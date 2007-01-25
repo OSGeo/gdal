@@ -1,0 +1,431 @@
+#ifndef DOXYGEN_SKIP
+/* $Id: gdal_drivertut.dox,v 1.4 2006/10/18 13:26:45 mloskot Exp $ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page ogr_drivertut OGR Driver Implementation Tutorial
+
+\section odt_overall Overall Approach
+
+In general new formats are added to OGR by implementing format specific
+drivers with subclasses of OGRSFDriver, OGRDataSource and OGRLayer.  The
+OGRSFDriver subclass is registered with the OGRSFDriverRegistrar at runtime.
+
+Before following this tutorial to implement an OGR driver, please review 
+the <a href="ogr_arch.html">OGR Architecture</a> document carefully. 
+
+The tutorial will be based on implementing a simple ascii point format.
+
+\section odt_toc Contents
+
+<ol>
+<li> \ref odt_driver_ro
+<li> \ref odt_datasource_bro
+</ol>
+
+\section odt_driver_ro Implementing OGRSFDriver
+
+The format specific driver class is implemented as a subclass of OGRSFDriver.
+One instance of the driver will normally be created, and registered with
+the OGRSFDriverRegistrar().  The instantiation of the driver is normally 
+handled by a global C callable registration function, similar to the
+following placed in the same file as the driver class. 
+
+\verbatim
+void RegisterOGRSPF()
+
+{
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSPFDriver );
+}
+\endverbatim
+
+The driver class declaration generally looks something like this for a
+format with read or read and update access (the Open() method), creation 
+support (the CreateDataSource() method), and the ability to delete a datasource
+(the DeleteDataSource() method).
+
+\verbatim
+class OGRSPFDriver : public OGRSFDriver
+{
+  public:
+                ~OGRSPFDriver();
+                
+    const char    *GetName();
+    OGRDataSource *Open( const char *, int );
+    OGRDataSource *CreateDataSource( const char *, char ** );
+    OGRErr         DeleteDataSource( const char *pszName );
+    int            TestCapability( const char * );
+};
+\endverbatim
+
+The constructor generally does nothing.  The OGRSFDriver::GetName() method 
+returns a static string with the name of the driver.  This name is specified 
+on the commandline when creating datasources so it is generally good to keep 
+it short and without any special characters or spaces. 
+
+\verbatim
+OGRSPFDriver::~OGRSPFDriver()
+
+{
+}
+
+const char *OGRSPFDriver::GetName()
+{
+    return "SPF";
+}
+\endverbatim
+
+The Open() method is called by OGRSFDriverRegistrar::Open(), or from the 
+C API OGROpen().  The OGRSFDriver::Open() method should quietly return NULL if 
+the passed
+filename is not of the format supported by the driver.  If it is the target
+format, then a new OGRDataSource object for the datasource should be returned.
+
+Is is common for the Open() method to be delegated to an Open() method on
+the actual format's OGRDataSource class.  In the case of the SPF format
+update in place is not supported, so we always fail if bUpdate is FALSE. 
+
+\verbatim
+OGRDataSource *OGRSPFDriver::Open( const char * pszFilename, int bUpdate )
+{
+    if( bUpdate )
+    {
+	CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Update access not supported by the SPF driver." );
+        return NULL;
+    }
+
+    OGRSPFDataSource   *poDS = new OGRSPFDataSource();
+
+    if( !poDS->Open( pszFilename ) )
+    {
+        delete poDS;
+	return NULL;
+    }
+    else
+        return poDS;
+}
+\endverbatim
+
+In OGR the capabilities of drivers, datasources and layers are determined
+by calling TestCapability() on the various objects with names strings 
+representing specific optional capabilities.  For the driver the only two
+capabilities currently tested for are the ability to create datasources and
+to delete them.  In our first pass as a read only SPF driver, these are
+both disabled.  The default return value for unrecognised capabilities 
+should always be FALSE, and the symbolic #defines for capability names
+(defined in ogr_core.h) should be used instead of the literal strings to 
+avoid typos. 
+
+\verbatim
+int OGRSPFDriver::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return FALSE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+        return FALSE;
+    else
+        return FALSE;
+}
+\endverbatim
+
+Examples of the CreateDataSource() and DeleteDataSource() methods are left 
+for the section on creation and update. 
+
+\section odt_datasource_bro Basic Read Only Data Source
+
+We will start implementing a minimal read-only datasource.  No attempt is
+made to optimize operations, and default implementations of many methods
+inherited from OGRDataSource are used.  
+
+The primary responsibility of the datasource is to manage the list of layers.
+In the case of the SPF format a datasource is a single file representing one
+layer so there is at most one layer.  The "name" of a datasource should 
+generally be the name passed to the Open() method.  
+
+The Open() method below is not overriding a base class method, but we have
+it to implement the open operation delegated by the driver class. 
+
+For this simple case we provide a stub TestCapability() that returns FALSE
+for all extended capabilities.  The TestCapability() method is pure virtual,
+so it does need to be implemented.
+
+\verbatim
+class OGRSPFDataSource : public OGRDataSource
+{
+    char                *pszName;
+    
+    OGRSPFLayer       **papoLayers;
+    int                 nLayers;
+
+  public:
+                        OGRSPFDataSource();
+                        ~OGRSPFDataSource();
+
+    int                 Open( const char * pszFilename );
+    
+    const char          *GetName() { return pszName; }
+
+    int                 GetLayerCount() { return nLayers; }
+    OGRLayer            *GetLayer( int );
+
+    int                 TestCapability( const char * ) { return FALSE; }
+};
+\endverbatim
+
+The constructor is a simple initializer to a default state.  The Open() will
+take care of actually attaching it to a file.  The destructor is responsible
+for orderly cleanup of layers.  
+
+\verbatim
+OGRSPFDataSource::OGRSPFDataSource()
+
+{
+    papoLayers = NULL;
+    nLayers = 0;
+
+    pszName = NULL;
+}
+
+OGRSPFDataSource::~OGRSPFDataSource()
+
+{
+    for( int i = 0; i < nLayers; i++ )
+        delete papoLayers[i];
+    CPLFree( papoLayers );
+
+    CPLFree( pszName );
+}
+\endverbatim
+
+The Open() method is the most important one on the datasource, though
+in this particular instance it passes most of it's work off to the
+OGRSPFLayer constructor if it believes the file is of the desired format.
+
+Note that Open() methods should try and determine that a file isn't of the 
+identified format as efficiently as possible, since many drivers may be 
+invoked with files of the wrong format before the correct driver is 
+reached.  In this particular Open() we just test the file extension but this
+is generally a poor way of identifying a file format.  If available, checking
+"magic header values" or something similar is preferrable. 
+
+\verbatim
+int  OGRSPFDataSource::Open( const char *pszFilename )
+
+{
+// -------------------------------------------------------------------- 
+//      Does this appear to be an .spf file?                           
+// --------------------------------------------------------------------
+    if( !EQUAL( CPLGetExtension(pszFilename), "spf" ) )
+        return FALSE;
+
+// -------------------------------------------------------------------- 
+//      Create a corresponding layer.
+// --------------------------------------------------------------------
+    nLayers = 1;
+    papoLayers = (OGRSPFLayer **) CPLMalloc(sizeof(void*));
+    
+    papoLayers[0] = new OGRSPFLayer( pszFilename );
+
+    pszName = CPLStrdup( pszFilename );
+
+    return TRUE;
+}
+\endverbatim
+
+A GetLayer() method also needs to be implemented.  Since the layer list
+is created in the Open() this is just a lookup with some safety testing.
+
+\verbatim
+OGRLayer *OGRSPFDataSource::GetLayer( int iLayer )
+
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+        return NULL;
+    else
+        return papoLayers[iLayer];
+}
+\endverbatim
+
+\section odt_layer_bro Read Only Layer
+
+The OGRSPFLayer is implements layer semantics for an .spf file.  It provides
+access to a set of feature objects in a constistent coordinate system
+with a particular set of attribute columns.  Our class definition looks like
+this:
+
+\verbatim
+class OGRSPFLayer : public OGRLayer
+{
+    OGRFeatureDefn     *poFeatureDefn;
+
+    FILE               *fp;
+
+    int                 nNextFID;
+
+  public:
+    OGRSPFLayer( const char *pszFilename );
+   ~OGRSPFLayer();
+
+    void                ResetReading();
+    OGRFeature *        GetNextFeature();
+
+    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+
+    int                 TestCapability( const char * ) { return FALSE; }
+};
+\endverbatim
+
+The layer constructor is responsible for initialization.  The most important
+initialization is setting up the OGRFeatureDefn for the layer.  This defines
+the list of fields and their types, the geometry type and the coordinate 
+system for the layer.  In the SPF format the set of fields is fixed - a 
+single string field and we have no coordinate system info to set. 
+
+Pay particular attention to the reference counting of the OGRFeatureDefn.
+As OGRFeature's for this layer will also take a reference to this definition
+it is important that we also establish a reference on behalf of the layer
+itself. 
+
+\verbatim
+OGRSPFLayer::OGRSPFLayer( const char *pszFilename )
+
+{
+    nNextFID = 0;
+
+    poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( pszFilename ) );
+    poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType( wkbPoint );
+   
+    OGRFieldDefn oFieldTemplate( "Name", OFTString );
+
+    poFeatureDefn->AddFieldDefn( &oFieldTemplate );
+
+    fp = VSIFOpenL( pszFilename, "r" );
+    if( fp == NULL )
+        return;
+}
+\endverbatim
+
+Note that the destructor uses Release() on the OGRFeatureDefn.  This will
+destroy the feature definition if the reference count drops to zero, but if
+the application is still holding onto a feature from this layer, then that
+feature will hold a reference to the feature definition and it will not
+be destroyed here (which is good!).  
+
+\verbatim
+OGRSPFLayer::~OGRSPFLayer()
+
+{
+    poFeatureDefn->Release();
+    if( fp != NULL )
+        VSIFCloseL( fp );
+}
+\endverbatim
+
+The GetNextFeature() method is usually the work horse of OGRLayer 
+implementations.  It is responsible for reading the next feature according
+to the current spatial and attribute filters installed.  
+
+The while() loop is present to loop until we find a satisfactory 
+feature.  The first section of code is for parsing a single line of 
+the SPF text file and establishing the x, y and name for the line.
+
+\verbatim
+OGRFeature *OGRSPFLayer::GetNextFeature()
+
+{
+    // --------------------------------------------------------------------
+    //	Loop till we find a feature matching our requirements.
+    // --------------------------------------------------------------------
+    while( TRUE )
+    {
+        const char *pszLine;
+        const char *pszName;
+    
+        pszLine = CPLReadLineL( fp );
+
+        // Are we at end of file (out of features)? 
+        if( pszLine == NULL )
+            return NULL;
+
+        double dfX;
+        double dfY;
+
+        dfX = atof(pszLine);
+    
+        pszLine = strstr(pszLine,"|");
+        if( pszLine == NULL )
+            continue; // we should issue an error!
+        else
+            pszLine++;
+
+        dfY = atof(pszLine);
+    
+        pszLine = strstr(pszLine,"|");
+        if( pszLine == NULL )
+            continue; // we should issue an error!
+        else
+            pszName = pszLine+1;
+
+\endverbatim
+
+The next section turns the x, y and name into a feature.  Also note that
+we assign a linearly incremented feature id.  In our case we started at
+zero for the first feature, though some drivers start at 1.  
+
+\verbatim
+        OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+        
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+        poFeature->SetField( 0, pszName );
+        poFeature->SetFID( nNextFID++ );
+\endverbatim
+
+Next we check if the feature matches our current attribute or 
+spatial filter if we have them.  Methods on the OGRLayer base class 
+support maintain filters in the OGRLayer member fields m_poFilterGeom
+(spatial filter) and m_poAttrQuery (attribute filter) so we can just use
+these values here if they are non-NULL.  The following test is essentially
+"stock" and done the same in all formats.  Some formats also do some 
+spatial filtering ahead of time using a spatial index. 
+
+If the feature meets our criteria we return it.  Otherwise we destroy it,
+and return to the top of the loop to fetch another to try.  
+
+\verbatim
+        if( (m_poFilterGeom == NULL
+             || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            return poFeature;
+
+        delete poFeature;
+    }
+}
+\endverbatim
+
+While in the middle of reading a feature set from a layer, or at any other
+time the application can call ResetReading() which is intended to restart
+reading at the beginning of the feature set.  We implement this by seeking
+back to the beginning of the file, and resetting our feature id counter. 
+
+\verbatim
+void OGRSPFLayer::ResetReading()
+
+{
+    VSIFSeekL( fp, 0, SEEK_SET );
+    nNextFID = 0;
+}
+\endverbatim
+
+In this implementation we do not provide a custom implementation for the
+GetFeature() method.  This means an attempt to read a particular feature
+by it's feature id will result in many calls to GetNextFeature() till the 
+desired feature is found.  However, in a sequential text format like spf
+there is little else we could do anyways.
+
+There! We have completed a simple read-only feature file format driver.  
+
+*/
