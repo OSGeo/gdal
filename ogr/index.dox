@@ -19,6 +19,8 @@ OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
 
 <li> <a href="ogr_apitut.html">OGR C++ API Read/Write Tutorial</a>
 
+<li> <a href="ogr_drivertut.html">OGR Driver Implementation Tutorial</a>
+
 <li> <a href="ogr__api_8h.html">ogr_api.h</a>: OGR C API
 
 <li> <a href="osr_tutorial.html">OGR Projections Tutorial</a>
