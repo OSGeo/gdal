@@ -47,6 +47,12 @@ fi
 
 find gdal -name .svn -exec rm -rf {} \;
 
+# Generate SWIG interface for C#
+cwd=${PWD}
+cd gdal/swig/csharp
+./mkinterface.sh
+cd ${cwd}
+
 rm -rf gdal/viewer
 rm -rf gdal/dist_docs
 
