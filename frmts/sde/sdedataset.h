@@ -26,8 +26,6 @@ class SDEDataset : public GDALPamDataset
         SE_RASCOLINFO hRasterColumn;
 
         
-        GDALColorTable *poCT;
-        
         CPLErr                  ComputeRasterInfo(void);
         SE_RASBANDINFO* paohSDERasterBands;
         

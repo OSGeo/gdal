@@ -208,9 +208,6 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         return CE_Fatal;
     }
 
-    eDataType = GDT_UInt16;
-    
-    CPLDebug("SDERASTER", "pixel type from GDAL: %d", eDataType);
     
     for (int i=0; i < nBands; i++) {
         SetBand( i+1, new SDERasterBand( this, i+1, &(paohSDERasterBands[i]) ));
