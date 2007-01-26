@@ -1,3 +1,6 @@
+#ifndef SDERASTERBAND_INCLUDED
+#define SDERASTERBAND_INCLUDED
+
 #include "gdal_sde.h"
 
 /************************************************************************/
@@ -26,3 +29,5 @@ class SDERasterBand : public GDALPamRasterBand
 //    virtual GDALColorInterp GetColorInterpretation();
 //    virtual GDALColorTable *GetColorTable();
 };
+
+#endif

@@ -1,4 +1,4 @@
-#include "gdal_sde.h"
+#include "sderasterband.h"
 
 /************************************************************************/
 /*                           SDERasterBand()                            */
