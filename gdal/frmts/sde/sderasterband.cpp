@@ -11,7 +11,7 @@ SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, const SE_RASBANDINFO*
     this->nBand = nBand;
     
     poBand = band;
-    eDataType = GDT_Float32;
+    eDataType = GetRasterDataType();
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -94,7 +94,31 @@ CPLErr SDERasterBand::GetStatistics( int bApproxOK, int bForce,
 /************************************************************************/
 /*                             ComputeColorTable()                      */
 /************************************************************************/
-GDALColorTable* SDERasterBand::ComputeColorTable(const SE_RASBANDINFO& band) {
+GDALColorTable* SDERasterBand::GetColorTable(void) 
+{
+    
+
+    if (SE_rasbandinfo_has_colormap(*poBand)) {
+        GDALColorTable* poCT = ComputeColorTable();
+        return poCT;
+    } else {
+        return NULL;
+    }
+}
+GDALColorInterp SDERasterBand::GetColorInterpretation()
+{
+    if (SE_rasbandinfo_has_colormap(*poBand)) 
+        return GCI_PaletteIndex;
+    else
+        return GCI_GrayIndex;
+}
+    
+    
+/************************************************************************/
+/*                             ComputeColorTable()                      */
+/************************************************************************/
+GDALColorTable* SDERasterBand::ComputeColorTable(void) 
+{
 
 //    if (SE_rasbandinfo_has_colormap(band)) 
 //        poCT = ComputeColorTable(band);    
@@ -109,7 +133,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(const SE_RASBANDINFO& band) {
     
     long nSDEErr;
     
-    nSDEErr = SE_rasbandinfo_get_colormap(  band,
+    nSDEErr = SE_rasbandinfo_get_colormap(  *poBand,
                                             &eCMap_Type,
                                             &eCMap_DataType,
                                             &nCMapEntries,
