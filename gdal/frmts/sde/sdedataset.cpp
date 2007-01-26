@@ -101,7 +101,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
         return CE_Fatal;
     }
-    nSDEErr = SE_raster_get_bands(*hConnection, raster, &bands, &nBands);
+    nSDEErr = SE_raster_get_bands(*hConnection, raster, &paohSDERasterBands, &nBands);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_raster_get_bands" );
@@ -111,7 +111,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     SE_RASBANDINFO band;
     
     // grab our other stuff from the first band and hope for the best
-    band = bands[0];
+    band = paohSDERasterBands[0];
     
     
     nSDEErr = SE_rasbandinfo_get_band_size(band, &nRasterXSize, &nRasterYSize);
@@ -209,60 +209,27 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     }
 
     eDataType = GDT_UInt16;
-    long pixel_type;
-    nSDEErr = SE_rasterattr_get_pixel_type (attributes, &pixel_type);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_rasterattr_get_pixel_type" );
-        return CE_Fatal;
-    }
-    CPLDebug("SDERASTER", "pixel type from sde: %d %d", pixel_type,SE_PIXEL_TYPE_GET_DEPTH(pixel_type));
-    
-    eDataType = MorphESRIRasterType(pixel_type);
     
     CPLDebug("SDERASTER", "pixel type from GDAL: %d", eDataType);
     
     for (int i=0; i < nBands; i++) {
-        SetBand( i+1, new SDERasterBand( this, i+1, bands[i] ));
+        SetBand( i+1, new SDERasterBand( this, i+1, &(paohSDERasterBands[i]) ));
     }
 
+    GDALRasterBand* b = GetRasterBand(1);
+    
+    eDataType = b->GetRasterDataType();
     
     SE_queryinfo_free(query);
     SE_stream_free(stream);
     
     SE_rasterinfo_free(raster);
-    SE_rasterband_free_info_list(nBands, bands);
+   // SE_rasterband_free_info_list(nBands, bands);
 
     return CE_None;
 }
 
-GDALDataType SDEDataset::MorphESRIRasterType(int gtype) {
-    
-    switch (gtype) {
-        case SE_PIXEL_TYPE_1BIT:
-            return GDT_Byte;
-        case SE_PIXEL_TYPE_4BIT:
-            return GDT_Byte;
-        case SE_PIXEL_TYPE_8BIT_U:
-            return GDT_Byte;
-        case SE_PIXEL_TYPE_8BIT_S:
-            return GDT_Byte;
-        case SE_PIXEL_TYPE_16BIT_U:
-            return GDT_UInt16;
-        case SE_PIXEL_TYPE_16BIT_S:
-            return GDT_Int16;
-        case SE_PIXEL_TYPE_32BIT_U:
-            return GDT_UInt32;
-        case SE_PIXEL_TYPE_32BIT_S:
-            return GDT_Int32;
-        case SE_PIXEL_TYPE_32BIT_REAL:
-            return GDT_Float32;
-        case SE_PIXEL_TYPE_64BIT_REAL:
-            return GDT_Float64;
-        default:
-            return GDT_UInt16;
-        }
-}
+
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
