@@ -4,12 +4,13 @@
 /*                           SDERasterBand()                            */
 /************************************************************************/
 
-SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, const SE_RASBANDINFO& band )
+SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, const SE_RASBANDINFO* band )
 
 {
     this->poDS = poDS;
     this->nBand = nBand;
     
+    poBand = band;
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -35,6 +36,22 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                             GetRasterDataType()                      */
+/************************************************************************/
+GDALDataType SDERasterBand::GetRasterDataType(void) 
+{
+    long nSDEErr;
+    long nSDERasterType;
+    
+    nSDEErr = SE_rasbandinfo_get_pixel_type(*poBand, &nSDERasterType);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_pixel_type" );
+        return GDT_Byte;
+    }
+    return MorphESRIRasterType(nSDERasterType);
+}
+/************************************************************************/
 /*                             GetStatistics()                          */
 /************************************************************************/
 
@@ -42,6 +59,35 @@ CPLErr SDERasterBand::GetStatistics( int bApproxOK, int bForce,
                                       double *pdfMin, double *pdfMax, 
                                       double *pdfMean, double *pdfStdDev ) 
 {
+
+    long nSDEErr;
+    nSDEErr = SE_rasbandinfo_get_stats_min(*poBand, pdfMin);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_stats_min" );
+        return CE_Fatal;
+    }  
+
+    nSDEErr = SE_rasbandinfo_get_stats_max(*poBand, pdfMax);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_stats_max" );
+        return CE_Fatal;
+    } 
+
+    nSDEErr = SE_rasbandinfo_get_stats_mean(*poBand, pdfMean);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_stats_mean" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_rasbandinfo_get_stats_stddev(*poBand, pdfStdDev);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_stats_stddev" );
+        return CE_Fatal;
+    } 
     return CE_None;
 }
 
@@ -170,4 +216,35 @@ GDALColorTable* SDERasterBand::ComputeColorTable(const SE_RASBANDINFO& band) {
     }
     GDALColorEntry sColor;
     return poCT;
+}
+
+/************************************************************************/
+/*                             MorphESRIRasterType()                    */
+/************************************************************************/
+GDALDataType SDERasterBand::MorphESRIRasterType(int gtype) {
+    
+    switch (gtype) {
+        case SE_PIXEL_TYPE_1BIT:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_4BIT:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_8BIT_U:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_8BIT_S:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_16BIT_U:
+            return GDT_UInt16;
+        case SE_PIXEL_TYPE_16BIT_S:
+            return GDT_Int16;
+        case SE_PIXEL_TYPE_32BIT_U:
+            return GDT_UInt32;
+        case SE_PIXEL_TYPE_32BIT_S:
+            return GDT_Int32;
+        case SE_PIXEL_TYPE_32BIT_REAL:
+            return GDT_Float32;
+        case SE_PIXEL_TYPE_64BIT_REAL:
+            return GDT_Float64;
+        default:
+            return GDT_UInt16;
+        }
 }
