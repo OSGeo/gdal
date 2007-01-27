@@ -101,7 +101,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
         return CE_Fatal;
     }
-    nSDEErr = SE_raster_get_bands(*hConnection, raster, &paohSDERasterBands, &nBands);
+    nSDEErr = SE_raster_get_bands(*hConnection, raster, &paohSDERasterBands, (long*)&nBands);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_raster_get_bands" );
@@ -114,7 +114,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     band = paohSDERasterBands[0];
     
     
-    nSDEErr = SE_rasbandinfo_get_band_size(band, &nRasterXSize, &nRasterYSize);
+    nSDEErr = SE_rasbandinfo_get_band_size(band, (long*)&nRasterXSize, (long*)&nRasterYSize);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_size" );
@@ -448,6 +448,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             return FALSE;
         }
         poDS->ComputeRasterInfo();
+
     } else {
 //
 //      SE_RASCOLINFO* columns;
