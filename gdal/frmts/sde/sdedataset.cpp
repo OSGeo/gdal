@@ -238,13 +238,13 @@ CPLErr SDEDataset::GetGeoTransform( double * padfTransform )
     if (dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0)
         return CE_Fatal;
  
-    padfTransform[0] = dfMinX;
-    padfTransform[3] = dfMaxY;
-    padfTransform[1] = (dfMaxX - dfMinX) / GetRasterXSize();
+    padfTransform[0] = dfMinX - 0.5*(dfMaxX - dfMinX) / (GetRasterXSize()-1);
+    padfTransform[3] = dfMaxY + 0.5*(dfMaxY - dfMinY) / (GetRasterYSize()-1);
+    padfTransform[1] = (dfMaxX - dfMinX) / (GetRasterXSize()-1);
     padfTransform[2] = 0.0;
         
     padfTransform[4] = 0.0;
-    padfTransform[5] = -1 * (dfMaxY - dfMinY) / GetRasterYSize();
+    padfTransform[5] = -1 * (dfMaxY - dfMinY) / (GetRasterYSize()-1);
     
     return CE_None;
 }
