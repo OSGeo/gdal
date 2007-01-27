@@ -15,9 +15,7 @@ class SDEDataset : public GDALPamDataset
         char                *pszLayerName;
         char                *pszColumnName;
         long                nSubDataCount;
-        long                nBands;
-        long                nRasterXSize;
-        long                nRasterYSize;
+
         
         double              dfMinX, dfMaxX, dfMinY, dfMaxY;
         
@@ -34,11 +32,12 @@ class SDEDataset : public GDALPamDataset
         ~SDEDataset();
         
         static GDALDataset *Open( GDALOpenInfo * );
-        
-        CPLErr  GetGeoTransform( double * padfTransform );
-        int     GetRasterCount(void);
-        int     GetRasterXSize(void);
-        int     GetRasterYSize(void);
+    protected:        
+
+        virtual CPLErr  GetGeoTransform( double * padfTransform );
+        virtual int     GetRasterCount(void);
+        virtual int     GetRasterXSize(void);
+        virtual int     GetRasterYSize(void);
         
         const char *GetProjectionRef();
 };
