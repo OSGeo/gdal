@@ -45,13 +45,12 @@ Yes, you can. It's also possible to use GDAL libraries in applications developed
 
 <li><p>Download and install Microsoft Platform SDK</p>. Also, follow these instructions carefully without omitting any of steps presented there:</p><p>http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/</p></li>
 
-<li>Add following two paths to <em>Include files</em> in the Visual C++ IDE settings. Do it the same way as presented in <a href="http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/">Step 3</a> from the website above.
+<li>Add following two paths to <em>Include files</em> in the Visual C++ IDE settings. Do it the same way as presented in <a href="http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/">Step 3</a> from the website above.</li>
 
-<pre>
+\verbatim
 C:\\Program Files\\Microsoft Platform SDK\\Include\\atl
 C:\\Program Files\\Microsoft Platform SDK\\Include\\mfc
-</pre>
-</li>
+\endverbatim
 
 <li>Since you will build GDAL from command line using nmake tool, you also need to set or update <em>INCLUDE</em> and <em>LIB</em> environment variables manually. You can do it in two ways:
 
@@ -62,25 +61,25 @@ C:\\Program Files\\Microsoft Platform SDK\\Include\\mfc
 
 These variables should have following values assigned:
 
-<pre>
+\verbatim
 INCLUDE=C:\\Program Files\\Microsoft Visual Studio 8\\VC\\Include;
         C:\\Program Files\\Microsoft Platform SDK\\Include;
         C:\\Program Files\\Microsoft Platform SDK\\Include\\mfc;
         C:\\Program Files\\Microsoft Platform SDK\\Include\\atl;%INCLUDE%
-</pre>
 
-<pre>
 LIB=C:\\Program Files\\Microsoft Visual Studio 8\\VC\\Lib;
     C:\\Program Files\\Microsoft Visual Studio 8\\SDK\\v2.0\\lib;
     C:\\Program Files\\Microsoft Platform SDK\\lib;%LIB%
-</pre>
+\endverbatim
 
 <strong>NOTE:</strong> If you have edited system-wide <em>INCLUDE</em> and <em>LIB</em> variables, using <em>System</em> applet, every Console (cmd.exe) will have it properly set. But if you have edited them through <em>vsvars32.bat</em> script, you will need to run this script in the Console before every compilation.
 </li>
 
 <li><p>Patch atlwin.h header</p>
 <p>At line 1725 add <em>int i;</em> declaration, so it looks as follows:</p>
-<pre>
+</li>
+
+\verbatim
 ---------------------------------------------------------------
 BOOL SetChainEntry(DWORD dwChainID, CMessageMap* pObject, DWORD dwMsgMapID = 0)
 {
@@ -89,12 +88,13 @@ BOOL SetChainEntry(DWORD dwChainID, CMessageMap* pObject, DWORD dwMsgMapID = 0)
 
     for(i = 0; i < m_aChainEntry.GetSize(); i++)
 ---------------------------------------------------------------
-</pre>
-</li>
+\endverbatim
 
 <li><p>Patch atlbase.h header</p>
 <p>At line 287, comment AllocStdCallThunk and FreeStdCallThunk functions and add macros replacements:</p>
-<pre>
+</li>
+
+\verbatim
 ---------------------------------------------------------------
 /***************************************************
 PVOID __stdcall __AllocStdCallThunk(VOID);
@@ -110,8 +110,7 @@ VOID __stdcall __FreeStdCallThunk(PVOID);
 #define AllocStdCallThunk() HeapAlloc(GetProcessHeap(),0,sizeof(_stdcallthunk))
 #define FreeStdCallThunk(p) HeapFree(GetProcessHeap(), 0, p)
 ---------------------------------------------------------------
-</pre>
-</li>
+\endverbatim
 
 <li><p>Building GDAL</p>
     <ul>
