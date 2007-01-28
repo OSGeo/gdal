@@ -36,6 +36,8 @@ char const *GDALDriverShadow_get_HelpTopic( GDALDriverShadow *h ) {
 }
 %}
 
+%rename (GetMetadata) GetMetadata_List;
+%ignore GetMetadata_Dict;
 
 %include typemaps_csharp.i
 
