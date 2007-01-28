@@ -17,6 +17,7 @@ all:	default testecw.exe
 clean:
 	-del *.obj
 	-del *.exe
+	-del gdal_ECW.*
 
 testecw.exe:	testecw.cpp
 	$(CC) /Zi /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
@@ -24,4 +25,9 @@ testecw.exe:	testecw.cpp
 ecw_example1.exe:	ecw_example1.c
 	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
 	
+plugin:	gdal_ECW.dll
 
+gdal_ECW.dll: $(OBJ)
+	link /dll /out:gdal_ECW.dll $(OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib $(ECWLIB)
+	if exist gdal_ECW.dll.manifest mt -manifest gdal_ECW.dll.manifest -outputresource:gdal_ECW.dll;2
