@@ -4,7 +4,7 @@
 #include "gdal_sde.h"
 
 
-class SDEDataset : public GDALPamDataset
+class SDEDataset : public GDALDataset
 {
     friend class SDERasterBand;
 

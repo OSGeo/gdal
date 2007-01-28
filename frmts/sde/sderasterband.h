@@ -9,7 +9,7 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class SDERasterBand : public GDALPamRasterBand
+class SDERasterBand : public GDALRasterBand
 {
     friend class SDEDataset;
     
@@ -32,8 +32,9 @@ class SDERasterBand : public GDALPamRasterBand
     virtual GDALColorTable *GetColorTable();
     virtual GDALColorInterp GetColorInterpretation();
 
-//    virtual double GetMinimum( int *pbSuccess );
-//    virtual double GetMaximum( int *pbSuccess );
+
+    virtual double GetMinimum( int *pbSuccess );
+    virtual double GetMaximum( int *pbSuccess );
 //    virtual double GetNoDataValue( int *pbSuccess );
 //
 };

@@ -60,6 +60,15 @@ CPLErr SDERasterBand::GetStatistics( int bApproxOK, int bForce,
                                       double *pdfMean, double *pdfStdDev ) 
 {
 
+    bool bHasStats;
+    bHasStats = SE_rasbandinfo_has_stats (*poBand);
+    if (!bHasStats) 
+        return GDALRasterBand::GetStatistics(    bApproxOK,
+                                                    bForce,
+                                                    pdfMin,
+                                                    pdfMax,
+                                                    pdfMean,
+                                                    pdfStdDev);
     long nSDEErr;
     nSDEErr = SE_rasbandinfo_get_stats_min(*poBand, pdfMin);
     if( nSDEErr != SE_SUCCESS )
@@ -91,6 +100,45 @@ CPLErr SDERasterBand::GetStatistics( int bApproxOK, int bForce,
     return CE_None;
 }
 
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double SDERasterBand::GetMinimum(int *pbSuccess) 
+{
+    double dfMin, dfMax, dfMean, dfStdDev;
+    CPLErr error = GetStatistics( TRUE, TRUE, 
+                                  &dfMin,
+                                  &dfMax, 
+                                  &dfMean, 
+                                  &dfStdDev );
+    if (error) {
+        *pbSuccess = TRUE;
+        return dfMin;
+    }
+    *pbSuccess = FALSE;
+    return 0.0;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double SDERasterBand::GetMaximum(int *pbSuccess) 
+{
+    double dfMin, dfMax, dfMean, dfStdDev;
+    CPLErr error = GetStatistics( TRUE, TRUE, 
+                                  &dfMin,
+                                  &dfMax, 
+                                  &dfMean, 
+                                  &dfStdDev );
+    if (error) {
+        *pbSuccess = TRUE;
+        return dfMax;
+    }
+    *pbSuccess = FALSE;
+    return 0.0;
+}
 /************************************************************************/
 /*                             ComputeColorTable()                      */
 /************************************************************************/
