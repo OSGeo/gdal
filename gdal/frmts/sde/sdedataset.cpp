@@ -312,6 +312,7 @@ SDEDataset::SDEDataset( SE_CONNECTION* connection )
     pszLayerName        = NULL;
     pszColumnName       = NULL;
     paohSDERasterColumns  = NULL;
+    paohSDERasterBands  = NULL;
     hRasterColumn       = NULL;
     nBands              = 0;
     nRasterXSize        = 0;
@@ -337,6 +338,9 @@ SDEDataset::~SDEDataset()
 //    if (paohSDERasterColumns != NULL)
 //        SE_rastercolumn_free_info_list(nSubDataCount,
 //                                   paohSDERasterColumns);
+    if (paohSDERasterBands)
+        SE_rasterband_free_info_list(nBands, paohSDERasterBands);
+
     if (hRasterColumn)
         SE_rascolinfo_free(hRasterColumn);
 }
