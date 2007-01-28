@@ -216,8 +216,23 @@ OPTIONAL_POD(int,i);
 %typemap(out) char **options %{ $result = $1; %}
 %typemap(csin) char **options "new $modulePINVOKE.StringListMarshal($csinput)._ar"
 %typemap(csout, excode=SWIGEXCODE) char**options {
-    $excode
-    throw new System.NotSupportedException("Returning string arrays is not implemented yet.");
+        /* %typemap(csout) char**options */
+        IntPtr cPtr = $imcall;
+        IntPtr objPtr;
+        int count = 0;
+        if (cPtr != IntPtr.Zero) {
+            while (Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
+                ++count;
+        }
+        string[] ret = new string[count];
+        if (count > 0) {       
+	        for(int cx = 0; cx < count; cx++) {
+                objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+                ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
+            }
+        }
+        $excode
+        return ret;
 }
  
 %typemap(freearg) char **options
