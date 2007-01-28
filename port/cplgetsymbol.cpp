@@ -141,8 +141,19 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     pLibrary = LoadLibrary(pszLibrary);
     if( pLibrary == NULL )
     {
+        LPVOID      lpMsgBuf = NULL;
+        int         nLastError = GetLastError();
+        
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
+                       | FORMAT_MESSAGE_FROM_SYSTEM
+                       | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, nLastError,
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                       (LPTSTR) &lpMsgBuf, 0, NULL );
+ 
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't load requested DLL: %s", pszLibrary );
+                  "Can't load requested DLL: %s\n%d: %s", 
+                  pszLibrary, nLastError, (const char *) lpMsgBuf );
         return NULL;
     }
 
