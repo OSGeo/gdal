@@ -154,7 +154,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
                     szSeconds[1] = '0';
                     szSeconds[2] = '\0';
                 }
-                dfAngle += atof(szSeconds) / 3600.0;
+                dfAngle += CPLAtof(szSeconds) / 3600.0;
             }
         }
 
@@ -163,25 +163,25 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     }
     else if( nUOMAngle == 9105 || nUOMAngle == 9106 )   /* grad */
     {
-        dfAngle = 180 * (atof(pszAngle ) / 200);
+        dfAngle = 180 * (CPLAtof(pszAngle ) / 200);
     }
     else if( nUOMAngle == 9101 )                        /* radians */
     {
-        dfAngle = 180 * (atof(pszAngle ) / PI);
+        dfAngle = 180 * (CPLAtof(pszAngle ) / PI);
     }
     else if( nUOMAngle == 9103 )                        /* arc-minute */
     {
-        dfAngle = atof(pszAngle) / 60;
+        dfAngle = CPLAtof(pszAngle) / 60;
     }
     else if( nUOMAngle == 9104 )                        /* arc-second */
     {
-        dfAngle = atof(pszAngle) / 3600;
+        dfAngle = CPLAtof(pszAngle) / 3600;
     }
     else /* decimal degrees ... some cases missing but seeminly never used */
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == 0 );
         
-        dfAngle = atof(pszAngle );
+        dfAngle = CPLAtof(pszAngle );
     }
 
     return( dfAngle );
@@ -217,12 +217,12 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
         double dfFactorB, dfFactorC;
         
         dfFactorB = 
-            atof(CSVGetField( pszFilename,
+            CPLAtof(CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "FACTOR_B" ));
         
         dfFactorC = 
-            atof(CSVGetField( pszFilename,
+            CPLAtof(CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "FACTOR_C" ));
 
@@ -372,9 +372,9 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
         iBFactorField = CSVGetFileFieldId( UOM_FILENAME, "FACTOR_B" );
         iCFactorField = CSVGetFileFieldId( UOM_FILENAME, "FACTOR_C" );
 
-        if( atof(CSLGetField(papszUnitsRecord, iCFactorField)) > 0.0 )
-            *pdfInMeters = atof(CSLGetField(papszUnitsRecord, iBFactorField))
-                / atof(CSLGetField(papszUnitsRecord, iCFactorField));
+        if( CPLAtof(CSLGetField(papszUnitsRecord, iCFactorField)) > 0.0 )
+            *pdfInMeters = CPLAtof(CSLGetField(papszUnitsRecord,iBFactorField))
+                / CPLAtof(CSLGetField(papszUnitsRecord, iCFactorField));
         else
             *pdfInMeters = 0.0;
     }
@@ -430,7 +430,7 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
     iDXField = CSVGetFileFieldId(pszFilename, "DX");
 
     for( iField = 0; iField < 7; iField++ )
-        padfTransform[iField] = atof(papszLine[iDXField+iField]);
+        padfTransform[iField] = CPLAtof(papszLine[iDXField+iField]);
 
 /* -------------------------------------------------------------------- */
 /*      9607 - coordinate frame rotation has reverse signs on the       */
@@ -629,9 +629,9 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
     sprintf( szSearchKey, "%d", nCode );
 
     dfSemiMajor =
-        atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                          "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                          "SEMI_MAJOR_AXIS" ) );
+        CPLAtof(CSVGetField( CSVFilename("ellipsoid.csv" ),
+                             "ELLIPSOID_CODE", szSearchKey, CC_Integer,
+                             "SEMI_MAJOR_AXIS" ) );
     if( dfSemiMajor == 0.0 )
         return FALSE;
 
@@ -655,16 +655,16 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
     if( pdfInvFlattening != NULL )
     {
         *pdfInvFlattening = 
-            atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                              "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                              "INV_FLATTENING" ));
+            CPLAtof(CSVGetField( CSVFilename("ellipsoid.csv" ),
+                                 "ELLIPSOID_CODE", szSearchKey, CC_Integer,
+                                 "INV_FLATTENING" ));
 
         if( *pdfInvFlattening == 0.0 )
         {
             double dfSemiMinor;
 
             dfSemiMinor =
-                atof(CSVGetField( CSVFilename("ellipsoid.csv" ),
+                CPLAtof(CSVGetField( CSVFilename("ellipsoid.csv" ),
                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                   "SEMI_MINOR_AXIS" )) * dfToMeters;
 
@@ -790,7 +790,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
             if( !EPSGGetUOMLengthInfo( nUOM, NULL, &dfInMeters ) )
                 dfInMeters = 1.0;
-            adfProjParms[i] = atof(pszValue) * dfInMeters;
+            adfProjParms[i] = CPLAtof(pszValue) * dfInMeters;
         }
         else if( EQUAL(pszValue,"") ) /* null field */
         {
@@ -800,7 +800,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
         {
             if( nUOM != 9201 )
                 CPLDebug( "OGR", "Non-unity scale factor units!" );
-            adfProjParms[i] = atof(pszValue);
+            adfProjParms[i] = CPLAtof(pszValue);
         }
 
         CPLFree( pszValue );
@@ -979,9 +979,9 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     }
 
     if( dfAngleInDegrees == 1.0 )
-        dfAngleInRadians = atof(SRS_UA_DEGREE_CONV);
+        dfAngleInRadians = CPLAtof(SRS_UA_DEGREE_CONV);
     else
-        dfAngleInRadians = atof(SRS_UA_DEGREE_CONV) * dfAngleInDegrees;
+        dfAngleInRadians = CPLAtof(SRS_UA_DEGREE_CONV) * dfAngleInDegrees;
 
     poSRS->SetGeogCS( pszGeogCSName, pszDatumName, 
                       pszEllipsoidName, dfSemiMajor, dfInvFlattening,
@@ -991,7 +991,6 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     if( EPSGGetWGS84Transform( nGeogCS, adfBursaTransform ) )
     {
         OGR_SRSNode     *poWGS84;
-        char            szValue[48];
 
         poWGS84 = new OGR_SRSNode( "TOWGS84" );
 
@@ -1512,7 +1511,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
         {
             sprintf( szName, "State Plane Zone %d / NAD27", nZone );
             SetLocalCS( szName );
-            SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+            SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
         }
 
         return OGRERR_FAILURE;
