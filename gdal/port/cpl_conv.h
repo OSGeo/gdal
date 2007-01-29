@@ -85,6 +85,12 @@ float CPL_DLL CPLStrtof(const char *, char **);
 float CPL_DLL CPLStrtofDelim(const char *, char **, char);
 
 /* -------------------------------------------------------------------- */
+/*      Convert number to string.  This function is locale agnostic     */
+/*      (ie. it will support "," or "." regardless of current locale)   */
+/* -------------------------------------------------------------------- */
+double CPL_DLL CPLAtofM(const char *);
+
+/* -------------------------------------------------------------------- */
 /*      Read a numeric value from an ASCII character string.            */
 /* -------------------------------------------------------------------- */
 char CPL_DLL *CPLScanString( const char *, int, int, int );
