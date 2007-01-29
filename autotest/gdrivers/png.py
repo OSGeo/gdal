@@ -69,7 +69,7 @@ def png_2():
     return tst.testCreateCopy()
     
 ###############################################################################
-# Verify the colormap, and nodata setting for test file. 
+# Verify the geotransform, colormap, and nodata setting for test file. 
 
 def png_3():
 
@@ -86,6 +86,21 @@ def png_3():
     if int(ds.GetRasterBand(1).GetNoDataValue()) != 0:
         gdaltest.post_reason( 'Wrong nodata value.' )
         return 'fail'
+
+    # This geotransform test is also verifying the fix for bug 1414, as
+    # the world file is in a mixture of numeric representations for the
+    # numbers.  (mixture of "," and "." in file)
+
+    gt_expected = (700000.341, 0.308, 0.01, 4287500.659, -0.01, -0.308)
+
+    gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(gt[i] - gt_expected[i]) > 0.0001:
+            print 'expected:', gt_expected
+            print 'got:', gt
+            
+            gdaltest.post_reason( 'Mixed locale world file read improperly.' )
+            return 'fail'
 
     return 'success'
     
