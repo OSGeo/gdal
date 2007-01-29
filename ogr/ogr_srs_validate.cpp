@@ -479,7 +479,7 @@ OGRErr OGRSpatialReference::Validate()
                               poNode->GetChildCount() );
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( atof(poNode->GetChild(1)->GetValue()) == 0.0 )
+                else if( CPLAtof(poNode->GetChild(1)->GetValue()) == 0.0 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                               "UNIT does not appear to have meaningful"
@@ -603,7 +603,7 @@ OGRErr OGRSpatialReference::Validate()
                               poNode->GetChildCount() );
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( atof(poNode->GetChild(1)->GetValue()) == 0.0 )
+                else if( CPLAtof(poNode->GetChild(1)->GetValue()) == 0.0 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                               "UNIT does not appear to have meaningful"
@@ -691,7 +691,7 @@ OGRErr OGRSpatialReference::Validate()
                     
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( atof(poSPHEROID->GetChild(1)->GetValue()) == 0.0 )
+                else if( CPLAtof(poSPHEROID->GetChild(1)->GetValue()) == 0.0 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                               "SPHEROID semi-major axis is zero (%s)!\n",
