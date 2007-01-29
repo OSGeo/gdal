@@ -809,15 +809,6 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
             GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                                poDS->adfGeoTransform );
 
-    if( !poDS->bGeoTransformValid )
-        poDS->bGeoTransformValid = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".tfw", 
-                               poDS->adfGeoTransform );
-    if( !poDS->bGeoTransformValid )
-        poDS->bGeoTransformValid = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".tifw", 
-                               poDS->adfGeoTransform );
-
     return poDS;
 }
 
