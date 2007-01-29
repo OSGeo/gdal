@@ -740,13 +740,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
             CPLAssert( EQUALN(ogr_pj_ellps[i+1],"a=",2) );
             
-            dfSemiMajor = atof(ogr_pj_ellps[i+1]+2);
+            dfSemiMajor = CPLAtof(ogr_pj_ellps[i+1]+2);
             if( EQUALN(ogr_pj_ellps[i+2],"rf=",3) )
-                dfInvFlattening = atof(ogr_pj_ellps[i+2]+3);
+                dfInvFlattening = CPLAtof(ogr_pj_ellps[i+2]+3);
             else
             {
                 CPLAssert( EQUALN(ogr_pj_ellps[i+2],"b=",2) );
-                dfSemiMinor = atof(ogr_pj_ellps[i+2]+2);
+                dfSemiMinor = CPLAtof(ogr_pj_ellps[i+2]+2);
                 
                 if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
                     dfInvFlattening = 0.0;
@@ -823,17 +823,17 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                                                         FALSE, TRUE );
 
         if( CSLCount(papszToWGS84) >= 7 )
-            SetTOWGS84( atof(papszToWGS84[0]), 
-                        atof(papszToWGS84[1]), 
-                        atof(papszToWGS84[2]), 
-                        atof(papszToWGS84[3]), 
-                        atof(papszToWGS84[4]), 
-                        atof(papszToWGS84[5]), 
-                        atof(papszToWGS84[6]) );
+            SetTOWGS84( CPLAtof(papszToWGS84[0]), 
+                        CPLAtof(papszToWGS84[1]), 
+                        CPLAtof(papszToWGS84[2]), 
+                        CPLAtof(papszToWGS84[3]), 
+                        CPLAtof(papszToWGS84[4]), 
+                        CPLAtof(papszToWGS84[5]), 
+                        CPLAtof(papszToWGS84[6]) );
         else if( CSLCount(papszToWGS84) >= 3 )
-            SetTOWGS84( atof(papszToWGS84[0]), 
-                        atof(papszToWGS84[1]), 
-                        atof(papszToWGS84[2]) );
+            SetTOWGS84( CPLAtof(papszToWGS84[0]), 
+                        CPLAtof(papszToWGS84[1]), 
+                        CPLAtof(papszToWGS84[2]) );
         else
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Seemingly corrupt +towgs84 option (%s), ignoring.", 
@@ -849,18 +849,18 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         pszValue = CSLFetchNameValue(papszNV, "to_meter");
 
-        if( pszValue != NULL && atof(pszValue) > 0.0 )
+        if( pszValue != NULL && CPLAtofM(pszValue) > 0.0 )
         {
-            SetLinearUnits( "unknown", atof(pszValue) );
+            SetLinearUnits( "unknown", CPLAtofM(pszValue) );
         }
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
             if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") )
                 SetLinearUnits( SRS_UL_METER, 1.0 );
             else if( EQUAL(pszValue,"us-ft" ) )
-                SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+                SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
             else if( EQUAL(pszValue,"ft" ) )
-                SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+                SetLinearUnits( SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
             else if( EQUAL(pszValue,"yd" ) )
                 SetLinearUnits( pszValue, 0.9144 );
             else if( EQUAL(pszValue,"us-yd" ) )
@@ -946,6 +946,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 {
     char        szProj4[512];
     const char *pszProjection = GetAttrValue("PROJECTION");
+    CPLLocaleC  oLocaleEnforcer;
 
     szProj4[0] = '\0';
 
@@ -967,9 +968,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     double dfFromGreenwich = 0.0;
 
     if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
-        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+        && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
-        dfFromGreenwich = atof(poPRIMEM->GetChild(1)->GetValue());
+        dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
     }
 
 /* ==================================================================== */
@@ -1625,7 +1626,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      Is there prime meridian info to apply?                          */
 /* -------------------------------------------------------------------- */
     if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
-        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+        && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
         const char *pszAuthority = GetAuthorityName( "PRIMEM" );
         char szPMValue[128];

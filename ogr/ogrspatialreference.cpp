@@ -806,7 +806,7 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
         *ppszName = "degree";
         
     if( poCS == NULL )
-        return atof(SRS_UA_DEGREE_CONV);
+        return CPLAtof(SRS_UA_DEGREE_CONV);
 
     for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
     {
@@ -818,7 +818,7 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
             if( ppszName != NULL )
                 *ppszName = (char *) poChild->GetChild(0)->GetValue();
             
-            return atof( poChild->GetChild(1)->GetValue() );
+            return CPLAtof( poChild->GetChild(1)->GetValue() );
         }
     }
 
@@ -1018,7 +1018,7 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
             if( ppszName != NULL )
                 *ppszName = (char *) poChild->GetChild(0)->GetValue();
             
-            return atof( poChild->GetChild(1)->GetValue() );
+            return CPLAtof( poChild->GetChild(1)->GetValue() );
         }
     }
 
@@ -1066,11 +1066,11 @@ double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const
     const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
 
     if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
-        && atof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
+        && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
         if( ppszName != NULL )
             *ppszName = (char *) poPRIMEM->GetChild(0)->GetValue();
-        return atof(poPRIMEM->GetChild(1)->GetValue());
+        return CPLAtof(poPRIMEM->GetChild(1)->GetValue());
     }
     
     if( ppszName != NULL )
@@ -1182,7 +1182,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
     if( pszAngularUnits == NULL )
     {
         pszAngularUnits = SRS_UA_DEGREE;
-        dfConvertToRadians = atof(SRS_UA_DEGREE_CONV);
+        dfConvertToRadians = CPLAtof(SRS_UA_DEGREE_CONV);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1747,29 +1747,29 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
     {
         nProjId = atoi(papszTokens[0]);
         nUnitsId = atoi(papszTokens[1]);
-        dfRefLong = atof(papszTokens[2]);
-        dfRefLat = atof(papszTokens[3]);
+        dfRefLong = CPLAtof(papszTokens[2]);
+        dfRefLat = CPLAtof(papszTokens[3]);
     }
     else if( CSLCount(papszTokens) == 3 && atoi(papszTokens[0]) == 42005 )
     {
         nProjId = atoi(papszTokens[0]);
         nUnitsId = atoi(papszTokens[1]);
-        dfRefLong = atof(papszTokens[2]);
+        dfRefLong = CPLAtof(papszTokens[2]);
         dfRefLat = 0.0;
     }
     else if( CSLCount(papszTokens) == 3 )
     {
         nProjId = atoi(papszTokens[0]);
         nUnitsId = 9001;
-        dfRefLong = atof(papszTokens[1]);
-        dfRefLat = atof(papszTokens[2]);
+        dfRefLong = CPLAtof(papszTokens[1]);
+        dfRefLat = CPLAtof(papszTokens[2]);
 
     }
     else if( CSLCount(papszTokens) == 2 && atoi(papszTokens[0]) == 42005 ) 
     {
         nProjId = atoi(papszTokens[0]);
         nUnitsId = 9001;
-        dfRefLong = atof(papszTokens[1]);
+        dfRefLong = CPLAtof(papszTokens[1]);
     }
     else
     {
@@ -1880,7 +1880,7 @@ double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr ) const
 
     if( poSpheroid != NULL && poSpheroid->GetChildCount() >= 3 )
     {
-        return atof( poSpheroid->GetChild(1)->GetValue() );
+        return CPLAtof( poSpheroid->GetChild(1)->GetValue() );
     }
     else
     {
@@ -1926,7 +1926,7 @@ double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr ) const
 
     if( poSpheroid != NULL && poSpheroid->GetChildCount() >= 3 )
     {
-        return atof( poSpheroid->GetChild(2)->GetValue() );
+        return CPLAtof( poSpheroid->GetChild(2)->GetValue() );
     }
     else
     {
@@ -2265,7 +2265,7 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
                 && EQUAL(poPROJCS->GetChild(iChild)->GetChild(0)->GetValue(),
                          pszName) )
             {
-                return atof(poParameter->GetChild(1)->GetValue());
+                return CPLAtof(poParameter->GetChild(1)->GetValue());
             }
         }
     }
@@ -4390,7 +4390,7 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = "0.0";
 
-    if( atof(pszOtherValue) != atof(pszThisValue) )
+    if( CPLAtof(pszOtherValue) != CPLAtof(pszThisValue) )
         return FALSE;
     
 /* -------------------------------------------------------------------- */
@@ -4404,7 +4404,7 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = SRS_UA_DEGREE_CONV;
 
-    if( ABS(atof(pszOtherValue) - atof(pszThisValue)) > 0.00000001 )
+    if( ABS(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -4414,13 +4414,13 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     pszThisValue = this->GetAttrValue( "SPHEROID", 1 );
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 1 );
     if( pszThisValue != NULL && pszOtherValue != NULL 
-        && ABS(atof(pszThisValue) - atof(pszOtherValue)) > 0.01 )
+        && ABS(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.01 )
         return FALSE;
 
     pszThisValue = this->GetAttrValue( "SPHEROID", 2 );
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 2 );
     if( pszThisValue != NULL && pszOtherValue != NULL 
-        && ABS(atof(pszThisValue) - atof(pszOtherValue)) > 0.0001 )
+        && ABS(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.0001 )
         return FALSE;
     
     return TRUE;
@@ -4649,7 +4649,7 @@ OGRErr OGRSpatialReference::GetTOWGS84( double * padfCoeff,
 
     for( int i = 0; i < nCoeffCount && i < poNode->GetChildCount(); i++ )
     {
-        padfCoeff[i] = atof(poNode->GetChild(i)->GetValue());
+        padfCoeff[i] = CPLAtof(poNode->GetChild(i)->GetValue());
     }
 
     return OGRERR_NONE;
@@ -4742,7 +4742,7 @@ void OGRSpatialReference::GetNormInfo(void) const
 
     poThis->dfFromGreenwich = GetPrimeMeridian(NULL);
     poThis->dfToMeter = GetLinearUnits(NULL);
-    poThis->dfToDegrees = GetAngularUnits(NULL) / atof(SRS_UA_DEGREE_CONV);
+    poThis->dfToDegrees = GetAngularUnits(NULL) / CPLAtof(SRS_UA_DEGREE_CONV);
     if( fabs(poThis->dfToDegrees-1.0) < 0.000000001 )
         poThis->dfToDegrees = 1.0;
 }
@@ -4832,7 +4832,7 @@ OGRErr OGRSpatialReference::Fixup()
 /* -------------------------------------------------------------------- */
     poCS = GetAttrNode( "GEOGCS" );
     if( poCS != NULL && poCS->FindChild( "UNIT" ) == -1 )
-        SetAngularUnits( SRS_UA_DEGREE, atof(SRS_UA_DEGREE_CONV) );
+        SetAngularUnits( SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV) );
 
     return FixupOrdering();
 }
