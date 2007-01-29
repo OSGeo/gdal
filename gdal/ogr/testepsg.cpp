@@ -28,7 +28,10 @@
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
+#include "ogr_core.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
+#include "ogr_p.h"
 
 void Usage()
 
@@ -47,6 +50,11 @@ int main( int nArgc, char ** papszArgv )
     OGRSpatialReference oSRS;
     int i;
     int bReportXML = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Processing command line arguments.                              */
+/* -------------------------------------------------------------------- */
+    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
 
     if( nArgc < 2 )
         Usage();
@@ -175,6 +183,7 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
+    CSLDestroy( papszArgv );
     OSRCleanup();
     CPLFinderClean();
 }
