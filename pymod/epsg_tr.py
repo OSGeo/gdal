@@ -121,11 +121,15 @@ if __name__ == '__main__':
     output_format = '-pretty_wkt'
     report_error = 1
     
+    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    if argv is None:
+        sys.exit( 0 )
+        
     # Parse command line arguments.
     
     i = 1
-    while i < len(sys.argv):
-        arg = sys.argv[i]
+    while i < len(argv):
+        arg = argv[i]
 
         if arg == '-wkt' or arg == '-pretty_wkt' or arg == '-proj4' \
            or arg == '-postgis' or arg == '-xml':
@@ -134,9 +138,9 @@ if __name__ == '__main__':
         elif arg[:5] == '-skip':
             report_error = 0
             
-        elif arg == '-list' and i < len(sys.argv)-1:
+        elif arg == '-list' and i < len(argv)-1:
             i = i + 1
-            list_file = sys.argv[i]
+            list_file = argv[i]
             
         elif arg[0] == '-':
             Usage()
