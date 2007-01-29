@@ -991,6 +991,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     if( EPSGGetWGS84Transform( nGeogCS, adfBursaTransform ) )
     {
         OGR_SRSNode     *poWGS84;
+        char            szValue[100];
 
         poWGS84 = new OGR_SRSNode( "TOWGS84" );
 
