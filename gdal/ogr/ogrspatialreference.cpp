@@ -58,6 +58,13 @@ static void OGRPrintDouble( char * pszStrBuf, double dfValue )
     {
         sprintf( pszStrBuf, "%.15g", dfValue );
     }
+
+    // force to user periods regardless of locale.
+    if( strchr( pszStrBuf, ',' ) != NULL )
+    {
+        char *pszDelim = strchr( pszStrBuf, ',' );
+        *pszDelim = '.';
+    }
 }
 
 /************************************************************************/
@@ -694,7 +701,6 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
     if( ABS(dfValue - (int) dfValue) == 0.0 )
         sprintf( szValue, "%d", (int) dfValue );
     else
-        // notdef: sprintf( szValue, "%.16g", dfValue );
         OGRPrintDouble( szValue, dfValue );
 
     return SetNode( pszNodePath, szValue );
@@ -932,7 +938,6 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
     if( dfInMeters == (int) dfInMeters )
         sprintf( szValue, "%d", (int) dfInMeters );
     else
-        //notdef: sprintf( szValue, "%.16g", dfInMeters );
         OGRPrintDouble( szValue, dfInMeters );
 
     if( poCS->FindChild( "UNIT" ) >= 0 )
