@@ -579,6 +579,14 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 #endif /* OGR_ENABLED */
 
 /* -------------------------------------------------------------------- */
+/*      --locale                                                        */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--locale") && iArg < nArgc-1 )
+        {
+            setlocale( LC_ALL, papszArgv[++iArg] );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      --help-general                                                  */
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--help-general") )
