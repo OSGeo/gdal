@@ -4,7 +4,8 @@
 /*                           SDERasterBand()                            */
 /************************************************************************/
 
-SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, const SE_RASBANDINFO* band )
+SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, 
+                              const SE_RASBANDINFO* band )
 
 {
     this->poDS = poDS;
@@ -15,6 +16,156 @@ SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, const SE_RASBANDINFO*
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+    
+    nOverviews = 0;
+    
+
+    
+}
+
+int SDERasterBand::GetOverviewCount(void)
+{
+    long nSDEErr;
+    BOOL bSkipLevel;
+    
+    if (nOverviews)
+        return nOverviews;
+    nSDEErr = SE_rasbandinfo_get_max_level(*poBand, (long*)&nOverviews, &bSkipLevel);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_size" );
+
+    }
+    
+    CPLDebug("SDERASTER", "We have %d overviews", nOverviews);
+    return 0;
+    return nOverviews;
+    
+}
+
+CPLErr SDERasterBand::InitializeBand( void )
+
+{    
+
+    SDEDataset *poGDS = (SDEDataset *) poDS;
+    SE_RASTILEINFO hTile;
+    SE_RASCONSTRAINT hConstraint;
+    
+    long nSDEErr;
+    nSDEErr = SE_rastileinfo_create(&hTile);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rastileinfo_create" );
+        return CE_Fatal;
+    }
+    
+    nSDEErr = SE_rasconstraint_create(&hConstraint);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
+        return CE_Fatal;
+    }
+    
+    nSDEErr = SE_rasconstraint_set_level(hConstraint, 0);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
+        return CE_Fatal;
+    }
+
+    long pnBandNumber;
+    nSDEErr = SE_rasbandinfo_get_band_number (*poBand, &pnBandNumber);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_number" );
+        return CE_Fatal;
+    }
+    
+    nSDEErr = SE_rasconstraint_set_bands(hConstraint, 1, &pnBandNumber);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasconstraint_set_bands" );
+        return CE_Fatal;
+    }
+    
+    SE_QUERYINFO query;
+
+    nSDEErr = SE_queryinfo_create(&query);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_create" );
+        return CE_Fatal;
+    }
+        
+    nSDEErr = SE_queryinfo_set_tables(query, 1, (const char**) &(poGDS->pszLayerName), NULL);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_queryinfo_set_where_clause(query, (const char*) "");
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_queryinfo_set_columns(query, 1, (const char**) &(poGDS->pszColumnName));
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
+        return CE_Fatal;
+    }
+
+    SE_STREAM stream;
+    nSDEErr = SE_stream_create(*(poGDS->hConnection), &stream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_create" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_stream_query_with_info(stream, query);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_stream_execute (stream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_execute" );
+        return CE_Fatal;
+    }
+    nSDEErr = SE_stream_fetch (stream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_fetch" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_stream_get_raster (stream, 1, *(poGDS->hAttributes));
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_fetch" );
+        return CE_Fatal;
+    }
+
+    
+    nSDEErr = SE_stream_query_raster_tile(stream, hConstraint);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_query_raster_tile" );
+        return CE_Fatal;
+    }
+    
+
+    SE_rasconstraint_free (hConstraint);
+    SE_rastileinfo_free (hTile);
+ 
+    return CE_None;
 }
 
 /************************************************************************/
@@ -26,12 +177,8 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     SDEDataset *poGDS = (SDEDataset *) poDS;
-    char  *pszRecord;
-    int   nRecordSize = nBlockXSize*5 + 9 + 2;
-    int   i;
 
-
-
+    return InitializeBand();
     return CE_None;
 }
 

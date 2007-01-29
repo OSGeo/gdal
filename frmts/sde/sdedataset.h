@@ -10,10 +10,7 @@ class SDEDataset : public GDALDataset
 
     private:
         
-        // SDE-specific stuff
-        SE_CONNECTION*      hConnection;
-        char                *pszLayerName;
-        char                *pszColumnName;
+
         long                nSubDataCount;
 
         
@@ -28,11 +25,20 @@ class SDEDataset : public GDALDataset
         SE_RASBANDINFO* paohSDERasterBands;
         
     public:
-        SDEDataset(SE_CONNECTION* connection);
+        SDEDataset();
         ~SDEDataset();
         
         static GDALDataset *Open( GDALOpenInfo * );
+
+
     protected:        
+
+        // SDE-specific stuff
+        SE_CONNECTION*      hConnection;
+        SE_RASTERATTR*      hAttributes;
+    
+        char                *pszLayerName;
+        char                *pszColumnName;
 
         virtual CPLErr  GetGeoTransform( double * padfTransform );
         virtual int     GetRasterCount(void);
