@@ -17,8 +17,9 @@ class SDERasterBand : public GDALRasterBand
         const SE_RASBANDINFO* poBand;
         
         GDALDataType            MorphESRIRasterType(int gtype);
-        GDALColorTable*         ComputeColorTable();  
-          
+        GDALColorTable*         ComputeColorTable(void);  
+        CPLErr                  InitializeBand(void);
+        int                     nOverviews;
     public:
 
         SDERasterBand( SDEDataset * poDS, int nBand , const SE_RASBANDINFO* band);
@@ -35,6 +36,7 @@ class SDERasterBand : public GDALRasterBand
 
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
+    virtual int GetOverviewCount(void);
 //    virtual double GetNoDataValue( int *pbSuccess );
 //
 };
