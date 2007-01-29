@@ -566,6 +566,43 @@ double CPLAtof(const char *nptr)
 }
 
 /************************************************************************/
+/*                              CPLAtofM()                              */
+/************************************************************************/
+
+/**
+ * Converts ASCII string to floating point number using any numeric locale.
+ *
+ * This function converts the initial portion of the string pointed to
+ * by nptr to double floating point representation. This function does the
+ * same as standard atof(), but it allows a variety of locale representations.
+ * That is it supports numeric values with either a comma or a period for 
+ * the decimal delimiter. 
+ * 
+ * PS. The M stands for Multi-lingual.
+ *
+ * @param nptr The string to convert.
+ *
+ * @return Converted value, if any.  Zero on failure.
+ */
+
+double CPLAtofM( const char *nptr )
+
+{
+    int i;
+    const static int nMaxSearch = 50;
+
+    for( i = 0; i < nMaxSearch; i++ )
+    {
+        if( nptr[i] == ',' )
+            return CPLStrtodDelim( nptr, 0, ',' );
+        else if( nptr[i] == '.' || nptr[i] == '\0' )
+            return CPLStrtodDelim( nptr, 0, '.' );
+    }
+
+    return CPLStrtodDelim( nptr, 0, '.' );
+}
+
+/************************************************************************/
 /*                          CPLStrtodDelim()                            */
 /************************************************************************/
 
