@@ -30,15 +30,6 @@
 #include "sdedataset.h"
 
 
-
-
-
-
-
-
-
-
-
 /************************************************************************/
 /*                          GetRastercount()                            */
 /************************************************************************/
@@ -140,73 +131,10 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         IssueSDEError( nSDEErr, "SE_rasterattr_create" );
         return CE_Fatal;
     }
+    
+    // Grab the pointer for our member variable
+    hAttributes = &attributes;
 
-
-    SE_QUERYINFO query;
-    char ** paszTables = (char**) CPLMalloc((SE_MAX_TABLE_LEN+1)*sizeof(char*));
-
-    nSDEErr = SE_queryinfo_create(&query);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_create" );
-        return CE_Fatal;
-    }
-        
-    nSDEErr = SE_queryinfo_set_tables(query, 1, (const char**) &pszLayerName, NULL);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_queryinfo_set_where_clause(query, (const char*) "");
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_queryinfo_set_columns(query, 1, (const char**) &pszColumnName);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
-        return CE_Fatal;
-    }
-
-    SE_STREAM stream;
-    nSDEErr = SE_stream_create(*hConnection, &stream);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_create" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_stream_query_with_info(stream, query);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_stream_execute (stream);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_execute" );
-        return CE_Fatal;
-    }
-    nSDEErr = SE_stream_fetch (stream);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_fetch" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_stream_get_raster (stream, 1, attributes);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_fetch" );
-        return CE_Fatal;
-    }
 
     
     for (int i=0; i < nBands; i++) {
@@ -217,11 +145,10 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     
     eDataType = b->GetRasterDataType();
     
-    SE_queryinfo_free(query);
-    SE_stream_free(stream);
+
     
     SE_rasterinfo_free(raster);
-   // SE_rasterband_free_info_list(nBands, bands);
+
 
     return CE_None;
 }
@@ -297,6 +224,8 @@ const char *SDEDataset::GetProjectionRef()
     char* pszWKT;
     poSRS->exportToWkt(&pszWKT);
     poSRS->Release();
+    
+    // FIXME: leakage
     return CPLStrdup(pszWKT);
 }
 
@@ -304,12 +233,13 @@ const char *SDEDataset::GetProjectionRef()
 /*                                SDEDataset()                          */
 /************************************************************************/
 
-SDEDataset::SDEDataset( SE_CONNECTION* connection )
+SDEDataset::SDEDataset(  )
 
 {
-    hConnection         = connection;
+    hConnection         = NULL;
     nSubDataCount       = 0;
     pszLayerName        = NULL;
+    hAttributes         = NULL;
     pszColumnName       = NULL;
     paohSDERasterColumns  = NULL;
     paohSDERasterBands  = NULL;
@@ -423,7 +353,8 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
     SDEDataset *poDS;
 
-    poDS = new SDEDataset(&connection);
+    poDS = new SDEDataset();
+    poDS->hConnection = &connection;
 
 /* -------------------------------------------------------------------- */
 /*      If we were given a layer name, use that directly, otherwise     */
