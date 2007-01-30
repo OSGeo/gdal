@@ -34,9 +34,9 @@ class SDEDataset : public GDALDataset
     protected:        
 
         // SDE-specific stuff
-        SE_CONNECTION*      hConnection;
-        SE_RASTERATTR*      hAttributes;
-    
+        SE_CONNECTION      hConnection;
+        SE_RASTERATTR      hAttributes;
+        
         char                *pszLayerName;
         char                *pszColumnName;
 

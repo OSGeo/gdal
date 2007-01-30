@@ -96,7 +96,13 @@ CPLErr SDERasterBand::InitializeBand( void )
         IssueSDEError( nSDEErr, "SE_queryinfo_create" );
         return CE_Fatal;
     }
-        
+    
+    // FIXME free this crap up
+    char ** tables;
+    tables = (char **)malloc(sizeof(char*));
+    tables[0] = (char*)malloc((strlen(poGDS->pszLayerName) +1) * sizeof(char));
+    tables[0]= CPLStrdup(poGDS->pszLayerName);
+    
     nSDEErr = SE_queryinfo_set_tables(query, 1, (const char**) &(poGDS->pszLayerName), NULL);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -119,7 +125,7 @@ CPLErr SDERasterBand::InitializeBand( void )
     }
 
     SE_STREAM stream;
-    nSDEErr = SE_stream_create(*(poGDS->hConnection), &stream);
+    nSDEErr = SE_stream_create(poGDS->hConnection, &stream);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_create" );
@@ -146,7 +152,7 @@ CPLErr SDERasterBand::InitializeBand( void )
         return CE_Fatal;
     }
 
-    nSDEErr = SE_stream_get_raster (stream, 1, *(poGDS->hAttributes));
+    nSDEErr = SE_stream_get_raster (stream, 1, poGDS->hAttributes);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_fetch" );
@@ -162,8 +168,8 @@ CPLErr SDERasterBand::InitializeBand( void )
     }
     
 
-    SE_rasconstraint_free (hConstraint);
-    SE_rastileinfo_free (hTile);
+  //  SE_rasconstraint_free (hConstraint);
+   // SE_rastileinfo_free (hTile);
  
     return CE_None;
 }
@@ -179,7 +185,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
     return InitializeBand();
-    return CE_None;
+    return CE_Fatal ;
 }
 
 /************************************************************************/
