@@ -86,13 +86,13 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         return CE_Fatal;
     }        
 
-    nSDEErr = SE_raster_get_info_by_id(*hConnection, nRasterColumnId, 1, raster);
+    nSDEErr = SE_raster_get_info_by_id(hConnection, nRasterColumnId, 1, raster);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
         return CE_Fatal;
     }
-    nSDEErr = SE_raster_get_bands(*hConnection, raster, &paohSDERasterBands, (long*)&nBands);
+    nSDEErr = SE_raster_get_bands(hConnection, raster, &paohSDERasterBands, (long*)&nBands);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_raster_get_bands" );
@@ -125,7 +125,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     dfMaxY = extent.maxy;
     
     
-    nSDEErr = SE_rasterattr_create(&attributes, false);
+    nSDEErr = SE_rasterattr_create(&hAttributes, false);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasterattr_create" );
@@ -133,7 +133,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     }
     
     // Grab the pointer for our member variable
-    hAttributes = &attributes;
+
 
 
     
@@ -314,19 +314,23 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+
+    SDEDataset *poDS;
+
+    poDS = new SDEDataset();
+/* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
     int         nSDEErr;
-    SE_ERROR    sSDEErrorInfo;
-
-    SE_CONNECTION connection = NULL;
-        
+SE_ERROR            hSDEErrorInfo;
     nSDEErr = SE_connection_create( papszTokens[0], 
                                     papszTokens[1], 
                                     papszTokens[2], 
                                     papszTokens[3],
                                     papszTokens[4],
-                                    &sSDEErrorInfo, &connection );
+                                    &(hSDEErrorInfo), &(poDS->hConnection) );
 
     if( nSDEErr != SE_SUCCESS )
     {
@@ -339,22 +343,13 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set unprotected concurrency policy, suitable for single         */
 /*      threaded access.                                                */
 /* -------------------------------------------------------------------- */
-    nSDEErr = SE_connection_set_concurrency( connection,
+    nSDEErr = SE_connection_set_concurrency( poDS->hConnection,
                                              SE_UNPROTECTED_POLICY);
 
     if( nSDEErr != SE_SUCCESS) {
         IssueSDEError( nSDEErr, NULL );
         return FALSE;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
-
-    SDEDataset *poDS;
-
-    poDS = new SDEDataset();
-    poDS->hConnection = &connection;
 
 /* -------------------------------------------------------------------- */
 /*      If we were given a layer name, use that directly, otherwise     */
@@ -369,11 +364,18 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 //        // FIXME this needs to be a configuration option or allow it to
 //        // come in via the arguments
         poDS->pszColumnName = CPLStrdup( "RASTER" );
+        
+        nSDEErr =   SE_rascolinfo_create  (&(poDS->hRasterColumn));
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rastercolumn_create" );
+            return FALSE;
+        }
         CPLDebug( "SDERASTER", "'%s' raster layer specified... "\
                                "using it directly with '%s' as the raster column name.", 
                   poDS->pszLayerName,
                   poDS->pszColumnName);
-        nSDEErr = SE_rastercolumn_get_info_by_name(*(poDS->hConnection), 
+        nSDEErr = SE_rastercolumn_get_info_by_name(poDS->hConnection, 
                                                     poDS->pszLayerName, 
                                                     poDS->pszColumnName, 
                                                     poDS->hRasterColumn);
