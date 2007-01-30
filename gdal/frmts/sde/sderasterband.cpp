@@ -19,7 +19,7 @@ SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand,
     
     nOverviews = 0;
     
-
+     InitializeBand();
     
 }
 
@@ -48,16 +48,11 @@ CPLErr SDERasterBand::InitializeBand( void )
 {    
 
     SDEDataset *poGDS = (SDEDataset *) poDS;
-    SE_RASTILEINFO hTile;
+
     SE_RASCONSTRAINT hConstraint;
     
     long nSDEErr;
-    nSDEErr = SE_rastileinfo_create(&hTile);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_rastileinfo_create" );
-        return CE_Fatal;
-    }
+
     
     nSDEErr = SE_rasconstraint_create(&hConstraint);
     if( nSDEErr != SE_SUCCESS )
@@ -97,12 +92,6 @@ CPLErr SDERasterBand::InitializeBand( void )
         return CE_Fatal;
     }
     
-    // FIXME free this crap up
-    char ** tables;
-    tables = (char **)malloc(sizeof(char*));
-    tables[0] = (char*)malloc((strlen(poGDS->pszLayerName) +1) * sizeof(char));
-    tables[0]= CPLStrdup(poGDS->pszLayerName);
-    
     nSDEErr = SE_queryinfo_set_tables(query, 1, (const char**) &(poGDS->pszLayerName), NULL);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -123,56 +112,78 @@ CPLErr SDERasterBand::InitializeBand( void )
         IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
         return CE_Fatal;
     }
-
-    SE_STREAM stream;
-    nSDEErr = SE_stream_create(poGDS->hConnection, &stream);
+    
+    nSDEErr = SE_stream_create(poGDS->hConnection, &hStream);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_create" );
         return CE_Fatal;
     }
 
-    nSDEErr = SE_stream_query_with_info(stream, query);
+    nSDEErr = SE_stream_query_with_info(hStream, query);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
         return CE_Fatal;
     }
 
-    nSDEErr = SE_stream_execute (stream);
+    nSDEErr = SE_stream_execute (hStream);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_execute" );
         return CE_Fatal;
     }
-    nSDEErr = SE_stream_fetch (stream);
+    nSDEErr = SE_stream_fetch (hStream);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_fetch" );
         return CE_Fatal;
     }
 
-    nSDEErr = SE_stream_get_raster (stream, 1, poGDS->hAttributes);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_fetch" );
-        return CE_Fatal;
-    }
 
     
-    nSDEErr = SE_stream_query_raster_tile(stream, hConstraint);
+    nSDEErr = SE_stream_query_raster_tile(hStream, hConstraint);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_query_raster_tile" );
         return CE_Fatal;
     }
-    
 
+
+    
+    nSDEErr = SE_stream_get_raster (hStream, 1, poGDS->hAttributes);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_fetch" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_rasterattr_get_tile_size (poGDS->hAttributes, (long*)&nBlockXSize, (long*)&nBlockYSize);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasterattr_get_tile_size" );
+        return CE_Fatal;
+    }
+}
+
+//T:\>gdal_translate -of GTiff SDE:nakina.gis.iastate.edu,5151,,geoservwrite,EsrI4ever,sde_master.geoservwrite.century foo.tif  
+//T:\>gdalinfo SDE:nakina.gis.iastate.edu,5151,,geoservwrite,EsrI4ever,sde_master.geoservwrite.century  
+//    long nTileHeight;
+//    long nTileWidth;
+//    
+//    nSDEErr = SE_rasterattr_get_tile_size (poGDS->hAttributes, &nTileWidth, &nTileHeight);
+//    if( nSDEErr != SE_SUCCESS )
+//    {
+//        IssueSDEError( nSDEErr, "SE_rasterattr_get_tile_size" );
+//        return CE_Fatal;
+//    }
+
+  //  CPLDebug("SDERASTER", "Tile width: %d Tile height: %d", nTileWidth, nTileHeight);
   //  SE_rasconstraint_free (hConstraint);
    // SE_rastileinfo_free (hTile);
  
-    return CE_None;
-}
+//    return CE_Fatal;
+//}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -184,8 +195,53 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
-    return InitializeBand();
-    return CE_Fatal ;
+    SE_RASTILEINFO hTile;
+    long nSDEErr;
+    nSDEErr = SE_rastileinfo_create(&hTile);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rastileinfo_create" );
+        return CE_Fatal;
+    }
+
+    while (nSDEErr == SE_SUCCESS) {
+
+        nSDEErr = SE_stream_get_raster_tile(hStream, hTile);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            if (nSDEErr == SE_FINISHED) {break;}
+            IssueSDEError( nSDEErr, "SE_stream_get_raster_tile" );
+            return CE_Fatal;
+        }        
+        long level;
+        nSDEErr = SE_rastileinfo_get_level(hTile, &level);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
+            return CE_Fatal;
+        }   
+        
+        CPLDebug("SDERASTER", "Tile level: %d ...", level);     
+
+        long row, column;
+        nSDEErr = SE_rastileinfo_get_rowcol(hTile, &row, &column);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
+            return CE_Fatal;
+        }         
+        CPLDebug("SDERASTER", "row: %d column: %d", row, column);
+        long length;
+        unsigned char* pixels;
+        nSDEErr = SE_rastileinfo_get_pixel_data(hTile, (void**) &pixels, &length);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rastileinfo_get_pixel_data" );
+            return CE_Fatal;
+        }           
+        CPLDebug("SDERASTER", "pixel data length: %d", length);
+    }
+    return CE_None ;
 }
 
 /************************************************************************/
