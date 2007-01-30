@@ -20,6 +20,7 @@ class SDERasterBand : public GDALRasterBand
         GDALColorTable*         ComputeColorTable(void);  
         CPLErr                  InitializeBand(void);
         int                     nOverviews;
+        SE_STREAM               hStream;
     public:
 
         SDERasterBand( SDEDataset * poDS, int nBand , const SE_RASBANDINFO* band);
