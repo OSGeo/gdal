@@ -46,7 +46,6 @@
 #include <ogrsf_frmts.h>
 #include <cpl_conv.h>
 // STD
-#include <tchar.h>
 #include <iostream>
 #include <string>
 
@@ -69,7 +68,7 @@ namespace tut
 
 } // namespace tut
 
-int _tmain(int argc, const TCHAR* argv[])
+int main(int argc, const char* argv[])
 {
     // Register GDAL/OGR drivers
     ::GDALAllRegister();
@@ -84,7 +83,7 @@ int _tmain(int argc, const TCHAR* argv[])
     // Retrieve GDAL version
     std::string gdalVersion(::GDALVersionInfo("RELEASE_NAME"));
 
-    std::cout << "GDAL Test Suite for Windwos CE\n"
+    std::cout << "C++ Test Suite for GDAL C/C++ API\n"
         << "----------------------------------------\n"
         << "GDAL library version: " << gdalVersion
         << "\nGDAL test data: " << tut::common::data_basedir
