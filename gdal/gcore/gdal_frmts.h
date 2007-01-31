@@ -109,6 +109,8 @@ void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
 void CPL_DLL GDALRegister_HTTP(void);
 void CPL_DLL GDALRegister_SDE(void);
+void CPL_DLL GDALRegister_GSAG(void);
+void CPL_DLL GDALRegister_GSBG(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
