@@ -48,10 +48,11 @@
 import sys
 sys.path.append( 'pymod' )
 import gdaltest
+import gdal
 
 test_list = []
-for i in range(1,len(sys.argv)):
-    test_list.append( sys.argv[i] )
+for i in range(1,len(gdaltest.argv)):
+    test_list.append( gdaltest.argv[i] )
 
 if len(test_list) == 0:
     test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' ]

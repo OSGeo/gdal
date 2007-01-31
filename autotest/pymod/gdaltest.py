@@ -138,11 +138,20 @@ skip_counter = 0
 
 reason = None
 
+# Process commandline arguments for stuff like --debug, --locale, --config
+
+argv = gdal.GeneralCmdLineProcessor( sys.argv )
+
+
+###############################################################################
+
 def setup_run( name ):
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
     
     cur_name = name
+
+###############################################################################
 
 def run_tests( test_list ):
     global success_counter, failure_counter, blow_counter, skip_counter
@@ -189,10 +198,14 @@ def run_tests( test_list ):
         else:
             blow_counter = blow_counter + 1
 
+###############################################################################
+
 def post_reason( msg ):
     global reason
 
     reason = msg
+
+###############################################################################
 
 def summarize():
     global success_counter, failure_counter, blow_counter, skip_counter
@@ -207,6 +220,8 @@ def summarize():
     print
 
     return failure_counter + blow_counter
+
+###############################################################################
 
 def clean_tmp():
     all_files = os.listdir('tmp')
