@@ -404,7 +404,10 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
 	{
 	  /* found a nonzero digit */
 	  if (olead < 0)
+          {
 	    olead = nzero;
+            nzero = 0;
+          }
 	  else
 	    {
 	      /* deliver zeros */
