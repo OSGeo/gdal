@@ -628,6 +628,14 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
   double ld;
   char *nan_arg = 0;
 
+  // Temporary hack till _Stold() is fixed per bug 1464 is fixed.
+  if( point == '.' )
+  {
+      CPLLocaleC oLocaleEnforcer;
+      
+      return strtod( nptr, endptr );
+  }
+
   switch (_Stold(nptr, endptr, &ld, &nan_arg, point))
     {
     case FP_NORMAL:
