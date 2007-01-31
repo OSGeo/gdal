@@ -63,6 +63,8 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * <li> PCI .aux Labelled Raw Raster (PAux)
  * <li> HDF4 Hierachal Data Format Release 4
  * <li> HDF5 Hierachal Data Format Release 5
+ * <li> GSAG Golden Software ASCII Grid
+ * <li> GSBG Golden Software Binary Grid
  * </ul>
  *
  */
@@ -307,6 +309,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HDF5();
     GDALRegister_HDF5Image();
 #endif
+
+#ifdef FRMT_gsg
+    GDALRegister_GSAG();
+    GDALRegister_GSBG();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */

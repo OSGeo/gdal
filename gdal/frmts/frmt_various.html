@@ -247,6 +247,26 @@ reading/writing of data values from/to the file.
 
 <p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
 
+<h2><a name="GSAG">GSAG -- Golden Software ASCII Grid File Format</a></h2>
+
+This is the ASCII-based (human-readable) version of one of the raster formats
+used by Golden Software products (such as the Surfer series).  This format is
+supported for both reading and writing (including create, delete, and copy).
+Currently the associated formats for color, metadata, and shapes are not
+supported.<p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/gsg/gsagdataset.cpp</tt>.<p>
+
+<h2><a name="GSBG">GSBG -- Golden Software Binary Grid File Format</a></h2>
+
+This is the binary (non-human-readable) version of one of the raster formats
+used by Golden Software products (such as the Surfer series).  Like the ASCII
+version, this format is supported for both reading and writing (including
+create, delete, and copy).  Currently the associated formats for color,
+metadata, and shapes are not supported.<p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/gsg/gsbgdataset.cpp</tt>.<p>
+
 <h2><a name="GXF">GXF -- Grid eXchange File</a></h2>
 
 This is a raster exchange format propagated by Geosoft, and made a standard
