@@ -575,7 +575,7 @@ class CPL_DLL OGRStyleVector : public OGRStyleTool
     void SetCentering(GBool bCentering){SetParamNum(OGRSTVectorCentering,bCentering);}
     const char *Placement(GBool &bDefault){return GetParamStr(OGRSTVectorPlacement,bDefault);}
     void SetPlacement(const char *pszPlacement){SetParamStr(OGRSTVectorPlacement,pszPlacement);}
-    double Length(GBool &bDefault){return GetParamNum(OGRSTVectorLength,bDefault);}
+    double Length(GBool &bDefault){return GetParamDbl(OGRSTVectorLength,bDefault);}
     void SetLength(double dfLength){SetParamDbl(OGRSTVectorLength,dfLength);}
     GBool Even(GBool &bDefault){return GetParamNum(OGRSTVectorEven,bDefault);}
     void SetEven(GBool bEven){SetParamNum(OGRSTVectorEven,bEven);}
