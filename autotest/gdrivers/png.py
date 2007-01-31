@@ -91,7 +91,7 @@ def png_3():
     # the world file is in a mixture of numeric representations for the
     # numbers.  (mixture of "," and "." in file)
 
-    gt_expected = (700000.341, 0.308, 0.01, 4287500.659, -0.01, -0.308)
+    gt_expected = (700000.305, 0.38, 0.01, 4287500.695, -0.01, -0.38)
 
     gt = ds.GetGeoTransform()
     for i in range(6):
