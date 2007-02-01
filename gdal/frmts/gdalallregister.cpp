@@ -256,6 +256,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_FIT();
 #endif
 
+#ifdef FRMT_grib
+    GDALRegister_GRIB();
+#endif
+
 #ifdef FRMT_mrsid
     GDALRegister_MrSID();
 #endif
@@ -270,7 +274,7 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_sde
-		GDALRegister_SDE();
+    GDALRegister_SDE();
 #endif
 
 
