@@ -201,10 +201,12 @@ struct gribfield {
 
 typedef struct gribfield gribfield;
 
-__forceinline double rint( double d )
+#ifdef notdef
+inline double rint( double d )
 {
         return floor( d + 0.5 );
 };
+#endif
 
 /*  Prototypes for unpacking API  */
 void seekgb(FILE *,g2int ,g2int ,g2int *,g2int *);
