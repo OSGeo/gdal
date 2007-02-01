@@ -1,0 +1,14 @@
+
+OBJ	=	gribdataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+        cd degrib18 && nmake /NOLOGO /f makefile.vc && cd ..
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

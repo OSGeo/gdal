@@ -1,0 +1,6 @@
+default:
+        cd degrib && nmake /NOLOGO /f makefile.vc && cd ..
+        cd g2clib-1.0.4 && nmake /NOLOGO /f makefile.vc && cd ..
+
+
+
