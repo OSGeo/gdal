@@ -4,9 +4,6 @@ EXTRAFLAGS = -Idegrib18/degrib
 
 include ../../GDALmake.opt
 
-CFLAGS		:= -fPIC $(C_ODFLAGS) $(USER_DEFS)
-CXXFLAGS	:= -fPIC $(CXX_ODFLAGS) $(USER_DEFS)
-
 OBJ	=	gribdataset.o \
                 clock.o \
                 degrib1.o \
