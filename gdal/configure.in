@@ -1232,6 +1232,16 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check for grib in the local tree.
+dnl ---------------------------------------------------------------------------
+
+HAVE_GRIB=no
+if test -d frmts/grib ; then
+  OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
+  HAVE_GRIB=yes
+fi
+
+dnl ---------------------------------------------------------------------------
 
 AC_SUBST(OPT_GDAL_FORMATS,$OPT_GDAL_FORMATS)
 
@@ -2042,6 +2052,7 @@ else
 fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
+LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  CURL support (wcs):        ${CURL_SETTING}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
