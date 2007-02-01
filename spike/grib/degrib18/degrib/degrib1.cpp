@@ -1479,12 +1479,12 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 
    /* Convert Units. */
    if (unitM == -10) {
-      meta->gridAttrib.min = pow (10, (refVal * pow (2, ESF) /
-                                       pow (10, DSF)));
+      meta->gridAttrib.min = pow (10.0, (refVal * pow (2.0, ESF) /
+                                       pow (10.0, DSF)));
    } else {
 /*      meta->gridAttrib.min = unitM * (refVal / pow (10, DSF)) + unitB; */
-      meta->gridAttrib.min = unitM * (refVal * pow (2, ESF) /
-                                      pow (10, DSF)) + unitB;
+      meta->gridAttrib.min = unitM * (refVal * pow (2.0, ESF) /
+                                      pow (10.0, DSF)) + unitB;
    }
    meta->gridAttrib.max = meta->gridAttrib.min;
    meta->gridAttrib.f_maxmin = 1;
@@ -1528,7 +1528,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                d_temp = (refVal + (uli_temp * pow (2, ESF))) / pow (10, DSF);
                /* Convert Units. */
                if (unitM == -10) {
-                  d_temp = pow (10, d_temp);
+                  d_temp = pow (10.0, d_temp);
                } else {
                   d_temp = unitM * d_temp + unitB;
                }
@@ -1612,7 +1612,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 
             /* Convert Units. */
             if (unitM == -10) {
-               d_temp = pow (10, d_temp);
+               d_temp = pow (10.0, d_temp);
             } else {
                d_temp = unitM * d_temp + unitB;
             }

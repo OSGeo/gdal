@@ -2007,7 +2007,7 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
                   }
                } else {
                   if (unitM == -10) {
-                     value = pow (10, (*ftemp++));
+                     value = pow (10.0, (double) (*ftemp++));
                   } else {
                      value = unitM * (*ftemp++) + unitB;
                   }
@@ -2135,7 +2135,7 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
                } else {
                   /* Convert the units. */
                   if (unitM == -10) {
-                     value = pow (10, value);
+                     value = pow (10.0, value);
                   } else {
                      value = unitM * value + unitB;
                   }
@@ -2263,7 +2263,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
                } else {
                   /* Convert the units. */
                   if (unitM == -10) {
-                     value = pow (10, value);
+                     value = pow (10.0, value);
                   } else {
                      value = unitM * value + unitB;
                   }
@@ -2427,7 +2427,7 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
               (value != attrib->missSec))) {
             /* Convert the units. */
             if (unitM == -10) {
-               value = pow (10, value);
+               value = pow (10.0, value);
             } else {
                value = unitM * value + unitB;
             }
