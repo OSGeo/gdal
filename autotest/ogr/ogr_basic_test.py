@@ -149,6 +149,31 @@ def ogr_basic_4():
     return 'success'
 
 ###############################################################################
+# Test attribute query on special field fid - per bug 1468.
+
+def ogr_basic_5():
+
+    gdaltest.lyr.SetAttributeFilter( 'FID = 3' )
+    gdaltest.lyr.ResetReading()
+    
+    feat1 = gdaltest.lyr.GetNextFeature()
+    feat2 = gdaltest.lyr.GetNextFeature()
+
+    gdaltest.lyr.SetAttributeFilter( None )
+    
+    if feat1 is None or feat2 is not None:
+        gdaltest.post_reason( 'unexpected result count.' )
+        return 'fail'
+
+    if feat1.GetFID() != 3:
+        gdaltest.post_reason( 'got wrong feature.' )
+        return 'fail'
+
+    feat1.Destroy()
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -163,6 +188,7 @@ gdaltest_list = [
     ogr_basic_2,
     ogr_basic_3,
     ogr_basic_4,
+    ogr_basic_5,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
