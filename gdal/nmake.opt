@@ -190,6 +190,9 @@ JPEG_SUPPORTED = 1
 #FITS_INC_DIR =	c:\dev32\usr\include\cfitsio
 #FITS_LIB =	c:\dev32\usr\lib\cfitsio.lib
 
+# Enable if you have the grib directory in \frmts
+#GRIB_SETTING=yes
+
 # Uncomment the following to enable NetCDF format.
 #NETCDF_SETTING=yes
 #NETCDF_LIB=C:\Software\netcdf\lib\netcdf.lib
