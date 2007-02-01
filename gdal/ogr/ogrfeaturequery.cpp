@@ -169,10 +169,14 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
         {
             switch ( SpecialFieldTypes[iSpecialField] )
             {
-            case SWQ_INTEGER:
-                sField.Integer = poFeature->GetFieldAsInteger( op->field_index );
-            case SWQ_STRING:
-                sField.String = (char*) poFeature->GetFieldAsString( op->field_index );
+              case SWQ_INTEGER:
+                sField.Integer = poFeature->GetFieldAsInteger(op->field_index);
+                break;
+                
+              case SWQ_STRING:
+                sField.String = (char*) 
+                    poFeature->GetFieldAsString( op->field_index );
+                break;
             }      
         }
         else
