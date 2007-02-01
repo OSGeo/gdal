@@ -31,11 +31,11 @@
 
 #include "gdal_pam.h"
 
-#include "degrib18\degrib\degrib2.h"
-#include "degrib18\degrib\inventory.h"
-#include "degrib18\degrib\myerror.h"
-#include "degrib18\degrib\filedatasource.h"
-#include "degrib18\degrib\memorydatasource.h"
+#include "degrib18/degrib/degrib2.h"
+#include "degrib18/degrib/inventory.h"
+#include "degrib18/degrib/myerror.h"
+#include "degrib18/degrib/filedatasource.h"
+#include "degrib18/degrib/memorydatasource.h"
 
 #include "ogr_spatialref.h"
 

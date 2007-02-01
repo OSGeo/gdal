@@ -16,7 +16,7 @@
 #include <string.h>
 #include <math.h>
 #include <sys/stat.h>
-#include <direct.h>
+//#include <direct.h>
 //#include <dirent.h>
 #include "myutil.h"
 #include "myassert.h"
