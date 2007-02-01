@@ -14,8 +14,21 @@
 #ifndef MYASSERT_H
 #define MYASSERT_H
 
+#ifndef CPL_C_START
+#ifdef __cplusplus
+#  define CPL_C_START           extern "C" {
+#  define CPL_C_END             }
+#else
+#  define CPL_C_START
+#  define CPL_C_END
+#endif
+#endif
+
 #ifdef DEBUG
+CPL_C_START
    void _myAssert (const char *file, int lineNum);
+CPL_C_END
+
    #define myAssert(f) \
       if (f)          \
          {}           \
