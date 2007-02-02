@@ -99,7 +99,7 @@ by Timothy H. Keitt.
 
 <ul>
 <li> <a href="http://grass.itc.it/index.html">GRASS</a>: A raster/vector
-open source GIS uses GDAL for raster import (via r.in.gdal).
+open source GIS uses GDAL for raster import and export (via r.in.gdal and r.out.gdal).
 <li> <a href="http://openev.sourceforge.net">OpenEV</a>: An OpenGL/GTK/Python
 based graphical viewer which exclusively uses GDAL for raster access.
 <li> <a href="http://www.ossim.org">OSSIM</a>: 
