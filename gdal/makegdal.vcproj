@@ -25,8 +25,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd $(ProjectDir)\apps&#x0D;&#x0A;nmake -f makefile.vc"
-				ReBuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc"
+				BuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc"
+				ReBuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc devinstall"
 				CleanCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc clean"
 				Output="gdal14.dll"
 				PreprocessorDefinitions="WIN32;_DEBUG"
@@ -46,8 +46,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake -f makefile.vc"
-				ReBuildCommandLine="nmake -f makefile.vc install"
+				BuildCommandLine="nmake -f makefile.vc devinstall"
+				ReBuildCommandLine="nmake -f makefile.vc devinstall"
 				CleanCommandLine="nmake -f makefile.vc clean"
 				Output="gdal14.dll"
 				PreprocessorDefinitions="WIN32;NDEBUG"
