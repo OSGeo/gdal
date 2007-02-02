@@ -29,8 +29,8 @@ $datasource = Geo::OGR::Open($dsname, 1) or die;
 $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
 
-$layer = $datasource->CreateLayer($lname, $osr, $ogr::wkbPolygon);
-$column = new Geo::OSR::FieldDefn('key', $ogr::OFTInteger);
+$layer = $datasource->CreateLayer($lname, $osr, $Geo::OGR::wkbPolygon);
+$column = new Geo::OSR::FieldDefn('key', $Geo::OGR::OFTInteger);
 $layer->CreateField($column);
 
 $schema = $layer->GetLayerDefn();
@@ -40,8 +40,8 @@ $schema = $layer->GetLayerDefn();
 for $item (@data) {
 
     $f = new Geo::OGR::Feature($schema);
-    $g = new Geo::OGR::Geometry($ogr::wkbPolygon);
-    $r = new Geo::OGR::Geometry($ogr::wkbLinearRing);
+    $g = new Geo::OGR::Geometry($Geo::OGR::wkbPolygon);
+    $r = new Geo::OGR::Geometry($Geo::OGR::wkbLinearRing);
 
     $r->AddPoint(@{$item->{points}[0]});
     $r->AddPoint(@{$item->{points}[1]});
