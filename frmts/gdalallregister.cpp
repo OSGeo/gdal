@@ -290,6 +290,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IDRISI();
 #endif
 
+#ifdef FRMT_ingr
+    GDALRegister_INGR();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
