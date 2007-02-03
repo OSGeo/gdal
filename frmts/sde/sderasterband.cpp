@@ -164,6 +164,7 @@ CPLErr SDERasterBand::InitializeBand( void )
         IssueSDEError( nSDEErr, "SE_rasterattr_get_tile_size" );
         return CE_Fatal;
     }
+    nBlockSize = nBlockXSize * nBlockYSize;
 }
 
 //T:\>gdal_translate -of GTiff SDE:nakina.gis.iastate.edu,5151,,geoservwrite,EsrI4ever,sde_master.geoservwrite.century foo.tif  
@@ -204,6 +205,17 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Fatal;
     }
 
+    long level;
+    nSDEErr = SE_rastileinfo_get_level(hTile, &level);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
+        return CE_Fatal;
+    }   
+    
+  //  CPLDebug("SDERASTER", "Tile level: %d ...", level);     
+
+    CPLDebug("SDERASTER", "nBlockXOff: %d nBlockYOff: %d", nBlockXOff, nBlockYOff);
     while (nSDEErr == SE_SUCCESS) {
 
         nSDEErr = SE_stream_get_raster_tile(hStream, hTile);
@@ -213,15 +225,6 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             IssueSDEError( nSDEErr, "SE_stream_get_raster_tile" );
             return CE_Fatal;
         }        
-        long level;
-        nSDEErr = SE_rastileinfo_get_level(hTile, &level);
-        if( nSDEErr != SE_SUCCESS )
-        {
-            IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
-            return CE_Fatal;
-        }   
-        
-        CPLDebug("SDERASTER", "Tile level: %d ...", level);     
 
         long row, column;
         nSDEErr = SE_rastileinfo_get_rowcol(hTile, &row, &column);
@@ -229,17 +232,25 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
             return CE_Fatal;
-        }         
+        }     
+        
         CPLDebug("SDERASTER", "row: %d column: %d", row, column);
-        long length;
-        unsigned char* pixels;
-        nSDEErr = SE_rastileinfo_get_pixel_data(hTile, (void**) &pixels, &length);
-        if( nSDEErr != SE_SUCCESS )
-        {
-            IssueSDEError( nSDEErr, "SE_rastileinfo_get_pixel_data" );
-            return CE_Fatal;
-        }           
-        CPLDebug("SDERASTER", "pixel data length: %d", length);
+        if (column == nBlockXOff && row == nBlockYOff) {    
+            CPLDebug("SDERASTER", "row: %d column: %d", row, column);
+            long length;
+            unsigned char* pixels;
+            nSDEErr = SE_rastileinfo_get_pixel_data(hTile, (void**) &pixels, &length);
+            if( nSDEErr != SE_SUCCESS )
+            {
+                IssueSDEError( nSDEErr, "SE_rastileinfo_get_pixel_data" );
+                return CE_Fatal;
+            }           
+            CPLDebug("SDERASTER", "pixel data length: %d", length);
+            
+            memcpy( pImage, pixels, 
+                nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
+            nSDEErr = SE_FINISHED;
+        }
     }
     return CE_None ;
 }

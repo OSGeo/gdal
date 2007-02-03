@@ -21,6 +21,7 @@ class SDERasterBand : public GDALRasterBand
         CPLErr                  InitializeBand(void);
         int                     nOverviews;
         SE_STREAM               hStream;
+        long                    nBlockSize;
     public:
 
         SDERasterBand( SDEDataset * poDS, int nBand , const SE_RASBANDINFO* band);
