@@ -16,12 +16,16 @@ class SDERasterBand : public GDALRasterBand
     private:
         const SE_RASBANDINFO* poBand;
         
-        GDALDataType            MorphESRIRasterType(int gtype);
-        GDALColorTable*         ComputeColorTable(void);  
-        CPLErr                  InitializeBand(void);
+        GDALDataType            MorphESRIRasterType( int gtype );
+        GDALColorTable*         ComputeColorTable( void );  
+        CPLErr                  InitializeBand( void );
+        SE_QUERYINFO            InitializeQuery( void ); 
+        
         int                     nOverviews;
         SE_STREAM               hStream;
         long                    nBlockSize;
+        SE_QUERYINFO            hQuery;
+        
     public:
 
         SDERasterBand( SDEDataset * poDS, int nBand , const SE_RASBANDINFO* band);
