@@ -19,7 +19,7 @@ SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand,
     
     nOverviews = 0;
     
-     InitializeBand();
+    InitializeBand();
     
 }
 
@@ -42,6 +42,42 @@ int SDERasterBand::GetOverviewCount(void)
     return nOverviews;
     
 }
+
+SE_QUERYINFO SDERasterBand::InitializeQuery( void ) 
+{
+    SDEDataset *poGDS = (SDEDataset *) poDS;
+    long nSDEErr;
+
+    nSDEErr = SE_queryinfo_create(&hQuery);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_create" );
+        return NULL;
+    }
+    
+    nSDEErr = SE_queryinfo_set_tables(hQuery, 1, (const char**) &(poGDS->pszLayerName), NULL);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
+        return NULL;
+    }
+
+    nSDEErr = SE_queryinfo_set_where_clause(hQuery, (const char*) "");
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
+        return NULL;
+    }
+
+    nSDEErr = SE_queryinfo_set_columns(hQuery, 1, (const char**) &(poGDS->pszColumnName));
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
+        return NULL;
+    }
+    return hQuery;        
+}
+
 
 CPLErr SDERasterBand::InitializeBand( void )
 
@@ -83,35 +119,10 @@ CPLErr SDERasterBand::InitializeBand( void )
         return CE_Fatal;
     }
     
-    SE_QUERYINFO query;
-
-    nSDEErr = SE_queryinfo_create(&query);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_create" );
-        return CE_Fatal;
-    }
-    
-    nSDEErr = SE_queryinfo_set_tables(query, 1, (const char**) &(poGDS->pszLayerName), NULL);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_queryinfo_set_where_clause(query, (const char*) "");
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
-        return CE_Fatal;
-    }
-
-    nSDEErr = SE_queryinfo_set_columns(query, 1, (const char**) &(poGDS->pszColumnName));
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
-        return CE_Fatal;
-    }
+    hQuery = InitializeQuery();
+    if (!hQuery)
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "QueryInfo initialization failed");
     
     nSDEErr = SE_stream_create(poGDS->hConnection, &hStream);
     if( nSDEErr != SE_SUCCESS )
@@ -120,7 +131,7 @@ CPLErr SDERasterBand::InitializeBand( void )
         return CE_Fatal;
     }
 
-    nSDEErr = SE_stream_query_with_info(hStream, query);
+    nSDEErr = SE_stream_query_with_info(hStream, hQuery);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
