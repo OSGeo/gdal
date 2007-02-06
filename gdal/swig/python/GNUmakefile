@@ -19,6 +19,12 @@ veryclean: clean
 	-rm -f ${WRAPPERS} ${PY_MODULES}
 	-rm -f *.pyc
 
+gdal_wrap.cpp: ../include/python/gdal_python.i
+
+ogr_wrap.cpp: ../include/python/ogr_python.i
+
+osr_wrap.cpp: ../include/python/osr_python.i
+
 generate: ${WRAPPERS}
 
 build:
