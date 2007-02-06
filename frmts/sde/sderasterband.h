@@ -20,6 +20,10 @@ class SDERasterBand : public GDALRasterBand
         GDALColorTable*         ComputeColorTable( void );  
         CPLErr                  InitializeBand( void );
         SE_QUERYINFO            InitializeQuery( void ); 
+        SE_RASCONSTRAINT        InitializeConstraint (  long nBlockXOff,
+                                                        long nBlockYOff);
+        CPLErr                  QueryRaster( SE_RASCONSTRAINT constraint );
+        int                     ComputeSDEBandNumber( void );
         
         int                     nOverviews;
         SE_STREAM               hStream;
@@ -29,6 +33,7 @@ class SDERasterBand : public GDALRasterBand
     public:
 
         SDERasterBand( SDEDataset * poDS, int nBand , const SE_RASBANDINFO* band);
+        ~SDERasterBand( void );
     
 
     virtual CPLErr IReadBlock( int, int, void * );
