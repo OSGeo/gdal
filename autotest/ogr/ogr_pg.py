@@ -642,6 +642,46 @@ def ogr_pg_16():
         return 'fail'
 
 ###############################################################################
+# Test requesting a non-existent table by name (bug 1480).
+
+def ogr_pg_17():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    count = gdaltest.pg_ds.GetLayerCount()
+    layer = gdaltest.pg_ds.GetLayerByName( 'JunkTableName' )
+    if layer is not None:
+        gdaltest.post_reason( 'got layer for non-existant table!' )
+        return 'fail'
+
+    if count != gdaltest.pg_ds.GetLayerCount():
+        gdaltest.post_reason( 'layer count changed unexpectedly.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test getting a layer by name that wasn't previously a layer.
+
+def ogr_pg_18():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    count = gdaltest.pg_ds.GetLayerCount()
+    layer = gdaltest.pg_ds.GetLayerByName( 'geometry_columns' )
+    if layer is None:
+        gdaltest.post_reason( 'did not get geometry_columns layer' )
+        return 'fail'
+
+    if count+1 != gdaltest.pg_ds.GetLayerCount():
+        gdaltest.post_reason( 'layer count unexpectedly unchanged.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_cleanup():
@@ -675,6 +715,8 @@ gdaltest_list = [
     ogr_pg_14,
     ogr_pg_15,
     ogr_pg_16,
+    ogr_pg_17,
+    ogr_pg_18,
     ogr_pg_cleanup ]
 
 if __name__ == '__main__':
