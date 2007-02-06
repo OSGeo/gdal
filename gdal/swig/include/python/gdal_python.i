@@ -185,7 +185,7 @@ void DontUseExceptions() {
             buf_ysize = ysize;
 
         if buf_type is None:
-            buf_type = self.GetRasterBand(0).DataType;
+            buf_type = self.GetRasterBand(1).DataType;
         return _gdal.Dataset_ReadRaster(self, xoff, yoff, xsize, ysize,
                                            buf_xsize, buf_ysize, buf_type,
                                            band_list)
