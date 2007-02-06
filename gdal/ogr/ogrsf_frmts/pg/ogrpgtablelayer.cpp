@@ -203,6 +203,12 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     if( PQntuples(hResult) == 0 )
     {
         PQclear( hResult );
+        hResult = PQexec(hPGConn, "CLOSE mycursor");
+        PQclear( hResult );
+
+        hResult = PQexec(hPGConn, "COMMIT");
+        PQclear( hResult );
+
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No field definitions found for '%s', is it a table?",
                   pszTableIn );
