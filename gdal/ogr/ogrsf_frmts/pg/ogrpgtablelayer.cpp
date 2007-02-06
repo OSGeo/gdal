@@ -57,6 +57,10 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     nSRSId = nSRSIdIn;
 
+    bLaunderColumnNames = TRUE;
+    bCopyActive = FALSE;
+    bUseCopy = USE_COPY_UNSET;  // unknown
+
     pszTableName = CPLStrdup( pszTableNameIn );
     if (pszSchemaNameIn)
       pszSchemaName = CPLStrdup( pszSchemaNameIn );
@@ -67,16 +71,14 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName );
 
-    ResetReading();
-
-    bLaunderColumnNames = TRUE;
-    bCopyActive = FALSE;
-
-    // check SRID if it's necessary
-    if( nSRSId == -2 )
-        GetSpatialRef();
-
-    bUseCopy = USE_COPY_UNSET;  // unknown
+    if( poFeatureDefn )
+    {
+        ResetReading();
+        
+        // check SRID if it's necessary
+        if( nSRSId == -2 )
+            GetSpatialRef();
+    }
 }
 
 //************************************************************************/
@@ -195,6 +197,21 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", PQerrorMessage(hPGConn) );
+        return NULL;
+    }
+
+    if( PQntuples(hResult) == 0 )
+    {
+        PQclear( hResult );
+        hResult = PQexec(hPGConn, "CLOSE mycursor");
+        PQclear( hResult );
+
+        hResult = PQexec(hPGConn, "COMMIT");
+        PQclear( hResult );
+
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No field definitions found for '%s', is it a table?",
+                  pszTableIn );
         return NULL;
     }
 
