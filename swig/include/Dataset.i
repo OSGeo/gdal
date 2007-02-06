@@ -90,9 +90,7 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
                             int *buf_size, char **buf,
                             int band_list, int *pband_list )
 {
-
-    
-  *buf_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
+  *buf_size = buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
   *buf = (char*) malloc( *buf_size );
 
   CPLErr result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
