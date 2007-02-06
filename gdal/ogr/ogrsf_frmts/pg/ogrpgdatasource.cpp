@@ -386,6 +386,11 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaNam
     OGRPGTableLayer  *poLayer;
 
     poLayer = new OGRPGTableLayer( this, pszNewName, pszSchemaName, bUpdate );
+    if( poLayer->GetLayerDefn() == NULL )
+    {
+        delete poLayer;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -805,11 +810,10 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
             return poLayer;
     }
     
-    OpenTable( pszName, NULL, TRUE, FALSE );
-    
-    if(GetLayerCount() == count+1) return GetLayer(count);
-
-    return NULL;
+    if( OpenTable( pszName, NULL, TRUE, FALSE ) )
+        return GetLayer(count);
+    else
+        return NULL;
 }
 
 
