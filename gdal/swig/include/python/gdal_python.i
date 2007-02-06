@@ -163,7 +163,7 @@ void DontUseExceptions() {
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_type is None:
-            buf_type = self._band[band_list[0]-1].DataType;
+            buf_type = self.GetRasterBand(1).DataType
 
         if len(buf_string) < buf_xsize * buf_ysize * len(band_list) \
            * (_gdal.GetDataTypeSize(buf_type) / 8):
