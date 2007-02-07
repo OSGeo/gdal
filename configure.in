@@ -87,6 +87,7 @@ AC_UNIX_STDIO_64
 
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(void*)
 dnl Some compilers (IBM VisualAge) has these types defined, so check it here.
 dnl These types are used in internal libtiff.
 AC_CHECK_TYPES([int8, int16, int32],,,
