@@ -67,7 +67,11 @@
 #define SIZEOF_LONG 4
 
 /* The size of `void*', as computed by sizeof. */
-#define SIZEOF_VOIDP 4
+#ifdef _WIN64
+# define SIZEOF_VOIDP 8
+#else
+# define SIZEOF_VOIDP 4
+#endif
 
 /* Set the native cpu bit order */
 #define HOST_FILLORDER FILLORDER_LSB2MSB
