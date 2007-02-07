@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	sdedataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) -DFRMT_sde $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(SDE_INC) -DFRMT_sde $(CPPFLAGS)
 
 default:	$(OBJ)
 
