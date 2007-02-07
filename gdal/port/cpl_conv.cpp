@@ -847,7 +847,11 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
     
     else
     {
+#if SIZEOF_VOIDP == 8
         pResult = (void *) CPLScanUIntBig( szTemp, nMaxLength );
+#else
+        pResult = (void *) CPLScanLong( szTemp, nMaxLength );
+#endif
     }
 
     return pResult;
