@@ -4013,9 +4013,9 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         uint32  nBlockXSize;
         uint32	nBlockYSize;
-        int     nTileSize, nTilesAcross, nTilesDown, iTileX, iTileY;
+        int     nTileSize=0, nTilesAcross=0, nTilesDown=0, iTileX, iTileY;
         GByte   *pabyTile = NULL;
-        int     nTilesDone = 0, nPixelSize;
+        int     nTilesDone = 0, nPixelSize=0;
 
         if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
              || !TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize )
@@ -4152,9 +4152,9 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         uint32  nBlockXSize;
         uint32	nBlockYSize;
-        int     nTileSize, nTilesAcross, nTilesDown, iTileX, iTileY, nElemSize;
+        int     nTileSize=0, nTilesAcross=0, nTilesDown=0, iTileX, iTileY;
         GByte   *pabyTile = NULL;
-        int     nTilesDone = 0, nPixelSize;
+        int     nTilesDone = 0, nPixelSize = 0, nElemSize = 0;
 
         if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
              || !TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize )
