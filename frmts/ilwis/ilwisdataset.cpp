@@ -46,8 +46,8 @@ string TrimSpaces(const string& input)
     if ( input.empty()) 
         return string();
 
-    int iFirstNonSpace = input.find_first_not_of(' ');
-    int iFindLastSpace = input.find_last_not_of(' ');
+    size_t iFirstNonSpace = input.find_first_not_of(' ');
+    size_t iFindLastSpace = input.find_last_not_of(' ');
     if (iFirstNonSpace == string::npos || iFindLastSpace == string::npos)
         return string();
 
@@ -178,7 +178,7 @@ void IniFile::Load()
 
             if (s[0] == '[')
             {
-                int iLast = s.find_first_of(']');
+                size_t iLast = s.find_first_of(']');
                 if (iLast != string::npos)
                 {
                     section = s.substr(1, iLast - 1);
@@ -192,7 +192,7 @@ void IniFile::Load()
             s = GetLine(filIni); // fall through (no break)
           case FindKey:
           {
-              int iEqu = s.find_first_of('=');
+              size_t iEqu = s.find_first_of('=');
               if (iEqu != string::npos)
               {
                   key = s.substr(0, iEqu);
@@ -310,7 +310,7 @@ bool WriteElement(string sSection, string sEntry,
 static CPLErr GetRowCol(string str,int &Row, int &Col)
 {
     string delimStr = " ,;";
-    int iPos = str.find_first_of(delimStr);
+    size_t iPos = str.find_first_of(delimStr);
     if (iPos != string::npos)
     {
         Row = atoi(str.substr(0, iPos).c_str());
