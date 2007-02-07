@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	sdedataset.o
+OBJ	=	sdedataset.o sdeerror.o sderasterband.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(SDE_INC) -DFRMT_sde $(CPPFLAGS)
 
