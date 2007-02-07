@@ -34,7 +34,7 @@
 CPL_CVSID("$Id$");
 
 static int bCacheMaxInitialized = FALSE;
-static int nCacheMax = 10 * 1024*1024;
+static int nCacheMax = 40 * 1024*1024;
 static volatile int nCacheUsed = 0;
 
 static volatile GDALRasterBlock *poOldest = NULL;    /* tail */
@@ -96,7 +96,7 @@ int CPL_STDCALL GDALGetCacheMax()
         if( CPLGetConfigOption("GDAL_CACHEMAX",NULL) != NULL )
         {
             nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX","10"));
-            if( nCacheMax < 1000 )
+            if( nCacheMax < 10000 )
                 nCacheMax *= 1024 * 1024;
         }
         bCacheMaxInitialized = TRUE;
