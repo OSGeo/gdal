@@ -89,7 +89,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for Unix 64 bit STDIO API (fseek64, ftell64 like on IRIX).
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN(AC_UNIX_STDIO_64,
+AC_DEFUN([AC_UNIX_STDIO_64],
 [
   AC_ARG_WITH(unix-stdio-64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api (yes/no)],,)
 
@@ -175,7 +175,7 @@ AC_DEFUN(AC_UNIX_STDIO_64,
 
 ])
 
-AC_DEFUN(AC_COMPILER_LOCALHACK,
+AC_DEFUN([AC_COMPILER_LOCALHACK],
 [
   AC_MSG_CHECKING([if local/include already standard])
 
@@ -194,7 +194,7 @@ AC_DEFUN(AC_COMPILER_LOCALHACK,
   rm -f comp.out
 ])
 
-AC_DEFUN(AC_COMPILER_WFLAGS,
+AC_DEFUN([AC_COMPILER_WFLAGS],
 [
 	# Remove -g from compile flags, we will add via CFG variable if
 	# we need it.
@@ -216,7 +216,7 @@ AC_DEFUN(AC_COMPILER_WFLAGS,
 	AC_SUBST(C_WFLAGS,$C_WFLAGS)
 ])
 
-AC_DEFUN(AC_COMPILER_PIC,
+AC_DEFUN([AC_COMPILER_PIC],
 [
 	echo 'void f(){}' > conftest.c
 	if test -z "`${CC-cc} -fPIC -c conftest.c 2>&1`"; then
@@ -238,7 +238,7 @@ AC_DEFUN(AC_COMPILER_PIC,
 dnl
 dnl Look for OGDI, and verify that we can link and run.
 dnl
-AC_DEFUN(AC_TRY_OGDI,
+AC_DEFUN([AC_TRY_OGDI],
 [
   saved_LIBS="$LIBS"
   OGDI_LIBS=" -logdi -lzlib"
@@ -286,7 +286,7 @@ dnl Try to find something to link shared libraries with.  Use "c++ -shared"
 dnl in preference to "ld -shared" because it will link in required c++
 dnl run time support for us. 
 dnl
-AC_DEFUN(AC_LD_SHARED,
+AC_DEFUN([AC_LD_SHARED],
 [
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
@@ -428,7 +428,7 @@ dnl
 dnl Find Python.
 dnl
 
-AC_DEFUN(AM_PATH_PYTHON,
+AC_DEFUN([AM_PATH_PYTHON],
   [AC_CHECK_PROGS(PYTHON, python python1.5 python1.4 python1.3,no)
   if test "$with_python" = no ; then
      echo "python support disabled"
@@ -510,7 +510,7 @@ dnl finds information needed for compilation of shared library style python
 dnl extensions.  AM_PATH_PYTHON should be called before hand.
 dnl NFW: Modified from original to avoid overridding CC, SO and OPT
 
-AC_DEFUN(AM_INIT_PYEXEC_MOD,
+AC_DEFUN([AM_INIT_PYEXEC_MOD],
   [AC_REQUIRE([AM_PATH_PYTHON])
 
 PYTHON_LIBS=""
@@ -606,7 +606,7 @@ dnl
 dnl Check if we have NUMPY include file(s).
 dnl
 
-AC_DEFUN(AM_CHECK_NUMPY,
+AC_DEFUN([AM_CHECK_NUMPY],
   [
   AC_MSG_CHECKING([for NumPy include files])
   echo '#include "Python.h"' > conftest.c
@@ -634,12 +634,12 @@ AC_DEFUN(AM_CHECK_NUMPY,
 dnl ---------------------------------------------------------------------------
 dnl Message output
 dnl ---------------------------------------------------------------------------
-AC_DEFUN(LOC_MSG,[
+AC_DEFUN([LOC_MSG],[
 echo "$1"
 ])
 
-AC_DEFUN(LOC_YES_NO,[if test -n "${$1}" ; then echo yes ; else echo no ; fi])
+AC_DEFUN([LOC_YES_NO],[if test -n "${$1}" ; then echo yes ; else echo no ; fi])
 
-AC_DEFUN(LOC_MSG_USE,[
+AC_DEFUN([LOC_MSG_USE],[
 [echo "  $1: ]`LOC_YES_NO($2)`"])
 
