@@ -650,7 +650,11 @@ def ogr_pg_17():
         return 'skip'
 
     count = gdaltest.pg_ds.GetLayerCount()
-    layer = gdaltest.pg_ds.GetLayerByName( 'JunkTableName' )
+    try:
+        layer = gdaltest.pg_ds.GetLayerByName( 'JunkTableName' )
+    except:
+        layer = None
+        
     if layer is not None:
         gdaltest.post_reason( 'got layer for non-existant table!' )
         return 'fail'
