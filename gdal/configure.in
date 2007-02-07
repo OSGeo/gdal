@@ -1728,6 +1728,7 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
   fi
 
   SDE_ENABLED=yes
+  OPT_GDAL_FORMATS="sde $OPT_GDAL_FORMATS"
   AC_MSG_RESULT([        using ESRI SDE from $SDE_DIR.])
 
 else
