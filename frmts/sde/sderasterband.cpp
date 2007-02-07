@@ -14,11 +14,13 @@ SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand,
     poBand = band;
     eDataType = GetRasterDataType();
 
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->GetRasterYSize();
+//    nBlockXSize = poDS->GetRasterXSize();
+//    nBlockYSize = poDS->GetRasterYSize();
     
     nOverviews = 0;
-    
+    hConstraint = NULL;
+    hQuery = NULL;
+    hStream = NULL;
     InitializeBand();
     nBand = ComputeSDEBandNumber();
     
@@ -65,7 +67,7 @@ int SDERasterBand::GetOverviewCount( void )
     
 }
 
-SE_QUERYINFO SDERasterBand::InitializeQuery( void ) 
+SE_QUERYINFO& SDERasterBand::InitializeQuery( void ) 
 {
     SDEDataset *poGDS = (SDEDataset *) poDS;
     long nSDEErr;
@@ -74,85 +76,106 @@ SE_QUERYINFO SDERasterBand::InitializeQuery( void )
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_queryinfo_create" );
-        return NULL;
     }
     
     nSDEErr = SE_queryinfo_set_tables(hQuery, 1, (const char**) &(poGDS->pszLayerName), NULL);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
-        return NULL;
     }
 
     nSDEErr = SE_queryinfo_set_where_clause(hQuery, (const char*) "");
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
-        return NULL;
     }
 
     nSDEErr = SE_queryinfo_set_columns(hQuery, 1, (const char**) &(poGDS->pszColumnName));
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
-        return NULL;
     }
     return hQuery;        
 }
 
-SE_RASCONSTRAINT SDERasterBand::InitializeConstraint( long nBlockXOff, 
+SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff, 
                                                       long nBlockYOff) 
 {
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
-    SE_RASCONSTRAINT constraint;
     
     long nSDEErr;   
-     
-    nSDEErr = SE_rasconstraint_create(&constraint);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
-        return NULL;
-    }
     
-    nSDEErr = SE_rasconstraint_set_level(constraint, 0);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
-        return NULL;
-    }
-
-    nSDEErr = SE_rasconstraint_set_bands(constraint, 1, (long*)&nBand);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_rasconstraint_set_bands" );
-        return NULL;
-    }
-    
-    if (nBlockXOff && nBlockYOff && nBlockXSize && nBlockYSize) {
-        nSDEErr = SE_rasconstraint_set_envelope (constraint,
-                                                (nBlockXOff+1) * nBlockXSize,
-                                                (nBlockYOff+1) * nBlockYSize,
-                                                nBlockXOff * nBlockXSize,
-                                                nBlockYOff * nBlockYSize);
+    if (!hConstraint) {
+        nSDEErr = SE_rasconstraint_create(&hConstraint);
         if( nSDEErr != SE_SUCCESS )
         {
-            IssueSDEError( nSDEErr, "SE_rasconstraint_set_envelope" );
-            return NULL;
+            IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
+        }
+ 
+        nSDEErr = SE_rasconstraint_set_level(hConstraint, 0);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
+        }
+    
+        nSDEErr = SE_rasconstraint_set_bands(hConstraint, 1, (long*)&nBand);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rasconstraint_set_bands" );
         }
     }
-    return constraint;
+    
+    if (nBlockXSize && nBlockYSize) {
+        if (nBlockXSize >= 0 && nBlockYSize >= 0) {
+        if (nBlockXOff >= 0 &&  nBlockYOff >= 0) {
+            long nMinX, nMinY, nMaxX, nMaxY;
+            CPLDebug ("SDERASTER", "nBlockXSize: %d nBlockYSize: %d nBlockXOff: %d nBlockYOff: %d",
+            nBlockXSize, nBlockYSize, nBlockXOff, nBlockYOff);
+            nMinX = nBlockXOff * nBlockXSize ;
+            nMinY = nBlockYOff * nBlockYSize;
+            nMaxX = (nBlockXOff+1) * nBlockXSize;
+            nMaxY = (nBlockYOff+1) * nBlockYSize;
+            CPLDebug("SDERASTER", "minx: %d, miny: %d, maxx: %d, maxy:%d", 
+                     nMinX, nMinY, nMaxX, nMaxY);    
+    //CPLDebug("SDERASTER", "minx: %d, miny: %d, maxx: %d, maxy:%d", nBlockXSize*nBlockXOff,
+    //                                                            nBlockYSize*(nBlockYOff+1),
+    //                                                            nBlockXSize*(nBlockXOff+1),
+    //                                                            nBlockYSize*nBlockYOff);
+    //                                                            
+    //    nSDEErr = SE_rasconstraint_set_envelope(hConstraint,    nBlockXSize*nBlockXOff,
+    //                                                            nBlockYSize*(nBlockYOff+1),
+    //                                                            nBlockXSize*(nBlockXOff+1),
+    //                                                            nBlockYSize*nBlockYOff
+    //                                                            );
+                                                                        
+            nSDEErr = SE_rasconstraint_set_envelope (hConstraint,
+                                                    nMinX,
+                                                    nMinY,
+                                                    nMaxX,
+                                                    nMaxY);
+            if( nSDEErr != SE_SUCCESS )
+            {
+                IssueSDEError( nSDEErr, "SE_rasconstraint_set_envelope" );
+          //      return NULL;
+            }
+            
+            CPLDebug("SDERASTER", "minx: %d, miny: %d, maxx: %d, maxy:%d", 
+                     nMinX, nMinY, nMaxX, nMaxY);
+    }
+    }
+}
+    return hConstraint;
 }
 
-CPLErr SDERasterBand::QueryRaster( SE_RASCONSTRAINT constraint ) 
+CPLErr SDERasterBand::QueryRaster( SE_RASCONSTRAINT& constraint ) 
 {
 
     SDEDataset *poGDS = (SDEDataset *) poDS;
     
     long nSDEErr;
 
-    InitializeQuery();
+    hQuery = InitializeQuery();
     if (!hQuery)
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "QueryInfo initialization failed");
@@ -210,8 +233,6 @@ CPLErr SDERasterBand::InitializeBand( void )
     }
 
 
-    SE_RASCONSTRAINT hConstraint;
-
     hConstraint = InitializeConstraint( NULL, NULL );  
     if (!hConstraint)
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -230,12 +251,13 @@ CPLErr SDERasterBand::InitializeBand( void )
         return CE_Fatal;
     }
     
+    CPLDebug("SDERASTER", "Tile Sizes: %d %d", nBlockXSize, nBlockYSize);
     nBlockSize = nBlockXSize * nBlockYSize;
     
     
     
     // Reset our stream
-  //  SE_stream_close(hStream, TRUE);
+    SE_stream_close(hStream, TRUE);
     
     return CE_None;
 }
@@ -278,6 +300,18 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Fatal;
     }
 
+    hConstraint = InitializeConstraint( nBlockXOff, nBlockYOff );  
+    if (!hConstraint)
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "ConstraintInfo initialization failed");   
+
+
+    CPLErr error = QueryRaster(hConstraint);
+    if (error != CE_None)
+        return error;
+
+
+
     long level;
     nSDEErr = SE_rastileinfo_get_level(hTile, &level);
     if( nSDEErr != SE_SUCCESS )
@@ -289,12 +323,12 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
   //  CPLDebug("SDERASTER", "Tile level: %d ...", level);     
 
     CPLDebug("SDERASTER", "nBlockXOff: %d nBlockYOff: %d", nBlockXOff, nBlockYOff);
-    while (nSDEErr == SE_SUCCESS) {
+   // while (nSDEErr == SE_SUCCESS) {
 
         nSDEErr = SE_stream_get_raster_tile(hStream, hTile);
         if( nSDEErr != SE_SUCCESS )
         {
-            if (nSDEErr == SE_FINISHED) {break;}
+         //   if (nSDEErr == SE_FINISHED) {break;}
             IssueSDEError( nSDEErr, "SE_stream_get_raster_tile" );
             return CE_Fatal;
         }        
@@ -308,7 +342,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }     
         
         CPLDebug("SDERASTER", "row: %d column: %d", row, column);
-        if (column == nBlockXOff && row == nBlockYOff) {    
+     //   if (column == nBlockXOff && row == nBlockYOff) {    
             CPLDebug("SDERASTER", "row: %d column: %d", row, column);
             long length;
             unsigned char* pixels;
@@ -323,8 +357,10 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             memcpy( pImage, pixels, 
                 nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
             nSDEErr = SE_FINISHED;
-        }
-    }
+       // }
+   // }
+       // Reset our stream
+    SE_stream_close(hStream, TRUE);
     return CE_None ;
 }
 

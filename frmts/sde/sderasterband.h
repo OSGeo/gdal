@@ -19,16 +19,17 @@ class SDERasterBand : public GDALRasterBand
         GDALDataType            MorphESRIRasterType( int gtype );
         GDALColorTable*         ComputeColorTable( void );  
         CPLErr                  InitializeBand( void );
-        SE_QUERYINFO            InitializeQuery( void ); 
-        SE_RASCONSTRAINT        InitializeConstraint (  long nBlockXOff,
+        SE_QUERYINFO&           InitializeQuery( void ); 
+        SE_RASCONSTRAINT&       InitializeConstraint (  long nBlockXOff,
                                                         long nBlockYOff);
-        CPLErr                  QueryRaster( SE_RASCONSTRAINT constraint );
+        CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
         int                     ComputeSDEBandNumber( void );
         
         int                     nOverviews;
         SE_STREAM               hStream;
         long                    nBlockSize;
         SE_QUERYINFO            hQuery;
+        SE_RASCONSTRAINT        hConstraint;
         
     public:
 
