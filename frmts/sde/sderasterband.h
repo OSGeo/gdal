@@ -33,7 +33,11 @@ class SDERasterBand : public GDALRasterBand
         
     public:
 
-        SDERasterBand( SDEDataset * poDS, int nBand , const SE_RASBANDINFO* band);
+        SDERasterBand( SDEDataset * poDS, 
+                       int nBand, 
+                       int nOverview, 
+                       const SE_RASBANDINFO* band);
+                       
         ~SDERasterBand( void );
     
 
