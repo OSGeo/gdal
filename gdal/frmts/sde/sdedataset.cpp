@@ -265,14 +265,18 @@ SDEDataset::SDEDataset(  )
 SDEDataset::~SDEDataset()
 
 {
-//    if (paohSDERasterColumns != NULL)
-//        SE_rastercolumn_free_info_list(nSubDataCount,
-//                                   paohSDERasterColumns);
+
     if (paohSDERasterBands)
         SE_rasterband_free_info_list(nBands, paohSDERasterBands);
 
     if (hRasterColumn)
         SE_rascolinfo_free(hRasterColumn);
+    
+    if (hConnection)
+        SE_connection_free(hConnection);
+    
+    if (hAttributes)
+        SE_rasterattr_free(hAttributes);
 }
 
 
