@@ -35,7 +35,9 @@ C_DBGFLAGS =	-g -DDEBUG
 CXX_PROFFLAGS =	-g3 -pg -DDEBUG 
 C_PROFFLAGS =	-g3 -pg -DDEBUG 
 
-LIBS	=	@LIBS@ $(DWG_LIBS) $(SDE_LIB) $(CURL_LIB) $(IDB_LIB)
+# SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
+
+LIBS	=	$(SDE_LIB) @LIBS@ $(DWG_LIBS) $(CURL_LIB) $(IDB_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
