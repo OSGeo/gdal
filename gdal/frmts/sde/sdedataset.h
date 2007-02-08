@@ -12,14 +12,14 @@ class SDEDataset : public GDALDataset
         
 
         long                nSubDataCount;
-
+        char*               pszWKT;
         
         double              dfMinX, dfMaxX, dfMinY, dfMaxY;
         
         GDALDataType        eDataType;
-        SE_RASCOLINFO* paohSDERasterColumns;
-        SE_RASCOLINFO hRasterColumn;
-
+        SE_RASCOLINFO*      paohSDERasterColumns;
+        SE_RASCOLINFO       hRasterColumn;
+    
         
         CPLErr                  ComputeRasterInfo(void);
         SE_RASBANDINFO* paohSDERasterBands;
