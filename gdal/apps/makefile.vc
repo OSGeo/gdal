@@ -8,13 +8,13 @@ LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 XTRAFLAGS =	-I..\frmts -I..\alg
 
 !INCLUDE ..\nmake.opt
-									-
+
 !IFDEF INCLUDE_OGR_FRMTS
 OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe
 !ENDIF
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
-		$(OGR_PROGRAMS)
+		nearblack.exe $(OGR_PROGRAMS)
 
 all:	default gdalwarpsimple.exe
 
@@ -45,6 +45,11 @@ gdalwarp.exe:	gdalwarp.cpp $(GDALLIB) $(XTRAOBJ)
 	
 gdal_contour.exe:	gdal_contour.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_contour.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+nearblack.exe:	nearblack.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) nearblack.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
