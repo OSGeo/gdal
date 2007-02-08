@@ -138,7 +138,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 
     
     for (int i=0; i < nBands; i++) {
-        SetBand( i+1, new SDERasterBand( this, i+1, &(paohSDERasterBands[i]) ));
+        SetBand( i+1, new SDERasterBand( this, i+1, -1, &(paohSDERasterBands[i]) ));
     }
 
     GDALRasterBand* b = GetRasterBand(1);
@@ -204,10 +204,10 @@ const char *SDEDataset::GetProjectionRef()
     if (nSDEErr == SE_NO_COORDREF) {
         return ("");
     }
+    
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_coordref" );
-      //  return FALSE;
     }    
     
     char szWKT[SE_MAX_SPATIALREF_SRTEXT_LEN];
@@ -221,11 +221,10 @@ const char *SDEDataset::GetProjectionRef()
     OGRSpatialReference *poSRS;
     poSRS = new OGRSpatialReference(szWKT);
     poSRS->morphFromESRI();
-    char* pszWKT;
+
     poSRS->exportToWkt(&pszWKT);
     poSRS->Release();
     
-    // FIXME: leakage
     return CPLStrdup(pszWKT);
 }
 
@@ -277,6 +276,9 @@ SDEDataset::~SDEDataset()
     
     if (hAttributes)
         SE_rasterattr_free(hAttributes);
+
+    if (pszWKT)
+        CPLFree(pszWKT);
 }
 
 
@@ -328,7 +330,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
     int         nSDEErr;
-SE_ERROR            hSDEErrorInfo;
+    SE_ERROR    hSDEErrorInfo;
     nSDEErr = SE_connection_create( papszTokens[0], 
                                     papszTokens[1], 
                                     papszTokens[2], 
