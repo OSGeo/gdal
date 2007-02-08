@@ -18,6 +18,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
 <li> \ref gdal_merge - Build a quick mosaic from a set of images.
 <li> \ref gdal_rasterize - Rasterize vectors into raster file.
+<li> \ref nearblack - Convert nearly black/white borders to exact value.
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
@@ -884,6 +885,70 @@ with Python support.
 \if man
 \section rauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page nearblack nearblack
+
+convert nearly black/white borders to black
+
+\if man
+\section msynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+nearblack [-white] [-near dist] [-nb non_black_pixels]
+          [-o outfile] infile
+\endverbatim
+\if man
+\section mdescription DESCRIPTION
+\endif
+
+This utility will scan an image and try to set all pixels that are nearly
+black (or nearly white) around the collar to exactly black (or white).  This
+is often used to "fix up" lossily compressed airphotos so that color pixels
+can be treated as transparent when mosaicing. 
+
+<dl>
+<dt> <b>-o</b> <i>outfile</i>:</dt><dd> The name of the output file to be
+created.  Newly created files are currently always created with the HFA driver
+(Erdas Imagine - .img)</dd>
+<dt> <b>-white</b>:</dt><dd> 
+Search for nearly white (255) pixels instead of nearly black pixels.
+</dd>
+<dt> <b>-near</b> <i>dist</i>:</dt><dd> 
+Select how far from black (or white) the pixel values can be and still considered near black (white).  Defaults to 15. 
+</dd>
+<dt> <b>-nb</b> <i>non_black_pixels</i>:</dt><dd> 
+number of non-black pixels that can be encountered before the giving up search inwards. Defaults to 2. 
+</dd>
+<dt> <i>infile</i>:</dt><dd> 
+The input file.  Any GDAL supported format, any number of bands, normally 8bit 
+Byte bands.
+</dd>
+</dl>
+
+The algorithm processes the image one scanline at a time.  A scan "in" is done 
+from either end setting pixels to black (white) until at least 
+"non_black_pixels" pixels that are more than "dist" gray levels away from 
+black (white) have been encountered at which point the scan stops.  The nearly
+black (white) pixels are set to black (white). 
+
+Note that this algorithm is only applied to horizontal scanlines, so a photo
+with an indentation in the top or bottom will not have that indentation
+identified.  The processing is all done in 8bit (Bytes).
+
+If the output file is omitted, the processed results will be written back
+to the input file - which must support update. 
+
+\if man
+\section mauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
 
