@@ -4,8 +4,10 @@
 /*                           SDERasterBand()                            */
 /************************************************************************/
 
-SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand, 
-                              const SE_RASBANDINFO* band )
+SDERasterBand::SDERasterBand(   SDEDataset *poDS, 
+                                int nBand, 
+                                int nOverview, 
+                                const SE_RASBANDINFO* band )
 
 {
     this->poDS = poDS;
@@ -15,6 +17,7 @@ SDERasterBand::SDERasterBand( SDEDataset *poDS, int nBand,
     eDataType = GetRasterDataType();
     
     nOverviews = 0;
+    nOverview = nOverview;
     hConstraint = NULL;
     hQuery = NULL;
     hStream = NULL;
@@ -30,7 +33,6 @@ SDERasterBand::~SDERasterBand( void )
 
 {
     SE_queryinfo_free(hQuery);
-    SE_stream_close(hStream, FALSE);
     SE_stream_free(hStream);
     SE_rasconstraint_free(hConstraint);
 }
@@ -83,7 +85,6 @@ int SDERasterBand::GetOverviewCount( void )
     }
     
     CPLDebug("SDERASTER", "We have %d overviews", nOverviews);
-    return 0;
     return nOverviews;
     
 } 
