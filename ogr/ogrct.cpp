@@ -447,13 +447,17 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */
-    char        *pszProj4Defn;
+    char        *pszProj4Defn = NULL;
 
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
+    {
+        CPLFree( pszProj4Defn );
         return FALSE;
+    }
 
     if( strlen(pszProj4Defn) == 0 )
     {
+        CPLFree( pszProj4Defn );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No PROJ.4 translation for source SRS, coordinate\n"
                   "transformation initialization has failed." );
@@ -489,11 +493,17 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for target if projection.               */
 /* -------------------------------------------------------------------- */
+    pszProj4Defn = NULL;
+
     if( poSRSTarget->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
+    {
+        CPLFree( pszProj4Defn );
         return FALSE;
+    }
 
     if( strlen(pszProj4Defn) == 0 )
     {
+        CPLFree( pszProj4Defn );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No PROJ.4 translation for destination SRS, coordinate\n"
                   "transformation initialization has failed." );
