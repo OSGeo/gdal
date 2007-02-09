@@ -18,13 +18,14 @@ class SDERasterBand : public GDALRasterBand
         
         GDALDataType            MorphESRIRasterType( int gtype );
         GDALColorTable*         ComputeColorTable( void );  
-        CPLErr                  InitializeBand( void );
+        CPLErr                  InitializeBand( int nOverview );
         SE_QUERYINFO&           InitializeQuery( void ); 
         SE_RASCONSTRAINT&       InitializeConstraint (  long nBlockXOff,
                                                         long nBlockYOff);
         CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
         int                     ComputeSDEBandNumber( void );
         
+		int						nOverview;
         int                     nOverviews;
         SE_STREAM               hStream;
         long                    nBlockSize;
@@ -53,6 +54,7 @@ class SDERasterBand : public GDALRasterBand
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
     virtual int GetOverviewCount(void);
+	virtual GDALRasterBand* GetOverview(int nOverview);
 //    virtual double GetNoDataValue( int *pbSuccess );
 //
 };
