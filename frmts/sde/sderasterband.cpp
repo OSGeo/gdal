@@ -17,11 +17,12 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     eDataType = GetRasterDataType();
     
     nOverviews = 0;
-    nOverview = nOverview;
-    hConstraint = NULL;
+	if (nOverview == -1) nOverview = 0; else nOverview = nOverview;
+
+	hConstraint = NULL;
     hQuery = NULL;
     hStream = NULL;
-    InitializeBand();
+    InitializeBand(nOverview);
     nBand = ComputeSDEBandNumber();
     
 }
@@ -65,6 +66,15 @@ GDALColorInterp SDERasterBand::GetColorInterpretation()
         return GCI_GrayIndex;
 }
 
+/************************************************************************/
+/*                           GetOverview()                              */
+/************************************************************************/
+GDALRasterBand* SDERasterBand::GetOverview( int nOverview )
+{
+	SDEDataset *poGDS = (SDEDataset *) poDS;
+    return new SDERasterBand(poGDS, nBand, nOverview, poBand);
+    
+} 
 /************************************************************************/
 /*                           GetOverviewCount()                         */
 /************************************************************************/
@@ -430,7 +440,7 @@ int SDERasterBand::ComputeSDEBandNumber( void )
 /************************************************************************/
 /*                           InitializeBand()                           */
 /************************************************************************/
-CPLErr SDERasterBand::InitializeBand( void )
+CPLErr SDERasterBand::InitializeBand( int nOverview )
 
 {    
 
@@ -492,6 +502,22 @@ CPLErr SDERasterBand::InitializeBand( void )
         return CE_Fatal;
     }
     
+	long offset_x, offset_y, num_bands;
+
+	nSDEErr = SE_rasterattr_get_image_size_by_level (poGDS->hAttributes,
+													 (long*)&nRasterXSize,
+													 (long*)&nRasterYSize,
+													 &offset_x,
+													 &offset_y,
+													 &num_bands,
+													 nOverview);
+
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasterattr_get_image_size_by_level" );
+        return CE_Fatal;
+    }
+													 
     CPLDebug("SDERASTER", "Tile Sizes: %d %d", nBlockXSize, nBlockYSize);
     nBlockSize = nBlockXSize * nBlockYSize;
 
@@ -514,13 +540,13 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff,
         {
             IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
         }
- 
-        nSDEErr = SE_rasconstraint_set_level(hConstraint, 0);
-        if( nSDEErr != SE_SUCCESS )
-        {
-            IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
-        }
-    
+		
+		nSDEErr = SE_rasconstraint_set_level(hConstraint, nOverview);
+		if( nSDEErr != SE_SUCCESS )
+		{
+			IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
+		}		
+
         nSDEErr = SE_rasconstraint_set_bands(hConstraint, 1, (long*)&nBand);
         if( nSDEErr != SE_SUCCESS )
         {
