@@ -23,7 +23,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     hQuery = NULL;
     hStream = NULL;
     InitializeBand(nOverview);
-    nBand = ComputeSDEBandNumber();
+    nBand = ComputeSDEBandNumber(band);
     
 }
 
@@ -424,11 +424,11 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
 /************************************************************************/
 /*                           ComputeSDEBandNumber()                     */
 /************************************************************************/
-int SDERasterBand::ComputeSDEBandNumber( void ) 
+int SDERasterBand::ComputeSDEBandNumber( const SE_RASBANDINFO* band ) 
 {
     long nSDEErr;
     long pnBandNumber;
-    nSDEErr = SE_rasbandinfo_get_band_number (*poBand, &pnBandNumber);
+    nSDEErr = SE_rasbandinfo_get_band_number (*band, &pnBandNumber);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_number" );

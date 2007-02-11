@@ -23,7 +23,7 @@ class SDERasterBand : public GDALRasterBand
         SE_RASCONSTRAINT&       InitializeConstraint (  long nBlockXOff,
                                                         long nBlockYOff);
         CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
-        int                     ComputeSDEBandNumber( void );
+        int                     ComputeSDEBandNumber( const SE_RASBANDINFO* band );
         
 		int						nOverview;
         int                     nOverviews;
