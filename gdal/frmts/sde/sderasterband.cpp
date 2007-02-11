@@ -1,4 +1,85 @@
+/******************************************************************************
+ * $Id: sdedataset.cpp 10804 2007-02-08 23:24:59Z hobu $
+ *
+ * Project:  ESRI ArcSDE Raster reader
+ * Purpose:  Rasterband implementaion for ESRI ArcSDE Rasters
+ * Author:   Howard Butler, hobu@hobu.net
+ *
+ ******************************************************************************
+ * Copyright (c) 2007, Howard Butler <hobu@hobu.net>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+
 #include "sderasterband.h"
+
+
+/************************************************************************/
+/*  SDERasterBand implements a GDAL RasterBand for ArcSDE.  This class  */
+/*  carries around a pointer to SDE's internal band representation      */
+/*  is of type SE_RASBANDINFO*.  SDERasterBand provides the following   */
+/*  capabilities:                                                       */
+/*                                                                      */
+/*      -- Statistics support - uses SDE's internal band statistics     */
+/*      -- Colortable - translates SDE's internal colortable to GDAL's  */
+/*      -- Block reading through IReadBlock                             */
+/*      -- Overview support                                             */
+/*      -- NODATA support                                               */
+/*                                                                      */
+/*  Instantiating a SDERasterBand is rather expensive because of all    */
+/*  of the round trips to the database the SDE C API must make to       */
+/*  calculate band information.  This overhead hit is also taken in     */
+/*  the case of grabbing an overview, because information between       */
+/*  bands is not shared.  It might be possible in the future to do      */
+/*  do so, but it would likely make things rather complicated.          */
+/*  In particular, the stream, constraint, and queryinfo SDE objects    */
+/*  could be passed around from band to overview band without having    */
+/*  to be instantiated every time.  Stream creation has an especially   */
+/*  large overhead.                                                     */
+/*                                                                      */
+/*  Once the band or overview band is established, querying raster      */
+/*  blocks does not carry much more network overhead than that requied  */
+/*  to actually download the bytes.                                     */
+/*                                                                      */
+/*  Overview of internal methods:                                       */
+/*      -- InitializeBand - does most of the work of construction       */
+/*                          of the band and communication with SDE.     */
+/*                          Calls InitializeConstraint and              */
+/*                          IntializeQuery.                             */
+/*      -- InitializeQuery -    Initializes a SDE queryinfo object      */
+/*                              that contains information about which   */
+/*                              tables we are querying from.
+/*      -- InitializeConstraint -   Specifies block constraints (which  */
+/*                                  are initially set to none in        */
+/*                                  InitializeBand) as well as which    */
+/*                                  band for SDE to query from.         */
+/*      -- MorphESRIRasterType -    translates SDE's raster type to GDAL*/
+/*      -- ComputeColorTable -  does the work of getting and            */
+/*                              translating the SDE colortable to GDAL. */
+/*      -- ComputeSDEBandNumber -   returns the band # for SDE's        */
+/*                                  internal representation of the band.*/
+/*      -- QueryRaster -    Does the work of setting the constraint     */
+/*                          and preparing for querying tiles from SDE.  */
+/*                                                                      */
+/************************************************************************/
+
 
 /************************************************************************/
 /*                           SDERasterBand()                            */
@@ -10,20 +91,28 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
                                 const SE_RASBANDINFO* band )
 
 {
+    // Carry some of the data we were given at construction.  
+    // If we were passed -1 for an overview at construction, reset it 
+    // to 0 to ensure we get the zero'th level from SDE.
+    // The SE_RASBANDINFO* we were given is actually owned by the 
+    // dataset.  We want it around for convenience.
     this->poDS = poDS;
     this->nBand = nBand;
-    
+	if (nOverview == -1) this->nOverview = 0; else this->nOverview = nOverview;
     poBand = band;
-    eDataType = GetRasterDataType();
-    
-    nOverviews = 0;
-	if (nOverview == -1) nOverview = 0; else nOverview = nOverview;
 
+    
+    // Initialize our SDE opaque object pointers to NULL.
+    // The nOverviews private data member will be updated when 
+    // GetOverviewCount is called and subsequently returned immediately in 
+    // later calls if it has been set to anything other than 0.
 	hConstraint = NULL;
     hQuery = NULL;
     hStream = NULL;
-    InitializeBand(nOverview);
-    nBand = ComputeSDEBandNumber(band);
+    nOverviews = 0;
+
+    eDataType = GetRasterDataType();
+    InitializeBand(this->nOverview);
     
 }
 
@@ -60,6 +149,9 @@ GDALColorTable* SDERasterBand::GetColorTable(void)
 /************************************************************************/
 GDALColorInterp SDERasterBand::GetColorInterpretation()
 {
+    // Only return Paletted images when SDE has a colormap.  Otherwise,
+    // just return gray, even in the instance where we have 3 or 4 band, 
+    // imagery.  Let the client be smart instead of trying to do too much.
     if (SE_rasbandinfo_has_colormap(*poBand)) 
         return GCI_PaletteIndex;
     else
@@ -242,10 +334,11 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         return CE_Fatal;
     }   
     
-    CPLDebug ("SDERASTER", "nBlockXSize: %d nBlockYSize: %d "\
-                           "nBlockXOff: %d nBlockYOff: %d",
-                            nBlockXSize, nBlockYSize, 
-                            nBlockXOff, nBlockYOff);
+
+//    CPLDebug ("SDERASTER", "nBlockXSize: %d nBlockYSize: %d "\
+//                           "nBlockXOff: %d nBlockYOff: %d",
+//                            nBlockXSize, nBlockYSize, 
+//                            nBlockXOff, nBlockYOff);
                             
     nSDEErr = SE_stream_get_raster_tile(hStream, hTile);
     if( nSDEErr != SE_SUCCESS )
@@ -262,7 +355,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         return CE_Fatal;
     }     
     
-    CPLDebug("SDERASTER", "row: %d column: %d", row, column); 
+//    CPLDebug("SDERASTER", "row: %d column: %d", row, column); 
 
     long length;
     unsigned char* pixels;
@@ -272,7 +365,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         IssueSDEError( nSDEErr, "SE_rastileinfo_get_pixel_data" );
         return CE_Fatal;
     }           
-    CPLDebug("SDERASTER", "pixel data length: %d", length);
+//    CPLDebug("SDERASTER", "pixel data length: %d", length);
     
     memcpy( pImage, pixels, 
         nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
@@ -422,22 +515,6 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
 
 
 /************************************************************************/
-/*                           ComputeSDEBandNumber()                     */
-/************************************************************************/
-int SDERasterBand::ComputeSDEBandNumber( const SE_RASBANDINFO* band ) 
-{
-    long nSDEErr;
-    long pnBandNumber;
-    nSDEErr = SE_rasbandinfo_get_band_number (*band, &pnBandNumber);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_number" );
-        return 0;
-    }
-    return pnBandNumber;
-}
-
-/************************************************************************/
 /*                           InitializeBand()                           */
 /************************************************************************/
 CPLErr SDERasterBand::InitializeBand( int nOverview )
@@ -517,8 +594,7 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
         IssueSDEError( nSDEErr, "SE_rasterattr_get_image_size_by_level" );
         return CE_Fatal;
     }
-													 
-    CPLDebug("SDERASTER", "Tile Sizes: %d %d", nBlockXSize, nBlockYSize);
+
     nBlockSize = nBlockXSize * nBlockYSize;
 
     return CE_None;
