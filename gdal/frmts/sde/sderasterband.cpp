@@ -122,9 +122,13 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
 SDERasterBand::~SDERasterBand( void )
 
 {
-    SE_queryinfo_free(hQuery);
-    SE_stream_free(hStream);
-    SE_rasconstraint_free(hConstraint);
+    // clean up our SDE related stuff
+    if (hQuery)
+        SE_queryinfo_free(hQuery);
+    if (hStream)
+        SE_stream_free(hStream);
+    if (hConstraint)
+        SE_rasconstraint_free(hConstraint);
 }
 
 
@@ -134,7 +138,6 @@ SDERasterBand::~SDERasterBand( void )
 GDALColorTable* SDERasterBand::GetColorTable(void) 
 {
     
-
     if (SE_rasbandinfo_has_colormap(*poBand)) {
         GDALColorTable* poCT = ComputeColorTable();
         return poCT;
@@ -163,15 +166,19 @@ GDALColorInterp SDERasterBand::GetColorInterpretation()
 /************************************************************************/
 GDALRasterBand* SDERasterBand::GetOverview( int nOverview )
 {
+    // cast our Dataset and request a new band for the given overview.
 	SDEDataset *poGDS = (SDEDataset *) poDS;
     return new SDERasterBand(poGDS, nBand, nOverview, poBand);
     
-} 
+}
+
 /************************************************************************/
 /*                           GetOverviewCount()                         */
 /************************************************************************/
 int SDERasterBand::GetOverviewCount( void )
 {
+    // grab our existing overview count if we have already gotten it,
+    // otherwise request it from SDE and set our member data with it.
     long nSDEErr;
     BOOL bSkipLevel;
     
@@ -186,7 +193,6 @@ int SDERasterBand::GetOverviewCount( void )
 
     }
     
-    CPLDebug("SDERASTER", "We have %d overviews", nOverviews);
     return nOverviews;
     
 } 
@@ -196,6 +202,7 @@ int SDERasterBand::GetOverviewCount( void )
 /************************************************************************/
 GDALDataType SDERasterBand::GetRasterDataType(void) 
 {
+    // Always ask SDE what it thinks our type is.
     long nSDEErr;
     long nSDERasterType;
     
@@ -216,7 +223,8 @@ CPLErr SDERasterBand::GetStatistics( int bApproxOK, int bForce,
                                       double *pdfMin, double *pdfMax, 
                                       double *pdfMean, double *pdfStdDev ) 
 {
-
+    // if SDE hasn't already cached our statistics, we'll depend on the 
+    // GDALRasterBands's method for getting them.
     bool bHasStats;
     bHasStats = SE_rasbandinfo_has_stats (*poBand);
     if (!bHasStats) 
@@ -226,6 +234,12 @@ CPLErr SDERasterBand::GetStatistics( int bApproxOK, int bForce,
                                                     pdfMax,
                                                     pdfMean,
                                                     pdfStdDev);
+
+    // bForce has no effect currently.  We always go to SDE to get our 
+    // stats if SDE has them.
+    
+    // bApproxOK has no effect currently.  If we're getting stats from 
+    // SDE, we're hoping SDE calculates them in the way we want.
     long nSDEErr;
     nSDEErr = SE_rasbandinfo_get_stats_min(*poBand, pdfMin);
     if( nSDEErr != SE_SUCCESS )
@@ -269,7 +283,7 @@ double SDERasterBand::GetMinimum(int *pbSuccess)
                                   &dfMax, 
                                   &dfMean, 
                                   &dfStdDev );
-    if (error) {
+    if (error == CE_None)
         *pbSuccess = TRUE;
         return dfMin;
     }
@@ -289,7 +303,7 @@ double SDERasterBand::GetMaximum(int *pbSuccess)
                                   &dfMax, 
                                   &dfMean, 
                                   &dfStdDev );
-    if (error) {
+    if (error == CE_None)
         *pbSuccess = TRUE;
         return dfMax;
     }
@@ -306,8 +320,15 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
                                   void * pImage )
 
 {
+    // grab our Dataset to limit the casting we have to do.
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
+
+    // SDE manages the acquisition of raster data in "TileInfo" objects.  
+    // The hTile is the only heap-allocated object in this method, and 
+    // we should make sure to delete it at the end.  Once we get the 
+    // pixel data, we'll memcopy it back on to the pImage pointer.
+    
     SE_RASTILEINFO hTile;
     long nSDEErr;
     nSDEErr = SE_rastileinfo_create(&hTile);
@@ -333,13 +354,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
         return CE_Fatal;
     }   
-    
 
-//    CPLDebug ("SDERASTER", "nBlockXSize: %d nBlockYSize: %d "\
-//                           "nBlockXOff: %d nBlockYOff: %d",
-//                            nBlockXSize, nBlockYSize, 
-//                            nBlockXOff, nBlockYOff);
-                            
     nSDEErr = SE_stream_get_raster_tile(hStream, hTile);
     if( nSDEErr != SE_SUCCESS )
     {
@@ -354,8 +369,6 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         IssueSDEError( nSDEErr, "SE_rastileinfo_get_level" );
         return CE_Fatal;
     }     
-    
-//    CPLDebug("SDERASTER", "row: %d column: %d", row, column); 
 
     long length;
     unsigned char* pixels;
@@ -365,11 +378,10 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         IssueSDEError( nSDEErr, "SE_rastileinfo_get_pixel_data" );
         return CE_Fatal;
     }           
-//    CPLDebug("SDERASTER", "pixel data length: %d", length);
-    
+  
     memcpy( pImage, pixels, 
         nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
-    nSDEErr = SE_FINISHED;
+
 
     SE_rastileinfo_free (hTile);
 
