@@ -283,7 +283,7 @@ double SDERasterBand::GetMinimum(int *pbSuccess)
                                   &dfMax, 
                                   &dfMean, 
                                   &dfStdDev );
-    if (error == CE_None)
+    if (error == CE_None) {
         *pbSuccess = TRUE;
         return dfMin;
     }
@@ -303,7 +303,7 @@ double SDERasterBand::GetMaximum(int *pbSuccess)
                                   &dfMax, 
                                   &dfMean, 
                                   &dfStdDev );
-    if (error == CE_None)
+    if (error == CE_None) {
         *pbSuccess = TRUE;
         return dfMax;
     }
