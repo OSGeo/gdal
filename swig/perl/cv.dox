@@ -15,7 +15,7 @@ polygon will have four vertices. The SRS is explicitly set to WGS84.
 use Geo::GDAL;
 
 # information that we need:
-$dsname = "./";          # name of the datasource (in this case a directory)
+$dsname = ".";          # name of the datasource (in this case a directory)
 $lname = "boxes";        # name of the layer
 @data;                   # array which contains the data as hashref items,
                          # each item comprises items 'points' and 'key'
@@ -30,7 +30,7 @@ $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
 
 $layer = $datasource->CreateLayer($lname, $osr, $Geo::OGR::wkbPolygon);
-$column = new Geo::OSR::FieldDefn('key', $Geo::OGR::OFTInteger);
+$column = new Geo::OGR::FieldDefn('key', $Geo::OGR::OFTInteger);
 $layer->CreateField($column);
 
 $schema = $layer->GetLayerDefn();
