@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id: $
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software ASCII Grid Format.
@@ -1029,12 +1029,17 @@ CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
     if( eErr == CE_None )
 	return CE_None;
 
-    padfGeoTransform[0] = poGRB->dfMinX;
+    /* calculate pixel size first */
     padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
-    padfGeoTransform[2] = 0.0;
-    padfGeoTransform[3] = poGRB->dfMinY;
+    padfGeoTransform[5] = (poGRB->dfMinY - poGRB->dfMaxY)/(nRasterYSize - 1);
+
+    /* then calculate image origin */
+    padfGeoTransform[0] = poGRB->dfMinX - padfGeoTransform[1] / 2;
+    padfGeoTransform[3] = poGRB->dfMaxY - padfGeoTransform[5] / 2;
+
+    /* tilt/rotation does not supported by the GS grids */
     padfGeoTransform[4] = 0.0;
-    padfGeoTransform[5] = (poGRB->dfMaxY - poGRB->dfMinY)/(nRasterYSize - 1);
+    padfGeoTransform[2] = 0.0;
 
     return CE_None;
 }
@@ -1059,9 +1064,9 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
     CPLErr eErr = CE_None;
-    if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
+    /*if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
 	|| padfGeoTransform[1] < 0.0 || padfGeoTransform[5] < 0.0 )
-	eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );
+	eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );*/
 
     if( eErr != CE_None )
 	return eErr;
@@ -1071,10 +1076,12 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
     double dfOldMinY = poGRB->dfMinY;
     double dfOldMaxY = poGRB->dfMaxY;
 
-    poGRB->dfMinX = padfGeoTransform[0];
-    poGRB->dfMaxX = fabs(padfGeoTransform[1])*(nRasterXSize-1) + poGRB->dfMinX;
-    poGRB->dfMinY = padfGeoTransform[3];
-    poGRB->dfMaxY = fabs(padfGeoTransform[5])*(nRasterYSize-1) + poGRB->dfMinY;
+    poGRB->dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
+    poGRB->dfMaxX =
+        padfGeoTransform[1] * (nRasterXSize - 0.5) + padfGeoTransform[0];
+    poGRB->dfMinY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
+    poGRB->dfMaxY =
+        padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
 
     eErr = UpdateHeader();
 
@@ -1561,12 +1568,12 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 
     ssHeader << nXSize << " " << nYSize << "\x0D\x0A";
 
-    ssHeader << adfGeoTransform[0] << " "
-	     << fabs(adfGeoTransform[1])*(nXSize-1)+adfGeoTransform[0]
+    ssHeader << adfGeoTransform[0] + adfGeoTransform[1] / 2 << " "
+	     << adfGeoTransform[1] * (nXSize - 0.5) + adfGeoTransform[0]
 	     << "\x0D\x0A";
 
-    ssHeader << adfGeoTransform[3] << " "
-	     << fabs(adfGeoTransform[5])*(nYSize-1)+adfGeoTransform[3]
+    ssHeader << adfGeoTransform[5] * (nYSize - 0.5) + adfGeoTransform[3] << " "
+	     << adfGeoTransform[3] + adfGeoTransform[5] / 2
 	     << "\x0D\x0A";
 
     if( VSIFWriteL( (void *)ssHeader.str().c_str(), 1, ssHeader.str().length(),
@@ -1754,9 +1761,9 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 	CPLPushErrorHandler( CPLQuietErrorHandler );
 
     /* non-zero transform 2 or 4 or negative 1 or 5  not supported natively */
-    if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
+    /*if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
 	|| adfGeoTransform[1] < 0.0 || adfGeoTransform[5] < 0.0 )
-	poDstDS->GDALPamDataset::SetGeoTransform( adfGeoTransform );
+	poDstDS->GDALPamDataset::SetGeoTransform( adfGeoTransform );*/
 
     const char *szProjectionRef = poSrcDS->GetProjectionRef();
     if( *szProjectionRef != '\0' )
