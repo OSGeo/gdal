@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:$
+ * $Id: $
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software Binary Grid Format.
@@ -681,12 +681,17 @@ CPLErr GSBGDataset::GetGeoTransform( double *padfGeoTransform )
     if( eErr == CE_None )
 	return CE_None;
 
-    padfGeoTransform[0] = poGRB->dfMinX;
+    /* calculate pixel size first */
     padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
-    padfGeoTransform[2] = 0.0;
-    padfGeoTransform[3] = poGRB->dfMinY;
+    padfGeoTransform[5] = (poGRB->dfMinY - poGRB->dfMaxY)/(nRasterYSize - 1);
+
+    /* then calculate image origin */
+    padfGeoTransform[0] = poGRB->dfMinX - padfGeoTransform[1] / 2;
+    padfGeoTransform[3] = poGRB->dfMaxY - padfGeoTransform[5] / 2;
+
+    /* tilt/rotation does not supported by the GS grids */
     padfGeoTransform[4] = 0.0;
-    padfGeoTransform[5] = (poGRB->dfMaxY - poGRB->dfMinY)/(nRasterYSize - 1);
+    padfGeoTransform[2] = 0.0;
 
     return CE_None;
 }
@@ -711,17 +716,19 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
     CPLErr eErr = CE_None;
-    if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
+    /*if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
 	|| padfGeoTransform[1] < 0.0 || padfGeoTransform[5] < 0.0 )
 	eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );
 
     if( eErr != CE_None )
-	return eErr;
+	return eErr;*/
 
-    double dfMinX = padfGeoTransform[0];
-    double dfMaxX = fabs(padfGeoTransform[1])*(nRasterXSize-1) + dfMinX;
-    double dfMinY = padfGeoTransform[3];
-    double dfMaxY = fabs(padfGeoTransform[5])*(nRasterYSize-1) + dfMinY;
+    double dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
+    double dfMaxX =
+        padfGeoTransform[1] * (nRasterXSize - 0.5) + padfGeoTransform[0];
+    double dfMinY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
+    double dfMaxY =
+        padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
 
     eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
 			dfMinX, dfMaxX, dfMinY, dfMaxY,
@@ -977,10 +984,10 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    double dfMinX = adfGeoTransform[0];
-    double dfMaxX = fabs(adfGeoTransform[1])*(nXSize-1) + dfMinX;
-    double dfMinY = adfGeoTransform[3];
-    double dfMaxY = fabs(adfGeoTransform[5])*(nYSize-1) + dfMinY;
+    double dfMinX = adfGeoTransform[0] + adfGeoTransform[1] / 2;
+    double dfMaxX = adfGeoTransform[1] * (nXSize - 0.5) + adfGeoTransform[0];
+    double dfMinY = adfGeoTransform[5] * (nYSize - 0.5) + adfGeoTransform[3];
+    double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
     CPLErr eErr = WriteHeader( fp, nXSize, nYSize,
 			       dfMinX, dfMaxX, dfMinY, dfMaxY, 0.0, 0.0 );
 
@@ -1106,9 +1113,9 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 	CPLPushErrorHandler( CPLQuietErrorHandler );
 
     /* non-zero transform 2 or 4 or negative 1 or 5  not supported natively */
-    if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
+    /*if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
 	|| adfGeoTransform[1] < 0.0 || adfGeoTransform[5] < 0.0 )
-	poDstDS->GDALPamDataset::SetGeoTransform( adfGeoTransform );
+	poDstDS->GDALPamDataset::SetGeoTransform( adfGeoTransform );*/
 
     const char *szProjectionRef = poSrcDS->GetProjectionRef();
     if( *szProjectionRef != '\0' )
