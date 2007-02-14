@@ -1079,9 +1079,9 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
     poGRB->dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
     poGRB->dfMaxX =
         padfGeoTransform[1] * (nRasterXSize - 0.5) + padfGeoTransform[0];
-    poGRB->dfMinY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
-    poGRB->dfMaxY =
+    poGRB->dfMinY =
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
+    poGRB->dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
     eErr = UpdateHeader();
 

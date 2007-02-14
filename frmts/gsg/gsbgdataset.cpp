@@ -726,9 +726,9 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
     double dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
     double dfMaxX =
         padfGeoTransform[1] * (nRasterXSize - 0.5) + padfGeoTransform[0];
-    double dfMinY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
-    double dfMaxY =
+    double dfMinY =
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
+    double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
     eErr = WriteHeader( fp, poGRB->nRasterXSize, poGRB->nRasterYSize,
 			dfMinX, dfMaxX, dfMinY, dfMaxY,
