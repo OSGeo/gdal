@@ -3,7 +3,7 @@
 
 1) Update the release date, and number information in gcore/gdal_version.h.
 
-2) Update the VERSION file.
+2) Update the VERSION file. 
 
 3) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION. 
