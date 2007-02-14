@@ -328,7 +328,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     // The hTile is the only heap-allocated object in this method, and 
     // we should make sure to delete it at the end.  Once we get the 
     // pixel data, we'll memcopy it back on to the pImage pointer.
-    
+
     SE_RASTILEINFO hTile;
     long nSDEErr;
     nSDEErr = SE_rastileinfo_create(&hTile);
@@ -440,8 +440,8 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                     for (int i = 0; i < (nCMapEntries); i++) {
                         int j = i*3;
                         red = puszSDECMapData[j];
-                        blue = puszSDECMapData[j+1];
-                        green = puszSDECMapData[j+2];
+                        green = puszSDECMapData[j+1];
+                        blue = puszSDECMapData[j+2];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
                         sColor.c2 = green;
@@ -459,8 +459,8 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                     for (int i = 0; i < (nCMapEntries); i++) {
                         int j = i*4;
                         red = puszSDECMapData[j];
-                        blue = puszSDECMapData[j+1];
-                        green = puszSDECMapData[j+2];
+                        green = puszSDECMapData[j+1];
+                        blue = puszSDECMapData[j+2];
                         alpha = puszSDECMapData[j+3];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
@@ -483,8 +483,8 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                     for (int i = 0; i < (nCMapEntries); i++) {
                         int j = i*3;
                         red = pushSDECMapData[j];
-                        blue = pushSDECMapData[j+1];
-                        green = pushSDECMapData[j+2];
+                        green = pushSDECMapData[j+1];
+                        blue = pushSDECMapData[j+2];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
                         sColor.c2 = green;
@@ -502,8 +502,8 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                     for (int i = 0; i < (nCMapEntries); i++) {
                         int j = i*4;
                         red = pushSDECMapData[j];
-                        blue = pushSDECMapData[j+1];
-                        green = pushSDECMapData[j+2];
+                        green = pushSDECMapData[j+1];
+                        blue = pushSDECMapData[j+2];
                         alpha = pushSDECMapData[j+3];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
