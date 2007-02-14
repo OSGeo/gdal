@@ -185,7 +185,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-wm") && i < argc-1 )
         {
-            if( atof(argv[i+1]) < 4000 )
+            if( atof(argv[i+1]) < 10000 )
                 dfWarpMemoryLimit = atof(argv[i+1]) * 1024 * 1024;
             else
                 dfWarpMemoryLimit = atof(argv[i+1]);
