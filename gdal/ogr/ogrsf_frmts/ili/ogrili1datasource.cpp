@@ -230,7 +230,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 
 static char *ExtractTopic(const char * pszLayerName)
 {
-  char *table = strchr(pszLayerName, '_');
+  const char *table = strchr(pszLayerName, '_');
   while (table && table[1] !=  '_') table = strchr(table+1, '_');
   return (table) ? CPLScanString(pszLayerName, table-pszLayerName, FALSE, FALSE) : NULL;
 }
