@@ -809,20 +809,18 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                              int nPixelSpace,int nLineSpace )
 
 {
-    JP2KAKDataset *poODS = (JP2KAKDataset *) poDS;
-
 /* -------------------------------------------------------------------- */
 /*      We need various criteria to skip out to block based methods.    */
 /* -------------------------------------------------------------------- */
-    if( poODS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize, 
-                               nBufXSize, nBufYSize,
-                               eBufType, 1, &nBand ) )
+    if( poBaseDS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize, 
+                                  nBufXSize, nBufYSize,
+                                  eBufType, 1, &nBand ) )
         return GDALPamRasterBand::IRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             nPixelSpace, nLineSpace );
     else
-        return poODS->DirectRasterIO( 
+        return poBaseDS->DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             1, &nBand, nPixelSpace, nLineSpace, 0 );
