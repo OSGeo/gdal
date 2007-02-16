@@ -2230,6 +2230,18 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Don't even try to look for an .aux file if we don't have a      */
+/*      basename.  This occurs for directory based things, or "in       */
+/*      memory" datasets.  What we for sure want to avoid is trying     */
+/*      to open something named "aux" as this is a special device on    */
+/*      windows, and things will hang. (see bug 1493)                   */
+/* -------------------------------------------------------------------- */
+    CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
+
+    if( strlen(oJustFile) == 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*      We didn't find that, so try and find a corresponding aux        */
 /*      file.  Check that we are the dependent file of the aux          */
 /*      file, or if we aren't verify that the dependent file does       */
@@ -2237,18 +2249,23 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      has occured.                                                    */
 /* -------------------------------------------------------------------- */
     CPLString oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
-    CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
     FILE *fp;
 
     fp = VSIFOpenL( oAuxFilename, "rb" );
-    if ( fp == NULL )
+
+
+    if ( fp == NULL ) 
     {
         // Can't found file with lower case suffix. Try the upper case one.
+        // no point in doing this on Win32 with case insensitive filenames.
+#ifndef WIN32
         oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
         fp = VSIFOpenL( oAuxFilename, "rb" );
+#endif
     }
+
     if( fp != NULL )
     {
         VSIFReadL( abyHeader, 1, 32, fp );
