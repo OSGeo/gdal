@@ -31,6 +31,7 @@
 #include "sderasterband.h"
 
 
+
 /************************************************************************/
 /*  SDERasterBand implements a GDAL RasterBand for ArcSDE.  This class  */
 /*  carries around a pointer to SDE's internal band representation      */
