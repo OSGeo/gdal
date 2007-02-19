@@ -2230,25 +2230,38 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         return NULL;
 
 /* -------------------------------------------------------------------- */
+/*      Don't even try to look for an .aux file if we don't have a      */
+/*      path of any kind.                                               */
+/* -------------------------------------------------------------------- */
+    if( strlen(pszBasename) == 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*      We didn't find that, so try and find a corresponding aux        */
 /*      file.  Check that we are the dependent file of the aux          */
 /*      file, or if we aren't verify that the dependent file does       */
 /*      not exist, likely mean it is us but some sort of renaming       */
 /*      has occured.                                                    */
 /* -------------------------------------------------------------------- */
-    CPLString oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
+    CPLString oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
     FILE *fp;
 
     fp = VSIFOpenL( oAuxFilename, "rb" );
-    if ( fp == NULL )
+
+
+    if ( fp == NULL ) 
     {
         // Can't found file with lower case suffix. Try the upper case one.
+        // no point in doing this on Win32 with case insensitive filenames.
+#ifndef WIN32
         oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
         fp = VSIFOpenL( oAuxFilename, "rb" );
+#endif
     }
+
     if( fp != NULL )
     {
         VSIFReadL( abyHeader, 1, 32, fp );
@@ -2301,15 +2314,20 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     if( poODS == NULL )
     {
         oAuxFilename = pszBasename;
+        oAuxFilename += ".";
         oAuxFilename += pszAuxSuffixLC;
         fp = VSIFOpenL( oAuxFilename, "rb" );
+#ifndef WIN32
         if ( fp == NULL )
         {
             // Can't found file with lower case suffix. Try the upper case one.
             oAuxFilename = pszBasename;
+            oAuxFilename += ".";
             oAuxFilename += pszAuxSuffixUC;
             fp = VSIFOpenL( oAuxFilename, "rb" );
         }
+#endif
+
         if( fp != NULL )
         {
             VSIFReadL( abyHeader, 1, 32, fp );
