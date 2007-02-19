@@ -201,8 +201,12 @@ http://www.cl.cam.ac.uk/~mgk25/unicode.html</a>
 
 <a href="http://svn.easysw.com/public/fltk/fltk/trunk/src/utf.c">
 http://svn.easysw.com/public/fltk/fltk/trunk/src/utf.c</a>
+
 <a href="http://www.easysw.com/~mike/fltk/doc-2.0/html/utf_8h.html">
 http://www.easysw.com/~mike/fltk/doc-2.0/html/utf_8h.html</a>
+
+<li> <a href="http://bugzilla.remotesensing.org/show_bug.cgi?id=1494">Bug 
+1498</a>: UTF-8 encoding for GML output.
 
 </ul>
 
