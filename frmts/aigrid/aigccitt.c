@@ -5,7 +5,7 @@
  * Purpose:  Code for decoding CCITT RLE (G1) compressed data.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *           Code derived from libtiff (tif_fax3), which originally was
- *           derived from code by Fred Cringle in viewfax. 
+ *           derived from code by Frank Cringle in viewfax. 
  *
  ******************************************************************************
  * Copyright (c) 2002 Frank Warmerdam <warmerdam@pobox.com>
