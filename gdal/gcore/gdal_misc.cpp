@@ -2231,14 +2231,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 
 /* -------------------------------------------------------------------- */
 /*      Don't even try to look for an .aux file if we don't have a      */
-/*      basename.  This occurs for directory based things, or "in       */
-/*      memory" datasets.  What we for sure want to avoid is trying     */
-/*      to open something named "aux" as this is a special device on    */
-/*      windows, and things will hang. (see bug 1493)                   */
+/*      path of any kind.                                               */
 /* -------------------------------------------------------------------- */
-    CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
-
-    if( strlen(oJustFile) == 0 )
+    if( strlen(pszBasename) == 0 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2248,6 +2243,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      not exist, likely mean it is us but some sort of renaming       */
 /*      has occured.                                                    */
 /* -------------------------------------------------------------------- */
+    CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
     CPLString oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
@@ -2318,15 +2314,20 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     if( poODS == NULL )
     {
         oAuxFilename = pszBasename;
+        oAuxFilename += ".";
         oAuxFilename += pszAuxSuffixLC;
         fp = VSIFOpenL( oAuxFilename, "rb" );
+#ifndef WIN32
         if ( fp == NULL )
         {
             // Can't found file with lower case suffix. Try the upper case one.
             oAuxFilename = pszBasename;
+            oAuxFilename += ".";
             oAuxFilename += pszAuxSuffixUC;
             fp = VSIFOpenL( oAuxFilename, "rb" );
         }
+#endif
+
         if( fp != NULL )
         {
             VSIFReadL( abyHeader, 1, 32, fp );
