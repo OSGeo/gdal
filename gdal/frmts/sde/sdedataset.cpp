@@ -393,37 +393,37 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->ComputeRasterInfo();
 
     } else {
-//
-//      SE_RASCOLINFO* columns;
-//          nSDEErr = SE_rastercolumn_get_info_list(connection, 
-//                                                  &(poDS->paohSDERasterColumns), 
-//                                                  &(poDS->nSubDataCount));
-//        if( nSDEErr != SE_SUCCESS )
-//        {
-//            IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
-//            return FALSE;
-//        }
-//
-//        CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
-//                  poDS->nSubDataCount);
-//                  
-//
-//        for (int i = 0; i < poDS->nSubDataCount; i++) {
-//
-//              char         szTableName[SE_QUALIFIED_TABLE_NAME+1];
-//              char         szColumnName[SE_MAX_COLUMN_LEN+1];
-//            nSDEErr = SE_rascolinfo_get_raster_column (poDS->paohSDERasterColumns[i], 
-//                                                       szTableName, 
-//                                                       szColumnName); 
-//            CPLDebug("SDERASTER", "Layer '%s' with column '%s' found.", szTableName, szColumnName);
-//
-//            if( nSDEErr != SE_SUCCESS )
-//            {
-//                IssueSDEError( nSDEErr, "SE_rascolinfo_get_raster_column" );
-//                return FALSE;
-//            }
-//        }
-//
+
+      SE_RASCOLINFO* columns;
+          nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection, 
+                                                  &(poDS->paohSDERasterColumns), 
+                                                  &(poDS->nSubDataCount));
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
+            return FALSE;
+        }
+
+        CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
+                  poDS->nSubDataCount);
+                  
+
+        for (int i = 0; i < poDS->nSubDataCount; i++) {
+
+              char         szTableName[SE_QUALIFIED_TABLE_NAME+1];
+              char         szColumnName[SE_MAX_COLUMN_LEN+1];
+            nSDEErr = SE_rascolinfo_get_raster_column (poDS->paohSDERasterColumns[i], 
+                                                       szTableName, 
+                                                       szColumnName); 
+            CPLDebug("SDERASTER", "Layer '%s' with column '%s' found.", szTableName, szColumnName);
+
+            if( nSDEErr != SE_SUCCESS )
+            {
+                IssueSDEError( nSDEErr, "SE_rascolinfo_get_raster_column" );
+                return FALSE;
+            }
+        }
+
     return FALSE;
     }
     

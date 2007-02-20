@@ -72,6 +72,7 @@
 /*                                  InitializeBand) as well as which    */
 /*                                  band for SDE to query from.         */
 /*      -- MorphESRIRasterType -    translates SDE's raster type to GDAL*/
+/*      -- MorphESRIRasterDepth -   calculates the bit depth from SDE   */
 /*      -- ComputeColorTable -  does the work of getting and            */
 /*                              translating the SDE colortable to GDAL. */
 /*      -- ComputeSDEBandNumber -   returns the band # for SDE's        */
@@ -113,6 +114,9 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     nOverviews = 0;
 
     eDataType = GetRasterDataType();
+    
+    // nSDERasterType is set by GetRasterDataType
+    dfDepth = MorphESRIRasterDepth(nSDERasterType);
     InitializeBand(this->nOverview);
     
 }
@@ -205,7 +209,7 @@ GDALDataType SDERasterBand::GetRasterDataType(void)
 {
     // Always ask SDE what it thinks our type is.
     long nSDEErr;
-    long nSDERasterType;
+
     
     nSDEErr = SE_rasbandinfo_get_pixel_type(*poBand, &nSDERasterType);
     if( nSDEErr != SE_SUCCESS )
@@ -213,6 +217,7 @@ GDALDataType SDERasterBand::GetRasterDataType(void)
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_pixel_type" );
         return GDT_Byte;
     }
+
     return MorphESRIRasterType(nSDERasterType);
 }
 
@@ -379,10 +384,60 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         IssueSDEError( nSDEErr, "SE_rastileinfo_get_pixel_data" );
         return CE_Fatal;
     }           
-  
-    memcpy( pImage, pixels, 
-        nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
 
+    int nShift;
+    
+    // only round up widths for 1 and 4 bit data to byte boundaries
+    // height is untouched according to SDE docs.
+    if (dfDepth == 0.125 || dfDepth == 0.5) 
+        nShift = (nBlockXSize+7)/8*8;
+    else
+        nShift = nBlockXSize;
+
+    long nLengthWithBitmap, nLengthWithoutBitmap;        
+    nLengthWithBitmap = (nShift*nBlockYSize*dfDepth)+(nBlockXSize*nBlockYSize/8);
+    nLengthWithoutBitmap = (nShift*nBlockYSize*dfDepth);
+    bool bHaveBitmap;
+    
+    if (length == nLengthWithBitmap)
+        bHaveBitmap = true;
+    else if (length == nLengthWithoutBitmap)
+        bHaveBitmap = false;
+    else 
+        {
+
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Bit size calculation failed... "\
+                      "SDE's length:%d With bitmap length: %d Without bitmap length: %d", 
+                      length, nLengthWithBitmap, nLengthWithoutBitmap );
+            return CE_Fatal;
+        }
+
+    if (dfDepth == 0.125) // 1 bit
+        {
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            {
+                if( ((unsigned char*) pixels)[i>>3] & (0x80 >> (i&0x7)) )
+                    ((GByte*)pImage)[i] = 1;
+                else
+                    ((GByte*)pImage)[i] = 0;
+            }
+        }
+    else if (dfDepth == 0.5) // 4 bit
+        {
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+                {
+                    if( i % 2 == 0 )
+                        ((GByte*)pImage)[i] = ((*(((unsigned char*) pixels)) & 0xf0) >> 4);
+                    else
+                        ((GByte*)pImage)[i] = (*(((unsigned char*) pixels)++) & 0xf);
+                }
+         }
+    else 
+        {
+            memcpy( pImage, pixels, nLengthWithoutBitmap );
+        }
+        
 
     SE_rastileinfo_free (hTile);
 
@@ -641,6 +696,12 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff,
         {
             IssueSDEError( nSDEErr, "SE_rasconstraint_set_bands" );
         }
+        nSDEErr = SE_rasconstraint_set_interleave(hConstraint, SE_RASTER_INTERLEAVE_BSQ);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rasconstraint_set_interleave" );
+        }
+
     }
     
     if (nBlockXSize != -1 && nBlockYSize != -1) { // we aren't initialized yet
@@ -705,6 +766,39 @@ SE_QUERYINFO& SDERasterBand::InitializeQuery( void )
         IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
     }
     return hQuery;        
+}
+
+
+
+/************************************************************************/
+/*                             MorphESRIRasterDepth()                   */
+/************************************************************************/
+double SDERasterBand::MorphESRIRasterDepth(int gtype) {
+    
+    switch (gtype) {
+        case SE_PIXEL_TYPE_1BIT:
+            return 0.125;
+        case SE_PIXEL_TYPE_4BIT:
+            return 0.5;
+        case SE_PIXEL_TYPE_8BIT_U:
+            return 1.0;
+        case SE_PIXEL_TYPE_8BIT_S:
+            return 1.0;
+        case SE_PIXEL_TYPE_16BIT_U:
+            return 2.0;
+        case SE_PIXEL_TYPE_16BIT_S:
+            return 2.0;
+        case SE_PIXEL_TYPE_32BIT_U:
+            return 4.0;
+        case SE_PIXEL_TYPE_32BIT_S:
+            return 4.0;
+        case SE_PIXEL_TYPE_32BIT_REAL:
+            return 4.0;
+        case SE_PIXEL_TYPE_64BIT_REAL:
+            return 8.0;
+        default:
+            return 2.0;
+        }
 }
 
 /************************************************************************/
