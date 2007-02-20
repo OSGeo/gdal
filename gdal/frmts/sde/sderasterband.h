@@ -15,7 +15,8 @@ class SDERasterBand : public GDALRasterBand
     
     private:
         const SE_RASBANDINFO* poBand;
-        
+
+        double                  MorphESRIRasterDepth( int gtype );        
         GDALDataType            MorphESRIRasterType( int gtype );
         GDALColorTable*         ComputeColorTable( void );  
         CPLErr                  InitializeBand( int nOverview );
@@ -24,10 +25,13 @@ class SDERasterBand : public GDALRasterBand
                                                         long nBlockYOff);
         CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
         
+        
 		int						nOverview;
         int                     nOverviews;
         SE_STREAM               hStream;
         long                    nBlockSize;
+        double                  dfDepth;
+        long                    nSDERasterType;
         SE_QUERYINFO            hQuery;
         SE_RASCONSTRAINT        hConstraint;
         
