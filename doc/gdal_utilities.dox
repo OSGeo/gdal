@@ -464,7 +464,7 @@ gdalwarp
     [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
     [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
-    [-of format] [-co "NAME=VALUE"]* srcfile dstfile
+    [-of format] [-co "NAME=VALUE"]* srcfile* dstfile
 \endverbatim
 
 \if man
@@ -472,8 +472,8 @@ gdalwarp
 \endif
 
 <p>
-The gdalwarp utility is a simple image reprojection and warping
-utility. The program can reproject to any support projection,
+The gdalwarp utility is an image mosaicing, reprojection and warping
+utility. The program can reproject to any supported projection,
 and can also apply GCPs stored with the image if the image is "raw"
 with control information.
 
@@ -530,7 +530,7 @@ recorded in the output file.</dd>
  option to the output format driver. Multiple <b>-co</b> options may be
  listed. See format specific documentation for legal creation options
  for each format. </dd>
-<dt> <em>srcfile</em>:</dt><dd> The source file name. </dd>
+<dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
 </dl>
 
