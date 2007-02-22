@@ -53,7 +53,7 @@
 </p>
 <p>
     The ArcSDE raster driver should only consume a single ArcSDE connection 
-    throughout the livespan of the dataset.  Each connection to the database has 
+    throughout the lifespan of the dataset.  Each connection to the database has 
     an overhead of approximately 2 seconds, with additional overhead that is 
     taken for calculating dataset information.  Therefore, usage of the 
     driver in situations where there is a lot of opening and closing of 
@@ -76,7 +76,7 @@
 </pre>
 <p>
 <ul>
-    <li><b>SDE:</b> -- this is the prefix that tips of GDAL to use the SDE driver.</li>
+    <li><b>SDE:</b> -- this is the prefix that tips off GDAL to use the SDE driver.</li>
     <li><b>sdemachine.iastate.edu</b> -- the DNS name or IP address of the server we are connecting to.</li>
     <li><b>5151</b> -- the port number (5151 or port:5151) or service entry (typically <i>esri_sde</i>.</li>
     <li><b>database</b> -- the database to connect to.  This can also be blank and specified as ,,.  See below for some examples.</li>
