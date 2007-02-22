@@ -20,7 +20,7 @@
 		</jar>
 	</target>
 
-	<target name="clean" description="Cleans up old files.">
+	<target name="clean" description="Clean up old files.">
 		<delete dir="build"/>
 	</target>
 
