@@ -36,15 +36,15 @@
 </p>
 <ul>
     <li><b>Writing</b> GDAL datasets into the database.</li>
-    <li>RasterIO for large, fast reads from the database.</li>
+    <li>Large, fast, single-pass reads from the database.</li>
     <li>Reading from "ESRI ArcSDE Raster Catalogs."</li>
     <li>NODATA masks.</li>
 </ul>
 
 <h2>Performance considerations</h2>
 <p>
-    The ArcSDE raster driver currently only supports block read methods by utilizing 
-    GDAL's IReadBlock interface.  Each call to this method results in a request for a 
+    The ArcSDE raster driver currently only supports block read methods.  
+    Each call to this method results in a request for a 
     block of raster data for <b>each</b> band of data in the raster, and single-pass requests 
     for all of the bands for a block or given area is not currently done.  
     This approach consequently results in extra network overhead.  It is hoped 
@@ -79,154 +79,12 @@
     <li><b>SDE:</b> -- this is the prefix that tips off GDAL to use the SDE driver.</li>
     <li><b>sdemachine.iastate.edu</b> -- the DNS name or IP address of the server we are connecting to.</li>
     <li><b>5151</b> -- the port number (5151 or port:5151) or service entry (typically <i>esri_sde</i>.</li>
-    <li><b>database</b> -- the database to connect to.  This can also be blank and specified as ,,.  See below for some examples.</li>
+    <li><b>database</b> -- the database to connect to.  This can also be blank and specified as ,,. </li>
     <li><b>username</b> -- username.</li>
     <li><b>password</b> -- password.</li>
     <li><b>fully.specified.tablename</b> -- It is prudent to use a fully specified tablename wherever possible, although it is not absolutely required.</li>
 </ul>
-<p>
-    Describing information about an ArcSDE dataset with gdalinfo:
-</p>
-<pre>
->> gdalinfo SDE:sdemachine.iastate.edu,5151,,username,password,sde_master.geoservwrite.colormap
 
-Driver: SDE/ESRI ArcSDE
-Size is 32, 32
-Coordinate System is `'
-Origin = (-0.500000000000000,0.500000000000000)
-Pixel Size = (1.000000000000000,-1.000000000000000)
-Corner Coordinates:
-Upper Left  (  -0.5000000,   0.5000000)
-Lower Left  (  -0.5000000, -31.5000000)
-Upper Right (  31.5000000,   0.5000000)
-Lower Right (  31.5000000, -31.5000000)
-Center      (  15.5000000, -15.5000000)
-Band 1 Block=128x128 Type=Byte, ColorInterp=Palette
-  Min=1.000 Max=1.000
-  Minimum=1.000, Maximum=1.000, Mean=1.000, StdDev=0.000
-  Overviews: 32x32
-  Color Table (RGB with 2 entries)
-    0: 0,0,128,255
-    1: 0,0,255,255
-
->> gdalinfo SDE:sdemachine.iastate.edu,5151,,username,password,sde_master.geoservwrite.century
-Driver: SDE/ESRI ArcSDE
-Size is 828, 602
-Coordinate System is:
-GEOGCS["GCS_WGS_1984",
-    DATUM["WGS_1984",
-        SPHEROID["WGS_1984",6378137.0,298.257223563]],
-    PRIMEM["Greenwich",0.0],
-    UNIT["Degree",0.0174532925199433]]
-Origin = (28.178192394861057,-25.829505501313879)
-Pixel Size = (0.000039564534573,-0.000039564534573)
-Corner Coordinates:
-Upper Left  (  28.1781924, -25.8295055) ( 28d10'41.49"E, 25d49'46.22"S)
-Lower Left  (  28.1781924, -25.8533234) ( 28d10'41.49"E, 25d51'11.96"S)
-Upper Right (  28.2109518, -25.8295055) ( 28d12'39.43"E, 25d49'46.22"S)
-Lower Right (  28.2109518, -25.8533234) ( 28d12'39.43"E, 25d51'11.96"S)
-Center      (  28.1945721, -25.8414144) ( 28d11'40.46"E, 25d50'29.09"S)
-Band 1 Block=128x128 Type=Byte, ColorInterp=Gray
-  Min=0.000 Max=255.000
-  Minimum=0.000, Maximum=255.000, Mean=107.179, StdDev=38.868
-  Overviews: 828x602, 414x301, 207x151, 104x76
-Band 2 Block=128x128 Type=Byte, ColorInterp=Gray
-  Min=0.000 Max=255.000
-  Minimum=0.000, Maximum=255.000, Mean=100.702, StdDev=36.725
-  Overviews: 828x602, 414x301, 207x151, 104x76
-Band 3 Block=128x128 Type=Byte, ColorInterp=Gray
-  Min=0.000 Max=255.000
-  Minimum=0.000, Maximum=255.000, Mean=100.927, StdDev=35.801
-  Overviews: 828x602, 414x301, 207x151, 104x76
-Band 4 Block=128x128 Type=Byte, ColorInterp=Gray
-  Min=0.000 Max=255.000
-  Minimum=0.000, Maximum=255.000, Mean=249.128, StdDev=38.249
-  Overviews: 828x602, 414x301, 207x151, 104x76
-</pre>
-<p>
-    gdal_translate of an ArcSDE raster into a GeoTiff:
-</p>
-<pre>
->> gdal_translate -of GTiff SDE:sdemachine.iastate.edu,5151,,username,password,sde_master.geoservwrite.century output.tif
-Input file size is 828, 602
-0...10...20...30...40...50...60...70...80...90...100 - done.
-</pre>
-
-<h2>Compilation of SDE support on Linux</h2>
-<p>
-    GDAL supports the incorporation of ArcSDE support via 
-    direct linkage of the gdal.so to ArcSDE SDK .so's.  Specify at configure 
-    to tell GDAL to use SDE:
-</p>
-<pre>
-./configure --with-sde=/usr/local/sdesdk/sdeexe91 --with-sde-version=91 
-./configure --with-sde=/usr/local/sdesdk/sdeexe92 --with-sde-version=92 
-</p>
-<p> 
-    One important consideration of the use of the driver on linux is the 
-    fact that the ArcSDE SDK embeds a copy of zlib that can conflict with 
-    the system zlib that GDAL will pick up as part of linking to other 
-    libraries.  It is important to ensure that the SDE .so's are linked 
-    <b>first</b> so this version of the library is used.  The GDAL makefiles 
-    should be updated to reflect this fact, but if you are seeing segfaults 
-    when translating or reading data, this issue is likely the culprit.  See
-    <a href="http://forums.esri.com/Thread.asp?c=2&f=1718&t=212867&mc=3">this link</a> 
-    for specific information about the issue.
-</p>
-
-<h2>Compilation of SDE support in Windows with MSVC</h2>
-
-<p>
-    GDAL supports the incorporation of ArcSDE support via two 
-    methods in Windows with MSVC -- embedding into the gdal.dll 
-    and its use via a plugin.  
-</p>
-
-<h3>Embedding SDE support</h3>
-<p>
-    To embed it directly into the DLL, ensure that the 
-    following parameters are set in nmake.opt:
-</p>
-
-<pre>
-SDE_ENABLED = YES # turn on support
-SDE_VERSION = 91
-#SDE_PLUGIN = YES
-SDE_SDK = C:\arcgis\arcsde # base directory of SDE includes and libraries
-SDE_INC = $(SDE_SDK)\include  # includes directory
-SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
-          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib 
-</pre>
-
-<h3>Plugin support</h3>
-<p>
-    To build SDE as a plugin, build GDAL as you normally would without enabling 
-    any of the SDE-specific options in nmake.opt.  After you have a gdal.dll, 
-    go back and edit nmake.opt to the following:
-</p>
-<pre>
-SDE_ENABLED = YES # turn on support
-SDE_VERSION = 91
-SDE_PLUGIN = YES
-SDE_SDK = C:\arcgis\arcsde # base directory of SDE includes and libraries
-SDE_INC = $(SDE_SDK)\include  # includes directory
-SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
-          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib 
-</pre>
-<p>
-    After editing nmake.opt, cd into frmts/sde using your MSVC 
-    terminal and issue the make command: 
-</p>
-<pre>
-nmake /f makefile.vc plugin
-</pre>
-<p>
-    This will build gdal_SDE.dll and link it against your gdal.dll and the SDE SDK 
-    client DLLs.  After you have your gdal_SDE.dll, copy it into your 
-    GDAL_DRIVER_PATH folder that you have set with an environment variable and 
-    your next gdalinfo or gdal_translate (or other GDAL calls) should be able to 
-    see the driver when it goes through the driver registration process.
-</p>
 
 
 
