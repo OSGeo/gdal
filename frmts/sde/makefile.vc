@@ -1,6 +1,6 @@
 
 EXTRAFLAGS = 	-I$(SDE_INC) \
-		/D_MBCS /DWIN32 /D_WIN32 -DFRMT_sde 
+		/D_MBCS /DWIN32 /D_WIN32  
 
 OBJ	=	sdedataset.obj sderasterband.obj sdeerror.obj
 
@@ -16,11 +16,11 @@ all:	default
 clean:
 	-del *.obj
 	-del *.exe
+	-del *.pdb
+	-del *.dll
 
-#testecw.exe:	testecw.cpp
-#	$(CC) /Zi /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
+plugin: gdal_SDE.dll
 
-#ecw_example1.exe:	ecw_example1.c
-#	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
-	
-
+gdal_SDE.dll:	$(OBJ)
+	link /dll /out:gdal_SDE.dll $(OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib  $(SDE_LIB)
