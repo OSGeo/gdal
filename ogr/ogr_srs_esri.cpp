@@ -1199,13 +1199,18 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*      Split Lambert_Conformal_Conic into 1SP or 2SP form.             */
 /*                                                                      */
 /*      See bugzilla.remotesensing.org/show_bug.cgi?id=187              */
+/*                                                                      */
+/*      We decide based on whether it has 2SPs.  We used to assume      */
+/*      1SP if it had a scale factor but that turned out to be a        */
+/*      poor test.                                                      */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = GetAttrValue("PROJECTION");
     
     if( pszProjection != NULL
         && EQUAL(pszProjection,"Lambert_Conformal_Conic") )
     {
-        if( GetProjParm( "Scale_Factor", 2.0 ) == 2.0 )
+        if( GetProjParm( SRS_PP_STANDARD_PARALLEL_1, 1000.0 ) != 1000.0 
+            && GetProjParm( SRS_PP_STANDARD_PARALLEL_2, 1000.0 ) != 1000.0 )
             SetNode( "PROJCS|PROJECTION", 
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP );
         else
