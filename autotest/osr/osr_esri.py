@@ -169,12 +169,32 @@ def osr_esri_5():
     
     return 'success'
 
+###############################################################################
+# Verify Lambert 2SP with a 1.0 scale factor still gets translated to 2SP
+# per bug 187. 
+
+def osr_esri_6():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'PROJCS["Texas Centric Mapping System/Lambert Conformal",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",1500000.0],PARAMETER["False_Northing",5000000.0],PARAMETER["Central_Meridian",-100.0],PARAMETER["Standard_Parallel_1",27.5],PARAMETER["Standard_Parallel_2",35.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",18.0],UNIT["Meter",1.0]]' )
+
+    srs.MorphFromESRI()
+    
+    if srs.GetAttrValue( 'PROJECTION' ) != 'Lambert_Conformal_Conic_2SP':
+        gdaltest.post_reason( \
+            'Got wrong PROJECTION name (%s) after ESRI morph, expected 2SP' %\
+            srs.GetAttrValue( 'PROJECTION' ) )
+        return 'fail'
+    
+    return 'success'
+
 gdaltest_list = [ 
     osr_esri_1,
     osr_esri_2,
     osr_esri_3,
     osr_esri_4,
     osr_esri_5,
+    osr_esri_6,
     None ]
 
 if __name__ == '__main__':
