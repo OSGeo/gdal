@@ -1205,7 +1205,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
     if( pszProjection != NULL
         && EQUAL(pszProjection,"Lambert_Conformal_Conic") )
     {
-        if( GetProjParm( "Scale_Factor", 2.0 ) == 2.0 )
+        if( GetProjParm( SRS_PP_STANDARD_PARALLEL_1, 1000.0 ) != 1000.0 
+            && GetProjParm( SRS_PP_STANDARD_PARALLEL_2, 1000.0 ) != 1000.0 )
             SetNode( "PROJCS|PROJECTION", 
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP );
         else
