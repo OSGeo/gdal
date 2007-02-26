@@ -39,6 +39,7 @@
 #include "ogr_spatialref.h"
 #include "gdal.h"
 #include "xtiffio.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -1566,14 +1567,14 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
-    const static char *pszFilename = "/vsimem/wkt_from_mem_buf.tif";
+    char        szFilename[100];
 
-//    GTiffOneTimeInit();
+    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%d.tif", CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFileFromMemBuffer( pszFilename, pabyBuffer, nSize, FALSE );
+    FILE *fp = VSIFileFromMemBuffer( szFilename, pabyBuffer, nSize, FALSE );
     if( fp == NULL )
         return CE_Failure;
     VSIFCloseL( fp );
@@ -1581,7 +1582,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
-    hTIFF = VSI_TIFFOpen( pszFilename, "r" );
+    hTIFF = VSI_TIFFOpen( szFilename, "r" );
 
     if( hTIFF == NULL )
     {
@@ -1673,7 +1674,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
 
-    VSIUnlink( pszFilename );
+    VSIUnlink( szFilename );
 
     if( *ppszWKT == NULL )
         return CE_Failure;
@@ -1692,14 +1693,14 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 {
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
-    const static char *pszFilename = "/vsimem/wkt_from_mem_buf.tif";
+    char        szFilename[100];
 
-//    GTiffOneTimeInit();
+    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%d.tif", CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
-    hTIFF = VSI_TIFFOpen( pszFilename, "w" );
+    hTIFF = VSI_TIFFOpen( szFilename, "w" );
 
     if( hTIFF == NULL )
     {
@@ -1818,7 +1819,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
     GUIntBig nBigLength;
 
-    *ppabyBuffer = VSIGetMemFileBuffer( pszFilename, &nBigLength, TRUE );
+    *ppabyBuffer = VSIGetMemFileBuffer( szFilename, &nBigLength, TRUE );
     *pnSize = (int) nBigLength;
 
     return CE_None;
