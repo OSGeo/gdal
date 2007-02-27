@@ -248,16 +248,12 @@ PanoramaGetEllipsoidInfo( int nCode, char ** ppszName,
 
 OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
                               long iProjSys, long iDatum, long iEllips,
-                              long iZone,
-                              double dfStdP1, double dfStdP2,
-                              double dfCenterLat, double dfCenterLong )
+                              long iZone, double *padfPrjParams )
 
 {
     return ((OGRSpatialReference *) hSRS)->importFromPanorama( iProjSys, iDatum,
                                                                iEllips, iZone,
-                                                               dfStdP1, dfStdP2,
-                                                               dfCenterLat,
-                                                               dfCenterLong );
+                                                               padfPrjParams );
 }
 
 /************************************************************************/
@@ -291,26 +287,14 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *
  * @param iDatum Input coordinate system.
  *
- * @param iEllips Input spheroid.
- * 
- * @param iZone Input zone for UTM projection system.
- *
- * @param dfStdP1 Latitude of the first standard parallel (radians).
- *
- * @param dfStdP2 Latitude of the second standard parallel (radians).
- *
- * @param dfCenterLat Latitude of center of projection (radians).
- *
- * @param dfCenterLong Longitude of center of projection (radians).
- *
- * @param iDatum Output spheroid.<p>
- *
  *      <h4>Supported Datums</h4>
  * <pre>
  *       1: Pulkovo, 1942
  *       2: WGS, 1984
  * </pre>
  *
+ * @param iEllips Input spheroid.
+ * 
  *      <h4>Supported Spheroids</h4>
  * <pre>
  *       1: Krassovsky, 1940
@@ -324,16 +308,46 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *       9: WGS, 1984 (GPS)
  * </pre>
  *
+ * @param iZone Input zone for UTM projection system.
+ *
+ * @param padfPrjParams Array of 6 coordinate system parameters:
+ *
+ * [0]  Latitude of the first standard parallel (radians)
+ * [1]  Latitude of the second standard parallel (radians)
+ * [2]  Latitude of center of projection (radians)
+ * [3]  Longitude of center of projection (radians)
+ * [4]  False Easting
+ * [5]  False Northing
+ *
+ * Particular projection uses different parameters, unused ones may be set to
+ * zero. If NULL suppliet instead of array pointer default values will be used
+ * (i.e., zeroes).
+ *
  * @return OGRERR_NONE on success or an error code in case of failure. 
  */
 
 OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                                                 long iEllips, long iZone,
-                                                double dfStdP1, double dfStdP2,
-                                                double dfCenterLat,
-                                                double dfCenterLong )
+                                                double *padfPrjParams )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Use safe defaults if projection parameters are not supplied.    */
+/* -------------------------------------------------------------------- */
+    int     bProjAllocated = FALSE;
+
+    if( padfPrjParams == NULL )
+    {
+        int     i;
+
+        padfPrjParams = (double *)CPLMalloc( 6 * sizeof(double) );
+        if ( !padfPrjParams )
+            return OGRERR_NOT_ENOUGH_MEMORY;
+        for ( i = 0; i < 6; i++ )
+            padfPrjParams[i] = 0.0;
+        bProjAllocated = TRUE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection code.                    */
 /* -------------------------------------------------------------------- */
@@ -350,54 +364,64 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             break;
 
         case MERCAT:
-            SetMercator( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                         1.0, 0.0, 0.0 );
+            SetMercator( TO_DEGREES * padfPrjParams[2],
+                         TO_DEGREES * padfPrjParams[3], 1.0,
+                         padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case PS:
-            SetPS( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                   1.0, 0.0, 0.0 );
+            SetPS( TO_DEGREES * padfPrjParams[2],
+                   TO_DEGREES * padfPrjParams[3], 1.0,
+                   padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case POLYC:
-            SetPolyconic( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                          0.0, 0.0 );
+            SetPolyconic( TO_DEGREES * padfPrjParams[2],
+                          TO_DEGREES * padfPrjParams[3],
+                          padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case EC:
-            SetEC( TO_DEGREES * dfStdP1, TO_DEGREES * dfStdP2,
-                   TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                   0.0, 0.0 );
+            SetEC( TO_DEGREES * padfPrjParams[0],
+                   TO_DEGREES * padfPrjParams[1],
+                   TO_DEGREES * padfPrjParams[2],
+                   TO_DEGREES * padfPrjParams[3],
+                   padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case TM:
-            SetTM( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                   1.0, 0.0, 0.0 );
+            SetTM( TO_DEGREES * padfPrjParams[2],
+                   TO_DEGREES * padfPrjParams[3],
+                   1.0, padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case STEREO:
-            SetStereographic( TO_DEGREES * dfCenterLat,
-                              TO_DEGREES * dfCenterLong,
-                              1.0, 0.0, 0.0 );
+            SetStereographic( TO_DEGREES * padfPrjParams[2],
+                              TO_DEGREES * padfPrjParams[3],
+                              1.0, padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case LAEA:
-            SetLAEA( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                     0.0, 0.0 );
+            SetLAEA( TO_DEGREES * padfPrjParams[2],
+                     TO_DEGREES * padfPrjParams[3],
+                     padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case AE:
-            SetAE( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                   0.0, 0.0 );
+            SetAE( TO_DEGREES * padfPrjParams[2],
+                   TO_DEGREES * padfPrjParams[3],
+                   padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case GNOMON:
-            SetGnomonic( TO_DEGREES * dfCenterLat, TO_DEGREES * dfCenterLong,
-                         0.0, 0.0 );
+            SetGnomonic( TO_DEGREES * padfPrjParams[2],
+                         TO_DEGREES * padfPrjParams[3],
+                         padfPrjParams[4], padfPrjParams[5] );
             break;
 
         case MOLL:
-            SetMollweide( TO_DEGREES * dfCenterLong, 0.0, 0.0 );
+            SetMollweide( TO_DEGREES * padfPrjParams[3],
+                          padfPrjParams[4], padfPrjParams[5] );
             break;
 
         default:
@@ -471,6 +495,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
     FixupOrdering();
 
+    if ( bProjAllocated && padfPrjParams )
+        CPLFree( padfPrjParams );
+
     return OGRERR_NONE;
 }
 
@@ -480,17 +507,13 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
 OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
                             long *piProjSys, long *piDatum, long *piEllips,
-                            long *piZone,
-                            double *pdfStdP1, double *pdfStdP2,
-                            double *pdfCenterLat, double *pdfCenterLong )
+                            long *piZone, double **ppadfPrjParams )
 
 {
     return ((OGRSpatialReference *) hSRS)->exportToPanorama( piProjSys,
                                                              piDatum, piEllips,
                                                              piZone,
-                                                             pdfStdP1, pdfStdP2,
-                                                             pdfCenterLat,
-                                                             pdfCenterLong );
+                                                             ppadfPrjParams );
 }
 
 /************************************************************************/
@@ -501,6 +524,8 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
  * Export coordinate system in "Panorama" GIS projection definition.
  *
  * This method is the equivalent of the C function OSRExportToPanorama().
+ * The ppadfPrjParams array should be deallocated by the caller with
+ * CPLFree() when no longer needed.
  *
  * @param piProjSys Pointer to variable, where the projection system code will
  * be returned.
@@ -514,27 +539,16 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
  * @param piZone Pointer to variable, where the zone for UTM projection
  * system will be returned.
  *
- * @param pdfStdP1 Pointer to variable, where the latitude of the first
- * standard parallel will be returned (radians).
- *
- * @param pdfStdP2 Pointer to variable, where the latitude of the second
- * standard parallel will be returned (radians).
- *
- * @param pdfCenterLat Pointer to variable, where the latitude of center
- * of projection will be returned (radians).
- *
- * @param pdfCenterLong Pointer to variable, where the longitude of center
- * of projection will be returned (radians).
- *
+ * @param ppadfPrjParams pointer to which dynamically allocated array of
+ * 6 projection parameters will be assigned. See importFromPanorama()
+ * for the list of parameters. Caller responsible to free this array.
+ * 
  * @return OGRERR_NONE on success or an error code on failure. 
  */
 
 OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                                               long *piEllips, long *piZone,
-                                              double *pdfStdP1,
-                                              double *pdfStdP2,
-                                              double *pdfCenterLat,
-                                              double *pdfCenterLong ) const
+                                              double **ppadfPrjParams ) const
 
 {
     const char  *pszProjection = GetAttrValue("PROJECTION");
@@ -542,10 +556,14 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
 /* -------------------------------------------------------------------- */
+    int     i;
+
     *piDatum = 0L;
     *piEllips = 0L;
     *piZone = 0L;
-    *pdfStdP1 = *pdfStdP2 = *pdfCenterLat = *pdfCenterLong = 0.0;
+    *ppadfPrjParams = (double *)CPLMalloc( 6 * sizeof(double) );
+    for ( i = 0; i < 6; i++ )
+        (*ppadfPrjParams)[i] = 0.0;
 
 /* ==================================================================== */
 /*      Handle the projection definition.                               */
@@ -565,40 +583,40 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
     {
         *piProjSys = MERCAT;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
     {
         *piProjSys = PS;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_POLYCONIC) )
     {
         *piProjSys = POLYC;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC) )
     {
         *piProjSys = EC;
-        *pdfStdP1 =
+        (*ppadfPrjParams)[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
-        *pdfStdP2 = 
+        (*ppadfPrjParams)[1] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 );
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
@@ -617,9 +635,9 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         else
         {
             *piProjSys = TM;
-            *pdfCenterLong =
+            (*ppadfPrjParams)[3] =
                 TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-            *pdfCenterLat = 
+            (*ppadfPrjParams)[2] = 
                 TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
         }
     }
@@ -627,43 +645,43 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     else if( EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC) )
     {
         *piProjSys = STEREO;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         *piProjSys = LAEA;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
         *piProjSys = AE;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_GNOMONIC) )
     {
         *piProjSys = GNOMON;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
-        *pdfCenterLat = 
+        (*ppadfPrjParams)[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
     }
 
     else if( EQUAL(pszProjection, SRS_PT_MOLLWEIDE) )
     {
         *piProjSys = MOLL;
-        *pdfCenterLong =
+        (*ppadfPrjParams)[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
     }
 
