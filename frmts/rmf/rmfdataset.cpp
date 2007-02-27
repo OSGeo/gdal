@@ -736,10 +736,19 @@ CPLErr RMFDataset::WriteHeader()
 
         if ( oSRS.importFromWkt( &pszProj ) == OGRERR_NONE )
         {
-            oSRS.exportToPanorama((long *)&sHeader.iProjection,
-                                  &iDatum, &iEllips, &iZone,
-                                  &sHeader.dfStdP1, &sHeader.dfStdP2,
-                                  &sHeader.dfCenterLat, &sHeader.dfCenterLong);
+            double  *padfPrjParams = NULL;
+
+            oSRS.exportToPanorama( (long *)&sHeader.iProjection, &iDatum,
+                                   &iEllips, &iZone, &padfPrjParams );
+            if ( padfPrjParams )
+            {
+                sHeader.dfStdP1 = padfPrjParams[0];
+                sHeader.dfStdP2 = padfPrjParams[1];
+                sHeader.dfCenterLat = padfPrjParams[2];
+                sHeader.dfCenterLong = padfPrjParams[3];
+
+                CPLFree( padfPrjParams );
+            }
         }
     }
 
@@ -1123,13 +1132,18 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         OGRSpatialReference oSRS;
         GInt32  nProj =
             (poDS->sHeader.iProjection) ? poDS->sHeader.iProjection : 1L;
+        double  padfPrjParams[6];
+
+        padfPrjParams[0] = poDS->sHeader.dfStdP1;
+        padfPrjParams[1] = poDS->sHeader.dfStdP2;
+        padfPrjParams[2] = poDS->sHeader.dfCenterLat;
+        padfPrjParams[3] = poDS->sHeader.dfCenterLong;
+        padfPrjParams[4] = 0.0;
+        padfPrjParams[5] = 0.0;
 
         // XXX: Ellipsoid and datum are not specified in RMF file, but they
         // are always Krassovsky/Pulkovo, 1942.
-        oSRS.importFromPanorama( nProj, 1, 1, 0,
-                                 poDS->sHeader.dfStdP1, poDS->sHeader.dfStdP2,
-                                 poDS->sHeader.dfCenterLat,
-                                 poDS->sHeader.dfCenterLong );
+        oSRS.importFromPanorama( nProj, 1, 1, 0, padfPrjParams );
         if ( poDS->pszProjection )
             CPLFree( poDS->pszProjection );
         oSRS.exportToWkt( &poDS->pszProjection );
