@@ -849,8 +849,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                                              iRank, "x" );
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-                                         CPLSPrintf( "[%s] %s (%s)", pszString,
+                                         CPLSPrintf( "[%s] %s %s (%s)", pszString,
                                          papszFields[j],
+                                         papszSwaths[i],
                                          poDS->GetDataTypeName(iNumType) ) );
                     CPLFree( pszString );
                 }
@@ -949,8 +950,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                                              iRank, "x" );
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
-                                         CPLSPrintf("[%s] %s (%s)", pszString,
+                                         CPLSPrintf("[%s] %s %s (%s)", pszString,
                                              papszFields[j],
+                                             papszGrids[i],
                                              poDS->GetDataTypeName(iNumType)) );
                     CPLFree( pszString );
                 }
