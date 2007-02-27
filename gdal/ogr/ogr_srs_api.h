@@ -250,7 +250,7 @@ OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *, 
                                   const char * );
 OGRErr OSRImportFromPanorama( OGRSpatialReferenceH, long, long, long, long,
-                              double, double, double, double );
+                              double * );
 
 OGRErr CPL_DLL CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
@@ -261,7 +261,7 @@ OGRErr CPL_DLL OSRExportToUSGS( OGRSpatialReferenceH, long *, long *,
                                 double **, long * );
 OGRErr CPL_DLL OSRExportToXML( OGRSpatialReferenceH, char **, const char * );
 OGRErr OSRExportToPanorama( OGRSpatialReferenceH, long *, long *, long *,
-                            long *, double *, double *, double *, double * );
+                            long *, double ** );
 
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
