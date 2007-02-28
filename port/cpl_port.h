@@ -379,7 +379,7 @@ char * strdup (char *instr);
                                                             
 
 /* Until we have a safe 64 bits integer data type defined, we'll replace
-m * this version of the CPL_SWAP64() macro with a less efficient one.
+ * this version of the CPL_SWAP64() macro with a less efficient one.
  */
 /*
 #define CPL_SWAP64(x) \
