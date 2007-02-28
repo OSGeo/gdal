@@ -1138,8 +1138,9 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         padfPrjParams[1] = poDS->sHeader.dfStdP2;
         padfPrjParams[2] = poDS->sHeader.dfCenterLat;
         padfPrjParams[3] = poDS->sHeader.dfCenterLong;
-        padfPrjParams[4] = 0.0;
-        padfPrjParams[5] = 0.0;
+        padfPrjParams[4] = 0.9996;
+        padfPrjParams[5] = 500000.0;
+        padfPrjParams[6] = 0.0;
 
         // XXX: Ellipsoid and datum are not specified in RMF file, but they
         // are always Krassovsky/Pulkovo, 1942.
