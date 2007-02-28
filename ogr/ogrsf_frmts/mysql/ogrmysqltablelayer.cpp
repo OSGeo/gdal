@@ -1062,3 +1062,88 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
     return nCount;
 }
 
+/************************************************************************/
+/*                          GetExtent()					*/
+/*                                                                      */
+/*      Retrieve the MBR of the MySQL table.  This should be made more  */
+/*      in the future when MySQL adds support for a single MBR query    */
+/*      like PostgreSQL.						*/
+/************************************************************************/
+
+OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
+
+{
+	if( GetLayerDefn()->GetGeomType() == wkbNone )
+    {
+        psExtent->MinX = 0.0;
+        psExtent->MaxX = 0.0;
+        psExtent->MinY = 0.0;
+        psExtent->MaxY = 0.0;
+        
+        return OGRERR_FAILURE;
+    }
+
+	OGREnvelope oEnv;
+	CPLString   osCommand;
+	GBool       bExtentSet = FALSE;
+
+	osCommand.Printf( "SELECT Envelope(%s) FROM %s;", pszGeomColumn, pszGeomColumnTable);
+
+	if (mysql_query(poDS->GetConn(), osCommand) == 0)
+	{
+		MYSQL_RES* result = mysql_use_result(poDS->GetConn());
+		if ( result == NULL )
+        {
+            poDS->ReportError( "mysql_use_result() failed on extents query." );
+            return OGRERR_FAILURE;
+        }
+
+		MYSQL_ROW row; 
+		unsigned long *panLengths = NULL;
+		while ((row = mysql_fetch_row(result)))
+		{
+			if (panLengths == NULL)
+			{
+				panLengths = mysql_fetch_lengths( result );
+				if ( panLengths == NULL )
+				{
+					poDS->ReportError( "mysql_fetch_lengths() failed on extents query." );
+					return OGRERR_FAILURE;
+				}
+			}
+
+			OGRGeometry *poGeometry = NULL;
+			// Geometry columns will have the first 4 bytes contain the SRID.
+			OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4, 
+											  NULL,
+											  &poGeometry,
+											  panLengths[0] - 4 );
+
+			if ( poGeometry != NULL )
+			{
+				if (poGeometry && !bExtentSet)
+				{
+					poGeometry->getEnvelope(psExtent);
+					bExtentSet = TRUE;
+				}
+				else if (poGeometry)
+				{
+					poGeometry->getEnvelope(&oEnv);
+					if (oEnv.MinX < psExtent->MinX) 
+						psExtent->MinX = oEnv.MinX;
+					if (oEnv.MinY < psExtent->MinY) 
+						psExtent->MinY = oEnv.MinY;
+					if (oEnv.MaxX > psExtent->MaxX) 
+						psExtent->MaxX = oEnv.MaxX;
+					if (oEnv.MaxY > psExtent->MaxY) 
+						psExtent->MaxY = oEnv.MaxY;
+				}
+				delete poGeometry;
+			}
+		}
+
+		mysql_free_result(result);      
+	}
+
+	return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+}
