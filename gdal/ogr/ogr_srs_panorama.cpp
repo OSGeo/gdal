@@ -310,14 +310,15 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *
  * @param iZone Input zone for UTM projection system.
  *
- * @param padfPrjParams Array of 6 coordinate system parameters:
+ * @param padfPrjParams Array of 7 coordinate system parameters:
  *
  * [0]  Latitude of the first standard parallel (radians)
  * [1]  Latitude of the second standard parallel (radians)
  * [2]  Latitude of center of projection (radians)
  * [3]  Longitude of center of projection (radians)
- * [4]  False Easting
- * [5]  False Northing
+ * [4]  Scaling factor
+ * [5]  False Easting
+ * [6]  False Northing
  *
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If NULL suppliet instead of array pointer default values will be used
@@ -340,10 +341,10 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
     {
         int     i;
 
-        padfPrjParams = (double *)CPLMalloc( 6 * sizeof(double) );
+        padfPrjParams = (double *)CPLMalloc( 7 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( i = 0; i < 6; i++ )
+        for ( i = 0; i < 7; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = TRUE;
     }
@@ -365,20 +366,22 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         case MERCAT:
             SetMercator( TO_DEGREES * padfPrjParams[2],
-                         TO_DEGREES * padfPrjParams[3], 1.0,
-                         padfPrjParams[4], padfPrjParams[5] );
+                         TO_DEGREES * padfPrjParams[3],
+                         padfPrjParams[4],
+                         padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case PS:
             SetPS( TO_DEGREES * padfPrjParams[2],
-                   TO_DEGREES * padfPrjParams[3], 1.0,
-                   padfPrjParams[4], padfPrjParams[5] );
+                   TO_DEGREES * padfPrjParams[3],
+                   padfPrjParams[4],
+                   padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case POLYC:
             SetPolyconic( TO_DEGREES * padfPrjParams[2],
                           TO_DEGREES * padfPrjParams[3],
-                          padfPrjParams[4], padfPrjParams[5] );
+                          padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case EC:
@@ -386,42 +389,44 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                    TO_DEGREES * padfPrjParams[1],
                    TO_DEGREES * padfPrjParams[2],
                    TO_DEGREES * padfPrjParams[3],
-                   padfPrjParams[4], padfPrjParams[5] );
+                   padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case TM:
             SetTM( TO_DEGREES * padfPrjParams[2],
                    TO_DEGREES * padfPrjParams[3],
-                   1.0, padfPrjParams[4], padfPrjParams[5] );
+                   padfPrjParams[5],
+                   padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case STEREO:
             SetStereographic( TO_DEGREES * padfPrjParams[2],
                               TO_DEGREES * padfPrjParams[3],
-                              1.0, padfPrjParams[4], padfPrjParams[5] );
+                              padfPrjParams[5],
+                              padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case LAEA:
             SetLAEA( TO_DEGREES * padfPrjParams[2],
                      TO_DEGREES * padfPrjParams[3],
-                     padfPrjParams[4], padfPrjParams[5] );
+                     padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case AE:
             SetAE( TO_DEGREES * padfPrjParams[2],
                    TO_DEGREES * padfPrjParams[3],
-                   padfPrjParams[4], padfPrjParams[5] );
+                   padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case GNOMON:
             SetGnomonic( TO_DEGREES * padfPrjParams[2],
                          TO_DEGREES * padfPrjParams[3],
-                         padfPrjParams[4], padfPrjParams[5] );
+                         padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case MOLL:
             SetMollweide( TO_DEGREES * padfPrjParams[3],
-                          padfPrjParams[4], padfPrjParams[5] );
+                          padfPrjParams[5], padfPrjParams[6] );
             break;
 
         default:
@@ -540,7 +545,7 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
  * system will be returned.
  *
  * @param ppadfPrjParams pointer to which dynamically allocated array of
- * 6 projection parameters will be assigned. See importFromPanorama()
+ * 7 projection parameters will be assigned. See importFromPanorama()
  * for the list of parameters. Caller responsible to free this array.
  * 
  * @return OGRERR_NONE on success or an error code on failure. 
@@ -561,8 +566,8 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     *piDatum = 0L;
     *piEllips = 0L;
     *piZone = 0L;
-    *ppadfPrjParams = (double *)CPLMalloc( 6 * sizeof(double) );
-    for ( i = 0; i < 6; i++ )
+    *ppadfPrjParams = (double *)CPLMalloc( 7 * sizeof(double) );
+    for ( i = 0; i < 7; i++ )
         (*ppadfPrjParams)[i] = 0.0;
 
 /* ==================================================================== */
