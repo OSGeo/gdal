@@ -146,6 +146,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                                 { bPreservePrecision = bFlag; }    
 
     virtual int         TestCapability( const char * );
+	virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 };
 
 /************************************************************************/
