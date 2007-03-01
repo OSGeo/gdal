@@ -129,12 +129,12 @@ CPLErr MEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nPixelOffset == nWordSize )
     {
         memcpy( pImage, 
-                pabyData+nLineOffset*nBlockYOff, 
+                pabyData + nLineOffset*(size_t)nBlockYOff, 
                 nPixelOffset * nBlockXSize );
     }
     else
     {
-        GByte *pabyCur = pabyData + nLineOffset*nBlockYOff;
+        GByte *pabyCur = pabyData + nLineOffset * (size_t)nBlockYOff;
 
         for( int iPixel = 0; iPixel < nBlockXSize; iPixel++ )
         {
@@ -160,13 +160,13 @@ CPLErr MEMRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( nPixelOffset == nWordSize )
     {
-        memcpy( pabyData+nLineOffset*nBlockYOff, 
+        memcpy( pabyData+nLineOffset*(size_t)nBlockYOff, 
                 pImage, 
                 nPixelOffset * nBlockXSize );
     }
     else
     {
-        GByte *pabyCur = pabyData + nLineOffset*nBlockYOff;
+        GByte *pabyCur = pabyData + nLineOffset*(size_t)nBlockYOff;
 
         for( int iPixel = 0; iPixel < nBlockXSize; iPixel++ )
         {
@@ -568,7 +568,8 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char *pszOption;
     GDALDataType eType;
-    int nBands, nPixelOffset, nLineOffset, nBandOffset;
+    int nBands, nPixelOffset, nLineOffset;
+    size_t nBandOffset;
     const char *pszDataPointer;
     GByte *pabyData;
 
@@ -625,7 +626,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszOption = CSLFetchNameValue(papszOptions,"BANDOFFSET");
     if( pszOption == NULL )
-        nBandOffset = nLineOffset * poDS->nRasterYSize;
+        nBandOffset = nLineOffset * (size_t) poDS->nRasterYSize;
     else
         nBandOffset = atoi(pszOption);
 
