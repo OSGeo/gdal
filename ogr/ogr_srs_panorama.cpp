@@ -62,7 +62,7 @@ CPL_CVSID("$Id$");
 static long aoDatums[] =
 {
     0,
-    4284,   // Pulkovo, 1942
+    4178,   // Pulkovo, 1942(83)
     4326    // WGS, 1984
 };
 
