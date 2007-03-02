@@ -95,8 +95,6 @@ class PNGDataset : public GDALPamDataset
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
 
-    int		bHaveNoData;
-    double 	dfNoDataValue;
 
     void        CollectMetadata();
     CPLErr      LoadScanline( int );
@@ -133,7 +131,11 @@ class PNGRasterBand : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    CPLErr SetNoDataValue( double dfNewValue );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
+
+    int		bHaveNoData;
+    double 	dfNoDataValue;
 };
 
 
@@ -154,6 +156,9 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDS, int nBand )
 
     nBlockXSize = poDS->nRasterXSize;;
     nBlockYSize = 1;
+
+    bHaveNoData = FALSE;
+    dfNoDataValue = -1;
 }
 
 /************************************************************************/
@@ -266,19 +271,30 @@ GDALColorTable *PNGRasterBand::GetColorTable()
 }
 
 /************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr PNGRasterBand::SetNoDataValue( double dfNewValue )
+
+{
+   bHaveNoData = TRUE;
+   dfNoDataValue = dfNewValue;
+      
+   return CE_None;
+}
+
+/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double PNGRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    PNGDataset *poPDS = (PNGDataset *) poDS;
-
-    if( poPDS->bHaveNoData )
+    if( bHaveNoData )
     {
         if( pbSuccess != NULL )
-            *pbSuccess = poPDS->bHaveNoData;
-        return poPDS->dfNoDataValue;
+            *pbSuccess = bHaveNoData;
+        return dfNoDataValue;
     }
     else
     {
@@ -315,9 +331,6 @@ PNGDataset::PNGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    bHaveNoData = FALSE;
-    dfNoDataValue = -1;
 }
 
 /************************************************************************/
@@ -735,8 +748,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         */
         if( nNoDataIndex > -1 )
         {
-            poDS->bHaveNoData = TRUE;
-            poDS->dfNoDataValue = nNoDataIndex;
+            poDS->GetRasterBand(1)->SetNoDataValue(nNoDataIndex);
         }
     }
 
@@ -753,8 +765,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
                           &trans, &num_trans, &trans_values ) != 0 
             && trans_values != NULL )
         {
-            poDS->bHaveNoData = TRUE;
-            poDS->dfNoDataValue = trans_values->gray;
+            poDS->GetRasterBand(1)->SetNoDataValue(trans_values->gray);
         }
     }
 
@@ -774,10 +785,14 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLString oNDValue;
 
             oNDValue.Printf( "%d %d %d", 
-                             trans_values->red, 
-                             trans_values->green, 
-                             trans_values->blue );
+                    trans_values->red, 
+                    trans_values->green, 
+                    trans_values->blue );
             poDS->SetMetadataItem( "NODATA_VALUES", oNDValue.c_str() );
+
+            poDS->GetRasterBand(1)->SetNoDataValue(trans_values->red);
+            poDS->GetRasterBand(2)->SetNoDataValue(trans_values->green);
+            poDS->GetRasterBand(3)->SetNoDataValue(trans_values->blue);
         }
     }
 
@@ -915,37 +930,66 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      paletted images, we save the effect to apply as part of         */
 /*      palette).                                                       */
 /* -------------------------------------------------------------------- */
-    int		bHaveNoData = FALSE;
-    double	dfNoDataValue = -1;
     png_color_16 sTRNSColor;
 
-    dfNoDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
-
-    if( (nColorType == PNG_COLOR_TYPE_GRAY )
-        && dfNoDataValue > 0 && dfNoDataValue < 65536 )
+    // Gray nodata.
+    if( nColorType == PNG_COLOR_TYPE_GRAY )
     {
-        sTRNSColor.gray = (png_uint_16) dfNoDataValue;
-        png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+       int		bHaveNoData = FALSE;
+       double	dfNoDataValue = -1;
+
+       dfNoDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+
+       if ( dfNoDataValue > 0 && dfNoDataValue < 65536 )
+       {
+          sTRNSColor.gray = (png_uint_16) dfNoDataValue;
+          png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+       }
     }
 
-    // RGB case.
-    if( nColorType == PNG_COLOR_TYPE_RGB 
-        && poSrcDS->GetMetadataItem( "NODATA_VALUES" ) != NULL )
+    // RGB nodata.
+    if( nColorType == PNG_COLOR_TYPE_RGB )
     {
-        char **papszValues = CSLTokenizeString(
-            poSrcDS->GetMetadataItem( "NODATA_VALUES" ) );
-        
-        if( CSLCount(papszValues) >= 3 )
-        {
-            sTRNSColor.red   = (png_uint_16) atoi(papszValues[0]);
-            sTRNSColor.green = (png_uint_16) atoi(papszValues[1]);
-            sTRNSColor.blue  = (png_uint_16) atoi(papszValues[2]);
-            png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
-        }
+       // First try to use the NODATA_VALUES metadata item.
+       if ( poSrcDS->GetMetadataItem( "NODATA_VALUES" ) != NULL )
+       {
+           char **papszValues = CSLTokenizeString(
+               poSrcDS->GetMetadataItem( "NODATA_VALUES" ) );
+           
+           if( CSLCount(papszValues) >= 3 )
+           {
+               sTRNSColor.red   = (png_uint_16) atoi(papszValues[0]);
+               sTRNSColor.green = (png_uint_16) atoi(papszValues[1]);
+               sTRNSColor.blue  = (png_uint_16) atoi(papszValues[2]);
+               png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+           }
 
-        CSLDestroy( papszValues );
+           CSLDestroy( papszValues );
+       }
+       // Otherwise, get the nodata value from the bands.
+       else
+       {
+          int	  bHaveNoData = FALSE;
+          double dfNoDataValueRed = -1;
+          double dfNoDataValueGreen = -1;
+          double dfNoDataValueBlue = -1;
+
+          dfNoDataValueRed  = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+          dfNoDataValueGreen= poSrcDS->GetRasterBand(2)->GetNoDataValue( &bHaveNoData );
+          dfNoDataValueBlue = poSrcDS->GetRasterBand(3)->GetNoDataValue( &bHaveNoData );
+
+          if ( ( dfNoDataValueRed > 0 && dfNoDataValueRed < 65536 ) &&
+             ( dfNoDataValueGreen > 0 && dfNoDataValueGreen < 65536 ) &&
+             ( dfNoDataValueBlue > 0 && dfNoDataValueBlue < 65536 ) )
+          {
+             sTRNSColor.red   = (png_uint_16) dfNoDataValueRed;
+             sTRNSColor.green = (png_uint_16) dfNoDataValueGreen;
+             sTRNSColor.blue  = (png_uint_16) dfNoDataValueBlue;
+             png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+          }
+       }
     }
-
+    
 /* -------------------------------------------------------------------- */
 /*      Write palette if there is one.  Technically, I think it is      */
 /*      possible to write 16bit palettes for PNG, but we will omit      */
@@ -959,7 +1003,11 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALColorTable	*poCT;
         GDALColorEntry  sEntry;
         int		iColor, bFoundTrans = FALSE;
+        int		bHaveNoData = FALSE;
+        double	dfNoDataValue = -1;
 
+        dfNoDataValue  = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+        
         poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
 
         pasPNGColors = (png_color *) CPLMalloc(sizeof(png_color) *
@@ -985,7 +1033,6 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
         if( bFoundTrans || bHaveNoData )
         {
-
             pabyAlpha = (unsigned char *)CPLMalloc(poCT->GetColorEntryCount());
 
             for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
