@@ -35,7 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-#define CURSOR_PAGE     1
+#define CURSOR_PAGE     500
 
 // These originally are defined in libpq-fs.h.
 
@@ -551,7 +551,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         && bCursorActive )
     {
         PQclear( hCursorResult );
-
+        
         osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
         hCursorResult = PQexec(hPGConn, osCommand );
 
