@@ -55,8 +55,7 @@ the possible geometry types.
 The console program SFCDUMP is intended to be an example of how to use
 the client api (as well as being a useful debugging tool in it's own
 right).  The full source should be available in 
-<a href="http://gdal.velocet.ca/projects/opengis/src/sfcdump.cpp">
-gdal/ogr/sfcdump.cpp</a>.<p>
+<a href="http://svn.osgeo.org/gdal/trunk/gdal/ogr/sfcdump.cpp" title="sfcdump.cpp linked directly from GDAL SVN">gdal/ogr/sfcdump.cpp</a>.<p>
 
 
 \subsection sfc_tutorial_enum SFCEnumerator: Finding a Provider
@@ -286,5 +285,11 @@ Items to add:
 <li> Rewrite error handling when error handling semantics worked out.<p>
 <li> Rewrite table selection when table selection semantics are available.<p>
 </ol>
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
 
 */
