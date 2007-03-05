@@ -215,9 +215,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     if( hResult )
         PQclear( hResult );
 
-    hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
-    PQclear( hResult );
-
     // find out postgis version.
     sPostGISVersion.nMajor = -1;
     sPostGISVersion.nMinor = -1;
@@ -279,9 +276,25 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             }
 
             CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s",
-                      PQgetvalue(hResult,0,0));
+                    PQgetvalue(hResult,0,0) );
         }
         PQclear(hResult);
+
+
+        if (sPostGISVersion.nMajor == 0 && sPostGISVersion.nMinor < 8)
+        {
+            // Turning off sequential scans for PostGIS < 0.8
+            hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
+            
+            CPLDebug( "OGR_PG", "SET ENABLE_SEQSCAN=OFF" );
+        }
+        else
+        {
+            // PostGIS >=0.8 is correctly integrated with query planner,
+            // thus PostgreSQL will use indexes whenever appropriate.
+            hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = ON");
+        }
+        PQclear( hResult );
     }
 
     hResult = PQexec(hPGConn, "COMMIT");
