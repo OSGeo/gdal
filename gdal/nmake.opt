@@ -1,4 +1,4 @@
-
+#
 # Location to install .exe, .dll and python stuff
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
