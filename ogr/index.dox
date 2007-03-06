@@ -1,6 +1,7 @@
 /*! \mainpage OGR Simple Feature Library
 
-The OGR Simple Features Library is a C++ open source library (and commandline 
+The OGR Simple Features Library is a C++ 
+<a href="http://www.opensource.org/">open source</a> library (and commandline 
 tools) providing read (and sometimes write) access to a variety of vector file 
 formats including ESRI Shapefiles, S-57, SDTS, PostGIS, Oracle Spatial, 
 and Mapinfo mid/mif and TAB formats.<p>
@@ -104,8 +105,8 @@ sample script is one demonstration of using the python API.<p>
 <h2>OGR and OpenGIS Simple Features for OLE DB</h2>
 
 With the support of <a href="http://www.softmaptech.com/">SoftMap</a> and
-<a href="http://www.safe.com/">Safe Software</a> some
-associates and I have implemented an OLE DB provider on top of OGR, attempting
+<a href="http://www.safe.com/">Safe Software</a> an OLE DB provider on top 
+of OGR has been implemented, attempting
 to adhere to the OpenGIS Simple Features for COM specification to the
 extent possible.  This implementation is not certified as compliant with 
 the OpenGIS specification.<p>
@@ -124,48 +125,5 @@ reference implementation of the spec the name was changed to "OGR Simple
 Features Library" ... and the only meaning of OGR in this name is
 historical.  "OGR" is also the prefix used everywhere in the source of
 the library for class names, filenames, etc.<p>
-
-<h2>Acknowledgements</h2>
-
-I would like to thank the following individuals and organizations for their
-contributions.<p>
-
-<ul>
-
-<li> <a href="http://www.softmaptech.com/">SoftMap</a> for their funding for
-the implementation of most work so far.<P>
-
-<li> <a href="http://www.safe.com/">Safe Software</a> for their funding for
-the client side classes as part of implementing a simple features reader
-for FME, and supporting implmentaton of the S-57, TIGER/Line, SDTS and NTF 
-drivers.<p>
-
-<li> Ned Harding of <a href="http://www.extendthereach.com/">SRC</a> for
-funding the Oracle Spatial driver.<p>
-
-<li> Adam Gawne-Cain, and Martin Daly of
-<a href="http://www.cadcorp.co.uk">Cadcorp</a>
-whose groundbreaking SFCOM implementation made mine possible, and
-for answering so many of my annoying questions.<p>
-
-<li> <a href="http://pages.infinit.net/danmo/">Daniel Morissette</a> for 
-his key contributions to CPL library, and development of the Mapinfo TAB
-translator.<p>
-
-<li> Ken Shih for the vast bulk of the implementation of the OLE DB provider.
-<p>
-
-<li> Stephane Villeneuve for development of the Mapinfo MIF translator.<p>
-
-<li> Hartmut Kaiser of Deutsche PhoneSat AG for making me realize that
-ATL can be my friend.<p>
-
-</ul>
-
-\htmlonly
-<p>
-$Id$
-</p>
-\endhtmlonly
 
 */
