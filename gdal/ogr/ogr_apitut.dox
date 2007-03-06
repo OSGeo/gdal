@@ -170,7 +170,7 @@ int main()
     poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
     if( poDS == NULL )
     {
-	printf( "Open failed.\n%s" );
+	printf( "Open failed.\n" );
 	exit( 1 );
     }
 
