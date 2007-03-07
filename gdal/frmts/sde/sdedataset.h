@@ -29,7 +29,7 @@ class SDEDataset : public GDALDataset
         ~SDEDataset();
         
         static GDALDataset *Open( GDALOpenInfo * );
-
+ 
 
     protected:        
 
