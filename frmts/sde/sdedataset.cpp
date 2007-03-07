@@ -152,7 +152,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     
 
     
-    SE_rasterinfo_free(raster);
+   // SE_rasterinfo_free(raster);
 
 
     return CE_None;
@@ -271,23 +271,23 @@ SDEDataset::~SDEDataset()
 
 {
 
-    if (paohSDERasterBands)
-        SE_rasterband_free_info_list(nBands, paohSDERasterBands);
-
-    if (hRasterColumn)
-        SE_rascolinfo_free(hRasterColumn);
-    
-    if (hConnection)
-        SE_connection_free(hConnection);
-    
-    if (hStream)
-        SE_stream_free(hStream);
-        
-    if (hAttributes)
-        SE_rasterattr_free(hAttributes);
-
-    if (pszWKT)
-        CPLFree(pszWKT);
+//    if (paohSDERasterBands)
+//        SE_rasterband_free_info_list(nBands, paohSDERasterBands);
+//
+//    if (hRasterColumn)
+//        SE_rascolinfo_free(hRasterColumn);
+//    
+//    if (hConnection)
+//        SE_connection_free(hConnection);
+//    
+//    if (hStream)
+//        SE_stream_free(hStream);
+//        
+//    if (hAttributes)
+//        SE_rasterattr_free(hAttributes);
+//
+//    if (pszWKT)
+//        CPLFree(pszWKT);
 }
 
 
