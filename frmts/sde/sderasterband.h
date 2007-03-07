@@ -21,8 +21,8 @@ class SDERasterBand : public GDALRasterBand
         GDALColorTable*         ComputeColorTable( void );  
         CPLErr                  InitializeBand( int nOverview );
         SE_QUERYINFO&           InitializeQuery( void ); 
-        SE_RASCONSTRAINT&       InitializeConstraint (  long nBlockXOff,
-                                                        long nBlockYOff);
+        SE_RASCONSTRAINT&       InitializeConstraint (  long* nBlockXOff,
+                                                        long* nBlockYOff);
         CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
         
         
