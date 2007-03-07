@@ -170,6 +170,8 @@ int OGRSDEDataSource::Open( const char * pszNewName )
     {
         EnumerateSpatialTables();
     }
+
+    CSLDestroy( papszTokens );
  
     return nLayers > 0;
 }
