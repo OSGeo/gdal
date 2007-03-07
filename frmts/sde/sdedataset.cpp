@@ -134,7 +134,12 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     
     // Grab the pointer for our member variable
 
-
+    nSDEErr = SE_stream_create(hConnection, &hStream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_create" );
+        return CE_Fatal;
+    }
 
     
     for (int i=0; i < nBands; i++) {
@@ -242,6 +247,7 @@ SDEDataset::SDEDataset(  )
     pszColumnName       = NULL;
     paohSDERasterColumns  = NULL;
     paohSDERasterBands  = NULL;
+    hStream             = NULL;
     hRasterColumn       = NULL;
     nBands              = 0;
     nRasterXSize        = 0;
@@ -274,6 +280,9 @@ SDEDataset::~SDEDataset()
     if (hConnection)
         SE_connection_free(hConnection);
     
+    if (hStream)
+        SE_stream_free(hStream);
+        
     if (hAttributes)
         SE_rasterattr_free(hAttributes);
 
@@ -391,6 +400,8 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             return FALSE;
         }
         poDS->ComputeRasterInfo();
+
+
 
     } else {
 
