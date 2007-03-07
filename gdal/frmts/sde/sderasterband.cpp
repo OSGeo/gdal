@@ -100,9 +100,8 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     // dataset.  We want it around for convenience.
     this->poDS = poDS;
     this->nBand = nBand;
-	 this->nOverview = nOverview;
+	this->nOverview = nOverview;
     poBand = band;
-//if (nOverview == -1) this->nOverview = 0; else
     
     // Initialize our SDE opaque object pointers to NULL.
     // The nOverviews private data member will be updated when 
@@ -110,18 +109,24 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     // later calls if it has been set to anything other than 0.
 	hConstraint = NULL;
     hQuery = NULL;
-    nOverviews = GetOverviewCount();
-
-    if (nOverviews != -1)
-        papoOverviews = (GDALRasterBand**)  CPLMalloc( nOverviews * sizeof(GDALRasterBand*) );
+    
+    if (this->nOverview == -1 || this->nOverview == 0)
+        this->nOverviews = GetOverviewCount();
     else
-        papoOverviews = NULL;
-    eDataType = GetRasterDataType();
+        this->nOverviews = 0;
+
+    if (nOverview == -1) {
+        this->papoOverviews = (GDALRasterBand**)  CPLMalloc( nOverviews * sizeof(GDALRasterBand*) );
+    }
+    else {
+        this->papoOverviews = NULL;
+    }
+    this->eDataType = GetRasterDataType();
     
     // nSDERasterType is set by GetRasterDataType
-    dfDepth = MorphESRIRasterDepth(nSDERasterType);
+    this->dfDepth = MorphESRIRasterDepth(nSDERasterType);
     InitializeBand(this->nOverview);
-    CPLDebug("SDERASTER","Initializing rasterband with overview=%d", this->nOverview);
+
     
 }
 
@@ -131,20 +136,22 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
 SDERasterBand::~SDERasterBand( void )
 
 {
-    // clean up our SDE related stuff
-    CPLDebug ("SDERASTER", "Calling ~SDERasterBand()...");
-
     // grab our Dataset to limit the casting we have to do.
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
+    // clean up our SDE related stuff
     SE_stream_close(poGDS->hStream, 1);
-        if (hQuery)
-            SE_queryinfo_free(hQuery);
 
-            
-        if (hConstraint)
-            SE_rasconstraint_free(hConstraint);
+    if (hQuery)
+        SE_queryinfo_free(hQuery);
 
+    if (hConstraint)
+        SE_rasconstraint_free(hConstraint);
+
+    if (papoOverviews)
+        for (int i=0; i < nOverviews; i++)
+            CPLFree(papoOverviews[i]);
+        CPLFree(papoOverviews);
 }
 
 
@@ -180,20 +187,15 @@ GDALColorInterp SDERasterBand::GetColorInterpretation()
 /************************************************************************/
 /*                           GetOverview()                              */
 /************************************************************************/
-GDALRasterBand* SDERasterBand::GetOverview( int nOverview )
+GDALRasterBand* SDERasterBand::GetOverview( int nOverviewValue )
 {
-    CPLDebug("SDERASTER","Calling get overview for band %d, noverview %d, numoverviews: %d", nBand, nOverview, nOverviews);
+
     if (papoOverviews) {
-        if (!papoOverviews[nOverview]) {
-            CPLDebug("SDERASTER", "hey idiot, we were null!!!");
-        }
-        return papoOverviews[nOverview];
+        return papoOverviews[nOverviewValue];
     }
     else
         return NULL;
-    // cast our Dataset and request a new band for the given overview.
-//	SDEDataset *poGDS = (SDEDataset *) poDS;
-//    return new SDERasterBand(poGDS, nBand, nOverview, poBand);
+
     
 }
 
@@ -207,15 +209,16 @@ int SDERasterBand::GetOverviewCount( void )
     long nSDEErr;
     BOOL bSkipLevel;
     
-//    if (nOverviews)
-//        return nOverviews;
+    // return nothing if we were an overview band
+    if (nOverview != -1)
+        return 0;
+
     nSDEErr = SE_rasbandinfo_get_max_level(*poBand, 
                                            (long*)&nOverviews, 
                                            &bSkipLevel);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_size" );
-
     }
     
     return nOverviews;
@@ -686,12 +689,11 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
 
     nBlockSize = nBlockXSize * nBlockYSize;
 
-    CPLDebug("SDERASTER", "preparing to cache overviews nOverview: %d", nOverview);
+    // We're the base level
     if (nOverview == -1) {
     	for (int i = 0; i<this->nOverviews; i++) {
-    	    CPLDebug("SDERASTER", "initializing badn... nOverviews:%d nBand: %d, i:%d", this->nOverviews,nBand,i);
             papoOverviews[i]= new SDERasterBand(poGDS, nBand, i, poBand);
-            CPLDebug("SDERASTER", " sizex:%d sizey:%d" , papoOverviews[i]->GetXSize(), papoOverviews[i]->GetYSize());
+
         }
     }
     return CE_None;
