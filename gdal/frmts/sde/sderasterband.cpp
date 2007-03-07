@@ -66,7 +66,7 @@
 /*                          IntializeQuery.                             */
 /*      -- InitializeQuery -    Initializes a SDE queryinfo object      */
 /*                              that contains information about which   */
-/*                              tables we are querying from.
+/*                              tables we are querying from.            */
 /*      -- InitializeConstraint -   Specifies block constraints (which  */
 /*                                  are initially set to none in        */
 /*                                  InitializeBand) as well as which    */
@@ -367,7 +367,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         return CE_Fatal;
     }
 
-    hConstraint = InitializeConstraint( nBlockXOff, nBlockYOff );  
+    hConstraint = InitializeConstraint( (long*) &nBlockXOff, (long*)&nBlockYOff );  
     if (!hConstraint)
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "ConstraintInfo initialization failed");   
@@ -417,9 +417,12 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     else
         nShift = nBlockXSize;
 
-    long nLengthWithBitmap, nLengthWithoutBitmap;        
-    nLengthWithBitmap = (nShift*nBlockYSize*dfDepth)+(nBlockXSize*nBlockYSize/8);
-    nLengthWithoutBitmap = (nShift*nBlockYSize*dfDepth);
+    long nLengthWithBitmap, nLengthWithoutBitmap;
+    double dLengthWithBitmap, dLengthWithoutBitmap;         
+    dLengthWithBitmap = (nShift*nBlockYSize*dfDepth)+(nBlockXSize*nBlockYSize/8);
+    dLengthWithoutBitmap = (nShift*nBlockYSize*dfDepth);
+    nLengthWithBitmap = (long) dLengthWithBitmap;
+    nLengthWithoutBitmap = (long) dLengthWithBitmap;
     bool bHaveBitmap;
     
     if (length == nLengthWithBitmap)
@@ -452,8 +455,10 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
                 {
                     if( i % 2 == 0 )
                         ((GByte*)pImage)[i] = ((*(((unsigned char*) pixels)) & 0xf0) >> 4);
-                    else
-                        ((GByte*)pImage)[i] = (*(((unsigned char*) pixels)++) & 0xf);
+                    else {
+                        unsigned char* tmp = (unsigned char*) pixels;
+                        ((GByte*)pImage)[i] = (*((tmp)++) & 0xf);
+                    }
                 }
          }
     else 
@@ -470,7 +475,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
 
 
 /* ---------------------------------------------------------------------*/
-/* Private Methods 
+/* Private Methods                                                      */
 
 /************************************************************************/
 /*                             ComputeColorTable()                      */
@@ -507,8 +512,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
     pushSDECMapData = (unsigned short*) phSDEColormapData;
     
     GDALColorTable* poCT = new GDALColorTable(GPI_RGB);
-    
-    int nEntries;
+
     int red, green, blue, alpha;
     
     CPLDebug("SDERASTER", "%d colormap entries specified", nCMapEntries);
@@ -553,7 +557,9 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                                   "SE_COLORMAP_RGBA Colormap Entry: %d %d %d %d", 
                                   red, blue, green, alpha);
                     }
-                    break;               
+                    break;   
+                case SE_COLORMAP_NONE:
+                    break;            
             }
             break;
         case SE_COLORMAP_DATA_SHORT:
@@ -597,10 +603,13 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                                   red, blue, green, alpha);
                     }
                     break;
+                case SE_COLORMAP_NONE:
+                    break;            
+
             }
             break;
     }
-    GDALColorEntry sColor;
+
     return poCT;
 }
 
@@ -702,10 +711,9 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
 /************************************************************************/
 /*                           InitializeConstraint()                     */
 /************************************************************************/
-SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff, 
-                                                       long nBlockYOff) 
+SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff, 
+                                                       long* nBlockYOff) 
 {
-    SDEDataset *poGDS = (SDEDataset *) poDS;
 
     long nSDEErr;   
     
@@ -737,13 +745,13 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff,
     
     if (nBlockXSize != -1 && nBlockYSize != -1) { // we aren't initialized yet
         if (nBlockXSize >= 0 && nBlockYSize >= 0) { 
-            if (nBlockXOff >= 0 &&  nBlockYOff >= 0) {
+            if (*nBlockXOff >= 0 &&  *nBlockYOff >= 0) {
                 long nMinX, nMinY, nMaxX, nMaxY;
                 
-                nMinX = nBlockXOff;
-                nMinY = nBlockYOff;
-                nMaxX = nBlockXOff;
-                nMaxY = nBlockYOff;
+                nMinX = *nBlockXOff;
+                nMinY = *nBlockYOff;
+                nMaxX = *nBlockXOff;
+                nMaxY = *nBlockYOff;
                                                                             
                 nSDEErr = SE_rasconstraint_set_envelope (hConstraint,
                                                         nMinX,

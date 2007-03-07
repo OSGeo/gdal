@@ -36,7 +36,7 @@ class SDEDataset : public GDALDataset
         // SDE-specific stuff
         SE_CONNECTION      hConnection;
         SE_RASTERATTR      hAttributes;
-        SE_STREAM           hStream;
+        SE_STREAM          hStream;
         
         char                *pszLayerName;
         char                *pszColumnName;
