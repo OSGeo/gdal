@@ -613,7 +613,7 @@ public:
     return OSRImportFromProj4( self, ppszInput );
   }
 
-%apply (char **ignorechange) { (char **) };
+%apply (char **options) { (char **) };
   OGRErr ImportFromESRI( char **ppszInput ) {
     return OSRImportFromESRI( self, ppszInput );
   }
