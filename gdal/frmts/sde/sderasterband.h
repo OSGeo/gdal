@@ -28,12 +28,13 @@ class SDERasterBand : public GDALRasterBand
         
 		int						nOverview;
         int                     nOverviews;
-        SE_STREAM               hStream;
+      //  SE_STREAM               hStream;
         long                    nBlockSize;
         double                  dfDepth;
         long                    nSDERasterType;
         SE_QUERYINFO            hQuery;
         SE_RASCONSTRAINT        hConstraint;
+        GDALRasterBand**        papoOverviews;
         
     public:
 

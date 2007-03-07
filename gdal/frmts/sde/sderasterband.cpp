@@ -100,9 +100,9 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     // dataset.  We want it around for convenience.
     this->poDS = poDS;
     this->nBand = nBand;
-	if (nOverview == -1) this->nOverview = 0; else this->nOverview = nOverview;
+	 this->nOverview = nOverview;
     poBand = band;
-
+//if (nOverview == -1) this->nOverview = 0; else
     
     // Initialize our SDE opaque object pointers to NULL.
     // The nOverviews private data member will be updated when 
@@ -110,14 +110,18 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     // later calls if it has been set to anything other than 0.
 	hConstraint = NULL;
     hQuery = NULL;
-    hStream = NULL;
-    nOverviews = 0;
+    nOverviews = GetOverviewCount();
 
+    if (nOverviews != -1)
+        papoOverviews = (GDALRasterBand**)  CPLMalloc( nOverviews * sizeof(GDALRasterBand*) );
+    else
+        papoOverviews = NULL;
     eDataType = GetRasterDataType();
     
     // nSDERasterType is set by GetRasterDataType
     dfDepth = MorphESRIRasterDepth(nSDERasterType);
     InitializeBand(this->nOverview);
+    CPLDebug("SDERASTER","Initializing rasterband with overview=%d", this->nOverview);
     
 }
 
@@ -128,12 +132,19 @@ SDERasterBand::~SDERasterBand( void )
 
 {
     // clean up our SDE related stuff
-    if (hQuery)
-        SE_queryinfo_free(hQuery);
-    if (hStream)
-        SE_stream_free(hStream);
-    if (hConstraint)
-        SE_rasconstraint_free(hConstraint);
+    CPLDebug ("SDERASTER", "Calling ~SDERasterBand()...");
+
+    // grab our Dataset to limit the casting we have to do.
+    SDEDataset *poGDS = (SDEDataset *) poDS;
+
+    SE_stream_close(poGDS->hStream, 1);
+        if (hQuery)
+            SE_queryinfo_free(hQuery);
+
+            
+        if (hConstraint)
+            SE_rasconstraint_free(hConstraint);
+
 }
 
 
@@ -171,9 +182,18 @@ GDALColorInterp SDERasterBand::GetColorInterpretation()
 /************************************************************************/
 GDALRasterBand* SDERasterBand::GetOverview( int nOverview )
 {
+    CPLDebug("SDERASTER","Calling get overview for band %d, noverview %d, numoverviews: %d", nBand, nOverview, nOverviews);
+    if (papoOverviews) {
+        if (!papoOverviews[nOverview]) {
+            CPLDebug("SDERASTER", "hey idiot, we were null!!!");
+        }
+        return papoOverviews[nOverview];
+    }
+    else
+        return NULL;
     // cast our Dataset and request a new band for the given overview.
-	SDEDataset *poGDS = (SDEDataset *) poDS;
-    return new SDERasterBand(poGDS, nBand, nOverview, poBand);
+//	SDEDataset *poGDS = (SDEDataset *) poDS;
+//    return new SDERasterBand(poGDS, nBand, nOverview, poBand);
     
 }
 
@@ -187,8 +207,8 @@ int SDERasterBand::GetOverviewCount( void )
     long nSDEErr;
     BOOL bSkipLevel;
     
-    if (nOverviews)
-        return nOverviews;
+//    if (nOverviews)
+//        return nOverviews;
     nSDEErr = SE_rasbandinfo_get_max_level(*poBand, 
                                            (long*)&nOverviews, 
                                            &bSkipLevel);
@@ -361,7 +381,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         return CE_Fatal;
     }   
 
-    nSDEErr = SE_stream_get_raster_tile(hStream, hTile);
+    nSDEErr = SE_stream_get_raster_tile(poGDS->hStream, hTile);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_get_raster_tile" );
@@ -593,12 +613,6 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
     
     long nSDEErr;
 
-    nSDEErr = SE_stream_create(poGDS->hConnection, &hStream);
-    if( nSDEErr != SE_SUCCESS )
-    {
-        IssueSDEError( nSDEErr, "SE_stream_create" );
-        return CE_Fatal;
-    }
 
     hConstraint = InitializeConstraint( NULL, NULL );  
     if (!hConstraint)
@@ -611,21 +625,28 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "QueryInfo initialization failed");
     }
-                  
-    nSDEErr = SE_stream_query_with_info(hStream, hQuery);
+
+    nSDEErr = SE_stream_close(poGDS->hStream, 1);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_close" );
+        return CE_Fatal;
+    }
+                      
+    nSDEErr = SE_stream_query_with_info(poGDS->hStream, hQuery);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
         return CE_Fatal;
     }
 
-    nSDEErr = SE_stream_execute (hStream);
+    nSDEErr = SE_stream_execute (poGDS->hStream);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_execute" );
         return CE_Fatal;
     }
-    nSDEErr = SE_stream_fetch (hStream);
+    nSDEErr = SE_stream_fetch (poGDS->hStream);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_fetch" );
@@ -655,7 +676,7 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
 													 &offset_x,
 													 &offset_y,
 													 &num_bands,
-													 nOverview);
+													 (nOverview == -1) ? (0): (nOverview));
 
     if( nSDEErr != SE_SUCCESS )
     {
@@ -665,6 +686,14 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
 
     nBlockSize = nBlockXSize * nBlockYSize;
 
+    CPLDebug("SDERASTER", "preparing to cache overviews nOverview: %d", nOverview);
+    if (nOverview == -1) {
+    	for (int i = 0; i<this->nOverviews; i++) {
+    	    CPLDebug("SDERASTER", "initializing badn... nOverviews:%d nBand: %d, i:%d", this->nOverviews,nBand,i);
+            papoOverviews[i]= new SDERasterBand(poGDS, nBand, i, poBand);
+            CPLDebug("SDERASTER", " sizex:%d sizey:%d" , papoOverviews[i]->GetXSize(), papoOverviews[i]->GetYSize());
+        }
+    }
     return CE_None;
 }
 
@@ -685,7 +714,7 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff,
             IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
         }
 		
-		nSDEErr = SE_rasconstraint_set_level(hConstraint, nOverview);
+		nSDEErr = SE_rasconstraint_set_level(hConstraint, (nOverview == -1) ? (0): (nOverview));
 		if( nSDEErr != SE_SUCCESS )
 		{
 			IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
@@ -844,14 +873,14 @@ CPLErr SDERasterBand::QueryRaster( SE_RASCONSTRAINT& constraint )
 
 
                           
-    nSDEErr = SE_stream_query_raster_tile(hStream, constraint);
+    nSDEErr = SE_stream_query_raster_tile(poGDS->hStream, constraint);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_query_raster_tile" );
         return CE_Fatal;
     }
     
-    nSDEErr = SE_stream_get_raster (hStream, 1, poGDS->hAttributes);
+    nSDEErr = SE_stream_get_raster (poGDS->hStream, 1, poGDS->hAttributes);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_stream_fetch" );
