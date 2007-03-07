@@ -46,7 +46,6 @@ ilucena       Ivan Lucena                  idrisi
 mbrudka	      Marek Brudka		   thread safety
               mbrudka at aster.pl
 
-
 jlacroix      Julien-Samuel Lacroix	   mitab, avc
               jlacroix at mapgears.com        
 
@@ -68,7 +67,11 @@ dreamil       Swapnil Harjare
 mchapman      Martin Chapman               mysql, postgres, etc
               mchapman at sanz.com
 
-hannah	     Hannah Valbonesi		       hdf, png, gif, geotiff
+hannah	      Hannah Valbonesi             hdf, png, gif, geotiff
+              Hannah.Valvonesi at safe.com
+
+gaopeng       Gao Peng
+              pgao at esri.com 
 
 
 Folks who have not yet agreed to RFC 3:
