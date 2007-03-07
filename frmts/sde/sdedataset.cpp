@@ -67,8 +67,6 @@ int SDEDataset::GetRasterYSize( void )
 CPLErr SDEDataset::ComputeRasterInfo() {
     long nSDEErr;
     SE_RASTERINFO raster;
-    SE_RASBANDINFO *bands;
-    SE_RASTERATTR attributes;
     
     nSDEErr = SE_rasterinfo_create(&raster);
     if( nSDEErr != SE_SUCCESS )
@@ -152,7 +150,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     
 
     
-   // SE_rasterinfo_free(raster);
+    SE_rasterinfo_free(raster);
 
 
     return CE_None;
@@ -230,7 +228,7 @@ const char *SDEDataset::GetProjectionRef()
     poSRS->exportToWkt(&pszWKT);
     poSRS->Release();
     
-    return CPLStrdup(pszWKT);
+    return pszWKT;
 }
 
 /************************************************************************/
@@ -271,23 +269,29 @@ SDEDataset::~SDEDataset()
 
 {
 
-//    if (paohSDERasterBands)
-//        SE_rasterband_free_info_list(nBands, paohSDERasterBands);
-//
-//    if (hRasterColumn)
-//        SE_rascolinfo_free(hRasterColumn);
-//    
-//    if (hConnection)
-//        SE_connection_free(hConnection);
-//    
-//    if (hStream)
-//        SE_stream_free(hStream);
-//        
-//    if (hAttributes)
-//        SE_rasterattr_free(hAttributes);
-//
-//    if (pszWKT)
-//        CPLFree(pszWKT);
+    if (paohSDERasterBands)
+        SE_rasterband_free_info_list(nBands, paohSDERasterBands);
+
+    if (hRasterColumn)
+        SE_rascolinfo_free(hRasterColumn);
+    
+    if (hStream)
+        SE_stream_free(hStream);
+        
+    if (hAttributes)
+        SE_rasterattr_free(hAttributes);
+
+    if (hConnection)
+        SE_connection_free(hConnection);
+        
+    if (pszWKT)
+        CPLFree(pszWKT);
+    
+    if (pszLayerName)
+        CPLFree(pszLayerName);
+
+    if (pszColumnName)
+        CPLFree(pszColumnName);
 }
 
 
@@ -404,11 +408,10 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
     } else {
-
-      SE_RASCOLINFO* columns;
-          nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection, 
-                                                  &(poDS->paohSDERasterColumns), 
-                                                  &(poDS->nSubDataCount));
+ 
+        nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection, 
+                                                &(poDS->paohSDERasterColumns), 
+                                                &(poDS->nSubDataCount));
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
@@ -437,7 +440,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return FALSE;
     }
-    
+    CSLDestroy( papszTokens);
     return( poDS );
 }
 

@@ -135,12 +135,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
 /************************************************************************/
 SDERasterBand::~SDERasterBand( void )
 
-{
-    // grab our Dataset to limit the casting we have to do.
-    SDEDataset *poGDS = (SDEDataset *) poDS;
-
-    // clean up our SDE related stuff
-    SE_stream_close(poGDS->hStream, 1);
+{ 
 
     if (hQuery)
         SE_queryinfo_free(hQuery);
@@ -150,7 +145,7 @@ SDERasterBand::~SDERasterBand( void )
 
     if (papoOverviews)
         for (int i=0; i < nOverviews; i++)
-            CPLFree(papoOverviews[i]);
+            delete papoOverviews[i];
         CPLFree(papoOverviews);
 }
 
@@ -367,7 +362,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         return CE_Fatal;
     }
 
-    hConstraint = InitializeConstraint( (long*) &nBlockXOff, (long*)&nBlockYOff );  
+    hConstraint = InitializeConstraint( nBlockXOff, nBlockYOff );  
     if (!hConstraint)
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "ConstraintInfo initialization failed");   
@@ -417,12 +412,9 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     else
         nShift = nBlockXSize;
 
-    long nLengthWithBitmap, nLengthWithoutBitmap;
-    double dLengthWithBitmap, dLengthWithoutBitmap;         
-    dLengthWithBitmap = (nShift*nBlockYSize*dfDepth)+(nBlockXSize*nBlockYSize/8);
-    dLengthWithoutBitmap = (nShift*nBlockYSize*dfDepth);
-    nLengthWithBitmap = (long) dLengthWithBitmap;
-    nLengthWithoutBitmap = (long) dLengthWithBitmap;
+    long nLengthWithBitmap, nLengthWithoutBitmap;        
+    nLengthWithBitmap = (nShift*nBlockYSize*dfDepth)+(nBlockXSize*nBlockYSize/8);
+    nLengthWithoutBitmap = (nShift*nBlockYSize*dfDepth);
     bool bHaveBitmap;
     
     if (length == nLengthWithBitmap)
@@ -512,7 +504,8 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
     pushSDECMapData = (unsigned short*) phSDEColormapData;
     
     GDALColorTable* poCT = new GDALColorTable(GPI_RGB);
-
+    
+    int nEntries;
     int red, green, blue, alpha;
     
     CPLDebug("SDERASTER", "%d colormap entries specified", nCMapEntries);
@@ -557,9 +550,9 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                                   "SE_COLORMAP_RGBA Colormap Entry: %d %d %d %d", 
                                   red, blue, green, alpha);
                     }
-                    break;   
+                    break;  
                 case SE_COLORMAP_NONE:
-                    break;            
+                    break;                 
             }
             break;
         case SE_COLORMAP_DATA_SHORT:
@@ -604,12 +597,11 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                     }
                     break;
                 case SE_COLORMAP_NONE:
-                    break;            
-
+                    break;    
             }
             break;
     }
-
+    GDALColorEntry sColor;
     return poCT;
 }
 
@@ -711,8 +703,8 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
 /************************************************************************/
 /*                           InitializeConstraint()                     */
 /************************************************************************/
-SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff, 
-                                                       long* nBlockYOff) 
+SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long nBlockXOff, 
+                                                       long nBlockYOff) 
 {
 
     long nSDEErr;   
@@ -745,13 +737,13 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff,
     
     if (nBlockXSize != -1 && nBlockYSize != -1) { // we aren't initialized yet
         if (nBlockXSize >= 0 && nBlockYSize >= 0) { 
-            if (*nBlockXOff >= 0 &&  *nBlockYOff >= 0) {
+            if (nBlockXOff >= 0 &&  nBlockYOff >= 0) {
                 long nMinX, nMinY, nMaxX, nMaxY;
                 
-                nMinX = *nBlockXOff;
-                nMinY = *nBlockYOff;
-                nMaxX = *nBlockXOff;
-                nMaxY = *nBlockYOff;
+                nMinX = nBlockXOff;
+                nMinY = nBlockYOff;
+                nMaxX = nBlockXOff;
+                nMaxY = nBlockYOff;
                                                                             
                 nSDEErr = SE_rasconstraint_set_envelope (hConstraint,
                                                         nMinX,
