@@ -1,6 +1,6 @@
 using System;
 
-using GDAL;
+using OSGeo.GDAL;
 
 
 /**
@@ -38,12 +38,12 @@ class GDALInfo {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
-            gdal.AllRegister();
+            Gdal.AllRegister();
 
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = gdal.Open( args[0], 0 );
+            Dataset ds = Gdal.Open( args[0], 0 );
 		
             if (ds == null) 
             {
@@ -132,8 +132,8 @@ class GDALInfo {
             {
                 Band band = ds.GetRasterBand(iBand);
                 Console.WriteLine("Band " + iBand + " :");
-                Console.WriteLine("   DataType: " + gdal.GetDataTypeName(band.DataType));
-                Console.WriteLine("   ColorInterpretation: " + gdal.GetColorInterpretationName(band.GetRasterColorInterpretation()));
+                Console.WriteLine("   DataType: " + Gdal.GetDataTypeName(band.DataType));
+                Console.WriteLine("   ColorInterpretation: " + Gdal.GetColorInterpretationName(band.GetRasterColorInterpretation()));
                 Console.WriteLine("   Description: " + band.GetDescription());
                 Console.WriteLine("   Size (" + band.XSize + "," + band.YSize + ")");
                 int BlockXSize, BlockYSize;

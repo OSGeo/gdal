@@ -1,6 +1,6 @@
 using System;
 
-using GDAL;
+using OSGeo.GDAL;
 
 
 /**
@@ -37,7 +37,7 @@ class GDALColorTable {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
-            gdal.AllRegister();
+            Gdal.AllRegister();
             
             Driver dv = null;
             Dataset ds = null, ds_out = null;
@@ -48,7 +48,7 @@ class GDALColorTable {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            ds = gdal.Open(file, gdalconst.GA_ReadOnly);
+            ds = Gdal.Open(file, Access.GA_ReadOnly);
             ba = ds.GetRasterBand(1);
             ct = ba.GetRasterColorTable();
 
@@ -62,12 +62,12 @@ class GDALColorTable {
             /* -------------------------------------------------------------------- */
             /*      Get driver                                                      */
             /* -------------------------------------------------------------------- */	
-            dv = gdal.GetDriverByName("GTiff");
+            dv = Gdal.GetDriverByName("GTiff");
 
             ds_out = dv.Create(file_out, ds.RasterXSize, ds.RasterYSize,
                 ds.RasterCount, ba.DataType, new string [] {});
             ba_out = ds_out.GetRasterBand(1);
-            ct_out = new ColorTable(gdalconst.GPI_RGB);
+            ct_out = new ColorTable(PaletteInterp.GPI_RGB);
 
             ba_out.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
                 ds.RasterXSize, ds.RasterYSize, 0, 0);
