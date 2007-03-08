@@ -1,6 +1,6 @@
 using System;
 
-using GDAL;
+using OSGeo.GDAL;
 /**
 
  * <p>Title: GDAL C# readxml example.</p>

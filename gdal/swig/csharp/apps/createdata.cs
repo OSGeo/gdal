@@ -1,6 +1,6 @@
 using System;
 
-using OGR;
+using OSGeo.OGR;
 
 
 /**
@@ -36,12 +36,12 @@ class CreateData {
 		/* -------------------------------------------------------------------- */
 		/*      Register format(s).                                             */
 		/* -------------------------------------------------------------------- */
-        ogr.RegisterAll();
+        Ogr.RegisterAll();
 
 		/* -------------------------------------------------------------------- */
 		/*      Get driver                                                      */
 		/* -------------------------------------------------------------------- */	
-        Driver drv = ogr.GetDriverByName("ESRI Shapefile");
+        Driver drv = Ogr.GetDriverByName("ESRI Shapefile");
 
 		if (drv == null) 
 		{
@@ -69,7 +69,7 @@ class CreateData {
 
         Layer layer;
 
-        layer = ds.CreateLayer( args[1], null, ogr.wkbPoint, new string[] {} );
+        layer = ds.CreateLayer( args[1], null, wkbGeometryType.wkbPoint, new string[] {} );
         if( layer == null )
         {
             Console.WriteLine("Layer creation failed.");
@@ -80,7 +80,7 @@ class CreateData {
         /*      Adding attribute fields                                         */
         /* -------------------------------------------------------------------- */
 
-        FieldDefn fdefn = new FieldDefn( "Name", ogr.OFTString );
+        FieldDefn fdefn = new FieldDefn( "Name", FieldType.OFTString );
 
         fdefn.SetWidth(32);
 
@@ -97,7 +97,7 @@ class CreateData {
         Feature feature = new Feature( layer.GetLayerDefn() );
         feature.SetField( "Name", "value" );
 
-        Geometry geom = new Geometry(ogr.wkbUnknown, "POINT(47.0 19.2)", 0, null, null);
+        Geometry geom = new Geometry(wkbGeometryType.wkbUnknown, "POINT(47.0 19.2)", 0, null, null);
         
         if( feature.SetGeometry( geom ) != 0 )
         {
