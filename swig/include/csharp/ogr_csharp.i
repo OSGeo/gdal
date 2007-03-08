@@ -14,7 +14,7 @@
 
 
 %typemap(cscode, noblock="1") OGRGeometryShadow {
-  public int ExportToWkb( byte[] buffer, int byte_order ) {
+  public int ExportToWkb( byte[] buffer, wkbByteOrder byte_order ) {
       int retval;
       int size = WkbSize();
       if (buffer.Length < size)
@@ -31,6 +31,6 @@
       return retval;
   }
   public int ExportToWkb( byte[] buffer ) {
-      return ExportToWkb( buffer, ogr.wkbXDR);
+      return ExportToWkb( buffer, wkbByteOrder.wkbXDR);
   }
 }
