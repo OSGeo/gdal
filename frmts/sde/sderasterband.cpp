@@ -101,14 +101,15 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     this->poDS = poDS;
     this->nBand = nBand;
 	this->nOverview = nOverview;
-    poBand = band;
+    this->poBand = band;
     
     // Initialize our SDE opaque object pointers to NULL.
     // The nOverviews private data member will be updated when 
     // GetOverviewCount is called and subsequently returned immediately in 
     // later calls if it has been set to anything other than 0.
-	hConstraint = NULL;
-    hQuery = NULL;
+	this->hConstraint = NULL;
+    this->hQuery = NULL;
+    this->poColorTable = NULL;
     
     if (this->nOverview == -1 || this->nOverview == 0)
         this->nOverviews = GetOverviewCount();
@@ -147,6 +148,9 @@ SDERasterBand::~SDERasterBand( void )
         for (int i=0; i < nOverviews; i++)
             delete papoOverviews[i];
         CPLFree(papoOverviews);
+    
+    if (poColorTable != NULL)
+        delete poColorTable;
 }
 
 
@@ -157,8 +161,9 @@ GDALColorTable* SDERasterBand::GetColorTable(void)
 {
     
     if (SE_rasbandinfo_has_colormap(*poBand)) {
-        GDALColorTable* poCT = ComputeColorTable();
-        return poCT;
+        if (poColorTable == NULL)
+            ComputeColorTable();
+        return poColorTable;
     } else {
         return NULL;
     }
@@ -444,7 +449,7 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
 /************************************************************************/
 /*                             ComputeColorTable()                      */
 /************************************************************************/
-GDALColorTable* SDERasterBand::ComputeColorTable(void) 
+void SDERasterBand::ComputeColorTable(void) 
 {
 
     SE_COLORMAP_TYPE eCMap_Type;
@@ -466,7 +471,6 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_colormap" );
-        return NULL;
     }                                            
 
     // Assign both the short and char pointers 
@@ -475,7 +479,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
     puszSDECMapData = (unsigned char*) phSDEColormapData;
     pushSDECMapData = (unsigned short*) phSDEColormapData;
     
-    GDALColorTable* poCT = new GDALColorTable(GPI_RGB);
+    poColorTable = new GDALColorTable(GPI_RGB);
     
     int red, green, blue, alpha;
     
@@ -496,7 +500,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                         sColor.c4 = 255;
                         
                         // sColor is copied
-                        poCT->SetColorEntry(i,&sColor);
+                        poColorTable->SetColorEntry(i,&sColor);
                         CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_BYTE "\
                                   "SE_COLORMAP_RGB Colormap Entry: %d %d %d", 
                                   red, blue, green);
@@ -516,7 +520,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                         sColor.c4 = alpha;
                         
                         // sColor is copied
-                        poCT->SetColorEntry(i,&sColor);
+                        poColorTable->SetColorEntry(i,&sColor);
                         CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_BYTE "\
                                   "SE_COLORMAP_RGBA Colormap Entry: %d %d %d %d", 
                                   red, blue, green, alpha);
@@ -541,7 +545,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                         sColor.c4 = 255;
                         
                         // sColor is copied
-                        poCT->SetColorEntry(i,&sColor);
+                        poColorTable->SetColorEntry(i,&sColor);
                         CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_SHORT "\
                                   "SE_COLORMAP_RGB Colormap Entry: %d %d %d", 
                                   red, blue, green);
@@ -561,7 +565,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
                         sColor.c4 = alpha;
                         
                         // sColor is copied
-                        poCT->SetColorEntry(i,&sColor);
+                        poColorTable->SetColorEntry(i,&sColor);
                         CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_SHORT "\
                                   "SE_COLORMAP_RGBA Colormap Entry: %d %d %d %d", 
                                   red, blue, green, alpha);
@@ -573,7 +577,6 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
             break;
     }
     SE_rasbandinfo_free_colormap(phSDEColormapData);
-    return poCT;
 }
 
 
