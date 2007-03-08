@@ -1,6 +1,6 @@
 using System;
 
-using GDAL;
+using OSGeo.GDAL;
 
 
 /**
@@ -47,12 +47,12 @@ class GDALWrite {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
-            gdal.AllRegister();
+            Gdal.AllRegister();
             
             /* -------------------------------------------------------------------- */
             /*      Get driver                                                      */
             /* -------------------------------------------------------------------- */	
-            Driver drv = gdal.GetDriverByName("GTiff");
+            Driver drv = Gdal.GetDriverByName("GTiff");
 
             if (drv == null) 
             {
@@ -66,7 +66,7 @@ class GDALWrite {
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             string[] options = new string [] {"BLOCKXSIZE=" + bXSize, "BLOCKYSIZE=" + bYSize};
-            Dataset ds = drv.Create(args[0], w, h, 1, gdalconst.GDT_Byte, options);
+            Dataset ds = drv.Create(args[0], w, h, 1, DataType.GDT_Byte, options);
 		
             if (ds == null) 
             {

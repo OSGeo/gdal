@@ -1,6 +1,6 @@
 using System;
 
-using OGR;
+using OSGeo.OGR;
 
 
 /**
@@ -36,12 +36,12 @@ class OGRInfo {
 		/* -------------------------------------------------------------------- */
 		/*      Register format(s).                                             */
 		/* -------------------------------------------------------------------- */
-		ogr.RegisterAll();
+		Ogr.RegisterAll();
 
 		/* -------------------------------------------------------------------- */
 		/*      Open data source.                                               */
 		/* -------------------------------------------------------------------- */
-		DataSource ds = ogr.Open( args[0], 0 );
+		DataSource ds = Ogr.Open( args[0], 0 );
 		
 		if (ds == null) {
 			Console.WriteLine("Can't open " + args[0]);

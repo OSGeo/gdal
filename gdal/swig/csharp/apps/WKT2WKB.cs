@@ -1,6 +1,6 @@
 using System;
 
-using OGR;
+using OSGeo.OGR;
 
 
 /**
@@ -33,9 +33,9 @@ class WKT2WKB {
 		/* -------------------------------------------------------------------- */
 		/*      Register format(s).                                             */
 		/* -------------------------------------------------------------------- */
-        ogr.RegisterAll();
+        Ogr.RegisterAll();
 
-        Geometry geom = new Geometry(ogr.wkbUnknown, args[0], 0, null, null);
+        Geometry geom = new Geometry(wkbGeometryType.wkbUnknown, args[0], 0, null, null);
         
         int wkbSize = geom.WkbSize();
         if (wkbSize > 0) 

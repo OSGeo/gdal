@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-using GDAL;
+using OSGeo.GDAL;
 
 
 /**
@@ -41,12 +41,12 @@ class GDALReadDirect {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
-            gdal.AllRegister();
+            Gdal.AllRegister();
 
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = gdal.Open( args[0], 0 );
+            Dataset ds = Gdal.Open( args[0], 0 );
 		
             if (ds == null) 
             {
@@ -126,9 +126,9 @@ class GDALReadDirect {
             int stride = bitmapData.Stride;
             IntPtr buf = bitmapData.Scan0;
 
-            blueBand.ReadRaster(0, 0, width, height, buf, width, height, 1, 4, stride);
-            greenBand.ReadRaster(0, 0, width, height, new IntPtr(buf.ToInt32()+1), width, height, 1, 4, stride);
-            redBand.ReadRaster(0, 0, width, height, new IntPtr(buf.ToInt32()+2), width, height, 1, 4, stride);
+            blueBand.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 4, stride);
+            greenBand.ReadRaster(0, 0, width, height, new IntPtr(buf.ToInt32()+1), width, height, DataType.GDT_Byte, 4, stride);
+            redBand.ReadRaster(0, 0, width, height, new IntPtr(buf.ToInt32()+2), width, height, DataType.GDT_Byte, 4, stride);
             TimeSpan renderTime = DateTime.Now - start;
             Console.WriteLine("SaveBitmapDirect fetch time: " + renderTime.TotalMilliseconds + " ms");
         }
