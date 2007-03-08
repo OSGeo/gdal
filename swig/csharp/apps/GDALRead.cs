@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-using GDAL;
+using OSGeo.GDAL;
 
 
 /**
@@ -41,12 +41,12 @@ class GDALRead {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
-            gdal.AllRegister();
+            Gdal.AllRegister();
 
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = gdal.Open( args[0], 0 );
+            Dataset ds = Gdal.Open( args[0], 0 );
 		
             if (ds == null) 
             {

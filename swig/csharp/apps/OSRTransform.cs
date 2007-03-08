@@ -1,5 +1,5 @@
 using System;
-using OSR;
+using OSGeo.OSR;
 
 /**
  * <p>Title: GDAL C# OSRTransform example.</p>
