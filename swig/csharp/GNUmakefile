@@ -21,11 +21,11 @@ veryclean: clean
 	-rm -f *.cs *.cpp *.c const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp
 
 interface:
-	$(SWIG) -$(BINDING) -namespace GDAL -dllimport gdalconst_wrap -o const/gdalconst_wrap.c ../include/gdalconst.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace GDAL -dllimport gdal_wrap -o gdal/gdal_wrap.cpp ../include/gdal.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSR -dllimport osr_wrap -o osr/osr_wrap.cpp ../include/osr.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OGR -dllimport osr_wrap -o ogr/osr_wrap.cpp ../include/osr.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OGR -dllimport ogr_wrap -o ogr/ogr_wrap.cpp ../include/ogr.i
+	$(SWIG) -$(BINDING) -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o const/gdalconst_wrap.c ../include/gdalconst.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.GDAL -dllimport gdal_wrap -o gdal/gdal_wrap.cpp ../include/gdal.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OSR -dllimport osr_wrap -o osr/osr_wrap.cpp ../include/osr.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport osr_wrap -o ogr/osr_wrap.cpp ../include/osr.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport ogr_wrap -o ogr/ogr_wrap.cpp ../include/ogr.i
 
 build: ${CSHARP_OBJECTS} ${CSHARP_MODULES} gdal_csharp samples
 
@@ -60,8 +60,8 @@ samples:
 	$(CSC) /r:osr_csharp.dll /out:OSRTransform.exe apps/OSRTransform.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps/GDALRead.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps/GDALReadDirect.cs
-	$(CSC) /r:gdal_csharp.dll /r:gdalconst_csharp.dll /out:GDALWrite.exe apps/GDALWrite.cs
-	$(CSC) /r:gdal_csharp.dll /r:gdalconst_csharp.dll /out:GDALColorTable.exe apps/GDALColorTable.cs
+	$(CSC) /r:gdal_csharp.dll /out:GDALWrite.exe apps/GDALWrite.cs
+	$(CSC) /r:gdal_csharp.dll /out:GDALColorTable.exe apps/GDALColorTable.cs
 	$(CSC) /r:ogr_csharp.dll /out:WKT2WKB.exe apps/WKT2WKB.cs
 	$(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps/ReadXML.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALInfo.exe apps/GDALInfo.cs
