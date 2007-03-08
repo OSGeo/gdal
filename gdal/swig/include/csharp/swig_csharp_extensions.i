@@ -3,60 +3,50 @@
  * $Id$
  *
  * Name:     swig_csharp_extensions.i
- * Project:  GDAL SWIG Interface
- * Purpose:  Temporary fix for the SWIG Interface problems
+ * Purpose:  Fix for the SWIG Interface problems (early GC) 
+ *           and implementing SWIGTYPE *DISOWN 
  * Author:   Tamas Szekeres
  *
 */
 
-// Comment out the following line to revert to the original SWIG behaviour
-#define ADVANCED_OBJECT_REF
-
-#ifdef ADVANCED_OBJECT_REF
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
     $&csclassname ret = new $&csclassname($imcall, null);$excode
     return ret;
   }
   
-%define %owner(OWNER, TYPE)
+%define %implement_class(TYPE)
 %typemap(csout, excode=SWIGEXCODE, new="1") TYPE & {
-    $csclassname ret = new $csclassname($imcall, $owner? null : OWNER);$excode
+    $csclassname ret = new $csclassname($imcall, ThisOwn_$owner());$excode
     return ret;
   }
 %typemap(csout, excode=SWIGEXCODE, new="1") TYPE *, TYPE [], TYPE (CLASS::*) {
     IntPtr cPtr = $imcall;
-    $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner? null : OWNER);$excode
+    $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, ThisOwn_$owner());$excode
     return ret;
   }
 %typemap(csvarout, excode=SWIGEXCODE2) TYPE & %{
     get {
-      $csclassname ret = new $csclassname($imcall, $owner? null : OWNER);$excode
+      $csclassname ret = new $csclassname($imcall, ThisOwn_$owner());$excode
       return ret;
     } %}
 %typemap(csvarout, excode=SWIGEXCODE2) TYPE *, TYPE [], TYPE (CLASS::*) %{
     get {
       IntPtr cPtr = $imcall;
-      $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner? null : OWNER);$excode
+      $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, ThisOwn_$owner());$excode
       return ret;
     } %}
 %typemap(csout, excode=SWIGEXCODE) TYPE *& {
     IntPtr cPtr = $imcall;
-    $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner? null : OWNER);$excode
+    $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, ThisOwn_$owner());$excode
     return ret;
-  }    
-%enddef
-
-#define %object_owner %owner(this, SWIGTYPE)
-#define %static_owner %owner(new object(), SWIGTYPE)
-
-%object_owner
-
-%owner(new object(), GByte)
-
+  }
 // Proxy classes (base classes, ie, not derived classes)
-%typemap(csbody) SWIGTYPE %{
+%typemap(csbody) TYPE %{
   private HandleRef swigCPtr;
   protected object swigCMemOwner;
+  
+  protected static object ThisOwn_true() { return null; }
+  protected object ThisOwn_false() { return this; }
 
   internal $csclassname(IntPtr cPtr, object cMemoryOwner) {
     swigCMemOwner = cMemoryOwner;
@@ -73,7 +63,7 @@
 %}
 
 // Derived proxy classes
-%typemap(csbody_derived) SWIGTYPE %{
+%typemap(csbody_derived) TYPE %{
   private HandleRef swigCPtr;
 
   internal $csclassname(IntPtr cPtr, object cMemoryOwner) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwner) {
@@ -90,7 +80,7 @@
 %}
 
 // Typewrapper classes
-%typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
+%typemap(csbody) TYPE *, TYPE &, TYPE [], TYPE (CLASS::*) %{
   private HandleRef swigCPtr;
 
   internal $csclassname(IntPtr cPtr, object futureUse) {
@@ -106,17 +96,17 @@
   }
 %}
 
-%typemap(csfinalize) SWIGTYPE %{
+%typemap(csfinalize) TYPE %{
   ~$csclassname() {
     Dispose();
   }
 %}
 
-%typemap(csconstruct, excode=SWIGEXCODE) SWIGTYPE %{: this($imcall, null) {$excode
+%typemap(csconstruct, excode=SWIGEXCODE) TYPE %{: this($imcall, null) {$excode
   }
 %}
 
-%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") TYPE {
   lock(this) {
       if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwner == null) {
         swigCMemOwner = new object();
@@ -127,7 +117,7 @@
     }
   }
 
-%typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+%typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") TYPE {
   lock(this) {
       if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwner == null) {
         swigCMemOwner = new object();
@@ -138,21 +128,23 @@
       base.Dispose();
     }
   }
-  
-%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput, this)"
+          
+%enddef
 
-#else //ADVANCED_OBJECT_REF
-%typemap(cscode) SWIGTYPE %{
-  internal static HandleRef getCPtrAndDisown($csclassname obj) {
-    obj.swigCMemOwn = false;
-    return getCPtr(obj);
+%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput, ThisOwn_false())"
+
+%pragma(csharp) modulecode=%{
+  internal class $moduleObject : IDisposable {
+	public virtual void Dispose() {
+      
+    }
   }
+  internal static $moduleObject the$moduleObject = new $moduleObject();
+  protected static object ThisOwn_true() { return null; }
+  protected static object ThisOwn_false() { return the$moduleObject; }
 %}
 
-%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput)"
 
-#define %object_owner
-#define %static_owner
 
-#endif
+
   
