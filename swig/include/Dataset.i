@@ -205,6 +205,7 @@ public:
     return GDALAddBand( self, datatype, options );
   }
 
+#ifndef SWIGCSHARP
 %feature("kwargs") WriteRaster;
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
 %apply (int *optional_int) { (int*) };
@@ -251,9 +252,9 @@ public:
 %clear (GDALDataType *buf_type);
 %clear (int*);
 %clear (int buf_len, char *buf_string);
+#endif
 
-
-
+#ifndef SWIGCSHARP
 %feature("kwargs") ReadRaster;
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
@@ -304,6 +305,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
   
 %clear (int *buf_len, char **buf );
 %clear (int*);
+#endif
 
 
 /* NEEDED */
