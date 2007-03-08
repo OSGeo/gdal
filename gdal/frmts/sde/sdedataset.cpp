@@ -5,6 +5,9 @@
  * Purpose:  Dataset implementaion for ESRI ArcSDE Rasters
  * Author:   Howard Butler, hobu@hobu.net
  *
+ * This work was sponsored by the Geological Survey of Canada, Natural
+ * Resources Canada. http://gsc.nrcan.gc.ca/
+ *
  ******************************************************************************
  * Copyright (c) 2007, Howard Butler <hobu@hobu.net>
  *
