@@ -403,61 +403,33 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
         return CE_Fatal;
     }           
 
-    int nShift;
-    
-    // only round up widths for 1 and 4 bit data to byte boundaries
-    // height is untouched according to SDE docs.
-    if (dfDepth == 0.125 || dfDepth == 0.5) 
-        nShift = (nBlockXSize+7)/8*8;
-    else
-        nShift = nBlockXSize;
+    int bits_per_pixel = static_cast<int>(dfDepth * 8 + 0.0001);
+    int block_size = (nBlockXSize * bits_per_pixel + 7) / 8 * nBlockYSize;
+    int bitmap_size = (nBlockXSize * nBlockYSize + 7) / 8;
 
-    long nLengthWithBitmap, nLengthWithoutBitmap;        
-    nLengthWithBitmap = (nShift*nBlockYSize*dfDepth)+(nBlockXSize*nBlockYSize/8);
-    nLengthWithoutBitmap = (nShift*nBlockYSize*dfDepth);
-    bool bHaveBitmap;
-    
-    if (length == nLengthWithBitmap)
-        bHaveBitmap = true;
-    else if (length == nLengthWithoutBitmap)
-        bHaveBitmap = false;
-    else 
-        {
+    if ((length == block_size) || (length == (block_size + bitmap_size))) {
+	if (bits_per_pixel >= 8) {
+	    memcpy(pImage, pixels, block_size);
+	} else {
+	    GByte *p = reinterpret_cast<GByte*>(pImage);
+	    int bit_mask = (2 << bits_per_pixel) - 1;
+	    int i = 0;
+	    for (int y = 0; y < nBlockYSize; ++y) {
+		for (int x = 0; x < nBlockXSize; ++x) {
+		    *p++ = (pixels[i >> 3] >> (i & 7)) & bit_mask;
+		    i += bits_per_pixel;
+		}
+		i = (i + 7) / 8 * 8;
+	    }
+	}
+    } else {
 
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Bit size calculation failed... "\
                       "SDE's length:%d With bitmap length: %d Without bitmap length: %d", 
-                      length, nLengthWithBitmap, nLengthWithoutBitmap );
+                      length, block_size + bitmap_size, block_size );
             return CE_Fatal;
         }
-
-    if (dfDepth == 0.125) // 1 bit
-        {
-            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-            {
-                if( ((unsigned char*) pixels)[i>>3] & (0x80 >> (i&0x7)) )
-                    ((GByte*)pImage)[i] = 1;
-                else
-                    ((GByte*)pImage)[i] = 0;
-            }
-        }
-    else if (dfDepth == 0.5) // 4 bit
-        {
-            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
-                {
-                    if( i % 2 == 0 )
-                        ((GByte*)pImage)[i] = ((*(((unsigned char*) pixels)) & 0xf0) >> 4);
-                    else {
-                        unsigned char* tmp = (unsigned char*) pixels;
-                        ((GByte*)pImage)[i] = (*((tmp)++) & 0xf);
-                    }
-                }
-         }
-    else 
-        {
-            memcpy( pImage, pixels, nLengthWithoutBitmap );
-        }
-        
 
     SE_rastileinfo_free (hTile);
 
@@ -600,6 +572,7 @@ GDALColorTable* SDERasterBand::ComputeColorTable(void)
             }
             break;
     }
+    SE_rasbandinfo_free_colormap(phSDEColormapData);
     return poCT;
 }
 
