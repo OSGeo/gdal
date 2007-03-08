@@ -9,6 +9,12 @@ BINDING = csharp
 SWIG = swig
 SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
+LINK = $(LD_SHARED)
+ifeq ($(HAVE_LIBTOOL),yes)
+LINK = $(LD)
+endif
+
+
 CSHARP_MODULES = libgdalcsharp.$(SO_EXT) libogrcsharp.$(SO_EXT) libgdalconstcsharp.$(SO_EXT) libosrcsharp.$(SO_EXT)
 CSHARP_OBJECTS = const/gdalconst_wrap.o gdal/gdal_wrap.o osr/osr_wrap.o ogr/ogr_wrap.o
 
@@ -33,7 +39,7 @@ install:
 	@echo "No installation to be done"
 
 $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.o
-	$(LD_SHARED) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
+	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
 	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\">" >> $*_csharp.dll.config
