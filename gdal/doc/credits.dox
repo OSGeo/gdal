@@ -161,6 +161,10 @@ OGR VRT driver, ODBC driver, MySQL driver, SQLite driver, OGR JOIN and
 OGR C API.
 <p>
 
+<li> <b><a href="http://gsc.nrcan.gc.ca">Geological Survey of Canada</a>, 
+Natural Resources Canada: Supported the initial development of the ArcSDE raster
+driver. <p>
+
 <li> <b><a href="http://www.osgis.nl/">OSGIS</a></b> and the 
 Geo-Information and ICT Department of the Ministry of Transport, Public
 Works and Water Management:
