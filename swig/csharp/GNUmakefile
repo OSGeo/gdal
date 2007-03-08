@@ -10,8 +10,10 @@ SWIG = swig
 SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
+LINK_EXTRAFLAGS = 
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
+LINK_EXTRAFLAGS = -rpath /
 endif
 
 
@@ -39,7 +41,7 @@ install:
 	@echo "No installation to be done"
 
 $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.o
-	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
+	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
 	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\">" >> $*_csharp.dll.config
