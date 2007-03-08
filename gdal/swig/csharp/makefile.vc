@@ -89,17 +89,17 @@ osr_dir:
 	
 interface:
 	cd const
-    $(SWIG) -csharp -namespace GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+    $(SWIG) -csharp -namespace OSGeo.GDAL -dllimport gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
 	cd ..
 	cd gdal
-	$(SWIG) -c++ -csharp -namespace GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	$(SWIG) -c++ -csharp -namespace OSGeo.GDAL  -dllimport gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
 	cd ..
 	cd osr
-	$(SWIG) -c++ -csharp -namespace OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -c++ -csharp -namespace OSGeo.OSR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	cd ..
 	cd ogr
-	$(SWIG) -c++ -csharp -namespace OGR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
-	$(SWIG) -c++ -csharp -namespace OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
+	$(SWIG) -c++ -csharp -namespace OSGeo.OGR  -dllimport osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -c++ -csharp -namespace OSGeo.OGR -dllimport ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
 	cd ..
 
 samples:
@@ -108,8 +108,8 @@ samples:
     $(CSC) /r:osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
     $(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps\GDALRead.cs
     $(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps\GDALReadDirect.cs
-    $(CSC) /r:gdal_csharp.dll /r:gdalconst_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
-    $(CSC) /r:gdal_csharp.dll /r:gdalconst_csharp.dll /out:GDALColorTable.exe apps\GDALColorTable.cs
+    $(CSC) /r:gdal_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
+    $(CSC) /r:gdal_csharp.dll /out:GDALColorTable.exe apps\GDALColorTable.cs
     $(CSC) /r:ogr_csharp.dll /out:WKT2WKB.exe apps\WKT2WKB.cs
     $(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps\ReadXML.cs
     $(CSC) /r:gdal_csharp.dll /out:GDALInfo.exe apps\GDALInfo.cs
