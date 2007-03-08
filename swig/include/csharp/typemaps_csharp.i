@@ -12,8 +12,6 @@
 
 /* CSHARP TYPEMAPS */
 
-%include swig_csharp_extensions.i
-
 %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
