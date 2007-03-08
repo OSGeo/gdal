@@ -1,5 +1,7 @@
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL::Const"
+#elif defined(SWIGCSHARP)
+%module GdalConst
 #else
 %module gdalconst 
 #endif

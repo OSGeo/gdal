@@ -131,8 +131,15 @@
 
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OSR"
+#elif defined(SWIGCSHARP)
+%module Osr
 #else
 %module osr
+#endif
+
+#ifdef SWIGCSHARP
+%include swig_csharp_extensions.i
+%implement_class(SWIGTYPE)
 #endif
 
 %feature("compactdefaultargs");
@@ -300,9 +307,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
  * exactly the same as the C api.
  * 
  */
-#if defined(SWIGCSHARP)
-%static_owner
-#endif 
+
 #if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
 #if defined(SWIGPERL)
@@ -337,9 +342,6 @@ void OPTGetParameterInfo( char *method, char *param, char **usrname,
 %clear (char **type);
 %clear (char **usrname);
 #endif
-#endif
-#if defined(SWIGCSHARP)
-%object_owner
 #endif
 
 /******************************************************************************
