@@ -11,11 +11,11 @@ SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
 LINK_EXTRAFLAGS = 
-OBJ_EXT = .o
+OBJ_EXT = o
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
 LINK_EXTRAFLAGS = -rpath $(INST_LIB) -no-undefined -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
-OBJ_EXT = .lo
+OBJ_EXT = lo
 endif
 
 
@@ -25,7 +25,7 @@ CSHARP_OBJECTS = const/gdalconst_wrap.$(OBJ_EXT) gdal/gdal_wrap.$(OBJ_EXT) osr/o
 CSC = mcs
 
 clean:
-	-rm -f ${CSHARP_MODULES} *$(OBJ_EXT) *.config *.dll *.mdb *.exe
+	-rm -f ${CSHARP_MODULES} *.$(OBJ_EXT) *.config *.dll *.mdb *.exe
 
 veryclean: clean
 	-rm -f *.cs *.cpp *.c const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp
@@ -49,13 +49,13 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\">" >> $*_csharp.dll.config
 	echo "</configuration>" >> $*_csharp.dll.config
 
-%$(OBJ_EXT): %.cpp
+%.$(OBJ_EXT): %.cpp
 	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
-%$(OBJ_EXT): %.cxx
+%.$(OBJ_EXT): %.cxx
 	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
-%$(OBJ_EXT): %.c
+%.$(OBJ_EXT): %.c
 	$(CC) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
 gdal_csharp:
