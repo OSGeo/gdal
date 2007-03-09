@@ -11,19 +11,21 @@ SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 LINK = $(LD_SHARED)
 LINK_EXTRAFLAGS = 
+OBJ_EXT = .o
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
 LINK_EXTRAFLAGS = -rpath $(INST_LIB) -no-undefined -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
+OBJ_EXT = .lo
 endif
 
 
 CSHARP_MODULES = libgdalcsharp.$(SO_EXT) libogrcsharp.$(SO_EXT) libgdalconstcsharp.$(SO_EXT) libosrcsharp.$(SO_EXT)
-CSHARP_OBJECTS = const/gdalconst_wrap.o gdal/gdal_wrap.o osr/osr_wrap.o ogr/ogr_wrap.o
+CSHARP_OBJECTS = const/gdalconst_wrap.$(OBJ_EXT) gdal/gdal_wrap.$(OBJ_EXT) osr/osr_wrap.$(OBJ_EXT) ogr/ogr_wrap.$(OBJ_EXT)
 
 CSC = mcs
 
 clean:
-	-rm -f ${CSHARP_MODULES} *.o *.config *.dll *.mdb *.exe
+	-rm -f ${CSHARP_MODULES} *$(OBJ_EXT) *.config *.dll *.mdb *.exe
 
 veryclean: clean
 	-rm -f *.cs *.cpp *.c const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp
@@ -40,20 +42,20 @@ build: ${CSHARP_OBJECTS} ${CSHARP_MODULES} gdal_csharp samples
 install:
 	@echo "No installation to be done"
 
-$(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.o
+$(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
 	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\">" >> $*_csharp.dll.config
 	echo "</configuration>" >> $*_csharp.dll.config
 
-%.o: %.cpp
+%$(OBJ_EXT): %.cpp
 	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
-%.o: %.cxx
+%$(OBJ_EXT): %.cxx
 	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
-%.o: %.c
+%$(OBJ_EXT): %.c
 	$(CC) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
 gdal_csharp:
