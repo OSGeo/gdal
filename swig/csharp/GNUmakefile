@@ -13,7 +13,7 @@ LINK = $(LD_SHARED)
 LINK_EXTRAFLAGS = 
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
-LINK_EXTRAFLAGS = -rpath /
+LINK_EXTRAFLAGS = -rpath $(INST_LIB) -no-undefined -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
 endif
 
 
