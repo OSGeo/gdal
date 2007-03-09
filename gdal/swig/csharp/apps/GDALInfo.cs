@@ -134,7 +134,11 @@ class GDALInfo {
                 Console.WriteLine("Band " + iBand + " :");
                 Console.WriteLine("   DataType: " + Gdal.GetDataTypeName(band.DataType));
                 Console.WriteLine("   ColorInterpretation: " + Gdal.GetColorInterpretationName(band.GetRasterColorInterpretation()));
-                Console.WriteLine("   Description: " + band.GetDescription());
+                ColorTable ct = band.GetRasterColorTable();
+				if (ct != null)
+					Console.WriteLine("   Band has a color table with " + ct.GetCount() + " entries.");
+                
+				Console.WriteLine("   Description: " + band.GetDescription());
                 Console.WriteLine("   Size (" + band.XSize + "," + band.YSize + ")");
                 int BlockXSize, BlockYSize;
                 band.GetBlockSize(out BlockXSize, out BlockYSize);
