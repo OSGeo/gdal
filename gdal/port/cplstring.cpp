@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -192,7 +193,7 @@ CPLString &CPLString::Trim()
     iLeft = find_first_not_of( szWhitespace );
     iRight = find_last_not_of( szWhitespace );
 
-    if( iLeft == string::npos )
+    if( iLeft == std::string::npos )
     {
         clear();
         return *this;
