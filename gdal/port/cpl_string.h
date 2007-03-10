@@ -177,6 +177,8 @@ public:
 
     CPLString &Printf( const char *pszFormat, ... );
     CPLString &vPrintf( const char *pszFormat, va_list args );
+    CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
+    CPLString &Trim();
 };
 
 #endif /* def __cplusplus */
