@@ -21,6 +21,7 @@ The tutorial will be based on implementing a simple ascii point format.
 <ol>
 <li> \ref odt_driver_ro
 <li> \ref odt_datasource_bro
+<li> \ref odt_layer_bro
 </ol>
 
 \section odt_driver_ro Implementing OGRSFDriver
