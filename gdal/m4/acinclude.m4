@@ -31,7 +31,7 @@ dnl ---------------------------------------------------------------------------
 dnl Try to establish a 64 bit integer type.
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN(AC_HAVE_LONG_LONG,
+AC_DEFUN([AC_HAVE_LONG_LONG],
 [
   AC_MSG_CHECKING([for 64bit integer type])
 
@@ -429,81 +429,91 @@ dnl Find Python.
 dnl
 
 AC_DEFUN([AM_PATH_PYTHON],
-  [AC_CHECK_PROGS(PYTHON, python python1.5 python1.4 python1.3,no)
-  if test "$with_python" = no ; then
-     echo "python support disabled"
-     PYTHON=no
-  fi
+[
+    dnl
+    dnl Check for Python executable in PATH
+    dnl
+    AC_CHECK_PROGS([PYTHON], [python python1.5 python1.4 python1.3], [no])
 
-  if test "x$with_ngpython" != xno -a "x$with_ngpython" != "x" ; then
-     echo "python support disabled since ngpython enabled."
-     PYTHON=no
-  fi
+    if test "$with_python" = no ; then
+        echo "Python support disabled"
+        PYTHON=no
+    fi
 
-  ARCH=`uname -i 2>/dev/null`
-  PYLIB=lib
-  if test "$ARCH" = "x86_64" ; then
-    PYLIB=lib64
-  fi
+    if test "x$with_ngpython" != xno -a "x$with_ngpython" != "x" ; then
+        echo "Python support disabled since ngpython enabled."
+        PYTHON=no
+    fi
 
-  if test "$PYTHON" != no ; then
-    AC_MSG_CHECKING([where python Makefiles are])
-changequote(,)dnl
-    python_prefix="`$PYTHON -c '
+    ARCH=`uname -i 2>/dev/null`
+    PYLIB=lib
+    if test "$ARCH" = "x86_64" ; then
+        PYLIB=lib64
+    fi
+
+    if test "$PYTHON" != no ; then
+        AC_MSG_CHECKING([for location of Python Makefiles])
+
+        changequote(,)dnl
+        python_prefix="`$PYTHON -c '
 import sys
 print sys.prefix'`"
-changequote([, ])dnl
-changequote(,)dnl
-    python_execprefix="`$PYTHON -c '
+        changequote([, ])dnl
+        
+        changequote(,)dnl
+        python_execprefix="`$PYTHON -c '
 import sys
 print sys.prefix'`"
-changequote([, ])dnl
-changequote(,)dnl
-    python_version="`$PYTHON -c '
+        changequote([, ])dnl
+
+        changequote(,)dnl
+        python_version="`$PYTHON -c '
 import sys
 print sys.version[:3]'`"
-changequote([, ])dnl
+        changequote([, ])dnl
 
-    pythondir=$python_prefix/$PYLIB/python${python_version}/site-packages
-    pyexecdir=$python_execprefix/$PYLIB/python${python_version}/site-packages
+        pythondir=$python_prefix/$PYLIB/python${python_version}/site-packages
+        pyexecdir=$python_execprefix/$PYLIB/python${python_version}/site-packages
 
-    AC_MSG_RESULT(found)
+        AC_MSG_RESULT(found)
 
-    dnl Verify that we have the makefile needed later.
+        dnl Verify that we have the makefile needed later.
     
-    AC_MSG_CHECKING([Python makefile])
-    py_mf=$python_execprefix/$PYLIB/python${python_version}/config/Makefile
-    if test -f $py_mf ; then
-      AC_MSG_RESULT(found)
+        AC_MSG_CHECKING([for top-level Makefile for Python])
+        py_mf=$python_execprefix/$PYLIB/python${python_version}/config/Makefile
+        if test -f $py_mf ; then
+            AC_MSG_RESULT(found)
+        else
+            AC_MSG_RESULT([missing, Python disabled.])
+            PYTHON=no
+        fi
     else
-      AC_MSG_RESULT([missing, python disabled.])
-      PYTHON=no
-    fi
-  else
-    # these defaults are version independent ...
-    pythondir='$(prefix)/lib/site-python'
-    pyexecdir='$(exec_prefix)/lib/site-python'
-  fi
-
-  AC_ARG_WITH(pymoddir,[  --with-pymoddir=ARG   Override Python package install dir],,)
-
-  if test "$PYTHON" != "no" ; then
-    AC_MSG_CHECKING([where .py files should go])
-
-    if test "$with_pymoddir" = "" ; then
-       pymoddir=$pyexecdir
-    else
-       pymoddir=$with_pymoddir
+        dnl These defaults are version independent
+        pythondir='$(prefix)/lib/site-python'
+        pyexecdir='$(exec_prefix)/lib/site-python'
     fi
 
-    export pymoddir
-    AC_MSG_RESULT($pymoddir)
-  fi  
+    dnl TODO: Add HELP_STRING
+    AC_ARG_WITH([pymoddir],[  --with-pymoddir=ARG   Override Python package install dir],,)
 
-  AC_SUBST(pythondir)
-  AC_SUBST(pyexecdir)
-  AC_SUBST(pymoddir)
-])
+    if test "$PYTHON" != "no" ; then
+        AC_MSG_CHECKING([where to install Python modules])
+
+        if test "$with_pymoddir" = "" ; then
+            pymoddir=$pyexecdir
+        else
+            pymoddir=$with_pymoddir
+        fi
+
+        export pymoddir
+        AC_MSG_RESULT([$pymoddir])
+    fi
+
+    AC_SUBST([pythondir])
+    AC_SUBST([pyexecdir])
+    AC_SUBST([pymoddir])
+
+]) dnl AM_PATH_PYTHON
 
 
 dnl finds information needed for compilation of shared library style python
@@ -511,124 +521,177 @@ dnl extensions.  AM_PATH_PYTHON should be called before hand.
 dnl NFW: Modified from original to avoid overridding CC, SO and OPT
 
 AC_DEFUN([AM_INIT_PYEXEC_MOD],
-  [AC_REQUIRE([AM_PATH_PYTHON])
+[
+    AC_REQUIRE([AM_PATH_PYTHON])
+    PYTHON_LIBS=""
+    PYTHON_DEV="no"
 
-PYTHON_LIBS=""
-if test "$PYTHON" != no ; then
-  AC_MSG_CHECKING([for python headers])
-  AC_CACHE_VAL(am_cv_python_includes,
-    [changequote(,)dnl
-    am_cv_python_includes="`$PYTHON -c '
+    if test "$PYTHON" != no ; then
+        AC_MSG_CHECKING([for location of Python headers])
+
+        AC_CACHE_VAL(am_cv_python_includes,
+        [
+        changequote(,)dnl
+        am_cv_python_includes="`$PYTHON -c '
 import sys
 includepy = \"%s/include/python%s\" % (sys.prefix, sys.version[:3])
 if sys.version[0] > \"1\" or sys.version[2] > \"4\":
-  libpl = \"%s/include/python%s\" % (sys.exec_prefix, sys.version[:3])
+    libpl = \"%s/include/python%s\" % (sys.exec_prefix, sys.version[:3])
 else:
-  libpl = \"%s/'$PYLIB'/python%s/config\" % (sys.exec_prefix, sys.version[:3])
+    libpl = \"%s/'$PYLIB'/python%s/config\" % (sys.exec_prefix, sys.version[:3])
 print \"-I%s -I%s\" % (includepy, libpl)'`"
-    changequote([, ])])
-  PYTHON_INCLUDES="$am_cv_python_includes"
-  AC_MSG_RESULT(found)
-  AC_SUBST(PYTHON_INCLUDES)
+        changequote([, ])
+        ])
 
-  AC_MSG_CHECKING([definitions from Python makefile])
-  AC_CACHE_VAL(am_cv_python_makefile,
-    [changequote(,)dnl
-    if test ! -z "`uname -a | grep CYGWIN`" ; then 
-      PYTHON_LIBS="`$PYTHON -c '
+        PYTHON_INCLUDES="$am_cv_python_includes"
+        AC_MSG_RESULT(found)
+        AC_SUBST(PYTHON_INCLUDES)
+
+        AC_MSG_CHECKING([definitions from top-level Python Makefile])
+        AC_CACHE_VAL(am_cv_python_makefile,
+        [
+        changequote(,)dnl
+        if test ! -z "`uname -a | grep CYGWIN`" ; then 
+            PYTHON_LIBS="`$PYTHON -c '
 import sys
 print \"-L%s/'$PYLIB'/python%s/config -lpython%s.dll\" % (sys.prefix, sys.version[:3], sys.version[:3])'`"
-    fi 
-    py_makefile="`$PYTHON -c '
+        fi 
+        
+        py_makefile="`$PYTHON -c '
 import sys
 print \"%s/'$PYLIB'/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
-    if test ! -f "$py_makefile"; then
-      echo Could not find the python config makefile.  Maybe you are;
-      echo missing the development portion of the python installation;
-      exit;
+
+        if test ! -f "$py_makefile"; then
+            echo Could not find the python config makefile.  Maybe you are;
+            echo missing the development portion of the python installation;
+            exit;
+        fi
+
+        eval `sed -n \
+            -e "s/^CC=[ 	]*\(.*\)/am_cv_python_CC='\1'/p" \
+            -e "s/^OPT=[ 	]*\(.*\)/am_cv_python_OPT='\1'/p" \
+            -e "s/^CCSHARED=[ 	]*\(.*\)/am_cv_python_CCSHARED='\1'/p" \
+            -e "s/^LDSHARED=[ 	]*\(.*\)/am_cv_python_LDSHARED='\1'/p" \
+            -e "s/^SO=[ 	]*\(.*\)/am_cv_python_SO='\1'/p" \
+            $py_makefile`
+        
+        am_cv_python_makefile=found
+        changequote([, ])
+
+        AC_MSG_RESULT([$am_cv_python_makefile])
+        ]) dnl AC_CACHE_VAL
+
+        dnl Check if everything compiles well
+        AC_MSG_CHECKING([for Python.h header])
+        AC_LANG_PUSH([C])
+
+        saved_CPPFLAGS="$CPPFLAGS"
+        CPPFLAGS="$PYTHON_INCLUDES"
+        
+        AC_COMPILE_IFELSE(
+            [#include <Python.h>],
+            [ac_cv_python_dev_exists=yes],
+            [ac_cv_python_dev_exists=no]
+        )
+
+        AC_LANG_POP()
+        CPPFLAGS="$saved_CPPFLAGS"
+
+        if test ! "$ac_cv_python_dev_exists" = "yes"; then
+            AC_MSG_RESULT([not found])
+            PYTHON_DEV="no"
+
+            AC_MSG_WARN([
+*** Could not compile test program with Python.h included, so Python bindings for GDAL will not be built.
+*** Check if you have installed development version of the Python package for your distribution.])
+
+        else
+            AC_MSG_RESULT([found])
+            PYTHON_DEV="yes"
+
+            PYTHON_CC="$am_cv_python_CC"
+            PYTHON_OPT="$am_cv_python_OPT"
+            PYTHON_SO="$am_cv_python_SO"
+            PYTHON_CFLAGS="$am_cv_python_CCSHARED \$(OPT)"
+            PYTHON_LINK="$am_cv_python_LDSHARED -o \[$]@"
+        fi
     fi
-    eval `sed -n \
--e "s/^CC=[ 	]*\(.*\)/am_cv_python_CC='\1'/p" \
--e "s/^OPT=[ 	]*\(.*\)/am_cv_python_OPT='\1'/p" \
--e "s/^CCSHARED=[ 	]*\(.*\)/am_cv_python_CCSHARED='\1'/p" \
--e "s/^LDSHARED=[ 	]*\(.*\)/am_cv_python_LDSHARED='\1'/p" \
--e "s/^SO=[ 	]*\(.*\)/am_cv_python_SO='\1'/p" \
-    $py_makefile`
-    am_cv_python_makefile=found
-    changequote([, ])])
-  AC_MSG_RESULT(done)
-  PYTHON_CC="$am_cv_python_CC"
-  PYTHON_OPT="$am_cv_python_OPT"
-  PYTHON_SO="$am_cv_python_SO"
-  PYTHON_CFLAGS="$am_cv_python_CCSHARED \$(OPT)"
-  PYTHON_LINK="$am_cv_python_LDSHARED -o \[$]@"
 
-else
-  PYTHON_CC=""
-  PYTHON_OPT=""
-  PYTHON_SO=""
-  PYTHON_CFLAGS=""
-  PYTHON_LINK=""
-fi
+    if test "$PYTHON_DEV" = "yes"; then
+        AC_MSG_CHECKING([for special pymod link hacks])
+        if test ! -z "`uname | grep Darwin`" -a ${with_libtool} == no ; then
+            AC_MSG_RESULT([darwin-nonlibtool])
+            PY_LD_SHARED='g++ -bundle -framework Python'
+            PY_SO_EXT='so'
+        elif test ! -z "`uname | grep Darwin`" -a ${with_libtool} == yes ; then
+            AC_MSG_RESULT([darwin-libtool])
+            PYTHON_LIBS='-XCClinker -framework -XCClinker Python $(LIBS)'
+            PY_LD_SHARED='$(LD_SHARED)'
+            PY_SO_EXT='$(SO_EXT)'
+        else
+            AC_MSG_RESULT([default])
+            PY_LD_SHARED='$(LD_SHARED)'
+            PY_SO_EXT='$(SO_EXT)'
+        fi
+    else
+        PYTHON_CC=""
+        PYTHON_OPT=""
+        PYTHON_SO=""
+        PYTHON_CFLAGS=""
+        PYTHON_LINK=""
+        PYTHON_LIBS=""
+        PY_LD_SHARED=""
+        PY_SO_EXT=""
+    fi
 
-AC_MSG_CHECKING([for special pymod link hacks])
-if test ! -z "`uname | grep Darwin`" -a ${with_libtool} == no ; then
-    AC_MSG_RESULT(darwin-nonlibtool)
 
-    PY_LD_SHARED='g++ -bundle -framework Python'
-    PY_SO_EXT='so'
-elif test ! -z "`uname | grep Darwin`" -a ${with_libtool} == yes ; then
-    AC_MSG_RESULT(darwin-libtool)
+    export PY_LD_SHARED PY_SO_EXT
 
-    PYTHON_LIBS='-XCClinker -framework -XCClinker Python $(LIBS)'
-    PY_LD_SHARED='$(LD_SHARED)'
-    PY_SO_EXT='$(SO_EXT)'
-else
-    AC_MSG_RESULT(default)
+    AC_SUBST([PYTHON_CC])
+    AC_SUBST([PYTHON_OPT])
+    AC_SUBST([PYTHON_SO])
+    AC_SUBST([PYTHON_CFLAGS])
+    AC_SUBST([PYTHON_LIBS])
+    AC_SUBST([PYTHON_LINK])
+    AC_SUBST([PY_LD_SHARED])
+    AC_SUBST([PY_SO_EXT])
 
-    PY_LD_SHARED='$(LD_SHARED)'
-    PY_SO_EXT='$(SO_EXT)'
-fi
+    dnl Main flag indicating if Python development package has been found.
+    dnl PYTHON and PYTHON_DEV are used together to decide about building Python bindings for GDAL.
+    AC_SUBST([PYTHON_DEV])
 
-export PY_LD_SHARED PY_SO_EXT
+]) dnl AM_INIT_PYEXEC_MOD
 
-AC_SUBST(PY_LD_SHARED)
-AC_SUBST(PY_SO_EXT)])
-
-AC_SUBST(PYTHON_CC)dnl
-AC_SUBST(PYTHON_OPT)dnl
-AC_SUBST(PYTHON_SO)dnl
-AC_SUBST(PYTHON_CFLAGS)dnl
-AC_SUBST(PYTHON_LIBS)dnl
-AC_SUBST(PYTHON_LINK)])
 
 dnl
 dnl Check if we have NUMPY include file(s).
 dnl
 
 AC_DEFUN([AM_CHECK_NUMPY],
-  [
-  AC_MSG_CHECKING([for NumPy include files])
+[
+  AC_MSG_CHECKING([for Python NumPy headers])
+
   echo '#include "Python.h"' > conftest.c
   echo '#include "Numeric/arrayobject.h"' >> conftest.c
   if test -z "`${CC-cc} $PYTHON_INCLUDES -c conftest.c 2>&1`"; then
     HAVE_NUMPY=yes
-    AC_MSG_RESULT(found)
+    AC_MSG_RESULT([found])
   else
     HAVE_NUMPY=no
-    AC_MSG_RESULT(missing)
+    AC_MSG_RESULT([not found])
   fi
   export HAVE_NUMPY
   rm -f conftest.c
 
-  AC_SUBST(HAVE_NUMPY)
+  AC_SUBST([HAVE_NUMPY])
   if test "$HAVE_NUMPY" = "yes" ; then
     NUMPY_FLAG=-DHAVE_NUMPY
   else
-    NUMPY_FLAG=
+    NUMPY_FLAG=-UHAVE_NUMPY
   fi
   export NUMPY_FLAG
-  AC_SUBST(NUMPY_FLAG)])
+  AC_SUBST([NUMPY_FLAG])
+])
 
 
 dnl ---------------------------------------------------------------------------
