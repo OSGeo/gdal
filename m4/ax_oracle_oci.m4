@@ -34,6 +34,9 @@ dnl @category Cxx
 dnl @author Mateusz Loskot <mateusz@loskot.net>
 dnl @version $Date$
 dnl @license AllPermissive
+dnl          Copying and distribution of this file, with or without modification,
+dnl          are permitted in any medium without royalty provided the copyright notice and
+dnl          this notice are preserved.
 dnl
 AC_DEFUN([AX_LIB_ORACLE_OCI],
 [
