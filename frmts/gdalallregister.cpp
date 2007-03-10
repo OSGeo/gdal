@@ -231,6 +231,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PDS();
 #endif
 
+#ifdef FRMT_ers
+    GDALRegister_ERS();
+#endif
+
 #ifdef FRMT_jp2kak
 // JPEG2000 support using Kakadu toolkit
     GDALRegister_JP2KAK();
