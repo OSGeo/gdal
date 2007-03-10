@@ -4,4 +4,3 @@ set -x
 aclocal -I ./m4
 autoheader
 autoconf
-
