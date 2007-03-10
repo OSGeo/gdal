@@ -1747,7 +1747,7 @@ dnl ---------------------------------------------------------------------------
 GEOS_INIT(2.2.0)
 if test "${HAVE_GEOS}" = "yes" ; then
 
-  AC_MSG_NOTICE([using GEOS 2.2.x+ C API])
+  AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
   LIBS="${GEOS_LIBS} ${LIBS}"
 fi
 
