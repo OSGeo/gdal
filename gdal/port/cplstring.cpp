@@ -129,3 +129,76 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
     return *this;
 }
+
+/************************************************************************/
+/*                              FormatC()                               */
+/************************************************************************/
+
+/**
+ * Format double in C locale.
+ * 
+ * The passed value is formatted using the C locale (period as decimal 
+ * seperator) and appended to the target CPLString. 
+ *
+ * @param dfValue the value to format. 
+ * @param pszFormat the sprintf() style format to use or omit for default.
+ * Note that this format string should only include one substitution argument 
+ * and it must be for a double (%f or %g). 
+ *
+ * @return a reference to the CPLString. 
+ */
+
+CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
+
+{
+    if( pszFormat == NULL )
+        pszFormat = "%g";
+
+    char szWork[512]; // presumably long enough for any number?
+
+    sprintf( szWork, pszFormat, dfValue );
+    CPLAssert( strlen(szWork) < sizeof(szWork) );
+    
+    if( strchr( szWork, ',' ) != NULL )
+    {
+        char *pszDelim = strchr( szWork, ',' );
+        *pszDelim = '.';
+    }
+
+    *this += szWork;
+    
+    return *this;
+}
+
+/************************************************************************/
+/*                                Trim()                                */
+/************************************************************************/
+
+/**
+ * Trim white space.
+ *
+ * Trims white space off the let and right of the string.  White space
+ * is any of a space, a tab, a newline ('\n') or a carriage control ('\r').
+ *
+ * @return a reference to the CPLString. 
+ */
+
+CPLString &CPLString::Trim()
+
+{
+    size_t iLeft, iRight;
+    static const char szWhitespace[] = " \t\r\n";
+
+    iLeft = find_first_not_of( szWhitespace );
+    iRight = find_last_not_of( szWhitespace );
+
+    if( iLeft == string::npos )
+    {
+        clear();
+        return *this;
+    }
+    
+    assign( substr( iLeft, iRight - iLeft + 1 ) );
+
+    return *this;
+}
