@@ -357,36 +357,6 @@ private:
 public:
 %extend {
 
-// NEEDED
-// Reference
-// Dereference
-// SetAuthority
-// SetGH
-// SetGnomonic
-// SetHOM
-//SetHOM2PNO
-// SetKrovak
-// SetLAEA
-// SetLCC
-// SetLCCB
-// SetLCC1SP
-// SetMC
-// SetMercator
-// SetMollweide
-// SetNZMG
-// SetOS
-// SetOrthographic
-// SetPolyconic
-// SetPS
-// SetRobinson
-// SetSinusoidal
-// SetStereographic
-// SetSOC
-// SetTM
-// SetTMSO
-// SetTMG
-// SetVDG
-
 
   %feature("kwargs") OSRSpatialReferenceShadow;
   OSRSpatialReferenceShadow( char const * wkt = "" ) {
@@ -403,9 +373,6 @@ public:
     }
   }
 
-/* NEEDED */
-// Reference ?  I don't think this are needed in script-land
-// Dereference ?  I don't think this are needed in script-land
 
 %newobject __str__;
   char *__str__() {
@@ -432,6 +399,12 @@ public:
 
   int IsLocal() {
     return OSRIsLocal(self);
+  }
+
+  OGRErr SetAuthority( const char * pszTargetKey,
+                       const char * pszAuthority,
+                       int nCode ) {
+    return OSRSetAuthority( self, pszTargetKey, pszAuthority, nCode );
   }
 
   const char *GetAttrValue( const char *name, int child = 0 ) {
@@ -529,41 +502,240 @@ public:
     return OSRGetNormProjParm( self, name, default_val, 0 );
   }
 
-  OGRErr SetACEA( double stdp1, double stdp2, double clat, double clong, double fe, double fn ) {
-    return OSRSetACEA( self, stdp1, stdp2, clat, clong, fe, fn );
+  OGRErr SetACEA( double dfStdP1, double dfStdP2,
+ 		double dfCenterLat, double dfCenterLong,
+                double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetACEA( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }    
+
+  OGRErr SetAE( double dfCenterLat, double dfCenterLong,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetAE( self, dfCenterLat, dfCenterLong, 
+                     dfFalseEasting, dfFalseNorthing );
   }
 
-  OGRErr SetAE( double clat, double clon, double fe, double fn ) {
-    return OSRSetAE( self, clat, clon, fe, fn );
+  OGRErr SetBonne( double dfStandardParallel, double dfCentralMeridian,
+                 double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetBonne( self, dfStandardParallel, dfCentralMeridian, 
+                        dfFalseEasting, dfFalseNorthing );
   }
 
-  OGRErr SetCS( double clat, double clong, double fe, double fn ) {
-    return OSRSetCS( self, clat, clong, fe, fn );
+  OGRErr SetCEA( double dfStdP1, double dfCentralMeridian,
+               double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetCEA( self, dfStdP1, dfCentralMeridian, 
+                      dfFalseEasting, dfFalseNorthing );
   }
 
-  OGRErr SetBonne( double clat, double clong, double fe, double fn ) {
-    return OSRSetBonne( self, clat, clong, fe, fn );
+  OGRErr SetCS( double dfCenterLat, double dfCenterLong,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetCS( self, dfCenterLat, dfCenterLong, 
+                     dfFalseEasting, dfFalseNorthing );
   }
 
-  OGRErr SetEC( double stdp1, double stdp2, double clat, double clong, double fe, double fn ) {
-    return OSRSetEC( self, stdp1, stdp2, clat, clong, fe, fn );
+  OGRErr SetEC( double dfStdP1, double dfStdP2,
+              double dfCenterLat, double dfCenterLong,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetEC( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                     dfFalseEasting, dfFalseNorthing );
   }
 
-  OGRErr SetEckertIV( double cm, double fe, double fn ) {
-    return OSRSetEckertIV( self, cm, fe, fn );
+  OGRErr SetEckertIV( double dfCentralMeridian,
+                    double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetEckertIV( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing);
   }
 
-  OGRErr SetEckertVI( double cm, double fe, double fn ) {
-    return OSRSetEckertVI( self, cm, fe, fn );
+  OGRErr SetEckertVI( double dfCentralMeridian,
+                    double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetEckertVI( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing);
   }
 
-  OGRErr SetEquirectangular( double clat, double clong, double fe, double fn ) {
-    return OSRSetEquirectangular( self, clat, clong, fe, fn );
+  OGRErr SetEquirectangular( double dfCenterLat, double dfCenterLong,
+                           double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetEquirectangular( self, dfCenterLat, dfCenterLong, 
+                                  dfFalseEasting, dfFalseNorthing );
   }
 
-%feature( "kwargs" ) SetGS;
-  OGRErr SetGS( double cm, double fe, double fn ) {
-    return OSRSetGS( self, cm, fe, fn );
+  OGRErr SetGS( double dfCentralMeridian,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetGS( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetGH( double dfCentralMeridian,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetGH( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetGEOS( double dfCentralMeridian, double dfSatelliteHeight,
+                double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetGEOS( self, dfCentralMeridian, dfSatelliteHeight,
+                       dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetGnomonic( double dfCenterLat, double dfCenterLong,
+                    double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetGnomonic( self, dfCenterLat, dfCenterLong, 
+                           dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetHOM( double dfCenterLat, double dfCenterLong,
+               double dfAzimuth, double dfRectToSkew,
+               double dfScale,
+               double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetHOM( self, dfCenterLat, dfCenterLong, dfAzimuth, dfRectToSkew,
+                      dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetHOM2PNO( double dfCenterLat,
+                   double dfLat1, double dfLong1,
+                   double dfLat2, double dfLong2,
+                   double dfScale,
+                   double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetHOM2PNO( self, dfCenterLat, dfLat1, dfLong1, dfLat2, dfLong2, 
+                          dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetKrovak( double dfCenterLat, double dfCenterLong,
+                  double dfAzimuth, double dfPseudoStdParallelLat,
+                  double dfScale, 
+                  double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetKrovak( self, dfCenterLat, dfCenterLong, 
+                         dfAzimuth, dfPseudoStdParallelLat, 
+                         dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetLAEA( double dfCenterLat, double dfCenterLong,
+                double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetLAEA( self, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetLCC( double dfStdP1, double dfStdP2,
+               double dfCenterLat, double dfCenterLong,
+               double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetLCC( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                      dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetLCC1SP( double dfCenterLat, double dfCenterLong,
+                  double dfScale,
+                  double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetLCC1SP( self, dfCenterLat, dfCenterLong, dfScale, 
+                         dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetLCCB( double dfStdP1, double dfStdP2,
+                double dfCenterLat, double dfCenterLong,
+                double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetLCCB( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetMC( double dfCenterLat, double dfCenterLong,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetMC( self, dfCenterLat, dfCenterLong,    
+                     dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetMercator( double dfCenterLat, double dfCenterLong,
+                    double dfScale, 
+                    double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetMercator( self, dfCenterLat, dfCenterLong, 
+                           dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr  SetMollweide( double dfCentralMeridian,
+                      double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetMollweide( self, dfCentralMeridian, 
+                            dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetNZMG( double dfCenterLat, double dfCenterLong,
+                double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetNZMG( self, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetOS( double dfOriginLat, double dfCMeridian,
+              double dfScale,
+              double dfFalseEasting,double dfFalseNorthing) {
+    return OSRSetOS( self, dfOriginLat, dfCMeridian, dfScale, 
+                     dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetOrthographic( double dfCenterLat, double dfCenterLong,
+                        double dfFalseEasting,double dfFalseNorthing) {
+    return OSRSetOrthographic( self, dfCenterLat, dfCenterLong, 
+                               dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetPolyconic( double dfCenterLat, double dfCenterLong,
+                     double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetPolyconic( self, dfCenterLat, dfCenterLong, 
+                            dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetPS( double dfCenterLat, double dfCenterLong,
+              double dfScale,
+              double dfFalseEasting, double dfFalseNorthing) {
+    return OSRSetPS( self, dfCenterLat, dfCenterLong, dfScale,
+                     dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetRobinson( double dfCenterLong, 
+                    double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetRobinson( self, dfCenterLong, dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetSinusoidal( double dfCenterLong, 
+                      double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetSinusoidal( self, dfCenterLong, dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetStereographic( double dfCenterLat, double dfCenterLong,
+                         double dfScale,
+                         double dfFalseEasting,double dfFalseNorthing) {
+    return OSRSetStereographic( self, dfCenterLat, dfCenterLong, dfScale, 
+                                dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetSOC( double dfLatitudeOfOrigin, double dfCentralMeridian,
+               double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetSOC( self, dfLatitudeOfOrigin, dfCentralMeridian,
+	              dfFalseEasting, dfFalseNorthing );
+  }
+    
+  OGRErr SetTM( double dfCenterLat, double dfCenterLong,
+              double dfScale,
+              double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetTM( self, dfCenterLat, dfCenterLong, dfScale, 
+                     dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetTMVariant( const char *pszVariantName,
+                     double dfCenterLat, double dfCenterLong,
+                     double dfScale,
+                     double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetTMVariant( self, pszVariantName, dfCenterLat, dfCenterLong,  
+                            dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetTMG( double dfCenterLat, double dfCenterLong, 
+               double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetTMG( self, dfCenterLat, dfCenterLong, 
+                      dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetTMSO( double dfCenterLat, double dfCenterLong,
+                double dfScale,
+                double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetTMSO( self, dfCenterLat, dfCenterLong, dfScale, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+
+  OGRErr SetVDG( double dfCenterLong,
+               double dfFalseEasting, double dfFalseNorthing ) {
+    return OSRSetVDG( self, dfCenterLong, dfFalseEasting, dfFalseNorthing );
   }
 
   OGRErr SetWellKnownGeogCS( const char *name ) {
