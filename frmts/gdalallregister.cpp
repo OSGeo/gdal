@@ -102,6 +102,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_CEOS();
 #endif
     
+#ifdef FRMT_palsar
+    GDALRegister_PALSAR();
+#endif
+    
 #ifdef FRMT_elas
     GDALRegister_ELAS();
 #endif
