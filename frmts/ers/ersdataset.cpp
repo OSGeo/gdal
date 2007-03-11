@@ -164,6 +164,36 @@ CPLErr ERSDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                             ERSDMS2Dec()                             */
+/*                                                                      */
+/*      Convert ERS DMS format to decimal degrees.   Input is like      */
+/*      "-180:00:00".                                                   */
+/************************************************************************/
+
+static double ERSDMS2Dec( const char *pszDMS )
+
+{
+    char **papszTokens = CSLTokenizeStringComplex( pszDMS, ":", FALSE, FALSE );
+
+    if( CSLCount(papszTokens) != 3 )
+    {
+        return CPLAtof( pszDMS );
+    }
+    else
+    {
+        double dfResult = fabs(CPLAtof(papszTokens[0]))
+            + CPLAtof(papszTokens[1]) / 60.0
+            + CPLAtof(papszTokens[2]) / 3600.0;
+
+        if( CPLAtof(papszTokens[0]) < 0 )
+            dfResult *= -1;
+
+        CSLDestroy( papszTokens );
+        return dfResult;
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -346,6 +376,55 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Look for projection.                                            */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+
+    CPLString osProjection = poHeader->Find( "CoordinateSpace.Projection", 
+                                             "RAW" );
+    CPLString osDatum = poHeader->Find( "CoordinateSpace.Datum", "WGS84" );
+    CPLString osUnits = poHeader->Find( "CoordinateSpace.Units", "METERS" );
+
+    oSRS.importFromERM( osProjection, osDatum, osUnits );
+
+    CPLFree( poDS->pszProjection );
+    oSRS.exportToWkt( &(poDS->pszProjection) );
+
+/* -------------------------------------------------------------------- */
+/*      Look for the geotransform.                                      */
+/* -------------------------------------------------------------------- */
+    if( poHeader->Find( "RasterInfo.RegistrationCoord.Eastings", NULL )
+        && poHeader->Find( "RasterInfo.CellInfo.Xdimension", NULL ) )
+    {
+        poDS->bGotTransform = TRUE;
+        poDS->adfGeoTransform[0] = CPLAtof( 
+            poHeader->Find( "RasterInfo.RegistrationCoord.Eastings", "" ));
+        poDS->adfGeoTransform[1] = CPLAtof( 
+            poHeader->Find( "RasterInfo.CellInfo.Xdimension", "" ));
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = CPLAtof( 
+            poHeader->Find( "RasterInfo.RegistrationCoord.Northings", "" ));
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -CPLAtof( 
+            poHeader->Find( "RasterInfo.CellInfo.Ydimension", "" ));
+    }
+    else if( poHeader->Find( "RasterInfo.RegistrationCoord.Latitude", NULL )
+        && poHeader->Find( "RasterInfo.CellInfo.Xdimension", NULL ) )
+    {
+        poDS->bGotTransform = TRUE;
+        poDS->adfGeoTransform[0] = ERSDMS2Dec( 
+            poHeader->Find( "RasterInfo.RegistrationCoord.Longitude", "" ));
+        poDS->adfGeoTransform[1] = CPLAtof( 
+            poHeader->Find( "RasterInfo.CellInfo.Xdimension", "" ));
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = ERSDMS2Dec( 
+            poHeader->Find( "RasterInfo.RegistrationCoord.Latitude", "" ));
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -CPLAtof( 
+            poHeader->Find( "RasterInfo.CellInfo.Ydimension", "" ));
     }
 
 /* -------------------------------------------------------------------- */
