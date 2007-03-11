@@ -152,19 +152,20 @@ for line in pfile.readlines():
 	    srs.SetUTM( int(dline[1]), dline[2] != 'S' )
 
 	# Handle Units from projects.dat file.
-	if lsize_str == '0.30480061':
-	    srs.SetLinearUnits( 'US Foot', float(lsize_str) )
-	elif lsize_str != '1.0':
-	    srs.SetLinearUnits( 'unnamed', float(lsize_str) )
+        if srs.IsProjected():
+            if lsize_str == '0.30480061':
+                srs.SetLinearUnits( 'US Foot', float(lsize_str) )
+            elif lsize_str != '1.0':
+                srs.SetLinearUnits( 'unnamed', float(lsize_str) )
 
         wkt = srs.ExportToWkt()
         if len(wkt) > 0:
-	    print '%s:%s' % (id, srs.ExportToWkt())
+	    print '%s,%s' % (id, srs.ExportToWkt())
         else:
-            print '%s:unsupported' % id
+            print '%s,LOCAL_CS["%s - (unsupported)"]' % (id,id)
 		
     except KeyError:
-	print '%s:unsupported' % id
+        print '%s,LOCAL_CS["%s - (unsupported)"]' % (id,id)
 
     except:
         print 'cant translate: ', line
@@ -195,5 +196,5 @@ for line in pfile.readlines():
     else:
         srs.SetGeogCS( tokens[1], id, sp_name, float(dline[2]), float(dline[4]) )
 
-    print '%s:%s' % (id, srs.ExportToWkt())
+    print '%s,%s' % (id, srs.ExportToWkt())
 
