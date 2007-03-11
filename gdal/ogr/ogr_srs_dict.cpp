@@ -130,3 +130,72 @@ OGRErr OSRImportFromDict( OGRSpatialReferenceH hSRS,
     return ((OGRSpatialReference *) hSRS)->importFromDict( pszDictFile,
                                                            pszCode );
 }
+
+/************************************************************************/
+/*                           importFromERM()                            */
+/************************************************************************/
+
+/**
+ * OGR WKT from ERMapper projection definitions.
+ *
+ * Generates an OGRSpatialReference definition from an ERMapper datum
+ * and projection name.  Based on the ecw_cs.wkt dictionary file from 
+ * gdal/data. 
+ * 
+ * @param pszProj the projection name, such as "NUTM11" or "GEOGRAPHIC".
+ * @param pszDatum the datum name, such as "NAD83".
+ * @param pszUnits the linear units "FEET" or "METERS".
+ *
+ * @return OGRERR_NONE on success or OGRERR_UNSUPPORTED_SRS if not found.
+ */
+
+OGRErr OGRSpatialReference::importFromERM( const char *pszProj, 
+                                           const char *pszDatum,
+                                           const char *pszUnits )
+
+{
+    Clear();
+
+/* -------------------------------------------------------------------- */
+/*      do we have projection and datum?                                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszProj,"RAW") )
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Set projection if we have it.                                   */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr;
+
+    if( EQUAL(pszProj,"GEODETIC") )
+    {
+    }
+    else
+    {
+        eErr = importFromDict( "ecw_cs.wkt", pszProj );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+
+        if( EQUAL(pszUnits,"FEET") )
+            SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV));
+        else
+            SetLinearUnits( SRS_UL_METER, 1.0 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the geogcs.                                                 */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oGeogCS;
+
+    eErr = oGeogCS.importFromDict( "ecw_cs.wkt", pszDatum );
+    if( eErr != OGRERR_NONE )
+    {
+        Clear();
+        return eErr;
+    }
+
+    if( !IsLocal() )
+        CopyGeogCSFrom( &oGeogCS );
+
+    return OGRERR_NONE;
+}
