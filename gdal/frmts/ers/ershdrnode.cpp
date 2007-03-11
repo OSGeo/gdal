@@ -207,7 +207,7 @@ int ERSHdrNode::ParseChildren( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Error?                                                          */
 /* -------------------------------------------------------------------- */
-        else
+        else if( osLine.Trim().length() > 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Unexpected line parsing .ecw:\n%s", 
