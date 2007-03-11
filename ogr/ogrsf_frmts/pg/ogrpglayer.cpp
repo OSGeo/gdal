@@ -29,8 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
 #include "ogr_pg.h"
+#include "ogrpgutility.h"
+#include "cpl_conv.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -123,14 +124,14 @@ void OGRPGLayer::ResetReading()
 
     if( hCursorResult != NULL )
     {
-        PQclear( hCursorResult );
+        OGRPGClearResult( hCursorResult );
 
         if( bCursorActive )
         {
             sprintf( szCommand, "CLOSE %s", pszCursorName );
 
             hCursorResult = PQexec(hPGConn, szCommand);
-            PQclear( hCursorResult );
+            OGRPGClearResult( hCursorResult );
         }
 
         poDS->FlushSoftTransaction();
@@ -524,7 +525,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         CPLDebug( "OGR_PG", "PQexec(%s)", osCommand.c_str() );
 
         hCursorResult = PQexec(hPGConn, osCommand );
-        PQclear( hCursorResult );
+        OGRPGClearResult( hCursorResult );
 
         osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
         hCursorResult = PQexec(hPGConn, osCommand );
@@ -540,6 +541,10 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     if( hCursorResult == NULL
         || PQresultStatus(hCursorResult) != PGRES_TUPLES_OK )
     {
+        CPLDebug( "OGR_PG", "PQclear() on an error condition");
+
+        OGRPGClearResult( hCursorResult );
+
         iNextShapeId = MAX(1,iNextShapeId);
         return NULL;
     }
@@ -550,7 +555,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     if( nResultOffset >= PQntuples(hCursorResult)
         && bCursorActive )
     {
-        PQclear( hCursorResult );
+        OGRPGClearResult( hCursorResult );
         
         osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
         hCursorResult = PQexec(hPGConn, osCommand );
@@ -564,14 +569,14 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( nResultOffset >= PQntuples(hCursorResult) )
     {
-        PQclear( hCursorResult );
+        OGRPGClearResult( hCursorResult );
 
         if( bCursorActive )
         {
             osCommand.Printf( "CLOSE %s", pszCursorName );
 
             hCursorResult = PQexec(hPGConn, osCommand);
-            PQclear( hCursorResult );
+            OGRPGClearResult( hCursorResult );
         }
 
         poDS->FlushSoftTransaction();
@@ -603,7 +608,11 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 OGRFeature *OGRPGLayer::GetFeature( long nFeatureId )
 
 {
-    /* This should be implemented! */
+    /*
+     * TODO: This should be implemented!
+     * See related Bug 1445
+     * http://bugzilla.remotesensing.org/show_bug.cgi?id=1445
+     */
 
     return NULL;
 }
