@@ -175,6 +175,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromXML( const char * );
     OGRErr      importFromDict( const char *pszDict, const char *pszCode );
     OGRErr      importFromURN( const char * );
+    OGRErr      importFromERM( const char *pszProj, const char *pszDatum,
+                               const char *pszUnits );
 
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();
