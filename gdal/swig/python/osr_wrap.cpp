@@ -2960,6 +2960,9 @@ SWIG_AsVal_int (PyObject * obj, int *val)
   return res;
 }
 
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetAuthority(OSRSpatialReferenceShadow *self,char const *pszTargetKey,char const *pszAuthority,int nCode){
+    return OSRSetAuthority( self, pszTargetKey, pszAuthority, nCode );
+  }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetAttrValue(OSRSpatialReferenceShadow *self,char const *name,int child=0){
     return OSRGetAttrValue( self, name, child );
   }
@@ -3026,32 +3029,147 @@ SWIGINTERN double OSRSpatialReferenceShadow_GetNormProjParm(OSRSpatialReferenceS
     // Return code ignored.
     return OSRGetNormProjParm( self, name, default_val, 0 );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetACEA(OSRSpatialReferenceShadow *self,double stdp1,double stdp2,double clat,double clong,double fe,double fn){
-    return OSRSetACEA( self, stdp1, stdp2, clat, clong, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetACEA(OSRSpatialReferenceShadow *self,double dfStdP1,double dfStdP2,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetACEA( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetAE(OSRSpatialReferenceShadow *self,double clat,double clon,double fe,double fn){
-    return OSRSetAE( self, clat, clon, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetAE(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetAE( self, dfCenterLat, dfCenterLong, 
+                     dfFalseEasting, dfFalseNorthing );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetCS(OSRSpatialReferenceShadow *self,double clat,double clong,double fe,double fn){
-    return OSRSetCS( self, clat, clong, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetBonne(OSRSpatialReferenceShadow *self,double dfStandardParallel,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetBonne( self, dfStandardParallel, dfCentralMeridian, 
+                        dfFalseEasting, dfFalseNorthing );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetBonne(OSRSpatialReferenceShadow *self,double clat,double clong,double fe,double fn){
-    return OSRSetBonne( self, clat, clong, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetCEA(OSRSpatialReferenceShadow *self,double dfStdP1,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetCEA( self, dfStdP1, dfCentralMeridian, 
+                      dfFalseEasting, dfFalseNorthing );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEC(OSRSpatialReferenceShadow *self,double stdp1,double stdp2,double clat,double clong,double fe,double fn){
-    return OSRSetEC( self, stdp1, stdp2, clat, clong, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetCS(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetCS( self, dfCenterLat, dfCenterLong, 
+                     dfFalseEasting, dfFalseNorthing );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEckertIV(OSRSpatialReferenceShadow *self,double cm,double fe,double fn){
-    return OSRSetEckertIV( self, cm, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEC(OSRSpatialReferenceShadow *self,double dfStdP1,double dfStdP2,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetEC( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                     dfFalseEasting, dfFalseNorthing );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEckertVI(OSRSpatialReferenceShadow *self,double cm,double fe,double fn){
-    return OSRSetEckertVI( self, cm, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEckertIV(OSRSpatialReferenceShadow *self,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetEckertIV( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing);
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEquirectangular(OSRSpatialReferenceShadow *self,double clat,double clong,double fe,double fn){
-    return OSRSetEquirectangular( self, clat, clong, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEckertVI(OSRSpatialReferenceShadow *self,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetEckertVI( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing);
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGS(OSRSpatialReferenceShadow *self,double cm,double fe,double fn){
-    return OSRSetGS( self, cm, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEquirectangular(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetEquirectangular( self, dfCenterLat, dfCenterLong, 
+                                  dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGS(OSRSpatialReferenceShadow *self,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetGS( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGH(OSRSpatialReferenceShadow *self,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetGH( self, dfCentralMeridian, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGEOS(OSRSpatialReferenceShadow *self,double dfCentralMeridian,double dfSatelliteHeight,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetGEOS( self, dfCentralMeridian, dfSatelliteHeight,
+                       dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGnomonic(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetGnomonic( self, dfCenterLat, dfCenterLong, 
+                           dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetHOM(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfAzimuth,double dfRectToSkew,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetHOM( self, dfCenterLat, dfCenterLong, dfAzimuth, dfRectToSkew,
+                      dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetHOM2PNO(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfLat1,double dfLong1,double dfLat2,double dfLong2,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetHOM2PNO( self, dfCenterLat, dfLat1, dfLong1, dfLat2, dfLong2, 
+                          dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetKrovak(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfAzimuth,double dfPseudoStdParallelLat,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetKrovak( self, dfCenterLat, dfCenterLong, 
+                         dfAzimuth, dfPseudoStdParallelLat, 
+                         dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLAEA(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetLAEA( self, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLCC(OSRSpatialReferenceShadow *self,double dfStdP1,double dfStdP2,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetLCC( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                      dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLCC1SP(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetLCC1SP( self, dfCenterLat, dfCenterLong, dfScale, 
+                         dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLCCB(OSRSpatialReferenceShadow *self,double dfStdP1,double dfStdP2,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetLCCB( self, dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetMC(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetMC( self, dfCenterLat, dfCenterLong,    
+                     dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetMercator(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetMercator( self, dfCenterLat, dfCenterLong, 
+                           dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetMollweide(OSRSpatialReferenceShadow *self,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetMollweide( self, dfCentralMeridian, 
+                            dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetNZMG(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetNZMG( self, dfCenterLat, dfCenterLong, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetOS(OSRSpatialReferenceShadow *self,double dfOriginLat,double dfCMeridian,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetOS( self, dfOriginLat, dfCMeridian, dfScale, 
+                     dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetOrthographic(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetOrthographic( self, dfCenterLat, dfCenterLong, 
+                               dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetPolyconic(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetPolyconic( self, dfCenterLat, dfCenterLong, 
+                            dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetPS(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetPS( self, dfCenterLat, dfCenterLong, dfScale,
+                     dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetRobinson(OSRSpatialReferenceShadow *self,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetRobinson( self, dfCenterLong, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetSinusoidal(OSRSpatialReferenceShadow *self,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetSinusoidal( self, dfCenterLong, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetStereographic(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetStereographic( self, dfCenterLat, dfCenterLong, dfScale, 
+                                dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetSOC(OSRSpatialReferenceShadow *self,double dfLatitudeOfOrigin,double dfCentralMeridian,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetSOC( self, dfLatitudeOfOrigin, dfCentralMeridian,
+	              dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTM(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetTM( self, dfCenterLat, dfCenterLong, dfScale, 
+                     dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTMVariant(OSRSpatialReferenceShadow *self,char const *pszVariantName,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetTMVariant( self, pszVariantName, dfCenterLat, dfCenterLong,  
+                            dfScale, dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTMG(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetTMG( self, dfCenterLat, dfCenterLong, 
+                      dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetTMSO(OSRSpatialReferenceShadow *self,double dfCenterLat,double dfCenterLong,double dfScale,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetTMSO( self, dfCenterLat, dfCenterLong, dfScale, 
+                       dfFalseEasting, dfFalseNorthing );
+  }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetVDG(OSRSpatialReferenceShadow *self,double dfCenterLong,double dfFalseEasting,double dfFalseNorthing){
+    return OSRSetVDG( self, dfCenterLong, dfFalseEasting, dfFalseNorthing );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetWellKnownGeogCS(OSRSpatialReferenceShadow *self,char const *name){
     return OSRSetWellKnownGeogCS( self, name );
@@ -3508,6 +3626,77 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsLocal(PyObject *SWIGUNUSEDPARM(sel
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetAuthority(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  int arg4 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetAuthority",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetAuthority" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_SetAuthority" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = buf2;
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SpatialReference_SetAuthority" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = buf3;
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetAuthority" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetAuthority(arg1,(char const *)arg2,(char const *)arg3,arg4);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   return NULL;
 }
 
@@ -4474,80 +4663,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_SpatialReference_SetCS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
-  double arg2 ;
-  double arg3 ;
-  double arg4 ;
-  double arg5 ;
-  OGRErr result;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  double val2 ;
-  int ecode2 = 0 ;
-  double val3 ;
-  int ecode3 = 0 ;
-  double val4 ;
-  int ecode4 = 0 ;
-  double val5 ;
-  int ecode5 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetCS",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
-  ecode2 = SWIG_AsVal_double(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetCS" "', argument " "2"" of type '" "double""'");
-  } 
-  arg2 = static_cast< double >(val2);
-  ecode3 = SWIG_AsVal_double(obj2, &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetCS" "', argument " "3"" of type '" "double""'");
-  } 
-  arg3 = static_cast< double >(val3);
-  ecode4 = SWIG_AsVal_double(obj3, &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetCS" "', argument " "4"" of type '" "double""'");
-  } 
-  arg4 = static_cast< double >(val4);
-  ecode5 = SWIG_AsVal_double(obj4, &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetCS" "', argument " "5"" of type '" "double""'");
-  } 
-  arg5 = static_cast< double >(val5);
-  result = (OGRErr)OSRSpatialReferenceShadow_SetCS(arg1,arg2,arg3,arg4,arg5);
-  {
-    /* %typemap(out) OGRErr */
-    if ( result != 0) {
-      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
-      SWIG_fail;
-    }
-  }
-  {
-    /* %typemap(ret) OGRErr */
-    if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
-      resultobj = 0;
-    }
-    if (resultobj == 0) {
-      resultobj = PyInt_FromLong( 0 );
-    }
-  }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *_wrap_SpatialReference_SetBonne(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -4599,6 +4714,154 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetBonne(PyObject *SWIGUNUSEDPARM(se
   } 
   arg5 = static_cast< double >(val5);
   result = (OGRErr)OSRSpatialReferenceShadow_SetBonne(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetCEA(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetCEA",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetCEA" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetCEA" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetCEA" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetCEA" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetCEA" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetCEA(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetCS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetCS",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetCS" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetCS" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetCS" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetCS" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetCS(arg1,arg2,arg3,arg4,arg5);
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4918,7 +5181,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_SpatialReference_SetGS(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+SWIGINTERN PyObject *_wrap_SpatialReference_SetGS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4937,11 +5200,8 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGS(PyObject *SWIGUNUSEDPARM(self)
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
-  char *  kwnames[] = {
-    (char *) "self",(char *) "cm",(char *) "fe",(char *) "fn", NULL 
-  };
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:SpatialReference_SetGS",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetGS",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
@@ -4963,6 +5223,2169 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGS(PyObject *SWIGUNUSEDPARM(self)
   } 
   arg4 = static_cast< double >(val4);
   result = (OGRErr)OSRSpatialReferenceShadow_SetGS(arg1,arg2,arg3,arg4);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetGH(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetGH",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetGH" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetGH" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetGH" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetGH" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetGH(arg1,arg2,arg3,arg4);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetGEOS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetGEOS",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetGEOS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetGEOS" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetGEOS" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetGEOS" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetGEOS" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetGEOS(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetGnomonic(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetGnomonic",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetGnomonic" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetGnomonic" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetGnomonic" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetGnomonic" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetGnomonic" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetGnomonic(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetHOM(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  double arg8 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  double val8 ;
+  int ecode8 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOOO:SpatialReference_SetHOM",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetHOM" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetHOM" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetHOM" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetHOM" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetHOM" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetHOM" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetHOM" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  ecode8 = SWIG_AsVal_double(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "SpatialReference_SetHOM" "', argument " "8"" of type '" "double""'");
+  } 
+  arg8 = static_cast< double >(val8);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetHOM(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetHOM2PNO(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  double arg8 ;
+  double arg9 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  double val8 ;
+  int ecode8 = 0 ;
+  double val9 ;
+  int ecode9 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOOOO:SpatialReference_SetHOM2PNO",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  ecode8 = SWIG_AsVal_double(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "8"" of type '" "double""'");
+  } 
+  arg8 = static_cast< double >(val8);
+  ecode9 = SWIG_AsVal_double(obj8, &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "SpatialReference_SetHOM2PNO" "', argument " "9"" of type '" "double""'");
+  } 
+  arg9 = static_cast< double >(val9);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetHOM2PNO(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetKrovak(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  double arg8 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  double val8 ;
+  int ecode8 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOOO:SpatialReference_SetKrovak",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetKrovak" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetKrovak" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetKrovak" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetKrovak" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetKrovak" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetKrovak" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetKrovak" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  ecode8 = SWIG_AsVal_double(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "SpatialReference_SetKrovak" "', argument " "8"" of type '" "double""'");
+  } 
+  arg8 = static_cast< double >(val8);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetKrovak(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetLAEA(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetLAEA",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetLAEA" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetLAEA" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetLAEA" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetLAEA" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetLAEA" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetLAEA(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetLCC(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:SpatialReference_SetLCC",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetLCC" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetLCC" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetLCC" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetLCC" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetLCC" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetLCC" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetLCC" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetLCC(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetLCC1SP(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetLCC1SP",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetLCC1SP" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetLCC1SP" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetLCC1SP" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetLCC1SP" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetLCC1SP" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetLCC1SP" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetLCC1SP(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetLCCB(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:SpatialReference_SetLCCB",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetLCCB" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetLCCB" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetLCCB" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetLCCB" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetLCCB" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetLCCB" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetLCCB" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetLCCB(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetMC(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetMC",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetMC" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetMC" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetMC" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetMC" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetMC" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetMC(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetMercator(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetMercator",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetMercator" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetMercator" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetMercator" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetMercator" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetMercator" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetMercator" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetMercator(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetMollweide(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetMollweide",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetMollweide" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetMollweide" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetMollweide" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetMollweide" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetMollweide(arg1,arg2,arg3,arg4);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetNZMG(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetNZMG",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetNZMG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetNZMG" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetNZMG" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetNZMG" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetNZMG" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetNZMG(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetOS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetOS",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetOS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetOS" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetOS" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetOS" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetOS" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetOS" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetOS(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetOrthographic(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetOrthographic",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetOrthographic" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetOrthographic" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetOrthographic" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetOrthographic" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetOrthographic" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetOrthographic(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetPolyconic(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetPolyconic",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetPolyconic" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetPolyconic" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetPolyconic" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetPolyconic" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetPolyconic" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetPolyconic(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetPS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetPS",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetPS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetPS" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetPS" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetPS" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetPS" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetPS" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetPS(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetRobinson(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetRobinson",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetRobinson" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetRobinson" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetRobinson" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetRobinson" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetRobinson(arg1,arg2,arg3,arg4);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetSinusoidal(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetSinusoidal",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetSinusoidal" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetSinusoidal" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetSinusoidal" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetSinusoidal" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetSinusoidal(arg1,arg2,arg3,arg4);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetStereographic(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetStereographic",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetStereographic" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetStereographic" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetStereographic" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetStereographic" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetStereographic" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetStereographic" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetStereographic(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetSOC(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetSOC",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetSOC" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetSOC" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetSOC" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetSOC" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetSOC" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetSOC(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetTM(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetTM",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetTM" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetTM" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetTM" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetTM" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetTM" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetTM" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetTM(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetTMVariant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  double arg7 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:SpatialReference_SetTMVariant",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetTMVariant" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_SetTMVariant" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = buf2;
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetTMVariant" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetTMVariant" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetTMVariant" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetTMVariant" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "SpatialReference_SetTMVariant" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetTMVariant(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetTMG(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:SpatialReference_SetTMG",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetTMG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetTMG" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetTMG" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetTMG" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetTMG" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetTMG(arg1,arg2,arg3,arg4,arg5);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetTMSO(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:SpatialReference_SetTMSO",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetTMSO" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetTMSO" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetTMSO" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetTMSO" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetTMSO" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetTMSO" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetTMSO(arg1,arg2,arg3,arg4,arg5,arg6);
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetVDG(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_SetVDG",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetVDG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetVDG" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetVDG" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetVDG" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  result = (OGRErr)OSRSpatialReferenceShadow_SetVDG(arg1,arg2,arg3,arg4);
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5588,7 +8011,6 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
   OGRErr result;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  char *val2 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -5599,9 +8021,22 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
   }
   arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
   {
-    /* %typemap(in) (char **ignorechange) */
-    PyArg_Parse( obj1, "s", &val2 );
-    arg2 = &val2;
+    /* %typemap(in) char **options */
+    /* Check if is a list */
+    if ( ! PySequence_Check(obj1)) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    int size = PySequence_Size(obj1);
+    for (int i = 0; i < size; i++) {
+      char *pszItem = NULL;
+      if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      arg2 = CSLAddString( arg2, pszItem );
+    }
   }
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromESRI(arg1,arg2);
   {
@@ -5610,6 +8045,10 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -5623,6 +8062,10 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
   }
   return resultobj;
 fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
   return NULL;
 }
 
@@ -6893,6 +9336,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_IsProjected", _wrap_SpatialReference_IsProjected, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetAuthority", _wrap_SpatialReference_SetAuthority, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_GetAttrValue", _wrap_SpatialReference_GetAttrValue, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetAttrValue", _wrap_SpatialReference_SetAttrValue, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetAngularUnits", _wrap_SpatialReference_SetAngularUnits, METH_VARARGS, NULL},
@@ -6912,13 +9356,41 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_GetNormProjParm", _wrap_SpatialReference_GetNormProjParm, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetACEA", _wrap_SpatialReference_SetACEA, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetAE", _wrap_SpatialReference_SetAE, METH_VARARGS, NULL},
-	 { (char *)"SpatialReference_SetCS", _wrap_SpatialReference_SetCS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetBonne", _wrap_SpatialReference_SetBonne, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetCEA", _wrap_SpatialReference_SetCEA, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetCS", _wrap_SpatialReference_SetCS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetEC", _wrap_SpatialReference_SetEC, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetEckertIV", _wrap_SpatialReference_SetEckertIV, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetEckertVI", _wrap_SpatialReference_SetEckertVI, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetEquirectangular", _wrap_SpatialReference_SetEquirectangular, METH_VARARGS, NULL},
-	 { (char *)"SpatialReference_SetGS", (PyCFunction) _wrap_SpatialReference_SetGS, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"SpatialReference_SetGS", _wrap_SpatialReference_SetGS, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetGH", _wrap_SpatialReference_SetGH, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetGEOS", _wrap_SpatialReference_SetGEOS, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetGnomonic", _wrap_SpatialReference_SetGnomonic, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetHOM", _wrap_SpatialReference_SetHOM, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetHOM2PNO", _wrap_SpatialReference_SetHOM2PNO, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetKrovak", _wrap_SpatialReference_SetKrovak, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetLAEA", _wrap_SpatialReference_SetLAEA, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetLCC", _wrap_SpatialReference_SetLCC, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetLCC1SP", _wrap_SpatialReference_SetLCC1SP, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetLCCB", _wrap_SpatialReference_SetLCCB, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetMC", _wrap_SpatialReference_SetMC, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetMercator", _wrap_SpatialReference_SetMercator, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetMollweide", _wrap_SpatialReference_SetMollweide, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetNZMG", _wrap_SpatialReference_SetNZMG, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetOS", _wrap_SpatialReference_SetOS, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetOrthographic", _wrap_SpatialReference_SetOrthographic, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetPolyconic", _wrap_SpatialReference_SetPolyconic, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetPS", _wrap_SpatialReference_SetPS, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetRobinson", _wrap_SpatialReference_SetRobinson, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetSinusoidal", _wrap_SpatialReference_SetSinusoidal, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetStereographic", _wrap_SpatialReference_SetStereographic, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetSOC", _wrap_SpatialReference_SetSOC, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetTM", _wrap_SpatialReference_SetTM, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetTMVariant", _wrap_SpatialReference_SetTMVariant, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetTMG", _wrap_SpatialReference_SetTMG, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetTMSO", _wrap_SpatialReference_SetTMSO, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_SetVDG", _wrap_SpatialReference_SetVDG, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetWellKnownGeogCS", _wrap_SpatialReference_SetWellKnownGeogCS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_SetFromUserInput", _wrap_SpatialReference_SetFromUserInput, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_CopyGeogCSFrom", _wrap_SpatialReference_CopyGeogCSFrom, METH_VARARGS, NULL},
