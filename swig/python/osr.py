@@ -171,6 +171,10 @@ class SpatialReference(_object):
         """IsLocal(self) -> int"""
         return _osr.SpatialReference_IsLocal(*args)
 
+    def SetAuthority(*args):
+        """SetAuthority(self, char pszTargetKey, char pszAuthority, int nCode) -> OGRErr"""
+        return _osr.SpatialReference_SetAuthority(*args)
+
     def GetAttrValue(*args):
         """GetAttrValue(self, char name, int child=0) -> char"""
         return _osr.SpatialReference_GetAttrValue(*args)
@@ -241,45 +245,246 @@ class SpatialReference(_object):
 
     def SetACEA(*args):
         """
-        SetACEA(self, double stdp1, double stdp2, double clat, double clong, 
-            double fe, double fn) -> OGRErr
+        SetACEA(self, double dfStdP1, double dfStdP2, double dfCenterLat, 
+            double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
         """
         return _osr.SpatialReference_SetACEA(*args)
 
     def SetAE(*args):
-        """SetAE(self, double clat, double clon, double fe, double fn) -> OGRErr"""
+        """
+        SetAE(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
         return _osr.SpatialReference_SetAE(*args)
 
-    def SetCS(*args):
-        """SetCS(self, double clat, double clong, double fe, double fn) -> OGRErr"""
-        return _osr.SpatialReference_SetCS(*args)
-
     def SetBonne(*args):
-        """SetBonne(self, double clat, double clong, double fe, double fn) -> OGRErr"""
+        """
+        SetBonne(self, double dfStandardParallel, double dfCentralMeridian, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
         return _osr.SpatialReference_SetBonne(*args)
+
+    def SetCEA(*args):
+        """
+        SetCEA(self, double dfStdP1, double dfCentralMeridian, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetCEA(*args)
+
+    def SetCS(*args):
+        """
+        SetCS(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetCS(*args)
 
     def SetEC(*args):
         """
-        SetEC(self, double stdp1, double stdp2, double clat, double clong, 
-            double fe, double fn) -> OGRErr
+        SetEC(self, double dfStdP1, double dfStdP2, double dfCenterLat, 
+            double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
         """
         return _osr.SpatialReference_SetEC(*args)
 
     def SetEckertIV(*args):
-        """SetEckertIV(self, double cm, double fe, double fn) -> OGRErr"""
+        """SetEckertIV(self, double dfCentralMeridian, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
         return _osr.SpatialReference_SetEckertIV(*args)
 
     def SetEckertVI(*args):
-        """SetEckertVI(self, double cm, double fe, double fn) -> OGRErr"""
+        """SetEckertVI(self, double dfCentralMeridian, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
         return _osr.SpatialReference_SetEckertVI(*args)
 
     def SetEquirectangular(*args):
-        """SetEquirectangular(self, double clat, double clong, double fe, double fn) -> OGRErr"""
+        """
+        SetEquirectangular(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
         return _osr.SpatialReference_SetEquirectangular(*args)
 
-    def SetGS(*args, **kwargs):
-        """SetGS(self, double cm, double fe, double fn) -> OGRErr"""
-        return _osr.SpatialReference_SetGS(*args, **kwargs)
+    def SetGS(*args):
+        """SetGS(self, double dfCentralMeridian, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
+        return _osr.SpatialReference_SetGS(*args)
+
+    def SetGH(*args):
+        """SetGH(self, double dfCentralMeridian, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
+        return _osr.SpatialReference_SetGH(*args)
+
+    def SetGEOS(*args):
+        """
+        SetGEOS(self, double dfCentralMeridian, double dfSatelliteHeight, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetGEOS(*args)
+
+    def SetGnomonic(*args):
+        """
+        SetGnomonic(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetGnomonic(*args)
+
+    def SetHOM(*args):
+        """
+        SetHOM(self, double dfCenterLat, double dfCenterLong, double dfAzimuth, 
+            double dfRectToSkew, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetHOM(*args)
+
+    def SetHOM2PNO(*args):
+        """
+        SetHOM2PNO(self, double dfCenterLat, double dfLat1, double dfLong1, 
+            double dfLat2, double dfLong2, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetHOM2PNO(*args)
+
+    def SetKrovak(*args):
+        """
+        SetKrovak(self, double dfCenterLat, double dfCenterLong, double dfAzimuth, 
+            double dfPseudoStdParallelLat, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetKrovak(*args)
+
+    def SetLAEA(*args):
+        """
+        SetLAEA(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetLAEA(*args)
+
+    def SetLCC(*args):
+        """
+        SetLCC(self, double dfStdP1, double dfStdP2, double dfCenterLat, 
+            double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetLCC(*args)
+
+    def SetLCC1SP(*args):
+        """
+        SetLCC1SP(self, double dfCenterLat, double dfCenterLong, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetLCC1SP(*args)
+
+    def SetLCCB(*args):
+        """
+        SetLCCB(self, double dfStdP1, double dfStdP2, double dfCenterLat, 
+            double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetLCCB(*args)
+
+    def SetMC(*args):
+        """
+        SetMC(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetMC(*args)
+
+    def SetMercator(*args):
+        """
+        SetMercator(self, double dfCenterLat, double dfCenterLong, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetMercator(*args)
+
+    def SetMollweide(*args):
+        """SetMollweide(self, double dfCentralMeridian, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
+        return _osr.SpatialReference_SetMollweide(*args)
+
+    def SetNZMG(*args):
+        """
+        SetNZMG(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetNZMG(*args)
+
+    def SetOS(*args):
+        """
+        SetOS(self, double dfOriginLat, double dfCMeridian, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetOS(*args)
+
+    def SetOrthographic(*args):
+        """
+        SetOrthographic(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetOrthographic(*args)
+
+    def SetPolyconic(*args):
+        """
+        SetPolyconic(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetPolyconic(*args)
+
+    def SetPS(*args):
+        """
+        SetPS(self, double dfCenterLat, double dfCenterLong, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetPS(*args)
+
+    def SetRobinson(*args):
+        """SetRobinson(self, double dfCenterLong, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
+        return _osr.SpatialReference_SetRobinson(*args)
+
+    def SetSinusoidal(*args):
+        """SetSinusoidal(self, double dfCenterLong, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
+        return _osr.SpatialReference_SetSinusoidal(*args)
+
+    def SetStereographic(*args):
+        """
+        SetStereographic(self, double dfCenterLat, double dfCenterLong, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetStereographic(*args)
+
+    def SetSOC(*args):
+        """
+        SetSOC(self, double dfLatitudeOfOrigin, double dfCentralMeridian, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetSOC(*args)
+
+    def SetTM(*args):
+        """
+        SetTM(self, double dfCenterLat, double dfCenterLong, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetTM(*args)
+
+    def SetTMVariant(*args):
+        """
+        SetTMVariant(self, char pszVariantName, double dfCenterLat, double dfCenterLong, 
+            double dfScale, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetTMVariant(*args)
+
+    def SetTMG(*args):
+        """
+        SetTMG(self, double dfCenterLat, double dfCenterLong, double dfFalseEasting, 
+            double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetTMG(*args)
+
+    def SetTMSO(*args):
+        """
+        SetTMSO(self, double dfCenterLat, double dfCenterLong, double dfScale, 
+            double dfFalseEasting, double dfFalseNorthing) -> OGRErr
+        """
+        return _osr.SpatialReference_SetTMSO(*args)
+
+    def SetVDG(*args):
+        """SetVDG(self, double dfCenterLong, double dfFalseEasting, double dfFalseNorthing) -> OGRErr"""
+        return _osr.SpatialReference_SetVDG(*args)
 
     def SetWellKnownGeogCS(*args):
         """SetWellKnownGeogCS(self, char name) -> OGRErr"""
