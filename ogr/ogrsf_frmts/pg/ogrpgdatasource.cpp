@@ -976,7 +976,8 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     {
         // TODO: mloskot - replace with strtol() function.
         // atoi does not provide any level of diagnostics.
-        // What about adding CPLAtoi() ? 
+        // What about adding CPLAtoi() ? See bug 1517:
+        // http://bugzilla.remotesensing.org/show_bug.cgi?id=1517
 
         nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
 
