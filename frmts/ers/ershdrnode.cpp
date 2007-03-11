@@ -162,7 +162,7 @@ int ERSHdrNode::ParseChildren( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Got a Name=Value.                                               */
 /* -------------------------------------------------------------------- */
-        if( (iOff = osLine.find_first_of( '=' )) != string::npos )
+        if( (iOff = osLine.find_first_of( '=' )) != std::string::npos )
         {
             CPLString osName = osLine.substr(0,iOff-1);
             osName.Trim();
@@ -180,7 +180,7 @@ int ERSHdrNode::ParseChildren( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Got a Begin for an object.                                      */
 /* -------------------------------------------------------------------- */
-        else if( (iOff = osLine.find( " Begin" )) != string::npos )
+        else if( (iOff = osLine.find( " Begin" )) != std::string::npos )
         {
             CPLString osName = osLine.substr(0,iOff);
             osName.Trim();
@@ -199,7 +199,7 @@ int ERSHdrNode::ParseChildren( FILE * fp )
 /*      Got an End for our object.  Well, at least we *assume* it       */
 /*      must be for our object.                                         */
 /* -------------------------------------------------------------------- */
-        else if( osLine.find( " End" ) != string::npos )
+        else if( osLine.find( " End" ) != std::string::npos )
         {
             return TRUE;
         }
