@@ -686,6 +686,33 @@ def ogr_pg_18():
     return 'success'
 
 ###############################################################################
+# Test reading a layer extent
+
+def ogr_pg_19():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    layer = gdaltest.pg_ds.GetLayerByName( 'tpoly' )
+    if layer is None:
+        gdaltest.post_reason( 'did not get tpoly layer' )
+        return 'fail'
+    
+    extent = layer.GetExtent()
+    expect = ( 478315.53125, 481645.3125, 4762880.5, 4765610.5 )
+
+    minx = abs(extent[0] - expect[0])
+    maxx = abs(extent[1] - expect[1])
+    miny = abs(extent[2] - expect[2])
+    maxy = abs(extent[3] - expect[3])
+
+    if max(minx, maxx, miny, maxy) > 0.0001:
+        gdaltest.post_reason( 'Extents do not match' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_cleanup():
@@ -702,9 +729,12 @@ def ogr_pg_cleanup():
 
     return 'success'
 
+# NOTE: The ogr_pg_19 intentionally executed after ogr_pg_2
+
 gdaltest_list = [ 
     ogr_pg_1,
     ogr_pg_2,
+    ogr_pg_19,
     ogr_pg_3,
     ogr_pg_4,
     ogr_pg_5,
