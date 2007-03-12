@@ -62,7 +62,7 @@ The source code for this effort is intended to be available as OpenSource
 using an X Consortium style license.  The OGR library is currently a 
 loosely coupled subcomponent of the 
 <a href="http://www.gdal.org/">GDAL</a> library, so you get all
-of GDAL for the price of OGR, though you can build and use just the OGR 
+of GDAL for the "price" of OGR, though you can build and use just the OGR 
 components.  See the <a href="http://www.gdal.org/">GDAL</a> 
 page for the most recently released source including 
 <a href="http://gdal.maptools.org/dl/daily">nightly CVS snapshots</a>. 
