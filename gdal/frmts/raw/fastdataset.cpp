@@ -758,7 +758,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             dfLRX -= (double)iZone * 1000000.0;
 
         // Create projection definition
-        oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum );
+        OGRErr eErr =
+            oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum );
+        if ( eErr != OGRERR_NONE )
+            CPLDebug("FAST", "Import projection from USGS failed: %d", eErr);
         oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
         
         // Read datum name
@@ -781,7 +784,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if ( poDS->pszProjection )
             CPLFree( poDS->pszProjection );
-        oSRS.exportToWkt( &poDS->pszProjection );
+        eErr = oSRS.exportToWkt( &poDS->pszProjection );
+        if ( eErr != OGRERR_NONE )
+            CPLDebug("FAST", "Export projection to WKT USGS failed: %d", eErr);
 
         // Generate GCPs
         pasGCPList = (GDAL_GCP *) CPLCalloc( sizeof( GDAL_GCP ), 4 );
@@ -813,7 +818,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pasGCPList[3].dfGCPLine = poDS->nRasterYSize-0.5;
 
         // Calculate transformation matrix, if accurate
-        transform_ok = GDALGCPsToGeoTransform(4,pasGCPList,poDS->adfGeoTransform,0);
+        transform_ok =
+            GDALGCPsToGeoTransform(4,pasGCPList,poDS->adfGeoTransform,0);
         if (transform_ok == FALSE)
         {
             
@@ -836,8 +842,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     int nLineOffset = poDS->nRasterXSize * nPixelOffset;
 
     for( i = 1; i <= poDS->nBands; i++ )
+    {
         poDS->SetBand( i, new FASTRasterBand( poDS, i, poDS->fpChannels[i - 1],
 	    0, nPixelOffset, nLineOffset, poDS->eDataType, TRUE));
+    }
 
     CPLFree( pszHeader );
 
