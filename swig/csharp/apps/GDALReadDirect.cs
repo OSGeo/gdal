@@ -36,7 +36,7 @@ class GDALReadDirect {
         // Using early initialization of System.Console
         Console.WriteLine("");
 
-        //try 
+        try 
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -89,10 +89,10 @@ class GDALReadDirect {
             SaveBitmapDirect(ds, args[1]);
             
         }
-        /*catch (Exception e)
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
-        }/**/
+        }
     }
 
     private static void SaveBitmapDirect(Dataset ds, string filename) 
