@@ -1,0 +1,94 @@
+#ifndef DOXYGEN_SKIP
+/* $Id: RFC9_MAINTAINER.dox 10629 2007-01-17 05:22:08Z warmerdam $ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page rfc10_ogropen RFC 10: OGR Open Parameters
+
+Author: Andrey Kiselev<br>
+Contact: dron@ak4719.spb.edu<br>
+Status: Development<br>
+
+\section rfc10_summary Summary
+
+It is proposed that OGRSFDriver::Open() and OGRSFDriverRegistrar::Open() calls
+should be changed to accept additional parameter containing arbitrary
+additional parameters supplied by caller. OGROpenEx() function should be
+introduced to map this new functionality into C interface.
+
+\section rfc10_parameters Open parameters
+
+Sometimes it is needed to pass additional information to OGR driver along with
+the name of the dataset to be opened. It can be, for example, the style table
+name (some drivers allow to choose from the various style tables) or any other
+additional data. The old method for doing this was to encode the extra info in
+the dataset name string. It was convenient approach, so it proposed to use
+separate parameter in OGRSFDriver::Open() and OGRSFDriverRegistrar::Open()
+calls representing open options, just like it is implemented in
+OGRDataSource::CreateLayer() call.
+
+It is supposed that open options will be supplied in form of NAME=VALUE pairs
+forming the string list.
+
+\section rfc10_implementation Implementation
+
+All Open() functions should be changed in the following way:
+
+<pre>
+OGRDataSource *
+OGRSFDriverRegistrar::Open( const char * pszName, int bUpdate,
+                            OGRSFDriver ** ppoDriver,
+			    char **papszOptions = NULL );
+
+
+</pre>
+
+<pre>
+OGRDataSource *
+OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
+                                  OGRSFDriver ** ppoDriver,
+                                  char **papszOptions = NULL );
+</pre>
+
+<pre>
+virtual OGRDataSource
+OGRSFDriver::*Open( const char *pszName, int bUpdate=FALSE,
+                    char **papszOptions = NULL ) = 0;
+</pre>
+
+The last change needs to be propagated in all OGR drivers. The change itself
+is pretty simple: one additional parameter should be added to function
+definition. But it has impact on third-party OGR drivers: they are not
+source compatible anymore and should be changed too.
+
+Also appropriate C functions should be added:
+
+<pre>
+OGRDataSourceH OGROpenEx( const char *pszName, int bUpdate,
+                          OGRSFDriverH *pahDriverList,
+			  char **papszOptions );
+</pre>
+
+<pre>
+OGRDataSourceH OGROpenSharedEx( const char *pszName, int bUpdate,
+                                OGRSFDriverH *pahDriverList,
+                                char **papszOptions );
+</pre>
+
+<pre>
+OGRDataSourceH OGR_Dr_OpenEx( OGRSFDriverH hDriver, const char *pszName, 
+                              int bUpdate, char **papszOptions );
+</pre>
+
+\section rfc10_compatibility Backward compatibility
+
+Proposed additions will not have any impact on C binary compatibility.
+C++ binary interface will be broken, source level compatibility will be
+broken for third-party OGR drivers only. There will be no impact
+for high-level applications on source level.
+
+\section rfc10_responsibility Responsibility and Timeline
+
+Andrey Kiselev is responsible to implement this proposal. New API will
+be available in GDAL 1.5.0.
+*/
