@@ -123,7 +123,7 @@ includes a GDAL plugin.
 <li> <a href="http://www.ionicsoft.com/">IONIC Red Spider</a>: an OGC Web Services platform includes a GDAL plugin.
 <li> <a href="http://www.esri.com/">ESRI ArcGIS 9.2+</a>: A popular GIS platform.
 <li> <a href="http://www.scanex.ru/software/scanmagic/">ScanMagic</a>: 
-Commercial Win32 application for visualization, analysis and processing of
+Win32 application for visualization, analysis and processing of
 remote sensing data (lite version for free).
 <li> <a href="http://www.msmacrosystem.nl/Ilwis/index.html">MS MacroSystem</a>: 3D DEM Viewer.
 <li> <a href="http://www.gstat.org/">gstat</a>: a geostatistical modelling
@@ -139,7 +139,7 @@ implementation and an experimental GUI+CLI GIS with Perl and GTK+.
 Interactive data fusion and visual analysis tool.
 <li> <a href="http://www.itc.nl/ilwis/">ILWIS</a>: Remote Sensing and GIS 
 Desktop Package.
-<li> <a href="http://www.spaceyes.com/">SpaceEyes3D</a>: Commercial 
+<li> <a href="http://www.spaceyes.com/">SpaceEyes3D</a>: 
 3D visualization software for cartographic data.
 <li> <a href="http://www.mapwindow.org/">MapWindow</a>: open source
 ActiveX control with GIS functionality.
