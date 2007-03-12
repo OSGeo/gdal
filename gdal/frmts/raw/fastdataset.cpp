@@ -80,10 +80,10 @@ CPL_C_END
 
 #define USGS_PARAMETERS         "USGS PROJECTION PARAMETERS"
 
-#define CORNER_UPPER_LEFT       "UL"
-#define CORNER_UPPER_RIGHT      "UR"
-#define CORNER_LOWER_LEFT       "LL"
-#define CORNER_LOWER_RIGHT      "LR"
+#define CORNER_UPPER_LEFT       "UL "
+#define CORNER_UPPER_RIGHT      "UR "
+#define CORNER_LOWER_LEFT       "LL "
+#define CORNER_LOWER_RIGHT      "LR "
 #define CORNER_VALUE_SIZE       13
 
 #define VALUE_SIZE              24
@@ -239,81 +239,89 @@ FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
     switch ( iSatellite )
     {
 	case LANDSAT:
-	if ( pszFilename && !EQUAL( pszFilename, "" ) )
-	{
-	    pszChannelFilename =
-                CPLFormCIFilename( pszDirname, pszFilename, NULL );
-	    fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	}
-	else
-	    fpChannels[iBand] = NULL;
-	break;
+            if ( pszFilename && !EQUAL( pszFilename, "" ) )
+            {
+                pszChannelFilename =
+                    CPLFormCIFilename( pszDirname, pszFilename, NULL );
+                fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+                if ( !fpChannels[iBand] )
+                {
+                    pszChannelFilename =
+                        CPLFormFilename( pszDirname,
+                                CPLSPrintf( "%s.b%02d", pszPrefix, iBand + 1 ),
+                                NULL );
+                    fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+                }
+            }
+            else
+                fpChannels[iBand] = NULL;
+            break;
 	case IRS:
 	default:
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "%s.%d", pszPrefix, iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "IMAGERY%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "imagery%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "IMAGERY%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "imagery%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "IMAGERY%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "imagery%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "BAND%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "band%d", iBand + 1 ), pszSuffix );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "BAND%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "band%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "BAND%d.dat", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	if ( fpChannels[iBand] )
-	    break;
-	pszChannelFilename = CPLFormFilename( pszDirname,
-	    CPLSPrintf( "band%d.DAT", iBand + 1 ), NULL );
-	fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
-	break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "%s.%d", pszPrefix, iBand + 1 ), pszSuffix );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "IMAGERY%d", iBand + 1 ), pszSuffix );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "imagery%d", iBand + 1 ), pszSuffix );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "IMAGERY%d.DAT", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "imagery%d.dat", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "IMAGERY%d.dat", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "imagery%d.DAT", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "BAND%d", iBand + 1 ), pszSuffix );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "band%d", iBand + 1 ), pszSuffix );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "BAND%d.DAT", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "band%d.dat", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "BAND%d.dat", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            if ( fpChannels[iBand] )
+                break;
+            pszChannelFilename = CPLFormFilename( pszDirname,
+                CPLSPrintf( "band%d.DAT", iBand + 1 ), NULL );
+            fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
+            break;
     }
     
     CPLDebug( "FAST", "Band %d filename=%s", iBand + 1, pszChannelFilename);
@@ -502,7 +510,13 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             pszTemp = strstr( pszTemp, FILENAME );
         if ( pszTemp )
         {
+            // Skip the parameter name
             pszTemp += strlen(FILENAME);
+            // Skip whitespaces and equal signs
+            while ( *pszTemp == ' ' )
+                pszTemp++;
+            while ( *pszTemp == '=' )
+                pszTemp++;
             pszFilename = CPLScanString( pszTemp, FILENAME_SIZE, TRUE, FALSE );
         }
         else
@@ -648,6 +662,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         iZone = 0L;
     CPLFree( pszTemp );
+#if DEBUG
+    CPLDebug("FAST", "USGS zone number %ld.", iZone);
+#endif
 
     // Read 15 USGS projection parameters
     for ( i = 0; i < 15; i++ )
@@ -670,41 +687,56 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+    // Coordinates should follow the word "PROJECTION", otherwise we can
+    // be confused by other occurences of the corner keywords.
+    char        *pszGeomRecord = strstr( pszHeader, "PROJECTION" );
     // Read corner coordinates
-    pszTemp = strstr( pszHeader, CORNER_UPPER_LEFT );
+    pszTemp = strstr( pszGeomRecord, CORNER_UPPER_LEFT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
         dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+#if DEBUG
+        CPLDebug("FAST", "Upper left coordinates: %f, %f.", dfULX, dfULY);
+#endif
     }
 
-    pszTemp = strstr( pszHeader, CORNER_UPPER_RIGHT );
+    pszTemp = strstr( pszGeomRecord, CORNER_UPPER_RIGHT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_UPPER_RIGHT ) + 28;
         dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfURY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+#if DEBUG
+        CPLDebug("FAST", "Upper right coordinates: %f, %f.", dfURX, dfURY);
+#endif
     }
 
-    pszTemp = strstr( pszHeader, CORNER_LOWER_LEFT );
+    pszTemp = strstr( pszGeomRecord, CORNER_LOWER_LEFT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_LOWER_LEFT ) + 28;
         dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfLLY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+#if DEBUG
+        CPLDebug("FAST", "Lower left coordinates: %f, %f.", dfLLX, dfLLY);
+#endif
     }
 
-    pszTemp = strstr( pszHeader, CORNER_LOWER_RIGHT );
+    pszTemp = strstr( pszGeomRecord, CORNER_LOWER_RIGHT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_LOWER_RIGHT ) + 28;
         dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+#if DEBUG
+        CPLDebug("FAST", "Lower right coordinates: %f, %f.", dfLRX, dfLRY);
+#endif
     }
 
     if ( dfULX != 0.0 && dfULY != 0.0
@@ -731,13 +763,21 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         
         // Read datum name
         pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
-        if ( EQUAL( pszTemp, "WGS84" ) )
+        if ( pszTemp )
+        {
+            if ( EQUAL( pszTemp, "WGS84" ) )
+                oSRS.SetWellKnownGeogCS( "WGS84" );
+            else if ( EQUAL( pszTemp, "NAD27" ) )
+                oSRS.SetWellKnownGeogCS( "NAD27" );
+            else if ( EQUAL( pszTemp, "NAD83" ) )
+                oSRS.SetWellKnownGeogCS( "NAD83" );
+            CPLFree( pszTemp );
+        }
+        else
+        {
+            // Reasonable fallback
             oSRS.SetWellKnownGeogCS( "WGS84" );
-        else if ( EQUAL( pszTemp, "NAD27" ) )
-            oSRS.SetWellKnownGeogCS( "NAD27" );
-        else if ( EQUAL( pszTemp, "NAD83" ) )
-            oSRS.SetWellKnownGeogCS( "NAD83" );
-        CPLFree( pszTemp );
+        }
 
         if ( poDS->pszProjection )
             CPLFree( poDS->pszProjection );
