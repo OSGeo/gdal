@@ -23,6 +23,8 @@ A list of all GDAL/OGR RFC documents, with status.
 
 <li> \link rfc9_maintainer RFC 9: GDAL Paid Maintainer Guidelines\endlink (Adopted)
 
+<li> \link rfc9_ogropen RFC 10: OGR Open Parameters\endlink (Development)
+
 </ul>
 
 */
