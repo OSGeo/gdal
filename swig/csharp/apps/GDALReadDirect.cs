@@ -106,6 +106,12 @@ class GDALReadDirect {
             return;
         }
 
+        if (redBand.GetRasterColorInterpretation() == ColorInterp.GCI_GrayIndex)
+        {
+            SaveBitmapGrayDirect(ds, filename);
+            return;
+        }
+
         if (ds.RasterCount < 3) 
         {
             Console.WriteLine("The number of the raster bands is not enough to run this sample");
@@ -188,6 +194,48 @@ class GDALReadDirect {
                 ColorEntry ce = ct.GetColorEntry(i);
                 pal.Entries[i] = Color.FromArgb(ce.c4, ce.c1, ce.c2, ce.c3);
             }
+            bitmap.Palette = pal;
+            
+            int stride = bitmapData.Stride;
+            IntPtr buf = bitmapData.Scan0;
+
+            band.ReadRaster(0, 0, width, height, buf, width, height, DataType.GDT_Byte, 1, stride);
+            TimeSpan renderTime = DateTime.Now - start;
+            Console.WriteLine("SaveBitmapDirect fetch time: " + renderTime.TotalMilliseconds + " ms");
+        }
+        finally 
+        {
+            bitmap.UnlockBits(bitmapData);
+        }
+
+        bitmap.Save(filename);
+    }
+
+    private static void SaveBitmapGrayDirect(Dataset ds, string filename) 
+    {
+        // Get the GDAL Band objects from the Dataset
+        Band band = ds.GetRasterBand(1);
+
+        // Get the width and height of the Dataset
+        int width = ds.RasterXSize;
+        int height = ds.RasterYSize;
+
+        // Create a Bitmap to store the GDAL image in
+        Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
+
+        DateTime start = DateTime.Now;
+        
+        byte[] r = new byte[width * height];
+		
+        band.ReadRaster(0, 0, width, height, r, width, height, 0, 0);
+        // Use GDAL raster reading methods to read the image data directly into the Bitmap
+        BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format8bppIndexed);
+
+        try 
+        {
+            ColorPalette pal = bitmap.Palette; 
+            for(int i = 0; i < 256; i++) 
+                pal.Entries[i] = Color.FromArgb( 255, i, i, i ); 
             bitmap.Palette = pal;
             
             int stride = bitmapData.Stride;
