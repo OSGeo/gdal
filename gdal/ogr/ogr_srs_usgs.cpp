@@ -99,14 +99,14 @@ static long aoEllips[] =
     0,// FIXME: Southeast Asia --- skipped
     7003,   // Australian National, 1965
     7024,   // Krassovsky, 1940
-    0,// FIXME: Hough --- skipped
+    7053,   // Hough
     0,// FIXME: Mercury, 1960 --- skipped
     0,// FIXME: Modified Mercury, 1968 --- skipped
     7047,   // Sphere, rad 6370997 m (normal sphere)
     7006,   // Bessel, 1841 (Namibia)
     7016,   // Everest (Sabah & Sarawak)
     7044,   // Everest, 1956
-    0,// FIXME: Everest, Malaysia 1969 --- skipped
+    7056,   // Everest, Malaysia 1969
     7018,   // Everest, Malay & Singapr 1948
     0,// FIXME: Everest, Pakistan --- skipped
     7022,   // Hayford (International 1924) XXX?
