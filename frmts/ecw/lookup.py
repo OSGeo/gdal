@@ -153,6 +153,7 @@ for line in pfile.readlines():
 
 	# Handle Units from projects.dat file.
         if srs.IsProjected():
+            srs.SetAttrValue( 'PROJCS', id )
             if lsize_str == '0.30480061':
                 srs.SetLinearUnits( 'US Foot', float(lsize_str) )
             elif lsize_str != '1.0':
