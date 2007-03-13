@@ -319,7 +319,7 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
   unsigned long lo[SIG_MAX / 8 + 1], *pl;
   short sexp;
   long lexp;
-  char *scsav, esign;
+  char esign;
 
   /* Get past the spaces.  */
   for (sc = (char *)s; isspace(*sc); ++sc)
@@ -460,11 +460,8 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
   if ((base == 10 && (*sc == 'e' || *sc == 'E'))
       || (base == 16 && (*sc == 'p' || *sc == 'P')))
     {
-      scsav = sc;
       esign = *++sc == '+' || *sc == '-' ? *sc++ : '+';
-      if (!isdigit (*sc))
-	*sc = *scsav;		/* ill-formed exponent */
-      else
+      if (isdigit (*sc))
 	{
 	  /* exponent looks valid */
 	  for (; isdigit (*sc); ++sc)
