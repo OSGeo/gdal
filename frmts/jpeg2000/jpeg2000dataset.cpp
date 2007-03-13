@@ -251,11 +251,11 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
             this->eDataType = GDT_UInt32;
         break;
     }
-
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->GetRasterYSize();
+    // FIXME: Figure out optimal block size!
+    // Should the block size be fixed or determined dynamically?
+    nBlockXSize = 256;
+    nBlockYSize = 256;
     psMatrix = jas_matrix_create(nBlockYSize, nBlockXSize);
-    
 }
 
 /************************************************************************/
@@ -264,7 +264,8 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
 
 JPEG2000RasterBand::~JPEG2000RasterBand()
 {
-    jas_matrix_destroy( psMatrix );
+    if ( psMatrix )
+        jas_matrix_destroy( psMatrix );    
 }
 
 /************************************************************************/
@@ -288,9 +289,12 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
     }
-    
-    jas_image_readcmpt( poGDS->psImage, nBand - 1, nBlockXOff, nBlockYOff,
-        nBlockXSize, nBlockYSize, psMatrix );
+
+    // Now we can calculate the pixel offset of the top left by multiplying
+    // block offset with the block size.
+    jas_image_readcmpt( poGDS->psImage, nBand - 1,
+                        nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
+                        nBlockXSize, nBlockYSize, psMatrix );
 
     for( i = 0; i < jas_matrix_numrows(psMatrix); i++ )
         for( j = 0; j < jas_matrix_numcols(psMatrix); j++ )
@@ -400,7 +404,6 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 /************************************************************************/
 
 JPEG2000Dataset::JPEG2000Dataset()
-
 {
     fp = NULL;
     psStream = NULL;
@@ -514,13 +517,14 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->fp == NULL )
         return NULL;
-   
+
     jas_init();
     if( !(sS = jas_stream_fopen( poOpenInfo->pszFilename, "rb" )) )
     {
         jas_image_clearfmts();
         return NULL;
     }
+
     iFormat = jas_image_getfmt( sS );
     if ( !(pszFormatName = jas_image_fmttostr( iFormat )) )
     {
@@ -556,8 +560,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( EQUALN( pszFormatName, "jp2", 3 ) )
     {
-// XXX: Hack to read JP2 boxes from input file. JasPer hasn't public API
-// call for such things, so we use internal JasPer functions.
+        // XXX: Hack to read JP2 boxes from input file. JasPer hasn't public
+        // API call for such things, so we will use internal JasPer functions.
         jp2_box_t *box;
         box = 0;
         while ( ( box = jp2_box_get(poDS->psStream) ) )
@@ -672,6 +676,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
