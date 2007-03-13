@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.74 2006/10/12 16:50:55 dron Exp $ */
+/* $Id: tif_dir.c,v 1.75 2007/02/22 14:07:16 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -74,21 +74,37 @@ void _TIFFsetDoubleArray(double** dpp, double* dp, uint32 n)
 static int
 setExtraSamples(TIFFDirectory* td, va_list ap, uint32* v)
 {
+/* XXX: Unassociated alpha data == 999 is a known Corel Draw bug, see below */
+#define EXTRASAMPLE_COREL_UNASSALPHA 999 
+
 	uint16* va;
 	uint32 i;
 
 	*v = va_arg(ap, uint32);
 	if ((uint16) *v > td->td_samplesperpixel)
-		return (0);
+		return 0;
 	va = va_arg(ap, uint16*);
 	if (*v > 0 && va == NULL)		/* typically missing param */
-		return (0);
-	for (i = 0; i < *v; i++)
-		if (va[i] > EXTRASAMPLE_UNASSALPHA)
-			return (0);
+		return 0;
+	for (i = 0; i < *v; i++) {
+		if (va[i] > EXTRASAMPLE_UNASSALPHA) {
+			/*
+			 * XXX: Corel Draw is known to produce incorrect
+			 * ExtraSamples tags which must be patched here if we
+			 * want to be able to open some of the damaged TIFF
+			 * files: 
+			 */
+			if (va[i] == EXTRASAMPLE_COREL_UNASSALPHA)
+				va[i] = EXTRASAMPLE_UNASSALPHA;
+			else
+				return 0;
+		}
+	}
 	td->td_extrasamples = (uint16) *v;
 	_TIFFsetShortArray(&td->td_sampleinfo, va, td->td_extrasamples);
-	return (1);
+	return 1;
+
+#undef EXTRASAMPLE_COREL_UNASSALPHA
 }
 
 static uint32
@@ -343,8 +359,9 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			_TIFFsetLongArray(&td->td_subifd, va_arg(ap, uint32*),
 			    (long) td->td_nsubifd);
 		} else {
-			TIFFErrorExt(tif->tif_clientdata, module, "%s: Sorry, cannot nest SubIFDs",
-				  tif->tif_name);
+			TIFFErrorExt(tif->tif_clientdata, module,
+				     "%s: Sorry, cannot nest SubIFDs",
+				     tif->tif_name);
 			status = 0;
 		}
 		break;
