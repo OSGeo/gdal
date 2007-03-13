@@ -358,14 +358,12 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 	diroff = (uint32) tif->tif_nextdiroff;
 	if (tif->tif_flags & TIFF_SWAB) {
 		/*
-		 * The file's byte order is opposite to the
-		 * native machine architecture.  We overwrite
-		 * the directory information with impunity
-		 * because it'll be released below after we
-		 * write it to the file.  Note that all the
-		 * other tag construction routines assume that
-		 * we do this byte-swapping; i.e. they only
-		 * byte-swap indirect data.
+		 * The file's byte order is opposite to the native machine
+		 * architecture.  We overwrite the directory information with
+		 * impunity because it'll be released below after we write it
+		 * to the file.  Note that all the other tag construction
+		 * routines assume that we do this byte-swapping; i.e. they
+		 * only byte-swap indirect data.
 		 */
 		for (dir = (TIFFDirEntry*) data; dircount; dir++, dircount--) {
 			TIFFSwabArrayOfShort(&dir->tdir_tag, 2);
@@ -478,8 +476,7 @@ _TIFFWriteCustomDirectory(TIFF* tif, toff_t *pdiroff)
 	(void) TIFFSeekFile(tif, tif->tif_dataoff, SEEK_SET);
 	dir = (TIFFDirEntry*) data;
 	/*
-	 * Setup external form of directory
-	 * entries and write data items.
+	 * Setup external form of directory entries and write data items.
 	 */
 	_TIFFmemcpy(fields, td->td_fieldsset, sizeof (fields));
 
@@ -515,14 +512,12 @@ _TIFFWriteCustomDirectory(TIFF* tif, toff_t *pdiroff)
 	*pdiroff = (uint32) tif->tif_nextdiroff;
 	if (tif->tif_flags & TIFF_SWAB) {
 		/*
-		 * The file's byte order is opposite to the
-		 * native machine architecture.  We overwrite
-		 * the directory information with impunity
-		 * because it'll be released below after we
-		 * write it to the file.  Note that all the
-		 * other tag construction routines assume that
-		 * we do this byte-swapping; i.e. they only
-		 * byte-swap indirect data.
+		 * The file's byte order is opposite to the native machine
+		 * architecture.  We overwrite the directory information with
+		 * impunity because it'll be released below after we write it
+		 * to the file.  Note that all the other tag construction
+		 * routines assume that we do this byte-swapping; i.e. they
+		 * only byte-swap indirect data.
 		 */
 		for (dir = (TIFFDirEntry*) data; dircount; dir++, dircount--) {
 			TIFFSwabArrayOfShort(&dir->tdir_tag, 2);
