@@ -13,7 +13,7 @@ Status: Development<br>
 
 It is proposed that OGRSFDriver::Open() and OGRSFDriverRegistrar::Open() calls
 should be changed to accept additional parameter containing arbitrary
-additional parameters supplied by caller. OGROpenEx() function should be
+additional parameters supplied by caller. OGROpenEx() function will be
 introduced to map this new functionality into C interface.
 
 \section rfc10_parameters Open parameters
@@ -22,7 +22,7 @@ Sometimes it is needed to pass additional information to OGR driver along with
 the name of the dataset to be opened. It can be, for example, the style table
 name (some drivers allow to choose from the various style tables) or any other
 additional data. The old method for doing this was to encode the extra info in
-the dataset name string. It was convenient approach, so it proposed to use
+the dataset name string. It was inconvenient approach, so it proposed to use
 separate parameter in OGRSFDriver::Open() and OGRSFDriverRegistrar::Open()
 calls representing open options, just like it is implemented in
 OGRDataSource::CreateLayer() call.
@@ -32,7 +32,7 @@ forming the string list.
 
 \section rfc10_implementation Implementation
 
-All Open() functions should be changed in the following way:
+All Open() functions will be changed in the following way:
 
 <pre>
 OGRDataSource *
@@ -61,7 +61,7 @@ is pretty simple: one additional parameter should be added to function
 definition. But it has impact on third-party OGR drivers: they are not
 source compatible anymore and should be changed too.
 
-Also appropriate C functions should be added:
+Also appropriate C functions will be added:
 
 <pre>
 OGRDataSourceH OGROpenEx( const char *pszName, int bUpdate,
@@ -80,7 +80,12 @@ OGRDataSourceH OGR_Dr_OpenEx( OGRSFDriverH hDriver, const char *pszName,
                               int bUpdate, char **papszOptions );
 </pre>
 
-\section rfc10_compatibility Backward compatibility
+\section rfc10_utilities New Options for OGR Utilities
+
+Proposed functionality will be available in OGR utilities ogr2ogr and ogrinfo
+via the '-oo NAME=VALUE' ("Open Option") format specific parameter.
+
+\section rfc10_compatibility Backward Compatibility
 
 Proposed additions will not have any impact on C binary compatibility.
 C++ binary interface will be broken, source level compatibility will be
