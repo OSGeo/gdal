@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.55 2006/06/30 19:08:03 dron Exp $ */
+/* $Id: tiffio.h,v 1.56 2007/03/08 03:07:42 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -188,38 +188,41 @@ typedef void (*tileSeparateRoutine)
  * RGBA-reader state.
  */
 struct _TIFFRGBAImage {
-	TIFF*	tif;				/* image handle */
-	int	stoponerr;			/* stop on read error */
-	int	isContig;			/* data is packed/separate */
-	int	alpha;				/* type of alpha data present */
-	uint32	width;				/* image width */
-	uint32	height;				/* image height */
-	uint16	bitspersample;			/* image bits/sample */
-	uint16	samplesperpixel;		/* image samples/pixel */
-	uint16	orientation;			/* image orientation */
-	uint16	req_orientation;		/* requested orientation */
-	uint16	photometric;			/* image photometric interp */
-	uint16*	redcmap;			/* colormap pallete */
-	uint16*	greencmap;
-	uint16*	bluecmap;
-						/* get image data routine */
-	int	(*get)(TIFFRGBAImage*, uint32*, uint32, uint32);
+	TIFF* tif;                              /* image handle */
+	int stoponerr;                          /* stop on read error */
+	int isContig;                           /* data is packed/separate */
+	int alpha;                              /* type of alpha data present */
+	uint32 width;                           /* image width */
+	uint32 height;                          /* image height */
+	uint16 SubsamplingHor;                  /* subsampling factors */
+	uint16 SubsamplingVer;
+	uint16 bitspersample;                   /* image bits/sample */
+	uint16 samplesperpixel;                 /* image samples/pixel */
+	uint16 orientation;                     /* image orientation */
+	uint16 req_orientation;                 /* requested orientation */
+	uint16 photometric;                     /* image photometric interp */
+	uint16* redcmap;                        /* colormap pallete */
+	uint16* greencmap;
+	uint16* bluecmap;
+	/* get image data routine */
+	int (*get)(TIFFRGBAImage*, uint32*, uint32, uint32);
+	/* put decoded strip/tile */
 	union {
 	    void (*any)(TIFFRGBAImage*);
-	    tileContigRoutine	contig;
-	    tileSeparateRoutine	separate;
-	} put;					/* put decoded strip/tile */
-	TIFFRGBValue* Map;			/* sample mapping array */
-	uint32** BWmap;				/* black&white map */
-	uint32** PALmap;			/* palette image map */
-	TIFFYCbCrToRGB* ycbcr;			/* YCbCr conversion state */
-	TIFFCIELabToRGB* cielab;		/* CIE L*a*b conversion state */
+	    tileContigRoutine contig;
+	    tileSeparateRoutine separate;
+	} put;
+	TIFFRGBValue* Map;                      /* sample mapping array */
+	uint32** BWmap;                         /* black&white map */
+	uint32** PALmap;                        /* palette image map */
+	TIFFYCbCrToRGB* ycbcr;                  /* YCbCr conversion state */
+	TIFFCIELabToRGB* cielab;                /* CIE L*a*b conversion state */
 
 	uint8* UaToAa;                          /* Unassociated alpha to associated alpha convertion LUT */
 	uint8* Bitdepth16To8;                   /* LUT for conversion from 16bit to 8bit values */
 
-        int	row_offset;
-        int     col_offset;
+	int row_offset;
+	int col_offset;
 };
 
 /*

@@ -20,6 +20,7 @@ OBJ	= \
 	tif_luv.obj \
 	tif_lzw.obj \
 	tif_next.obj \
+	tif_ojpeg.obj \
 	tif_open.obj \
 	tif_packbits.obj \
 	tif_pixarlog.obj \
@@ -44,9 +45,9 @@ EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT $(JPEG_FLAGS)
 
 !IFDEF JPEG_SUPPORTED
 !IFDEF JPEG_EXTERNAL_LIB
-JPEG_FLAGS =	-I$(JPEGDIR) -DJPEG_SUPPORT 
+JPEG_FLAGS =	-I$(JPEGDIR) -DJPEG_SUPPORT  -DOJPEG_SUPPORT
 !ELSE
-JPEG_FLAGS =	-I..\..\jpeg\libjpeg -DJPEG_SUPPORT 
+JPEG_FLAGS =	-I..\..\jpeg\libjpeg -DJPEG_SUPPORT -DOJPEG_SUPPORT
 !ENDIF
 !ENDIF
 
