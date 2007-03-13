@@ -28,6 +28,7 @@ OBJ =	ogrgeometryfactory.o \
 	ogr_srs_usgs.o \
 	ogr_srs_dict.o \
 	ogr_srs_panorama.o \
+	ogr_srs_erm.o \
 	swq.o \
 	ogr_srs_validate.o \
 	ogr_srs_xml.o \
