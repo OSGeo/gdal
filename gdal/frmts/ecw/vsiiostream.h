@@ -68,10 +68,6 @@ ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize, int nBands,
                   GDALDataType eType, char **papszOptions );
 #endif
 
-CPL_C_START
-char **ECWGetCSList(void);
-CPL_C_END
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             VSIIOStream                              */
