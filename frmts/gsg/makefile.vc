@@ -1,5 +1,5 @@
 
-OBJ	=	gsagdataset.obj gsbgdataset.obj
+OBJ	=	gsagdataset.obj gsbgdataset.obj gs7bgdataset.obj
 
 GDAL_ROOT	=	..\..
 
