@@ -163,6 +163,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToXML( char **, const char * = NULL ) const;
     OGRErr      exportToPanorama( long *, long *, long *, long *,
                                   double ** ) const;
+    OGRErr      exportToERM( char *pszProj, char *pszDatum, char *pszUnits );
     OGRErr      importFromWkt( char ** );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
