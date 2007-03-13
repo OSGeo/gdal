@@ -487,16 +487,19 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                               char ** papszOptions )
 
 {
-    PGresult            *hResult;
+    PGresult            *hResult = NULL;
     char                szCommand[1024];
-    const char          *pszGeomType;
-    char                *pszLayerName;
-    const char          *pszTableName;
-    char                *pszSchemaName;
+    const char          *pszGeomType = NULL;
+    char                *pszLayerName = NULL;
+    const char          *pszTableName = NULL;
+    char                *pszSchemaName = NULL;
     int                 nDimension = 3;
 
-    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    {
         pszLayerName = LaunderName( pszLayerNameIn );
+        
+    }
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
 
@@ -508,19 +511,19 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
        Set layer name to "schema.table" or to "table" if schema == current_schema()
        Usage without schema name is backwards compatible
     */
-    pszTableName = strstr(pszLayerNameIn,".");
+    pszTableName = strstr(pszLayerName,".");
     if ( pszTableName != NULL )
     {
-      int length = pszTableName-pszLayerNameIn;
+      int length = pszTableName - pszLayerName;
       pszSchemaName = (char*)CPLMalloc(length);
-      strncpy(pszSchemaName, pszLayerNameIn, length);
+      strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
       ++pszTableName; //skip "."
     }
     else
     {
       pszSchemaName = NULL;
-      pszTableName = pszLayerNameIn;
+      pszTableName = pszLayerName;
     }
 
 /* -------------------------------------------------------------------- */
@@ -626,7 +629,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  pszSchemaName, pszTableName, pszTableName );
     }
 
-    CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+    CPLDebug( "OGR_PG", "PQexec( %s )", szCommand );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -1317,6 +1320,8 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
         if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
             pszSafeName[i] = '_';
     }
+
+    CPLDebug("OGR_PG","LaunderName( %s ) result: %s", pszSrcName, pszSafeName);
 
     return pszSafeName;
 }
