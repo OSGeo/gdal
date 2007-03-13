@@ -46,8 +46,6 @@ static unsigned char jpc_header[] = {0xff,0x4f};
 static unsigned char jp2_header[] = 
 {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
-static int    gnTriedCSFile = FALSE;
-static char **gpapszCSLookup = NULL;
 static void *hECWDatasetMutex = NULL;
 static int    bNCSInitialized = FALSE;
 
@@ -1331,31 +1329,6 @@ CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                            ECWGetCSList()                            */
-/************************************************************************/
-
-char **ECWGetCSList()
-
-{
-/* -------------------------------------------------------------------- */
-/*      Load the supporting data file with the coordinate system        */
-/*      translations if we don't already have it loaded.  Note,         */
-/*      currently we never unload the file, even if the driver is       */
-/*      destroyed ... but we should.                                    */
-/* -------------------------------------------------------------------- */
-    if( !gnTriedCSFile )
-    {
-        const char *pszFilename = CPLFindFile( "data", "ecw_cs.dat" );
-        
-        gnTriedCSFile = TRUE;
-        if( pszFilename != NULL )
-            gpapszCSLookup = CSLLoad( pszFilename );
-    }
-
-    return gpapszCSLookup;
-}
-
-/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -1425,56 +1398,16 @@ void ECWDataset::ECW2WKTProjection()
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    if( EQUAL(psFileInfo->szProjection,"GEODETIC") )
-    {
-    }
-    else
-    {
-        const char *pszProjWKT;
+    CPLString osUnits = "METERS";
 
-        pszProjWKT = CSLFetchNameValue( gpapszCSLookup, 
-                                        psFileInfo->szProjection );
+    if( psFileInfo->eCellSizeUnits == ECW_CELL_UNITS_FEET )
+        osUnits = "FEET";
 
-        if( pszProjWKT == NULL 
-            || EQUAL(pszProjWKT,"unsupported")
-            || oSRS.importFromWkt( (char **) &pszProjWKT ) != OGRERR_NONE )
-        {
-            oSRS.SetLocalCS( psFileInfo->szProjection );
-        }
+    if( oSRS.importFromERM( psFileInfo->szProjection, 
+                            psFileInfo->szDatum, 
+                            osUnits ) != OGRERR_NONE )
+        return;
 
-        if( psFileInfo->eCellSizeUnits == ECW_CELL_UNITS_FEET )
-            oSRS.SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV));
-        else
-            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set the geogcs.                                                 */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference oGeogCS;
-    const char *pszGeogWKT;
-
-    pszGeogWKT = CSLFetchNameValue( gpapszCSLookup, 
-                                    psFileInfo->szDatum );
-
-    if( pszGeogWKT == NULL )
-        oGeogCS.SetWellKnownGeogCS( "WGS84" );
-    else
-    {
-        oGeogCS.importFromWkt( (char **) &pszGeogWKT );
-    }
-
-    if( !oSRS.IsLocal() )
-        oSRS.CopyGeogCSFrom( &oGeogCS );
-
-/* -------------------------------------------------------------------- */
-/*      Capture the resulting composite coordiante system.              */
-/* -------------------------------------------------------------------- */
-    if( pszProjection != NULL )
-    {
-        CPLFree( pszProjection );
-        pszProjection = NULL;
-    }
     oSRS.exportToWkt( &pszProjection );
 }
 
@@ -1513,13 +1446,6 @@ void ECWInitialize()
 void GDALDeregister_ECW( GDALDriver * )
 
 {
-    if( gpapszCSLookup )
-    {
-        CSLDestroy( gpapszCSLookup );
-        gpapszCSLookup = NULL;
-        gnTriedCSFile = FALSE;
-    }
-
     if( bNCSInitialized )
     {
         bNCSInitialized = FALSE;

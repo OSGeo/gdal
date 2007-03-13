@@ -423,7 +423,6 @@ static int ECWTranslateFromWKT( const char *pszWKT,
 {
     OGRSpatialReference oSRS;
     char *pszWKTIn = (char *) pszWKT;
-    char **papszCSLookup;
 
     strcpy( pszProjection, "RAW" );
     strcpy( pszDatum, "RAW" );
@@ -478,119 +477,14 @@ static int ECWTranslateFromWKT( const char *pszWKT,
             return TRUE;
         }
     }
-        
-/* -------------------------------------------------------------------- */
-/*      Is our GEOGCS name already defined in ecw_cs.dat?               */
-/* -------------------------------------------------------------------- */
-    const char *pszMatch = NULL;
-    const char *pszGEOGCS = oSRS.GetAttrValue( "GEOGCS" );
-    const char *pszWKTDatum = oSRS.GetAttrValue( "DATUM" );
-
-    papszCSLookup = ECWGetCSList();
-
-    if( pszGEOGCS != NULL )
-        pszMatch = CSLFetchNameValue( papszCSLookup, pszGEOGCS );
-
-    if( pszMatch != NULL && EQUALN(pszMatch,"GEOGCS",6) )
-    {
-        strcpy( pszDatum, pszGEOGCS );
-    }
 
 /* -------------------------------------------------------------------- */
-/*      Is this a "well known" geographic coordinate system?            */
+/*      Fallback to translating based on the ecw_cs.wkt file, and       */
+/*      various jiffy rules.                                            */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszDatum,"RAW") )
-    {
-        if( nEPSGCode == 4326 
-            || (strstr(pszGEOGCS,"WGS") && strstr(pszGEOGCS,"84") )
-            || (strstr(pszWKTDatum,"WGS") && strstr(pszWKTDatum,"84") ) )
-            strcpy( pszDatum, "WGS84" );
+    char szUnits[32];
 
-        else if( nEPSGCode == 4322 
-            || (strstr(pszGEOGCS,"WGS") && strstr(pszGEOGCS,"72") )
-            || (strstr(pszWKTDatum,"WGS") && strstr(pszWKTDatum,"72") ) )
-            strcpy( pszDatum, "WGS72DOD" );
-        
-        else if( nEPSGCode == 4267 
-            || (strstr(pszGEOGCS,"NAD") && strstr(pszGEOGCS,"27") )
-            || (strstr(pszWKTDatum,"NAD") && strstr(pszWKTDatum,"27") ) )
-            strcpy( pszDatum, "NAD27" );
-        
-        else if( nEPSGCode == 4269 
-            || (strstr(pszGEOGCS,"NAD") && strstr(pszGEOGCS,"83") )
-            || (strstr(pszWKTDatum,"NAD") && strstr(pszWKTDatum,"83") ) )
-            strcpy( pszDatum, "NAD83" );
-
-        else if( nEPSGCode == 4277 )
-            strcpy( pszDatum, "OSGB36" );
-
-        else if( nEPSGCode == 4278 )
-            strcpy( pszDatum, "OSGB78" );
-
-        else if( nEPSGCode == 4201 )
-            strcpy( pszDatum, "ADINDAN" );
-
-        else if( nEPSGCode == 4202 )
-            strcpy( pszDatum, "AGD66" );
-
-        else if( nEPSGCode == 4203 )
-            strcpy( pszDatum, "AGD84" );
-
-        else if( nEPSGCode == 4209 )
-            strcpy( pszDatum, "ARC1950" );
-
-        else if( nEPSGCode == 4210 )
-            strcpy( pszDatum, "ARC1960" );
-
-        else if( nEPSGCode == 4275 )
-            strcpy( pszDatum, "NTF" );
-
-        else if( nEPSGCode == 4284 )
-            strcpy( pszDatum, "PULKOVO" );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Are we working with a geographic (geodetic) coordinate system?  */
-/* -------------------------------------------------------------------- */
-
-    if( oSRS.IsGeographic() )
-    {
-        strcpy( pszProjection, "GEODETIC" );
-        return TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Is this a UTM projection?                                       */
-/* -------------------------------------------------------------------- */
-    int bNorth, nZone;
-
-    nZone = oSRS.GetUTMZone( &bNorth );
-    if( nZone > 0 )
-    {
-        if( bNorth )
-            sprintf( pszProjection, "NUTM%02d", nZone );
-        else
-            sprintf( pszProjection, "SUTM%02d", nZone );
-        return TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Is our GEOGCS name already defined in ecw_cs.dat?               */
-/* -------------------------------------------------------------------- */
-    const char *pszPROJCS = oSRS.GetAttrValue( "PROJCS" );
-
-    if( pszPROJCS != NULL )
-        pszMatch = CSLFetchNameValue( papszCSLookup, pszGEOGCS );
-    else
-        pszMatch = NULL;
-
-    if( pszMatch != NULL && EQUALN(pszMatch,"PROJCS",6) )
-    {
-        strcpy( pszProjection, pszPROJCS );
-        return TRUE;
-    }
-
-    return FALSE;
+    return oSRS.exportToERM( pszProjection, pszDatum, szUnits ) == OGRERR_NONE;
 }
 
 /************************************************************************/
