@@ -298,6 +298,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_INGR();
 #endif
 
+#ifdef FRMT_gsg
+    GDALRegister_GSAG();
+    GDALRegister_GSBG();
+    GDALRegister_GS7BG();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
@@ -324,11 +330,6 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_hdf5
     GDALRegister_HDF5();
     GDALRegister_HDF5Image();
-#endif
-
-#ifdef FRMT_gsg
-    GDALRegister_GSAG();
-    GDALRegister_GSBG();
 #endif
 
 /* -------------------------------------------------------------------- */
