@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.15 2006/10/12 15:01:30 dron Exp $ */
+/* $Id: tif_read.c,v 1.16 2007/02/22 11:33:44 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -50,8 +50,10 @@ TIFFSeek(TIFF* tif, uint32 row, tsample_t sample)
 	tstrip_t strip;
 
 	if (row >= td->td_imagelength) {	/* out of range */
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%lu: Row out of range, max %lu",
-		    (unsigned long) row, (unsigned long) td->td_imagelength);
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "%lu: Row out of range, max %lu",
+			     (unsigned long) row,
+			     (unsigned long) td->td_imagelength);
 		return (0);
 	}
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
@@ -64,7 +66,7 @@ TIFFSeek(TIFF* tif, uint32 row, tsample_t sample)
 		strip = sample*td->td_stripsperimage + row/td->td_rowsperstrip;
 	} else
 		strip = row / td->td_rowsperstrip;
-	if (strip != tif->tif_curstrip) { 	/* different strip, refill */
+	if (strip != tif->tif_curstrip) {	/* different strip, refill */
 		if (!TIFFFillStrip(tif, strip))
 			return (0);
 	} else if (row < tif->tif_row) {
@@ -129,8 +131,9 @@ TIFFReadEncodedStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 	if (!TIFFCheckRead(tif, 0))
 		return (-1);
 	if (strip >= td->td_nstrips) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%ld: Strip out of range, max %ld",
-		    (long) strip, (long) td->td_nstrips);
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "%ld: Strip out of range, max %ld",
+			     (long) strip, (long) td->td_nstrips);
 		return (-1);
 	}
 	/*
@@ -216,18 +219,27 @@ TIFFReadRawStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 {
 	static const char module[] = "TIFFReadRawStrip";
 	TIFFDirectory *td = &tif->tif_dir;
-	tsize_t bytecount;
+	/*
+	 * FIXME: butecount should have tsize_t type, but for now libtiff
+	 * defines tsize_t as a signed 32-bit integer and we are losing
+	 * ability to read arrays larger than 2^31 bytes. So we are using
+	 * uint32 instead of tsize_t here.
+	 */
+	uint32 bytecount;
 
 	if (!TIFFCheckRead(tif, 0))
 		return ((tsize_t) -1);
 	if (strip >= td->td_nstrips) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%lu: Strip out of range, max %lu",
-		    (unsigned long) strip, (unsigned long) td->td_nstrips);
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "%lu: Strip out of range, max %lu",
+			     (unsigned long) strip,
+			     (unsigned long) td->td_nstrips);
 		return ((tsize_t) -1);
 	}
 	if (tif->tif_flags&TIFF_NOREADRAW)
 	{
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "Compression scheme does not support access to raw uncompressed data");
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+	"Compression scheme does not support access to raw uncompressed data");
 		return ((tsize_t) -1);
 	}
 	bytecount = td->td_stripbytecount[strip];
@@ -237,7 +249,7 @@ TIFFReadRawStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 		    (unsigned long) bytecount, (unsigned long) strip);
 		return ((tsize_t) -1);
 	}
-	if (size != (tsize_t)-1 && size < bytecount)
+	if (size != (tsize_t)-1 && (uint32)size < bytecount)
 		bytecount = size;
 	return (TIFFReadRawStrip1(tif, strip, buf, bytecount, module));
 }
@@ -254,7 +266,13 @@ TIFFFillStrip(TIFF* tif, tstrip_t strip)
 
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
-		tsize_t bytecount = td->td_stripbytecount[strip];
+		/*
+		 * FIXME: butecount should have tsize_t type, but for now
+		 * libtiff defines tsize_t as a signed 32-bit integer and we
+		 * are losing ability to read arrays larger than 2^31 bytes.
+		 * So we are using uint32 instead of tsize_t here.
+		 */
+		uint32 bytecount = td->td_stripbytecount[strip];
 		if (bytecount <= 0) {
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "%s: Invalid strip byte count %lu, strip %lu",
@@ -313,21 +331,23 @@ TIFFFillStrip(TIFF* tif, tstrip_t strip)
 			 * strip coming from file (perhaps should set upper
 			 * bound on the size of a buffer we'll use?).
 			 */
-			if (bytecount > tif->tif_rawdatasize) {
+			if (bytecount > (uint32)tif->tif_rawdatasize) {
 				tif->tif_curstrip = NOSTRIP;
 				if ((tif->tif_flags & TIFF_MYBUFFER) == 0) {
-					TIFFErrorExt(tif->tif_clientdata, module,
-					"%s: Data buffer too small to hold strip %lu",
-					    tif->tif_name, (unsigned long) strip);
+					TIFFErrorExt(tif->tif_clientdata,
+						     module,
+				"%s: Data buffer too small to hold strip %lu",
+						     tif->tif_name,
+						     (unsigned long) strip);
 					return (0);
 				}
 				if (!TIFFReadBufferSetup(tif, 0,
 				    TIFFroundup(bytecount, 1024)))
 					return (0);
 			}
-			if (TIFFReadRawStrip1(tif, strip,
-					      (unsigned char *)tif->tif_rawdata,
-					      bytecount, module) != bytecount)
+			if ((uint32)TIFFReadRawStrip1(tif, strip,
+				(unsigned char *)tif->tif_rawdata,
+				bytecount, module) != bytecount)
 				return (0);
 			if (!isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)
@@ -369,8 +389,9 @@ TIFFReadEncodedTile(TIFF* tif, ttile_t tile, tdata_t buf, tsize_t size)
 	if (!TIFFCheckRead(tif, 1))
 		return (-1);
 	if (tile >= td->td_nstrips) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%ld: Tile out of range, max %ld",
-		    (long) tile, (unsigned long) td->td_nstrips);
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "%ld: Tile out of range, max %ld",
+			     (long) tile, (unsigned long) td->td_nstrips);
 		return (-1);
 	}
 	if (size == (tsize_t) -1)
@@ -440,22 +461,30 @@ TIFFReadRawTile(TIFF* tif, ttile_t tile, tdata_t buf, tsize_t size)
 {
 	static const char module[] = "TIFFReadRawTile";
 	TIFFDirectory *td = &tif->tif_dir;
-	tsize_t bytecount;
+	/*
+	 * FIXME: butecount should have tsize_t type, but for now libtiff
+	 * defines tsize_t as a signed 32-bit integer and we are losing
+	 * ability to read arrays larger than 2^31 bytes. So we are using
+	 * uint32 instead of tsize_t here.
+	 */
+	uint32 bytecount;
 
 	if (!TIFFCheckRead(tif, 1))
 		return ((tsize_t) -1);
 	if (tile >= td->td_nstrips) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%lu: Tile out of range, max %lu",
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "%lu: Tile out of range, max %lu",
 		    (unsigned long) tile, (unsigned long) td->td_nstrips);
 		return ((tsize_t) -1);
 	}
 	if (tif->tif_flags&TIFF_NOREADRAW)
 	{
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "Compression scheme does not support access to raw uncompressed data");
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+	"Compression scheme does not support access to raw uncompressed data");
 		return ((tsize_t) -1);
 	}
 	bytecount = td->td_stripbytecount[tile];
-	if (size != (tsize_t) -1 && size < bytecount)
+	if (size != (tsize_t) -1 && (uint32)size < bytecount)
 		bytecount = size;
 	return (TIFFReadRawTile1(tif, tile, buf, bytecount, module));
 }
@@ -472,7 +501,13 @@ TIFFFillTile(TIFF* tif, ttile_t tile)
 
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
-		tsize_t bytecount = td->td_stripbytecount[tile];
+		/*
+		 * FIXME: butecount should have tsize_t type, but for now
+		 * libtiff defines tsize_t as a signed 32-bit integer and we
+		 * are losing ability to read arrays larger than 2^31 bytes.
+		 * So we are using uint32 instead of tsize_t here.
+		 */
+		uint32 bytecount = td->td_stripbytecount[tile];
 		if (bytecount <= 0) {
 			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			    "%lu: Invalid tile byte count, tile %lu",
@@ -511,28 +546,31 @@ TIFFFillTile(TIFF* tif, ttile_t tile)
 				return (0);
 			}
 			tif->tif_rawdatasize = bytecount;
-			tif->tif_rawdata = tif->tif_base + td->td_stripoffset[tile];
+			tif->tif_rawdata =
+				tif->tif_base + td->td_stripoffset[tile];
 		} else {
 			/*
 			 * Expand raw data buffer, if needed, to hold data
 			 * tile coming from file (perhaps should set upper
 			 * bound on the size of a buffer we'll use?).
 			 */
-			if (bytecount > tif->tif_rawdatasize) {
+			if (bytecount > (uint32)tif->tif_rawdatasize) {
 				tif->tif_curtile = NOTILE;
 				if ((tif->tif_flags & TIFF_MYBUFFER) == 0) {
-					TIFFErrorExt(tif->tif_clientdata, module,
-					"%s: Data buffer too small to hold tile %ld",
-					    tif->tif_name, (long) tile);
+					TIFFErrorExt(tif->tif_clientdata,
+						     module,
+				"%s: Data buffer too small to hold tile %ld",
+						     tif->tif_name,
+						     (long) tile);
 					return (0);
 				}
 				if (!TIFFReadBufferSetup(tif, 0,
 				    TIFFroundup(bytecount, 1024)))
 					return (0);
 			}
-			if (TIFFReadRawTile1(tif, tile,
-			    (unsigned char *)tif->tif_rawdata,
-			    bytecount, module) != bytecount)
+			if ((uint32)TIFFReadRawTile1(tif, tile,
+				(unsigned char *)tif->tif_rawdata,
+				bytecount, module) != bytecount)
 				return (0);
 			if (!isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)

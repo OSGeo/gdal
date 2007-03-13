@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.88 2006/10/13 15:06:52 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.92 2007/02/27 15:46:34 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -58,6 +58,7 @@ static	int TIFFFetchPerSampleAnys(TIFF*, TIFFDirEntry*, double*);
 static	int TIFFFetchShortArray(TIFF*, TIFFDirEntry*, uint16*);
 static	int TIFFFetchStripThing(TIFF*, TIFFDirEntry*, long, uint32**);
 static	int TIFFFetchRefBlackWhite(TIFF*, TIFFDirEntry*);
+static	int TIFFFetchSubjectDistance(TIFF*, TIFFDirEntry*);
 static	float TIFFFetchFloat(TIFF*, TIFFDirEntry*);
 static	int TIFFFetchFloatArray(TIFF*, TIFFDirEntry*, float*);
 static	int TIFFFetchDoubleArray(TIFF*, TIFFDirEntry*, double*);
@@ -509,7 +510,7 @@ TIFFReadDirectory(TIFF* tif)
 		}
 	}
 	/*
-	 * Joris: OJPEG hack:
+	 * OJPEG hack:
 	 * - If a) compression is OJPEG, and b) photometric tag is missing,
 	 * then we consistently find that photometric should be YCbCr
 	 * - If a) compression is OJPEG, and b) photometric tag says it's RGB,
@@ -580,7 +581,7 @@ TIFFReadDirectory(TIFF* tif)
 		goto bad;
 	}
 	/*
-	 * Joris: OJPEG hack:
+	 * OJPEG hack:
 	 * We do no further messing with strip/tile offsets/bytecounts in OJPEG
 	 * TIFFs
 	 */
@@ -860,7 +861,17 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 				goto ignore;
 		}
 
-		(void) TIFFFetchNormalTag(tif, dp);
+		/*
+		 * EXIF tags which need to be specifically processed.
+		 */
+		switch (dp->tdir_tag) {
+			case EXIFTAG_SUBJECTDISTANCE:
+				(void) TIFFFetchSubjectDistance(tif, dp);
+				break;
+			default:
+				(void) TIFFFetchNormalTag(tif, dp);
+				break;
+		}
 	}
 	
 	if (dir)
@@ -1141,11 +1152,17 @@ TIFFFetchDirectory(TIFF* tif, toff_t diroff, TIFFDirEntry **pdir,
 static tsize_t
 TIFFFetchData(TIFF* tif, TIFFDirEntry* dir, char* cp)
 {
-	int w = TIFFDataWidth((TIFFDataType) dir->tdir_type);
-	tsize_t cc = dir->tdir_count * w;
+	uint32 w = TIFFDataWidth((TIFFDataType) dir->tdir_type);
+	/* 
+	 * FIXME: butecount should have tsize_t type, but for now libtiff
+	 * defines tsize_t as a signed 32-bit integer and we are losing
+	 * ability to read arrays larger than 2^31 bytes. So we are using
+	 * uint32 instead of tsize_t here.
+	 */
+	uint32 cc = dir->tdir_count * w;
 
 	/* Check for overflow. */
-	if (!dir->tdir_count || !w || cc / w != (tsize_t)dir->tdir_count)
+	if (!dir->tdir_count || !w || cc / w != dir->tdir_count)
 		goto bad;
 
 	if (!isMapped(tif)) {
@@ -1155,9 +1172,9 @@ TIFFFetchData(TIFF* tif, TIFFDirEntry* dir, char* cp)
 			goto bad;
 	} else {
 		/* Check for overflow. */
-		if ((tsize_t)dir->tdir_offset + cc < (tsize_t)dir->tdir_offset
-		    || (tsize_t)dir->tdir_offset + cc < cc
-		    || (tsize_t)dir->tdir_offset + cc > (tsize_t)tif->tif_size)
+		if (dir->tdir_offset + cc < dir->tdir_offset
+		    || dir->tdir_offset + cc < cc
+		    || dir->tdir_offset + cc > tif->tif_size)
 			goto bad;
 		_TIFFmemcpy(cp, tif->tif_base + dir->tdir_offset, cc);
 	}
@@ -1226,9 +1243,8 @@ cvtRational(TIFF* tif, TIFFDirEntry* dir, uint32 num, uint32 denom, float* rv)
 }
 
 /*
- * Fetch a rational item from the file
- * at offset off and return the value
- * as a floating point number.
+ * Fetch a rational item from the file at offset off and return the value as a
+ * floating point number.
  */
 static float
 TIFFFetchRational(TIFF* tif, TIFFDirEntry* dir)
@@ -1241,9 +1257,8 @@ TIFFFetchRational(TIFF* tif, TIFFDirEntry* dir)
 }
 
 /*
- * Fetch a single floating point value
- * from the offset field and return it
- * as a native float.
+ * Fetch a single floating point value from the offset field and return it as
+ * a native float.
  */
 static float
 TIFFFetchFloat(TIFF* tif, TIFFDirEntry* dir)
@@ -1888,11 +1903,34 @@ TIFFFetchRefBlackWhite(TIFF* tif, TIFFDirEntry* dir)
 }
 
 /*
- * Replace a single strip (tile) of uncompressed data by
- * multiple strips (tiles), each approximately 8Kbytes.
- * This is useful for dealing with large images or
- * for dealing with machines with a limited amount
- * memory.
+ * Fetch and set the SubjectDistance EXIF tag.
+ */
+static int
+TIFFFetchSubjectDistance(TIFF* tif, TIFFDirEntry* dir)
+{
+	uint32 l[2];
+	float v;
+	int ok = 0;
+
+	if (TIFFFetchData(tif, dir, (char *)l)
+	    && cvtRational(tif, dir, l[0], l[1], &v)) {
+		/*
+		 * XXX: Numerator 0xFFFFFFFF means that we have infinite
+		 * distance. Indicate that with a negative floating point
+		 * SubjectDistance value.
+		 */
+		ok = TIFFSetField(tif, dir->tdir_tag,
+				  (l[0] != 0xFFFFFFFF) ? v : -v);
+	}
+
+	return ok;
+}
+
+/*
+ * Replace a single strip (tile) of uncompressed data by multiple strips
+ * (tiles), each approximately STRIP_SIZE_DEFAULT bytes. This is useful for
+ * dealing with large images or for dealing with machines with a limited
+ * amount memory.
  */
 static void
 ChopUpSingleUncompressedStrip(TIFF* tif)
@@ -1934,8 +1972,8 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 				"for chopped \"StripOffsets\" array");
 	if (newcounts == NULL || newoffsets == NULL) {
 	        /*
-		 * Unable to allocate new strip information, give
-		 * up and use the original one strip information.
+		 * Unable to allocate new strip information, give up and use
+		 * the original one strip information.
 		 */
 		if (newcounts != NULL)
 			_TIFFfree(newcounts);
@@ -1948,7 +1986,7 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	 * that reflect the broken-up format.
 	 */
 	for (strip = 0; strip < nstrips; strip++) {
-		if (stripbytes > (tsize_t) bytecount)
+		if ((uint32)stripbytes > bytecount)
 			stripbytes = bytecount;
 		newcounts[strip] = stripbytes;
 		newoffsets[strip] = offset;
