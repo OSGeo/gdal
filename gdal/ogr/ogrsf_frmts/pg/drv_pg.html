@@ -14,7 +14,7 @@ Some support exists in the driver for use with PostgreSQL without PostGIS
 but this has not been recently tested and is likely decayed.<p>
 
 When opening a database, it's name should be specified in the form
-"PG:dbname=<databasename>".  We use PQconnectdb() to make the connection, so 
+"PG:dbname=<databasename>". It's also possible to omit the database name and connet to <em>default</em> one, with the same name as the user name.  We use PQconnectdb() to make the connection, so 
 any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
