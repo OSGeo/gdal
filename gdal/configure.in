@@ -168,6 +168,7 @@ dnl ---------------------------------------------------------------------
 
 THREAD_LIB=""
 THREAD_FLAG=""
+PTHREAD_ENABLED="no"
 
 AC_ARG_WITH(threads,
 [  --with-threads[=linkopt]Include thread safe support],,)
@@ -179,6 +180,7 @@ if test "$with_threads" = "yes" ; then
   if test -n "$THREAD_FLAG" ; then
       THREAD_LIB="-lpthread"
   fi
+  PTHREAD_ENABLED="yes"
 
 elif test -n "$with_threads" -a "$with_threads" != "no" ; then
 
@@ -187,6 +189,8 @@ elif test -n "$with_threads" -a "$with_threads" != "no" ; then
 
   AC_CHECKING(whether we should include thread/mutex support...)
   AC_MSG_RESULT([        using threads with link options "$THREAD_LIB".])
+
+  PTHREAD_ENABLED="yes"
 
 else
   AC_CHECKING(whether we should include thread/mutex support...)
@@ -2084,4 +2088,6 @@ fi
 LOC_MSG([  NG SWIG Bindings:          ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
+LOC_MSG()
+LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG()
