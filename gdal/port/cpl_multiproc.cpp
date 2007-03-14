@@ -364,6 +364,8 @@ int CPLGetPID()
 int CPLCreateThread( CPLThreadFunc pfnMain, void *pArg )
 
 {
+    CPLDebug( "CPLCreateThread", "Fails to dummy implementation" );
+
     return -1;
 }
 
