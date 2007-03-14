@@ -14,7 +14,9 @@ Status: Development<br>
 It is proposed that OGRSFDriver::Open() and OGRSFDriverRegistrar::Open() calls
 should be changed to accept additional parameter containing arbitrary
 additional parameters supplied by caller. OGROpenEx() function will be
-introduced to map this new functionality into C interface.
+introduced to map this new functionality into C interface. In addition
+it is proposed to add an "update" flag to OGRSFDriverRegistrar::Open()
+call to avoid using OGRSFDriverRegistrar::OpenShared() method.
 
 \section rfc10_parameters Open parameters
 
@@ -30,14 +32,19 @@ OGRDataSource::CreateLayer() call.
 It is supposed that open options will be supplied in form of NAME=VALUE pairs
 forming the string list.
 
+In addition to options parameter the special "shared" flag will be added to
+OGRSFDriverRegistrar::Open() call, so there will be no need in separate
+OGRSFDriverRegistrar::OpenShared() method.
+
 \section rfc10_implementation Implementation
 
 All Open() functions will be changed in the following way:
 
 <pre>
-OGRDataSource *
+static OGRDataSource *
 OGRSFDriverRegistrar::Open( const char * pszName, int bUpdate,
                             OGRSFDriver ** ppoDriver,
+			    int bShared = FALSE,
 			    char **papszOptions = NULL );
 
 
@@ -46,8 +53,8 @@ OGRSFDriverRegistrar::Open( const char * pszName, int bUpdate,
 <pre>
 OGRDataSource *
 OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
-                                  OGRSFDriver ** ppoDriver,
-                                  char **papszOptions = NULL );
+                                  OGRSFDriver ** ppoDriver )
+	{ return Open( pszName, bUpdate, ppoDriver, TRUE, NULL ); }
 </pre>
 
 <pre>
@@ -66,13 +73,7 @@ Also appropriate C functions will be added:
 <pre>
 OGRDataSourceH OGROpenEx( const char *pszName, int bUpdate,
                           OGRSFDriverH *pahDriverList,
-			  char **papszOptions );
-</pre>
-
-<pre>
-OGRDataSourceH OGROpenSharedEx( const char *pszName, int bUpdate,
-                                OGRSFDriverH *pahDriverList,
-                                char **papszOptions );
+			  int bShared, char **papszOptions );
 </pre>
 
 <pre>
@@ -83,7 +84,7 @@ OGRDataSourceH OGR_Dr_OpenEx( OGRSFDriverH hDriver, const char *pszName,
 \section rfc10_utilities New Options for OGR Utilities
 
 Proposed functionality will be available in OGR utilities ogr2ogr and ogrinfo
-via the '-oo NAME=VALUE' ("Open Option") format specific parameter.
+via the '-doo NAME=VALUE' ("Datasource Open Option") format specific parameter.
 
 \section rfc10_compatibility Backward Compatibility
 
