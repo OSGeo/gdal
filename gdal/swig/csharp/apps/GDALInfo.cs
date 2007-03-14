@@ -126,6 +126,17 @@ class GDALInfo {
             }
 
             /* -------------------------------------------------------------------- */
+            /*      Report corners.                                                 */
+            /* -------------------------------------------------------------------- */
+            Console.WriteLine( "Corner Coordinates:" );
+            Console.WriteLine("  Upper Left (" + GDALInfoGetPosition( ds, 0.0, 0.0) + ")");
+            Console.WriteLine("  Lower Left (" + GDALInfoGetPosition( ds, 0.0, ds.RasterYSize) + ")");
+            Console.WriteLine("  Upper Right (" + GDALInfoGetPosition( ds, ds.RasterXSize, 0.0) + ")");
+            Console.WriteLine("  Lower Right (" + GDALInfoGetPosition( ds, ds.RasterXSize, ds.RasterYSize) + ")");
+            Console.WriteLine("  Center (" + GDALInfoGetPosition( ds, ds.RasterXSize / 2, ds.RasterYSize / 2) + ")");
+            Console.WriteLine("");
+
+            /* -------------------------------------------------------------------- */
             /*      Get raster band                                                 */
             /* -------------------------------------------------------------------- */
             for (int iBand = 1; iBand <= ds.RasterCount; iBand++) 
@@ -161,5 +172,17 @@ class GDALInfo {
         {
             Console.WriteLine("Application error: " + e.Message);
         }
+    }
+
+    private static string GDALInfoGetPosition(Dataset ds, double x, double y)
+    {
+        double[] adfGeoTransform = new double[6];
+        double	dfGeoX, dfGeoY;
+        ds.GetGeoTransform(adfGeoTransform);
+
+        dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x + adfGeoTransform[2] * y;
+        dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x + adfGeoTransform[5] * y;
+
+        return dfGeoX.ToString() + ", " + dfGeoY.ToString();
     }
 }
