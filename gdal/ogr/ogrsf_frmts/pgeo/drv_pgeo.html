@@ -20,8 +20,11 @@
   ODBC but does not depend on any ESRI middle-ware.</p>
 
   <p>Personal Geodatabases are accessed by passing the file name of
-  the .mdb file to be accessed as the data source name. No ODBC DSN
-  is required.</p>
+  the .mdb file to be accessed as the data source name. On Windows,
+  no ODBC DSN is required. On Linux, there are problems with DSN-less
+  connection due to incomplete or buggy implementation of this feature 
+  in the <a href="http://mdbtools.sourceforge.net/">MDB Tools</a> package,
+  So, it is required to configure Data Source Name (DSN) if the MDB Tools driver is used (check instructions below).</p>
 
   <p>OGR treats all feature tables as layers. Most geometry types
   should be supported, including 3D data. Measures information will
@@ -180,6 +183,13 @@ using driver `PGeo' successful.
 
 Layer name: ...
 </pre>
+
+  <h2>Resources</h2>
+
+  <ul>
+      <li><a href="http://www.esri.com/software/arcgis/geodatabase/index.html">About ESRI Geodatabase</a></li>
+      <li><a href="http://sourceforge.net/mailarchive/forum.php?thread_id=10463538&forum_id=5183">[mdbtools-dev] DSN-less connection not supported?</a></li>
+  </ul>
 
   <p>If you have any comments or questions, don't hesitate to post
   them on the <a href=
