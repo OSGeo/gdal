@@ -828,7 +828,8 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
     }
 
     TIFFSetField( poGDS->hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
-    TIFFSetField( poGDS->hTIFF, TIFFTAG_COLORMAP, panTRed, panTGreen, panTBlue );
+    TIFFSetField( poGDS->hTIFF, TIFFTAG_COLORMAP,
+                  panTRed, panTGreen, panTBlue );
 
     CPLFree( panTRed );
     CPLFree( panTGreen );
@@ -978,8 +979,8 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( poGDS->pabyBlockBuf == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
-                   "Unable to allocate %d bytes for a temporary strip buffer\n"
-                      "in GeoTIFF driver.",
+                      "Unable to allocate %d bytes for a temporary strip "
+                      "buffer in GTIFF driver.",
                       nBlockBufSize );
             
             return( CE_Failure );
@@ -1703,8 +1704,8 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
         if( pabyBlockBuf == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "Unable to allocate %d bytes for a temporary strip buffer\n"
-                      "in GeoTIFF driver.",
+                      "Unable to allocate %d bytes for a temporary strip "
+                      "buffer in GTIFF driver.",
                       nBlockBufSize );
             
             return( CE_Failure );
@@ -3054,7 +3055,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
         char	*pszText, szWorkMDI[200];
         float   fResolution;
-        uint16  nResUnits;
+        uint16  nShort;
 
         if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
             SetMetadataItem( "TIFFTAG_DOCUMENTNAME",  pszText );
@@ -3080,16 +3081,28 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             SetMetadataItem( "TIFFTAG_YRESOLUTION", szWorkMDI );
         }
 
-        if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nResUnits ) )
+        if( TIFFGetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, &nShort ) )
         {
-            if( nResUnits == RESUNIT_NONE )
-                sprintf( szWorkMDI, "%d (unitless)", nResUnits );
-            else if( nResUnits == RESUNIT_INCH )
-                sprintf( szWorkMDI, "%d (pixels/inch)", nResUnits );
-            else if( nResUnits == RESUNIT_CENTIMETER )
-                sprintf( szWorkMDI, "%d (pixels/cm)", nResUnits );
+            sprintf( szWorkMDI, "%d", nShort );
+            SetMetadataItem( "TIFFTAG_MINSAMPLEVALUE", szWorkMDI );
+        }
+
+        if( TIFFGetField( hTIFF, TIFFTAG_MAXSAMPLEVALUE, &nShort ) )
+        {
+            sprintf( szWorkMDI, "%d", nShort );
+            SetMetadataItem( "TIFFTAG_MAXSAMPLEVALUE", szWorkMDI );
+        }
+
+        if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nShort ) )
+        {
+            if( nShort == RESUNIT_NONE )
+                sprintf( szWorkMDI, "%d (unitless)", nShort );
+            else if( nShort == RESUNIT_INCH )
+                sprintf( szWorkMDI, "%d (pixels/inch)", nShort );
+            else if( nShort == RESUNIT_CENTIMETER )
+                sprintf( szWorkMDI, "%d (pixels/cm)", nShort );
             else
-                sprintf( szWorkMDI, "%d", nResUnits );
+                sprintf( szWorkMDI, "%d", nShort );
             SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
         }
 
