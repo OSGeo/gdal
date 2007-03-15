@@ -6,27 +6,27 @@
  * Purpose:  GDAL Core SWIG Interface declarations.
  * Author:   Kevin Ruland, kruland@ku.edu
  *
-
+ ******************************************************************************
+ * Copyright (c) 2005, Kevin Ruland
  *
- * $Log$
- * Revision 1.5  2006/02/02 20:52:40  collinsb
- * Added SWIG JAVA bindings
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * Revision 1.4  2005/09/06 01:41:06  kruland
- * Added SWIGPERL include.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * Revision 1.3  2005/08/09 17:40:09  kruland
- * Added support for ruby.
- *
- * Revision 1.2  2005/07/20 16:30:32  kruland
- * Import the php typemaps.
- *
- * Revision 1.1  2005/02/24 17:44:54  kruland
- * Generic typemap.i file which delegates to the appropriate language
- * specific file.
- *
- *
-*/
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 #ifdef SWIGCSHARP
 %import typemaps_csharp.i

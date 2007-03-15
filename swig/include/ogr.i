@@ -1,279 +1,31 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     ogr.i
- * Project:  GDAL Python Interface
- * Purpose:  OGR Core SWIG Interface declarations.
+ * Project:  OGR Core SWIG Interface declarations.
+ * Purpose:  OGR declarations.
  * Author:   Howard Butler, hobu@iastate.edu
  *
-
- *
- * $Log$
- * Revision 1.64  2006/11/29 03:31:48  hobu
- * we need a newline to close of the #ifdef for SWIGCSHARP at the end of the file
- *
- * Revision 1.63  2006/11/23 22:51:35  tamas
- * C# ExportToWkb support
- *
- * Revision 1.62  2006/11/19 17:45:05  ajolma
- * In all cases where GetFieldIndex is used, added check for non-null name, and check for the return value. This prevents countless segfaults and quiet fails at least in Perl.
- *
- * Revision 1.61  2006/11/18 09:25:53  ajolma
- * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
- *
- * Revision 1.60  2006/11/18 09:05:01  ajolma
- * Versions of SetField and UnsetField, which use field name fail now with a sensible error message (previously the error was caught with CPLAssert later)
- *
- * Revision 1.59  2006/11/11 19:33:47  tamas
- * Controlling the owner of the objects returned by the static/non static members for the csharp binding
- *
- * Revision 1.58  2006/11/07 13:48:07  hobu
- * remove unused rcode in Centroid
- *
- * Revision 1.57  2006/09/09 17:52:28  tamas
- * Added OGREnvelope for the C# bindings
- *
- * Revision 1.56  2006/06/27 12:47:28  ajolma
- * Error reporting in CreateGeometry, added SetCoordinateDimension
- *
- * Revision 1.55  2006/04/11 12:48:52  ajolma
- * swig 1.3.29 _does_ have DISOWN for Perl
- *
- * Revision 1.54  2006/04/06 20:45:47  ajolma
- *
- * swig/Perl does not use *DISOWN, so I added another solution
- *
- * Revision 1.53  2006/04/02 18:34:33  fwarmerdam
- * Added OFTTime and OFTDateTime.
- *
- * Revision 1.52  2006/02/15 04:19:51  fwarmerdam
- * Added OFTDate.
- *
- * Revision 1.51  2006/02/02 21:09:24  collinsb
- * Corrected wrong Java typemap filename
- *
- * Revision 1.50  2006/02/02 20:52:40  collinsb
- * Added SWIG JAVA bindings
- *
- * Revision 1.49  2005/10/17 14:38:16  hobu
- * Implemented a poor excuse for a GetDriver method on OGRDataSourceShadow
- *
- * Revision 1.48  2005/10/11 14:47:36  kruland
- * Removed all the manual throws and changed to return OGRErr where appropriate.
- * There are 4 methods which have had serious alterations:
- * Layer.GetExtent() was changed to OGRErr GetExtent( double argout[4], int = 1);
- * Geometry.ExportToWkt() was changed to OGRErr ExportToWkt( char **argout );
- * CreateGeometryFromWkb() and CreateGeometryFromWkt will return a NULL
- * geometry object is the construction fails.  This will need to be handled
- * differently in a subsequent revision.
- *
- * Revision 1.47  2005/10/11 14:10:57  kruland
- * Feature.SetGeomerty() should not throw but should return the OGRErr.
- *
- * Revision 1.46  2005/10/03 20:09:58  cfis
- * Changed various methods to return bool instead of int.  These changes make the methods more natural to work with in scripting languages.
- *
- * Revision 1.45  2005/09/26 05:02:13  cfis
- * Added comments pointing out where parent objects are giving out references to child objects.
- *
- * Revision 1.44  2005/09/21 15:33:02  kruland
- * - Added DISOWN to ReleaseResultSet
- * - Added %newobject to GetSpatialFilter and GetOpenDS
- * - Added kwargs feature to Open and OpenShared - they must have been
- *   dropped during a previous commit.
- *
- * Revision 1.43  2005/09/21 02:21:56  fwarmerdam
- * added comment blocks
- *
- * Revision 1.42  2005/09/19 02:53:23  cfis
- * The two versions of the method OGRFeatureShadow::GetFieldDefnRef were both marked with the %newobject feature.
- *
- * However, this is wrong.  Neither return a newobject so this has been removed.
- *
- * Revision 1.41  2005/09/14 21:28:35  kruland
- * OGRFeatureDefn::GetFieldDefn() returns an internal pointer, not a newobject.
- *
- * Revision 1.40  2005/09/13 16:10:00  kruland
- * Import ogr_perl.i for SWIGPERL.
- * Moved GetFieldTypeName from Geometry to FieldDefn.
- *
- * Revision 1.39  2005/09/07 01:12:49  kruland
- * Have ogr.i include osr.i in order to have access to types defined in the osr
- * module.
- * Removed the typedef for OGRErr.  The %include osr.i caused it to be double
- * defined and caused warnings from swig.
- * Fixed the %constant declarations for strings.
- *
- * Revision 1.38  2005/09/06 01:49:07  kruland
- * Declare %feature("compactdefaultargs") so all bindings use it.
- * Import gdal_typemaps.i if no other language specific file used.
- * Added Geometry::GetFieldTypeName() binding.
- * Moved Open, OpenShared, GetDriver, and GetDriverByName from python
- * language file.
- *
- * Revision 1.37  2005/09/02 16:19:23  kruland
- * Major reorganization to accomodate multiple language bindings.
- * Each language binding can define renames and supplemental code without
- * having to have a lot of conditionals in the main interface definition files.
- *
- * Revision 1.36  2005/08/25 21:02:30  cfis
- * Added check for SWIGRuby when defining open,openshared,GetDriverByName and GetDriver methods.
- *
- * Also moved all the renames into a preprocessor macro block because they interfere with the Ruby specific %rename directives.
- *
- * Revision 1.35  2005/08/22 19:00:50  kruland
- * Attempt to make ogr library behave well using normal script memory
- * management.
- * - Implemented public destructor for DataSource, Feature, FeatureDefn, FieldDefn,
- *   Geometry
- * - Stubbed Reference() and Dereference() for all classes as "pass"
- *   in python for backward compatibility
- * - Implemented Destroy() and Release() for all classes in python
- *   as calls to destructor along with disowning the C ptr so the destructor
- *   is not called again.  These methods are only for backward compatibility in
- *   python bindings.
- * - Added %newobject to Layer.GetFeature() and Layer.GetNextFeature()
- * - Use DISOWN typemap on Feature.SetGeometryDirectly() and
- *   Geometry.AddGeometryDirectly() because they assume ownership of the
- *   argument.
- * - Removed %newobject from Geometry.GetGeometryRef(), GetOpenDS() because they
- *   return internal references.
- *
- * Revision 1.34  2005/08/10 16:49:43  hobu
- * syntactic sugar to support the __iter__ protocol on Layer
- * for Python.  This allows us to (slowly) do for feature in layer and
- * have it call GetNextFeature for us until we are done.
- *
- * Revision 1.33  2005/08/10 15:44:57  hobu
- * Added some convenience properties for FieldDefn:
- * width, type, precision, name, justify as shortcuts for the
- * setters/getters
- *
- * Revision 1.32  2005/08/09 17:40:09  kruland
- * Added support for ruby.
- *
- * Revision 1.31  2005/08/09 14:38:27  kruland
- * Fixed the FeatureDefn constructor -- their decls don't have a return value.
- *
- * Revision 1.30  2005/08/06 20:51:58  kruland
- * Instead of using double_## defines and SWIG macros, use typemaps with
- * [ANY] specified and use $dim0 to extract the dimension.  This makes the
- * code quite a bit more readable.
- *
- * Revision 1.29  2005/08/05 20:32:11  kruland
- * Pass bytecount into OGR_G_CreateFromWkb.
- *
- * Revision 1.28  2005/08/05 15:49:27  kruland
- * Added __str__ to Geometry class python bindings.
- *
- * Revision 1.27  2005/06/22 18:42:33  kruland
- * Don't apply a typemap for returning OGRErr.
- *
- * Revision 1.26  2005/03/14 21:33:33  hobu
- * rename method names that are common to both gdal and ogr
- * for the C# only
- *
- * Revision 1.25  2005/03/10 17:13:57  hobu
- * #ifdefs for csharp
- *
- * Revision 1.24  2005/02/24 17:20:47  hobu
- * move constants to %constants so they are available to
- * all languages
- *
- * Revision 1.23  2005/02/24 16:15:53  hobu
- * ifdef'd the %pythoncode, conditionally rename some methods
- * if they conflict with existing "object" methods in C#.
- *
- * Revision 1.22  2005/02/22 18:44:34  hobu
- * and the one in the Datasource constructor
- *
- * Revision 1.21  2005/02/22 18:43:31  hobu
- * yank out debug refcount increments
- *
- * Revision 1.20  2005/02/22 18:24:34  hobu
- * apply the double_4 typemap for Layer.GetExtent
- *
- * Revision 1.19  2005/02/22 15:33:37  kruland
- * Removed duplicate defns of SetField that I introduced in previous revision.
- * Added %appy to SetField which will call str() on second arg.
- *
- * Revision 1.18  2005/02/22 02:04:33  kruland
- * Corrected decl of FieldDefn constructor.
- * Implemented first cut at Feature.SetField() -- needs to accept any for value.
- * Added constructor for FeatureDefn.
- * Make Geometry.GetEnvelope return a 4-tuple.
- * Implemented Geometry.Centroid()
- *
- * Revision 1.17  2005/02/21 23:09:33  hobu
- * Added all of the Geometry and FieldDefn classes/methods
- *
- * Revision 1.16  2005/02/21 21:27:31  kruland
- * Added AddPoint, AddGeometryDirectly, Destroy to Geometry.
- * Mucked with some more newobject directives.
- *
- * Revision 1.15  2005/02/21 20:48:11  kruland
- * Intermediate commit.  Changed internal typenames so they no longer use
- * those defined in gdal/ogr library.  Removed newobject from Dataset function
- * which return layers since they are owned by the dataset.  Moved the
- * Geometry factory methods so they are visible to the Geometry object
- * constructor.
- *
- * Revision 1.14  2005/02/21 18:56:54  kruland
- * Fix usage of the Geometry class.  The factory methods were confused by
- * returning voids instead of void*s.
- * Renamed the internal type to OGRGeometryShadow to prevent confusion.
- * Properly implemented Geometry.ExportToWkb() using the buffer typemaps.
- *
- * Revision 1.13  2005/02/21 18:00:44  hobu
- * Started in on Geometry
- *
- * Revision 1.12  2005/02/21 16:53:30  kruland
- * Changed name of SpatialReference shadow type.
- *
- * Revision 1.11  2005/02/21 16:52:39  hobu
- * GetFieldAs* methods that take in string or int input for Feature
- *
- * Revision 1.10  2005/02/18 23:47:11  hobu
- * Feature and FeatureDefn
- * except for the field handling methods on Feature
- *
- * Revision 1.9  2005/02/18 22:03:51  hobu
- * Finished up Layer
- *
- * Revision 1.8  2005/02/18 20:41:19  hobu
- * it compiles and it doesn't blow up.  IMO this is a
- * good stopping point :)
- *
- * Revision 1.7  2005/02/18 18:42:07  kruland
- * Added %feature("autodoc");
- *
- * Revision 1.6  2005/02/18 18:28:16  kruland
- * Rename OGRSpatialReferenceH type to SpatialReference to make the ogr and
- * osr modules compatible.
- *
- * Revision 1.5  2005/02/18 18:01:34  hobu
- * Started working on the geometry constructors with a lot
- * of help from Kevin
- *
- * Revision 1.4  2005/02/17 00:01:37  hobu
- * quick start on the datasource/driver stuff
- *
- * Revision 1.3  2005/02/16 21:55:02  hobu
- * started the OGRDriver class stuff.
- * CopyDataSource, CreateDataSource, and
- * DS Open
- *
- * Revision 1.2  2005/02/16 20:02:57  hobu
- * added constants
- *
- * Revision 1.1  2005/02/16 19:47:03  hobu
- * skeleton OGR interface
- *
- *
- *
- * nmake /f makefile.vc swig_python
- *D:\cvs\gdal\gdalautotest>d:\Python\debug\Python-2.4\PCbuild\python_d.exe run_all.py ogr
-*/
+ ******************************************************************************
+ * Copyright (c) 2005, Howard Butler
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 %include "exception.i"
 

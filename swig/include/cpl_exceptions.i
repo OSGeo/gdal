@@ -1,4 +1,4 @@
-/*
+/******************************************************************************
  * $Id$
  *
  * Code for Optional Exception Handling through UseExceptions(),
@@ -9,26 +9,27 @@
  *
  * This is not thread safe.
  *
- * $Log$
- * Revision 1.5  2006/06/27 12:54:34  ajolma
- * Perl seems to need SWIG_exception_fail
+ ******************************************************************************
+ * Copyright (c) 2005, Kevin Ruland
  *
- * Revision 1.4  2005/09/30 20:21:31  kruland
- * Removed the file global variable bUseExceptions.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * Revision 1.3  2005/09/28 18:24:36  kruland
- * Removed global flag bExceptionHappened.  Create a custom error handler which
- * writes messages for CE_Fatal errors.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * Revision 1.2  2005/09/18 07:36:18  cfis
- * Only raise exceptions on failures or fatal errors.  The previous code rose exceptions on debug messages, warning messages and when nothing at all happened.
- *
- * Revision 1.1  2005/09/13 03:04:27  kruland
- * Pull the exception generation mechanism out of gdal_python.i so it could
- * be used by other bindings.
- *
- *
- */
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 %{
 void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
