@@ -319,7 +319,7 @@ void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
  */
 #define SRCVAL(papoSource, eSrcType, ii) \
       (eSrcType == GDT_Byte ? \
-          ((char *)papoSource)[ii] : \
+          ((GByte *)papoSource)[ii] : \
       (eSrcType == GDT_Float32 ? \
           ((float *)papoSource)[ii] : \
       (eSrcType == GDT_Float64 ? \
