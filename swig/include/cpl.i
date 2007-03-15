@@ -6,25 +6,27 @@
  * Purpose:  GDAL Core SWIG Interface declarations.
  * Author:   Kevin Ruland, kruland@ku.edu
  *
-
+ ******************************************************************************
+ * Copyright (c) 2005, Kevin Ruland
  *
- * $Log$
- * Revision 1.5  2006/01/17 04:38:09  cfis
- * Switched #ifdef declarations to have a section for Ruby to be more consistent with other SWIG interface files.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * Revision 1.4  2006/01/16 08:07:04  cfis
- * Exposed CPLHexToBinary and CPLHexToBinary to scripting languages.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * Revision 1.3  2005/10/02 23:31:27  cfis
- * Updated the renames to include support for Ruby.
- *
- * Revision 1.2  2005/02/16 16:54:48  kruland
- * Removed the python code from the wrapper for now.  Wrapped a simple version
- * of PushErrorHandler(char const*) which allows assignment of the CPL defined
- * error handlers.
- *
- *
-*/
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 #ifdef SWIGCSHARP
 typedef enum

@@ -6,23 +6,27 @@
  * Purpose:  GDAL Core SWIG Interface declarations.
  * Author:   Kevin Ruland, kruland@ku.edu
  *
-
+ ******************************************************************************
+ * Copyright (c) 2005, Kevin Ruland
  *
- * $Log$
- * Revision 1.4  2006/01/17 04:37:17  cfis
- * Added rename section for Ruby.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * Revision 1.3  2005/08/04 19:16:35  kruland
- * Clone() returns a newobject.  And changed some whitespace.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * Revision 1.2  2005/02/22 23:33:07  kruland
- * Implement GetCount, and GetColorTableEntry correctly.
- *
- * Revision 1.1  2005/02/15 21:37:43  kruland
- * Interface definition for ColorTable object.  Cut&Paste from gdal_priv.h.
- *
- *
-*/
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 //************************************************************************
 //
