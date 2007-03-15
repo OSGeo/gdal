@@ -1,133 +1,31 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     osr.i
- * Project:  GDAL Python Interface
- * Purpose:  OSR Core SWIG Interface declarations.
+ * Project:  GDAL SWIG Interfaces.
+ * Purpose:  OGRSpatialReference related declarations.
  * Author:   Kevin Ruland, kruland@ku.edu
  *
-
+ ******************************************************************************
+ * Copyright (c) 2005, Kevin Ruland
  *
- * $Log$
- * Revision 1.32  2006/12/11 20:46:35  ajolma
- * apply some typemaps for GetProjectionMethod* methods (only for SWIGPERL now)
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * Revision 1.31  2006/11/18 09:25:53  ajolma
- * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * Revision 1.30  2006/11/15 21:11:57  fwarmerdam
- * Added GetUserInputAsWKT().
- *
- * Revision 1.29  2006/11/11 19:33:48  tamas
- * Controlling the owner of the objects returned by the static/non static members for the csharp binding
- *
- * Revision 1.28  2006/10/15 20:58:07  fwarmerdam
- * Added IsLocal() method.
- *
- * Revision 1.27  2006/06/27 13:14:49  ajolma
- * removed throw from OSRCoordinateTransformationShadow
- *
- * Revision 1.26  2006/06/27 12:48:44  ajolma
- * Geo::GDAL namespace had creeped in too early
- *
- * Revision 1.25  2006/06/20 07:33:17  ajolma
- * SetLinearUnits should call OSRSetLinearUnits
- *
- * Revision 1.24  2006/02/02 21:09:24  collinsb
- * Corrected wrong Java typemap filename
- *
- * Revision 1.23  2006/02/02 20:52:40  collinsb
- * Added SWIG JAVA bindings
- *
- * Revision 1.22  2006/01/14 01:47:22  cfis
- * Added private default constructors since SWIG 1.3.28 HEAD was incorrectly generating them.
- *
- * Revision 1.21  2005/09/06 01:43:06  kruland
- * Include gdal_typemaps.i if no other file is specified.
- *
- * Revision 1.20  2005/09/02 21:42:42  kruland
- * The compactdefaultargs feature should be turned on for all bindings not just
- * python.
- *
- * Revision 1.19  2005/09/02 16:19:23  kruland
- * Major reorganization to accomodate multiple language bindings.
- * Each language binding can define renames and supplemental code without
- * having to have a lot of conditionals in the main interface definition files.
- *
- * Revision 1.18  2005/08/06 20:51:58  kruland
- * Instead of using double_## defines and SWIG macros, use typemaps with
- * [ANY] specified and use $dim0 to extract the dimension.  This makes the
- * code quite a bit more readable.
- *
- * Revision 1.17  2005/08/05 19:19:53  hobu
- * OPTGetParameterInfo uses default as an argument.
- * C# uses default as a keyword.
- * C# wins.  Rename the parameter name.
- *
- * Revision 1.16  2005/07/20 16:08:49  kruland
- * Declare the double and char * consts correctly.  And change all the decls
- * to defer the the #defined values from the headers.
- *
- * Revision 1.15  2005/07/20 14:44:13  kruland
- * Use correct name for OPTGetProjectionMethods().
- *
- * Revision 1.14  2005/06/22 18:42:33  kruland
- * Don't apply a typemap for returning OGRErr.
- *
- * Revision 1.13  2005/02/24 20:33:58  kruland
- * Back to import gdal_typemaps.i to prevent confusion.
- *
- * Revision 1.12  2005/02/24 18:39:14  kruland
- * Using the GetProjectionMethods() custom code from old interface for the
- * python binding.  Defined access to plain C-api for other bindings.
- * Added GetWellKnownGeogCSAsWKT() global method.
- *
- * Revision 1.11  2005/02/24 17:53:37  kruland
- * import the generic typemap.i file.
- *
- * Revision 1.10  2005/02/24 16:45:17  kruland
- * Commented missing methods.
- * Added first cut at a proxy for ProjectionMethods.
- *
- * Revision 1.9  2005/02/23 17:44:37  kruland
- * Change SpatialReference constructor to have keyword argument "wkt".
- *
- * Revision 1.8  2005/02/20 19:46:04  kruland
- * Use the new fixed size typemap for (double **) arguments in ExportToPCI and
- * ExportToUSGS.
- *
- * Revision 1.7  2005/02/20 19:42:53  kruland
- * Rename the Swig shadow classes so the names do not give the impression that
- * they are any part of the GDAL/OSR apis.  There were no bugs with the old
- * names but they were confusing.
- *
- * Revision 1.6  2005/02/18 18:42:07  kruland
- * Added %feature("autodoc");
- *
- * Revision 1.5  2005/02/18 18:13:05  kruland
- * Now using the THROW_OGR_ERROR tyepmap for all methods.  Changed those
- * which should return OGRErr to return OGRErr since the typemap is friendly
- * to return arguments.
- *
- * Revision 1.4  2005/02/18 16:18:27  kruland
- * Added %feature("compactdefaultargs") to fix problem with ImportFromPCI,
- * ImportFromUSGS and the fact that %typemap (char**ignorechange) has no
- * %typecheck.
- *
- * Fixed bug in new_CoordinateTransformation().  It wasn't returning a value.
- *
- * Revision 1.3  2005/02/17 21:12:06  kruland
- * More complete implementation of SpatialReference and CoordinateTransformation.
- * Satisfies the osr gdalautotests with 1 exception.
- *
- * Revision 1.2  2005/02/17 03:39:25  kruland
- * Use %constant decls for the constants.
- *
- * Revision 1.1  2005/02/15 20:50:09  kruland
- * Minimal SpatialReference Object to make gcore pretty much succeed.
- *
- *
-*/
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OSR"
