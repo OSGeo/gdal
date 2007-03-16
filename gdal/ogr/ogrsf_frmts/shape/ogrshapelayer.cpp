@@ -1095,7 +1095,7 @@ OGRErr OGRShapeLayer::Repack()
 /* If all operations above succeeded, then all necessery files are      */
 /* in the right place and accessible.
 /* -------------------------------------------------------------------- */
-    CPLAssert( NULL == hSHP && NULL == hNewSHP );
+    CPLAssert( NULL == hSHP );
     CPLAssert( NULL == hDBF && NULL == hNewDBF );
     
     CPLPushErrorHandler( CPLQuietErrorHandler );
