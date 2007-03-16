@@ -454,6 +454,32 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Adjust if we have a registration cell.                          */
+/* -------------------------------------------------------------------- */
+    int iCellX = atoi(poHeader->Find("RasterInfo.RegistrationCellX", "1"));
+    int iCellY = atoi(poHeader->Find("RasterInfo.RegistrationCellY", "1"));
+
+    if( poDS->bGotTransform )
+    {
+        poDS->adfGeoTransform[0] -=
+            (iCellX-1) * poDS->adfGeoTransform[1]
+            + (iCellY-1) * poDS->adfGeoTransform[2];
+        poDS->adfGeoTransform[3] -= 
+            (iCellX-1) * poDS->adfGeoTransform[4]
+            + (iCellY-1) * poDS->adfGeoTransform[5];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for null values.                                          */
+/* -------------------------------------------------------------------- */
+    if( poHeader->Find( "RasterInfo.NullCellValue", NULL ) )
+    {
+        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+            poDS->GetRasterBand(iBand)->SetNoDataValue(
+                CPLAtofM(poHeader->Find( "RasterInfo.NullCellValue" )) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
