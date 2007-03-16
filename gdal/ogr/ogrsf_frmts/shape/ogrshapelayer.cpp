@@ -912,6 +912,13 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 OGRErr OGRShapeLayer::Repack()
 
 {
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The REPACK operation not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Build a list of records to be dropped.                          */
 /* -------------------------------------------------------------------- */
@@ -945,8 +952,11 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
 /*      Create a new dbf file, matching the old.                        */
 /* -------------------------------------------------------------------- */
-    DBFHandle hNewDBF;
-    CPLString oTempFile = CPLGetBasename(pszFullName);
+    DBFHandle hNewDBF = NULL;
+    
+    CPLString oTempFile(CPLGetPath(pszFullName));
+    oTempFile += '\\';
+    oTempFile += CPLGetBasename(pszFullName);
     oTempFile += "_packed.dbf";
 
     hNewDBF = DBFCloneEmpty( hDBF, oTempFile );
@@ -992,22 +1002,27 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
 /*      Cleanup the old .dbf and rename the new one.                    */
 /* -------------------------------------------------------------------- */
-
     DBFClose( hDBF );
-    hDBF = hNewDBF;
+    DBFClose( hNewDBF );
+    hDBF = hNewDBF = NULL;
 
     VSIUnlink( CPLResetExtension( pszFullName, "dbf" ) );
     if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "dbf" ) ) != 0 )
+    {
+        CPLDebug( "Shape", "Can not rename DBF file: %s", strerror( errno ) );
         return OGRERR_FAILURE;
-
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Now create a shapefile matching the old one.                    */
 /* -------------------------------------------------------------------- */
     if( hSHP != NULL )
     {
-        SHPHandle hNewSHP;
+        SHPHandle hNewSHP = NULL;
 
-        oTempFile = CPLGetBasename(pszFullName);
+        oTempFile = CPLGetPath(pszFullName);
+        oTempFile += '\\';
+        oTempFile += CPLGetBasename(pszFullName);
         oTempFile += "_packed.shp";
 
         hNewSHP = SHPCreate( oTempFile, hSHP->nShapeType );
@@ -1052,19 +1067,60 @@ OGRErr OGRShapeLayer::Repack()
 /*      Cleanup the old .shp/.shx and rename the new one.               */
 /* -------------------------------------------------------------------- */
         SHPClose( hSHP );
-        hSHP = hNewSHP;
+        SHPClose( hNewSHP );
+        hSHP = hNewSHP = NULL;
 
         VSIUnlink( CPLResetExtension( pszFullName, "shp" ) );
         VSIUnlink( CPLResetExtension( pszFullName, "shx" ) );
 
-        if( VSIRename( oTempFile, 
-                       CPLResetExtension( pszFullName, "shp" ) ) != 0 )
+        if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "shp" ) ) != 0 )
+        {
+            CPLDebug( "Shape", "Can not rename SHP file: %s", strerror( errno ) );
             return OGRERR_FAILURE;
+        }
     
         oTempFile = CPLResetExtension( oTempFile, "shx" );
-        if( VSIRename( oTempFile, 
-                       CPLResetExtension( pszFullName, "shx" ) ) != 0 )
+        if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "shx" ) ) != 0 )
+        {
+            CPLDebug( "Shape", "Can not rename SHX file: %s", strerror( errno ) );
             return OGRERR_FAILURE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Reopen the shapefile                                            */
+/*                                                                      */
+/* We do not need to reimplement OGRShapeDataSource::OpenFile() here    */  
+/* with the fully featured error checking.
+/* If all operations above succeeded, then all necessery files are      */
+/* in the right place and accessible.
+/* -------------------------------------------------------------------- */
+    CPLAssert( NULL == hSHP );
+    CPLAssert( NULL == hDBF );
+    
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+    
+    const char* pszAccess = NULL;
+    if( bUpdateAccess )
+    {
+        pszAccess = "r+";
+    }
+    else
+    {
+        pszAccess = "r";
+    }
+    
+    hSHP = SHPOpen ( CPLResetExtension( pszFullName, "shp" ) , "r" );
+    hDBF = DBFOpen ( CPLResetExtension( pszFullName, "dbf" ) , "r" );
+    
+    CPLPopErrorHandler();
+    
+    if( NULL == hSHP || NULL == hDBF )
+    {
+        CPLString osMsg(CPLGetLastErrorMsg());
+        CPLError( CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str() );
+
+        return OGRERR_FAILURE;
     }
 
 /* -------------------------------------------------------------------- */
