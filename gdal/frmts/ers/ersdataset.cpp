@@ -379,6 +379,32 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Look for band descriptions.                                     */
+/* -------------------------------------------------------------------- */
+    int iChild, iBand = 0;
+    ERSHdrNode *poRI = poHeader->FindNode( "RasterInfo" );
+
+    for( iChild = 0; 
+         poRI != NULL && iChild < poRI->nItemCount && iBand < poDS->nBands; 
+         iChild++ )
+    {
+        if( poRI->papoItemChild[iChild] != NULL
+            && EQUAL(poRI->papszItemName[iChild],"BandId") )
+        {
+            const char *pszValue = 
+                poRI->papoItemChild[iChild]->Find( "Value", NULL );
+
+            iBand++;
+            if( pszValue )
+            {
+                CPLPushErrorHandler( CPLQuietErrorHandler );
+                poDS->GetRasterBand( iBand )->SetDescription( pszValue );
+                CPLPopErrorHandler();
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Look for projection.                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
