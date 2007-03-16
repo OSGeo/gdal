@@ -343,7 +343,7 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failure writing .shp header." );
+                  "Failure writing .shp header (%s)", strerror( errno ) );
 #endif
         return;
     }
@@ -360,7 +360,7 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failure writing .shx header." );
+                  "Failure writing .shx header (%s)", strerror( errno ) );
 #endif
         return;
     }
@@ -383,7 +383,7 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failure writing .shx contents." );
+                  "Failure writing .shx contents (%s)", strerror( errno ) );
 #endif
     }
 
