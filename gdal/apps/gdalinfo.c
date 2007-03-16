@@ -122,8 +122,8 @@ int main( int argc, char ** argv )
     if( hDataset == NULL )
     {
         fprintf( stderr,
-                 "GDALOpen failed - %d\n%s\n",
-                 CPLGetLastErrorNo(), CPLGetLastErrorMsg() );
+                 "gdalinfo failed - unable to open '%s'.\n",
+                 pszFilename );
 
         CSLDestroy( argv );
     
