@@ -238,7 +238,7 @@ void OGRShapeLayer::ResetReading()
 
     iNextShapeId = 0;
 
-    if( bHeaderDirty )
+    if( bHeaderDirty && bUpdateAccess )
         SyncToDisk();
 }
 
@@ -1102,13 +1102,9 @@ OGRErr OGRShapeLayer::Repack()
     
     const char* pszAccess = NULL;
     if( bUpdateAccess )
-    {
         pszAccess = "r+";
-    }
     else
-    {
         pszAccess = "r";
-    }
     
     hSHP = SHPOpen ( CPLResetExtension( pszFullName, "shp" ) , "r" );
     hDBF = DBFOpen ( CPLResetExtension( pszFullName, "dbf" ) , "r" );
