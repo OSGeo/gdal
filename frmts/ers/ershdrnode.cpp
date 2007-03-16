@@ -285,6 +285,38 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
 }
 
 /************************************************************************/
+/*                              FindElem()                              */
+/*                                                                      */
+/*      Find a particular element from an array valued item.            */
+/************************************************************************/
+
+const char *ERSHdrNode::FindElem( const char *pszPath, int iElem, 
+                                  const char *pszDefault )
+
+{
+    const char *pszArray = Find( pszPath, NULL );
+    char **papszTokens;
+    int  bDefault = TRUE;
+
+    if( pszArray == NULL )
+        return pszDefault;
+
+    papszTokens = CSLTokenizeStringComplex( pszArray, "{ \t}", TRUE, FALSE );
+    if( iElem >= 0 && iElem < CSLCount(papszTokens) )
+    {
+        osTempReturn = papszTokens[iElem];
+        bDefault = FALSE;
+    }
+    
+    CSLDestroy( papszTokens );
+
+    if( bDefault )
+        return pszDefault;
+    else
+        return osTempReturn;
+}
+
+/************************************************************************/
 /*                              FindNode()                              */
 /*                                                                      */
 /*      Find the desired node.                                          */
