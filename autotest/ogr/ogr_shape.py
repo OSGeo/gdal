@@ -24,54 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_shape.py,v $
-#  Revision 1.15  2006/06/21 20:41:42  fwarmerdam
-#  added test for shapefile without .dbf
-#
-#  Revision 1.14  2006/03/29 18:03:13  fwarmerdam
-#  Make sure we clean up asm_ds.
-#
-#  Revision 1.13  2006/01/10 16:49:25  fwarmerdam
-#  Added rudimentary testing of REPACK.
-#
-#  Revision 1.12  2006/01/05 00:35:00  fwarmerdam
-#  added a DeleteFeature() test
-#
-#  Revision 1.11  2006/01/04 21:18:29  fwarmerdam
-#  added tests for SetFeature() method
-#
-#  Revision 1.10  2005/09/30 17:33:00  fwarmerdam
-#  Added multipolygon translation test for American Samoa.
-#
-#  Revision 1.9  2005/02/23 21:35:10  fwarmerdam
-#  updated to account for inclusion of none geom features in spat search
-#
-#  Revision 1.8  2005/01/04 03:42:17  fwarmerdam
-#  Added test of creating and destroying spatial index.
-#
-#  Revision 1.7  2005/01/03 22:20:21  fwarmerdam
-#  Added several spatial filter tests
-#
-#  Revision 1.6  2004/10/27 19:36:05  fwarmerdam
-#  Restore temp cleanup accidentally removed.
-#
-#  Revision 1.5  2004/10/27 19:35:20  fwarmerdam
-#  only check precision within accuracy of our WKT representation
-#
-#  Revision 1.4  2004/02/27 20:14:18  warmerda
-#  cleanup a different way
-#
-#  Revision 1.3  2004/02/27 20:12:48  warmerda
-#  cleanup tpoly properly
-#
-#  Revision 1.2  2003/06/10 14:50:10  warmerda
-#  completed, all passing now
-#
-#  Revision 1.1  2003/06/10 14:26:09  warmerda
-#  New
-#
-#
 
 import os
 import sys
