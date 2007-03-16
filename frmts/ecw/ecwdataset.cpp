@@ -1391,9 +1391,6 @@ void ECWDataset::ECW2WKTProjection()
     if( EQUAL(psFileInfo->szProjection,"RAW") )
         return;
 
-    if( ECWGetCSList() == NULL )
-        return;
-
 /* -------------------------------------------------------------------- */
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
