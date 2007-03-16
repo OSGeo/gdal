@@ -925,7 +925,7 @@ OGRErr OGRShapeLayer::Repack()
     int *panRecordsToDelete = (int *) 
         CPLMalloc(sizeof(int)*(nTotalShapeCount+1));
     int nDeleteCount = 0;
-    int iShape;
+    int iShape = 0;
     OGRErr eErr = OGRERR_NONE;
 
     for( iShape = 0; iShape < nTotalShapeCount; iShape++ )
@@ -1095,8 +1095,8 @@ OGRErr OGRShapeLayer::Repack()
 /* If all operations above succeeded, then all necessery files are      */
 /* in the right place and accessible.
 /* -------------------------------------------------------------------- */
-    CPLAssert( NULL == hSHP );
-    CPLAssert( NULL == hDBF );
+    CPLAssert( NULL == hSHP && NULL == hNewSHP );
+    CPLAssert( NULL == hDBF && NULL == hNewDBF );
     
     CPLPushErrorHandler( CPLQuietErrorHandler );
     
@@ -1106,8 +1106,8 @@ OGRErr OGRShapeLayer::Repack()
     else
         pszAccess = "r";
     
-    hSHP = SHPOpen ( CPLResetExtension( pszFullName, "shp" ) , "r" );
-    hDBF = DBFOpen ( CPLResetExtension( pszFullName, "dbf" ) , "r" );
+    hSHP = SHPOpen ( CPLResetExtension( pszFullName, "shp" ) , pszAccess );
+    hDBF = DBFOpen ( CPLResetExtension( pszFullName, "dbf" ) , pszAccess );
     
     CPLPopErrorHandler();
     
