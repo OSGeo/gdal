@@ -405,6 +405,10 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
     if (bSwabflag)
         TIFFSwabShort(&nEntryCount);
 
+    // Some apps write empty directories - see bug 1523.
+    if( nEntryCount == 0 )  
+        return CE_None;
+
     poTIFFDir = (TIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(TIFFDirEntry));
 
     if (poTIFFDir == NULL) 
