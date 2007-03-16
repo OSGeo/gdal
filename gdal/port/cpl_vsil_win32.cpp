@@ -232,7 +232,7 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
         printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n", 
                 (GUInt32) nOffset, nMoveLow, dwMoveHigh );
 #endif
-        
+        errno = ErrnoFromGetLastError();
         return -1;
     }
     else
@@ -366,6 +366,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
+        errno = ErrnoFromGetLastError();
         return NULL;
     }
     else
