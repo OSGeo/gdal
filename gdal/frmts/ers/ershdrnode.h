@@ -19,6 +19,7 @@ public:
     int    WriteSelf( FILE *fp, int nIndent );
 
     const char *Find( const char *pszPath, const char *pszDefault = NULL );
+    ERSHdrNode *FindNode( const char *pszPath );
 
 private:
     int    ReadLine( FILE *, CPLString & );

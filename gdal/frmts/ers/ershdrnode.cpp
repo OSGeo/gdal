@@ -283,3 +283,46 @@ const char *ERSHdrNode::Find( const char *pszPath, const char *pszDefault )
 
     return pszDefault;
 }
+
+/************************************************************************/
+/*                              FindNode()                              */
+/*                                                                      */
+/*      Find the desired node.                                          */
+/************************************************************************/
+
+ERSHdrNode *ERSHdrNode::FindNode( const char *pszPath )
+
+{
+    int i;
+    CPLString osPathFirst, osPathRest, osPath = pszPath;
+    int iDot;
+    
+    iDot = osPath.find_first_of('.');
+    if( iDot == -1 )
+    {
+        osPathFirst = osPath;
+    }
+    else
+    {
+        osPathFirst = osPath.substr(0,iDot);
+        osPathRest = osPath.substr(iDot+1);
+    }
+
+    for( i = 0; i < nItemCount; i++ )
+    {
+        if( EQUAL(osPathFirst,papszItemName[i]) )
+        {
+            if( papoItemChild[i] != NULL )
+            {
+                if( osPathRest.length() > 0 )
+                    return papoItemChild[i]->FindNode( osPathRest );
+                else
+                    return papoItemChild[i];
+            }
+            else
+                return NULL;
+        }
+    }
+
+    return NULL;
+}
