@@ -1427,6 +1427,16 @@ GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
 double GDALRasterBand::GetMaximum( int *pbSuccess )
 
 {
+    const char *pszValue;
+    
+    if( (pszValue = GetMetadataItem("STATISTICS_MAXIMUM")) != NULL )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+        
+        return CPLAtofM(pszValue);
+    }
+
     if( pbSuccess != NULL )
         *pbSuccess = FALSE;
 
@@ -1498,6 +1508,16 @@ GDALGetRasterMaximum( GDALRasterBandH hBand, int *pbSuccess )
 double GDALRasterBand::GetMinimum( int *pbSuccess )
 
 {
+    const char *pszValue;
+    
+    if( (pszValue = GetMetadataItem("STATISTICS_MINIMUM")) != NULL )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+        
+        return CPLAtofM(pszValue);
+    }
+
     if( pbSuccess != NULL )
         *pbSuccess = FALSE;
 
