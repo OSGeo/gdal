@@ -24,12 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: hdf4_write.py,v $
-#  Revision 1.1  2003/04/01 09:55:23  dron
-#  New.
-#
-#
 
 import os
 import sys

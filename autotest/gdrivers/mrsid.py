@@ -27,30 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: mrsid.py,v $
-#  Revision 1.7  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.6  2006/06/28 14:12:06  fwarmerdam
-#  Updated to for new getWKT result from SDK 6.
-#
-#  Revision 1.5  2006/05/19 02:52:04  fwarmerdam
-#  added test of new style srs
-#
-#  Revision 1.4  2005/10/25 21:25:45  fwarmerdam
-#  Added enabled test in mrsid_3.
-#
-#  Revision 1.3  2005/10/17 19:29:36  fwarmerdam
-#  added overview test
-#
-#  Revision 1.2  2005/04/21 16:42:46  fwarmerdam
-#  Added test for overview rasterio bug.
-#
-#  Revision 1.1  2005/02/17 21:45:39  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

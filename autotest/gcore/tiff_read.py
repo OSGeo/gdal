@@ -24,15 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: tiff_read.py,v $
-#  Revision 1.2  2003/03/25 17:29:44  dron
-#  Switched to using GDALTest class.
-#
-#  Revision 1.1  2003/03/13 16:22:45  warmerda
-#  New
-#
-#
 
 import os
 import sys

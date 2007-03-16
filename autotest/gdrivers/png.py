@@ -27,21 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: png.py,v $
-#  Revision 1.4  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.3  2005/09/15 02:36:24  fwarmerdam
-#  added RGB nodata test
-#
-#  Revision 1.2  2005/09/12 19:00:27  fwarmerdam
-#  added 16bit rgba test case
-#
-#  Revision 1.1  2004/08/26 21:36:16  warmerda
-#  New
-#
-#
 
 import os
 import sys

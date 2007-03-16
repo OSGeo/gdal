@@ -25,15 +25,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: bmp_write.py,v $
-#  Revision 1.2  2006/06/17 18:24:00  fwarmerdam
-#  improved cleanup
-#
-#  Revision 1.1  2003/03/27 14:03:19  dron
-#  New.
-#
-#
 
 import os
 import sys

@@ -27,18 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: vrt_read.py,v $
-#  Revision 1.3  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.2  2003/03/27 08:20:04  dron
-#  Typo fixed.
-#
-#  Revision 1.1  2003/03/26 19:37:16  dron
-#  New.
-#
-#
 
 import os
 import sys

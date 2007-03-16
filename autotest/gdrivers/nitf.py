@@ -27,30 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: nitf.py,v $
-#  Revision 1.7  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.6  2005/10/13 01:42:36  fwarmerdam
-#  Added vsimem test.
-#
-#  Revision 1.5  2005/03/21 16:20:21  fwarmerdam
-#  added geotransform test from existing IGEOLO.
-#
-#  Revision 1.4  2005/02/22 08:18:54  fwarmerdam
-#  fixed issue with color interp testing
-#
-#  Revision 1.3  2005/02/18 19:27:15  fwarmerdam
-#  Added direct Create test with band interps
-#
-#  Revision 1.2  2004/02/20 00:30:32  warmerda
-#  use .tif files as source data
-#
-#  Revision 1.1  2003/07/17 16:18:43  warmerda
-#  New
-#
-#
 
 import os
 import sys

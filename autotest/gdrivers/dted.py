@@ -27,15 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: dted.py,v $
-#  Revision 1.2  2006/11/21 18:06:52  mloskot
-#  Fixed geo transform factors comparison.
-#
-#  Revision 1.1  2006/11/21 17:49:51  mloskot
-#  Added dted.py test script to gdalautotest.
-#
-#
 
 import os
 import sys

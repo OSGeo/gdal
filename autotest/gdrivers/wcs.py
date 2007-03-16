@@ -27,21 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: wcs.py,v $
-#  Revision 1.4  2007/01/02 14:44:31  fwarmerdam
-#  added service description in the url test
-#
-#  Revision 1.3  2006/10/27 04:38:34  fwarmerdam
-#  Report skip on first test if driver not available.
-#
-#  Revision 1.2  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.1  2006/10/27 04:20:14  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

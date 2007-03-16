@@ -27,33 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: hfa_write.py,v $
-#  Revision 1.8  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.7  2005/08/20 23:52:03  fwarmerdam
-#  added compressed tests
-#
-#  Revision 1.6  2005/08/19 02:13:35  fwarmerdam
-#  added description setting test
-#
-#  Revision 1.5  2003/03/28 09:13:42  dron
-#  Buanch of new tests added.
-#
-#  Revision 1.4  2003/03/25 17:29:44  dron
-#  Switched to using GDALTest class.
-#
-#  Revision 1.3  2003/03/25 13:54:50  dron
-#  Debug output removed.
-#
-#  Revision 1.2  2003/03/25 11:15:42  dron
-#  Use run_tests2() function instead of run_tests(). Added hfa_write_5() test.
-#
-#  Revision 1.1  2003/03/18 18:35:33  warmerda
-#  New
-#
-#
 
 import os
 import sys

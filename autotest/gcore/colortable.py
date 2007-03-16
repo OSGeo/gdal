@@ -28,15 +28,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: colortable.py,v $
-#  Revision 1.2  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.1  2003/11/24 16:39:07  warmerda
-#  New
-#
-#
 
 import os
 import sys
