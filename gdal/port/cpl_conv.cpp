@@ -1025,7 +1025,7 @@ int CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
  * Print GInt32 value into specified string buffer. This string will not
  * be NULL-terminated.
  *
- * @param Pointer to the destination string buffer. Should be
+ * @param pszBuffer Pointer to the destination string buffer. Should be
  * large enough to hold the resulting string. Note, that the string will
  * not be NULL-terminated, so user should do this himself, if needed.
  *
@@ -1064,7 +1064,7 @@ int CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
  * Print GUIntBig value into specified string buffer. This string will not
  * be NULL-terminated.
  *
- * @param Pointer to the destination string buffer. Should be
+ * @param pszBuffer Pointer to the destination string buffer. Should be
  * large enough to hold the resulting string. Note, that the string will
  * not be NULL-terminated, so user should do this himself, if needed.
  *
@@ -1106,7 +1106,7 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
  * Print pointer value into specified string buffer. This string will not
  * be NULL-terminated.
  *
- * @param Pointer to the destination string buffer. Should be
+ * @param pszBuffer Pointer to the destination string buffer. Should be
  * large enough to hold the resulting string. Note, that the string will
  * not be NULL-terminated, so user should do this himself, if needed.
  *
@@ -1149,11 +1149,11 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  * flag 'E' (or 'e') will be replaced with 'D', as in Fortran. Resulting
  * string will not to be NULL-terminated.
  *
- * @param Pointer to the destination string buffer. Should be
+ * @param pszBuffer Pointer to the destination string buffer. Should be
  * large enough to hold the resulting string. Note, that the string will
  * not be NULL-terminated, so user should do this himself, if needed.
  *
- * @param Format specifier (for example, "%16.9E").
+ * @param pszFormat Format specifier (for example, "%16.9E").
  *
  * @param dfValue Numerical value to print.
  * 
