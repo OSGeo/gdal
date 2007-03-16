@@ -27,21 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: numpy_rw.py,v $
-#  Revision 1.4  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.3  2006/04/28 03:40:05  fwarmerdam
-#  Just skip if we can't import gdalnumeric.
-#
-#  Revision 1.2  2004/11/11 04:21:44  fwarmerdam
-#  converted to unix text format, added allregister
-#
-#  Revision 1.1  2003/09/26 15:55:18  warmerda
-#  New
-#
-#
 
 import os
 import sys

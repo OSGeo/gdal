@@ -27,18 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: pnm_read.py,v $
-#  Revision 1.3  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.2  2003/03/26 19:32:57  dron
-#  Switched to GDALTest.
-#
-#  Revision 1.1  2003/03/25 11:16:11  dron
-#  New.
-#
-#
 
 import os
 import sys

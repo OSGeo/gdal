@@ -27,24 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: jp2kak.py,v $
-#  Revision 1.5  2006/12/05 05:11:25  fwarmerdam
-#  better driver order management
-#
-#  Revision 1.4  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.3  2006/06/22 03:08:28  fwarmerdam
-#  added tests for geojp2 and gmljp2 production.
-#
-#  Revision 1.2  2003/07/18 04:48:44  warmerda
-#  fixed name
-#
-#  Revision 1.1  2003/04/16 19:39:05  warmerda
-#  New
-#
-#
 
 import os
 import sys

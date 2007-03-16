@@ -27,57 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: ecw.py,v $
-#  Revision 1.17  2006/11/16 03:22:56  fwarmerdam
-#  Fixed handling of deregistering jp2kak, jpeg2000 drivers.
-#
-#  Revision 1.16  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.15  2006/04/28 05:18:44  fwarmerdam
-#  Added gcp tests
-#
-#  Revision 1.14  2006/03/21 05:18:56  fwarmerdam
-#  loosen up stddev range on test 6 alot
-#
-#  Revision 1.13  2006/03/21 05:03:39  fwarmerdam
-#  loosen up tests so they pass on win32
-#
-#  Revision 1.12  2005/10/25 02:31:24  fwarmerdam
-#  Commit frenzy...
-#
-#  Revision 1.11  2005/05/23 05:22:29  fwarmerdam
-#  make UTM Zone 11 test less stringent
-#
-#  Revision 1.10  2005/03/03 17:05:03  fwarmerdam
-#  added ECWDataset::RasterIO() test
-#
-#  Revision 1.9  2005/02/22 08:19:42  fwarmerdam
-#  added test for color interp setting in NITF direct create w/jpeg2000
-#
-#  Revision 1.8  2005/02/17 16:04:58  fwarmerdam
-#  Cleanup ecw9.jp2
-#
-#  Revision 1.7  2005/02/17 16:04:31  fwarmerdam
-#  Added Create() test.
-#
-#  Revision 1.6  2005/02/15 03:30:58  fwarmerdam
-#  temporariliy deregister JP2KAK driver
-#
-#  Revision 1.5  2005/02/15 02:29:55  fwarmerdam
-#  adjusted for linux/gcc3.2.3
-#
-#  Revision 1.4  2004/12/21 04:56:05  fwarmerdam
-#  impoved cleanup a bit
-#
-#  Revision 1.3  2004/12/21 04:55:12  fwarmerdam
-#  added jp2 and nitf jp2 output testing
-#
-#  Revision 1.1  2004/12/02 20:47:50  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

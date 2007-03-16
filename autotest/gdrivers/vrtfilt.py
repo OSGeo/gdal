@@ -27,15 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: vrtfilt.py,v $
-#  Revision 1.2  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.1  2003/07/18 04:50:08  warmerda
-#  New
-#
-#
 
 import os
 import sys

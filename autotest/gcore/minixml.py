@@ -27,15 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: minixml.py,v $
-#  Revision 1.2  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.1  2005/08/08 15:55:17  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

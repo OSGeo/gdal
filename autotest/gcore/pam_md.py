@@ -27,23 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: pam_md.py,v $
-#  Revision 1.5  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.4  2005/08/08 15:23:29  fwarmerdam
-#  Return fail in required cases.
-#
-#  Revision 1.3  2005/08/08 15:18:21  fwarmerdam
-#  Fixed header.
-#
-#  Revision 1.2  2005/08/04 19:31:26  fwarmerdam
-#  try to enable pam and restore setting at end of script
-#
-#  Revision 1.1  2005/06/28 22:27:19  fwarmerdam
-#  New
-#
 
 import os
 import sys

@@ -24,15 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: gtiff_write.py,v $
-#  Revision 1.2  2005/05/22 20:51:23  fwarmerdam
-#  only do some of the tests once
-#
-#  Revision 1.1  2003/04/02 10:41:00  dron
-#  New.
-#
-#
 
 import os
 import sys

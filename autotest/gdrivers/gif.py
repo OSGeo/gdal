@@ -27,24 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: gif.py,v $
-#  Revision 1.5  2006/11/29 18:35:55  fwarmerdam
-#  Fixed up cleanup function.
-#
-#  Revision 1.4  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.3  2005/10/13 01:37:47  fwarmerdam
-#  added /vsimem/ test
-#
-#  Revision 1.2  2005/08/05 17:48:20  fwarmerdam
-#  fixed gif background check
-#
-#  Revision 1.1  2004/02/10 07:56:32  warmerda
-#  New
-#
-#
 
 import os
 import sys

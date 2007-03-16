@@ -27,20 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: ehdr.py,v $
-#  Revision 1.4  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.3  2006/04/28 03:24:04  fwarmerdam
-#  SetColorEntry() takes a tuples, but not lists in "next gen" implementation.
-#
-#  Revision 1.2  2006/01/27 19:10:21  fwarmerdam
-#  added tests for nodata and colortable preservation
-#
-#  Revision 1.1  2005/12/21 05:47:26  fwarmerdam
-#  New
-#
 
 import os
 import sys

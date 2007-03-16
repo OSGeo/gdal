@@ -27,16 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: tiff_ovr.py,v $
-#  Revision 1.2  2006/10/27 04:31:51  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.1  2004/11/11 05:51:57  fwarmerdam
-#  New
-#
-#
-#
 
 import os
 import sys
