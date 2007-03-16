@@ -92,6 +92,88 @@ class VSIWin32Handle : public VSIVirtualHandle
 };
 
 /************************************************************************/
+/*                      ErrnoFromGetLastError()                         */
+/*                                                                      */
+/* Private function translating Windows API error codes to POSIX errno. */
+/*                                                                      */
+/* TODO: If the function is going to be public CPL function, then       */
+/* replace the switch with array of (Win32 code, errno code) tuples and */
+/* complement it with missing codes.                                    */ 
+/************************************************************************/
+
+static int ErrnoFromGetLastError()
+{
+    int err = 0;
+    DWORD dwError = GetLastError();
+    
+    switch( dwError )
+    {
+    case NO_ERROR:
+        err = 0;
+        break;
+    case ERROR_FILE_NOT_FOUND:      /* Cannot find the file specified. */
+    case ERROR_PATH_NOT_FOUND:      /* Cannot find the path specified. */
+    case ERROR_INVALID_DRIVE:       /* Cannot find the drive specified. */
+    case ERROR_NO_MORE_FILES:       /* There are no more files. */
+    case ERROR_BAD_PATHNAME:        /* The specified path is invalid. */
+    case ERROR_BAD_NETPATH:         /* The network path was not found. */
+    case ERROR_FILENAME_EXCED_RANGE:/* The filename or extension is too long. */
+        err = ENOENT;
+        break;
+    case ERROR_TOO_MANY_OPEN_FILES: /* The system cannot open the file. */
+        err = EMFILE;
+        break;
+    case ERROR_ACCESS_DENIED:       /* Access denied. */
+    case ERROR_CURRENT_DIRECTORY:   /* The directory cannot be removed. */
+    case ERROR_WRITE_PROTECT:       /* The media is write protected. */
+    case ERROR_LOCK_VIOLATION:      /* Another process has locked a portion of the file. */
+    case ERROR_WRONG_DISK:          /* The wrong diskette is in the drive. */
+    case ERROR_SHARING_BUFFER_EXCEEDED: /* Too many files opened for sharing. */
+    case ERROR_DRIVE_LOCKED:        /* The disk is in use or locked by another process. */
+    case ERROR_LOCK_FAILED:         /* Unable to lock a region of a file. */
+    case ERROR_SEEK_ON_DEVICE:      /* The file pointer cannot be set on the specified device or file. */
+        err = EACCES;
+        break;
+    case ERROR_INVALID_HANDLE:      /* The handle is invalid. */
+    case ERROR_INVALID_TARGET_HANDLE: /* The target internal file identifier is incorrect. */
+    case ERROR_DIRECT_ACCESS_HANDLE:  /* Operation other than raw disk I/O not permitted. */
+        err = EBADF;
+        break;
+    case ERROR_ARENA_TRASHED:       /* The storage control blocks were destroyed. */
+    case ERROR_NOT_ENOUGH_MEMORY:   /* Not enough storage is available. */
+    case ERROR_INVALID_BLOCK:       /* The storage control block address is invalid. */
+    case ERROR_NOT_ENOUGH_QUOTA:    /* Not enough quota is available to process this command. */
+        err = ENOMEM;
+        break;
+    case ERROR_BAD_ENVIRONMENT:     /* The environment is incorrect. */
+        err = E2BIG;
+        break;
+    case ERROR_INVALID_ACCESS:      /* The access code is invalid. */
+    case ERROR_INVALID_DATA:        /* The data is invalid. */
+        err = EINVAL;
+        break;
+    case ERROR_NOT_SAME_DEVICE:     /* The system cannot move the file to a different disk drive. */
+        err = EXDEV;
+        break;
+    case ERROR_DIR_NOT_EMPTY:       /* The directory is not empty. */
+        err = ENOTEMPTY;
+        break;
+    case ERROR_FILE_EXISTS:         /* The file exists. */
+    case ERROR_ALREADY_EXISTS:      /* Cannot create a file when that file already exists. */
+        err = EEXIST;
+        break;
+    case ERROR_DISK_FULL:           /* There is not enough space on the disk. */
+        err = ENOSPC;
+        break;
+    default:
+        err = 0;
+    }
+    CPLAssert( 0 <= err );
+
+    return err;
+}
+
+/************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
 
