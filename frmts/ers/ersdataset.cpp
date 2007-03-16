@@ -70,11 +70,6 @@ class ERSDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-    static GDALDataset *CreateCopy( const char * pszFilename, 
-                                    GDALDataset * poSrcDS, 
-                                    int bStrict, char ** papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void * pProgressData );
 #endif
 };
 
@@ -203,6 +198,18 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes > 15
+        && EQUALN((const char *) poOpenInfo->pabyHeader,"Algorithm Begin",15) )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "%s appears to be an algorithm ERS file, which is not currently supported.", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We assume the user selects the .ers file.                       */
+/* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 15 
         || !EQUALN((const char *) poOpenInfo->pabyHeader,"DatasetHeader ",14) )
         return NULL;
@@ -237,6 +244,12 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         || poHeader->Find( "RasterInfo.NrOfCellsPerLine" ) == NULL 
         || poHeader->Find( "RasterInfo.NrOfBands" ) == NULL )
     {
+        if( poHeader->FindNode( "Algorithm" ) != NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "%s appears to be an algorithm ERS file, which is not currently supported.", 
+                      poOpenInfo->pszFilename );
+        }
         delete poHeader;
         return NULL;
     }
@@ -474,9 +487,70 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poHeader->Find( "RasterInfo.NullCellValue", NULL ) )
     {
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
             poDS->GetRasterBand(iBand)->SetNoDataValue(
                 CPLAtofM(poHeader->Find( "RasterInfo.NullCellValue" )) );
+        
+        CPLPopErrorHandler();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an "All" region?                                     */
+/* -------------------------------------------------------------------- */
+    ERSHdrNode *poAll = NULL;
+
+    for( iChild = 0; 
+         poRI != NULL && iChild < poRI->nItemCount; 
+         iChild++ )
+    {
+        if( poRI->papoItemChild[iChild] != NULL
+            && EQUAL(poRI->papszItemName[iChild],"RegionInfo") )
+        {
+            if( EQUAL(poRI->papoItemChild[iChild]->Find("RegionName",""), 
+                      "All") )
+                poAll = poRI->papoItemChild[iChild];
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have statistics?                                          */
+/* -------------------------------------------------------------------- */
+    if( poAll && poAll->FindNode( "Stats" ) )
+    {
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+
+        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+        {
+            const char *pszValue = 
+                poAll->FindElem( "Stats.MinimumValue", iBand-1 );
+
+            if( pszValue )
+                poDS->GetRasterBand(iBand)->SetMetadataItem(
+                    "STATISTICS_MINIMUM", pszValue );
+
+            pszValue = poAll->FindElem( "Stats.MaximumValue", iBand-1 );
+
+            if( pszValue )
+                poDS->GetRasterBand(iBand)->SetMetadataItem(
+                    "STATISTICS_MAXIMUM", pszValue );
+
+            pszValue = poAll->FindElem( "Stats.MeanValue", iBand-1 );
+
+            if( pszValue )
+                poDS->GetRasterBand(iBand)->SetMetadataItem(
+                    "STATISTICS_MEAN", pszValue );
+
+            pszValue = poAll->FindElem( "Stats.MedianValue", iBand-1 );
+
+            if( pszValue )
+                poDS->GetRasterBand(iBand)->SetMetadataItem(
+                    "STATISTICS_MEDIAN", pszValue );
+        }
+        
+        CPLPopErrorHandler();
+        
     }
 
 /* -------------------------------------------------------------------- */
@@ -491,6 +565,19 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     
     return( poDS );
 }
+
+#ifdef notdef
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+GDALDataset *ERSDataset::Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType, char ** papszOptions )
+
+{
+    
+}
+#endif
 
 /************************************************************************/
 /*                         GDALRegister_ERS()                           */
@@ -518,6 +605,9 @@ void GDALRegister_ERS()
 "</CreationOptionList>" );
 
         poDriver->pfnOpen = ERSDataset::Open;
+#ifdef notdef
+        poDriver->pfnCreate = ERSDataset::Create;
+#endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
