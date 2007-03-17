@@ -246,6 +246,7 @@ class CPL_DLL OGRSpatialReference
                               int nCode );
 
     OGRErr      AutoIdentifyEPSG();
+    int         GetEPSGGeogCS();
 
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
     const char *GetAuthorityName( const char * pszTargetKey ) const;
