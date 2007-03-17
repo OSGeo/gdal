@@ -303,13 +303,15 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     FILE        *fp = NULL;
 
     fp = VSIFOpen( pszPrjFile, "r" );
+
+#ifndef WIN32
     if( NULL == fp )
     {
-        // Try upper-case extension
         pszPrjFile = CPLResetExtension( pszNewName, "PRJ" );
+        fp = VSIFOpen( pszPrjFile, "r" );
     }
+#endif
 
-    fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
     {
         char    **papszLines;
