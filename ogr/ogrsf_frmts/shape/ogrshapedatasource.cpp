@@ -300,7 +300,14 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRSpatialReference *poSRS = NULL;
     const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
-    FILE        *fp;
+    FILE        *fp = NULL;
+
+    fp = VSIFOpen( pszPrjFile, "r" );
+    if( NULL == fp )
+    {
+        // Try upper-case extension
+        pszPrjFile = CPLResetExtension( pszNewName, "PRJ" );
+    }
 
     fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
