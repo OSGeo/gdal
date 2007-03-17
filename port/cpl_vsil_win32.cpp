@@ -165,6 +165,9 @@ static int ErrnoFromGetLastError()
     case ERROR_DISK_FULL:           /* There is not enough space on the disk. */
         err = ENOSPC;
         break;
+    case ERROR_HANDLE_EOF:          /* Reached the end of the file. */
+        err = 0; /* There is no errno quivalent, in the errno.h */
+        break;
     default:
         err = 0;
     }
@@ -277,7 +280,10 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
     size_t      nResult;
 
     if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, NULL ) )
+    {
         nResult = 0;
+        errno = ErrnoFromGetLastError();
+    }
     else if( nSize == 0 )
         nResult = 0;
     else
@@ -298,7 +304,10 @@ size_t VSIWin32Handle::Write( const void *pBuffer, size_t nSize, size_t nCount)
 
     if( !WriteFile(hFile, (void *)pBuffer,
                    (DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
+    {
         nResult = 0;
+        errno = ErrnoFromGetLastError();
+    }
     else if( nSize == 0)
         nResult = 0;
     else
