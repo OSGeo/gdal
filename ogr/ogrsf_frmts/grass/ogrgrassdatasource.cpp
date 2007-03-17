@@ -65,8 +65,6 @@ OGRGRASSDataSource::OGRGRASSDataSource()
 /************************************************************************/
 OGRGRASSDataSource::~OGRGRASSDataSource()
 {
-    CPLDebug ( "GRASS", "OGRGRASSDataSource::~OGRGRASSDataSource()" );
-
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     
@@ -86,8 +84,6 @@ typedef int (*GrassErrorHandler)(char *, int);
 int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
                               int bTestOpen, int bSingleNewFileIn )
 {
-    CPLDebug ( "GRASS", "OGRGRASSDataSource::Open" );
-
     VSIStatBuf  stat;
     
     CPLAssert( nLayers == 0 );
