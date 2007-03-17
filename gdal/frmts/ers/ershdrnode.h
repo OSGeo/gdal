@@ -5,6 +5,8 @@ class ERSHdrNode
 {
     CPLString osTempReturn;
 
+    void      MakeSpace();
+
 public:
     int    nItemMax;
     int    nItemCount;
@@ -22,6 +24,8 @@ public:
     const char *FindElem( const char *pszPath, int iElem, 
                           const char *pszDefault = NULL );
     ERSHdrNode *FindNode( const char *pszPath );
+
+    void   Set( const char *pszPath, const char *pszValue );
 
 private:
     int    ReadLine( FILE *, CPLString & );
