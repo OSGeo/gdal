@@ -60,17 +60,16 @@ class ERSDataset : public RawDataset
     		ERSDataset();
 	       ~ERSDataset();
     
+    virtual void FlushCache(void);
     virtual CPLErr GetGeoTransform( double * padfTransform );
-//    virtual CPLErr SetGeoTransform( double *padfTransform );
+    virtual CPLErr SetGeoTransform( double *padfTransform );
     virtual const char *GetProjectionRef(void);
-//    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetProjection( const char * );
     
     static GDALDataset *Open( GDALOpenInfo * );
-#ifdef notdef
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-#endif
 };
 
 /************************************************************************/
@@ -107,7 +106,7 @@ ERSDataset::~ERSDataset()
 
 {
     FlushCache();
-    
+
     if( fpImage != NULL )
     {
         VSIFCloseL( fpImage );
@@ -128,6 +127,35 @@ ERSDataset::~ERSDataset()
     if( poHeader != NULL )
         delete poHeader;
 }
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void ERSDataset::FlushCache()
+
+{
+    if( bHDRDirty )
+    {
+        FILE * fpERS = VSIFOpenL( GetDescription(), "w" );
+        if( fpERS == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to rewrite %s header.",
+                      GetDescription() );
+        }
+        else
+        {
+            VSIFPrintfL( fpERS, "DatasetHeader Begin\n" );
+            poHeader->WriteSelf( fpERS, 1 );
+            VSIFPrintfL( fpERS, "DatasetHeader End\n" );
+            VSIFCloseL( fpERS );
+        }
+    }
+
+    RawDataset::FlushCache();
+}
+
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -140,6 +168,43 @@ const char *ERSDataset::GetProjectionRef()
 
     return GDALPamDataset::GetProjectionRef();
 }
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr ERSDataset::SetProjection( const char *pszSRS )
+
+{
+    if( pszProjection && EQUAL(pszSRS,pszProjection) )
+        return CE_None;
+
+    if( pszSRS == NULL )
+        pszSRS = "";
+
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup(pszSRS);
+
+    OGRSpatialReference oSRS( pszSRS );
+    char szERSProj[32], szERSDatum[32], szERSUnits[32];
+
+    oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
+    
+    bHDRDirty = TRUE;
+    poHeader->Set( "CoordinateSpace.Datum", 
+                   CPLString().Printf( "\"%s\"", szERSDatum ) );
+    poHeader->Set( "CoordinateSpace.Projection", 
+                   CPLString().Printf( "\"%s\"", szERSProj ) );
+    poHeader->Set( "CoordinateSpace.CoordinateType", 
+                   CPLString().Printf( "EN" ) );
+    poHeader->Set( "CoordinateSpace.Units", 
+                   CPLString().Printf( "\"%s\"", szERSUnits ) );
+    poHeader->Set( "CoordinateSpace.Rotation", 
+                   "0:0:0.0" );
+    
+    return CE_None;
+}
+
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -156,6 +221,40 @@ CPLErr ERSDataset::GetGeoTransform( double * padfTransform )
     {
         return GDALPamDataset::GetGeoTransform( padfTransform );
     }
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr ERSDataset::SetGeoTransform( double *padfTransform )
+
+{
+    if( memcmp( padfTransform, adfGeoTransform, sizeof(double)*6 ) == 0 )
+        return CE_None;
+
+    if( adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Rotated and skewed geotransforms not currently supported for ERS driver." );
+        return CE_Failure;
+    }
+
+    bGotTransform = TRUE;
+    memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
+
+    bHDRDirty = TRUE;
+
+    poHeader->Set( "RasterInfo.CellInfo.Xdimension", 
+                   CPLString().Printf( "%.15g", fabs(adfGeoTransform[1]) ) );
+    poHeader->Set( "RasterInfo.CellInfo.Ydimension", 
+                   CPLString().Printf( "%.15g", fabs(adfGeoTransform[5]) ) );
+    poHeader->Set( "RasterInfo.RegistrationCoord.Eastings", 
+                   CPLString().Printf( "%.15g", adfGeoTransform[0] ) );
+    poHeader->Set( "RasterInfo.RegistrationCoord.Northings", 
+                   CPLString().Printf( "%.15g", adfGeoTransform[3] ) );
+    
+    return CE_None;
 }
 
 /************************************************************************/
@@ -566,18 +665,133 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
-#ifdef notdef
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
+
 GDALDataset *ERSDataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszOptions )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Verify settings.                                                */
+/* -------------------------------------------------------------------- */
+    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16
+        && eType != GDT_Float32 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The ERS driver does not supporting creating files of types %s.", 
+                  GDALGetDataTypeName( eType ) );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the name we want to use for the .ers and binary        */
+/*      data files.                                                     */
+/* -------------------------------------------------------------------- */
+    CPLString osBinFile, osErsFile;
+
+    if( EQUAL(CPLGetExtension( pszFilename ), "ers") )
+    {
+        osErsFile = pszFilename;
+        osBinFile = osErsFile.substr(0,osErsFile.length()-4);
+    }
+    else
+    {
+        osBinFile = pszFilename;
+        osErsFile = osBinFile + ".ers";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out some values we will write.                             */
+/* -------------------------------------------------------------------- */
+    const char *pszCellType = "Unsigned8BitInteger";
+
+    if( eType == GDT_Byte )
+        pszCellType = "Unsigned8BitInteger";
+    else if( eType == GDT_Int16 )
+        pszCellType = "Signed16BitInteger";
+    else if( eType == GDT_UInt16 )
+        pszCellType = "Unsigned16BitInteger";
+    else if( eType == GDT_Float32 )
+        pszCellType = "IEEE4ByteReal";
+    else
+    {
+        CPLAssert( FALSE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write binary file.                                              */
+/* -------------------------------------------------------------------- */
+    GUIntBig nSize;
+    GByte byZero = 0;
+
+    FILE *fpBin = VSIFOpenL( osBinFile, "w" );
+
+    if( fpBin == NULL )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to create %s:\n%s", 
+                  osBinFile.c_str(), VSIStrerror( errno ) );
+        return NULL;
+    }
+
+    nSize = nXSize * (GUIntBig) nYSize 
+        * nBands * (GDALGetDataTypeSize(eType) / 8);
+    if( VSIFSeekL( fpBin, nSize, SEEK_SET ) != 0
+        || VSIFWriteL( &byZero, 1, 1, fpBin ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to write %s:\n%s", 
+                  osBinFile.c_str(), VSIStrerror( errno ) );
+        return NULL;
+    }
+    VSIFCloseL( fpBin );
+
+
+/* -------------------------------------------------------------------- */
+/*      Try writing header file.                                        */
+/* -------------------------------------------------------------------- */
+    FILE *fpERS = VSIFOpenL( osErsFile, "w" );
     
+    if( fpERS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to create %s:\n%s", 
+                  osErsFile.c_str(), VSIStrerror( errno ) );
+        return NULL;
+    }
+
+    VSIFPrintfL( fpERS, "DatasetHeader Begin\n" );
+    VSIFPrintfL( fpERS, "\tVersion\t\t = \"6.0\"\n" );
+    VSIFPrintfL( fpERS, "\tName\t\t= \"%s\"\n", CPLGetFilename(osErsFile) );
+    VSIFPrintfL( fpERS, "\tLastUpdated\t= %s", 
+                 VSICTime( VSITime( NULL ) ) );
+    VSIFPrintfL( fpERS, "\tDataSetType\t= ERStorage\n" );
+    VSIFPrintfL( fpERS, "\tDataType\t= Raster\n" );
+    VSIFPrintfL( fpERS, "\tByteOrder\t= LSBFirst\n" );
+    VSIFPrintfL( fpERS, "\tRasterInfo Begin\n" );
+    VSIFPrintfL( fpERS, "\t\tCellType\t= %s\n", pszCellType );
+    VSIFPrintfL( fpERS, "\t\tNrOfLines\t= %d\n", nYSize );
+    VSIFPrintfL( fpERS, "\t\tNrOfCellsPerLine\t= %d\n", nXSize );
+    VSIFPrintfL( fpERS, "\t\tNrOfBands\t= %d\n", nBands );
+    VSIFPrintfL( fpERS, "\tRasterInfo End\n" );
+    if( VSIFPrintfL( fpERS, "DatasetHeader End\n" ) < 17 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to write %s:\n%s", 
+                  osErsFile.c_str(), VSIStrerror( errno ) );
+        return NULL;
+    }
+
+    VSIFCloseL( fpERS );
+
+/* -------------------------------------------------------------------- */
+/*      Reopen.                                                         */
+/* -------------------------------------------------------------------- */
+    return (GDALDataset *) GDALOpen( osErsFile, GA_Update );
 }
-#endif
 
 /************************************************************************/
 /*                         GDALRegister_ERS()                           */
@@ -605,9 +819,7 @@ void GDALRegister_ERS()
 "</CreationOptionList>" );
 
         poDriver->pfnOpen = ERSDataset::Open;
-#ifdef notdef
         poDriver->pfnCreate = ERSDataset::Create;
-#endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

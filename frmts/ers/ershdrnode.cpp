@@ -72,6 +72,28 @@ ERSHdrNode::~ERSHdrNode()
 }
 
 /************************************************************************/
+/*                             MakeSpace()                              */
+/*                                                                      */
+/*      Ensure we have room for at least one more entry in our item     */
+/*      lists.                                                          */
+/************************************************************************/
+
+void ERSHdrNode::MakeSpace()
+
+{
+    if( nItemCount == nItemMax )
+    {
+        nItemMax = (int) (nItemMax * 1.3) + 10;
+        papszItemName = (char **) 
+            CPLRealloc(papszItemName,sizeof(char *) * nItemMax);
+        papszItemValue = (char **) 
+            CPLRealloc(papszItemValue,sizeof(char *) * nItemMax);
+        papoItemChild = (ERSHdrNode **) 
+            CPLRealloc(papoItemChild,sizeof(void *) * nItemMax);
+    }
+}
+
+/************************************************************************/
 /*                              ReadLine()                              */
 /*                                                                      */
 /*      Read one virtual line from the input source.  Multiple lines    */
@@ -140,20 +162,6 @@ int ERSHdrNode::ParseChildren( FILE * fp )
         CPLString osLine;
 
 /* -------------------------------------------------------------------- */
-/*      Make sure we have room for another item in our lists.           */
-/* -------------------------------------------------------------------- */
-        if( nItemCount == nItemMax )
-        {
-            nItemMax = (int) (nItemMax * 1.3) + 10;
-            papszItemName = (char **) 
-                CPLRealloc(papszItemName,sizeof(char *) * nItemMax);
-            papszItemValue = (char **) 
-                CPLRealloc(papszItemValue,sizeof(char *) * nItemMax);
-            papoItemChild = (ERSHdrNode **) 
-                CPLRealloc(papoItemChild,sizeof(void *) * nItemMax);
-        }
-
-/* -------------------------------------------------------------------- */
 /*      Read the next line (or multi-line for bracketed value).         */
 /* -------------------------------------------------------------------- */
         if( !ReadLine( fp, osLine ) )
@@ -169,7 +177,8 @@ int ERSHdrNode::ParseChildren( FILE * fp )
 
             CPLString osValue = osLine.c_str() + iOff + 1;
             osValue.Trim();
-            
+
+            MakeSpace();
             papszItemName[nItemCount] = CPLStrdup(osName);
             papszItemValue[nItemCount] = CPLStrdup(osValue);
             papoItemChild[nItemCount] = NULL;
@@ -185,6 +194,7 @@ int ERSHdrNode::ParseChildren( FILE * fp )
             CPLString osName = osLine.substr(0,iOff);
             osName.Trim();
             
+            MakeSpace();
             papszItemName[nItemCount] = CPLStrdup(osName);
             papszItemValue[nItemCount] = NULL;
             papoItemChild[nItemCount] = new ERSHdrNode();
@@ -215,6 +225,45 @@ int ERSHdrNode::ParseChildren( FILE * fp )
             return FALSE;
         }
     }
+}
+
+/************************************************************************/
+/*                             WriteSelf()                              */
+/*                                                                      */
+/*      Recursively write self and children to file.                    */
+/************************************************************************/
+
+int ERSHdrNode::WriteSelf( FILE * fp, int nIndent )
+
+{
+    CPLString oIndent;
+    int i;
+
+    oIndent.assign( nIndent, '\t' );
+
+    for( i = 0; i < nItemCount; i++ )
+    {
+        if( papszItemValue[i] != NULL )
+        {
+            if( VSIFPrintfL( fp, "%s%s\t= %s\n", 
+                             oIndent.c_str(), 
+                             papszItemName[i], 
+                             papszItemValue[i] ) < 1 )
+                return FALSE;
+        }
+        else
+        {
+            VSIFPrintfL( fp, "%s%s Begin\n", 
+                         oIndent.c_str(), papszItemName[i] );
+            if( !papoItemChild[i]->WriteSelf( fp, nIndent+1 ) )
+                return FALSE;
+            if( VSIFPrintfL( fp, "%s%s End\n", 
+                             oIndent.c_str(), papszItemName[i] ) < 1 )
+                return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -357,4 +406,66 @@ ERSHdrNode *ERSHdrNode::FindNode( const char *pszPath )
     }
 
     return NULL;
+}
+
+/************************************************************************/
+/*                                Set()                                 */
+/*                                                                      */
+/*      Set a value item.                                               */
+/************************************************************************/
+
+void ERSHdrNode::Set( const char *pszPath, const char *pszValue )
+
+{
+    CPLString  osPath = pszPath;
+    int iDot;
+    
+    iDot = osPath.find_first_of('.');
+
+/* -------------------------------------------------------------------- */
+/*      We have an intermediate node, find or create it and             */
+/*      recurse.                                                        */
+/* -------------------------------------------------------------------- */
+    if( iDot != -1 )
+    {
+        CPLString osPathFirst = osPath.substr(0,iDot);
+        CPLString osPathRest = osPath.substr(iDot+1);
+        ERSHdrNode *poFirst = FindNode( osPathFirst );
+        
+        if( poFirst == NULL )
+        {
+            poFirst = new ERSHdrNode();
+            
+            MakeSpace();
+            papszItemName[nItemCount] = CPLStrdup(osPathFirst);
+            papszItemValue[nItemCount] = NULL;
+            papoItemChild[nItemCount] = poFirst;
+            nItemCount++;
+        }
+
+        poFirst->Set( osPathRest, pszValue );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      This is the final item name.  Find or create it.                */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; i < nItemCount; i++ )
+    {
+        if( EQUAL(osPath,papszItemName[i]) 
+            && papszItemValue[i] != NULL )
+        {
+            CPLFree( papszItemValue[i] );
+            papszItemValue[i] = CPLStrdup( pszValue );
+            return;
+        }
+    }
+
+    MakeSpace();
+    papszItemName[nItemCount] = CPLStrdup(osPath);
+    papszItemValue[nItemCount] = CPLStrdup(pszValue);
+    papoItemChild[nItemCount] = NULL;
+    nItemCount++;
 }
