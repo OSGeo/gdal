@@ -122,6 +122,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 {
     strcpy( pszProj, "RAW" );
     strcpy( pszDatum, "RAW" );
+    strcpy( pszUnits, "METERS" );
 
     if( !IsProjected() && !IsGeographic() )
         return TRUE;
@@ -154,7 +155,6 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /*      Is our GEOGCS name already defined in ecw_cs.dat?               */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRSWork;
-    const char *pszGEOGCS = GetAttrValue( "GEOGCS" );
     const char *pszWKTDatum = GetAttrValue( "DATUM" );
 
     if( pszWKTDatum != NULL 
@@ -168,24 +168,18 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszDatum,"RAW") )
     {
-        if( nEPSGCode == 4326 
-            || (strstr(pszGEOGCS,"WGS") && strstr(pszGEOGCS,"84") )
-            || (strstr(pszWKTDatum,"WGS") && strstr(pszWKTDatum,"84") ) )
+        nEPSGCode = GetEPSGGeogCS();
+
+        if( nEPSGCode == 4326 )
             strcpy( pszDatum, "WGS84" );
 
-        else if( nEPSGCode == 4322 
-            || (strstr(pszGEOGCS,"WGS") && strstr(pszGEOGCS,"72") )
-            || (strstr(pszWKTDatum,"WGS") && strstr(pszWKTDatum,"72") ) )
+        else if( nEPSGCode == 4322 )
             strcpy( pszDatum, "WGS72DOD" );
         
-        else if( nEPSGCode == 4267 
-            || (strstr(pszGEOGCS,"NAD") && strstr(pszGEOGCS,"27") )
-            || (strstr(pszWKTDatum,"NAD") && strstr(pszWKTDatum,"27") ) )
+        else if( nEPSGCode == 4267 )
             strcpy( pszDatum, "NAD27" );
         
-        else if( nEPSGCode == 4269 
-            || (strstr(pszGEOGCS,"NAD") && strstr(pszGEOGCS,"83") )
-            || (strstr(pszWKTDatum,"NAD") && strstr(pszWKTDatum,"83") ) )
+        else if( nEPSGCode == 4269 )
             strcpy( pszDatum, "NAD83" );
 
         else if( nEPSGCode == 4277 )
@@ -243,19 +237,21 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
             sprintf( pszProj, "NUTM%02d", nZone );
         else
             sprintf( pszProj, "SUTM%02d", nZone );
-        return OGRERR_NONE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Is our PROJCS name already defined in ecw_cs.dat?               */
 /* -------------------------------------------------------------------- */
-    const char *pszPROJCS = GetAttrValue( "PROJCS" );
-
-    if( pszWKTDatum != NULL 
-        && oSRSWork.importFromDict( pszPROJCS, "ecw_cs.wkt" ) == OGRERR_NONE 
-        && oSRSWork.IsProjected() )
+    else
     {
-        strcpy( pszProj, pszPROJCS );
+        const char *pszPROJCS = GetAttrValue( "PROJCS" );
+
+        if( pszWKTDatum != NULL 
+            && oSRSWork.importFromDict( pszPROJCS, "ecw_cs.wkt" ) == OGRERR_NONE 
+            && oSRSWork.IsProjected() )
+        {
+            strcpy( pszProj, pszPROJCS );
+        }
     }
 
 /* -------------------------------------------------------------------- */
