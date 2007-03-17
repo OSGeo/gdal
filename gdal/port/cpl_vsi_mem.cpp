@@ -350,7 +350,10 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
     std::map<CPLString,VSIMemFile*>::const_iterator iter;
 
     for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
+    {
+        iter->second->nRefCount--;
         delete iter->second;
+    }
 
     if( hMutex != NULL )
         CPLDestroyMutex( hMutex );
