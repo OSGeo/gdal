@@ -1,0 +1,37 @@
+DatasetHeader Begin
+  Version = "5.2"
+  DataSetType = ERStorage
+  DataType = Raster
+  ByteOrder = MSBFirst
+
+  CoordinateSpace Begin
+    Datum = "WGS84"
+    Projection = "GEODETIC"
+    CoordinateType = LL
+    Rotation = 0:0:0.0
+  CoordinateSpace End
+
+  RasterInfo Begin
+    CellType = Signed16BitInteger
+    NullCellValue = +9999
+    CellInfo Begin
+      Xdimension = 0.00833333
+      Ydimension = 0.00833333
+    CellInfo End
+    NrOfCellsPerLine = 12
+    NrOfLines = 10
+    RegistrationCellX = 1
+    RegistrationCellY = 1
+    NrOfBands = 1
+    BandId Begin
+      Value = "Topography"
+      Units = "meters"
+    BandId End
+    RegistrationCoord Begin
+      Latitude = -60:00:00
+      Longitude = -180:00:00
+    RegistrationCoord End
+    NrOfBands = 1
+  RasterInfo End
+DatasetHeader End
+
