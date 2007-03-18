@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 SUBDIRS-yes	:= generic shape ntf sdts tiger s57 mitab dgn \
-				gml kml avc rec mem vrt csv
+				gml kml avc rec mem vrt csv gmt
 SUBDIRS-$(HAVE_OGDI)	+= ogdi
 SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
