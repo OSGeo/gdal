@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_vsi_private.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -432,6 +433,37 @@ int VSIFEofL( FILE * fp )
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
     
     return poFileHandle->Eof();
+}
+
+/************************************************************************/
+/*                            VSIFPrintfL()                             */
+/************************************************************************/
+
+/**
+ * \brief Formatted write to file.
+ *
+ * Provides fprintf() style formatted output to a VSI*L file.  This formats
+ * an internal buffer which is written using VSIFWriteL(). 
+ *
+ * Analog of the POSIX fprintf() call.
+ *
+ * @param fp file handle opened with VSIFOpenL(). 
+ * @param pszFormat the printf style format string. 
+ * 
+ * @return the number of bytes written or -1 on an error.
+ */
+
+int VSIFPrintfL( FILE *fp, const char *pszFormat, ... )
+
+{
+    va_list args;
+    CPLString osResult;
+
+    va_start( args, pszFormat );
+    osResult.vPrintf( pszFormat, args );
+    va_end( args );
+
+    return VSIFWriteL( osResult.c_str(), 1, osResult.length(), fp );
 }
 
 /************************************************************************/
