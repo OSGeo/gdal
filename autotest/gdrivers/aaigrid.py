@@ -104,7 +104,32 @@ def aaigrid_5():
     # - case_sensitive.PRJ
 
     tst = gdaltest.GDALTest( 'aaigrid', 'case_sensitive.ASC', 1, 1123 )
-    return tst.testOpen()
+
+    prj = """PROJCS["unnamed",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
+        AXIS["Lat",NORTH],
+        AXIS["Long",EAST],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Albers_Conic_Equal_Area"],
+    PARAMETER["standard_parallel_1",61.66666666666666],
+    PARAMETER["standard_parallel_2",68],
+    PARAMETER["latitude_of_center",59],
+    PARAMETER["longitude_of_center",-132.5],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",500000],
+    UNIT["METERS",1]]
+    """
+
+    return tst.testOpen(check_prj = prj)
 
 ###############################################################################
 
