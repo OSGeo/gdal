@@ -544,11 +544,23 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
     pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
-    if( VSIStatL( pszPrjFilename, &sStatBuf ) == 0 )
+    int nRet = VSIStatL( pszPrjFilename, &sStatBuf );
+
+#ifndef WIN32
+    if( nRet != 0 )
+    {
+        pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
+        nRet = VSIStatL( pszPrjFilename, &sStatBuf );
+    }
+#endif
+
+    if( nRet == 0 )
     {
         OGRSpatialReference     oSRS;
 
         poDS->papszPrj = CSLLoad( pszPrjFilename );
+
+        CPLDebug( "AAIGrid", "Loaded SRS from %s", pszPrjFilename );
 
         if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
         {
