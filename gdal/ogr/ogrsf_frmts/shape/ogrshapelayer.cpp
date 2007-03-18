@@ -1009,7 +1009,7 @@ OGRErr OGRShapeLayer::Repack()
     VSIUnlink( CPLResetExtension( pszFullName, "dbf" ) );
     if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "dbf" ) ) != 0 )
     {
-        CPLDebug( "Shape", "Can not rename DBF file: %s", strerror( errno ) );
+        CPLDebug( "Shape", "Can not rename DBF file: %s", VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
     
@@ -1075,14 +1075,14 @@ OGRErr OGRShapeLayer::Repack()
 
         if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "shp" ) ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHP file: %s", strerror( errno ) );
+            CPLDebug( "Shape", "Can not rename SHP file: %s", VSIStrerror( errno ) );
             return OGRERR_FAILURE;
         }
     
         oTempFile = CPLResetExtension( oTempFile, "shx" );
         if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "shx" ) ) != 0 )
         {
-            CPLDebug( "Shape", "Can not rename SHX file: %s", strerror( errno ) );
+            CPLDebug( "Shape", "Can not rename SHX file: %s", VSIStrerror( errno ) );
             return OGRERR_FAILURE;
         }
     }
@@ -1091,9 +1091,9 @@ OGRErr OGRShapeLayer::Repack()
 /*      Reopen the shapefile                                            */
 /*                                                                      */
 /* We do not need to reimplement OGRShapeDataSource::OpenFile() here    */  
-/* with the fully featured error checking.
+/* with the fully featured error checking.                              */
 /* If all operations above succeeded, then all necessery files are      */
-/* in the right place and accessible.
+/* in the right place and accessible.                                   */
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL == hSHP );
     CPLAssert( NULL == hDBF && NULL == hNewDBF );
