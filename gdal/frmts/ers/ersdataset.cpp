@@ -376,12 +376,20 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                                            "Unsigned8BitInteger" );
     if( EQUAL(osCellType,"Unsigned8BitInteger") )
         eType = GDT_Byte;
+    else if( EQUAL(osCellType,"Signed8BitInteger") )
+        eType = GDT_Byte;
     else if( EQUAL(osCellType,"Unsigned16BitInteger") )
         eType = GDT_UInt16;
     else if( EQUAL(osCellType,"Signed16BitInteger") )
         eType = GDT_Int16;
+    else if( EQUAL(osCellType,"Unsigned32BitInteger") )
+        eType = GDT_UInt32;
+    else if( EQUAL(osCellType,"Signed32BitInteger") )
+        eType = GDT_Int32;
     else if( EQUAL(osCellType,"IEEE4ByteReal") )
         eType = GDT_Float32;
+    else if( EQUAL(osCellType,"IEEE8ByteReal") )
+        eType = GDT_Float64;
     else
     {
         CPLDebug( "ERS", "Unknown CellType '%s'", osCellType.c_str() );
@@ -678,7 +686,8 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 /*      Verify settings.                                                */
 /* -------------------------------------------------------------------- */
     if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16
-        && eType != GDT_Float32 )
+        && eType != GDT_Int32 && eType != GDT_UInt32
+        && eType != GDT_Float32 && eType != GDT_Float64 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The ERS driver does not supporting creating files of types %s.", 
@@ -714,8 +723,14 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
         pszCellType = "Signed16BitInteger";
     else if( eType == GDT_UInt16 )
         pszCellType = "Unsigned16BitInteger";
+    else if( eType == GDT_Int32 )
+        pszCellType = "Signed32BitInteger";
+    else if( eType == GDT_UInt32 )
+        pszCellType = "Unsigned32BitInteger";
     else if( eType == GDT_Float32 )
         pszCellType = "IEEE4ByteReal";
+    else if( eType == GDT_Float64 )
+        pszCellType = "IEEE8ByteReal";
     else
     {
         CPLAssert( FALSE );
@@ -812,7 +827,7 @@ void GDALRegister_ERS()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_ers.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Float32" );
+                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
