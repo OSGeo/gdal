@@ -94,11 +94,26 @@ def aaigrid_4():
                              5, 5, 5, 5 )
     return tst.testOpen()
 
+###############################################################################
+# Perform simple read test on mixed-case .PRJ filename
+
+def aaigrid_5():
+
+    # Mixed-case files pair used in the test:
+    # - case_sensitive.ASC
+    # - case_sensitive.PRJ
+
+    tst = gdaltest.GDALTest( 'aaigrid', 'case_sensitive.ASC', 1, 1123 )
+    return tst.testOpen()
+
+###############################################################################
+
 gdaltest_list = [
     aaigrid_1,
     aaigrid_2,
     aaigrid_3,
-    aaigrid_4 ]
+    aaigrid_4,
+    aaigrid_5 ]
   
 
 
