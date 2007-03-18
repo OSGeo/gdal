@@ -328,6 +328,7 @@ void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXFDWG();
 void CPL_DLL RegisterOGRSDE();
 void CPL_DLL RegisterOGRIDB();
+void CPL_DLL RegisterOGRGMT();
 
 CPL_C_END
 
