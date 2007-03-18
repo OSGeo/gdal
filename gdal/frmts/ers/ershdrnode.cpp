@@ -245,7 +245,7 @@ int ERSHdrNode::WriteSelf( FILE * fp, int nIndent )
     {
         if( papszItemValue[i] != NULL )
         {
-            if( VSIFPrintf( fp, "%s%s\t= %s\n", 
+            if( VSIFPrintfL( fp, "%s%s\t= %s\n", 
                              oIndent.c_str(), 
                              papszItemName[i], 
                              papszItemValue[i] ) < 1 )
@@ -253,11 +253,11 @@ int ERSHdrNode::WriteSelf( FILE * fp, int nIndent )
         }
         else
         {
-            VSIFPrintf( fp, "%s%s Begin\n", 
+            VSIFPrintfL( fp, "%s%s Begin\n", 
                          oIndent.c_str(), papszItemName[i] );
             if( !papoItemChild[i]->WriteSelf( fp, nIndent+1 ) )
                 return FALSE;
-            if( VSIFPrintf( fp, "%s%s End\n", 
+            if( VSIFPrintfL( fp, "%s%s End\n", 
                              oIndent.c_str(), papszItemName[i] ) < 1 )
                 return FALSE;
         }
