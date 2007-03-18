@@ -146,9 +146,9 @@ void ERSDataset::FlushCache()
         }
         else
         {
-            VSIFPrintfL( fpERS, "DatasetHeader Begin\n" );
+            VSIFPrintf( fpERS, "DatasetHeader Begin\n" );
             poHeader->WriteSelf( fpERS, 1 );
-            VSIFPrintfL( fpERS, "DatasetHeader End\n" );
+            VSIFPrintf( fpERS, "DatasetHeader End\n" );
             VSIFCloseL( fpERS );
         }
     }
@@ -778,21 +778,21 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    VSIFPrintfL( fpERS, "DatasetHeader Begin\n" );
-    VSIFPrintfL( fpERS, "\tVersion\t\t = \"6.0\"\n" );
-    VSIFPrintfL( fpERS, "\tName\t\t= \"%s\"\n", CPLGetFilename(osErsFile) );
-    VSIFPrintfL( fpERS, "\tLastUpdated\t= %s", 
+    VSIFPrintf( fpERS, "DatasetHeader Begin\n" );
+    VSIFPrintf( fpERS, "\tVersion\t\t = \"6.0\"\n" );
+    VSIFPrintf( fpERS, "\tName\t\t= \"%s\"\n", CPLGetFilename(osErsFile) );
+    VSIFPrintf( fpERS, "\tLastUpdated\t= %s", 
                  VSICTime( VSITime( NULL ) ) );
-    VSIFPrintfL( fpERS, "\tDataSetType\t= ERStorage\n" );
-    VSIFPrintfL( fpERS, "\tDataType\t= Raster\n" );
-    VSIFPrintfL( fpERS, "\tByteOrder\t= LSBFirst\n" );
-    VSIFPrintfL( fpERS, "\tRasterInfo Begin\n" );
-    VSIFPrintfL( fpERS, "\t\tCellType\t= %s\n", pszCellType );
-    VSIFPrintfL( fpERS, "\t\tNrOfLines\t= %d\n", nYSize );
-    VSIFPrintfL( fpERS, "\t\tNrOfCellsPerLine\t= %d\n", nXSize );
-    VSIFPrintfL( fpERS, "\t\tNrOfBands\t= %d\n", nBands );
-    VSIFPrintfL( fpERS, "\tRasterInfo End\n" );
-    if( VSIFPrintfL( fpERS, "DatasetHeader End\n" ) < 17 )
+    VSIFPrintf( fpERS, "\tDataSetType\t= ERStorage\n" );
+    VSIFPrintf( fpERS, "\tDataType\t= Raster\n" );
+    VSIFPrintf( fpERS, "\tByteOrder\t= LSBFirst\n" );
+    VSIFPrintf( fpERS, "\tRasterInfo Begin\n" );
+    VSIFPrintf( fpERS, "\t\tCellType\t= %s\n", pszCellType );
+    VSIFPrintf( fpERS, "\t\tNrOfLines\t= %d\n", nYSize );
+    VSIFPrintf( fpERS, "\t\tNrOfCellsPerLine\t= %d\n", nXSize );
+    VSIFPrintf( fpERS, "\t\tNrOfBands\t= %d\n", nBands );
+    VSIFPrintf( fpERS, "\tRasterInfo End\n" );
+    if( VSIFPrintf( fpERS, "DatasetHeader End\n" ) < 17 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to write %s:\n%s", 
