@@ -253,13 +253,14 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     osRequest.Printf( 
         "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s",
+        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
         CPLGetXMLValue( poODS->psService, "ServiceURL", "" ),
         CPLGetXMLValue( poODS->psService, "CoverageName", "" ),
         CPLGetXMLValue( poODS->psService, "PreferredFormat", "" ),
         dfMinX, dfMinY, dfMaxX, dfMaxY,
         nBlockXSize, nBlockYSize,
-        poODS->osCRS.c_str() ); // maxy
+        poODS->osCRS.c_str(),
+        CPLGetXMLValue( poODS->psService, "GetCoverageExtra", "" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
@@ -550,13 +551,20 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 
     osRequest.Printf( 
         "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s",
+        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
         CPLGetXMLValue( psService, "ServiceURL", "" ),
         CPLGetXMLValue( psService, "CoverageName", "" ),
         CPLGetXMLValue( psService, "PreferredFormat", "" ),
         dfMinX, dfMinY, dfMaxX, dfMaxY,
         nBufXSize, nBufYSize,
-        osCRS.c_str() ); 
+        osCRS.c_str(),
+        CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
+
+    if( CPLGetXMLValue( psService, "Resample", NULL ) )
+    {
+        osRequest += "&RESAMPLE=";
+        osRequest += CPLGetXMLValue( psService, "Resample", "" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
@@ -643,9 +651,10 @@ int WCSDataset::DescribeCoverage()
 /*      Fetch coverage description for this coverage.                   */
 /* -------------------------------------------------------------------- */
     osRequest.Printf( 
-        "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=DescribeCoverage&COVERAGE=%s", 
+        "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=DescribeCoverage&COVERAGE=%s%s", 
         CPLGetXMLValue( psService, "ServiceURL", "" ),
-        CPLGetXMLValue( psService, "CoverageName", "" ) );
+        CPLGetXMLValue( psService, "CoverageName", "" ),
+        CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
 
     CPLErrorReset();
     
@@ -960,7 +969,7 @@ int WCSDataset::EstablishRasterDetails()
 
     osRequest.Printf( 
         "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=2&HEIGHT=2&CRS=%s",
+        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=2&HEIGHT=2&CRS=%s%s",
         CPLGetXMLValue( psService, "ServiceURL", "" ),
         CPLGetXMLValue( psService, "CoverageName", "" ),
         CPLGetXMLValue( psService, "PreferredFormat", "" ),
@@ -968,7 +977,8 @@ int WCSDataset::EstablishRasterDetails()
         adfGeoTransform[3] + 1.5 * adfGeoTransform[5], // miny
         adfGeoTransform[0] + 1.5 * adfGeoTransform[1], // maxx
         adfGeoTransform[3] + 0.5 * adfGeoTransform[5],
-        osCRS.c_str() ); // maxy
+        osCRS.c_str(),
+        CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
@@ -1025,7 +1035,7 @@ void WCSDataset::FlushMemoryResult()
 {
     if( strlen(osResultFilename) > 0 )
     {
-        VSIUnlink( osResultFilename );
+//        VSIUnlink( osResultFilename );
         osResultFilename = "";
     }
 }
