@@ -205,6 +205,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef USE_CPL
+#include <cpl_vsi.h>
+#endif
 
 SHP_CVSID("$Id: shpopen.c,v 1.51 2006/09/04 15:24:01 fwarmerdam Exp $")
 
@@ -343,7 +346,7 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failure writing .shp header (%s)", strerror( errno ) );
+                  "Failure writing .shp header (%s)", VSIStrerror( errno ) );
 #endif
         return;
     }
@@ -360,7 +363,7 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failure writing .shx header (%s)", strerror( errno ) );
+                  "Failure writing .shx header (%s)", VSIStrerror( errno ) );
 #endif
         return;
     }
@@ -383,7 +386,7 @@ void SHPWriteHeader( SHPHandle psSHP )
     {
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failure writing .shx contents (%s)", strerror( errno ) );
+                  "Failure writing .shx contents (%s)", VSIStrerror( errno ) );
 #endif
     }
 
