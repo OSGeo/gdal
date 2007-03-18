@@ -85,6 +85,9 @@ void OGRRegisterAll()
     RegisterOGRILI1();
     RegisterOGRILI2();
 #endif
+#ifdef GMT_ENABLED
+    RegisterOGRGMT();
+#endif
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
