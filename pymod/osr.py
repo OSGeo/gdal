@@ -1,11 +1,11 @@
-#******************************************************************************
+###############################################################################
 #  $Id$
 # 
 #  Project:  OSR (OGRSpatialReference/CoordinateTransform) Python Interface
 #  Purpose:  OSR Shadow Class Implementations
 #  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
-#******************************************************************************
+###############################################################################
 #  Copyright (c) 2000, Frank Warmerdam <warmerdam@pobox.com>
 # 
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,118 +25,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
-# 
-# $Log$
-# Revision 1.50  2006/10/15 20:58:51  fwarmerdam
-# Added IsLocal() method.
-#
-# Revision 1.49  2005/06/10 21:51:02  fwarmerdam
-# fixed up osr.Clone() support
-#
-# Revision 1.48  2005/05/16 19:34:12  dron
-# Added GetSemiMajor(), GetSemiMinor() and GetInvFlattening() methods.
-#
-# Revision 1.47  2005/05/06 17:34:30  fwarmerdam
-# added GetUserInputAsWKT
-#
-# Revision 1.46  2005/04/22 08:09:26  dron
-# Use empty tuple instead of None as default parameter for proj_parms
-# in ImportFromUSGS().
-#
-# Revision 1.45  2005/02/15 02:32:11  fwarmerdam
-# added osr.SpatialReference init from wkt
-#
-# Revision 1.44  2005/01/05 21:21:38  fwarmerdam
-# added goode homolosine
-#
-# Revision 1.43  2004/11/11 18:29:44  fwarmerdam
-# Added Bonne.
-#
-# Revision 1.42  2004/05/15 17:57:40  warmerda
-# Fixed SRS_UL_FOOT_CONV.
-#
-# Revision 1.41  2004/05/12 19:27:31  dron
-# Added well known datum and units names.
-#
-# Revision 1.40  2004/05/10 17:09:15  warmerda
-# added autoidentifyepsg
-#
-# Revision 1.39  2004/05/06 19:28:04  dron
-# Added SetProjection() method.
-#
-# Revision 1.38  2004/05/06 14:11:54  dron
-# Added projection names.
-#
-# Revision 1.37  2004/02/25 08:13:40  dron
-# Added wrapper for OSRExportToUSGS() function.
-#
-# Revision 1.36  2004/02/22 10:25:12  dron
-# Added wrapper for OSRImportFromUSGS().
-#
-# Revision 1.35  2004/02/05 17:08:57  dron
-# Added wrapper for OSRSetHOM2PNO().
-#
-# Revision 1.34  2004/01/31 09:54:28  dron
-# Fixed projection parameters number mismatch in PCI import/export functions.
-#
-# Revision 1.33  2004/01/30 09:58:32  dron
-# Wrapper for OSRExportToPCI() function.
-#
-# Revision 1.32  2004/01/29 15:22:30  dron
-# Added wrapper for OSRImportFromPCI().
-#
-# Revision 1.31  2003/11/03 16:55:18  dron
-# Added missed 'scale' parameter to SetPS().
-#
-# Revision 1.30  2003/06/21 23:27:13  warmerda
-# added TOWGS84 and PROJ.4 import
-#
-# Revision 1.29  2003/06/20 18:28:15  warmerda
-# added all the projection specific Set methods
-#
-# Revision 1.28  2003/06/10 09:26:55  dron
-# Added SetAngularUnits() and GetAngularUnits().
-#
-# Revision 1.27  2003/05/30 21:47:37  warmerda
-# added OSRSetStatePlaneWithUnits
-#
-# Revision 1.26  2003/05/30 15:38:59  warmerda
-# updated to use SetStatePlaneWithUnits
-#
-# Revision 1.25  2003/03/28 17:47:41  warmerda
-# added lots of stuff for accessing projection parameters
-#
-# Revision 1.24  2003/03/21 22:23:27  warmerda
-# added xml support
-#
-# Revision 1.23  2003/03/07 16:29:39  warmerda
-# NULL fixes
-#
-# Revision 1.22  2003/02/25 04:57:37  warmerda
-# added CopyGeogCSFrom()
-#
-# Revision 1.21  2003/02/20 04:14:04  warmerda
-# Updated email.
-#
-# Revision 1.20  2003/02/06 05:53:56  warmerda
-# Blow an exception when the CoordinateTransformation constructor fails.
-#
-# Revision 1.19  2003/02/06 05:49:28  warmerda
-# Translate 'NULL' into None for CoordinateTransformation class constructor.
-#
-# Revision 1.18  2003/02/06 04:50:57  warmerda
-# added the Fixup() method on OGRSpatialReference
-#
-# Revision 1.17  2003/01/24 19:45:17  warmerda
-# fixed handling of CloneGeogCS() failing
-#
-# Revision 1.16  2003/01/08 18:17:33  warmerda
-# added FixupOrdering() and StripCTParms
-#
-# Revision 1.15  2002/11/30 20:53:51  warmerda
-# added SetFromUserInput
-#
+###############################################################################
 
 import _gdal
 import gdal
