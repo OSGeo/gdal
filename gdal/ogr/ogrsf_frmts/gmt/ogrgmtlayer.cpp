@@ -60,7 +60,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename )
     CPLString osFieldNames, osFieldTypes, osGeometryType, osRegion;
     CPLString osWKT, osProj4, osEPSG;
 
-    while( ReadLine() && osLine[0] == '#' )
+    while( ReadLine() && osLine.c_str()[0] == '#' )
     {
         int iKey;
 
@@ -230,7 +230,7 @@ int OGRGmtLayer::ReadLine()
 /* -------------------------------------------------------------------- */
     size_t i;
 
-    if( osLine[0] != '#' || osLine.find_first_of('@') == std::string::npos )
+    if( osLine.c_str()[0] != '#' || osLine.find_first_of('@') == std::string::npos )
         return TRUE;
 
     for( i = 0; i < osLine.length(); i++ )
@@ -303,7 +303,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         if( osLine.length() == 0 )
             break;
 
-        if( osLine[0] == '>' )
+        if( osLine.c_str()[0] == '>' )
         {
             if( poGeom != NULL )
                 break;
@@ -313,7 +313,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 bMultiVertex = TRUE;
             }
         }
-        else if( osLine[0] == '#' )
+        else if( osLine.c_str()[0] == '#' )
         {
             if( papszKeyedValues != NULL && papszKeyedValues[0][0] == 'D' )
                 osFieldData = papszKeyedValues[0] + 1;
