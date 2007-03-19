@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Common Portability Library
+ * Project:  Common Portability Library 
  * Purpose:  Simple implementation of POSIX VSI functions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
