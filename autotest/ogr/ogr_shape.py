@@ -34,6 +34,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 import ogr
+import osr
 import gdal
 
 ###############################################################################
@@ -582,7 +583,34 @@ def ogr_shape_17():
     shp_ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test reading data/poly.PRJ file with mixed-case file name
+
+def ogr_shape_18():
+
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_lyr = shp_ds.GetLayer(0)
+
+    srs_lyr = shp_lyr.GetSpatialRef()
+
+    if srs_lyr is None:
+        gdaltest.post_reason( 'Missing projection definition.' )
+        return 'fail'
+
+    # data/poly.shp has arbitraily assigned EPSG:27700
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 27700 )
+
+    if not srs_lyr.IsSame(srs):
+        print
+        print 'expected = ', srs.ExportToPrettyWkt()
+        print 'existing = ', srs_lyr.ExportToPrettyWkt()
+        gdaltest.post_reason( 'Projections differ' )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -617,6 +645,7 @@ gdaltest_list = [
     ogr_shape_15,
     ogr_shape_16,
     ogr_shape_17,
+    ogr_shape_18,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
