@@ -1,0 +1,28 @@
+<html>
+<head>
+<title>GMT ASCII Vectors (.gmt)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GMT ASCII Vectors (.gmt)</h1>
+
+OGR supports reading and writing GMT ASCII vector format.  This is the
+format used by the Generic Mapping Tools (GMT) package, and includes 
+recent additions to the format to handle more geometry types, and attributes.
+Currently GMT files are only supported if they have the extension ".gmt". 
+
+Old (simple) GMT files are treated as either point, or linestring files
+depending on whether a ">" line is encountered before the first vertex. 
+New style files have a variety of auxilary information including geometry
+type, layer extents, coordinate system and attribute field declarations in
+comments in the header, and for each feature can have attributes. 
+
+<h2>Creation Issues</h2>
+
+The driver supports creating new GMT files, and appending additional features
+to existing files, but update of existing features is not supported.  Each
+layer is created as a seperate .gmt file.<p>
+
+</body>
+</html>
