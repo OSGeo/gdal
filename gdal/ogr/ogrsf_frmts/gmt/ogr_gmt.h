@@ -50,6 +50,10 @@ class OGRGmtLayer : public OGRLayer
     int                 bUpdate;
     int                 bHeaderComplete;
 
+    int                 bRegionComplete;
+    OGREnvelope         sRegion;
+    vsi_l_offset        nRegionOffset;
+
     FILE               *fp;
 
     int                 ReadLine();
@@ -61,6 +65,7 @@ class OGRGmtLayer : public OGRLayer
     OGRFeature         *GetNextRawFeature();
 
     OGRErr              WriteGeometry( OGRGeometryH hGeom, int bHaveAngle );
+    OGRErr              CompleteHeader( OGRGeometry * );
 
   public:
     int                 bValidFile;
