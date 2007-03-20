@@ -29,6 +29,7 @@
 
 #include "ogr_gmt.h"
 #include "cpl_conv.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id: ogrgmtlayer.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 
@@ -36,20 +37,27 @@ CPL_CVSID("$Id: ogrgmtlayer.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 /*                            OGRGmtLayer()                             */
 /************************************************************************/
 
-OGRGmtLayer::OGRGmtLayer( const char * pszFilename )
+OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
 
 {
     poSRS = NULL;
     
     iNextFID = 0;
     bValidFile = FALSE;
+    bHeaderComplete = !bUpdate; // assume header complete in readonly mode.
     eWkbType = wkbUnknown;
     poFeatureDefn = NULL;
+    papszKeyedValues = NULL;
+
+    this->bUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
 /*      Open file.                                                      */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "r" );
+    if( bUpdate )
+        fp = VSIFOpenL( pszFilename, "r+" );
+    else
+        fp = VSIFOpenL( pszFilename, "r" );
     
     if( fp == NULL )
         return;
@@ -63,6 +71,13 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename )
     while( ReadLine() && osLine.c_str()[0] == '#' )
     {
         int iKey;
+
+        if( strstr( osLine, "FEATURE_DATA" ) )
+        {
+            bHeaderComplete = TRUE;
+            ReadLine();
+            break;
+        }
 
         for( iKey = 0; 
              papszKeyedValues != NULL && papszKeyedValues[iKey] != NULL; 
@@ -86,7 +101,6 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename )
                     osWKT = papszKeyedValues[iKey] + 2;
             }
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -97,17 +111,29 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename )
         char *pszWKT = (char *) osWKT.c_str();
 
         poSRS = new OGRSpatialReference();
-        poSRS->importFromWkt(&pszWKT);
+        if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
     }
     else if( osEPSG.length() )
     {
         poSRS = new OGRSpatialReference();
-        poSRS->importFromEPSG( atoi(osEPSG) );
+        if( poSRS->importFromEPSG( atoi(osEPSG) ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
     }
     else if( osProj4.length() )
     {
         poSRS = new OGRSpatialReference();
-        poSRS->importFromProj4( osProj4 );
+        if( poSRS->importFromProj4( osProj4 ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -133,7 +159,6 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Process fields.                                                 */
 /* -------------------------------------------------------------------- */
-
     if( osFieldNames.length() || osFieldTypes.length() )
     {
         char **papszFN = CSLTokenizeStringComplex( osFieldNames, "|", 
@@ -255,6 +280,17 @@ int OGRGmtLayer::ReadLine()
             }
 
             CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
+
+            // Strip quotes
+            if( osValue[0] == '"' && osValue[osValue.length()-1] == '"' )
+                osValue = osValue.substr(1,osValue.length()-2);
+
+            // special case for @Jp"..."
+            if( osValue[1] == '"' && osValue[osValue.length()-1] == '"' )
+                osValue = osValue.substr(0,1)
+                    + osValue.substr(2,osValue.length()-2);
+
+            // Unexcape contents
             char *pszUEValue = CPLUnescapeString( osValue, NULL, 
                                                   CPLES_BackslashQuotable );
             
@@ -286,6 +322,36 @@ void OGRGmtLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                          ScanAheadForHole()                          */
+/*                                                                      */
+/*      Scan ahead to see if the next geometry is a hole.  If so        */
+/*      return TRUE, otherwise seek back to where we were and return    */
+/*      FALSE.                                                          */
+/************************************************************************/
+
+int OGRGmtLayer::ScanAheadForHole()
+
+{
+    CPLString osSavedLine = osLine;
+    vsi_l_offset nSavedLocation = VSIFTellL( fp );
+
+    while( ReadLine() && osLine[0] == '#' )
+    {
+        if( papszKeyedValues != NULL && papszKeyedValues[0][0] == 'H' )
+            return TRUE;
+    }
+
+    VSIFSeekL( fp, nSavedLocation, SEEK_SET );
+    osLine = osSavedLine;
+
+    // We don't actually restore papszKeyedValues, but we 
+    // assume it doesn't matter since this method is only called
+    // when processing the '>' line.
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
@@ -298,6 +364,11 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
     CPLString osFieldData;
     OGRGeometry *poGeom = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Read lines associated with this feature.                        */
+/* -------------------------------------------------------------------- */
+    int iChild = 0;
+
     for( ; TRUE; ReadLine() )
     {
         if( osLine.length() == 0 )
@@ -305,7 +376,13 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
         if( osLine.c_str()[0] == '>' )
         {
-            if( poGeom != NULL )
+            if( poGeom != NULL 
+                && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon
+                && ScanAheadForHole() )
+            {
+                iChild++;
+            }
+            else if( poGeom != NULL )
                 break;
             else if( poFeatureDefn->GetGeomType() == wkbUnknown )
             {
@@ -315,8 +392,14 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         }
         else if( osLine.c_str()[0] == '#' )
         {
-            if( papszKeyedValues != NULL && papszKeyedValues[0][0] == 'D' )
-                osFieldData = papszKeyedValues[0] + 1;
+            int i;
+            for( i = 0; 
+                 papszKeyedValues != NULL && papszKeyedValues[i] != NULL; 
+                 i++ )
+            {
+                if( papszKeyedValues[i][0] == 'D' )
+                    osFieldData = papszKeyedValues[i] + 1;
+            }
         }
         else
         {
@@ -371,6 +454,28 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                         ((OGRLineString *)poGeom)->addPoint(dfX,dfY);
                     break;
 
+                  case wkbPolygon:
+                  {
+                      OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+                      OGRLinearRing *poRing;
+
+                      if( iChild == 0 )
+                          poRing = poPoly->getExteriorRing();
+                      else
+                          poRing = poPoly->getInteriorRing(iChild-1);
+                      if( poRing == NULL )
+                      {
+                          poRing = new OGRLinearRing();
+                          poPoly->addRingDirectly( poRing );
+                      }
+                      
+                      if( nDim == 3 )
+                        poRing->addPoint(dfX,dfY,dfZ);
+                      else
+                        poRing->addPoint(dfX,dfY);
+                  }
+                  break;
+
                   default:
                     CPLAssert( FALSE );
                 }
@@ -387,11 +492,28 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
     if( poGeom == NULL )
         return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Create feature.                                                 */
+/* -------------------------------------------------------------------- */
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetGeometryDirectly( poGeom );
     poFeature->SetFID( iNextFID++ );
 
-    // set field values...
+/* -------------------------------------------------------------------- */
+/*      Process field values.                                           */
+/* -------------------------------------------------------------------- */
+    char **papszFD = CSLTokenizeStringComplex( osFieldData, "|", TRUE, TRUE );
+    int iField; 
+
+    for( iField = 0; papszFD != NULL && papszFD[iField] != NULL; iField++ )
+    {
+        if( iField >= poFeatureDefn->GetFieldCount() )
+            break;
+
+        poFeature->SetField( iField, papszFD[iField] );
+    }
+
+    CSLDestroy( papszFD );
 
     m_nFeaturesRead++;
 
@@ -432,24 +554,198 @@ OGRFeature *OGRGmtLayer::GetNextFeature()
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-#ifdef notdef
 OGRErr OGRGmtLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    if( poFeature->GetFID() != OGRNullFID 
-        && poFeature->GetFID() >= 0
-        && poFeature->GetFID() < nMaxFeatureCount )
+    if( !bUpdate )
     {
-        if( papoFeatures[poFeature->GetFID()] != NULL )
-            poFeature->SetFID( OGRNullFID );
+        CPLError( CE_Failure, CPLE_NoWriteAccess, 
+                  "Can't create features on read-only dataset." );
+        return OGRERR_FAILURE;
     }
 
-    if( poFeature->GetFID() > 10000000 )
-        poFeature->SetFID( OGRNullFID );
+/* -------------------------------------------------------------------- */
+/*      Do we need to write the header describing the fields?           */
+/* -------------------------------------------------------------------- */
+    if( !bHeaderComplete )
+    {
+        CPLString osFieldNames, osFieldTypes;
+        
+        int iField;
 
-    return SetFeature( poFeature );
+        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        {
+            if( iField > 0 )
+            {
+                osFieldNames += "|";
+                osFieldTypes += "|";
+            }
+
+            osFieldNames += poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+            switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
+            {
+              case OFTInteger:
+                osFieldTypes += "integer";
+                break;
+                
+              case OFTReal:
+                osFieldTypes += "double";
+                break;
+                
+              case OFTDateTime:
+                osFieldTypes += "datetime";
+                break;
+                
+              default:
+                osFieldTypes += "string";
+                break;
+            }
+        }
+
+        if( poFeatureDefn->GetFieldCount() > 0 )
+        {
+            VSIFPrintfL( fp, "# @N\"%s\"\n", osFieldNames.c_str() );
+            VSIFPrintfL( fp, "# @T%s\n", osFieldTypes.c_str() );
+        }
+
+        VSIFPrintfL( fp, "# FEATURE_DATA\n" );
+
+        bHeaderComplete = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the feature                                           */
+/* -------------------------------------------------------------------- */
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    
+    if( poGeom == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Features without geometry not supported by GMT writer." );
+        return OGRERR_FAILURE;
+    }
+
+    if( poFeatureDefn->GetGeomType() == wkbUnknown )
+        poFeatureDefn->SetGeomType(wkbFlatten(poGeom->getGeometryType()));
+
+    // Do we need a vertex collection marker grouping vertices. 
+    if( poFeatureDefn->GetGeomType() != wkbPoint )
+        VSIFPrintfL( fp, ">\n" );
+
+/* -------------------------------------------------------------------- */
+/*      Write feature properties()                                      */
+/* -------------------------------------------------------------------- */
+    if( poFeatureDefn->GetFieldCount() > 0 )
+    {
+        int iField;
+        CPLString osFieldData;
+
+        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        {
+            char *pszEscapedVal;
+
+            pszEscapedVal = 
+                CPLEscapeString( poFeature->GetFieldAsString(iField), 
+                                 -1, CPLES_BackslashQuotable );
+
+            if( iField > 0 )
+                osFieldData += "|";
+            osFieldData += pszEscapedVal;
+            CPLFree( pszEscapedVal );
+        }
+
+        VSIFPrintfL( fp, "# @D\"%s\"\n", osFieldData.c_str() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write Geometry                                                  */
+/* -------------------------------------------------------------------- */
+    return WriteGeometry( (OGRGeometryH) poGeom, TRUE );
 }
-#endif
+
+/************************************************************************/
+/*                           WriteGeometry()                            */
+/*                                                                      */
+/*      Write a geometry to the file.  If bHaveAngle is TRUE it         */
+/*      means the angle bracket preceeding the point stream has         */
+/*      already been written out.                                       */
+/*                                                                      */
+/*      We use the C API for geometry access because of it's            */
+/*      simplified access to vertices and children geometries.          */
+/************************************************************************/
+
+OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
+
+{
+/* -------------------------------------------------------------------- */
+/*      This is a geometry with sub-geometries.                         */
+/* -------------------------------------------------------------------- */
+    if( OGR_G_GetGeometryCount( hGeom ) > 0 )
+    {
+        int iGeom;
+        OGRErr eErr;
+        
+        for( iGeom = 0; 
+             iGeom < OGR_G_GetGeometryCount(hGeom) && eErr == OGRERR_NONE;
+             iGeom++ )
+        {
+            // We need to emit polygon @P and @H items while we still
+            // know this is a polygon and which is the outer and inner
+            // ring. 
+            if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon )
+            {
+                if( !bHaveAngle )
+                {
+                    VSIFPrintfL( fp, ">\n" );
+                    bHaveAngle = TRUE;
+                }
+                if( iGeom == 0 )
+                    VSIFPrintfL( fp, "# @P\n" );
+                else
+                    VSIFPrintfL( fp, "# @H\n" );
+            }
+
+            eErr = WriteGeometry( OGR_G_GetGeometryRef( hGeom, iGeom ), 
+                                  bHaveAngle );
+            bHaveAngle = FALSE;
+        }
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If this is not a point we need to have an angle bracket to      */
+/*      mark the vertex list.                                           */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) != wkbPoint 
+        && !bHaveAngle )
+        VSIFPrintfL( fp, ">\n" );
+
+/* -------------------------------------------------------------------- */
+/*      Dump vertices.                                                  */
+/* -------------------------------------------------------------------- */
+    int iPoint, nPointCount = OGR_G_GetPointCount(hGeom);
+    int nDim = OGR_G_GetCoordinateDimension(hGeom);
+
+    for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+    {
+        char szLine[128];
+
+        OGRMakeWktCoordinate( szLine, 
+                              OGR_G_GetX( hGeom, iPoint ),
+                              OGR_G_GetY( hGeom, iPoint ),
+                              OGR_G_GetZ( hGeom, iPoint ),
+                              nDim );
+        if( VSIFPrintfL( fp, "%s\n", szLine ) < 1 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Gmt write failure: %s", 
+                      VSIStrerror( errno ) );
+            return OGRERR_FAILURE;
+        }
+    }
+
+    return OGRERR_NONE;
+}
 
 /************************************************************************/
 /*                             GetExtent()                              */
@@ -496,49 +792,62 @@ int OGRGmtLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
-#ifdef notdef
+
 OGRErr OGRGmtLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-/* -------------------------------------------------------------------- */
-/*      simple case, no features exist yet.                             */
-/* -------------------------------------------------------------------- */
-    if( nFeatureCount == 0 )
+    if( !bUpdate )
     {
+        CPLError( CE_Failure, CPLE_NoWriteAccess, 
+                  "Can't create fields on read-only dataset." );
+        return OGRERR_FAILURE;
+    }
+
+    if( bHeaderComplete )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to create fields after features have been created.");
+        return OGRERR_FAILURE;
+    }
+
+    switch( poField->GetType() )
+    {
+      case OFTInteger:
+      case OFTReal:
+      case OFTString:
+      case OFTDateTime:
         poFeatureDefn->AddFieldDefn( poField );
         return OGRERR_NONE;
+        break;
+
+        break;
+
+      default:
+        if( !bApproxOK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Field %s is of unsupported type %s.", 
+                      poField->GetNameRef(), 
+                      poField->GetFieldTypeName( poField->GetType() ) );
+            return OGRERR_FAILURE;
+        } 
+        else if( poField->GetType() == OFTDate 
+                 || poField->GetType() == OFTTime )
+        {
+            OGRFieldDefn oModDef( poField );
+            oModDef.SetType( OFTDateTime );
+            poFeatureDefn->AddFieldDefn( poField );
+            return OGRERR_NONE;
+        }
+        else 
+        {
+            OGRFieldDefn oModDef( poField );
+            oModDef.SetType( OFTString );
+            poFeatureDefn->AddFieldDefn( poField );
+            return OGRERR_NONE;
+        }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Add field definition and setup remap definition.                */
-/* -------------------------------------------------------------------- */
-    int  *panRemap;
-    int   i;
-
-    poFeatureDefn->AddFieldDefn( poField );
-
-    panRemap = (int *) CPLMalloc(sizeof(int) * poFeatureDefn->GetFieldCount());
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-    {
-        if( i < poFeatureDefn->GetFieldCount() - 1 )
-            panRemap[i] = i;
-        else
-            panRemap[i] = -1;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Remap all the internal features.  Hopefully there aren't any    */
-/*      external features referring to our OGRFeatureDefn!              */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nMaxFeatureCount; i++ )
-    {
-        if( papoFeatures[i] != NULL )
-            papoFeatures[i]->RemapFields( NULL, panRemap );
-    }
-
-    return OGRERR_NONE;
 }
-#endif
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
