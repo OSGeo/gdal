@@ -43,6 +43,8 @@ OGRGmtDataSource::OGRGmtDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+
+    bUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -67,7 +69,9 @@ OGRGmtDataSource::~OGRGmtDataSource()
 int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
 
 {
-    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename );
+    this->bUpdate = bUpdate;
+
+    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, bUpdate );
     if( !poLayer->bValidFile )
     {
         delete poLayer;
@@ -84,35 +88,138 @@ int OGRGmtDataSource::Open( const char *pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                               Create()                               */
+/*                                                                      */
+/*      Create a new datasource.  This doesn't really do anything       */
+/*      currently but save the name.                                    */
+/************************************************************************/
+
+int OGRGmtDataSource::Create( const char *pszDSName, char **papszOptions )
+
+{
+    (void) papszOptions;
+
+    pszName = CPLStrdup( pszDSName );
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                            CreateLayer()                             */
 /************************************************************************/
 
 OGRLayer *
 OGRGmtDataSource::CreateLayer( const char * pszLayerName,
-                                 OGRSpatialReference *poSRS,
-                                 OGRwkbGeometryType eType,
-                                 char ** papszOptions )
+                               OGRSpatialReference *poSRS,
+                               OGRwkbGeometryType eType,
+                               char ** papszOptions )
 
 {
-    return NULL;
-#ifdef notdef
 /* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
+/*      Establish the geometry type.                                    */
 /* -------------------------------------------------------------------- */
-    OGRGmtLayer *poLayer;
+    const char *pszGeom;
 
-    poLayer = new OGRGmtLayer( pszLayerName, poSRS, eType );
+    switch( wkbFlatten(eType) )
+    {
+      case wkbPoint:
+        pszGeom = " @GPOINT";
+        break;
+      case wkbLineString:
+        pszGeom = " @GLINESTRING";
+        break;
+      case wkbPolygon:
+        pszGeom = " @GPOLYGON";
+        break;
+      case wkbMultiPoint:
+        pszGeom = " @GMULTIPOINT";
+        break;
+      case wkbMultiLineString:
+        pszGeom = " @GMULTILINESTRING";
+        break;
+      case wkbMultiPolygon:
+        pszGeom = " @GMULTIPOLYGON";
+        break;
+      default:
+        pszGeom = "";
+        break;
+    }
 
 /* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
+/*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    papoLayers = (OGRGmtLayer **)
-        CPLRealloc( papoLayers,  sizeof(OGRGmtLayer *) * (nLayers+1) );
-    
-    papoLayers[nLayers++] = poLayer;
+    CPLString osPath = CPLGetPath( pszName );
+    CPLString osFilename = 
+        CPLFormFilename( osPath, pszLayerName, "gmt" );
 
-    return poLayer;
-#endif
+    FILE *fp = VSIFOpenL( osFilename, "w" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "open(%s) failed: %s", 
+                  osFilename.c_str(), VSIStrerror(errno) );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out header.                                               */
+/* -------------------------------------------------------------------- */
+    VSIFPrintfL( fp, "# @VGMT1.0%s\n", pszGeom );
+    VSIFPrintfL( fp, "# REGION_STUB                                      \n" );
+
+/* -------------------------------------------------------------------- */
+/*      Write the projection, if possible.                              */
+/* -------------------------------------------------------------------- */
+    if( poSRS != NULL )
+    {
+        char *pszValue = NULL;
+
+        if( poSRS->IsProjected() 
+            && poSRS->GetAuthorityName("PROJCS")
+            && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG") )
+        {
+            VSIFPrintfL( fp, "# @Je%s\n", 
+                         poSRS->GetAuthorityCode("PROJCS") );
+        }
+        else if( poSRS->IsGeographic() 
+                 && poSRS->GetAuthorityName("GEOGCS")
+                 && EQUAL(poSRS->GetAuthorityName("GEOGCS"),"EPSG") )
+        {
+            VSIFPrintfL( fp, "# @Je%s\n", 
+                         poSRS->GetAuthorityCode("GEOGCS") );
+        }
+
+        if( poSRS->exportToProj4( &pszValue ) == OGRERR_NONE )
+        {
+            VSIFPrintfL( fp, "# @Jp\"%s\"\n", pszValue );
+            CPLFree( pszValue );
+            pszValue = NULL;
+        }
+
+        if( poSRS->exportToWkt( &pszValue ) == OGRERR_NONE )
+        {
+            char *pszEscapedWkt = CPLEscapeString( pszValue, -1,
+                                                   CPLES_BackslashQuotable );
+                                                   
+            VSIFPrintfL( fp, "# @Jw\"%s\"\n", pszEscapedWkt );
+            CPLFree( pszValue );
+            CPLFree( pszEscapedWkt );
+            pszValue = NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Finish header and close.                                        */
+/* -------------------------------------------------------------------- */
+    VSIFCloseL( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Return open layer handle.                                       */
+/* -------------------------------------------------------------------- */
+    if( Open( osFilename, TRUE ) )
+        return papoLayers[nLayers-1];
+    else
+        return NULL;
 }
 
 /************************************************************************/

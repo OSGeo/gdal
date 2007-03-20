@@ -31,6 +31,7 @@
 #define _OGRGMT_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "ogr_api.h"
 #include "cpl_string.h"
 
 /************************************************************************/
@@ -46,18 +47,25 @@ class OGRGmtLayer : public OGRLayer
 
     OGRwkbGeometryType  eWkbType;
 
+    int                 bUpdate;
+    int                 bHeaderComplete;
+
     FILE               *fp;
 
     int                 ReadLine();
     CPLString           osLine;
     char              **papszKeyedValues;
 
+    int                 ScanAheadForHole();
+
     OGRFeature         *GetNextRawFeature();
+
+    OGRErr              WriteGeometry( OGRGeometryH hGeom, int bHaveAngle );
 
   public:
     int                 bValidFile;
 
-                        OGRGmtLayer( const char *pszFilename );
+                        OGRGmtLayer( const char *pszFilename, int bUpdate );
                         ~OGRGmtLayer();
 
     void                ResetReading();
@@ -67,10 +75,10 @@ class OGRGmtLayer : public OGRLayer
 
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
 
-//    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              CreateFeature( OGRFeature *poFeature );
     
-//    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-//                                     int bApproxOK = TRUE );
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE );
 
     virtual OGRSpatialReference *GetSpatialRef();
     
@@ -88,11 +96,14 @@ class OGRGmtDataSource : public OGRDataSource
     
     char                *pszName;
 
+    int                 bUpdate;
+
   public:
                         OGRGmtDataSource();
                         ~OGRGmtDataSource();
 
     int                 Open( const char *pszFilename, int bUpdate );
+    int                 Create( const char *pszFilename, char **papszOptions );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
