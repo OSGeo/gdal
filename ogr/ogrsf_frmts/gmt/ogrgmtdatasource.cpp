@@ -116,7 +116,7 @@ OGRGmtDataSource::CreateLayer( const char * pszLayerName,
 
 {
 /* -------------------------------------------------------------------- */
-/*      Establish the geometry type.                                    */
+/*      Establish the geometry type.  Note this logic                   */
 /* -------------------------------------------------------------------- */
     const char *pszGeom;
 
@@ -146,12 +146,21 @@ OGRGmtDataSource::CreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
+/*      If this is the first layer for this datasource, and if the      */
+/*      datasource name ends in .gmt we will override the provided      */
+/*      layer name with the name from the gmt.                          */
 /* -------------------------------------------------------------------- */
     CPLString osPath = CPLGetPath( pszName );
-    CPLString osFilename = 
-        CPLFormFilename( osPath, pszLayerName, "gmt" );
+    CPLString osFilename;
 
+    if( EQUAL(CPLGetExtension(pszName),"gmt") )
+        osFilename = pszName;
+    else
+        osFilename = CPLFormFilename( osPath, pszLayerName, "gmt" );
+
+/* -------------------------------------------------------------------- */
+/*      Open the file.                                                  */
+/* -------------------------------------------------------------------- */
     FILE *fp = VSIFOpenL( osFilename, "w" );
     if( fp == NULL )
     {
@@ -165,7 +174,7 @@ OGRGmtDataSource::CreateLayer( const char * pszLayerName,
 /*      Write out header.                                               */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fp, "# @VGMT1.0%s\n", pszGeom );
-    VSIFPrintfL( fp, "# REGION_STUB                                      \n" );
+    VSIFPrintfL( fp, "# REGION_STUB                                                             \n" );
 
 /* -------------------------------------------------------------------- */
 /*      Write the projection, if possible.                              */
