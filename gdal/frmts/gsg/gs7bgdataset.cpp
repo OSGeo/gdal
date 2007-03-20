@@ -157,7 +157,7 @@ CPLErr GS7BGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( VSIFSeekL( poGDS->fp,
         ( GS7BGDataset::nData_Position +
-            sizeof(double)*nRasterXSize*nBlockYOff ),
+            sizeof(double) * nRasterXSize * (nRasterYSize - nBlockYOff - 1) ),
         SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
