@@ -68,7 +68,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
     CPLString osFieldNames, osFieldTypes, osGeometryType, osRegion;
     CPLString osWKT, osProj4, osEPSG;
 
-    while( ReadLine() && osLine.c_str()[0] == '#' )
+    while( ReadLine() && osLine[0] == '#' )
     {
         int iKey;
 
@@ -255,7 +255,7 @@ int OGRGmtLayer::ReadLine()
 /* -------------------------------------------------------------------- */
     size_t i;
 
-    if( osLine.c_str()[0] != '#' || osLine.find_first_of('@') == std::string::npos )
+    if( osLine[0] != '#' || osLine.find_first_of('@') == std::string::npos )
         return TRUE;
 
     for( i = 0; i < osLine.length(); i++ )
@@ -282,11 +282,11 @@ int OGRGmtLayer::ReadLine()
             CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
 
             // Strip quotes
-            if( osValue.c_str()[0] == '"' && osValue.c_str()[osValue.length()-1] == '"' )
+            if( osValue[0] == '"' && osValue[osValue.length()-1] == '"' )
                 osValue = osValue.substr(1,osValue.length()-2);
 
             // special case for @Jp"..."
-            if( osValue.c_str()[1] == '"' && osValue.c_str()[osValue.length()-1] == '"' )
+            if( osValue[1] == '"' && osValue[osValue.length()-1] == '"' )
                 osValue = osValue.substr(0,1)
                     + osValue.substr(2,osValue.length()-2);
 
@@ -335,7 +335,7 @@ int OGRGmtLayer::ScanAheadForHole()
     CPLString osSavedLine = osLine;
     vsi_l_offset nSavedLocation = VSIFTellL( fp );
 
-    while( ReadLine() && osLine.c_str()[0] == '#' )
+    while( ReadLine() && osLine[0] == '#' )
     {
         if( papszKeyedValues != NULL && papszKeyedValues[0][0] == 'H' )
             return TRUE;
@@ -374,7 +374,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         if( osLine.length() == 0 )
             break;
 
-        if( osLine.c_str()[0] == '>' )
+        if( osLine[0] == '>' )
         {
             if( poGeom != NULL 
                 && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon
@@ -390,7 +390,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 bMultiVertex = TRUE;
             }
         }
-        else if( osLine.c_str()[0] == '#' )
+        else if( osLine[0] == '#' )
         {
             int i;
             for( i = 0; 
