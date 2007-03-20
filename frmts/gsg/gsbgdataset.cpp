@@ -283,7 +283,8 @@ CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     GSBGDataset *poGDS = dynamic_cast<GSBGDataset *>(poDS);
     if( VSIFSeekL( poGDS->fp,
-		   GSBGDataset::nHEADER_SIZE + 4*nRasterXSize*nBlockYOff,
+		   GSBGDataset::nHEADER_SIZE +
+                        4 * nRasterXSize * (nRasterYSize - nBlockYOff - 1),
 		   SEEK_SET ) != 0 )
     {
 	CPLError( CE_Failure, CPLE_FileIO,
@@ -312,7 +313,7 @@ CPLErr GSBGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-				    void * pImage )
+				    void *pImage )
 
 {
     if( eAccess == GA_ReadOnly )
@@ -355,7 +356,8 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( VSIFSeekL( poGDS->fp,
-		   GSBGDataset::nHEADER_SIZE + 4*nRasterXSize*nBlockYOff,
+		   GSBGDataset::nHEADER_SIZE +
+                        4 * nRasterXSize * (nRasterYSize - nBlockYOff - 1),
 		   SEEK_SET ) != 0 )
     {
 	CPLError( CE_Failure, CPLE_FileIO,
@@ -902,7 +904,7 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
 
     float fVal = fNODATA_VALUE;
     CPL_LSBPTR32( &fVal );
-    for( int iRow=0; iRow<nYSize; iRow++ )
+    for( int iRow = 0; iRow < nYSize; iRow++ )
     {
 	for( int iCol=0; iCol<nXSize; iCol++ )
 	{
@@ -968,7 +970,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    FILE *fp = VSIFOpenL( pszFilename, "w+b" );
+    FILE    *fp = VSIFOpenL( pszFilename, "w+b" );
 
     if( fp == NULL )
     {
@@ -978,9 +980,9 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    GInt16       nXSize = poSrcBand->GetXSize();
-    GInt16       nYSize = poSrcBand->GetYSize();
-    double	 adfGeoTransform[6];
+    GInt16  nXSize = poSrcBand->GetXSize();
+    GInt16  nYSize = poSrcBand->GetYSize();
+    double  adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
@@ -1009,11 +1011,11 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 	return NULL;
     }
 
-    int bSrcHasNDValue;
-    float fSrcNoDataValue = poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-    double dfMinZ = DBL_MAX;
-    double dfMaxZ = -DBL_MAX;
-    for( int iRow=0; iRow<nYSize; iRow++ )
+    int     bSrcHasNDValue;
+    float   fSrcNoDataValue = poSrcBand->GetNoDataValue( &bSrcHasNDValue );
+    double  dfMinZ = DBL_MAX;
+    double  dfMaxZ = -DBL_MAX;
+    for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
     {
 	eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
 				    nXSize, 1, pfData,
