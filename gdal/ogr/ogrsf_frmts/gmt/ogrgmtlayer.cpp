@@ -282,11 +282,11 @@ int OGRGmtLayer::ReadLine()
             CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
 
             // Strip quotes
-            if( osValue[0] == '"' && osValue[osValue.length()-1] == '"' )
+            if( osValue.c_str()[0] == '"' && osValue.c_str()[osValue.length()-1] == '"' )
                 osValue = osValue.substr(1,osValue.length()-2);
 
             // special case for @Jp"..."
-            if( osValue[1] == '"' && osValue[osValue.length()-1] == '"' )
+            if( osValue.c_str()[1] == '"' && osValue.c_str()[osValue.length()-1] == '"' )
                 osValue = osValue.substr(0,1)
                     + osValue.substr(2,osValue.length()-2);
 
@@ -335,7 +335,7 @@ int OGRGmtLayer::ScanAheadForHole()
     CPLString osSavedLine = osLine;
     vsi_l_offset nSavedLocation = VSIFTellL( fp );
 
-    while( ReadLine() && osLine[0] == '#' )
+    while( ReadLine() && osLine.c_str()[0] == '#' )
     {
         if( papszKeyedValues != NULL && papszKeyedValues[0][0] == 'H' )
             return TRUE;
@@ -683,7 +683,7 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
     if( OGR_G_GetGeometryCount( hGeom ) > 0 )
     {
         int iGeom;
-        OGRErr eErr;
+        OGRErr eErr = OGRERR_NONE;
         
         for( iGeom = 0; 
              iGeom < OGR_G_GetGeometryCount(hGeom) && eErr == OGRERR_NONE;
