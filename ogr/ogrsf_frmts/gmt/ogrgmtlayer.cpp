@@ -51,6 +51,9 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
 
     this->bUpdate = bUpdate;
 
+    bRegionComplete = FALSE;
+    nRegionOffset = 0;
+
 /* -------------------------------------------------------------------- */
 /*      Open file.                                                      */
 /* -------------------------------------------------------------------- */
@@ -67,7 +70,8 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
     CPLString osFieldNames, osFieldTypes, osGeometryType, osRegion;
     CPLString osWKT, osProj4, osEPSG;
-
+    vsi_l_offset nStartOfLine = VSIFTellL(fp);
+    
     while( ReadLine() && osLine[0] == '#' )
     {
         int iKey;
@@ -78,6 +82,9 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
             ReadLine();
             break;
         }
+
+        if( EQUALN( osLine, "# REGION_STUB ", 14 ) )
+            nRegionOffset = nStartOfLine;
 
         for( iKey = 0; 
              papszKeyedValues != NULL && papszKeyedValues[iKey] != NULL; 
@@ -101,6 +108,8 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
                     osWKT = papszKeyedValues[iKey] + 2;
             }
         }
+
+        nStartOfLine = VSIFTellL(fp);
     }
 
 /* -------------------------------------------------------------------- */
@@ -157,6 +166,25 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
         poFeatureDefn->SetGeomType( wkbMultiPolygon );
 
 /* -------------------------------------------------------------------- */
+/*      Process a region line.                                          */
+/* -------------------------------------------------------------------- */
+    if( osRegion.length() > 0 )
+    {
+        char **papszTokens = CSLTokenizeStringComplex( osRegion.c_str() + 1,
+                                                       "/", FALSE, FALSE );
+        
+        if( CSLCount(papszTokens) == 4 )
+        {
+            sRegion.MinX = CPLAtofM(papszTokens[0]);
+            sRegion.MaxX = CPLAtofM(papszTokens[1]);
+            sRegion.MinY = CPLAtofM(papszTokens[2]);
+            sRegion.MaxY = CPLAtofM(papszTokens[3]);
+        }
+
+        bRegionComplete = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Process fields.                                                 */
 /* -------------------------------------------------------------------- */
     if( osFieldNames.length() || osFieldTypes.length() )
@@ -208,6 +236,23 @@ OGRGmtLayer::~OGRGmtLayer()
                   poFeatureDefn->GetName() );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Write out the region bounds if we know where they go, and we    */
+/*      are in update mode.                                             */
+/* -------------------------------------------------------------------- */
+    if( nRegionOffset != 0 && bUpdate )
+    {
+        VSIFSeekL( fp, nRegionOffset, SEEK_SET );
+        VSIFPrintfL( fp, "# @R%.12g,%.12g,%.12g,%.12g", 
+                     sRegion.MinX, 
+                     sRegion.MaxX,
+                     sRegion.MinY,
+                     sRegion.MaxY );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Clean up.                                                       */
+/* -------------------------------------------------------------------- */
     CSLDestroy( papszKeyedValues );
 
     if( poFeatureDefn )
@@ -551,6 +596,108 @@ OGRFeature *OGRGmtLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*                           CompleteHeader()                           */
+/*                                                                      */
+/*      Finish writing out the header with field definitions and the    */
+/*      layer geometry type.                                            */
+/************************************************************************/
+
+OGRErr OGRGmtLayer::CompleteHeader( OGRGeometry *poThisGeom )
+
+{
+/* -------------------------------------------------------------------- */
+/*      If we don't already have a geometry type, try to work one       */
+/*      out and write it now.                                           */
+/* -------------------------------------------------------------------- */
+    if( poFeatureDefn->GetGeomType() == wkbUnknown 
+        && poThisGeom != NULL )
+    {
+        const char *pszGeom;
+
+        poFeatureDefn->SetGeomType(wkbFlatten(poThisGeom->getGeometryType()));
+
+        switch( wkbFlatten(poFeatureDefn->GetGeomType()) )
+        {
+          case wkbPoint:
+            pszGeom = " @GPOINT";
+            break;
+          case wkbLineString:
+            pszGeom = " @GLINESTRING";
+            break;
+          case wkbPolygon:
+            pszGeom = " @GPOLYGON";
+            break;
+          case wkbMultiPoint:
+            pszGeom = " @GMULTIPOINT";
+            break;
+          case wkbMultiLineString:
+            pszGeom = " @GMULTILINESTRING";
+            break;
+          case wkbMultiPolygon:
+            pszGeom = " @GMULTIPOLYGON";
+            break;
+          default:
+            pszGeom = "";
+            break;
+        }
+        
+        VSIFPrintfL( fp, "#%s\n", pszGeom );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare and write the field names and types.                    */
+/* -------------------------------------------------------------------- */
+    CPLString osFieldNames, osFieldTypes;
+        
+    int iField;
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        if( iField > 0 )
+        {
+            osFieldNames += "|";
+            osFieldTypes += "|";
+        }
+
+        osFieldNames += poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+        switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
+        {
+          case OFTInteger:
+            osFieldTypes += "integer";
+            break;
+                
+          case OFTReal:
+            osFieldTypes += "double";
+            break;
+                
+          case OFTDateTime:
+            osFieldTypes += "datetime";
+            break;
+                
+          default:
+            osFieldTypes += "string";
+            break;
+        }
+    }
+
+    if( poFeatureDefn->GetFieldCount() > 0 )
+    {
+        VSIFPrintfL( fp, "# @N\"%s\"\n", osFieldNames.c_str() );
+        VSIFPrintfL( fp, "# @T%s\n", osFieldTypes.c_str() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Mark the end of the header, and start of feature data.          */
+/* -------------------------------------------------------------------- */
+    VSIFPrintfL( fp, "# FEATURE_DATA\n" );
+
+    bHeaderComplete = TRUE;
+    bRegionComplete = TRUE; // no feature written, so we know them all!
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -569,48 +716,10 @@ OGRErr OGRGmtLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( !bHeaderComplete )
     {
-        CPLString osFieldNames, osFieldTypes;
-        
-        int iField;
+        OGRErr eErr = CompleteHeader( poFeature->GetGeometryRef() );
 
-        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
-        {
-            if( iField > 0 )
-            {
-                osFieldNames += "|";
-                osFieldTypes += "|";
-            }
-
-            osFieldNames += poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-            switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
-            {
-              case OFTInteger:
-                osFieldTypes += "integer";
-                break;
-                
-              case OFTReal:
-                osFieldTypes += "double";
-                break;
-                
-              case OFTDateTime:
-                osFieldTypes += "datetime";
-                break;
-                
-              default:
-                osFieldTypes += "string";
-                break;
-            }
-        }
-
-        if( poFeatureDefn->GetFieldCount() > 0 )
-        {
-            VSIFPrintfL( fp, "# @N\"%s\"\n", osFieldNames.c_str() );
-            VSIFPrintfL( fp, "# @T%s\n", osFieldTypes.c_str() );
-        }
-
-        VSIFPrintfL( fp, "# FEATURE_DATA\n" );
-
-        bHeaderComplete = TRUE;
+        if( eErr != OGRERR_NONE )
+            return eErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -728,13 +837,13 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 
     for( iPoint = 0; iPoint < nPointCount; iPoint++ )
     {
-        char szLine[128];
+        char   szLine[128];
+        double dfX = OGR_G_GetX( hGeom, iPoint );
+        double dfY = OGR_G_GetY( hGeom, iPoint );
+        double dfZ = OGR_G_GetZ( hGeom, iPoint );
 
-        OGRMakeWktCoordinate( szLine, 
-                              OGR_G_GetX( hGeom, iPoint ),
-                              OGR_G_GetY( hGeom, iPoint ),
-                              OGR_G_GetZ( hGeom, iPoint ),
-                              nDim );
+        sRegion.Merge( dfX, dfY );
+        OGRMakeWktCoordinate( szLine, dfX, dfY, dfZ, nDim );
         if( VSIFPrintfL( fp, "%s\n", szLine ) < 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -760,6 +869,12 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 OGRErr OGRGmtLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
 {
+    if( bRegionComplete )
+    {
+        *psExtent = sRegion;
+        return OGRERR_NONE;
+    }
+
     return OGRLayer::GetExtent( psExtent, bForce );
 }
 
@@ -780,7 +895,7 @@ int OGRGmtLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
-        return TRUE;  // TODO
+        return bRegionComplete;
 
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
