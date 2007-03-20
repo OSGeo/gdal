@@ -169,11 +169,33 @@ CPL_C_END
 class CPL_DLL CPLString : public std_string
 {
 public:
+
+    
     CPLString(void) {}
     CPLString( const std::string &oStr ) : std_string( oStr ) {}
     CPLString( const char *pszStr ) : std_string( pszStr ) {}
     
     operator const char* (void) const { return c_str(); }
+
+    char& operator[](std::string::size_type i)
+    {
+        return std::string::operator[](i);
+    }
+    
+    const char& operator[](std::string::size_type i) const
+    {
+        return std::string::operator[](i);
+    }
+
+    char& operator[](int i)
+    {
+        return std::string::operator[](static_cast<std::string::size_type>(i));
+    }
+
+    const char& operator[](int i) const
+    {
+        return std::string::operator[](static_cast<std::string::size_type>(i));
+    }
 
     CPLString &Printf( const char *pszFormat, ... );
     CPLString &vPrintf( const char *pszFormat, va_list args );
