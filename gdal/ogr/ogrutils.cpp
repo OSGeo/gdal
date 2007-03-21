@@ -300,6 +300,15 @@ const char * OGRWktReadPoints( const char * pszInput,
         (*pnPointsRead)++;
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a M coordinate?                                      */
+/*      If we do, just skip it.                                         */
+/* -------------------------------------------------------------------- */
+        if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
+        {
+            pszInput = OGRWktReadToken( pszInput, szDelim );
+        }
+        
+/* -------------------------------------------------------------------- */
 /*      Read next delimeter ... it should be a comma if there are       */
 /*      more points.                                                    */
 /* -------------------------------------------------------------------- */
