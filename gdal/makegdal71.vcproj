@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.00"
-	Name="makegdal"
+	Name="makegdal71"
 	ProjectGUID="{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}"
-	RootNamespace="makegdal"
+	RootNamespace="makegdal71"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makegdal", "makegdal.vcproj", "{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makegdal71", "makegdal71.vcproj", "{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
