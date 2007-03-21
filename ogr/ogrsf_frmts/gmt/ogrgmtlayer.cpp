@@ -100,12 +100,22 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
                 osRegion = papszKeyedValues[iKey] + 1;
             if( papszKeyedValues[iKey][0] == 'J' )
             {
+                CPLString osArg = papszKeyedValues[iKey] + 2;
+                if( osArg[0] == '"' && osArg[osArg.length()-1] == '"' )
+                {
+                    osArg = osArg.substr(1,osArg.length()-2);
+                    char *pszArg = CPLUnescapeString(osArg, NULL,
+                                                     CPLES_BackslashQuotable);
+                    osArg = pszArg;
+                    CPLFree( pszArg );
+                }
+                    
                 if( papszKeyedValues[iKey][1] == 'e' )
-                    osEPSG = papszKeyedValues[iKey] + 2;
+                    osEPSG = osArg;
                 if( papszKeyedValues[iKey][1] == 'p' )
-                    osProj4 = papszKeyedValues[iKey] + 2;
+                    osProj4 = osArg;
                 if( papszKeyedValues[iKey][1] == 'w' )
-                    osWKT = papszKeyedValues[iKey] + 2;
+                    osWKT = osArg;
             }
         }
 
@@ -190,9 +200,9 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
     if( osFieldNames.length() || osFieldTypes.length() )
     {
         char **papszFN = CSLTokenizeStringComplex( osFieldNames, "|", 
-                                                   FALSE, TRUE );
+                                                   TRUE, TRUE );
         char **papszFT = CSLTokenizeStringComplex( osFieldTypes, "|", 
-                                                   FALSE, TRUE );
+                                                   TRUE, TRUE );
         int nFieldCount = MAX(CSLCount(papszFN),CSLCount(papszFT));
         int iField;
 
@@ -243,7 +253,7 @@ OGRGmtLayer::~OGRGmtLayer()
     if( nRegionOffset != 0 && bUpdate )
     {
         VSIFSeekL( fp, nRegionOffset, SEEK_SET );
-        VSIFPrintfL( fp, "# @R%.12g,%.12g,%.12g,%.12g", 
+        VSIFPrintfL( fp, "# @R%.12g/%.12g/%.12g/%.12g", 
                      sRegion.MinX, 
                      sRegion.MaxX,
                      sRegion.MinY,
@@ -326,16 +336,7 @@ int OGRGmtLayer::ReadLine()
 
             CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
 
-            // Strip quotes
-            if( osValue[0] == '"' && osValue[osValue.length()-1] == '"' )
-                osValue = osValue.substr(1,osValue.length()-2);
-
-            // special case for @Jp"..."
-            if( osValue[1] == '"' && osValue[osValue.length()-1] == '"' )
-                osValue = osValue.substr(0,1)
-                    + osValue.substr(2,osValue.length()-2);
-
-            // Unexcape contents
+            // Unecape contents
             char *pszUEValue = CPLUnescapeString( osValue, NULL, 
                                                   CPLES_BackslashQuotable );
             
@@ -682,7 +683,7 @@ OGRErr OGRGmtLayer::CompleteHeader( OGRGeometry *poThisGeom )
 
     if( poFeatureDefn->GetFieldCount() > 0 )
     {
-        VSIFPrintfL( fp, "# @N\"%s\"\n", osFieldNames.c_str() );
+        VSIFPrintfL( fp, "# @N%s\n", osFieldNames.c_str() );
         VSIFPrintfL( fp, "# @T%s\n", osFieldTypes.c_str() );
     }
 
@@ -751,19 +752,29 @@ OGRErr OGRGmtLayer::CreateFeature( OGRFeature *poFeature )
 
         for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
+            const char *pszRawValue = poFeature->GetFieldAsString(iField);
             char *pszEscapedVal;
-
-            pszEscapedVal = 
-                CPLEscapeString( poFeature->GetFieldAsString(iField), 
-                                 -1, CPLES_BackslashQuotable );
 
             if( iField > 0 )
                 osFieldData += "|";
-            osFieldData += pszEscapedVal;
-            CPLFree( pszEscapedVal );
+
+            if( strchr(pszRawValue,' ') || strchr(pszRawValue,'|') 
+                || strchr(pszRawValue, '\t') || strchr(pszRawValue, '\n') )
+            {
+                pszEscapedVal = 
+                    CPLEscapeString( pszRawValue, 
+                                     -1, CPLES_BackslashQuotable );
+                
+                osFieldData += "\"";
+                osFieldData += pszEscapedVal;
+                osFieldData += "\"";
+                CPLFree( pszEscapedVal );
+            }
+            else
+                osFieldData += pszRawValue;
         }
 
-        VSIFPrintfL( fp, "# @D\"%s\"\n", osFieldData.c_str() );
+        VSIFPrintfL( fp, "# @D%s\n", osFieldData.c_str() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -869,7 +880,7 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, int bHaveAngle )
 OGRErr OGRGmtLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
 {
-    if( bRegionComplete )
+    if( bRegionComplete && sRegion.IsInit() )
     {
         *psExtent = sRegion;
         return OGRERR_NONE;
