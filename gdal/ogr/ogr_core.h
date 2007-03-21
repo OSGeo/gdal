@@ -72,6 +72,20 @@ class CPL_DLL OGREnvelope
             MaxY = sOther.MaxY;
         }
     }
+    void Merge( double dfX, double dfY ) {
+        if( IsInit() )
+        {
+            MinX = MIN(MinX,dfX);
+            MaxX = MAX(MaxX,dfX);
+            MinY = MIN(MinY,dfY);
+            MaxY = MAX(MaxY,dfY);
+        }
+        else
+        {
+            MinX = MaxX = dfX;
+            MinY = MaxY = dfY;
+        }
+    }
 };
 #else
 typedef struct
