@@ -94,7 +94,8 @@ typedef union
 //    Raster Format Types
 //  ----------------------------------------------------------------------------
 
-typedef enum : uint16 {
+//typedef enum : uint16 {
+typedef enum {
     PackedBinary                     = 1,   // 1 bit / pixel  
     ByteInteger                      = 2,   // 8 bits / pixel  
     WordIntegers                     = 3,   // 16 bits / pixel  
@@ -176,7 +177,8 @@ static INGR_FormatDescription INGR_FormatTable[] = {
 //    Raster Application Types
 //  ----------------------------------------------------------------------------
 
-typedef enum : uint16 {
+//typedef enum : uint16 {
+typedef enum {
     GenericRasterImageFile           = 0, 
     DigitalTerrainModeling           = 1, 
     GridDataUtilities                = 2, 
@@ -193,7 +195,8 @@ typedef enum : uint16 {
 //    Scan line orientation codes
 //  ----------------------------------------------------------------------------
 
-typedef enum : uint8 {
+//typedef enum : uint8 {
+typedef enum {
     UpperLeftVertical                = 0,
     UpperRightVertical               = 1,
     LowerLeftVertical                = 2,
@@ -218,7 +221,8 @@ static char *IngrOrientation[] = {
 //    Scannable flag field codes
 //  ----------------------------------------------------------------------------
 
-typedef enum : uint8 {
+//typedef enum : uint8 {
+typedef enum {
     HasLineHeader                    = 1,   
     // Every line of raster data has a 4 word 
     // raster line header at the beginning of
@@ -244,7 +248,8 @@ typedef enum : uint8 {
 //    Color Table Values ( CTV )
 //  ----------------------------------------------------------------------------
 
-typedef enum : uint16 {
+//typedef enum : uint16 {
+typedef enum {
     NoColorTable                     = 0,
     IGDSColorTable                   = 1,
     EnvironVColorTable               = 2
