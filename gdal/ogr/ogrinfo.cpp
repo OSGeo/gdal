@@ -314,8 +314,6 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
 /*      Report various overall information.                             */
 /* -------------------------------------------------------------------- */
-    CPLDebug("INFO", "---------- General Layer Report ----------"); 
-
     printf( "\n" );
     
     printf( "Layer name: %s\n", poDefn->GetName() );
@@ -345,10 +343,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 
         printf( "Layer SRS WKT:\n%s\n", pszWKT );
         CPLFree( pszWKT );
-
     
-        CPLDebug("\nINFO", "---------- Geometry Column Report ----------\n"); 
-
         if( strlen(poLayer->GetFIDColumn()) > 0 )
             printf( "FID Column = %s\n", 
                     poLayer->GetFIDColumn() );
@@ -372,8 +367,6 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
 /*      Read, and dump features.                                        */
 /* -------------------------------------------------------------------- */
-    CPLDebug("\nINFO", "---------- Features Dump ----------\n"); 
-
     OGRFeature  *poFeature = NULL;
 
     if( nFetchFID == OGRNullFID && !bSummaryOnly )
