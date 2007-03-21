@@ -4,7 +4,7 @@ GDAL_ROOT = ..\..
 
 OBJ	= intergraphdataset.obj intergraphband.obj ingrtypes.obj
 
-EXTRAFLAGS = -D_USE_MATH_DEFINES -I..\aigrid
+EXTRAFLAGS = -D_USE_MATH_DEFINES -I..\jpeg\libjpeg
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

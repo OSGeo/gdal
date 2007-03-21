@@ -2,7 +2,7 @@
  * $Id: $
  *
  * Project:  Intergraph Raster Format support
- * Purpose:  Types and constants definition
+ * Purpose:  Types, constants and functions definition
  * Author:   Ivan Lucena, ivan@ilucena.net
  *
  ******************************************************************************
@@ -25,11 +25,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log: $
- *
- */
+ *****************************************************************************/
 
 #ifndef INGR_TYPES_H_INCLUDED
 #define INGR_TYPES_H_INCLUDED
@@ -37,6 +33,11 @@
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+
+CPL_C_START
+#include "jpeglib.h"
+#include "jpegint.h"
+CPL_C_END
 
 //  ----------------------------------------------------------------------------
 //    Magic number, identification and limits
@@ -52,14 +53,14 @@
 //    Data type convention
 //  ----------------------------------------------------------------------------
 
-typedef char                byte;
-typedef char                int8;
+typedef   signed char       byte;
+typedef   signed char       int8;
 typedef unsigned char       uint8;
-typedef short               int16;
+typedef   signed short      int16;
 typedef unsigned short      uint16;
-typedef int                 int32;
+typedef   signed int        int32;
 typedef unsigned int        uint32;
-typedef long long           int64;
+typedef   signed long long  int64;
 typedef unsigned long long  uint64;
 typedef double              real64;
 typedef float               real32;
@@ -74,7 +75,7 @@ typedef struct {
     uint16 Version   : 6;        // ??????00 00000000 
     uint16 Is2Dor3D  : 2;        // 000000?? 00000000 
     uint16 Type      : 8;        // 00000000 ???????? 
-} IngrHeaderType;
+} INGR_HeaderType;
 
 //  ----------------------------------------------------------------------------
 //    Data type dependent Minimum and Maximum type
@@ -87,13 +88,13 @@ typedef union
     uint32  AsUint32;          
     real32  AsReal32;          
     real64  AsReal64;
-} IngrMinMax;
+} INGR_MinMax;
 
 //  ----------------------------------------------------------------------------
 //    Raster Format Types
 //  ----------------------------------------------------------------------------
 
-typedef enum {
+typedef enum : uint16 {
     PackedBinary                     = 1,   // 1 bit / pixel  
     ByteInteger                      = 2,   // 8 bits / pixel  
     WordIntegers                     = 3,   // 16 bits / pixel  
@@ -122,19 +123,19 @@ typedef enum {
     JPEGGRAY                         = 30,  // Gray Scale  
     JPEGRGB                          = 31,  // Full Color RGB  
     JPEGCYMK                         = 32,  // CYMK  
-    TiledRasterData                  = 65,  // ** NOT IN THE ORIGINAL TABLE ** //
-    NotUsedReserved                  = 66,  // ** NOT IN THE ORIGINAL TABLE ** // 
+    TiledRasterData                  = 65,  // See tile directory Data Type Code (DTC)//
+    NotUsedReserved                  = 66,   
     ContinuousTone                   = 67,  // CYMK  
     LineArt                          = 68   // CYMK/RGB  
-} IngrFormatType;
+} INGR_Format;
 
-struct hIngrFormatType {
-	IngrFormatType   eFormatCode;
+struct INGR_FormatDescription {
+	INGR_Format       eFormatCode;
 	char            *pszName;
     GDALDataType     eDataType;
 };
 
-static hIngrFormatType ahIngrFormatTypeTab[] = {
+static INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},
     {ByteInteger,             "Byte Integer",                GDT_Byte},
     {WordIntegers,            "Word Integers",               GDT_Int16},
@@ -169,13 +170,13 @@ static hIngrFormatType ahIngrFormatTypeTab[] = {
     {LineArt,                 "LineArt",                     GDT_Byte}
 };
 
-#define FORMAT_TYPE_COUNT (sizeof(ahIngrFormatTypeTab) / sizeof(hIngrFormatType))
+#define FORMAT_TAB_COUNT (sizeof(INGR_FormatTable) / sizeof(INGR_FormatDescription))
 
 //  ----------------------------------------------------------------------------
 //    Raster Application Types
 //  ----------------------------------------------------------------------------
 
-typedef enum {
+typedef enum : uint16 {
     GenericRasterImageFile           = 0, 
     DigitalTerrainModeling           = 1, 
     GridDataUtilities                = 2, 
@@ -186,28 +187,38 @@ typedef enum {
     ScreenCopyPlotting               = 7, 
     IMAGEandMicroStationImager       = 8, 
     ModelView                        = 9 
-} IngrApplicationType;
+} INGR_Application;
 
 //  ----------------------------------------------------------------------------
 //    Scan line orientation codes
 //  ----------------------------------------------------------------------------
 
-typedef enum {
-    UpperLeftHorizontal              = 4,
+typedef enum : uint8 {
     UpperLeftVertical                = 0,
-    UpperRightHorizontal             = 5,
     UpperRightVertical               = 1,
-    LowerLeftHorizontal              = 6,
     LowerLeftVertical                = 2,
-    LowerRightHorizontal             = 7,
-    LowerRightVertical               = 3
-} IngrOriginOrientation;
+    LowerRightVertical               = 3,
+    UpperLeftHorizontal              = 4,
+    UpperRightHorizontal             = 5,
+    LowerLeftHorizontal              = 6,
+    LowerRightHorizontal             = 7
+} INGR_Orientation;
+
+static char *IngrOrientation[] = {
+    "Upper Left Vertical",
+    "Upper Right Vertical",
+    "Lower Left Vertical",
+    "Lower Right Vertical",
+    "Upper Left Horizontal",
+    "Upper Right Horizontal",
+    "Lower Left Horizontal",
+    "Lower Right Horizontal"};
 
 //  ----------------------------------------------------------------------------
 //    Scannable flag field codes
 //  ----------------------------------------------------------------------------
 
-typedef enum {
+typedef enum : uint8 {
     HasLineHeader                    = 1,   
     // Every line of raster data has a 4 word 
     // raster line header at the beginning of
@@ -226,18 +237,18 @@ typedef enum {
     // the number of pixels per line ( PPL ). In 
     // a run length compression case, the data must 
     // be decoded to find the end of a raster line.
-} IngrIndexingMethod;
+} INGR_IndexingMethod;
 
 
 //  ----------------------------------------------------------------------------
 //    Color Table Values ( CTV )
 //  ----------------------------------------------------------------------------
 
-typedef enum {
+typedef enum : uint16 {
     NoColorTable                     = 0,
     IGDSColorTable                   = 1,
     EnvironVColorTable               = 2
-} IngrColorTableType;
+} INGR_ColorTableType;
 
 //  ----------------------------------------------------------------------------
 //    Environ-V Color Tables Entrie
@@ -245,10 +256,10 @@ typedef enum {
 
 struct vlt_slot
 {
-    uint16  v_slot;
-    uint16  v_red;
-    uint16  v_green;
-    uint16  v_blue;
+    uint16 v_slot;
+    uint16 v_red;
+    uint16 v_green;
+    uint16 v_blue;
 };
 
 //  ----------------------------------------------------------------------------
@@ -257,142 +268,115 @@ struct vlt_slot
 
 struct igds_slot
 {
-    uint8  v_red;
-    uint8  v_green;
-    uint8  v_blue;
-};
-
-//  ----------------------------------------------------------------------------
-//    RSvc_entry Structure
-//  ----------------------------------------------------------------------------
-
-struct RSvc_entry
-{
-    uint8   type;
-    uint8   flags;
-    uint16  rgb[3];
-    uint16  c[4];
-    uint8   spot[12];
-    int32   trans_flag;
-    uint8   spot_index;
-    uint8   res2;
-    uint16  res3;
-    uint32  res4;
-    uint8   name[INGR_RSVC_MAX_NAME];
-};
-
-//  ----------------------------------------------------------------------------
-//    RSptclsub14_Data Format
-//  ----------------------------------------------------------------------------
-
-struct RSptclsub14_data
-{
-    uint16  version;
-    uint16  num_colors;
-    uint64  res1;
-    uint64  colors;
+    uint8 v_red;
+    uint8 v_green;
+    uint8 v_blue;
 };
 
 //  ----------------------------------------------------------------------------
 //    Header Block One data items
 //  ----------------------------------------------------------------------------
 
-typedef    struct {
-    IngrHeaderType  HeaderType;                 
-    uint16          WordsToFollow;              
-    uint16          DataTypeCode;               
-    uint16          ApplicationType;            
-    real64          XViewOrigin;                
-    real64          YViewOrigin;                
-    real64          ZViewOrigin;                
-    real64          XViewExtent;                
-    real64          YViewExtent;                
-    real64          ZViewExtent;                
-    real64          TransformationMatrix[16];   
-    uint32          PixelsPerLine;              
-    uint32          NumberOfLines;              
-    int16           DeviceResolution;           
-    uint8           ScanlineOrientation;        
-    uint8           ScannableFlag;              
-    real64          RotationAngle;              
-    real64          SkewAngle;                  
-    uint16          DataTypeModifier;           
-    byte            DesignFileName[66];         
-    byte            DataBaseFileName[66];       
-    byte            ParentGridFileName[66];     
-    byte            FileDescription[80];        
-    IngrMinMax      Minimum;                    
-    IngrMinMax      Maximum;                    
-    byte            Reserved[3];                
-    uint8           GridFileVersion;            
-} IngrHeaderOne;
+typedef struct {
+    INGR_HeaderType     HeaderType;                 
+    uint16              WordsToFollow;              
+    INGR_Format         DataTypeCode;               
+    INGR_Application    ApplicationType;            
+    real64              XViewOrigin;                
+    real64              YViewOrigin;                
+    real64              ZViewOrigin;                
+    real64              XViewExtent;                
+    real64              YViewExtent;                
+    real64              ZViewExtent;                
+    real64              TransformationMatrix[16];   
+    uint32              PixelsPerLine;              
+    uint32              NumberOfLines;              
+    int16               DeviceResolution;           
+    INGR_Orientation    ScanlineOrientation;        
+    INGR_IndexingMethod ScannableFlag;              
+    real64              RotationAngle;              
+    real64              SkewAngle;                  
+    uint16              DataTypeModifier;           
+    byte                DesignFileName[66];         
+    byte                DataBaseFileName[66];       
+    byte                ParentGridFileName[66];     
+    byte                FileDescription[80];        
+    INGR_MinMax         Minimum;                    
+    INGR_MinMax         Maximum;                    
+    byte                Reserved[3];                
+    uint8               GridFileVersion;            
+} INGR_HeaderOne;
 
 //  ----------------------------------------------------------------------------
 //    Block two field descriptions
 //  ----------------------------------------------------------------------------
 
-typedef    struct {
-    uint8           Gain;                       
-    uint8           OffsetThreshold;            
-    uint8           View1;                      
-    uint8           View2;                      
-    uint8           ViewNumber;                 
-    uint8           Reserved2;                  
-    uint16          Reserved3;                  
-    real64          AspectRatio;                
-    uint32          CatenatedFilePointer;       
-    uint16          ColorTableType;             
-    uint16          Reserved8;                  
-    uint32          NumberOfCTEntries;          
-    uint32          ApplicationPacketPointer;   
-    uint32          ApplicationPacketLength;    
-    uint16          Reserved[110];              
-} IngrHeaderTwoA;
+typedef struct {
+    uint8               Gain;                       
+    uint8               OffsetThreshold;            
+    uint8               View1;                      
+    uint8               View2;                      
+    uint8               ViewNumber;                 
+    uint8               Reserved2;                  
+    uint16              Reserved3;                  
+    real64              AspectRatio;                
+    uint32              CatenatedFilePointer;       
+    INGR_ColorTableType ColorTableType;             
+    uint16              Reserved8;                  
+    uint32              NumberOfCTEntries;          
+    uint32              ApplicationPacketPointer;   
+    uint32              ApplicationPacketLength;    
+    uint16              Reserved[110];              
+} INGR_HeaderTwoA;
 
 typedef    struct {
-    uint16          ApplicationData[128];       
-} IngrHeaderTwoB;
+    uint16              ApplicationData[128];       
+} INGR_HeaderTwoB;
 
 //  ----------------------------------------------------------------------------
 //    2nd half of Block two plus another block as a static 256 entries color table
 //  ----------------------------------------------------------------------------
 
 typedef    struct {
-    igds_slot       Entry[256];
-} IngrColorTable;
+    igds_slot           Entry[256];
+} INGR_ColorTable256;
 
 //  ----------------------------------------------------------------------------
 //    Extra Block( s ) for dynamic allocated color table with intensit level entries
 //  ----------------------------------------------------------------------------
 
 typedef    struct {
-    vlt_slot       *Entry;
-} IngrEnvVTable;
+    vlt_slot           *Entry;
+} INGR_ColorTableVar;
 
 //  ----------------------------------------------------------------------------
-//    TILE DIRECTORY FORMAT
+//    Tile Directory Item
 //  ----------------------------------------------------------------------------
 
 typedef     struct {
-    uint32          Start;
-    uint32          Allocated;
-    uint32          Used;
-} IngrOneTile;
+    uint32              Start;
+    uint32              Allocated;
+    uint32              Used;
+} INGR_TileItem;
+
+//  ----------------------------------------------------------------------------
+//    Tile Directory Header
+//  ----------------------------------------------------------------------------
 
 typedef    struct {
-    uint16          ApplicationType;
-    uint16          SubTypeCode;
-    uint32          WordsToFollow;
-    uint16          PacketVersion;
-    uint16          Identifier;
-    uint16          Reserved[2];
-    uint16          Properties;
-    uint16          DataTypeCode;
-    uint8           Reserved2[100];
-    uint32          TileSize; 
-    uint32          Reserved3;
-    IngrOneTile     First;
-} IngrTileDir;
+    uint16              ApplicationType;
+    uint16              SubTypeCode;
+    uint32              WordsToFollow;
+    uint16              PacketVersion;
+    uint16              Identifier;
+    uint16              Reserved[2];
+    uint16              Properties;
+    INGR_Format         DataTypeCode;
+    uint8               Reserved2[100];
+    uint32              TileSize; 
+    uint32              Reserved3;
+    INGR_TileItem       First;
+} INGR_TileHeader;
 
 #pragma pack()
 
@@ -418,8 +402,8 @@ typedef    struct {
             +-------------+  -  0    -  Header Block One
             |     512     |
             |             |
-            +-------------+  -  512  -  Header Block Two
-            |     256     |             ( First Half )
+            +-------------+  -  512  -  Header Block Two ( First Half )
+            |     256     |             
             +-------------+  -  768  -  IGDS 256 Entries
             |     768     |             Color Table 
             |             |
@@ -439,17 +423,17 @@ typedef    struct {
             :   n x 512   :             Table
             :             :
             :             :
-            +-------------+  ( n+2 )x512  Extra Header Info or Image Data  
+            +-------------+  ( n+2 )x512  - Extra Header Info or Image Data  
             |     ...     |
 
 */
 
-#define SIZEOF_HDR1     sizeof( IngrHeaderOne )
-#define SIZEOF_HDR2_A   sizeof( IngrHeaderTwoA )
-#define SIZEOF_HDR2_B   sizeof( IngrHeaderTwoB )
-#define SIZEOF_CTAB     sizeof( IngrColorTable )
-#define SIZEOF_TDIR     sizeof( IngrTileDir )
-#define SIZEOF_TILE     sizeof( IngrOneTile )
+#define SIZEOF_HDR1     sizeof( INGR_HeaderOne )
+#define SIZEOF_HDR2_A   sizeof( INGR_HeaderTwoA )
+#define SIZEOF_HDR2_B   sizeof( INGR_HeaderTwoB )
+#define SIZEOF_CTAB     sizeof( INGR_ColorTable256 )
+#define SIZEOF_TDIR     sizeof( INGR_TileHeader )
+#define SIZEOF_TILE     sizeof( INGR_TileItem )
 
 //  ----------------------------------------------------------------------------
 //                                 Functions
@@ -459,84 +443,162 @@ typedef    struct {
 //    Compression, Data Format, Data Type related funtions
 //  ------------------------------------------------------------------
 
-const IngrFormatType GetFormatCodeFromName( GDALDataType eType, const char *pszCompression );
-const char * CPL_STDCALL GetFormatNameFromCode( uint16 eCode );
-const GDALDataType CPL_STDCALL GetDataTypeForFormat( uint16 eCode );
+const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, const char *pszCompression );
+const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode );
+const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode );
 
 //  ------------------------------------------------------------------
 //    Transformation Matrix conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL GetTransforMatrix( real64 *padfMatrix, double *padfGeoTransform );
-void CPL_STDCALL SetTransforMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
 
 //  ------------------------------------------------------------------
 //    Color Table conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL GetIGDSColorTable( GDALColorTable *poColorTable, 
-                                    IngrColorTable *pColorTableIGDS );
-void CPL_STDCALL GetEnvironColorTable( GDALColorTable *poColorTable,
-                                       IngrEnvVTable *pEnvironTable,
-                                       uint32 nColorsCount );
-uint32 CPL_STDCALL SetEnvironColorTable( GDALColorTable *poColorTable,
-                                         IngrEnvVTable *pEnvironTable );
-uint32 CPL_STDCALL SetIGDSColorTable( GDALColorTable *poColorTable,
-                                      IngrColorTable *pColorTableIGDS );
+void CPL_STDCALL INGR_GetIGDSColors( GDALColorTable *poColorTable, 
+                                     INGR_ColorTable256 *pColorTableIGDS );
+void CPL_STDCALL INGR_GetEnvironVColors( GDALColorTable *poColorTable,
+                                        INGR_ColorTableVar *pEnvironTable,
+                                        uint32 nColorsCount );
+uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
+                                          INGR_ColorTableVar *pEnvironTable );
+uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
+                                       INGR_ColorTable256 *pColorTableIGDS );
 
 //  ------------------------------------------------------------------
-//    Miselaneous
+//    Get, Set Min & Max
 //  ------------------------------------------------------------------
 
-IngrMinMax CPL_STDCALL SetMinMax( GDALDataType eType, double dVal );
-double CPL_STDCALL GetMinMax( GDALDataType eType, IngrMinMax hVal );
-const char *GetOrientationName( uint8 eType );
-const char *GetApplicationTypeName( uint8 eType );
+INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dVal );
+double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 
 //  ------------------------------------------------------------------
-//    Decoder
+//    Decoders
 //  ------------------------------------------------------------------
 
-CPLErr DecodePackedBinary( GByte *pabyDst, 
-                           int nDataSize, 
-                           int nBlockXSize, 
-                           int nBlockYSize,
-                           GByte *pabySrc );
+CPLErr DecodeRunLengthEncoded( GByte *pabySrcData, int nSrcBytes, 
+                               int nBlockXSize, int nBlockYSize );
 
-CPLErr DecodeRunLengthEncoded( GByte *pabyDst, 
-                               int nDataSize, 
-                               int nBlockXSize, 
-                               int nBlockYSize,
-                               GByte *pabySrc );
+CPLErr DecodeCCITTGroup4( GByte *pabyCur, int nDataSize, int nMin,
+                          int nBlockXSize, int nBlockYSize,
+                          GByte *panData );
 
-CPLErr DecodeCCITTGroup4( GByte *pabyDst, 
-                          int nDataSize, 
-                          int nBlockXSize, 
-                          int nBlockYSize,
-                          GByte *pabySrc );
+CPLErr DecodeAdaptiveRGB( GByte *pabySrcData, int nSrcBytes, 
+                          int nBlockXSize, int nBlockYSize );
 
-CPLErr DecodeAdaptiveRGB( GByte *pabyDst,  
-                          int nDataSize, 
-                          int nBlockXSize, 
-                          int nBlockYSize,
-                          GByte *pabySrc );
+CPLErr DecodeAdaptiveGrayScale( GByte *pabySrcData, int nSrcBytes, 
+                                int nBlockXSize, int nBlockYSize );
 
-CPLErr DecodeAdaptiveGrayScale( GByte *pabyDst, 
-                                int nDataSize, 
-                                int nBlockXSize, 
-                                int nBlockYSize,
-                                GByte *pabySrc );
+CPLErr DecodeContinuousTone( GByte *pabySrcData, int nSrcBytes, 
+                             int nBlockXSize, int nBlockYSize );
 
-CPLErr DecodeContinuousTone( GByte *pabyDst, 
-                             int nDataSize, 
-                             int nBlockXSize, 
-                             int nBlockYSize,
-                             GByte *pabySrc );
+CPLErr DecodeJPEG( GByte *pabySrcData, int nSrcBytes, 
+                   int nBlockXSize, int nBlockYSize );
 
-CPLErr DecodeJPEG( GByte *pabyDst, 
-                   int nDataSize, 
-                   int nBlockXSize, 
-                   int nBlockYSize,
-                   GByte *pabySrc );
+//  ------------------------------------------------------------------
+//    JPEG stuff
+//  ------------------------------------------------------------------
+
+void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+
+/************************************************************************/
+/*                      INGR_LoadJPEGTables()                        */
+/************************************************************************/
+
+const static int Q1table[256] = 
+{
+    8,    72,     72,     72,    72,    72,    72,    72,    72,    72,
+    78,    74,     76,    74,    78,    89,    81,    84,    84,    81,
+    89,    106,    93,    94,    99,    94,    93,    106,    129,    111,
+    108,    116,    116,    108,    111,    129,    135,    128,    136,    
+    145,    136,    128,    135,    155,    160,    177,    177,    160,
+    155,    193,    213,    228,    213,    193,    255,    255,    255,    
+    255
+};
+
+const static int Q2table[64] = 
+{ 
+    8, 36, 36, 36,
+    36, 36, 36, 36, 36, 36, 39, 37, 38, 37, 39, 45, 41, 42, 42, 41, 45, 53,
+    47, 47, 50, 47, 47, 53, 65, 56, 54, 59, 59, 54, 56, 65, 68, 64, 69, 73,
+    69, 64, 68, 78, 81, 89, 89, 81, 78, 98,108,115,108, 98,130,144,144,130,
+    178,190,178,243,243,255
+};
+
+const static int Q3table[64] = 
+{ 
+     8, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15, 
+    13, 13, 14, 13, 13, 15, 18, 16, 15, 16, 16, 15, 16, 18, 19, 18, 19, 21, 
+    19, 18, 19, 22, 23, 25, 25, 23, 22, 27, 30, 32, 30, 27, 36, 40, 40, 36, 
+    50, 53, 50, 68, 68, 91 
+}; 
+
+const static int Q4table[64] = 
+{
+    8, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11, 
+    9, 9, 10, 9, 9, 11, 13, 11, 11, 12, 12, 11, 11, 13, 14, 13, 14, 15, 
+    14, 13, 14, 16, 16, 18, 18, 16, 16, 20, 22, 23, 22, 20, 26, 29, 29, 26, 
+    36, 38, 36, 49, 49, 65
+};
+
+const static int Q5table[64] = 
+{
+    4, 4, 4, 4, 
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
+    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8, 
+    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14, 
+    20, 21, 20, 27, 27, 36
+};
+
+static const int AC_BITS[16] = 
+{ 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 };
+
+static const int AC_HUFFVAL[256] = {
+    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
+    0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
+    0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
+    0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
+    0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16,
+    0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28,
+    0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+    0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+    0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+    0x5A, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+    0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+    0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
+    0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
+    0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+    0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6,
+    0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5,
+    0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4,
+    0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
+    0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA,
+    0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
+    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+static const int DC_BITS[16] = 
+{ 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
+
+static const int DC_HUFFVAL[256] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+    0x08, 0x09, 0x0A, 0x0B };
+
+void INGR_LoadJPEGTables( j_compress_ptr cinfo, int n, int nQLevel );
+
 
 #endif
