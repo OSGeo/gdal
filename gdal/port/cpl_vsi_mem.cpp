@@ -529,6 +529,8 @@ int VSIMemFilesystemHandler::Rmdir( const char * pszPathname )
 char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
 
 {
+    // TODO: mloskot - Should we set errno to NOENT here?
+
     return NULL;
 }
 
