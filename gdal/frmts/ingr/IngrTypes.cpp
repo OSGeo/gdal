@@ -25,65 +25,42 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log: $
- *
- */
+ *****************************************************************************/
 
 #include "IngrTypes.h"
-#include "aigrid.h"
 
 // ------------------------------------------------------------------------
-//                                                   GetDataTypeForFormat()
+//                                                   INGR_GetDataType()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get the Data appropieted for a given Raster Data Type Code.
- *
- * Data Type Code ( DTC )
- * Intergraph Raster File Formats, pg. 26
- *
- * @param eCode Data Type Code.
- * @return the correspondent GDALDataType.
- */
-const GDALDataType CPL_STDCALL GetDataTypeForFormat( uint16 eCode )
+const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 {
     unsigned int i;
 
-    for( i = 0; i < FORMAT_TYPE_COUNT; i++ )
+    for( i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
-		if( eCode == ahIngrFormatTypeTab[i].eFormatCode )
+		if( eCode == INGR_FormatTable[i].eFormatCode )
         {
-            return ahIngrFormatTypeTab[i].eDataType;
+            return INGR_FormatTable[i].eDataType;
         }
     }
 
-    return GDT_Byte;
+    return GDT_Unknown;
 }
 
 // ------------------------------------------------------------------------
-//                                                  GetFormatNameFromCode()
+//                                                  INGR_GetFormatName()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get Intergraph Raster Data Type Name from a given code
- *
- * Data Type Code ( DTC )
- * Intergraph Raster File Formats, pg. 26
- *
- * @param eCode Data Type Code.
- * @return string with the name of a data type.
- */
-const char * CPL_STDCALL GetFormatNameFromCode( uint16 eCode )
+const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
 {
     unsigned int i;
 
-    for( i = 0; i < FORMAT_TYPE_COUNT; i++ )
+    for( i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
-        if( eCode == ahIngrFormatTypeTab[i].eFormatCode )
+        if( eCode == INGR_FormatTable[i].eFormatCode )
         {
-            return CPLStrdup( ahIngrFormatTypeTab[i].pszName );
+            return CPLStrdup( INGR_FormatTable[i].pszName );
         }
     }
 
@@ -92,19 +69,10 @@ const char * CPL_STDCALL GetFormatNameFromCode( uint16 eCode )
 
 
 // ------------------------------------------------------------------------
-//                                                  GetFormatCodeFromName()
+//                                                  INGR_GetFormat()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get Intergraph Raster Data Type Code from a given name
- *
- * Data Type Code ( DTC )
- * Intergraph Raster File Formats, pg. 26
- *
- * @param eCode Data Type Code.
- * @return string with the name of a data type.
- */
-const IngrFormatType GetFormatCodeFromName( GDALDataType eType, const char *pszCompression )
+const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, const char *pszCompression )
 {
     if( EQUAL( pszCompression, "None" ) ||
         EQUAL( pszCompression, "" ) )
@@ -124,11 +92,11 @@ const IngrFormatType GetFormatCodeFromName( GDALDataType eType, const char *pszC
 
     unsigned int i;
 
-    for( i = 0; i < FORMAT_TYPE_COUNT; i++ )
+    for( i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
-        if( EQUAL( pszCompression, ahIngrFormatTypeTab[i].pszName ) )
+        if( EQUAL( pszCompression, INGR_FormatTable[i].pszName ) )
         {
-            return ahIngrFormatTypeTab[i].eFormatCode;
+            return INGR_FormatTable[i].eFormatCode;
         }
     }
 
@@ -136,19 +104,10 @@ const IngrFormatType GetFormatCodeFromName( GDALDataType eType, const char *pszC
 }
 
 // ------------------------------------------------------------------------
-//                                                      GetTransforMatrix()
+//                                                      INGR_GetTransMatrix()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get the Homogeneous Transformation Matrix ( TRN )
- *
- * Homogeneous Transformation Matrix ( TRN )
- * Intergraph Raster File Formats, pg. 29
- *
- * @param pHeaderOne pointer to Raster Header One.
- * @param padfGeoTransform an output GDAL GeoTransformation pointer.
- */
-void CPL_STDCALL GetTransforMatrix( real64 *padfMatrix, double *padfGeoTransform )
+void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 {
     padfGeoTransform[0] = padfMatrix[3];
     padfGeoTransform[1] = padfMatrix[0];
@@ -162,21 +121,18 @@ void CPL_STDCALL GetTransforMatrix( real64 *padfMatrix, double *padfGeoTransform
     padfGeoTransform[5] *= -1;
 }
 
-/**
- * \brief Set the Homogeneous Transformation Matrix ( TRN )
- *
- * Homogeneous Transformation Matrix ( TRN )
- * Intergraph Raster File Formats, pg. 29
- *
- * @param pHeaderOne pointer to Raster Header One.
- * @param padfGeoTransform an output GDAL GeoTransformation pointer.
- */
-void CPL_STDCALL SetTransforMatrix( real64 *padfMatrix, double *padfGeoTransform )
+// ------------------------------------------------------------------------
+//                                                      INGR_SetTransMatrix()
+// ------------------------------------------------------------------------
+
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, 
+                                    double *padfGeoTransform )
 {
     for( int i = 0; i < 15; i++ )
     {
         padfMatrix[i] = 0.0;
     }
+
     padfMatrix[15] = 1.0;
 
     padfMatrix[3] = padfGeoTransform[0];
@@ -191,17 +147,12 @@ void CPL_STDCALL SetTransforMatrix( real64 *padfMatrix, double *padfGeoTransform
     padfMatrix[7] -= ( padfMatrix[5] / 2 );
 }
 
-/**
- * \brief Set IGDS Color Table
- *
- * IGDS Color Table
- * Intergraph Raster File Formats, pg. 38
- * 
- * @param poColorTable the GDAL Color Table.
- * @param pColorTableIGDS the IGDS Color Table.
- */
-uint32 CPL_STDCALL SetIGDSColorTable( GDALColorTable *poColorTable,
-                                   IngrColorTable *pColorTableIGDS )
+// ------------------------------------------------------------------------
+//                                                      INGR_SetIGDSColors()
+// ------------------------------------------------------------------------
+
+uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
+                                      INGR_ColorTable256 *pColorTableIGDS )
 {
     GDALColorEntry oEntry;
     int i;
@@ -209,58 +160,39 @@ uint32 CPL_STDCALL SetIGDSColorTable( GDALColorTable *poColorTable,
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
     {
         poColorTable->GetColorEntryAsRGB( i, &oEntry );
-        pColorTableIGDS->Entry->v_red    = ( uint8 ) oEntry.c1;
-        pColorTableIGDS->Entry->v_green  = ( uint8 ) oEntry.c2;
-        pColorTableIGDS->Entry->v_blue   = ( uint8 ) oEntry.c3;
+        pColorTableIGDS->Entry->v_red   = (uint8) oEntry.c1;
+        pColorTableIGDS->Entry->v_green = (uint8) oEntry.c2;
+        pColorTableIGDS->Entry->v_blue  = (uint8) oEntry.c3;
     }
 
     return i;
 }
 
 // ------------------------------------------------------------------------
-//                                                      GetIGDSColorTable()
+//                                                      INGR_GetIGDSColors()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get IGDS Color Table
- *
- * IGDS Color Table
- * Intergraph Raster File Formats, pg. 38
- * 
- * @param poColorTable the GDAL Color Table.
- * @param pColorTableIGDS the IGDS Color Table.
- */
-void CPL_STDCALL GetIGDSColorTable( GDALColorTable *poColorTable,
-                                   IngrColorTable *pColorTableIGDS )
+void CPL_STDCALL INGR_GetIGDSColors( GDALColorTable *poColorTable,
+                                    INGR_ColorTable256 *pColorTableIGDS )
 {
     GDALColorEntry oEntry;
     int i;
 
     for( i = 0; i < 256; i++ )
     {
-        oEntry.c1 = ( GByte ) pColorTableIGDS->Entry->v_red;
-        oEntry.c2 = ( GByte ) pColorTableIGDS->Entry->v_green;
-        oEntry.c2 = ( GByte ) pColorTableIGDS->Entry->v_blue;
+        oEntry.c1 = (short) pColorTableIGDS->Entry->v_red;
+        oEntry.c2 = (short) pColorTableIGDS->Entry->v_green;
+        oEntry.c2 = (short) pColorTableIGDS->Entry->v_blue;
         poColorTable->SetColorEntry( i, &oEntry );
     }
 }
 
 // ------------------------------------------------------------------------
-//                                                      SetIGDSColorTable()
+//                                                   INGR_SetEnvironColors()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Set Environ-V Color Tables
- *
- * Environ-V Color Tables
- * Intergraph Raster File Formats, pg. 38
- * 
- * @param poColorTable the GDAL Color Table.
- * @param pHeaderThree the continuation of the color table
- * @return the number os color index.
- */
-uint32 CPL_STDCALL SetEnvironColorTable( GDALColorTable *poColorTable,
-                                      IngrEnvVTable *pEnvironTable )
+uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
+                                         INGR_ColorTableVar *pEnvironTable )
 {
     GDALColorEntry oEntry;
     real32 fNormFactor = 0xfff / 255;
@@ -269,42 +201,31 @@ uint32 CPL_STDCALL SetEnvironColorTable( GDALColorTable *poColorTable,
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
     {
         poColorTable->GetColorEntryAsRGB( i, &oEntry );
-        pEnvironTable->Entry->v_slot   = ( uint16 ) i;
-        pEnvironTable->Entry->v_red    = ( uint16 ) ( oEntry.c1 * fNormFactor );
-        pEnvironTable->Entry->v_green  = ( uint16 ) ( oEntry.c2 * fNormFactor );
-        pEnvironTable->Entry->v_blue   = ( uint16 ) ( oEntry.c3 * fNormFactor );
+        pEnvironTable->Entry->v_slot  = (uint16) i;
+        pEnvironTable->Entry->v_red   = (uint16) ( oEntry.c1 * fNormFactor );
+        pEnvironTable->Entry->v_green = (uint16) ( oEntry.c2 * fNormFactor );
+        pEnvironTable->Entry->v_blue  = (uint16) ( oEntry.c3 * fNormFactor );
     }
 
     return i;
 }
 
 // ------------------------------------------------------------------------
-//                                                   GetEnvironColorTable()
+//                                                 INGR_GetEnvironVColors()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get Environ-V Color Tables
- *
- * Environ-V Color Tables
- * Intergraph Raster File Formats, pg. 38
- * 
- * @param nColorsCount the number of color index.
- * @param poColorTable the GDAL Color Table.
- * @param pHeaderThree the continuation of the color table
- */
-void CPL_STDCALL GetEnvironColorTable( GDALColorTable *poColorTable,
-                                      IngrEnvVTable *pEnvironTable,
-                                      uint32 nColorsCount )
+void CPL_STDCALL INGR_GetEnvironVColors( GDALColorTable *poColorTable,
+                                       INGR_ColorTableVar *pEnvironTable,
+                                       uint32 nColorsCount )
 {
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
     // Sort records by crescent order of "slot" 
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
 
     vlt_slot hSwapSlot;
-    bool bContinue = true; /* inprove bubble sort performance */
-
-    uint32 i;
-    uint32 j;
+    bool bContinue = true; // Inproved bubble sort.
+    uint32 i;              // This is the best sort techique when you
+    uint32 j;              // suspect that the data is already sorted
 
     for( j = 1; j < nColorsCount && bContinue; j++ )
     {
@@ -322,9 +243,9 @@ void CPL_STDCALL GetEnvironColorTable( GDALColorTable *poColorTable,
         }
     }
 
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
     // Get Maximum Intensity and Index Values
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
 
     uint32 nMaxIndex    = 0;
     real32 fMaxRed      = 0.0;
@@ -343,9 +264,9 @@ void CPL_STDCALL GetEnvironColorTable( GDALColorTable *poColorTable,
             fMaxBlues = pEnvironTable->Entry[i].v_blue;
     }
 
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
     // Calculate Normalization Factor
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
 
     real32 fNormFactor  = 0.0;
 
@@ -353,26 +274,26 @@ void CPL_STDCALL GetEnvironColorTable( GDALColorTable *poColorTable,
     fNormFactor  = ( fNormFactor > fMaxBlues ? fNormFactor : fMaxBlues );
     fNormFactor  = 256 / fNormFactor;
 
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
     // Loads GDAL Color Table ( filling the wholes )
-    // -------------------------------------------------------------------- 
+    // -------------------------------------------------------------
 
     GDALColorEntry oEntry;
     GDALColorEntry oNullEntry;
 
-    oNullEntry.c1 = ( GByte ) 0;
-    oNullEntry.c2 = ( GByte ) 0;
-    oNullEntry.c3 = ( GByte ) 0;
-    oNullEntry.c4 = ( GByte ) 255;
+    oNullEntry.c1 = (short) 0;
+    oNullEntry.c2 = (short) 0;
+    oNullEntry.c3 = (short) 0;
+    oNullEntry.c4 = (short) 255;
 
     for( i = 0, j = 0; i <= nMaxIndex; i++ )
     {
         if( pEnvironTable->Entry[j].v_slot == i )
         {
-            oEntry.c1 = ( GByte ) ( pEnvironTable->Entry[j].v_red   * fNormFactor );
-            oEntry.c2 = ( GByte ) ( pEnvironTable->Entry[j].v_green * fNormFactor );
-            oEntry.c3 = ( GByte ) ( pEnvironTable->Entry[j].v_blue  * fNormFactor );
-            oEntry.c4 = ( GByte ) 255;
+            oEntry.c1 = (short) ( pEnvironTable->Entry[j].v_red   * fNormFactor );
+            oEntry.c2 = (short) ( pEnvironTable->Entry[j].v_green * fNormFactor );
+            oEntry.c3 = (short) ( pEnvironTable->Entry[j].v_blue  * fNormFactor );
+            oEntry.c4 = (short) 255;
             poColorTable->SetColorEntry( i, &oEntry );
             j++;
         }
@@ -387,221 +308,398 @@ void CPL_STDCALL GetEnvironColorTable( GDALColorTable *poColorTable,
 //                                                              SetMiniMax()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Set Minimum or Maximum
- *
- * Minimum Value ( MN1, MN2, MN4, MNR, MN8 )
- * Minimum Value ( MX1, MX2, MX4, MXR, MX8 )
- * Intergraph Raster File Formats, pg. 36
- * 
- * @param eType Gdal Data type
- * @param dValue new value
- * @return IngrMinMax the minimum or maximum value union
- */
-IngrMinMax CPL_STDCALL SetMinMax( GDALDataType eType, double dValue )
+INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
 {
-    IngrMinMax uResult;
+    INGR_MinMax uResult;
 
     switch ( eType )
     {
     case GDT_Byte:
-        uResult.AsUint8   = ( uint8 ) dValue;
+        uResult.AsUint8   = (uint8) dValue;
         break;
     case GDT_Int16:
-        uResult.AsUint16  = ( int16 ) dValue;
+        uResult.AsUint16  = (int16) dValue;
         break;
     case GDT_UInt16:
-        uResult.AsUint16  = ( uint16 ) dValue;
+        uResult.AsUint16  = (uint16) dValue;
         break;
     case GDT_Int32:
-        uResult.AsUint32  = ( int32 ) dValue;
+        uResult.AsUint32  = (int32) dValue;
         break;
     case GDT_UInt32:
-        uResult.AsUint32  = ( uint32 ) dValue;
+        uResult.AsUint32  = (uint32) dValue;
         break;
     case GDT_Float32:
-        uResult.AsReal32  = ( real32 ) dValue;
+        uResult.AsReal32  = (real32) dValue;
         break;
     case GDT_Float64:
-        uResult.AsReal64  = ( real64 ) dValue;
+        uResult.AsReal64  = (real64) dValue;
+    default:
+        uResult.AsUint8   = (uint8) 0;
     }
 
     return uResult;
 }
 
 // ------------------------------------------------------------------------
-//                                                              GetMinMax()
+//                                                              INGR_GetMinMax()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get Minimum or Maximum
- *
- * Minimum Value ( MN1, MN2, MN4, MNR, MN8 )
- * Minimum Value ( MX1, MX2, MX4, MXR, MX8 )
- * Intergraph Raster File Formats, pg. 36
- * 
- * @param eType Gdal Data type
- * @param dValue IngrMinMin new value
- * @return double minimum or maximum
- */
-double CPL_STDCALL GetMinMax( GDALDataType eType, IngrMinMax hValue )
+double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
 {
     switch ( eType )
     {
-    case GDT_Byte:    return ( double ) hValue.AsUint8;
-    case GDT_Int16:   return ( double ) hValue.AsUint16;
-    case GDT_UInt16:  return ( double ) hValue.AsUint16;
-    case GDT_Int32:   return ( double ) hValue.AsUint32;
-    case GDT_UInt32:  return ( double ) hValue.AsUint32;
-    case GDT_Float32: return ( double ) hValue.AsReal32;
-    case GDT_Float64: return ( double ) hValue.AsReal64;
-    default:          return ( double ) 0.0;
+    case GDT_Byte:    return (double) hValue.AsUint8;
+    case GDT_Int16:   return (double) hValue.AsUint16;
+    case GDT_UInt16:  return (double) hValue.AsUint16;
+    case GDT_Int32:   return (double) hValue.AsUint32;
+    case GDT_UInt32:  return (double) hValue.AsUint32;
+    case GDT_Float32: return (double) hValue.AsReal32;
+    case GDT_Float64: return (double) hValue.AsReal64;
+    default:          return (double) 0.0;
     }
 }
 
 // ------------------------------------------------------------------------
-//                                                     GetOrientationName()
+//                                                 DecodeRunLengthEncoded()
 // ------------------------------------------------------------------------
 
-/**
- * \brief Get Origin Orientation
- *
- * Origin Orientation ( SLO )
- * Intergraph Raster File Formats, pg. 32
- * 
- * @param eCode Origin Orientation type
- * @return string name of Orientation
- */
-const char *GetOrientationName( uint8 eType )
+CPLErr DecodeRunLengthEncoded( GByte *pabySrcData, int nSrcBytes, 
+                               int nBlockXSize, int nBlockYSize )
 {
-    switch ( eType )
-    {
-    case UpperLeftHorizontal:       return CPLStrdup( "Upper Left Horizontal" );
-    case UpperLeftVertical:         return CPLStrdup( "Upper Left Vertical" );
-    case UpperRightHorizontal:      return CPLStrdup( "Upper Right Horizontal" );
-    case UpperRightVertical:        return CPLStrdup( "Upper Right Vertical" );
-    case LowerLeftHorizontal:       return CPLStrdup( "Lower Left Horizontal" );
-    case LowerLeftVertical:         return CPLStrdup( "Lower Left Vertical" );
-    case LowerRightHorizontal:      return CPLStrdup( "Lower Right Horizontal" );
-    case LowerRightVertical:        return CPLStrdup( "Lower Right Vertical" );
-    default:                        return CPLStrdup( "Not Identified" );
-    }
-}
+/*
+Type 9: Run Length Encoded
 
-// ------------------------------------------------------------------------
-//                                                 GetApplicationTypeName()
-// ------------------------------------------------------------------------
+    The type 9 format compresses bi-level raster data. Each 16 bit unsigned
+    word stores the number of pixels with an identical level.
 
-/**
- * \brief Get Application Type Name
- *
- * Application Type Code ( UTC )
- * Intergraph Raster File Formats, pg. 27
- * 
- * @param eCode Origin Orientation type
- * @return string name of Application Type
- */
-const char *GetApplicationTypeName( uint8 eType )
-{
-    switch ( eType )
-    {
-    case 0: return CPLStrdup( "\"Generic\" Raster Image File" );
-    case 1: return CPLStrdup( "Digital Terrain Modeling" );
-    case 2: return CPLStrdup( "Grid Data Utilities" );
-    case 3: return CPLStrdup( "Drawing Scanning" );
-    case 4: return CPLStrdup( "Image Processing" );
-    case 5: return CPLStrdup( "Hidden Surfaces" );
-    case 6: return CPLStrdup( "Imagitex Scanner Product" );
-    case 7: return CPLStrdup( "Screen Copy Plotting" );
-    case 8: return CPLStrdup( "I/IMAGE and MicroStation Imager" );
-    case 9: return CPLStrdup( "ModelView" );
-    }
-}
+    This format consists of a series of on and off runs. Each line starts with an
+    "OFF" run (background level) followed by an "ON" run (foreground level).
+    This OFF/ON pattern repeats until the end of the line and a new line starts.
+    This continues until the end of the file. Each line ends with an "OFF" run.
+    A zero length "OFF" run is placed at the end of a line if necessary. Zero
+    length runs are valid runs any where in the file. Runs are always less than
+    65536 pixels in length. It is strongly recommended that applications cut the
+    run at 32767 pixels for consistency with the majority of applications.
 
-// ------------------------------------------------------------------------
-//                                                     DecodePackedBinary()
-// ------------------------------------------------------------------------
+    Data stored in this format is generally referred to as run length, RLE or
+    type 9 data. The most popular file extension is ".RLE".
 
-/**
- * \brief Decode Packed Binary Block
- *
- * 
- * @param GByte* pabyCur - pointer to raw buffer
- * @param int nDataSize - size of the block
- * @param int nBlockXSize - size of the block in X
- * @param int nBlockYSize - size of the block in Y
- * @param GInt32* panData - data pointer
- * @return CPLErr error code
- */
-CPLErr DecodePackedBinary( GByte *pabyDst, 
-                           int nDataSize, 
-                           int nBlockXSize, 
-                           int nBlockYSize,
-                           GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
-    CPLError( CE_Failure, CPLE_FileIO, "DecodePackedBinary not implemented yet");
-    return CE_Failure;
-}
-
-CPLErr DecodeRunLengthEncoded( GByte *pabyDst, 
-                               int nDataSize, 
-                               int nBlockXSize, 
-                               int nBlockYSize,
-                               GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
+    A large number of files exist in this format throughout the Intergraph
+    installed customer base. It has been primarily the storage format for bilevel
+    image data. It is not as efficient as CCITT-Group IV compression.
+    This format should be read by all applications, and only written when
+    specifically required. The preferred storage format is type 24 or type
+    65/24.
+*/
     CPLError( CE_Failure, CPLE_FileIO, "DecodeRunLengthEncoded not implemented yet");
-    return CE_Failure;
-}
-CPLErr DecodeCCITTGroup4( GByte *pabyDst, 
-                          int nDataSize, 
-                          int nBlockXSize, 
-                          int nBlockYSize,
-                          GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeCCITTGroup4 not implemented yet");
-    return CE_Failure;
-}
-CPLErr DecodeAdaptiveRGB( GByte *pabyDst, 
-                          int nDataSize, 
-                          int nBlockXSize, 
-                          int nBlockYSize,
-                          GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeAdaptiveRGB not implemented yet");
-    return CE_Failure;
-}
-CPLErr DecodeAdaptiveGrayScale( GByte *pabyDst, 
-                                int nDataSize, 
-                                int nBlockXSize, 
-                                int nBlockYSize,
-                                GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeAdaptiveGrayScale not implemented yet");
-    return CE_Failure;
-}
-CPLErr DecodeContinuousTone( GByte *pabyDst, 
-                             int nDataSize, 
-                             int nBlockXSize, 
-                             int nBlockYSize,
-                             GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeContinuousTone not implemented yet");
-    return CE_Failure;
-}
-CPLErr DecodeJPEG( GByte *pabyDst, 
-                   int nDataSize, 
-                   int nBlockXSize, 
-                   int nBlockYSize,
-                   GByte *pabySrc )
-{
-    memcpy( pabyDst, 0, nDataSize );
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeJPEG not implemented yet");
-    return CE_Failure;
+    return CE_Fatal;
 }
 
+/*
+ Type 27: Compressed RGB
+
+    Type 27 format is a compressed RGB format for 24-bit color data. A file
+    of this format can contain both run length encoded data and unencoded
+    data for separate red, green, and blue components.
+    The RGB data is band interleaved by line. Each line of RGB data is stored
+    as a line of red data, followed by a line of green data and a line of blue
+    data. The end of line is reached when the appropriate number of pixels
+    have been represented.
+
+    Each line of raster data is composed of one or more atoms. An atom is a
+    string of bytes consisting of an atom head and an atom tail. The first byte,
+    or the atom head, is a signed value that determines the size and format of
+    the remaining byte(s), the atom tail. If the atom is positive (1 to 127), then
+    the atom tail contains that number of bytes. These bytes are to be
+    interpreted as a string of individual intensity values. If the atom head is
+    negative (-1 to -128), then it signifies a constant shade run length. In this
+    case, the absolute value of the atom head is the length of the run, and the
+    atom tail is a single byte that specifies the intensity of the run. Atom head
+    values of zero are ignored, and the atom is skipped.
+    
+    The tiled version of this format is the recommended method of storing 24
+    bit data color raster data. It is strongly suggested that this format be used
+    by all new applications.
+*/
+
+// ------------------------------------------------------------------------
+// Copied from ..\frmts\aigrid\aigccitt.c               DecodeCCITTGroup4()
+// ------------------------------------------------------------------------
+
+CPLErr DecodeCCITTGroup4( GByte *pabyCur, int nDataSize, int nMin,
+                          int nBlockXSize, int nBlockYSize,
+                          GByte *panData )
+{
+    CPLError( CE_Failure, CPLE_FileIO, "DecodeCCITTGroup4 not implemented yet");
+    return CE_None;
+}
+
+// ------------------------------------------------------------------------
+//                                                      DecodeAdaptiveRGB()
+// ------------------------------------------------------------------------
+
+CPLErr DecodeAdaptiveRGB( GByte *pabySrcData, int nSrcBytes, 
+                          int nBlockXSize, int nBlockYSize )
+{
+    CPLError( CE_Failure, CPLE_FileIO, "DecodeAdaptiveRGB not implemented yet");
+    return CE_Fatal;
+}
+
+// ------------------------------------------------------------------------
+//                                                DecodeAdaptiveGrayScale()
+// ------------------------------------------------------------------------
+
+CPLErr DecodeAdaptiveGrayScale( GByte *pabySrcData, int nSrcBytes, 
+                                int nBlockXSize, int nBlockYSize )
+{
+    CPLError( CE_Failure, CPLE_FileIO, "DecodeAdaptiveGrayScale not implemented yet");
+    return CE_Fatal;
+}
+
+// ------------------------------------------------------------------------
+//                                                   DecodeContinuousTone()
+// ------------------------------------------------------------------------
+
+CPLErr DecodeContinuousTone( GByte *pabySrcData, int nSrcBytes, 
+                             int nBlockXSize, int nBlockYSize )
+{
+    CPLError( CE_Failure, CPLE_FileIO, "DecodeContinuousTone not implemented yet");
+    return CE_Fatal;
+}
+
+// ------------------------------------------------------------------------
+//                                                             DecodeJPEG()
+// ------------------------------------------------------------------------
+
+CPLErr DecodeJPEG( GByte *pabySrcData, int nSrcBytes, 
+                   int nBlockXSize, int nBlockYSize )
+{
+    CPLError( CE_Failure, CPLE_FileIO, "DecodeJPEG not implemented yet");
+    return CE_Fatal;
+}
+
+/*
+Type 29: Compressed 8 Bit
+
+    The type 29 format is a compressed 8 bit data format that combines a run
+    length encoding technique with straight byte per pixel format. This format
+    is the 8 bit counterpart to the 24 bit compressed RGB format (type 27).
+
+    Each line of raster data is composed of one or more atoms. An atom is a
+    string of bytes consisting of an atom head and an atom tail. The first byte,
+    or the atom head, is a signed value that determines the size and format of
+    the remaining byte(s), the atom tail. If the atom is positive (1 to 127), then
+    the atom tail contains that number of bytes. These bytes are to be
+    interpreted as a string of individual intensity values. If the atom head is
+    negative (-1 to -128), then it signifies a constant intensity run length. In
+    this case, the absolute value of the atom head is the length of the run, and
+    the atom tail is a single byte that specifies the intensity of the run. Atom
+    heads of zero are ignored and the atom is skipped.
+
+    The tiled version of this format is the recommended method of storing 8 bit
+    raster data. It is strongly suggested that this format be used by all new
+    applications.
+*/
+/*
+Type 67: Continuous Tone CMYK
+
+    Type 67 files are used to store continuous tone CMYK images. These
+    images are representative of images used in the lithographic printing
+    process. Each color ink used in the printing process is represented by an
+    intensity in the image file. The three subtractive primaries of Cyan,
+    Magenta and Yellow, and a fourth printing ink in Black are used in this
+    image format. Each pixel in the file is represented as a set of eight bit
+    values corresponding to these four colors.
+
+    In the Type 67 file, an eight bit value of zero represents 100% ink
+    coverage, and a value of 255 represents 0% ink. Even though this is a
+    continuous tone format, it includes a facility for run length encoding to
+    allow large contiguous areas of solid color to be represented compactly.
+
+    Each row is made up of a line of cyan atoms, followed by a line of magenta
+    atoms, followed by a line of yellow, and finally black. Atoms are composed
+    of a string of bytes which represent a run length. The first byte of the atom
+    is the atom head. The atom head determines the length of the atom tail.
+
+    If the atom head positive, then that number of bytes follow the atom head
+    and the bytes are individual pixel values.
+
+    A negative atom head indicates that the next bytes represent a string of
+    pixels that are all the same intensity. The absolute value of the head is the
+    length of the run, The single unsigned byte value immediately following the
+    atom head is the value of the run.
+
+    When the number of pixels per row are represented for each color, the
+    current line is terminated. Note that an atom head with a zero value is
+    meaningless.
+*/
+ /*
+Type 30, 31 and 32: JPEG
+
+    JPEG is a compression technique defined by the "Joint Photographic
+    Experts Group," that is used primarily for full color, pictorial images. It
+    uses a block by block conversion to frequency space, and stores a discrete
+    cosine series representation of the frequency space. Compression is
+    achieved by defining the number of terms to retain in the cosine series. The
+    image is converted (if necessary) into HSI color space, and then
+    compressed. The Hue and Saturation images can be greatly compressed
+    without loosing pictorial quality. This is the only "lossy" compression
+    technique Intergraph supports.
+
+    Type 30 is JPEG compressed greyscale imagery with eight bits per pixel in
+    the original image. By default, no color table association exists for this
+    type of data. Type 31 is JPEG compressed RGB data, 24 bit color raster
+    images, and type 32 is JPEG compressed CYMK, four band imagery.
+
+    As the JPEG formats contain a private application packet that contains
+    critical information necessary to decode the JPEG data, contact the
+    Intergraph Raster Review Board Chairman at the address in the beginning
+    of this document for information about this application packet.
+
+    Tiled JPEG files must have "full" tiles for proper compression and
+    decompression without image anomalies. Tiles should be padded with the
+    last pixel value in each line to give the least distortion.
+*/
+
+/*
+        unsigned int nBitsCount = nBufferRead * 8;
+
+        GByte *pabyBitAsByte = (GByte*) CPLMalloc( nBitsCount );
+
+        for( unsigned int i = 0; i < nBitsCount; i++ )
+        {
+            if( (pabyIntermediate[i>>3] & (1 << (i & 0x7))) )
+                pabyBitAsByte[i] = 1;
+            else
+                pabyBitAsByte[i] = 0;
+        }
+                
+        for( unsigned int i = 0; i < ( nBitsCount - 24 ); i++ )
+        {
+            if( pabyBitAsByte[i]    == 0 &&
+                pabyBitAsByte[i+1]  == 0 &&
+                pabyBitAsByte[i+2]  == 0 && 
+                pabyBitAsByte[i+3]  == 0 && 
+                pabyBitAsByte[i+4]  == 0 && 
+                pabyBitAsByte[i+5]  == 0 &&
+                pabyBitAsByte[i+6]  == 0 &&
+                pabyBitAsByte[i+7]  == 0 &&
+                pabyBitAsByte[i+8]  == 0 &&
+                pabyBitAsByte[i+9]  == 0 &&
+                pabyBitAsByte[i+10] == 0 &&
+                pabyBitAsByte[i+11] == 1 &&
+                pabyBitAsByte[i+12] == 0 &&
+                pabyBitAsByte[i+13] == 0 &&
+                pabyBitAsByte[i+14] == 0 &&
+                pabyBitAsByte[i+15] == 0 &&
+                pabyBitAsByte[i+16] == 0 &&
+                pabyBitAsByte[i+17] == 0 &&
+                pabyBitAsByte[i+18] == 0 &&
+                pabyBitAsByte[i+19] == 0 &&
+                pabyBitAsByte[i+20] == 0 &&
+                pabyBitAsByte[i+21] == 0 &&
+                pabyBitAsByte[i+22] == 0 &&
+                pabyBitAsByte[i+23] == 1 )
+            {
+                this->nBytesRead = nBufferRead;
+                break;
+            }
+        }
+
+        CPLFree( pabyBitAsByte );
+*/
+
+
+//  ----------------------------------------------------------------------------
+//                                                      INGR_LoadJPEGTables()
+//  ----------------------------------------------------------------------------
+
+void INGR_LoadJPEGTables( j_compress_ptr cinfo, int n, int nQLevel )
+{
+    if( nQLevel < 1 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Load quantization table						                    */
+/* -------------------------------------------------------------------- */
+    int i;
+    JQUANT_TBL  *quant_ptr;
+    const int *panQTable;
+
+    if( nQLevel == 1 )
+        panQTable = Q1table;
+    else if( nQLevel == 2 )
+        panQTable = Q2table;
+    else if( nQLevel == 3 )
+        panQTable = Q3table;
+    else if( nQLevel == 4 )
+        panQTable = Q4table;
+    else if( nQLevel == 5 )
+        panQTable = Q5table;
+    else
+        return;
+
+    if (cinfo->quant_tbl_ptrs[n] == NULL)
+    {
+        cinfo->quant_tbl_ptrs[n] = 
+            jpeg_alloc_quant_table( (j_common_ptr) cinfo );
+    }
+
+    quant_ptr = cinfo->quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
+
+    for (i = 0; i < 64; i++) 
+    {
+        /* Qtable[] is desired quantization table, in natural array order */
+        quant_ptr->quantval[i] = panQTable[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load AC huffman table.                                          */
+/* -------------------------------------------------------------------- */
+    JHUFF_TBL  *huff_ptr;
+
+    if (cinfo->ac_huff_tbl_ptrs[n] == NULL)
+    {
+        cinfo->ac_huff_tbl_ptrs[n] =
+            jpeg_alloc_huff_table( (j_common_ptr) cinfo );
+    }
+
+    huff_ptr = cinfo->ac_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
+
+    for (i = 1; i <= 16; i++) 
+    {
+        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+        huff_ptr->bits[i] = AC_BITS[i-1];
+    }
+
+    for (i = 0; i < 256; i++) 
+    {
+        /* symbols[] is the list of Huffman symbols, in code-length order */
+        huff_ptr->huffval[i] = AC_HUFFVAL[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load DC huffman table.                                          */
+/* -------------------------------------------------------------------- */
+    if (cinfo->dc_huff_tbl_ptrs[n] == NULL)
+    {
+        cinfo->dc_huff_tbl_ptrs[n] =
+            jpeg_alloc_huff_table( (j_common_ptr) cinfo );
+    }
+
+    huff_ptr = cinfo->dc_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
+
+    for (i = 1; i <= 16; i++) 
+    {
+        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+        huff_ptr->bits[i] = DC_BITS[i-1];
+    }
+
+    for (i = 0; i < 256; i++) 
+    {
+        /* symbols[] is the list of Huffman symbols, in code-length order */
+        huff_ptr->huffval[i] = DC_HUFFVAL[i];
+    }
+
+}

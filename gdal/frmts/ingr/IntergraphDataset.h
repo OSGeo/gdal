@@ -25,19 +25,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log: $
- *
- */
-
-//TODO: Depending on the Origin Orientation I need to re shape the Transformation Matrix
-//TODO: Version 1 and maybe 2 need to swap VAX to IEEE. Call the ogr\dgn function
-//TODO: Find or create some multi-band file to test it
-//TODO: Support reading compressed formats
-//TODO: Check page 64 for more details about the color of un-instantiated tiles
-//TODO: Search for more "//TODO:"s on the rest of the code on \frmts\ingr
-//TODO: Test it on Linux
+ *****************************************************************************/
 
 #include "IngrTypes.h"
 
@@ -48,14 +36,17 @@
 class IntergraphDataset : public GDALPamDataset
 {
     friend class IntergraphRasterBand;
+    friend class IntergraphRGBBand;
+    friend class IntergraphBitmapBand;
+    friend class IntergraphJPEGBand;
 
 private:
     FILE           *fp;
     char           *pszFilename;
     double          adfGeoTransform[6];
 
-    IngrHeaderOne   hHeaderOne;
-    IngrHeaderTwoA  hHeaderTwo;
+    INGR_HeaderOne   hHeaderOne;
+    INGR_HeaderTwoA  hHeaderTwo;
 
 public:
     IntergraphDataset();
