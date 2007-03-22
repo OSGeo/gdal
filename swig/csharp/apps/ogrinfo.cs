@@ -150,9 +150,21 @@ class OGRInfo {
 			Console.WriteLine( "  Style = " + feat.GetStyleString() );
     
 		Geometry geom = feat.GetGeometryRef();
-		if( geom != null )
+		if( geom != null ) 
+		{
 			Console.WriteLine( "  " + geom.GetGeometryName() + 
 				"(" + geom.GetGeometryType() + ")" );
+			Geometry sub_geom;
+			for (int i = 0; i < geom.GetGeometryCount(); i++)
+			{
+				sub_geom = geom.GetGeometryRef(i);
+				if ( sub_geom != null )
+				{
+					Console.WriteLine( "  subgeom" + i + ": " + sub_geom.GetGeometryName() + 
+						"(" + sub_geom.GetGeometryType() + ")" );
+				}
+			}
+		}
 
 		Envelope env = new Envelope();
 		geom.GetEnvelope(env);
