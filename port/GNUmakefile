@@ -1,6 +1,7 @@
 #
 # CPL (Common Portability Library) makefile
 #
+
 ifneq ($(wildcard ../GDALmake.op?),)
 include ../GDALmake.opt
 else
