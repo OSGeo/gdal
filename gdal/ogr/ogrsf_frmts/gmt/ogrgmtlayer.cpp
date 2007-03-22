@@ -289,7 +289,7 @@ int OGRGmtLayer::ReadLine()
 /* -------------------------------------------------------------------- */
 /*      Clear last line.                                                */
 /* -------------------------------------------------------------------- */
-    osLine.clear();
+    osLine.erase();
     if( papszKeyedValues )
     {
         CSLDestroy( papszKeyedValues );
