@@ -31,6 +31,7 @@
 
 #include "ogr_pg.h"
 #include "ogrpgutility.h"
+#include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -266,6 +267,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         {
             GByte * pabyWkb = (GByte *)PQgetvalue( hCursorResult,
                                                    iRecord, iField);
+
+
+
             OGRGeometry * poGeom = NULL;
             OGRGeometryFactory::createFromWkb(pabyWkb,NULL,&poGeom);
             poFeature->SetGeometryDirectly( poGeom );
@@ -624,9 +628,11 @@ OGRFeature *OGRPGLayer::GetFeature( long nFeatureId )
 OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
 
 {
-    GByte       *pabyWKB;
-    int iSrc=0, iDst=0;
-    OGRGeometry *poGeometry;
+    GByte   *pabyWKB = NULL;
+    int     iSrc=0;
+    int     iDst=0;
+    OGRGeometry *poGeometry = NULL;
+    unsigned int ewkbFlags = 0;
 
     if( pszBytea == NULL )
         return NULL;
@@ -661,6 +667,26 @@ OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
 
         iSrc++;
         iDst++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Detect XYZM variant of PostGIS EWKB                             */
+/*                                                                      */
+/*      OGR does not support parsing M coordinate,                      */
+/*      so we return NULL geometry.                                     */
+/* -------------------------------------------------------------------- */
+    memcpy(&ewkbFlags, pabyWKB+1, 4);
+    OGRwkbByteOrder eByteOrder = (pabyWKB[0] == 0 ? wkbXDR : wkbNDR);
+    if( OGR_SWAP( eByteOrder ) )
+        ewkbFlags= CPL_SWAP32(ewkbFlags);
+
+    if (ewkbFlags & 0x40000000)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Reading EWKB with 4-dimensional coordinates (XYZM) is not supported" );
+
+        CPLFree( pabyWKB );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
