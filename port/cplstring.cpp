@@ -195,7 +195,7 @@ CPLString &CPLString::Trim()
 
     if( iLeft == std::string::npos )
     {
-        clear();
+        erase();
         return *this;
     }
     
