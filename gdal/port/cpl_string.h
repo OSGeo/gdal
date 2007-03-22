@@ -197,6 +197,8 @@ public:
         return std_string::operator[](static_cast<std::string::size_type>(i));
     }
 
+    void Clear() { resize(0); }
+
     CPLString &Printf( const char *pszFormat, ... );
     CPLString &vPrintf( const char *pszFormat, va_list args );
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
