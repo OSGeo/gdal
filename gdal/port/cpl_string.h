@@ -179,22 +179,22 @@ public:
 
     char& operator[](std::string::size_type i)
     {
-        return std::string::operator[](i);
+        return std_string::operator[](i);
     }
     
     const char& operator[](std::string::size_type i) const
     {
-        return std::string::operator[](i);
+        return std_string::operator[](i);
     }
 
     char& operator[](int i)
     {
-        return std::string::operator[](static_cast<std::string::size_type>(i));
+        return std_string::operator[](static_cast<std::string::size_type>(i));
     }
 
     const char& operator[](int i) const
     {
-        return std::string::operator[](static_cast<std::string::size_type>(i));
+        return std_string::operator[](static_cast<std::string::size_type>(i));
     }
 
     CPLString &Printf( const char *pszFormat, ... );
