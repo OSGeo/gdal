@@ -1,5 +1,5 @@
 /*****************************************************************************
- * $Id: $
+ * $Id$
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Types, constants and functions definition
