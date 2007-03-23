@@ -35,14 +35,29 @@ class WKT2WKB {
 		/* -------------------------------------------------------------------- */
         Ogr.RegisterAll();
 
-        Geometry geom = new Geometry(wkbGeometryType.wkbUnknown, args[0], 0, null, null);
+        Geometry geom = Geometry.CreateFromWkt(args[0]);
         
-        int wkbSize = geom.WkbSize();
+		int wkbSize = geom.WkbSize();
         if (wkbSize > 0) 
         {
             byte[] wkb = new byte[wkbSize];
             geom.ExportToWkb( wkb );
-            Console.WriteLine( BitConverter.ToString(wkb) );
+            Console.WriteLine( "wkt-->wkb: " + BitConverter.ToString(wkb) );
+			
+			// wkb --> wkt (reverse test)
+			Geometry geom2 = Geometry.CreateFromWkb(wkb);
+			string geom_wkt;
+			geom2.ExportToWkt(out geom_wkt);
+			Console.WriteLine( "wkb->wkt: " + geom_wkt );
         }
+
+		// wkt -- gml transformation
+       string gml = geom.ExportToGML();
+       Console.WriteLine( "wkt->gml: " + gml );
+
+       Geometry geom3 = Geometry.CreateFromGML(gml);
+	   string geom_wkt2;
+	   geom3.ExportToWkt(out geom_wkt2);
+	   Console.WriteLine( "gml->wkt: " + geom_wkt2 );
 	}
 }
