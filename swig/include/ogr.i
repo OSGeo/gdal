@@ -951,7 +951,12 @@ public:
 
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
+
+#ifndef SWIGCSHARP
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+#else
+%apply (void *buffer_ptr) {char *bin_string};
+#endif
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
@@ -968,7 +973,11 @@ public:
   }
  
 %}
+#ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
+#else
+%clear void *buffer;
+#endif
 
 %feature( "kwargs" ) CreateGeometryFromWkt;
 %apply (char **ignorechange) { (char **) };
@@ -1012,7 +1021,10 @@ public:
   ~OGRGeometryShadow() {
     OGR_G_DestroyGeometry( self );
   }
-
+  
+#ifdef SWIGCSHARP
+%apply (void *buffer_ptr) {char *wkb_buf};
+#endif
   %feature("kwargs") OGRGeometryShadow;
   OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb= 0, char *wkb_buf = 0, char *gml = 0 ) {
     if (type != wkbUnknown ) {
@@ -1029,7 +1041,10 @@ public:
     }
     // throw?
     else return 0;
-  }
+  }  
+#ifdef SWIGCSHARP
+%clear void *buffer;
+#endif
 
   OGRErr ExportToWkt( char** argout ) {
     return OGR_G_ExportToWkt(self, argout);
