@@ -97,7 +97,7 @@ class CreateData {
         Feature feature = new Feature( layer.GetLayerDefn() );
         feature.SetField( "Name", "value" );
 
-        Geometry geom = new Geometry(wkbGeometryType.wkbUnknown, "POINT(47.0 19.2)", 0, null, null);
+        Geometry geom = Geometry.CreateFromWkt("POINT(47.0 19.2)");
         
         if( feature.SetGeometry( geom ) != 0 )
         {
