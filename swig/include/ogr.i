@@ -766,6 +766,62 @@ public:
     }
   }
   %clear (const char* value );
+  
+  void SetField(int id, int value) {
+    OGR_F_SetFieldInteger(self, id, value);
+  }
+  
+  void SetField(const char* name, int value) {
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in SetFieldInteger");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            OGR_F_SetFieldInteger(self, i, value);
+    }
+  }
+  
+  void SetField(int id, double value) {
+    OGR_F_SetFieldDouble(self, id, value);
+  }
+  
+  void SetField(const char* name, double value) {
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in SetFieldDouble");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            OGR_F_SetFieldDouble(self, i, value);
+    }
+  }
+  
+  void SetField( int id, int year, int month, int day,
+                             int hour, int minute, int second, 
+                             int tzflag ) {
+    OGR_F_SetFieldDateTime(self, id, year, month, day,
+                             hour, minute, second, 
+                             tzflag);
+  }
+  
+  void SetField(const char* name, int year, int month, int day,
+                             int hour, int minute, int second, 
+                             int tzflag ) {
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in SetFieldDateTime");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            OGR_F_SetFieldDateTime(self, i, year, month, day,
+                             hour, minute, second, 
+                             tzflag);
+    }
+  }
 
   /* ------------------------------------------- */  
   
