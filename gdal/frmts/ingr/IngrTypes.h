@@ -94,7 +94,6 @@ typedef union
 //    Raster Format Types
 //  ----------------------------------------------------------------------------
 
-//typedef enum : uint16 {
 typedef enum {
     PackedBinary                     = 1,   // 1 bit / pixel  
     ByteInteger                      = 2,   // 8 bits / pixel  
@@ -131,7 +130,7 @@ typedef enum {
 } INGR_Format;
 
 struct INGR_FormatDescription {
-	INGR_Format       eFormatCode;
+	uint16           eFormatCode;
 	char            *pszName;
     GDALDataType     eDataType;
 };
@@ -177,7 +176,6 @@ static INGR_FormatDescription INGR_FormatTable[] = {
 //    Raster Application Types
 //  ----------------------------------------------------------------------------
 
-//typedef enum : uint16 {
 typedef enum {
     GenericRasterImageFile           = 0, 
     DigitalTerrainModeling           = 1, 
@@ -195,7 +193,6 @@ typedef enum {
 //    Scan line orientation codes
 //  ----------------------------------------------------------------------------
 
-//typedef enum : uint8 {
 typedef enum {
     UpperLeftVertical                = 0,
     UpperRightVertical               = 1,
@@ -221,7 +218,6 @@ static char *IngrOrientation[] = {
 //    Scannable flag field codes
 //  ----------------------------------------------------------------------------
 
-//typedef enum : uint8 {
 typedef enum {
     HasLineHeader                    = 1,   
     // Every line of raster data has a 4 word 
@@ -248,7 +244,6 @@ typedef enum {
 //    Color Table Values ( CTV )
 //  ----------------------------------------------------------------------------
 
-//typedef enum : uint16 {
 typedef enum {
     NoColorTable                     = 0,
     IGDSColorTable                   = 1,
@@ -285,8 +280,8 @@ struct igds_slot
 typedef struct {
     INGR_HeaderType     HeaderType;                 
     uint16              WordsToFollow;              
-    INGR_Format         DataTypeCode;               
-    INGR_Application    ApplicationType;            
+    uint16              DataTypeCode;               
+    uint16              ApplicationType;            
     real64              XViewOrigin;                
     real64              YViewOrigin;                
     real64              ZViewOrigin;                
@@ -297,8 +292,8 @@ typedef struct {
     uint32              PixelsPerLine;              
     uint32              NumberOfLines;              
     int16               DeviceResolution;           
-    INGR_Orientation    ScanlineOrientation;        
-    INGR_IndexingMethod ScannableFlag;              
+    uint8               ScanlineOrientation;        
+    uint8               ScannableFlag;              
     real64              RotationAngle;              
     real64              SkewAngle;                  
     uint16              DataTypeModifier;           
@@ -326,7 +321,7 @@ typedef struct {
     uint16              Reserved3;                  
     real64              AspectRatio;                
     uint32              CatenatedFilePointer;       
-    INGR_ColorTableType ColorTableType;             
+    uint16              ColorTableType;             
     uint16              Reserved8;                  
     uint32              NumberOfCTEntries;          
     uint32              ApplicationPacketPointer;   
@@ -376,7 +371,7 @@ typedef    struct {
     uint16              Identifier;
     uint16              Reserved[2];
     uint16              Properties;
-    INGR_Format         DataTypeCode;
+    uint16              DataTypeCode;
     uint8               Reserved2[100];
     uint32              TileSize; 
     uint32              Reserved3;
