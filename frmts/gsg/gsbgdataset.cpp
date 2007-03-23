@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software Binary Grid Format.
