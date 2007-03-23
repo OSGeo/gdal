@@ -1,5 +1,5 @@
 /****************************************************************************
- * $Id: $
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements the Golden Software Surfer 7 Binary Grid Format.
@@ -59,7 +59,7 @@
 # define SHRT_MAX 32767
 #endif /* SHRT_MAX */
 
-CPL_CVSID("$Id: $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_GS7BG(void);
