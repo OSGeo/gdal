@@ -33,4 +33,30 @@
   public int ExportToWkb( byte[] buffer ) {
       return ExportToWkb( buffer, wkbByteOrder.wkbXDR);
   }
+  
+  public static $csclassname CreateFromWkb(byte[] wkb){
+     if (wkb.Length == 0)
+        throw new ArgumentException("Buffer size is small (CreateFromWkb)");
+     $csclassname retval;   
+     IntPtr ptr = Marshal.AllocHGlobal(wkb.Length * Marshal.SizeOf(wkb[0]));
+     try {
+         Marshal.Copy(wkb, 0, ptr, wkb.Length);
+         retval =  new $csclassname(wkbGeometryType.wkbUnknown, null, wkb.Length, ptr, null);
+      } finally {
+          Marshal.FreeHGlobal(ptr);
+      }
+      return retval;  
+  }
+  
+  public static $csclassname CreateFromWkt(string wkt){
+     return new $csclassname(wkbGeometryType.wkbUnknown, wkt, 0, IntPtr.Zero, null);
+  }
+  
+  public static $csclassname CreateFromGML(string gml){
+     return new $csclassname(wkbGeometryType.wkbUnknown, null, 0, IntPtr.Zero, gml);
+  }
+  
+  public Geometry(wkbGeometryType type) : this(OgrPINVOKE.new_Geometry((int)type, null, 0, IntPtr.Zero, null), null) {
+    if (OgrPINVOKE.SWIGPendingException.Pending) throw OgrPINVOKE.SWIGPendingException.Retrieve();
+  }
 }
