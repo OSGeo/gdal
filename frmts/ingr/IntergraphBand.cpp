@@ -134,7 +134,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // Get tile directory
     // -------------------------------------------------------------------- 
 
-    eFormat = hHeaderOne.DataTypeCode;
+    eFormat = (INGR_Format) hHeaderOne.DataTypeCode;
 
     if( hHeaderOne.DataTypeCode == TiledRasterData )
     {
@@ -145,7 +145,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         VSIFSeekL( poDS->fp, nDataOffset, SEEK_SET );
         VSIFReadL( &hTileDir, 1, SIZEOF_TDIR, poDS->fp );
 
-        eFormat = hTileDir.DataTypeCode;
+        eFormat = (INGR_Format) hTileDir.DataTypeCode;
 
         // ----------------------------------------------------------------
         // Calculate the number of tiles

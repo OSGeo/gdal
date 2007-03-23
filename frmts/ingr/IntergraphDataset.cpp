@@ -153,7 +153,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // Get Data Type Code (DTC) => Format Type
     // -------------------------------------------------------------------- 
 
-    INGR_Format eFormat = pHeaderOne->DataTypeCode;
+    INGR_Format eFormat = (INGR_Format) pHeaderOne->DataTypeCode;
 
     // -------------------------------------------------------------------- 
     // Check integrity of tiled data
@@ -178,7 +178,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
                 hTileDir.PacketVersion       == 1 &&
                 hTileDir.Identifier          == 1 )
             {
-                eFormat = hTileDir.DataTypeCode;
+                eFormat = (INGR_Format) hTileDir.DataTypeCode;
             }
         }
     }
