@@ -96,7 +96,7 @@ const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, const char *ps
     {
         if( EQUAL( pszCompression, INGR_FormatTable[i].pszName ) )
         {
-            return INGR_FormatTable[i].eFormatCode;
+            return (INGR_Format) INGR_FormatTable[i].eFormatCode;
         }
     }
 
