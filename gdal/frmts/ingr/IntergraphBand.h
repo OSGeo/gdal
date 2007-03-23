@@ -133,3 +133,4 @@ public:
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
+
