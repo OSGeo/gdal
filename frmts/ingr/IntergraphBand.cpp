@@ -114,7 +114,9 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // Get IGDS (fixed size) starting in the middle of block 2 + 1.5 blocks
         // ----------------------------------------------------------------
 
-        VSIFSeekL( poDS->fp, nBandOffset + ( 1.5 * SIZEOF_HDR1 ), SEEK_SET );
+        VSIFSeekL( poDS->fp,
+                   nBandOffset + (SIZEOF_HDR1 + SIZEOF_HDR1 / 2),
+                   SEEK_SET );
         VSIFReadL( hIGDSTable.Entry, 256, sizeof( igds_slot ), poDS->fp );
 
         INGR_GetIGDSColors( poColorTable, &hIGDSTable );
@@ -151,8 +153,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // Calculate the number of tiles
         // ----------------------------------------------------------------
 
-        int nTilesPerCol = ceil( (float) nRasterXSize / hTileDir.TileSize );
-        int nTilesPerRow = ceil( (float) nRasterYSize / hTileDir.TileSize );
+        int nTilesPerCol = (int)ceil((float)nRasterXSize / hTileDir.TileSize);
+        int nTilesPerRow = (int)ceil((float)nRasterYSize / hTileDir.TileSize);
 
         nTiles = nTilesPerCol * nTilesPerRow;
 
@@ -353,8 +355,6 @@ CPLErr IntergraphRasterBand::SetStatistics( double dfMin,
                                             double dfMean, 
                                             double dfStdDev )
 {      
-    IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
-
     hHeaderOne.Minimum = INGR_SetMinMax( eDataType, dfMin );
     hHeaderOne.Maximum = INGR_SetMinMax( eDataType, dfMax );
     
@@ -469,7 +469,7 @@ CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff,
     // Extract the band of interest from the block buffer
     // --------------------------------------------------------------------
 
-    unsigned int i, j;
+    int i, j;
 
     for ( i = 0, j = ( 3 - this->nRGBIndex ); 
           i < ( nBlockXSize * nBlockYSize ); 
@@ -489,8 +489,6 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          void *pImage )
 {
-    IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
-
     //TODO: What is the nBlockBufSize for untiled CCITT?
 
     // --------------------------------------------------------------------
@@ -534,7 +532,6 @@ CPLErr IntergraphJPEGBand::IReadBlock( int nBlockXOff,
                                        int nBlockYOff,
                                        void *pImage )
 {
-    IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 #ifdef UnderContruction
     uint32 nSeekOffset = 0;
 
@@ -769,7 +766,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
 
     VSIFSeekL( poGDS->fp, nDataOffset + ( nBlockBufSize * nBlockYOff ), SEEK_SET );
 
-    if( ( int ) VSIFWriteL( pabyBlockBuf, 1, nBlockBufSize, poGDS->fp ) < nBlockBufSize )
+    if( (uint32)VSIFWriteL(pabyBlockBuf, 1, nBlockBufSize, poGDS->fp) < nBlockBufSize )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
@@ -809,3 +806,4 @@ void IntergraphRasterBand::FlushBandHeader( void )
     VSIFWriteL( &hHeaderTwo, 1, SIZEOF_HDR2_A, poGDS->fp );
     VSIFWriteL( &hCTab,      1, SIZEOF_CTAB,   poGDS->fp );
 }
+
