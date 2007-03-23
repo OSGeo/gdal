@@ -200,7 +200,7 @@ static int ESRIToUSGSZone( int nESRIZone )
             return anUsgsEsriZones[i*2];
     }
 
-    return 0;
+    return nESRIZone; // perhaps it *is* the USGS zone?
 }
 
 /************************************************************************/
@@ -227,6 +227,8 @@ class ENVIDataset : public RawDataset
 
     int         ReadHeader( FILE * );
     int         ProcessMapinfo( const char * );
+    void        SetENVIDatum( OGRSpatialReference *, const char * );
+    void        SetENVIEllipse( OGRSpatialReference *, char ** );
     
     char        **SplitList( const char * );
 
@@ -444,7 +446,6 @@ void ENVIDataset::FlushCache()
                     adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
                     dfPixelY, 0, pszHemisphere);
     }
-    
 
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
@@ -567,6 +568,60 @@ char **ENVIDataset::SplitList( const char *pszCleanInput )
 }
 
 /************************************************************************/
+/*                            SetENVIDatum()                            */
+/************************************************************************/
+
+void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS, 
+                                const char *pszENVIDatumName )
+
+{
+    if( EQUAL(pszENVIDatumName, "WGS 84") )
+        poSRS->SetWellKnownGeogCS( "WGS84" );
+    else if( EQUAL(pszENVIDatumName, "WGS-84") )
+        poSRS->SetWellKnownGeogCS( "WGS84" );
+    else if( EQUAL(pszENVIDatumName, "WGS 72") )
+        poSRS->SetWellKnownGeogCS( "WGS72" );
+    else if( EQUAL(pszENVIDatumName, "GRS 80") )
+        poSRS->SetWellKnownGeogCS( "NAD83" );
+    else if( EQUAL(pszENVIDatumName, "Airy") )
+        poSRS->SetWellKnownGeogCS( "EPSG:4001" );
+    else if( EQUAL(pszENVIDatumName, "Australian National") )
+        poSRS->SetWellKnownGeogCS( "EPSG:4003" );
+    else if( EQUAL(pszENVIDatumName, "Bessel 1841") )
+        poSRS->SetWellKnownGeogCS( "EPSG:4004" );
+    else if( EQUAL(pszENVIDatumName, "Clark 1866") )
+        poSRS->SetWellKnownGeogCS( "EPSG:4008" );
+    else 
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unrecognised datum '%s', defaulting to WGS84." );
+        poSRS->SetWellKnownGeogCS( "WGS84" );
+    }
+}
+
+/************************************************************************/
+/*                           SetENVIEllipse()                           */
+/************************************************************************/
+
+void ENVIDataset::SetENVIEllipse( OGRSpatialReference *poSRS, 
+                                  char **papszPI_EI )
+
+{
+    double dfA = CPLAtofM(papszPI_EI[0]);
+    double dfB = CPLAtofM(papszPI_EI[1]);
+    double dfInvF;
+
+    if( fabs(dfA-dfB) < 0.1 )
+        dfInvF = 0.0; // sphere
+    else
+        dfInvF = dfA / (dfA - dfB);
+    
+    
+    poSRS->SetGeogCS( "Ellipse Based", "Ellipse Based", "Unnamed", 
+                      dfA, dfInvF );
+}
+
+/************************************************************************/
 /*                           ProcessMapinfo()                           */
 /*                                                                      */
 /*      Extract projection, and geotransform from a mapinfo value in    */
@@ -589,6 +644,21 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check if we have projection info, and if so parse it.           */
+/* -------------------------------------------------------------------- */
+    char        **papszPI = NULL;
+    int         nPICount = 0;
+    if( CSLFetchNameValue( papszHeader, "projection_info" ) != NULL )
+    {
+        papszPI = SplitList( 
+            CSLFetchNameValue( papszHeader, "projection_info" ) );
+        nPICount = CSLCount(papszPI);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Capture geotransform.                                           */
+/* -------------------------------------------------------------------- */
     adfGeoTransform[1] = atof(papszFields[5]);	    // Pixel width
     adfGeoTransform[5] = -atof(papszFields[6]);	    // Pixel height
     adfGeoTransform[0] =			    // Upper left X coordinate
@@ -598,31 +668,83 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[4] = 0.0;
 
+/* -------------------------------------------------------------------- */
+/*      Capture projection.                                             */
+/* -------------------------------------------------------------------- */
     if( EQUALN(papszFields[0],"UTM",3) && nCount >= 9 )
     {
         oSRS.SetUTM( atoi(papszFields[7]), 
                      !EQUAL(papszFields[8],"South") );
-        oSRS.SetWellKnownGeogCS( "WGS84" );
+        if( nCount >= 10 && strstr(papszFields[9],"=") == NULL )
+            SetENVIDatum( &oSRS, papszFields[9] );
+        else
+            oSRS.SetWellKnownGeogCS( "WGS84" );
     }
     else if( EQUALN(papszFields[0],"State Plane (NAD 27)",19)
-             && nCount >= 8 )
+             && nCount >= 7 )
     {
         oSRS.SetStatePlane( ESRIToUSGSZone(atoi(papszFields[7])), FALSE );
     }
     else if( EQUALN(papszFields[0],"State Plane (NAD 83)",19)
-             && nCount >= 8 )
+             && nCount >= 7 )
     {
         oSRS.SetStatePlane( ESRIToUSGSZone(atoi(papszFields[7])), TRUE );
     }
     else if( EQUALN(papszFields[0],"Geographic Lat",14) 
              && nCount >= 8 )
     {
-        oSRS.SetWellKnownGeogCS( "WGS84" );
+        if( nCount >= 8 && strstr(papszFields[7],"=") == NULL )
+            SetENVIDatum( &oSRS, papszFields[7] );
+        else
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+    }
+    else if( nPICount > 8 && atoi(papszPI[0]) == 9 ) // Albers Equal Area
+    {
+        oSRS.SetACEA( CPLAtofM(papszPI[7]), CPLAtofM(papszPI[8]),
+                      CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
+                      CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
+        SetENVIEllipse( &oSRS, papszPI + 1 );
+    }
+    else if( nPICount > 8 && atoi(papszPI[0]) == 4 ) // Lambert Conformal Conic
+    {
+        oSRS.SetLCC( CPLAtofM(papszPI[7]), CPLAtofM(papszPI[8]),
+                     CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]),
+                     CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
+        SetENVIEllipse( &oSRS, papszPI + 1 );
+    }
+    else if( nPICount > 10 && atoi(papszPI[0]) == 5 ) // Oblique Merc (2 point)
+    {
+        oSRS.SetHOM2PNO( CPLAtofM(papszPI[3]), 
+                         CPLAtofM(papszPI[4]), CPLAtofM(papszPI[5]), 
+                         CPLAtofM(papszPI[6]), CPLAtofM(papszPI[7]), 
+                         CPLAtofM(papszPI[10]), 
+                         CPLAtofM(papszPI[8]), CPLAtofM(papszPI[9]) );
+        SetENVIEllipse( &oSRS, papszPI + 1 );
+    }
+    else if( nPICount > 8 && atoi(papszPI[0]) == 6 ) // Oblique Merc 
+    {
+        oSRS.SetHOM(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+                    CPLAtofM(papszPI[5]), 0.0,
+                    CPLAtofM(papszPI[8]), 
+                    CPLAtofM(papszPI[6]), CPLAtofM(papszPI[7]) );
+        SetENVIEllipse( &oSRS, papszPI + 1 );
+    }
+    else if( nPICount > 5 && atoi(papszPI[0]) == 10 ) // Polyconic
+    {
+        oSRS.SetPolyconic(CPLAtofM(papszPI[3]), CPLAtofM(papszPI[4]), 
+                          CPLAtofM(papszPI[5]), CPLAtofM(papszPI[6]) );
+        SetENVIEllipse( &oSRS, papszPI + 1 );
     }
 
+/* -------------------------------------------------------------------- */
+/*      fallback to localcs if we don't recognise things.               */
+/* -------------------------------------------------------------------- */
     if( oSRS.GetRoot() == NULL )
         oSRS.SetLocalCS( papszFields[0] );
 
+/* -------------------------------------------------------------------- */
+/*      Try to process specialized units.                               */
+/* -------------------------------------------------------------------- */
     if( EQUAL(papszFields[nCount-1],"units=Feet") )
     {
         oSRS.SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
@@ -639,6 +761,9 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         adfGeoTransform[5] /= 3600.0;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Turn back into WKT.                                             */
+/* -------------------------------------------------------------------- */
     if( oSRS.GetRoot() != NULL )
     {
         oSRS.Fixup();
@@ -651,6 +776,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     }
 
     CSLDestroy( papszFields );
+    CSLDestroy( papszPI );
     return TRUE;
 }
 
