@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: tiff_write.py,v 1.10 2006/12/02 05:13:53 hobu Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for GeoTIFF format.

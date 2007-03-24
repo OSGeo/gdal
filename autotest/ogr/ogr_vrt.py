@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_vrt.py,v 1.8 2006/03/29 18:14:40 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR VRT driver functionality.
@@ -24,33 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_vrt.py,v $
-#  Revision 1.8  2006/03/29 18:14:40  fwarmerdam
-#  Use release, not destroy for shared datasource.
-#
-#  Revision 1.7  2006/03/29 18:09:34  fwarmerdam
-#  Make sure we release sub_ds.
-#
-#  Revision 1.6  2005/08/02 20:16:49  fwarmerdam
-#  added a SetAttributeFilter test to make sure passed to sublayer
-#
-#  Revision 1.5  2005/03/01 21:59:29  fwarmerdam
-#  Use SetSpatialFilterRect().
-#
-#  Revision 1.4  2004/01/09 18:56:36  warmerda
-#  Added VRT in filename test
-#
-#  Revision 1.3  2003/12/30 18:53:50  warmerda
-#  added new SrcSQL test
-#
-#  Revision 1.2  2003/11/07 21:53:46  warmerda
-#  added GetFeature tests
-#
-#  Revision 1.1  2003/11/07 21:08:31  warmerda
-#  New
-#
-#
 
 import os
 import sys

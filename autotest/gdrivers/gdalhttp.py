@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: wcs.py,v 1.4 2007/01/02 14:44:31 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test HTTP Driver.

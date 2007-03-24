@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_basic.py,v 1.8 2006/12/18 16:21:56 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Basic tests of OGRSpatialReference (OSR) operation, not including
@@ -28,33 +28,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: osr_basic.py,v $
-#  Revision 1.8  2006/12/18 16:21:56  fwarmerdam
-#  Added test for x-ogc as well as ogc namespace.
-#
-#  Revision 1.7  2006/11/28 16:39:55  mloskot
-#  Fixed typo in osr_basic_4() test.
-#
-#  Revision 1.6  2006/11/07 18:54:05  fwarmerdam
-#  Added some urn processing tests.
-#
-#  Revision 1.5  2006/10/27 04:34:35  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.4  2004/07/10 04:48:39  warmerda
-#  Removed some GEOGCS|UNIT stuff ... changes with EPSG rev.
-#
-#  Revision 1.3  2003/06/21 23:24:07  warmerda
-#  added proj4 TOWGS84 check
-#
-#  Revision 1.2  2003/05/30 18:17:34  warmerda
-#  Added a bunch of state plane testing.
-#
-#  Revision 1.1  2003/03/25 15:22:31  warmerda
-#  New
-#
-#
 
 import os
 import sys

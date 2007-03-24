@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_gml_read.py,v 1.2 2006/10/31 21:28:06 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GML Reading Driver testing.
@@ -27,15 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: ogr_gml_read.py,v $
-#  Revision 1.2  2006/10/31 21:28:06  fwarmerdam
-#  Improve missing xerces test.
-#
-#  Revision 1.1  2006/10/31 21:02:55  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

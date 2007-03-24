@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_oci.py,v 1.6 2004/07/09 17:51:09 warmerda Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Oracle OCI driver functionality.
@@ -24,29 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_oci.py,v $
-#  Revision 1.6  2004/07/09 17:51:09  warmerda
-#  Verify we have the OCI driver configured in.
-#
-#  Revision 1.5  2003/09/13 04:57:56  warmerda
-#  Added extra SRS mapping testings
-#
-#  Revision 1.4  2003/04/07 14:15:04  warmerda
-#  Added spatial test.
-#
-#  Revision 1.3  2003/04/07 14:05:45  warmerda
-#  Added a few more tests.
-#
-#  Revision 1.2  2003/04/03 19:26:37  warmerda
-#  added some tests
-#
-#  Revision 1.1  2003/04/02 07:42:46  warmerda
-#  New
-#
-#  Revision 1.1  2003/03/05 05:05:10  warmerda
-#  New
-#
 
 import os
 import sys

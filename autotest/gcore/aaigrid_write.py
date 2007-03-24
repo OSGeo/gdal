@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: aaigrid_write.py,v 1.1 2003/03/27 19:53:23 dron Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for Arc/Info ASCII grid

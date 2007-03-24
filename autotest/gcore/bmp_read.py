@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: bmp_read.py,v 1.1 2003/03/27 13:24:09 dron Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic read support for a all datatypes from a BMP file.

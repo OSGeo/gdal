@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: hdf4_write.py,v 1.1 2003/04/01 09:55:23 dron Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for HDF4 driver.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_esri.py,v 1.5 2006/10/27 04:34:35 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some ESRI specific translation issues.
@@ -27,24 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: osr_esri.py,v $
-#  Revision 1.5  2006/10/27 04:34:35  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.4  2006/06/26 19:41:34  fwarmerdam
-#  added polar stereographic related tests
-#
-#  Revision 1.3  2005/12/11 21:23:57  fwarmerdam
-#  morphtoesri now sets PROJCS name based on PROJECTION
-#
-#  Revision 1.2  2005/08/03 16:16:17  fwarmerdam
-#  Added new tests for pengs requested changes.
-#
-#  Revision 1.1  2003/06/23 14:47:55  warmerda
-#  New
-#
-#
 
 import os
 import sys

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: colortable.py,v 1.2 2006/10/27 04:31:51 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test functioning of the GDALColorTable.  Mostly this tests

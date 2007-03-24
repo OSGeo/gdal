@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_index_test.py,v 1.5 2004/07/09 17:40:58 warmerda Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR INDEX support.
@@ -24,24 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_index_test.py,v $
-#  Revision 1.5  2004/07/09 17:40:58  warmerda
-#  now the layer must be explicitly created, even for single files
-#
-#  Revision 1.4  2003/06/10 14:26:41  warmerda
-#  feature count check
-#
-#  Revision 1.3  2003/03/20 20:38:48  warmerda
-#  added drop index test
-#
-#  Revision 1.2  2003/03/20 19:04:23  warmerda
-#  Make sure we Release shared datasets, not destroy them
-#
-#  Revision 1.1  2003/03/20 18:51:19  warmerda
-#  New
-#
-#
 
 import os
 import sys

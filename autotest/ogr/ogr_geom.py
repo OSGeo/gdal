@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_geom.py,v 1.2 2004/09/17 14:46:41 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Misc. OGRGeometry operations.
@@ -24,15 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_geom.py,v $
-#  Revision 1.2  2004/09/17 14:46:41  fwarmerdam
-#  use more complex multipolygon with holes in a polygon
-#
-#  Revision 1.1  2004/09/17 14:41:28  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

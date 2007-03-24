@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: hfa_read.py,v 1.2 2006/10/27 04:31:51 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic read support for all datatypes from a HFA file.

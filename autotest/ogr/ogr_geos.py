@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_geos.py,v 1.3 2006/11/27 16:07:48 mloskot Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GEOS integration in OGR - geometric operations.
@@ -24,18 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_geos.py,v $
-#  Revision 1.3  2006/11/27 16:07:48  mloskot
-#  Cleaned ogr_geos_overlaps test.
-#
-#  Revision 1.2  2004/10/04 21:00:49  fwarmerdam
-#  Added Centroid check, fixed difference test.
-#
-#  Revision 1.1  2004/07/11 18:37:01  warmerda
-#  New
-#
-#
 
 import os
 import sys

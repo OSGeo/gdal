@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: jp2kak.py,v 1.5 2006/12/05 05:11:25 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for JP2KAK JPEG2000 driver.

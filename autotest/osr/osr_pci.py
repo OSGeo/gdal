@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_pci.py,v 1.1 2004/01/31 09:51:00 dron Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some PCI specific translation issues.
@@ -24,12 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: osr_pci.py,v $
-#  Revision 1.1  2004/01/31 09:51:00  dron
-#  New.
-#
-#
 
 import os
 import sys

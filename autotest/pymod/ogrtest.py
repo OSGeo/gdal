@@ -1,5 +1,5 @@
 ###############################################################################
-# $Id: ogrtest.py,v 1.5 2005/01/22 22:56:25 hobu Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Support functions for OGR tests.
@@ -23,24 +23,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogrtest.py,v $
-#  Revision 1.5  2005/01/22 22:56:25  hobu
-#  use a try..except clause in check_feature_geometry
-#  instead of asking its type
-#
-#  Revision 1.4  2004/10/04 20:58:25  fwarmerdam
-#  Fixed geometry test.
-#
-#  Revision 1.3  2003/04/08 22:16:39  warmerda
-#  Added check_feature_geometry
-#
-#  Revision 1.2  2003/03/21 02:26:51  warmerda
-#  added quick create functions
-#
-#  Revision 1.1  2003/03/20 15:08:00  warmerda
-#  New
-#
 
 import os
 import sys

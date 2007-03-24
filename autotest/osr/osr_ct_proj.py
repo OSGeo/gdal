@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_ct_proj.py,v 1.8 2006/11/01 04:43:18 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test reprojection of points of many different projections.
@@ -27,33 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: osr_ct_proj.py,v $
-#  Revision 1.8  2006/11/01 04:43:18  fwarmerdam
-#  Added twopoint equidistant test.
-#
-#  Revision 1.7  2006/10/27 04:34:35  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.6  2006/09/28 16:38:39  fwarmerdam
-#  Another try...
-#
-#  Revision 1.5  2006/09/28 16:30:47  fwarmerdam
-#  Hopefully this works.
-#
-#  Revision 1.4  2006/09/28 16:25:14  fwarmerdam
-#  Added skip logic if proj not available.
-#
-#  Revision 1.3  2006/04/21 05:09:25  fwarmerdam
-#  added test for Monte Mario (Rome) / Italy Zone 1 problems
-#
-#  Revision 1.2  2006/04/21 03:25:12  fwarmerdam
-#  Added a prime meridian test
-#
-#  Revision 1.1  2004/11/11 18:27:14  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys

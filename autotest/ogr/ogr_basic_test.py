@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_basic_test.py,v 1.3 2005/10/25 20:01:35 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR functionality against test shapefiles.
@@ -24,17 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_basic_test.py,v $
-#  Revision 1.3  2005/10/25 20:01:35  fwarmerdam
-#  test getdriver
-#
-#  Revision 1.2  2003/06/10 14:27:09  warmerda
-#  comment
-#
-#  Revision 1.1  2003/03/05 05:05:10  warmerda
-#  New
-#
 
 import os
 import sys

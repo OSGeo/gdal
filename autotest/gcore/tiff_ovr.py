@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: tiff_ovr.py,v 1.2 2006/10/27 04:31:51 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Overview Support (mostly a GeoTIFF issue).

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_dods.py,v 1.4 2004/09/16 16:41:32 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR DODS driver.
@@ -24,22 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_dods.py,v $
-#  Revision 1.4  2004/09/16 16:41:32  fwarmerdam
-#  Latitude value in last test has changed for some reason ... I am
-#  presuming this is a real change on the remote server.
-#
-#  Revision 1.3  2004/04/08 13:49:37  warmerda
-#  improved logic to detect missing driver
-#
-#  Revision 1.2  2004/03/17 18:14:46  warmerda
-#  Added test of lines from nested sequences.
-#
-#  Revision 1.1  2004/03/12 22:09:53  warmerda
-#  New
-#
-#
 
 import os
 import sys

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: hfa.py,v 1.2 2006/10/27 04:27:12 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some functions of HFA driver.  Most testing in ../gcore/hfa_*

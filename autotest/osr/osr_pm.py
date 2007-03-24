@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_pm.py,v 1.2 2006/10/27 04:34:35 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some prime meridian related issues with EPSG translation
@@ -28,15 +28,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: osr_pm.py,v $
-#  Revision 1.2  2006/10/27 04:34:35  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.1  2006/04/21 03:23:47  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys
