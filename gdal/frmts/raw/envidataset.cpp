@@ -1059,7 +1059,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         CPLString osDatumName = papszPI[iDatum];
         if( osDatumName.find_first_of("abcdefghijklmnopqrstuvwxyz"
                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ") 
-            != string::npos )
+                                      != std::string::npos )
         {
             SetENVIDatum( &oSRS, osDatumName );
         }
