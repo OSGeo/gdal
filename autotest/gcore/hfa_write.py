@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: hfa_write.py,v 1.8 2006/10/27 04:31:51 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for Erdas Imagine (.img) HFA driver.

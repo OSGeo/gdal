@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_mem.py,v 1.3 2003/10/09 15:26:46 warmerda Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR Memory driver functionality.
@@ -24,18 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_mem.py,v $
-#  Revision 1.3  2003/10/09 15:26:46  warmerda
-#  added DeleteFeature check
-#
-#  Revision 1.2  2003/07/18 04:49:00  warmerda
-#  fixed name
-#
-#  Revision 1.1  2003/04/08 20:55:51  warmerda
-#  New
-#
-#
 
 import os
 import sys

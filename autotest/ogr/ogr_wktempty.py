@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_wktempty.py,v 1.2 2005/07/12 17:33:17 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test support for the various "EMPTY" WKT geometry representations.
@@ -24,15 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_wktempty.py,v $
-#  Revision 1.2  2005/07/12 17:33:17  fwarmerdam
-#  Updated to proper empty syntax.
-#
-#  Revision 1.1  2004/02/25 15:18:55  warmerda
-#  New
-#
-#
 
 import os
 import sys

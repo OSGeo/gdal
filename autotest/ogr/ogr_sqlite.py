@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_sqlite.py,v 1.6 2006/04/28 03:34:18 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test SQLite driver functionality.
@@ -24,27 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_sqlite.py,v $
-#  Revision 1.6  2006/04/28 03:34:18  fwarmerdam
-#  skip if GetDriverByName() returns NULL
-#
-#  Revision 1.5  2004/10/27 19:41:22  fwarmerdam
-#  Use reasonable geometry precision test for intermediate WKT rep.
-#
-#  Revision 1.4  2004/07/13 15:46:10  warmerda
-#  added tests for transactions, GetFeature() and SetFeature()
-#
-#  Revision 1.3  2004/07/12 21:49:55  warmerda
-#  fixed up .db removal
-#
-#  Revision 1.2  2004/07/12 20:48:58  warmerda
-#  now creates temporary database
-#
-#  Revision 1.1  2004/07/12 20:08:43  warmerda
-#  New
-#
-#
 
 import os
 import sys

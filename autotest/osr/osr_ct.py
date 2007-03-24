@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_ct.py,v 1.3 2006/10/27 04:34:35 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test coordinate transformations. 
@@ -27,18 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: osr_ct.py,v $
-#  Revision 1.3  2006/10/27 04:34:35  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.2  2003/11/10 17:07:58  warmerda
-#  improve 3rd test check and comments
-#
-#  Revision 1.1  2003/11/10 17:01:24  warmerda
-#  New
-#
-#
 
 import os
 import sys

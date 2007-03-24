@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_gml_geom.py,v 1.5 2006/06/23 00:36:59 mloskot Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR translation of WKT and WKB geometries.
@@ -24,33 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_gml_geom.py,v $
-#  Revision 1.5  2006/06/23 00:36:59  mloskot
-#  Added new test cases to ogr/ogr_gml_geom.py. New cases test export of GML 2 srsName.
-#
-#  Revision 1.4  2005/07/29 04:14:15  fwarmerdam
-#  fix up test names for better reporting
-#
-#  Revision 1.3  2005/03/08 19:50:50  fwarmerdam
-#  Added gml:pos parsing test.
-#
-#  Revision 1.2  2004/01/06 18:30:25  warmerda
-#  added test with newline and spaces in it
-#
-#  Revision 1.1  2003/09/22 03:11:59  warmerda
-#  New
-#
-#  Revision 1.3  2003/03/19 16:04:26  warmerda
-#  read wkb files in binary mode
-#
-#  Revision 1.2  2003/03/13 15:33:30  warmerda
-#  removed cruft
-#
-#  Revision 1.1  2003/03/07 21:31:57  warmerda
-#  New
-#
-#
 
 import os
 import sys

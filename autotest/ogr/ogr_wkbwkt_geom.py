@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_wkbwkt_geom.py,v 1.5 2005/08/05 15:53:51 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic OGR translation of WKT and WKB geometries.
@@ -24,24 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_wkbwkt_geom.py,v $
-#  Revision 1.5  2005/08/05 15:53:51  fwarmerdam
-#  compare WKT encoding instead of raw geometry
-#
-#  Revision 1.4  2005/07/20 13:29:36  fwarmerdam
-#  more complete error reporting on failure
-#
-#  Revision 1.3  2003/03/19 16:04:26  warmerda
-#  read wkb files in binary mode
-#
-#  Revision 1.2  2003/03/13 15:33:30  warmerda
-#  removed cruft
-#
-#  Revision 1.1  2003/03/07 21:31:57  warmerda
-#  New
-#
-#
 
 import os
 import sys

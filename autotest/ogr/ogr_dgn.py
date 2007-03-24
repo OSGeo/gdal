@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_dgn.py,v 1.3 2006/06/29 20:31:57 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Some DGN Driver features.
@@ -24,18 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_dgn.py,v $
-#  Revision 1.3  2006/06/29 20:31:57  fwarmerdam
-#  relaxed values on geometry window
-#
-#  Revision 1.2  2006/06/27 15:16:32  fwarmerdam
-#  added simple write test
-#
-#  Revision 1.1  2004/02/23 18:50:50  warmerda
-#  New
-#
-#
 
 import os
 import sys

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_refcount.py,v 1.2 2006/04/28 03:21:55 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test "shared" open, and various refcount based stuff.
@@ -24,15 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_refcount.py,v $
-#  Revision 1.2  2006/04/28 03:21:55  fwarmerdam
-#  avoid old-gen specific ._o tests
-#
-#  Revision 1.1  2003/03/19 19:29:16  warmerda
-#  New
-#
-#
 
 import os
 import sys

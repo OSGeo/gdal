@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_sql_test.py,v 1.6 2006/12/04 01:54:55 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test various OGR SQL support options.
@@ -24,26 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_sql_test.py,v $
-#  Revision 1.6  2006/12/04 01:54:55  fwarmerdam
-#  Added brief tests for ogr_geometry, ogr_geom_wkt and ogr_style.
-#
-#  Revision 1.5  2006/09/22 05:51:10  fwarmerdam
-#  added tests for distinct and max on empty dataset (bug 1298)
-#
-#  Revision 1.4  2005/08/03 13:38:55  fwarmerdam
-#  added ilike test
-#
-#  Revision 1.3  2003/03/26 16:14:45  warmerda
-#  added test for quoted table names
-#
-#  Revision 1.2  2003/03/19 06:20:15  warmerda
-#  added an additional test of wildcard expansion
-#
-#  Revision 1.1  2003/03/05 05:05:10  warmerda
-#  New
-#
 
 import os
 import sys

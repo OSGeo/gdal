@@ -1,5 +1,5 @@
 ###############################################################################
-# $Id: gdaltest.py,v 1.31 2007/01/02 15:20:06 fwarmerdam Exp $
+# $Id$
 # 
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Python Library supporting GDAL/OGR Test Suite

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_join_test.py,v 1.3 2003/03/20 19:04:03 warmerda Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR JOIN support.
@@ -24,18 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_join_test.py,v $
-#  Revision 1.3  2003/03/20 19:04:03  warmerda
-#  added double join test
-#
-#  Revision 1.2  2003/03/19 20:39:23  warmerda
-#  added test for external datasources
-#
-#  Revision 1.1  2003/03/19 06:19:57  warmerda
-#  New
-#
-#
 
 import os
 import sys

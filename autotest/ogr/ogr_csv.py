@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_csv.py,v 1.5 2004/08/17 15:40:13 warmerda Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR CSV driver functionality.
@@ -24,24 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_csv.py,v $
-#  Revision 1.5  2004/08/17 15:40:13  warmerda
-#  added test 10 - capabilitie testing
-#
-#  Revision 1.4  2004/08/17 14:57:31  warmerda
-#  cleanup properlyi
-#
-#  Revision 1.3  2004/08/17 14:57:07  warmerda
-#  added append test
-#
-#  Revision 1.2  2004/08/16 21:29:07  warmerda
-#  Added deletelayer test
-#
-#  Revision 1.1  2004/08/16 20:23:02  warmerda
-#  New
-#
-#
 
 import os
 import sys

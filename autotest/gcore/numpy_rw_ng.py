@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: numpy_rw_ng.py,v 1.2 2006/11/30 04:17:28 hobu Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic integration with Numeric Python.

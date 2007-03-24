@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_db2_hack.py,v 1.1 2003/08/27 15:34:58 warmerda Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test DB2 V7.2 WKB support. DB2 7.2 had a corrupt WKB format
@@ -26,12 +26,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_db2_hack.py,v $
-#  Revision 1.1  2003/08/27 15:34:58  warmerda
-#  New
-#
-#
 
 import os
 import sys

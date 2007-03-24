@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_mitab.py,v 1.5 2006/01/26 21:23:40 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  MapInfo driver testing.
@@ -24,24 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_mitab.py,v $
-#  Revision 1.5  2006/01/26 21:23:40  fwarmerdam
-#  added test for multi character delimeter
-#
-#  Revision 1.4  2005/03/02 01:28:07  fwarmerdam
-#  use SetSpatialFilterRect()
-#
-#  Revision 1.3  2005/03/02 01:27:47  fwarmerdam
-#  use SetSpatialFilterRect()
-#
-#  Revision 1.2  2004/10/27 19:28:47  fwarmerdam
-#  Corrected geometry test now that the vertices are really being compared!
-#
-#  Revision 1.1  2004/02/27 20:57:28  warmerda
-#  New
-#
-#
 
 import os
 import sys

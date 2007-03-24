@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: osr_proj4.py,v 1.3 2006/10/27 04:34:35 fwarmerdam Exp $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test some PROJ.4 specific translation issues.
@@ -27,17 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: osr_proj4.py,v $
-#  Revision 1.3  2006/10/27 04:34:35  fwarmerdam
-#  corrected licenses
-#
-#  Revision 1.2  2003/07/18 04:49:36  warmerda
-#  added test for exponents
-#
-#  Revision 1.1  2003/06/27 18:13:37  warmerda
-#  New
-#
 
 import os
 import sys
