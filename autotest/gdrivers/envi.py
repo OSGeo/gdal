@@ -5,6 +5,8 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test ENVI format driver.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
+#
+# See also: gcore/envi_read.py for a driver focused on raster data types.
 # 
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
