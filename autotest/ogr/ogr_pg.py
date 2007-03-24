@@ -24,36 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: ogr_pg.py,v $
-#  Revision 1.9  2006/04/05 03:03:18  fwarmerdam
-#  Added test for large attribute filters and large sql statements.
-#
-#  Revision 1.8  2006/02/15 04:22:12  fwarmerdam
-#  added date testing
-#
-#  Revision 1.7  2005/10/24 23:49:38  fwarmerdam
-#  added COPY test
-#
-#  Revision 1.6  2005/07/20 01:47:14  fwarmerdam
-#  postgis 1.0 / coordinate dimension upgrades
-#
-#  Revision 1.5  2004/11/17 17:49:37  fwarmerdam
-#  added two new tests for SetFeature() and DeleteFeature().
-#
-#  Revision 1.4  2004/10/27 19:40:27  fwarmerdam
-#  use reasonable error limits for intermediate WKT representation
-#
-#  Revision 1.3  2004/09/16 16:32:53  fwarmerdam
-#  added test of truncation
-#
-#  Revision 1.2  2004/07/10 05:59:04  warmerda
-#  place open in try block
-#
-#  Revision 1.1  2004/07/10 04:29:51  warmerda
-#  New
-#
-#
 
 import os
 import sys
@@ -713,6 +683,93 @@ def ogr_pg_19():
     return 'success'
 
 ###############################################################################
+# Test reading 4-dim geometry in EWKT format
+
+def ogr_pg_20():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    #
+    # Prepare test layer with 4-dim geometries.
+    #
+
+    # Collection of test geometry pairs:
+    # ( <EWKT>, <WKT> ) <=> ( <tested>, <expected> )
+    geometries = (
+        ( 'POINT (10 20 5 5)',
+          'POINT (10 20 5)' ),
+        ( 'LINESTRING (10 10 1 2,20 20 3 4,30 30 5 6,40 40 7 8)',
+          'LINESTRING (10 10 1,20 20 3,30 30 5,40 40 7)' ),
+        ( 'POLYGON ((0 0 1 2,4 0 3 4,4 4 5 6,0 4 7 8,0 0 1 2))',
+          'POLYGON ((0 0 1,4 0 3,4 4 5,0 4 7,0 0 1))' ),
+        ( 'MULTIPOINT (10 20 5 5,30 30 7 7)',
+          'MULTIPOINT (10 20 5,30 30 7)' ),
+        ( 'MULTILINESTRING ((10 10 1 2,20 20 3 4),(30 30 5 6,40 40 7 8))',
+          'MULTILINESTRING ((10 10 1,20 20 3),(30 30 5,40 40 7))' ),
+        ( 'MULTIPOLYGON(((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))',
+          'MULTIPOLYGON (((0 0 0,4 0 0,4 4 0,0 4 0,0 0 0),(1 1 0,2 1 0,2 2 0,1 2 0,1 1 0)),((-1 -1 0,-1 -2 0,-2 -2 0,-2 -1 0,-1 -1 0)))' ),
+        ( 'GEOMETRYCOLLECTION(POINT(2 3 11 101),LINESTRING(2 3 12 102,3 4 13 103))',
+          'GEOMETRYCOLLECTION (POINT (2 3 11),LINESTRING (2 3 12,3 4 13))' )
+    )
+
+    # This layer is also used in ogr_pg_21() test.
+    gdaltest.pg_ds.ExecuteSQL( "CREATE TABLE geom4d (ogc_fid integer)" )
+    gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('geom4d','wkb_geometry',-1,'GEOMETRY',4)" )
+    for i in range(len(geometries)):
+        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geom4d (ogc_fid,wkb_geometry) \
+                                    VALUES (%d,GeomFromEWKT('%s'))" % ( i, geometries[i][0])  )
+
+    #
+    # Test reading 4-dim geometries normalized to OGC WKT form.
+    #
+
+    layer = gdaltest.pg_ds.GetLayerByName( 'geom4d' )
+    if layer is None:
+        gdaltest.post_reason( 'did not get geom4d layer' )
+        return 'fail'
+ 
+    for i in range(len(geometries)):
+        feat = layer.GetFeature(i)
+        geom = feat.GetGeometryRef()
+        wkt = geom.ExportToWkt()
+        feat.Destroy()
+
+        if wkt != geometries[i][1]:
+            gdaltest.post_reason( 'WKT do not match' )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading 4-dimension geometries in EWKB format
+
+def ogr_pg_21():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    layer = gdaltest.pg_ds.ExecuteSQL( "SELECT wkb_geometry FROM geom4d" )
+    if layer is None:
+        gdaltest.post_reason( 'did not get geom4d layer' )
+        return 'fail'
+
+    fail = False
+
+    feat = layer.GetNextFeature()
+    while feat is not None:
+        geom = feat.GetGeometryRef()
+        if geom is not None:
+            gdaltest.post_reason( 'expected feature with None geometry' )
+            feat.Destroy()
+            return 'fail'
+
+        feat.Destroy()
+        feat = layer.GetNextFeature()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_cleanup():
@@ -723,6 +780,7 @@ def ogr_pg_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:geom4d' )
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
@@ -751,6 +809,8 @@ gdaltest_list = [
     ogr_pg_16,
     ogr_pg_17,
     ogr_pg_18,
+    ogr_pg_20,
+    ogr_pg_21,
     ogr_pg_cleanup ]
 
 if __name__ == '__main__':
