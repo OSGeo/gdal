@@ -694,6 +694,7 @@ def ogr_pg_20():
     # Prepare test layer with 4-dim geometries.
     #
 
+
     # Collection of test geometry pairs:
     # ( <EWKT>, <WKT> ) <=> ( <tested>, <expected> )
     geometries = (
@@ -714,19 +715,31 @@ def ogr_pg_20():
     )
 
     # This layer is also used in ogr_pg_21() test.
-    gdaltest.pg_ds.ExecuteSQL( "CREATE TABLE geom4d (ogc_fid integer)" )
-    gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('geom4d','wkb_geometry',-1,'GEOMETRY',4)" )
+    gdaltest.pg_ds.ExecuteSQL( "CREATE TABLE testgeom (ogc_fid integer)" )
+
+    # XXX - mloskot - if 'public' is omitted, then OGRPGDataSource::DeleteLayer fails, line 438
+    gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testgeom','wkb_geometry',-1,'GEOMETRY',4)" )
     for i in range(len(geometries)):
-        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geom4d (ogc_fid,wkb_geometry) \
+        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO testgeom (ogc_fid,wkb_geometry) \
                                     VALUES (%d,GeomFromEWKT('%s'))" % ( i, geometries[i][0])  )
+
+    # We need to re-read layers
+    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = None
+    try:
+        gdaltest.pg_ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    except:
+        gdaltest.pg_ds = None
+        gdaltest.post_reason( 'can not re-open datasource' )
+        return 'fail'
 
     #
     # Test reading 4-dim geometries normalized to OGC WKT form.
     #
 
-    layer = gdaltest.pg_ds.GetLayerByName( 'geom4d' )
+    layer = gdaltest.pg_ds.GetLayerByName( 'testgeom' )
     if layer is None:
-        gdaltest.post_reason( 'did not get geom4d layer' )
+        gdaltest.post_reason( 'did not get testgeom layer' )
         return 'fail'
  
     for i in range(len(geometries)):
@@ -734,10 +747,13 @@ def ogr_pg_20():
         geom = feat.GetGeometryRef()
         wkt = geom.ExportToWkt()
         feat.Destroy()
+        feat = None
 
         if wkt != geometries[i][1]:
             gdaltest.post_reason( 'WKT do not match' )
             return 'fail'
+
+    layer = None
 
     return 'success'
 
@@ -749,9 +765,9 @@ def ogr_pg_21():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    layer = gdaltest.pg_ds.ExecuteSQL( "SELECT wkb_geometry FROM geom4d" )
+    layer = gdaltest.pg_ds.ExecuteSQL( "SELECT wkb_geometry FROM testgeom" )
     if layer is None:
-        gdaltest.post_reason( 'did not get geom4d layer' )
+        gdaltest.post_reason( 'did not get testgeom layer' )
         return 'fail'
 
     fail = False
@@ -762,10 +778,14 @@ def ogr_pg_21():
         if geom is not None:
             gdaltest.post_reason( 'expected feature with None geometry' )
             feat.Destroy()
+            feat = None
             return 'fail'
 
         feat.Destroy()
         feat = layer.GetNextFeature()
+
+    feat = None
+    layer = None
 
     return 'success'
 
@@ -780,7 +800,7 @@ def ogr_pg_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
-    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:geom4d' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testgeom' )
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
