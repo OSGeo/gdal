@@ -1033,7 +1033,7 @@ public:
 #ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
 #else
-%clear void *buffer;
+%clear (char *bin_string);
 #endif
 
 #ifdef SWIGJAVA
@@ -1096,10 +1096,10 @@ public:
     OGR_G_DestroyGeometry( self );
   }
   
+#ifndef SWIGJAVA
 #ifdef SWIGCSHARP
 %apply (void *buffer_ptr) {char *wkb_buf};
 #endif
-#ifndef SWIGJAVA
   %feature("kwargs") OGRGeometryShadow;
   OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb= 0, char *wkb_buf = 0, char *gml = 0 ) {
     if (type != wkbUnknown ) {
@@ -1118,7 +1118,7 @@ public:
     else return 0;
   }  
 #ifdef SWIGCSHARP
-%clear void *buffer;
+%clear (char *wkb_buf);
 #endif
 #endif
 
