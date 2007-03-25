@@ -231,6 +231,38 @@ OGRErrMessages( int rc ) {
   }
 
 
+%typemap(in) (int nLen, unsigned char *pBuf ) (jboolean isCopy)
+{
+  /* %typemap(in) (int nLen, char *pBuf ) */
+  $1 = jenv->GetArrayLength($input);
+  $2 = (unsigned char *)jenv->GetByteArrayElements($input, &isCopy);
+}
+
+%typemap(argout) (int nLen, unsigned char *pBuf )
+{
+  /* %typemap(argout) (int nLen, char *pBuf ) */
+}
+
+%typemap(freearg) (int nLen, unsigned char *pBuf )
+{
+  /* %typemap(freearg) (int nLen, char *pBuf ) */
+  /* This calls JNI_ABORT, so any modifications will not be passed back
+      into the Java caller
+   */
+  if(isCopy$argnum == JNI_TRUE) {
+    jenv->ReleaseByteArrayElements($input, (jbyte *)$2, 0);
+  }
+}
+
+%typemap(jni) (int nLen, unsigned char *pBuf ) "jbyteArray"
+%typemap(jtype) (int nLen, unsigned char *pBuf ) "byte[]"
+%typemap(jstype) (int nLen, unsigned char *pBuf ) "byte[]"
+%typemap(javain) (int nLen, unsigned char *pBuf ) "$javainput"
+%typemap(javaout) (int nLen, unsigned char *pBuf ) {
+    return $jnicall;
+  }
+
+
 %typemap(in) (tostring argin)
 {
   /* %typemap(in) (tostring argin) */
