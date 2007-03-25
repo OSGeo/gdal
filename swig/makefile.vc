@@ -69,12 +69,12 @@ clean:
         nmake /f makefile.vc clean
         cd ..
         cd python
-        rmdir /S /Q build
+        if exist build\nul rmdir /S /Q build
         cd ..
         cd java
         nmake /f makefile.vc clean
         cd ..
         cd ruby
-        name /f makefile.vc clean
+        nmake /f makefile.vc clean
         cd ..
 
