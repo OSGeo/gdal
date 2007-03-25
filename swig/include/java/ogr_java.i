@@ -46,6 +46,12 @@
 /*
  *
  */ 
+ 
+%pragma(java) jniclassimports=%{
+import org.gdal.osr.SpatialReference;
+import org.gdal.osr.CoordinateTransformation;
+%}
+ 
 %pragma(java) moduleimports=%{
 import org.gdal.osr.SpatialReference;
 %}
