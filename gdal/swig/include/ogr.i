@@ -1005,9 +1005,9 @@ public:
 /*      Geometry factory methods.                                       */
 /* -------------------------------------------------------------------- */
 
+#ifndef SWIGJAVA
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
-
 #ifndef SWIGCSHARP
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 #else
@@ -1029,10 +1029,28 @@ public:
   }
  
 %}
+#endif
 #ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
 #else
 %clear void *buffer;
+#endif
+
+#ifdef SWIGJAVA
+%newobject CreateGeometryFromWkb;
+%feature("kwargs") CreateGeometryFromWkb;
+%inline {
+OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf, 
+                                            OSRSpatialReferenceShadow *reference=NULL ) {
+    void *geom;
+    OGRErr err = OGR_G_CreateFromWkb((unsigned char*) pBuf, reference, &geom, nLen);
+    if (err != 0 ) {
+       CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
+       return NULL;
+    }
+    return (OGRGeometryShadow*) geom;
+  }
+}
 #endif
 
 %feature( "kwargs" ) CreateGeometryFromWkt;
@@ -1081,6 +1099,7 @@ public:
 #ifdef SWIGCSHARP
 %apply (void *buffer_ptr) {char *wkb_buf};
 #endif
+#ifndef SWIGJAVA
   %feature("kwargs") OGRGeometryShadow;
   OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb= 0, char *wkb_buf = 0, char *gml = 0 ) {
     if (type != wkbUnknown ) {
@@ -1101,18 +1120,21 @@ public:
 #ifdef SWIGCSHARP
 %clear void *buffer;
 #endif
+#endif
 
   OGRErr ExportToWkt( char** argout ) {
     return OGR_G_ExportToWkt(self, argout);
   }
 
 #ifndef SWIGCSHARP
+#ifndef SWIGJAVA
   %feature("kwargs") ExportToWkb;
   OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
     *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
+#endif
 #endif
 
   const char * ExportToGML() {
@@ -1295,12 +1317,14 @@ public:
   }
 #endif  
 
+#ifndef SWIGJAVA
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
     OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
     OGR_G_Centroid( self, pt );
     return pt;
   }
+#endif
   
   int WkbSize() {
     return OGR_G_WkbSize(self);
@@ -1320,8 +1344,8 @@ public:
 
 } /* %extend */
 
-
 }; /* class OGRGeometryShadow */
+
 
 /************************************************************************/
 /*                        Other misc functions.                         */
@@ -1396,4 +1420,9 @@ OGRDriverShadow* GetDriver(int driver_number) {
 
 #ifdef SWIGCSHARP
 %include "ogr_csharp_extend.i"
+#endif
+
+
+#ifdef SWIGJAVA
+%include "ogr_java_extend.i"
 #endif
