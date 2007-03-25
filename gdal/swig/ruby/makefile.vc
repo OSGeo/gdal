@@ -63,5 +63,5 @@ clean:
 	-del *.ilk
 	-del *.pdb
 	-del *.lib
-	rmdir /S /Q $(RUBY_ARCH_DIR)\gdal
+	if exist $(RUBY_ARCH_DIR)\gdal\nul rmdir /S /Q $(RUBY_ARCH_DIR)\gdal
 
