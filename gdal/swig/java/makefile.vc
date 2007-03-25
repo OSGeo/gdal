@@ -40,7 +40,7 @@ osr_dir:
 	
 	
 clean:
-    rmdir /s /q org
+  if exist org\nul rmdir /s /q org
 	cd gdal
 	$(MAKE) /f makefile.vc clean
 	cd ..
