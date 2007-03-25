@@ -74,7 +74,7 @@ public:
   }
 
   void Deregister() {
-    return GDALDeregisterDriver( self );
+    GDALDeregisterDriver( self );
   }
 
 }
