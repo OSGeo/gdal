@@ -1812,7 +1812,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
 /*      Establish geolocation metadata, but only if there is no         */
 /*      lattice.  The lattice destroys the regularity of the grid.      */
 /* -------------------------------------------------------------------- */
-    if( pLatticeX == NULL )
+    if( pLatticeX == NULL 
+        && iLatDim != -1 && iLongDim != -1 
+        && iPixelDim != -1 && iLineDim != -1 )
     {
         CPLString  osWrk;
 
