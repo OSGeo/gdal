@@ -69,8 +69,10 @@ details on getting the source and building it. <p>
 
 <h2>Bug Reporting</h2>
 
-OGR bugs <a href="http://bugzilla.remotesensing.org/enter_bug.cgi?product=GDAL&component=OGR_SF">can  be entered</a>, and  <a href="http://bugzilla.remotesensing.org/buglist.cgi?product=GDAL">can be  listed</a> using BugZilla.
-<p>
+GDAL/OGR bugs 
+<a href="http://trac.osgeo.org/gdal/newticket">can be reported</a>, and 
+<a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">can be 
+listed</a> using Trac.<p>
 
 <h2>Mailing Lists</h2>
 
