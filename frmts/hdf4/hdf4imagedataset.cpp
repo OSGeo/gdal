@@ -1336,7 +1336,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     int32   nXPoints, nYPoints;
     int32   nStrBufSize;
     int32   aiDimSizes[MAX_VAR_DIMS];
-    int     i, j, iDataSize, iPixelDim, iLineDim, iLongDim, iLatDim;
+    int     i, j, iDataSize, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
     char    **papszGeolocations = NULL, **papszDimMap = NULL;
@@ -1812,7 +1812,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
 /*      Establish geolocation metadata, but only if there is no         */
 /*      lattice.  The lattice destroys the regularity of the grid.      */
 /* -------------------------------------------------------------------- */
-    if( pLatticeX == NULL )
+    if( pLatticeX == NULL 
+        && iLatDim != -1 && iLongDim != -1 
+        && iPixelDim != -1 && iLineDim != -1 )
     {
         CPLString  osWrk;
 
