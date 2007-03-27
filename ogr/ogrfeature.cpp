@@ -955,24 +955,37 @@ const char *OGRFeature::GetFieldAsString( int iField )
     int iSpecialField = iField - poDefn->GetFieldCount();
     if (iSpecialField >= 0)
     {
-    // special field value accessors
+        // special field value accessors
         switch (iSpecialField)
         {
-        case SPF_FID:
+          case SPF_FID:
             snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%ld", GetFID() );
             return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
-        case SPF_OGR_GEOMETRY:
-            return poGeometry->getGeometryName();
-        case SPF_OGR_STYLE:
-            return GetStyleString();
-        case SPF_OGR_GEOM_WKT:
-            {
-                if (poGeometry->exportToWkt( &m_pszTmpFieldValue ) == OGRERR_NONE )
-                    return m_pszTmpFieldValue;
-                else
-                    return "";
-            }
-        default:
+
+          case SPF_OGR_GEOMETRY:
+            if( poGeometry )
+                return poGeometry->getGeometryName();
+            else
+                return "";
+
+          case SPF_OGR_STYLE:
+            if( GetStyleString() == NULL )
+                return "";
+            else
+                return GetStyleString();
+
+          case SPF_OGR_GEOM_WKT:
+          {
+              if( poGeometry == NULL )
+                  return "";
+
+              if (poGeometry->exportToWkt( &m_pszTmpFieldValue ) == OGRERR_NONE )
+                  return m_pszTmpFieldValue;
+              else
+                  return "";
+          }
+
+          default:
             return "";
         }
     }
@@ -1006,7 +1019,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         if( poFDefn->GetWidth() != 0 )
         {
             snprintf( szFormat, TEMP_BUFFER_SIZE, "%%%d.%df",
-                     poFDefn->GetWidth(), poFDefn->GetPrecision() );
+                      poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
             strcpy( szFormat, "%.15g" );
@@ -1043,10 +1056,10 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
             if( nMinutes == 0 )
                 snprintf( szTempBuffer+strlen(szTempBuffer), 
-                         TEMP_BUFFER_SIZE, "%02d", nHours );
+                          TEMP_BUFFER_SIZE, "%02d", nHours );
             else
                 snprintf( szTempBuffer+strlen(szTempBuffer), 
-                         TEMP_BUFFER_SIZE, "%02d%02d", nHours, nMinutes );
+                          TEMP_BUFFER_SIZE, "%02d%02d", nHours, nMinutes );
         }
 
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
@@ -1054,18 +1067,18 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( poFDefn->GetType() == OFTDate )
     {
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%04d/%02d/%02d",
-                 pauFields[iField].Date.Year,
-                 pauFields[iField].Date.Month,
-                 pauFields[iField].Date.Day );
+                  pauFields[iField].Date.Year,
+                  pauFields[iField].Date.Month,
+                  pauFields[iField].Date.Day );
 
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTTime )
     {
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%2d:%02d:%02d", 
-                 pauFields[iField].Date.Hour,
-                 pauFields[iField].Date.Minute,
-                 pauFields[iField].Date.Second );
+                  pauFields[iField].Date.Hour,
+                  pauFields[iField].Date.Minute,
+                  pauFields[iField].Date.Second );
         
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
