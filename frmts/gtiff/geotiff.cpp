@@ -583,22 +583,53 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return eErr;
 
 /* -------------------------------------------------------------------- */
-/*      Handle simple case of eight bit data, and pixel interleaving.   */
+/*      On write of pixel interleaved data, we might as well flush      */
+/*      out any other bands that are dirty in our cache.  This is       */
+/*      especially helpful when writing compressed blocks.              */
 /* -------------------------------------------------------------------- */
-    int	i, nBlockPixels, nWordBytes;
-    GByte	*pabyImage;
+    int iBand; 
+    int nWordBytes = poGDS->nBitsPerSample / 8;
 
-    nWordBytes = poGDS->nBitsPerSample / 8;
-    pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
-    
-    nBlockPixels = nBlockXSize * nBlockYSize;
-    for( i = 0; i < nBlockPixels; i++ )
+    for( iBand = 0; iBand < poGDS->nBands; iBand++ )
     {
-        for( int j = 0; j < nWordBytes; j++ )
+        const GByte *pabyThisImage = NULL;
+        GDALRasterBlock *poBlock = NULL;
+
+        if( iBand+1 == nBand )
+            pabyThisImage = (GByte *) pImage;
+        else
         {
-            pabyImage[j] = ((GByte *) pImage)[i*nWordBytes + j];
+            poBlock = ((GTiffRasterBand *)poGDS->GetRasterBand( iBand+1 ))
+                ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
+
+            if( poBlock == NULL )
+                continue;
+
+            if( !poBlock->GetDirty() )
+            {
+                poBlock->DropLock();
+                continue;
+            }
+
+            pabyThisImage = (GByte *) poBlock->GetDataRef();
         }
-        pabyImage += poGDS->nBands * nWordBytes;
+
+        int i, nBlockPixels = nBlockXSize * nBlockYSize;
+        GByte *pabyOut = poGDS->pabyBlockBuf + iBand*nWordBytes;
+
+        for( i = 0; i < nBlockPixels; i++ )
+        {
+            memcpy( pabyOut, pabyThisImage, nWordBytes );
+            
+            pabyOut += nWordBytes * poGDS->nBands;
+            pabyThisImage += nWordBytes;
+        }
+        
+        if( poBlock != NULL )
+        {
+            poBlock->MarkClean();
+            poBlock->DropLock();
+        }
     }
 
     poGDS->bLoadedBlockDirty = TRUE;
