@@ -27,10 +27,16 @@ HAVE_NUMPY=False
 try:
     import numpy
     HAVE_NUMPY=True
-    print 'numpy include', get_numpy_include()
-    if get_numpy_include() =='.':
-        print "numpy headers were not found!  Array support will not be enabled"
-        HAVE_NUMPY=False
+    # check version
+    numpy_major = numpy.__version__.split('.')[0]
+    if int(numpy_major) < 1:
+        print "numpy version must be > 1.0.0"
+        HAVE_NUMPY = False
+    else:
+        print 'numpy include', get_numpy_include()
+        if get_numpy_include() =='.':
+            print "numpy headers were not found!  Array support will not be enabled"
+            HAVE_NUMPY=False
 except ImportError:
     pass
 
