@@ -49,11 +49,16 @@ include_dirs = ['../../port',
                 '../../ogr',
                 get_numpy_include()]
 
+if sys.platform == 'win32' and os.path.exists("../../GDALmake.opt"):
+    # If we're using mingw -- compile it as a regular unix
+    mingw = True
+else:
+    mingw = False
 
 # Put your build libraries and lib link directories here
 # These *must* match what is in nmake.opt.  We could get
 # fancier here and parse the nmake.opt for lib files in the future.
-if sys.platform == 'win32':
+if sys.platform == 'win32' and not mingw:
     # Created by the GDAL build process.
     # This was swiped from MapServer
     setupvars = "../setup.ini"
