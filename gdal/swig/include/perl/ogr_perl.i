@@ -65,3 +65,26 @@
   }
 
 }
+
+%extend OGRGeometryShadow {
+    
+    void Move(double dx, double dy, double dz = 0) {
+	int n = OGR_G_GetGeometryCount(self);
+	if (n > 0) {
+	    int i;
+	    for (i = 0; i < n; i++) {
+		OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
+		OGRGeometryShadow_Move(g, dx, dy, dz);
+	    }
+	} else {
+	    int i;
+	    for (i = 0; i < OGR_G_GetPointCount(self); i++) {
+		double x = OGR_G_GetX(self, i);
+		double y = OGR_G_GetY(self, i);
+		double z = OGR_G_GetZ(self, i);
+		OGR_G_SetPoint(self, i, x+dx, y+dy, z+dz);
+	    }
+	}
+    }
+    
+}
