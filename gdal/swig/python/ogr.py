@@ -519,6 +519,14 @@ class Feature(_object):
         """
         SetField(self, int id, char value)
         SetField(self, char name, char value)
+        SetField(self, int id, int value)
+        SetField(self, char name, int value)
+        SetField(self, int id, double value)
+        SetField(self, char name, double value)
+        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+            int second, int tzflag)
+        SetField(self, char name, int year, int month, int day, int hour, 
+            int minute, int second, int tzflag)
         """
         return _ogr.Feature_SetField(*args)
 

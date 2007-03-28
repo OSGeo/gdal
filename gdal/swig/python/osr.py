@@ -509,6 +509,10 @@ class SpatialReference(_object):
         """GetTOWGS84(self, double argout) -> OGRErr"""
         return _osr.SpatialReference_GetTOWGS84(*args)
 
+    def SetLocalCS(*args):
+        """SetLocalCS(self, char pszName) -> OGRErr"""
+        return _osr.SpatialReference_SetLocalCS(*args)
+
     def SetGeogCS(*args):
         """
         SetGeogCS(self, char pszGeogName, char pszDatumName, char pszEllipsoidName, 
