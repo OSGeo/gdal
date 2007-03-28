@@ -2920,7 +2920,7 @@ SWIGINTERN int GDALDriverShadow_Register(GDALDriverShadow *self){
     return GDALRegisterDriver( self );
   }
 SWIGINTERN void GDALDriverShadow_Deregister(GDALDriverShadow *self){
-    return GDALDeregisterDriver( self );
+    GDALDeregisterDriver( self );
   }
 
 char const *GDALDriverShadow_ShortName_get( GDALDriverShadow *h ) {
@@ -3082,9 +3082,7 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
                             int *buf_size, char **buf,
                             int band_list, int *pband_list )
 {
-
-    
-  *buf_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
+  *buf_size = buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
   *buf = (char*) malloc( *buf_size );
 
   CPLErr result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
@@ -8454,23 +8452,23 @@ SWIGINTERN PyObject *_wrap_Band_GetStatistics(PyObject *SWIGUNUSEDPARM(self), Py
   int ecode2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
-  void *argp5 = 0 ;
-  int res5 = 0 ;
-  void *argp6 = 0 ;
-  int res6 = 0 ;
-  void *argp7 = 0 ;
-  int res7 = 0 ;
+  double temp4 ;
+  int res4 = SWIG_TMPOBJ ;
+  double temp5 ;
+  int res5 = SWIG_TMPOBJ ;
+  double temp6 ;
+  int res6 = SWIG_TMPOBJ ;
+  double temp7 ;
+  int res7 = SWIG_TMPOBJ ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
-  PyObject * obj5 = 0 ;
-  PyObject * obj6 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:Band_GetStatistics",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  arg4 = &temp4;
+  arg5 = &temp5;
+  arg6 = &temp6;
+  arg7 = &temp7;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Band_GetStatistics",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetStatistics" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -8486,26 +8484,6 @@ SWIGINTERN PyObject *_wrap_Band_GetStatistics(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_GetStatistics" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Band_GetStatistics" "', argument " "4"" of type '" "double *""'"); 
-  }
-  arg4 = reinterpret_cast< double * >(argp4);
-  res5 = SWIG_ConvertPtr(obj4, &argp5,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Band_GetStatistics" "', argument " "5"" of type '" "double *""'"); 
-  }
-  arg5 = reinterpret_cast< double * >(argp5);
-  res6 = SWIG_ConvertPtr(obj5, &argp6,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res6)) {
-    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "Band_GetStatistics" "', argument " "6"" of type '" "double *""'"); 
-  }
-  arg6 = reinterpret_cast< double * >(argp6);
-  res7 = SWIG_ConvertPtr(obj6, &argp7,SWIGTYPE_p_double, 0 |  0 );
-  if (!SWIG_IsOK(res7)) {
-    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "Band_GetStatistics" "', argument " "7"" of type '" "double *""'"); 
-  }
-  arg7 = reinterpret_cast< double * >(argp7);
   {
     CPLErrorReset();
     result = (CPLErr)GDALRasterBandShadow_GetStatistics(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
@@ -8516,7 +8494,33 @@ SWIGINTERN PyObject *_wrap_Band_GetStatistics(PyObject *SWIGUNUSEDPARM(self), Py
       }
     }
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) IF_ERROR_RETURN_NONE */
+  }
+  if (SWIG_IsTmpObj(res4)) {
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_double((*arg4)));
+  } else {
+    int new_flags = SWIG_IsNewObj(res4) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg4), SWIGTYPE_p_double, new_flags));
+  }
+  if (SWIG_IsTmpObj(res5)) {
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_double((*arg5)));
+  } else {
+    int new_flags = SWIG_IsNewObj(res5) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg5), SWIGTYPE_p_double, new_flags));
+  }
+  if (SWIG_IsTmpObj(res6)) {
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_double((*arg6)));
+  } else {
+    int new_flags = SWIG_IsNewObj(res6) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg6), SWIGTYPE_p_double, new_flags));
+  }
+  if (SWIG_IsTmpObj(res7)) {
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_double((*arg7)));
+  } else {
+    int new_flags = SWIG_IsNewObj(res7) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg7), SWIGTYPE_p_double, new_flags));
+  }
   {
     /* %typemap(ret) CPLErr */
     if ( bUseExceptions == 0 ) {
@@ -8594,16 +8598,6 @@ SWIGINTERN PyObject *_wrap_Band_SetStatistics(PyObject *SWIGUNUSEDPARM(self), Py
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
   return resultobj;
 fail:
   return NULL;
@@ -8922,16 +8916,6 @@ SWIGINTERN PyObject *_wrap_Band_Fill(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
   return resultobj;
 fail:
   return NULL;
@@ -9076,16 +9060,6 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster(PyObject *SWIGUNUSEDPARM(self), PyObj
       free( *arg7 );
     }
   }
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
   return resultobj;
 fail:
   {
@@ -9223,16 +9197,6 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
   return resultobj;
 fail:
   return NULL;
