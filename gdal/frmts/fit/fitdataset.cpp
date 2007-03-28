@@ -302,6 +302,8 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                  "FITRasterBand::IReadBlock unsupported bytesPerPixel %lu",
                  bytesPerComponent);
     } // switch
+#else
+    (void) p; // avoid warnings.
 #endif // swapping
 
     if (! fastpath) {
