@@ -658,6 +658,10 @@ public:
     return OSRGetTOWGS84( self, argout, 7 );
   }
 
+  OGRErr SetLocalCS( const char *pszName ) {
+    return OSRSetLocalCS( self, pszName );
+  }
+
   OGRErr SetGeogCS( const char * pszGeogName,
                     const char * pszDatumName,
                     const char * pszEllipsoidName,
