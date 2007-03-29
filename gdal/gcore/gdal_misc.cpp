@@ -1196,10 +1196,10 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
         {
             GDALInitGCPs( 1, asGCPs + nCoordinateCount );
             
-            asGCPs[nCoordinateCount].dfGCPPixel = atof(papszTok[2]);
-            asGCPs[nCoordinateCount].dfGCPLine = atof(papszTok[3]);
-            asGCPs[nCoordinateCount].dfGCPX = atof(papszTok[0]);
-            asGCPs[nCoordinateCount].dfGCPY = atof(papszTok[1]);
+            asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]);
+            asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]);
+            asGCPs[nCoordinateCount].dfGCPX = CPLAtofM(papszTok[0]);
+            asGCPs[nCoordinateCount].dfGCPY = CPLAtofM(papszTok[1]);
             if( papszTok[5] != NULL )
             {
                 CPLFree( asGCPs[nCoordinateCount].pszId );
@@ -1406,15 +1406,15 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     papszLines = CSLLoad( pszTFW );
 
     if( CSLCount(papszLines) >= 6 
-        && (atof(papszLines[0]) != 0.0 || atof(papszLines[2]) != 0.0)
-        && (atof(papszLines[3]) != 0.0 || atof(papszLines[1]) != 0.0) )
+        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0)
+        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) )
     {
-        padfGeoTransform[0] = atof(papszLines[4]);
-        padfGeoTransform[1] = atof(papszLines[0]);
-        padfGeoTransform[2] = atof(papszLines[2]);
-        padfGeoTransform[3] = atof(papszLines[5]);
-        padfGeoTransform[4] = atof(papszLines[1]);
-        padfGeoTransform[5] = atof(papszLines[3]);
+        padfGeoTransform[0] = CPLAtofM(papszLines[4]);
+        padfGeoTransform[1] = CPLAtofM(papszLines[0]);
+        padfGeoTransform[2] = CPLAtofM(papszLines[2]);
+        padfGeoTransform[3] = CPLAtofM(papszLines[5]);
+        padfGeoTransform[4] = CPLAtofM(papszLines[1]);
+        padfGeoTransform[5] = CPLAtofM(papszLines[3]);
 
         // correct for center of pixel vs. top left of pixel
         padfGeoTransform[0] -= 0.5 * padfGeoTransform[1];
@@ -2146,7 +2146,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 
     if( nCount == 1 )
     {
-        *padfTarget = atof( pszValue );
+        *padfTarget = CPLAtofM( pszValue );
         return TRUE;
     }
 
@@ -2160,7 +2160,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
     }
 
     for( i = 0; i < nCount; i++ )
-        padfTarget[i] = atof(papszTokens[i]);
+        padfTarget[i] = CPLAtofM(papszTokens[i]);
 
     CSLDestroy( papszTokens );
 
