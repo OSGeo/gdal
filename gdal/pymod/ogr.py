@@ -831,7 +831,7 @@ class Geometry:
                 self._o = _obj
                 self.thisown = 1
         elif gml:
-            _obj = _gdal.OGR_G_CreateFromWkb(gml)
+            _obj = _gdal.OGR_G_CreateFromGML(gml)
             if _obj is not None and _obj != 'NULL':
                 self._o = _obj
                 self.thisown = 1
