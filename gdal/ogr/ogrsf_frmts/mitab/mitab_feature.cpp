@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.65 2006/07/25 13:22:58 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.66 2006/10/17 14:34:31 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.66  2006/10/17 14:34:31  dmorissette
+ * Fixed problem with null brush bg color (bug 1603)
+ *
  * Revision 1.65  2006/07/25 13:22:58  dmorissette
  * Fixed initialization of MBR of TABCollection members (bug 1520)
  *
@@ -7833,6 +7836,8 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
 
     // Set the BackColor, if not set, then it's transparent
     pszBrushColor = poBrushStyle->BackColor(bIsNull);
+    if(bIsNull) pszBrushColor = NULL;
+
     if(pszBrushColor)
     {
         if(pszBrushColor[0] == '#')
@@ -7847,6 +7852,8 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
 
     // Set the ForeColor
     pszBrushColor = poBrushStyle->ForeColor(bIsNull);
+    if(bIsNull) pszBrushColor = NULL;
+
     if(pszBrushColor)
     {
         if(pszBrushColor[0] == '#')
