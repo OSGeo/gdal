@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.69  2007/02/28 20:41:40  dmorissette
+ * Added missing NULL pointer checks in SetPenFromStyleString(),
+ * SetBrushFromStyleString() and SetSymbolFromStyleString() (bug 1670)
+ *
  * Revision 1.66  2006/10/17 14:34:31  dmorissette
  * Fixed problem with null brush bg color (bug 1603)
  *
@@ -7611,8 +7615,8 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     }
 
     // Set the Id of the Pen, use Pattern if necessary.
-    if(pszPenName && strstr(pszPenName, "mapinfo-pen-") ||
-       strstr(pszPenName, "ogr-pen-"))
+    if(pszPenName && 
+       (strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")) )
     {
         if((pszPenId = (char *) strstr(pszPenName, "mapinfo-pen-")))
         {
@@ -7631,52 +7635,57 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     {
         // If no Pen Id, use the Pen Pattern to retreive the Id.
         pszPenPattern = poPenStyle->Pattern(bIsNull);
-        if(strcmp(pszPenPattern, "1 1") == 0)
-            SetPenPattern(3);
-        else if(strcmp(pszPenPattern, "2 1") == 0)
-            SetPenPattern(4);
-        else if(strcmp(pszPenPattern, "3 1") == 0)
-            SetPenPattern(5);
-        else if(strcmp(pszPenPattern, "6 1") == 0)
-            SetPenPattern(6);
-        else if(strcmp(pszPenPattern, "12 2") == 0)
-            SetPenPattern(7);
-        else if(strcmp(pszPenPattern, "24 4") == 0)
-            SetPenPattern(8);
-        else if(strcmp(pszPenPattern, "4 3") == 0)
-            SetPenPattern(9);
-        else if(strcmp(pszPenPattern, "1 4") == 0)
-            SetPenPattern(10);
-        else if(strcmp(pszPenPattern, "4 6") == 0)
-            SetPenPattern(11);
-        else if(strcmp(pszPenPattern, "6 4") == 0)
-            SetPenPattern(12);
-        else if(strcmp(pszPenPattern, "12 12") == 0)
-            SetPenPattern(13);
-        else if(strcmp(pszPenPattern, "8 2 1 2") == 0)
-            SetPenPattern(14);
-        else if(strcmp(pszPenPattern, "12 1 1 1") == 0)
-            SetPenPattern(15);
-        else if(strcmp(pszPenPattern, "12 1 3 1") == 0)
-            SetPenPattern(16);
-        else if(strcmp(pszPenPattern, "24 6 4 6") == 0)
-            SetPenPattern(17);
-        else if(strcmp(pszPenPattern, "24 3 3 3 3 3") == 0)
-            SetPenPattern(18);
-        else if(strcmp(pszPenPattern, "24 3 3 3 3 3 3 3") == 0)
-            SetPenPattern(19);
-        else if(strcmp(pszPenPattern, "6 3 1 3 1 3") == 0)
-            SetPenPattern(20);
-        else if(strcmp(pszPenPattern, "12 2 1 2 1 2") == 0)
-            SetPenPattern(21);
-        else if(strcmp(pszPenPattern, "12 2 1 2 1 2 1 2") == 0)
-            SetPenPattern(22);
-        else if(strcmp(pszPenPattern, "4 1 1 1") == 0)
-            SetPenPattern(23);
-        else if(strcmp(pszPenPattern, "4 1 1 1 1") == 0)
-            SetPenPattern(24);
-        else if(strcmp(pszPenPattern, "4 1 1 1 2 1 1 1") == 0)
-            SetPenPattern(25);
+        if (bIsNull)
+            pszPenPattern = NULL;
+        else
+        {
+            if(strcmp(pszPenPattern, "1 1") == 0)
+                SetPenPattern(3);
+            else if(strcmp(pszPenPattern, "2 1") == 0)
+                SetPenPattern(4);
+            else if(strcmp(pszPenPattern, "3 1") == 0)
+                SetPenPattern(5);
+            else if(strcmp(pszPenPattern, "6 1") == 0)
+                SetPenPattern(6);
+            else if(strcmp(pszPenPattern, "12 2") == 0)
+                SetPenPattern(7);
+            else if(strcmp(pszPenPattern, "24 4") == 0)
+                SetPenPattern(8);
+            else if(strcmp(pszPenPattern, "4 3") == 0)
+                SetPenPattern(9);
+            else if(strcmp(pszPenPattern, "1 4") == 0)
+                SetPenPattern(10);
+            else if(strcmp(pszPenPattern, "4 6") == 0)
+                SetPenPattern(11);
+            else if(strcmp(pszPenPattern, "6 4") == 0)
+                SetPenPattern(12);
+            else if(strcmp(pszPenPattern, "12 12") == 0)
+                SetPenPattern(13);
+            else if(strcmp(pszPenPattern, "8 2 1 2") == 0)
+                SetPenPattern(14);
+            else if(strcmp(pszPenPattern, "12 1 1 1") == 0)
+                SetPenPattern(15);
+            else if(strcmp(pszPenPattern, "12 1 3 1") == 0)
+                SetPenPattern(16);
+            else if(strcmp(pszPenPattern, "24 6 4 6") == 0)
+                SetPenPattern(17);
+            else if(strcmp(pszPenPattern, "24 3 3 3 3 3") == 0)
+                SetPenPattern(18);
+            else if(strcmp(pszPenPattern, "24 3 3 3 3 3 3 3") == 0)
+                SetPenPattern(19);
+            else if(strcmp(pszPenPattern, "6 3 1 3 1 3") == 0)
+                SetPenPattern(20);
+            else if(strcmp(pszPenPattern, "12 2 1 2 1 2") == 0)
+                SetPenPattern(21);
+            else if(strcmp(pszPenPattern, "12 2 1 2 1 2 1 2") == 0)
+                SetPenPattern(22);
+            else if(strcmp(pszPenPattern, "4 1 1 1") == 0)
+                SetPenPattern(23);
+            else if(strcmp(pszPenPattern, "4 1 1 1 1") == 0)
+                SetPenPattern(24);
+            else if(strcmp(pszPenPattern, "4 1 1 1 2 1 1 1") == 0)
+                SetPenPattern(25);
+        }
     }
 
     return;
@@ -7817,8 +7826,9 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     pszBrushId = poBrushStyle->Id(bIsNull);
     if(bIsNull) pszBrushId = NULL;
 
-    if(pszBrushId && strstr(pszBrushId, "mapinfo-brush-") || 
-       strstr(pszBrushId, "ogr-brush-"))
+    if(pszBrushId && 
+       (strstr(pszBrushId, "mapinfo-brush-") || 
+        strstr(pszBrushId, "ogr-brush-")) )
     {
         if(strstr(pszBrushId, "mapinfo-brush-"))
         {
@@ -8076,8 +8086,9 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     pszSymbolId = poSymbolStyle->Id(bIsNull);
     if(bIsNull) pszSymbolId = NULL;
 
-    if(pszSymbolId && strstr(pszSymbolId, "mapinfo-sym-") || 
-       strstr(pszSymbolId, "ogr-sym-"))
+    if(pszSymbolId &&  
+       (strstr(pszSymbolId, "mapinfo-sym-") || 
+        strstr(pszSymbolId, "ogr-sym-")) )
     {
         if(strstr(pszSymbolId, "mapinfo-sym-"))
         {
