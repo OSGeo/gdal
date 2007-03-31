@@ -100,9 +100,37 @@ def hfa_histwrite():
 
     return 'success'
     
+###############################################################################
+# Verify we can read suspicious int data.
+
+def hfa_int_read():
+
+    ds = gdal.Open('data/int.img')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Verify we can read suspicious int data.
+
+def hfa_float_read():
+
+    ds = gdal.Open('data/float.img')
+    md = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    return 'success'
+
+#
+###############################################################################
+#
+
 gdaltest_list = [
     hfa_histread,
-    hfa_histwrite ]
+    hfa_histwrite,
+    hfa_int_read,
+    hfa_float_read ]
 
 if __name__ == '__main__':
 
