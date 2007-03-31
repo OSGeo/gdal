@@ -26,7 +26,7 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc"
-				ReBuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc devinstall"
+				ReBuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc clean&#x0D;&#x0A;nmake -f makefile.vc"
 				CleanCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc clean"
 				Output="gdal14.dll"
 				PreprocessorDefinitions="WIN32;_DEBUG"
