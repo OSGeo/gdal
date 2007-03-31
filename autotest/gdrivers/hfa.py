@@ -140,6 +140,35 @@ def hfa_int_read():
     return 'success'
 
 ###############################################################################
+# Verify we can read suspicious int data statistics.
+
+def hfa_int_stats():
+
+    ds = gdal.Open('data/int.img')
+    stats = ds.GetRasterBand(1).GetStatistics(False, True)
+    ds = None
+
+    tolerance = 0.0001
+
+    if abs(stats[0] - 40918.0) > tolerance:
+        gdaltest.post_reason( 'Minimum value is wrong.' )
+        return 'fail'
+
+    if abs(stats[1] - 41134.0) > tolerance:
+        gdaltest.post_reason( 'Maximum value is wrong.' )
+        return 'fail'
+
+    if abs(stats[2] - 41019.784218148) > tolerance:
+        gdaltest.post_reason( 'Mean value is wrong.' )
+        return 'fail'
+
+    if abs(stats[3] - 44.637237445468) > tolerance:
+        gdaltest.post_reason( 'StdDev value is wrong.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Verify we can read suspicious int data.
 
 def hfa_float_read():
@@ -186,7 +215,35 @@ def hfa_float_read():
 
     return 'success'
 
-#
+###############################################################################
+# Verify we can read suspicious float data statistics.
+
+def hfa_float_stats():
+
+    ds = gdal.Open('data/float.img')
+    stats = ds.GetRasterBand(1).GetStatistics(False, True)
+    ds = None
+    
+    tolerance = 0.0001
+
+    if abs(stats[0] - 40.91858291626) > tolerance:
+        gdaltest.post_reason( 'Minimum value is wrong.' )
+        return 'fail'
+
+    if abs(stats[1] - 41.134323120117) > tolerance:
+        gdaltest.post_reason( 'Maximum value is wrong.' )
+        return 'fail'
+
+    if abs(stats[2] - 41.020284249223) > tolerance:
+        gdaltest.post_reason( 'Mean value is wrong.' )
+        return 'fail'
+
+    if abs(stats[3] - 0.044636441749041) > tolerance:
+        gdaltest.post_reason( 'StdDev value is wrong.' )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -194,7 +251,9 @@ gdaltest_list = [
     hfa_histread,
     hfa_histwrite,
     hfa_int_read,
-    hfa_float_read ]
+    hfa_int_stats,
+    hfa_float_read,
+    hfa_float_stats ]
 
 if __name__ == '__main__':
 
