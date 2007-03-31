@@ -1352,11 +1352,18 @@ CPLErr HFADataset::WriteProjection()
             }
         }
 
-        /* try to morph WGS84 varients to "WGS 84" (bug 1281) */
-        if( EQUALN(sDatum.datumname,"wgs",3) 
-            && strstr(sDatum.datumname,"84") != NULL )
-            sDatum.datumname = "WGS 84";
+        /* Map some EPSG datum codes directly to Imagine names */
+        int nGCS = poGeogSRS->GetEPSGGeogCS();
 
+        if( nGCS == 4326 )
+            sDatum.datumname = "WGS 84";
+        if( nGCS == 4322 )
+            sDatum.datumname = "WGS 1972";
+        if( nGCS == 4267 )
+            sDatum.datumname = "North_American_Datum_1927";
+        if( nGCS == 4269 )
+            sDatum.datumname = "North_American_Datum_1983";
+            
         if( poGeogSRS->GetTOWGS84( sDatum.params ) == OGRERR_NONE )
             sDatum.type = EPRJ_DATUM_PARAMETRIC;
         else if( EQUAL(sDatum.datumname,"NAD27") )
