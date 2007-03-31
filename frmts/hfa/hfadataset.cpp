@@ -1360,9 +1360,9 @@ CPLErr HFADataset::WriteProjection()
         if( nGCS == 4322 )
             sDatum.datumname = "WGS 1972";
         if( nGCS == 4267 )
-            sDatum.datumname = "North_American_Datum_1927";
+            sDatum.datumname = "NAD27";
         if( nGCS == 4269 )
-            sDatum.datumname = "North_American_Datum_1983";
+            sDatum.datumname = "NAD83";
             
         if( poGeogSRS->GetTOWGS84( sDatum.params ) == OGRERR_NONE )
             sDatum.type = EPRJ_DATUM_PARAMETRIC;
