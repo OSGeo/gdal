@@ -109,6 +109,34 @@ def hfa_int_read():
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
+    if md['STATISTICS_MINIMUM'] != '40918':
+        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_MAXIMUM'] != '41134':
+        gdaltest.post_reason( 'STATISTICS_MAXIMUM is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_MEDIAN'] != '41017':
+        gdaltest.post_reason( 'STATISTICS_MEDIAN is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_MODE'] != '41013':
+        gdaltest.post_reason( 'STATISTICS_MODE is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_HISTOMIN'] != '40918':
+        gdaltest.post_reason( 'STATISTICS_HISTOMIN is wrong.' )
+        return 'fail'
+
+    if md['STATISTICS_HISTOMAX'] != '41134':
+        gdaltest.post_reason( 'STATISTICS_HISTOMAX is wrong.' )
+        return 'fail'
+
+    if md['LAYER_TYPE'] != 'athematic':
+        gdaltest.post_reason( 'LAYER_TYPE is wrong.' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -119,6 +147,42 @@ def hfa_float_read():
     ds = gdal.Open('data/float.img')
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
+
+    tolerance = 0.0001
+
+    min = float(md['STATISTICS_MINIMUM'])
+    if abs(min - 40.91858291626) > tolerance:
+        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        return 'fail'
+
+    max = float(md['STATISTICS_MAXIMUM'])
+    if abs(max - 41.134323120117) > tolerance:
+        gdaltest.post_reason( 'STATISTICS_MAXIMUM is wrong.' )
+        return 'fail'
+
+    median = float(md['STATISTICS_MEDIAN'])
+    if abs(median - 41.017182931304) > tolerance:
+        gdaltest.post_reason( 'STATISTICS_MEDIAN is wrong.' )
+        return 'fail'
+
+    mod = float(md['STATISTICS_MODE'])
+    if abs(mod - 41.0104410499) > tolerance:
+        gdaltest.post_reason( 'STATISTICS_MODE is wrong.' )
+        return 'fail'
+
+    histMin = float(md['STATISTICS_HISTOMIN'])
+    if abs(histMin - 40.91858291626) > tolerance:
+        gdaltest.post_reason( 'STATISTICS_HISTOMIN is wrong.' )
+        return 'fail'
+
+    histMax = float(md['STATISTICS_HISTOMAX'])
+    if abs(histMax - 41.134323120117) > tolerance:
+        gdaltest.post_reason( 'STATISTICS_HISTOMAX is wrong.' )
+        return 'fail'
+
+    if md['LAYER_TYPE'] != 'athematic':
+        gdaltest.post_reason( 'LAYER_TYPE is wrong.' )
+        return 'fail'
 
     return 'success'
 
