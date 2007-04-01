@@ -2091,3 +2091,10 @@ LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG()
+if test "x$CFG" != "xdebug"; then
+    DEBUG_MODE="no"
+else
+    DEBUG_MODE="yes"
+fi
+LOC_MSG([  enable debug mode:         ${DEBUG_MODE}])
+LOC_MSG()
