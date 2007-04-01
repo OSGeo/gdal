@@ -1363,7 +1363,7 @@ void netCDFDataset::CreateSubDatasetList( )
 	    szDim[0]='\0';
 	    for( i = 0; i < nDims; i++ ) {
 		nc_inq_dimlen ( cdfid, ponDimIds[i], &nDimLen );
-		sprintf(szTemp, "%d", nDimLen);
+		sprintf(szTemp, "%d", (int) nDimLen);
 		strcat(szTemp,  "x" );
 		strcat(szDim,   szTemp);
 	    }
@@ -1445,6 +1445,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     char         attname[NC_MAX_NAME];
     int          ndims, nvars, ngatts, unlimdimid;
 
+/* -------------------------------------------------------------------- */
+/*      Does this appear to be a netcdf file?                           */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(poOpenInfo->pszFilename,"NETCDF:",7)
+        && ( poOpenInfo->nHeaderBytes < 5 
+             || !EQUALN((const char *) (poOpenInfo->pabyHeader),"CDF\001",5)))
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*       Check if filename start with NETCDF: tag                       */
