@@ -29,7 +29,11 @@ rm -rf dist_wrk
 mkdir dist_wrk
 cd dist_wrk
 
-svn checkout http://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
+SVNURL="http://svn.osgeo.org/gdal"
+SVNBRANCH="trunk"
+SVNMODULE="gdal"
+
+svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
 
 if [ \! -d gdal ] ; then
     echo "svn checkout reported an error ... abandoning mkgdaldist"
