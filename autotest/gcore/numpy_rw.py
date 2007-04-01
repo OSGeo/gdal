@@ -43,14 +43,16 @@ def numpy_rw_1():
 	
     gdaltest.numpy_drv = None
     try:
-	import Numeric
         import gdalnumeric
     except:
 	return 'skip'
 
-    import _gdal
-    gdal.AllRegister()
-    _gdal.GDALRegister_NUMPY()
+    try:
+        import _gdal
+        _gdal.GDALRegister_NUMPY()  # only needed for old style bindings.
+        gdal.AllRegister()
+    except:
+        pass
 
     gdaltest.numpy_drv = gdal.GetDriverByName( 'NUMPY' )
     if gdaltest.numpy_drv is None:
@@ -76,7 +78,7 @@ def numpy_rw_2():
 
     ds = gdalnumeric.OpenArray( array )
     if ds is None:
-	gdaltest.post_reason( 'Failed to open memory array as dataset.' )
+ 	gdaltest.post_reason( 'Failed to open memory array as dataset.' )
 	return 'fail'
 
     bnd = ds.GetRasterBand(1)
@@ -87,6 +89,70 @@ def numpy_rw_2():
 
     return 'success'
 
+###############################################################################
+# Test loading complex data.
+
+def numpy_rw_3():
+
+    if gdaltest.numpy_drv is None:
+	return 'skip'
+
+    ds = gdal.Open( 'data/cint_sar.tif' )
+    array = ds.ReadAsArray()
+
+    if array[2][3] != 116-16j:
+        print array[0][2][3]
+        gdaltest.post_reason( 'complex value read improperly.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test a band read with downsampling.
+
+def numpy_rw_4():
+
+    if gdaltest.numpy_drv is None:
+	return 'skip'
+
+    ds = gdal.Open( 'data/byte.tif' )
+    array = ds.GetRasterBand(1).ReadAsArray(0,0,20,20,5,5)
+
+    if array[2][3] != 123:
+        print array[2][3]
+        gdaltest.post_reason( 'Read wrong value - perhaps downsampling algorithm has changed subtly?' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a multi-band file.
+
+def numpy_rw_5():
+
+    if gdaltest.numpy_drv is None:
+	return 'skip'
+
+    import gdalnumeric
+    
+    array = gdalnumeric.LoadFile('data/rgbsmall.tif',35,21,1,1)
+
+    if array[0][0][0] != 78:
+        print array
+        gdaltest.post_reason( 'value read improperly.' )
+        return 'fail'
+
+    if array[1][0][0] != 117:
+        print array
+        gdaltest.post_reason( 'value read improperly.' )
+        return 'fail'
+
+    if array[2][0][0] != 24:
+        print array
+        gdaltest.post_reason( 'value read improperly.' )
+        return 'fail'
+
+    return 'success'
 
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
@@ -96,6 +162,9 @@ def numpy_rw_cleanup():
 gdaltest_list = [
     numpy_rw_1,
     numpy_rw_2,
+    numpy_rw_3,
+    numpy_rw_4,
+    numpy_rw_5,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
