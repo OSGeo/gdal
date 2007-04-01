@@ -20,6 +20,16 @@
 %include "arrays_java.i";
 %include "typemaps.i"
 
+/* DISOWN implementation */
+%typemap(javacode) SWIGTYPE %{
+  protected static long getCPtrAndDisown($javaclassname obj) {
+    if (obj != null) obj.swigCMemOwn= false;
+    return getCPtr(obj);
+  }
+%}
+
+%typemap(javain) SWIGTYPE *DISOWN "$javaclassname.getCPtrAndDisown($javainput)" 
+
 
 /* JAVA TYPEMAPS */
 
@@ -711,4 +721,7 @@ OPTIONAL_POD(int,i);
 %typemap(javaout) void * {
     return $jnicall;
   }
+  
+  
+  
 
