@@ -6,10 +6,13 @@ import string
 
 from os import path
 from glob import glob
-from distutils.core import setup, Extension
-from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
+
+from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
 # Function to find numpy's include directory
 def get_numpy_include():
@@ -48,6 +51,9 @@ def unique(list):
         dict[item] = ''
     return dict.keys()
 
+
+# Get GDAL version from ../../VERSION
+gdal_version = open('../../VERSION').read().strip()
 
 include_dirs = ['../../port',
                 '../../gcore',
@@ -199,9 +205,9 @@ if HAVE_NUMPY:
     py_modules.append('gdal_array')
     py_modules.append('gdalnumeric')
     
-setup( name = 'Gdal Wrapper',
-       version = 'ng using swig 1.3',
-       description = 'Swig 1.3 wrapper over gdal',
+setup( name = 'GDAL-OGR',
+       version = gdal_version,
+       description = 'GDAL-OGR Python Bindings',
        py_modules = py_modules,
        url="http://www.gdal.org",
        ext_modules = ext_modules )
