@@ -103,7 +103,7 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, xsize=None, ysize=None ):
     for band_index in range(1,ds.RasterCount+1):
         band_array = BandReadAsArray( ds.GetRasterBand(band_index),
                                       xoff, yoff, xsize, ysize)
-        array_list.append( reshape( band_array, [1,ysize,xsize] ) )
+        array_list.append( numpy.reshape( band_array, [1,ysize,xsize] ) )
 
     return numpy.concatenate( array_list )
             
@@ -137,7 +137,7 @@ def BandReadAsArray( band, xoff, yoff, win_xsize, win_ysize,
     band_str = band.ReadRaster( xoff, yoff, win_xsize, win_ysize,
                                  buf_xsize, buf_ysize, datatype )
     ar = numpy.fromstring(band_str,dtype=typecode)
-    ar = numpy.reshape(ar, [1,buf_ysize,buf_xsize])
+    ar = numpy.reshape(ar, [buf_ysize,buf_xsize])
     
     return ar
 
