@@ -25,22 +25,14 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.3  2004/04/02 17:40:44  warmerda
-#  added GDALGeneralCmdLineProcessor() support
-#
-#  Revision 1.2  2002/09/04 18:11:17  warmerda
-#  fixed to emit center of pixel
-#
-#  Revision 1.1  2002/09/04 17:58:07  warmerda
-#  New
-#
-#
 
 import gdal
 import sys
-import Numeric
+
+try:
+    import numpy as Numeric
+except ImportError:
+    import Numeric
 
 # =============================================================================
 def Usage():
