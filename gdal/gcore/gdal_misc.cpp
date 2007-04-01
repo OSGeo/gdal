@@ -1406,14 +1406,9 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
     papszLines = CSLLoad( pszTFW );
 
-    for( i = 0; i < CSLCount(papszLines); i++)
-    {
-        CPLString line(papszLines[i]);
-        if( line.Trim().empty() )
-            bCorrupt = true;
-    } 
-
-    if( !bCorrupt )
+    if( CSLCount(papszLines) >= 6  
+        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0) 
+        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) ) 
     {
         padfGeoTransform[0] = CPLAtofM(papszLines[4]);
         padfGeoTransform[1] = CPLAtofM(papszLines[0]);
