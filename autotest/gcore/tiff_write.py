@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: tiff_write.py,v 1.10 2006/12/02 05:13:53 hobu Exp $
+# $Id: tiff_write.py 11124 2007-04-01 04:09:40Z warmerdam $
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for GeoTIFF format.
@@ -24,39 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
-#  $Log: tiff_write.py,v $
-#  Revision 1.10  2006/12/02 05:13:53  hobu
-#  changes for ng numpy bindings
-#
-#  Revision 1.9  2006/09/27 22:40:31  fwarmerdam
-#  added bug 757 related checks for readwrite on compressed files
-#
-#  Revision 1.8  2006/04/28 03:39:05  fwarmerdam
-#  Skip test 4 if gdalnumeric not available (ie. with NG bindings).
-#
-#  Revision 1.7  2005/12/11 21:21:39  fwarmerdam
-#  removed debugging statement
-#
-#  Revision 1.6  2005/01/22 06:06:35  fwarmerdam
-#  added GCP test
-#
-#  Revision 1.5  2004/09/16 20:24:18  fwarmerdam
-#  Use UnsignedInt8.
-#
-#  Revision 1.4  2003/05/20 15:11:05  warmerda
-#  skip test if numeric not available
-#
-#  Revision 1.3  2003/03/25 06:00:25  warmerda
-#  added metadata and raster minmax testing
-#
-#  Revision 1.2  2003/03/25 04:39:50  warmerda
-#  Added some geotransform and nodata testing.
-#
-#  Revision 1.1  2003/03/17 06:43:43  warmerda
-#  New
-#
-#
 
 import os
 import sys
@@ -151,14 +118,9 @@ def tiff_write_3():
 def tiff_write_4():
 
     try:
-        import Numeric
         import gdalnumeric
     except ImportError:
-        try:
-            import numpy as Numeric
-            import gdalnumeric
-        except ImportError:
-            return 'skip'
+        return 'skip'
 
     src_ds = gdal.Open( 'data/utmsmall.tif' )
 
@@ -167,9 +129,9 @@ def tiff_write_4():
     new_ds = gdaltest.tiff_drv.Create( 'test_4.tif', 40, 50, 3,
                                        gdal.GDT_Byte, options )
 
-    data_red = Numeric.zeros( (50, 40) )
-    data_green = Numeric.zeros( (50, 40) )
-    data_blue = Numeric.zeros( (50, 40) )
+    data_red = gdalnumeric.zeros( (50, 40) )
+    data_green = gdalnumeric.zeros( (50, 40) )
+    data_blue = gdalnumeric.zeros( (50, 40) )
 
     for y in range(50):
         for x in range(40):
@@ -178,13 +140,13 @@ def tiff_write_4():
             data_blue[y][x] = x+y
 
     try:
-        data_red   = data_red.astype(Numeric.UnsignedInt8)
-        data_green = data_green.astype(Numeric.UnsignedInt8)
-        data_blue  = data_blue.astype(Numeric.UnsignedInt8)
+        data_red   = data_red.astype(gdalnumeric.UnsignedInt8)
+        data_green = data_green.astype(gdalnumeric.UnsignedInt8)
+        data_blue  = data_blue.astype(gdalnumeric.UnsignedInt8)
     except AttributeError:
-        data_red   = data_red.astype(Numeric.uint8)
-        data_green = data_green.astype(Numeric.uint8)
-        data_blue  = data_blue.astype(Numeric.uint8)
+        data_red   = data_red.astype(gdalnumeric.uint8)
+        data_green = data_green.astype(gdalnumeric.uint8)
+        data_blue  = data_blue.astype(gdalnumeric.uint8)
         
     new_ds.GetRasterBand(1).WriteArray( data_red )
     new_ds.GetRasterBand(2).WriteArray( data_green )
