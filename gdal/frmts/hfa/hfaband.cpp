@@ -420,6 +420,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 
     nNumBits = pabyCData[12];
 
+    CPLDebug( "HFA", 
+              "nNumBits=%d, nNumRuns=%d, nDataMin=%d/%g", 
+              nNumBits, nNumRuns, 
+              nDataMin, *((float *) &nDataMin) );
+
 /* ==================================================================== */
 /*      If this is not run length encoded, but just reduced             */
 /*      precision, handle it now.                                       */
@@ -431,7 +436,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 
         for( nPixelsOutput = 0; nPixelsOutput < nMaxPixels; nPixelsOutput++ )
         {
-            int	nDataValue;
+            int	nDataValue, nRawValue;
 
 /* -------------------------------------------------------------------- */
 /*      Extract the data value in a way that depends on the number      */
@@ -439,54 +444,54 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /* -------------------------------------------------------------------- */
             if( nNumBits == 0 )
             {
-                nDataValue = 0;
+                nRawValue = 0;
             }
             else if( nNumBits == 1 )
             {
-                nDataValue =
+                nRawValue =
                     (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0x1;
                 nValueBitOffset++;
             }
             else if( nNumBits == 2 )
             {
-                nDataValue =
+                nRawValue =
                     (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0x3;
                 nValueBitOffset += 2;
             }
             else if( nNumBits == 4 )
             {
-                nDataValue =
+                nRawValue =
                     (pabyValues[nValueBitOffset>>3] >> (nValueBitOffset&7)) & 0xf;
                 nValueBitOffset += 4;
             }
             else if( nNumBits == 8 )
             {
-                nDataValue = *pabyValues;
+                nRawValue = *pabyValues;
                 pabyValues++;
             }
             else if( nNumBits == 16 )
             {
-                nDataValue = 256 * *(pabyValues++);
-                nDataValue += *(pabyValues++);
+                nRawValue = 256 * *(pabyValues++);
+                nRawValue += *(pabyValues++);
             }
             else if( nNumBits == 32 )
             {
-                nDataValue = 256 * 256 * 256 * *(pabyValues++);
-                nDataValue += 256 * 256 * *(pabyValues++);
-                nDataValue += 256 * *(pabyValues++);
-                nDataValue += *(pabyValues++);
+                nRawValue = 256 * 256 * 256 * *(pabyValues++);
+                nRawValue += 256 * 256 * *(pabyValues++);
+                nRawValue += 256 * *(pabyValues++);
+                nRawValue += *(pabyValues++);
             }
             else
             {
                 printf( "nNumBits = %d\n", nNumBits );
                 CPLAssert( FALSE );
-                nDataValue = 0;
+                nRawValue = 0;
             }
 
 /* -------------------------------------------------------------------- */
 /*      Offset by the minimum value.                                    */
 /* -------------------------------------------------------------------- */
-            nDataValue += nDataMin;
+            nDataValue = nRawValue + nDataMin;
 
 /* -------------------------------------------------------------------- */
 /*      Now apply to the output buffer in a type specific way.          */
@@ -528,9 +533,30 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
             {
                 ((GInt16 *) pabyDest)[nPixelsOutput] = (GInt16) nDataValue;
             }
+            else if( nDataType == EPT_s32 )
+            {
+                ((GInt32 *) pabyDest)[nPixelsOutput] = nDataValue;
+            }
+            else if( nDataType == EPT_u32 )
+            {
+                ((GUInt32 *) pabyDest)[nPixelsOutput] = nDataValue;
+            }
+/* -------------------------------------------------------------------- */
+/*      Note, floating point values are handled somewhat                */
+/*      differently, and I've only been able to test f32 with a         */
+/*      16bit offset value (see bug #1000 and                           */
+/*      data/imagine/bug1000/float.img)                                 */
+/* -------------------------------------------------------------------- */
             else if( nDataType == EPT_f32 )
             {
-                ((float *) pabyDest)[nPixelsOutput] = (float) nDataValue;
+                float fValue = *((float *) &nDataMin);
+
+                if( nNumBits == 16 )
+                    fValue = fValue + 0.25 * (nRawValue / 65536.0);
+                else
+                    CPLAssert( FALSE );
+                
+                ((float *) pabyDest)[nPixelsOutput] = fValue;
             }
             else
             {
