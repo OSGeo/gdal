@@ -101,9 +101,9 @@ def hfa_histwrite():
     return 'success'
     
 ###############################################################################
-# Verify we can read suspicious int data.
+# Verify we can read metadata of int.img.
 
-def hfa_int_read():
+def hfa_int_stats_1():
 
     ds = gdal.Open('data/int.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -140,9 +140,9 @@ def hfa_int_read():
     return 'success'
 
 ###############################################################################
-# Verify we can read suspicious int data statistics.
+# Verify we can read band statistics of int.img.
 
-def hfa_int_stats():
+def hfa_int_stats_2():
 
     ds = gdal.Open('data/int.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
@@ -169,9 +169,9 @@ def hfa_int_stats():
     return 'success'
 
 ###############################################################################
-# Verify we can read suspicious int data.
+# Verify we can read metadata of float.img.
 
-def hfa_float_read():
+def hfa_float_stats_1():
 
     ds = gdal.Open('data/float.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -216,9 +216,9 @@ def hfa_float_read():
     return 'success'
 
 ###############################################################################
-# Verify we can read suspicious float data statistics.
+# Verify we can read band statistics of float.img.
 
-def hfa_float_stats():
+def hfa_float_stats_2():
 
     ds = gdal.Open('data/float.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
@@ -245,15 +245,59 @@ def hfa_float_stats():
     return 'success'
 
 ###############################################################################
+# Verify we can read image data.
+
+def hfa_int_read():
+
+    ds = gdal.Open('data/int.img')
+    band = ds.GetRasterBand(1)
+    cs = band.Checksum()
+    data = band.ReadRaster(100, 100, 1, 1)
+    ds = None
+
+    if cs != 6691:
+        gdaltest.post_reason( 'Checksum value is wrong.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Verify we can read image data.
+
+def hfa_float_read():
+
+    ds = gdal.Open('data/float.img')
+    band = ds.GetRasterBand(1)
+    cs = band.Checksum()
+    data = band.ReadRaster(100, 100, 1, 1)
+    ds = None
+
+    if cs != 23529:
+        gdaltest.post_reason( 'Checksum value is wrong.' )
+        return 'fail'
+
+    # Read raw data into tuple of float numbers
+    import struct
+    value = struct.unpack('f' * 1, data)[0]
+
+    if abs(value - 41.021659851074219) > 0.0001:
+        gdaltest.post_reason( 'Pixel value is wrong.' )
+        return 'fail'
+
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
     hfa_histread,
     hfa_histwrite,
+    hfa_int_stats_1,
+    hfa_int_stats_2,
+    hfa_float_stats_1,
+    hfa_float_stats_2,
     hfa_int_read,
-    hfa_int_stats,
-    hfa_float_read,
-    hfa_float_stats ]
+    hfa_float_read]
 
 if __name__ == '__main__':
 
