@@ -18,10 +18,10 @@ codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
             gdalconst.GDT_Int32     :   numpy.int32,
             gdalconst.GDT_Float32   :   numpy.float32,
             gdalconst.GDT_Float64   :   numpy.float64,
-            gdalconst.GDT_CInt16    :   numpy.complex,
-            gdalconst.GDT_CInt32    :   numpy.complex,
-            gdalconst.GDT_CFloat32  :   numpy.complex,
-            gdalconst.GDT_CFloat64  :   numpy.complex64
+            gdalconst.GDT_CInt16    :   numpy.complex64,
+            gdalconst.GDT_CInt32    :   numpy.complex64,
+            gdalconst.GDT_CFloat32  :   numpy.complex64,
+            gdalconst.GDT_CFloat64  :   numpy.complex128
         }
 
 def GetArrayFilename( array ):
@@ -42,6 +42,11 @@ def OpenArray( array, prototype_ds = None ):
     
 def flip_code(code):
     if isinstance(code, type):
+        # since several things map to complex64 we must carefully select
+        # the opposite that is an exact match (ticket 1518)
+        if code == numpy.complex64:
+            return gdalconst.GDT_CFloat32
+        
         for key, value in codes.items():
             if value == code:
                 return key
