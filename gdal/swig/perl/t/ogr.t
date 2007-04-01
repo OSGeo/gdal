@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%known_driver $loaded $verbose @types %pack_types %types @fails/;
+use vars qw/%known_driver $loaded $verbose @types %pack_types %types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -48,9 +48,9 @@ ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
 if (@fails) {
     print STDERR "unexpected failures:\n",@fails;
-    print STDERR "all other tests ok.\n";
+    print STDERR "all other tests ok.\nTested drivers were: @tested_drivers\n";
 } else {
-    print STDERR "all tests ok.\n";
+    print STDERR "all tests ok.\nTested drivers were: @tested_drivers\n";
 }
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
@@ -80,7 +80,7 @@ sub ogr_tests {
 	    next;
 	}
 	
-	if ($name eq 'KML' or $name eq 'S57' or $name eq 'CSV' or $name eq 'GML' or $name eq 'PostgreSQL') {
+	if ($name eq 'KML' or $name eq 'S57' or $name eq 'CSV' or $name eq 'GML' or $name eq 'PostgreSQL' or $name =~ /^Interlis/ or $name eq 'SQLite' or $name eq 'MySQL') {
 	    mytest('skipped: apparently no capability',undef,$name,'datasource create');
 	    next;
 	}
@@ -89,6 +89,8 @@ sub ogr_tests {
 	    mytest("skipped: can't create layers afterwards.",undef,$name,'datasource create');
 	    next;
 	}
+
+	push @tested_drivers,"'$name'";
 
 	my @field_types = ('OFTInteger','OFTIntegerList','OFTReal','OFTRealList','OFTString',
 			   'OFTStringList','OFTWideString','OFTWideStringList','OFTBinary');
