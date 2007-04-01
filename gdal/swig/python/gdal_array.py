@@ -18,10 +18,10 @@ codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
             gdalconst.GDT_Int32     :   numpy.int32,
             gdalconst.GDT_Float32   :   numpy.float32,
             gdalconst.GDT_Float64   :   numpy.float64,
-            gdalconst.GDT_CInt16    :   numpy.complex,
-            gdalconst.GDT_CInt32    :   numpy.complex,
-            gdalconst.GDT_CFloat32  :   numpy.complex,
-            gdalconst.GDT_CFloat64  :   numpy.complex64
+            gdalconst.GDT_CInt16    :   numpy.complex64,
+            gdalconst.GDT_CInt32    :   numpy.complex64,
+            gdalconst.GDT_CFloat32  :   numpy.complex64,
+            gdalconst.GDT_CFloat64  :   numpy.complex128
         }
 
 def GetArrayFilename( array ):
@@ -42,6 +42,11 @@ def OpenArray( array, prototype_ds = None ):
     
 def flip_code(code):
     if isinstance(code, type):
+        # since several things map to complex64 we must carefully select
+        # the opposite that is an exact match (ticket 1518)
+        if code == numpy.complex64:
+            return gdalconst.GDT_CFloat32
+        
         for key, value in codes.items():
             if value == code:
                 return key
@@ -98,7 +103,7 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, xsize=None, ysize=None ):
     for band_index in range(1,ds.RasterCount+1):
         band_array = BandReadAsArray( ds.GetRasterBand(band_index),
                                       xoff, yoff, xsize, ysize)
-        array_list.append( reshape( band_array, [1,ysize,xsize] ) )
+        array_list.append( numpy.reshape( band_array, [1,ysize,xsize] ) )
 
     return numpy.concatenate( array_list )
             
@@ -132,7 +137,7 @@ def BandReadAsArray( band, xoff, yoff, win_xsize, win_ysize,
     band_str = band.ReadRaster( xoff, yoff, win_xsize, win_ysize,
                                  buf_xsize, buf_ysize, datatype )
     ar = numpy.fromstring(band_str,dtype=typecode)
-    ar = numpy.reshape(ar, [1,win_ysize,win_xsize])
+    ar = numpy.reshape(ar, [buf_ysize,buf_xsize])
     
     return ar
 
