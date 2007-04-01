@@ -420,11 +420,6 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 
     nNumBits = pabyCData[12];
 
-    CPLDebug( "HFA", 
-              "nNumBits=%d, nNumRuns=%d, nDataMin=%d/%g", 
-              nNumBits, nNumRuns, 
-              nDataMin, *((float *) &nDataMin) );
-
 /* ==================================================================== */
 /*      If this is not run length encoded, but just reduced             */
 /*      precision, handle it now.                                       */
