@@ -1,6 +1,7 @@
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+!INCLUDE java.opt
 
 !IFDEF DLLBUILD
 GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
@@ -11,7 +12,8 @@ GDALLIB	=    $(GDAL_ROOT)\gdal.lib
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 all:  ogr_dir gdal_dir const_dir osr_dir
-	ant
+  set JAVA_HOME=$(JAVA_HOME)
+	$(ANT_HOME)\bin\ant
 
     
 ogr_dir:
