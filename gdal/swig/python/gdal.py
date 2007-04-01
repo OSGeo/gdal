@@ -483,8 +483,7 @@ class Dataset(MajorObject):
         """
         return _gdal.Dataset_ReadRaster(*args, **kwargs)
 
-    def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                  buf_xsize=None, buf_ysize=None, buf_obj=None):
+    def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None ):
         import gdalnumeric
         return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize )
     def WriteRaster(self, xoff, yoff, xsize, ysize,
@@ -499,7 +498,7 @@ class Dataset(MajorObject):
         if band_list is None:
             band_list = range(1,self.RasterCount+1)
         if buf_type is None:
-            buf_type = self._band[band_list[0]-1].DataType;
+            buf_type = self.GetRasterBand(1).DataType
 
         if len(buf_string) < buf_xsize * buf_ysize * len(band_list) \
            * (_gdal.GetDataTypeSize(buf_type) / 8):
@@ -521,7 +520,7 @@ class Dataset(MajorObject):
             buf_ysize = ysize;
 
         if buf_type is None:
-            buf_type = self.GetRasterBand(0).DataType;
+            buf_type = self.GetRasterBand(1).DataType;
         return _gdal.Dataset_ReadRaster(self, xoff, yoff, xsize, ysize,
                                            buf_xsize, buf_ysize, buf_type,
                                            band_list)
