@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%known_driver $loaded $verbose @types %types @fails/;
+use vars qw/%known_driver $loaded $verbose @types %types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -58,9 +58,9 @@ gdal_tests(Geo::GDAL::GetDriverCount());
 
 if (@fails) {
     print STDERR "unexpected failures:\n",@fails;
-    print STDERR "all other tests ok.\n";
+    print STDERR "all other tests ok.\nTested drivers were: @tested_drivers\n";
 } else {
-    print STDERR "all tests ok.\n";
+    print STDERR "all tests ok.\nTested drivers were: @tested_drivers\n";
 }
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
@@ -108,6 +108,8 @@ sub gdal_tests {
 	    mytest('skipped: does not work?',undef,$name,'dataset create');
 	    next;
 	}
+
+	push @tested_drivers,"'$name'";
 	
 	my $ext = $metadata->{DMD_EXTENSION} ? '.'.$metadata->{DMD_EXTENSION} : '';
 	$ext = '' if $driver->{ShortName} eq 'ILWIS';
