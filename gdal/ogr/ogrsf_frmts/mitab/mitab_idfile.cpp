@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_idfile.cpp,v 1.7 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_idfile.cpp,v 1.8 2006/11/28 18:49:08 dmorissette Exp $
  *
  * Name:     mitab_idfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_idfile.cpp,v $
+ * Revision 1.8  2006/11/28 18:49:08  dmorissette
+ * Completed changes to split TABMAPObjectBlocks properly and produce an
+ * optimal spatial index (bug 1585)
+ *
  * Revision 1.7  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -109,6 +113,8 @@ int TABIDFile::Open(const char *pszFname, const char *pszAccess)
 
     /*-----------------------------------------------------------------
      * Validate access mode and make sure we use binary access.
+     * Note that in Write mode we need TABReadWrite since we do random
+     * updates in the index as data blocks are split
      *----------------------------------------------------------------*/
     if (EQUALN(pszAccess, "r", 1))
     {
@@ -117,8 +123,8 @@ int TABIDFile::Open(const char *pszFname, const char *pszAccess)
     }
     else if (EQUALN(pszAccess, "w", 1))
     {
-        m_eAccessMode = TABWrite;
-        pszAccess = "wb";
+        m_eAccessMode = TABReadWrite;
+        pszAccess = "wb+";
     }
     else
     {
@@ -226,7 +232,7 @@ int TABIDFile::Close()
     /*----------------------------------------------------------------
      * Write access: commit latest changes to the file.
      *---------------------------------------------------------------*/
-    if (m_eAccessMode == TABWrite && m_poIDBlock)
+    if (m_eAccessMode == TABReadWrite && m_poIDBlock)
     {
         m_poIDBlock->CommitToFile();
     }
@@ -294,7 +300,7 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
     if (m_poIDBlock == NULL)
         return -1;
 
-    if (m_eAccessMode != TABWrite)
+    if (m_eAccessMode != TABReadWrite)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SetObjPtr() can be used only with Write access.");
@@ -304,7 +310,7 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
     if (nObjId < 1)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-               "GetObjPtr(): Invalid object ID %d (must be greater than zero)",
+               "SetObjPtr(): Invalid object ID %d (must be greater than zero)",
                  nObjId);
         return -1;
     }
@@ -313,9 +319,23 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
      * GotoByteInFile() will automagically commit current block and init
      * a new one if necessary.
      *----------------------------------------------------------------*/
-
-    if (m_poIDBlock->GotoByteInFile( (nObjId-1)*4 ) != 0)
-        return -1;
+    GInt32 nLastIdBlock = ((m_nMaxId-1)*4) / m_nBlockSize;
+    GInt32 nTargetIdBlock = ((nObjId-1)*4) / m_nBlockSize;
+    if (m_nMaxId > 0 && nTargetIdBlock <= nLastIdBlock)
+    {
+        /* Pass second arg to GotoByteInFile() to force reading from file
+         * when going back to blocks already committed
+         */
+        if (m_poIDBlock->GotoByteInFile( (nObjId-1)*4, TRUE ) != 0)
+            return -1;
+    }
+    else
+    {
+        /* If we reach EOF then a new empty block will have to be allocated
+         */
+        if (m_poIDBlock->GotoByteInFile( (nObjId-1)*4 ) != 0)
+            return -1;
+    }
 
     m_nMaxId = MAX(m_nMaxId, nObjId);
 

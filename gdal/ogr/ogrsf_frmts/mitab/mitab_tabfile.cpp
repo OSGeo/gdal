@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.59 2006/02/08 05:02:58 dmorissette Exp $
+ * $Id: mitab_tabfile.cpp,v 1.61 2007/03/21 21:15:56 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,14 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.61  2007/03/21 21:15:56  dmorissette
+ * Added SetQuickSpatialIndexMode() which generates a non-optimal spatial
+ * index but results in faster write time (bug 1669)
+ *
+ * Revision 1.60  2006/11/28 18:49:08  dmorissette
+ * Completed changes to split TABMAPObjectBlocks properly and produce an
+ * optimal spatial index (bug 1585)
+ *
  * Revision 1.59  2006/02/08 05:02:58  dmorissette
  * Fixed crash when attempting to write TABPolyline object with an invalid
  * geometry (GDAL bug 1059)
@@ -1107,6 +1115,38 @@ int TABFile::Close()
 }
 
 /**********************************************************************
+ *                   TABFile::SetQuickSpatialIndexMode()
+ *
+ * Select "quick spatial index mode". 
+ *
+ * The default behavior of MITAB is to generate an optimized spatial index,
+ * but this results in slower write speed. 
+ *
+ * Applications that want faster write speed and do not care
+ * about the performance of spatial queries on the resulting file can
+ * use SetQuickSpatialIndexMode() to require the creation of a non-optimal
+ * spatial index (actually emulating the type of spatial index produced
+ * by MITAB before version 1.6.0). In this mode writing files can be 
+ * about 5 times faster, but spatial queries can be up to 30 times slower.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABFile::SetQuickSpatialIndexMode()
+{
+    if (m_eAccessMode != TABWrite || m_poMAPFile == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetQuickSpatialIndexMode() failed: file not opened for write access.");
+        return -1;
+    }
+
+
+    return m_poMAPFile->SetQuickSpatialIndexMode();
+}
+
+
+
+/**********************************************************************
  *                   TABFile::GetNextFeatureId()
  *
  * Returns feature id that follows nPrevId, or -1 if it is the
@@ -1470,8 +1510,6 @@ int TABFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     TABMAPObjHdr *poObjHdr = 
         TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
                              nFeatureId);
-    TABMAPObjectBlock *poObjBlock = NULL;
-
     
     /*-----------------------------------------------------------------
      * ValidateMapInfoType() may have returned TAB_GEOM_NONE if feature
@@ -1487,29 +1525,31 @@ int TABFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         return -1;
     }
 
+    /*-----------------------------------------------------------------
+     * The ValidateMapInfoType() call above has forced calculation of the
+     * feature's IntMBR. Store that value in the ObjHdr for use by
+     * PrepareNewObj() to search the best node to insert the feature.
+     *----------------------------------------------------------------*/
+    if ( poObjHdr && poObjHdr->m_nType != TAB_GEOM_NONE)
+    {
+        poFeature->GetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
+                             poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
+    }
+
     if ( poObjHdr == NULL || m_poMAPFile == NULL ||
-        m_poMAPFile->PrepareNewObj(nFeatureId, poObjHdr->m_nType) != 0 ||
-         poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 )
+         m_poMAPFile->PrepareNewObj(poObjHdr) != 0 ||
+         poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 ||
+         m_poMAPFile->CommitNewObj(poObjHdr) != 0 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing geometry for feature id %d in %s",
                  nFeatureId, m_pszFname);
+        if (poObjHdr)
+            delete poObjHdr;
         return -1;
     }
 
-    if (poObjHdr->m_nType == TAB_GEOM_NONE)
-    {
-        // NONE objects have no reference in the ObjectBlocks.  Just flush it.
-        delete poObjHdr;
-    }
-    else if ( (poObjBlock = m_poMAPFile->GetCurObjBlock()) == NULL ||
-              poObjBlock->AddObject(poObjHdr) != 0 )
-    {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed writing object header for feature id %d in %s",
-                 nFeatureId, m_pszFname);
-        return -1;
-    }
+    delete poObjHdr;
 
     return nFeatureId;
 }
