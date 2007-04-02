@@ -210,7 +210,7 @@ def osr_esri_7():
     UNIT["U.S. Foot",0.3048006],
     AUTHORITY["EPSG","26960"]]"""
 
-    srs_wkt = osr.SpatialReference(wkt)
+    srs_wkt = osr.SpatialReference(wkt = wkt)
 
     if not srs_prj.IsSame( srs_wkt ):
         gdaltest.post_reason( 'old style ESRI projection imported wrong, perhaps linear units?' )
@@ -258,7 +258,7 @@ def osr_esri_8():
     UNIT["user-defined",0.3048],
     AUTHORITY["EPSG","26960"]]"""
 
-    srs_wkt = osr.SpatialReference(wkt)
+    srs_wkt = osr.SpatialReference(wkt = wkt)
 
     if not srs_prj.IsSame( srs_wkt ):
         gdaltest.post_reason( 'old style ESRI projection imported wrong, perhaps linear units?' )
