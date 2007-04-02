@@ -662,9 +662,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         iZone = 0L;
     CPLFree( pszTemp );
-#if DEBUG
-    CPLDebug("FAST", "USGS zone number %ld.", iZone);
-#endif
 
     // Read 15 USGS projection parameters
     for ( i = 0; i < 15; i++ )
@@ -679,9 +676,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( pszTemp )
             {
                 adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE, "C" );
-#if DEBUG
-                CPLDebug("FAST", "USGS parameter %2d=%f.", i, adfProjParms[i]);
-#endif
             }
             pszTemp = strpbrk( pszTemp, " \t" );
         }
@@ -698,9 +692,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
-#if DEBUG
-        CPLDebug("FAST", "Upper left coordinates: %f, %f.", dfULX, dfULY);
-#endif
     }
 
     pszTemp = strstr( pszGeomRecord, CORNER_UPPER_RIGHT );
@@ -710,9 +701,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfURY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
-#if DEBUG
-        CPLDebug("FAST", "Upper right coordinates: %f, %f.", dfURX, dfURY);
-#endif
     }
 
     pszTemp = strstr( pszGeomRecord, CORNER_LOWER_LEFT );
@@ -722,9 +710,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfLLY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
-#if DEBUG
-        CPLDebug("FAST", "Lower left coordinates: %f, %f.", dfLLX, dfLLY);
-#endif
     }
 
     pszTemp = strstr( pszGeomRecord, CORNER_LOWER_RIGHT );
@@ -734,9 +719,6 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
         pszTemp += CORNER_VALUE_SIZE + 1;
         dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
-#if DEBUG
-        CPLDebug("FAST", "Lower right coordinates: %f, %f.", dfLRX, dfLRY);
-#endif
     }
 
     if ( dfULX != 0.0 && dfULY != 0.0
