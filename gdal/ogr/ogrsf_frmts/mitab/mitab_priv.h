@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.44  2007/02/22 18:35:53  dmorissette
+ * Fixed problem writing collections where MITAB was sometimes trying to
+ * read past EOF in write mode (bug 1657).
+ *
  * Revision 1.40  2005/10/06 19:15:31  dmorissette
  * Collections: added support for reading/writing pen/brush/symbol ids and
  * for writing collection objects to .TAB/.MAP (bug 1126)
@@ -757,7 +761,9 @@ class TABRawBinBlock
 
     int         GotoByteRel(int nOffset);
     int         GotoByteInBlock(int nOffset);
-    int         GotoByteInFile(int nOffset, GBool bForceReadFromFile=FALSE);
+    int         GotoByteInFile(int nOffset, 
+                               GBool bForceReadFromFile = FALSE,
+                               GBool bOffsetIsEndOfData = FALSE);
     void        SetFirstBlockPtr(int nOffset);
 
     int         GetNumUnusedBytes();

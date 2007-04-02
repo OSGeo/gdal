@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
+ * Revision 1.10  2007/02/22 18:35:53  dmorissette
+ * Fixed problem writing collections where MITAB was sometimes trying to
+ * read past EOF in write mode (bug 1657).
+ *
  * Revision 1.8  2005/10/06 19:15:31  dmorissette
  * Collections: added support for reading/writing pen/brush/symbol ids and
  * for writing collection objects to .TAB/.MAP (bug 1126)
@@ -433,11 +437,21 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  * file instead of creating an empty block. (Useful for TABCollection
  * or other cases that need to do random access in the file in write mode.)
  *
+ * bOffsetIsEndOfData is set to TRUE to indicate that the nOffset
+ * to which we are attempting to go is the end of the used data in this
+ * block (we are positioninig ourselves to append data), so if the nOffset 
+ * corresponds to the beginning of a 512 bytes block then we should really 
+ * be positioning ourselves at the end of the block that ends at this 
+ * address instead of at the beginning of the blocks that starts at this 
+ * address. This case can happen when going back and forth to write collection
+ * objects to a Coordblock and is documented in bug 1657.
+ *
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
 int     TABRawBinBlock::GotoByteInFile(int nOffset, 
-                                       GBool bForceReadFromFile /*=FALSE*/)
+                                       GBool bForceReadFromFile /*=FALSE*/,
+                                       GBool bOffsetIsEndOfData /*=FALSE*/)
 {
     int nNewBlockPtr;
 
@@ -479,15 +493,37 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
         // be read, or a new one to be created from scratch.
         // CommitToFile() should only be called only if something changed.
         //
-        if ( (nOffset<m_nFileOffset || nOffset>=m_nFileOffset+m_nBlockSize) &&
-             (CommitToFile() != 0 ||
-              (!bForceReadFromFile && 
-               InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0) ||
-              (bForceReadFromFile &&
-               ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )  )
+        if (bOffsetIsEndOfData &&  nOffset%m_nBlockSize == 0)
         {
-            // Failed reading new block... error has already been reported.
-            return -1;
+            /* We're trying to go byte 512 of a block that's full of data.
+             * In this case it's okay to place the m_nCurPos at byte 512
+             * which is past the end of the block.
+             */
+            if ( (nOffset < m_nFileOffset || 
+                  nOffset > m_nFileOffset+m_nBlockSize) &&
+                 (CommitToFile() != 0 ||
+                  (!bForceReadFromFile && 
+                   InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0) ||
+                  (bForceReadFromFile &&
+                   ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )  )
+            {
+                // Failed reading new block... error has already been reported.
+                return -1;
+            }
+        }
+        else
+        {
+            if ( (nOffset < m_nFileOffset || 
+                  nOffset >= m_nFileOffset+m_nBlockSize) &&
+                 (CommitToFile() != 0 ||
+                  (!bForceReadFromFile && 
+                   InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0) ||
+                  (bForceReadFromFile &&
+                   ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )  )
+            {
+                // Failed reading new block... error has already been reported.
+                return -1;
+            }
         }
     }
     else
