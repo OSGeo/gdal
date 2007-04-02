@@ -116,7 +116,7 @@ void OGRILI2Layer::ResetReading(){
 
 OGRFeature *OGRILI2Layer::GetNextFeature() {
     if (listFeatureIt != listFeature.end())
-        return *(listFeatureIt++);
+        return (*(listFeatureIt++))->Clone();
     return NULL;
 }
 
