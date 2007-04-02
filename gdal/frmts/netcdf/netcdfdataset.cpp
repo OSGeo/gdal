@@ -671,7 +671,7 @@ void netCDFDataset::SetProjection( int var )
 
     const char *pszWKT;
     const char *pszGeoTransform;
-    char **papszGeoTransform;
+    char **papszGeoTransform=NULL;
 
 
     netCDFDataset * poDS;
@@ -1069,11 +1069,19 @@ void netCDFDataset::SetProjection( int var )
 		    poDS->adfGeoTransform[4] = 0;
 		    poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - 
 						  pdfXCoord[0] ) / 
-						poDS->nRasterXSize);
+						( poDS->nRasterXSize - 1 ));
 
 		    poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - 
 						  pdfYCoord[0] ) / 
-						poDS->nRasterYSize);
+						( poDS->nRasterYSize - 1 ));
+/* -------------------------------------------------------------------- */
+/*     Compute the center of the pixel                                  */
+/* -------------------------------------------------------------------- */
+                  poDS->adfGeoTransform[0] = pdfXCoord[0]
+                      * (poDS->adfGeoTransform[1] / 2);
+
+                  poDS->adfGeoTransform[3] = pdfYCoord[0]
+                      * (poDS->adfGeoTransform[5] / 2);
 
 		    oSRS.exportToWkt( &(poDS->pszProjection) );
 		    
@@ -1161,12 +1169,23 @@ void netCDFDataset::SetProjection( int var )
 		}
 		
 		adfGeoTransform[0] = dfWE;
-		adfGeoTransform[1] = (dfEE - dfWE) / poDS->GetRasterXSize();
+		adfGeoTransform[1] = (dfEE - dfWE) / 
+		    ( poDS->GetRasterXSize() - 1 );
 		adfGeoTransform[2] = 0.0;
 		adfGeoTransform[3] = dfNN;
 		adfGeoTransform[4] = 0.0;
-		adfGeoTransform[5] = (dfSN - dfNN) / poDS->GetRasterYSize();
-		
+		adfGeoTransform[5] = (dfSN - dfNN) / 
+		    ( poDS->GetRasterYSize() - 1 );
+/* -------------------------------------------------------------------- */
+/*     Compute the center of the pixel                                  */
+/* -------------------------------------------------------------------- */
+              adfGeoTransform[0] = dfWE
+                      * (adfGeoTransform[1] / 2);
+
+              adfGeoTransform[3] = dfNN
+                      * (adfGeoTransform[5] / 2);
+
+
 		bGotGeoTransform = TRUE;
 	    }
 	    CSLDestroy( papszGeoTransform );
