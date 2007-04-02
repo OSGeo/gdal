@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.85 2006/07/25 13:24:47 dmorissette Exp $
+ * $Id: mitab.h,v 1.92 2007/03/30 18:05:49 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,33 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.92  2007/03/30 18:05:49  dmorissette
+ * Updated 1.6.1 release date
+ *
+ * Revision 1.91  2007/03/22 21:01:37  dmorissette
+ * Update for v1.6.1
+ *
+ * Revision 1.90  2007/03/21 21:15:56  dmorissette
+ * Added SetQuickSpatialIndexMode() which generates a non-optimal spatial
+ * index but results in faster write time (bug 1669)
+ *
+ * Revision 1.89  2007/02/15 20:19:06  dmorissette
+ * Update for v1.6.0
+ *
+ * Revision 1.88  2006/11/28 19:11:20  dmorissette
+ * Set version to 1.6.0-dev
+ *
+ * Revision 1.87  2006/11/28 18:49:07  dmorissette
+ * Completed changes to split TABMAPObjectBlocks properly and produce an
+ * optimal spatial index (bug 1585)
+ *
+ * Revision 1.86  2006/11/20 20:05:58  dmorissette
+ * First pass at improving generation of spatial index in .map file (bug 1585)
+ * New methods for insertion and splittung in the spatial index are done.
+ * Also implemented a method to dump the spatial index to .mif/.mid
+ * Still need to implement splitting of TABMapObjectBlock to get optimal
+ * results.
+ *
  * Revision 1.85  2006/07/25 13:24:47  dmorissette
  * Updated for 1.5.1 release
  *
@@ -102,8 +129,8 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.5.1 (2006-07-25)"
-#define MITAB_VERSION_INT  1005001  /* version x.y.z -> xxxyyyzzz */
+#define MITAB_VERSION      "1.6.1 (2007-03-30)"
+#define MITAB_VERSION_INT  1006001  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -112,6 +139,9 @@
 #ifndef ROUND_INT
 #  define ROUND_INT(dX) ((int)((dX) < 0.0 ? (dX)-0.5 : (dX)+0.5 ))
 #endif
+
+
+#define MITAB_AREA(x1, y1, x2, y2)  ((double)((x2)-(x1))*(double)((y2)-(y1)))
 
 class TABFeature;
 
@@ -155,6 +185,8 @@ class IMapInfoFile : public OGRLayer
     virtual int Open(const char *pszFname, const char *pszAccess,
                      GBool bTestOpenNoError = FALSE ) = 0;
     virtual int Close() = 0;
+
+    virtual int SetQuickSpatialIndexMode() {return -1;}
 
     virtual const char *GetTableName() = 0;
 
@@ -275,6 +307,8 @@ class TABFile: public IMapInfoFile
     virtual int Open(const char *pszFname, const char *pszAccess,
                      GBool bTestOpenNoError = FALSE );
     virtual int Close();
+
+    virtual int SetQuickSpatialIndexMode();
 
     virtual const char *GetTableName()
                             {return m_poDefn?m_poDefn->GetName():"";};
@@ -399,6 +433,8 @@ class TABView: public IMapInfoFile
     virtual int Open(const char *pszFname, const char *pszAccess,
                      GBool bTestOpenNoError = FALSE );
     virtual int Close();
+
+    virtual int SetQuickSpatialIndexMode();
 
     virtual const char *GetTableName()
            {return m_poRelation?m_poRelation->GetFeatureDefn()->GetName():"";};
@@ -999,6 +1035,8 @@ class TABFeature: public OGRFeature
     GInt32      m_nComprOrgX;
     GInt32      m_nComprOrgY;
 
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
+
   public:
              TABFeature(OGRFeatureDefn *poDefnIn );
     virtual ~TABFeature();
@@ -1343,6 +1381,9 @@ class TABRectangle: public TABFeature,
                     public ITABFeaturePen, 
                     public ITABFeatureBrush
 {
+  private:
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
+
   public:
              TABRectangle(OGRFeatureDefn *poDefnIn);
     virtual ~TABRectangle();
@@ -1397,6 +1438,8 @@ class TABEllipse: public TABFeature,
                   public ITABFeaturePen, 
                   public ITABFeatureBrush
 {
+  private:
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
              TABEllipse(OGRFeatureDefn *poDefnIn);
@@ -1453,6 +1496,8 @@ class TABArc: public TABFeature,
   private:
     double      m_dStartAngle;  // In degrees, counterclockwise, 
     double      m_dEndAngle;    // starting at 3 o'clock
+
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
              TABArc(OGRFeatureDefn *poDefnIn);
@@ -1524,6 +1569,8 @@ class TABText: public TABFeature,
     GInt16      m_nFontStyle;           // Bold/italic/underlined/shadow/...
 
     const char *GetLabelStyleString();
+
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
              TABText(OGRFeatureDefn *poDefnIn);
