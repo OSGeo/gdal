@@ -3806,7 +3806,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Are we really producing an RGBA image?  If so, set the          */
 /*      associated alpha information.                                   */
 /* -------------------------------------------------------------------- */
-    if( nBands == 4 
+    int bForcePhotometric = 
+        CSLFetchNameValue(papszOptions,"PHOTOMETRIC") != NULL;
+
+    if( nBands == 4 && !bForcePhotometric
         && poSrcDS->GetRasterBand(4)->GetColorInterpretation()==GCI_AlphaBand)
     {
         uint16 v[1];
@@ -3875,7 +3878,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
 
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
+        if( !bForcePhotometric )
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
     }
     else if( nBands == 1 
@@ -3905,7 +3909,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
 
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
+        if( !bForcePhotometric )
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
     }
     else if( poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
