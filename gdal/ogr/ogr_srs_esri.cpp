@@ -827,7 +827,10 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         if( pszValue == NULL )
             SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
         else if( EQUAL(pszValue,"FEET") )
-            SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+        else if( atof(pszValue) != 0.0 )
+            SetLinearUnitsAndUpdateParameters( "user-defined", 
+                                               1.0 / atof(pszValue) );
         else
             SetLinearUnitsAndUpdateParameters( pszValue, 1.0 );
     }
