@@ -1328,7 +1328,6 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     char        szExtUpper[32], szExtLower[32];
     int         i;
     char        **papszLines;
-    bool bCorrupt = false;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't given an extension, try both the unix and          */
