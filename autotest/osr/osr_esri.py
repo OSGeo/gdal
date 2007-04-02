@@ -170,6 +170,102 @@ def osr_esri_6():
     
     return 'success'
 
+###############################################################################
+# Verify that FEET is treated as US survey feet per bug #1533.
+
+def osr_esri_7():
+    
+    prj = [ 'Projection    STATEPLANE',
+            'Fipszone      903',
+            'Datum         NAD83',
+            'Spheroid      GRS80',
+            'Units         FEET',
+            'Zunits        NO',
+            'Xshift        0.0',
+            'Yshift        0.0',
+            'Parameters    ',
+            '' ]
+
+    srs_prj = osr.SpatialReference()
+    srs_prj.ImportFromESRI( prj )
+    
+    wkt = """PROJCS["NAD83 / Florida North",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.01745329251994328,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",30.75],
+    PARAMETER["standard_parallel_2",29.58333333333333],
+    PARAMETER["latitude_of_origin",29],
+    PARAMETER["central_meridian",-84.5],
+    PARAMETER["false_easting",1968500.062007752],
+    PARAMETER["false_northing",0],
+    UNIT["U.S. Foot",0.3048006],
+    AUTHORITY["EPSG","26960"]]"""
+
+    srs_wkt = osr.SpatialReference(wkt)
+
+    if not srs_prj.IsSame( srs_wkt ):
+        gdaltest.post_reason( 'old style ESRI projection imported wrong, perhaps linear units?' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Verify that handling of numerically specified units (see bug #1533)
+
+def osr_esri_8():
+    
+    prj = [ 'Projection    STATEPLANE',
+            'Fipszone      903',
+            'Datum         NAD83',
+            'Spheroid      GRS80',
+            'Units         3.280839895013123',
+            'Zunits        NO',
+            'Xshift        0.0',
+            'Yshift        0.0',
+            'Parameters    ',
+            '' ]
+
+    srs_prj = osr.SpatialReference()
+    srs_prj.ImportFromESRI( prj )
+    
+    wkt = """PROJCS["NAD83 / Florida North",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.01745329251994328,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",30.75],
+    PARAMETER["standard_parallel_2",29.58333333333333],
+    PARAMETER["latitude_of_origin",29],
+    PARAMETER["central_meridian",-84.5],
+    PARAMETER["false_easting",1968503.937007874],
+    PARAMETER["false_northing",0],
+    UNIT["user-defined",0.3048],
+    AUTHORITY["EPSG","26960"]]"""
+
+    srs_wkt = osr.SpatialReference(wkt)
+
+    if not srs_prj.IsSame( srs_wkt ):
+        gdaltest.post_reason( 'old style ESRI projection imported wrong, perhaps linear units?' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_esri_1,
     osr_esri_2,
@@ -177,6 +273,8 @@ gdaltest_list = [
     osr_esri_4,
     osr_esri_5,
     osr_esri_6,
+    osr_esri_7,
+    osr_esri_8,
     None ]
 
 if __name__ == '__main__':
