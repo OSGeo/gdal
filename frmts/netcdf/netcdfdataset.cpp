@@ -1078,10 +1078,10 @@ void netCDFDataset::SetProjection( int var )
 /*     Compute the center of the pixel                                  */
 /* -------------------------------------------------------------------- */
                   poDS->adfGeoTransform[0] = pdfXCoord[0]
-                      * (poDS->adfGeoTransform[1] / 2);
+                      - (poDS->adfGeoTransform[1] / 2);
 
                   poDS->adfGeoTransform[3] = pdfYCoord[0]
-                      * (poDS->adfGeoTransform[5] / 2);
+                      - (poDS->adfGeoTransform[5] / 2);
 
 		    oSRS.exportToWkt( &(poDS->pszProjection) );
 		    
@@ -1180,10 +1180,10 @@ void netCDFDataset::SetProjection( int var )
 /*     Compute the center of the pixel                                  */
 /* -------------------------------------------------------------------- */
               adfGeoTransform[0] = dfWE
-                      * (adfGeoTransform[1] / 2);
+                      - (adfGeoTransform[1] / 2);
 
               adfGeoTransform[3] = dfNN
-                      * (adfGeoTransform[5] / 2);
+                      - (adfGeoTransform[5] / 2);
 
 
 		bGotGeoTransform = TRUE;
