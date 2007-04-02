@@ -1,4 +1,11 @@
 #
+# Check for additional file to include 
+# nmake -f makefile.vc EXT_NMAKE_OPT=mynmake.opt
+!IFDEF EXT_NMAKE_OPT
+!INCLUDE $(EXT_NMAKE_OPT)
+!ENDIF
+
+#
 # Location to install .exe, .dll and python stuff
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
