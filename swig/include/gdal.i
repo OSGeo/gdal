@@ -231,6 +231,7 @@ typedef enum {
 #else
 %rename (GCP) GDAL_GCP;
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
+%rename (VersionInfo) GDALVersionInfo;
 %rename (AllRegister) GDALAllRegister;
 %rename (GetCacheMax) GDALGetCacheMax;
 %rename (SetCacheMax) GDALSetCacheMax;
@@ -453,6 +454,8 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // GeneralCmdLineProcessor
 // TermProgress
 //
+
+const char *GDALVersionInfo( const char * = NULL );
 
 void GDALAllRegister();
 
