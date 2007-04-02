@@ -9633,6 +9633,42 @@ SWIGINTERN PyObject *ColorTable_swigregister(PyObject *SWIGUNUSEDPARM(self), PyO
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap_VersionInfo(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) NULL ;
+  char *result = 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"|O:VersionInfo",&obj0)) SWIG_fail;
+  if (obj0) {
+    res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VersionInfo" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = buf1;
+  }
+  {
+    CPLErrorReset();
+    result = (char *)GDALVersionInfo((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr(result);
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_AllRegister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   
@@ -10581,6 +10617,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"ColorTable_GetColorEntryAsRGB", _wrap_ColorTable_GetColorEntryAsRGB, METH_VARARGS, NULL},
 	 { (char *)"ColorTable_SetColorEntry", _wrap_ColorTable_SetColorEntry, METH_VARARGS, NULL},
 	 { (char *)"ColorTable_swigregister", ColorTable_swigregister, METH_VARARGS, NULL},
+	 { (char *)"VersionInfo", _wrap_VersionInfo, METH_VARARGS, NULL},
 	 { (char *)"AllRegister", _wrap_AllRegister, METH_VARARGS, NULL},
 	 { (char *)"GetCacheMax", _wrap_GetCacheMax, METH_VARARGS, NULL},
 	 { (char *)"SetCacheMax", _wrap_SetCacheMax, METH_VARARGS, NULL},
