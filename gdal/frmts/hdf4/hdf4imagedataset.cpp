@@ -1333,7 +1333,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     void    *pLatticeX = NULL, *pLatticeY = NULL;
     int32   iLatticeType, iLatticeDataSize, iRank;
     int32   nLatCount = 0, nLongCount = 0;
-    int32   nXPoints, nYPoints;
+    int32   nXPoints=0, nYPoints=0;
     int32   nStrBufSize;
     int32   aiDimSizes[MAX_VAR_DIMS];
     int     i, j, iDataSize, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
@@ -1413,6 +1413,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     memset( paiOffset, 0, nDimMaps * sizeof(int32) );
     paiIncrement = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
     memset( paiIncrement, 0, nDimMaps * sizeof(int32) );
+
+    *pszDimMaps = '\0';
     if ( nDimMaps == 0 
          || nDimMaps != SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement) )
     {
