@@ -60,7 +60,8 @@ def fast_2():
     # Actually, the band (a placeholder) is of 0 bytes size,
     # so the checksum is 0 expected.
 
-    tst = gdaltest.GDALTest( 'fast', 'L71118038_03820020111_HPN.FST', 1, 0 )
+    tst = gdaltest.GDALTest( 'fast', 'L71118038_03820020111_HPN.FST', 1, 0,
+                             100, 100, 10, 10 )
     return tst.testOpen()
 
 ###############################################################################
@@ -123,9 +124,12 @@ def fast_4():
         return 'fail'
 
     gt = ds.GetGeoTransform()
+    ds = None
 
-    if gt[0] != 280342.5 or gt[1] != 15.0 or gt[2] != 0.0 \
-        or gt[3] != 3621457.5 or gt[4] != 0.0 or gt[5] != -15.0:
+    tolerance = 0.01
+    if abs(gt[0] - 280342.5) > tolerance or abs(gt[1] - 15.0) > tolerance or \
+       abs(gt[2] - 0.0) > tolerance or abs(gt[3] - 3621457.5) > tolerance or \
+       abs(gt[4] - 0.0) > tolerance or abs(gt[5] + 15.0) > tolerance:
         gdaltest.post_reason( 'FAST geotransform wrong' )
         return 'fail'
 
@@ -140,7 +144,8 @@ def fast_5():
     if gdaltest.fast_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'fast', 'L71230079_07920021111_HTM.FST', 2, 0 )
+    tst = gdaltest.GDALTest( 'fast', 'L71230079_07920021111_HTM.FST', 2, 0,
+                             100, 100, 10, 10 )
     
     # Expected parameters of the geotransform
     gt = (528417.25, 30.0, 0.0, 7071187.0, 0.0, -30.0)
