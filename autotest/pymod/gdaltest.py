@@ -37,6 +37,7 @@ success_counter = 0
 failure_counter = 0
 blow_counter = 0
 skip_counter = 0
+failure_summary = []
 
 reason = None
 
@@ -48,16 +49,16 @@ argv = gdal.GeneralCmdLineProcessor( sys.argv )
 ###############################################################################
 
 def setup_run( name ):
-    global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
-    
     cur_name = name
 
 ###############################################################################
 
 def run_tests( test_list ):
     global success_counter, failure_counter, blow_counter, skip_counter
-    global cur_name, reason
+    global reason, failure_summary, cur_name
+
+    had_errors_this_script = 0
     
     for test_item in test_list:
         if test_item is None:
@@ -66,14 +67,15 @@ def run_tests( test_list ):
         try:
             (func, name) = test_item
             if func.__name__[:4] == 'test':
-                sys.stdout.write( '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' )
+                outline = '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' 
             else:
-                sys.stdout.write( '  TEST: ' + func.__name__ + ': ' + name + ' ... ' )
+                outline = '  TEST: ' + func.__name__ + ': ' + name + ' ... ' 
 	except:
             func = test_item
             name = func.__name__
-	    sys.stdout.write( '  TEST: ' + name + ' ... ' )
+	    outline =  '  TEST: ' + name + ' ... '
 
+        sys.stdout.write( outline )
         sys.stdout.flush()
             
         reason = None
@@ -87,9 +89,15 @@ def run_tests( test_list ):
             import traceback
             traceback.print_exc()
 
+        if result[:4] == 'fail':
+            if had_errors_this_script == 0:
+                failure_summary.append( 'Script: ' + cur_name )
+                had_errors_this_script = 1
+            failure_summary.append( outline + result )
 
         if reason is not None:
             print '    ' + reason
+            failure_summary.append( '    ' + reason )
 
         if result == 'success':
             success_counter = success_counter + 1
@@ -122,6 +130,55 @@ def summarize():
     print
 
     return failure_counter + blow_counter
+
+###############################################################################
+
+def run_all( dirlist, option_list ):
+
+    for dir_name in dirlist:
+        files = os.listdir(dir_name)
+
+        old_path = sys.path
+        sys.path.append('.')
+        
+        for file in files:
+            if not file[-3:] == '.py':
+                continue
+
+            module = file[:-3]
+            try:
+                wd = os.getcwd()
+                os.chdir( dir_name )
+                
+                exec "import " + module
+                try:
+                    exec "test_list = " + module + ".gdaltest_list"
+
+                    print 'Running tests from %s/%s' % (dir_name,file)
+                    setup_run( '%s/%s' % (dir_name,file) )
+                    run_tests( test_list )
+                except:
+                    pass
+                
+                os.chdir( wd )
+
+            except:
+                os.chdir( wd )
+                print '... failed to load %s ... skipping.' % file
+
+                import traceback
+                traceback.print_exc()
+
+        # We only add the tool directory to the python path long enough
+        # to load the tool files.
+        sys.path = old_path
+
+    if len(failure_summary) > 0:
+        print
+        print ' ------------ Failures ------------'
+        for item in failure_summary:
+            print item
+        print ' ----------------------------------'
 
 ###############################################################################
 
@@ -600,48 +657,6 @@ class GDALTest:
 
 	return 'success'
 
-
-###############################################################################
-
-def run_all( dirlist, option_list ):
-
-    for dir_name in dirlist:
-        files = os.listdir(dir_name)
-
-        old_path = sys.path
-        sys.path.append('.')
-        
-        for file in files:
-            if not file[-3:] == '.py':
-                continue
-
-            module = file[:-3]
-            try:
-                wd = os.getcwd()
-                os.chdir( dir_name )
-                
-                exec "import " + module
-                try:
-                    exec "test_list = " + module + ".gdaltest_list"
-
-                    print 'Running tests from %s/%s' % (dir_name,file)
-                    run_tests( test_list )
-                except:
-                    pass
-                
-                os.chdir( wd )
-
-            except:
-                os.chdir( wd )
-                print '... failed to load %s ... skipping.' % file
-
-                import traceback
-                traceback.print_exc()
-
-
-        # We only add the tool directory to the python path long enough
-        # to load the tool files.
-        sys.path = old_path
 
 def approx_equal( a, b ):
     a = float(a)
