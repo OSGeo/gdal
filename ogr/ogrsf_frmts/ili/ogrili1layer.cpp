@@ -121,7 +121,7 @@ void OGRILI1Layer::ResetReading(){
 OGRFeature *OGRILI1Layer::GetNextFeature() {
     if (nFeatureIdx < nFeatures)
     {
-      return papoFeatures[nFeatureIdx++];
+      return papoFeatures[nFeatureIdx++]->Clone();
     }
     return NULL;
 }
