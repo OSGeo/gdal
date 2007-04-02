@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.13 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_tabview.cpp,v 1.14 2007/03/21 21:15:56 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.14  2007/03/21 21:15:56  dmorissette
+ * Added SetQuickSpatialIndexMode() which generates a non-optimal spatial
+ * index but results in faster write time (bug 1669)
+ *
  * Revision 1.13  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -763,6 +767,45 @@ int TABView::Close()
 
     return 0;
 }
+
+/**********************************************************************
+ *                   TABView::SetQuickSpatialIndexMode()
+ *
+ * Select "quick spatial index mode". 
+ *
+ * The default behavior of MITAB is to generate an optimized spatial index,
+ * but this results in slower write speed. 
+ *
+ * Applications that want faster write speed and do not care
+ * about the performance of spatial queries on the resulting file can
+ * use SetQuickSpatialIndexMode() to require the creation of a non-optimal
+ * spatial index (actually emulating the type of spatial index produced
+ * by MITAB before version 1.6.0). In this mode writing files can be 
+ * about 5 times faster, but spatial queries can be up to 30 times slower.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABView::SetQuickSpatialIndexMode()
+{
+    if (m_eAccessMode != TABWrite || m_numTABFiles == 0)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetQuickSpatialIndexMode() failed: file not opened for write access.");
+        return -1;
+    }
+
+    for (int iFile=0; iFile < m_numTABFiles; iFile++)
+    {
+        if ( m_papoTABFiles[iFile]->SetQuickSpatialIndexMode() != 0)
+        {
+            // An error has already been reported, just return.
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 
 /**********************************************************************
  *                   TABView::GetNextFeatureId()

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.20 2005/08/07 21:02:14 fwarmerdam Exp $
+ * $Id: mitab_utils.cpp,v 1.21 2006/12/01 16:53:15 dmorissette Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.21  2006/12/01 16:53:15  dmorissette
+ * Wrapped <mbctype.h> stuff with !defined(WIN32CE) (done by mloskot in OGR)
+ *
  * Revision 1.20  2005/08/07 21:02:14  fwarmerdam
  * avoid warnings about testing for characters > 255.
  *

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_maptoolblock.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_maptoolblock.cpp,v 1.7 2006/11/28 18:49:08 dmorissette Exp $
  *
  * Name:     mitab_maptoollock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_maptoolblock.cpp,v $
+ * Revision 1.7  2006/11/28 18:49:08  dmorissette
+ * Completed changes to split TABMAPObjectBlocks properly and produce an
+ * optimal spatial index (bug 1585)
+ *
  * Revision 1.6  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -113,18 +117,19 @@ GBool TABMAPToolBlock::EndOfChain()
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf, int nSize, 
-                                         GBool bMakeCopy /* = TRUE */,
-                                         FILE *fpSrc /* = NULL */, 
-                                         int nOffset /* = 0 */)
+int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
+                                           int nBlockSize, int nSizeUsed, 
+                                           GBool bMakeCopy /* = TRUE */,
+                                           FILE *fpSrc /* = NULL */, 
+                                           int nOffset /* = 0 */)
 {
     int nStatus;
 
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, nSize, bMakeCopy,
-                                            fpSrc, nOffset);
+    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
+                                                bMakeCopy, fpSrc, nOffset);
     if (nStatus != 0)   
         return nStatus;
 
