@@ -703,6 +703,10 @@ ColorTable_swigregister = _gdal.ColorTable_swigregister
 ColorTable_swigregister(ColorTable)
 
 
+def VersionInfo(*args):
+  """VersionInfo(char ?=None) -> char"""
+  return _gdal.VersionInfo(*args)
+
 def AllRegister(*args):
   """AllRegister()"""
   return _gdal.AllRegister(*args)
