@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.16  2007/02/23 18:56:44  dmorissette
+ * Fixed another problem writing collections when the header of objects
+ * part of a collection were split on multiple blocks. Fix WriteBytes()
+ * to reload next coord block in TABReadWrite mode if there is one (bug 1663)
+ *
  * Revision 1.14  2005/10/06 19:15:31  dmorissette
  * Collections: added support for reading/writing pen/brush/symbol ids and
  * for writing collection objects to .TAB/.MAP (bug 1126)
@@ -722,17 +727,38 @@ int  TABMAPCoordBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
             // prevent us from overlapping coordinate values on 2 blocks, but
             // still allows strings longer than one block (see 'else' below).
             //
-            int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
-            SetNextCoordBlock(nNewBlockOffset);
 
-            if (CommitToFile() != 0 ||
-                InitNewBlock(m_fp, 512, nNewBlockOffset) != 0)
+            if ( m_nNextCoordBlock != 0 )
             {
-                // An error message should have already been reported.
-                return -1;
-            }
+                // We're in read/write mode and there is already an allocated
+                // block following this one in the chain ... just reload it 
+                // and continue writing to it
 
-            m_numBlocksInChain++;
+                CPLAssert( m_eAccess == TABReadWrite );
+
+                if (CommitToFile() != 0 ||
+                     ReadFromFile(m_fp, m_nNextCoordBlock, m_nBlockSize) != 0)
+                {
+                    // An error message should have already been reported.
+                    return -1;
+                }
+            }
+            else
+            {
+                // Need to alloc a new block.
+
+                int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock();
+                SetNextCoordBlock(nNewBlockOffset);
+
+                if (CommitToFile() != 0 ||
+                    InitNewBlock(m_fp, m_nBlockSize, nNewBlockOffset) != 0)
+                {
+                    // An error message should have already been reported.
+                    return -1;
+                }
+
+                m_numBlocksInChain++;
+            }
         }
         else
         {
