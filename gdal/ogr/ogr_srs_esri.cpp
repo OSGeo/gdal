@@ -827,7 +827,10 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         if( pszValue == NULL )
             SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
         else if( EQUAL(pszValue,"FEET") )
-            SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
+        else if( atof(pszValue) != 0.0 )
+            SetLinearUnitsAndUpdateParameters( "user-defined", 
+                                               1.0 / atof(pszValue) );
         else
             SetLinearUnitsAndUpdateParameters( pszValue, 1.0 );
     }
@@ -1199,6 +1202,10 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*      Split Lambert_Conformal_Conic into 1SP or 2SP form.             */
 /*                                                                      */
 /*      See bugzilla.remotesensing.org/show_bug.cgi?id=187              */
+/*                                                                      */
+/*      We decide based on whether it has 2SPs.  We used to assume      */
+/*      1SP if it had a scale factor but that turned out to be a        */
+/*      poor test.                                                      */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = GetAttrValue("PROJECTION");
     
