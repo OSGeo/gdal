@@ -76,6 +76,9 @@ gaopeng       Gao Peng
 aaime         Andrea Aime                  swig java bindings
               aaime at openplans.org
 
+pka           Pirmin Kalberer              interlis
+              pka at sourcepole.ch
+
 
 Folks who have not yet agreed to RFC 3:
 
@@ -94,8 +97,6 @@ dgilbert	Dave Gilbert		dgilbert at dclg.ca		libjpeg
 nhv		Norman Vine		nhv at cape.com			gdal
 
 kruland		Kevin Ruland		kruland at ku.edu		gdal
-
-pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
 
 fvdbergh	Frans van der Bergh	fvdbergh at csir.co.za		gdal
 
