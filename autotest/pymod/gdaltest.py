@@ -94,10 +94,11 @@ def run_tests( test_list ):
                 failure_summary.append( 'Script: ' + cur_name )
                 had_errors_this_script = 1
             failure_summary.append( outline + result )
+            if reason is not None:
+                failure_summary.append( '    ' + reason )
 
         if reason is not None:
             print '    ' + reason
-            failure_summary.append( '    ' + reason )
 
         if result == 'success':
             success_counter = success_counter + 1
