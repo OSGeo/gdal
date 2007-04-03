@@ -981,7 +981,9 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
 CPLErr  IdrisiDataset::GetGeoTransform( double * padfTransform )
 {
     if( GDALPamDataset::GetGeoTransform( padfTransform ) != CE_None )
+    {
         memcpy( padfTransform, adfGeoTransform, sizeof( double ) * 6 );
+    }
 
     return CE_None;
 }
@@ -990,9 +992,9 @@ CPLErr  IdrisiDataset::GetGeoTransform( double * padfTransform )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr  IdrisiDataset::SetGeoTransform( double * padfGeoTransform )
+CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
 {    
-    if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0 )
+    if( padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Attempt to set rotated geotransform on Idrisi Raster file.\n"
@@ -1000,13 +1002,17 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfGeoTransform )
         return CE_Failure;
     }
 
+    // --------------------------------------------------------------------
+    // Update the .rdc file
+    // --------------------------------------------------------------------
+
     double dfMinX, dfMaxX, dfMinY, dfMaxY, dfXPixSz, dfYPixSz;
 
-    dfXPixSz = padfGeoTransform[1];
-    dfYPixSz = padfGeoTransform[5];
-    dfMinX   = padfGeoTransform[0];
+    dfXPixSz = padfTransform[1];
+    dfYPixSz = padfTransform[5];
+    dfMinX   = padfTransform[0];
     dfMaxX   = ( dfXPixSz * nRasterXSize ) + dfMinX;
-    dfMaxY   = padfGeoTransform[3];
+    dfMaxY   = padfTransform[3];
     dfMinY   = ( dfYPixSz * nRasterYSize ) + dfMaxY;
 
     CSLSetNameValue( papszRDC, rdcMIN_X,      CPLSPrintf( "%.7f", dfMinX ) );
@@ -1014,6 +1020,18 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfGeoTransform )
     CSLSetNameValue( papszRDC, rdcMIN_Y,      CPLSPrintf( "%.7f", dfMinY ) );
     CSLSetNameValue( papszRDC, rdcMAX_Y,      CPLSPrintf( "%.7f", dfMaxY ) );
     CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", -dfYPixSz ) );
+
+    // --------------------------------------------------------------------
+    // Update the Dataset attribute
+    // --------------------------------------------------------------------
+
+    memcpy( adfGeoTransform, padfTransform, sizeof( double ) * 6 );
+
+    // --------------------------------------------------------------------
+    // Update the Pam Dataset
+    // --------------------------------------------------------------------
+
+    GDALPamDataset::SetGeoTransform( adfGeoTransform );
 
     return CE_None;
 }
