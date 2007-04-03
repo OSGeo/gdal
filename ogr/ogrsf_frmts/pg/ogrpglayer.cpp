@@ -612,13 +612,10 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 OGRFeature *OGRPGLayer::GetFeature( long nFeatureId )
 
 {
-    /*
-     * TODO: This should be implemented!
-     * See related Bug 1445
-     * http://bugzilla.remotesensing.org/show_bug.cgi?id=1445
-     */
+    // Forward call to based class instead of removing this stub.
+    // See discussion here: http://trac.osgeo.org/gdal/ticket/1445
 
-    return NULL;
+    return OGRLayer::GetFeature( nFeatureId );
 }
 
 /************************************************************************/
