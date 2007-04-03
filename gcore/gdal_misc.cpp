@@ -1407,6 +1407,7 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
     papszLines = CSLLoad( pszTFW );
 
+    /* Handling of blank lines is not supported. */
     nLinesCount = CSLCount(papszLines);
     if( nLinesCount >= 6 )
     {
@@ -1424,10 +1425,13 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
         }
     }
     else
+    {
         bValid = false;
+    }
 
-
-    if( bValid )
+    if( bValid
+        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0)  
+        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) ) 
     {
         padfGeoTransform[0] = CPLAtofM(papszLines[4]);
         padfGeoTransform[1] = CPLAtofM(papszLines[0]);
