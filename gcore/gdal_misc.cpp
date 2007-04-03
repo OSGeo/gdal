@@ -1326,8 +1326,10 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 {
     const char  *pszTFW;
     char        szExtUpper[32], szExtLower[32];
-    int         i;
-    char        **papszLines;
+    int         i = 0;
+    int         nLinesCount = 0;
+    char        **papszLines = NULL;
+    bool        bValid = false;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't given an extension, try both the unix and          */
@@ -1405,9 +1407,27 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
     papszLines = CSLLoad( pszTFW );
 
-    if( CSLCount(papszLines) >= 6  
-        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0) 
-        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) ) 
+    nLinesCount = CSLCount(papszLines);
+    if( nLinesCount >= 6 )
+    {
+        bValid = true;
+
+        /* First six lines of a world file can not be empty. */
+        for( i = 0; i < 6; i++)
+        {
+           CPLString line(papszLines[i]);
+           if( line.Trim().empty() )
+           {
+               bValid = false;
+               break;
+           }
+        }
+    }
+    else
+        bValid = false;
+
+
+    if( bValid )
     {
         padfGeoTransform[0] = CPLAtofM(papszLines[4]);
         padfGeoTransform[1] = CPLAtofM(papszLines[0]);
