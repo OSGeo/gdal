@@ -132,8 +132,28 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         VSIFRead( szHeader, 1, sizeof(szHeader), fp );
         szHeader[sizeof(szHeader)-1] = '\0';
 
-        if( szHeader[0] != '<' 
-            || strstr(szHeader,"opengis.net/gml") == NULL )
+/* -------------------------------------------------------------------- */
+/*      Check for a UTF-8 BOM and skip if found                         */
+/*                                                                      */
+/*      TODO: BOM is variable-lenght parameter and depends on encoding. */
+/*            Add BOM detection for other encodings.                    */
+/* -------------------------------------------------------------------- */
+
+        // Used to skip to actual beginning of XML data
+        char* szPtr = szHeader;
+
+        if( ( (unsigned char)szHeader[0] == 0xEF )
+            && ( (unsigned char)szHeader[1] == 0xBB )
+            && ( (unsigned char)szHeader[2] == 0xBF) )
+        {
+            szPtr += 3;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Here, we expect the opening chevrons of GML tree root element   */
+/* -------------------------------------------------------------------- */
+        if( szPtr[0] != '<' 
+            || strstr(szPtr,"opengis.net/gml") == NULL )
         {
             VSIFClose( fp );
             return FALSE;
