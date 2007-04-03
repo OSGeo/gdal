@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -126,6 +127,39 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
     }
     va_end( wrk_args );
 #endif
+
+    return *this;
+}
+
+/************************************************************************/
+/*                                Trim()                                */
+/************************************************************************/
+
+/**
+ * Trim white space.
+ *
+ * Trims white space off the let and right of the string.  White space
+ * is any of a space, a tab, a newline ('\n') or a carriage control ('\r').
+ *
+ * @return a reference to the CPLString. 
+ */
+
+CPLString &CPLString::Trim()
+
+{
+    size_t iLeft, iRight;
+    static const char szWhitespace[] = " \t\r\n";
+
+    iLeft = find_first_not_of( szWhitespace );
+    iRight = find_last_not_of( szWhitespace );
+
+    if( iLeft == std::string::npos )
+    {
+        erase();
+        return *this;
+    }
+    
+    assign( substr( iLeft, iRight - iLeft + 1 ) );
 
     return *this;
 }

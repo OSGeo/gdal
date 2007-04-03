@@ -169,6 +169,7 @@ CPL_C_END
 class CPL_DLL CPLString : public std_string
 {
 public:
+    
     CPLString(void) {}
     CPLString( const std::string &oStr ) : std_string( oStr ) {}
     CPLString( const char *pszStr ) : std_string( pszStr ) {}
@@ -177,6 +178,7 @@ public:
 
     CPLString &Printf( const char *pszFormat, ... );
     CPLString &vPrintf( const char *pszFormat, va_list args );
+    CPLString &Trim();
 };
 
 #endif /* def __cplusplus */
