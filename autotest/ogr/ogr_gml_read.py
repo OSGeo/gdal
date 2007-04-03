@@ -157,6 +157,51 @@ def ogr_gml_3():
     return 'success'
 
 ###############################################################################
+# Test of read GML file with UTF-8 BOM indicator.
+
+def ogr_gml_4():
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gml_ds = ogr.Open( 'data/bom.gml' )    
+
+    if gml_ds.GetLayerCount() != 1:
+        gdaltest.post_reason( 'wrong number of layers' )
+        return 'fail'
+
+    lyr = gml_ds.GetLayerByName('CartographicText')
+
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'wrong number of features' )
+        return 'fail'
+
+    # Test 1st feature
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('featureCode') != 10198:
+        gdaltest.post_reason( 'Wrong featureCode field value' )
+        return 'fail'
+
+    wkt = 'POINT (347243.85 461299.5)'
+
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    # Test 2nd feature
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('featureCode') != 10069:
+        gdaltest.post_reason( 'Wrong featureCode field value' )
+        return 'fail'
+
+    wkt = 'POINT (347251.45 461250.85)'
+
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -167,6 +212,7 @@ gdaltest_list = [
     ogr_gml_1,
     ogr_gml_2,
     ogr_gml_3,
+    ogr_gml_4,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
