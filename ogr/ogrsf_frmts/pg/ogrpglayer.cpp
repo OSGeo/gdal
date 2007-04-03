@@ -606,19 +606,6 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *OGRPGLayer::GetFeature( long nFeatureId )
-
-{
-    // Forward call to based class instead of removing this stub.
-    // See discussion here: http://trac.osgeo.org/gdal/ticket/1445
-
-    return OGRLayer::GetFeature( nFeatureId );
-}
-
-/************************************************************************/
 /*                           HEXToGeometry()                            */
 /************************************************************************/
 
