@@ -88,8 +88,6 @@ class OGRPGLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature();
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
-
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      StartTransaction();
