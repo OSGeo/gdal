@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%known_driver $loaded $verbose @types %types @fails @tested_drivers/;
+use vars qw/%available_driver %test_driver $loaded $verbose @types %types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -26,17 +26,61 @@ $verbose = $ENV{VERBOSE};
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
-%known_driver = ('VRT' => 1,'GTiff' => 1,'NITF' => 1,'HFA' => 1,'SAR_CEOS' => 1,
-		 'CEOS' => 1,'ELAS' => 1,'AIG' => 1,'AAIGrid' => 1,'SDTS' => 1,
-		 'OGDI' => 1,'DTED' => 1,'PNG' => 1,'JPEG' => 1,'MEM' => 1,
-		 'JDEM' => 1,'GIF' => 1,'ESAT' => 1,'BSB' => 1,'XPM' => 1,
-		 'BMP' => 1,'AirSAR' => 1,'RS2' => 1,'PCIDSK' => 1,'PCRaster' => 1,
-		 'ILWIS' => 1,'RIK' => 1,'SGI' => 1,'Leveller' => 1,'GMT' => 1,
-		 'netCDF' => 1,'PNM' => 1,'DOQ1' => 1,'DOQ2' => 1,'ENVI' => 1,
-		 'EHdr' => 1,'PAux' => 1,'MFF' => 1,'MFF2' => 1,'FujiBAS' => 1,
-		 'GSC' => 1,'FAST' => 1,'BT' => 1,'LAN' => 1,'CPG' => 1,'IDA' => 1,
-		 'NDF' => 1,'DIPEx' => 1,'ISIS2' => 1,'L1B' => 1,'FIT' => 1,'RMF' => 1,
-		 'RST' => 1,'USGSDEM' => 1,'GXF' => 1);
+%test_driver = ('VRT' => 0,
+		'GTiff' => 1,
+		'NITF' => 0,
+		'HFA' => 0,
+		'SAR_CEOS' => 0,
+		'CEOS' => 0,
+		'ELAS' => 0,
+		'AIG' => 0,
+		'AAIGrid' => 0,
+		'SDTS' => 0,
+		'OGDI' => 0,
+		'DTED' => 0,
+		'PNG' => 0,
+		'JPEG' => 0,
+		'MEM' => 1,
+		'JDEM' => 0,
+		'GIF' => 0,
+		'ESAT' => 0,
+		'BSB' => 0,
+		'XPM' => 0,
+		'BMP' => 0,
+		'AirSAR' => 0,
+		'RS2' => 0,
+		'PCIDSK' => 0,
+		'PCRaster' => 0,
+		'ILWIS' => 0,
+		'RIK' => 0,
+		'SGI' => 0,
+		'Leveller' => 0,
+		'GMT' => 0,
+		'netCDF' => 0,
+		'PNM' => 0,
+		'DOQ1' => 0,
+		'DOQ2' => 0,
+		'ENVI' => 0,
+		'EHdr' => 1,
+		'PAux' => 0,
+		'MFF' => 0,
+		'MFF2' => 0,
+		'FujiBAS' => 0,
+		'GSC' => 0,
+		'FAST' => 0,
+		'BT' => 0,
+		'LAN' => 0,
+		'CPG' => 0,
+		'IDA' => 0,
+		'NDF' => 0,
+		'DIPEx' => 0,
+		'ISIS2' => 0,
+		'L1B' => 0,
+		'FIT' => 0,
+		'RMF' => 0,
+		'RST' => 0,
+		'USGSDEM' => 0,
+		'GXF' => 0);
 
 @types = ('GDT_Byte','GDT_UInt16','GDT_Int16','GDT_UInt32','GDT_Int32',
 	  'GDT_Float32','GDT_Float64','GDT_CInt16','GDT_CInt32','GDT_CFloat32','GDT_CFloat64');
@@ -56,11 +100,15 @@ my %no_open = map {$_=>1} ('VRT','MEM','ILWIS','MFF2');
 
 gdal_tests(Geo::GDAL::GetDriverCount());
 
+my @tmp = sort keys %available_driver;
+
 if (@fails) {
-    print STDERR "unexpected failures:\n",@fails;
-    print STDERR "all other tests ok.\nTested drivers were: @tested_drivers\n";
+    print STDERR "\nUnexpected failures:\n",@fails;
+    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    print STDERR "Tested drivers were: ",join(', ',@tested_drivers),"\n";
 } else {
-    print STDERR "all tests ok.\nTested drivers were: @tested_drivers\n";
+    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    print STDERR "Tested drivers were: ",join(', ',@tested_drivers),"\n";
 }
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
@@ -83,7 +131,8 @@ sub gdal_tests {
 	}
 
 	my $name = $driver->{ShortName};
-	mytest('skipped: not tested',undef,$name,'test') unless $known_driver{$name};
+	$available_driver{$name} = 1;
+	mytest('skipped: not tested',undef,$name,'test'),next unless $test_driver{$name};
 
         next if $name eq 'MFF2'; # does not work probably because of changes in hkvdataset.cpp
 	
@@ -109,7 +158,7 @@ sub gdal_tests {
 	    next;
 	}
 
-	push @tested_drivers,"'$name'";
+	push @tested_drivers,$name;
 	
 	my $ext = $metadata->{DMD_EXTENSION} ? '.'.$metadata->{DMD_EXTENSION} : '';
 	$ext = '' if $driver->{ShortName} eq 'ILWIS';
