@@ -90,6 +90,22 @@
 /*! Thirty two bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int32,int)
 /*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
+
+public int BuildOverviews( string resampling, int[] overviewlist) {
+      int retval;
+      if (overviewlist.Length <= 0)
+        throw new ArgumentException("overviewlist size is small (BuildOverviews)");
+        
+      IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
+      try {
+          Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
+          retval = BuildOverviews(resampling, overviewlist.Length, ptr);
+      } finally {
+          Marshal.FreeHGlobal(ptr);
+      }
+      GC.KeepAlive(this);
+      return retval;
+  }
 }
 
 /*! Sixteen bit unsigned integer */ //%ds_rasterio_functions(DataType.GDT_UInt16,ushort)
