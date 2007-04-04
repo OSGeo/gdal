@@ -29,7 +29,7 @@ clean:
 
 veryclean: clean
 	-rm -f ${WRAPPERS}
-	-rm -rf ${EXTRA_DIST}
+	-rm -rf ${EXTRA_DIST}/*
 
 generate: makedir ${WRAPPERS}
   
