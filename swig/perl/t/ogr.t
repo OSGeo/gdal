@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%known_driver $loaded $verbose @types %pack_types %types @fails @tested_drivers/;
+use vars qw/%available_driver %test_driver $loaded $verbose @types %pack_types %types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -29,10 +29,24 @@ $verbose = $ENV{VERBOSE};
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
-%known_driver = ('ESRI Shapefile' => 1,
-		 'MapInfo File' => 1,'UK .NTF' => 1,'SDTS' => 1,'TIGER' => 1,
-		 'S57' => 1,'DGN' => 1,'VRT' => 1,'AVCBin' => 1,'REC' => 1,
-		 'Memory' => 1,'CSV' => 1,'GML' => 1,'OGDI' => 1,'PostgreSQL' => 1);
+
+
+%test_driver = ('ESRI Shapefile' => 1,
+		'MapInfo File' => 1,
+		'UK .NTF' => 0,
+		'SDTS' => 0,
+		'TIGER' => 0,
+		'S57' => 0,
+		'DGN' => 0,
+		'VRT' => 0,
+		'AVCBin' => 0,
+		'REC' => 0,
+		'Memory' => 1,
+		'CSV' => 0,
+		'GML' => 0,
+		'GMT' => 0,
+		'OGDI' => 0,
+		'PostgreSQL' => 0);
 
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
@@ -46,11 +60,15 @@ for (@types) {$types{$_} = eval "\$Geo::OGR::$_"};
 
 ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
+my @tmp = sort keys %available_driver;
+
 if (@fails) {
-    print STDERR "unexpected failures:\n",@fails;
-    print STDERR "all other tests ok.\nTested drivers were: @tested_drivers\n";
+    print STDERR "\nUnexpected failures:\n",@fails;
+    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    print STDERR "Tested drivers were: ",join(', ',@tested_drivers),"\n";
 } else {
-    print STDERR "all tests ok.\nTested drivers were: @tested_drivers\n";
+    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    print STDERR "Tested drivers were: ",join(', ',@tested_drivers),"\n";
 }
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
@@ -72,8 +90,8 @@ sub ogr_tests {
 	    next;
 	}
 	my $name = $driver->{name};
-#	print "$name\n";
-	mytest('skipped: not tested',undef,$name,'test') unless $known_driver{$name};
+	$available_driver{$name} = 1;
+	mytest('skipped: not tested',undef,$name,'test'),next unless $test_driver{$name};
 	
 	if (!$driver->TestCapability($Geo::OGR::ODrCCreateDataSource)) {
 	    mytest('skipped: no capability',undef,$name,'datasource create');
@@ -90,7 +108,7 @@ sub ogr_tests {
 	    next;
 	}
 
-	push @tested_drivers,"'$name'";
+	push @tested_drivers,$name;
 
 	my @field_types = ('OFTInteger','OFTIntegerList','OFTReal','OFTRealList','OFTString',
 			   'OFTStringList','OFTWideString','OFTWideStringList','OFTBinary');
@@ -157,9 +175,9 @@ sub ogr_tests {
 		my $schema = $layer->GetLayerDefn();
 		
 		$i = 0;
-		for my $ft (@field_types) {
+		for $ft (@field_types) {
 		    
-		    my $column = $schema->GetFieldDefn($i++);
+		    $column = $schema->GetFieldDefn($i++);
 		    my $n = $column->GetName;
 		    mytest($n eq $ft,"$n ne $ft",$name,$type,$ft,'field create');
 		    
@@ -182,7 +200,7 @@ sub ogr_tests {
 		} elsif ($type eq 'wkbMultiLineString') {
 
 		    for (0..1) {
-			my $g = new Geo::OGR::Geometry($Geo::OGR::wkbLineString);
+			$g = new Geo::OGR::Geometry($Geo::OGR::wkbLineString);
 			test_geom($g,$name,'wkbLineString','create');
 			$geom->AddGeometry($g);
 		    }
@@ -196,7 +214,7 @@ sub ogr_tests {
 		$feature->SetGeometry($geom);
 		
 		$i = 0;
-		for my $ft (@field_types) {
+		for $ft (@field_types) {
 		    my $v = 2;
 		    $v = 'kaksi' if $ft eq 'OFTString';
 		    $feature->SetField($i++,$v);
@@ -234,14 +252,14 @@ sub ogr_tests {
 		
 		# check to see if the fields exist and the types are the same
 		
-		my $schema = $layer->GetLayerDefn();
+		$schema = $layer->GetLayerDefn();
 		
 		$i = 0;
-		for my $ft (@field_types) {
-		    my $column = $schema->GetFieldDefn($i++);
-		    my $n = $column->GetName;
+		for $ft (@field_types) {
+		    $column = $schema->GetFieldDefn($i++);
+		    $n = $column->GetName;
 		    mytest($n eq $ft,"$n ne $ft",$name,$type,$ft,'GetName');
-		    my $t = $column->GetType;
+		    $t = $column->GetType;
 		    my $t2 = $field_types{$ft};
 		    mytest($t == $t2,"$t != $t2",$name,$type,$ft,'GetType');
 		}
@@ -249,19 +267,19 @@ sub ogr_tests {
 		if ($type eq 'wkbPoint' or $type eq 'wkbLineString' or $type eq 'wkbPolygon') {
 		    
 		    $layer->ResetReading;
-		    my $feature = $layer->GetNextFeature;
+		    $feature = $layer->GetNextFeature;
 		    
 		    mytest($feature,'GetFeature failed',$name,$type,'GetNextFeature');
 		    
 		    if ($feature) {
 			
-			my $geom = $feature->GetGeometryRef();
+			$geom = $feature->GetGeometryRef();
 			
 			if ($type eq 'wkbPointlll') {
 			    mytest('skipped',undef,$name,$type,'geom open');
 			} else {
-			    my $t = $type eq 'wkbUnknown' ? $Geo::OGR::wkbPolygon : $types{$type};
-			    my $t2 = $geom->GetGeometryType;
+			    $t = $type eq 'wkbUnknown' ? $Geo::OGR::wkbPolygon : $types{$type};
+			    $t2 = $geom->GetGeometryType;
 			    mytest($t == $t2,"$t != $t2",$name,$type,'geom open');
 
 			    if ($type eq 'wkbMultiPoint') {
@@ -270,17 +288,17 @@ sub ogr_tests {
 				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
 
 				for my $i (0..1) {
-				    my $g = $geom->GetGeometryRef($i);
+				    $g = $geom->GetGeometryRef($i);
 				    test_geom($g,$name,'wkbPoint','open');
 				}
 
 			    } elsif ($type eq 'wkbMultiLineString') {
 
-				my $gn = $geom->GetGeometryCount;
+				$gn = $geom->GetGeometryCount;
 				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
 
-				for my $i (0..1) {
-				    my $g = $geom->GetGeometryRef($i);
+				for $i (0..1) {
+				    $g = $geom->GetGeometryRef($i);
 				    test_geom($g,$name,'wkbLineString','open');
 				}
 				
@@ -290,7 +308,7 @@ sub ogr_tests {
 			}
 			
 			$i = 0;
-			for my $ft (@field_types) {
+			for $ft (@field_types) {
 			    #$feature->SetField($i++,2);
 			    my $f;
 			    if ($ft eq 'OFTString') {
