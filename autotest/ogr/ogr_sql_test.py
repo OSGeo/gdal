@@ -331,6 +331,26 @@ def ogr_sql_15():
     else:
         return 'fail'
 
+###############################################################################
+
+def ogr_sql_16():
+
+    expect = [ 2 ]
+
+    ds = ogr.Open( 'data/small.mif' )
+    sql_lyr = ds.ExecuteSQL( "select fid from small where owner < 'H'" )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
+
+    ds.ReleaseResultSet( sql_lyr )
+    ds = None
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+
 
 ###############################################################################
 
@@ -358,6 +378,7 @@ gdaltest_list = [
     ogr_sql_13,
     ogr_sql_14,
     ogr_sql_15,
+    ogr_sql_16,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
