@@ -736,19 +736,14 @@ CPLErr RMFDataset::WriteHeader()
 
         if ( oSRS.importFromWkt( &pszProj ) == OGRERR_NONE )
         {
-            double  *padfPrjParams = NULL;
+            double  adfPrjParams[7];
 
             oSRS.exportToPanorama( (long *)&sHeader.iProjection, &iDatum,
-                                   &iEllips, &iZone, &padfPrjParams );
-            if ( padfPrjParams )
-            {
-                sHeader.dfStdP1 = padfPrjParams[0];
-                sHeader.dfStdP2 = padfPrjParams[1];
-                sHeader.dfCenterLat = padfPrjParams[2];
-                sHeader.dfCenterLong = padfPrjParams[3];
-
-                CPLFree( padfPrjParams );
-            }
+                                   &iEllips, &iZone, adfPrjParams );
+            sHeader.dfStdP1 = adfPrjParams[0];
+            sHeader.dfStdP2 = adfPrjParams[1];
+            sHeader.dfCenterLat = adfPrjParams[2];
+            sHeader.dfCenterLong = adfPrjParams[3];
         }
     }
 
