@@ -10,14 +10,10 @@
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
    - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
 
-4) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
-   useful for collecting a full listing of all CVS log entries.  It can be
-   useful to perform this and some of the other cvs intensive steps on 
-   remotesensing.org if possible, to minimize CVS latency. 
+4) Prepare release overview in the NEWS file.  The Trac revision log for
+   trunk or the stable branch can be helpful.
 
-   eg. 
-
-   % cvs2cl.pl > AutoChangeLog
+    http://trac.osgeo.org/gdal/log/branches/1.4
 
 5) Update the GDAL doc/index.doc to refer to the newly to be created version, 
    and commit.  Update the doc/download.dox to point to the newest release
@@ -46,10 +42,10 @@
 
 7.6) Create a snapshot of gdalautotest. 
 
-8) Publish the resulting files on www.gdal.org/gdal-web/dl and 
-   download.osgeo.org in /osgeo/download/gdal.
+8) Publish the resulting files in download.osgeo.org/gdal.
 
-9) Announce release to the gdal-dev@lists.maptools.org, and freegis@freegis.org
+9) Announce release to the gdal-dev@lists.maptools.org, 
+   gdal-announce@lists.osgeo.org, freegis@freegis.org and news_item@osgeo.org. 
 
 10) Update the freshmeat.net entry for GDAL. 
 
