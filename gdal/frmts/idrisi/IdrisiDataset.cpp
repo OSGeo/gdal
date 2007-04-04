@@ -1027,12 +1027,6 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
 
     memcpy( adfGeoTransform, padfTransform, sizeof( double ) * 6 );
 
-    // --------------------------------------------------------------------
-    // Update the Pam Dataset
-    // --------------------------------------------------------------------
-
-    GDALPamDataset::SetGeoTransform( adfGeoTransform );
-
     return CE_None;
 }
 
