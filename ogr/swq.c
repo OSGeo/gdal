@@ -657,6 +657,8 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
 
     if( op->field_index != -1 && op->field_type == SWQ_STRING
         && (op->operation != SWQ_EQ && op->operation != SWQ_NE
+            && op->operation != SWQ_GT && op->operation != SWQ_LT
+            && op->operation != SWQ_GE && op->operation != SWQ_LE
             && op->operation != SWQ_LIKE && op->operation != SWQ_NOTLIKE
             && op->operation != SWQ_IN && op->operation != SWQ_NOTIN
             && op->operation != SWQ_ISNULL && op->operation != SWQ_ISNOTNULL ))

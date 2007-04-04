@@ -139,9 +139,8 @@ layer.  The operator is one of
 <b>IN</b>. 
 
 Most of the operators are self explanitory, but is is worth nothing that <b>
-!=</b> is the same as <b>&lt;&gt;</b>, the less than and greater than 
-operators do not currently work on string values, and string equality is
-case insensitive.  Both the LIKE and ILIKE operators are case insensitive.
+!=</b> is the same as <b>&lt;&gt;</b>, the string equality is
+case insensitive, but the <b>&lt;</b>, <b>&gt;</b>, <b>&lt;=</b> and <b>&gt;=</b> operators <i>are</i> case sensitive.  Both the LIKE and ILIKE operators are case insensitive.
 
 The value argument to the <b>LIKE</b> operator is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
@@ -198,8 +197,7 @@ clause, and must not have any table prefix ... they must just be the field
 name.
 <li> No arithmetric operations are supported.  You can't test 
 "WHERE (a+b) < 10" for instance.
-<li> All string comparisons are case insensitive.
-<li> Greater than, and less than operators may not be used with strings.
+<li> All string comparisons are case insensitive except for <b>&lt;</b>, <b>&gt;</b>, <b>&lt;=</b> and <b>&gt;=</b>.
 </ol>
 
 \subsection ogr_sql_order_by ORDER BY
