@@ -294,6 +294,47 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
                 return !EQUAL(psField->String,op->string_value);
             }
 
+          case SWQ_LT:
+            if (psField->Set.nMarker1 == OGRUnsetMarker
+                && psField->Set.nMarker2 == OGRUnsetMarker )
+            {
+                return (op->string_value[0] != '\0');
+            }
+            else
+            {
+                return strcmp(psField->String,op->string_value) < 0;
+            }
+          case SWQ_GT:
+            if (psField->Set.nMarker1 == OGRUnsetMarker
+                && psField->Set.nMarker2 == OGRUnsetMarker )
+            {
+                return (op->string_value[0] != '\0');
+            }
+            else
+            {
+                return strcmp(psField->String,op->string_value) > 0;
+            }
+          case SWQ_LE:
+            if (psField->Set.nMarker1 == OGRUnsetMarker
+                && psField->Set.nMarker2 == OGRUnsetMarker )
+            {
+                return (op->string_value[0] != '\0');
+            }
+            else
+            {
+                return strcmp(psField->String,op->string_value) <= 0;
+            }
+          case SWQ_GE:
+            if (psField->Set.nMarker1 == OGRUnsetMarker
+                && psField->Set.nMarker2 == OGRUnsetMarker )
+            {
+                return (op->string_value[0] != '\0');
+            }
+            else
+            {
+                return strcmp(psField->String,op->string_value) >= 0;
+            }
+
           case SWQ_ISNULL:
             return !poFeature->IsFieldSet( op->field_index );
 
