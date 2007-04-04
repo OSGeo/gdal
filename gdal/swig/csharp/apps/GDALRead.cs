@@ -24,14 +24,15 @@ class GDALRead {
 	public static void usage() 
 
 	{ 
-		Console.WriteLine("usage: gdalread {GDAL dataset name} {output file name}");
+		Console.WriteLine("usage: gdalread {GDAL dataset name} {output file name} {overview}");
 		System.Environment.Exit(-1);
 	}
  
     public static void Main(string[] args) 
     {
-
-        if (args.Length != 2) usage();
+        int iOverview = -1;
+        if (args.Length < 2) usage();
+        if (args.Length == 3) iOverview = int.Parse(args[2]);
 
         // Using early initialization of System.Console
         Console.WriteLine("");
@@ -81,12 +82,22 @@ class GDALRead {
                 Console.WriteLine("Band " + iBand + " :");
                 Console.WriteLine("   DataType: " + band.DataType);
                 Console.WriteLine("   Size (" + band.XSize + "," + band.YSize + ")");
+                Console.WriteLine("   PaletteInterp: " + band.GetRasterColorInterpretation().ToString());
+
+                for (int iOver = 0; iOver < band.GetOverviewCount(); iOver++)
+                {
+                    Band over = band.GetOverview(iOver);
+                    Console.WriteLine("      OverView " + iOver + " :");
+                    Console.WriteLine("         DataType: " + over.DataType);
+                    Console.WriteLine("         Size (" + over.XSize + "," + over.YSize + ")");
+                    Console.WriteLine("         PaletteInterp: " + over.GetRasterColorInterpretation().ToString());
+                }
             }
 
             /* -------------------------------------------------------------------- */
             /*      Processing the raster                                           */
             /* -------------------------------------------------------------------- */
-            SaveBitmapBuffered(ds, args[1]);
+            SaveBitmapBuffered(ds, args[1], iOverview);
             
         }
         catch (Exception e) 
@@ -95,26 +106,27 @@ class GDALRead {
         }
     }
 
-    private static void SaveBitmapBuffered(Dataset ds, string filename) 
+    private static void SaveBitmapBuffered(Dataset ds, string filename, int iOverview) 
     {
         // Get the GDAL Band objects from the Dataset
         Band redBand = ds.GetRasterBand(1);
-
+        
 		if (redBand.GetRasterColorInterpretation() == ColorInterp.GCI_PaletteIndex)
 		{
-			SaveBitmapPaletteBuffered(ds, filename);
+			SaveBitmapPaletteBuffered(ds, filename, iOverview);
 			return;
 		}
 
 		if (redBand.GetRasterColorInterpretation() == ColorInterp.GCI_GrayIndex)
 		{
-			SaveBitmapGrayBuffered(ds, filename);
+			SaveBitmapGrayBuffered(ds, filename, iOverview);
 			return;
 		}
 
 		if (redBand.GetRasterColorInterpretation() != ColorInterp.GCI_RedBand)
 		{
-            Console.WriteLine("Non RGB images are not supported by this sample!");
+            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " + 
+                redBand.GetRasterColorInterpretation().ToString());
 			return;
 		}
 
@@ -124,25 +136,36 @@ class GDALRead {
 			System.Environment.Exit(-1);
 		}
 
-        Band greenBand = ds.GetRasterBand(2);
+        if (iOverview >= 0 && redBand.GetOverviewCount() > iOverview) 
+            redBand = redBand.GetOverview(iOverview);
 
-		if (redBand.GetRasterColorInterpretation() != ColorInterp.GCI_GreenBand)
+        Band greenBand = ds.GetRasterBand(2);
+        
+		if (greenBand.GetRasterColorInterpretation() != ColorInterp.GCI_GreenBand)
 		{
-			Console.WriteLine("Non RGB images are not supported by this sample!");
+            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " + 
+                greenBand.GetRasterColorInterpretation().ToString());
 			return;
 		}
+
+        if (iOverview >= 0 && greenBand.GetOverviewCount() > iOverview) 
+            greenBand = greenBand.GetOverview(iOverview);
 
         Band blueBand = ds.GetRasterBand(3);
-
-		if (redBand.GetRasterColorInterpretation() != ColorInterp.GCI_BlueBand)
+        
+		if (blueBand.GetRasterColorInterpretation() != ColorInterp.GCI_BlueBand)
 		{
-			Console.WriteLine("Non RGB images are not supported by this sample!");
+            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " + 
+                blueBand.GetRasterColorInterpretation().ToString());
 			return;
 		}
 
-        // Get the width and height of the Dataset
-        int width = ds.RasterXSize;
-        int height = ds.RasterYSize;
+        if (iOverview >= 0 && blueBand.GetOverviewCount() > iOverview) 
+            blueBand = blueBand.GetOverview(iOverview);
+
+        // Get the width and height of the raster
+        int width = redBand.XSize;
+        int height = redBand.YSize;
 
         // Create a Bitmap to store the GDAL image in
         Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
@@ -172,10 +195,12 @@ class GDALRead {
         bitmap.Save(filename);
     }
 
-	private static void SaveBitmapPaletteBuffered(Dataset ds, string filename) 
+	private static void SaveBitmapPaletteBuffered(Dataset ds, string filename, int iOverview) 
 	{
 		// Get the GDAL Band objects from the Dataset
 		Band band = ds.GetRasterBand(1);
+        if (iOverview >= 0 && band.GetOverviewCount() > iOverview) 
+            band = band.GetOverview(iOverview);
 
 		ColorTable ct = band.GetRasterColorTable();
 		if (ct == null)
@@ -191,8 +216,8 @@ class GDALRead {
 		}
 
 		// Get the width and height of the Dataset
-		int width = ds.RasterXSize;
-		int height = ds.RasterYSize;
+        int width = band.XSize;
+        int height = band.YSize;
 
 		// Create a Bitmap to store the GDAL image in
 		Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
@@ -219,14 +244,16 @@ class GDALRead {
 		bitmap.Save(filename);
 	}
 
-	private static void SaveBitmapGrayBuffered(Dataset ds, string filename) 
+	private static void SaveBitmapGrayBuffered(Dataset ds, string filename, int iOverview) 
 	{
 		// Get the GDAL Band objects from the Dataset
 		Band band = ds.GetRasterBand(1);
+        if (iOverview >= 0 && band.GetOverviewCount() > iOverview) 
+            band = band.GetOverview(iOverview);
 
 		// Get the width and height of the Dataset
-		int width = ds.RasterXSize;
-		int height = ds.RasterYSize;
+		int width = band.XSize;
+        int height = band.YSize;
 
 		// Create a Bitmap to store the GDAL image in
 		Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
