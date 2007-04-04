@@ -314,6 +314,25 @@ def ogr_sql_14():
         return 'fail'
 
 ###############################################################################
+# Verify that selecting with filtering by FID works properly.
+
+def ogr_sql_15():
+
+    expect = [ 7 ]
+    
+    sql_lyr = gdaltest.ds.ExecuteSQL( 'select fid,eas_id,prfedea from poly where fid = %d' % expect[0]  )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+
+###############################################################################
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -338,6 +357,7 @@ gdaltest_list = [
     ogr_sql_12,
     ogr_sql_13,
     ogr_sql_14,
+    ogr_sql_15,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
