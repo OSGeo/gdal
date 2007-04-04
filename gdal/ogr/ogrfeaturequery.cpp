@@ -177,6 +177,10 @@ static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
                 sField.String = (char*) 
                     poFeature->GetFieldAsString( op->field_index );
                 break;
+
+              default:
+                CPLAssert( FALSE );
+                break;
             }      
         }
         else
