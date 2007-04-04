@@ -75,6 +75,7 @@ samples:
 	$(CSC) /r:ogr_csharp.dll /out:WKT2WKB.exe apps/WKT2WKB.cs
 	$(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps/ReadXML.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALInfo.exe apps/GDALInfo.cs
+	$(CSC) /r:gdal_csharp.dll /out:GDALOverviews.exe apps/GDALOverviews.cs
 
 test:
 	LC_ALL=C mono createdata.exe Data pointlayer
