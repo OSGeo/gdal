@@ -119,13 +119,21 @@ public:
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
+#ifndef SWIGCSHARP  
 %feature("kwargs") BuildOverviews;
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
+#else
+%apply (void *buffer_ptr) {int *pOverviews};
+#endif
   int BuildOverviews( const char *resampling = "NEAREST",
                       int overviewlist = 0 , int *pOverviews = 0 ) {
     return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, 0, 0);
   }
+#ifndef SWIGCSHARP
 %clear (int overviewlist, int *pOverviews);
+#else
+%clear (int *pOverviews);
+#endif
 
   int GetGCPCount() {
     return GDALGetGCPCount( self );
