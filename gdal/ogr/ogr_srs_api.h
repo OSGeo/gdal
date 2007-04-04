@@ -261,7 +261,7 @@ OGRErr CPL_DLL OSRExportToUSGS( OGRSpatialReferenceH, long *, long *,
                                 double **, long * );
 OGRErr CPL_DLL OSRExportToXML( OGRSpatialReferenceH, char **, const char * );
 OGRErr OSRExportToPanorama( OGRSpatialReferenceH, long *, long *, long *,
-                            long *, double ** );
+                            long *, double * );
 
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
