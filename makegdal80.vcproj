@@ -25,7 +25,7 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc"
+				BuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc gdal14.dll"
 				ReBuildCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc clean&#x0D;&#x0A;nmake -f makefile.vc"
 				CleanCommandLine="cd $(ProjectDir)&#x0D;&#x0A;nmake -f makefile.vc clean"
 				Output="gdal14.dll"
@@ -67,10 +67,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\apps\gdal_translate.cpp"
-				>
-			</File>
 			<Filter
 				Name="alg"
 				>
@@ -219,6 +215,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\ogr\ogr2ogr.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\ogr\ogr_api.cpp"
 					>
 				</File>
@@ -304,6 +304,10 @@
 				</File>
 				<File
 					RelativePath=".\ogr\ogrgeometryfactory.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrinfo.cpp"
 					>
 				</File>
 				<File
@@ -2739,6 +2743,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\apps\gdal_translate.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\apps\gdaladdo.cpp"
 					>
 				</File>
@@ -2760,6 +2768,10 @@
 				</File>
 				<File
 					RelativePath=".\apps\multireadtest.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\apps\nearblack.cpp"
 					>
 				</File>
 			</Filter>
