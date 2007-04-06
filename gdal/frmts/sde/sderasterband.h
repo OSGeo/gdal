@@ -26,7 +26,7 @@ class SDERasterBand : public GDALRasterBand
         CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
         
         
-		int						nOverview;
+        int                     nOverview;
         int                     nOverviews;
         long                    nBlockSize;
         double                  dfDepth;
@@ -58,9 +58,8 @@ class SDERasterBand : public GDALRasterBand
     virtual double GetMinimum( int *pbSuccess );
     virtual double GetMaximum( int *pbSuccess );
     virtual int GetOverviewCount(void);
-	virtual GDALRasterBand* GetOverview(int nOverview);
-//    virtual double GetNoDataValue( int *pbSuccess );
-//
+    virtual GDALRasterBand* GetOverview(int nOverview);
+
 };
 
 #endif
