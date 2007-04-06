@@ -80,20 +80,27 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     
     long nRasterColumnId = 0;
 
-    nSDEErr = SE_rascolinfo_get_id(hRasterColumn, &nRasterColumnId);
+    nSDEErr = SE_rascolinfo_get_id( hRasterColumn, 
+                                    &nRasterColumnId);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
         return CE_Fatal;
     }        
 
-    nSDEErr = SE_raster_get_info_by_id(hConnection, nRasterColumnId, 1, raster);
+    nSDEErr = SE_raster_get_info_by_id( hConnection, 
+                                        nRasterColumnId, 
+                                        1, 
+                                        raster);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
         return CE_Fatal;
     }
-    nSDEErr = SE_raster_get_bands(hConnection, raster, &paohSDERasterBands, (long*)&nBands);
+    nSDEErr = SE_raster_get_bands(  hConnection, 
+                                    raster, 
+                                    &paohSDERasterBands, 
+                                    (long*)&nBands);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_raster_get_bands" );
@@ -106,7 +113,9 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     band = paohSDERasterBands[0];
     
     
-    nSDEErr = SE_rasbandinfo_get_band_size(band, (long*)&nRasterXSize, (long*)&nRasterYSize);
+    nSDEErr = SE_rasbandinfo_get_band_size( band, 
+                                            (long*)&nRasterXSize, 
+                                            (long*)&nRasterYSize);
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_size" );
@@ -151,10 +160,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     
     eDataType = b->GetRasterDataType();
     
-
-    
     SE_rasterinfo_free(raster);
-
 
     return CE_None;
 }
@@ -173,6 +179,7 @@ CPLErr SDEDataset::GetGeoTransform( double * padfTransform )
  
     padfTransform[0] = dfMinX - 0.5*(dfMaxX - dfMinX) / (GetRasterXSize()-1);
     padfTransform[3] = dfMaxY + 0.5*(dfMaxY - dfMinY) / (GetRasterYSize()-1);
+    
     padfTransform[1] = (dfMaxX - dfMinX) / (GetRasterXSize()-1);
     padfTransform[2] = 0.0;
         
@@ -306,8 +313,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     
-
-
 /* -------------------------------------------------------------------- */
 /*      If we aren't prefixed with SDE: then ignore this datasource.    */
 /* -------------------------------------------------------------------- */
@@ -318,10 +323,13 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Parse arguments on comma.  We expect (layer is optional):       */
 /*        SDE:server,instance,database,username,password,layer          */
 /* -------------------------------------------------------------------- */
-    char **papszTokens = CSLTokenizeStringComplex( poOpenInfo->pszFilename+4, ",",
-                                                   TRUE, TRUE );
-    CPLDebug( "SDERASTER", "Open(\"%s\") revealed %d tokens.", poOpenInfo->pszFilename,
-              CSLCount( papszTokens ) );
+    char **papszTokens = CSLTokenizeStringComplex(  poOpenInfo->pszFilename+4, 
+                                                    ",",
+                                                    TRUE, 
+                                                    TRUE );
+    CPLDebug(   "SDERASTER", "Open(\"%s\") revealed %d tokens.", 
+                poOpenInfo->pszFilename,
+                CSLCount( papszTokens ) );
 
 
     if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 6 )
@@ -352,7 +360,8 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
                                     papszTokens[2], 
                                     papszTokens[3],
                                     papszTokens[4],
-                                    &(hSDEErrorInfo), &(poDS->hConnection) );
+                                    &(hSDEErrorInfo), 
+                                    &(poDS->hConnection) );
 
     if( nSDEErr != SE_SUCCESS )
     {
@@ -397,7 +406,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
                                "using it directly with '%s' as the raster column name.", 
                   poDS->pszLayerName,
                   poDS->pszColumnName);
-        nSDEErr = SE_rastercolumn_get_info_by_name(poDS->hConnection, 
+        nSDEErr = SE_rastercolumn_get_info_by_name( poDS->hConnection, 
                                                     poDS->pszLayerName, 
                                                     poDS->pszColumnName, 
                                                     poDS->hRasterColumn);
@@ -432,7 +441,10 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             nSDEErr = SE_rascolinfo_get_raster_column (poDS->paohSDERasterColumns[i], 
                                                        szTableName, 
                                                        szColumnName); 
-            CPLDebug("SDERASTER", "Layer '%s' with column '%s' found.", szTableName, szColumnName);
+            CPLDebug(   "SDERASTER", 
+                        "Layer '%s' with column '%s' found.", 
+                        szTableName, 
+                        szColumnName);
 
             if( nSDEErr != SE_SUCCESS )
             {
@@ -465,7 +477,6 @@ void GDALRegister_SDE()
                                    "ESRI ArcSDE" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#SDE" );
-       // poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
 
         poDriver->pfnOpen = SDEDataset::Open;
 
