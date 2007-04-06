@@ -103,14 +103,14 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     // dataset.  We want it around for convenience.
     this->poDS = poDS;
     this->nBand = nBand;
-	this->nOverview = nOverview;
+    this->nOverview = nOverview;
     this->poBand = band;
     
     // Initialize our SDE opaque object pointers to NULL.
     // The nOverviews private data member will be updated when 
     // GetOverviewCount is called and subsequently returned immediately in 
     // later calls if it has been set to anything other than 0.
-	this->hConstraint = NULL;
+    this->hConstraint = NULL;
     this->hQuery = NULL;
     this->poColorTable = NULL;
     
@@ -416,20 +416,20 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     int bitmap_size = (nBlockXSize * nBlockYSize + 7) / 8;
 
     if ((length == block_size) || (length == (block_size + bitmap_size))) {
-	if (bits_per_pixel >= 8) {
-	    memcpy(pImage, pixels, block_size);
-	} else {
-	    GByte *p = reinterpret_cast<GByte*>(pImage);
-	    int bit_mask = (2 << bits_per_pixel) - 1;
-	    int i = 0;
-	    for (int y = 0; y < nBlockYSize; ++y) {
-		for (int x = 0; x < nBlockXSize; ++x) {
-		    *p++ = (pixels[i >> 3] >> (i & 7)) & bit_mask;
-		    i += bits_per_pixel;
-		}
-		i = (i + 7) / 8 * 8;
-	    }
-	}
+    if (bits_per_pixel >= 8) {
+        memcpy(pImage, pixels, block_size);
+    } else {
+        GByte *p = reinterpret_cast<GByte*>(pImage);
+        int bit_mask = (2 << bits_per_pixel) - 1;
+        int i = 0;
+        for (int y = 0; y < nBlockYSize; ++y) {
+        for (int x = 0; x < nBlockXSize; ++x) {
+            *p++ = (pixels[i >> 3] >> (i & 7)) & bit_mask;
+            i += bits_per_pixel;
+        }
+        i = (i + 7) / 8 * 8;
+        }
+    }
     } else {
 
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -649,15 +649,15 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
         return CE_Fatal;
     }
     
-	long offset_x, offset_y, num_bands;
+    long offset_x, offset_y, num_bands;
 
-	nSDEErr = SE_rasterattr_get_image_size_by_level (poGDS->hAttributes,
-													 (long*)&nRasterXSize,
-													 (long*)&nRasterYSize,
-													 &offset_x,
-													 &offset_y,
-													 &num_bands,
-													 (nOverview == -1) ? (0): (nOverview));
+    nSDEErr = SE_rasterattr_get_image_size_by_level (poGDS->hAttributes,
+                                                     (long*)&nRasterXSize,
+                                                     (long*)&nRasterYSize,
+                                                     &offset_x,
+                                                     &offset_y,
+                                                     &num_bands,
+                                                     (nOverview == -1) ? (0): (nOverview));
 
     if( nSDEErr != SE_SUCCESS )
     {
@@ -669,7 +669,7 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
 
     // We're the base level
     if (nOverview == -1) {
-    	for (int i = 0; i<this->nOverviews; i++) {
+        for (int i = 0; i<this->nOverviews; i++) {
             papoOverviews[i]= new SDERasterBand(poGDS, nBand, i, poBand);
 
         }
@@ -692,12 +692,12 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff,
         {
             IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
         }
-		
-		nSDEErr = SE_rasconstraint_set_level(hConstraint, (nOverview == -1) ? (0): (nOverview));
-		if( nSDEErr != SE_SUCCESS )
-		{
-			IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
-		}		
+        
+        nSDEErr = SE_rasconstraint_set_level(hConstraint, (nOverview == -1) ? (0): (nOverview));
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_rasconstraint_create" );
+        }       
 
         nSDEErr = SE_rasconstraint_set_bands(hConstraint, 1, (long*)&nBand);
         if( nSDEErr != SE_SUCCESS )

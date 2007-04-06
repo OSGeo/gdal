@@ -21,8 +21,8 @@ class SDEDataset : public GDALDataset
         SE_RASCOLINFO       hRasterColumn;
     
         
-        CPLErr                  ComputeRasterInfo(void);
-        SE_RASBANDINFO* paohSDERasterBands;
+        CPLErr              ComputeRasterInfo(void);
+        SE_RASBANDINFO*     paohSDERasterBands;
         
     public:
         SDEDataset();
