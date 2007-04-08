@@ -42,6 +42,9 @@ MrSID Driver:
  - Compute approximate statistics from overview, even if not forced. #1452
  - Fix for decoding some stripped data. #1446
 
+AAIGrid Driver:
+ - Handling case-mixed file names. #1524
+
 
 OGR
 ---
@@ -72,10 +75,12 @@ PostGIS Driver:
  - Increase CURSOR_PAGE from 1 to 500. #1474
  - Ensure that GetLayerByName(), and OpenTable() fail gracefully for
    non existant tables. #1480
+ - Improved result set cleaning. #1514
+ - Fixed detecting 4-dimension coordinates in input EWKB streams. #1323
 
 Shapefile Driver:
  - Ensure SetFeature() and DeleteFeature() operations get applied. #1456
-
+ - Handling case-mixed file names. #1524
 
 Other
 -----
