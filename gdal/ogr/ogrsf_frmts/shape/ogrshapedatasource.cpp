@@ -300,9 +300,18 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRSpatialReference *poSRS = NULL;
     const char  *pszPrjFile = CPLResetExtension( pszNewName, "prj" );
-    FILE        *fp;
+    FILE        *fp = NULL;
 
     fp = VSIFOpen( pszPrjFile, "r" );
+
+#ifndef WIN32
+    if( NULL == fp )
+    {
+        pszPrjFile = CPLResetExtension( pszNewName, "PRJ" );
+        fp = VSIFOpen( pszPrjFile, "r" );
+    }
+#endif
+
     if( fp != NULL )
     {
         char    **papszLines;
