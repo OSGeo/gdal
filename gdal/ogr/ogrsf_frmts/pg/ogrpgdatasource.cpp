@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_pg.h"
+#include "ogrpgutility.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -166,11 +167,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     if( strstr(pszNewName, "dbname=") != NULL )
     {
-        int     i;
-
         pszDBName = CPLStrdup( strstr(pszNewName, "dbname=") + 7 );
 
-        for( i = 0; pszDBName[i] != '\0'; i++ )
+        for( int i = 0; pszDBName[i] != '\0'; i++ )
         {
             if( pszDBName[i] == ' ' )
             {
@@ -191,13 +190,14 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      PostGIS Geometry type.  If so, disable sequential scanning      */
 /*      so we will get the value of the gist indexes.                   */
 /* -------------------------------------------------------------------- */
-    PGresult            *hResult;
+    PGresult    *hResult = NULL;
 
     hResult = PQexec(hPGConn, "BEGIN");
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
+        CPLAssert(NULL == hResult);
 
         hResult = PQexec(hPGConn,
                          "SELECT oid FROM pg_type WHERE typname = 'geometry'" );
@@ -210,10 +210,12 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         nGeometryOID = atoi(PQgetvalue(hResult,0,0));
     }
     else
+    {
         nGeometryOID = (Oid) 0;
+    }
 
-    if( hResult )
-        PQclear( hResult );
+    OGRPGClearResult( hResult );
+    CPLAssert(NULL == hResult); /* Test if safe PQclear has not been broken */
 
     // find out postgis version.
     sPostGISVersion.nMajor = -1;
@@ -278,7 +280,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s",
                     PQgetvalue(hResult,0,0) );
         }
-        PQclear(hResult);
+        OGRPGClearResult(hResult);
 
 
         if (sPostGISVersion.nMajor == 0 && sPostGISVersion.nMinor < 8)
@@ -294,11 +296,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             // thus PostgreSQL will use indexes whenever appropriate.
             hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = ON");
         }
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
     }
 
     hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
 /*      Get a list of available tables.                                 */
@@ -307,7 +309,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
 
         if ( bHavePostGIS )
             hResult = PQexec(hPGConn,
@@ -324,12 +326,14 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
         hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
     }
 
     if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
     {
+        OGRPGClearResult( hResult );
+
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", PQerrorMessage(hPGConn) );
         return FALSE;
@@ -360,13 +364,13 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "CLOSE mycursor");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
 /*      Register the available tables.                                  */
@@ -447,7 +451,7 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     char                szCommand[1024];
 
     hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     if( bHavePostGIS )
     {
@@ -458,16 +462,16 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
         CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
 
         hResult = PQexec( hPGConn, szCommand );
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
     }
 
     sprintf( szCommand, "DROP TABLE %s.\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     return OGRERR_NONE;
 }
@@ -534,8 +538,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
       if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
       {
           pszSchemaName = CPLStrdup(PQgetvalue(hResult,0,0));
-          PQclear( hResult );
       }
+      OGRPGClearResult( hResult );
     }
 
 /* -------------------------------------------------------------------- */
@@ -604,9 +608,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
-
+    OGRPGClearResult( hResult );
 
     if( !bHavePostGIS )
     {
@@ -632,13 +634,14 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                   "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
         CPLFree( pszLayerName );
         CPLFree( pszSchemaName );
-        PQclear( hResult );
+
+        OGRPGClearResult( hResult );
         hResult = PQexec( hPGConn, "ROLLBACK" );
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
         return NULL;
     }
 
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
 /*      Eventually we should be adding this table to a table of         */
@@ -668,7 +671,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
 
         switch( wkbFlatten(eType) )
         {
@@ -724,22 +727,22 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
             CPLFree( pszLayerName );
             CPLFree( pszSchemaName );
 
-            PQclear( hResult );
+            OGRPGClearResult( hResult );
 
             hResult = PQexec(hPGConn, "ROLLBACK");
-            PQclear( hResult );
+            OGRPGClearResult( hResult );
 
             return NULL;
         }
 
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Complete, and commit the transaction.                           */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -882,7 +885,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      Try looking up in spatial_ref_sys table.                        */
 /* -------------------------------------------------------------------- */
-    PGresult        *hResult;
+    PGresult        *hResult = NULL;
     char            szCommand[1024];
     OGRSpatialReference *poSRS = NULL;
 
@@ -909,7 +912,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
         }
     }
 
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
     SoftCommit();
 
 /* -------------------------------------------------------------------- */
@@ -935,10 +938,10 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    PGresult            *hResult;
+    PGresult            *hResult = NULL;
     char                szCommand[10000];
     char                *pszWKT = NULL;
-    int                 nSRSId;
+    int                 nSRSId = -1;
 
     if( poSRS == NULL )
         return -1;
@@ -956,6 +959,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
+    OGRPGClearResult( hResult );
 
     sprintf( szCommand,
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
@@ -970,12 +974,16 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
+        // TODO: mloskot - replace with strtol() function.
+        // atoi does not provide any level of diagnostics.
+        // What about adding CPLAtoi() ? 
+
         nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
 
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
 
         hResult = PQexec(hPGConn, "COMMIT");
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
 
         return nSRSId;
     }
@@ -990,7 +998,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
 
     hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     if( bTableMissing )
     {
@@ -1002,17 +1010,19 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Get the current maximum srid in the srs table.                  */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
 
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
     {
         nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
     }
     else
+    {
         nSRSId = 1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
@@ -1042,10 +1052,10 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     CPLFree( pszWKT);
 
     hResult = PQexec(hPGConn, szCommand );
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     return nSRSId;
 }
@@ -1065,20 +1075,22 @@ OGRErr OGRPGDataSource::SoftStartTransaction()
 
     if( nSoftTransactionLevel == 1 )
     {
-        PGresult            *hResult;
-        PGconn          *hPGConn = GetPGConn();
+        PGresult    *hResult = NULL;
+        PGconn      *hPGConn = GetPGConn();
 
         //CPLDebug( "OGR_PG", "BEGIN Transaction" );
         hResult = PQexec(hPGConn, "BEGIN");
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
+            OGRPGClearResult( hResult );
+
             CPLDebug( "OGR_PG", "BEGIN Transaction failed:\n%s",
                       PQerrorMessage( hPGConn ) );
             return OGRERR_FAILURE;
         }
 
-        PQclear( hResult );
+        OGRPGClearResult( hResult );
     }
 
     return OGRERR_NONE;
@@ -1106,20 +1118,22 @@ OGRErr OGRPGDataSource::SoftCommit()
 
     if( nSoftTransactionLevel == 0 )
     {
-        PGresult            *hResult;
-        PGconn          *hPGConn = GetPGConn();
+        PGresult    *hResult = NULL;
+        PGconn      *hPGConn = GetPGConn();
 
         //CPLDebug( "OGR_PG", "COMMIT Transaction" );
         hResult = PQexec(hPGConn, "COMMIT");
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
+            OGRPGClearResult( hResult );
+
             CPLDebug( "OGR_PG", "COMMIT Transaction failed:\n%s",
                       PQerrorMessage( hPGConn ) );
             return OGRERR_FAILURE;
         }
-
-        PQclear( hResult );
+        
+        OGRPGClearResult( hResult );
     }
 
     return OGRERR_NONE;
@@ -1143,15 +1157,19 @@ OGRErr OGRPGDataSource::SoftRollback()
 
     nSoftTransactionLevel = 0;
 
-    PGresult            *hResult;
-    PGconn              *hPGConn = GetPGConn();
+    PGresult    *hResult = NULL;
+    PGconn      *hPGConn = GetPGConn();
 
     hResult = PQexec(hPGConn, "ROLLBACK");
 
     if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
-        return OGRERR_FAILURE;
+    {
+        OGRPGClearResult( hResult );
 
-    PQclear( hResult );
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGClearResult( hResult );
 
     return OGRERR_NONE;
 }
@@ -1210,12 +1228,11 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
     {
         const char *pszLayerName = pszSQLCommand + 9;
-        int iLayer;
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
         
-        for( iLayer = 0; iLayer < nLayers; iLayer++ )
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
             if( EQUAL(papoLayers[iLayer]->GetLayerDefn()->GetName(), 
                       pszLayerName ))
@@ -1230,7 +1247,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
-    PGresult            *hResult = NULL;
+    PGresult    *hResult = NULL;
 
     FlushSoftTransaction();
 
@@ -1267,8 +1284,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                   "%s", PQresultErrorMessage( hResult ) );
     }
 
-    if( hResult )
-        PQclear( hResult );
+    OGRPGClearResult( hResult );
 
     FlushSoftTransaction();
 
@@ -1293,9 +1309,8 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
 
 {
     char    *pszSafeName = CPLStrdup( pszSrcName );
-    int     i;
 
-    for( i = 0; pszSafeName[i] != '\0'; i++ )
+    for( int i = 0; pszSafeName[i] != '\0'; i++ )
     {
         pszSafeName[i] = (char) tolower( pszSafeName[i] );
         if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )

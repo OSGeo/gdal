@@ -314,7 +314,5 @@ class OGRPGDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
-
 #endif /* ndef _OGR_PG_H_INCLUDED */
-
 
