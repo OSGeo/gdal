@@ -15,32 +15,33 @@
 
     http://trac.osgeo.org/gdal/log/branches/1.4
 
-5) Update the GDAL doc/index.doc to refer to the newly to be created version, 
-   and commit.  Update the doc/download.dox to point to the newest release
-   (there should be 4 lines / 8 items to change)
+5) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to 
+   refer to the latest available source. 
+
+5.9) If this is a major release, prepare a branch. 
+
+   svn copy https://svn.osgeo.org/gdal/trunk \
+            https://svn.osgeo.org/gdal/branches/1.5
 
 6) Tag the release set in CVS: 
 
-   eg. 
-   % cvs tag -F gdal_1_1_6 
-
-6.5) Also tag the "autotest" tree as above.
+   svn copy https://svn.osgeo.org/gdal/branches/1.4 \
+            https://svn.osgeo.org/gdal/1.4.1
 
 7) Create the source distributions using the mkgdaldist.sh script.  The
-   argument should be the version number (ie. 1.1.6).  Hit enter when 
-   prompted for a CVS password.
+   argument should be the version number (ie. 1.4.1). 
 
    eg.
-   % mkgdaldist.sh 1.1.6
+   % mkgdaldist.sh 1.4.1
 
 7.5) Create a snapshot of the documentation.
 
  ie. On www.gdal.org:
- % gdalhtmlupdate.sh
- % cd 
- % zip -r ~/gdal-web/dl/gdalXXXdoc.zip gdal-web/*.* gdal-web/ogr
+ % cd /osgeo/gdal
+ % ./gdalhtmlupdate.sh
+ % zip -r /osgeo/download/gdal/gdal150doc.zip gdal-web/*.* gdal-web/ogr
 
-7.6) Create a snapshot of gdalautotest. 
+7.6) Create a snapshot of gdalautotest (make sure it doesn't include .svn's)
 
 8) Publish the resulting files in download.osgeo.org/gdal.
 
