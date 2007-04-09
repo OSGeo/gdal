@@ -45,6 +45,9 @@ MrSID Driver:
 AAIGrid Driver:
  - Handling case-mixed file names. #1524
 
+VRT Driver:
+ - Fixed reprojection in AutoCreateWarpedVRT() #1469
+
 
 OGR
 ---

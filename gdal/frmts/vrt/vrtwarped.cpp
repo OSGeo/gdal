@@ -120,7 +120,8 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
     psWO->pfnTransformer = GDALGenImgProjTransform;
     psWO->pTransformerArg = 
-        GDALCreateGenImgProjTransformer( psWO->hSrcDS, pszSrcWKT, NULL, NULL,
+        GDALCreateGenImgProjTransformer( psWO->hSrcDS, pszSrcWKT, 
+                                         NULL, pszDstWKT,
                                          TRUE, 1.0, 0 );
 
 /* -------------------------------------------------------------------- */
