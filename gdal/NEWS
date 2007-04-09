@@ -1,104 +1,99 @@
-GDAL/OGR 1.4.1 - Overview of Changes
-====================================
+= GDAL/OGR 1.4.1 - Overview of Changes =
 
 The GDAL 1.4.1 release is a stable release, and contains the following
 bug fixes.  There should be no noteworthy changes in interfaces or APIs. 
 
-
-GDAL
-----
+== GDAL ==
 
 World File Reader:
- - Handle case with blank lines in worldfile gracefully . #1523
- - Support other numeric locales (ie. comma for decimal). #1414
+ * Handle case with blank lines in worldfile gracefully . #1523
+ * Support other numeric locales (ie. comma for decimal). #1414
 
 GeoTIFF Driver:
- - Use PHOTOMETRIC creation option properly. #1559
- - Fix writing pixel interleaved files. #1470
- - Fix thread safety issue with inmemory geo parsing. #1500
+ * Use PHOTOMETRIC creation option properly. #1559
+ * Fix writing pixel interleaved files. #1470
+ * Fix thread safety issue with inmemory geo parsing. #1500
 
 NetCDF Driver:
- - Correct off-by-half-pixel error in the geotransform. #1506
- - Pre-verify file is NetCDF format before calling nc_open(). #1176
+ * Correct off-by-half-pixel error in the geotransform. #1506
+ * Pre-verify file is NetCDF format before calling nc_open(). #1176
 
 Erdas Imagine (HFA) Driver:
- - Add support for EPT_s32 and EPT_u32 non-runs in UncompressBlock?().  #1000
- - Fix support for EPT_f32 non-runs with 16bit offset values. #1000 
- - Avoid attempting to open "AUX" directly. #1493
+ * Add support for EPT_s32 and EPT_u32 non-runs in UncompressBlock?().  #1000
+ * Fix support for EPT_f32 non-runs with 16bit offset values. #1000 
+ * Avoid attempting to open "AUX" directly. #1493
 
 HDF4 Driver:
- - Fix some problems with geolocation support crashes. 
+ * Fix some problems with geolocation support crashes. 
 
 JPEG Driver:
- - Support EXIF directories with no entries. #1523
+ * Support EXIF directories with no entries. #1523
 
 FAST Driver:
- - Handle various FAST datasets. #1516
+ * Handle various FAST datasets. #1516
 
 MEM Driver:
- - Fix support for memory arrays larger than 4GB. #1503
+ * Fix support for memory arrays larger than 4GB. #1503
 
 MrSID Driver:
- - Compute approximate statistics from overview, even if not forced. #1452
- - Fix for decoding some stripped data. #1446
+ * Compute approximate statistics from overview, even if not forced. #1452
+ * Fix for decoding some stripped data. #1446
 
 AAIGrid Driver:
- - Handling case-mixed file names. #1524
+ * Handling case-mixed file names. #1524
 
 VRT Driver:
- - Fixed reprojection in AutoCreateWarpedVRT() #1469
+ * Fixed reprojection in AutoCreateWarpedVRT() #1469
 
 
-OGR
----
+== OGR ==
 
 OGR:
- - Fixed handling of XYZM data in WKT without crashing (#1036)
+ * Fixed handling of XYZM data in WKT without crashing. #1036
 
 OGRSpatialReference:
- - Fix up handling of feet and numeric units in old ESRI .prj files. #1533
- - Fix ESRI LCC 2SP support. #187
+ * Fix up handling of feet and numeric units in old ESRI .prj files. #1533
+ * Fix ESRI LCC 2SP support. #187
 
 OGR SQL: 
- - Allow use of <, >, <= and >= in attribute filters and WHERE. #1557
- - Fix handling of special fields if values are null. #1528
- - Fixed FID special field support. #1468
+ * Allow use of <, >, <= and >= in attribute filters and WHERE. #1557
+ * Fix handling of special fields if values are null. #1528
+ * Fixed FID special field support. #1468
 
 GML Driver:
- - Support files with a "BOM" marker at the beginning. #
+ * Support files with a "BOM" marker at the beginning. #1534
 
 Interlis Driver:
- - Return a clone of internal features to avoid crash if reread. #1535
+ * Return a clone of internal features to avoid crash if reread. #1535
 
 Mapinfo Driver:
- - Back ported various MITAB 1.6.1 fixes. #1541
+ * Back ported various MITAB 1.6.1 fixes. #1541
 
 PostGIS Driver: 
- - Don't disable sequential scanning. #1472
- - Increase CURSOR_PAGE from 1 to 500. #1474
- - Ensure that GetLayerByName(), and OpenTable() fail gracefully for
+ * Don't disable sequential scanning. #1472
+ * Increase CURSOR_PAGE from 1 to 500. #1474
+ * Ensure that GetLayerByName(), and OpenTable() fail gracefully for 
    non existant tables. #1480
- - Improved result set cleaning. #1514
- - Fixed detecting 4-dimension coordinates in input EWKB streams. #1323
+ * Improved result set cleaning. #1514
+ * Fixed detecting 4-dimension coordinates in input EWKB streams. #1323
 
 Shapefile Driver:
- - Ensure SetFeature() and DeleteFeature() operations get applied. #1456
- - Handling case-mixed file names. #1524
+ * Ensure SetFeature() and DeleteFeature() operations get applied. #1456
+ * Handling case-mixed file names. #1524
 
-Other
------
+== Other ==
 
 Java:
- - Fix missing import. #1463
- - Make ANT location configurable #1545
- - void functions should not return values #1543
+ * Fix missing import. #1463
+ * Make ANT location configurable #1545
+ * void functions should not return values #1543
 
 Python:
- - Fix support for complex data in NG bindings. #1518
- - Fix array order compatibility with old bindings. #1542
- - Fix Dataset.ReadAsArray()
- - Fix WriteRaster and ReadRaster. #1481
- - Geometry contructor in old bindings. #1255
+ * Fix support for complex data in NG bindings. #1518
+ * Fix array order compatibility with old bindings. #1542
+ * Fix Dataset.ReadAsArray()
+ * Fix WriteRaster and ReadRaster. #1481
+ * Geometry contructor in old bindings. #1255
 
 
 ===============================================================================
