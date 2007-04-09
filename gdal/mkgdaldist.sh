@@ -29,7 +29,11 @@ rm -rf dist_wrk
 mkdir dist_wrk
 cd dist_wrk
 
-svn checkout http://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
+SVNURL="http://svn.osgeo.org/gdal"
+SVNBRANCH="trunk"
+SVNMODULE="gdal"
+
+svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
 
 if [ \! -d gdal ] ; then
     echo "svn checkout reported an error ... abandoning mkgdaldist"
@@ -46,6 +50,12 @@ if test "$forcedate" != "no" ; then
 fi
 
 find gdal -name .svn -exec rm -rf {} \;
+
+# Generate SWIG interface for C#
+cwd=${PWD}
+cd gdal/swig/csharp
+./mkinterface.sh
+cd ${cwd}
 
 rm -rf gdal/viewer
 rm -rf gdal/dist_docs
