@@ -1032,9 +1032,9 @@ void netCDFDataset::SetProjection( int var )
 	nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
 				      pdfXCoord[xdim-1]) * 1000);
 	
-	if( ( abs( nSpacingBegin ) == abs( nSpacingLast )) &&
-	    ( abs( nSpacingBegin ) == abs( nSpacingMiddle )) &&
-	    ( abs( nSpacingMiddle ) == abs( nSpacingLast )) ) {
+	if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )     )  &&
+	    ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle )   ) &&
+	    ( abs( nSpacingMiddle ) ==  abs( nSpacingLast )     ) ) {
 
 /* -------------------------------------------------------------------- */
 /*      Longitude is equaly spaced, check lattitde                      */
@@ -1049,11 +1049,24 @@ void netCDFDataset::SetProjection( int var )
 	    nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim - 2] - 
 						pdfYCoord[ydim-1]) * 
 					       1000);
-	    
 
-	    if( ( abs( nSpacingBegin ) == abs( nSpacingLast )) &&
-		( abs( nSpacingBegin ) == abs( nSpacingMiddle )) &&
-		( abs( nSpacingMiddle ) == abs( nSpacingLast )) ) {
+		    
+/* -------------------------------------------------------------------- */
+/*   For Latitude  we allow an error of 0.1 degrees for gaussion        */
+/*   gridding                                                           */
+/* -------------------------------------------------------------------- */
+
+	    if((( abs( abs(nSpacingBegin) - abs(nSpacingLast) ) )   < 100 ) &&
+	       (( abs( abs(nSpacingBegin) -  abs(nSpacingMiddle) ) ) < 100 ) &&
+	       (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   < 100) ) {
+
+		if( ( abs( nSpacingBegin )  !=  abs( nSpacingLast )     )  ||
+		    ( abs( nSpacingBegin )  !=  abs( nSpacingMiddle )   ) ||
+		    ( abs( nSpacingMiddle ) !=  abs( nSpacingLast )     ) ) {
+		    
+		    CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
+
+		}
 /* -------------------------------------------------------------------- */
 /*      We have gridded data s we can set the Gereferencing info.       */
 /* -------------------------------------------------------------------- */
