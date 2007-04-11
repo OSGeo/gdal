@@ -3,7 +3,7 @@
 include ../../GDALmake.opt
 
 GDAL_OBJ	=	nitfdataset.o
-NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o
+NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
