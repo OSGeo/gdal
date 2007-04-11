@@ -1060,8 +1060,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             eDataType = GDT_UInt32; // default 
     }
     else if( nBits == 8 || nBits == -1 )
+    {
         eDataType = GDT_Byte;
-
+        nBits = 8;
+    }
     else if( nBits < 8 && nBits >= 1 )
         eDataType = GDT_Byte;
     
