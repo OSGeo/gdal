@@ -1024,6 +1024,50 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handle VQ compression.  The VQ compression basically keeps a    */
+/*      64x64 array of 12bit code words.  Each code word expands to     */
+/*      a predefined 4x4 8 bit per pixel pattern.                       */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(psImage->szIC,"C2") || EQUAL(psImage->szIC,"M2") )
+    {
+        int nRawBytes;
+        NITFSegmentInfo *psSegInfo;
+
+        if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
+            nRawBytes = psImage->panBlockStart[iFullBlock+1] 
+                - psImage->panBlockStart[iFullBlock];
+        else
+        {
+            psSegInfo = psImage->psFile->pasSegmentInfo + psImage->iSegment;
+            nRawBytes =  psSegInfo->nSegmentStart + psSegInfo->nSegmentSize
+                - psImage->panBlockStart[iFullBlock];
+        }
+
+        GByte *pabyRawData = (GByte *) CPLMalloc( nRawBytes );
+        
+        /* Read the codewords */
+        if( VSIFSeekL(psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
+                      SEEK_SET ) != 0 
+            || VSIFReadL(pabyRawData, 1, nRawBytes, psImage->psFile->fp ) !=  
+            nRawBytes )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Unable to read %d byte block from %d.", 
+                      nRawBytes, psImage->panBlockStart[iFullBlock] );
+            return BLKREAD_FAIL;
+        }
+        
+        int success = NITFUncompressARIDPCM( psImage, pabyRawData, pData );
+        
+        CPLFree( pabyRawData );
+
+        if( success )
+            return BLKREAD_OK;
+        else
+            return BLKREAD_FAIL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Report unsupported compression scheme(s).                       */
 /* -------------------------------------------------------------------- */
     else if( atoi(psImage->szIC + 1) > 0 )

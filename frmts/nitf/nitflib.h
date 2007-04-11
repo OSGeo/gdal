@@ -201,6 +201,9 @@ GUInt32   CPL_DLL NITFIHFieldOffset( NITFImage *psImage,
 #define BLKREAD_NULL  1
 #define BLKREAD_FAIL  2
 
+int NITFUncompressARIDPCM( NITFImage *psImage, GByte *pabyInputData,
+                           GByte *pabyOutputImage );
+
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */
 /*      library.                                                        */
