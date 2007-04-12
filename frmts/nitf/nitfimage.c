@@ -1032,6 +1032,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     {
         int nRawBytes;
         NITFSegmentInfo *psSegInfo;
+        int success;
+        GByte *pabyRawData;
 
         if( iFullBlock < psImage->nBlocksPerRow * psImage->nBlocksPerColumn-1 )
             nRawBytes = psImage->panBlockStart[iFullBlock+1] 
@@ -1043,7 +1045,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
                 - psImage->panBlockStart[iFullBlock];
         }
 
-        GByte *pabyRawData = (GByte *) CPLMalloc( nRawBytes );
+        pabyRawData = (GByte *) CPLMalloc( nRawBytes );
         
         /* Read the codewords */
         if( VSIFSeekL(psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
@@ -1057,7 +1059,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             return BLKREAD_FAIL;
         }
         
-        int success = NITFUncompressARIDPCM( psImage, pabyRawData, pData );
+        success = NITFUncompressARIDPCM( psImage, pabyRawData, pData );
         
         CPLFree( pabyRawData );
 
