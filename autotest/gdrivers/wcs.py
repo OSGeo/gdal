@@ -136,7 +136,7 @@ def wcs_5():
     if gdaltest.wcs_drv is None:
 	return 'skip'
 
-    fn = '<WCS_GDAL><ServiceURL>http://maps.gdal.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
+    fn = '<WCS_GDAL><ServiceURL>http://geodata.telascience.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
 
     ds = gdal.Open( fn )
 
