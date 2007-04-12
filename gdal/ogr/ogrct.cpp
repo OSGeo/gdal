@@ -448,6 +448,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */
     char        *pszProj4Defn = NULL;
+    static int   nDebugReportCount = 0;
 
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
     {
@@ -485,8 +486,11 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
         }
     }
     
-    CPLFree( pszProj4Defn );
+    if( nDebugReportCount < 10 )
+        CPLDebug( "OGRCT", "Source: %s", pszProj4Defn );
     
+    CPLFree( pszProj4Defn );
+
     if( psPJSource == NULL )
         return FALSE;
 
@@ -517,6 +521,12 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
                   "Failed to initialize PROJ.4 with `%s'.", 
                   pszProj4Defn );
     
+    if( nDebugReportCount < 10 )
+    {
+        CPLDebug( "OGRCT", "Target: %s", pszProj4Defn );
+        nDebugReportCount++;
+    }
+
     CPLFree( pszProj4Defn );
     
     if( psPJTarget == NULL )
