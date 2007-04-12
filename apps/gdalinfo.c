@@ -37,6 +37,7 @@ CPL_CVSID("$Id$");
 
 static int 
 GDALInfoReportCorner( GDALDatasetH hDataset, 
+                      OGRCoordinateTransformationH hTransform,
                       const char * corner_name,
                       double x, double y );
 
@@ -285,22 +286,58 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Setup projected to lat/long transform if appropriate.           */
+/* -------------------------------------------------------------------- */
+    const char  *pszProjection = NULL;
+    OGRCoordinateTransformationH hTransform = NULL;
+
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+        pszProjection = GDALGetProjectionRef(hDataset);
+
+    if( pszProjection != NULL && strlen(pszProjection) > 0 )
+    {
+        OGRSpatialReferenceH hProj, hLatLong = NULL;
+
+        hProj = OSRNewSpatialReference( pszProjection );
+        if( hProj != NULL )
+            hLatLong = OSRCloneGeogCS( hProj );
+
+        if( hLatLong != NULL )
+        {
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+            hTransform = OCTNewCoordinateTransformation( hProj, hLatLong );
+            CPLPopErrorHandler();
+            
+            OSRDestroySpatialReference( hLatLong );
+        }
+
+        if( hProj != NULL )
+            OSRDestroySpatialReference( hProj );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Report corners.                                                 */
 /* -------------------------------------------------------------------- */
     printf( "Corner Coordinates:\n" );
-    GDALInfoReportCorner( hDataset, "Upper Left", 
+    GDALInfoReportCorner( hDataset, hTransform, "Upper Left", 
                           0.0, 0.0 );
-    GDALInfoReportCorner( hDataset, "Lower Left", 
+    GDALInfoReportCorner( hDataset, hTransform, "Lower Left", 
                           0.0, GDALGetRasterYSize(hDataset));
-    GDALInfoReportCorner( hDataset, "Upper Right", 
+    GDALInfoReportCorner( hDataset, hTransform, "Upper Right", 
                           GDALGetRasterXSize(hDataset), 0.0 );
-    GDALInfoReportCorner( hDataset, "Lower Right", 
+    GDALInfoReportCorner( hDataset, hTransform, "Lower Right", 
                           GDALGetRasterXSize(hDataset), 
                           GDALGetRasterYSize(hDataset) );
-    GDALInfoReportCorner( hDataset, "Center", 
+    GDALInfoReportCorner( hDataset, hTransform, "Center", 
                           GDALGetRasterXSize(hDataset)/2.0, 
                           GDALGetRasterYSize(hDataset)/2.0 );
 
+    if( hTransform != NULL )
+    {
+        OCTDestroyCoordinateTransformation( hTransform );
+        hTransform = NULL;
+    }
+    
 /* ==================================================================== */
 /*      Loop over bands.                                                */
 /* ==================================================================== */
@@ -491,14 +528,13 @@ int main( int argc, char ** argv )
 
 static int 
 GDALInfoReportCorner( GDALDatasetH hDataset, 
+                      OGRCoordinateTransformationH hTransform,
                       const char * corner_name,
                       double x, double y )
 
 {
     double	dfGeoX, dfGeoY;
-    const char  *pszProjection;
     double	adfGeoTransform[6];
-    OGRCoordinateTransformationH hTransform = NULL;
         
     printf( "%-11s ", corner_name );
     
@@ -507,8 +543,6 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 /* -------------------------------------------------------------------- */
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
     {
-        pszProjection = GDALGetProjectionRef(hDataset);
-
         dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x
             + adfGeoTransform[2] * y;
         dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x
@@ -535,30 +569,6 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Setup transformation to lat/long.                               */
-/* -------------------------------------------------------------------- */
-    if( pszProjection != NULL && strlen(pszProjection) > 0 )
-    {
-        OGRSpatialReferenceH hProj, hLatLong = NULL;
-
-        hProj = OSRNewSpatialReference( pszProjection );
-        if( hProj != NULL )
-            hLatLong = OSRCloneGeogCS( hProj );
-
-        if( hLatLong != NULL )
-        {
-            CPLPushErrorHandler( CPLQuietErrorHandler );
-            hTransform = OCTNewCoordinateTransformation( hProj, hLatLong );
-            CPLPopErrorHandler();
-            
-            OSRDestroySpatialReference( hLatLong );
-        }
-
-        if( hProj != NULL )
-            OSRDestroySpatialReference( hProj );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Transform to latlong and report.                                */
 /* -------------------------------------------------------------------- */
     if( hTransform != NULL 
@@ -569,9 +579,6 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
         printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
     }
 
-    if( hTransform != NULL )
-        OCTDestroyCoordinateTransformation( hTransform );
-    
     printf( "\n" );
 
     return TRUE;
