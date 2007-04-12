@@ -71,6 +71,8 @@ int main( int argc, char ** argv )
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL;
+    const char  *pszProjection = NULL;
+    OGRCoordinateTransformationH hTransform = NULL;
 
     GDALAllRegister();
 
@@ -288,9 +290,6 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Setup projected to lat/long transform if appropriate.           */
 /* -------------------------------------------------------------------- */
-    const char  *pszProjection = NULL;
-    OGRCoordinateTransformationH hTransform = NULL;
-
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
         pszProjection = GDALGetProjectionRef(hDataset);
 
