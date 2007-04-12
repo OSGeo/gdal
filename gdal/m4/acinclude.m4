@@ -203,7 +203,7 @@ AC_DEFUN([AC_COMPILER_WFLAGS],
 
 	# check for GNU compiler, and use -Wall
 	if test "$GCC" = "yes"; then
-		C_WFLAGS="-Wall"
+		C_WFLAGS="-Wall -Wdeclaration-after-statement"
 		AC_DEFINE(USE_GNUCC, 1, [Define to 1, if you have GNU C
 		compiler])
 	fi

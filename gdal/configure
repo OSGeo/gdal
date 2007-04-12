@@ -28208,7 +28208,7 @@ fi
 
 	# check for GNU compiler, and use -Wall
 	if test "$GCC" = "yes"; then
-		C_WFLAGS="-Wall"
+		C_WFLAGS="-Wall -Wdeclaration-after-statement"
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_GNUCC 1
@@ -30096,6 +30096,17 @@ echo ""
 
 
 echo "  enable pthread support:    ${PTHREAD_ENABLED}"
+
+
+echo ""
+
+if test "x$CFG" != "xdebug"; then
+    DEBUG_MODE="no"
+else
+    DEBUG_MODE="yes"
+fi
+
+echo "  enable debug mode:         ${DEBUG_MODE}"
 
 
 echo ""
