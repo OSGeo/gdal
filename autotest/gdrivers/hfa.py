@@ -287,6 +287,47 @@ def hfa_float_read():
     return 'success'
  
 ###############################################################################
+# verify we can read PE_STRING coordinate system.
+
+def hfa_pe_read():
+
+    ds = gdal.Open('data/87test.img')
+    wkt = ds.GetProjectionRef()
+    expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
+
+    if wkt != expected:
+        print wkt
+        gdaltest.post_reason( 'failed to read pe string as expected.' )
+        return 'fail'
+
+    return 'success'
+ 
+###############################################################################
+# Verify we can write PE_STRING nodes.
+
+def hfa_pe_write():
+
+    drv = gdal.GetDriverByName('HFA')
+    ds_src = gdal.Open('data/87test.img')
+    drv.CreateCopy( 'tmp/87test.img', ds_src )
+    ds_src = None
+
+    expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
+    
+    ds = gdal.Open('tmp/87test.img')
+    wkt = ds.GetProjectionRef()
+
+    if wkt != expected:
+        print
+        print expected
+        print wkt
+        gdaltest.post_reason( 'failed to write pe string as expected.' )
+        return 'fail'
+
+    drv.Delete( 'tmp/87test.img' )
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -297,7 +338,9 @@ gdaltest_list = [
     hfa_float_stats_1,
     hfa_float_stats_2,
     hfa_int_read,
-    hfa_float_read]
+    hfa_float_read,
+    hfa_pe_read,
+    hfa_pe_write]
 
 if __name__ == '__main__':
 
