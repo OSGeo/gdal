@@ -119,9 +119,16 @@ void OGRILI1Layer::ResetReading(){
 /************************************************************************/
 
 OGRFeature *OGRILI1Layer::GetNextFeature() {
+    OGRFeature *poFeature = NULL;
     if (nFeatureIdx < nFeatures)
     {
-      return papoFeatures[nFeatureIdx++]->Clone();
+      poFeature = papoFeatures[nFeatureIdx++];
+      //apply filters
+      if( (m_poFilterGeom == NULL
+           || FilterGeometry( poFeature->GetGeometryRef() ) )
+          && (m_poAttrQuery == NULL
+              || m_poAttrQuery->Evaluate( poFeature )) )
+          return poFeature->Clone();
     }
     return NULL;
 }
@@ -139,7 +146,7 @@ int OGRILI1Layer::GetFeatureCount( int bForce ) {
 /************************************************************************/
 
 OGRErr OGRILI1Layer::GetExtent(OGREnvelope *psExtent, int bForce ) {
-  return OGRERR_NONE;
+  return OGRLayer::GetExtent( psExtent, bForce );
 }
 
 static char* d2str(double val)
