@@ -38,6 +38,7 @@ class OSRTransform {
 		catch (Exception e)
 		{
 			Console.WriteLine("Error occurred: " + e.Message);
+			System.Environment.Exit(-1);
 		}
 	}
 }
