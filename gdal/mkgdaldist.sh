@@ -1,8 +1,11 @@
 #!/bin/sh
 
 if [ $# -lt 1 ] ; then
-  echo "Usage: mkgdaldist.sh version [-date date] [-install] [-nologin]"
-  echo
+  echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-install]"
+  echo " <version> - version number used in name of generated archive."
+  echo " -date     - date of package generation, current date used if not provided"
+  echo " -branch   - path to SVN branch, trunk is used if not provided"
+  echo " -install  - force to install package on remote server"
   echo "Example: mkgdaldist.sh 1.1.4"
   exit
 fi
@@ -24,16 +27,23 @@ if test "$2" = "-date" ; then
 else
   forcedate=no
 fi
+
+if test "$2" = "-branch"; then
+  forcebranch=$3
+else
+  forcebranch="trunk"
+fi
   
 rm -rf dist_wrk  
 mkdir dist_wrk
 cd dist_wrk
 
 SVNURL="http://svn.osgeo.org/gdal"
-SVNBRANCH="trunk"
+SVNBRANCH=${forcebranch}
 SVNMODULE="gdal"
 
 svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
+
 
 if [ \! -d gdal ] ; then
     echo "svn checkout reported an error ... abandoning mkgdaldist"
