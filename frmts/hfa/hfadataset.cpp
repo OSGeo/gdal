@@ -1645,6 +1645,16 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
+    // Anything we can't map, we store as an ESRI PE_STRING 
+    else if( oSRS.IsProjected() || oSRS.IsGeographic() )
+    {
+        char *pszPEString = NULL;
+        oSRS.morphToESRI();
+        oSRS.exportToWkt( &pszPEString );
+        // need to transform this into ESRI format.
+        HFASetPEString( hHFA, pszPEString );
+        CPLFree( pszPEString );
+    }
     else
     {
         CPLError( CE_Warning, CPLE_NotSupported,
