@@ -225,7 +225,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     if ( pszSchemaNameIn && osCurrentSchema != pszSchemaNameIn )
     {
         sprintf( szLayerName, "%s.%s", pszSchemaNameIn, pszTableIn );
-        sprintf( pszSqlTableName, "%s.\"%s\"", pszSchemaNameIn, pszTableIn );
+        sprintf( pszSqlTableName, "\"%s\".\"%s\"", pszSchemaNameIn, pszTableIn );
     }
     else
     {
