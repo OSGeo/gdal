@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: wcs.py,v 1.4 2007/01/02 14:44:31 fwarmerdam Exp $
+# $Id: wcs.py 11242 2007-04-12 01:09:18Z warmerdam $
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test WCS client support.
@@ -27,21 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log: wcs.py,v $
-#  Revision 1.4  2007/01/02 14:44:31  fwarmerdam
-#  added service description in the url test
-#
-#  Revision 1.3  2006/10/27 04:38:34  fwarmerdam
-#  Report skip on first test if driver not available.
-#
-#  Revision 1.2  2006/10/27 04:27:12  fwarmerdam
-#  fixed license text
-#
-#  Revision 1.1  2006/10/27 04:20:14  fwarmerdam
-#  New
-#
-#
 
 import os
 import sys
@@ -151,7 +136,7 @@ def wcs_5():
     if gdaltest.wcs_drv is None:
 	return 'skip'
 
-    fn = '<WCS_GDAL><ServiceURL>http://maps.gdal.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
+    fn = '<WCS_GDAL><ServiceURL>http://geodata.telascience.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
 
     ds = gdal.Open( fn )
 
