@@ -57,6 +57,29 @@ Download:
 <li> <a href="wince.html">GDAL for Windows CE</a>
 </ul>
 
+\section foss4g Conference
+
+\htmlonly
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td><a href="http://www.foss4g2007.org/"><center>
+<img src="FOSS4G2007_Logo_0.png" alt="" border="0" width="150" height="125">
+</center></a></td>
+
+<td><a href="http://www.foss4g2007.org">FOSS4G 2007</a> is the leading annual 
+conference for free and open source geospatial software.  This year it is
+in Victoria, Canada from September 24-27.  It will include workshops and 
+presentations related to GDAL/OGR, and much of the GDAL/OGR development 
+community will be attending.  It is <i>the</i> event for those interested
+in GDAL/OGR, other FOSS geospatial technologies and the community around them.
+<a href="http://www.foss4g2007.org/register/">Registration</a> is now open, and
+the <a href="http://www.foss4g2007.org/presentations/">call for presentations
+</a> is open till June 29th.
+</td></tr>
+
+</table>
+\endhtmlonly
+
 \section index_maillist Mailing List
 
 A gdal-announce mailing list <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">subscription</a> is a low volume way of keeping track of major
