@@ -71,8 +71,7 @@ class GSAGDataset : public GDALPamDataset
     static const int nFIELD_PRECISION;
     static const size_t nMAX_HEADER_SIZE;
 
-    static CPLErr ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
-				     int nShiftSize, const char *szEOL );
+    static CPLErr ShiftFileContents( FILE *, vsi_l_offset, int, const char * );
 
     FILE	*fp;
     size_t	 nMinMaxZOffset;
@@ -81,7 +80,7 @@ class GSAGDataset : public GDALPamDataset
     CPLErr UpdateHeader();
 
   public:
-		GSAGDataset( const char *szEOL = "\x0D\x0A" );
+		GSAGDataset( const char *pszEOL = "\x0D\x0A" );
 		~GSAGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -362,12 +361,28 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	double dfValue = CPLStrtod( szStart, &szEnd );
 	if( szStart == szEnd )
 	{
+	    /* No number found */
 
 	    /* Check if this was an expected failure */
 	    while( isspace( *szStart ) )
 		szStart++;
 
-	    if( *szStart != '\0' )
+	    /* Found sign at end of input, seek back to re-read it */
+	    if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
+	    {
+	    	if( VSIFSeekL( poGDS->fp, -1, SEEK_CUR ) != 0 )
+	    	{
+		    VSIFree( szLineBuf );
+		    CPLError( CE_Failure, CPLE_FileIO,
+			      "Unable to seek in grid row %d "
+			      "(offset %ld, seek %d).\n",
+			      nBlockYOff, VSIFTellL(poGDS->fp),
+			      -1 );
+
+		    return CE_Failure;
+		}
+	    }
+	    else if( *szStart != '\0' )
 	    {
 		szEnd = szStart;
 		while( !isspace( *szEnd ) && *szEnd != '\0' )
@@ -398,6 +413,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 			static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
 		    szStart++;
 
+		szEnd = szStart;
 		continue;
 	    }
 
@@ -415,8 +431,21 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    szStart = szEnd = szLineBuf;
 	    continue;
 	}
-	else if( *szEnd == '\0' )
+	else if( *szEnd == '\0'
+		|| (*szEnd == '.' && *(szEnd+1) == '\0')
+		|| (*szEnd == '-' && *(szEnd+1) == '\0')
+		|| (*szEnd == '+' && *(szEnd+1) == '\0')
+		|| (*szEnd == 'E' && *(szEnd+1) == '\0')
+		|| (*szEnd == 'E' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
+		|| (*szEnd == 'E' && *(szEnd+1) == '+' && *(szEnd+2) == '\0')
+		|| (*szEnd == 'e' && *(szEnd+1) == '\0')
+		|| (*szEnd == 'e' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
+		|| (*szEnd == 'e' && *(szEnd+1) == '+' && *(szEnd+2) == '\0'))
 	{
+	    /* Number was interrupted by a nul character */
+	    while( *szEnd != '\0' )
+		szEnd++;
+
 	    if( static_cast<size_t>(szEnd - szLineBuf) != nCharsRead )
 	    {
 		CPLError( CE_Warning, CPLE_FileIO,
@@ -722,10 +751,10 @@ double GSAGRasterBand::GetMaximum( int *pbSuccess )
 /*                             GSAGDataset()                            */
 /************************************************************************/
 
-GSAGDataset::GSAGDataset( const char *szEOL )
+GSAGDataset::GSAGDataset( const char *pszEOL )
 
 {
-    if( szEOL == NULL || szEOL[0] == '\0' )
+    if( pszEOL == NULL || EQUAL(pszEOL, "") )
     {
 	CPLDebug( "GSAG", "GSAGDataset() created with invalid EOL string.\n" );
 	this->szEOL[0] = '\x0D';
@@ -734,9 +763,8 @@ GSAGDataset::GSAGDataset( const char *szEOL )
     }
     else
     {
-	this->szEOL[0] = szEOL[0];
-	this->szEOL[1] = szEOL[1];
-	this->szEOL[2] = '\0';
+        strncpy(this->szEOL, pszEOL, sizeof(this->szEOL));
+	this->szEOL[sizeof(this->szEOL) - 1] = '\0';
     }
 }
 
@@ -825,8 +853,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	pabyHeader[nRead+1] = '\0';
     }
 
-    char *szErrorMsg;
-
+    const char *szErrorMsg;
     const char *szStart = pabyHeader + 5;
     char *szEnd;
     double dfTemp;
@@ -1100,7 +1127,7 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
 /*                         ShiftFileContents()                          */
 /************************************************************************/
 CPLErr GSAGDataset::ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
-				       int nShiftSize, const char *szEOL )
+				       int nShiftSize, const char *pszEOL )
 {
     /* nothing to do for zero-shift */
     if( nShiftSize == 0 )
@@ -1294,7 +1321,8 @@ CPLErr GSAGDataset::ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
 	    return CE_Failure;
 	}
 
-	if( VSIFWriteL( (void *)szEOL, 1, strlen(szEOL), fp ) != strlen(szEOL) )
+	if( VSIFWriteL( (void *)pszEOL, 1, strlen(pszEOL), fp )
+            != strlen(pszEOL) )
 	{
 	    VSIFree( pabyBuffer );
 	    CPLError( CE_Failure, CPLE_FileIO,
@@ -1306,7 +1334,7 @@ CPLErr GSAGDataset::ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
     {
 	/* FIXME: ftruncate()? */
 	/* FIXME:  Should use SEEK_CUR, review integer promotions... */
-	if( VSIFSeekL( fp, VSIFTellL(fp)-strlen(szEOL), SEEK_SET ) != 0 )
+	if( VSIFSeekL( fp, VSIFTellL(fp)-strlen(pszEOL), SEEK_SET ) != 0 )
 	{
 	    VSIFree( pabyBuffer );
 	    CPLError( CE_Failure, CPLE_FileIO,
@@ -1325,7 +1353,8 @@ CPLErr GSAGDataset::ShiftFileContents( FILE *fp, vsi_l_offset nShiftStart,
 	    }
 	}
 
-	if( VSIFWriteL( (void *)szEOL, 1, strlen(szEOL), fp ) != strlen(szEOL) )
+	if( VSIFWriteL( (void *)pszEOL, 1, strlen(pszEOL), fp )
+            != strlen(pszEOL) )
 	{
 	    VSIFree( pabyBuffer );
 	    CPLError( CE_Failure, CPLE_FileIO,
