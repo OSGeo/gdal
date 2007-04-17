@@ -319,7 +319,6 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
   unsigned long lo[SIG_MAX / 8 + 1], *pl;
   short sexp;
   long lexp;
-  char esign;
 
   /* Get past the spaces.  */
   for (sc = (char *)s; isspace(*sc); ++sc)
@@ -460,16 +459,18 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
   if ((base == 10 && (*sc == 'e' || *sc == 'E'))
       || (base == 16 && (*sc == 'p' || *sc == 'P')))
     {
-      esign = *++sc == '+' || *sc == '-' ? *sc++ : '+';
-      if (isdigit (*sc))
+      char *exponent = sc; /* temporary pointer to possible exponent part */
+      char esign = *++exponent == '+' || *exponent == '-' ? *exponent++ : '+';
+      if (isdigit(*exponent))
 	{
 	  /* exponent looks valid */
-	  for (; isdigit (*sc); ++sc)
+	  for (; isdigit (*exponent); ++exponent)
 	    if (lexp < 10000)
-	      lexp = lexp * 10 + (*sc - '0');
+	      lexp = lexp * 10 + (*exponent - '0');
 	  /* else overflow */
 	  if (esign == '-')
 	    lexp = -lexp;
+          sc = exponent; /* point to part which follows parsed exponent */
 	}
     }
   if (endptr)
