@@ -2840,8 +2840,6 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /*      approximate value.                                              */
 /* -------------------------------------------------------------------- */
     double      dfMin=0.0, dfMax=0.0;
-    int         nBlockXSize, nBlockYSize;
-    int         nBlocksPerRow, nBlocksPerColumn;
     int         nSampleRate;
     int         bGotNoDataValue, bFirstValue = TRUE;
     double      dfNoDataValue, dfSum=0.0, dfSum2=0.0;
@@ -2854,10 +2852,6 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     }
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
-
-    GetBlockSize( &nBlockXSize, &nBlockYSize );
-    nBlocksPerRow = (GetXSize() + nBlockXSize - 1) / nBlockXSize;
-    nBlocksPerColumn = (GetYSize() + nBlockYSize - 1) / nBlockYSize;
 
     if( bApproxOK )
         nSampleRate = 
