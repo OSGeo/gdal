@@ -85,7 +85,7 @@ enum BMPLCSType                 // Type of logical color space.
     BMPLT_CALIBRATED_RGB = 0,   // This value indicates that endpoints and gamma
                                 // values are given in the appropriate fields.
     BMPLT_DEVICE_RGB = 1,
-    BMPLT_DEVICE_CMYK = 2,
+    BMPLT_DEVICE_CMYK = 2
 };
 
 typedef struct
