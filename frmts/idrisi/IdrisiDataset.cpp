@@ -129,7 +129,7 @@ bool FileExists( const char *pszPath );
 //----- Reference Table
 struct ReferenceTab {
     int nCode;
-    char *pszName;
+    const char *pszName;
 };
 
 //----- USA State's reference table to USGS PCS Code
@@ -196,7 +196,7 @@ const char *GetStateName( int nCode );
 
 //----- Conversion Table definition
 struct ConvertionTab {
-    char *pszName;
+    const char *pszName;
     int nDefault;
     double dfConv;
 };
@@ -2163,13 +2163,13 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Prepare to match some projections 
     // -----------------------------------------------------
 
-    const char *pszProjection = CPLStrdup( oSRS.GetAttrValue( "PROJECTION" ) );
+    const char *pszProjName = oSRS.GetAttrValue( "PROJECTION" );
 
     // -----------------------------------------------------
     //  Check for UTM zones
     // -----------------------------------------------------
 
-    if( EQUAL( pszProjection, SRS_PT_TRANSVERSE_MERCATOR ) )
+    if( EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
     {
         int nZone = oSRS.GetUTMZone();
 
@@ -2186,8 +2186,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Check for State Plane
     // -----------------------------------------------------
 
-    if( EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ||
-        EQUAL( pszProjection, SRS_PT_TRANSVERSE_MERCATOR ) )
+    if( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ||
+        EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
     {
         const char *pszPCSCode;
         const char *pszID = CPLStrdup( oSRS.GetAuthorityCode( "PROJCS" ) );
@@ -2230,23 +2230,23 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         //  Check for supported projections
         // ---------------------------------------------------------
 
-        if EQUAL( pszProjection, SRS_PT_MERCATOR_1SP )
+        if EQUAL( pszProjName, SRS_PT_MERCATOR_1SP )
         {
             pszProjectionOut = CPLStrdup( "Mercator" );
         }
-        if EQUAL( pszProjection, SRS_PT_TRANSVERSE_MERCATOR )         
+        if EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR )         
         {   
             pszProjectionOut = CPLStrdup( "Transverse Mercator" );
         }
-        else if EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP )
+        else if EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP )
         {
             pszProjectionOut = CPLStrdup( "Lambert Conformal Conic" );
         }
-        else if EQUAL( pszProjection, SRS_PT_EQUIRECTANGULAR )
+        else if EQUAL( pszProjName, SRS_PT_EQUIRECTANGULAR )
         {
             pszProjectionOut = CPLStrdup( "Plate Carrée" );
         }
-        else if EQUAL( pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA )
+        else if EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA )
         {   
             double dfCenterLat = oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL );
             if( dfCenterLat == 0.0 )
@@ -2258,26 +2258,26 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             else
                 pszProjectionOut = CPLStrdup( "Lambert South Oblique Azimuthal Equal Area" );
         }
-        else if EQUAL( pszProjection, SRS_PT_POLAR_STEREOGRAPHIC )
+        else if EQUAL( pszProjName, SRS_PT_POLAR_STEREOGRAPHIC )
         {
             if( oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL ) > 0 )
                 pszProjectionOut = CPLStrdup( "North Polar Stereographic" );
             else
                 pszProjectionOut = CPLStrdup( "South Polar Stereographic" );
         }
-        else if EQUAL( pszProjection, SRS_PT_STEREOGRAPHIC )
+        else if EQUAL( pszProjName, SRS_PT_STEREOGRAPHIC )
         {
             pszProjectionOut = CPLStrdup( "Transverse Stereographic" );
         }
-        else if EQUAL( pszProjection, SRS_PT_OBLIQUE_STEREOGRAPHIC )
+        else if EQUAL( pszProjName, SRS_PT_OBLIQUE_STEREOGRAPHIC )
         {
             pszProjectionOut = CPLStrdup( "Oblique Stereographic" );
         }
-        else if EQUAL( pszProjection, SRS_PT_SINUSOIDAL )
+        else if EQUAL( pszProjName, SRS_PT_SINUSOIDAL )
         {
             pszProjectionOut = CPLStrdup( "Sinusoidal" );
         }
-        else if EQUAL( pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA )
+        else if EQUAL( pszProjName, SRS_PT_ALBERS_CONIC_EQUAL_AREA )
         {
             pszProjectionOut = CPLStrdup( "Alber's Equal Area Conic" );
         }
@@ -2288,7 +2288,9 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
         if( pszProjectionOut == NULL )
         {
-            CPLDebug( "RST", "Not support by RST driver: PROJECTION[\"%s\"]", pszProjection );
+            CPLDebug( "RST",
+                      "Not supported by RST driver: PROJECTION[\"%s\"]",
+                      pszProjName );
 
             *pszRefSystem = CPLStrdup( rstPLANE );
             *pszRefUnit   = CPLStrdup( rstMETER );
