@@ -61,13 +61,13 @@ typedef struct {
 
 
 typedef struct {
-	char * proName;		/* projection name */
-	Eprj_Coordinate upperLeftCenter;	/* map coordinates of center of
+	char * proName;		    /* projection name */
+	Eprj_Coordinate upperLeftCenter;    /* map coordinates of center of
 						   upper left pixel */
-	Eprj_Coordinate lowerRightCenter;	/* map coordinates of center of
+	Eprj_Coordinate lowerRightCenter;   /* map coordinates of center of
 						   lower right pixel */
-	Eprj_Size pixelSize;			/* pixel size in map units */
-	char * units;			/* units of the map */
+	Eprj_Size pixelSize;		    /* pixel size in map units */
+	char * units;		    /* units of the map */
 } Eprj_MapInfo;
 
 typedef enum {
@@ -92,11 +92,11 @@ typedef enum {
 } Eprj_DatumType;
 
 typedef struct {
-	const char *datumname;		/* name of the datum */
+	char *datumname;		/* name of the datum */
 	Eprj_DatumType type;		/* The datum type */
 	double  params[7];		/* The parameters for type
 						   EPRJ_DATUM_PARAMETRIC */
-	const char *gridname;		/* name of the grid file */
+	char *gridname;		/* name of the grid file */
 } Eprj_Datum;
 
 typedef struct {
