@@ -1232,7 +1232,7 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 /* -------------------------------------------------------------------- */
     if( nEntryCount == -1 )
     {
-        int  iRow, nRowCount = GetRowCount();
+        int  iRow;
         int  iMaxCol;
 
         iMaxCol = GetColOfUsage( GFU_Max );
