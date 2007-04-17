@@ -92,11 +92,11 @@ typedef enum {
 } Eprj_DatumType;
 
 typedef struct {
-	char * datumname;		/* name of the datum */
-	Eprj_DatumType type;			/* The datum type */
+	const char *datumname;		/* name of the datum */
+	Eprj_DatumType type;		/* The datum type */
 	double  params[7];		/* The parameters for type
 						   EPRJ_DATUM_PARAMETRIC */
-	char * gridname;		/* name of the grid file */
+	const char *gridname;		/* name of the grid file */
 } Eprj_Datum;
 
 typedef struct {
