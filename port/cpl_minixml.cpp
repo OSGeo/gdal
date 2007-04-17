@@ -201,6 +201,31 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                 
                 break;
             }
+            
+            /* Skip the internal DTD subset as NOT SUPPORTED YET (Ticket #755).
+             * The markup declaration block within a DOCTYPE tag consists of:
+             * - a left square bracket [
+             * - a list of declarations
+             * - a right square bracket ]
+             * Example:
+             * <!DOCTYPE RootElement [ ...declarations... ]>
+             *
+             * We need to skip all 3 parts, until closing > 
+             */
+            if( chNext == '[' )
+            {
+                do
+                {
+                    chNext = ReadChar( psContext );
+                }
+                while( chNext != ']'
+                    && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
+
+                // Skip "]" character to point to the closing ">"
+                chNext = ReadChar( psContext );
+                chNext = ReadChar( psContext );
+            }
+
 
             if( chNext == '\"' )
                 bInQuotes = !bInQuotes;
@@ -1729,6 +1754,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
  *
  * @param psTree the document tree to write. 
  * @param pszFilename the name of the file to write to. 
+ * @return TRUE on success, FALSE otherwise.
  */
 
 int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
