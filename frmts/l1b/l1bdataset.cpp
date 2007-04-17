@@ -1186,7 +1186,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get and set other important information as metadata             */
 /* -------------------------------------------------------------------- */
-    char *pszText;
+    const char *pszText;
     switch( poDS->iSpacecraftID )
     {
         case TIROSN:
