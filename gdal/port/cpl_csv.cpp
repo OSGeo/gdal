@@ -943,7 +943,9 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
 /*      eventually be something the application can override.           */
 /************************************************************************/
 
+CPL_C_START
 static const char *(*pfnCSVFilenameHook)(const char *) = NULL;
+CPL_C_END
 
 const char * CSVFilename( const char *pszBasename )
 
