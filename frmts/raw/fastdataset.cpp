@@ -120,9 +120,9 @@ class FASTDataset : public GDALPamDataset
     
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr 	GetGeoTransform( double * );
     const char	*GetProjectionRef();
-    FILE	*FOpenChannel( char *pszFilename, int iBand );
+    FILE	*FOpenChannel( char *, int );
 };
 
 /************************************************************************/
@@ -230,19 +230,19 @@ const char *FASTDataset::GetProjectionRef()
 /*                             FOpenChannel()                           */
 /************************************************************************/
 
-FILE *FASTDataset::FOpenChannel( char *pszFilename, int iBand )
+FILE *FASTDataset::FOpenChannel( char *pszBandname, int iBand )
 {
     const char	*pszChannelFilename = NULL;
-    char	*pszPrefix = CPLStrdup( CPLGetBasename( this->pszFilename ) );
-    char	*pszSuffix = CPLStrdup( CPLGetExtension( this->pszFilename ) );
+    char	*pszPrefix = CPLStrdup( CPLGetBasename( pszFilename ) );
+    char	*pszSuffix = CPLStrdup( CPLGetExtension( pszFilename ) );
 
     switch ( iSatellite )
     {
 	case LANDSAT:
-            if ( pszFilename && !EQUAL( pszFilename, "" ) )
+            if ( pszBandname && !EQUAL( pszBandname, "" ) )
             {
                 pszChannelFilename =
-                    CPLFormCIFilename( pszDirname, pszFilename, NULL );
+                    CPLFormCIFilename( pszDirname, pszBandname, NULL );
                 fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
                 if ( !fpChannels[iBand] )
                 {
@@ -584,7 +584,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Read radiometric record.    					*/
 /* -------------------------------------------------------------------- */
-    char    *pszFirst, *pszSecond;
+    const char  *pszFirst, *pszSecond;
 
     // Read gains and biases. This is a trick!
     pszTemp = strstr( pszHeader, "BIASES" );// It may be "BIASES AND GAINS"
