@@ -229,7 +229,7 @@ class ENVIDataset : public RawDataset
     int         ProcessMapinfo( const char * );
     void        SetENVIDatum( OGRSpatialReference *, const char * );
     void        SetENVIEllipse( OGRSpatialReference *, char ** );
-    void        WriteProjectionInfo( FILE * );
+    void        WriteProjectionInfo();
     
     char        **SplitList( const char * );
 
@@ -411,7 +411,7 @@ void ENVIDataset::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Write the rest of header.                                       */
 /* -------------------------------------------------------------------- */
-    WriteProjectionInfo( fp );
+    WriteProjectionInfo();
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
     {
@@ -430,7 +430,7 @@ void ENVIDataset::FlushCache()
 /*                        WriteProjectionInfo()                         */
 /************************************************************************/
 
-void ENVIDataset::WriteProjectionInfo( FILE * fp )
+void ENVIDataset::WriteProjectionInfo()
 
 {
 /* -------------------------------------------------------------------- */
@@ -514,7 +514,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
 /*      Handle UTM case.                                                */
 /* -------------------------------------------------------------------- */
     const char	*pszHemisphere;
-    const char  *pszProjection = oSRS.GetAttrValue("PROJECTION");
+    const char  *pszProjName = oSRS.GetAttrValue("PROJECTION");
     int		bNorth;
     int		iUTMZone;
 
@@ -535,11 +535,11 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
         VSIFPrintf( fp, "map info = {Geographic Lat/Lon, %s%s}\n",
                     osLocation.c_str(), osCommaDatum.c_str());
     }
-    else if( pszProjection == NULL )
+    else if( pszProjName == NULL )
     {
         // what to do? 
     }
-    else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
+    else if( EQUAL(pszProjName,SRS_PT_NEW_ZEALAND_MAP_GRID) )
     {
         VSIFPrintf( fp, "map info = {New Zealand Map Grid, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -553,7 +553,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+    else if( EQUAL(pszProjName,SRS_PT_TRANSVERSE_MERCATOR) )
     {
         VSIFPrintf( fp, "map info = {Transverse Mercator, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -568,8 +568,8 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
-         || EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
+    else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+         || EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
         VSIFPrintf( fp, "map info = {Lambert Conformal Conic, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -585,7 +585,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,
+    else if( EQUAL(pszProjName,
                    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
         VSIFPrintf( fp, "map info = {Hotine Oblique Mercator A, %s%s%s}\n",
@@ -604,7 +604,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+    else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         VSIFPrintf( fp, "map info = {Hotine Oblique Mercator B, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -620,8 +620,8 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_STEREOGRAPHIC) 
-             || EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
+    else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) 
+             || EQUAL(pszProjName,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
         VSIFPrintf( fp, "map info = {Stereographic (ellipsoid), %s%s%s}\n",
                     osLocation.c_str(), 
@@ -636,7 +636,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
+    else if( EQUAL(pszProjName,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         VSIFPrintf( fp, "map info = {Albers Conical Equal Area, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -652,7 +652,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_POLYCONIC) )
+    else if( EQUAL(pszProjName,SRS_PT_POLYCONIC) )
     {
         VSIFPrintf( fp, "map info = {Polyconic, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -666,7 +666,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
+    else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         VSIFPrintf( fp, "map info = {Lambert Azimuthal Equal Area, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -680,7 +680,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
+    else if( EQUAL(pszProjName,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
         VSIFPrintf( fp, "map info = {Azimuthal Equadistant, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -694,7 +694,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
                     oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
                     osCommaDatum.c_str() );
     }
-    else if( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
+    else if( EQUAL(pszProjName,SRS_PT_POLAR_STEREOGRAPHIC) )
     {
         VSIFPrintf( fp, "map info = {Polar Stereographic, %s%s%s}\n",
                     osLocation.c_str(), 
@@ -711,7 +711,7 @@ void ENVIDataset::WriteProjectionInfo( FILE * fp )
     else
     {
         VSIFPrintf( fp, "map info = {%s, %s}\n",
-                    pszProjection, osLocation.c_str());
+                    pszProjName, osLocation.c_str());
     }
 }
 
