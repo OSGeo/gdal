@@ -1,6 +1,7 @@
 GDAL/OGR 1.4.0 - General Changes
 --------------------------------
 
+
 Perl Bindings: 
  - Added doxygen based documentation.
 
