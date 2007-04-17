@@ -236,17 +236,15 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->Model == ModelTypeProjected )
     {
-        char	*pszPCSName = "unnamed";
-        int         bNeedFree = FALSE;
 
         if( psDefn->PCS != KvUserDefined )
         {
+            char    *pszPCSName = NULL;
 
-            if( GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL ) )
-                bNeedFree = TRUE;
+            GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL );
             
-            oSRS.SetNode( "PROJCS", pszPCSName );
-            if( bNeedFree )
+            oSRS.SetNode( "PROJCS", pszPCSName ? pszPCSName : "unnamed" );
+            if ( pszPCSName )
                 GTIFFreeMemory( pszPCSName );
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
