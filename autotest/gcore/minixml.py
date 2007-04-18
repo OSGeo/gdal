@@ -126,6 +126,70 @@ def minixml_2():
     return 'success' 
 
 ###############################################################################
+# Read XML document with complex DOCTYPE element.
+
+def minixml_3():
+
+    fp = open( 'data/doctype.xml', 'r' )
+    text = fp.read()
+    tree = gdal.ParseXMLString( text )
+
+    if tree[0] != gdal.CXT_Element:
+        gdaltest.post_reason( 'wrong node type.' )
+        return 'fail'
+
+    # Check <chapter> element
+    node = tree[6]
+
+    if node[0] != gdal.CXT_Element:
+        gdaltest.post_reason( 'wrong node type.' )
+        return 'fail'
+
+    if node[1] != 'chapter':
+        gdaltest.post_reason( 'Wrong element name' )
+        return 'fail'
+    
+    if len(node) != 7:
+        gdaltest.post_reason( 'Wrong number of children.' )
+        return 'fail'
+
+    # Check <chapter><title> subelement
+    subnode = node[2]
+
+    if subnode[0] != gdal.CXT_Element:
+        gdaltest.post_reason( 'wrong node type.' )
+        return 'fail'
+
+    if subnode[1] != 'title':
+        gdaltest.post_reason( 'Wrong element name' )
+        return 'fail'
+
+    if len(subnode) != 3:
+        gdaltest.post_reason( 'Wrong number of children.' )
+        return 'fail'
+
+    if subnode[2][1] != 'Chapter 1':
+        gdaltest.post_reason( 'Wrong element content.' )
+        return 'fail'
+
+    # Check fist <chapter><para> subelement
+    subnode = node[3]
+
+    if subnode[0] != gdal.CXT_Element:
+        gdaltest.post_reason( 'wrong node type.' )
+        return 'fail'
+
+    if subnode[1] != 'para':
+        gdaltest.post_reason( 'Wrong element name' )
+        return 'fail'
+
+    if len(subnode) != 3:
+        gdaltest.post_reason( 'Wrong number of children.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def minixml_cleanup():
@@ -134,6 +198,7 @@ def minixml_cleanup():
 gdaltest_list = [
     minixml_1,
     minixml_2,
+    minixml_3,
     minixml_cleanup ]
 
 if __name__ == '__main__':
