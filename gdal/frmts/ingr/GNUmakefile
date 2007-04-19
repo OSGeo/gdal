@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	IntergraphDataset.o IntergraphBand.o IngrTypes.o
 
-CPPFLAGS	:=	-I..\gtiff\libtiff $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../gtiff/libtiff $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
