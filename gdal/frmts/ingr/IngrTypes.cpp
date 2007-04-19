@@ -371,7 +371,6 @@ INGR_TiffMem CPL_STDCALL INGR_CreateTiff( const char *pszFilename,
                                           int nBufferSize)
 {
     INGR_TiffMem hMemTiff;
-	uint16	hCT[255] = {0xFFFF, 0x0000};
 
     hMemTiff.pszFileName = CPLSPrintf( "/vsimem/%s.virtual.tiff", 
         CPLGetBasename( pszFilename ) );
@@ -418,6 +417,7 @@ INGR_TiffMem CPL_STDCALL INGR_CreateTiff( const char *pszFilename,
         TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC,     PHOTOMETRIC_MINISWHITE );
         TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_CCITTFAX4 );
+        break;
 	default:
 		return hMemTiff;
     }
