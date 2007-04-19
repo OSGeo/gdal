@@ -299,17 +299,14 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
 {
 /* -------------------------------------------------------------------- */
-/*      Translate requested region in virtual file into the source      */
-/*      band coordinates.                                               */
+/*      If the input window completely misses the portion of the        */
+/*      virtual dataset provided by this source we have nothing to do.  */
 /* -------------------------------------------------------------------- */
-    double      dfScaleX = nSrcXSize / (double) nDstXSize;
-    double      dfScaleY = nSrcYSize / (double) nDstYSize;
-
-    *pnReqXOff = (int) floor((nXOff - nDstXOff) * dfScaleX + nSrcXOff);
-    *pnReqYOff = (int) floor((nYOff - nDstYOff) * dfScaleY + nSrcYOff);
-
-    *pnReqXSize = (int) floor(nXSize * dfScaleX + 0.5);
-    *pnReqYSize = (int) floor(nYSize * dfScaleY + 0.5);
+    if( nXOff > nDstXOff + nDstXSize
+        || nYOff > nDstYOff + nDstYSize
+        || nXOff + nXSize < nDstXOff
+        || nYOff + nYSize < nDstYOff )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      This request window corresponds to the whole output buffer.     */
@@ -320,10 +317,58 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     *pnOutYSize = nBufYSize;
 
 /* -------------------------------------------------------------------- */
-/*      Clamp within the bounds of the available source data.           */
+/*      If the input window extents outside the portion of the on       */
+/*      the virtual file that this source can set, then clip down       */
+/*      the requested window.                                           */
 /* -------------------------------------------------------------------- */
     int bModifiedX = FALSE, bModifiedY = FALSE;
+    int nRXOff = nXOff;
+    int nRYOff = nYOff;
+    int nRXSize = nXSize;
+    int nRYSize = nYSize;
 
+    if( nRXOff < nDstXOff )
+    {
+        nRXSize = nRXSize + nRXOff - nDstXOff;
+        nRXOff = nDstXOff;
+        bModifiedX = TRUE;
+    }
+
+    if( nRYOff < nDstYOff )
+    {
+        nRYSize = nRYSize + nRYOff - nDstYOff;
+        nRYOff = nDstYOff;
+        bModifiedY = TRUE;
+    }
+
+    if( nRXOff + nRXSize > nDstXOff + nDstXSize )
+    {
+        nRXSize = nDstXOff + nDstXSize - nRXOff;
+        bModifiedX = TRUE;
+    }
+
+    if( nRYOff + nRYSize > nDstYOff + nDstYSize )
+    {
+        nRYSize = nDstYOff + nDstYSize - nRYOff;
+        bModifiedY = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate requested region in virtual file into the source      */
+/*      band coordinates.                                               */
+/* -------------------------------------------------------------------- */
+    double      dfScaleX = nSrcXSize / (double) nDstXSize;
+    double      dfScaleY = nSrcYSize / (double) nDstYSize;
+
+    *pnReqXOff = (int) floor((nRXOff - nDstXOff) * dfScaleX + nSrcXOff);
+    *pnReqYOff = (int) floor((nRYOff - nDstYOff) * dfScaleY + nSrcYOff);
+
+    *pnReqXSize = (int) floor(nRXSize * dfScaleX + 0.5);
+    *pnReqYSize = (int) floor(nRYSize * dfScaleY + 0.5);
+
+/* -------------------------------------------------------------------- */
+/*      Clamp within the bounds of the available source data.           */
+/* -------------------------------------------------------------------- */
     if( *pnReqXOff < 0 )
     {
         *pnReqXSize += *pnReqXOff;
@@ -411,7 +456,6 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         if( *pnOutYOff + *pnOutYSize > nBufYSize )
             *pnOutYSize = nBufYSize - *pnOutYOff;
     }
-
 
     if( *pnOutXSize < 1 || *pnOutYSize < 1 )
         return FALSE;
