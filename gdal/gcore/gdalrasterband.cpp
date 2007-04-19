@@ -230,7 +230,7 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 /**
- * @see GDALRasterBand::Rasterio()
+ * @see GDALRasterBand::RasterIO()
  */
 
 CPLErr CPL_STDCALL 
