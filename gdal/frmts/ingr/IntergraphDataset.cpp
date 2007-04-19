@@ -92,7 +92,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // -------------------------------------------------------------------- 
 
     INGR_HeaderOne  *pHeaderOne = ( INGR_HeaderOne* ) poOpenInfo->pabyHeader;
-    INGR_HeaderTwoA *pHeaderTwo = ( INGR_HeaderTwoA* ) pHeaderOne + 1;
+//??INGR_HeaderTwoA *pHeaderTwo = ( INGR_HeaderTwoA* ) pHeaderOne + 1;
 
     // -------------------------------------------------------------------- 
     // Check Header Type (HTC) Version
@@ -278,7 +278,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // Get Data type approprieted for Format
     // -------------------------------------------------------------------- 
 
-    GDALDataType eType = INGR_GetDataType( eFormat );
+//??    GDALDataType eType = INGR_GetDataType( eFormat );
 
     // -------------------------------------------------------------------- 
     // Create Band Information
@@ -416,7 +416,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.TransformationMatrix[15]      = 1.0;
     hHdr1.PixelsPerLine         = nXSize;
     hHdr1.NumberOfLines         = nYSize;
-    hHdr1.DeviceResolution      = 1.0;
+    hHdr1.DeviceResolution      = 1;
     hHdr1.ScanlineOrientation   = UpperLeftHorizontal;
     hHdr1.ScannableFlag         = NoLineHeader;
     hHdr1.RotationAngle         = 0.0;
