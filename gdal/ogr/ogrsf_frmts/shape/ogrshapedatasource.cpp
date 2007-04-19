@@ -56,7 +56,11 @@ OGRShapeDataSource::~OGRShapeDataSource()
     CPLFree( pszName );
 
     for( int i = 0; i < nLayers; i++ )
+    {
+        CPLAssert( NULL != papoLayers[i] );
+
         delete papoLayers[i];
+    }
     
     CPLFree( papoLayers );
 }

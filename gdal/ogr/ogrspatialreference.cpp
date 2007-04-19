@@ -290,7 +290,9 @@ int OSRDereference( OGRSpatialReferenceH hSRS )
 void OGRSpatialReference::Release()
 
 {
-    if( this && Dereference() <= 0 ) 
+    CPLAssert( NULL != this );
+
+    if( Dereference() <= 0 ) 
         delete this;
 }
 
