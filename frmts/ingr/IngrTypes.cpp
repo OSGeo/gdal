@@ -418,6 +418,8 @@ INGR_TiffMem CPL_STDCALL INGR_CreateTiff( const char *pszFilename,
         TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC,     PHOTOMETRIC_MINISWHITE );
         TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_CCITTFAX4 );
+	default:
+		return hMemTiff;
     }
 
     TIFFWriteRawStrip( hTIFF, 0, pabyBuffer, nBufferSize );

@@ -117,7 +117,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // Get IGDS (fixed size) starting in the middle of block 2 + 1.5 blocks
         // ----------------------------------------------------------------
 
-        VSIFSeekL( poDS->fp, nBandOffset + ( 1.5 * SIZEOF_HDR1 ), SEEK_SET );
+        VSIFSeekL( poDS->fp, nBandOffset + SIZEOF_HDR1 + SIZEOF_HDR2_A, SEEK_SET );
         VSIFReadL( hIGDSTable.Entry, 256, sizeof( igds_slot ), poDS->fp );
 
         INGR_GetIGDSColors( poColorTable, &hIGDSTable );
@@ -156,8 +156,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // Calculate the number of tiles
         // ----------------------------------------------------------------
 
-        int nTilesPerCol = ceil( (float) nRasterXSize / hTileDir.TileSize );
-        int nTilesPerRow = ceil( (float) nRasterYSize / hTileDir.TileSize );
+        int nTilesPerCol = (int) ceil( (float) nRasterXSize / hTileDir.TileSize );
+        int nTilesPerRow = (int) ceil( (float) nRasterYSize / hTileDir.TileSize );
 
         nTiles = nTilesPerCol * nTilesPerRow;
 
@@ -179,8 +179,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // Set blocks dimensions based on tiles
         // ----------------------------------------------------------------
 
-        nBlockXSize = MIN( hTileDir.TileSize, nRasterXSize );
-        nBlockYSize = MIN( hTileDir.TileSize, nRasterYSize );
+        nBlockXSize = MIN( hTileDir.TileSize, (uint32) nRasterXSize );
+        nBlockYSize = MIN( hTileDir.TileSize, (uint32) nRasterYSize );
     }
 
     // -------------------------------------------------------------------- 
@@ -344,8 +344,6 @@ CPLErr IntergraphRasterBand::SetStatistics( double dfMin,
                                             double dfMean, 
                                             double dfStdDev )
 {      
-    IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
-
     hHeaderOne.Minimum = INGR_SetMinMax( eDataType, dfMin );
     hHeaderOne.Maximum = INGR_SetMinMax( eDataType, dfMax );
     
@@ -459,7 +457,7 @@ CPLErr IntergraphRGBBand::IReadBlock( int nBlockXOff,
     // Extract the band of interest from the block buffer
     // --------------------------------------------------------------------
 
-    unsigned int i, j;
+    int i, j;
 
     for ( i = 0, j = ( 3 - this->nRGBIndex ); 
           i < ( nBlockXSize * nBlockYSize ); 
@@ -524,8 +522,6 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 {
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
-    int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-
     if( LoadBlockBuf( nBlockXOff, nBlockYOff ) != CE_None )
     {
         memset( pImage, 0, nBlockBufSize );
@@ -588,8 +584,8 @@ CPLErr IntergraphRasterBand::LoadBlockBuf( int nBlockXOff, int nBlockYOff )
 {
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
-    int nSeekOffset   = 0;
-    int nReadSize     = 0;
+    uint32 nSeekOffset   = 0;
+    uint32 nReadSize     = 0;
 
     // --------------------------------------------------------------------
     // Read from tiles or read from strip
@@ -664,8 +660,6 @@ void IntergraphRasterBand::ReshapeBlock( int nBlockXOff,
                                          int nBlockBytes,
                                          GByte *pabyBlock )
 {
-    int nTileId    = nBlockXOff + nBlockYOff * nBlocksPerRow;
-
     GByte *pabyTile = (GByte*) CPLCalloc( 1, nBlockBufSize );
 
     memcpy( pabyTile, pabyBlock, nBlockBytes );
