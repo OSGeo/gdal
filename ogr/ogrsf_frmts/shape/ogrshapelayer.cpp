@@ -93,8 +93,11 @@ OGRShapeLayer::~OGRShapeLayer()
 
     CPLFree( pszFullName );
 
-    poFeatureDefn->Release();
-    poSRS->Release();
+    if( poFeatureDefn != NULL )
+        poFeatureDefn->Release();
+
+    if( poSRS != NULL )
+        poSRS->Release();
 
     if( hDBF != NULL )
         DBFClose( hDBF );
