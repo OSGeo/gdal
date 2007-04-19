@@ -54,6 +54,10 @@ IntergraphDataset::IntergraphDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    hTiffMem.poDS = NULL;
+    hTiffMem.poBand = NULL;
+    hTiffMem.pszFileName = NULL;
 }
 
 //  ----------------------------------------------------------------------------
@@ -309,22 +313,14 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
             switch( eFormat )
             {
-            case CCITTGroup4:
-
-                poDS->SetBand( nBands, 
-                    new IntergraphBitmapBand( poDS, nBands, nBandOffset ) );
-                break;
-
             case JPEGGRAY:
             case JPEGRGB:
             case JPEGCYMK:
-
+            case CCITTGroup4:
                 poDS->SetBand( nBands, 
-                    new IntergraphJPEGBand( poDS, nBands, nBandOffset ) );
+                    new IntergraphBitmapBand( poDS, nBands, nBandOffset ) );
                 break;
-
             default:
-
                 poDS->SetBand( nBands, 
                     new IntergraphRasterBand( poDS, nBands, nBandOffset ) );
             }
@@ -420,7 +416,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.TransformationMatrix[15]      = 1.0;
     hHdr1.PixelsPerLine         = nXSize;
     hHdr1.NumberOfLines         = nYSize;
-    hHdr1.DeviceResolution      = 1;
+    hHdr1.DeviceResolution      = 1.0;
     hHdr1.ScanlineOrientation   = UpperLeftHorizontal;
     hHdr1.ScannableFlag         = NoLineHeader;
     hHdr1.RotationAngle         = 0.0;
@@ -508,6 +504,8 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                                            GDALProgressFunc pfnProgress, 
                                            void *pProgressData )
 {
+    //TODO: Clear INGR Metadata from the output
+
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
         return NULL;
@@ -746,4 +744,3 @@ void GDALRegister_INGR()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-

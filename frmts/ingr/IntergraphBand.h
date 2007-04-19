@@ -45,17 +45,18 @@ protected:
     uint32          nBandStart;
     uint8           nRGBIndex;
 
-    INGR_Format      eFormat;
-    bool            bTreatAsBitmap;
+    INGR_Format     eFormat;
+    bool            bTiled;
+    bool            bVirtualTile;
 
     GByte	       *pabyBlockBuf;
     uint32          nTiles;
 
-    INGR_TileItem    *pahTiles;
+    INGR_TileItem  *pahTiles;
 
-    INGR_HeaderOne   hHeaderOne;
-    INGR_HeaderTwoA  hHeaderTwo;
-    INGR_TileHeader     hTileDir;
+    INGR_HeaderOne  hHeaderOne;
+    INGR_HeaderTwoA hHeaderTwo;
+    INGR_TileHeader hTileDir;
 
 public:
     IntergraphRasterBand( IntergraphDataset *poDS, 
@@ -76,7 +77,7 @@ public:
 protected:
     CPLErr  LoadBlockBuf( int nBlockXOff, int nBlockYOff );
 
-    void ReshapeBlock( int nBlockXOff, int nBlockYOff, GByte *pabyBlock );
+    void ReshapeBlock( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void FlushBandHeader( void );
 };
 
@@ -110,27 +111,3 @@ public:
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
-
-//  ----------------------------------------------------------------------------
-//     Intergraph IntergraphJPEGBand
-//  ----------------------------------------------------------------------------
-
-class IntergraphJPEGBand : public IntergraphRasterBand
-{
-private:
-    FILE        *fp_jpeg;
-    char        *psz_jpeg;
-
-    struct jpeg_decompress_struct sDInfo;
-    struct jpeg_error_mgr sJErr;
-    int    nQLevel;
-    int    nQuality;
-
-public:
-    IntergraphJPEGBand( IntergraphDataset *poDS, 
-        int nBand,
-        int nBandOffset );
-
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-};
-
