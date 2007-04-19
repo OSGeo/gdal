@@ -45,8 +45,9 @@ private:
     char           *pszFilename;
     double          adfGeoTransform[6];
 
-    INGR_HeaderOne   hHeaderOne;
-    INGR_HeaderTwoA  hHeaderTwo;
+    INGR_HeaderOne  hHeaderOne;
+    INGR_HeaderTwoA hHeaderTwo;
+    INGR_TiffMem    hTiffMem;
 
 public:
     IntergraphDataset();
