@@ -1476,6 +1476,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          nDimID;
     char         attname[NC_MAX_NAME];
     int          ndims, nvars, ngatts, unlimdimid;
+    int          nCount=0;
+    int          nVarID;
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
@@ -1574,12 +1576,53 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->ReadAttributes( cdfid, NC_GLOBAL );	
 
-    if( ( !EQUAL( poDS->papszName[0], "NETCDF" ) ) ) {
+/* -------------------------------------------------------------------- */
+/*  Verify if only one variable has 2 dimensions                        */
+/* -------------------------------------------------------------------- */
+    for ( j = 0; j < nvars; j++ ) {
+
+	nc_inq_varndims ( cdfid, j, &ndims );
+	if( ndims >= 2 ) {
+	    nVarID=j;
+	    nCount++;
+	}
+    }
+
+/* -------------------------------------------------------------------- */
+/*  We have more than one variable with 2 dimensions in the file        */
+/* -------------------------------------------------------------------- */
+    if( (nCount > 1) && ( !EQUAL( poDS->papszName[0], "NETCDF" ) ) ) {
 	poDS->CreateSubDatasetList( );
 	poDS->SetMetadata( poDS->papszMetadata );
 	return( poDS );
     }
+/* -------------------------------------------------------------------- */
+/*  If we have only one varialbe                                        */
+/*  Generate a new filename with format NETCDF:"filename":subdataset    */
+/* -------------------------------------------------------------------- */
+    if( ( nCount == 1 )  && ( !EQUAL( poDS->papszName[0], "NETCDF" ) ) ){
+	CPLFree( poDS->pszFilename );
+	CSLDestroy( poDS->papszName );
 
+	char pszNETCDFFilename[NC_MAX_NAME];
+	char szVarName[NC_MAX_NAME];
+
+	nc_inq_varname( cdfid, nVarID, szVarName);
+
+	strcpy( pszNETCDFFilename,"NETCDF:" );
+	strcat( pszNETCDFFilename,poOpenInfo->pszFilename );
+	strcat( pszNETCDFFilename,":" );
+	strcat( pszNETCDFFilename, szVarName );
+
+	CPLDebug( "GDAL_netCDF", "NETCDFFilename = %s\n", 
+		  pszNETCDFFilename);
+
+	poDS->papszName = CSLTokenizeString2(  pszNETCDFFilename,
+					       ":", CSLT_HONOURSTRINGS );
+	poDS->pszFilename = strdup( pszNETCDFFilename );
+
+
+    }	
 
 /* -------------------------------------------------------------------- */
 /*      Open the NETCDF subdataset NETCDF:"filename":subdataset         */
