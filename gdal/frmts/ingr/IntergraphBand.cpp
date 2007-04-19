@@ -738,7 +738,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
 
     VSIFSeekL( poGDS->fp, nDataOffset + ( nBlockBufSize * nBlockYOff ), SEEK_SET );
 
-    if( ( int ) VSIFWriteL( pabyBlockBuf, 1, nBlockBufSize, poGDS->fp ) < nBlockBufSize )
+    if( ( uint32 ) VSIFWriteL( pabyBlockBuf, 1, nBlockBufSize, poGDS->fp ) < nBlockBufSize )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
