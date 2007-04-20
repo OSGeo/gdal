@@ -774,6 +774,8 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         pszAlgName = "Cubic";
     else if( psWO->eResampleAlg == GRA_CubicSpline )
         pszAlgName = "CubicSpline";
+    else if( psWO->eResampleAlg == GRA_Lanczos )
+        pszAlgName = "Lanczos";
     else
         pszAlgName = "Unknown";
 
@@ -950,6 +952,8 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         psWO->eResampleAlg = GRA_Cubic;
     else if( EQUAL(pszValue,"CubicSpline") )
         psWO->eResampleAlg = GRA_CubicSpline;
+    else if( EQUAL(pszValue,"Lanczos") )
+        psWO->eResampleAlg = GRA_Lanczos;
     else if( EQUAL(pszValue,"Default") )
         /* leave as is */;
     else

@@ -1534,6 +1534,7 @@ static double BSpline( double x )
 {
     return ( P(x + 2) - 4 * P(x + 1) + 6 * P(x) - 4 * P(x - 1) ) / 6;
 }
+#undef P
 
 static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand, 
                                    double dfSrcX, double dfSrcY,
@@ -1664,6 +1665,79 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
+/*                         GWKLanczosResample()                         */
+/*     Set of Lanczos windowed sinc interpolators                       */
+/************************************************************************/
+
+/*
+ * Lanczos windowed sinc interpolation kernel with radius r.
+ *        /
+ *        | sinc(x) * sinc(x/r), if |x| < r
+ * L(x) = | 1, if x = 0                     ,
+ *        | 0, otherwise
+ *        \
+ *
+ * where sinc(x) = sin(PI * x) / (PI * x).
+ */
+static double LanczosSinc( double dfX, double dfR )
+{
+  if ( fabs(dfX) > dfR )
+      return 0.0;
+  if ( dfX == 0.0 )
+      return 1.0;
+
+  double dfPIX = M_PI * dfX;
+  return ( sin(dfPIX) / dfPIX ) * ( sin(dfPIX / dfR) * dfR / dfPIX );
+}
+
+static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand, 
+                               double dfSrcX, double dfSrcY,
+                               double *pdfDensity, 
+                               double *pdfReal, double *pdfImag )
+
+{
+    double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
+    double  dfAccumulatorDensity = 0.0;
+    int     iSrcX = (int) floor( dfSrcX - 0.5 );
+    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
+    int     i, j;
+
+    // Get the bilinear interpolation at the image borders
+    if ( iSrcX - 1 < 0 || iSrcX + 1 >= poWK->nSrcXSize
+         || iSrcY - 1 < 0 || iSrcY + 1 >= poWK->nSrcYSize )
+        return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
+                                    pdfDensity, pdfReal, pdfImag );
+
+    for ( i = -1; i < 2; i++ )
+    {
+        double  dfWeight1 = LanczosSinc((double)i - dfDeltaX, 2.0);
+
+        for ( j = -1; j < 2; j++ )
+        {
+            if ( GWKGetPixelValue( poWK, iBand,
+                                   iSrcOffset + i + j  * poWK->nSrcXSize,
+                                   pdfDensity, pdfReal, pdfImag ) )
+            {
+                double  dfWeight2 = dfWeight1 * LanczosSinc(dfDeltaY - (double)j, 2.0);
+
+                dfAccumulatorReal += *pdfReal * dfWeight2;
+                dfAccumulatorImag += *pdfImag * dfWeight2;
+                dfAccumulatorDensity += *pdfDensity * dfWeight2;
+            }
+        }
+    }
+    
+    *pdfReal = dfAccumulatorReal;
+    *pdfImag = dfAccumulatorImag;
+    *pdfDensity = dfAccumulatorDensity;
+    
+    return TRUE;
+}
+
+/************************************************************************/
 /*                           GWKGeneralCase()                           */
 /*                                                                      */
 /*      This is the most general case.  It attempts to handle all       */
@@ -1704,7 +1778,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
     if( poWK->eResample == GRA_Bilinear )
         nResWinSize = 1;
     
-    if( poWK->eResample == GRA_Cubic )
+    if( poWK->eResample == GRA_Cubic || poWK->eResample == GRA_CubicSpline )
         nResWinSize = 2;
 
 /* -------------------------------------------------------------------- */
@@ -1850,6 +1924,14 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                                             padfY[iDstX]-poWK->nSrcYOff,
                                             &dfBandDensity, 
                                             &dfValueReal, &dfValueImag );
+                }
+                else if( poWK->eResample == GRA_Lanczos )
+                {
+                    GWKLanczosResample( poWK, iBand, 
+                                        padfX[iDstX]-poWK->nSrcXOff,
+                                        padfY[iDstX]-poWK->nSrcYOff,
+                                        &dfBandDensity, 
+                                        &dfValueReal, &dfValueImag );
                 }
 
 
@@ -2037,7 +2119,7 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
 /************************************************************************/
 /*                       GWKBilinearNoMasksByte()                       */
 /*                                                                      */
-/*      Case for 8bit input data with cubic resampling without          */
+/*      Case for 8bit input data with bilinear resampling without       */
 /*      concerning about masking. Should be as fast as possible         */
 /*      for this particular transformation type.                        */
 /************************************************************************/
@@ -2305,7 +2387,7 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
 /************************************************************************/
 /*                   GWKCubicSplineNoMasksByte()                        */
 /*                                                                      */
-/*      Case for 8bit input data with cubic resampling without          */
+/*      Case for 8bit input data with cubic spline resampling without   */
 /*      concerning about masking. Should be as fast as possible         */
 /*      for this particular transformation type.                        */
 /************************************************************************/
