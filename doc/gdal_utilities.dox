@@ -464,7 +464,7 @@ gdalwarp
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
     [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
-    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
+    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile* dstfile
 \endverbatim
 
@@ -480,57 +480,67 @@ with control information.
 
 <p>
 <dl>
-<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference
- set. The coordinate systems that can be passed are anything supported
- by the OGRSpatialReference.SetFromUserInput() call, which includes
- EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
- or the name of a .prf file containing well known text.</dd>
-<dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set. The
-coordinate systems that can be passed are anything supported by the
-OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
-and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
-of a .prf file containing well known text.</dd>
-<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping (1 to 3). The default is to select a polynomial order based on the number of GCPs.</dd>
-<dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer 
-based on available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
-<dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for transformation approximation (in pixel units - defaults to 0.125).</dd>
-<dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced extents of output file to be created.</dd>
-<dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in target georeferenced units)</dd>
+<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+containing well known text.</dd>
+<dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+containing well known text.</dd>
+<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping
+(1 to 3). The default is to select a polynomial order based on the number of
+GCPs.</dd>
+<dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer based on
+available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
+<dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for
+transformation approximation (in pixel units - defaults to 0.125).</dd>
+<dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced
+extents of output file to be created.</dd>
+<dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
+target georeferenced units)</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
 pixels and lines</dd>
 <dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options.  The 
 GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
  <b>-wo</b> options may be listed.</dd>
-<dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the indicated
- data type.</dd>
-<dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The data type of
- pixels in the source image and destination image buffers.</dd>
-<dt> <b>-rn</b>:</dt><dd> Use nearest neighbour resampling (default, fastest algorithm, worst
- interpolation quality).</dd>
-<dt> <b>-rb</b>:</dt><dd> Use bilinear resampling.</dd>
-<dt> <b>-rc</b>:</dt><dd> Use cubic resampling.</dd>
-<dt> <b>-rcs</b>:</dt><dd> Use cubic spline resampling (slowest
-algorithm).</dd>
+<dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the
+indicated data type.</dd>
+<dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The data type
+of pixels in the source image and destination image buffers.</dd>
+<dt> <b>-r</b> <em>resampling_method</em>:</dt><dd> Resampling method to use. Available methods are:
+<dl>
+<dt><b>near</b></dt>: <dd>nearest neighbour resampling (default, fastest
+algorithm, worst interpolation quality).</dd>
+<dt><b>bilinear</b></dt>: <dd>bilinear resampling.</dd>
+<dt><b>cubic</b></dt>: <dd>cubic resampling.</dd>
+<dt><b>cubicspline</b></dt>: <dd>cubic spline resampling.</dd>
+<dt><b>lanczos</b></dt>: <dd>Lanczos windowed sinc resampling.</dd>
+</dl>
 <dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking
 values for input bands (different values can be supplied for each band).  If 
 more than one value is supplied all values should be quoted to keep them 
 together as a single operating system argument.  Masked values will not be 
 used in interpolation.</dd>
-<dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values for output bands (different values can be supplied for each band).  If 
-more than one value is supplied all values should be quoted to keep them 
-together as a single operating system argument.  New files
-will be initialized to this value and if possible the nodata value will be
-recorded in the output file.</dd>
-<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in megabytes) that the warp API is allowed to use for caching.</dd>
+<dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values
+for output bands (different values can be supplied for each band).  If more
+than one value is supplied all values should be quoted to keep them together
+as a single operating system argument.  New files will be initialized to this
+value and if possible the nodata value will be recorded in the output
+file.</dd>
+<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
+megabytes) that the warp API is allowed to use for caching.</dd>
 <dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
- Multiple threads will be used to process chunks of image and perform
- input/output operation simultaneously.</dd>
+Multiple threads will be used to process chunks of image and perform
+input/output operation simultaneously.</dd>
 <dt> <b>-q</b>:</dt><dd> Be quiet.</dd>
 <dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
-<dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation
- option to the output format driver. Multiple <b>-co</b> options may be
- listed. See format specific documentation for legal creation options
- for each format. </dd>
+<dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation option to
+the output format driver. Multiple <b>-co</b> options may be listed. See
+format specific documentation for legal creation options for each format.
+</dd>
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
 </dl>
