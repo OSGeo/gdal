@@ -62,8 +62,10 @@ static void Usage()
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
-        "    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]* srcfile* dstfile\n" );
+        "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
+        "    [-of format] [-co \"NAME=VALUE\"]* srcfile* dstfile\n"
+        "\n"
+        "    Avalable resampling methods: near, bilinear, cubic, cubicspline, lanczos.\n" );
     exit( 1 );
 }
 
@@ -275,6 +277,25 @@ int main( int argc, char ** argv )
 
         else if( EQUAL(argv[i],"-rcs") )
             eResampleAlg = GRA_CubicSpline;
+
+        else if( EQUAL(argv[i],"-r") && i < argc - 1 )
+        {
+            if ( EQUAL(argv[++i], "near") )
+                eResampleAlg = GRA_NearestNeighbour;
+            else if ( EQUAL(argv[i], "bilinear") )
+                eResampleAlg = GRA_Bilinear;
+            else if ( EQUAL(argv[i], "cubic") )
+                eResampleAlg = GRA_Cubic;
+            else if ( EQUAL(argv[i], "cubicspline") )
+                eResampleAlg = GRA_CubicSpline;
+            else if ( EQUAL(argv[i], "lanczos") )
+                eResampleAlg = GRA_Lanczos;
+            else
+            {
+                printf( "Unknown resampling method: \"%s\".\n", argv[i] );
+                Usage();
+            }
+        }
 
         else if( argv[i][0] == '-' )
             Usage();
