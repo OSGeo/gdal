@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_private.h"
+#include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
 

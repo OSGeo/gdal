@@ -2,7 +2,10 @@
  * $Id$
  *
  * Project:  VSI Virtual File System
- * Purpose:  Private declarations for classes related to the virtual filesystem
+ * Purpose:  Declarations for classes related to the virtual filesystem.
+ *           These would only be normally required by applications implmenting
+ *           their own virtual file system classes which should be rare.  
+ *           The class interface may be fragile through versions.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -46,7 +49,7 @@
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
 
-class VSIVirtualHandle { 
+class CPL_DLL VSIVirtualHandle { 
   public:
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
     virtual vsi_l_offset Tell() = 0;
@@ -62,7 +65,7 @@ class VSIVirtualHandle {
 /*                         VSIFilesystemHandler                         */
 /************************************************************************/
 
-class VSIFilesystemHandler {
+class CPL_DLL VSIFilesystemHandler {
 
 public:
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
@@ -85,7 +88,7 @@ public:
 /*                            VSIFileManager                            */
 /************************************************************************/
 
-class VSIFileManager 
+class CPL_DLL VSIFileManager 
 {
 private:
     VSIFilesystemHandler         *poDefaultHandler;
