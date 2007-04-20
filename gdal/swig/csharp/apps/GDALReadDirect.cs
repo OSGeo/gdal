@@ -48,7 +48,7 @@ class GDALReadDirect {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open( args[0], 0 );
+            Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
 		
             if (ds == null) 
             {
