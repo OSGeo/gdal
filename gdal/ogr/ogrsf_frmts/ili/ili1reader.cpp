@@ -113,7 +113,7 @@ const char* ILI1Reader::GetLayerName(IOM_BASKET model, IOM_OBJECT table) {
     return layername;
 }
 
-void ILI1Reader::AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj) {
+void ILI1Reader::AddCoord(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj) {
   unsigned int dim = ::GetCoordDim(model, typeobj);
   for (unsigned int i=0; i<dim; i++) {
     OGRFieldDefn fieldDef(CPLSPrintf("%s_%d", iom_getattrvalue(modelele, "name"), i), OFTReal);
@@ -122,28 +122,33 @@ void ILI1Reader::AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele
   }
 }
 
-OGRLayer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
+OGRILI1Layer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
   static char layername[512];
   layername[0] = '\0';
   strcat(layername, datalayername);
   strcat(layername, "_");
   strcat(layername, geomname);
 
-  OGRLayer* geomlayer = new OGRILI1Layer(layername, NULL, 0, eType, NULL);
+  OGRILI1Layer* geomlayer = new OGRILI1Layer(layername, NULL, 0, eType, NULL);
   AddLayer(geomlayer);
-  OGRFieldDefn fieldDef(datalayername, OFTString); //"__Ident"
+  OGRFieldDefn fieldDef("_TID", OFTString);
   geomlayer->GetLayerDefn()->AddFieldDefn(&fieldDef);
+  if (eType == wkbPolygon)
+  {
+     OGRFieldDefn fieldDefRef("_RefTID", OFTString);
+     geomlayer->GetLayerDefn()->AddFieldDefn(&fieldDefRef);
+  }
   OGRFieldDefn fieldDef2("ILI_Geometry", OFTString); //in write mode only?
   geomlayer->GetLayerDefn()->AddFieldDefn(&fieldDef2);
   return geomlayer;
 }
 
-void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
+void ILI1Reader::AddField(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT obj) {
   const char* typenam = "Reference";
   if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.LocalAttribute")) typenam = GetTypeName(model, obj);
   CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
   if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
-    OGRLayer* polyLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
+    OGRILI1Layer* polyLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
     AddSurfaceLayer(layer, polyLayer);
     //TODO: add line attributes to geometry
   } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
@@ -152,7 +157,7 @@ void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
       AddCoord(layer, model, obj, GetTypeObj(model, controlPointDomain));
       layer->GetLayerDefn()->SetGeomType(wkbPoint);
     }
-    OGRLayer* areaLineLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbMultiLineString);
+    OGRILI1Layer* areaLineLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbMultiLineString);
 #ifdef POLYGONIZE_AREAS
     AddAreaLayer(layer, areaLineLayer);
 #endif
@@ -202,7 +207,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
         int bWriterIn = 0;
         OGRwkbGeometryType eReqType = wkbUnknown;
         OGRILI1DataSource *poDSIn = NULL;
-        OGRLayer* layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
+        OGRILI1Layer* layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
         AddLayer(layer);
         CPLDebug( "OGR_ILI", "Reading table model '%s'", layername );
 
@@ -234,7 +239,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
         }
         iom_releaseiterator(fieldit);
 
-        OGRFieldDefn fieldDef("__Ident", OFTString);
+        OGRFieldDefn fieldDef("_TID", OFTString);
         layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
         for (int i=0; i<=maxIdx; i++) {
           IOM_OBJECT obj = fields[i];
@@ -301,7 +306,7 @@ int ILI1Reader::ReadFeatures() {
       else if (EQUAL(firsttok, "TABL"))
       {
         CPLDebug( "OGR_ILI", "Reading table '%s'", GetLayerNameString(topic, CSLGetField(tokens, 1)) );
-        curLayer = (OGRILI1Layer*)GetLayerByName(GetLayerNameString(topic, CSLGetField(tokens, 1)));
+        curLayer = GetLayerByName(GetLayerNameString(topic, CSLGetField(tokens, 1)));
         if (curLayer == NULL) { //create one
           CPLDebug( "OGR_ILI", "No model found, using default field names." );
           OGRSpatialReference *poSRSIn = NULL;
@@ -399,13 +404,13 @@ void ILI1Reader::PolygonizeAreaLayers()
 {
     for(int iLayer = 0; iLayer < nAreaLayers; iLayer++ )
     {
-      OGRLayer *poAreaLayer = papoAreaLayers[iLayer];
-      OGRLayer *poLineLayer = papoAreaLineLayers[iLayer];
+      OGRILI1Layer *poAreaLayer = papoAreaLayers[iLayer];
+      OGRILI1Layer *poLineLayer = papoAreaLineLayers[iLayer];
 
       //add all lines from poLineLayer to collection
       OGRGeometryCollection *gc = new OGRGeometryCollection();
       poLineLayer->ResetReading();
-      while (OGRFeature *feature = poLineLayer->GetNextFeature())
+      while (OGRFeature *feature = poLineLayer->GetNextFeatureRef())
           gc->addGeometry(feature->GetGeometryRef());
 
       //polygonize lines
@@ -425,7 +430,7 @@ void ILI1Reader::PolygonizeAreaLayers()
           if (!GEOSisValid(ahInGeoms[i])) ahInGeoms[i] = NULL;
       }
       poAreaLayer->ResetReading();
-      while (OGRFeature *feature = poAreaLayer->GetNextFeature())
+      while (OGRFeature *feature = poAreaLayer->GetNextFeatureRef())
       {
         GEOSGeom point = (GEOSGeom)feature->GetGeometryRef()->exportToGEOS();
         for (i = 0; i < polys->getNumGeometries(); i++ )
@@ -456,15 +461,15 @@ void ILI1Reader::JoinSurfaceLayers()
 {
     for(int iLayer = 0; iLayer < nSurfaceLayers; iLayer++ )
     {
-      OGRLayer *poSurfaceLayer = papoSurfaceLayers[iLayer];
-      OGRLayer *poPolyLayer = papoSurfacePolyLayers[iLayer];
+      OGRILI1Layer *poSurfaceLayer = papoSurfaceLayers[iLayer];
+      OGRILI1Layer *poPolyLayer = papoSurfacePolyLayers[iLayer];
 
       poSurfaceLayer->GetLayerDefn()->SetGeomType(poPolyLayer->GetLayerDefn()->GetGeomType());
       poSurfaceLayer->ResetReading();
       poPolyLayer->ResetReading();
-      while (OGRFeature *feature = poSurfaceLayer->GetNextFeature()) {
+      while (OGRFeature *feature = poSurfaceLayer->GetNextFeatureRef()) {
         //Assume same sequence -> Dangerous?
-        OGRFeature *polyfeature = poPolyLayer->GetNextFeature();
+        OGRFeature *polyfeature = poPolyLayer->GetNextFeatureRef();
         if (polyfeature) { //&& EQUAL(feature->GetFieldAsString(0), polyfeature->GetFieldAsString(0))
           feature->SetGeometry(polyfeature->GetGeometryRef());
         }
@@ -672,10 +677,10 @@ OGRGeometry *ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType) {
 /*                              AddLayer()                              */
 /************************************************************************/
 
-void ILI1Reader::AddLayer( OGRLayer * poNewLayer )
+void ILI1Reader::AddLayer( OGRILI1Layer * poNewLayer )
 
 {
-    papoLayers = (OGRLayer **)
+    papoLayers = (OGRILI1Layer **)
         CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
     
     papoLayers[nLayers-1] = poNewLayer;
@@ -685,14 +690,14 @@ void ILI1Reader::AddLayer( OGRLayer * poNewLayer )
 /*                              AddAreaLayer()                              */
 /************************************************************************/
 
-void ILI1Reader::AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer )
+void ILI1Reader::AddAreaLayer( OGRILI1Layer * poAreaLayer,  OGRILI1Layer * poLineLayer )
 
 {
     ++nAreaLayers;
 
-    papoAreaLayers = (OGRLayer **)
+    papoAreaLayers = (OGRILI1Layer **)
         CPLRealloc( papoAreaLayers, sizeof(void*) * nAreaLayers );
-    papoAreaLineLayers = (OGRLayer **)
+    papoAreaLineLayers = (OGRILI1Layer **)
         CPLRealloc( papoAreaLineLayers, sizeof(void*) * nAreaLayers );
     
     papoAreaLayers[nAreaLayers-1] = poAreaLayer;
@@ -703,14 +708,14 @@ void ILI1Reader::AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer )
 /*                              AddSurfaceLayer()                              */
 /************************************************************************/
 
-void ILI1Reader::AddSurfaceLayer( OGRLayer * poDataLayer,  OGRLayer * poPolyLayer )
+void ILI1Reader::AddSurfaceLayer( OGRILI1Layer * poDataLayer,  OGRILI1Layer * poPolyLayer )
 
 {
     ++nSurfaceLayers;
 
-    papoSurfaceLayers = (OGRLayer **)
+    papoSurfaceLayers = (OGRILI1Layer **)
         CPLRealloc( papoSurfaceLayers, sizeof(void*) * nSurfaceLayers );
-    papoSurfacePolyLayers = (OGRLayer **)
+    papoSurfacePolyLayers = (OGRILI1Layer **)
         CPLRealloc( papoSurfacePolyLayers, sizeof(void*) * nSurfaceLayers );
     
     papoSurfaceLayers[nSurfaceLayers-1] = poDataLayer;
@@ -721,7 +726,7 @@ void ILI1Reader::AddSurfaceLayer( OGRLayer * poDataLayer,  OGRLayer * poPolyLaye
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *ILI1Reader::GetLayer( int iLayer )
+OGRILI1Layer *ILI1Reader::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
@@ -730,7 +735,7 @@ OGRLayer *ILI1Reader::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-OGRLayer *ILI1Reader::GetLayerByName( const char* pszLayerName )
+OGRILI1Layer *ILI1Reader::GetLayerByName( const char* pszLayerName )
 
 {
     for(int iLayer = 0; iLayer < nLayers; iLayer++ )
