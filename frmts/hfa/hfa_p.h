@@ -305,7 +305,7 @@ class HFAField
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                      const char *pszPrefix = NULL );
     
-    int		GetInstBytes( GByte * pabyData );
+    int		GetInstBytes( GByte *, int );
     int		GetInstCount( GByte * pabyData );
 };
 
@@ -335,7 +335,7 @@ class HFAType
 
     void	Dump( FILE * );
 
-    int		GetInstBytes( GByte * pabyData );
+    int		GetInstBytes( GByte *, int );
     int         GetInstCount( const char *pszField, 
                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
     int         ExtractInstValue( const char * pszField,

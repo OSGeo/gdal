@@ -646,15 +646,17 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             else
             {
                 for( iIndexCounter = 0;
-                     iIndexCounter < nIndexValue;
+                     iIndexCounter < nIndexValue && nExtraOffset < nDataSize;
                      iIndexCounter++ )
                 {
                     nExtraOffset +=
-                        poItemObjectType->GetInstBytes(pabyData+nExtraOffset);
+                        poItemObjectType->GetInstBytes(pabyData + nExtraOffset,
+                                                       nDataSize - nExtraOffset);
                 }
             }
 
-            if( pszField != NULL && strlen(pszField) > 0 )
+            if( pszField != NULL && strlen(pszField) > 0
+                && nExtraOffset < nDataSize )
             {
                 return( poItemObjectType->
                             SetInstValue( pszField, pabyData + nExtraOffset,
@@ -915,7 +917,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                      iIndexCounter++ )
                 {
                     nExtraOffset +=
-                        poItemObjectType->GetInstBytes(pabyData+nExtraOffset);
+                        poItemObjectType->GetInstBytes(pabyData + nExtraOffset,
+                                                       nDataSize - nExtraOffset);
                 }
             }
 
@@ -984,7 +987,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 /*      portion.                                                        */
 /************************************************************************/
 
-int HFAField::GetInstBytes( GByte * pabyData )
+int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 
 {
     int		nCount;
@@ -1033,7 +1036,9 @@ int HFAField::GetInstBytes( GByte * pabyData )
         {
             int	nThisBytes;
 
-            nThisBytes = poItemObjectType->GetInstBytes( pabyData );
+            nThisBytes =
+                poItemObjectType->GetInstBytes( pabyData,
+                                                nDataSize - nInstBytes );
             nInstBytes += nThisBytes;
             pabyData += nThisBytes;
         }
