@@ -107,6 +107,18 @@ public:
   CPLErr SetNoDataValue( double d) {
     return GDALSetRasterNoDataValue( self, d );
   }
+  
+  %apply (char **options) { (char **) };
+  char** GetRasterCategoryNames( ) {
+    return GDALGetRasterCategoryNames( self );
+  }
+  %clear (char **);
+  
+  %apply (char **options) { (char **names) };
+  CPLErr SetRasterCategoryNames( char **names ) {
+    return GDALSetRasterCategoryNames( self, names );
+  }
+  %clear (char **names);
 
   void GetMinimum( double *val, int *hasval ) {
     *val = GDALGetRasterMinimum( self, hasval );
