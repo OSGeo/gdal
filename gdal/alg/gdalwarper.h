@@ -48,7 +48,8 @@ typedef enum {
   /*! Nearest neighbour (select on one input pixel) */ GRA_NearestNeighbour=0,
   /*! Bilinear (2x2 kernel) */                         GRA_Bilinear=1,
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
-  /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3
+  /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
+  /*! Lanczos windowed sinc interpolation (3x3 kernel) */ GRA_Lanczos=4
 } GDALResampleAlg;
 
 typedef int 
