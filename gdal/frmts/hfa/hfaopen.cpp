@@ -1071,6 +1071,9 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 char *HFAGetPEString( HFAHandle hHFA )
  
 {
+    if( hHFA->nBands == 0 )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Get the HFA node.                                               */
 /* -------------------------------------------------------------------- */
@@ -1108,6 +1111,109 @@ char *HFAGetPEString( HFAHandle hHFA )
     nDataSize -= 30;
 
     return CPLStrdup( (const char *) pabyData );
+}
+
+/************************************************************************/
+/*                           HFASetPEString()                           */
+/************************************************************************/
+
+CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify we don't already have the node, since update-in-place    */
+/*      is likely to be more complicated.                               */
+/* -------------------------------------------------------------------- */
+    if( hHFA->nBands == 0 )
+        return CE_None;
+
+    HFAEntry *poProX;
+
+    poProX = hHFA->papoBand[0]->poNode->GetNamedChild( "ProjectionX" );
+    if( poProX != NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "HFASetPEString() failed because the ProjectionX node\n"
+                  "already exists and can't be reliably updated." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the node.                                                */
+/* -------------------------------------------------------------------- */
+    poProX = new HFAEntry( hHFA, "ProjectionX","Eprj_MapProjection842",
+                           hHFA->papoBand[0]->poNode );
+    if( poProX == NULL )
+        return CE_Failure;
+
+    GByte *pabyData = poProX->MakeData( 700 + strlen(pszPEString) );
+    memset( pabyData, 0, 250+strlen(pszPEString) );
+
+    poProX->SetPosition();
+
+    poProX->SetStringField( "projection.type.string", "PE_COORDSYS" );
+    poProX->SetStringField( "projection.MIFDictionary.string", 
+                            "{0:pcstring,}Emif_String,{1:x{0:pcstring,}Emif_String,coordSys,}PE_COORDSYS,." );
+
+/* -------------------------------------------------------------------- */
+/*      Use a gross hack to scan ahead to the actual projection         */
+/*      string. We do it this way because we don't have general         */
+/*      handling for MIFObjects.                                        */
+/* -------------------------------------------------------------------- */
+    pabyData = poProX->GetData();
+    int    nDataSize = poProX->GetDataSize();
+    GUInt32   iOffset = poProX->GetDataPos();
+    GUInt32   nSize;
+
+    while( nDataSize > 10 
+           && !EQUALN((const char *) pabyData,"PE_COORDSYS,.",13) ) {
+        pabyData++;
+        nDataSize--;
+        iOffset++;
+    }
+
+    CPLAssert( nDataSize > (int) strlen(pszPEString) + 10 );
+
+    pabyData += 14;
+    iOffset += 14;
+    
+/* -------------------------------------------------------------------- */
+/*      Set the size and offset of the mifobject.                       */
+/* -------------------------------------------------------------------- */
+    iOffset += 8;
+
+    nSize = strlen(pszPEString) + 9;
+
+    HFAStandard( 4, nSize );
+    memcpy( pabyData, &nSize, 4 );
+    pabyData += 4;
+    
+    HFAStandard( 4, &iOffset );
+    memcpy( pabyData, &iOffset, 4 );
+    pabyData += 4;
+
+/* -------------------------------------------------------------------- */
+/*      Set the size and offset of the string value.                    */
+/* -------------------------------------------------------------------- */
+    nSize = strlen(pszPEString) + 1;
+    
+    HFAStandard( 4, nSize );
+    memcpy( pabyData, &nSize, 4 );
+    pabyData += 4;
+
+    iOffset = 8;
+    HFAStandard( 4, &iOffset );
+    memcpy( pabyData, &iOffset, 4 );
+    pabyData += 4;
+
+/* -------------------------------------------------------------------- */
+/*      Place the string itself.                                        */
+/* -------------------------------------------------------------------- */
+    memcpy( pabyData, pszPEString, strlen(pszPEString)+1 );
+    
+    poProX->SetStringField( "title.string", "PE" );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1537,9 +1643,14 @@ static const char *aszDefaultDD[] = {
 "1:e2:no compression,ESRI GRID compression,compressionType,}Edms_VirtualBlockInfo,{1:lmin,1:lmax,}Edms_FreeIDList,{1:lnumvirtualblocks,1:lnumobjectsperblock,1:lnextobjectnum,1:e2:no compression,RLC compression,compressionType,0:poEdms_VirtualBlockInfo,blockinfo,0:poEdms_FreeIDList,freelist,1:tmodTime,}Edms_State,{0:pcstring,}Emif_String,{1:oEmif_String,fileName,2:LlayerStackValidFlagsOffset,2:LlayerStackDataOffset,1:LlayerStackCount,1:LlayerStackIndex,}ImgExternalRaster,{1:oEmif_String,algorithm,0:poEmif_String,nameList,}Eimg_RRDNamesList,{1:oEmif_String,projection,1:oEmif_String,units,}Eimg_MapInformation,",
 "{1:oEmif_String,dependent,}Eimg_DependentFile,{1:oEmif_String,ImageLayerName,}Eimg_DependentLayerName,{1:lnumrows,1:lnumcolumns,1:e13:EGDA_TYPE_U1,EGDA_TYPE_U2,EGDA_TYPE_U4,EGDA_TYPE_U8,EGDA_TYPE_S8,EGDA_TYPE_U16,EGDA_TYPE_S16,EGDA_TYPE_U32,EGDA_TYPE_S32,EGDA_TYPE_F32,EGDA_TYPE_F64,EGDA_TYPE_C64,EGDA_TYPE_C128,datatype,1:e4:EGDA_SCALAR_OBJECT,EGDA_TABLE_OBJECT,EGDA_MATRIX_OBJECT,EGDA_RASTER_OBJECT,objecttype,}Egda_BaseData,{1:*bvalueBD,}Eimg_NonInitializedValue,{1:dx,1:dy,}Eprj_Coordinate,{1:dwidth,1:dheight,}Eprj_Size,{0:pcproName,1:*oEprj_Coordinate,upperLeftCenter,",
 "1:*oEprj_Coordinate,lowerRightCenter,1:*oEprj_Size,pixelSize,0:pcunits,}Eprj_MapInfo,{0:pcdatumname,1:e3:EPRJ_DATUM_PARAMETRIC,EPRJ_DATUM_GRID,EPRJ_DATUM_REGRESSION,type,0:pdparams,0:pcgridname,}Eprj_Datum,{0:pcsphereName,1:da,1:db,1:deSquared,1:dradius,}Eprj_Spheroid,{1:e2:EPRJ_INTERNAL,EPRJ_EXTERNAL,proType,1:lproNumber,0:pcproExeName,0:pcproName,1:lproZone,0:pdproParams,1:*oEprj_Spheroid,proSpheroid,}Eprj_ProParameters,{1:dminimum,1:dmaximum,1:dmean,1:dmedian,1:dmode,1:dstddev,}Esta_Statistics,{1:lnumBins,1:e4:direct,linear,logarithmic,explicit,binFunctionType,1:dminLimit,1:dmaxLimit,1:*bbinLimits,}Edsc_BinFunction,{0:poEmif_String,LayerNames,1:*bExcludedValues,1:oEmif_String,AOIname,",
-"1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830,{1:lnumrows,}Edsc_Table,{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column,{1:lposition,0:pcname,1:e2:EMSC_FALSE,EMSC_TRUE,editable,1:e3:LEFT,CENTER,RIGHT,alignment,0:pcformat,1:e3:DEFAULT,APPLY,AUTO-APPLY,formulamode,0:pcformula,1:dcolumnwidth,0:pcunits,1:e5:NO_COLOR,RED,GREEN,BLUE,COLOR,colorflag,0:pcgreenname,0:pcbluename,}Eded_ColumnAttributes_1,{1:lversion,1:lnumobjects,1:e2:EAOI_UNION,EAOI_INTERSECTION,operation,}Eaoi_AreaOfInterest,.",
+"1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830,{1:lnumrows,}Edsc_Table,{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column,{1:lposition,0:pcname,1:e2:EMSC_FALSE,EMSC_TRUE,editable,1:e3:LEFT,CENTER,RIGHT,alignment,0:pcformat,1:e3:DEFAULT,APPLY,AUTO-APPLY,formulamode,0:pcformula,1:dcolumnwidth,0:pcunits,1:e5:NO_COLOR,RED,GREEN,BLUE,COLOR,colorflag,0:pcgreenname,0:pcbluename,}Eded_ColumnAttributes_1,{1:lversion,1:lnumobjects,1:e2:EAOI_UNION,EAOI_INTERSECTION,operation,}Eaoi_AreaOfInterest,",
+"{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject,",
+"{1:x{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject,projection,1:x{0:pcstring,}Emif_String,title,}Eprj_MapProjection842,",
+".",
 NULL
 };
+
+
 
 /************************************************************************/
 /*                            HFACreateLL()                             */
@@ -2489,8 +2600,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                     pszWork = pszEnd + 1;
                 }
             }
-            free( pszBinValues );
         }
+        free( pszBinValues );
     }
 
 /* -------------------------------------------------------------------- */

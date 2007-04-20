@@ -143,6 +143,7 @@ const Eprj_Datum CPL_DLL *HFAGetDatum( HFAHandle );
 CPLErr CPL_DLL HFASetDatum( HFAHandle, const Eprj_Datum * );
 const Eprj_ProParameters CPL_DLL *HFAGetProParameters( HFAHandle );
 char CPL_DLL *HFAGetPEString( HFAHandle );
+CPLErr CPL_DLL HFASetPEString( HFAHandle hHFA, const char *pszPEString );
 CPLErr CPL_DLL HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 
 CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
