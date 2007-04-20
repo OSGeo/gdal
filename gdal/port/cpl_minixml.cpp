@@ -202,27 +202,29 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                 break;
             }
             
-            /* Skip the internal DTD subset as NOT SUPPORTED YET (Ticket #755).
-             * The markup declaration block within a DOCTYPE tag consists of:
+            /* The markup declaration block within a DOCTYPE tag consists of:
              * - a left square bracket [
              * - a list of declarations
              * - a right square bracket ]
              * Example:
              * <!DOCTYPE RootElement [ ...declarations... ]>
-             *
-             * We need to skip all 3 parts, until closing > 
              */
             if( chNext == '[' )
             {
+                AddToToken( psContext, chNext );
+
                 do
                 {
                     chNext = ReadChar( psContext );
+                    AddToToken( psContext, chNext );
                 }
                 while( chNext != ']'
                     && !EQUALN(psContext->pszInput+psContext->nInputOffset,"]>", 2) );
 
-                // Skip "]" character to point to the closing ">"
                 chNext = ReadChar( psContext );
+                AddToToken( psContext, chNext );
+
+                // Skip ">" character, will be consumed below
                 chNext = ReadChar( psContext );
             }
 
