@@ -34,7 +34,7 @@ Download:
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">Downloads</a> - Ready to use binaries (executables)
 <li> <a href="formats_list.html">Supported Formats</a>
 <li> <a href="gdal_utilities.html">GDAL Utility Programs</a>
-<li> <a href="faq.html">GDAL FAQ</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/FAQ">GDAL FAQ</a>
 <li> <a href="gdal_datamodel.html">GDAL Data Model</a>
 <li> <a href="governance.html">GDAL/OGR Governance and Community Participation</a>
 <li> <a href="credits.html">Sponsors, Acknowledgements and Credits</a>
