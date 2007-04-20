@@ -203,7 +203,8 @@ int GDALWarpOperation::ValidateOptions()
     if( psOptions->eResampleAlg != GRA_NearestNeighbour 
         && psOptions->eResampleAlg != GRA_Bilinear
         && psOptions->eResampleAlg != GRA_Cubic
-        && psOptions->eResampleAlg != GRA_CubicSpline )
+        && psOptions->eResampleAlg != GRA_CubicSpline
+        && psOptions->eResampleAlg != GRA_Lanczos )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
