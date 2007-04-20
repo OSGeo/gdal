@@ -1679,6 +1679,7 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
  *
  * where sinc(x) = sin(PI * x) / (PI * x).
  */
+#define GWK_PI 3.14159265358979323846
 static double LanczosSinc( double dfX, double dfR )
 {
   if ( fabs(dfX) > dfR )
@@ -1686,9 +1687,10 @@ static double LanczosSinc( double dfX, double dfR )
   if ( dfX == 0.0 )
       return 1.0;
 
-  double dfPIX = M_PI * dfX;
+  double dfPIX = GWK_PI * dfX;
   return ( sin(dfPIX) / dfPIX ) * ( sin(dfPIX / dfR) * dfR / dfPIX );
 }
+#undef GWK_PI
 
 static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand, 
                                double dfSrcX, double dfSrcY,
