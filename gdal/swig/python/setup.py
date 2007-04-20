@@ -155,11 +155,12 @@ else:
 
 
 gdal_module = Extension('_gdal',
-                    sources=['gdal_wrap.cpp'],
-                    include_dirs = include_dirs,
-                    libraries = libraries,
-                    library_dirs = library_dirs,
-                    extra_link_args = extra_link_args)
+                        sources=['gdal_wrap.cpp'],
+                        include_dirs = include_dirs,
+                        libraries = libraries,
+                        library_dirs = library_dirs,
+                        extra_compile_args = ['-g'],
+                        extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('_gdalconst',
                     sources=['gdalconst_wrap.c'],
