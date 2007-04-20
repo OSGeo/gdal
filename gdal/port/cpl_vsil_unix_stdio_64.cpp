@@ -32,7 +32,7 @@
 
 #if !defined(WIN32) && !defined(WIN32CE)
 
-#include "cpl_vsi_private.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 
 #include <unistd.h>
