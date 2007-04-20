@@ -47,13 +47,13 @@ class ILI1Reader : public IILI1Reader
 private:
     FILE         *fpItf;
     int          nLayers;
-    OGRLayer     **papoLayers;
+    OGRILI1Layer **papoLayers;
     int          nAreaLayers;
-    OGRLayer     **papoAreaLayers;
-    OGRLayer     **papoAreaLineLayers;
+    OGRILI1Layer **papoAreaLayers;
+    OGRILI1Layer **papoAreaLineLayers;
     int          nSurfaceLayers;
-    OGRLayer     **papoSurfaceLayers;
-    OGRLayer     **papoSurfacePolyLayers;
+    OGRILI1Layer **papoSurfaceLayers;
+    OGRILI1Layer **papoSurfacePolyLayers;
     OGRILI1Layer *curLayer;
     double       arcIncr;
 
@@ -69,22 +69,22 @@ public:
     OGRGeometry  *ReadGeom(char **stgeom, OGRwkbGeometryType eType);
     char         **ReadParseLine();
 
-    void         AddLayer( OGRLayer * poNewLayer );
-    void         AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer );
-    void         AddSurfaceLayer( OGRLayer * poDataLayer,  OGRLayer * poPolyLayer );
+    void         AddLayer( OGRILI1Layer * poNewLayer );
+    void         AddAreaLayer( OGRILI1Layer * poAreaLayer,  OGRILI1Layer * poLineLayer );
+    void         AddSurfaceLayer( OGRILI1Layer * poDataLayer,  OGRILI1Layer * poPolyLayer );
     int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
     OGRMultiPolygon* Polygonize( OGRGeometryCollection* poLines );
     void         PolygonizeAreaLayers();
     void         JoinSurfaceLayers();
-    OGRLayer     *GetLayer( int );
-    OGRLayer     *GetLayerByName( const char* );
+    OGRILI1Layer *GetLayer( int );
+    OGRILI1Layer *GetLayerByName( const char* );
     int          GetLayerCount();
 
     const char*  GetLayerNameString(const char* topicname, const char* tablename);
     const char*  GetLayerName(IOM_BASKET model, IOM_OBJECT table);
-    void         AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj);
-    OGRLayer*    AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType);
-    void         AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj);
+    void         AddCoord(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj);
+    OGRILI1Layer* AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType);
+    void         AddField(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT obj);
     unsigned int GetCoordDim(IOM_BASKET model, IOM_OBJECT typeobj);
 };
 

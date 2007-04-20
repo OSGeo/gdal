@@ -119,6 +119,11 @@ void OGRILI1Layer::ResetReading(){
 /************************************************************************/
 
 OGRFeature *OGRILI1Layer::GetNextFeature() {
+    OGRFeature *poFeature = GetNextFeatureRef();
+    return poFeature ? poFeature->Clone() : NULL;
+}
+
+OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
     OGRFeature *poFeature = NULL;
     if (nFeatureIdx < nFeatures)
     {
@@ -128,7 +133,7 @@ OGRFeature *OGRILI1Layer::GetNextFeature() {
            || FilterGeometry( poFeature->GetGeometryRef() ) )
           && (m_poAttrQuery == NULL
               || m_poAttrQuery->Evaluate( poFeature )) )
-          return poFeature->Clone();
+          return poFeature;
     }
     return NULL;
 }
