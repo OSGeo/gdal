@@ -14,14 +14,14 @@ The KML driver has no coordinate system support at this time.<p>
 <h2>Creation Issues</h2>
 <p>KML is mix of formatting and feature data. When writing KML, attributes are added to
 the output with the following HTML structure:
-<pre>&lt;b>Attribute name&lt;/b>: Attribute content</pre>
+<pre><b>Attribute name</b>: Attribute content</pre>
 </p>
 <p>The OGR KML driver supports multiple layers of data.  
 Each input layer is translated into a separate KML "Folder" element.</p>
 <h2>Creation Options</h2>
 <p>The following creation options are supported:
 <ul>
-<li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name> element.
+<li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element.
 <pre>ogr2ogr -f KML output.kml input.shp -dsco NameField=RegionName</pre>
 </li>
 </ul>
@@ -35,6 +35,17 @@ KML:
 ogr2ogr -f KML output.kml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 </pre>
 </p>
+
+<h2>Caveats</h2>
+<p>
+The Google Earth seems to have some limits regarding the number of coordinates in complex geometries like polygons.
+If the problem appears, then problematic geometries are displayed completely or partially covered by vertical stripes.
+Unfortunately, there are no exact number given in the KML specification about this limitation, so the KML driver
+will not warn about potential problems. One of possible and tested solutions is to simplify a line or a polygon to remove
+some coordinates.
+Here is the whole discussion about this issue on the <a href="http://groups.google.com/group/kml-support">Google KML Developer Forum</a>, in the <a href="http://groups.google.com/group/kml-support-getting-started/browse_thread/thread/e6995b8073e69c41">polygon displays with vertical stripes</a> thread.
+</p>
+
 <h2>See Also</h2>
 <ul>
 <li> <a href="http://earth.google.com/kml/kml_intro.html">KML 2.0 Specification</a></li>
