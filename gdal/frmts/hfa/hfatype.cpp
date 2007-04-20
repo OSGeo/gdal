@@ -231,7 +231,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
 /*      Find this field within this type, if possible.                  */
 /* -------------------------------------------------------------------- */
     nByteOffset = 0;
-    for( iField = 0; iField < nFields; iField++ )
+    for( iField = 0; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
         if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
             && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
@@ -239,10 +239,12 @@ HFAType::SetInstValue( const char * pszFieldPath,
             break;
         }
 
-        nByteOffset += papoFields[iField]->GetInstBytes(pabyData+nByteOffset);
+        nByteOffset +=
+            papoFields[iField]->GetInstBytes( pabyData+nByteOffset,
+                                              nDataSize - nByteOffset );
     }
 
-    if( iField == nFields )
+    if( iField == nFields || nByteOffset >= nDataSize )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -302,7 +304,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /*      Find this field within this type, if possible.                  */
 /* -------------------------------------------------------------------- */
     nByteOffset = 0;
-    for( iField = 0; iField < nFields; iField++ )
+    for( iField = 0; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
         if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
             && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
@@ -310,10 +312,12 @@ HFAType::GetInstCount( const char * pszFieldPath,
             break;
         }
 
-        nByteOffset += papoFields[iField]->GetInstBytes(pabyData+nByteOffset);
+        nByteOffset +=
+            papoFields[iField]->GetInstBytes( pabyData + nByteOffset,
+                                              nDataSize - nByteOffset );
     }
 
-    if( iField == nFields )
+    if( iField == nFields || nByteOffset >= nDataSize )
         return -1;
 
 /* -------------------------------------------------------------------- */
@@ -384,7 +388,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 /*      Find this field within this type, if possible.                  */
 /* -------------------------------------------------------------------- */
     nByteOffset = 0;
-    for( iField = 0; iField < nFields; iField++ )
+    for( iField = 0; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
         if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
             && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
@@ -392,10 +396,12 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
             break;
         }
 
-        nByteOffset += papoFields[iField]->GetInstBytes(pabyData+nByteOffset);
+        nByteOffset +=
+            papoFields[iField]->GetInstBytes( pabyData + nByteOffset,
+                                              nDataSize - nByteOffset );
     }
 
-    if( iField == nFields )
+    if( iField == nFields || nByteOffset >= nDataSize )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -415,13 +421,13 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 /************************************************************************/
 
 void HFAType::DumpInstValue( FILE * fpOut,
-                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           const char * pszPrefix )
+                             GByte *pabyData, GUInt32 nDataOffset,
+                             int nDataSize, const char * pszPrefix )
 
 {
     int		iField;
     
-    for( iField = 0; iField < nFields; iField++ )
+    for ( iField = 0; iField < nFields && nDataSize > 0; iField++ )
     {
         HFAField	*poField = papoFields[iField];
         int		nInstBytes;
@@ -429,7 +435,7 @@ void HFAType::DumpInstValue( FILE * fpOut,
         poField->DumpInstValue( fpOut, pabyData, nDataOffset,
                                 nDataSize, pszPrefix );
 
-        nInstBytes = poField->GetInstBytes( pabyData );
+        nInstBytes = poField->GetInstBytes( pabyData, nDataSize );
 
         pabyData += nInstBytes;
         nDataOffset += nInstBytes;
@@ -443,7 +449,7 @@ void HFAType::DumpInstValue( FILE * fpOut,
 /*      How many bytes in this particular instance of this type?        */
 /************************************************************************/
 
-int HFAType::GetInstBytes( GByte * pabyData )
+int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
 
 {
     if( nBytes >= 0 )
@@ -453,12 +459,12 @@ int HFAType::GetInstBytes( GByte * pabyData )
         int	nTotal = 0;
         int	iField;
     
-        for( iField = 0; iField < nFields; iField++ )
+        for( iField = 0; iField < nFields && nTotal < nDataSize; iField++ )
         {
             HFAField	*poField = papoFields[iField];
-            int		nInstBytes;
 
-            nInstBytes = poField->GetInstBytes( pabyData );
+            int nInstBytes = poField->GetInstBytes( pabyData,
+                                                    nDataSize - nTotal );
 
             pabyData += nInstBytes;
             nTotal += nInstBytes;
