@@ -17,7 +17,7 @@ for my $module (keys %object) {
     WriteMakefile( NAME => $module,
 		   VERSION_FROM => 'lib/Geo/GDAL.pm',
 		   MAKEFILE => 'Makefile_'.$add,
-		   LIBS => "$libdir -L../../.libs -L../.. -lgdal$ext -lgeos$ext -lgeos_c$ext",
+		   LIBS => "$libdir -L/msys/1.0/local/lib -L../../.libs -L../.. -lgdal$ext",
 		   INC => '-I../../gcore -I../../alg -I../../ogr -I../../port',
 		   OBJECT => $object{$module}
 		   );
