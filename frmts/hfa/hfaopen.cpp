@@ -1184,7 +1184,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 
     nSize = strlen(pszPEString) + 9;
 
-    HFAStandard( 4, nSize );
+    HFAStandard( 4, &nSize );
     memcpy( pabyData, &nSize, 4 );
     pabyData += 4;
     
