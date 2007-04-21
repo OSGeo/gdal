@@ -1557,17 +1557,17 @@ static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand,
         return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
-    for ( i = -1; i < 3; i++ )
+    for ( j = -1; j < 3; j++ )
     {
-        double  dfWeight1 = BSpline((double)i - dfDeltaX);
+        double  dfWeight1 = BSpline((double)j - dfDeltaY);
 
-        for ( j = -1; j < 3; j++ )
+        for ( i = -1; i < 3; i++ )
         {
             if ( GWKGetPixelValue( poWK, iBand,
                                    iSrcOffset + i + j  * poWK->nSrcXSize,
                                    pdfDensity, pdfReal, pdfImag ) )
             {
-                double  dfWeight2 = dfWeight1 * BSpline(dfDeltaY - (double)j);
+                double  dfWeight2 = dfWeight1 * BSpline(dfDeltaX - (double)i);
 
                 dfAccumulatorReal += *pdfReal * dfWeight2;
                 dfAccumulatorImag += *pdfImag * dfWeight2;
@@ -1602,13 +1602,13 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
         return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY,
                                                pbValue);
 
-    for ( i = -1; i < 3; i++ )
+    for ( j = -1; j < 3; j++ )
     {
-        double  dfWeight1 = BSpline((double)i - dfDeltaX);
+        double  dfWeight1 = BSpline((double)j - dfDeltaY);
 
-        for ( j = -1; j < 3; j++ )
+        for ( i = -1; i < 3; i++ )
         {
-            double  dfWeight2 = dfWeight1 * BSpline(dfDeltaY - (double)j);
+            double  dfWeight2 = dfWeight1 * BSpline(dfDeltaX - (double)i);
 
             dfAccumulator +=
                 (double)poWK->papabySrcImage[iBand][iSrcOffset + i + j * poWK->nSrcXSize]
@@ -1645,13 +1645,13 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
         return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY,
                                                 piValue);
 
-    for ( i = -1; i < 3; i++ )
+    for ( j = -1; j < 3; j++ )
     {
-        double  dfWeight1 = BSpline((double)i - dfDeltaX);
+        double  dfWeight1 = BSpline((double)j - dfDeltaY);
 
-        for ( j = -1; j < 3; j++ )
+        for ( i = -1; i < 3; i++ )
         {
-            double  dfWeight2 = dfWeight1 * BSpline(dfDeltaY - (double)j);
+            double  dfWeight2 = dfWeight1 * BSpline(dfDeltaX - (double)i);
 
             dfAccumulator +=
                 (double)((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset + i + j * poWK->nSrcXSize]
@@ -1708,22 +1708,22 @@ static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand,
     int     i, j;
 
     // Get the bilinear interpolation at the image borders
-    if ( iSrcX - 1 < 0 || iSrcX + 1 >= poWK->nSrcXSize
-         || iSrcY - 1 < 0 || iSrcY + 1 >= poWK->nSrcYSize )
+    if ( iSrcX - 3 < 0 || iSrcX + 3 >= poWK->nSrcXSize
+         || iSrcY - 3 < 0 || iSrcY + 3 >= poWK->nSrcYSize )
         return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
-    for ( i = -1; i < 2; i++ )
+    for ( j = -3; j <= 3; j++ )
     {
-        double  dfWeight1 = LanczosSinc((double)i - dfDeltaX, 2.0);
+        double  dfWeight1 = LanczosSinc((double)j - dfDeltaY, 3.0);
 
-        for ( j = -1; j < 2; j++ )
+        for ( i = -3; i <= 3; i++ )
         {
             if ( GWKGetPixelValue( poWK, iBand,
                                    iSrcOffset + i + j  * poWK->nSrcXSize,
                                    pdfDensity, pdfReal, pdfImag ) )
             {
-                double  dfWeight2 = dfWeight1 * LanczosSinc(dfDeltaY - (double)j, 2.0);
+                double  dfWeight2 = dfWeight1 * LanczosSinc(dfDeltaX - (double)i, 2.0);
 
                 dfAccumulatorReal += *pdfReal * dfWeight2;
                 dfAccumulatorImag += *pdfImag * dfWeight2;
