@@ -24,14 +24,28 @@ In MinGW it is
    perl Makefile.PL
    make.bat 
    dmake -f Makefile_Geo__GDAL test
+   clean.bat
    dmake -f Makefile_Geo__GDAL install
 
-You may need to edit the Makefile.PL to add the path to the GEOS
-DLL's.
+You may need to edit the Makefile.PL to add the path to the GDAL DLL.
 
 DEPENDENCIES
 
-This module requires the GDAL and GEOS libraries.
+This module requires the GDAL library.
+
+DOCUMENTATION
+
+The documentation is maintained in Doxygen files. Doxygen is available
+at www.doxygen.org. You will also need Perl Doxygen Filter from
+http://www.bigsister.ch/doxygenfilter/ and my extension to it from
+http://map.hut.fi/files/doxygenfilter/. To generate the documentation
+type
+
+    doxygen
+
+You can find the documentation also at
+http://map.hut.fi/doc/Geo-GDAL/html/. However, Tthe comprehensive
+documentation of GDAL and OGR are at http://www.gdal.org/.
 
 COPYRIGHT AND LICENCE
 
