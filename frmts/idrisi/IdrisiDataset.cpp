@@ -1550,8 +1550,6 @@ CPLErr IdrisiRasterBand::SetStatistics( double dfMin, double dfMax, double dfMea
 
 CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
     // ----------------------------------------------------------
     // Update Bands Attribute Table
     // ----------------------------------------------------------
