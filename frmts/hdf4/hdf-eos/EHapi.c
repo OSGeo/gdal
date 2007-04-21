@@ -9,7 +9,6 @@ this permission notice appear in supporting documentation.
 #ifdef WIN32
 #include <windows.h>	//bwf
 #include <winbase.h>	//bwf
-#define sleep Sleep
 #endif
 
 #include <errno.h>
@@ -242,8 +241,6 @@ EHopen(char *filename, intn access)
                     HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
                     sprintf(errbuf, "\"%s\" cannot be opened for READ/WRITE access, will retry %d times.", filename,  (MAX_RETRIES - retryCount - 1));
                     HEreport("%s\n", errbuf);
-
-                    sleep(1);
                     }
                 retryCount++;
                 }
@@ -351,8 +348,6 @@ EHopen(char *filename, intn access)
                     HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
                     sprintf(errbuf, "\"%s\" cannot be opened for READONLY access, will retry %d times.", filename,  (MAX_RETRIES - retryCount - 1));
                     HEreport("%s\n", errbuf);
-
-                    sleep(1);
                     }
                 retryCount++;
                 }
