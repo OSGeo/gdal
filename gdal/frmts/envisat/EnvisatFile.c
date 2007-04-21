@@ -1039,7 +1039,7 @@ int EnvisatFile_SetKeyValueAsInt( EnvisatFile *self,
         return FAILURE;
     }
 
-    sprintf( format, "%%+0%dd", strlen(prototype_value) );
+    sprintf( format, "%%+0%dd", (int) strlen(prototype_value) );
     sprintf( string_value, format, value );
 
     return EnvisatFile_SetKeyValueAsString( self, mph_or_sph, key, string_value );
