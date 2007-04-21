@@ -86,7 +86,7 @@ INPUT                  = .
 FILE_PATTERNS          = *.pm \
 			*.dox
 RECURSIVE              = YES
-EXCLUDE                = 
+EXCLUDE                = blib
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = 
