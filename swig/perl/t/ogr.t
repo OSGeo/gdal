@@ -33,20 +33,8 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 %test_driver = ('ESRI Shapefile' => 1,
 		'MapInfo File' => 1,
-		'UK .NTF' => 0,
-		'SDTS' => 0,
-		'TIGER' => 0,
-		'S57' => 0,
-		'DGN' => 0,
-		'VRT' => 0,
-		'AVCBin' => 0,
-		'REC' => 0,
 		'Memory' => 1,
-		'CSV' => 0,
-		'GML' => 0,
-		'GMT' => 0,
-		'OGDI' => 0,
-		'PostgreSQL' => 0);
+		);
 
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
