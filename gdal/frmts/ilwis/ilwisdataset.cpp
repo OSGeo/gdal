@@ -29,6 +29,7 @@
 
 #include "ilwisdataset.h"
 #include <float.h>
+#include <climits>
 
 // IniFile.cpp: implementation of the IniFile class.
 //
