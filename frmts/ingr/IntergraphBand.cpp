@@ -92,9 +92,6 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // Get Color Tabel from Color Table Type (CTV)
     // -------------------------------------------------------------------- 
 
-    INGR_ColorTableVar hEnvrTable;
-    INGR_ColorTable256 hIGDSTable;
-
     uint32 nEntries = hHeaderTwo.NumberOfCTEntries;
 
     if( nEntries > 0 )
@@ -133,12 +130,12 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
 
     if( bTiled )
     {
-        uint32 nTiles = INGR_GetTileDirectory( poDS->fp, 
-                                               nDataOffset, 
-                                               nRasterXSize, 
-                                               nRasterYSize,
-                                               &hTileDir, 
-                                               &pahTiles );
+        INGR_GetTileDirectory( poDS->fp, 
+                               nDataOffset, 
+                               nRasterXSize, 
+                               nRasterYSize,
+                               &hTileDir, 
+                               &pahTiles );
 
         eFormat = (INGR_Format) hTileDir.DataTypeCode;
 
