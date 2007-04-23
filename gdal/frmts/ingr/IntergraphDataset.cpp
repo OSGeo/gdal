@@ -92,7 +92,6 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // -------------------------------------------------------------------- 
 
     INGR_HeaderOne  *pHeaderOne = ( INGR_HeaderOne* ) poOpenInfo->pabyHeader;
-//??INGR_HeaderTwoA *pHeaderTwo = ( INGR_HeaderTwoA* ) pHeaderOne + 1;
 
     // -------------------------------------------------------------------- 
     // Check Header Type (HTC) Version
@@ -278,12 +277,6 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->SetMetadataItem( "FILE_VERSION", 
         CPLSPrintf ( "%d", pHeaderOne->GridFileVersion ) );
-
-    // -------------------------------------------------------------------- 
-    // Get Data type approprieted for Format
-    // -------------------------------------------------------------------- 
-
-//??    GDALDataType eType = INGR_GetDataType( eFormat );
 
     // -------------------------------------------------------------------- 
     // Create Band Information
@@ -620,7 +613,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
         int   iYOffset, iXOffset;
         void *pData;
 
-        poSrcBand->GetBlockSize( &nBlockXSize, &nBlockYSize ); //??
+        poSrcBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
         nBlockXSize = nXSize;
         nBlockYSize = 1;

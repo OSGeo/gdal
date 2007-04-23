@@ -354,9 +354,8 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
     // -------------------------------------------------------------
 
     GDALColorEntry oEntry;
-    int i;
 
-    for( i = 0; i < nEntries; i++ )
+    for( unsigned int i = 0; i < nEntries; i++ )
     {
         oEntry.c1 = (short) hIGDSColors.Entry[i].v_red;
         oEntry.c2 = (short) hIGDSColors.Entry[i].v_green;
