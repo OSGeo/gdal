@@ -3,7 +3,7 @@
 *
 * Project:  Idrisi Raster Image File Driver
 * Purpose:  Read/write Idrisi Raster Image Format RST
-* Author:   Ivan Lucena, ivan@ilucena.net
+* Author:   Ivan Lucena, ivan.lucena@pmldnet.com
 *
 ******************************************************************************
 * Copyright( c ) 2006, Ivan Lucena
@@ -1265,6 +1265,8 @@ double IdrisiRasterBand::GetNoDataValue( int *pbSuccess )
         pszFlagDefn = CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN );
     else if( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN2 ) != NULL )
         pszFlagDefn = CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN2 );
+    else
+        pszFlagDefn = CPLStrdup( "none" );
 
     // ------------------------------------------------------------------------
     // If Flag_Def is not "none", Flag_Value means "background" 
