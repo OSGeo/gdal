@@ -79,7 +79,12 @@ OGRGRASSDataSource::~OGRGRASSDataSource()
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
+
+#if GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3
+typedef int (*GrassErrorHandler)(const char *, int);
+#else
 typedef int (*GrassErrorHandler)(char *, int);
+#endif
 
 int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
                               int bTestOpen, int bSingleNewFileIn )
