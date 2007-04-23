@@ -26,18 +26,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: avc_mbyte.c,v $
- * Revision 1.3  2005/06/03 03:49:59  daniel
- * Update email address, website url, and copyright dates
- *
- * Revision 1.2  2000/09/22 19:45:21  daniel
- * Switch to MIT-style license
- *
- * Revision 1.1  2000/05/29 15:31:03  daniel
- * Initial revision - Japanese support
- *
  **********************************************************************/
 
 #include "avc.h"
