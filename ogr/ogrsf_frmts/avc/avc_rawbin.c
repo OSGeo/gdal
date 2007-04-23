@@ -27,48 +27,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: avc_rawbin.c,v $
- * Revision 1.13  2005/06/03 03:49:59  daniel
- * Update email address, website url, and copyright dates
- *
- * Revision 1.12  2004/08/19 23:41:04  warmerda
- * fixed pointer aliasing optimization bug
- *
- * Revision 1.11  2000/09/22 19:45:21  daniel
- * Switch to MIT-style license
- *
- * Revision 1.10  2000/05/29 15:36:07  daniel
- * Fixed compile warning
- *
- * Revision 1.9  2000/05/29 15:31:31  daniel
- * Added Japanese DBCS support
- *
- * Revision 1.8  2000/01/10 02:59:11  daniel
- * Fixed problem in AVCRawBinOpen() when file not found
- *
- * Revision 1.7  1999/12/24 07:18:34  daniel
- * Added PC Arc/Info coverages support
- *
- * Revision 1.6  1999/08/29 15:05:43  daniel
- * Added source filename in "Attempt to read past EOF" error message
- *
- * Revision 1.5  1999/06/08 22:09:03  daniel
- * Allow opening file with "r+" (but no real random access support yet)
- *
- * Revision 1.4  1999/05/11 02:10:51  daniel
- * Added write support
- *
- * Revision 1.3  1999/03/03 19:55:21  daniel
- * Fixed syntax error in the CPL_MSB version of AVCRawBinReadInt32()
- *
- * Revision 1.2  1999/02/25 04:20:08  daniel
- * Modified AVCRawBinEOF() to detect EOF even if AVCRawBinFSeek() was used.
- *
- * Revision 1.1  1999/01/29 16:28:52  daniel
- * Initial revision
- *
  **********************************************************************/
 
 #include "avc.h"

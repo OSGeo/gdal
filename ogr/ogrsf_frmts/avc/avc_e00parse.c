@@ -27,66 +27,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: avc_e00parse.c,v $
- * Revision 1.18  2006/06/27 18:06:34  dmorissette
- * Applied patch for EOP processing from James F. (bug 1497)
- *
- * Revision 1.17  2006/06/19 14:35:47  dmorissette
- * New patch from James F. for E00 read support in OGR (bug 1497)
- *
- * Revision 1.16  2006/06/16 11:48:11  daniel
- * New functions to read E00 files directly as opposed to translating to
- * binary coverage. Used in the implementation of E00 read support in OGR.
- * Contributed by James E. Flemer. (bug 1497)
- *
- * Revision 1.15  2006/03/02 22:46:26  daniel
- * Accept empty subclass names for TX6/TX7 sections (bug 1261)
- *
- * Revision 1.14  2005/06/03 03:49:58  daniel
- * Update email address, website url, and copyright dates
- *
- * Revision 1.13  2002/08/27 15:43:02  daniel
- * Small typo in type 40 fix (forgot to commit to CVS on 2002-08-05)
- *
- * Revision 1.12  2002/08/05 20:20:17  daniel
- * Fixed parsing type 40 fields to properly detect negative exp. (bug 1272)
- *
- * Revision 1.11  2001/11/25 21:15:23  daniel
- * Added hack (AVC_MAP_TYPE40_TO_DOUBLE) to map type 40 fields bigger than 8
- * digits to double precision as we generate E00 output (bug599)
- *
- * Revision 1.10  2001/11/25 19:45:32  daniel
- * Fixed reading of type 40 when not in exponent format (bug599)
- *
- * Revision 1.9  2001/07/12 20:59:34  daniel
- * Properly handle PAL entries with 0 arcs
- *
- * Revision 1.8  2000/09/22 19:45:20  daniel
- * Switch to MIT-style license
- *
- * Revision 1.7  2000/03/16 03:48:00  daniel
- * Accept 0-length text strings in TX6/TX7 objects
- *
- * Revision 1.6  2000/02/03 07:21:40  daniel
- * TXT/TX6 with string longer than 80 chars: split string in 80 chars chunks
- *
- * Revision 1.5  1999/12/05 03:40:13  daniel
- * Fixed signed/unsigned mismatch compile warning
- *
- * Revision 1.4  1999/11/23 05:27:58  daniel
- * Added AVCE00Str2Int() to extract integer values in E00 lines
- *
- * Revision 1.3  1999/08/23 18:20:49  daniel
- * Fixed support for attribute fields type 40
- *
- * Revision 1.2  1999/05/17 16:20:48  daniel
- * Added RXP + TXT/TX6/TX7 write support + some simple problems fixed
- *
- * Revision 1.1  1999/05/11 02:34:46  daniel
- * Initial revision
- *
  **********************************************************************/
 
 #include "avc.h"

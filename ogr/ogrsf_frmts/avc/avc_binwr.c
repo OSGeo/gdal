@@ -26,61 +26,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: avc_binwr.c,v $
- * Revision 1.17  2006/06/14 16:31:28  daniel
- * Added support for AVCCoverPC2 type (bug 1491)
- *
- * Revision 1.16  2005/06/03 03:49:58  daniel
- * Update email address, website url, and copyright dates
- *
- * Revision 1.15  2001/07/06 05:09:33  daniel
- * Removed #ifdef around fseek to fix NT4 drive problem since ANSI-C requires
- * an fseek() between read and write operations so this applies to Unix too.
- *
- * Revision 1.14  2001/07/06 04:25:00  daniel
- * Fixed a problem writing arc.dir on NT4 networked drives in an empty dir.
- *
- * Revision 1.13  2000/10/16 16:13:29  daniel
- * Fixed sHeader.nPrecision when writing PC TXT files
- *
- * Revision 1.12  2000/09/26 21:40:18  daniel
- * Fixed writing of PC Coverage TXT... they're different from V7 TXT
- *
- * Revision 1.11  2000/09/26 20:21:04  daniel
- * Added AVCCoverPC write
- *
- * Revision 1.10  2000/09/22 19:45:20  daniel
- * Switch to MIT-style license
- *
- * Revision 1.9  2000/05/29 15:31:30  daniel
- * Added Japanese DBCS support
- *
- * Revision 1.8  2000/01/10 02:55:12  daniel
- * Added call to AVCAdjustCaseSensitiveFilename() when creating tables
- *
- * Revision 1.7  1999/12/24 07:18:34  daniel
- * Added PC Arc/Info coverages support
- *
- * Revision 1.6  1999/08/26 17:26:09  daniel
- * Removed printf() messages used in Windows tests
- *
- * Revision 1.5  1999/08/23 18:18:51  daniel
- * Fixed memory leak and some VC++ warnings
- *
- * Revision 1.4  1999/06/08 22:08:14  daniel
- * Modified CreateTable() to overwrite existing arc.dir entries if necessary
- *
- * Revision 1.3  1999/06/08 18:24:32  daniel
- * Fixed some problems with '/' vs '\\' on Windows
- *
- * Revision 1.2  1999/05/17 16:17:36  daniel
- * Added RXP + TXT/TX6/TX7 write support
- *
- * Revision 1.1  1999/05/11 02:34:46  daniel
- * Initial revision
- *
  **********************************************************************/
 
 #include "avc.h"
