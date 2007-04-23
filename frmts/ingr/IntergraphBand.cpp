@@ -3,7 +3,7 @@
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Read/Write Intergraph Raster Format, band support
- * Author:   Ivan Lucena, ivan@ilucena.net
+ * Author:   Ivan Lucena, ivan.lucena@pmldnet.com
  *
  ******************************************************************************
  * Copyright (c) 2007, Ivan Lucena
@@ -97,30 +97,20 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
 
     uint32 nEntries = hHeaderTwo.NumberOfCTEntries;
 
-    if( ( nEntries > 0 ) && ( hHeaderTwo.ColorTableType == EnvironVColorTable ) )
+    if( nEntries > 0 )
     {
-        // ----------------------------------------------------------------
-        // Get EnvironV color table starting at block 3
-        // ----------------------------------------------------------------
-
-        hEnvrTable.Entry = (vlt_slot*) CPLCalloc( nEntries, sizeof( vlt_slot ) );
-
-        VSIFSeekL( poDS->fp, nBandOffset + ( 2 * SIZEOF_HDR1 ), SEEK_SET );
-        VSIFReadL( hEnvrTable.Entry, nEntries, sizeof( vlt_slot ), poDS->fp );
-
-        INGR_GetEnvironVColors( poColorTable, &hEnvrTable, nEntries );
-        CPLFree( hEnvrTable.Entry );
-    }
-    else if( ( nEntries > 0 ) && ( hHeaderTwo.ColorTableType == IGDSColorTable ) )
-    {
-        // ----------------------------------------------------------------
-        // Get IGDS (fixed size) starting in the middle of block 2 + 1.5 blocks
-        // ----------------------------------------------------------------
-
-        VSIFSeekL( poDS->fp, nBandOffset + SIZEOF_HDR1 + SIZEOF_HDR2_A, SEEK_SET );
-        VSIFReadL( hIGDSTable.Entry, 256, sizeof( igds_slot ), poDS->fp );
-
-        INGR_GetIGDSColors( poColorTable, &hIGDSTable );
+        switch ( hHeaderTwo.ColorTableType )
+        {
+        case EnvironVColorTable:
+            INGR_GetEnvironVColors( poDS->fp, nBandOffset, nEntries, poColorTable );
+            break;
+        case IGDSColorTable:
+            INGR_GetIGDSColors( poDS->fp, nBandOffset, nEntries, poColorTable );
+            break;
+        default:
+            CPLDebug( "INGR", "Wrong Color table type (%d), number of colors (%d)", 
+                hHeaderTwo.ColorTableType, nEntries );
+        }
     }
 
     // -------------------------------------------------------------------- 
@@ -143,37 +133,14 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
 
     if( bTiled )
     {
-        // ----------------------------------------------------------------
-        // Reads tile header and the first tile info
-        // ----------------------------------------------------------------
-
-        VSIFSeekL( poDS->fp, nDataOffset, SEEK_SET );
-        VSIFReadL( &hTileDir, 1, SIZEOF_TDIR, poDS->fp );
+        uint32 nTiles = INGR_GetTileDirectory( poDS->fp, 
+                                               nDataOffset, 
+                                               nRasterXSize, 
+                                               nRasterYSize,
+                                               &hTileDir, 
+                                               &pahTiles );
 
         eFormat = (INGR_Format) hTileDir.DataTypeCode;
-
-        // ----------------------------------------------------------------
-        // Calculate the number of tiles
-        // ----------------------------------------------------------------
-
-        int nTilesPerCol = (int) ceil( (float) nRasterXSize / hTileDir.TileSize );
-        int nTilesPerRow = (int) ceil( (float) nRasterYSize / hTileDir.TileSize );
-
-        nTiles = nTilesPerCol * nTilesPerRow;
-
-        // ----------------------------------------------------------------
-        // Load the tile table (first tile info is already read)
-        // ----------------------------------------------------------------
-
-        pahTiles  = (INGR_TileItem*) CPLCalloc( nTiles, SIZEOF_TILE );
-        pahTiles[0].Start      = hTileDir.First.Start;
-        pahTiles[0].Allocated  = hTileDir.First.Allocated;
-        pahTiles[0].Used       = hTileDir.First.Used;
-
-        if( nTiles > 1 )
-        {
-            VSIFReadL( &pahTiles[1], nTiles - 1, SIZEOF_TILE, poDS->fp );
-        }
 
         // ----------------------------------------------------------------
         // Set blocks dimensions based on tiles
@@ -208,7 +175,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         SetMetadataItem( "INGR_ROTATION", 
             CPLSPrintf ( "%f", hHeaderOne.RotationAngle ) );
      
-    SetMetadataItem( "INGR_ORIENTATION", IngrOrientation[hHeaderOne.ScanlineOrientation] );
+    SetMetadataItem( "INGR_ORIENTATION", INGR_GetOrientation( hHeaderOne.ScanlineOrientation ) );
 
     if( hHeaderOne.ScannableFlag == HasLineHeader )
         SetMetadataItem( "INGR_SCANFLAG", "YES" );
@@ -480,9 +447,9 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
 {
     if( ! this->bTiled )
     {
-        // ----------------------------------------------------------------
+        // ------------------------------------------------------------
         // Load all rows at once
-        // ----------------------------------------------------------------
+        // ------------------------------------------------------------
 
         nBlockYSize         = nRasterYSize;
         this->bVirtualTile  = TRUE;
@@ -510,6 +477,19 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
 
 		poColorTable->SetColorEntry( 1, &oEntry );
 	}
+
+    // ----------------------------------------------------------------
+    // Read JPEG Quality from Application Data
+    // ----------------------------------------------------------------
+
+	if( eFormat == JPEGGRAY ||
+		eFormat == JPEGRGB  ||
+		eFormat == JPEGCYMK )
+	{
+        nQuality = INGR_ReadJpegQuality( poDS->fp, 
+            hHeaderTwo.ApplicationPacketPointer,
+            nDataOffset );
+	}
 }
 
 //  ----------------------------------------------------------------------------
@@ -522,6 +502,10 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 {
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
+    // ----------------------------------------------------------------
+	// Load the block of a tile or a whole image
+    // ----------------------------------------------------------------
+
     if( LoadBlockBuf( nBlockXOff, nBlockYOff ) != CE_None )
     {
         memset( pImage, 0, nBlockBufSize );
@@ -531,39 +515,53 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
         return CE_Failure;
     }
 
+    // ----------------------------------------------------------------
+	// Calcule the resulting image dimmention
+    // ----------------------------------------------------------------
+
     int nTiffXSize = nBlockXSize;
     int nTiffYSize = nBlockYSize; 
 
-    if( bTiled && ( nBlockXOff + 1 == nBlocksPerRow ) && ( nRasterXSize > nTiffYSize ) )
+    if( bTiled && 
+	  ( nBlockXOff + 1 == nBlocksPerRow ) &&	// left block 
+	  ( nRasterXSize > nTiffYSize ) )			// smaller than a tile
     {
         nTiffXSize = nRasterXSize % nBlockXSize;
     }
 
-    if( bTiled && ( nBlockYOff + 1 == nBlocksPerColumn ) && ( nRasterYSize > nTiffYSize ))
+    if( bTiled && 
+	  ( nBlockYOff + 1 == nBlocksPerColumn ) &&	// bottom block 
+	  ( nRasterYSize > nTiffYSize ) )			// smaller than a tile
     {
         nTiffYSize = nRasterYSize % nBlockYSize;
     }
 
+    // ----------------------------------------------------------------
+	// Create a in memory a smal (~400K) tiff file
+    // ----------------------------------------------------------------
+
     poGDS->hTiffMem = INGR_CreateTiff( poGDS->pszFilename, eFormat,
-                                       nTiffXSize, nTiffYSize, 
+                                       nTiffXSize, nTiffYSize, nQuality,
                                        pabyBlockBuf, nBytesRead );
 
     if( poGDS->hTiffMem.poDS == NULL )
     {
         memset( pImage, 0, nBlockBufSize );
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to open TIFF virtual file.\n"
-                  "Is the GTIFF driver available?" );
+			"Unable to open TIFF virtual file.\n"
+			"Is the GTIFF driver available?" );
         return CE_Failure;
     }
 
+    // ----------------------------------------------------------------
+	// Read the unique block of the in memory tiff and release it
+    // ----------------------------------------------------------------
+
     poGDS->hTiffMem.poBand->ReadBlock( 0, 0, pImage );
 
-    delete poGDS->hTiffMem.poDS;
+	INGR_ReleaseTiff( &poGDS->hTiffMem );
 
-    VSIUnlink( poGDS->hTiffMem.pszFileName );
-
-    // --------------------------------------------------------------------
+	// --------------------------------------------------------------------
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 

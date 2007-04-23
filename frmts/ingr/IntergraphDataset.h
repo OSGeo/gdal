@@ -3,7 +3,7 @@
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Read selected types of Intergraph Raster Format
- * Author:   Ivan Lucena, ivan@ilucena.net
+ * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
  *
  ******************************************************************************
  * Copyright (c) 2007, Ivan Lucena
