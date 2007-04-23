@@ -406,7 +406,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                  aiStart, NULL, aiEdges, pImage ) < 0 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                              "GDreadfield() failed for block." );
+                              "SWreadfield() failed for block." );
                     eErr = CE_Failure;
                 }
                 SWdetach( hSW );
@@ -2167,9 +2167,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             break;
                         }
                     }
-
-                    if ( i == nDimCount )
-                            poDS->nBands = poDS->aiDimSizes[0];
                 }
 
                 // Search for the "XDim" and "YDim" names or take the last
@@ -2179,10 +2176,27 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 for ( i = 0; i < nDimCount; i++ )
                 {
-                    if ( EQUALN( papszDimList[i], "X", 1 ) )
+                    if ( EQUALN( papszDimList[i], "X", 1 )
+                         && poDS->iBandDim != i )
                         poDS->iXDim = i;
-                    else if ( EQUALN( papszDimList[i], "Y", 1 ) )
+                    else if ( EQUALN( papszDimList[i], "Y", 1 ) 
+                              && poDS->iBandDim != i )
                         poDS->iYDim = i;
+                }
+
+                // If didn't get a band dimension yet, but have an extra
+                // dimension, use it as the band dimension. 
+
+                if( poDS->iRank > 2 && poDS->iBandDim == -1 )
+                {
+                    if( poDS->iXDim != 0 && poDS->iYDim != 0 )
+                        poDS->iBandDim = 0;
+                    else if( poDS->iXDim != 1 && poDS->iYDim != 1 )
+                        poDS->iBandDim = 1;
+                    else if( poDS->iXDim != 2 && poDS->iYDim != 2 )
+                        poDS->iBandDim = 2;
+
+                    poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
                 }
 
                 // Fetch projection information
