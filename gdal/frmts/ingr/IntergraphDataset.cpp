@@ -3,7 +3,7 @@
 *
 * Project:  Intergraph Raster Format support
 * Purpose:  Read/Write Intergraph Raster Format, dataset support
-* Author:   Ivan Lucena, ivan@ilucena.net
+* Author:   Ivan Lucena, ivan.lucena@pmldnet.com
 *
 ******************************************************************************
 * Copyright (c) 2007, Ivan Lucena
@@ -160,7 +160,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     INGR_Format eFormat = (INGR_Format) pHeaderOne->DataTypeCode;
 
     // -------------------------------------------------------------------- 
-    // Check integrity of tiled data
+    // Get Format Type from the tile directory
     // -------------------------------------------------------------------- 
 
     if( pHeaderOne->DataTypeCode == TiledRasterData )
@@ -169,22 +169,27 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
         int nOffset = 2 + ( 2 * ( pHeaderOne->WordsToFollow + 1 ) );
 
-        // ----------------------------------------------------------------
-        // Get Format Type from the tile directory
-        // ----------------------------------------------------------------
-
-        if( (VSIFSeek( poOpenInfo->fp, nOffset, SEEK_SET ) != 0 )  ||
-            (VSIFRead( &hTileDir, 1, sizeof( INGR_TileHeader ), poOpenInfo->fp ) ) );
+        if( (VSIFSeek( poOpenInfo->fp, nOffset, SEEK_SET ) == -1 )  ||
+            (VSIFRead( &hTileDir, 1, SIZEOF_TDIR, poOpenInfo->fp ) == 0) )
         {
-            if( hTileDir.ApplicationType     == 1 &&
-                hTileDir.SubTypeCode         == 7 &&
-                ( hTileDir.WordsToFollow % 4 ) == 0 &&
-                hTileDir.PacketVersion       == 1 &&
-                hTileDir.Identifier          == 1 )
-            {
-                eFormat = (INGR_Format) hTileDir.DataTypeCode;
-            }
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Error reading tiles header" );
+            return NULL;
         }
+
+        if( !
+          ( hTileDir.ApplicationType     == 1 &&
+            hTileDir.SubTypeCode         == 7 &&
+            ( hTileDir.WordsToFollow % 4 ) == 0 &&
+            hTileDir.PacketVersion       == 1 &&
+            hTileDir.Identifier          == 1 ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Cannot recognize tiles header info");
+            return NULL;
+        }
+            
+        eFormat = (INGR_Format) hTileDir.DataTypeCode;
     }
 
     // -------------------------------------------------------------------- 
