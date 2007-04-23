@@ -785,7 +785,11 @@ bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
 /*                                Open()                                */
 /************************************************************************/
 
+#if GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3
+typedef int (*GrassErrorHandler)(const char *, int);
+#else
 typedef int (*GrassErrorHandler)(char *, int);
+#endif
 
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
