@@ -266,6 +266,70 @@ def osr_esri_8():
 
     return 'success'
 
+###############################################################################
+# Verify Equidistant Conic handling.
+
+def osr_esri_9():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'PROJCS["edc",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-96.0],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["Latitude_Of_Origin",37.5],UNIT["Meter",1.0]]' )
+
+    expected = 'PROJCS["edc",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["longitude_of_center",-96.0],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["latitude_of_center",37.5],UNIT["Meter",1.0]]'
+    
+    srs.MorphFromESRI()
+    wkt = srs.ExportToWkt()
+    if wkt != expected:
+        print
+        print 'Got:      ', wkt
+        print 'Expected: ', expected
+        gdaltest.post_reason( 'Did not get expected Equidistant Conic SRS after morphFromESRI' )
+        return 'fail'
+
+    expected = 'PROJCS["edc",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equidistant_Conic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["central_meridian",-96.0],PARAMETER["Standard_Parallel_1",29.5],PARAMETER["Standard_Parallel_2",45.5],PARAMETER["latitude_of_origin",37.5],UNIT["Meter",1.0]]'
+    
+    srs.MorphToESRI()
+    wkt = srs.ExportToWkt()
+    if wkt != expected:
+        print
+        print 'Got:      ', wkt
+        print 'Expected: ', expected
+        gdaltest.post_reason( 'Did not get expected Equidistant Conic SRS after morphToESRI' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Verify Plate_Carree handling.
+
+def osr_esri_10():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Plate_Carree"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]' )
+
+    expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["Not_specified_based_on_Authalic_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]'
+    
+    srs.MorphFromESRI()
+    wkt = srs.ExportToWkt()
+    if wkt != expected:
+        print
+        print 'Got:      ', wkt
+        print 'Expected: ', expected
+        gdaltest.post_reason( 'Did not get expected Equirectangular SRS after morphFromESRI' )
+        return 'fail'
+
+    expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Plate_Carree"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]'
+    
+    srs.MorphToESRI()
+    wkt = srs.ExportToWkt()
+    if wkt != expected:
+        print
+        print 'Got:      ', wkt
+        print 'Expected: ', expected
+        gdaltest.post_reason( 'Did not get expected Plate_Caree SRS after morphToESRI' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_esri_1,
     osr_esri_2,
@@ -275,6 +339,8 @@ gdaltest_list = [
     osr_esri_6,
     osr_esri_7,
     osr_esri_8,
+    osr_esri_9,
+    osr_esri_10,
     None ]
 
 if __name__ == '__main__':
