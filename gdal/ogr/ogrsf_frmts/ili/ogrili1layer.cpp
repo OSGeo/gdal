@@ -139,6 +139,25 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
 }
 
 /************************************************************************/
+/*                             GetFeatureRef()                          */
+/************************************************************************/
+
+OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
+
+{
+    OGRFeature *poFeature;
+
+    ResetReading();
+    while( (poFeature = GetNextFeatureRef()) != NULL )
+    {
+        if( poFeature->GetFID() == nFID )
+            return poFeature;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
