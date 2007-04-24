@@ -460,7 +460,6 @@ void ILI1Reader::PolygonizeAreaLayers()
 
 void ILI1Reader::JoinSurfaceLayers()
 {
-OGRGeometry* firstGeom = NULL;
     for(int iLayer = 0; iLayer < nSurfaceLayers; iLayer++ )
     {
       OGRILI1Layer *poSurfaceLayer = papoSurfaceLayers[iLayer];
@@ -499,7 +498,7 @@ int ILI1Reader::ReadTable() {
       firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
       {
-        //Check for featres spread over mutltiple objects
+        //Check for features spread over multiple objects
         if (featureDef->GetGeomType() == wkbPolygon)
         {
           //Multiple polygon rings
