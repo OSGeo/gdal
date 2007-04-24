@@ -2019,6 +2019,7 @@ CPLErr HFADataset::ReadProjection()
                             psPro->proParams[6], psPro->proParams[7] );
         break;
 
+      case EPRJ_PLATE_CARREE:
       case EPRJ_EQUIRECTANGULAR:
         oSRS.SetEquirectangular(
             psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
