@@ -2816,7 +2816,62 @@ OGRErr OSRSetEC( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                             SetEckert()                              */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetEckert( int nVariation /* 1-6 */,
+                                       double dfCentralMeridian,
+                                       double dfFalseEasting,
+                                       double dfFalseNorthing )
+
+{
+    if( nVariation == 1 )
+        SetProjection( SRS_PT_ECKERT_I );
+    else if( nVariation == 2 )
+        SetProjection( SRS_PT_ECKERT_II );
+    else if( nVariation == 3 )
+        SetProjection( SRS_PT_ECKERT_III );
+    else if( nVariation == 4 )
+        SetProjection( SRS_PT_ECKERT_IV );
+    else if( nVariation == 5 )
+        SetProjection( SRS_PT_ECKERT_V );
+    else if( nVariation == 6 )
+        SetProjection( SRS_PT_ECKERT_VI );
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported Eckert variation (%d).", 
+                  nVariation );
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCentralMeridian );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetEckert()                            */
+/************************************************************************/
+
+OGRErr OSRSetEckert( OGRSpatialReferenceH hSRS, 
+                     int nVariation,
+                     double dfCentralMeridian,
+                     double dfFalseEasting,
+                     double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetEckert( 
+        nVariation, dfCentralMeridian,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetEckertIV()                             */
+/*                                                                      */
+/*      Deprecated                                                      */
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetEckertIV( double dfCentralMeridian,
@@ -2849,6 +2904,8 @@ OGRErr OSRSetEckertIV( OGRSpatialReferenceH hSRS,
 
 /************************************************************************/
 /*                            SetEckertVI()                             */
+/*                                                                      */
+/*      Deprecated                                                      */
 /************************************************************************/
 
 OGRErr OGRSpatialReference::SetEckertVI( double dfCentralMeridian,

@@ -294,11 +294,13 @@ class CPL_DLL OGRSpatialReference
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-    /** Eckert IV */
+    /** Eckert I-VI */
+    OGRErr      SetEckert( int nVariation, double dfCentralMeridian,
+                           double dfFalseEasting, double dfFalseNorthing );
+
     OGRErr      SetEckertIV( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
-    /** Eckert VI */
     OGRErr      SetEckertVI( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
