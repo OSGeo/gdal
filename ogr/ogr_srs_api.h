@@ -88,7 +88,11 @@ typedef enum {
 #define SRS_PT_CASSINI_SOLDNER  "Cassini_Soldner"
 #define SRS_PT_CYLINDRICAL_EQUAL_AREA "Cylindrical_Equal_Area"
 #define SRS_PT_BONNE            "Bonne"
+#define SRS_PT_ECKERT_I         "Eckert_I"
+#define SRS_PT_ECKERT_II        "Eckert_II"
+#define SRS_PT_ECKERT_III       "Eckert_III"
 #define SRS_PT_ECKERT_IV        "Eckert_IV"
+#define SRS_PT_ECKERT_V         "Eckert_V"
 #define SRS_PT_ECKERT_VI        "Eckert_VI"
 #define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
 #define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
@@ -369,6 +373,11 @@ OGRErr CPL_DLL OSRSetCS( OGRSpatialReferenceH hSRS, double dfCenterLat, double d
 OGRErr CPL_DLL OSRSetEC( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
+
+/** Eckert I-VI */
+OGRErr CPL_DLL OSRSetEckert( OGRSpatialReferenceH hSRS,  int nVariation,
+                             double dfCentralMeridian,
+                             double dfFalseEasting, double dfFalseNorthing );
 
 /** Eckert IV */
 OGRErr CPL_DLL OSRSetEckertIV( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
