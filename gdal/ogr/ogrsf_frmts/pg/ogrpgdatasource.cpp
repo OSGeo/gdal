@@ -465,7 +465,7 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
         OGRPGClearResult( hResult );
     }
 
-    sprintf( szCommand, "DROP TABLE %s.\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
+    sprintf( szCommand, "DROP TABLE \"%s\".\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     OGRPGClearResult( hResult );
@@ -616,7 +616,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if( !bHavePostGIS )
     {
         sprintf( szCommand,
-                 "CREATE TABLE %s.\"%s\" ( "
+                 "CREATE TABLE \"%s\".\"%s\" ( "
                  "   OGC_FID SERIAL, "
                  "   WKB_GEOMETRY %s, "
                  "   CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
@@ -625,7 +625,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     else
     {
         sprintf( szCommand,
-                 "CREATE TABLE %s.\"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                 "CREATE TABLE \"%s\".\"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
                  pszSchemaName, pszTableName, pszTableName );
     }
 
