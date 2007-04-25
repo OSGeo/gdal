@@ -2110,6 +2110,12 @@ CPLErr HFADataset::ReadProjection()
             psPro->proParams[6], psPro->proParams[7] );
         break;
 
+      case EPRJ_EQUIDISTANT_CYLINDRICAL:
+        oSRS.SetEquirectangular(
+            psPro->proParams[2]*R2D, psPro->proParams[4]*R2D,
+            psPro->proParams[6], psPro->proParams[7] );
+        break;
+
       case EPRJ_MILLER_CYLINDRICAL:
         oSRS.SetMC( 0.0, psPro->proParams[4]*R2D,
                     psPro->proParams[6], psPro->proParams[7] );
