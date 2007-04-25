@@ -790,6 +790,70 @@ def ogr_pg_21():
     return 'success'
 
 ###############################################################################
+# Create table from data/poly.shp under specified SCHEMA
+# This test checks if schema support and schema name quoting works well.
+
+def ogr_pg_22():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ######################################################
+    # Create Schema 
+
+    schema_name = 'AutoTest-schema'
+    layer_name = schema_name + '.tpoly2'
+
+    gdaltest.pg_ds.ExecuteSQL( 'CREATE SCHEMA \"' + schema_name + '\"')
+
+    ######################################################
+    # Create Layer
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( layer_name,
+                                                  options = [
+                                                      'DIM=3',
+                                                      'SCHEMA=' + schema_name ]
+                                                )
+
+    ######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def( gdaltest.pg_lyr,
+                                    [ ('AREA', ogr.OFTReal),
+                                      ('EAS_ID', ogr.OFTInteger),
+                                      ('PRFEDEA', ogr.OFTString),
+                                      ('SHORTNAME', ogr.OFTString, 8) ] )
+
+    ######################################################
+    # Copy 3 features from the poly.shp
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
+
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    gdaltest.shp_ds = shp_ds
+    shp_lyr = shp_ds.GetLayer(0)
+    
+    # Insert 3 features only
+    for id in range(0, 3):
+        feat = shp_lyr.GetFeature(id)
+        dst_feat.SetFrom( feat )
+        gdaltest.pg_lyr.CreateFeature( dst_feat )
+
+    dst_feat.Destroy()
+
+    # Test if test layer under custom schema is listed
+    
+    found = False
+    for i in range(0, gdaltest.pg_ds.GetLayerCount()):
+        name = gdaltest.pg_ds.GetLayer(i).GetName()
+        if name == layer_name:
+            found = True
+
+    if found is False:
+        gdaltest.post_reason( 'layer from schema \''+schema_name+'\' not listed' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_cleanup():
@@ -801,6 +865,11 @@ def ogr_pg_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testgeom' )
+    
+    # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
+    # Drop 'AutoTest-schema' (here, double qoutes are required)
+    gdaltest.pg_ds.ExecuteSQL( 'DROP SCHEMA \"AutoTest-schema\" CASCADE')
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
@@ -831,6 +900,7 @@ gdaltest_list = [
     ogr_pg_18,
     ogr_pg_20,
     ogr_pg_21,
+    ogr_pg_22,
     ogr_pg_cleanup ]
 
 if __name__ == '__main__':
