@@ -40,4 +40,5 @@ class NUMPYDataset : public GDALDataset
 };
 
 PyObject* GDALRegister_NUMPY(void);
-#endif
+#endif /* GDAL_NUMPY_ARRAY_H */
+
