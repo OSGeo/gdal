@@ -200,20 +200,6 @@ AC_DEFUN([AC_COMPILER_WFLAGS],
 	# we need it.
 	CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
 	CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
-
-	# check for GNU compiler, and use -Wall
-	if test "$GCC" = "yes"; then
-		C_WFLAGS="-Wall -Wdeclaration-after-statement"
-		AC_DEFINE(USE_GNUCC, 1, [Define to 1, if you have GNU C
-		compiler])
-	fi
-	if test "$GXX" = "yes"; then
-		CXX_WFLAGS="-Wall"
-		AC_DEFINE(USE_GNUCC, 1, [Define to 1, if you have GNU C
-		compiler])
-	fi
-	AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
-	AC_SUBST(C_WFLAGS,$C_WFLAGS)
 ])
 
 AC_DEFUN([AC_COMPILER_PIC],
