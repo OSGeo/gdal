@@ -1366,8 +1366,8 @@ else
     XERCES_INCLUDE="-I$with_xerces/include -I$with_xerces/include/xercesc"
   fi
 
-  echo '#include <util/XercesDefs.hpp>' >> conftest.cpp
-  echo '#include <util/PlatformUtils.hpp>' >> conftest.cpp
+  echo '#include <xercesc/util/XercesDefs.hpp>' >> conftest.cpp
+  echo '#include <xercesc/util/PlatformUtils.hpp>' >> conftest.cpp
   echo '#if (_XERCES_VERSION >= 20200)' >> conftest.cpp
   echo '    XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
   echo '#endif' >> conftest.cpp
