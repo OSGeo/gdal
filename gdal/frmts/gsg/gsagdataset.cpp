@@ -28,13 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
+
 #include <sstream>
 #include <cfloat>
 #include <climits>
 #include <cmath>
 #include <cassert>
 
-#include "cpl_conv.h"
 #include "gdal_pam.h"
 
 #ifndef DBL_MAX
