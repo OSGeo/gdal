@@ -12,6 +12,7 @@
 # PARTICULAR PURPOSE.
 
 m4_include([m4/acinclude.m4])
+m4_include([m4/ax_cflags_warn_all.m4])
 m4_include([m4/ax_oracle_oci.m4])
 m4_include([m4/geos.m4])
 m4_include([m4/libtool.m4])
