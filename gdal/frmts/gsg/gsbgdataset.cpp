@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
+
 #include <cfloat>
 #include <climits>
 #include <cmath>
@@ -59,7 +61,7 @@
 # define SHRT_MAX 32767
 #endif /* SHRT_MAX */
 
-CPL_CVSID("$Id:$");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_GSBG(void);
