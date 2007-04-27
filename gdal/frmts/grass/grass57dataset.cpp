@@ -41,6 +41,7 @@ extern "C" {
 #undef class
 #endif
     
+#include <grass/version.h>
 #include <grass/gprojects.h>
 #include <grass/gis.h>
 }
