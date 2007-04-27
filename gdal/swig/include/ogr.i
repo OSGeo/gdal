@@ -375,12 +375,17 @@ public:
               OSRSpatialReferenceShadow* reference=NULL,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
-                                                        name,
-                                                        reference,
-                                                        geom_type,
-                                                        options);
-    return layer;
+    if (name == NULL) {
+      CPLError(CE_Failure, 1, "Undefined layer name in CreateLayer");
+      return NULL;
+    } else {
+      OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
+								    name,
+								    reference,
+								    geom_type,
+								    options);
+      return layer;
+    }
   }
 
   %feature( "kwargs" ) CopyLayer;
