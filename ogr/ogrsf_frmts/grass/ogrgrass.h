@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 
 extern "C" {
+    #include <grass/version.h>
     #include <grass/gprojects.h>
     #include <grass/gis.h>
     #include <grass/dbmi.h>
