@@ -579,7 +579,10 @@ public:
 
   %feature("kwargs") OGRFeatureShadow;
   OGRFeatureShadow( OGRFeatureDefnShadow *feature_def = 0 ) {
-    return (OGRFeatureShadow*) OGR_F_Create( feature_def );
+    if (feature_def == 0) {
+      CPLError(CE_Failure, 1, "Undefined feature definition in new OGRFeature");
+    } else
+      return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 
   OGRFeatureDefnShadow *GetDefnRef() {
