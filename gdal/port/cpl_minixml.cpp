@@ -1453,11 +1453,10 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
                                          const char *pszValue )
 
 {
-    CPLXMLNode *psTextNode;
     CPLXMLNode *psElementNode;
 
     psElementNode = CPLCreateXMLNode( psParent, CXT_Element, pszName );
-    psTextNode = CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
+    CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
 
     return psElementNode;
 }
