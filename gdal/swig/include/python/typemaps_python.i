@@ -442,7 +442,11 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-  PyString_AsStringAndSize($input, &$2, &$1 );
+  #if (PY_VERSION_HEX <= 0x02050000)
+     PyString_AsStringAndSize($input, &$2, ( Py_ssize_t*)&$1 );
+  #else
+     PyString_AsStringAndSize($input, &$2, &$1 );
+  #endif
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
         (int nLen, char *pBuf)
