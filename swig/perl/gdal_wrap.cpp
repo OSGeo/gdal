@@ -2164,6 +2164,12 @@ SWIGINTERN void GDALRasterBandShadow_GetNoDataValue(GDALRasterBandShadow *self,d
 SWIGINTERN CPLErr GDALRasterBandShadow_SetNoDataValue(GDALRasterBandShadow *self,double d){
     return GDALSetRasterNoDataValue( self, d );
   }
+SWIGINTERN char **GDALRasterBandShadow_GetRasterCategoryNames(GDALRasterBandShadow *self){
+    return GDALGetRasterCategoryNames( self );
+  }
+SWIGINTERN CPLErr GDALRasterBandShadow_SetRasterCategoryNames(GDALRasterBandShadow *self,char **names){
+    return GDALSetRasterCategoryNames( self, names );
+  }
 SWIGINTERN void GDALRasterBandShadow_GetMinimum(GDALRasterBandShadow *self,double *val,int *hasval){
     *val = GDALGetRasterMinimum( self, hasval );
   }
@@ -7679,6 +7685,118 @@ XS(_wrap_Band_SetNoDataValue) {
 }
 
 
+XS(_wrap_Band_GetRasterCategoryNames) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    char **result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: Band_GetRasterCategoryNames(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetRasterCategoryNames" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    {
+      CPLErrorReset();
+      result = (char **)GDALRasterBandShadow_GetRasterCategoryNames(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) char ** -> ( string ) */
+      AV* av = (AV*)sv_2mortal((SV*)newAV());
+      char **stringarray = result;
+      if ( stringarray != NULL ) {
+        for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
+          av_store(av, i, newSVpv(*stringarray, strlen(*stringarray)));
+        }
+      }
+      ST(argvi) = newRV_noinc((SV*)av);
+      argvi++;
+    }
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Band_SetRasterCategoryNames) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    char **arg2 = (char **) 0 ;
+    CPLErr result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: Band_SetRasterCategoryNames(self,names);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetRasterCategoryNames" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    {
+      /* %typemap(in) char **options */
+      if ( ! (SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV)) ) {
+        croak("argument is not an array ref");
+        SWIG_fail;
+      }
+      AV *av = (AV*)(SvRV(ST(1)));
+      for (int i = 0; i < av_len(av)-1; i++) {
+        char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+        arg2 = CSLAddString( arg2, pszItem );
+      }
+    }
+    {
+      CPLErrorReset();
+      result = (CPLErr)GDALRasterBandShadow_SetRasterCategoryNames(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) CPLErr */
+      ST(argvi) = sv_2mortal(newSViv(result));
+      argvi++;
+    }
+    
+    {
+      /* %typemap(freearg) char **options */
+      CSLDestroy( arg2 );
+    }
+    XSRETURN(argvi);
+  fail:
+    
+    {
+      /* %typemap(freearg) char **options */
+      CSLDestroy( arg2 );
+    }
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_Band_GetMinimum) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -10438,6 +10556,8 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::Band_SetRasterColorInterpretation", _wrap_Band_SetRasterColorInterpretation},
 {"Geo::GDALc::Band_GetNoDataValue", _wrap_Band_GetNoDataValue},
 {"Geo::GDALc::Band_SetNoDataValue", _wrap_Band_SetNoDataValue},
+{"Geo::GDALc::Band_GetRasterCategoryNames", _wrap_Band_GetRasterCategoryNames},
+{"Geo::GDALc::Band_SetRasterCategoryNames", _wrap_Band_SetRasterCategoryNames},
 {"Geo::GDALc::Band_GetMinimum", _wrap_Band_GetMinimum},
 {"Geo::GDALc::Band_GetMaximum", _wrap_Band_GetMaximum},
 {"Geo::GDALc::Band_GetOffset", _wrap_Band_GetOffset},
