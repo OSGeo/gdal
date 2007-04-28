@@ -64,7 +64,7 @@ public:
     const char *GetGeometryElement() const { return m_pszGeometryElement; }
     void        SetGeometryElement( const char *pszElementName );
 
-    const char *GetName() { return m_pszName; } const
+    const char *GetName() const { return m_pszName; }
     int         GetPropertyCount() const { return m_nPropertyCount; }        
 
     int         IsSchemaLocked() const { return m_bSchemaLocked; }
