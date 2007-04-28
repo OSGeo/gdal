@@ -1651,35 +1651,44 @@ dnl Select Informix DataBlade support
 dnl ---------------------------------------------------------------------------
 
 HAVE_IDB=no
+
 AC_ARG_WITH(idb,[  --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)],,)
 
-if test "$with_idb" = "no" ; then
-  AC_MSG_NOTICE(["IBM Informix DataBlade support disabled.])
+if test x"${with_idb}" = x"no" ; then
+  AC_MSG_NOTICE(["IBM Informix DataBlade support disabled."])
 else
-  if test xx"$with_idb" = "xx"; then
+  if test x"${with_idb}" = x ; then
     with_idb=$INFORMIXDIR
   fi
-dnl  if test "$ODBC_SETTING" = "yes"  ; then 
-  if test -e "$with_idb/incl/c++/it.h" ; then
-    HAVE_IDB=yes
 
-    LIBS_DIRS="-L$with_idb/lib/ -L$with_idb/lib/esql"
-    LIBS_ESQL="-lifsql -lifasf -lifgen -lifos -lifgls -lifglx $with_idb/lib/esql/checkapi.o"
-    LIBS_LIBMI="-L$with_idb/lib/dmi -lifdmi"
-    LIBS_CPPIF="-L$with_idb/lib/c++ -lifc++"
+  if test -e "${with_idb}/incl/c++/it.h" ; then
 
-    IDB_INC="-I$with_idb/incl/ -I$with_idb/incl/dmi -I$with_idb/incl/c++"
-    IDB_LIB="$LIBS_DIRS $LIBS_ESQL $LIBS_LIBMI $LIBS_CPPIF"
+    LIBS_DIRS="-L${with_idb}/lib/ -L${with_idb}/lib/esql"
+    LIBS_ESQL="-lifsql -lifasf -lifgen -lifos -lifgls -lifglx ${with_idb}/lib/esql/checkapi.o"
+    LIBS_LIBMI="-L${with_idb}/lib/dmi -lifdmi"
+    LIBS_CPPIF="-L${with_idb}/lib/c++ -lifc++"
+
+    IDB_INC="-I${with_idb}/incl/ -I${with_idb}/incl/dmi -I${with_idb}/incl/c++"
+    IDB_LIB="${LIBS_DIRS} ${LIBS_ESQL} ${LIBS_LIBMI} ${LIBS_CPPIF}"
+
+    ax_save_LIBS="${LIBS}"
+    LIBS="${IDB_LIB} -ldl -lcrypt"
+    AC_CHECK_LIB(ifsql,ifx_srvinfo,HAVE_IDB=yes,HAVE_IDB=no,)
+    LIBS="${ax_save_LIBS}"
+
+  fi
+
+  if test "${HAVE_IDB}" = "yes" ; then
     AC_MSG_NOTICE([using Informix C++ client library from $with_idb.])
-dnl    AC_MSG_NOTICE([IBM Informix DataBlade support enabled.])
   else
     AC_MSG_NOTICE([IBM Informix DataBlade not supported.])
   fi
+
 fi
 
-AC_SUBST(HAVE_IDB,$HAVE_IDB)
-AC_SUBST(IDB_INC,$IDB_INC)
-AC_SUBST(IDB_LIB,$IDB_LIB)
+AC_SUBST(HAVE_IDB,${HAVE_IDB})
+AC_SUBST(IDB_INC,${IDB_INC})
+AC_SUBST(IDB_LIB,${IDB_LIB})
 
 dnl ---------------------------------------------------------------------
 dnl Find ESRI SDE ONLY IF REQUESTED.
