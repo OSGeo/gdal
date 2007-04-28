@@ -36,7 +36,7 @@ Download:
 <li> <a href="gdal_utilities.html">GDAL Utility Programs</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/FAQ">GDAL FAQ</a>
 <li> <a href="gdal_datamodel.html">GDAL Data Model</a>
-<li> <a href="governance.html">GDAL/OGR Governance and Community Participation</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/GovernanceAndCommunity">GDAL/OGR Governance and Community Participation</a>
 <li> <a href="credits.html">Sponsors, Acknowledgements and Credits</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/SoftwareUsingGdal">Software Using GDAL</a>
 </ul>
