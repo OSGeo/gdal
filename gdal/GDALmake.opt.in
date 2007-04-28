@@ -37,7 +37,7 @@ C_PROFFLAGS =	-g3 -pg -DDEBUG
 
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
-LIBS	=	$(SDE_LIB) @LIBS@ $(DWG_LIBS) $(CURL_LIB) $(IDB_LIB)
+LIBS	=	$(SDE_LIB) @LIBS@ $(DWG_LIBS) $(CURL_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -263,6 +263,9 @@ PANORAMA_INC	= @PANORAMA_INC@
 HAVE_IDB	= @HAVE_IDB@
 IDB_INC		= @IDB_INC@
 IDB_LIB		= @IDB_LIB@
+ifeq ($(HAVE_IDB),yes)
+LIBS	   	+= $(IDB_LIB)
+endif
 
 #
 # FMEObjects
