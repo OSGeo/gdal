@@ -4123,8 +4123,9 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                              nPixelSize, 
                                              nBlockXSize * nPixelSize );
 
-                    TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
-                                          nTileSize );
+                    if( eErr == CE_None )
+                        TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
+                                              nTileSize );
 
                     nTilesDone++;
 
@@ -4248,26 +4249,23 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     memset( pabyTile, 0, nTileSize );
                 }
 
-                for( int iBand = 0; 
-                     eErr == CE_None && iBand < nBands; 
-                     iBand++ )
-                {
-                    GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
+                eErr = 
+                    poSrcDS->RasterIO( GF_Read, 
+                                       iTileX * nBlockXSize, 
+                                       iTileY * nBlockYSize, 
+                                       nThisBlockXSize, 
+                                       nThisBlockYSize,
+                                       pabyTile, 
+                                       nThisBlockXSize, 
+                                       nThisBlockYSize, 
+                                       eType, nBands, NULL, 
+                                       nPixelSize, 
+                                       nBlockXSize * nPixelSize,
+                                       nElemSize );
 
-                    eErr = poBand->RasterIO( GF_Read, 
-                                             iTileX * nBlockXSize, 
-                                             iTileY * nBlockYSize, 
-                                             nThisBlockXSize, 
-                                             nThisBlockYSize,
-                                             pabyTile + iBand * nElemSize,
-                                             nThisBlockXSize, 
-                                             nThisBlockYSize, eType,
-                                             nPixelSize, 
-                                             nBlockXSize * nPixelSize );
-                }
-
-                TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
-                                      nTileSize );
+                if( eErr == CE_None )
+                    TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
+                                          nTileSize );
 
                 nTilesDone++;
 
