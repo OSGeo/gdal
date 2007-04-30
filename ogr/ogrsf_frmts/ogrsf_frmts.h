@@ -201,6 +201,7 @@ class CPL_DLL OGRDataSource
     OGRErr              Release();
 
     OGRSFDriver        *GetDriver() const;
+    void                SetDriver( OGRSFDriver *poDriver );
 
   protected:
 

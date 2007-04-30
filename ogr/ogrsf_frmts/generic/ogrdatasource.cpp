@@ -928,3 +928,13 @@ OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS )
     return (OGRSFDriverH) ((OGRDataSource *) hDS)->GetDriver();
 }
 
+/************************************************************************/
+/*                             SetDriver()                              */
+/************************************************************************/
+
+void OGRDataSource::SetDriver( OGRSFDriver *poDriver ) 
+
+{
+    m_poDriver = poDriver;
+}
+
