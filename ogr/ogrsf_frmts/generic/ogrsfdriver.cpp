@@ -64,8 +64,17 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
                                         char ** papszOptions )
 
 {
-    return ((OGRSFDriver *)hDriver)->CreateDataSource( pszName, 
-                                                       papszOptions );
+    OGRSFDriver* poDriver = (OGRSFDriver *)hDriver;
+
+    OGRDataSource* poDS = NULL;
+    poDS = poDriver->CreateDataSource( pszName, papszOptions );
+    CPLAssert( NULL != poDS );
+
+    /* This fix is explained in Ticket #1223 */
+    poDS->SetDriver( poDriver );
+    CPLAssert( NULL != poDS->GetDriver() );
+
+    return poDS;
 }
 
 /************************************************************************/
