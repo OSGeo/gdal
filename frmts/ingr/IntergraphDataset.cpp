@@ -394,6 +394,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     INGR_HeaderOne  hHdr1;
     INGR_HeaderTwoA hHdr2;
     INGR_ColorTable256 hCTab;
+    int             i;
 
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
@@ -407,10 +408,8 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.XViewExtent           = 0.0;
     hHdr1.YViewExtent           = 0.0;
     hHdr1.ZViewExtent           = 0.0;
-    for( int i = 0; i < 15; i++ )
-    {
+    for( i = 0; i < 15; i++ )
         hHdr1.TransformationMatrix[i]   = 0.0;
-    }
     hHdr1.TransformationMatrix[15]      = 1.0;
     hHdr1.PixelsPerLine         = nXSize;
     hHdr1.NumberOfLines         = nYSize;
@@ -442,13 +441,11 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr2.ColorTableType        = NoColorTable;
     hHdr2.NumberOfCTEntries     = 0;
     hHdr2.Reserved8             = 0;
-    for( int i = 0; i < 110; i++ )
-    {
+    for( i = 0; i < 110; i++ )
         hHdr2.Reserved[i]       = 0;
-    }
     hHdr2.ApplicationPacketLength   = 0;
     hHdr2.ApplicationPacketPointer  = 0;
-    for( int i = 0; i < 256; i++ )
+    for( i = 0; i < 256; i++ )
     {
         hCTab.Entry[i].v_red   = ( uint8 ) 0;
         hCTab.Entry[i].v_green = ( uint8 ) 0;
