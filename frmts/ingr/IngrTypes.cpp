@@ -589,12 +589,11 @@ INGR_TiffMem CPL_STDCALL INGR_CreateTiff( const char *pszFilename,
 	switch( eFormat )
     {
     case JPEGGRAY:
-		uint16 nGrays[256];
+		uint16  nGrays[256];
+                int     i;
 #define	SCALE(x)	(((x)*((1L<<16)-1))/255)
-		for( int i = 0; i < 256; i ++ )
-		{
+		for( i = 0; i < 256; i ++ )
 			nGrays[i] = SCALE(i);
-		}
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP,    -1 );
         TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP,		  nGrays, nGrays, nGrays );
