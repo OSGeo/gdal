@@ -863,8 +863,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             CSLDestroy( papszSwaths );
-            SWclose( hHDF4 );
         }
+        SWclose( hHDF4 );
 
 /* -------------------------------------------------------------------- */
 /*  Process grid layers.                                           	*/
