@@ -570,6 +570,14 @@ class Band(MajorObject):
         """SetNoDataValue(self, double d) -> CPLErr"""
         return _gdal.Band_SetNoDataValue(*args)
 
+    def GetRasterCategoryNames(*args):
+        """GetRasterCategoryNames(self) -> char"""
+        return _gdal.Band_GetRasterCategoryNames(*args)
+
+    def SetRasterCategoryNames(*args):
+        """SetRasterCategoryNames(self, char names) -> CPLErr"""
+        return _gdal.Band_SetRasterCategoryNames(*args)
+
     def GetMinimum(*args):
         """GetMinimum(self, double val)"""
         return _gdal.Band_GetMinimum(*args)

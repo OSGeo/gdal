@@ -3291,6 +3291,12 @@ SWIGINTERN void GDALRasterBandShadow_GetNoDataValue(GDALRasterBandShadow *self,d
 SWIGINTERN CPLErr GDALRasterBandShadow_SetNoDataValue(GDALRasterBandShadow *self,double d){
     return GDALSetRasterNoDataValue( self, d );
   }
+SWIGINTERN char **GDALRasterBandShadow_GetRasterCategoryNames(GDALRasterBandShadow *self){
+    return GDALGetRasterCategoryNames( self );
+  }
+SWIGINTERN CPLErr GDALRasterBandShadow_SetRasterCategoryNames(GDALRasterBandShadow *self,char **names){
+    return GDALSetRasterCategoryNames( self, names );
+  }
 SWIGINTERN void GDALRasterBandShadow_GetMinimum(GDALRasterBandShadow *self,double *val,int *hasval){
     *val = GDALGetRasterMinimum( self, hasval );
   }
@@ -7605,7 +7611,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj5, &arg7, &arg6 );
+    PyString_AsStringAndSize(obj5, &arg7, (Py_ssize_t*)&arg6 );
   }
   if (obj6) {
     {
@@ -8231,6 +8237,121 @@ SWIGINTERN PyObject *_wrap_Band_SetNoDataValue(PyObject *SWIGUNUSEDPARM(self), P
   }
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Band_GetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  char **result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Band_GetRasterCategoryNames",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetRasterCategoryNames" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  {
+    CPLErrorReset();
+    result = (char **)GDALRasterBandShadow_GetRasterCategoryNames(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) char ** -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i, ++stringarray ) {
+        PyObject *o = PyString_FromString( *stringarray );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Band_SetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  CPLErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Band_SetRasterCategoryNames",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetRasterCategoryNames" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list */
+    if ( ! PySequence_Check(obj1)) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    int size = PySequence_Size(obj1);
+    for (int i = 0; i < size; i++) {
+      char *pszItem = NULL;
+      if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      arg2 = CSLAddString( arg2, pszItem );
+    }
+  }
+  {
+    CPLErrorReset();
+    result = (CPLErr)GDALRasterBandShadow_SetRasterCategoryNames(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
   return NULL;
 }
 
@@ -9146,7 +9267,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj5, &arg7, &arg6 );
+    PyString_AsStringAndSize(obj5, &arg7, (Py_ssize_t*)&arg6 );
   }
   if (obj6) {
     {
@@ -10597,6 +10718,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_SetRasterColorInterpretation", _wrap_Band_SetRasterColorInterpretation, METH_VARARGS, NULL},
 	 { (char *)"Band_GetNoDataValue", _wrap_Band_GetNoDataValue, METH_VARARGS, NULL},
 	 { (char *)"Band_SetNoDataValue", _wrap_Band_SetNoDataValue, METH_VARARGS, NULL},
+	 { (char *)"Band_GetRasterCategoryNames", _wrap_Band_GetRasterCategoryNames, METH_VARARGS, NULL},
+	 { (char *)"Band_SetRasterCategoryNames", _wrap_Band_SetRasterCategoryNames, METH_VARARGS, NULL},
 	 { (char *)"Band_GetMinimum", _wrap_Band_GetMinimum, METH_VARARGS, NULL},
 	 { (char *)"Band_GetMaximum", _wrap_Band_GetMaximum, METH_VARARGS, NULL},
 	 { (char *)"Band_GetOffset", _wrap_Band_GetOffset, METH_VARARGS, NULL},
