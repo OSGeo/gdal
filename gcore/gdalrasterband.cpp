@@ -2851,6 +2851,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         return CE_Failure;
     }
 
+    InitBlockInfo();
+
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
 
     if( bApproxOK )
