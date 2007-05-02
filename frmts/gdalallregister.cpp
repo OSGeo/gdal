@@ -278,7 +278,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_wcs
     GDALRegister_WCS();
-    GDALRegister_HTTP();
 #endif
 
 #ifdef FRMT_sde
@@ -327,6 +326,11 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_dods
     GDALRegister_DODS();
 #endif
+
+#ifdef FRMT_wcs
+    GDALRegister_HTTP();
+#endif
+
 #ifdef FRMT_hdf5
     GDALRegister_HDF5();
     GDALRegister_HDF5Image();
