@@ -450,6 +450,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     /* Python version was less than 2.5 */
      PyString_AsStringAndSize($input, &$2, &$1 );
 #endif
+#else
+    /* Python version was less than 2.5 */
+     PyString_AsStringAndSize($input, &$2, &$1 );
 #endif
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
