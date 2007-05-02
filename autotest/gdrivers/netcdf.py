@@ -70,12 +70,7 @@ def netcdf_2():
     
     base_ds = gdaltest.netcdf_drv.CreateCopy( 'tmp/netcdf2.nc', src_ds)
 
-    sds_md = base_ds.GetMetadata('SUBDATASETS')
-    if sds_md['SUBDATASET_1_NAME'] != 'NETCDF:"tmp/netcdf2.nc":Band1':
-        gdaltest.post_reason( 'wrong subdataset name.' )
-        return 'false'
-
-    tst = gdaltest.GDALTest( 'NetCDF', 'NETCDF:"tmp/netcdf2.nc":Band1',
+    tst = gdaltest.GDALTest( 'NetCDF', 'tmp/netcdf2.nc',
                              1, 4672,
                              filename_absolute = 1 )
 
