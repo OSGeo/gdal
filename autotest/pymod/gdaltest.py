@@ -222,7 +222,13 @@ class GDALTest:
 
 	return 'success'
 
-    def testOpen(self, check_prj = None, check_gt = None, gt_epsilon = None):
+    def testOpen(self, check_prj = None, check_gt = None, gt_epsilon = None, \
+                 check_stat = None, check_approx_stat = None, \
+                 stat_epsilon = None):
+        """check_prj - projection reference, check_gt - geotransformation
+        matrix (tuple), gt_epsilon - geotransformation tolerance,
+        check_stat - band statistics (tuple), stat_epsilon - statistics
+        tolerance."""
 	if self.testDriver() == 'fail':
 	    return 'skip'
 
@@ -241,7 +247,7 @@ class GDALTest:
             self.xsize = ds.RasterXSize
             self.ysize = ds.RasterYSize
 
-        # Do we need to check the geotransform?
+        # Do we need to check projection?
         if check_prj is not None:
             new_prj = ds.GetProjection()
             
@@ -257,7 +263,7 @@ class GDALTest:
                 post_reason( 'Projections differ' )
                 return 'fail'
 
-        # Do we need to check the geotransform?
+        # Do we need to check geotransform?
         if check_gt:
             # Default to 100th of pixel as our test value.
             if gt_epsilon is None:
@@ -272,8 +278,42 @@ class GDALTest:
                     post_reason( 'Geotransform differs.' )
                     return 'fail'
 
-        oBand = ds.GetRasterBand( self.band )
-        chksum = oBand.Checksum( self.xoff, self.yoff, self.xsize, self.ysize )
+        oBand = ds.GetRasterBand(self.band)
+        chksum = oBand.Checksum(self.xoff, self.yoff, self.xsize, self.ysize)
+
+        # Do we need to check approximate statistics?
+        if check_approx_stat:
+            # Default to 1000th of pixel value range as our test value.
+            if stat_epsilon is None:
+                stat_epsilon = \
+                    abs(check_approx_stat[1] - check_approx_stat[0]) / 1000.0
+
+            new_stat = oBand.GetStatistics(1, 1)
+            for i in range(4):
+                if abs(new_stat[i]-check_approx_stat[i]) > stat_epsilon:
+                    print
+                    print 'old = ', check_approx_stat
+                    print 'new = ', new_stat
+                    post_reason( 'Approximate statistics differs.' )
+                    return 'fail'
+
+        # Do we need to check statistics?
+        if check_stat:
+            # Default to 1000th of pixel value range as our test value.
+            if stat_epsilon is None:
+                stat_epsilon = abs(check_stat[1] - check_stat[0]) / 1000.0
+
+            # FIXME: how to test approximate statistic results?
+            new_stat = oBand.GetStatistics(1, 1)
+
+            new_stat = oBand.GetStatistics(0, 1)
+            for i in range(4):
+                if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
+                    print
+                    print 'old = ', check_stat
+                    print 'new = ', new_stat
+                    post_reason( 'Statistics differs.' )
+                    return 'fail'
 
         if chksum == self.chksum:
             return 'success'
