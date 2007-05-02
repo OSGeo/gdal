@@ -1536,6 +1536,7 @@ static double BSpline( double x )
 }
 #undef P
 
+#if 0
 static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand, 
                                    double dfSrcX, double dfSrcY,
                                    double *pdfDensity, 
@@ -1627,8 +1628,8 @@ static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
 }
 
 static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
-                                         double dfSrcX, double dfSrcY,
-                                         GInt16 *piValue )
+                                               double dfSrcX, double dfSrcY,
+                                               GInt16 *piValue )
 
 {
     double  dfAccumulator = 0.0;
@@ -1663,6 +1664,164 @@ static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
     
     return TRUE;
 }
+#endif
+
+#define GWKCUBICSPLINE_RADIUS 2
+static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand, 
+                                   double dfSrcX, double dfSrcY,
+                                   double *pdfDensity, 
+                                   double *pdfReal, double *pdfImag )
+
+{
+    double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
+    double  dfAccumulatorDensity = 0.0;
+    int     iSrcX = (int) floor( dfSrcX - 0.5 );
+    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
+    int     i, j;
+
+    double  dfScaleX = (double)poWK->nDstXSize / poWK->nSrcXSize;
+    double  dfScaleY = (double)poWK->nDstYSize / poWK->nSrcYSize;
+    int     nFiltX = (dfScaleX < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfScaleX) : GWKCUBICSPLINE_RADIUS;
+    int     nFiltY = (dfScaleY < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfScaleY) : GWKCUBICSPLINE_RADIUS;
+
+    // Get the bilinear interpolation at the image borders
+    if ( iSrcX - nFiltX + 1 < 0 || iSrcX + nFiltX >= poWK->nSrcXSize
+         || iSrcY - nFiltY + 1 < 0 || iSrcY + nFiltY >= poWK->nSrcYSize )
+        return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
+                                    pdfDensity, pdfReal, pdfImag );
+
+    for ( j = 1 - nFiltY; j < 1 + nFiltY; j++ )
+    {
+        double  dfWeight1 = ( dfScaleY < 1.0 ) ?
+            BSpline((double)j * dfScaleY) * dfScaleY :
+            BSpline((double)j - dfDeltaY);
+
+        for ( i = 1 - nFiltX; i < 1 + nFiltX; i++ )
+        {
+            if ( GWKGetPixelValue( poWK, iBand,
+                                   iSrcOffset + i + j  * poWK->nSrcXSize,
+                                   pdfDensity, pdfReal, pdfImag ) )
+            {
+                double  dfWeight2 = dfWeight1 * ((dfScaleX < 1.0 ) ?
+                    BSpline((double)i * dfScaleX) * dfScaleX :
+                    BSpline(dfDeltaX - (double)i));
+
+                dfAccumulatorReal += *pdfReal * dfWeight2;
+                dfAccumulatorImag += *pdfImag * dfWeight2;
+                dfAccumulatorDensity += *pdfDensity * dfWeight2;
+            }
+        }
+    }
+    
+    *pdfReal = dfAccumulatorReal;
+    *pdfImag = dfAccumulatorImag;
+    *pdfDensity = dfAccumulatorDensity;
+    
+    return TRUE;
+}
+
+static int GWKCubicSplineResampleNoMasksByte( GDALWarpKernel *poWK, int iBand,
+                                              double dfSrcX, double dfSrcY,
+                                              GByte *pbValue )
+
+{
+    double  dfAccumulator = 0.0;
+    int     iSrcX = (int) floor( dfSrcX - 0.5 );
+    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
+    int     i, j;
+
+    double  dfScaleX = (double)poWK->nDstXSize / poWK->nSrcXSize;
+    double  dfScaleY = (double)poWK->nDstYSize / poWK->nSrcYSize;
+    int     nFiltX = (dfScaleX < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfScaleX) : GWKCUBICSPLINE_RADIUS;
+    int     nFiltY = (dfScaleY < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfScaleY) : GWKCUBICSPLINE_RADIUS;
+
+    // Get the bilinear interpolation at the image borders
+    if ( iSrcX - nFiltX + 1 < 0 || iSrcX + nFiltX >= poWK->nSrcXSize
+         || iSrcY - nFiltY + 1 < 0 || iSrcY + nFiltY >= poWK->nSrcYSize )
+        return GWKBilinearResampleNoMasksByte( poWK, iBand, dfSrcX, dfSrcY,
+                                               pbValue);
+
+    for ( j = 1 - nFiltY; j < 1 + nFiltY; j++ )
+    {
+        double  dfWeight1 = ( dfScaleY < 1.0 ) ?
+            BSpline((double)j * dfScaleY) * dfScaleY :
+            BSpline((double)j - dfDeltaY);
+
+        for ( i = 1 - nFiltX; i < 1 + nFiltX; i++ )
+        {
+            double  dfWeight2 = dfWeight1 * ((dfScaleX < 1.0 ) ?
+                BSpline((double)i * dfScaleX) * dfScaleX :
+                BSpline(dfDeltaX - (double)i));
+
+            dfAccumulator +=
+                (double)poWK->papabySrcImage[iBand][iSrcOffset + i + j * poWK->nSrcXSize]
+                * dfWeight2;
+        }
+    }
+    
+    if ( dfAccumulator < 0.0 )
+        *pbValue = 0;
+    else if ( dfAccumulator > 255.0 )
+        *pbValue = 255;
+    else
+        *pbValue = (GByte)(0.5 + dfAccumulator);
+     
+    return TRUE;
+}
+
+static int GWKCubicSplineResampleNoMasksShort( GDALWarpKernel *poWK, int iBand,
+                                               double dfSrcX, double dfSrcY,
+                                               GInt16 *piValue )
+
+{
+    double  dfAccumulator = 0.0;
+    int     iSrcX = (int) floor( dfSrcX - 0.5 );
+    int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
+    int     i, j;
+
+    double  dfScaleX = (double)poWK->nDstXSize / poWK->nSrcXSize;
+    double  dfScaleY = (double)poWK->nDstYSize / poWK->nSrcYSize;
+    int     nFiltX = (dfScaleX < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfScaleX) : GWKCUBICSPLINE_RADIUS;
+    int     nFiltY = (dfScaleY < 1.0) ? (int)ceil(GWKCUBICSPLINE_RADIUS / dfScaleY) : GWKCUBICSPLINE_RADIUS;
+
+    // Get the bilinear interpolation at the image borders
+    if ( iSrcX - nFiltX + 1 < 0 || iSrcX + nFiltX >= poWK->nSrcXSize
+         || iSrcY - nFiltY + 1 < 0 || iSrcY + nFiltY >= poWK->nSrcYSize )
+        return GWKBilinearResampleNoMasksShort( poWK, iBand, dfSrcX, dfSrcY,
+                                                piValue);
+
+    for ( j = 1 - nFiltY; j < 1 + nFiltY; j++ )
+    {
+        double  dfWeight1 = ( dfScaleY < 1.0 ) ?
+            BSpline((double)j * dfScaleY) * dfScaleY :
+            BSpline((double)j - dfDeltaY);
+
+        for ( i = 1 - nFiltX; i < 1 + nFiltX; i++ )
+        {
+            double  dfWeight2 = dfWeight1 * ((dfScaleX < 1.0 ) ?
+                BSpline((double)i * dfScaleX) * dfScaleX :
+                BSpline(dfDeltaX - (double)i));
+
+            dfAccumulator +=
+                (double)((GInt16 *)poWK->papabySrcImage[iBand])[iSrcOffset + i + j * poWK->nSrcXSize]
+                * dfWeight2;
+        }
+    }
+    
+    *piValue = (GInt16)(0.5 + dfAccumulator);
+    
+    return TRUE;
+}
+#undef GWKCUBICSPLINE_RADIUS
 
 /************************************************************************/
 /*                         GWKLanczosResample()                         */
@@ -1692,6 +1851,7 @@ static double LanczosSinc( double dfX, double dfR )
 }
 #undef GWK_PI
 
+#define GWKLANCZOS_RADIUS 3
 static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand, 
                                double dfSrcX, double dfSrcY,
                                double *pdfDensity, 
@@ -1707,23 +1867,33 @@ static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
     int     i, j;
 
+    double  dfScaleX = (double)poWK->nDstXSize / poWK->nSrcXSize;
+    double  dfScaleY = (double)poWK->nDstYSize / poWK->nSrcYSize;
+    int     nFiltX = (dfScaleX < 1.0) ? (int)ceil(GWKLANCZOS_RADIUS / dfScaleX) : GWKLANCZOS_RADIUS;
+    int     nFiltY = (dfScaleY < 1.0) ? (int)ceil(GWKLANCZOS_RADIUS / dfScaleY) : GWKLANCZOS_RADIUS;
+
     // Get the bilinear interpolation at the image borders
-    if ( iSrcX - 3 < 0 || iSrcX + 3 >= poWK->nSrcXSize
-         || iSrcY - 3 < 0 || iSrcY + 3 >= poWK->nSrcYSize )
+    if ( iSrcX - nFiltX < 0 || iSrcX + nFiltX >= poWK->nSrcXSize
+         || iSrcY - nFiltY < 0 || iSrcY + nFiltY >= poWK->nSrcYSize )
         return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
-    for ( j = -3; j <= 3; j++ )
+    for ( j = -nFiltY; j <= nFiltY; j++ )
     {
-        double  dfWeight1 = LanczosSinc((double)j - dfDeltaY, 3.0);
+        double  dfWeight1 = (dfScaleY < 1.0 ) ?
+            LanczosSinc(j * dfScaleY, GWKLANCZOS_RADIUS) * dfScaleY :
+            LanczosSinc(j - dfDeltaY, GWKLANCZOS_RADIUS);
 
-        for ( i = -3; i <= 3; i++ )
+        for ( i = -nFiltX; i <= nFiltX; i++ )
         {
             if ( GWKGetPixelValue( poWK, iBand,
                                    iSrcOffset + i + j  * poWK->nSrcXSize,
                                    pdfDensity, pdfReal, pdfImag ) )
             {
-                double  dfWeight2 = dfWeight1 * LanczosSinc(dfDeltaX - (double)i, 2.0);
+                double  dfWeight2 =
+                    dfWeight1 * ((dfScaleX < 1.0 ) ?
+                        LanczosSinc(i * dfScaleX, GWKLANCZOS_RADIUS) * dfScaleX :
+                        LanczosSinc(i - dfDeltaX, GWKLANCZOS_RADIUS));
 
                 dfAccumulatorReal += *pdfReal * dfWeight2;
                 dfAccumulatorImag += *pdfImag * dfWeight2;
@@ -1738,6 +1908,7 @@ static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand,
     
     return TRUE;
 }
+#undef GWKLANCZOS_RADIUS
 
 /************************************************************************/
 /*                           GWKGeneralCase()                           */
