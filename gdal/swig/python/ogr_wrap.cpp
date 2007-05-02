@@ -2920,12 +2920,17 @@ OGRErrMessages( int rc ) {
 }
 
 SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_CreateLayer(OGRDataSourceShadow *self,char const *name,OSRSpatialReferenceShadow *reference=NULL,OGRwkbGeometryType geom_type=wkbUnknown,char **options=0){
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
-                                                        name,
-                                                        reference,
-                                                        geom_type,
-                                                        options);
-    return layer;
+    if (name == NULL) {
+      CPLError(CE_Failure, 1, "Undefined layer name in CreateLayer");
+      return NULL;
+    } else {
+      OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
+								    name,
+								    reference,
+								    geom_type,
+								    options);
+      return layer;
+    }
   }
 SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_CopyLayer(OGRDataSourceShadow *self,OGRLayerShadow *src_layer,char const *new_name,char **options=0){
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CopyLayer( self,
@@ -3046,7 +3051,10 @@ SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
   }
 SWIGINTERN OGRFeatureShadow *new_OGRFeatureShadow(OGRFeatureDefnShadow *feature_def=0){
-    return (OGRFeatureShadow*) OGR_F_Create( feature_def );
+    if (feature_def == 0) {
+      CPLError(CE_Failure, 1, "Undefined feature definition in new OGRFeature");
+    } else
+      return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 SWIGINTERN OGRFeatureDefnShadow *OGRFeatureShadow_GetDefnRef(OGRFeatureShadow *self){
     return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
@@ -8002,7 +8010,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:CreateGeometryFromWkb",kwnames,&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    PyString_AsStringAndSize(obj0, &arg2, &arg1 );
+    PyString_AsStringAndSize(obj0, &arg2, (Py_ssize_t*)&arg1 );
   }
   if (obj1) {
     res3 = SWIG_ConvertPtr(obj1, &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
