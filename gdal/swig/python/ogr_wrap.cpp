@@ -7413,15 +7413,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:CreateGeometryFromWkb",kwnames,&obj0,&obj1)) SWIG_fail;
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    PyString_AsStringAndSize(obj0, &arg2, ( Py_ssize_t*)&arg1 );
   }
   if (obj1) {
     res3 = SWIG_ConvertPtr(obj1, &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
