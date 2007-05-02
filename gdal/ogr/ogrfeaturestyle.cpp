@@ -854,13 +854,14 @@ GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed,
                                      int &nGreen ,int & nBlue, 
                                      int &nTransparance)
 {
-   int nCount;
+   int nCount=0;
    
    nTransparance = 255;
 
    // FIXME: should we really use sscanf here?
-   nCount  = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue, 
-                    &nTransparance);
+   if (pszColor)
+       nCount  = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue, 
+                        &nTransparance);
    
    if (nCount >=3)
      return TRUE;
