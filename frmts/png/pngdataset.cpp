@@ -105,6 +105,7 @@ class PNGDataset : public GDALPamDataset
                  ~PNGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 
     virtual CPLErr GetGeoTransform( double * );
     virtual void FlushCache( void );
@@ -576,21 +577,30 @@ void PNGDataset::CollectMetadata()
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int PNGDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if( poOpenInfo->nHeaderBytes < 4 )
+        return FALSE;
+
+    if( png_sig_cmp(poOpenInfo->pabyHeader, (png_size_t)0, 
+                    poOpenInfo->nHeaderBytes) != 0 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/    
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 4 )
-        return NULL;
-
-    if( png_sig_cmp(poOpenInfo->pabyHeader, (png_size_t)0, 
-                    poOpenInfo->nHeaderBytes) != 0 )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -1228,6 +1238,7 @@ void GDALRegister_PNG()
 
         poDriver->pfnOpen = PNGDataset::Open;
         poDriver->pfnCreateCopy = PNGCreateCopy;
+        poDriver->pfnIdentify = PNGDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

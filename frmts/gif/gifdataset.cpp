@@ -74,6 +74,7 @@ class GIFDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -329,18 +330,27 @@ CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
 /*                                Open()                                */
 /************************************************************************/
 
+int GIFDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if( poOpenInfo->nHeaderBytes < 8 )
+        return FALSE;
+
+    if( strncmp((const char *) poOpenInfo->pabyHeader, "GIF87a",5) != 0
+        && strncmp((const char *) poOpenInfo->pabyHeader, "GIF89a",5) != 0 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
 GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/    
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 8 )
-        return NULL;
-
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "GIF87a",5)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader, "GIF89a",5) )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -706,6 +716,7 @@ void GDALRegister_GIF()
 
         poDriver->pfnOpen = GIFDataset::Open;
         poDriver->pfnCreateCopy = GIFCreateCopy;
+        poDriver->pfnIdentify = GIFDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

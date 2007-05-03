@@ -626,6 +626,22 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int HDF4Dataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if( poOpenInfo->nHeaderBytes < 4 )
+        return FALSE;
+
+    if( memcmp(poOpenInfo->pabyHeader,"\016\003\023\001",4) != 0 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -633,17 +649,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int32	i;
-    
-    if( poOpenInfo->fp == NULL )
-        return NULL;
 
-    // We have special routine in the HDF library for format checking!
-    if ( !Hishdf(poOpenInfo->pszFilename) )
-    {
-        HEPclear();
-        HEshutdown();
-	return NULL;
-    }
+    if( !Identify( poOpenInfo ) )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -702,7 +710,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
-	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
+ 	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
 	poDS->iSubdatasetType = SEAWIFS_L1A;
 	poDS->pszSubdatasetType = "SEAWIFS_L1A";
@@ -864,8 +872,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             CSLDestroy( papszSwaths );
-            SWclose( hHDF4 );
         }
+        SWclose( hHDF4 );
 
 /* -------------------------------------------------------------------- */
 /*  Process grid layers.                                           	*/
@@ -1022,10 +1030,12 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->hGR = GRstart( hHDF4 );
     if ( poDS->hGR == -1 )
     {fprintf(stderr,"GRstart failed\n");}
-
+    
     if ( GRfileinfo( poDS->hGR, &poDS->nImages, &nAttrs ) != 0 )
+    {
 	return NULL;
-   
+    }
+    
     for ( i = 0; i < poDS->nImages; i++ )
     {
 	iGR = GRselect( poDS->hGR, i );
@@ -1091,6 +1101,7 @@ void GDALRegister_HDF4()
                                    "frmt_hdf4.html" );
 
         poDriver->pfnOpen = HDF4Dataset::Open;
+        poDriver->pfnIdentify = HDF4Dataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

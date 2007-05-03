@@ -329,6 +329,14 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Otherwise verify we were already given a directory.             */
+/* -------------------------------------------------------------------- */
+    else if( !poOpenInfo->bIsDirectory )
+    {
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Verify that a few of the "standard" files are available.        */
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;

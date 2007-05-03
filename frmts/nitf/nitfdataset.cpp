@@ -117,6 +117,7 @@ class NITFDataset : public GDALPamDataset
                                          const char * pszDomain = "" );
     virtual void   FlushCache();
 
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *
     NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
@@ -651,6 +652,36 @@ void NITFDataset::FlushCache()
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    const char *pszFilename = poOpenInfo->pszFilename;
+
+/* -------------------------------------------------------------------- */
+/*      Is this a dataset selector? If so, it is obviously NITF.        */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszFilename, "NITF_IM:",8) )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*	First we check to see if the file has the expected header	*/
+/*	bytes.								*/    
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 4 )
+        return FALSE;
+        
+    if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
+        && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
+        && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
+        return FALSE;
+
+    return TRUE;
+}
+        
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -660,6 +691,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     int nIMIndex = -1;
     const char *pszFilename = poOpenInfo->pszFilename;
 
+    if( !Identify( poOpenInfo ) )
+        return NULL;
+        
 /* -------------------------------------------------------------------- */
 /*      Select a specific subdataset.                                   */
 /* -------------------------------------------------------------------- */
@@ -675,21 +709,6 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             pszFilename++;
     }
 
-/* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/    
-/* -------------------------------------------------------------------- */
-    else
-    {
-        if( poOpenInfo->nHeaderBytes < 4 )
-            return NULL;
-        
-        if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
-            && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
-            && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
-            return NULL;
-    }
-        
 /* -------------------------------------------------------------------- */
 /*      Open the file with library.                                     */
 /* -------------------------------------------------------------------- */
@@ -2477,6 +2496,7 @@ void GDALRegister_NITF()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "National Imagery Transmission Format" );
         
+        poDriver->pfnIdentify = NITFDataset::Identify;
         poDriver->pfnOpen = NITFDataset::Open;
         poDriver->pfnCreate = NITFDatasetCreate;
         poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
