@@ -34,6 +34,14 @@
 
 CPL_CVSID("$Id$");
 
+static double   adfGWKFilterRadius[] = {
+    0.0,    // Nearest neighbour
+    1.0,    // Bilinear
+    2.0,    // Cubic Convolution
+    2.0,    // Cubic B-Spline
+    3.0     // Lanczos windowed sinc
+};
+
 static CPLErr GWKGeneralCase( GDALWarpKernel * );
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK );
@@ -466,6 +474,12 @@ GDALWarpKernel::GDALWarpKernel()
     nSrcYOff = 0;
     nSrcXSize = 0;
     nSrcYSize = 0;
+    dfXScale = 1.0;
+    dfYScale = 1.0;
+    dfXFilter = 0.0;
+    dfYFilter = 0.0;
+    nXRadius = 0;
+    nYRadius = 0;
     pafDstDensity = NULL;
     pafUnifiedSrcDensity = NULL;
     panDstValid = NULL;
@@ -511,6 +525,21 @@ CPLErr GDALWarpKernel::PerformWarp()
     if( (eErr = Validate()) != CE_None )
         return eErr;
 
+/* -------------------------------------------------------------------- */
+/*      Pre-calculate resampling scales and window sizes for filtering. */
+/* -------------------------------------------------------------------- */
+    dfXScale = (double)nDstXSize / nSrcXSize;
+    dfYScale = (double)nDstYSize / nSrcYSize;
+    dfXFilter = adfGWKFilterRadius[eResample];
+    dfYFilter = adfGWKFilterRadius[eResample];
+    nXRadius = ( dfXScale < 1.0 ) ?
+        (int)ceil( dfXFilter / dfXScale ) :(int)dfXFilter;
+    nYRadius = ( dfYScale < 1.0 ) ?
+        (int)ceil( dfYFilter / dfYScale ) : (int)dfYFilter;
+
+/* -------------------------------------------------------------------- */
+/*      Set up resampling functions.                                    */
+/* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszWarpOptions, "USE_GENERAL_CASE", FALSE ) )
         return GWKGeneralCase( this );
 
@@ -630,6 +659,13 @@ CPLErr GDALWarpKernel::PerformWarp()
 CPLErr GDALWarpKernel::Validate()
 
 {
+    if ((size_t)eResample >= sizeof(adfGWKFilterRadius))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported resampling method %d.", eResample );
+        return CE_Failure;
+    }
+
     return CE_None;
 }
 
@@ -1851,7 +1887,6 @@ static double LanczosSinc( double dfX, double dfR )
 }
 #undef GWK_PI
 
-#define GWKLANCZOS_RADIUS 3
 static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand, 
                                double dfSrcX, double dfSrcY,
                                double *pdfDensity, 
@@ -1867,33 +1902,28 @@ static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
     int     i, j;
 
-    double  dfScaleX = (double)poWK->nDstXSize / poWK->nSrcXSize;
-    double  dfScaleY = (double)poWK->nDstYSize / poWK->nSrcYSize;
-    int     nFiltX = (dfScaleX < 1.0) ? (int)ceil(GWKLANCZOS_RADIUS / dfScaleX) : GWKLANCZOS_RADIUS;
-    int     nFiltY = (dfScaleY < 1.0) ? (int)ceil(GWKLANCZOS_RADIUS / dfScaleY) : GWKLANCZOS_RADIUS;
-
     // Get the bilinear interpolation at the image borders
-    if ( iSrcX - nFiltX < 0 || iSrcX + nFiltX >= poWK->nSrcXSize
-         || iSrcY - nFiltY < 0 || iSrcY + nFiltY >= poWK->nSrcYSize )
+    if ( iSrcX - poWK->nXRadius < 0 || iSrcX + poWK->nXRadius >= poWK->nSrcXSize
+         || iSrcY - poWK->nYRadius < 0 || iSrcY + poWK->nYRadius >= poWK->nSrcYSize )
         return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
-    for ( j = -nFiltY; j <= nFiltY; j++ )
+    for ( j = -poWK->nYRadius; j <= poWK->nYRadius; j++ )
     {
-        double  dfWeight1 = (dfScaleY < 1.0 ) ?
-            LanczosSinc(j * dfScaleY, GWKLANCZOS_RADIUS) * dfScaleY :
-            LanczosSinc(j - dfDeltaY, GWKLANCZOS_RADIUS);
+        double  dfWeight1 = (poWK->dfYScale < 1.0 ) ?
+            LanczosSinc(j * poWK->dfYScale, poWK->dfYFilter) * poWK->dfYScale :
+            LanczosSinc(j - dfDeltaY, poWK->dfYFilter);
 
-        for ( i = -nFiltX; i <= nFiltX; i++ )
+        for ( i = -poWK->nXRadius; i <= poWK->nXRadius; i++ )
         {
             if ( GWKGetPixelValue( poWK, iBand,
                                    iSrcOffset + i + j  * poWK->nSrcXSize,
                                    pdfDensity, pdfReal, pdfImag ) )
             {
                 double  dfWeight2 =
-                    dfWeight1 * ((dfScaleX < 1.0 ) ?
-                        LanczosSinc(i * dfScaleX, GWKLANCZOS_RADIUS) * dfScaleX :
-                        LanczosSinc(i - dfDeltaX, GWKLANCZOS_RADIUS));
+                    dfWeight1 * ((poWK->dfXScale < 1.0 ) ?
+                        LanczosSinc(i * poWK->dfXScale, poWK->dfXFilter) * poWK->dfXScale :
+                        LanczosSinc(i - dfDeltaX, poWK->dfXFilter));
 
                 dfAccumulatorReal += *pdfReal * dfWeight2;
                 dfAccumulatorImag += *pdfImag * dfWeight2;
@@ -1908,7 +1938,6 @@ static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand,
     
     return TRUE;
 }
-#undef GWKLANCZOS_RADIUS
 
 /************************************************************************/
 /*                           GWKGeneralCase()                           */
