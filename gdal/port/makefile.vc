@@ -9,7 +9,6 @@ OBJ	=	cpl_conv.obj \
 		cpl_strtod.obj \
 		cpl_vsisimple.obj \
 		cplgetsymbol.obj \
-		cpl_dir.obj \
 		cpl_path.obj \
 		cpl_csv.obj \
 		cpl_findfile.obj \

@@ -8,7 +8,7 @@ else
 include GDALmake.opt
 endif
 
-OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cpl_dir.o \
+OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o \
 	cpl_strtod.o cpl_path.o cpl_csv.o cpl_findfile.o cpl_minixml.o \
 	cpl_multiproc.o cpl_list.o cpl_getexecpath.o cplstring.o \
 	cpl_vsil_win32.o cpl_vsisimple.o cpl_vsil.o cpl_vsi_mem.o \
