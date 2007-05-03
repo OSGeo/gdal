@@ -482,11 +482,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 class CPL_DLL GDALOpenInfo
 {
   public:
-
-                GDALOpenInfo( const char * pszFile, GDALAccess eAccessIn );
+                GDALOpenInfo( const char * pszFile, GDALAccess eAccessIn,
+                              char **papszSiblingFiles = NULL );
                 ~GDALOpenInfo( void );
     
     char        *pszFilename;
+    char        **papszSiblingFiles;
 
     GDALAccess  eAccess;
 
@@ -563,6 +564,8 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     void                *pDriverData;
 
     void                (*pfnUnloadDriver)(GDALDriver *);
+
+    int                 (*pfnIdentify)( GDALOpenInfo * );
 };
 
 /* ******************************************************************** */
