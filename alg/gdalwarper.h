@@ -49,7 +49,7 @@ typedef enum {
   /*! Bilinear (2x2 kernel) */                         GRA_Bilinear=1,
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
-  /*! Lanczos windowed sinc interpolation (3x3 kernel) */ GRA_Lanczos=4
+  /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4
 } GDALResampleAlg;
 
 typedef int 
@@ -232,9 +232,6 @@ CPL_C_END
 class CPL_DLL GDALWarpKernel
 {
 public:
-                       GDALWarpKernel();
-    virtual           ~GDALWarpKernel();
-
     char              **papszWarpOptions;
 
     GDALResampleAlg	eResample;
@@ -254,6 +251,13 @@ public:
     GByte             **papabyDstImage;
     GUInt32            *panDstValid;
     float              *pafDstDensity;
+
+    double              dfXScale;   // Resampling scale, i.e.
+    double              dfYScale;   // nDstSize/nSrcSize.
+    double              dfXFilter;  // Size of filter kernel.
+    double              dfYFilter;
+    int                 nXRadius;   // Size of window to filter.
+    int                 nYRadius;
     
     int                 nSrcXOff;
     int                 nSrcYOff;
@@ -269,6 +273,9 @@ public:
 
     double              dfProgressBase;
     double              dfProgressScale;
+
+                       GDALWarpKernel();
+    virtual           ~GDALWarpKernel();
 
     CPLErr              Validate();
     CPLErr              PerformWarp();
