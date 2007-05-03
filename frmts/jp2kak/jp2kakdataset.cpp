@@ -150,6 +150,7 @@ class JP2KAKDataset : public GDALPamDataset
 
     static void KakaduInitialize();
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -1077,6 +1078,54 @@ void JP2KAKDataset::KakaduInitialize()
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Check header                                                    */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->fp == NULL )
+    {
+        const char  *pszExtension = NULL;
+
+        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
+             || EQUALN(poOpenInfo->pszFilename,"https://",8)
+             || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
+            && EQUAL(pszExtension,"jp2") )
+            return TRUE;
+        else if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Any extension is supported for JP2 files.  Only selected        */
+/*      extensions are supported for JPC files since the standard       */
+/*      prefix is so short (two bytes).                                 */
+/* -------------------------------------------------------------------- */
+    if( memcmp(poOpenInfo->pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
+        return TRUE;
+    else if( memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                     sizeof(jpc_header) ) == 0 )
+    {
+        const char  *pszExtension = NULL;
+
+        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
+            && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
+            && !EQUAL(pszExtension,"j2c") )
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1089,8 +1138,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     int         bIsSubfile = FALSE;
     GByte      *pabyHeader = NULL;
 
+    if( !Identify( poOpenInfo ) )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
-/*      Check header                                                    */
+/*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->fp == NULL )
     {
@@ -1133,27 +1185,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
 
         pabyHeader = poOpenInfo->pabyHeader;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Any extension is supported for JP2 files.  Only selected        */
-/*      extensions are supported for JPC files since the standard       */
-/*      prefix is so short (two bytes).                                 */
-/* -------------------------------------------------------------------- */
-    if( !bIsJPIP )
-    {
-        if( memcmp(pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
-            pszExtension = "jp2";
-        else if( memcmp( pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
-        {
-            pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-            if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
-                && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
-                && !EQUAL(pszExtension,"j2c") )
-                pszExtension = "jpc";
-        }
-        else
-            return NULL;
     }
 
     KakaduInitialize();
@@ -2731,6 +2762,7 @@ void GDALRegister_JP2KAK()
 "</CreationOptionList>" );
 
         poDriver->pfnOpen = JP2KAKDataset::Open;
+        poDriver->pfnIdentify = JP2KAKDataset::Identify;
         poDriver->pfnCreateCopy = JP2KAKCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

@@ -90,6 +90,7 @@ class PCIDSKDataset : public RawDataset
                 PCIDSKDataset();
                 ~PCIDSKDataset();
 
+    static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,

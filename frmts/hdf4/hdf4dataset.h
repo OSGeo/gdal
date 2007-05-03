@@ -98,6 +98,7 @@ class HDF4Dataset : public GDALDataset
     
     virtual char **GetMetadata( const char * pszDomain = "" );
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 };
 
 char *SPrintArray( GDALDataType eDataType, void *paDataArray,

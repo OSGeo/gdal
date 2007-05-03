@@ -272,6 +272,7 @@ void GDALRegister_VRT()
         poDriver->pfnOpen = VRTDataset::Open;
         poDriver->pfnCreateCopy = VRTCreateCopy;
         poDriver->pfnCreate = VRTDataset::Create;
+        poDriver->pfnIdentify = VRTDataset::Identify;
 
         poDriver->AddSourceParser( "SimpleSource", 
                                    VRTParseCoreSources );
