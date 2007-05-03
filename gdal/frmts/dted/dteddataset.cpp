@@ -176,6 +176,23 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     DTEDInfo    *psDTED;
 
 /* -------------------------------------------------------------------- */
+/*      Does the file start with one of the possible DTED header        */
+/*      record types, and do we have a UHL marker?                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 240 )
+        return NULL;
+
+    if( !EQUALN((const char *)poOpenInfo->pabyHeader,"VOL",3)
+        && !EQUALN((const char *)poOpenInfo->pabyHeader,"HDR",3)
+        && !EQUALN((const char *)poOpenInfo->pabyHeader,"UHL",3) )
+    {
+        return NULL;
+    }
+
+    if( strstr((const char *)poOpenInfo->pabyHeader,"UHL") == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     psDTED = DTEDOpen( poOpenInfo->pszFilename, "rb", TRUE );

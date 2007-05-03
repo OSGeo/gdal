@@ -362,13 +362,25 @@ GDALDataType PCIDSKDataset::PCIDSKTypeToGDAL( const char *pszType )
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int PCIDSKDataset::Identify( GDALOpenInfo * poOpenInfo )
+{
+    if( poOpenInfo->nHeaderBytes < 512 
+        || !EQUALN((const char *) poOpenInfo->pabyHeader, "PCIDSK  ", 8) )
+        return FALSE;
+    else
+        return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->nHeaderBytes < 512 
-        || !EQUALN((const char *) poOpenInfo->pabyHeader, "PCIDSK  ", 8) )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1535,6 +1547,7 @@ void GDALRegister_PCIDSK()
 "   <Option name='BANDDESCn' type='string' description='Text describing contents of the specified band'/>"
 "</CreationOptionList>" ); 
 
+        poDriver->pfnIdentify = PCIDSKDataset::Identify;
         poDriver->pfnOpen = PCIDSKDataset::Open;
         poDriver->pfnCreate = PCIDSKDataset::Create;
         poDriver->pfnCreateCopy = PCIDSKDataset::CreateCopy;

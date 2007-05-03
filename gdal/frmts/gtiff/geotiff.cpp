@@ -154,6 +154,7 @@ class GTiffDataset : public GDALPamDataset
 
     static GDALDataset *OpenDir( const char *pszFilename );
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
@@ -2499,6 +2500,46 @@ int GTiffDataset::SetDirectory( uint32 nNewOffset )
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      We have a special hook for handling opening a specific          */
+/*      directory of a TIFF file.                                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*	First we check to see if the file has the expected header	*/
+/*	bytes.								*/    
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 2 )
+        return FALSE;
+
+    if( (poOpenInfo->pabyHeader[0] != 'I' || poOpenInfo->pabyHeader[1] != 'I')
+        && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
+        return FALSE;
+
+    if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "This is a BigTIFF file.  BigTIFF is not supported by this\n"
+                  "version of GDAL and libtiff." );
+        return FALSE;
+    }
+
+    if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
+        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0) )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -4772,6 +4813,7 @@ void GDALRegister_GTiff()
         poDriver->pfnCreate = GTiffDataset::Create;
         poDriver->pfnCreateCopy = GTiffCreateCopy;
         poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
+        poDriver->pfnIdentify = GTiffDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

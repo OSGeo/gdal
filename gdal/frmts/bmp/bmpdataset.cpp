@@ -233,6 +233,7 @@ class BMPDataset : public GDALPamDataset
                 BMPDataset();
                 ~BMPDataset();
 
+    static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -943,15 +944,27 @@ CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int BMPDataset::Identify( GDALOpenInfo *poOpenInfo )
+
+{
+    if( poOpenInfo->nHeaderBytes < 2
+        || poOpenInfo->pabyHeader[0] != 'B' 
+        || poOpenInfo->pabyHeader[1] != 'M' )
+        return FALSE;
+    else
+        return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->fp == NULL )
-        return NULL;
-
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "BM", 2) )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1439,6 +1452,7 @@ void GDALRegister_BMP()
 
         poDriver->pfnOpen = BMPDataset::Open;
         poDriver->pfnCreate = BMPDataset::Create;
+        poDriver->pfnIdentify = BMPDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

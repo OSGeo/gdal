@@ -831,7 +831,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int		i, bSelectedHDR;
-    const char	*pszHDRFilename;
     
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
@@ -843,23 +842,28 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Now we need to tear apart the filename to form a .HDR           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
-    char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    char *pszName = CPLStrdup( CPLGetBasename( poOpenInfo->pszFilename ) );
-    pszHDRFilename = CPLFormCIFilename( pszPath, pszName, "hdr" );
+    CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+    CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
 
-    bSelectedHDR = EQUAL( pszHDRFilename, poOpenInfo->pszFilename );
+    int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
+                              CPLFormFilename( NULL, osName, "hdr" ) );
+    if( iFile < 0 ) // return if there is no corresponding .hdr file
+        return NULL;
+
+    CPLString osHDRFilename = 
+        CPLFormFilename( osPath, poOpenInfo->papszSiblingFiles[iFile], NULL );
+
+    bSelectedHDR = EQUAL( osHDRFilename, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a .hdr file?                                         */
 /* -------------------------------------------------------------------- */
     FILE	*fp;
 
-    fp = VSIFOpen( pszHDRFilename, "r" );
+    fp = VSIFOpen( osHDRFilename, "r" );
     
     if( fp == NULL )
     {
-        CPLFree( pszName );
-        CPLFree( pszPath );
         return NULL;
     }
 
@@ -982,8 +986,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nRows == -1 || nCols == -1 )
     {
         CSLDestroy( papszHDR );
-        CPLFree( pszName );
-        CPLFree( pszPath );
         return NULL;
     }
     
@@ -1000,8 +1002,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                   "to the header file: %s\n", 
                   poOpenInfo->pszFilename );
         CSLDestroy( papszHDR );
-        CPLFree( pszName );
-        CPLFree( pszPath );
         return NULL;
     }
 
@@ -1031,10 +1031,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %s with write permission.\n%s", 
-                  pszName, VSIStrerror( errno ) );
+                  osName.c_str(), VSIStrerror( errno ) );
         delete poDS;
-        CPLFree( pszName );
-        CPLFree( pszPath );
         return NULL;
     }
 
@@ -1178,7 +1176,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file.                                          */
 /* -------------------------------------------------------------------- */
-    const char  *pszPrjFilename = CPLFormCIFilename( pszPath, pszName, "prj" );
+    const char  *pszPrjFilename = CPLFormCIFilename( osPath, osName, "prj" );
 
     fp = VSIFOpen( pszPrjFilename, "r" );
     if( fp != NULL )
@@ -1215,7 +1213,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a color table.                                        */
 /* -------------------------------------------------------------------- */
-    const char  *pszCLRFilename = CPLFormCIFilename( pszPath, pszName, "clr" );
+    const char  *pszCLRFilename = CPLFormCIFilename( osPath, osName, "clr" );
 
     fp = VSIFOpen( pszCLRFilename, "r" );
     if( fp != NULL )
@@ -1272,9 +1270,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
-    
-    CPLFree( pszName );
-    CPLFree( pszPath );
     
     return( poDS );
 }

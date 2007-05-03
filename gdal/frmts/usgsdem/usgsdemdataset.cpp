@@ -102,6 +102,7 @@ class USGSDEMDataset : public GDALPamDataset
                 USGSDEMDataset();
 		~USGSDEMDataset();
     
+    static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
@@ -522,6 +523,29 @@ const char *USGSDEMDataset::GetProjectionRef()
     return pszProjection;
 }
 
+
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int USGSDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 200 )
+        return FALSE;
+
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     0",6)
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     1",6)
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     2",6) 
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     3",6) )
+        return FALSE;
+
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) )
+        return FALSE;
+
+    return TRUE;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -529,16 +553,7 @@ const char *USGSDEMDataset::GetProjectionRef()
 GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 200 )
-        return NULL;
-
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     0",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     1",6)
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     2",6) 
-        && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     3",6) )
-        return NULL;
-
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -625,6 +640,7 @@ void GDALRegister_USGSDEM()
         
         poDriver->pfnOpen = USGSDEMDataset::Open;
         poDriver->pfnCreateCopy = USGSDEMCreateCopy;
+        poDriver->pfnIdentify = USGSDEMDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

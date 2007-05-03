@@ -280,6 +280,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
                 HFADataset();
                 ~HFADataset();
 
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -2350,6 +2351,23 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int HFADataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify that this is a HFA file.                                 */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 15
+        || !EQUALN((char *) poOpenInfo->pabyHeader,"EHFA_HEADER_TAG",15) )
+        return FALSE;
+    else
+        return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -2362,9 +2380,8 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify that this is a HFA file.                                 */
 /* -------------------------------------------------------------------- */
-    if( !poOpenInfo->bStatOK || poOpenInfo->nHeaderBytes < 15
-        || !EQUALN((char *) poOpenInfo->pabyHeader,"EHFA_HEADER_TAG",15) )
-        return( NULL );
+    if( !Identify( poOpenInfo ) )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -3080,6 +3097,7 @@ void GDALRegister_HFA()
         poDriver->pfnCreate = HFADataset::Create;
         poDriver->pfnCreateCopy = HFADataset::CreateCopy;
         poDriver->pfnDelete = HFADataset::Delete;
+        poDriver->pfnIdentify = HFADataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
