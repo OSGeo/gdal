@@ -529,9 +529,28 @@ int VSIMemFilesystemHandler::Rmdir( const char * pszPathname )
 char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
 
 {
-    errno = ENOENT;
+    CPLMutexHolder oHolder( &hMutex );
 
-    return NULL;
+    std::map<CPLString,VSIMemFile*>::const_iterator iter;
+    char **papszResult = NULL;
+    int nPathLen = strlen(pszPath);
+
+    if( pszPath[nPathLen-1] == '/' )
+        nPathLen--;
+
+    for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
+    {
+        const char *pszFilePath = iter->second->osFilename.c_str();
+        if( EQUALN(pszPath,pszFilePath,nPathLen)
+            && pszFilePath[nPathLen] == '/' 
+            && strstr(pszFilePath+nPathLen+1,"/") == NULL )
+        {
+            papszResult = CSLAddString( papszResult, 
+                                        pszFilePath+nPathLen+1 );
+        }
+    }
+
+    return papszResult;
 }
 
 /************************************************************************/
