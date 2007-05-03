@@ -34,6 +34,54 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                             VSIReadDir()                             */
+/************************************************************************/
+
+/**
+ * \brief Read names in a directory.
+ *
+ * This function abstracts access to directory contains.  It returns a
+ * list of strings containing the names of files, and directories in this
+ * directory.  The resulting string list becomes the responsibility of the
+ * application and should be freed with CSLDestroy() when no longer needed.
+ *
+ * Note that no error is issued via CPLError() if the directory path is
+ * invalid, though NULL is returned.
+ * 
+ * This function used to be known as CPLReadDir(), but the old name is now 
+ * deprecated. 
+ *
+ * @param pszPath the relative, or absolute path of a directory to read.
+ * @return The list of entries in the directory, or NULL if the directory
+ * doesn't exist.
+ */
+
+char **VSIReadDir(const char *pszPath)
+{
+    VSIFilesystemHandler *poFSHandler = 
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->ReadDir( pszPath );
+}
+
+/************************************************************************/
+/*                             CPLReadDir()                             */
+/*                                                                      */
+/*      This is present only to provide ABI compatability with older    */
+/*      versions.                                                       */
+/************************************************************************/
+#undef CPLReadDir
+
+CPL_C_START
+char CPL_DLL **CPLReadDir( const char *pszPath );
+CPL_C_END
+
+char **CPLReadDir( const char *pszPath )
+{
+    return VSIReadDir(pszPath);
+}
+
+/************************************************************************/
 /*                              VSIMkdir()                              */
 /************************************************************************/
 

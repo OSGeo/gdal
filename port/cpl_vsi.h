@@ -157,6 +157,8 @@ char CPL_DLL   *VSIStrdup( const char * );
 /*      Other...                                                        */
 /* ==================================================================== */
 
+#define CPLReadDir VSIReadDir
+char CPL_DLL **VSIReadDir( const char * );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
