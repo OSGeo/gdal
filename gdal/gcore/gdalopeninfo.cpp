@@ -42,7 +42,8 @@ CPL_CVSID("$Id$");
 /*                            GDALOpenInfo()                            */
 /************************************************************************/
 
-GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
+GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
+                            char **papszSiblingsIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -110,6 +111,22 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
         else if( VSI_ISDIR( sStat.st_mode ) )
             bIsDirectory = TRUE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Capture sibling list either from passed in values, or by        */
+/*      scanning for them.                                              */
+/* -------------------------------------------------------------------- */
+    if( papszSiblingsIn != NULL )
+    {
+        papszSiblingFiles = CSLDuplicate( papszSiblingsIn );
+    }
+    else if( bStatOK && !bIsDirectory )
+    {
+        CPLString osDir = CPLGetDirname( pszFilename );
+        papszSiblingFiles = VSIReadDir( osDir );
+    }
+    else
+        papszSiblingFiles = NULL;
 }
 
 /************************************************************************/
@@ -124,5 +141,6 @@ GDALOpenInfo::~GDALOpenInfo()
 
     if( fp != NULL )
         VSIFClose( fp );
+    CSLDestroy( papszSiblingFiles );
 }
 
