@@ -118,11 +118,6 @@ int CPL_DLL CPLPrintPointer( char *, void *, int );
 void CPL_DLL *CPLGetSymbol( const char *, const char * );
 
 /* -------------------------------------------------------------------- */
-/*      Read a directory  (cpl_dir.c)                                   */
-/* -------------------------------------------------------------------- */
-char CPL_DLL  **CPLReadDir( const char *pszPath );
-
-/* -------------------------------------------------------------------- */
 /*      Fetch executable path.                                          */
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLGetExecPath( char *pszPathBuf, int nMaxLength );
