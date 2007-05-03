@@ -108,6 +108,7 @@ class JPGDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -1082,28 +1083,101 @@ CPLErr JPGDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int JPGDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    GByte  *pabyHeader = NULL;
+    int    nHeaderBytes = poOpenInfo->nHeaderBytes;
+
+/* -------------------------------------------------------------------- */
+/*      If it is a subfile, read the JPEG header.                       */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*	First we check to see if the file has the expected header	*/
+/*	bytes.								*/    
+/* -------------------------------------------------------------------- */
+    pabyHeader = poOpenInfo->pabyHeader;
+
+    if( nHeaderBytes < 10 )
+        return FALSE;
+
+    if( pabyHeader[0] != 0xff
+        || pabyHeader[1] != 0xd8
+        || pabyHeader[2] != 0xff )
+        return FALSE;
+
+    int iChunkOff;
+
+    for( iChunkOff = 2; 
+         iChunkOff < nHeaderBytes-10; 
+         iChunkOff += 10 ) 
+    {
+        if( pabyHeader[0+iChunkOff] != 0xff
+            || (pabyHeader[1+iChunkOff] & 0xf0) < 0xe0 )
+            return FALSE;
+
+        if( pabyHeader[1+iChunkOff] == 0xe0
+            && pabyHeader[4+iChunkOff] == 'J'
+            && pabyHeader[5+iChunkOff] == 'F'
+            && pabyHeader[6+iChunkOff] == 'I'
+            && pabyHeader[7+iChunkOff] == 'F' )
+            break;
+        else if( pabyHeader[1+iChunkOff] == 0xe1
+                 && pabyHeader[4+iChunkOff] == 'E'
+                 && pabyHeader[5+iChunkOff] == 'x'
+                 && pabyHeader[6+iChunkOff] == 'i'
+                 && pabyHeader[7+iChunkOff] == 'f' )
+            break;
+        else if( pabyHeader[1+iChunkOff] == 0xe6
+                 && pabyHeader[4+iChunkOff] == 'N'
+                 && pabyHeader[5+iChunkOff] == 'I'
+                 && pabyHeader[6+iChunkOff] == 'T'
+                 && pabyHeader[7+iChunkOff] == 'F' )
+            break;
+        else if( CSLTestBoolean(
+                     CPLGetConfigOption( "SIMPLE_JPEG_MAGIC", "NO" ) ) )
+            /* Explicit request to allow non-app segment files */
+            break;
+    } /* next chunk */
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int    bIsSubfile = FALSE;
-    GByte  *pabyHeader = NULL;
-    int    subfile_offset = 0, subfile_size;
-    int    nHeaderBytes = poOpenInfo->nHeaderBytes;
-    const char *real_filename = poOpenInfo->pszFilename;
-    GByte abySubfileHeader[16];
-    int nQLevel = -1;
+    if( !Identify( poOpenInfo ) )
+        return NULL;
+
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The JPEG driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
 /* -------------------------------------------------------------------- */
+    int    bIsSubfile = FALSE;
+    int    subfile_offset = 0, subfile_size;
+    const char *real_filename = poOpenInfo->pszFilename;
+    int nQLevel = -1;
+
     if( ( poOpenInfo->fp == NULL ) &&
         ( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) ) )
     {
-        /* static GByte abySubfileHeader[16]; */
-        FILE *file;
         int bScan;
 
         if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:Q",14) )
@@ -1139,93 +1213,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
                   "real_filename %s, offset=%d, size=%d\n", 
                   real_filename, subfile_offset, subfile_size);
 
-        file = VSIFOpenL( real_filename, "rb" );
-        if( file == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Unable to open compressed data file %s",
-                      real_filename);
-            return NULL;
-        }
-
-        /* seek to beginning of JPEG data */
-        if( VSIFSeekL( file, subfile_offset, SEEK_SET ) != 0 )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Unable to seek in file %s",
-                      real_filename);
-            return NULL;
-        }
-
-        /* read header, then close file */
-        nHeaderBytes = VSIFReadL(abySubfileHeader, 1, (size_t) 16, file);
-        VSIFCloseL(file);
-
-        pabyHeader = abySubfileHeader;
-
         bIsSubfile = TRUE;
-    }
-    else
-    {
-        pabyHeader = poOpenInfo->pabyHeader;
-    }
-
-/* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/    
-/* -------------------------------------------------------------------- */
-    if( nHeaderBytes < 10 )
-        return NULL;
-
-    if( pabyHeader[0] != 0xff
-        || pabyHeader[1] != 0xd8
-        || pabyHeader[2] != 0xff )
-        return NULL;
-
-    int iChunkOff;
-
-    for( iChunkOff = 2; 
-         iChunkOff < nHeaderBytes-10; 
-         iChunkOff += 10 ) 
-    {
-        if( pabyHeader[0+iChunkOff] != 0xff
-            || (pabyHeader[1+iChunkOff] & 0xf0) < 0xe0 )
-            return NULL;
-
-        if( pabyHeader[1+iChunkOff] == 0xe0
-            && pabyHeader[4+iChunkOff] == 'J'
-            && pabyHeader[5+iChunkOff] == 'F'
-            && pabyHeader[6+iChunkOff] == 'I'
-            && pabyHeader[7+iChunkOff] == 'F' )
-            break;
-        else if( pabyHeader[1+iChunkOff] == 0xe1
-                 && pabyHeader[4+iChunkOff] == 'E'
-                 && pabyHeader[5+iChunkOff] == 'x'
-                 && pabyHeader[6+iChunkOff] == 'i'
-                 && pabyHeader[7+iChunkOff] == 'f' )
-            break;
-        else if( pabyHeader[1+iChunkOff] == 0xe6
-                 && pabyHeader[4+iChunkOff] == 'N'
-                 && pabyHeader[5+iChunkOff] == 'I'
-                 && pabyHeader[6+iChunkOff] == 'T'
-                 && pabyHeader[7+iChunkOff] == 'F' )
-            break;
-        else if( subfile_offset != 0 )
-            /* ok - we don't require app segment on "subfiles" which 
-               can be just part of a multi-image stream - ie. in nitf files */
-            break;
-        else if( CSLTestBoolean(
-                     CPLGetConfigOption( "SIMPLE_JPEG_MAGIC", "NO" ) ) )
-            /* Explicit request to allow non-app segment files */
-            break;
-    } /* next chunk */
-
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The JPEG driver does not support update access to existing"
-                  " datasets.\n" );
-        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1651,6 +1639,7 @@ void GDALRegister_JPEG()
 "   <Option name='WORLDFILE' type='boolean'/>\n"
 "</CreationOptionList>\n" );
 
+        poDriver->pfnIdentify = JPGDataset::Identify;
         poDriver->pfnOpen = JPGDataset::Open;
         poDriver->pfnCreateCopy = JPEGCreateCopy;
 

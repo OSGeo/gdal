@@ -544,6 +544,23 @@ CPLErr VRTDataset::SetMetadataItem( const char *pszName,
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int VRTDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if( (poOpenInfo->nHeaderBytes > 20 
+         && EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11)) )
+        return TRUE;
+
+    if( EQUALN(poOpenInfo->pszFilename,"<VRTDataset",11) )
+        return TRUE;
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -556,9 +573,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Does this appear to be a virtual dataset definition XML         */
 /*      file?                                                           */
 /* -------------------------------------------------------------------- */
-    if( (poOpenInfo->nHeaderBytes < 20 
-         || !EQUALN((const char *)poOpenInfo->pabyHeader,"<VRTDataset",11))
-        && !EQUALN(poOpenInfo->pszFilename,"<VRTDataset",11) )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */

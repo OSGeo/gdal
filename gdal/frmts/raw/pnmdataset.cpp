@@ -56,6 +56,7 @@ class PNMDataset : public RawDataset
 
     virtual CPLErr GetGeoTransform( double * );
 
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -108,6 +109,34 @@ CPLErr PNMDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int PNMDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify that this is a _raw_ ppm or pgm file.  Note, we don't    */
+/*      support ascii files, or pbm (1bit) files.                       */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fp == NULL )
+        return FALSE;
+
+    if( poOpenInfo->pabyHeader[0] != 'P'  &&
+        (poOpenInfo->pabyHeader[2] != ' '  ||    // XXX: Magick number
+         poOpenInfo->pabyHeader[2] != '\t' ||    // may be followed
+         poOpenInfo->pabyHeader[2] != '\n' ||    // any of the blank
+         poOpenInfo->pabyHeader[2] != '\r') )    // characters
+        return FALSE;
+
+    if( poOpenInfo->pabyHeader[1] != '5'
+        && poOpenInfo->pabyHeader[1] != '6' )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -118,18 +147,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Verify that this is a _raw_ ppm or pgm file.  Note, we don't    */
 /*      support ascii files, or pbm (1bit) files.                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fp == NULL )
-        return NULL;
-
-    if( poOpenInfo->pabyHeader[0] != 'P'  &&
-        (poOpenInfo->pabyHeader[2] != ' '  ||    // XXX: Magick number
-         poOpenInfo->pabyHeader[2] != '\t' ||    // may be followed
-         poOpenInfo->pabyHeader[2] != '\n' ||    // any of the blank
-         poOpenInfo->pabyHeader[2] != '\r') )    // characters
-        return NULL;
-
-    if( poOpenInfo->pabyHeader[1] != '5'
-        && poOpenInfo->pabyHeader[1] != '6' )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -387,6 +405,7 @@ void GDALRegister_PNM()
 
         poDriver->pfnOpen = PNMDataset::Open;
         poDriver->pfnCreate = PNMDataset::Create;
+        poDriver->pfnIdentify = PNMDataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
