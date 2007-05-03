@@ -44,6 +44,7 @@ GDALDriver::GDALDriver()
     pfnCreateCopy = NULL;
     pfnUnloadDriver = NULL;
     pDriverData = NULL;
+    pfnIdentify = NULL;
 }
 
 /************************************************************************/
@@ -537,4 +538,47 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
         return "";
     else
         return pszOptionList;
+}
+
+/************************************************************************/
+/*                         GDALIdentifyDriver()                         */
+/************************************************************************/
+
+GDALDriverH CPL_STDCALL 
+GDALIdentifyDriver( const char * pszFilename, 
+                    char **papszFileList )
+
+{
+    int         	iDriver;
+    GDALDriverManager  *poDM = GetGDALDriverManager();
+    GDALOpenInfo        oOpenInfo( pszFilename, GA_ReadOnly, papszFileList );
+    CPLLocaleC          oLocaleForcer;
+
+    CPLErrorReset();
+    
+    for( iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+    {
+        GDALDriver      *poDriver = poDM->GetDriver( iDriver );
+        GDALDataset     *poDS;
+
+        if( poDriver->pfnIdentify != NULL )
+        {
+            if( poDriver->pfnIdentify( &oOpenInfo ) )
+                return (GDALDriverH) poDriver;
+        }
+        else if( poDriver->pfnOpen != NULL )
+        {
+            poDS = poDriver->pfnOpen( &oOpenInfo );
+            if( poDS != NULL )
+            {
+                delete poDS;
+                return (GDALDriverH) poDriver;
+            }
+
+            if( CPLGetLastErrorNo() != 0 )
+                return NULL;
+        }
+    }
+
+    return NULL;
 }
