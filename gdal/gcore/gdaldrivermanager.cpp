@@ -655,3 +655,5 @@ void CPL_STDCALL GDALDestroyDriverManager( void )
     if( poDM != NULL )
         delete poDM;
 }
+
+
