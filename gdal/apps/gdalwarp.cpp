@@ -368,7 +368,7 @@ int main( int argc, char ** argv )
         exit( 1 );
 
     if( pszTargetSRS == NULL )
-        pszTargetSRS = CPLStrdup(GDALGetProjectionRef(hDstDS));
+        pszTargetSRS = CPLStrdup( GDALGetProjectionRef(hDstDS) );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all source files, processing each in turn.            */
@@ -738,7 +738,9 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Loop over all input files to collect extents.                   */
 /* -------------------------------------------------------------------- */
-    int iSrc;
+    int     iSrc;
+    char    *pszThisTargetSRS =
+        ( pszTargetSRS ) ? CPLStrdup( pszTargetSRS ) : NULL;
 
     for( iSrc = 0; papszSrcFiles[iSrc] != NULL; iSrc++ )
     {
@@ -785,8 +787,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                 pszThisSourceSRS = "";
         }
 
-        if( pszTargetSRS == NULL )
-            pszTargetSRS = pszThisSourceSRS;
+        if( pszThisTargetSRS == NULL )
+            pszThisTargetSRS = CPLStrdup( pszThisSourceSRS );
         
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
@@ -794,11 +796,15 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
         hTransformArg = 
             GDALCreateGenImgProjTransformer( hSrcDS, pszThisSourceSRS, 
-                                             NULL, pszTargetSRS, 
+                                             NULL, pszThisTargetSRS, 
                                              TRUE, 1000.0, nOrder );
         
         if( hTransformArg == NULL )
+        {
+            CPLFree( pszThisTargetSRS );
+            GDALClose( hSrcDS );
             return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Get approximate output definition.                              */
@@ -812,7 +818,11 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                                       adfThisGeoTransform, 
                                       &nThisPixels, &nThisLines, 
                                       adfExtent, 0 ) != CE_None )
+        {
+            CPLFree( pszThisTargetSRS );
+            GDALClose( hSrcDS );
             return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Expand the working bounds to include this region, ensure the    */
@@ -849,6 +859,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No usable source images." );
+        CPLFree( pszThisTargetSRS );
         return NULL;
     }
 
@@ -988,12 +999,15 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                          nDstBandCount, eDT, papszCreateOptions );
     
     if( hDstDS == NULL )
+    {
+        CPLFree( pszThisTargetSRS );
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write out the projection definition.                            */
 /* -------------------------------------------------------------------- */
-    GDALSetProjection( hDstDS, pszTargetSRS );
+    GDALSetProjection( hDstDS, pszThisTargetSRS );
     GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
 
 /* -------------------------------------------------------------------- */
@@ -1016,6 +1030,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         GDALDestroyColorTable( hCT );
     }
 
+    CPLFree( pszThisTargetSRS );
     return hDstDS;
 }
     
