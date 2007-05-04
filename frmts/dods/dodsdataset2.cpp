@@ -272,7 +272,7 @@ private:
     int    bTranspose;
     int    bFlipX;
     int    bFlipY;
-		int    bNoDataSet;
+    int    bNoDataSet;
     double dfNoDataValue;
 
     void            HarvestDAS();
@@ -375,13 +375,13 @@ DODSDataset::connect_to_server() throw(Error)
 /* -------------------------------------------------------------------- */
     AISConnect *poConnection = new AISConnect(oURL);
     string version = poConnection->request_version();
-    if (version.empty() || version.find("/3.") == string::npos)
+    /*    if (version.empty() || version.find("/3.") == string::npos)
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "I connected to the URL but could not get a DAP 3.x version string\n"
                   "from the server.  I will continue to connect but access may fail.");
     }
-
+    */
     return poConnection;
 }
 
@@ -695,8 +695,18 @@ void DODSDataset::HarvestDAS()
 
     if( poFileInfo == NULL )
     {
-        CPLDebug( "DODS", "No GLOBAL DAS info." );
-        return;
+        poFileInfo = oDAS.find_container( "NC_GLOBAL" );
+
+	if( poFileInfo == NULL )
+	{
+	    poFileInfo = oDAS.find_container( "HDF_GLOBAL" );
+
+	    if( poFileInfo == NULL )
+	    {
+	        CPLDebug( "DODS", "No GLOBAL DAS info." );
+	        return;
+	    }
+	}
     }
 
 /* -------------------------------------------------------------------- */
@@ -759,6 +769,8 @@ void DODSDataset::HarvestDAS()
 /*      stuff like "WGS84".                                             */
 /* -------------------------------------------------------------------- */
     oWKT = StripQuotes(poFileInfo->get_attr( "spatial_ref" ));
+    // strip remaining backslashes (2007-04-26, gaffigan@sfos.uaf.edu)
+    oWKT.erase(std::remove(oWKT.begin(), oWKT.end(), '\\'), oWKT.end());
     if( oWKT.length() > 0 
         && !EQUALN(oWKT.c_str(),"GEOGCS",6)
         && !EQUALN(oWKT.c_str(),"PROJCS",6)
@@ -888,8 +900,17 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /*      Dump the contents of the Array data into our output image       */
 /*      buffer.                                                         */
 /* -------------------------------------------------------------------- */
-    poAX->buf2val( (void **) &padfXMap );
-    poAY->buf2val( (void **) &padfYMap );
+
+/* -------------------------------------------------------------------- */
+/* The cast below is the correct way to handle the problem.             */
+/* The (void *) cast is to avoid a GCC warning like:                    */
+/* "warning: dereferencing type-punned pointer will break \             */
+/*  strict-aliasing rules"                                              */
+/*                                                                      */
+/*  (void *) introduces a compatible intermediate type in the cast list.*/
+/* -------------------------------------------------------------------- */
+    poAX->buf2val( (void **) (void *) &padfXMap );
+    poAY->buf2val( (void **) (void *) &padfYMap );
 
 /* -------------------------------------------------------------------- */
 /*      Compute a geotransform from the maps.  We are implicitly        */
@@ -1286,12 +1307,25 @@ void DODSRasterBand::HarvestDAS()
     if( oValue != "" )
         SetDescription( oValue.c_str() );
 
-/* --- */
-/* missing_value */
-/* --- */
+/* -------------------------------------------------------------------- */
+/* Try missing_value                                                    */
+/* -------------------------------------------------------------------- */
     oValue = poBandInfo->get_attr( "missing_value" );
-    if( oValue != "" )
+    bNoDataSet=FALSE;
+    if( oValue != "" ) {
         SetNoDataValue( atof(oValue.c_str()) );
+    } else {
+
+/* -------------------------------------------------------------------- */
+/* Try _FillValue                                                       */
+/* -------------------------------------------------------------------- */
+	oValue = poBandInfo->get_attr( "_FillValue" );
+	if( oValue != "" ) {
+	    SetNoDataValue( atof(oValue.c_str()) );
+	}
+    }
+
+
 
 /* -------------------------------------------------------------------- */
 /*      Collect color table                                             */
@@ -1414,8 +1448,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         BaseType *poBt = get_variable(data, oVarName );
         if (!poBt)
             throw Error(string("I could not read the variable '")
-		    + oVarName
-		    + string("' from the data source at:\n")
+		    + oVarName		    + string("' from the data source at:\n")
 		    + poDODS->GetUrl() );
 
         Array *poA;
