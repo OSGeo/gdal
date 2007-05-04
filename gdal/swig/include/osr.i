@@ -258,11 +258,7 @@ public:
 
   %feature("kwargs") OSRSpatialReferenceShadow;
   OSRSpatialReferenceShadow( char const * wkt = "" ) {
-    OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
-    if (sr) {
-      OSRReference( sr );
-    }
-    return sr;
+    return (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
   }
 
   ~OSRSpatialReferenceShadow() {
