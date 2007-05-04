@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test DODS raster access.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -36,13 +36,15 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+
+
 ###############################################################################
 # Open DODS datasource.
 
 def dods_1():
     gdaltest.dods_ds = None
     gdaltest.dods_dr = None
-    
+
     try:
         gdaltest.dods_dr = gdal.GetDriverByName( 'DODS' )
     except:
@@ -51,7 +53,7 @@ def dods_1():
     if gdaltest.dods_dr is None:
         return 'skip'
 
-    gdaltest.dods_grid_ds = gdal.Open( 'http://ingrid.ldeo.columbia.edu/SOURCES/.ARCTIC/.STATION/dods?Theta[x][y]')
+    gdaltest.dods_grid_ds = gdal.Open('http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]')
 
     if gdaltest.dods_grid_ds is None:
         gdaltest.dods_dr = None
@@ -65,8 +67,7 @@ def dods_1():
 def dods_2():
     if gdaltest.dods_dr is None:
         return 'skip'
-    
-    tst = gdaltest.GDALTest( 'dods', 'http://ingrid.ldeo.columbia.edu/SOURCES/.ARCTIC/.STATION/dods?Theta', 1, 51213, filename_absolute = 1 )
+    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute = 1 )
     return tst.testOpen()
 
 ###############################################################################
@@ -75,8 +76,7 @@ def dods_2():
 def dods_3():
     if gdaltest.dods_dr is None:
         return 'skip'
-    
-    tst = gdaltest.GDALTest( 'dods', 'http://ingrid.ldeo.columbia.edu/SOURCES/.ARCTIC/.STATION/dods', 12, 51213, filename_absolute = 1 )
+    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute = 1 )
     return tst.testOpen()
 
 ###############################################################################
@@ -85,8 +85,7 @@ def dods_3():
 def dods_4():
     if gdaltest.dods_dr is None:
         return 'skip'
-    
-    tst = gdaltest.GDALTest( 'dods', 'http://ingrid.ldeo.columbia.edu/SOURCES/.ARCTIC/.STATION/dods?Theta[x][y]', 1, 51985, filename_absolute = 1 )
+    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute = 1 )
     return tst.testOpen()
 
 ###############################################################################
@@ -95,8 +94,8 @@ def dods_4():
 def dods_5():
     if gdaltest.dods_dr is None:
         return 'skip'
-    
-    tst = gdaltest.GDALTest( 'dods', 'http://ingrid.ldeo.columbia.edu/SOURCES/.ARCTIC/.STATION/dods?Theta[y][-x]', 1, 52851, filename_absolute = 1 )
+
+    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][-x]', 1, 2436, filename_absolute = 1 )
     return tst.testOpen()
 
 ###############################################################################
@@ -105,9 +104,10 @@ def dods_5():
 def dods_6():
     if gdaltest.dods_dr is None:
         return 'skip'
-    
+
+    gdaltest.dods_grid_ds = gdal.Open('http://g0dup05u.ecs.nasa.gov/opendap/AIRS/AIRX3STD.003/2004.12.28/AIRS.2004.12.28.L3.RetStd001.v4.0.9.0.G05253115303.hdf?TotH2OVap_A[y][x]')
     nd = gdaltest.dods_grid_ds.GetRasterBand(1).GetNoDataValue()
-    if nd != -9999:
+    if nd != -9999.0:
         gdaltest.post_reason( 'nodata value wrong or missing.' )
         print nd
         return 'fail'
@@ -120,12 +120,12 @@ def dods_6():
 def dods_cleanup():
     if gdaltest.dods_dr is None:
         return 'skip'
-    
+
     gdaltest.dods_dr = None
     gdaltest.dods_grid_ds = None
 
     return 'success'
-    
+
 gdaltest_list = [
     dods_1,
     dods_2,
