@@ -344,13 +344,13 @@ public:
                                    const char *pszCOMT = NULL );
     int                 WriteDSPM( int nScale = 0 );
 
-private:
-    DDFModule           *poModule;
-    S57ClassRegistrar   *poRegistrar;
-
-    int                 nNext0001Index;
-
+// semi-private - for sophisticated writers.
     DDFRecord           *MakeRecord();
+    DDFModule           *poModule;
+
+private:
+    int                 nNext0001Index;
+    S57ClassRegistrar   *poRegistrar;
 
     int                 nCOMF;  /* Coordinate multiplier */
     int                 nSOMF;  /* Vertical (sounding) multiplier */
