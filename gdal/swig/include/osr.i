@@ -865,7 +865,9 @@ public:
     OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
   }
   
+#ifdef SWIGCSHARP
   %apply (double argout[ANY]) {(double*)};
+#endif
   void TransformPoints( int nCount, double *x, double *y, double *z ) {
     OCTTransform( self, nCount, x, y, z );
   }
