@@ -3463,6 +3463,13 @@ GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnl
 }
 
 
+GDALDriverShadow *IdentifyDriver( const char *pszDatasource, 
+				  char **papszSiblings = NULL ) {
+    return (GDALDriverShadow *) GDALIdentifyDriver( pszDatasource, 
+	                                            papszSiblings );
+}
+
+
 GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
                                         const char *src_wkt = 0,
                                         const char *dst_wkt = 0,
@@ -3970,6 +3977,55 @@ SWIGINTERN PyObject *_wrap_FindFile(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  char **result = 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ReadDir",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ReadDir" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    CPLErrorReset();
+    result = (char **)VSIReadDir((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) char ** -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i, ++stringarray ) {
+        PyObject *o = PyString_FromString( *stringarray );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+  }
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -10452,6 +10508,70 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  char **arg2 = (char **) NULL ;
+  GDALDriverShadow *result = 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:IdentifyDriver",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "IdentifyDriver" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list */
+      if ( ! PySequence_Check(obj1)) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      int size = PySequence_Size(obj1);
+      for (int i = 0; i < size; i++) {
+        char *pszItem = NULL;
+        if ( ! PyArg_Parse( PySequence_GetItem(obj1,i), "s", &pszItem ) ) {
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        arg2 = CSLAddString( arg2, pszItem );
+      }
+    }
+  }
+  {
+    CPLErrorReset();
+    result = (GDALDriverShadow *)IdentifyDriver((char const *)arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_AutoCreateWarpedVRT(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -10624,6 +10744,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"PopFinderLocation", _wrap_PopFinderLocation, METH_VARARGS, NULL},
 	 { (char *)"FinderClean", _wrap_FinderClean, METH_VARARGS, NULL},
 	 { (char *)"FindFile", _wrap_FindFile, METH_VARARGS, NULL},
+	 { (char *)"ReadDir", _wrap_ReadDir, METH_VARARGS, NULL},
 	 { (char *)"SetConfigOption", _wrap_SetConfigOption, METH_VARARGS, NULL},
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, NULL},
 	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, NULL},
@@ -10768,6 +10889,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetDriver", _wrap_GetDriver, METH_VARARGS, NULL},
 	 { (char *)"Open", _wrap_Open, METH_VARARGS, NULL},
 	 { (char *)"OpenShared", _wrap_OpenShared, METH_VARARGS, NULL},
+	 { (char *)"IdentifyDriver", _wrap_IdentifyDriver, METH_VARARGS, NULL},
 	 { (char *)"AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT, METH_VARARGS, NULL},
 	 { (char *)"GeneralCmdLineProcessor", _wrap_GeneralCmdLineProcessor, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }

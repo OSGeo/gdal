@@ -118,6 +118,10 @@ def FindFile(*args):
   """FindFile(char ?, char ?) -> char"""
   return _gdal.FindFile(*args)
 
+def ReadDir(*args):
+  """ReadDir(char ?) -> char"""
+  return _gdal.ReadDir(*args)
+
 def SetConfigOption(*args):
   """SetConfigOption(char ?, char ?)"""
   return _gdal.SetConfigOption(*args)
@@ -800,6 +804,10 @@ def Open(*args):
 def OpenShared(*args):
   """OpenShared(char name, GDALAccess eAccess=GA_ReadOnly) -> Dataset"""
   return _gdal.OpenShared(*args)
+
+def IdentifyDriver(*args):
+  """IdentifyDriver(char pszDatasource, char papszSiblings=None) -> Driver"""
+  return _gdal.IdentifyDriver(*args)
 
 def AutoCreateWarpedVRT(*args):
   """
