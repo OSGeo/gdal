@@ -77,6 +77,7 @@ typedef enum
 %rename (pop_finder_location) CPLPopFinderLocation;
 %rename (finder_clean) CPLFinderClean;
 %rename (find_file) CPLFindFile;
+%rename (read_dir) VSIReadDir;
 %rename (set_config_option) CPLSetConfigOption;
 %rename (get_config_option) CPLGetConfigOption;
 %rename (binary_to_hex) CPLBinaryToHex;
@@ -92,6 +93,7 @@ typedef enum
 %rename (PopFinderLocation) CPLPopFinderLocation;
 %rename (FinderClean) CPLFinderClean;
 %rename (FindFile) CPLFindFile;
+%rename (ReadDir) VSIReadDir;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) CPLGetConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
@@ -117,6 +119,10 @@ void CPLPopFinderLocation();
 void CPLFinderClean();
 
 const char * CPLFindFile( const char *, const char * );
+
+%apply (char **options) {char **};
+char **VSIReadDir( const char * );
+%clear char **;
 
 void CPLSetConfigOption( const char *, const char * );
 
