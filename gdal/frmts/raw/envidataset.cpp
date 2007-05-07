@@ -1284,6 +1284,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr") )
     {
+        delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The selected file is an ENVI header file, but to\n"
                   "open ENVI datasets, the data file should be selected\n"
