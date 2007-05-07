@@ -137,7 +137,6 @@ public:
   }
 
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
   CPLErr GetStatistics( int approx_ok, int force, 
                       double *min, double *max, double *mean, double *stddev ){
     return GDALGetRasterStatistics( self, approx_ok, force, 
