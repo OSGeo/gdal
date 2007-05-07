@@ -533,6 +533,16 @@ GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnl
 }
 %}
 
+%apply (char **options) {char **papszSiblings};
+%inline %{
+GDALDriverShadow *IdentifyDriver( const char *pszDatasource, 
+				  char **papszSiblings = NULL ) {
+    return (GDALDriverShadow *) GDALIdentifyDriver( pszDatasource, 
+	                                            papszSiblings );
+}
+%}
+%clear char **;
+
 //************************************************************************
 //
 // Define Algorithms
