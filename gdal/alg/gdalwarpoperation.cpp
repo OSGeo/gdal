@@ -450,7 +450,8 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
             {
                 int bMergeSource = FALSE;
 
-                if( psOptions->padfSrcNoDataImag[iBand] != 0.0 
+                if( psOptions->padfSrcNoDataImag != NULL
+                    && psOptions->padfSrcNoDataImag[iBand] != 0.0
                     && !GDALDataTypeIsComplex( psOptions->eWorkingDataType ) )
                     bMergeSource = TRUE;
                 else if( psOptions->padfSrcNoDataReal[iBand] < 0.0 
