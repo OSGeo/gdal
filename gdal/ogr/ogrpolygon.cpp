@@ -132,7 +132,7 @@ void OGRPolygon::flattenTo2D()
     for( int iRing = 0; iRing < nRingCount; iRing++ )
         papoRings[iRing]->flattenTo2D();
 
-    nCoordinateDimension = 2;
+    nCoordDimension = 2;
 }
 
 /************************************************************************/
