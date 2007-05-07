@@ -866,7 +866,7 @@ public:
   }
   
 #ifdef SWIGCSHARP
-  %apply (double argout[ANY]) {(double*)};
+  %apply (double *inout) {(double*)};
 #endif
   void TransformPoints( int nCount, double *x, double *y, double *z ) {
     OCTTransform( self, nCount, x, y, z );
