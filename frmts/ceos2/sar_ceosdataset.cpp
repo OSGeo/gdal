@@ -1977,7 +1977,7 @@ ProcessData( FILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             }
 	}
 
-        VSIFRead( temp_body, 1, record->Length - __CEOS_HEADER_LENGTH, fp );
+        VSIFRead( temp_body, 1, MAX(0,record->Length-__CEOS_HEADER_LENGTH),fp);
 
 	InitCeosRecordWithHeader( record, temp_buffer, temp_body );
 
