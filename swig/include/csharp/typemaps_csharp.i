@@ -12,26 +12,6 @@
 
 /* CSHARP TYPEMAPS */
 
-%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
-{
-  /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
-  $1 = &nLen;
-  $2 = &pBuf;
-}
-
-%typemap(argout) (int *nLen, char **pBuf )
-{
-  /* %typemap(argout) (int *nLen, char **pBuf ) */
-
-}
-%typemap(freearg) (int *nLen, char **pBuf )
-{
-  /* %typemap(freearg) (int *nLen, char **pBuf ) */
-  if( $1 ) {
-    free( *$2 );
-  }
-}
-
 %fragment("OGRErrMessages","header") %{
 static char const *
 OGRErrMessages( int rc ) {
@@ -56,14 +36,16 @@ OGRErrMessages( int rc ) {
 }
 %}
 
-%typemap(in,numinputs=1) (int nLen, char *pBuf )
+%typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr
 {
-  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-  /*TODO*/
-	$2 = $null;
-    $1 = $null;
+  /* %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr */
+  $result = result;
 }
+%typemap(ret) OGRErr
+{
+  /* %typemap(ret) OGRErr */
 
+}
 
 %typemap(in) (tostring argin) (string str)
 {
@@ -78,30 +60,9 @@ OGRErrMessages( int rc ) {
 	$1 = $null;
 }
 
-%typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr
-{
-  /* %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr */
-  $result = result;
-}
-%typemap(ret) OGRErr
-{
-  /* %typemap(ret) OGRErr */
-
-}
-
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_ERR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERR_RETURN_NONE */
-
-}
-%typemap(ret) IF_ERR_RETURN_NONE
-{
- /* %typemap(ret) IF_ERR_RETURN_NONE */
-
-}
 %typemap(out) IF_FALSE_RETURN_NONE
 {
   /* %typemap(out) IF_FALSE_RETURN_NONE */
@@ -112,21 +73,6 @@ OGRErrMessages( int rc ) {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
 
 }
-
-%typemap(in,numargs=1) (int nList, int* pList)
-{
-  /* %typemap(in,numargs=1) (int nList, int* pList)*/
-  /* check if is List */
-
-}
-%typemap(freearg) (int nList, int* pList)
-{
-  /* %typemap(freearg) (int nList, int* pList) */
-  if ($2) {
-    free((void*) $2);
-  }
-}
-
 
 /*
  * Typemap char ** -> dict
@@ -156,7 +102,7 @@ OGRErrMessages( int rc ) {
 %typemap(in) (type *optional_##type) ( type val )
 {
   /* %typemap(in) (type *optional_##type) */
-
+  $1 = ($1_type)$input;
 }
 %typemap(typecheck,precedence=0) (type *optional_##type)
 {
@@ -293,6 +239,8 @@ OPTIONAL_POD(int,i);
   /* %typemap(freearg) (double *argout[ANY]) */
 
 }
+
+%apply double argout[ANY] {double *inout}
 
 /*
  * Typemap for double argin[ANY]. 
