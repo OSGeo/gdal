@@ -294,3 +294,99 @@ GDALGetPaletteInterpretation( GDALColorTableH hTable )
 {
     return ((GDALColorTable *) hTable)->GetPaletteInterpretation();
 }
+
+/**
+ * Create color ramp
+ *
+ * Automatically creates a color ramp from one color entry to
+ * another. It can be called several times to create multiples ramps
+ * in the same color table.
+ *
+ * This function is the same as the C function GDALCreateColorRamp().
+ *
+ * @param nStartIndex index to start the ramp on the color table [0..255]
+ * @param psStartColor a color entry value to start the ramp
+ * @param nEndIndex index to end the ramp on the color table [0..255]
+ * @param psEndColor a color entry value to end the ramp
+ * @return total number of entries, -1 to report error
+ */
+
+int GDALColorTable::CreateColorRamp(
+            int nStartIndex, const GDALColorEntry *psStartColor,
+            int nEndIndex, const GDALColorEntry *psEndColor )
+{
+    /* validate indexes */
+
+    if( nStartIndex < 0 || nStartIndex > 255 ||
+        nEndIndex < 0 || nEndIndex > 255 ||
+        nStartIndex > nEndIndex )
+    {
+        return -1;
+    }
+
+    /* validate color entries */
+
+    if( psStartColor == NULL || psEndColor == NULL )
+    {
+        return -1;
+    }
+
+    /* calculate number of colors in-between */
+
+    int nColors = nEndIndex - nStartIndex;
+
+    /* set starting color */
+
+    SetColorEntry( nStartIndex, psStartColor );
+
+    if( nColors == 0 )
+    {
+        return GetColorEntryCount(); /* it should not proceed */
+    }
+
+    /* set ending color */
+
+    SetColorEntry( nEndIndex, psEndColor );
+
+    /* calculate the slope of the linear transformation */
+
+    double dfSlope1, dfSlope2, dfSlope3, dfSlope4;
+
+    dfSlope1 = ( psEndColor->c1 - psStartColor->c1 ) / (double) nColors;
+    dfSlope2 = ( psEndColor->c2 - psStartColor->c2 ) / (double) nColors;
+    dfSlope3 = ( psEndColor->c3 - psStartColor->c3 ) / (double) nColors;
+    dfSlope4 = ( psEndColor->c4 - psStartColor->c4 ) / (double) nColors;
+
+    /* loop through the new colors */
+
+    GDALColorEntry sColor = *psStartColor;
+
+    int i;
+
+    for( i = 1; i < nColors; i++ )
+    {
+        sColor.c1 = (short) i * dfSlope1 + psStartColor->c1;
+        sColor.c2 = (short) i * dfSlope2 + psStartColor->c2;
+        sColor.c3 = (short) i * dfSlope3 + psStartColor->c3;
+        sColor.c4 = (short) i * dfSlope4 + psStartColor->c4;
+
+        SetColorEntry( nStartIndex + i, &sColor );
+    }
+
+    /* return the total number of colors */
+
+    return GetColorEntryCount();
+}
+
+/************************************************************************/
+/*                         GDALCreateColorRamp()                        */
+/************************************************************************/
+
+void CPL_STDCALL 
+GDALCreateColorRamp( GDALColorTableH hTable, 
+            int nStartIndex, const GDALColorEntry *psStartColor,
+            int nEndIndex, const GDALColorEntry *psEndColor )
+{
+    ((GDALColorTable *) hTable)->CreateColorRamp( nStartIndex, psStartColor, 
+                                                  nEndIndex, psEndColor );
+}
