@@ -338,6 +338,8 @@ public:
     const GDALColorEntry *GetColorEntry( int ) const;
     int           GetColorEntryAsRGB( int, GDALColorEntry * ) const;
     void          SetColorEntry( int, const GDALColorEntry * );
+    int           CreateColorRamp( int, const GDALColorEntry * ,
+                                   int, const GDALColorEntry * );
 };
 
 /* ******************************************************************** */
