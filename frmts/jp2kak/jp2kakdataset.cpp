@@ -1144,9 +1144,9 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
+    pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
     if( poOpenInfo->fp == NULL )
     {
-        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
         if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
              || EQUALN(poOpenInfo->pszFilename,"https://",8)
              || EQUALN(poOpenInfo->pszFilename,"jpip://",7))
@@ -1189,6 +1189,12 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     KakaduInitialize();
         
+/* -------------------------------------------------------------------- */
+/*      If the header is a JP2 header, mark this as a JP2 dataset.      */
+/* -------------------------------------------------------------------- */
+    if( memcmp(pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
+        pszExtension = "jp2";
+
 /* -------------------------------------------------------------------- */
 /*      Try to open the file in a manner depending on the extension.    */
 /* -------------------------------------------------------------------- */
@@ -1263,7 +1269,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                       "JPIP Protocol not supported by GDAL with Kakadu 3.4 or on Unix." );
 #endif
         }
-        else if( EQUAL(pszExtension,"jp2") || EQUAL(pszExtension,"jpx") )
+        else if( pszExtension != NULL
+                 && (EQUAL(pszExtension,"jp2") || EQUAL(pszExtension,"jpx")) )
         {
             jp2_source *jp2_src;
 
