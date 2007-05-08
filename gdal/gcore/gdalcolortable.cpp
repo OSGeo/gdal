@@ -365,10 +365,10 @@ int GDALColorTable::CreateColorRamp(
 
     for( i = 1; i < nColors; i++ )
     {
-        sColor.c1 = (short) i * dfSlope1 + psStartColor->c1;
-        sColor.c2 = (short) i * dfSlope2 + psStartColor->c2;
-        sColor.c3 = (short) i * dfSlope3 + psStartColor->c3;
-        sColor.c4 = (short) i * dfSlope4 + psStartColor->c4;
+        sColor.c1 = (short) ( i * dfSlope1 + (double) psStartColor->c1 );
+        sColor.c2 = (short) ( i * dfSlope2 + (double) psStartColor->c2 );
+        sColor.c3 = (short) ( i * dfSlope3 + (double) psStartColor->c3 );
+        sColor.c4 = (short) ( i * dfSlope4 + (double) psStartColor->c4 );
 
         SetColorEntry( nStartIndex + i, &sColor );
     }
