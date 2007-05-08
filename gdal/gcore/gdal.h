@@ -526,6 +526,9 @@ int CPL_DLL CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH );
 const GDALColorEntry CPL_DLL * CPL_STDCALL GDALGetColorEntry( GDALColorTableH, int );
 int CPL_DLL CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorEntry *);
 void CPL_DLL CPL_STDCALL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
+void CPL_DLL CPL_STDCALL GDALCreateColorRamp( GDALColorTableH hTable, 
+            int nStartIndex, const GDALColorEntry *psStartColor,
+            int nEndIndex, const GDALColorEntry *psEndColor );
 
 /* ==================================================================== */
 /*      Raster Attribute Table						*/
