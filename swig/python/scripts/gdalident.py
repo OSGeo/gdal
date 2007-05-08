@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #******************************************************************************
-#  $Id: gdalchksum.py 7210 2005-02-23 14:37:03Z fwarmerdam $
+#  $Id$
 # 
 #  Project:  GDAL
 #  Purpose:  Application to identify files by format.
