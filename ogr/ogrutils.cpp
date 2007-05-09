@@ -89,40 +89,50 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
                            int nDimension )
 
 {
-    char  szX[40], szY[40], szZ[40];
+    const size_t bufSize = 400;
+    const size_t maxTargetSize= 75; /* Assumed max length of the target buffer. */
 
-    szZ[0] = '\0';
+    char szX[bufSize];
+    char szY[bufSize];
+    char szZ[bufSize];
+
+    memset( szX, '\0', bufSize );
+    memset( szY, '\0', bufSize );
+    memset( szZ, '\0', bufSize );
 
     if( x == (int) x && y == (int) y && z == (int) z )
     {
-        sprintf( szX, "%d", (int) x );
-        sprintf( szY, " %d", (int) y );
+        snprintf( szX, bufSize, "%d", (int) x );
+        snprintf( szY, bufSize, " %d", (int) y );
     }
     else
     {
-        sprintf( szX, "%.15f", x );
+        snprintf( szX, bufSize, "%.15f", x );
         OGRTrimExtraZeros( szX );
-        sprintf( szY, " %.15f", y );
+
+        snprintf( szY, bufSize, " %.15f", y );
         OGRTrimExtraZeros( szY );
     }
 
     if( nDimension == 3 )
     {
         if( z == (int) z )
-            sprintf( szZ, " %d", (int) z );
+        {
+            snprintf( szZ, bufSize, " %d", (int) z );
+        }
         else
         {
-            sprintf( szZ, " %.15f", z );
+            snprintf( szZ, bufSize, " %.15f", z );
             OGRTrimExtraZeros( szZ );
         }
     }
-            
-    if( strlen(szX) + strlen(szY) + strlen(szZ) > 75 )
+
+    if( strlen(szX) + strlen(szY) + strlen(szZ) > maxTargetSize )
     {
         strcpy( szX, "0" );
-        strcpy( szY, "0" );
+        strcpy( szY, " 0" );
         if( nDimension == 3 )
-            strcpy( szZ, "0" );
+            strcpy( szZ, " 0" );
 
 #ifdef DEBUG
         CPLDebug( "OGR", 
@@ -132,9 +142,9 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 #endif
     }
 
-    strcpy( pszTarget, szX );
-    strcat( pszTarget, szY );
-    strcat( pszTarget, szZ );
+    strncpy( pszTarget, szX, bufSize );
+    strncat( pszTarget, szY, bufSize );
+    strncat( pszTarget, szZ, bufSize );
 }
 
 /************************************************************************/
