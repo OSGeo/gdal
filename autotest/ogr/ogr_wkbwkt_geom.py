@@ -110,6 +110,25 @@ class wkb_wkt_unit:
 
         return 'success'
         
+###############################################################################
+# Test geometry with very large exponents of coordiantes values
+
+def ogr_wkbwkt_geom_bigexponents():
+
+    bigx = -1.79769313486e+308
+    bigy = -1.12345678901e+308
+
+    geom = ogr.Geometry( ogr.wkbPoint )
+    geom.SetPoint( 0, bigx, bigy )
+
+    expect = 'POINT (0 0 0)'
+    wkt = geom.ExportToWkt()
+
+    if str(wkt) != str(expect):
+            gdaltest.post_reason( 'trimming long float numbers failed.' )
+            return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -124,6 +143,8 @@ for filename in files:
     if filename[-4:] == '.wkb':
         ut = wkb_wkt_unit( filename[:-4] )
         gdaltest_list.append( (ut.wkbwkt_geom, ut.unit) )
+
+gdaltest_list.append( ogr_wkbwkt_geom_bigexponents )
 
 if __name__ == '__main__':
 
