@@ -219,7 +219,7 @@ static ConvertionTab aoLinearUnitsConv[] = {
 };
 #define LINEAR_UNITS_COUNT (sizeof(aoLinearUnitsConv) / sizeof(ConvertionTab))
 
-//----- Get the index of a given linear units
+//----- Get the index of a given linear unit
 int GetUnitIndex( const char *pszUnitName );
 
 //----- Get the defaut name
@@ -295,7 +295,7 @@ class IdrisiRasterBand : public GDALPamRasterBand
     GDALRasterAttributeTable *poDefaultRAT; 
 
 private:
-    int nRecordSize;
+    int     nRecordSize;
     GByte *pabyScanLine;
 
 public:
@@ -325,7 +325,7 @@ public:
 };
 
 //  ------------------------------------------------------------------------  //
-//                        Implementation of IdrisiDataset                          //
+//                        Implementation of IdrisiDataset                     //
 //  ------------------------------------------------------------------------  //
 
 /************************************************************************/
@@ -601,6 +601,31 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     /* -------------------------------------------------------------------- */
+    /*      Automatic Generated Color Table                                 */
+    /* -------------------------------------------------------------------- */
+
+    if( poDS->papszCategories != NULL && 
+      ( poDS->poColorTable->GetColorEntryCount() == 0 ) )
+    {
+        int nEntryCount = CSLCount(poDS->papszCategories);
+
+        GDALColorEntry sFromColor;
+        sFromColor.c1 = (short) ( 255 );
+        sFromColor.c2 = (short) ( 0 );
+        sFromColor.c3 = (short) ( 0 );
+        sFromColor.c4 = (short) ( 255 );
+
+        GDALColorEntry sToColor;
+        sToColor.c1 = (short) ( 0 );
+        sToColor.c2 = (short) ( 0 );
+        sToColor.c3 = (short) ( 255 );
+        sToColor.c4 = (short) ( 255 );
+
+        poDS->poColorTable->CreateColorRamp( 
+            0, &sFromColor, ( nEntryCount - 1 ), &sToColor );
+    }
+
+    /* -------------------------------------------------------------------- */
     /*      Check for external overviews.                                   */
     /* -------------------------------------------------------------------- */
 
@@ -814,17 +839,9 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     double dfMin;
     double dfMax;
     double dfMean;
-    double dfStdDev = -1;
+    double dfStdDev;
 
-    if( bStrict == TRUE )
-    {
-        poBand->GetStatistics( FALSE, TRUE, &dfMin, &dfMax, &dfMean, &dfStdDev );
-    }
-    else
-    {
-        dfMin = poBand->GetMinimum();
-        dfMax = poBand->GetMaximum();
-    }
+    poBand->GetStatistics( true, false, &dfMin, &dfMax, NULL, NULL );
 
     if(!( ( eType == GDT_Byte ) || 
           ( eType == GDT_Int16 ) || 
@@ -1428,6 +1445,10 @@ CPLErr IdrisiRasterBand::SetColorTable( GDALColorTable *poColorTable )
 
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
+    delete poGDS->poColorTable;
+
+    poGDS->poColorTable = poColorTable->Clone();
+
     const char *pszSMPFilename;
     pszSMPFilename = CPLResetExtension( poGDS->pszFilename, extSMP );
     FILE *fpSMP;
@@ -1660,7 +1681,8 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 {        
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    if( poGDS->papszCategories == NULL || poGDS->poColorTable == NULL )
+    if( poGDS->papszCategories == NULL && 
+      ( poGDS->poColorTable->GetColorEntryCount() == 0 ) )
     {
         return NULL;
     }
@@ -1694,11 +1716,15 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
     int iEntry = 0;
     int iRow = 0;
 
-
     for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
         iRow = poDefaultRAT->GetRowOfValue( iEntry );
-        
+
+        if( iRow == -1 )
+        {
+            iRow = iEntry; // This decision is questionable.
+        }
+       
         poDefaultRAT->SetValue( iRow, iNameCol, 
             poGDS->papszCategories[iEntry] );
     }
