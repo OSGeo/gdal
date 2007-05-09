@@ -142,9 +142,9 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 #endif
     }
 
-    strncpy( pszTarget, szX, bufSize );
-    strncat( pszTarget, szY, bufSize );
-    strncat( pszTarget, szZ, bufSize );
+    strcpy( pszTarget, szX );
+    strcat( pszTarget, szY );
+    strcat( pszTarget, szZ );
 }
 
 /************************************************************************/
