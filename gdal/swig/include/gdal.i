@@ -541,7 +541,7 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 	                                            papszSiblings );
 }
 %}
-%clear char **;
+%clear char **papszSiblings;
 
 //************************************************************************
 //
