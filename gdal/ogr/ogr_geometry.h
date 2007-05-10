@@ -84,7 +84,7 @@ class CPL_DLL OGRGeometry
     // standard IGeometry
     virtual int getDimension() const = 0;
     virtual int getCoordinateDimension() const;
-    virtual OGRBoolean  IsEmpty() const { return 0; } 
+    virtual OGRBoolean  IsEmpty() const; 
     virtual OGRBoolean  IsSimple() const { return 1; }
     virtual void        empty() = 0;
     virtual OGRGeometry *clone() const = 0;
