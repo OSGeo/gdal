@@ -804,7 +804,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 /*                         LoadDefaultTables()                          */
 /************************************************************************/
 
-const static int Q1table[256] = 
+const static int Q1table[64] = 
 {
     8,    72,     72,     72,    72,    72,    72,    72,    72,    72,
     78,    74,     76,    74,    78,    89,    81,    84,    84,    81,
