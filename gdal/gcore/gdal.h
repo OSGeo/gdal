@@ -186,7 +186,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
                 int, char **, GDALProgressFunc, void * );
 
-GDALDriverH CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
+GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
                                             char ** papszFileList );
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess );
