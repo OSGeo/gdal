@@ -36,11 +36,15 @@ the features, and not treated as a regular field. <p>
 The layer name may be of the form "schema.table". The schema must exist, and the 
 user needs to have write permissions for the target and the public schema.<p>
 
-The PostgreSQL driver passes SQL statements directly to PostgreSQL rather
-than evaluating them internally when using the ExecuteSQL() call on the
+<p>The PostgreSQL driver passes SQL statements directly to PostgreSQL by default,
+rather than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
-expressions are also passed through to PostgreSQL.  The PostgreSQL
-driver in OGR supports the OGRDataSource::StartTrasaction(), 
+expressions are also passed through to PostgreSQL. 
+It's also possible request the driver to handle SQL commands 
+with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, by passing <strong>"OGRSQL"</strong> 
+string to the ExecuteSQL() method, as name of the SQL dialect.</p>
+
+<p>The PostgreSQL driver in OGR supports the OGRDataSource::StartTrasaction(), 
 OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
 calls in the normal SQL sense.<p>
 
