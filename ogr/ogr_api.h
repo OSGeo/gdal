@@ -120,6 +120,7 @@ double CPL_DLL OGR_G_GetArea( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
+int    CPL_DLL OGR_G_IsEmpty (OGRGeometryH );
 
 /* backward compatibility */
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
