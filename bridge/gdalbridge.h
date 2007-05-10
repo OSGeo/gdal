@@ -258,6 +258,9 @@ GDAL_ENTRY const char *(*pfnGDALGetDriverShortName)(GDALDriverH) GDAL_NULL;
 GDAL_ENTRY const char *(*pfnGDALGetDriverLongName)(GDALDriverH) GDAL_NULL;
 #define GDALGetDriverLongName pfnGDALGetDriverLongName
 
+GDAL_ENTRY GDALDriverH (*pfnGDALIdentifyDriver)( const char *, char ** ) GDAL_NULL;
+#define GDALIdentifyDriver pfnGDALIdentifyDriver
+
 /* ==================================================================== */
 /*      GDALMajorObject                                                 */
 /* ==================================================================== */
