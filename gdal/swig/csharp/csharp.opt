@@ -8,4 +8,4 @@
 #MONO = YES
 
 #Comment the following line out if you want to link against the gdal dll
-CSHARP_STATIC_LINKAGE = YES
+#CSHARP_STATIC_LINKAGE = YES
