@@ -52,6 +52,24 @@ def ogr_geom_area():
     
     return 'success'
 
+def ogr_geom_empty():
+    geom_wkt = 'POINT EMPTY'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+    if (geom.IsEmpty() == False):
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+    geom.Destroy()
+    
+    geom_wkt = 'POINT( 0 0 )'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+    if not geom:
+        gdaltest.post_reason ("A geometry could not be created from wkt: %s"%wkt)
+        return 'fail'
+    if (geom.IsEmpty() == True):
+        gdaltest.post_reason ("IsEmpty returning true for a non-empty geometry")
+        return 'fail'
+    geom.Destroy()
+    return 'success'
 ###############################################################################
 # cleanup
 
@@ -60,6 +78,7 @@ def ogr_geom_cleanup():
 
 gdaltest_list = [ 
     ogr_geom_area,
+    ogr_geom_empty,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
