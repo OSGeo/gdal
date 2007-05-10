@@ -33,16 +33,19 @@ loading data into Oracle Spatial OGR will always create the OGR_FID field.
 
 <h2>SQL Issues</h2>
 
-The Oracle driver passes SQL statements directly to Oracle rather
+<p>By default, the Oracle driver passes SQL statements directly to Oracle rather
 than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
-expressions are also passed through to Oracle.<p>
+expressions are also passed through to Oracle.</p>
 
-As well two special commands are supported via the ExecuteSQL() interface.
+<p>As well two special commands are supported via the ExecuteSQL() interface.
 These are "<b>DELLAYER:&lt;table_name&gt;</b>" to delete a layer, 
 and "<b>VALLAYER:&lt;table_name&gt;</b>" to apply the 
 SDO_GEOM.VALIDATE_GEOMETRY() check to a layer.  Internally these 
-pseudo-commands are translated into more complex SQL commands for Oracle.<p>
+pseudo-commands are translated into more complex SQL commands for Oracle.</p>
+
+<p>It's also possible request the driver to handle SQL commands with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine,
+by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name of the SQL dialect.</p>
 
 <h2>Caveats</h2>
 
