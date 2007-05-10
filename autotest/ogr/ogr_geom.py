@@ -53,6 +53,11 @@ def ogr_geom_area():
     return 'success'
 
 def ogr_geom_empty():
+    try:
+        ogr.Geometry.IsEmpty
+    except:
+        return 'skip'
+
     geom_wkt = 'POINT EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if (geom.IsEmpty() == False):
