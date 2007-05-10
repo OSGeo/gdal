@@ -460,10 +460,10 @@ to release it before the datasource is destroyed may result in a crash.<p>
 All OGR drivers for database systems: <a href="/ogr/drv_mysql.html">MySQL</a>, 
 PostgreSQL and PostGIS (<a href="/ogr/drv_pg.html">PG</a>), 
 Oracle (<a href="/ogr/drv_oci.html">OCI</a>), 
-<a href="/ogr/drv_sqlie.html">SQLite</a>, 
+<a href="/ogr/drv_sqlite.html">SQLite</a>, 
 <a href="/ogr/drv_odbc.html">ODBC</a> 
 and ESRI Personal Geodatabase (<a href="/ogr/drv_pgeo.html">PGeo</a>) 
-override the OGRDataSource::ExecuteSQL() function with dedicated implementation,
+override the OGRDataSource::ExecuteSQL() function with dedicated implementation 
 and, by default, pass the SQL statements directly to the underlying RDBMS. 
 In these cases the SQL syntax varies in some particulars from OGR SQL.
 Also, anything possible in SQL can then be accomplished for these particular
