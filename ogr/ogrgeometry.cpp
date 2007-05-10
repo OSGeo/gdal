@@ -1067,6 +1067,55 @@ void OGR_G_Empty( OGRGeometryH hGeom )
 }
 
 /************************************************************************/
+/*                              IsEmpty()                               */
+/************************************************************************/
+
+/**
+ * Test if the geometry is empty
+ *
+ * This method is the same as the C function OGR_G_IsEmpty().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * FALSE. 
+ *
+ *
+ * @return TRUE if the geometry has no points, otherwise FALSE.  
+ */
+
+OGRBoolean
+OGRGeometry::IsEmpty(  ) const
+
+{
+#ifndef HAVE_GEOS
+
+    return FALSE;
+
+#else
+
+    OGRBoolean bResult = FALSE;
+    GEOSGeom hThisGeosGeom = NULL;
+    
+    hThisGeosGeom = exportToGEOS();
+
+    if( hThisGeosGeom != NULL  )
+    {
+        bResult = GEOSisEmpty( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+    }
+
+    return bResult;
+
+#endif /* HAVE_GEOS */
+}
+
+int OGR_G_IsEmpty( OGRGeometryH hGeom )
+
+{
+   return ((OGRGeometry *) hGeom)->IsEmpty();
+}
+/************************************************************************/
 /*                       OGRGeometryTypeToName()                        */
 /************************************************************************/
 
