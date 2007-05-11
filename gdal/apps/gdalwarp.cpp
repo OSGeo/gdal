@@ -65,7 +65,8 @@ static void Usage()
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile* dstfile\n"
         "\n"
-        "    Avalable resampling methods: near, bilinear, cubic, cubicspline, lanczos.\n" );
+        "Available resampling methods:\n"
+        "    near (default), bilinear, cubic, cubicspline, lanczos.\n" );
     exit( 1 );
 }
 
