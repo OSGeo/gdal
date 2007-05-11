@@ -200,6 +200,12 @@ int         CPL_DLL CPL_STDCALL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDestroyDriverManager( void );
 CPLErr      CPL_DLL CPL_STDCALL GDALDeleteDataset( GDALDriverH, const char * );
+CPLErr      CPL_DLL CPL_STDCALL GDALRenameDataset( GDALDriverH, 
+                                                   const char * pszNewName,
+                                                   const char * pszOldName );
+CPLErr      CPL_DLL CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH, 
+                                                      const char * pszNewName,
+                                                      const char * pszOldName);
 
 /* The following are deprecated */
 const char CPL_DLL * CPL_STDCALL GDALGetDriverShortName( GDALDriverH );
@@ -268,6 +274,7 @@ void CPL_DLL CPL_STDCALL GDALSetDescription( GDALMajorObjectH, const char * );
 /* ==================================================================== */
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH );
+char CPL_DLL CPL_STDCALL **GDALGetFileList( GDALDatasetH );
 void CPL_DLL CPL_STDCALL   GDALClose( GDALDatasetH );
 int CPL_DLL CPL_STDCALL     GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL CPL_STDCALL     GDALGetRasterYSize( GDALDatasetH );
