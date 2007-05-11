@@ -1292,6 +1292,20 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     CPLErr eErr = CE_None;
 
 /* -------------------------------------------------------------------- */
+/*      Some size values are "noop".  Lets just return to avoid         */
+/*      stressing lower level functions.                                */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    {
+        CPLDebug( "GDAL", 
+                  "RasterIO() skipped for odd window or buffer size.\n"
+                  "  Window = (%d,%d)x%dx%d\n"
+                  "  Buffer = %dx%d\n",
+                  nXOff, nYOff, nXSize, nYSize, 
+                  nBufXSize, nBufYSize );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If pixel and line spaceing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
@@ -1354,24 +1368,10 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Some size values are "noop".  Lets just return to avoid         */
-/*      stressing lower level functions.                                */
-/* -------------------------------------------------------------------- */
-    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
-    {
-        CPLDebug( "GDAL", 
-                  "RasterIO() skipped for odd window or buffer size.\n"
-                  "  Window = (%d,%d)x%dx%d\n"
-                  "  Buffer = %dx%d\n",
-                  nXOff, nYOff, nXSize, nYSize, 
-                  nBufXSize, nBufYSize );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      We are being forced to use cached IO instead of a driver        */
 /*      specific implementation.                                        */
 /* -------------------------------------------------------------------- */
-    else if( bForceCachedIO )
+    if( bForceCachedIO )
     {
         eErr = 
             BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,

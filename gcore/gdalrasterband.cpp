@@ -176,6 +176,22 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
         nLineSpace = nPixelSpace * nBufXSize;
     
 /* -------------------------------------------------------------------- */
+/*      Some size values are "noop".  Lets just return to avoid         */
+/*      stressing lower level functions.                                */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    {
+        CPLDebug( "GDAL", 
+                  "RasterIO() skipped for odd window or buffer size.\n"
+                  "  Window = (%d,%d)x%dx%d\n"
+                  "  Buffer = %dx%d\n",
+                  nXOff, nYOff, nXSize, nYSize, 
+                  nBufXSize, nBufYSize );
+
+        return CE_None;
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
     if( nXOff < 0 || nXOff + nXSize > nRasterXSize
@@ -196,22 +212,6 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Some size values are "noop".  Lets just return to avoid         */
-/*      stressing lower level functions.                                */
-/* -------------------------------------------------------------------- */
-    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
-    {
-        CPLDebug( "GDAL", 
-                  "RasterIO() skipped for odd window or buffer size.\n"
-                  "  Window = (%d,%d)x%dx%d\n"
-                  "  Buffer = %dx%d\n",
-                  nXOff, nYOff, nXSize, nYSize, 
-                  nBufXSize, nBufYSize );
-
-        return CE_None;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Call the format specific function.                              */
 /* -------------------------------------------------------------------- */
