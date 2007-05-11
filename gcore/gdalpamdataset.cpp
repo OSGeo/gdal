@@ -638,6 +638,28 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/*                                                                      */
+/*      Add .aux.xml or .aux file into file list as appropriate.        */
+/************************************************************************/
+
+char **GDALPamDataset::GetFileList()
+
+{
+    VSIStatBufL sStatBuf;
+    char **papszFileList = GDALDataset::GetFileList();
+
+    if( psPam && psPam->pszPamFilename 
+        && (nPamFlags & GPF_DIRTY 
+            || VSIStatL( psPam->pszPamFilename, &sStatBuf ) == 0) )
+    {
+        papszFileList = CSLAddString( papszFileList, psPam->pszPamFilename );
+    }
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
