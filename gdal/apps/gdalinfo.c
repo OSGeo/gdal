@@ -70,7 +70,7 @@ int main( int argc, char ** argv )
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     const char          *pszFilename = NULL;
-    char              **papszExtraMDDomains = NULL;
+    char              **papszExtraMDDomains = NULL, **papszFileList;
     const char  *pszProjection = NULL;
     OGRCoordinateTransformationH hTransform = NULL;
 
@@ -146,6 +146,19 @@ int main( int argc, char ** argv )
     printf( "Driver: %s/%s\n",
             GDALGetDriverShortName( hDriver ),
             GDALGetDriverLongName( hDriver ) );
+
+    papszFileList = GDALGetFileList( hDataset );
+    if( CSLCount(papszFileList) == 0 )
+    {
+        printf( "Files: none associated\n" );
+    }
+    else
+    {
+        printf( "Files: %s\n", papszFileList[0] );
+        for( i = 1; papszFileList[i] != NULL; i++ )
+            printf( "       %s\n", papszFileList[i] );
+    }
+    CSLDestroy( papszFileList );
 
     printf( "Size is %d, %d\n",
             GDALGetRasterXSize( hDataset ), 
