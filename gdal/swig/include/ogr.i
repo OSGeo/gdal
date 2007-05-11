@@ -1259,8 +1259,8 @@ public:
     OGR_G_Empty(self);
   }
 
-  void IsEmpty () {
-    OGR_G_IsEmpty(self);
+  int IsEmpty () {
+    return OGR_G_IsEmpty(self);
   }  
   bool Intersect (OGRGeometryShadow* other) {
     return OGR_G_Intersect(self, other);
