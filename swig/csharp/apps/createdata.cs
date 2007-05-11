@@ -50,7 +50,8 @@ class CreateData {
 		}
 
         // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
-        Console.WriteLine("Using driver " + drv.name);
+        string DriverName = drv.name;
+        Console.WriteLine("Using driver " + DriverName);
 
 		/* -------------------------------------------------------------------- */
 		/*      Creating the datasource                                         */
