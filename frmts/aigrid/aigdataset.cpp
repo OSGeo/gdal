@@ -71,6 +71,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
+    virtual char **GetFileList(void);
 };
 
 /************************************************************************/
@@ -80,6 +81,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
 /************************************************************************/
 
 class AIGRasterBand : public GDALPamRasterBand
+
 {
     friend class AIGDataset;
 
@@ -302,6 +304,34 @@ AIGDataset::~AIGDataset()
         delete poCT;
 }
 
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **AIGDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    // Add in all files in the cover directory.
+    char **papszCoverFiles = VSIReadDir( GetDescription() );
+    int i;
+
+    for( i = 0; papszCoverFiles != NULL && papszCoverFiles[i] != NULL; i++ )
+    {
+        if( EQUAL(papszCoverFiles[i],".")
+            || EQUAL(papszCoverFiles[i],"..") )
+            continue;
+
+        papszFileList = 
+            CSLAddString( papszFileList, 
+                          CPLFormFilename( GetDescription(), 
+                                           papszCoverFiles[i], 
+                                           NULL ) );
+    }
+    
+    return papszFileList;
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -476,13 +506,12 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( poDS->pszProjection );
             oSRS.exportToWkt( &(poDS->pszProjection) );
         }
-
     }
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, psInfo->pszCoverName );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -611,6 +640,168 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
 }
 
 /************************************************************************/
+/*                             AIGRename()                              */
+/*                                                                      */
+/*      Custom renamer for AIG dataset.                                 */
+/************************************************************************/
+
+static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Make sure we are talking about paths to the coverage            */
+/*      directory.                                                      */
+/* -------------------------------------------------------------------- */
+    CPLString osOldPath, osNewPath;
+
+    if( strlen(CPLGetExtension(pszNewName)) > 0 )
+        osNewPath = CPLGetPath(pszNewName);
+    else
+        osNewPath = pszNewName;
+
+    if( strlen(CPLGetExtension(pszOldName)) > 0 )
+        osOldPath = CPLGetPath(pszOldName);
+    else
+        osOldPath = pszOldName;
+
+/* -------------------------------------------------------------------- */
+/*      Get file list.                                                  */
+/* -------------------------------------------------------------------- */
+
+    GDALDatasetH hDS = GDALOpen( osOldPath, GA_ReadOnly );
+    if( hDS == NULL )
+        return CE_Failure;
+
+    char **papszFileList = GDALGetFileList( hDS );
+    GDALClose( hDS );
+
+    if( papszFileList == NULL )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Work out the corresponding new names.                           */
+/* -------------------------------------------------------------------- */
+    char **papszNewFileList = NULL;
+    int i;
+    
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        CPLString osNewFilename;
+
+        if( !EQUALN(papszFileList[i],osOldPath,strlen(osOldPath)) )
+        {
+            CPLAssert( FALSE );
+            return CE_Failure;
+        }
+
+        osNewFilename = osNewPath + (papszFileList[i] + strlen(osOldPath));
+        
+        papszNewFileList = CSLAddString( papszNewFileList, osNewFilename );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try renaming the directory.                                     */
+/* -------------------------------------------------------------------- */
+    if( VSIRename( osNewPath, osOldPath ) != 0 )
+    {
+        if( VSIMkdir( osNewPath, 0777 ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to create directory %s:\n%s",
+                      osNewPath.c_str(),
+                      VSIStrerror(errno) );
+            return CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy/rename any remaining files.                                */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+            && VSI_ISREG( sStatBuf.st_mode ) )
+        {
+            if( CPLMoveFile( papszNewFileList[i], papszFileList[i] ) != 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unable to move %s to %s:\n%s",
+                          papszFileList[i],
+                          papszNewFileList[i], 
+                          VSIStrerror(errno) );
+                return CE_Failure;
+            }
+        }
+    }
+
+    if( VSIStatL( osOldPath, &sStatBuf ) == 0 )
+        CPLUnlinkTree( osOldPath );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             AIGDelete()                              */
+/*                                                                      */
+/*      Custom dataset deleter for AIG dataset.                         */
+/************************************************************************/
+
+static CPLErr AIGDelete( const char *pszDatasetname )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Get file list.                                                  */
+/* -------------------------------------------------------------------- */
+    GDALDatasetH hDS = GDALOpen( pszDatasetname, GA_ReadOnly );
+    if( hDS == NULL )
+        return CE_Failure;
+
+    char **papszFileList = GDALGetFileList( hDS );
+    GDALClose( hDS );
+
+    if( papszFileList == NULL )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Delete all regular files.                                       */
+/* -------------------------------------------------------------------- */
+    int i;
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        VSIStatBufL sStatBuf;
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+            && VSI_ISREG( sStatBuf.st_mode ) )
+        {
+            if( VSIUnlink( papszFileList[i] ) != 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unable to delete '%s':\n%s", 
+                          papszFileList[i], VSIStrerror( errno ) );
+                return CE_Failure;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Delete directories.                                             */
+/* -------------------------------------------------------------------- */
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        VSIStatBufL sStatBuf;
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+            && VSI_ISDIR( sStatBuf.st_mode ) )
+        {
+            if( CPLUnlinkTree( papszFileList[i] ) != 0 )
+                return CE_Failure;
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                          GDALRegister_AIG()                        */
 /************************************************************************/
 
@@ -630,6 +821,9 @@ void GDALRegister_AIGrid()
                                    "frmt_various.html#AIG" );
         
         poDriver->pfnOpen = AIGDataset::Open;
+
+        poDriver->pfnRename = AIGRename;
+        poDriver->pfnDelete = AIGDelete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
