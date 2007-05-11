@@ -292,6 +292,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
                                     void * pProgressData );
     static CPLErr       Delete( const char *pszFilename );
 
+    virtual char **GetFileList(void);
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
@@ -2620,6 +2621,43 @@ CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
                                     nPixelSpace, nLineSpace, nBandSpace );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **HFADataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    if( hHFA->pszIGEFilename != NULL )
+    {
+        papszFileList = CSLAddString( papszFileList, 
+                                      CPLFormFilename( hHFA->pszPath, 
+                                                       hHFA->pszIGEFilename,
+                                                       NULL ));
+    }
+
+    if( hHFA->psDependent != NULL )
+    {
+        HFAInfo_t *psDep = hHFA->psDependent;
+
+        papszFileList = 
+            CSLAddString( papszFileList, 
+                          CPLFormFilename( psDep->pszPath, 
+                                           psDep->pszFilename, NULL ));
+        if( psDep->pszIGEFilename != NULL )
+        {
+            papszFileList = 
+                CSLAddString( papszFileList, 
+                              CPLFormFilename( psDep->pszPath, 
+                                               psDep->pszIGEFilename, NULL ));
+        }
+    }
+    
+    return papszFileList;
 }
 
 /************************************************************************/
