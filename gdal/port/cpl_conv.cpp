@@ -2031,6 +2031,23 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     return 0;
 }
 
+/************************************************************************/
+/*                            CPLMoveFile()                             */
+/************************************************************************/
+
+int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
+
+{
+    if( VSIRename( pszNewPath, pszOldPath ) == 0 )
+        return 0;
+
+    int nRet = CPLCopyFile( pszNewPath, pszOldPath );
+
+    if( nRet == 0 )
+        VSIUnlink( pszOldPath );
+    
+    return nRet;
+}
 
 /************************************************************************/
 /* ==================================================================== */

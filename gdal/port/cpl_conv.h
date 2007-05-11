@@ -143,6 +143,9 @@ const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir,
 int CPL_DLL CPLIsFilenameRelative( const char *pszFilename );
 const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *);
 const char CPL_DLL *CPLCleanTrailingSlash( const char * );
+char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename, 
+                                           const char *pszNewFilename, 
+                                           char **papszFileList );
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
@@ -198,6 +201,7 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLUnlinkTree( const char * );
 int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
+int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
 
 CPL_C_END
 
