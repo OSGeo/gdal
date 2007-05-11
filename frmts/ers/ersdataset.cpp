@@ -51,6 +51,8 @@ class ERSDataset : public RawDataset
     double      adfGeoTransform[6];
     char       *pszProjection;
 
+    CPLString   osRawFilename;
+
     int         bHDRDirty;
     ERSHdrNode *poHeader;
 
@@ -65,6 +67,7 @@ class ERSDataset : public RawDataset
     virtual CPLErr SetGeoTransform( double *padfTransform );
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
+    virtual char **GetFileList(void);
     
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -288,6 +291,34 @@ static double ERSDMS2Dec( const char *pszDMS )
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **ERSDataset::GetFileList()
+
+{
+    char **papszFileList = NULL;
+
+    // Main data file, etc. 
+    papszFileList = GDALPamDataset::GetFileList();
+
+    // Add raw data file if we have one. 
+    if( strlen(osRawFilename) > 0 )
+        papszFileList = CSLAddString( papszFileList, osRawFilename );
+
+    // If we have a dependent file, merge it's list of files in. 
+    if( poDepFile )
+    {
+        char **papszDepFiles = poDepFile->GetFileList();
+        papszFileList = 
+            CSLInsertStrings( papszFileList, -1, papszDepFiles );
+        CSLDestroy( papszDepFiles );
+    }
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -468,6 +499,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             poDS->fpImage = VSIFOpenL( pszDataFilename, "r" );
 
+        poDS->osRawFilename = pszDataFilename;
         CPLFree( pszDataFilename );
 
         if( poDS->fpImage != NULL )

@@ -76,6 +76,8 @@ class EHdrDataset : public RawDataset
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
     
+    virtual char **GetFileList();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -821,6 +823,43 @@ CPLErr EHdrDataset::ReadSTX()
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **EHdrDataset::GetFileList()
+
+{
+    VSIStatBufL sStatBuf;
+    CPLString osPath = CPLGetPath( GetDescription() );
+    CPLString osName = CPLGetBasename( GetDescription() );
+    char **papszFileList = NULL;
+
+    // Main data file, etc. 
+    papszFileList = GDALPamDataset::GetFileList();
+
+    // Header file.
+    CPLString osFilename = CPLFormCIFilename( osPath, osName, "hdr" );
+    papszFileList = CSLAddString( papszFileList, osFilename );
+
+    // Statistics file
+    osFilename = CPLFormCIFilename( osPath, osName, "stx" );
+    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osFilename );
+    
+    // color table file.
+    osFilename = CPLFormCIFilename( osPath, osName, "clr" );
+    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osFilename );
+    
+    // projections file.
+    osFilename = CPLFormCIFilename( osPath, osName, "prj" );
+    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osFilename );
+    
+    return papszFileList;
 }
 
 /************************************************************************/
