@@ -60,18 +60,40 @@ def ogr_geom_empty():
 
     geom_wkt = 'POINT EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
     if (geom.IsEmpty() == False):
         gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
         return 'fail'
     geom.Destroy()
     
-    geom_wkt = 'POINT( 0 0 )'
+    geom_wkt = 'POINT( 1 2 )'
+
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if not geom:
         gdaltest.post_reason ("A geometry could not be created from wkt: %s"%wkt)
         return 'fail'
+
     if (geom.IsEmpty() == True):
         gdaltest.post_reason ("IsEmpty returning true for a non-empty geometry")
+        return 'fail'
+    geom.Destroy()
+    return 'success'
+
+def ogr_geom_pickle():
+    try:
+        ogr.Geometry.IsEmpty  #IsEmpty is only in the ng bindings
+    except:
+        return 'skip'
+    
+    import pickle
+    geom_wkt = 'MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+    p = pickle.dumps(geom)
+    
+    g = pickle.loads(p)
+    
+    if not geom.Equal(g):
+        gdaltest.post_reason ("pickled geometries were not equal")
         return 'fail'
     geom.Destroy()
     return 'success'
@@ -84,6 +106,7 @@ def ogr_geom_cleanup():
 gdaltest_list = [ 
     ogr_geom_area,
     ogr_geom_empty,
+    ogr_geom_pickle,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
