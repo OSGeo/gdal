@@ -411,7 +411,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     ResetReading();
 
 /* -------------------------------------------------------------------- */
-/*      Do we want to "launder" the column names into Postgres          */
+/*      Do we want to "launder" the column names into SQLite            */
 /*      friendly format?                                                */
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
@@ -423,7 +423,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     
 /* -------------------------------------------------------------------- */
-/*      Work out the PostgreSQL type.                                   */
+/*      Work out the SQLite type.                                       */
 /* -------------------------------------------------------------------- */
     if( oField.GetType() == OFTInteger )
     {
@@ -432,6 +432,10 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     else if( oField.GetType() == OFTReal )
     {
         strcpy( szFieldType, "FLOAT" );
+    }
+    else if( oField.GetType() == OFTBinary )
+    {
+        strcpy( szFieldType, "BLOB" );
     }
     else
     {
@@ -483,6 +487,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
             pszType = "INTEGER";
         else if( poFldDefn->GetType() == OFTReal )
             pszType = "FLOAT";
+        else if( poFldDefn->GetType() == OFTBinary )
+            pszType = "BLOB";
         else
             pszType = "VARCHAR";
         
@@ -502,6 +508,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         pszType = "INTEGER";
     else if( oField.GetType() == OFTReal )
         pszType = "FLOAT";
+    else if( oField.GetType() == OFTBinary )
+        pszType = "BLOB";
     else
         pszType = "VARCHAR";
     
@@ -739,24 +747,38 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         oCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
         oCommand += "'";
 
-        pszRawValue = poFeature->GetFieldAsString( iField );
-        if( strchr( pszRawValue, '\'' ) != NULL )
+        if( poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTBinary  )
         {
-            char *pszEscapedValue = 
-                CPLEscapeString( pszRawValue, -1, CPLES_SQL );
+            int binaryCount = 0;
+            GByte* binaryData = poFeature->GetFieldAsBinary( iField, &binaryCount );
+            char* pszHexValue = CPLBinaryToHex( binaryCount, binaryData );
+            oValues += "X'";
+            oValues += pszHexValue;
             oValues += "'";
-            oValues += pszEscapedValue;
-            oValues += "'";
-
-            CPLFree( pszEscapedValue );
+            CPLFree( pszHexValue );
         }
         else
         {
-            oValues += "'";
-            oValues += pszRawValue;
-            oValues += "'";
+            pszRawValue = poFeature->GetFieldAsString( iField );
+
+            if( strchr( pszRawValue, '\'' ) != NULL )
+            {
+                char *pszEscapedValue = 
+                    CPLEscapeString( pszRawValue, -1, CPLES_SQL );
+                oValues += "'";
+                oValues += pszEscapedValue;
+                oValues += "'";
+
+                CPLFree( pszEscapedValue );
+            }
+            else
+            {
+                oValues += "'";
+                oValues += pszRawValue;
+                oValues += "'";
+            }
         }
-            
+
         bNeedComma = TRUE;
     }
 
@@ -795,4 +817,5 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
     return OGRERR_NONE;
 }
+
 

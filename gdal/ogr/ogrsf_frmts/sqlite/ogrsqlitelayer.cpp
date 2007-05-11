@@ -307,37 +307,35 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
         if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_NULL )
             continue;
-        
+
         switch( poFieldDefn->GetType() )
         {
-          case OFTInteger:
+        case OFTInteger:
             poFeature->SetField( iField, 
-                                 sqlite3_column_int( hStmt, iRawField ) );
+                sqlite3_column_int( hStmt, iRawField ) );
             break;
 
-          case OFTReal:
+        case OFTReal:
             poFeature->SetField( iField, 
-                                 sqlite3_column_double( hStmt, iRawField ) );
+                sqlite3_column_double( hStmt, iRawField ) );
             break;
 
-#ifdef notdef
-          case OFTBinary:
-          {
-              int nBytes = sqlite3_column_bytes( hStmt, iRawField );
+        case OFTBinary:
+            {
+                const int nBytes = sqlite3_column_bytes( hStmt, iRawField );
 
-              poFeature->SetField( iField, 
-                                   sqlite3_column_double( hStmt, iRawField ) );
-          }
-          break;
-#endif
-
-          case OFTString:
-            poFeature->SetField( iField, 
-                                 (const char *) 
-                                 sqlite3_column_text( hStmt, iRawField ) );
+                poFeature->SetField( iField, nBytes,
+                    (GByte*)sqlite3_column_blob( hStmt, iRawField ) );
+            }
             break;
 
-          default:
+        case OFTString:
+            poFeature->SetField( iField, 
+                (const char *) 
+                sqlite3_column_text( hStmt, iRawField ) );
+            break;
+
+        default:
             break;
         }
     }
