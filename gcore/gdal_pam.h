@@ -142,6 +142,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                                          const char * pszValue,
                                          const char * pszDomain = "" );
 
+    virtual char      **GetFileList(void);
+
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
 
