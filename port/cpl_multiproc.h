@@ -71,7 +71,7 @@ CPL_C_END
 
 #define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
 
-class CPLMutexHolder
+class CPL_DLL CPLMutexHolder
 {
   private:
     void       *hMutex;
