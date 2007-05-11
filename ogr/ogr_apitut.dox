@@ -326,8 +326,8 @@ associated with the layer it will be written to.
 \code
 	OGRFeature *poFeature;
 
-	poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-        poFeature->SetField( "Name", szName );
+	poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
+	poFeature->SetField( "Name", szName );
 \endcode
 
 We create a local geometry object, and assign its copy (indirectly) to the feature.
@@ -422,8 +422,8 @@ int main()
     {
 	OGRFeature *poFeature;
 
-	poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-        poFeature->SetField( "Name", szName );
+	poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
+	poFeature->SetField( "Name", szName );
 
 	OGRPoint pt;
 	
