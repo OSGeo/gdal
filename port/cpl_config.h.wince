@@ -19,6 +19,16 @@
 #define HAVE_VSNPRINTF
 #define vsnprintf _vsnprintf
 
+/* Define if you have the `copysign' function. */
+#define HAVE_COPYSIGN
+#define copysign _copysign
+#define copysignf _copysign
+#define copysignl _copysign
+
+/* Windows CE does not support getcwd function. */
+#undef HAVE_GETCWD
+/* #define getcwd _getcwd */
+
 /* Define if you have the stdicmp function.  */
 #define HAVE_STRICMP
 #define stricmp _stricmp
