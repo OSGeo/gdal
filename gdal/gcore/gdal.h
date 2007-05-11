@@ -274,7 +274,7 @@ void CPL_DLL CPL_STDCALL GDALSetDescription( GDALMajorObjectH, const char * );
 /* ==================================================================== */
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH );
-char CPL_DLL CPL_STDCALL **GDALGetFileList( GDALDatasetH );
+char CPL_DLL ** CPL_STDCALL GDALGetFileList( GDALDatasetH );
 void CPL_DLL CPL_STDCALL   GDALClose( GDALDatasetH );
 int CPL_DLL CPL_STDCALL     GDALGetRasterXSize( GDALDatasetH );
 int CPL_DLL CPL_STDCALL     GDALGetRasterYSize( GDALDatasetH );

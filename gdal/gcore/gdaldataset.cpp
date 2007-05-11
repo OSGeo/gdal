@@ -1635,7 +1635,7 @@ char **GDALDataset::GetFileList()
  * @see GDALDataset::GetFileList()
  */
 
-char ** GDALGetFileList( GDALDatasetH hDS )
+char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
 
 {
     return ((GDALDataset *) hDS)->GetFileList();
