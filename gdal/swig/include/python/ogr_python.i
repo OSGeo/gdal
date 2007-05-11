@@ -215,6 +215,15 @@ layer[0:4] would return a list of the first four features."""
 
   def __str__(self):
     return self.ExportToWkt()
+    
+
+  def __reduce__(self):
+    return (self.__class__, (), self.ExportToWkb())
+ 	
+  def __setstate__(self, state):
+      result = CreateGeometryFromWkb(state)
+      self.this = result.this
+
 }
 }
 
