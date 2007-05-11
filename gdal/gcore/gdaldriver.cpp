@@ -45,6 +45,8 @@ GDALDriver::GDALDriver()
     pfnUnloadDriver = NULL;
     pDriverData = NULL;
     pfnIdentify = NULL;
+    pfnRename = NULL;
+    pfnCopyFiles = NULL;
 }
 
 /************************************************************************/
@@ -435,35 +437,59 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
 {
     if( pfnDelete != NULL )
         return pfnDelete( pszFilename );
-    else
-    {
-        VSIStatBufL     sStat;
 
-        if( VSIStatL( pszFilename, &sStat ) == 0 
-            && VSI_ISREG( sStat.st_mode ) )
-        {
-            if( VSIUnlink( pszFilename ) == 0 )
-                return CE_None;
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "%s: Attempt to unlink %s failed.\n",
-                          GetDescription(), pszFilename );
-                return CE_Failure;
-            }
-        }
-        else
+/* -------------------------------------------------------------------- */
+/*      Collect file list.                                              */
+/* -------------------------------------------------------------------- */
+    GDALDatasetH hDS = (GDALDataset *) GDALOpen(pszFilename,GA_ReadOnly);
+        
+    if( hDS == NULL )
+    {
+        if( CPLGetLastErrorNo() == 0 )
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to open %s to obtain file list." );
+
+        return CE_Failure;
+    }
+
+    char **papszFileList = GDALGetFileList( hDS );
+        
+    GDALClose( hDS );
+
+    if( CSLCount( papszFileList ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unable to determine files associated with %s,\n"
+                  "delete fails.", pszFilename );
+
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Delete all files.                                               */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        if( VSIUnlink( papszFileList[i] ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s: Unable to delete %s, not a file.\n",
-                      GetDescription(), pszFilename );
+                      "Deleting %s failed:\n%s",
+                      papszFileList[i],
+                      VSIStrerror(errno) );
+            CSLDestroy( papszFileList );
             return CE_Failure;
         }
     }
+
+    CSLDestroy( papszFileList );
+
+    return CE_None;
 }
 
 /************************************************************************/
-/*                             GDALDelete()                             */
+/*                         GDALDeleteDataset()                          */
 /************************************************************************/
 
 /**
@@ -473,7 +499,233 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
 CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
 
 {
+    if( hDriver == NULL )
+        hDriver = GDALIdentifyDriver( pszFilename, NULL );
+    if( hDriver == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No identifiable driver for %s.",
+                  pszFilename );
+        return CE_Failure;
+    }
+
     return ((GDALDriver *) hDriver)->Delete( pszFilename );
+}
+
+/************************************************************************/
+/*                               Rename()                               */
+/************************************************************************/
+
+/**
+ * Rename a dataset.
+ *
+ * Rename a dataset. This may including moving the dataset to a new directory
+ * or even a new filesystem.  
+ *
+ * It is unwise to have open dataset handles on this dataset when it is
+ * being renamed. 
+ *
+ * Equivelent of the C function GDALRenameDataset().
+ *
+ * @param pszNewName new name for the dataset.
+ * @param pszOldName old name for the dataset.
+ *
+ * @return CE_None on success, or CE_Failure if the operation fails.
+ */
+
+CPLErr GDALDriver::Rename( const char * pszNewName, const char *pszOldName )
+
+{
+    if( pfnRename != NULL )
+        return pfnRename( pszNewName, pszOldName );
+
+/* -------------------------------------------------------------------- */
+/*      Collect file list.                                              */
+/* -------------------------------------------------------------------- */
+    GDALDatasetH hDS = (GDALDataset *) GDALOpen(pszOldName,GA_ReadOnly);
+        
+    if( hDS == NULL )
+    {
+        if( CPLGetLastErrorNo() == 0 )
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to open %s to obtain file list." );
+
+        return CE_Failure;
+    }
+
+    char **papszFileList = GDALGetFileList( hDS );
+        
+    GDALClose( hDS );
+
+    if( CSLCount( papszFileList ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unable to determine files associated with %s,\n"
+                  "rename fails.", pszOldName );
+
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Produce a list of new filenames that correspond to the old      */
+/*      names.                                                          */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+    int i;
+    char **papszNewFileList = 
+        CPLCorrespondingPaths( pszOldName, pszNewName, papszFileList );
+
+    if( papszNewFileList == NULL )
+        return CE_Failure;
+
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        if( CPLMoveFile( papszNewFileList[i], papszFileList[i] ) != 0 )
+        {
+            eErr = CE_Failure;
+            // Try to put the ones we moved back. 
+            for( --i; i >= 0; i-- )
+                CPLMoveFile( papszFileList[i], papszNewFileList[i] );
+            break;
+        }
+    }
+
+    CSLDestroy( papszNewFileList );
+    CSLDestroy( papszFileList );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                         GDALRenameDataset()                          */
+/************************************************************************/
+
+/**
+ * @see GDALDriver::Rename()
+ */
+
+CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver, 
+                                      const char * pszNewName,
+                                      const char * pszOldName )
+
+{
+    if( hDriver == NULL )
+        hDriver = GDALIdentifyDriver( pszOldName, NULL );
+    if( hDriver == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No identifiable driver for %s.",
+                  pszOldName );
+        return CE_Failure;
+    }
+
+    return ((GDALDriver *) hDriver)->Rename( pszNewName, pszOldName );
+}
+
+/************************************************************************/
+/*                             CopyFiles()                              */
+/************************************************************************/
+
+/**
+ * Copy the files of a dataset.
+ *
+ * Copy all the files associated with a dataset.
+ *
+ * Equivelent of the C function GDALCopyDatasetFiles().
+ *
+ * @param pszNewName new name for the dataset.
+ * @param pszOldName old name for the dataset.
+ *
+ * @return CE_None on success, or CE_Failure if the operation fails.
+ */
+
+CPLErr GDALDriver::CopyFiles( const char * pszNewName, const char *pszOldName )
+
+{
+    if( pfnRename != NULL )
+        return pfnRename( pszNewName, pszOldName );
+
+/* -------------------------------------------------------------------- */
+/*      Collect file list.                                              */
+/* -------------------------------------------------------------------- */
+    GDALDatasetH hDS = (GDALDataset *) GDALOpen(pszOldName,GA_ReadOnly);
+        
+    if( hDS == NULL )
+    {
+        if( CPLGetLastErrorNo() == 0 )
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to open %s to obtain file list." );
+
+        return CE_Failure;
+    }
+
+    char **papszFileList = GDALGetFileList( hDS );
+        
+    GDALClose( hDS );
+
+    if( CSLCount( papszFileList ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Unable to determine files associated with %s,\n"
+                  "rename fails.", pszOldName );
+
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Produce a list of new filenames that correspond to the old      */
+/*      names.                                                          */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+    int i;
+    char **papszNewFileList = 
+        CPLCorrespondingPaths( pszOldName, pszNewName, papszFileList );
+
+    if( papszNewFileList == NULL )
+        return CE_Failure;
+
+    for( i = 0; papszFileList[i] != NULL; i++ )
+    {
+        if( CPLCopyFile( papszNewFileList[i], papszFileList[i] ) != 0 )
+        {
+            eErr = CE_Failure;
+            // Try to put the ones we moved back. 
+            for( --i; i >= 0; i-- )
+                VSIUnlink( papszNewFileList[i] );
+            break;
+        }
+    }
+
+    CSLDestroy( papszNewFileList );
+    CSLDestroy( papszFileList );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        GDALCopyDatasetFiles()                        */
+/************************************************************************/
+
+/**
+ * @see GDALDriver::CopyFiles()
+ */
+
+CPLErr CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH hDriver, 
+                                         const char * pszNewName,
+                                         const char * pszOldName )
+
+{
+    if( hDriver == NULL )
+        hDriver = GDALIdentifyDriver( pszOldName, NULL );
+    if( hDriver == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No identifiable driver for %s.",
+                  pszOldName );
+        return CE_Failure;
+    }
+
+    return ((GDALDriver *) hDriver)->CopyFiles( pszNewName, pszOldName );
 }
 
 /************************************************************************/

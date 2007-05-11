@@ -1573,6 +1573,75 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+/**
+ * Fetch files forming dataset.
+ *
+ * Returns a list of files believed to be part of this dataset.  If it returns
+ * an empty list of files it means there is believed to be no local file
+ * system files associated with the dataset (for instance a virtual dataset).
+ * The returned file list is owned by the caller and should be deallocated
+ * with CSLDestroy().
+ * 
+ * The returned filenames will normally be relative or absolute paths 
+ * depending on the path used to originally open the dataset.
+ *
+ * This method is the same as the C GDALGetFileList() function.
+ *
+ * @return NULL or a NULL terminated array of file names. 
+ */
+
+char **GDALDataset::GetFileList()
+
+{
+    CPLString osMainFilename = GetDescription();
+    VSIStatBufL  sStat;
+
+/* -------------------------------------------------------------------- */
+/*      Is the main filename even a real filesystem object?             */
+/* -------------------------------------------------------------------- */
+    if( VSIStatL( osMainFilename, &sStat ) != 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Form new list.                                                  */
+/* -------------------------------------------------------------------- */
+    char **papszList = CSLAddString( NULL, osMainFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a known overview file?                               */
+/* -------------------------------------------------------------------- */
+    if( oOvManager.poODS != NULL )
+    {
+        char **papszOvrList = oOvManager.poODS->GetFileList();
+        papszList = CSLInsertStrings( papszList, -1, papszOvrList );
+        CSLDestroy( papszOvrList );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      should we try for world file(s)?   Not for now.                 */
+/* -------------------------------------------------------------------- */
+
+    return papszList;
+}
+
+/************************************************************************/
+/*                          GDALGetFileList()                           */
+/************************************************************************/
+
+/**
+ * @see GDALDataset::GetFileList()
+ */
+
+char ** GDALGetFileList( GDALDatasetH hDS )
+
+{
+    return ((GDALDataset *) hDS)->GetFileList();
+}
+
+/************************************************************************/
 /*                              GDALOpen()                              */
 /************************************************************************/
 
@@ -1616,7 +1685,8 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
         poDS = poDriver->pfnOpen( &oOpenInfo );
         if( poDS != NULL )
         {
-            poDS->SetDescription( pszFilename );
+            if( strlen(poDS->GetDescription()) == 0 )
+                poDS->SetDescription( pszFilename );
 
             if( poDS->poDriver == NULL )
                 poDS->poDriver = poDriver;

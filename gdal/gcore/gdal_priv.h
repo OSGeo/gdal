@@ -134,6 +134,8 @@ class CPL_DLL GDALMajorObject
 /* ******************************************************************** */
 class CPL_DLL GDALDefaultOverviews
 {
+    friend class GDALDataset;
+
     GDALDataset *poDS;
     GDALDataset *poODS;
     
@@ -228,6 +230,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual void *GetInternalHandle( const char * );
     virtual GDALDriver *GetDriver(void);
+    virtual char      **GetFileList(void);
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -533,6 +536,10 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                  GDALDataType eType, char ** papszOptions );
 
     CPLErr              Delete( const char * pszName );
+    CPLErr              Rename( const char * pszNewName,
+                                const char * pszOldName );
+    CPLErr              CopyFiles( const char * pszNewName,
+                                   const char * pszOldName );
 
     GDALDataset         *CreateCopy( const char *, GDALDataset *, 
                                      int, char **,
@@ -568,6 +575,11 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     void                (*pfnUnloadDriver)(GDALDriver *);
 
     int                 (*pfnIdentify)( GDALOpenInfo * );
+
+    CPLErr              (*pfnRename)( const char * pszNewName,
+                                      const char * pszOldName );
+    CPLErr              (*pfnCopyFiles)( const char * pszNewName,
+                                         const char * pszOldName );
 };
 
 /* ******************************************************************** */
