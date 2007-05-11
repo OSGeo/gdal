@@ -42,30 +42,11 @@ Supported compilers for Windows CE operating system:
  Content of gdal\wince directory:
 =============================================================================
 
-*** IMPORANT NOTE ***
-Due to problems with removing directories from CVS and missed
-synchronization of RC branch, the 'wince' directory includes a few
-deprecated project files (see below).
-Please DON'T USE them, unless you want to fix them yourself.
-********************
-
 Active content:
 
 - msvc80 - project for Visual C++ 2005 to build GDAL DLL for Windows CE
 - README - the file you're currently reading
 - TODO   - planned and requested features 
-
-*** DEPRECATED CONTENT - DON'T USE IT **
-- evc4_gdalce_dll
-- evc4_gdalce_dll_test
-- evc4_gdalce_lib
-- evc4_gdalce_lib_test
-- msvc8_gdalce_lib
-- msvc8_gdalce_lib_test
-- wce_test_dll
-- wce_test_lib
-- wcelibcex
-
 
 =============================================================================
  Building GDAL for Windows CE using Microsoft Visual C++ 2005
@@ -83,7 +64,9 @@ You also need to have installed at least one SDK for Windows CE platform:
 - Windows Mobile 5.0 Pocket PC SDK
 - Windows Mobile 5.0 Smartphone SDK
 
-Last requirement is the Run-time Type Information library for the Pocket PC 2003 SDK
+If you are going to build against Windows Mobile 2003 SDK, there is one more 
+requirement. You have to install the Run-time Type Information library
+for the Pocket PC 2003 SDK
 
 http://support.microsoft.com/default.aspx?scid=kb;[LN];830482
 
