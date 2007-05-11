@@ -789,3 +789,116 @@ const char *CPLCleanTrailingSlash( const char *pszFilename )
 
     return pszStaticResult;
 }
+
+/************************************************************************/
+/*                       CPLCorrespondingPaths()                        */
+/************************************************************************/
+
+/**
+ * Identify corresponding paths.
+ *
+ * Given a prototype old and new filename this function will attempt
+ * to determine corresponding names for a set of other old filenames that
+ * will rename them in a similar manner.  This correspondance assumes there
+ * are two possibly kinds of renaming going on.  A change of path, and a 
+ * change of filename stem. 
+ * 
+ * If a consistent renaming cannot be established for all the files this
+ * function will return indicating an error.  
+ *
+ * The returned file list becomes owned by the caller and should be destroyed
+ * with CSLDestroy(). 
+ *
+ * @param pszOldFilename path to old prototype file. 
+ * @param pszNewFilename path to new prototype file. 
+ * @param papszFileList list of other files associated with pszOldFilename to 
+ * rename similarly.
+ * 
+ * @return a list of files corresponding to papszFileList but renamed to 
+ * correspond to pszNewFilename.
+ */
+
+char **CPLCorrespondingPaths( const char *pszOldFilename, 
+                              const char *pszNewFilename, 
+                              char **papszFileList )
+
+{
+    CPLString osOldPath = CPLGetPath( pszOldFilename );
+    CPLString osNewPath = CPLGetPath( pszNewFilename );
+    CPLString osOldBasename = CPLGetBasename( pszOldFilename );
+    CPLString osNewBasename = CPLGetBasename( pszNewFilename );
+    int i;
+
+    if( CSLCount(papszFileList) == 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      There is a special case for a one item list which exactly       */
+/*      matches the old name, to rename to the new name.                */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszFileList) == 1 
+        && strcmp(pszOldFilename,papszFileList[0]) == 0 )
+    {
+        return CSLAddString( NULL, pszNewFilename );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the basename is changing, verify that all source files       */
+/*      have the same starting basename.                                */
+/* -------------------------------------------------------------------- */
+    if( osOldBasename != osNewBasename )
+    {
+        for( i=0; papszFileList[i] != NULL; i++ )
+        {
+            if( osOldBasename != CPLGetBasename( papszFileList[i] ) )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unable to rename fileset due irregular basenames.");
+                return NULL;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the filename portions differs, ensure they only differ in    */
+/*      basename.                                                       */
+/* -------------------------------------------------------------------- */
+    if( osOldBasename != osNewBasename )
+    {
+        CPLString osOldExtra = CPLGetFilename(pszOldFilename) 
+            + strlen(osOldBasename);
+        CPLString osNewExtra = CPLGetFilename(pszNewFilename) 
+            + strlen(osNewBasename);
+
+        if( osOldExtra != osNewExtra )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to rename fileset due to irregular filename correspondence." );
+            return NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Generate the new filenames.                                     */
+/* -------------------------------------------------------------------- */
+    char **papszNewList = NULL;
+
+    for( i=0; papszFileList[i] != NULL; i++ )
+    {
+        CPLString osNewFilename;
+        CPLString osOldFilename = CPLGetFilename( papszFileList[i] );
+
+        if( osOldBasename == osNewBasename )
+            osNewFilename = 
+                CPLFormFilename( osNewPath, osOldFilename, NULL );
+        else
+            osNewFilename = 
+                CPLFormFilename( osNewPath, osNewBasename, 
+                                 osOldFilename.c_str()+strlen(osOldBasename));
+
+        papszNewList = CSLAddString( papszNewList, osNewFilename );
+    }
+
+    return papszNewList;
+}
+
