@@ -245,6 +245,7 @@ class ENVIDataset : public RawDataset
     virtual CPLErr  SetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
     virtual CPLErr  SetProjection( const char * );
+    virtual char  **GetFileList(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -424,6 +425,24 @@ void ENVIDataset::FlushCache()
             VSIFPrintf( fp, ",\n" );
     }
     VSIFPrintf( fp, "}\n" );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **ENVIDataset::GetFileList()
+
+{
+    char **papszFileList = NULL;
+
+    // Main data file, etc. 
+    papszFileList = GDALPamDataset::GetFileList();
+
+    // Header file.
+    papszFileList = CSLAddString( papszFileList, pszHDRFilename );
+
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -1209,7 +1228,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      to whatever we currently have.                                  */
 /* -------------------------------------------------------------------- */
     const char	*pszMode;
-    const char	*pszHdrFilename;
+    CPLString   osHdrFilename;
     FILE	*fpHeader;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -1217,28 +1236,28 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     else
 	pszMode = "r";
 
-    pszHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
-    fpHeader = VSIFOpen( pszHdrFilename, pszMode );
+    osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
+    fpHeader = VSIFOpen( osHdrFilename, pszMode );
 
 #ifndef WIN32
     if( fpHeader == NULL )
     {
-        pszHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
-        fpHeader = VSIFOpen( pszHdrFilename, pszMode );
+        osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
+        fpHeader = VSIFOpen( osHdrFilename, pszMode );
     }
 #endif
     if( fpHeader == NULL )
     {
-        pszHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+        osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                           "hdr" );
-        fpHeader = VSIFOpen( pszHdrFilename, pszMode );
+        fpHeader = VSIFOpen( osHdrFilename, pszMode );
     }
 #ifndef WIN32
     if( fpHeader == NULL )
     {
-        pszHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+        osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                           "HDR" );
-        fpHeader = VSIFOpen( pszHdrFilename, pszMode );
+        fpHeader = VSIFOpen( osHdrFilename, pszMode );
     }
 #endif
 
@@ -1267,7 +1286,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     ENVIDataset 	*poDS;
 
     poDS = new ENVIDataset();
-    poDS->pszHDRFilename = pszHdrFilename;
+    poDS->pszHDRFilename = CPLStrdup(osHdrFilename);
     poDS->fp = fpHeader;
 
 /* -------------------------------------------------------------------- */

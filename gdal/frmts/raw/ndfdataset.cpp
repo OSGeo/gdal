@@ -44,6 +44,7 @@ class NDFDataset : public RawDataset
     double      adfGeoTransform[6];
 
     char	*pszProjection;
+    char       **papszExtraFiles;
 
     char        **papszHeader;
     const char  *Get( const char *pszKey, const char *pszDefault);
@@ -56,6 +57,7 @@ class NDFDataset : public RawDataset
 
     virtual CPLErr  GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
+    virtual char **GetFileList(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -69,6 +71,7 @@ NDFDataset::NDFDataset()
     pszProjection = CPLStrdup("");
 
     papszHeader = NULL;
+    papszExtraFiles = NULL;
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -88,6 +91,7 @@ NDFDataset::~NDFDataset()
     FlushCache();
     CPLFree( pszProjection );
     CSLDestroy( papszHeader );
+    CSLDestroy( papszExtraFiles );
 
     for( int i = 0; i < GetRasterCount(); i++ )
     {
@@ -131,6 +135,25 @@ const char *NDFDataset::Get( const char *pszKey, const char *pszDefault )
         return pszDefault;
     else
         return pszResult;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **NDFDataset::GetFileList()
+
+{
+    char **papszFileList = NULL;
+
+    // Main data file, etc. 
+    papszFileList = GDALPamDataset::GetFileList();
+
+    // Header file.
+    papszFileList = CSLInsertStrings( papszFileList, -1,
+                                      papszExtraFiles );
+
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -246,6 +269,9 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
             return NULL;
         }
+        poDS->papszExtraFiles = 
+            CSLAddString( poDS->papszExtraFiles, 
+                          pszFilename );
 
         RawRasterBand *poBand = 
             new RawRasterBand( poDS, iBand+1, fpRaw, 0, 1, poDS->nRasterXSize,
