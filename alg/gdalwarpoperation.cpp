@@ -1849,12 +1849,16 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) - nResWinSize );
     *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) - nResWinSize );
+    *pnSrcXOff = MIN(*pnSrcXOff,GDALGetRasterXSize(psOptions->hSrcDS));
+    *pnSrcYOff = MIN(*pnSrcYOff,GDALGetRasterYSize(psOptions->hSrcDS));
+
     *pnSrcXSize = MIN( GDALGetRasterXSize(psOptions->hSrcDS) - *pnSrcXOff,
                        ((int) ceil( dfMaxXOut )) - *pnSrcXOff + nResWinSize );
     *pnSrcYSize = MIN( GDALGetRasterYSize(psOptions->hSrcDS) - *pnSrcYOff,
                        ((int) ceil( dfMaxYOut )) - *pnSrcYOff + nResWinSize );
     *pnSrcXSize = MAX(0,*pnSrcXSize);
     *pnSrcYSize = MAX(0,*pnSrcYSize);
+
 
     return CE_None;
 }
