@@ -4,28 +4,6 @@
  * python specific code for ogr bindings.
  */
 
-/*
- * $Log$
- * Revision 1.5  2006/12/01 05:24:54  fwarmerdam
- * reimplement Destroy, Release, Reference and Dereference
- *
- * Revision 1.4  2006/11/30 21:45:32  fwarmerdam
- * Improve __getattr__ and GetField() methods on feature.
- *
- * Revision 1.3  2005/10/16 20:39:56  hobu
- * fix a typo
- *
- * Revision 1.2  2005/09/06 01:51:42  kruland
- * Removed GetDriverByName, GetDriver, Open, OpenShared because they are defined
- * in ogr now.
- * Removed %feature("compactdefaultargs") because it's defined in ogr.i now.
- *
- * Revision 1.1  2005/09/02 16:19:23  kruland
- * Major reorganization to accomodate multiple language bindings.
- * Each language binding can define renames and supplemental code without
- * having to have a lot of conditionals in the main interface definition files.
- *
- */
 
 %feature("autodoc");
 
