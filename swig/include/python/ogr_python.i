@@ -98,9 +98,10 @@ ds[0:4] would return a list of the first four layers."""
             return self.GetLayerByIndex(iLayer)
         else:
             raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
-}
+  }
 }
 
+%include "ogr_layer_docs.i"
 %extend OGRLayerShadow {
   %pythoncode {
     def Reference(self):
