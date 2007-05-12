@@ -15,6 +15,15 @@
   
 %}
 
+
+%include "ogr_layer_docs.i"
+%include "ogr_datasource_docs.i"
+%include "ogr_driver_docs.i"
+%include "ogr_feature_docs.i"
+%include "ogr_featuredef_docs.i"
+%include "ogr_fielddef_docs.i"
+%include "ogr_geometry_docs.i"
+
 %rename (GetDriverCount) OGRGetDriverCount;
 %rename (GetOpenDSCount) OGRGetOpenDSCount;
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
@@ -79,7 +88,6 @@ ds[0:4] would return a list of the first four layers."""
   }
 }
 
-%include "ogr_layer_docs.i"
 %extend OGRLayerShadow {
   %pythoncode {
     def Reference(self):
