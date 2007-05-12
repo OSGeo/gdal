@@ -4,28 +4,6 @@
  * python specific code for gdal bindings.
  */
 
-/*
- * $Log$
- * Revision 1.5  2006/12/02 05:16:12  hobu
- * Dataset.WriteRaster Dataset.ReadRaster
- *
- * Revision 1.4  2005/09/30 20:19:19  kruland
- * Moved cpl_exceptions.i code into gdal_python so the other languages can
- * have a common mechanism.
- *
- * Revision 1.3  2005/09/13 03:05:05  kruland
- * Exception generation code was moved to the cpl_exceptions.i file.
- *
- * Revision 1.2  2005/09/02 21:42:42  kruland
- * The compactdefaultargs feature should be turned on for all bindings not just
- * python.
- *
- * Revision 1.1  2005/09/02 16:19:23  kruland
- * Major reorganization to accomodate multiple language bindings.
- * Each language binding can define renames and supplemental code without
- * having to have a lot of conditionals in the main interface definition files.
- *
- */
 
 %feature("autodoc");
 
