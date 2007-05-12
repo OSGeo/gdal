@@ -554,7 +554,7 @@ public:
     return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
   }
   
-  GIntBig GetFeatureRead() {
+  GIntBig GetFeaturesRead() {
     return OGR_L_GetFeaturesRead(self);
   }
 
