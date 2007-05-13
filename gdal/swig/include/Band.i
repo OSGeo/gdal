@@ -220,8 +220,8 @@ public:
     GDALFlushRasterCache( self );
   }
 
-  GDALColorTable *GetRasterColorTable() {
-    return (GDALColorTable*) GDALGetRasterColorTable( self );
+  GDALColorTableShadow *GetRasterColorTable() {
+    return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
   }
 
   int SetRasterColorTable( GDALColorTable *arg ) {
