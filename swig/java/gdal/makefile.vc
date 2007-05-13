@@ -3,7 +3,6 @@ OBJ	=	gdal_wrap.obj
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
-!INCLUDE ..\java.opt
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..
