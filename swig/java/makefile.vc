@@ -1,7 +1,6 @@
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
-!INCLUDE java.opt
 
 !IFDEF DLLBUILD
 GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
