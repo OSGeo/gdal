@@ -1,11 +1,7 @@
 #
 # Java Stuff
-!IFNDEF JAVA_HOME
 JAVA_HOME = c:\j2sdk1.4.2_12
-!ENDIF
-!IFNDEF ANT_HOME
 ANT_HOME=c:\programmi\apache-ant-1.7.0
-!ENDIF
 JAVADOC=$(JAVA_HOME)\bin\javadoc
 JAVAC=$(JAVA_HOME)\bin\javac
 JAVA=$(JAVA_HOME)\bin\java
