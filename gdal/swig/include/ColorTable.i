@@ -33,36 +33,55 @@
 // Define the extensions for ColorTable (nee GDALColorTable)
 //
 //************************************************************************
-%rename (ColorTable) GDALColorTable;
+%rename (ColorTable) GDALColorTableShadow;
 
-typedef int GDALPaletteInterp;
+class GDALColorTableShadow : public GDALMajorObjectShadow {
+private:
+  GDALColorTableShadow();
 
-class GDALColorTable
-{
 public:
-    GDALColorTable( GDALPaletteInterp = GPI_RGB );
-    ~GDALColorTable();
 
-%newobject Clone();
-    GDALColorTable *Clone() const;
+%extend {
 
-    GDALPaletteInterp GetPaletteInterpretation() const;
+    %feature("kwargs") GDALColorTableShadow;
+    GDALColorTableShadow(GDALPaletteInterp palette = GPI_RGB ) {
+        return (GDALColorTableShadow*) GDALCreateColorTable(palette);
+    }
 
-#ifdef SWIGRUBY
-%rename (get_count) GetColorEntryCount;
-#else
-%rename (GetCount) GetColorEntryCount;
-#endif
+    ~GDALColorTableShadow() {
+        GDALDestroyColorTable(self);
+    }
+  
+    %newobject Clone();
+    GDALColorTableShadow* Clone() {
+        return (GDALColorTableShadow*) GDALCloneColorTable (self);
+    }
+  
+    GDALPaletteInterp GetPaletteInterpretation() {
+        return GDALGetPaletteInterpretation(self);
+    }
+  
+    int GetColorEntryCount() {
+        return GDALGetColorEntryCount(self);
+    }
+    
+    GDALColorEntry* GetColorEntry (int entry) {
+        return (GDALColorEntry*) GDALGetColorEntry(self, entry);
+    }
+    
+    int GetColorEntryAsRGB(int entry, GDALColorEntry* centry) {
+        return GDALGetColorEntryAsRGB(self, entry, centry);
+    }
 
-    int           GetColorEntryCount() const;
+    void SetColorEntry( int entry, const GDALColorEntry* centry) {
+        GDALSetColorEntry(self, entry, centry);
+    }
+    
+    void CreateColorRamp(   int nStartIndex, const GDALColorEntry* startcolor,
+                            int nEndIndex, const GDALColorEntry* endcolor) {
+        GDALCreateColorRamp(self, nStartIndex, startcolor, nEndIndex, endcolor);
+    }
 
-    GDALColorEntry* GetColorEntry(int);
-    int           GetColorEntryAsRGB( int, GDALColorEntry * ) const;
-    void          SetColorEntry( int, const GDALColorEntry * );
+}
 
-/* NEEDED 
- *
- * __str__;
- * serialize();
- */
 };
