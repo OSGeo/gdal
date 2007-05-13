@@ -60,6 +60,12 @@ public:
     GDALPaletteInterp GetPaletteInterpretation() {
         return GDALGetPaletteInterpretation(self);
     }
+
+#ifdef SWIGRUBY 
+%rename (get_count) GetColorEntryCount; 
+#else 
+%rename (GetCount) GetColorEntryCount; 
+#endif  
   
     int GetColorEntryCount() {
         return GDALGetColorEntryCount(self);
