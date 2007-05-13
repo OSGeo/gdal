@@ -153,7 +153,7 @@ typedef int OGRErr;
 #elif defined(SWIGPHP4)
 %include typemaps_php.i
 #elif defined(SWIGCSHARP)
-%include typemaps_csharp.i
+%include osr_csharp.i
 #elif defined(SWIGJAVA)
 %include osr_java.i
 #else
