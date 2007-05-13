@@ -32,6 +32,19 @@ PYDIR   =	"C:\Software\Python24"
 SWIG = swig.exe
 !ENDIF
 
+# SWIG Java settings
+!IFNDEF JAVA_HOME
+JAVA_HOME = c:\j2sdk1.4.2_12
+!ENDIF
+!IFNDEF ANT_HOME
+ANT_HOME=c:\programmi\apache-ant-1.7.0
+!ENDIF
+JAVADOC=$(JAVA_HOME)\bin\javadoc
+JAVAC=$(JAVA_HOME)\bin\javac
+JAVA=$(JAVA_HOME)\bin\java
+JAR=$(JAVA_HOME)\bin\jar
+JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
+
 # Check compiler version given in command line
 # nmake -f makefile.vc MSVC_VER=xxxx
 # 1310 = 7.1 (2003)   1400 = 8.0 (2005)
