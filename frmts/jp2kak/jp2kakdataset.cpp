@@ -203,7 +203,8 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 
     void        ApplyPalette( jp2_palette oJP2Palette );
     void        ProcessYCbCrTile(kdu_tile tile, GByte *pabyBuffer, 
-                                 int nBlockXOff, int nBlockYOff );
+                                 int nBlockXOff, int nBlockYOff,
+                                 int nTileOffsetX, int nTileOffsetY );
     void        ProcessTile(kdu_tile tile, GByte *pabyBuffer );
 };
 
@@ -578,18 +579,21 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 kdu_dims tile_dims; res.get_dims(tile_dims);
                 kdu_coords offset = tile_dims.pos - dims.pos;
 
-                GByte *pabyDest;
-
-                pabyDest = ((GByte *)pImage) 
-                    + (offset.x + offset.y*nBlockXSize) * nWordSize;
-
                 try 
                 {
                     if( tile.get_ycc() && nBand < 4 )
-                        ProcessYCbCrTile( tile, pabyDest, 
-                                          nBlockXOff, nBlockYOff );
+                        ProcessYCbCrTile( tile, (GByte *) pImage,
+                                          nBlockXOff, nBlockYOff,
+                                          offset.x, offset.y );
                     else
+                    {
+                        GByte *pabyDest;
+                        
+                        pabyDest = ((GByte *)pImage) 
+                            + (offset.x + offset.y*nBlockXSize) * nWordSize;
+
                         ProcessTile( tile, pabyDest );
+                    }
                     tile.close();
                 }
                 catch( ... )
@@ -671,7 +675,8 @@ void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest )
 /************************************************************************/
 
 void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest, 
-                                         int nTileXOff, int nTileYOff )
+                                         int nBlockXOff, int nBlockYOff,
+                                         int nTileOffsetX, int nTileOffsetY )
 
 {
     // Open tile-components and create processing engines and resources
@@ -736,7 +741,7 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
             }
 
             apoBlocks[iBand] = 
-                poBand->GetLockedBlockRef( nTileXOff, nTileYOff, TRUE );
+                poBand->GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
             apabyBandDest[iBand] = (GByte *) apoBlocks[iBand]->GetDataRef();
         }
     }
@@ -780,7 +785,8 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
         kdu_convert_ycc_to_rgb(line[0], line[1], line[2]);
 
         for( iBand = 0; iBand < 3; iBand++ )
-            transfer_bytes(apabyBandDest[iBand] + y * nBlockXSize * nWordSize,
+            transfer_bytes(apabyBandDest[iBand] 
+                           + (nTileOffsetX+nTileOffsetY*nBlockXSize)*nWordSize,
                            line[iBand], nWordSize, bit_depth, eDataType );
     }
 
