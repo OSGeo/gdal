@@ -164,16 +164,15 @@ class OGRInfo {
 						"(" + sub_geom.GetGeometryType() + ")" );
 				}
 			}
+            Envelope env = new Envelope();
+            geom.GetEnvelope(env);
+            Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
+                env.MinY + "," + env.MaxY);
+
+            string geom_wkt;
+            geom.ExportToWkt(out geom_wkt);
+            Console.WriteLine("  " + geom_wkt);
 		}
-
-		Envelope env = new Envelope();
-		geom.GetEnvelope(env);
-		Console.WriteLine( "   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
-			env.MinY + "," + env.MaxY);
-
-		string geom_wkt;
-		geom.ExportToWkt(out geom_wkt);
-		Console.WriteLine( "  " + geom_wkt );
 
 		Console.WriteLine( "" );
 	}
