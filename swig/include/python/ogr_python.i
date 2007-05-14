@@ -29,6 +29,8 @@
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 %rename (RegisterAll) OGRRegisterAll();
 
+%include "python_exceptions.i"
+
 %extend OGRDataSourceShadow {
   %pythoncode {
     def Destroy(self):
