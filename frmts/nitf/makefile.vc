@@ -1,12 +1,15 @@
 
 GDAL_OBJ	=	nitfdataset.obj
-NITFLIB_OBJ	=	nitffile.obj nitfimage.obj mgrs.obj nitfaridpcm.obj
+NITFLIB_OBJ	=	nitffile.obj nitfimage.obj mgrs.obj nitfaridpcm.obj \
+			nitfbilevel.obj
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I..\gtiff\libtiff
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
