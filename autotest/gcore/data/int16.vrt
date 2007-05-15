@@ -6,8 +6,6 @@
     <SimpleSource>
       <SourceFilename>./data/int16.tif</SourceFilename>
       <SourceBand>1</SourceBand>
-      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
-      <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
