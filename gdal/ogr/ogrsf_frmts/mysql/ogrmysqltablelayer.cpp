@@ -631,6 +631,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Execute the delete.                                             */
 /* -------------------------------------------------------------------- */
+    poDS->InterruptLongResult();
     if( mysql_query(poDS->GetConn(), osCommand.c_str() ) ){   
         poDS->ReportError(  osCommand.c_str() );
         return OGRERR_FAILURE;   
@@ -732,9 +733,6 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        const char *pszStrValue = poFeature->GetFieldAsString(i);
-        char *pszNeedToFree = NULL;
-
         if( !poFeature->IsFieldSet( i ) )
             continue;
 
@@ -743,8 +741,11 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         else
             bNeedComma = TRUE;
 
+        const char *pszStrValue = poFeature->GetFieldAsString(i);
+
         if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
-                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
+                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal
+                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTBinary )
         {
             int         iChar;
 
@@ -776,13 +777,23 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
 
             osCommand += "'";
         }
+        else if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTBinary )
+        {
+            int binaryCount = 0;
+            GByte* binaryData = poFeature->GetFieldAsBinary(i, &binaryCount);
+            char* pszHexValue = CPLBinaryToHex( binaryCount, binaryData );
+
+            osCommand += "x'";
+            osCommand += pszHexValue;
+            osCommand += "'";
+
+            CPLFree( pszHexValue );
+        }
         else
         {
             osCommand += pszStrValue;
         }
 
-        if( pszNeedToFree )
-            CPLFree( pszNeedToFree );
     }
 
     osCommand += ")";
@@ -882,6 +893,11 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( oField.GetType() == OFTTime )
     {
         sprintf( szFieldType, "TIME" );
+    }
+
+    else if( oField.GetType() == OFTBinary )
+    {
+        sprintf( szFieldType, "LONGBLOB" );
     }
 
     else if( oField.GetType() == OFTString )
