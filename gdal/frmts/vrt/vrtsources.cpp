@@ -263,6 +263,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 
 /************************************************************************/
 /*                              SrcToDst()                              */
+/*                                                                      */
+/*      Note: this is a no-op if the dst window is -1,-1,-1,-1.         */
 /************************************************************************/
 
 void VRTSimpleSource::SrcToDst( double dfX, double dfY,
@@ -275,6 +277,8 @@ void VRTSimpleSource::SrcToDst( double dfX, double dfY,
 
 /************************************************************************/
 /*                              DstToSrc()                              */
+/*                                                                      */
+/*      Note: this is a no-op if the dst window is -1,-1,-1,-1.         */
 /************************************************************************/
 
 void VRTSimpleSource::DstToSrc( double dfX, double dfY,
@@ -298,15 +302,25 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                   int *pnOutXSize, int *pnOutYSize )
 
 {
+    int bSrcWinSet = nSrcXOff != -1 || nSrcXSize != -1 
+        || nSrcYOff != -1 || nSrcYSize != -1;
+    int bDstWinSet = nDstXOff != -1 || nDstXSize != -1 
+        || nDstYOff != -1 || nDstYSize != -1;
+
+    CPLAssert( bSrcWinSet == bDstWinSet );
+
 /* -------------------------------------------------------------------- */
 /*      If the input window completely misses the portion of the        */
 /*      virtual dataset provided by this source we have nothing to do.  */
 /* -------------------------------------------------------------------- */
-    if( nXOff > nDstXOff + nDstXSize
-        || nYOff > nDstYOff + nDstYSize
-        || nXOff + nXSize < nDstXOff
-        || nYOff + nYSize < nDstYOff )
-        return FALSE;
+    if( bDstWinSet )
+    {
+        if( nXOff > nDstXOff + nDstXSize
+            || nYOff > nDstYOff + nDstYSize
+            || nXOff + nXSize < nDstXOff
+            || nYOff + nYSize < nDstYOff )
+            return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      This request window corresponds to the whole output buffer.     */
@@ -327,30 +341,34 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     int nRXSize = nXSize;
     int nRYSize = nYSize;
 
-    if( nRXOff < nDstXOff )
-    {
-        nRXSize = nRXSize + nRXOff - nDstXOff;
-        nRXOff = nDstXOff;
-        bModifiedX = TRUE;
-    }
 
-    if( nRYOff < nDstYOff )
+    if( bDstWinSet )
     {
-        nRYSize = nRYSize + nRYOff - nDstYOff;
-        nRYOff = nDstYOff;
-        bModifiedY = TRUE;
-    }
+        if( nRXOff < nDstXOff )
+        {
+            nRXSize = nRXSize + nRXOff - nDstXOff;
+            nRXOff = nDstXOff;
+            bModifiedX = TRUE;
+        }
 
-    if( nRXOff + nRXSize > nDstXOff + nDstXSize )
-    {
-        nRXSize = nDstXOff + nDstXSize - nRXOff;
-        bModifiedX = TRUE;
-    }
+        if( nRYOff < nDstYOff )
+        {
+            nRYSize = nRYSize + nRYOff - nDstYOff;
+            nRYOff = nDstYOff;
+            bModifiedY = TRUE;
+        }
 
-    if( nRYOff + nRYSize > nDstYOff + nDstYSize )
-    {
-        nRYSize = nDstYOff + nDstYSize - nRYOff;
-        bModifiedY = TRUE;
+        if( nRXOff + nRXSize > nDstXOff + nDstXSize )
+        {
+            nRXSize = nDstXOff + nDstXSize - nRXOff;
+            bModifiedX = TRUE;
+        }
+
+        if( nRYOff + nRYSize > nDstYOff + nDstYSize )
+        {
+            nRYSize = nDstYOff + nDstYSize - nRYOff;
+            bModifiedY = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
