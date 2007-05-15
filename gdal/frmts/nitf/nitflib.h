@@ -203,6 +203,9 @@ GUInt32   CPL_DLL NITFIHFieldOffset( NITFImage *psImage,
 
 int NITFUncompressARIDPCM( NITFImage *psImage, GByte *pabyInputData,
                            GByte *pabyOutputImage );
+int NITFUncompressBILEVEL( NITFImage *psImage, 
+                           GByte *pabyInputData, int nInputBytes,
+                           GByte *pabyOutputImage );
 
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */

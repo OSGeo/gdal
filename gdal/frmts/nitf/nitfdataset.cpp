@@ -239,6 +239,30 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
             poColorTable->SetColorEntry( iColor, &sEntry );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      We create a color table for 1 bit data too...                   */
+/* -------------------------------------------------------------------- */
+    if( poColorTable == NULL && psImage->nBitsPerSample == 1 )
+    {
+        GDALColorEntry sEntry;
+
+        poColorTable = new GDALColorTable();
+
+        sEntry.c1 = 0;
+        sEntry.c2 = 0;
+        sEntry.c3 = 0;
+        sEntry.c4 = 255;
+        poColorTable->SetColorEntry( 0, &sEntry );
+
+        sEntry.c1 = 255;
+        sEntry.c2 = 255;
+        sEntry.c3 = 255;
+        sEntry.c4 = 255;
+        poColorTable->SetColorEntry( 1, &sEntry );
+
+        SetMetadataItem( "NBITS", "1" );
+    }
 }
 
 /************************************************************************/
@@ -295,6 +319,29 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             NITFReadImageBlock(psImage, nBlockXOff, nBlockYOff, nBand, pImage);
     }
 
+/* -------------------------------------------------------------------- */
+/*      If the image is 1 bit, expand it now to 8bit.                   */
+/* -------------------------------------------------------------------- */
+    if( nBlockResult == BLKREAD_OK && psImage->nBitsPerSample == 1 )
+    {
+        int nPixelCount = psImage->nBlockWidth * psImage->nBlockHeight;
+        int i;
+        GByte *pabyImage = (GByte *) pImage;
+
+        for( i = nPixelCount-1; i >= 0; i-- )
+        {
+            if( pabyImage[i>>3] & (0x80 >> (i&7)) )
+                pabyImage[i] = 1;
+            else
+                pabyImage[i] = 0;
+        }
+        
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return result.                                                  */
+/* -------------------------------------------------------------------- */
     if( nBlockResult == BLKREAD_OK )
         return CE_None;
     else if( nBlockResult == BLKREAD_FAIL )
@@ -932,6 +979,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Report problems with odd bit sizes.                             */
 /* -------------------------------------------------------------------- */
     if( psImage != NULL 
+        && psImage->nBitsPerSample != 1
         && (psImage->nBitsPerSample < 8 || psImage->nBitsPerSample % 8 != 0) )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
