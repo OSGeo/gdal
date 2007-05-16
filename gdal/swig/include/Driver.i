@@ -69,6 +69,10 @@ public:
     return GDALDeleteDataset( self, name );
   }
 
+  int Rename( const char *newName, const char *oldName ) {
+    return GDALRenameDataset( self, newName, oldName );
+  }
+
   int Register() {
     return GDALRegisterDriver( self );
   }
