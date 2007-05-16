@@ -7,6 +7,8 @@
 
 %feature("autodoc");
 
+%include "python_exceptions.i"
+
 %{
 static PyObject *
 py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
