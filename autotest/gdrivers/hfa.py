@@ -328,6 +328,58 @@ def hfa_pe_write():
     return 'success'
  
 ###############################################################################
+# Verify we can write and read large metadata items.
+
+def hfa_metadata_1():
+
+    drv = gdal.GetDriverByName('HFA')
+    ds = drv.Create( 'tmp/md_1.img', 100, 150, 1, gdal.GDT_Byte )
+    
+    md_val = '0123456789' * 60
+    md = { 'test' : md_val }
+    ds.GetRasterBand(1).SetMetadata( md )
+    ds = None
+
+    ds = gdal.Open( 'tmp/md_1.img' )
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md['test'] != md_val:
+        print md['test']
+        print md_val
+        gdaltest.post_reason( 'got wrong metadata back' )
+        return 'fail'
+    ds = None
+    
+    return 'success'
+ 
+###############################################################################
+# Verify that writing metadata multiple times does not result in duplicate
+# nodes.
+
+def hfa_metadata_2():
+
+    ds = gdal.Open( 'tmp/md_1.img', gdal.GA_Update )
+    md = ds.GetRasterBand(1).GetMetadata()
+    md['test'] = '0123456789'
+    md['xxx'] = '123'
+    ds.GetRasterBand(1).SetMetadata( md )
+    ds = None
+
+    ds = gdal.Open( 'tmp/md_1.img' )
+    md = ds.GetRasterBand(1).GetMetadata()
+    if not md.has_key('xxx'):
+        gdaltest.post_reason('metadata rewrite seems not to have worked')
+        return 'fail'
+
+    if md['xxx'] != '123' or md['test'] != '0123456789':
+        print md
+        gdaltest.post_reason('got wrong metadata back')
+        return 'fail'
+
+    gdal.GetDriverByName('HFA').Delete( 'tmp/md_1.img' )
+    
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -340,7 +392,9 @@ gdaltest_list = [
     hfa_int_read,
     hfa_float_read,
     hfa_pe_read,
-    hfa_pe_write]
+    hfa_pe_write,
+    hfa_metadata_1,
+    hfa_metadata_2]
 
 if __name__ == '__main__':
 
