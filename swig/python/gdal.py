@@ -214,6 +214,10 @@ class Driver(MajorObject):
         """Delete(self, char name) -> int"""
         return _gdal.Driver_Delete(*args)
 
+    def Rename(*args):
+        """Rename(self, char newName, char oldName) -> int"""
+        return _gdal.Driver_Rename(*args)
+
     def Register(*args):
         """Register(self) -> int"""
         return _gdal.Driver_Register(*args)
@@ -679,16 +683,18 @@ class Band(MajorObject):
 Band_swigregister = _gdal.Band_swigregister
 Band_swigregister(Band)
 
-class ColorTable(_object):
+class ColorTable(MajorObject):
     """Proxy of C++ ColorTable class"""
     __swig_setmethods__ = {}
+    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, ColorTable, name, value)
     __swig_getmethods__ = {}
+    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, ColorTable, name)
     __repr__ = _swig_repr
-    def __init__(self, *args): 
-        """__init__(self, GDALPaletteInterp ?=GPI_RGB) -> ColorTable"""
-        this = _gdal.new_ColorTable(*args)
+    def __init__(self, *args, **kwargs): 
+        """__init__(self, GDALPaletteInterp palette=GPI_RGB) -> ColorTable"""
+        this = _gdal.new_ColorTable(*args, **kwargs)
         try: self.this.append(this)
         except: self.this = this
     __swig_destroy__ = _gdal.delete_ColorTable
@@ -706,16 +712,23 @@ class ColorTable(_object):
         return _gdal.ColorTable_GetCount(*args)
 
     def GetColorEntry(*args):
-        """GetColorEntry(self, int ?) -> GDALColorEntry"""
+        """GetColorEntry(self, int entry) -> GDALColorEntry"""
         return _gdal.ColorTable_GetColorEntry(*args)
 
     def GetColorEntryAsRGB(*args):
-        """GetColorEntryAsRGB(self, int ?, GDALColorEntry ?) -> int"""
+        """GetColorEntryAsRGB(self, int entry, GDALColorEntry centry) -> int"""
         return _gdal.ColorTable_GetColorEntryAsRGB(*args)
 
     def SetColorEntry(*args):
-        """SetColorEntry(self, int ?, GDALColorEntry ?)"""
+        """SetColorEntry(self, int entry, GDALColorEntry centry)"""
         return _gdal.ColorTable_SetColorEntry(*args)
+
+    def CreateColorRamp(*args):
+        """
+        CreateColorRamp(self, int nStartIndex, GDALColorEntry startcolor, int nEndIndex, 
+            GDALColorEntry endcolor)
+        """
+        return _gdal.ColorTable_CreateColorRamp(*args)
 
 ColorTable_swigregister = _gdal.ColorTable_swigregister
 ColorTable_swigregister(ColorTable)

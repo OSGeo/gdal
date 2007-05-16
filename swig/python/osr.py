@@ -132,6 +132,14 @@ SRS_DN_WGS84 = _osr.SRS_DN_WGS84
 SRS_WGS84_SEMIMAJOR = _osr.SRS_WGS84_SEMIMAJOR
 SRS_WGS84_INVFLATTENING = _osr.SRS_WGS84_INVFLATTENING
 
+def UseExceptions(*args):
+  """UseExceptions()"""
+  return _osr.UseExceptions(*args)
+
+def DontUseExceptions(*args):
+  """DontUseExceptions()"""
+  return _osr.DontUseExceptions(*args)
+
 def GetWellKnownGeogCSAsWKT(*args):
   """GetWellKnownGeogCSAsWKT(char name, char argout) -> OGRErr"""
   return _osr.GetWellKnownGeogCSAsWKT(*args)
@@ -588,6 +596,10 @@ class CoordinateTransformation(_object):
         TransformPoint(self, double argout, double x, double y, double z=0.0)
         """
         return _osr.CoordinateTransformation_TransformPoint(*args)
+
+    def TransformPoints(*args):
+        """TransformPoints(self, int nCount, double x, double y, double z)"""
+        return _osr.CoordinateTransformation_TransformPoints(*args)
 
 CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
 CoordinateTransformation_swigregister(CoordinateTransformation)
