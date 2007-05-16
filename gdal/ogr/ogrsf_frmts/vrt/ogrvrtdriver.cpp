@@ -64,10 +64,15 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Are we being passed the XML definition directly?                */
+/*      Skip any leading spaces/blanks.                                 */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszFilename,"<OGRVRTDataSource>",18) )
+    const char *pszTestXML = pszFilename;
+    while( *pszTestXML != '\0' && isspace( *pszTestXML ) )
+        pszTestXML++;
+
+    if( EQUALN(pszTestXML,"<OGRVRTDataSource>",18) )
     {
-        pszXML = CPLStrdup(pszFilename);
+        pszXML = CPLStrdup(pszTestXML);
     }
 
 /* -------------------------------------------------------------------- */
