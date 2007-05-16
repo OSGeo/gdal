@@ -88,7 +88,7 @@ void DontUseExceptions() {
 %include exception.i
 
 %exception {
-    CPLErrorReset();
+
     $action
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
