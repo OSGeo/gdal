@@ -12,7 +12,7 @@ GDAL_ROOT	=	..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 
-EXTRAFLAGS = -I.. -I..\.. -I$(ORACLE_HOME)\oci\include
+EXTRAFLAGS = -I.. -I..\.. $(OCI_INCLUDE)
 
 default:	$(OBJ)
 
