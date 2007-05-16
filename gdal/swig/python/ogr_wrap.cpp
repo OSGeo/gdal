@@ -2639,6 +2639,29 @@ SWIG_FromCharPtr(const char *cptr)
 }
 
 
+int bUseExceptions=0;
+
+void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
+  /* If the error class is CE_Fatal, we want to have a message issued
+     because the CPL support code does an abort() before any exception
+     can be generated */
+  if (eclass == CE_Fatal ) {
+    CPLDefaultErrorHandler(eclass, code, msg );
+  }
+}
+
+
+void UseExceptions() {
+  bUseExceptions = 1;
+  CPLSetErrorHandler( (CPLErrorHandler) VeryQuiteErrorHandler );
+}
+
+void DontUseExceptions() {
+  bUseExceptions = 0;
+  CPLSetErrorHandler( CPLDefaultErrorHandler );
+}
+
+
 SWIGINTERN int
 SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
 {
@@ -3044,16 +3067,13 @@ SWIGINTERN OGRErr OGRLayerShadow_RollbackTransaction(OGRLayerShadow *self){
 SWIGINTERN OSRSpatialReferenceShadow *OGRLayerShadow_GetSpatialRef(OGRLayerShadow *self){
     return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
   }
-SWIGINTERN GIntBig OGRLayerShadow_GetFeatureRead(OGRLayerShadow *self){
+SWIGINTERN GIntBig OGRLayerShadow_GetFeaturesRead(OGRLayerShadow *self){
     return OGR_L_GetFeaturesRead(self);
   }
 SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
   }
 SWIGINTERN OGRFeatureShadow *new_OGRFeatureShadow(OGRFeatureDefnShadow *feature_def=0){
-    if (feature_def == 0) {
-      CPLError(CE_Failure, 1, "Undefined feature definition in new OGRFeature");
-    } else
       return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 SWIGINTERN OGRFeatureDefnShadow *OGRFeatureShadow_GetDefnRef(OGRFeatureShadow *self){
@@ -3485,6 +3505,9 @@ SWIGINTERN double OGRGeometryShadow_Distance(OGRGeometryShadow *self,OGRGeometry
 SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
     OGR_G_Empty(self);
   }
+SWIGINTERN bool OGRGeometryShadow_IsEmpty(OGRGeometryShadow *self){
+    return OGR_G_IsEmpty(self);
+  }
 SWIGINTERN bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Intersect(self, other);
   }
@@ -3572,13 +3595,27 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 
 
   OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 
 
   OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 
@@ -3594,6 +3631,30 @@ OGRDriverShadow* GetDriver(int driver_number) {
 #ifdef __cplusplus
 extern "C" {
 #endif
+SWIGINTERN PyObject *_wrap_UseExceptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":UseExceptions")) SWIG_fail;
+  UseExceptions();
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DontUseExceptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  
+  if (!PyArg_ParseTuple(args,(char *)":DontUseExceptions")) SWIG_fail;
+  DontUseExceptions();
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Driver_name_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
@@ -3608,7 +3669,15 @@ SWIGINTERN PyObject *_wrap_Driver_name_get(PyObject *SWIGUNUSEDPARM(self), PyObj
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_name_get" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDriverShadow * >(argp1);
-  result = (char *)OGRDriverShadow_name_get(arg1);
+  {
+    result = (char *)OGRDriverShadow_name_get(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -3665,7 +3734,15 @@ SWIGINTERN PyObject *_wrap_Driver_CreateDataSource(PyObject *SWIGUNUSEDPARM(self
       }
     }
   }
-  result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
+  {
+    result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
@@ -3741,7 +3818,15 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
       }
     }
   }
-  result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
+  {
+    result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
@@ -3797,7 +3882,15 @@ SWIGINTERN PyObject *_wrap_Driver_Open(PyObject *SWIGUNUSEDPARM(self), PyObject 
     } 
     arg3 = static_cast< int >(val3);
   }
-  result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
+  {
+    result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -3831,7 +3924,15 @@ SWIGINTERN PyObject *_wrap_Driver_DeleteDataSource(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_DeleteDataSource" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (int)OGRDriverShadow_DeleteDataSource(arg1,(char const *)arg2);
+  {
+    result = (int)OGRDriverShadow_DeleteDataSource(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -3865,7 +3966,15 @@ SWIGINTERN PyObject *_wrap_Driver_TestCapability(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_TestCapability" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (bool)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
+  {
+    result = (bool)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -3889,7 +3998,15 @@ SWIGINTERN PyObject *_wrap_Driver_GetName(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_GetName" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDriverShadow * >(argp1);
-  result = (char *)OGRDriverShadow_GetName(arg1);
+  {
+    result = (char *)OGRDriverShadow_GetName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -3918,7 +4035,15 @@ SWIGINTERN PyObject *_wrap_DataSource_name_get(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_name_get" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  result = (char *)OGRDataSourceShadow_name_get(arg1);
+  {
+    result = (char *)OGRDataSourceShadow_name_get(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -3939,8 +4064,16 @@ SWIGINTERN PyObject *_wrap_delete_DataSource(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_DataSource" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  delete_OGRDataSourceShadow(arg1);
-  
+  {
+    delete_OGRDataSourceShadow(arg1);
+    
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -3962,7 +4095,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetRefCount(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_GetRefCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  result = (int)OGRDataSourceShadow_GetRefCount(arg1);
+  {
+    result = (int)OGRDataSourceShadow_GetRefCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -3984,7 +4125,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetSummaryRefCount(PyObject *SWIGUNUSEDPAR
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_GetSummaryRefCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
+  {
+    result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -4006,7 +4155,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetLayerCount(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_GetLayerCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
+  {
+    result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -4028,7 +4185,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetDriver(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_GetDriver" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  result = (OGRDriverShadow *)OGRDataSourceShadow_GetDriver(arg1);
+  {
+    result = (OGRDriverShadow *)OGRDataSourceShadow_GetDriver(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -4050,7 +4215,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetName(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_GetName" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
-  result = (char *)OGRDataSourceShadow_GetName(arg1);
+  {
+    result = (char *)OGRDataSourceShadow_GetName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -4081,7 +4254,15 @@ SWIGINTERN PyObject *_wrap_DataSource_DeleteLayer(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "DataSource_DeleteLayer" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
+  {
+    result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4176,7 +4357,15 @@ SWIGINTERN PyObject *_wrap_DataSource_CreateLayer(PyObject *SWIGUNUSEDPARM(self)
       }
     }
   }
-  result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
+  {
+    result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
@@ -4252,7 +4441,15 @@ SWIGINTERN PyObject *_wrap_DataSource_CopyLayer(PyObject *SWIGUNUSEDPARM(self), 
       }
     }
   }
-  result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
+  {
+    result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
@@ -4298,7 +4495,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetLayerByIndex(PyObject *SWIGUNUSEDPARM(s
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByIndex(arg1,arg2);
+  {
+    result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByIndex(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -4330,7 +4535,15 @@ SWIGINTERN PyObject *_wrap_DataSource_GetLayerByName(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "DataSource_GetLayerByName" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByName(arg1,(char const *)arg2);
+  {
+    result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByName(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -4364,7 +4577,15 @@ SWIGINTERN PyObject *_wrap_DataSource_TestCapability(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "DataSource_TestCapability" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+  {
+    result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -4424,7 +4645,15 @@ SWIGINTERN PyObject *_wrap_DataSource_ExecuteSQL(PyObject *SWIGUNUSEDPARM(self),
     }
     arg4 = reinterpret_cast< char * >(buf4);
   }
-  result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
+  {
+    result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, SWIG_POINTER_OWN |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
@@ -4456,7 +4685,15 @@ SWIGINTERN PyObject *_wrap_DataSource_ReleaseResultSet(PyObject *SWIGUNUSEDPARM(
   if (!SWIG_IsOK(res2)) {
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "DataSource_ReleaseResultSet" "', argument " "2"" of type '" "OGRLayerShadow *""'");
   }
-  OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
+  {
+    OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4485,7 +4722,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetRefCount(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetRefCount" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (int)OGRLayerShadow_GetRefCount(arg1);
+  {
+    result = (int)OGRLayerShadow_GetRefCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -4515,7 +4760,15 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilter(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_SetSpatialFilter" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  OGRLayerShadow_SetSpatialFilter(arg1,arg2);
+  {
+    OGRLayerShadow_SetSpatialFilter(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4572,7 +4825,15 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilterRect(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Layer_SetSpatialFilterRect" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast< double >(val5);
-  OGRLayerShadow_SetSpatialFilterRect(arg1,arg2,arg3,arg4,arg5);
+  {
+    OGRLayerShadow_SetSpatialFilterRect(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4594,7 +4855,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetSpatialFilter(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetSpatialFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
+  {
+    result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -4626,7 +4895,15 @@ SWIGINTERN PyObject *_wrap_Layer_SetAttributeFilter(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_SetAttributeFilter" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
+  {
+    result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4665,7 +4942,15 @@ SWIGINTERN PyObject *_wrap_Layer_ResetReading(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_ResetReading" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  OGRLayerShadow_ResetReading(arg1);
+  {
+    OGRLayerShadow_ResetReading(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4687,7 +4972,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetName(PyObject *SWIGUNUSEDPARM(self), PyObjec
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetName" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (char *)OGRLayerShadow_GetName(arg1);
+  {
+    result = (char *)OGRLayerShadow_GetName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -4718,7 +5011,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_GetFeature" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast< long >(val2);
-  result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
+  {
+    result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -4740,7 +5041,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetNextFeature(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetNextFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
+  {
+    result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -4771,7 +5080,15 @@ SWIGINTERN PyObject *_wrap_Layer_SetNextByIndex(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_SetNextByIndex" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast< long >(val2);
-  result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
+  {
+    result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4818,7 +5135,15 @@ SWIGINTERN PyObject *_wrap_Layer_SetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_SetFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
-  result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
+  {
+    result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4865,7 +5190,15 @@ SWIGINTERN PyObject *_wrap_Layer_CreateFeature(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_CreateFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
-  result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+  {
+    result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4912,7 +5245,15 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteFeature(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_DeleteFeature" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast< long >(val2);
-  result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
+  {
+    result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4950,7 +5291,15 @@ SWIGINTERN PyObject *_wrap_Layer_SyncToDisk(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_SyncToDisk" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
+  {
+    result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -4988,7 +5337,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetLayerDefn(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetLayerDefn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
+  {
+    result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -5024,7 +5381,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeatureCount(PyObject *SWIGUNUSEDPARM(self),
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (int)OGRLayerShadow_GetFeatureCount(arg1,arg2);
+  {
+    result = (int)OGRLayerShadow_GetFeatureCount(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -5066,7 +5431,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
     } 
     arg3 = static_cast< int >(val3);
   }
-  result = (OGRErr)OGRLayerShadow_GetExtent(arg1,arg2,arg3);
+  {
+    result = (OGRErr)OGRLayerShadow_GetExtent(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5119,7 +5492,15 @@ SWIGINTERN PyObject *_wrap_Layer_TestCapability(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_TestCapability" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+  {
+    result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -5166,7 +5547,15 @@ SWIGINTERN PyObject *_wrap_Layer_CreateField(PyObject *SWIGUNUSEDPARM(self), PyO
     } 
     arg3 = static_cast< int >(val3);
   }
-  result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
+  {
+    result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5204,7 +5593,15 @@ SWIGINTERN PyObject *_wrap_Layer_StartTransaction(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_StartTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
+  {
+    result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5242,7 +5639,15 @@ SWIGINTERN PyObject *_wrap_Layer_CommitTransaction(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_CommitTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
+  {
+    result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5280,7 +5685,15 @@ SWIGINTERN PyObject *_wrap_Layer_RollbackTransaction(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_RollbackTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
+  {
+    result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5318,7 +5731,15 @@ SWIGINTERN PyObject *_wrap_Layer_GetSpatialRef(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetSpatialRef" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
+  {
+    result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -5326,7 +5747,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_GetFeatureRead(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_GetFeaturesRead(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   GIntBig result;
@@ -5334,13 +5755,21 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeatureRead(PyObject *SWIGUNUSEDPARM(self), 
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:Layer_GetFeatureRead",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:Layer_GetFeaturesRead",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetFeatureRead" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetFeaturesRead" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
-  result = OGRLayerShadow_GetFeatureRead(arg1);
+  {
+    result = OGRLayerShadow_GetFeaturesRead(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj((new GIntBig(static_cast< const GIntBig& >(result))), SWIGTYPE_p_GIntBig, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -5368,8 +5797,16 @@ SWIGINTERN PyObject *_wrap_delete_Feature(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_Feature" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  delete_OGRFeatureShadow(arg1);
-  
+  {
+    delete_OGRFeatureShadow(arg1);
+    
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -5396,7 +5833,15 @@ SWIGINTERN PyObject *_wrap_new_Feature(PyObject *SWIGUNUSEDPARM(self), PyObject 
     }
     arg1 = reinterpret_cast< OGRFeatureDefnShadow * >(argp1);
   }
-  result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
+  {
+    result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_POINTER_NEW |  0 );
   return resultobj;
 fail:
@@ -5418,7 +5863,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetDefnRef(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
+  {
+    result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -5449,7 +5902,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometry(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_SetGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
+  {
+    result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5494,7 +5955,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometryDirectly(PyObject *SWIGUNUSEDPARM(
   if (!SWIG_IsOK(res2)) {
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_SetGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
   }
-  result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
+  {
+    result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -5532,7 +6001,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeometryRef(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetGeometryRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
+  {
+    result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -5554,7 +6031,15 @@ SWIGINTERN PyObject *_wrap_Feature_Clone(PyObject *SWIGUNUSEDPARM(self), PyObjec
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_Clone" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
+  {
+    result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -5585,7 +6070,15 @@ SWIGINTERN PyObject *_wrap_Feature_Equal(PyObject *SWIGUNUSEDPARM(self), PyObjec
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_Equal" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
-  result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
+  {
+    result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -5607,7 +6100,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldCount(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetFieldCount" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  result = (int)OGRFeatureShadow_GetFieldCount(arg1);
+  {
+    result = (int)OGRFeatureShadow_GetFieldCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -5638,7 +6139,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldDefnRef__SWIG_0(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetFieldDefnRef" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
+  {
+    result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -5670,7 +6179,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldDefnRef__SWIG_1(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldDefnRef" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+  {
+    result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -5748,7 +6265,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsString__SWIG_0(PyObject *SWIGUNUSED
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetFieldAsString" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
+  {
+    result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -5780,7 +6305,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsString__SWIG_1(PyObject *SWIGUNUSED
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldAsString" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
+  {
+    result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -5858,7 +6391,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger__SWIG_0(PyObject *SWIGUNUSE
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetFieldAsInteger" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
+  {
+    result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -5890,7 +6431,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger__SWIG_1(PyObject *SWIGUNUSE
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldAsInteger" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
+  {
+    result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -5968,7 +6517,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDouble__SWIG_0(PyObject *SWIGUNUSED
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetFieldAsDouble" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
+  {
+    result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
@@ -6000,7 +6557,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDouble__SWIG_1(PyObject *SWIGUNUSED
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldAsDouble" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
+  {
+    result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -6078,7 +6643,15 @@ SWIGINTERN PyObject *_wrap_Feature_IsFieldSet__SWIG_0(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_IsFieldSet" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+  {
+    result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -6110,7 +6683,15 @@ SWIGINTERN PyObject *_wrap_Feature_IsFieldSet__SWIG_1(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_IsFieldSet" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+  {
+    result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -6189,7 +6770,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldIndex(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldIndex" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
+  {
+    result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -6213,7 +6802,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetFID" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  result = (int)OGRFeatureShadow_GetFID(arg1);
+  {
+    result = (int)OGRFeatureShadow_GetFID(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -6244,7 +6841,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_SetFID" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
+  {
+    result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -6281,7 +6886,15 @@ SWIGINTERN PyObject *_wrap_Feature_DumpReadable(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_DumpReadable" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  OGRFeatureShadow_DumpReadable(arg1);
+  {
+    OGRFeatureShadow_DumpReadable(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -6311,7 +6924,15 @@ SWIGINTERN PyObject *_wrap_Feature_UnsetField__SWIG_0(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_UnsetField" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
+  {
+    OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -6342,7 +6963,15 @@ SWIGINTERN PyObject *_wrap_Feature_UnsetField__SWIG_1(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_UnsetField" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
+  {
+    OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -6432,7 +7061,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
     
     arg3 = PyString_AsString(str3); 
   }
-  OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
+  {
+    OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   {
     /* %typemap(freearg) (tostring argin) */
@@ -6484,7 +7121,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_1(PyObject *SWIGUNUSEDPARM(sel
     
     arg3 = PyString_AsString(str3); 
   }
-  OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+  {
+    OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
@@ -6533,7 +7178,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_2(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Feature_SetField" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  OGRFeatureShadow_SetField__SWIG_2(arg1,arg2,arg3);
+  {
+    OGRFeatureShadow_SetField__SWIG_2(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -6573,7 +7226,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_3(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Feature_SetField" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  OGRFeatureShadow_SetField__SWIG_3(arg1,(char const *)arg2,arg3);
+  {
+    OGRFeatureShadow_SetField__SWIG_3(arg1,(char const *)arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -6614,7 +7275,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_4(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Feature_SetField" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
-  OGRFeatureShadow_SetField__SWIG_4(arg1,arg2,arg3);
+  {
+    OGRFeatureShadow_SetField__SWIG_4(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -6654,7 +7323,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_5(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Feature_SetField" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
-  OGRFeatureShadow_SetField__SWIG_5(arg1,(char const *)arg2,arg3);
+  {
+    OGRFeatureShadow_SetField__SWIG_5(arg1,(char const *)arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -6749,7 +7426,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_6(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Feature_SetField" "', argument " "9"" of type '" "int""'");
   } 
   arg9 = static_cast< int >(val9);
-  OGRFeatureShadow_SetField__SWIG_6(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+  {
+    OGRFeatureShadow_SetField__SWIG_6(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -6843,7 +7528,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_7(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Feature_SetField" "', argument " "9"" of type '" "int""'");
   } 
   arg9 = static_cast< int >(val9);
-  OGRFeatureShadow_SetField__SWIG_7(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+  {
+    OGRFeatureShadow_SetField__SWIG_7(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -7139,7 +7832,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetFrom(PyObject *SWIGUNUSEDPARM(self), PyObj
     } 
     arg3 = static_cast< int >(val3);
   }
-  result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
+  {
+    result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -7177,7 +7878,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetStyleString(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetStyleString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
-  result = (char *)OGRFeatureShadow_GetStyleString(arg1);
+  {
+    result = (char *)OGRFeatureShadow_GetStyleString(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -7208,7 +7917,15 @@ SWIGINTERN PyObject *_wrap_Feature_SetStyleString(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_SetStyleString" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
+  {
+    OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -7241,7 +7958,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldType__SWIG_0(PyObject *SWIGUNUSEDPARM
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetFieldType" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
+  {
+    result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7273,7 +7998,15 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldType__SWIG_1(PyObject *SWIGUNUSEDPARM
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldType" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2);
+  {
+    result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -7348,8 +8081,16 @@ SWIGINTERN PyObject *_wrap_delete_FeatureDefn(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_FeatureDefn" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureDefnShadow * >(argp1);
-  delete_OGRFeatureDefnShadow(arg1);
-  
+  {
+    delete_OGRFeatureDefnShadow(arg1);
+    
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7377,7 +8118,15 @@ SWIGINTERN PyObject *_wrap_new_FeatureDefn(PyObject *SWIGUNUSEDPARM(self), PyObj
     }
     arg1 = reinterpret_cast< char * >(buf1);
   }
-  result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+  {
+    result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureDefnShadow, SWIG_POINTER_NEW |  0 );
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
@@ -7401,7 +8150,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetName(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FeatureDefn_GetName" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureDefnShadow * >(argp1);
-  result = (char *)OGRFeatureDefnShadow_GetName(arg1);
+  {
+    result = (char *)OGRFeatureDefnShadow_GetName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -7423,7 +8180,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetFieldCount(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FeatureDefn_GetFieldCount" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureDefnShadow * >(argp1);
-  result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
+  {
+    result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7454,7 +8219,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetFieldDefn(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FeatureDefn_GetFieldDefn" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
+  {
+    result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -7486,7 +8259,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetFieldIndex(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FeatureDefn_GetFieldIndex" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
+  {
+    result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -7518,7 +8299,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_AddFieldDefn(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FeatureDefn_AddFieldDefn" "', argument " "2"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRFieldDefnShadow * >(argp2);
-  OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
+  {
+    OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7540,7 +8329,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetGeomType(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FeatureDefn_GetGeomType" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureDefnShadow * >(argp1);
-  result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
+  {
+    result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7570,7 +8367,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_SetGeomType(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FeatureDefn_SetGeomType" "', argument " "2"" of type '" "OGRwkbGeometryType""'");
   } 
   arg2 = static_cast< OGRwkbGeometryType >(val2);
-  OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
+  {
+    OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7592,7 +8397,15 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetReferenceCount(PyObject *SWIGUNUSEDPAR
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FeatureDefn_GetReferenceCount" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFeatureDefnShadow * >(argp1);
-  result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
+  {
+    result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7620,8 +8433,16 @@ SWIGINTERN PyObject *_wrap_delete_FieldDefn(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_FieldDefn" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  delete_OGRFieldDefnShadow(arg1);
-  
+  {
+    delete_OGRFieldDefnShadow(arg1);
+    
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7660,7 +8481,15 @@ SWIGINTERN PyObject *_wrap_new_FieldDefn(PyObject *SWIGUNUSEDPARM(self), PyObjec
     } 
     arg2 = static_cast< OGRFieldType >(val2);
   }
-  result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
+  {
+    result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, SWIG_POINTER_NEW |  0 );
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
@@ -7684,7 +8513,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetName(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  result = (char *)OGRFieldDefnShadow_GetName(arg1);
+  {
+    result = (char *)OGRFieldDefnShadow_GetName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -7706,7 +8543,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetNameRef(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetNameRef" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
+  {
+    result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -7737,7 +8582,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetName(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FieldDefn_SetName" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
+  {
+    OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
@@ -7761,7 +8614,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetType(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
+  {
+    result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7791,7 +8652,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetType(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FieldDefn_SetType" "', argument " "2"" of type '" "OGRFieldType""'");
   } 
   arg2 = static_cast< OGRFieldType >(val2);
-  OGRFieldDefnShadow_SetType(arg1,arg2);
+  {
+    OGRFieldDefnShadow_SetType(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7813,7 +8682,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetJustify(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetJustify" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
+  {
+    result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7843,7 +8720,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetJustify(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FieldDefn_SetJustify" "', argument " "2"" of type '" "OGRJustification""'");
   } 
   arg2 = static_cast< OGRJustification >(val2);
-  OGRFieldDefnShadow_SetJustify(arg1,arg2);
+  {
+    OGRFieldDefnShadow_SetJustify(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7865,7 +8750,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetWidth(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetWidth" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  result = (int)OGRFieldDefnShadow_GetWidth(arg1);
+  {
+    result = (int)OGRFieldDefnShadow_GetWidth(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7895,7 +8788,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetWidth(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FieldDefn_SetWidth" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  OGRFieldDefnShadow_SetWidth(arg1,arg2);
+  {
+    OGRFieldDefnShadow_SetWidth(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7917,7 +8818,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetPrecision(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetPrecision" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
-  result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
+  {
+    result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -7947,7 +8856,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetPrecision(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FieldDefn_SetPrecision" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  OGRFieldDefnShadow_SetPrecision(arg1,arg2);
+  {
+    OGRFieldDefnShadow_SetPrecision(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -7978,7 +8895,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetFieldTypeName(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FieldDefn_GetFieldTypeName" "', argument " "2"" of type '" "OGRFieldType""'");
   } 
   arg2 = static_cast< OGRFieldType >(val2);
-  result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
+  {
+    result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -8019,7 +8944,15 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
     }
     arg3 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp3);
   }
-  result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
+  {
+    result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8054,7 +8987,15 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkt(PyObject *SWIGUNUSEDPARM(self),
     }
     arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
   }
-  result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
+  {
+    result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8077,7 +9018,15 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromGML(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CreateGeometryFromGML" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = reinterpret_cast< char * >(buf1);
-  result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
+  {
+    result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
@@ -8100,8 +9049,16 @@ SWIGINTERN PyObject *_wrap_delete_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObj
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_Geometry" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  delete_OGRGeometryShadow(arg1);
-  
+  {
+    delete_OGRGeometryShadow(arg1);
+    
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -8175,7 +9132,15 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
     }
     arg5 = reinterpret_cast< char * >(buf5);
   }
-  result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
+  {
+    result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_NEW |  0 );
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
@@ -8209,7 +9174,15 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ExportToWkt" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OGRErr)OGRGeometryShadow_ExportToWkt(arg1,arg2);
+  {
+    result = (OGRErr)OGRGeometryShadow_ExportToWkt(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -8292,7 +9265,15 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
     } 
     arg4 = static_cast< OGRwkbByteOrder >(val4);
   }
-  result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
+  {
+    result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -8347,7 +9328,15 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToGML(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ExportToGML" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (char *)OGRGeometryShadow_ExportToGML(arg1);
+  {
+    result = (char *)OGRGeometryShadow_ExportToGML(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -8400,7 +9389,15 @@ SWIGINTERN PyObject *_wrap_Geometry_AddPoint(PyObject *SWIGUNUSEDPARM(self), PyO
     } 
     arg4 = static_cast< double >(val4);
   }
-  OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
+  {
+    OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -8429,7 +9426,15 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *SWIGUNUSEDPARM
   if (!SWIG_IsOK(res2)) {
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AddGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
   }
-  result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
+  {
+    result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -8476,7 +9481,15 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometry(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AddGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
+  {
+    result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -8514,7 +9527,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Clone(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Clone" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8536,7 +9557,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryType(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetGeometryType" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
+  {
+    result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -8558,7 +9587,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryName(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetGeometryName" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
+  {
+    result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
@@ -8580,7 +9617,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetArea(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetArea" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (double)OGRGeometryShadow_GetArea(arg1);
+  {
+    result = (double)OGRGeometryShadow_GetArea(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
@@ -8602,7 +9647,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetPointCount(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetPointCount" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (int)OGRGeometryShadow_GetPointCount(arg1);
+  {
+    result = (int)OGRGeometryShadow_GetPointCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -8638,7 +9691,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetX(PyObject *SWIGUNUSEDPARM(self), PyObjec
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (double)OGRGeometryShadow_GetX(arg1,arg2);
+  {
+    result = (double)OGRGeometryShadow_GetX(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
@@ -8674,7 +9735,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetY(PyObject *SWIGUNUSEDPARM(self), PyObjec
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (double)OGRGeometryShadow_GetY(arg1,arg2);
+  {
+    result = (double)OGRGeometryShadow_GetY(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
@@ -8710,7 +9779,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetZ(PyObject *SWIGUNUSEDPARM(self), PyObjec
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
+  {
+    result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
@@ -8732,7 +9809,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryCount(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetGeometryCount" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
+  {
+    result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -8794,7 +9879,15 @@ SWIGINTERN PyObject *_wrap_Geometry_SetPoint(PyObject *SWIGUNUSEDPARM(self), PyO
     } 
     arg5 = static_cast< double >(val5);
   }
-  OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
+  {
+    OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -8825,7 +9918,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryRef(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_GetGeometryRef" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -8847,7 +9948,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetBoundary(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetBoundary" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8869,7 +9978,15 @@ SWIGINTERN PyObject *_wrap_Geometry_ConvexHull(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ConvexHull" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8914,7 +10031,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Buffer(PyObject *SWIGUNUSEDPARM(self), PyObj
     } 
     arg3 = static_cast< int >(val3);
   }
-  result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8945,7 +10070,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersection(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Intersection" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -8976,7 +10109,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Union(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Union" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -9007,7 +10148,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Difference(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Difference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -9038,7 +10187,15 @@ SWIGINTERN PyObject *_wrap_Geometry_SymmetricDifference(PyObject *SWIGUNUSEDPARM
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_SymmetricDifference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -9069,7 +10226,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Distance(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Distance" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (double)OGRGeometryShadow_Distance(arg1,arg2);
+  {
+    result = (double)OGRGeometryShadow_Distance(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_double(static_cast< double >(result));
   return resultobj;
 fail:
@@ -9090,8 +10255,46 @@ SWIGINTERN PyObject *_wrap_Geometry_Empty(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Empty" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  OGRGeometryShadow_Empty(arg1);
+  {
+    OGRGeometryShadow_Empty(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_IsEmpty(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  bool result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_IsEmpty",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_IsEmpty" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (bool)OGRGeometryShadow_IsEmpty(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
   return NULL;
@@ -9121,7 +10324,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersect(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Intersect" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9152,7 +10363,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Equal(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Equal" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9183,7 +10402,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Disjoint(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Disjoint" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9214,7 +10441,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Touches(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Touches" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9245,7 +10480,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Crosses(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Crosses" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9276,7 +10519,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Within(PyObject *SWIGUNUSEDPARM(self), PyObj
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Within" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Within(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Within(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9307,7 +10558,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Contains(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Contains" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9338,7 +10597,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Overlaps(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Overlaps" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
+  {
+    result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -9369,7 +10636,15 @@ SWIGINTERN PyObject *_wrap_Geometry_TransformTo(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_TransformTo" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
-  result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
+  {
+    result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -9416,7 +10691,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Transform" "', argument " "2"" of type '" "OSRCoordinateTransformationShadow *""'"); 
   }
   arg2 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp2);
-  result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
+  {
+    result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -9454,7 +10737,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetSpatialReference(PyObject *SWIGUNUSEDPARM
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetSpatialReference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
+  {
+    result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -9484,7 +10775,15 @@ SWIGINTERN PyObject *_wrap_Geometry_AssignSpatialReference(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AssignSpatialReference" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp2);
-  OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
+  {
+    OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -9505,7 +10804,15 @@ SWIGINTERN PyObject *_wrap_Geometry_CloseRings(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_CloseRings" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  OGRGeometryShadow_CloseRings(arg1);
+  {
+    OGRGeometryShadow_CloseRings(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -9526,7 +10833,15 @@ SWIGINTERN PyObject *_wrap_Geometry_FlattenTo2D(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_FlattenTo2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  OGRGeometryShadow_FlattenTo2D(arg1);
+  {
+    OGRGeometryShadow_FlattenTo2D(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -9553,7 +10868,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetEnvelope(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetEnvelope" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  OGRGeometryShadow_GetEnvelope(arg1,arg2);
+  {
+    OGRGeometryShadow_GetEnvelope(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   {
     /* %typemap(argout) (double argout[ANY]) */
@@ -9580,7 +10903,15 @@ SWIGINTERN PyObject *_wrap_Geometry_Centroid(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Centroid" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
+  {
+    result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
@@ -9602,7 +10933,15 @@ SWIGINTERN PyObject *_wrap_Geometry_WkbSize(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_WkbSize" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (int)OGRGeometryShadow_WkbSize(arg1);
+  {
+    result = (int)OGRGeometryShadow_WkbSize(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -9624,7 +10963,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetCoordinateDimension(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetCoordinateDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
+  {
+    result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -9654,7 +11001,15 @@ SWIGINTERN PyObject *_wrap_Geometry_SetCoordinateDimension(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SetCoordinateDimension" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  OGRGeometryShadow_SetCoordinateDimension(arg1,arg2);
+  {
+    OGRGeometryShadow_SetCoordinateDimension(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -9676,7 +11031,15 @@ SWIGINTERN PyObject *_wrap_Geometry_GetDimension(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
-  result = (int)OGRGeometryShadow_GetDimension(arg1);
+  {
+    result = (int)OGRGeometryShadow_GetDimension(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -9696,7 +11059,15 @@ SWIGINTERN PyObject *_wrap_GetDriverCount(PyObject *SWIGUNUSEDPARM(self), PyObje
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)":GetDriverCount")) SWIG_fail;
-  result = (int)OGRGetDriverCount();
+  {
+    result = (int)OGRGetDriverCount();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -9709,7 +11080,15 @@ SWIGINTERN PyObject *_wrap_GetOpenDSCount(PyObject *SWIGUNUSEDPARM(self), PyObje
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)":GetOpenDSCount")) SWIG_fail;
-  result = (int)OGRGetOpenDSCount();
+  {
+    result = (int)OGRGetOpenDSCount();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
@@ -9731,7 +11110,15 @@ SWIGINTERN PyObject *_wrap_SetGenerate_DB2_V72_BYTE_ORDER(PyObject *SWIGUNUSEDPA
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SetGenerate_DB2_V72_BYTE_ORDER" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast< int >(val1);
-  result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
+  {
+    result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   {
     /* %typemap(out) OGRErr */
     if ( result != 0) {
@@ -9759,7 +11146,15 @@ SWIGINTERN PyObject *_wrap_RegisterAll(PyObject *SWIGUNUSEDPARM(self), PyObject 
   PyObject *resultobj = 0;
   
   if (!PyArg_ParseTuple(args,(char *)":RegisterAll")) SWIG_fail;
-  OGRRegisterAll();
+  {
+    OGRRegisterAll();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -9781,7 +11176,15 @@ SWIGINTERN PyObject *_wrap_GetOpenDS(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetOpenDS" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast< int >(val1);
-  result = (OGRDataSourceShadow *)GetOpenDS(arg1);
+  {
+    result = (OGRDataSourceShadow *)GetOpenDS(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -9818,7 +11221,15 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args, 
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
+  {
+    result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
@@ -9857,7 +11268,15 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
     } 
     arg2 = static_cast< int >(val2);
   }
-  result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
+  {
+    result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_POINTER_OWN |  0 );
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
@@ -9882,7 +11301,15 @@ SWIGINTERN PyObject *_wrap_GetDriverByName(PyObject *SWIGUNUSEDPARM(self), PyObj
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetDriverByName" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = reinterpret_cast< char * >(buf1);
-  result = (OGRDriverShadow *)GetDriverByName((char const *)arg1);
+  {
+    result = (OGRDriverShadow *)GetDriverByName((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return resultobj;
@@ -9906,7 +11333,15 @@ SWIGINTERN PyObject *_wrap_GetDriver(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetDriver" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast< int >(val1);
-  result = (OGRDriverShadow *)GetDriver(arg1);
+  {
+    result = (OGRDriverShadow *)GetDriver(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   return resultobj;
 fail:
@@ -9915,6 +11350,8 @@ fail:
 
 
 static PyMethodDef SwigMethods[] = {
+	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, NULL},
+	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, NULL},
 	 { (char *)"Driver_name_get", _wrap_Driver_name_get, METH_VARARGS, NULL},
 	 { (char *)"Driver_CreateDataSource", (PyCFunction) _wrap_Driver_CreateDataSource, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Driver_CopyDataSource", (PyCFunction) _wrap_Driver_CopyDataSource, METH_VARARGS | METH_KEYWORDS, NULL},
@@ -9962,7 +11399,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Layer_CommitTransaction", _wrap_Layer_CommitTransaction, METH_VARARGS, NULL},
 	 { (char *)"Layer_RollbackTransaction", _wrap_Layer_RollbackTransaction, METH_VARARGS, NULL},
 	 { (char *)"Layer_GetSpatialRef", _wrap_Layer_GetSpatialRef, METH_VARARGS, NULL},
-	 { (char *)"Layer_GetFeatureRead", _wrap_Layer_GetFeatureRead, METH_VARARGS, NULL},
+	 { (char *)"Layer_GetFeaturesRead", _wrap_Layer_GetFeaturesRead, METH_VARARGS, NULL},
 	 { (char *)"Layer_swigregister", Layer_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_Feature", _wrap_delete_Feature, METH_VARARGS, NULL},
 	 { (char *)"new_Feature", (PyCFunction) _wrap_new_Feature, METH_VARARGS | METH_KEYWORDS, NULL},
@@ -10046,6 +11483,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_SymmetricDifference", _wrap_Geometry_SymmetricDifference, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Distance", _wrap_Geometry_Distance, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Empty", _wrap_Geometry_Empty, METH_VARARGS, NULL},
+	 { (char *)"Geometry_IsEmpty", _wrap_Geometry_IsEmpty, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Intersect", _wrap_Geometry_Intersect, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Equal", _wrap_Geometry_Equal, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Disjoint", _wrap_Geometry_Disjoint, METH_VARARGS, NULL},
