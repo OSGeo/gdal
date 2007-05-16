@@ -342,18 +342,19 @@ void S57Reader::Rewind()
 /*      indexes.                                                        */
 /************************************************************************/
 
-void S57Reader::Ingest()
+int S57Reader::Ingest()
 
 {
     DDFRecord   *poRecord;
     
     if( poModule == NULL || bFileIngested )
-        return;
+        return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Read all the records in the module, and place them in           */
 /*      appropriate indexes.                                            */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
         DDFField        *poKeyField = poRecord->GetField(1);
@@ -431,13 +432,18 @@ void S57Reader::Ingest()
         }
     }
 
+    if( CPLGetLastErrorType() == CE_Failure )
+        return FALSE;
+
     bFileIngested = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      If update support is enabled, read and apply them.              */
 /* -------------------------------------------------------------------- */
     if( nOptionFlags & S57M_UPDATES )
-        FindAndApplyUpdates();
+        return FindAndApplyUpdates();
+    else
+        return TRUE;
 }
 
 /************************************************************************/
@@ -494,8 +500,8 @@ int S57Reader::GetNextFEIndex( int nRCNM )
 OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 
 {
-    if( !bFileIngested )
-        Ingest();
+    if( !bFileIngested && !Ingest() )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Special case for "in progress" multipoints being split up.      */
@@ -2169,8 +2175,8 @@ int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
 {
     int         bSuccess = TRUE;
 
-    if( !bFileIngested )
-        Ingest();
+    if( !bFileIngested && !Ingest() )
+        return FALSE;
 
     for( int iFEIndex = 0; iFEIndex < oFE_Index.GetCount(); iFEIndex++ )
     {
@@ -2516,11 +2522,13 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 /* -------------------------------------------------------------------- */
 /*      Ensure base file is loaded.                                     */
 /* -------------------------------------------------------------------- */
-    Ingest();
+    if( !bFileIngested && !Ingest() )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Read records, and apply as updates.                             */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     while( (poRecord = poUpdateModule->ReadRecord()) != NULL )
     {
         DDFField        *poKeyField = poRecord->GetField(1);
@@ -2635,7 +2643,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
         }
     }
 
-    return TRUE;
+    return CPLGetLastErrorType() != CE_Failure;
 }
 
 /************************************************************************/
@@ -2763,7 +2771,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
     if( !bForce && !bFileIngested )
         return OGRERR_FAILURE;
 
-    Ingest();
+    if( !Ingest() )
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      We will scan all the low level vector elements for extents      */

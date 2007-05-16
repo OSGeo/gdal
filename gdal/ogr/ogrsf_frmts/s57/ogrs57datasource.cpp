@@ -228,6 +228,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         return FALSE;
     }
 
+    int bSuccess = TRUE;
+
     nModules = 1;
     papoModules = (S57Reader **) CPLMalloc(sizeof(void*));
     papoModules[0] = poModule;
@@ -300,14 +302,16 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         int             iClass, bGeneric = FALSE;
 
         for( iModule = 0; iModule < nModules; iModule++ )
-        {
             papoModules[iModule]->SetClassBased( OGRS57Driver::GetS57Registrar() );
-        }
         
         panClassCount = (int *) CPLCalloc(sizeof(int),MAX_CLASSES);
 
         for( iModule = 0; iModule < nModules; iModule++ )
-            papoModules[iModule]->CollectClassList(panClassCount,MAX_CLASSES);
+        {
+            bSuccess &= 
+                papoModules[iModule]->CollectClassList(panClassCount,
+                                                       MAX_CLASSES);
+        }
 
         for( iClass = 0; iClass < MAX_CLASSES; iClass++ )
         {
@@ -353,7 +357,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         }
     }
     
-    return TRUE;
+    return bSuccess;
 }
 
 /************************************************************************/
