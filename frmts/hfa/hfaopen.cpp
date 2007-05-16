@@ -2320,23 +2320,39 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
         columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
         if( columnDataPtr == 0 )
             continue;
-
+            
 /* -------------------------------------------------------------------- */
-/*      read up to 500 bytes from the indicated location.               */
+/*      read up to nMaxNumChars bytes from the indicated location.      */
+/*      allocate required space temporarily                             */
+/*      nMaxNumChars should have been set by GDAL orginally so we can   */
+/*      trust it.                                                       */
 /* -------------------------------------------------------------------- */
-        char szMDValue[501];
-        int  nMDBytes = sizeof(szMDValue)-1;
+        int nMaxNumChars = poColumn->GetIntField( "maxNumChars" );
 
-        if( VSIFSeekL( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
-            continue;
+        if( nMaxNumChars == 0 )
+        {
+            papszMD = CSLSetNameValue( papszMD, poColumn->GetName(), "" );
+        }
+        else
+        {
+            char *pszMDValue = (char*) CPLMalloc(nMaxNumChars);
 
-        nMDBytes = VSIFReadL( szMDValue, 1, nMDBytes, hHFA->fp );
-        if( nMDBytes == 0 )
-            continue;
+            if( VSIFSeekL( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
+                continue;
 
-        szMDValue[nMDBytes] = '\0';
+            int nMDBytes = VSIFReadL( pszMDValue, 1, nMaxNumChars, hHFA->fp );
+            if( nMDBytes == 0 )
+            {
+                CPLFree( pszMDValue );
+                continue;
+            }
 
-        papszMD = CSLSetNameValue( papszMD, poColumn->GetName(), szMDValue );
+            pszMDValue[nMaxNumChars-1] = '\0';
+
+            papszMD = CSLSetNameValue( papszMD, poColumn->GetName(), 
+                                       pszMDValue );
+            CPLFree( pszMDValue );
+        }
     }
 
     return papszMD;
@@ -2369,23 +2385,28 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
 /* -------------------------------------------------------------------- */
 /*      Create the Descriptor table.                                    */
+/*      Check we have no table with this name already                   */
 /* -------------------------------------------------------------------- */
-    HFAEntry	*poEdsc_Table;
+    HFAEntry	*poEdsc_Table = poNode->GetNamedChild( "GDAL_MetaData" );
 
-    poEdsc_Table = new HFAEntry( hHFA, "GDAL_MetaData", "Edsc_Table",
+    if( poEdsc_Table == NULL || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
+        poEdsc_Table = new HFAEntry( hHFA, "GDAL_MetaData", "Edsc_Table",
                                  poNode );
-
+        
     poEdsc_Table->SetIntField( "numrows", 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Create the Binning function node.  I am not sure that we        */
 /*      really need this though.                                        */
+/*      Check it doesn't exist already                                  */
 /* -------------------------------------------------------------------- */
-    HFAEntry       *poEdsc_BinFunction;
+    HFAEntry       *poEdsc_BinFunction = 
+        poEdsc_Table->GetNamedChild( "#Bin_Function#" );
 
-    poEdsc_BinFunction =
-        new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
-                      poEdsc_Table );
+    if( poEdsc_BinFunction == NULL 
+        || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
+        poEdsc_BinFunction = new HFAEntry( hHFA, "#Bin_Function#", 
+                                           "Edsc_BinFunction", poEdsc_Table );
 
     // Because of the BaseData we have to hardcode the size. 
     poEdsc_BinFunction->MakeData( 30 );
@@ -2410,9 +2431,15 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
 /* -------------------------------------------------------------------- */
 /*      Create the Edsc_Column.                                         */
+/*      Check it doesn't exist already                                  */
 /* -------------------------------------------------------------------- */
-        poEdsc_Column = new HFAEntry( hHFA, pszKey, "Edsc_Column",
-                                      poEdsc_Table );
+        poEdsc_Column = poEdsc_Table->GetNamedChild(pszKey);
+
+        if( poEdsc_Column == NULL 
+            || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
+            poEdsc_Column = new HFAEntry( hHFA, pszKey, "Edsc_Column",
+                                          poEdsc_Table );
+
         poEdsc_Column->SetIntField( "numRows", 1 );
         poEdsc_Column->SetStringField( "dataType", "string" );
         poEdsc_Column->SetIntField( "maxNumChars", strlen(pszValue)+1 );
