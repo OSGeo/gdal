@@ -298,7 +298,7 @@ class CPL_DLL S57Reader
     DDFModule           *GetModule() { return poModule; }
     const char          *GetDSNM() { return pszDSNM; }
 
-    void                Ingest();
+    int                 Ingest();
     int                 ApplyUpdates( DDFModule * );
     int                 FindAndApplyUpdates( const char *pszPath=NULL );
 
