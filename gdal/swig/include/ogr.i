@@ -579,9 +579,6 @@ public:
 
   %feature("kwargs") OGRFeatureShadow;
   OGRFeatureShadow( OGRFeatureDefnShadow *feature_def = 0 ) {
-    if (feature_def == 0) {
-      CPLError(CE_Failure, 1, "Undefined feature definition in new OGRFeature");
-    } else
       return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 
@@ -1399,7 +1396,14 @@ void OGRRegisterAll();
 %feature( "kwargs" ) Open;
 %inline %{
   OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 %}
@@ -1408,7 +1412,14 @@ void OGRRegisterAll();
 %feature( "kwargs" ) OpenShared;
 %inline %{
   OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 %}
