@@ -75,6 +75,7 @@ Note: all the following are build options, not required.
 * ECW SDK for ECW/JP2ECW GDAL driver (close to free now I think). 
 * Kakadu for JP2KAK GDAL driver. 
 * MrSID SDK for MrSID/JP2MrSID driver. 
+* DWGdirect library for DWG writing.
 
 == Code Reviewed ==
 
@@ -280,7 +281,7 @@ Note: all the following are build options, not required.
 
 === gdal/ogr ===
 
-* SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  '''TO_RESOLVE'''
+* SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  (removed)
 * ogr_capi_test.c: no copyright message, written by Daniel Morissette. Added copyright.
 * oledbgis.h: No copyright message, mostly OGC spec constants. 
 * swq.h, swq.c: Has alternate form of MIT/X license (should review). '''TO_RESOLVE'''
