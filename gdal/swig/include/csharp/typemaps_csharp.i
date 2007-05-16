@@ -74,6 +74,11 @@ OGRErrMessages( int rc ) {
 
 }
 
+%typemap(out) IF_ERROR_RETURN_NONE
+{
+  /* %typemap(out) IF_ERROR_RETURN_NONE */
+}
+
 /*
  * Typemap char ** -> dict
  */
