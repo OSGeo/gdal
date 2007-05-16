@@ -1447,7 +1447,14 @@ void OGRRegisterAll();
 %feature( "kwargs" ) Open;
 %inline %{
   OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 %}
@@ -1456,7 +1463,14 @@ void OGRRegisterAll();
 %feature( "kwargs" ) OpenShared;
 %inline %{
   OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 %}
