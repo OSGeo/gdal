@@ -521,7 +521,14 @@ GDALDriverShadow* GetDriver( int i ) {
 %newobject Open;
 %inline %{
 GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
+  {
+      if ( GDALDereferenceDataset( ds ) <= 0 )
+          GDALClose(ds);
+      ds = NULL;
+  }
   return (GDALDatasetShadow*) ds;
 }
 %}
@@ -529,7 +536,14 @@ GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
 %newobject OpenShared;
 %inline %{
 GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpenShared( name, eAccess );
+  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
+  {
+      if ( GDALDereferenceDataset( ds ) <= 0 )
+          GDALClose(ds);
+      ds = NULL;
+  }
   return (GDALDatasetShadow*) ds;
 }
 %}
