@@ -3558,6 +3558,14 @@ TIFF *GTiffCreate( const char * pszFilename,
             nCompression = COMPRESSION_PACKBITS;
         else if( EQUAL( pszValue, "DEFLATE" ) || EQUAL( pszValue, "ZIP" ))
             nCompression = COMPRESSION_ADOBE_DEFLATE;
+        else if( EQUAL( pszValue, "FAX3" )
+                 || EQUAL( pszValue, "CCITTFAX3" ))
+            nCompression = COMPRESSION_CCITTFAX3;
+        else if( EQUAL( pszValue, "FAX4" )
+                 || EQUAL( pszValue, "CCITTFAX4" ))
+            nCompression = COMPRESSION_CCITTFAX4;
+        else if( EQUAL( pszValue, "CCITTRLE" ) )
+            nCompression = COMPRESSION_CCITTRLE;
         else
             CPLError( CE_Warning, CPLE_IllegalArg, 
                       "COMPRESS=%s value not recognised, ignoring.",
@@ -4931,6 +4939,15 @@ void GDALRegister_GTiff()
             else if( c->scheme == COMPRESSION_ADOBE_DEFLATE )
                 strcat( szOptionalCompressItems,
                         "       <Value>DEFLATE</Value>" );
+            else if( c->scheme == COMPRESSION_CCITTRLE )
+                strcat( szOptionalCompressItems,
+                        "       <Value>CCITTRLE</Value>" );
+            else if( c->scheme == COMPRESSION_CCITTFAX3 )
+                strcat( szOptionalCompressItems,
+                        "       <Value>CCITTFAX3</Value>" );
+            else if( c->scheme == COMPRESSION_CCITTFAX4 )
+                strcat( szOptionalCompressItems,
+                        "       <Value>CCITTFAX4</Value>" );
         }
         _TIFFfree( codecs );
 #endif        
