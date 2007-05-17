@@ -463,6 +463,11 @@ void CPL_DLL CPL_STDCALL
                    void * pDstData, GDALDataType eDstType, int nDstPixelOffset,
                    int nWordCount );
 
+void CPL_DLL 
+GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep, 
+              GByte *pabyDstData, int nDstOffset, int nDstStep,
+              int nBitCount, int nStepCount );
+
 int CPL_DLL CPL_STDCALL GDALReadWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
