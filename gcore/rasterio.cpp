@@ -1149,6 +1149,69 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 }
 
 /************************************************************************/
+/*                            GDALCopyBits()                            */
+/************************************************************************/
+
+/**
+ * Bitwise word copying.
+ *
+ * A function for moving sets of partial bytes around.  Loosely
+ * speaking this is a bitswise analog to GDALCopyWords().
+ *
+ * It copies nStepCount "words" where each word is nBitCount bits long. 
+ * The nSrcStep and nDstStep are the number of bits from the start of one
+ * word to the next (same as nBitCount if they are packed).  The nSrcOffset
+ * and nDstOffset are the offset into the source and destination buffers
+ * to start at, also measured in bits. 
+ *
+ * All bit offsets are assumed to start from the high order bit in a byte
+ * (ie. most significant bit first).  Currently this function is not very
+ * optimized, but it may be improved for some common cases in the future 
+ * as needed. 
+ *
+ * @param pabySrcData the source data buffer.
+ * @param nSrcOffset the offset (in bits) in pabySrcData to the start of the 
+ * first word to copy.
+ * @param nSrcStep the offset in bits from the start one source word to the 
+ * start of the next. 
+ * @param pabyDstData the destination data buffer.
+ * @param nDstOffset the offset (in bits) in pabyDstData to the start of the 
+ * first word to copy over.
+ * @param nDstStep the offset in bits from the start one word to the 
+ * start of the next. 
+ * @param nBitCount the number of bits in a word to be copied.
+ * @param nStepCount the number of words to copy.
+ */
+
+void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep, 
+                   GByte *pabyDstData, int nDstOffset, int nDstStep,
+                   int nBitCount, int nStepCount )
+
+{
+    int iStep;
+    int iBit;
+
+    for( iStep = 0; iStep < nStepCount; iStep++ )
+    {
+        for( iBit = 0; iBit < nBitCount; iBit++ )
+        {
+            if( pabySrcData[nSrcOffset>>3] 
+                & (0x80 >>(nSrcOffset & 7)) )
+                pabyDstData[nDstOffset>>3] |= (0x80 >> (nDstOffset & 7));
+            else
+                pabyDstData[nDstOffset>>3] &= ~(0x80 >> (nDstOffset & 7));
+
+
+            nSrcOffset++;
+            nDstOffset++;
+        } 
+
+        nSrcOffset += (nSrcStep - nBitCount);
+        nDstOffset += (nDstStep - nBitCount);
+    }
+}
+
+/************************************************************************/
 /*                          OverviewRasterIO()                          */
 /*                                                                      */
 /*      Special work function to utilize available overviews to         */
