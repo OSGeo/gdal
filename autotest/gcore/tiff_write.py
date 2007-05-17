@@ -59,7 +59,7 @@ def tiff_write_2():
 
     src_ds = gdal.Open( 'data/cfloat64.tif' )
 
-    new_ds = gdaltest.tiff_drv.CreateCopy( 'test_2.tif', src_ds )
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_2.tif', src_ds )
 
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 5028:
@@ -71,7 +71,7 @@ def tiff_write_2():
 
     # hopefully it's closed now!
 
-    new_ds = gdal.Open( 'test_2.tif' )
+    new_ds = gdal.Open( 'tmp/test_2.tif' )
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 5028:
         gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
@@ -84,7 +84,7 @@ def tiff_write_2():
     bnd = None
     new_ds = None
 
-    gdaltest.tiff_drv.Delete( 'test_2.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_2.tif' )
 
     return 'success'
 
@@ -97,7 +97,7 @@ def tiff_write_3():
 
     options = [ 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32' ]
     
-    new_ds = gdaltest.tiff_drv.CreateCopy( 'test_3.tif', src_ds,
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_3.tif', src_ds,
                                            options = options )
 
     bnd = new_ds.GetRasterBand(1)
@@ -108,7 +108,7 @@ def tiff_write_3():
     bnd = None
     new_ds = None
 
-    gdaltest.tiff_drv.Delete( 'test_3.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_3.tif' )
 
     return 'success'
 
@@ -126,7 +126,7 @@ def tiff_write_4():
 
     options = [ 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32' ]
     
-    new_ds = gdaltest.tiff_drv.Create( 'test_4.tif', 40, 50, 3,
+    new_ds = gdaltest.tiff_drv.Create( 'tmp/test_4.tif', 40, 50, 3,
                                        gdal.GDT_Byte, options )
 
     data_red = gdalnumeric.zeros( (50, 40) )
@@ -171,7 +171,7 @@ def tiff_write_4():
     
     new_ds = None
 
-    new_ds = gdal.Open( 'test_4.tif' )
+    new_ds = gdal.Open( 'tmp/test_4.tif' )
 
     if new_ds.GetRasterBand(1).Checksum() != 21577 \
        or new_ds.GetRasterBand(2).Checksum() != 20950 \
@@ -195,7 +195,7 @@ def tiff_write_4():
                               
     new_ds = None
     
-    gdaltest.tiff_drv.Delete( 'test_4.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_4.tif' )
 
     return 'success'
 
@@ -315,6 +315,34 @@ def tiff_write_8():
 
     return 'success'
 
+###############################################################################
+# Create a simple file by copying from an existing one.
+
+def tiff_write_9():
+
+    src_ds = gdal.Open( 'data/byte.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_9.tif', src_ds,
+                                           options = [ 'NBITS=5' ] )
+
+    new_ds = None
+    src_ds = None
+
+    # hopefully it's closed now!
+
+    new_ds = gdal.Open( 'tmp/test_9.tif' )
+    bnd = new_ds.GetRasterBand(1)
+    if bnd.Checksum() != 4084:
+        gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
+        return 'false'
+
+    bnd = None
+    new_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/test_9.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -329,6 +357,7 @@ gdaltest_list = [
     tiff_write_6,
     tiff_write_7,
     tiff_write_8,
+    tiff_write_9,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
