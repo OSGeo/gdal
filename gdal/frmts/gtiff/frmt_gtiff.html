@@ -72,6 +72,8 @@ option can be used to force creation of tiled TIFF files.<p>
 <li> <b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
 256, strip height defaults to a value such that one strip is 8K or less. <p>
 
+<li> <b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. <p>
+
 <li> <b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/NONE]</b>: Set the compression
 to use.  JPEG should only be used with Byte data.  None is the default.<p>
 
