@@ -1298,7 +1298,7 @@ class GTiffOddBitsBand : public GTiffRasterBand
 
 
 /************************************************************************/
-/*                           GTiffOddBitsBand()                          */
+/*                           GTiffOddBitsBand()                         */
 /************************************************************************/
 
 GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDS, int nBand )
@@ -1327,12 +1327,117 @@ GTiffOddBitsBand::~GTiffOddBitsBand()
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr GTiffOddBitsBand::IWriteBlock( int, int, void * )
+CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff, 
+                                      void *pImage )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "Odd bits raster bands are read-only." );
-    return CE_Failure;
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+    int		nBlockId, nBlockBufSize;
+    CPLErr      eErr = CE_None;
+
+    poGDS->Crystalize();
+    poGDS->SetDirectory();
+
+    CPLAssert( poGDS != NULL
+               && nBlockXOff >= 0
+               && nBlockYOff >= 0
+               && pImage != NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Handle case of "separate" images or single band images where    */
+/*      no interleaving with other data is required.                    */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE
+        || poGDS->nBands == 1 )
+    {
+        // First downsample to the particular number of bits in
+        // a temporary buffer.
+        GByte *pabyOddImg = (GByte *) CPLCalloc(nBlockXSize,nBlockYSize);
+
+        GDALCopyBits( (GByte *) pImage, 8 - poGDS->nBitsPerSample, 8, 
+                      pabyOddImg, 0, poGDS->nBitsPerSample,
+                      poGDS->nBitsPerSample, nBlockXSize * nBlockYSize );
+
+        // Then write as appropriate.
+        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
+            + (nBand-1) * poGDS->nBlocksPerBand;
+        
+        if( TIFFIsTiled(poGDS->hTIFF) )
+        {
+            nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
+            if( TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pabyOddImg, 
+                                      nBlockBufSize ) == -1 )
+                eErr = CE_Failure;
+        }
+        else
+        {
+            nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+            if( TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pabyOddImg, 
+                                       nBlockBufSize ) == -1 )
+                eErr = CE_Failure;
+        }
+
+        CPLFree( pabyOddImg );
+
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
+/* -------------------------------------------------------------------- */
+
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        
+    eErr = poGDS->LoadBlockBuf( nBlockId );
+    if( eErr != CE_None )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      On write of pixel interleaved data, we might as well flush      */
+/*      out any other bands that are dirty in our cache.  This is       */
+/*      especially helpful when writing compressed blocks.              */
+/* -------------------------------------------------------------------- */
+    int iBand; 
+
+    for( iBand = 0; iBand < poGDS->nBands; iBand++ )
+    {
+        const GByte *pabyThisImage = NULL;
+        GDALRasterBlock *poBlock = NULL;
+
+        if( iBand+1 == nBand )
+            pabyThisImage = (GByte *) pImage;
+        else
+        {
+            poBlock = ((GTiffOddBitsBand *)poGDS->GetRasterBand( iBand+1 ))
+                ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
+
+            if( poBlock == NULL )
+                continue;
+
+            if( !poBlock->GetDirty() )
+            {
+                poBlock->DropLock();
+                continue;
+            }
+
+            pabyThisImage = (GByte *) poBlock->GetDataRef();
+        }
+
+        GDALCopyBits( pabyThisImage, 8 - poGDS->nBitsPerSample, 8, 
+                      poGDS->pabyBlockBuf, iBand * poGDS->nBitsPerSample, 
+                      poGDS->nBitsPerSample * poGDS->nBands,
+                      poGDS->nBitsPerSample, nBlockXSize * nBlockYSize );
+        
+        if( poBlock != NULL )
+        {
+            poBlock->MarkClean();
+            poBlock->DropLock();
+        }
+    }
+
+    poGDS->bLoadedBlockDirty = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -3499,11 +3604,23 @@ TIFF *GTiffCreate( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      How many bits per sample?  We have a special case if NBITS      */
+/*      specified for GDT_Byte.                                         */
+/* -------------------------------------------------------------------- */
+    int nBitsPerSample = GDALGetDataTypeSize(eType);
+    if( eType == GDT_Byte 
+        && CSLFetchNameValue(papszParmList, "NBITS") != NULL )
+    {
+        nBitsPerSample = 
+            MIN(8,MAX(1,atoi(CSLFetchNameValue(papszParmList, "NBITS"))));
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
 /* -------------------------------------------------------------------- */
     TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
-    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, GDALGetDataTypeSize(eType) );
+    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, nBitsPerSample );
 
     if( eType == GDT_Int16 || eType == GDT_Int32 )
         nSampleFormat = SAMPLEFORMAT_INT;
@@ -3748,7 +3865,10 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
+        if( poDS->nBitsPerSample < 8 )
+            poDS->SetBand( iBand+1, new GTiffOddBitsBand( poDS, iBand+1 ) );
+        else
+            poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
     }
 
     return( poDS );
@@ -3771,6 +3891,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int         iBand;
     CPLErr      eErr = CE_None;
     uint16	nPlanarConfig;
+    uint16	nBitsPerSample;
+    GDALRasterBand *poPBand;
 
     if( poSrcDS->GetRasterCount() == 0 )
     {
@@ -3779,7 +3901,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
         
-    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    poPBand = poSrcDS->GetRasterBand(1);
+    GDALDataType eType = poPBand->GetRasterDataType();
 
 /* -------------------------------------------------------------------- */
 /*      Check, whether all bands in input dataset has the same type.    */
@@ -3833,15 +3956,32 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         bGeoTIFF = TRUE;
 
 /* -------------------------------------------------------------------- */
+/*      Special handling for NBITS.  Copy from band metadata if found.  */
+/* -------------------------------------------------------------------- */
+    char     **papszCreateOptions = CSLDuplicate( papszOptions );
+
+    if( poPBand->GetMetadataItem( "NBITS" ) != NULL 
+        && atoi(poPBand->GetMetadataItem( "NBITS" )) < 8 
+        && CSLFetchNameValue( papszCreateOptions, "NBITS") == NULL )
+    {
+        papszCreateOptions = 
+            CSLSetNameValue( papszCreateOptions, "NBITS",
+                             poPBand->GetMetadataItem( "NBITS" ) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
     hTIFF = GTiffCreate( pszFilename, nXSize, nYSize, nBands, 
-                         eType, papszOptions );
+                         eType, papszCreateOptions );
+
+    CSLDestroy( papszCreateOptions );
 
     if( hTIFF == NULL )
         return NULL;
 
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &nPlanarConfig );
+    TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &nBitsPerSample );
 
 /* -------------------------------------------------------------------- */
 /*      Are we really producing an RGBA image?  If so, set the          */
@@ -4163,6 +4303,15 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                              nThisBlockYSize, eType,
                                              nPixelSize, 
                                              nBlockXSize * nPixelSize );
+                    
+                    // Do we need to downsample?
+                    if( nBitsPerSample < 8 )
+                    {
+                        GDALCopyBits( pabyTile, 8-nBitsPerSample, 8, 
+                                      pabyTile, 0, nBitsPerSample,
+                                      nBitsPerSample, 
+                                      nBlockXSize * nBlockYSize );
+                    }
 
                     if( eErr == CE_None )
                         TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
@@ -4211,6 +4360,15 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                          pabyLine, nXSize, 1, eType, 
                                          0, 0 );
+
+                // Do we need to downsample?
+                if( nBitsPerSample < 8 )
+                {
+                    GDALCopyBits( pabyLine, 8-nBitsPerSample, 8, 
+                                  pabyLine, 0, nBitsPerSample,
+                                  nBitsPerSample, nXSize );
+                }
+
                 if( eErr == CE_None 
                     && TIFFWriteScanline( hTIFF, pabyLine, iLine, 
                                           (tsample_t) iBand ) == -1 )
@@ -4304,6 +4462,15 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                        nBlockXSize * nPixelSize,
                                        nElemSize );
 
+                // Do we need to downsample?
+                if( nBitsPerSample < 8 )
+                {
+                    GDALCopyBits( pabyTile, 8-nBitsPerSample, 8, 
+                                  pabyTile, 0, nBitsPerSample,
+                                  nBitsPerSample, 
+                                  nBlockXSize * nBlockYSize * nBands );
+                }
+
                 if( eErr == CE_None )
                     TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
                                           nTileSize );
@@ -4345,6 +4512,14 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                    pabyLine, nXSize, 1, eType, nBands, NULL, 
                                    nPixelSize, nLineSize, nElemSize );
+
+            // Do we need to downsample?
+            if( nBitsPerSample < 8 )
+            {
+                GDALCopyBits( pabyLine, 8-nBitsPerSample, 8, 
+                              pabyLine, 0, nBitsPerSample,
+                              nBitsPerSample, nXSize * nBands );
+            }
 
             if( eErr == CE_None 
                 && TIFFWriteScanline( hTIFF, pabyLine, iLine, 0 ) == -1 )
@@ -4770,6 +4945,7 @@ void GDALRegister_GTiff()
 "   </Option>"
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100, default 75.'/>"
+"   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7)'/>"
 "   <Option name='INTERLEAVE' type='string-select'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
