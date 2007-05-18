@@ -75,7 +75,7 @@ ogr-apps:	lib-target
 #
 #	We only make python a default target if we think python is installed.
 #
-ifeq ($(PYTHON),no)
+ifeq ($(PYTHON_DEV),no)
 py-target: ;
 else
 py-target:	py-module;
@@ -179,7 +179,7 @@ endif
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
 	(cd man; $(MAKE) install)
-ifneq ($(PYTHON),no)
+ifneq ($(PYTHON_DEV),no)
 	(cd pymod; $(MAKE) install)
 endif
 ifneq ($(BINDINGS),)
