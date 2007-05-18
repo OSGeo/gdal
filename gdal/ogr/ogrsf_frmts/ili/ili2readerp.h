@@ -50,6 +50,10 @@
 #include <dom/DOM.hpp>
 #include <util/XMLString.hpp>
 
+#if _XERCES_VERSION >= 30000
+# include <sax2/Attributes.hpp>
+#endif
+
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE
 #endif

@@ -72,6 +72,8 @@ private:
     
     void                ResetReading();
     OGRFeature *        GetNextFeature();
+    OGRFeature *        GetNextFeatureRef();
+    OGRFeature *        GetFeatureRef( long nFID );
 
     int                 GetFeatureCount( int bForce = TRUE );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);

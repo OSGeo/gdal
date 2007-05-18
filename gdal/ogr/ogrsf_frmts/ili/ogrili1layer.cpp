@@ -119,10 +119,41 @@ void OGRILI1Layer::ResetReading(){
 /************************************************************************/
 
 OGRFeature *OGRILI1Layer::GetNextFeature() {
+    OGRFeature *poFeature = GetNextFeatureRef();
+    return poFeature ? poFeature->Clone() : NULL;
+}
+
+OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
+    OGRFeature *poFeature = NULL;
     if (nFeatureIdx < nFeatures)
     {
-      return papoFeatures[nFeatureIdx++]->Clone();
+      poFeature = papoFeatures[nFeatureIdx++];
+      //apply filters
+      if( (m_poFilterGeom == NULL
+           || FilterGeometry( poFeature->GetGeometryRef() ) )
+          && (m_poAttrQuery == NULL
+              || m_poAttrQuery->Evaluate( poFeature )) )
+          return poFeature;
     }
+    return NULL;
+}
+
+/************************************************************************/
+/*                             GetFeatureRef()                          */
+/************************************************************************/
+
+OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
+
+{
+    OGRFeature *poFeature;
+
+    ResetReading();
+    while( (poFeature = GetNextFeatureRef()) != NULL )
+    {
+        if( poFeature->GetFID() == nFID )
+            return poFeature;
+    }
+
     return NULL;
 }
 
@@ -139,7 +170,7 @@ int OGRILI1Layer::GetFeatureCount( int bForce ) {
 /************************************************************************/
 
 OGRErr OGRILI1Layer::GetExtent(OGREnvelope *psExtent, int bForce ) {
-  return OGRERR_NONE;
+  return OGRLayer::GetExtent( psExtent, bForce );
 }
 
 static char* d2str(double val)
