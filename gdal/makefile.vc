@@ -61,7 +61,7 @@ default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
 
 staticlib:
 	if exist gdal.lib del gdal.lib
-	lib /out:gdal.lib $(LIBOBJ)
+	lib /nologo /out:gdal.lib $(LIBOBJ)
 
 clean:	
 	cd port
@@ -159,7 +159,7 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	staticlib
-	link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
+	link /nologo /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(EXTERNAL_LIBS) gcore\Version.res \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
     if exist $(GDAL_DLL).manifest mt -manifest $(GDAL_DLL).manifest -outputresource:$(GDAL_DLL);2
