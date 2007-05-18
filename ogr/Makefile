@@ -67,10 +67,10 @@ spatialreferenceidl.h: spatialreferenceidl.idl
 	midl spatialreferenceidl.idl
 
 ogr.lib:	$(OBJ_OGR)
-	lib /out:ogr.lib $(OBJ_OGR)
+	lib /nologo /out:ogr.lib $(OBJ_OGR)
 
 ogroledb.lib:	$(OBJ_OLEDB)
-	lib /out:ogroledb.lib $(OBJ_OLEDB)
+	lib /nologo /out:ogroledb.lib $(OBJ_OLEDB)
 
 sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
 	cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
