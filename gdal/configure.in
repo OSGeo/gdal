@@ -1985,7 +1985,7 @@ else
   AC_MSG_RESULT([disabled])
 fi
 
-AC_SUBST(BINDINGS)
+AC_SUBST([BINDINGS])
 
 dnl ---------------------------------------------------------------------------
 dnl Python Checks
@@ -2006,7 +2006,7 @@ dnl ---------------------------------------------------------------------------
 dnl Display configuration status
 dnl ---------------------------------------------------------------------------
 
-if test "$PYTHON" != "no" ; then
+if test "$PYTHON" != "no" -a "$PYTHON_DEV" != "no" ; then
   HAVE_PYTHON=yes
 else
   HAVE_PYTHON=no
@@ -2063,7 +2063,12 @@ if test ! -z "`uname | grep Darwin`" ; then
 fi
 LOC_MSG()
 LOC_MSG([  Traditional Python:        ${HAVE_PYTHON}])
-LOC_MSG([  NG SWIG Bindings:          ${BINDINGS}])
+if test -z "$BINDINGS"; then
+    WHAT_BINDINGS="no"
+else
+    WHAT_BINDINGS="$BINDINGS"
+fi
+LOC_MSG([  NG SWIG Bindings:          ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
