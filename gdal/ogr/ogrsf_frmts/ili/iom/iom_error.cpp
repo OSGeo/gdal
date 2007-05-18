@@ -31,7 +31,7 @@
 
 IomBasket ErrorUtility::errs;
 int ErrorUtility::errc=0;
-XMLCh ErrorUtility::itoabuf[];
+XMLCh ErrorUtility::itoabuf[40];
 IOM_ERRLISTENER ErrorUtility::listener=iom_stderrlistener;
 
 
