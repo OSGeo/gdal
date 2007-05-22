@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.16 2006/11/28 18:49:08 dmorissette Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.17 2007/05/22 14:53:10 dmorissette Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.17  2007/05/22 14:53:10  dmorissette
+ * Fixed error reading compressed text objects introduced in v1.6.0 (bug 1722)
+ *
  * Revision 1.16  2006/11/28 18:49:08  dmorissette
  * Completed changes to split TABMAPObjectBlocks properly and produce an
  * optimal spatial index (bug 1585)
@@ -1426,7 +1429,10 @@ int TABMAPObjText::ReadObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nLineEndX, m_nLineEndY);
 
     // Text Height
-    m_nHeight = poObjBlock->ReadInt32();
+    if (IsCompressedType())
+        m_nHeight = poObjBlock->ReadInt16();
+    else
+        m_nHeight = poObjBlock->ReadInt32();
 
     // Font name
     m_nFontId = poObjBlock->ReadByte();      // Font name index
@@ -1475,7 +1481,10 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteIntCoord(m_nLineEndX, m_nLineEndY, IsCompressedType());
 
     // Text Height
-    poObjBlock->WriteInt32(m_nHeight);
+    if (IsCompressedType())
+        poObjBlock->WriteInt16(m_nHeight);
+    else
+        poObjBlock->WriteInt32(m_nHeight);
 
     // Font name
     poObjBlock->WriteByte(m_nFontId);      // Font name index
