@@ -330,6 +330,39 @@ def osr_esri_10():
 
     return 'success'
 
+###############################################################################
+# Verify arc/info style TM handling.
+
+def osr_esri_11():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromESRI( [ 'Projection    TRANSVERSE',
+                          'Datum         NAD27',
+                          'Spheroid      CLARKE1866',
+                          'Units         METERS',
+                          'Zunits        NO',
+                          'Xshift        0.0',
+                          'Yshift        0.0',
+                          'Parameters   ',
+                          '1.0 /* scale factor at central meridian',
+                          '-106 56  5.149215 /* longitude of central meridian',
+                          '  39 33 45.40326 /* latitude of origin',
+                          '0.0 /* false easting (meters)',
+                          '0.0 /* false northing (meters)' ] )
+    
+    expected = 'PROJCS["unnamed",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",39.56261201666666],PARAMETER["central_meridian",-106.9347636708333],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["METERS",1]]'
+    
+    srs.MorphFromESRI()
+    wkt = srs.ExportToWkt()
+    if wkt != expected:
+        print
+        print 'Got:      ', wkt
+        print 'Expected: ', expected
+        gdaltest.post_reason( 'Did not get expected TM SRS after morphFromESRI' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_esri_1,
     osr_esri_2,
@@ -341,6 +374,7 @@ gdaltest_list = [
     osr_esri_8,
     osr_esri_9,
     osr_esri_10,
+    osr_esri_11,
     None ]
 
 if __name__ == '__main__':
