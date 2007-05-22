@@ -731,8 +731,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
     else if( EQUAL(pszProj,"TRANSVERSE") )
     {
-        SetTM( OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
-               OSR_GDV( papszPrj, "PARAM_3", 0.0 ), 
+        SetTM( OSR_GDV( papszPrj, "PARAM_3", 0.0 ), 
+               OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_4", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_5", 0.0 ) );
