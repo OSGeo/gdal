@@ -396,7 +396,7 @@
  @param pszName the name for the new data source.
  @param papszOptions a StringList of name=value options.  Options are driver
 specific, and driver information can be found at the following url:  
-http://www.gdal.og/ogr/ogr_formats.html 
+http://www.gdal.org/ogr/ogr_formats.html 
 
  @return NULL is returned on failure, or a new OGRDataSource on 
 success. 
