@@ -813,19 +813,35 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     {
         GDALDataType eType = poSrcDS->GetRasterBand( i )->GetRasterDataType();
 
-        if( eType != GDT_Byte && 
-            eType != GDT_Int16 && 
-            eType != GDT_UInt16 && 
-            eType != GDT_UInt32 && 
-            eType != GDT_Int32 && 
-            eType != GDT_Float32 &&
-            eType != GDT_Float64 )
+        if( bStrict )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                "Attempt to create IDRISI dataset with an illegal "
-                "data type(%s).\n",
-                GDALGetDataTypeName( eType ) );
-            return NULL;
+            if( eType != GDT_Byte && 
+                eType != GDT_Int16 && 
+                eType != GDT_Float32 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "Attempt to create IDRISI dataset in strict mode "
+                    "with an illegal data type(%s).\n",
+                    GDALGetDataTypeName( eType ) );
+                return NULL;
+            }
+        }
+        else
+        {
+            if( eType != GDT_Byte && 
+                eType != GDT_Int16 && 
+                eType != GDT_UInt16 && 
+                eType != GDT_UInt32 && 
+                eType != GDT_Int32 && 
+                eType != GDT_Float32 &&
+                eType != GDT_Float64 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "Attempt to create IDRISI dataset with an illegal "
+                    "data type(%s).\n",
+                    GDALGetDataTypeName( eType ) );
+                return NULL;
+            }
         }
     }
 
@@ -841,7 +857,7 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     double dfMean;
     double dfStdDev;
 
-    poBand->GetStatistics( true, false, &dfMin, &dfMax, NULL, NULL );
+    poBand->GetStatistics( true, true, &dfMin, &dfMax, NULL, NULL );
 
     if(!( ( eType == GDT_Byte ) || 
           ( eType == GDT_Int16 ) || 
@@ -2348,7 +2364,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     int nParameters             = 0;         
     double dfStdP1              = 0.0;            
     double dfStdP2              = 0.0;            
-    const char *pszUnit         = CPLStrdup( oSRS.GetAttrValue( "GEOGCS|UNIT" ) );
+    const char *pszAngularUnit  = CPLStrdup( oSRS.GetAttrValue( "GEOGCS|UNIT" ) );
+    const char *pszLinearUnit;
 
     if( oSRS.IsProjected() )
     {
@@ -2366,6 +2383,11 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             if( dfStdP2 != -0.1 )
                 nParameters = 2;
         }
+        pszLinearUnit   = CPLStrdup( oSRS.GetAttrValue( "PROJCS|UNIT" ) );
+    }
+    else
+    {
+        pszLinearUnit   = CPLStrdup( pszAngularUnit );
     }
 
     // ---------------------------------------------------------
@@ -2386,7 +2408,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     papszRef = CSLAddNameValue( papszRef, refORIGIN_X,     CPLSPrintf( "%.9g", dfFalseEasting ) );
     papszRef = CSLAddNameValue( papszRef, refORIGIN_Y,     CPLSPrintf( "%.9g", dfFalseNorthing ) );
     papszRef = CSLAddNameValue( papszRef, refSCALE_FAC,    CPLSPrintf( "%.9g", dfScale ) );
-    papszRef = CSLAddNameValue( papszRef, refUNITS,        pszUnit );
+    papszRef = CSLAddNameValue( papszRef, refUNITS,        pszAngularUnit );
     papszRef = CSLAddNameValue( papszRef, refPARAMETERS,   CPLSPrintf( "%1d",  nParameters ) );
     if( nParameters > 0 )
         papszRef = CSLAddNameValue( papszRef, refSTANDL_1, CPLSPrintf( "%.9g", dfStdP1 ) );
@@ -2397,7 +2419,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     CSLDestroy( papszRef );
 
     *pszRefSystem = CPLStrdup( CPLGetBasename( pszFilename ) );
-    *pszRefUnit   = CPLStrdup( pszUnit );
+    *pszRefUnit   = CPLStrdup( pszLinearUnit );
 
     return CE_None;
 }
