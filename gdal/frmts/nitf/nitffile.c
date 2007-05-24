@@ -152,7 +152,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
                          start, length,                        \
                          "NITF_" #name );
        
-    if( EQUAL(psFile->szVersion,"NITF02.10") )
+    if( EQUAL(psFile->szVersion,"NITF02.10") 
+        || EQUAL(psFile->szVersion,"NSIF01.00") )
     {
         char szWork[100];
 

@@ -116,7 +116,8 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                          start, length,                        \
                          "NITF_" #name );
        
-    if( EQUAL(psFile->szVersion,"NITF02.10") )
+    if( EQUAL(psFile->szVersion,"NITF02.10") 
+        || EQUAL(psFile->szVersion,"NSIF01.00") )
     {
         GetMD( psImage, pachHeader,   2,  10, IID1   );
         GetMD( psImage, pachHeader,  12,  14, IDATIM );
