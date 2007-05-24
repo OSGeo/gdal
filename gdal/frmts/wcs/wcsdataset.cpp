@@ -56,6 +56,8 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     char        *pszProjection;
     double      adfGeoTransform[6];
 
+    CPLString   osBandIdentifier;
+
     int         TestUseBlockIO( int, int, int, int, int, int );
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
@@ -263,6 +265,19 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLGetXMLValue( poODS->psService, "GetCoverageExtra", "" ) );
 
 /* -------------------------------------------------------------------- */
+/*      Append band selector if we have one.                            */
+/* -------------------------------------------------------------------- */
+    CPLString osBandIdentifier = poODS->osBandIdentifier;
+
+    if( strlen(osBandIdentifier) )
+    {
+        CPLString osBS;
+
+        osBS.Printf( "&%s=%d", osBandIdentifier.c_str(), GetBand() );
+        osRequest += osBS;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLString osTimeout = "TIMEOUT=";
@@ -290,12 +305,20 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Verify configuration.                                           */
 /* -------------------------------------------------------------------- */
-    if( poTileDS->GetRasterCount() != poODS->GetRasterCount()
-        || poTileDS->GetRasterXSize() != nBlockXSize
+    if( poTileDS->GetRasterXSize() != nBlockXSize
         || poTileDS->GetRasterYSize() != nBlockYSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Returned tile does not match expected configuration." );
+        return CE_Failure;
+    }
+
+    if( (strlen(osBandIdentifier) && poTileDS->GetRasterCount() != 1)
+        || (!strlen(osBandIdentifier) 
+            && poTileDS->GetRasterCount() != poODS->GetRasterCount()) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Returned tile does not match expected band configuration.");
         return CE_Failure;
     }
 
@@ -312,7 +335,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         GDALRasterBand *poTileBand = poTileDS->GetRasterBand( iBand+1 );
 
-        if( iBand+1 == GetBand() )
+        if( iBand+1 == GetBand() || strlen(osBandIdentifier) )
         {
             eErr = poTileBand->RasterIO( GF_Read, 
                                          0, 0, nBlockXSize, nBlockYSize, 
@@ -530,6 +553,10 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                             int nPixelSpace, int nLineSpace, int nBandSpace)
 
 {
+    CPLDebug( "WCS", "DirectRasterIO(%d,%d,%d,%d) -> (%d,%d) (%d bands)\n", 
+              nXOff, nYOff, nXSize, nYSize, 
+              nBufXSize, nBufYSize, nBandCount );
+
 /* -------------------------------------------------------------------- */
 /*      Figure out the georeferenced extents.                           */
 /* -------------------------------------------------------------------- */
@@ -567,6 +594,30 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Select our band list if we have a band identifier.              */
+/* -------------------------------------------------------------------- */
+    int iBand;
+
+    if( strlen(osBandIdentifier) )
+    {
+        osRequest += "&";
+        osRequest += osBandIdentifier;
+
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+        {
+            char szItem[32];
+            
+            if( iBand == 0 )
+                osRequest += "=";
+            else
+                osRequest += ",";
+
+            sprintf( szItem, "%d", panBandMap[iBand] );
+            osRequest += szItem;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLString osTimeout = "TIMEOUT=";
@@ -594,8 +645,7 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Verify configuration.                                           */
 /* -------------------------------------------------------------------- */
-    if( poTileDS->GetRasterCount() != GetRasterCount()
-        || poTileDS->GetRasterXSize() != nBufXSize
+    if( poTileDS->GetRasterXSize() != nBufXSize
         || poTileDS->GetRasterYSize() != nBufYSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -603,25 +653,35 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
+    if( (strlen(osBandIdentifier) && poTileDS->GetRasterCount() != nBandCount)
+        || (!strlen(osBandIdentifier) && poTileDS->GetRasterCount() != 
+            GetRasterCount() ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Returned tile does not match expected band count." );
+        return CE_Failure;
+    }
+    
 /* -------------------------------------------------------------------- */
-/*      Process all bands of memory result, copying into pBuffer, or    */
-/*      pushing into cache for other bands.                             */
+/*      Pull requested bands from the downloaded dataset.               */
 /* -------------------------------------------------------------------- */
-    int iBand;
     CPLErr eErr = CE_None;
     
     for( iBand = 0; 
          iBand < nBandCount && eErr == CE_None; 
          iBand++ )
     {
-        GDALRasterBand *poTileBand = 
-            poTileDS->GetRasterBand( panBandMap[iBand] );
+        GDALRasterBand *poTileBand;
+
+        if( strlen(osBandIdentifier) )
+            poTileBand = poTileDS->GetRasterBand( iBand + 1 );
+        else
+            poTileBand = poTileDS->GetRasterBand( panBandMap[iBand] );
 
         eErr = poTileBand->RasterIO( GF_Read, 
                                      0, 0, nBufXSize, nBufYSize,
                                      ((GByte *) pData) + 
-                                     (panBandMap[iBand]-1) * nBandSpace, 
-                                     nBufXSize, nBufYSize, 
+                                     iBand * nBandSpace, nBufXSize, nBufYSize, 
                                      eBufType, nPixelSpace, nLineSpace );
     }
     
@@ -886,6 +946,47 @@ int WCSDataset::ExtractGridInfo()
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "NoDataValue", 
                                          pszSV );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a Band range type.  For now we look for a fairly     */
+/*      specific configuration.  The rangeset my have one axis named    */
+/*      "Band", with a set of ascending numerical values.               */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode * psAD = CPLGetXMLNode( psService, 
+      "CoverageOffering.rangeSet.RangeSet.axisDescription.AxisDescription" );
+    CPLXMLNode *psValues;
+
+    if( psAD != NULL 
+        && EQUAL(CPLGetXMLValue(psAD,"name",""),"Band") 
+        && ( (psValues = CPLGetXMLNode( psAD, "values" )) != NULL ) )
+    {
+        CPLXMLNode *psSV;
+        int iBand;
+
+        osBandIdentifier = "Band";
+
+        for( psSV = psValues->psChild, iBand = 1; 
+             psSV != NULL; 
+             psSV = psSV->psNext, iBand++ )
+        {
+            if( psSV->eType != CXT_Element 
+                || !EQUAL(psSV->pszValue,"singleValue") 
+                || psSV->psChild == NULL
+                || psSV->psChild->eType != CXT_Text
+                || atoi(psSV->psChild->pszValue) != iBand )
+            {
+                osBandIdentifier = "";
+                break;
+            }
+        }
+
+        if( strlen(osBandIdentifier) )
+        {
+            bServiceDirty = TRUE;
+            CPLCreateXMLElementAndValue( psService, "BandIdentifier", 
+                                         osBandIdentifier );
         }
     }
 
@@ -1224,6 +1325,11 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
      
     for( iBand = 0; iBand < nBandCount; iBand++ )
         poDS->SetBand( iBand+1, new WCSRasterBand( poDS, iBand+1, -1 ) );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a band identifier to select only a subset of bands?  */
+/* -------------------------------------------------------------------- */
+    poDS->osBandIdentifier = CPLGetXMLValue(psService,"BandIdentifier","");
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
