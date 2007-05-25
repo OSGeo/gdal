@@ -23,4 +23,4 @@ plugin: gdal_SDE.dll
 
 gdal_SDE.dll:	$(OBJ)
 	link /dll /out:gdal_SDE.dll $(OBJ) \
-		"C:\Program Files\FWTools1.2.2\lib"/gdal_i.lib  $(SDE_LIB)
+		../../gdal_i.lib  $(SDE_LIB)
