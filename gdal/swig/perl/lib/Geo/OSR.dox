@@ -385,8 +385,9 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
-## @method new($src, $dst)
+## @cmethod new($src, $dst)
 # @param $src Geo::OSR::SpatialReference object
 # @param $dst Geo::OSR::SpatialReference object
 # @return Geo::OSR::CoordinateTransformation object
