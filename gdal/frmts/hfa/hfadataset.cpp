@@ -816,13 +816,75 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
+    GByte *pabyOutBuf = (GByte *) pImage;
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to pack 1/2/4 bit data?                              */
+/* -------------------------------------------------------------------- */
+    if( nHFADataType == EPT_u1 
+        || nHFADataType == EPT_u2
+        || nHFADataType == EPT_u4 )
+    {
+        int nPixCount =  nBlockXSize * nBlockYSize;
+        pabyOutBuf = (GByte *) CPLMalloc(nPixCount);
+
+        if( nHFADataType == EPT_u1 )
+        {
+            for( int ii = 0; ii < nPixCount - 7; ii += 8 )
+            {
+                int k = ii>>3;
+                pabyOutBuf[k] = 
+                    (((GByte *) pImage)[ii] & 0x1)
+                    | ((((GByte *) pImage)[ii+1]&0x1) << 1)
+                    | ((((GByte *) pImage)[ii+2]&0x1) << 2)
+                    | ((((GByte *) pImage)[ii+3]&0x1) << 3)
+                    | ((((GByte *) pImage)[ii+4]&0x1) << 4)
+                    | ((((GByte *) pImage)[ii+5]&0x1) << 5)
+                    | ((((GByte *) pImage)[ii+6]&0x1) << 6)
+                    | ((((GByte *) pImage)[ii+7]&0x1) << 7);
+            }
+        }
+        else if( nHFADataType == EPT_u2 )
+        {
+            for( int ii = 0; ii < nPixCount - 3; ii += 4 )
+            {
+                int k = ii>>2;
+                pabyOutBuf[k] = 
+                    (((GByte *) pImage)[ii] & 0x3)
+                    | ((((GByte *) pImage)[ii+1]&0x3) << 2)
+                    | ((((GByte *) pImage)[ii+2]&0x3) << 4)
+                    | ((((GByte *) pImage)[ii+3]&0x3) << 6);
+            }
+        }
+        else if( nHFADataType == EPT_u4 )
+        {
+            for( int ii = 0; ii < nPixCount - 1; ii += 2 )
+            {
+                int k = ii>>1;
+                pabyOutBuf[k] = 
+                    (((GByte *) pImage)[ii] & 0xf) 
+                    | ((((GByte *) pImage)[ii+1]&0xf) << 4);
+            }
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Actually write out.                                             */
+/* -------------------------------------------------------------------- */
+    CPLErr nRetCode;
+
     if( nThisOverview == -1 )
-        return( HFASetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
-                                   pImage ) );
+        nRetCode = HFASetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
+                                      pabyOutBuf );
     else
-        return( HFASetOverviewRasterBlock( hHFA, nBand, nThisOverview,
-                                           nBlockXOff, nBlockYOff,
-                                           pImage ) );
+        nRetCode = HFASetOverviewRasterBlock( hHFA, nBand, nThisOverview,
+                                              nBlockXOff, nBlockYOff,
+                                              pabyOutBuf );
+
+    if( pabyOutBuf != pImage  )
+        CPLFree( pabyOutBuf );
+
+    return nRetCode;
 }
 
 /************************************************************************/
@@ -2671,6 +2733,10 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 
 {
     int		nHfaDataType;
+    int         nBits = 0;
+
+    if( CSLFetchNameValue( papszParmList, "NBITS" ) != NULL )
+        nBits = atoi(CSLFetchNameValue(papszParmList,"NBITS"));
 
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
@@ -2678,7 +2744,14 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     switch( eType )
     {
       case GDT_Byte:
-        nHfaDataType = EPT_u8;
+        if( nBits == 1 )
+            nHfaDataType = EPT_u1;
+        else if( nBits == 2 )
+            nHfaDataType = EPT_u2;
+        else if( nBits == 4 )
+            nHfaDataType = EPT_u4;
+        else
+            nHfaDataType = EPT_u8;
         break;
 
       case GDT_UInt16:
