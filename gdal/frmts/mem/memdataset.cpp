@@ -381,6 +381,9 @@ MEMDataset::MEMDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = -1.0;
+
+    nGCPCount = 0;
+    pasGCPs = NULL;
 }
 
 /************************************************************************/
@@ -392,6 +395,9 @@ MEMDataset::~MEMDataset()
 {
     FlushCache();
     CPLFree( pszProjection );
+
+    GDALDeinitGCPs( nGCPCount, pasGCPs );
+    CPLFree( pasGCPs );
 }
 
 /************************************************************************/
@@ -443,6 +449,58 @@ CPLErr MEMDataset::SetGeoTransform( double *padfGeoTransform )
 {
     memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
     bGeoTransformSet = TRUE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int MEMDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *MEMDataset::GetGCPProjection()
+
+{
+    return osGCPProjection;
+}
+
+/************************************************************************/
+/*                              GetGCPs()                               */
+/************************************************************************/
+
+const GDAL_GCP *MEMDataset::GetGCPs()
+
+{
+    return pasGCPs;
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+CPLErr MEMDataset::SetGCPs( int nNewCount, const GDAL_GCP *pasNewGCPList,
+                            const char *pszGCPProjection )
+
+{
+    GDALDeinitGCPs( nGCPCount, pasGCPs );
+    CPLFree( pasGCPs );
+
+    if( pszGCPProjection == NULL )
+        osGCPProjection = "";
+    else
+        osGCPProjection = pszGCPProjection;
+
+    nGCPCount = nNewCount;
+    pasGCPs = GDALDuplicateGCPs( nGCPCount, pasNewGCPList );
 
     return CE_None;
 }
