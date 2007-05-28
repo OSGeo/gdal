@@ -29,5 +29,5 @@ plugin:	gdal_ECW.dll
 
 gdal_ECW.dll: $(OBJ)
 	link /dll /out:gdal_ECW.dll $(OBJ) \
-		$(GDAL_ROOT)/gdal_i.lib $(ECWLIB)
+		$(GDALLIB) $(ECWLIB)
 	if exist gdal_ECW.dll.manifest mt -manifest gdal_ECW.dll.manifest -outputresource:gdal_ECW.dll;2
