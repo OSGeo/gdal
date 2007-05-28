@@ -35,6 +35,9 @@
 
 CPL_CVSID("$Id$");
 
+static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
+                            int *pnOffset, int nBytesAvailable,
+                            char **papszOptions );
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                         int nHeaderLenSize, int nDataLenSize, 
@@ -310,7 +313,8 @@ int NITFCreate( const char *pszFilename,
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
     const char *pszCLevel;
-
+    int nUDIDLOffset;
+    const char *pszVersion;
 
     if( pszIC == NULL )
         pszIC = "NC";
@@ -368,6 +372,23 @@ int NITFCreate( const char *pszFilename,
         * nNPPBH * nNPPBV * nBands;
 
 /* -------------------------------------------------------------------- */
+/*      Work out the version we are producing.  For now we really       */
+/*      only support creating NITF02.10 or the nato analog              */
+/*      NSIF01.00.                                                      */
+/* -------------------------------------------------------------------- */
+    pszVersion = CSLFetchNameValue( papszOptions, "FHDR" );
+    if( pszVersion == NULL )
+        pszVersion = "NITF02.10";
+    else if( !EQUAL(pszVersion,"NITF02.10") 
+             && !EQUAL(pszVersion,"NSIF01.00") )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "FHDR=%s not supported, switching to NITF02.10.",
+                  pszVersion );
+        pszVersion = "NITF02.10";
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Compute CLEVEL ("complexity" level).                            */
 /*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
 /*            page 96u                                                  */
@@ -391,7 +412,7 @@ int NITFCreate( const char *pszFilename,
         pszParmValue = text;						\
     strncpy(location,pszParmValue,MIN(width,strlen(pszParmValue))); }   
 
-    PLACE (achHeader+  0, FDHR_FVER,    "NITF02.10"                     );
+    PLACE (achHeader+  0, FDHR_FVER,    pszVersion                      );
     OVR( 2,achHeader+  9, CLEVEL,       pszCLevel                       );
     PLACE (achHeader+ 11, STYPE        ,"BF01"                          );
     OVR(10,achHeader+ 15, OSTAID       ,"GDAL"                          );
@@ -555,14 +576,29 @@ int NITFCreate( const char *pszFilename,
     PLACE(pachIMHDR+nOffset+ 40, UDIDL , "00000"                        );
     PLACE(pachIMHDR+nOffset+ 45, IXSHDL, "00000"                        );
 
-    nOffset += 53;
+    nUDIDLOffset = nOffset + 40;
+    nOffset += 50;
 
-    nIHSize = nOffset;
+/* -------------------------------------------------------------------- */
+/*      Add BLOCKA TRE if requested.                                    */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL )
+    {
+        NITFWriteBLOCKA( pachIMHDR + nUDIDLOffset, 
+                         pachIMHDR + nOffset, 
+                         0, &nOffset, 
+                         sizeof(achHeader) - (pachIMHDR+nOffset-achHeader),
+                         papszOptions );
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Update the image header length in the file header and the       */
 /*      total file size.                                                */
 /* -------------------------------------------------------------------- */
+    nOffset += 3; /* I don't know why! */
+    nIHSize = nOffset;
+
     PLACE(achHeader+ 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
     PLACE(achHeader+ 342, FL,
           CPLSPrintf( "%012d", 404 + nIHSize + nImageSize ) );
@@ -593,6 +629,96 @@ int NITFCreate( const char *pszFilename,
     return TRUE;
 }
 
+/************************************************************************/
+/*                          NITFWriteBLOCKA()                           */
+/************************************************************************/
+
+static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
+                            int *pnOffset, int nBytesAvailable,
+                            char **papszOptions )
+
+{
+    static const char *apszFields[] = { 
+        "BLOCK_INSTANCE", "0", "2",
+        "N_GRAY",         "2", "5",
+        "L_LINES",        "7", "5",
+        "LAYOVER_ANGLE",  "12", "3",
+        "SHADOW_ANGLE",   "15", "3",
+        "BLANKS",         "18", "16",
+        "FRLC_LOC",       "34", "21",
+        "LRLC_LOC",       "55", "21",
+        "LRFC_LOC",       "76", "21",
+        "FRFC_LOC",       "97", "21",
+        NULL,             NULL, NULL };
+    int nBlockCount = 
+        atoi(CSLFetchNameValue( papszOptions, "BLOCKA_BLOCK_COUNT" ));
+    int iBlock;
+
+/* ==================================================================== */
+/*      Loop over all the blocks we have metadata for.                  */
+/* ==================================================================== */
+    for( iBlock = 1; iBlock <= nBlockCount; iBlock++ )
+    {
+        char szTemp[200];
+        int iField, nOldOffset;
+
+/* -------------------------------------------------------------------- */
+/*      Try to allocate space in the header for for this BLOCKA         */
+/*      TRE.                                                            */
+/* -------------------------------------------------------------------- */
+        if( nBytesAvailable < 137 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Some BLOCKA TREs not written due to lack of header space." );
+            return nTRECount;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Update IXSHDL.                                                  */
+/* -------------------------------------------------------------------- */
+        nOldOffset = atoi(NITFGetField( szTemp, pachUDIDL, 5, 5 ));
+        sprintf( szTemp, "%05d", nOldOffset + 137 );
+        PLACE( pachUDIDL + 5, IXSHDL, szTemp );
+
+/* -------------------------------------------------------------------- */
+/*      Create TRE header.                                              */
+/* -------------------------------------------------------------------- */
+        sprintf( pachTRE + nOldOffset, "%03dBLOCKA00123", nTRECount );
+        
+/* -------------------------------------------------------------------- */
+/*      Write all fields.                                               */
+/* -------------------------------------------------------------------- */
+        for( iField = 0; apszFields[iField*3] != NULL; iField++ )
+        {
+            char szFullFieldName[64];
+            int  iStart = atoi(apszFields[iField*3+1]);
+            int  iSize = atoi(apszFields[iField*3+2]);
+            const char *pszValue;
+
+            sprintf( szFullFieldName, "BLOCKA_%s_%02d", 
+                     apszFields[iField*3 + 0], iBlock );
+
+            pszValue = CSLFetchNameValue( papszOptions, szFullFieldName );
+            if( pszValue == NULL )
+                pszValue = "";
+
+            memset( pachTRE + nOldOffset + 14 + iStart, ' ', iSize );
+            memcpy( pachTRE + nOldOffset + 14 + iStart 
+                    + MAX(0,iSize-strlen(pszValue)), 
+                    pszValue, MIN(iSize,strlen(pszValue)) );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Increment values.                                               */
+/* -------------------------------------------------------------------- */
+        nTRECount++;
+        nBytesAvailable -= 137;
+        *pnOffset += 137;
+    }
+    
+    return nTRECount;
+}
+                      
 /************************************************************************/
 /*                       NITFCollectSegmentInfo()                       */
 /*                                                                      */
