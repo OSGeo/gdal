@@ -65,6 +65,28 @@ def hfa_write_desc():
     return 'success'
 
 ###############################################################################
+# test writing 4 bit files.
+
+def hfa_write_4bit():
+    drv = gdal.GetDriverByName('HFA')
+    src_ds = gdal.Open('data/byte.tif')
+    ds = drv.CreateCopy('tmp/4bit.img', src_ds, options = ['NBITS=1'] )
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/4bit.img')
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 252:
+        gdaltest.post_reason( 'Got wrong checksum on 4bit image.' )
+        print cs
+        return 'fail'
+
+    drv.Delete( 'tmp/4bit.img' )
+
+    return 'success'
+
+###############################################################################
 # Get the driver, and verify a few things about it. 
 
 init_list = [ \
@@ -79,7 +101,8 @@ init_list = [ \
     ('cfloat64.tif', 1, 5028, None),
     ('utmsmall.tif', 1, 50054, None) ]
 
-gdaltest_list = [ hfa_write_desc ]
+gdaltest_list = [ hfa_write_desc,
+                  hfa_write_4bit ]
 
 # full set of tests for normal mode.
 
@@ -113,6 +136,7 @@ for item in short_list:
 	print( 'HFA tests skipped' )
 #    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (compressed)') )
     gdaltest_list.append( (ut2.testCreate, item[0] + ' (compressed)') )
+
 
 if __name__ == '__main__':
 
