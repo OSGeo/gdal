@@ -13,3 +13,9 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 
+plugin:	gdal_FITS.dll
+
+gdal_FITS.dll: $(OBJ)
+	link /dll /out:gdal_FITS.dll $(OBJ) \
+		$(GDALLIB) $(FITS_LIB)
+	if exist gdal_FITS.dll.manifest mt -manifest gdal_FITS.dll.manifest -outputresource:gdal_FITS.dll;2
