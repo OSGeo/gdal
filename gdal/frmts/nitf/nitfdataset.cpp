@@ -2263,6 +2263,27 @@ NITFDataset::NITFCreateCopy(
         eType = GDT_CFloat32;
 
 /* -------------------------------------------------------------------- */
+/*      Copy over other source metadata items as creation options       */
+/*      that seem useful.                                               */
+/* -------------------------------------------------------------------- */
+    char **papszSrcMD = poSrcDS->GetMetadata();
+    int iMD;
+
+    for( iMD = 0; papszSrcMD && papszSrcMD[iMD]; iMD++ )
+    {
+        if( EQUALN(papszSrcMD[iMD],"NITF_BLOCKA",11) 
+            || EQUALN(papszSrcMD[iMD],"NITF_FHDR",9) )
+        {
+            char *pszName;
+            const char *pszValue = CPLParseNameValue( papszSrcMD[iMD], 
+                                                      &pszName );
+            if( CSLFetchNameValue( papszFullOptions, pszName+5 ) == NULL )
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, pszName+5, pszValue );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Set if we can set IREP.                                         */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(papszFullOptions,"IREP") == NULL )
