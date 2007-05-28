@@ -12,3 +12,9 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 
+plugin:	gdal_HDF5.dll
+
+gdal_HDF5.dll: $(OBJ)
+	link /dll /out:gdal_HDF5.dll $(OBJ) \
+		$(GDALLIB) $(HDF5_LIB)
+	if exist gdal_HDF5.dll.manifest mt -manifest gdal_HDF5.dll.manifest -outputresource:gdal_HDF5.dll;2
