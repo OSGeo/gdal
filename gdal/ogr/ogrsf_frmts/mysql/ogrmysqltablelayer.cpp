@@ -799,6 +799,7 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
     osCommand += ")";
     
     int nQueryResult = mysql_query(poDS->GetConn(), osCommand.c_str() );
+    const my_ulonglong nFID = mysql_insert_id( poDS->GetConn() );
     
     if( nQueryResult ){   
         int eErrorCode = mysql_errno(poDS->GetConn());
@@ -822,6 +823,10 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         hResult = NULL;
             
         return OGRERR_FAILURE;   
+    }
+
+    if( nFID > 0 ) {
+        poFeature->SetFID( nFID );
     }
 
     // make sure to attempt to free results of successful queries
