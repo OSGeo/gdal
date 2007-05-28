@@ -159,6 +159,40 @@ def nitf_7():
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
+# Verify we can open an NSIF file, and get metadata including BLOCKA.
+
+def nitf_8():
+
+    ds = gdal.Open( 'data/fake_nsif.ntf' )
+    
+    chksum = ds.GetRasterBand(1).Checksum()
+    chksum_expect = 12033
+    if chksum != chksum_expect:
+	gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+	print chksum, chksum_expect
+	return 'fail'
+
+    md = ds.GetMetadata()
+    if md['NITF_FHDR'] != 'NSIF01.00':
+        gdaltest.post_reason( 'Got wrong FHDR value' )
+        return 'fail'
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+41.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+41.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+41.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+41.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -177,6 +211,7 @@ gdaltest_list = [
     nitf_5,
     nitf_6,
     nitf_7,
+    nitf_8,
     nitf_cleanup ]
 
 if __name__ == '__main__':
