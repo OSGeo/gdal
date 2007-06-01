@@ -39,7 +39,6 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 
 {
     AIGInfo_t	*psInfo;
-    char	*pszHDRFilename;
     char        *pszCoverName;
 
     (void) pszAccess;
@@ -85,63 +84,17 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open the file w001001.adf file itself.                          */
-/* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
-    sprintf( pszHDRFilename, "%s/w001001.adf", pszCoverName );
-
-    psInfo->fpGrid = AIGLLOpen( pszHDRFilename, "rb" );
-    
-    if( psInfo->fpGrid == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open grid file:\n%s\n",
-                  pszHDRFilename );
-
-        CPLFree( psInfo );
-        CPLFree( pszHDRFilename );
-        CPLFree( pszCoverName );
-        return( NULL );
-    }
-
-    CPLFree( pszHDRFilename );
-    pszHDRFilename = NULL;
-    
-/* -------------------------------------------------------------------- */
-/*      Read the block index file.                                      */
-/* -------------------------------------------------------------------- */
-    if( AIGReadBlockIndex( pszCoverName, psInfo ) != CE_None )
-    {
-        VSIFCloseL( psInfo->fpGrid );
-        
-        CPLFree( psInfo );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Read the extents.                                               */
 /* -------------------------------------------------------------------- */
     if( AIGReadBounds( pszCoverName, psInfo ) != CE_None )
     {
-        VSIFCloseL( psInfo->fpGrid );
-        
-        CPLFree( psInfo );
+        AIGClose( psInfo );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the statistics.                                            */
-/* -------------------------------------------------------------------- */
-    if( AIGReadStatistics( pszCoverName, psInfo ) != CE_None )
-    {
-        VSIFCloseL( psInfo->fpGrid );
-        
-        CPLFree( psInfo );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Compute the number of pixels and lines.                         */
+/*      Compute the number of pixels and lines, and the number of       */
+/*      tile files.                                                     */
 /* -------------------------------------------------------------------- */
     psInfo->nPixels = (int)
         ((psInfo->dfURX - psInfo->dfLLX + 0.5 * psInfo->dfCellSizeX) 
@@ -149,8 +102,90 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     psInfo->nLines = (int)
         ((psInfo->dfURY - psInfo->dfLLY + 0.5 * psInfo->dfCellSizeY) 
 		/ psInfo->dfCellSizeY);
-    
+
+    psInfo->nTileXSize = psInfo->nBlockXSize * psInfo->nBlocksPerRow;
+    psInfo->nTileYSize = psInfo->nBlockYSize * psInfo->nBlocksPerColumn;
+
+    psInfo->nTilesPerRow = (psInfo->nPixels-1) / psInfo->nTileXSize + 1;
+    psInfo->nTilesPerColumn = (psInfo->nLines-1) / psInfo->nTileYSize + 1;
+
+/* -------------------------------------------------------------------- */
+/*      Setup tile infos, but defer reading of tile data.               */
+/* -------------------------------------------------------------------- */
+    psInfo->pasTileInfo = (AIGTileInfo *) 
+        CPLCalloc(sizeof(AIGTileInfo),
+                  psInfo->nTilesPerRow * psInfo->nTilesPerColumn);
+/* -------------------------------------------------------------------- */
+/*      Read the statistics.                                            */
+/* -------------------------------------------------------------------- */
+    if( AIGReadStatistics( pszCoverName, psInfo ) != CE_None )
+    {
+        AIGClose( psInfo );
+        return NULL;
+    }
+
     return( psInfo );
+}
+
+/************************************************************************/
+/*                           AIGAccessTile()                            */
+/************************************************************************/
+
+CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
+
+{
+    char szBasename[20];
+    char *pszFilename;
+    AIGTileInfo *psTInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Identify our tile.                                              */
+/* -------------------------------------------------------------------- */
+    if( iTileX < 0 || iTileX >= psInfo->nTilesPerRow
+        || iTileY < 0 || iTileY >= psInfo->nTilesPerColumn )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
+
+    if( psTInfo->fpGrid != NULL )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Compute the basename.                                           */
+/* -------------------------------------------------------------------- */
+    if( iTileY == 0 )
+        sprintf( szBasename, "w%03d001", iTileX + 1 );
+    else if( iTileY == 1 )
+        sprintf( szBasename, "w%03d000", iTileX + 1 );
+    else
+        sprintf( szBasename, "z%03d%03d", iTileX + 1, iTileY - 2 );
+    
+/* -------------------------------------------------------------------- */
+/*      Open the file w001001.adf file itself.                          */
+/* -------------------------------------------------------------------- */
+    pszFilename = (char *) CPLMalloc(strlen(psInfo->pszCoverName)+40);
+    sprintf( pszFilename, "%s/%s.adf", psInfo->pszCoverName, szBasename );
+
+    psTInfo->fpGrid = AIGLLOpen( pszFilename, "rb" );
+    
+    if( psTInfo->fpGrid == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open grid file:\n%s\n",
+                  pszFilename );
+        return CE_Failure;
+    }
+
+    CPLFree( pszFilename );
+    pszFilename = NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Read the block index file.                                      */
+/* -------------------------------------------------------------------- */
+    return AIGReadBlockIndex( psInfo, psTInfo, szBasename );
 }
 
 /************************************************************************/
@@ -163,6 +198,24 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 {
     int		nBlockID;
     CPLErr	eErr;
+    int         iTileX, iTileY;
+    AIGTileInfo *psTInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Compute our tile, and ensure it is accessable (open).  Then     */
+/*      reduce block x/y values to be the block within that tile.       */
+/* -------------------------------------------------------------------- */
+    iTileX = nBlockXOff / psInfo->nBlocksPerRow;
+    iTileY = nBlockYOff / psInfo->nBlocksPerColumn;
+
+    eErr = AIGAccessTile( psInfo, iTileX, iTileY );
+    if( eErr != CE_None )
+        return eErr;
+
+    psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
+
+    nBlockXOff -= iTileX * psInfo->nBlocksPerRow;
+    nBlockYOff -= iTileY * psInfo->nBlocksPerColumn;
 
 /* -------------------------------------------------------------------- */
 /*      validate block id.                                              */
@@ -176,7 +229,7 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if( nBlockID >= psInfo->nBlocks )
+    if( nBlockID >= psTInfo->nBlocks )
     {
         int i;
         CPLDebug( "AIG", 
@@ -190,9 +243,9 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read block.                                                     */
 /* -------------------------------------------------------------------- */
-    eErr = AIGReadBlock( psInfo->fpGrid,
-                         psInfo->panBlockOffset[nBlockID],
-                         psInfo->panBlockSize[nBlockID],
+    eErr = AIGReadBlock( psTInfo->fpGrid,
+                         psTInfo->panBlockOffset[nBlockID],
+                         psTInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
                          panData, psInfo->nCellType );
 
@@ -223,6 +276,24 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 {
     int		nBlockID;
     CPLErr	eErr;
+    int         iTileX, iTileY;
+    AIGTileInfo *psTInfo;
+
+/* -------------------------------------------------------------------- */
+/*      Compute our tile, and ensure it is accessable (open).  Then     */
+/*      reduce block x/y values to be the block within that tile.       */
+/* -------------------------------------------------------------------- */
+    iTileX = nBlockXOff / psInfo->nBlocksPerRow;
+    iTileY = nBlockYOff / psInfo->nBlocksPerColumn;
+
+    eErr = AIGAccessTile( psInfo, iTileX, iTileY );
+    if( eErr != CE_None )
+        return eErr;
+
+    psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
+
+    nBlockXOff -= iTileX * psInfo->nBlocksPerRow;
+    nBlockYOff -= iTileY * psInfo->nBlocksPerColumn;
 
 /* -------------------------------------------------------------------- */
 /*      validate block id.                                              */
@@ -236,7 +307,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if( nBlockID >= psInfo->nBlocks )
+    if( nBlockID >= psTInfo->nBlocks )
     {
         int i;
         CPLDebug( "AIG", 
@@ -250,9 +321,9 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Read block.                                                     */
 /* -------------------------------------------------------------------- */
-    eErr = AIGReadBlock( psInfo->fpGrid,
-                         psInfo->panBlockOffset[nBlockID],
-                         psInfo->panBlockSize[nBlockID],
+    eErr = AIGReadBlock( psTInfo->fpGrid,
+                         psTInfo->panBlockOffset[nBlockID],
+                         psTInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
                          (GInt32 *) pafData, psInfo->nCellType );
 
@@ -280,10 +351,21 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 void AIGClose( AIGInfo_t * psInfo )
 
 {
-    VSIFCloseL( psInfo->fpGrid );
+    int nTileCount = psInfo->nTilesPerRow * psInfo->nTilesPerColumn;
+    int iTile;
 
-    CPLFree( psInfo->panBlockOffset );
-    CPLFree( psInfo->panBlockSize );
+    for( iTile = 0; iTile < nTileCount; iTile++ )
+    {
+        if( psInfo->pasTileInfo[iTile].fpGrid )
+        {
+            VSIFCloseL( psInfo->pasTileInfo[iTile].fpGrid );
+
+            CPLFree( psInfo->pasTileInfo[iTile].panBlockOffset );
+            CPLFree( psInfo->pasTileInfo[iTile].panBlockSize );
+        }
+    }
+
+    CPLFree( psInfo->pasTileInfo );
     CPLFree( psInfo->pszCoverName );
     CPLFree( psInfo );
 }
