@@ -161,7 +161,7 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
     else if( iTileY == 1 )
         sprintf( szBasename, "w%03d000", iTileX + 1 );
     else
-        sprintf( szBasename, "z%03d%03d", iTileX + 1, iTileY - 2 );
+        sprintf( szBasename, "z%03d%03d", iTileX + 1, iTileY - 1 );
     
 /* -------------------------------------------------------------------- */
 /*      Open the file w001001.adf file itself.                          */
