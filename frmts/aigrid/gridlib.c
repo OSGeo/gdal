@@ -767,7 +767,8 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 /*      structure with the block offsets, and sizes.                    */
 /************************************************************************/
 
-CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
+CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo, 
+                          const char *pszBasename )
 
 {
     char	*pszHDRFilename;
@@ -780,8 +781,8 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file hdr.adf file.                                     */
 /* -------------------------------------------------------------------- */
-    pszHDRFilename = (char *) CPLMalloc(strlen(pszCoverName)+40);
-    sprintf( pszHDRFilename, "%s/w001001x.adf", pszCoverName );
+    pszHDRFilename = (char *) CPLMalloc(strlen(psInfo->pszCoverName)+40);
+    sprintf( pszHDRFilename, "%s/%sx.adf", psInfo->pszCoverName, pszBasename );
 
     fp = AIGLLOpen( pszHDRFilename, "rb" );
     
@@ -835,26 +836,26 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
 /*      Allocate buffer, and read the file (from beyond the header)     */
 /*      into the buffer.                                                */
 /* -------------------------------------------------------------------- */
-    psInfo->nBlocks = (nLength-100) / 8;
-    panIndex = (GUInt32 *) CPLMalloc(psInfo->nBlocks * 8);
+    psTInfo->nBlocks = (nLength-100) / 8;
+    panIndex = (GUInt32 *) CPLMalloc(psTInfo->nBlocks * 8);
     VSIFSeekL( fp, 100, SEEK_SET );
-    VSIFReadL( panIndex, 8, psInfo->nBlocks, fp );
+    VSIFReadL( panIndex, 8, psTInfo->nBlocks, fp );
 
     VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*	Allocate AIGInfo block info arrays.				*/
 /* -------------------------------------------------------------------- */
-    psInfo->panBlockOffset = (GUInt32 *) CPLMalloc(4 * psInfo->nBlocks);
-    psInfo->panBlockSize = (int *) CPLMalloc(4 * psInfo->nBlocks);
+    psTInfo->panBlockOffset = (GUInt32 *) CPLMalloc(4 * psTInfo->nBlocks);
+    psTInfo->panBlockSize = (int *) CPLMalloc(4 * psTInfo->nBlocks);
 
 /* -------------------------------------------------------------------- */
 /*      Populate the block information.                                 */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < psInfo->nBlocks; i++ )
+    for( i = 0; i < psTInfo->nBlocks; i++ )
     {
-        psInfo->panBlockOffset[i] = CPL_MSBWORD32(panIndex[i*2]) * 2;
-        psInfo->panBlockSize[i] = CPL_MSBWORD32(panIndex[i*2+1]) * 2;
+        psTInfo->panBlockOffset[i] = CPL_MSBWORD32(panIndex[i*2]) * 2;
+        psTInfo->panBlockSize[i] = CPL_MSBWORD32(panIndex[i*2+1]) * 2;
     }
 
     CPLFree( panIndex );

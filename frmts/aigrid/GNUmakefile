@@ -9,7 +9,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o aitest $(OBJ)
+	rm -f *.o aitest $(OBJ) $(O_OBJ)
 
 aitest:	aitest.o $(AIGOBJ)
 	$(CXX) aitest.o $(AIGOBJ) ../../port/*.o $(CONFIG_LIBS) -o aitest
