@@ -872,6 +872,26 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               dfDoubleRet = nValue;
               nIntRet = nValue;
           }
+          else if( nBaseItemType == EPT_s32 )
+          {
+              GInt32  nValue;
+              
+              memcpy( &nValue, pabyData + 4*nIndexValue, 4 );
+              HFAStandard( 4, &nValue );
+
+              dfDoubleRet = nValue;
+              nIntRet = nValue;
+          }
+          else if( nBaseItemType == EPT_u32 )
+          {
+              GUInt32  nValue;
+              
+              memcpy( &nValue, pabyData + 4*nIndexValue, 4 );
+              HFAStandard( 4, &nValue );
+
+              dfDoubleRet = nValue;
+              nIntRet = nValue;
+          }
           else if( nBaseItemType == EPT_f32 )
           {
               float fValue;
