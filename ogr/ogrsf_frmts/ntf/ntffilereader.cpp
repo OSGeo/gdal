@@ -449,7 +449,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         nProduct = NPC_LANDRANGER_DTM;
     else if( EQUALN(pszProduct,"L-F_PROFILE_DTM",15) )
         nProduct = NPC_LANDFORM_PROFILE_DTM;
-    else if( EQUALN(pszProduct,"NEXTMap Britian DTM",19) )
+    else if( EQUALN(pszProduct,"NEXTMap Britain DTM",19) )
         nProduct = NPC_LANDFORM_PROFILE_DTM; // Treat as landform
 
     if( poDS->GetOption("FORCE_GENERIC") != NULL
