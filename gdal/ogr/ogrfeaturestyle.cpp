@@ -310,9 +310,6 @@ GBool OGRStyleMgr::AddPart(const char *pszPart)
     }
 
     return FALSE;
-
-
-
 }
 
 /****************************************************************************/
@@ -347,6 +344,8 @@ GBool OGRStyleMgr::AddPart(OGRStyleTool *poStyleTool)
 /****************************************************************************/
 /*            int OGRStyleMgr::GetPartCount(const char *pszStyleString)     */
 /*            return the number of part in the stylestring                  */
+/* FIXME: this function should actually parse style string instead of simple*/
+/*        semicolon counting, we should not count broken and empty parts.   */
 /****************************************************************************/
 int OGRStyleMgr::GetPartCount(const char *pszStyleString)
 {
@@ -364,7 +363,9 @@ int OGRStyleMgr::GetPartCount(const char *pszStyleString)
       return 0;
 
     pszStrTmp = pszString;
-    while ((pszPart = strstr(pszStrTmp,";")) != NULL)
+    // Search for parts separated by semicolons not counting the possible
+    // semicolon at the and of string.
+    while ((pszPart = strstr(pszStrTmp,";")) != NULL && pszPart[1] != '\0')
     {
         pszStrTmp = &pszPart[1];
         nPartCount++;
