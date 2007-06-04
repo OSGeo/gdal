@@ -480,11 +480,13 @@ int DDFRecord::ReadHeader()
         }
         while(DDF_FIELD_TERMINATOR != tmpBuf[0]);
 
-        // Now, rewind a little.  Only the TERMINATOR should have been read:
+        // --------------------------------------------------------------------
+        // Now, rewind a little.  Only the TERMINATOR should have been read
+        // --------------------------------------------------------------------
         int rewindSize = nFieldEntryWidth - 1;
         FILE *fp = poModule->GetFP();
-        long pos = ftell(fp) - rewindSize;
-        fseek(fp, pos, SEEK_SET);
+        vsi_l_offset pos = VSIFTellL(fp) - rewindSize;
+        VSIFSeekL(fp, pos, SEEK_SET);
         nDataSize -= rewindSize;
 
         // --------------------------------------------------------------------
