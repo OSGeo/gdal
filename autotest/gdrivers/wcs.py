@@ -82,8 +82,8 @@ def wcs_3():
 	return 'skip'
 
     if gdaltest.wcs_ds.RasterXSize != 43200 \
-       and gdaltest.wcs_ds.RasterYSize != 21600 \
-       and gdaltest.wcs_ds.BandCount != 1:
+       or gdaltest.wcs_ds.RasterYSize != 21600 \
+       or gdaltest.wcs_ds.RasterCount != 1:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
     
@@ -145,8 +145,8 @@ def wcs_5():
         return 'fail'
 
     if ds.RasterXSize != 43200 \
-       and ds.RasterYSize != 21600 \
-       and ds.BandCount != 1:
+       or ds.RasterYSize != 21600 \
+       or ds.RasterCount != 1:
         gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
 
