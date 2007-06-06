@@ -171,6 +171,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_BMP();
 #endif
 
+#ifdef FRMT_dimap
+    GDALRegister_DIMAP();
+#endif
+
 #ifdef FRMT_airsar
     GDALRegister_AirSAR();
 #endif
