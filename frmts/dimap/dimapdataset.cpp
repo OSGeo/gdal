@@ -86,16 +86,7 @@ DIMAPDataset::DIMAPDataset()
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup("");
 
-    if( poImageDS != NULL )
-        delete poImageDS;
-
-/* -------------------------------------------------------------------- */
-/*      Disconnect the bands so our destructor doesn't try and          */
-/*      delete them since they really belonged to poImageDS.            */
-/* -------------------------------------------------------------------- */
-    int iBand;
-    for( iBand = 0; iBand < GetRasterCount(); iBand++ )
-        papoBands[iBand] = NULL;
+    poImageDS = NULL;
 }
 
 /************************************************************************/
@@ -115,6 +106,17 @@ DIMAPDataset::~DIMAPDataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+
+    if( poImageDS != NULL )
+        delete poImageDS;
+
+/* -------------------------------------------------------------------- */
+/*      Disconnect the bands so our destructor doesn't try and          */
+/*      delete them since they really belonged to poImageDS.            */
+/* -------------------------------------------------------------------- */
+    int iBand;
+    for( iBand = 0; iBand < GetRasterCount(); iBand++ )
+        papoBands[iBand] = NULL;
 }
 
 /************************************************************************/
