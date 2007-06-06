@@ -180,13 +180,16 @@ class GTiffRasterBand : public GDALPamRasterBand
 {
     friend class GTiffDataset;
 
-    GDALColorInterp         eBandInterp;
+    GDALColorInterp    eBandInterp;
 
-    int    bHaveOffsetScale;
-    double dfOffset;
-    double dfScale;
+    int                bHaveOffsetScale;
+    double             dfOffset;
+    double             dfScale;
 
-  public:
+protected:
+    GTiffDataset       *poGDS;
+
+public:
                    GTiffRasterBand( GTiffDataset *, int );
 
     // should override RasterIO eventually.
@@ -220,6 +223,8 @@ class GTiffRasterBand : public GDALPamRasterBand
 GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 
 {
+    poGDS = poDS;
+
     this->poDS = poDS;
     this->nBand = nBand;
 
@@ -367,7 +372,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int			nBlockBufSize, nBlockId, nBlockIdBand0;
     CPLErr		eErr = CE_None;
 
@@ -534,7 +538,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int		nBlockId, nBlockBufSize;
     CPLErr      eErr = CE_None;
 
@@ -657,8 +660,6 @@ double GTiffRasterBand::GetOffset( int *pbSuccess )
 CPLErr GTiffRasterBand::SetOffset( double dfNewValue )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     poGDS->bMetadataChanged = TRUE;
 
     bHaveOffsetScale = TRUE;
@@ -685,8 +686,6 @@ double GTiffRasterBand::GetScale( int *pbSuccess )
 CPLErr GTiffRasterBand::SetScale( double dfNewValue )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     poGDS->bMetadataChanged = TRUE;
 
     bHaveOffsetScale = TRUE;
@@ -701,8 +700,6 @@ CPLErr GTiffRasterBand::SetScale( double dfNewValue )
 CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     poGDS->bMetadataChanged = TRUE;
     return GDALPamRasterBand::SetMetadata( papszMD, pszDomain );
 }
@@ -716,8 +713,6 @@ CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName,
                                          const char *pszDomain )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     poGDS->bMetadataChanged = TRUE;
     return GDALPamRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
 }
@@ -739,8 +734,6 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     if( eInterp == eBandInterp )
         return CE_None;
     
@@ -784,8 +777,6 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
 GDALColorTable *GTiffRasterBand::GetColorTable()
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     if( nBand == 1 )
         return poGDS->poColorTable;
     else
@@ -799,8 +790,6 @@ GDALColorTable *GTiffRasterBand::GetColorTable()
 CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
 /* -------------------------------------------------------------------- */
 /*      Check if this is even a candidate for applying a PCT.           */
 /* -------------------------------------------------------------------- */
@@ -882,8 +871,6 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     if( pbSuccess )
         *pbSuccess = poGDS->bNoDataSet;
 
@@ -897,8 +884,6 @@ double GTiffRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     poGDS->bNoDataSet = TRUE;
     poGDS->bNoDataChanged = TRUE;
     poGDS->dfNoDataValue = dfNoData;
@@ -913,8 +898,6 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 int GTiffRasterBand::GetOverviewCount()
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     if( poGDS->nOverviewCount > 0 )
         return poGDS->nOverviewCount;
     else
@@ -928,8 +911,6 @@ int GTiffRasterBand::GetOverviewCount()
 GDALRasterBand *GTiffRasterBand::GetOverview( int i )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
-
     if( poGDS->nOverviewCount > 0 )
     {
         if( i < 0 || i >= poGDS->nOverviewCount )
@@ -993,7 +974,6 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int			nBlockBufSize, nBlockId;
     CPLErr		eErr = CE_None;
 
@@ -1211,7 +1191,6 @@ CPLErr GTiffBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int			nBlockBufSize, nBlockId;
     CPLErr		eErr = CE_None;
 
@@ -1331,7 +1310,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                       void *pImage )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int		nBlockId, nBlockBufSize;
     CPLErr      eErr = CE_None;
 
@@ -1448,7 +1426,6 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 
 {
-    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
     int			nBlockBufSize, nBlockId;
     CPLErr		eErr = CE_None;
 
