@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.45 2005/03/15 16:01:18 fwarmerdam Exp $
+ * $Id: geo_normalize.c,v 1.48 2007/06/06 02:17:04 fwarmerdam Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,16 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.48  2007/06/06 02:17:04  fwarmerdam
+ * added builtin known values for foot and us survey foot
+ *
+ * Revision 1.47  2007/03/13 18:04:33  fwarmerdam
+ * added new zealand map grid support per bug 1519
+ *
+ * Revision 1.46  2006/04/11 19:25:06  fwarmerdam
+ * Be careful about falling back to gdal_datum.csv as it can interfere
+ * with incode datum.csv support.
+ *
  * Revision 1.45  2005/03/15 16:01:18  fwarmerdam
  * zero inv flattening interpreted as sphere
  *
@@ -739,7 +749,13 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
 /*      acceptable fallback.  Mostly this is for GDAL.                  */
 /* -------------------------------------------------------------------- */
     if( (fp = VSIFOpen(pszFilename,"r")) == NULL )
-        pszFilename = CSVFilename( "gdal_datum.csv" );
+    {
+        if( (fp = VSIFOpen(CSVFilename("gdal_datum.csv"), "r")) != NULL )
+        {
+            pszFilename = CSVFilename( "gdal_datum.csv" );
+            VSIFClose( fp );
+        }        
+    }
     else
         VSIFClose( fp );
 
@@ -825,7 +841,8 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
     const char *pszFilename;
 
 /* -------------------------------------------------------------------- */
-/*      We short cut meter to save work in the most common case.        */
+/*      We short cut meter to save work and avoid failure for missing   */
+/*      in the most common cases.       				*/
 /* -------------------------------------------------------------------- */
     if( nUOMLengthCode == 9001 )
     {
@@ -833,6 +850,26 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
             *ppszUOMName = CPLStrdup( "metre" );
         if( pdfInMeters != NULL )
             *pdfInMeters = 1.0;
+
+        return TRUE;
+    }
+
+    if( nUOMLengthCode == 9002 )
+    {
+        if( ppszUOMName != NULL )
+            *ppszUOMName = CPLStrdup( "foot" );
+        if( pdfInMeters != NULL )
+            *pdfInMeters = 0.3048;
+
+        return TRUE;
+    }
+
+    if( nUOMLengthCode == 9003 )
+    {
+        if( ppszUOMName != NULL )
+            *ppszUOMName = CPLStrdup( "US survey foot" );
+        if( pdfInMeters != NULL )
+            *pdfInMeters = 12.0 / 39.37;
 
         return TRUE;
     }
@@ -1555,6 +1592,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_Gnomonic:
       case CT_LambertAzimEqualArea:
       case CT_Orthographic:
+      case CT_NewZealandMapGrid:
 /* -------------------------------------------------------------------- */
         if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
