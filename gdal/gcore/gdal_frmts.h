@@ -116,6 +116,7 @@ void CPL_DLL GDALRegister_GRIB(void);
 void CPL_DLL GDALRegister_INGR(void);
 void CPL_DLL GDALRegister_ERS(void);
 void CPL_DLL GDALRegister_PALSAR();
+void CPL_DLL GDALRegister_DIMAP();
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
