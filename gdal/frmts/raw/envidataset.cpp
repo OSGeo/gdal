@@ -458,7 +458,7 @@ void ENVIDataset::WriteProjectionInfo()
 /* -------------------------------------------------------------------- */
     CPLString   osLocation;
 
-    osLocation.Printf( "1, 1, %f, %f, %f, %f", 
+    osLocation.Printf( "1, 1, %.15g, %.15g, %.15g, %.15g", 
                        adfGeoTransform[0], adfGeoTransform[3], 
                        adfGeoTransform[1], fabs(adfGeoTransform[5]) );
                        
