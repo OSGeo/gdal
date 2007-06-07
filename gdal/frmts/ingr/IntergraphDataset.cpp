@@ -321,44 +321,56 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         {
         case JPEGRGB:
         case JPEGCYMK:
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset, 1 ));
+                new IntergraphBitmapBand( poDS, nBands, nBandOffset, 1 ));
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset, 2 ));
+                new IntergraphBitmapBand( poDS, nBands, nBandOffset, 2 ));
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset, 3 ));
+                new IntergraphBitmapBand( poDS, nBands, nBandOffset, 3 ));
             break;
         case JPEGGRAY:
         case CCITTGroup4:
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset ));
+                new IntergraphBitmapBand( poDS, nBands, nBandOffset ));
             break;
         case RunLengthEncoded:
         case RunLengthEncodedC:
         case AdaptiveGrayScale:
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRLEBand( poDS, ++nBands, nBandOffset ));
+                new IntergraphRLEBand( poDS, nBands, nBandOffset ));
             break;
         case AdaptiveRGB:
         case ContinuousTone:
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRLEBand( poDS, ++nBands, nBandOffset, 1 ));
+                new IntergraphRLEBand( poDS, nBands, nBandOffset, 1 ));
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRLEBand( poDS, ++nBands, nBandOffset, 2 ));
+                new IntergraphRLEBand( poDS, nBands, nBandOffset, 2 ));
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRLEBand( poDS, ++nBands, nBandOffset, 3 ));
+                new IntergraphRLEBand( poDS, nBands, nBandOffset, 3 ));
             break;
         case Uncompressed24bit:
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRGBBand( poDS, ++nBands, nBandOffset, 1 ));
+                new IntergraphRGBBand( poDS, nBands, nBandOffset, 1 ));
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRGBBand( poDS, ++nBands, nBandOffset, 2 ));
+                new IntergraphRGBBand( poDS, nBands, nBandOffset, 2 ));
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRGBBand( poDS, ++nBands, nBandOffset, 3 ));
+                new IntergraphRGBBand( poDS, nBands, nBandOffset, 3 ));
             break;
         default:
+            nBands++;
             poDS->SetBand( nBands, 
-                new IntergraphRasterBand( poDS, ++nBands, nBandOffset ));
+                new IntergraphRasterBand( poDS, nBands, nBandOffset ));
         }
 
         // ----------------------------------------------------------------
