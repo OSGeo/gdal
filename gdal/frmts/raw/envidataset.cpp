@@ -432,7 +432,7 @@ void ENVIDataset::FlushCache()
                 pszHemisphere = "South";
                 dfPixelY = adfGeoTransform[5];
             }
-  	    VSIFPrintf( fp, "map info = {UTM, 1, 1, %f, %f, %f, %f, %d, %s}\n",
+  	    VSIFPrintf( fp, "map info = {UTM, 1, 1, %.15g, %.15g, %.15g, %.15g, %d, %s}\n",
                         adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
                         dfPixelY, iUTMZone, pszHemisphere);
         }
