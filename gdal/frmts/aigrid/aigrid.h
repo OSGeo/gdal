@@ -41,15 +41,20 @@ CPL_C_START
 /* ==================================================================== */
 /*      Grid Instance                                                   */
 /* ==================================================================== */
+
 typedef struct {
-    /* Private information */
-    
     int		nBlocks;
     GUInt32	*panBlockOffset;
     int		*panBlockSize;
 
     FILE	*fpGrid;	/* the w001001.adf file */
+} AIGTileInfo;
 
+typedef struct {
+    /* Private information */
+    
+    AIGTileInfo *pasTileInfo;
+    
     int		bHasWarned;
 
     /* public information */
@@ -66,6 +71,12 @@ typedef struct {
     
     int		nBlocksPerRow;
     int		nBlocksPerColumn;
+
+    int         nTileXSize;
+    int         nTileYSize;
+
+    int         nTilesPerRow;
+    int         nTilesPerColumn;
 
     double	dfLLX;
     double	dfLLY;
@@ -89,12 +100,14 @@ typedef struct {
 /*      Private APIs                                                    */
 /* ==================================================================== */
 
+CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY );
 CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize, GInt32 * panData,
                      int nCellType );
 
 CPLErr AIGReadHeader( const char *, AIGInfo_t * );
-CPLErr AIGReadBlockIndex( const char *, AIGInfo_t * );
+CPLErr AIGReadBlockIndex( AIGInfo_t *, AIGTileInfo *, 
+                          const char *pszBasename );
 CPLErr AIGReadBounds( const char *, AIGInfo_t * );
 CPLErr AIGReadStatistics( const char *, AIGInfo_t * );
 
