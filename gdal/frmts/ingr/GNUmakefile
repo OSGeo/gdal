@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	IntergraphDataset.o IntergraphBand.o IngrTypes.o
+OBJ	=	IntergraphDataset.o IntergraphBand.o IngrTypes.o JpegHelper.o
 
 CPPFLAGS	:=	-I../gtiff/libtiff $(GDAL_INCLUDE) $(CPPFLAGS)
 
