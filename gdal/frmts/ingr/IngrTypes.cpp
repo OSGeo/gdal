@@ -655,6 +655,8 @@ INGR_VirtualFile INGR_CreateVirtualFile( const char *pszFilename,
             TIFFClose( hTIFF );
             break;
         }
+    default:
+        return hVirtual;
     }
 
     hVirtual.poDS   = (GDALDataset*) GDALOpen( hVirtual.pszFileName, GA_ReadOnly );
