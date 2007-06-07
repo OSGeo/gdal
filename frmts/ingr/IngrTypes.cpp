@@ -115,7 +115,7 @@ static GByte BitReverseTable[256] =
 //                                                            INGR_GetDataType()
 // -----------------------------------------------------------------------------
 
-const GDALDataType INGR_GetDataType( uint16 eCode )
+const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 {
     unsigned int i;
 
@@ -134,7 +134,7 @@ const GDALDataType INGR_GetDataType( uint16 eCode )
 //                                                          INGR_GetFormatName()
 // -----------------------------------------------------------------------------
 
-const char * INGR_GetFormatName( uint16 eCode )
+const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
 {
     unsigned int i;
 
@@ -153,7 +153,7 @@ const char * INGR_GetFormatName( uint16 eCode )
 //                                                         INGR_GetOrientation()
 // -----------------------------------------------------------------------------
 
-const char * INGR_GetOrientation( uint8 nIndex )
+const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex )
 {
     return IngrOrientation[nIndex];
 }
@@ -162,7 +162,7 @@ const char * INGR_GetOrientation( uint8 nIndex )
 //                                                              INGR_GetFormat()
 // -----------------------------------------------------------------------------
 
-const INGR_Format INGR_GetFormat( GDALDataType eType, 
+const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
                                               const char *pszCompression )
 {
     if( EQUAL( pszCompression, "None" ) ||
@@ -198,7 +198,7 @@ const INGR_Format INGR_GetFormat( GDALDataType eType,
 //                                                         INGR_GetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
+void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 {
     padfGeoTransform[0] = padfMatrix[3];
     padfGeoTransform[1] = padfMatrix[0];
@@ -216,7 +216,7 @@ void INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 //                                                         INGR_SetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void INGR_SetTransMatrix( real64 *padfMatrix, 
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, 
                                     double *padfGeoTransform )
 {
     unsigned int i;
@@ -244,7 +244,7 @@ void INGR_SetTransMatrix( real64 *padfMatrix,
 //                                                          INGR_SetIGDSColors()
 // -----------------------------------------------------------------------------
 
-uint32 INGR_SetIGDSColors( GDALColorTable *poColorTable,
+uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                       INGR_ColorTable256 *pColorTableIGDS )
 {
     GDALColorEntry oEntry;
@@ -265,7 +265,7 @@ uint32 INGR_SetIGDSColors( GDALColorTable *poColorTable,
 //                                                       INGR_GetTileDirectory()
 // -----------------------------------------------------------------------------
 
-uint32 INGR_GetTileDirectory( FILE *fp,
+uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
                                           uint32 nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
@@ -325,10 +325,10 @@ uint32 INGR_GetTileDirectory( FILE *fp,
 //                                                          INGR_GetIGDSColors()
 // -----------------------------------------------------------------------------
 
-void INGR_GetIGDSColors( FILE *fp,
-                         uint32 nOffset,
-                         uint32 nEntries,
-                         GDALColorTable *poColorTable )
+void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
+                                     uint32 nOffset,
+                                     uint32 nEntries,
+                                     GDALColorTable *poColorTable )
 {
     if( fp == NULL ||
         nOffset < 0 ||
@@ -372,8 +372,8 @@ void INGR_GetIGDSColors( FILE *fp,
 //                                                       INGR_SetEnvironColors()
 // -----------------------------------------------------------------------------
 
-uint32 INGR_SetEnvironColors( GDALColorTable *poColorTable,
-                              INGR_ColorTableVar *pEnvironTable )
+uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
+                                          INGR_ColorTableVar *pEnvironTable )
 {
     GDALColorEntry oEntry;
     real32 fNormFactor = 0xfff / 255;
@@ -513,7 +513,7 @@ void INGR_GetEnvironVColors( FILE *fp,
 //                                                                  SetMiniMax()
 // -----------------------------------------------------------------------------
 
-INGR_MinMax INGR_SetMinMax( GDALDataType eType, double dValue )
+INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
 {
     INGR_MinMax uResult;
 
@@ -550,7 +550,7 @@ INGR_MinMax INGR_SetMinMax( GDALDataType eType, double dValue )
 //                                                              INGR_GetMinMax()
 // -----------------------------------------------------------------------------
 
-double INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
+double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
 {
     switch ( eType )
     {
@@ -569,7 +569,7 @@ double INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
 //                                                       INGR_GetDataBlockSize()
 // -----------------------------------------------------------------------------
 
-uint32 INGR_GetDataBlockSize( const char *pszFilename,
+uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
                                           uint32 nBandOffset,
                                           uint32 nDataOffset )
 {
@@ -597,7 +597,7 @@ uint32 INGR_GetDataBlockSize( const char *pszFilename,
 //                                                      INGR_CreateVirtualFile()
 // -----------------------------------------------------------------------------
 
-INGR_VirtualFile INGR_CreateVirtualFile( const char *pszFilename,
+INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
                                          INGR_Format eFormat,
                                          int nXSize, 
                                          int nYSize,
@@ -673,7 +673,7 @@ INGR_VirtualFile INGR_CreateVirtualFile( const char *pszFilename,
 //                                                            INGR_ReleaseTiff()
 // -----------------------------------------------------------------------------
 
-void INGR_ReleaseTiff( INGR_VirtualFile *poTiffMem )
+void CPL_STDCALL INGR_ReleaseTiff( INGR_VirtualFile *poTiffMem )
 {
     delete poTiffMem->poDS;
 //  VSIUnlink( poTiffMem->pszFileName );
@@ -683,7 +683,7 @@ void INGR_ReleaseTiff( INGR_VirtualFile *poTiffMem )
 //                                                            INGR_ReleaseTiff()
 // -----------------------------------------------------------------------------
 
-int INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
+int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
                                     uint32 nSeekLimit )
 {
     if( nAppDataOfseet == 0  )
@@ -719,8 +719,8 @@ int INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
 //                                                     INGR_DecodeRunLenth()
 // -----------------------------------------------------------------------------
 
-int INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
-                         int nSrcBytes, int nBlockSize )
+int CPL_STDCALL INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
+                                     uint32 nSrcBytes, uint32 nBlockSize )
 {
     signed char cAtomHead;
 

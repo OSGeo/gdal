@@ -409,7 +409,7 @@ typedef     struct {
 //    From the DNG OGR Driver
 //  ------------------------------------------------------------------
 
-void    DGN2IEEEDouble(void * dbl);
+void   DGN2IEEEDouble(void * dbl);
 
 //  ------------------------------------------------------------------
 //    Compression, Data Format, Data Type related funtions
@@ -472,7 +472,7 @@ double INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 //  ------------------------------------------------------------------
 
 int INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
-                             int nSrcBytes, int nBlockSize );
+                         uint32 nSrcBytes, uint32 nBlockSize );
 
 //  ------------------------------------------------------------------
 //    GeoTiff in memory helper

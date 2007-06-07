@@ -139,7 +139,7 @@ static GByte ZIGZAG[64] = {
   { int i; for( i = 0; i < 64; i++ ) ou[ZIGZAG[i]] = in[i]; }
 
 #define ADJUST(tb, op, vl) \
-  { int i; for( i = 0; i < 64; i++ ) tb[i] = tb[i] op vl; }
+  { int i; for( i = 0; i < 64; i++ ) tb[i] = (GByte) tb[i] op vl; }
 
 int JPGHLP_HeaderMaker( GByte *pabyBuffer,
                         const int nCols, 
