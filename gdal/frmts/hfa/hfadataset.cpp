@@ -668,7 +668,8 @@ double HFARasterBand::GetNoDataValue( int *pbSuccess )
 
     if( HFAGetBandNoData( hHFA, nBand, &dfNoData ) )
     {
-        *pbSuccess = TRUE;
+        if( pbSuccess )
+            *pbSuccess = TRUE;
         return dfNoData;
     }
     else
@@ -686,7 +687,8 @@ double HFARasterBand::GetMinimum( int *pbSuccess )
     
     if( pszValue != NULL )
     {
-        *pbSuccess = TRUE;
+        if( pbSuccess )
+            *pbSuccess = TRUE;
         return atof(pszValue);
     }
     else
@@ -706,7 +708,8 @@ double HFARasterBand::GetMaximum( int *pbSuccess )
     
     if( pszValue != NULL )
     {
-        *pbSuccess = TRUE;
+        if( pbSuccess )
+            *pbSuccess = TRUE;
         return atof(pszValue);
     }
     else
