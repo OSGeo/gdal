@@ -41,13 +41,11 @@ protected:
     GDALColorTable *poColorTable;
     uint32          nDataOffset;
     uint32          nBlockBufSize;
-    uint32          nBytesRead;
     uint32          nBandStart;
     uint8           nRGBIndex;
 
     INGR_Format     eFormat;
     bool            bTiled;
-    bool            bVirtualTile;
 
     GByte	       *pabyBlockBuf;
     uint32          nTiles;
@@ -75,8 +73,7 @@ public:
     virtual CPLErr SetStatistics( double dfMin, double dfMax, double dfMean, double dfStdDev );
 
 protected:
-    CPLErr  LoadBlockBuf( int nBlockXOff, int nBlockYOff );
-
+    int  LoadBlockBuf( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void ReshapeBlock( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void FlushBandHeader( void );
 };
@@ -87,14 +84,12 @@ protected:
 
 class IntergraphRGBBand : public IntergraphRasterBand
 {
-
 public:
     IntergraphRGBBand( IntergraphDataset *poDS, 
         int nBand,
         int nBandOffset,
         int nRGorB );
 
-    virtual GDALColorInterp GetColorInterpretation();
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
 
@@ -105,12 +100,37 @@ public:
 class IntergraphBitmapBand : public IntergraphRasterBand
 {
 private:
-    int nQuality;
+    GByte	       *pabyBMPBlock;
+    uint32          nBMPSize;
+    int             nQuality;
+    int             nRGBBand;
 
 public:
     IntergraphBitmapBand( IntergraphDataset *poDS, 
         int nBand,
-        int nBandOffset );
+        int nBandOffset,
+        int nRGorB = 1 );
+    ~IntergraphBitmapBand();
+
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+};
+
+//  ----------------------------------------------------------------------------
+//     Intergraph IntergraphRLEBand
+//  ----------------------------------------------------------------------------
+
+class IntergraphRLEBand : public IntergraphRasterBand
+{
+private:
+    GByte	       *pabyRLEBlock;
+    uint32          nRLESize;
+
+public:
+    IntergraphRLEBand( IntergraphDataset *poDS, 
+        int nBand,
+        int nBandOffset,
+        int nRGorB = 0);
+    ~IntergraphRLEBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };

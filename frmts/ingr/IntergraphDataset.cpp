@@ -55,9 +55,9 @@ IntergraphDataset::IntergraphDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
 
-    hTiffMem.poDS = NULL;
-    hTiffMem.poBand = NULL;
-    hTiffMem.pszFileName = NULL;
+    hVirtual.poDS = NULL;
+    hVirtual.poBand = NULL;
+    hVirtual.pszFileName = NULL;
 }
 
 //  ----------------------------------------------------------------------------
@@ -153,6 +153,29 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // -------------------------------------------------------------------- 
+    // Convert WAX REAL*8 to IEEE double
+    // -------------------------------------------------------------------- 
+
+    if( pHeaderOne->GridFileVersion < 3 )
+    {
+        DGN2IEEEDouble( &pHeaderOne->XViewOrigin );                
+        DGN2IEEEDouble( &pHeaderOne->YViewOrigin );                
+        DGN2IEEEDouble( &pHeaderOne->ZViewOrigin );                
+        DGN2IEEEDouble( &pHeaderOne->XViewExtent );                
+        DGN2IEEEDouble( &pHeaderOne->YViewExtent );                
+        DGN2IEEEDouble( &pHeaderOne->ZViewExtent );                
+        DGN2IEEEDouble( &pHeaderOne->RotationAngle );              
+        DGN2IEEEDouble( &pHeaderOne->SkewAngle );                  
+
+        uint8 i;
+
+        for( i = 0; i < 16; i++ )
+        {
+            DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
+        }
+    }
+
+    // -------------------------------------------------------------------- 
     // Get Data Type Code (DTC) => Format Type
     // -------------------------------------------------------------------- 
 
@@ -195,13 +218,16 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // Check Scannable Flag
     // -------------------------------------------------------------------- 
 
+    //TODO: Should we expect indexed uncompressed too?
+
+/*
     if (pHeaderOne->ScannableFlag == HasLineHeader)
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
             "Intergraph Raster Scannable Line Header not supported yet" );
         return NULL;
     }
-
+*/
     // -------------------------------------------------------------------- 
     // Check supported Format Type
     // -------------------------------------------------------------------- 
@@ -291,37 +317,48 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         VSIFReadL( &poDS->hHeaderOne, 1, SIZEOF_HDR1,   poDS->fp );
         VSIFReadL( &poDS->hHeaderTwo, 1, SIZEOF_HDR2_A, poDS->fp );
 
-        if( eFormat == Uncompressed24bit )
+        switch( eFormat )
         {
-            nBands++;
+        case JPEGRGB:
+        case JPEGCYMK:
             poDS->SetBand( nBands, 
-                new IntergraphRGBBand( poDS, nBands, nBandOffset, 3 ) );
-
-            nBands++;
+                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset, 1 ));
             poDS->SetBand( nBands, 
-                new IntergraphRGBBand( poDS, nBands, nBandOffset, 2 ) );
-
-            nBands++;
+                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset, 2 ));
             poDS->SetBand( nBands, 
-                new IntergraphRGBBand( poDS, nBands, nBandOffset, 1 ) );
-        }
-        else
-        {
-            nBands++;
-
-            switch( eFormat )
-            {
-            case JPEGGRAY:
-            case JPEGRGB:
-            case JPEGCYMK:
-            case CCITTGroup4:
-                poDS->SetBand( nBands, 
-                    new IntergraphBitmapBand( poDS, nBands, nBandOffset ) );
-                break;
-            default:
-                poDS->SetBand( nBands, 
-                    new IntergraphRasterBand( poDS, nBands, nBandOffset ) );
-            }
+                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset, 3 ));
+            break;
+        case JPEGGRAY:
+        case CCITTGroup4:
+            poDS->SetBand( nBands, 
+                new IntergraphBitmapBand( poDS, ++nBands, nBandOffset ));
+            break;
+        case RunLengthEncoded:
+        case RunLengthEncodedC:
+        case AdaptiveGrayScale:
+            poDS->SetBand( nBands, 
+                new IntergraphRLEBand( poDS, ++nBands, nBandOffset ));
+            break;
+        case AdaptiveRGB:
+        case ContinuousTone:
+            poDS->SetBand( nBands, 
+                new IntergraphRLEBand( poDS, ++nBands, nBandOffset, 1 ));
+            poDS->SetBand( nBands, 
+                new IntergraphRLEBand( poDS, ++nBands, nBandOffset, 2 ));
+            poDS->SetBand( nBands, 
+                new IntergraphRLEBand( poDS, ++nBands, nBandOffset, 3 ));
+            break;
+        case Uncompressed24bit:
+            poDS->SetBand( nBands, 
+                new IntergraphRGBBand( poDS, ++nBands, nBandOffset, 1 ));
+            poDS->SetBand( nBands, 
+                new IntergraphRGBBand( poDS, ++nBands, nBandOffset, 2 ));
+            poDS->SetBand( nBands, 
+                new IntergraphRGBBand( poDS, ++nBands, nBandOffset, 3 ));
+            break;
+        default:
+            poDS->SetBand( nBands, 
+                new IntergraphRasterBand( poDS, ++nBands, nBandOffset ));
         }
 
         // ----------------------------------------------------------------

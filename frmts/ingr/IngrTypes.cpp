@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 #include "IngrTypes.h"
+#include "JpegHelper.h"
 
 static INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},
@@ -114,7 +115,7 @@ static GByte BitReverseTable[256] =
 //                                                            INGR_GetDataType()
 // -----------------------------------------------------------------------------
 
-const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
+const GDALDataType INGR_GetDataType( uint16 eCode )
 {
     unsigned int i;
 
@@ -133,7 +134,7 @@ const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 //                                                          INGR_GetFormatName()
 // -----------------------------------------------------------------------------
 
-const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
+const char * INGR_GetFormatName( uint16 eCode )
 {
     unsigned int i;
 
@@ -161,7 +162,7 @@ const char * INGR_GetOrientation( uint8 nIndex )
 //                                                              INGR_GetFormat()
 // -----------------------------------------------------------------------------
 
-const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
+const INGR_Format INGR_GetFormat( GDALDataType eType, 
                                               const char *pszCompression )
 {
     if( EQUAL( pszCompression, "None" ) ||
@@ -197,7 +198,7 @@ const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
 //                                                         INGR_GetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
+void INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 {
     padfGeoTransform[0] = padfMatrix[3];
     padfGeoTransform[1] = padfMatrix[0];
@@ -215,10 +216,12 @@ void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransfo
 //                                                         INGR_SetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, 
+void INGR_SetTransMatrix( real64 *padfMatrix, 
                                     double *padfGeoTransform )
 {
-    for( int i = 0; i < 15; i++ )
+    unsigned int i;
+
+    for( i = 0; i < 15; i++ )
     {
         padfMatrix[i] = 0.0;
     }
@@ -241,7 +244,7 @@ void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix,
 //                                                          INGR_SetIGDSColors()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
+uint32 INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                       INGR_ColorTable256 *pColorTableIGDS )
 {
     GDALColorEntry oEntry;
@@ -262,7 +265,7 @@ uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
 //                                                       INGR_GetTileDirectory()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
+uint32 INGR_GetTileDirectory( FILE *fp,
                                           uint32 nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
@@ -322,10 +325,10 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
 //                                                          INGR_GetIGDSColors()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
-                                     uint32 nOffset,
-                                     uint32 nEntries,
-                                     GDALColorTable *poColorTable )
+void INGR_GetIGDSColors( FILE *fp,
+                         uint32 nOffset,
+                         uint32 nEntries,
+                         GDALColorTable *poColorTable )
 {
     if( fp == NULL ||
         nOffset < 0 ||
@@ -354,8 +357,9 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
     // -------------------------------------------------------------
 
     GDALColorEntry oEntry;
+    unsigned int i;
 
-    for( unsigned int i = 0; i < nEntries; i++ )
+    for( i = 0; i < nEntries; i++ )
     {
         oEntry.c1 = (short) hIGDSColors.Entry[i].v_red;
         oEntry.c2 = (short) hIGDSColors.Entry[i].v_green;
@@ -368,8 +372,8 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
 //                                                       INGR_SetEnvironColors()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
-                                         INGR_ColorTableVar *pEnvironTable )
+uint32 INGR_SetEnvironColors( GDALColorTable *poColorTable,
+                              INGR_ColorTableVar *pEnvironTable )
 {
     GDALColorEntry oEntry;
     real32 fNormFactor = 0xfff / 255;
@@ -391,10 +395,10 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
 //                                                      INGR_GetEnvironVColors()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
-                                         uint32 nOffset,
-                                         uint32 nEntries,
-                                         GDALColorTable *poColorTable )
+void INGR_GetEnvironVColors( FILE *fp,
+                             uint32 nOffset,
+                             uint32 nEntries,
+                             GDALColorTable *poColorTable )
 {
     if( fp == NULL ||
         nOffset < 0 ||
@@ -509,7 +513,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
 //                                                                  SetMiniMax()
 // -----------------------------------------------------------------------------
 
-INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
+INGR_MinMax INGR_SetMinMax( GDALDataType eType, double dValue )
 {
     INGR_MinMax uResult;
 
@@ -541,11 +545,12 @@ INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
 
     return uResult;
 }
+
 // -----------------------------------------------------------------------------
 //                                                              INGR_GetMinMax()
 // -----------------------------------------------------------------------------
 
-double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
+double INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
 {
     switch ( eType )
     {
@@ -561,98 +566,123 @@ double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
 }
 
 // -----------------------------------------------------------------------------
-//                                                             INGR_CreateTiff()
+//                                                       INGR_GetDataBlockSize()
 // -----------------------------------------------------------------------------
 
-INGR_TiffMem CPL_STDCALL INGR_CreateTiff( const char *pszFilename,
-                                          INGR_Format eFormat,
-                                          int nTiffXSize, 
-                                          int nTiffYSize,
-                                          int nQuality,
-                                          GByte *pabyBuffer,
-                                          int nBufferSize)
+uint32 INGR_GetDataBlockSize( const char *pszFilename,
+                                          uint32 nBandOffset,
+                                          uint32 nDataOffset )
 {
-    INGR_TiffMem hMTiff;
+    if( nBandOffset == 0 )
+    {
+        // -------------------------------------------------------------
+        // Until the end of the file
+        // -------------------------------------------------------------
 
-    hMTiff.pszFileName = CPLSPrintf( "/vsimem/%s.virtual.tiff", 
+        VSIStatBuf  sStat;
+        VSIStatL( pszFilename, &sStat );
+        return sStat.st_size - nDataOffset;
+    }
+    else
+    {
+        // -------------------------------------------------------------
+        // Until the end of the band
+        // -------------------------------------------------------------
+
+        return nBandOffset - nDataOffset;
+    }
+}
+
+// -----------------------------------------------------------------------------
+//                                                      INGR_CreateVirtualFile()
+// -----------------------------------------------------------------------------
+
+INGR_VirtualFile INGR_CreateVirtualFile( const char *pszFilename,
+                                         INGR_Format eFormat,
+                                         int nXSize, 
+                                         int nYSize,
+                                         int nQuality,
+                                         GByte *pabyBuffer,
+                                         int nBufferSize,
+                                         int nBand )
+{
+    INGR_VirtualFile hVirtual;
+
+    hVirtual.pszFileName = CPLSPrintf( // "/vsimem/%s.virtual",
+        "./%s.virtual", //TODO: remove it
         CPLGetBasename( pszFilename ) );
 
-    TIFF *hTIFF = VSI_TIFFOpen( hMTiff.pszFileName, "w+" );
+    int nJPGComponents = 1;
 
-    TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH,      nTiffXSize );
-    TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH,     nTiffYSize );
-    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,   1 );
-    TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT,    SAMPLEFORMAT_UINT );
-    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG );
-    TIFFSetField( hTIFF, TIFFTAG_FILLORDER,       FILLORDER_MSB2LSB );
-
-	switch( eFormat )
+    switch( eFormat )
     {
-    case JPEGGRAY:
-		uint16  nGrays[256];
-                int     i;
-#define	SCALE(x)	(((x)*((1L<<16)-1))/255)
-		for( i = 0; i < 256; i ++ )
-			nGrays[i] = SCALE(i);
-        TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP,    -1 );
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
-        TIFFSetField( hTIFF, TIFFTAG_COLORMAP,		  nGrays, nGrays, nGrays );
-        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_JPEG );
-        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_JPEG );
-        break;
-    case JPEGRGB: 
-		TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,	  nQuality );
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 3 );
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC,     PHOTOMETRIC_RGB );
-        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_JPEG );
-        break;
     case JPEGCYMK:
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 4 );
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC,     PHOTOMETRIC_YCBCR );
-        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_JPEG );
-        break;
+        nJPGComponents = 4;
+    case JPEGRGB: 
+        nJPGComponents = 3;
+    case JPEGGRAY:
+        {
+            GByte *pabyHeader = (GByte*) CPLCalloc( 1, 2048 );
+            int nHeaderSize   = JPGHLP_HeaderMaker( pabyHeader,
+                                                    nXSize,
+                                                    nYSize,
+                                                    nJPGComponents,
+                                                    0,
+                                                    nQuality );
+            FILE *fp = VSIFOpenL( hVirtual.pszFileName, "w+" );
+            VSIFWriteL( pabyHeader, 1, nHeaderSize, fp );
+            VSIFWriteL( pabyBuffer, 1, nBufferSize, fp );
+            VSIFCloseL( fp );
+            CPLFree( pabyHeader );
+            break;
+        }
     case CCITTGroup4:
-
-        REVERSEBITSBUFFER( pabyBuffer, nBufferSize );
-
-        TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP,    -1 );
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC,     PHOTOMETRIC_MINISWHITE );
-        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_CCITTFAX4 );
-        break;
-	default:
-	    TIFFClose( hTIFF );
-		return hMTiff;
+        {
+            REVERSEBITSBUFFER( pabyBuffer, nBufferSize );
+            TIFF *hTIFF = VSI_TIFFOpen( hVirtual.pszFileName, "w+" );
+            TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH,      nXSize );
+            TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH,     nYSize );
+            TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE,   1 );
+            TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT,    SAMPLEFORMAT_UINT );
+            TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG,    PLANARCONFIG_CONTIG );
+            TIFFSetField( hTIFF, TIFFTAG_FILLORDER,       FILLORDER_MSB2LSB );
+            TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP,    -1 );
+            TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC,     PHOTOMETRIC_MINISWHITE );
+            TIFFSetField( hTIFF, TIFFTAG_COMPRESSION,     COMPRESSION_CCITTFAX4 );
+            TIFFWriteRawStrip( hTIFF, 0, pabyBuffer, nBufferSize );
+            TIFFWriteDirectory( hTIFF );
+            TIFFClose( hTIFF );
+            break;
+        }
     }
 
-    TIFFWriteRawStrip( hTIFF, 0, pabyBuffer, nBufferSize );
-    TIFFWriteDirectory( hTIFF );
+    hVirtual.poDS   = (GDALDataset*) GDALOpen( hVirtual.pszFileName, GA_ReadOnly );
 
-    TIFFClose( hTIFF );
+    if( hVirtual.poDS )
+    {
+        hVirtual.poBand = (GDALRasterBand*) GDALGetRasterBand( hVirtual.poDS, nBand );
+    }
 
-    hMTiff.poDS   = (GDALDataset*) GDALOpen( hMTiff.pszFileName, GA_ReadOnly );
-    hMTiff.poBand = (GDALRasterBand*) GDALGetRasterBand( hMTiff.poDS, 1 );
-
-    return hMTiff;
+    return hVirtual;
 }
 
 // -----------------------------------------------------------------------------
 //                                                            INGR_ReleaseTiff()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_ReleaseTiff( INGR_TiffMem *poTiffMem )
+void INGR_ReleaseTiff( INGR_VirtualFile *poTiffMem )
 {
     delete poTiffMem->poDS;
-    VSIUnlink( poTiffMem->pszFileName );
+//  VSIUnlink( poTiffMem->pszFileName );
 }
 
 // -----------------------------------------------------------------------------
 //                                                            INGR_ReleaseTiff()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, 
-                                      uint32 nAppDataOfseet,
-                                      uint32 nSeekLimit )
+int INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
+                                    uint32 nSeekLimit )
 {
     if( nAppDataOfseet == 0  )
     {
@@ -684,143 +714,47 @@ int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp,
 }
 
 // -----------------------------------------------------------------------------
-//                                                      DecodeRunLengthEncoded()
+//                                                     INGR_DecodeRunLenth()
 // -----------------------------------------------------------------------------
 
-CPLErr DecodeRunLengthEncoded( GByte *pabySrcData, int nSrcBytes, 
-                               int nBlockXSize, int nBlockYSize )
+int INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
+                         int nSrcBytes, int nBlockSize )
 {
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeRunLengthEncoded not implemented yet");
-    return CE_Fatal;
+    signed char cAtomHead;
+
+    unsigned int nRun;
+    unsigned int i; 
+    unsigned int iInput;
+    unsigned int iOutput;
+
+    iInput = 0;
+    iOutput = 0;
+
+    do
+    {
+        cAtomHead = (char) pabySrcData[iInput++];
+
+        if( cAtomHead > 0 )
+        {
+            nRun = cAtomHead;
+
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[iOutput++] = pabySrcData[iInput++];
+            }
+        }
+        else if( cAtomHead < 0 )
+        {
+            nRun = abs( cAtomHead );
+
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[iOutput++] = pabySrcData[iInput];
+            }
+            iInput++;
+        }
+    }
+    while( (iInput < nSrcBytes) && (iOutput < nBlockSize) );
+
+    return iOutput;
 }
-
-// -----------------------------------------------------------------------------
-//                                                           DecodeAdaptiveRGB()
-// -----------------------------------------------------------------------------
-
-CPLErr DecodeAdaptiveRGB( GByte *pabySrcData, int nSrcBytes, 
-                          int nBlockXSize, int nBlockYSize )
-{
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeAdaptiveRGB not implemented yet");
-    return CE_Fatal;
-}
-
-// -----------------------------------------------------------------------------
-//                                                     DecodeAdaptiveGrayScale()
-// -----------------------------------------------------------------------------
-
-CPLErr DecodeAdaptiveGrayScale( GByte *pabySrcData, int nSrcBytes, 
-                                int nBlockXSize, int nBlockYSize )
-{
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeAdaptiveGrayScale not implemented yet");
-    return CE_Fatal;
-}
-
-// -----------------------------------------------------------------------------
-//                                                        DecodeContinuousTone()
-// -----------------------------------------------------------------------------
-
-CPLErr DecodeContinuousTone( GByte *pabySrcData, int nSrcBytes, 
-                             int nBlockXSize, int nBlockYSize )
-{
-    CPLError( CE_Failure, CPLE_FileIO, "DecodeContinuousTone not implemented yet");
-    return CE_Fatal;
-}
-
-//  ----------------------------------------------------------------------------
-//                                                         INGR_LoadJPEGTables()
-//  ----------------------------------------------------------------------------
-
-#ifdef undercontruction 
-
-void INGR_LoadJPEGTables( j_compress_ptr cinfo, int n, int nQLevel )
-{
-    if( nQLevel < 1 )
-        return;
-
-/* -------------------------------------------------------------------- */
-/*      Load quantization table						                    */
-/* -------------------------------------------------------------------- */
-    int i;
-    JQUANT_TBL  *quant_ptr;
-    const int *panQTable;
-
-    if( nQLevel == 1 )
-        panQTable = Q1table;
-    else if( nQLevel == 2 )
-        panQTable = Q2table;
-    else if( nQLevel == 3 )
-        panQTable = Q3table;
-    else if( nQLevel == 4 )
-        panQTable = Q4table;
-    else if( nQLevel == 5 )
-        panQTable = Q5table;
-    else
-        return;
-
-    if (cinfo->quant_tbl_ptrs[n] == NULL)
-    {
-        cinfo->quant_tbl_ptrs[n] = 
-            jpeg_alloc_quant_table( (j_common_ptr) cinfo );
-    }
-
-    quant_ptr = cinfo->quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
-
-    for (i = 0; i < 64; i++) 
-    {
-        /* Qtable[] is desired quantization table, in natural array order */
-        quant_ptr->quantval[i] = panQTable[i];
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Load AC huffman table.                                          */
-/* -------------------------------------------------------------------- */
-    JHUFF_TBL  *huff_ptr;
-
-    if (cinfo->ac_huff_tbl_ptrs[n] == NULL)
-    {
-        cinfo->ac_huff_tbl_ptrs[n] =
-            jpeg_alloc_huff_table( (j_common_ptr) cinfo );
-    }
-
-    huff_ptr = cinfo->ac_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
-
-    for (i = 1; i <= 16; i++) 
-    {
-        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
-        huff_ptr->bits[i] = AC_BITS[i-1];
-    }
-
-    for (i = 0; i < 256; i++) 
-    {
-        /* symbols[] is the list of Huffman symbols, in code-length order */
-        huff_ptr->huffval[i] = AC_HUFFVAL[i];
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Load DC huffman table.                                          */
-/* -------------------------------------------------------------------- */
-    if (cinfo->dc_huff_tbl_ptrs[n] == NULL)
-    {
-        cinfo->dc_huff_tbl_ptrs[n] =
-            jpeg_alloc_huff_table( (j_common_ptr) cinfo );
-    }
-
-    huff_ptr = cinfo->dc_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
-
-    for (i = 1; i <= 16; i++) 
-    {
-        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
-        huff_ptr->bits[i] = DC_BITS[i-1];
-    }
-
-    for (i = 0; i < 256; i++) 
-    {
-        /* symbols[] is the list of Huffman symbols, in code-length order */
-        huff_ptr->huffval[i] = DC_HUFFVAL[i];
-    }
-
-}
-
-#endif
-
