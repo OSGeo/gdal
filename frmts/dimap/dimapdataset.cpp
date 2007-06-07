@@ -5,6 +5,8 @@
  * Purpose:  Implementation of SPOT Dimap driver.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
+ * Docs: http://www.spotimage.fr/dimap/spec/documentation/refdoc.htm
+ * 
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -53,10 +55,17 @@ class DIMAPDataset : public GDALPamDataset
     GDAL_GCP      *pasGCPList;
     char          *pszGCPProjection;
 
+    CPLString     osProjection;
+
+    int           bHaveGeoTransform;
+    double        adfGeoTransform[6];
+
   public:
     		DIMAPDataset();
     	        ~DIMAPDataset();
     
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * );
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
@@ -87,6 +96,7 @@ DIMAPDataset::DIMAPDataset()
     pszGCPProjection = CPLStrdup("");
 
     poImageDS = NULL;
+    bHaveGeoTransform = FALSE;
 }
 
 /************************************************************************/
@@ -137,6 +147,35 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
     }
     else
         return GDALPamDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *DIMAPDataset::GetProjectionRef()
+
+{
+    if( strlen(osProjection) > 0 )
+        return osProjection;
+    else
+        return GDALPamDataset::GetProjectionRef();
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr DIMAPDataset::GetGeoTransform( double *padfGeoTransform )
+
+{
+    if( bHaveGeoTransform )
+    {
+        memcpy( padfGeoTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
+    else
+        return GDALPamDataset::GetGeoTransform( padfGeoTransform );
 }
 
 /************************************************************************/
@@ -232,10 +271,26 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( iBand, poDS->poImageDS->GetRasterBand( iBand ) );
 
 /* -------------------------------------------------------------------- */
-/*      Collect GCPs.                                                   */
+/*      Try to collect simple insertion point.                          */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psGeoLoc =  
-        CPLGetXMLNode( psDoc, "Geoposition.Geoposition_Points" );
+        CPLGetXMLNode( psDoc, "Geoposition.Geoposition_Insert" );
+
+    if( psGeoLoc != NULL )
+    {
+        poDS->bHaveGeoTransform = TRUE;
+        poDS->adfGeoTransform[0] = atof(CPLGetXMLValue(psGeoLoc,"ULXMAP","0"));
+        poDS->adfGeoTransform[1] = atof(CPLGetXMLValue(psGeoLoc,"XDIM","0"));
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = atof(CPLGetXMLValue(psGeoLoc,"ULYMAP","0"));
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -atof(CPLGetXMLValue(psGeoLoc,"YDIM","0"));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect GCPs.                                                   */
+/* -------------------------------------------------------------------- */
+    psGeoLoc = CPLGetXMLNode( psDoc, "Geoposition.Geoposition_Points" );
 
     if( psGeoLoc != NULL )
     {
@@ -294,7 +349,17 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         OGRSpatialReference oSRS;
         if( oSRS.SetFromUserInput( pszSRS ) == OGRERR_NONE )
-            oSRS.exportToWkt( &(poDS->pszGCPProjection) );
+        {
+            if( poDS->nGCPCount > 0 )
+                oSRS.exportToWkt( &(poDS->pszGCPProjection) );
+            else
+            {
+                char *pszProjection = NULL;
+                oSRS.exportToWkt( &pszProjection );
+                poDS->osProjection = pszProjection;
+                CPLFree( pszProjection );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
