@@ -579,7 +579,7 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
         // Until the end of the file
         // -------------------------------------------------------------
 
-        VSIStatBuf  sStat;
+        VSIStatBufL  sStat;
         VSIStatL( pszFilename, &sStat );
         return sStat.st_size - nDataOffset;
     }
@@ -716,7 +716,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
 }
 
 // -----------------------------------------------------------------------------
-//                                                     INGR_DecodeRunLenth()
+//                                                         INGR_DecodeRunLenth()
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
