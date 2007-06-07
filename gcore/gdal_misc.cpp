@@ -715,12 +715,12 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
  *
  *       pScaledProgress = GDALCreateScaledProgress( 0.0, 0.5, pfnProgress, 
  *                                                   pProgressData );
- *       GDALDoLongSlowOperation( ..., GDALScaledProgressFunc, pProgressData );
+ *       GDALDoLongSlowOperation( ..., GDALScaledProgressFunc, pScaledProgress );
  *       GDALDestroyScaledProgress( pScaledProgress );
  *
  *       pScaledProgress = GDALCreateScaledProgress( 0.5, 1.0, pfnProgress, 
  *                                                   pProgressData );
- *       GDALDoAnotherOperation( ..., GDALScaledProgressFunc, pProgressData );
+ *       GDALDoAnotherOperation( ..., GDALScaledProgressFunc, pScaledProgress );
  *       GDALDestroyScaledProgress( pScaledProgress );
  *
  *       return ...;
