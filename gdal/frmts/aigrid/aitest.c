@@ -41,23 +41,24 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
 
 {
     int		i;
+    AIGTileInfo *psTInfo = psInfo->pasTileInfo + 0;
 
-    for( i = 0; i < psInfo->nBlocks; i++ )
+    for( i = 0; i < psTInfo->nBlocks; i++ )
     {
         GByte	byMagic;
         int	bReport = bVerbose;
         unsigned char abyBlockSize[2];
         const char *pszMessage = "";
         
-        if( psInfo->panBlockSize[i] == 0 )
+        if( psTInfo->panBlockSize[i] == 0 )
             continue;
 
-        VSIFSeekL( psInfo->fpGrid, psInfo->panBlockOffset[i], SEEK_SET );
-        VSIFReadL( abyBlockSize, 2, 1, psInfo->fpGrid );
+        VSIFSeekL( psTInfo->fpGrid, psTInfo->panBlockOffset[i], SEEK_SET );
+        VSIFReadL( abyBlockSize, 2, 1, psTInfo->fpGrid );
 
         if( psInfo->nCellType == AIG_CELLTYPE_INT )
         {
-            VSIFReadL( &byMagic, 1, 1, psInfo->fpGrid );
+            VSIFReadL( &byMagic, 1, 1, psTInfo->fpGrid );
 
             if( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
                 && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
@@ -70,14 +71,14 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
                 bReport = TRUE;
             }
 
-            if( byMagic == 0 && psInfo->panBlockSize[i] > 8 )
+            if( byMagic == 0 && psTInfo->panBlockSize[i] > 8 )
             {
                 pszMessage = "(wrong size for 0x00 block, should be 8 bytes)";
                 bReport = TRUE;
             }
 
             if( (abyBlockSize[0] * 256 + abyBlockSize[1])*2 != 
-                psInfo->panBlockSize[i] )
+                psTInfo->panBlockSize[i] )
             {
                 pszMessage = "(block size in data doesn't match index)";
                 bReport = TRUE;
@@ -85,7 +86,7 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
         }
         else
         {
-            if( psInfo->panBlockSize[i] !=
+            if( psTInfo->panBlockSize[i] !=
                 psInfo->nBlockXSize*psInfo->nBlockYSize*sizeof(float) )
             {
                 pszMessage = "(floating point block size is wrong)";
@@ -96,8 +97,8 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
         if( bReport )
         {
             printf( " %02x %5d %5d @ %d %s\n", byMagic, i,
-                    psInfo->panBlockSize[i],
-                    psInfo->panBlockOffset[i],
+                    psTInfo->panBlockSize[i],
+                    psTInfo->panBlockOffset[i],
                     pszMessage );
         }
     }
@@ -143,6 +144,8 @@ int main( int argc, char ** argv )
     if( psInfo == NULL )
         exit( 1 );
 
+    AIGAccessTile( psInfo, 0, 0 );
+
 /* -------------------------------------------------------------------- */
 /*      Dump general information                                        */
 /* -------------------------------------------------------------------- */
@@ -183,13 +186,14 @@ int main( int argc, char ** argv )
     {
         int	nBlock = atoi(argv[2]);
         CPLErr  eErr;
+        AIGTileInfo *psTInfo = psInfo->pasTileInfo + 0;
 
         argv++;
         argc--;
         
-        eErr = AIGReadBlock( psInfo->fpGrid,
-                             psInfo->panBlockOffset[nBlock],
-                             psInfo->panBlockSize[nBlock],
+        eErr = AIGReadBlock( psTInfo->fpGrid,
+                             psTInfo->panBlockOffset[nBlock],
+                             psTInfo->panBlockSize[nBlock],
                              psInfo->nBlockXSize, psInfo->nBlockYSize,
                              panRaster, psInfo->nCellType );
 
