@@ -38,7 +38,7 @@ class IntergraphDataset : public GDALPamDataset
     friend class IntergraphRasterBand;
     friend class IntergraphRGBBand;
     friend class IntergraphBitmapBand;
-    friend class IntergraphJPEGBand;
+    friend class IntergraphRLEBand;
 
 private:
     FILE           *fp;
@@ -47,7 +47,7 @@ private:
 
     INGR_HeaderOne  hHeaderOne;
     INGR_HeaderTwoA hHeaderTwo;
-    INGR_TiffMem    hTiffMem;
+    INGR_VirtualFile    hVirtual;
 
 public:
     IntergraphDataset();

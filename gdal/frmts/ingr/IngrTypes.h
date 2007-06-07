@@ -30,6 +30,7 @@
 #ifndef INGR_TYPES_H_INCLUDED
 #define INGR_TYPES_H_INCLUDED
 
+#include "cpl_conv.h"
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -54,7 +55,6 @@ CPL_C_END
 //    Data type convention
 //  ----------------------------------------------------------------------------
 
-typedef   signed char       byte;
 typedef   signed char       int8;
 typedef unsigned char       uint8;
 typedef   signed short      int16;
@@ -249,13 +249,13 @@ typedef struct {
     real64              RotationAngle;              
     real64              SkewAngle;                  
     uint16              DataTypeModifier;           
-    byte                DesignFileName[66];         
-    byte                DataBaseFileName[66];       
-    byte                ParentGridFileName[66];     
-    byte                FileDescription[80];        
+    char                DesignFileName[66];         
+    char                DataBaseFileName[66];       
+    char                ParentGridFileName[66];     
+    char                FileDescription[80];        
     INGR_MinMax         Minimum;                    
     INGR_MinMax         Maximum;                    
-    byte                Reserved[3];                
+    char                Reserved[3];                
     uint8               GridFileVersion;            
 } INGR_HeaderOne;
 
@@ -338,7 +338,7 @@ typedef     struct {
     GDALDataset     *poDS;
     GDALRasterBand  *poBand;
     const char      *pszFileName;
-} INGR_TiffMem;
+} INGR_VirtualFile;
 
 #pragma pack()
 
@@ -406,22 +406,32 @@ typedef     struct {
 //  ----------------------------------------------------------------------------
 
 //  ------------------------------------------------------------------
+//    From the DNG OGR Driver
+//  ------------------------------------------------------------------
+
+void    DGN2IEEEDouble(void * dbl);
+
+//  ------------------------------------------------------------------
 //    Compression, Data Format, Data Type related funtions
 //  ------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
+uint32 INGR_GetDataBlockSize( const char *pszFileName,
+                                          uint32 nBandOffset,
+                                          uint32 nDataOffset );
+
+uint32 INGR_GetTileDirectory( FILE *fp,
                                           uint32 nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
                                           INGR_TileHeader *pTileDir,
                                           INGR_TileItem **pahTiles);
 
-const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType, 
+const INGR_Format INGR_GetFormat( GDALDataType eType, 
                                               const char *pszCompression );
 
-const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode );
+const char * INGR_GetFormatName( uint16 eCode );
 
-const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode );
+const GDALDataType INGR_GetDataType( uint16 eCode );
 
 const char * INGR_GetOrientation( uint8 nIndex );
 
@@ -429,33 +439,40 @@ const char * INGR_GetOrientation( uint8 nIndex );
 //    Transformation Matrix conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
-void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
 
 //  ------------------------------------------------------------------
 //    Color Table conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
+void INGR_GetIGDSColors( FILE *fp,
                                      uint32 nOffset,
                                      uint32 nEntries,
                                      GDALColorTable *poColorTable );
-uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
+uint32 INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                        INGR_ColorTable256 *pColorTableIGDS );
 
-void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
+void INGR_GetEnvironVColors( FILE *fp,
                                          uint32 nOffset,
                                          uint32 nEntries,
                                          GDALColorTable *poColorTable );
-uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
+uint32 INGR_SetEnvironColors( GDALColorTable *poColorTable,
                                           INGR_ColorTableVar *pEnvironTable );
 
 //  ------------------------------------------------------------------
 //    Get, Set Min & Max
 //  ------------------------------------------------------------------
 
-INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dVal );
-double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
+INGR_MinMax INGR_SetMinMax( GDALDataType eType, double dVal );
+double INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
+
+//  ------------------------------------------------------------------
+//    Run Length decoder
+//  ------------------------------------------------------------------
+
+int INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
+                             int nSrcBytes, int nBlockSize );
 
 //  ------------------------------------------------------------------
 //    GeoTiff in memory helper
@@ -463,19 +480,20 @@ double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
-INGR_TiffMem CPL_STDCALL INGR_CreateTiff( const char *pszFilename, 
-                                          INGR_Format eFormat,
-                                          int nTiffXSize, 
-                                          int nTiffYSize,
-                                          int nQuality,
-                                          GByte *pabyBuffer,
-                                          int nBufferSize);
+INGR_VirtualFile INGR_CreateVirtualFile( const char *pszFilename, 
+                                         INGR_Format eFormat,
+                                         int nVirtualXSize, 
+                                         int nVirtualYSize,
+                                         int nQuality,
+                                         GByte *pabyBuffer,
+                                         int nBufferSize,
+                                         int nBand );
 
-void CPL_STDCALL INGR_ReleaseTiff( INGR_TiffMem *poTiffMen );
+void INGR_ReleaseTiff( INGR_VirtualFile *poTiffMen );
 
-int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, 
-                                      uint32 nAppDataOfseet,
-                                      uint32 nSeekLimit );
+int INGR_ReadJpegQuality( FILE *fp, 
+                          uint32 nAppDataOfseet,
+                          uint32 nSeekLimit );
 
 typedef     struct {
     uint16              ApplicationType;
@@ -491,110 +509,13 @@ typedef     struct {
 
 #define REVERSEBITS(b)            (BitReverseTable[b])
 #define REVERSEBITSBUFFER(bb, bz)           \
-    {                                       \
-        int ibb;                            \
-        for( ibb = 0; ibb < bz; ibb++ )     \
-            bb[ibb] = REVERSEBITS(bb[ibb]); \
-    }
-
-#endif
+    int ibb;                                \
+    for( ibb = 0; ibb < bz; ibb++ )         \
+        bb[ibb] = REVERSEBITS( bb[ibb] )
 
 //  ------------------------------------------------------------------
 //    JPEG Tables
 //  ------------------------------------------------------------------
-
-#ifdef undercontruction
-
-void INGR_LoadJPEGTables( j_compress_ptr cinfo, int n, int nQLevel );
-
-const static int Q1table[256] = 
-{
-    8,    72,     72,     72,    72,    72,    72,    72,    72,    72,
-    78,    74,     76,    74,    78,    89,    81,    84,    84,    81,
-    89,    106,    93,    94,    99,    94,    93,    106,    129,    111,
-    108,    116,    116,    108,    111,    129,    135,    128,    136,    
-    145,    136,    128,    135,    155,    160,    177,    177,    160,
-    155,    193,    213,    228,    213,    193,    255,    255,    255,    
-    255
-};
-
-const static int Q2table[64] = 
-{ 
-    8, 36, 36, 36,
-    36, 36, 36, 36, 36, 36, 39, 37, 38, 37, 39, 45, 41, 42, 42, 41, 45, 53,
-    47, 47, 50, 47, 47, 53, 65, 56, 54, 59, 59, 54, 56, 65, 68, 64, 69, 73,
-    69, 64, 68, 78, 81, 89, 89, 81, 78, 98,108,115,108, 98,130,144,144,130,
-    178,190,178,243,243,255
-};
-
-const static int Q3table[64] = 
-{ 
-     8, 10, 10, 10,
-    10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15, 
-    13, 13, 14, 13, 13, 15, 18, 16, 15, 16, 16, 15, 16, 18, 19, 18, 19, 21, 
-    19, 18, 19, 22, 23, 25, 25, 23, 22, 27, 30, 32, 30, 27, 36, 40, 40, 36, 
-    50, 53, 50, 68, 68, 91 
-}; 
-
-const static int Q4table[64] = 
-{
-    8, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11, 
-    9, 9, 10, 9, 9, 11, 13, 11, 11, 12, 12, 11, 11, 13, 14, 13, 14, 15, 
-    14, 13, 14, 16, 16, 18, 18, 16, 16, 20, 22, 23, 22, 20, 26, 29, 29, 26, 
-    36, 38, 36, 49, 49, 65
-};
-
-const static int Q5table[64] = 
-{
-    4, 4, 4, 4, 
-    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
-    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8, 
-    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14, 
-    20, 21, 20, 27, 27, 36
-};
-
-static const int AC_BITS[16] = 
-{ 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 };
-
-static const int AC_HUFFVAL[256] = {
-    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
-    0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
-    0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
-    0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
-    0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16,
-    0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28,
-    0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
-    0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
-    0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
-    0x5A, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
-    0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
-    0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
-    0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
-    0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
-    0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6,
-    0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5,
-    0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4,
-    0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
-    0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA,
-    0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
-    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
-static const int DC_BITS[16] = 
-{ 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
-
-static const int DC_HUFFVAL[256] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
-    0x08, 0x09, 0x0A, 0x0B };
 
 #endif
 
