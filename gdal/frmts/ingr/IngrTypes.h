@@ -415,64 +415,64 @@ void   DGN2IEEEDouble(void * dbl);
 //    Compression, Data Format, Data Type related funtions
 //  ------------------------------------------------------------------
 
-uint32 INGR_GetDataBlockSize( const char *pszFileName,
+uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFileName,
                                           uint32 nBandOffset,
                                           uint32 nDataOffset );
 
-uint32 INGR_GetTileDirectory( FILE *fp,
+uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
                                           uint32 nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
                                           INGR_TileHeader *pTileDir,
                                           INGR_TileItem **pahTiles);
 
-const INGR_Format INGR_GetFormat( GDALDataType eType, 
+const CPL_STDCALL INGR_Format INGR_GetFormat( GDALDataType eType, 
                                               const char *pszCompression );
 
-const char * INGR_GetFormatName( uint16 eCode );
+const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode );
 
-const GDALDataType INGR_GetDataType( uint16 eCode );
+const GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode );
 
-const char * INGR_GetOrientation( uint8 nIndex );
+const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex );
 
 //  ------------------------------------------------------------------
 //    Transformation Matrix conversion
 //  ------------------------------------------------------------------
 
-void INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
-void INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
 
 //  ------------------------------------------------------------------
 //    Color Table conversion
 //  ------------------------------------------------------------------
 
-void INGR_GetIGDSColors( FILE *fp,
+void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
                                      uint32 nOffset,
                                      uint32 nEntries,
                                      GDALColorTable *poColorTable );
-uint32 INGR_SetIGDSColors( GDALColorTable *poColorTable,
+uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                        INGR_ColorTable256 *pColorTableIGDS );
 
-void INGR_GetEnvironVColors( FILE *fp,
+void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
                                          uint32 nOffset,
                                          uint32 nEntries,
                                          GDALColorTable *poColorTable );
-uint32 INGR_SetEnvironColors( GDALColorTable *poColorTable,
+uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
                                           INGR_ColorTableVar *pEnvironTable );
 
 //  ------------------------------------------------------------------
 //    Get, Set Min & Max
 //  ------------------------------------------------------------------
 
-INGR_MinMax INGR_SetMinMax( GDALDataType eType, double dVal );
-double INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
+INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dVal );
+double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 
 //  ------------------------------------------------------------------
 //    Run Length decoder
 //  ------------------------------------------------------------------
 
-int INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
-                         uint32 nSrcBytes, uint32 nBlockSize );
+int CPL_STDCALL INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
+                                     uint32 nSrcBytes, uint32 nBlockSize );
 
 //  ------------------------------------------------------------------
 //    GeoTiff in memory helper
@@ -480,18 +480,18 @@ int INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
-INGR_VirtualFile INGR_CreateVirtualFile( const char *pszFilename, 
-                                         INGR_Format eFormat,
-                                         int nVirtualXSize, 
-                                         int nVirtualYSize,
-                                         int nQuality,
-                                         GByte *pabyBuffer,
-                                         int nBufferSize,
-                                         int nBand );
+INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename, 
+        INGR_Format eFormat,
+        int nVirtualXSize, 
+        int nVirtualYSize,
+        int nQuality,
+        GByte *pabyBuffer,
+        int nBufferSize,
+        int nBand );
 
-void INGR_ReleaseTiff( INGR_VirtualFile *poTiffMen );
+void CPL_STDCALL INGR_ReleaseTiff( INGR_VirtualFile *poTiffMen );
 
-int INGR_ReadJpegQuality( FILE *fp, 
+int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, 
                           uint32 nAppDataOfseet,
                           uint32 nSeekLimit );
 
