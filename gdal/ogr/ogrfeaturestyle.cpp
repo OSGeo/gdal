@@ -365,7 +365,7 @@ int OGRStyleMgr::GetPartCount(const char *pszStyleString)
     pszStrTmp = pszString;
     // Search for parts separated by semicolons not counting the possible
     // semicolon at the and of string.
-    while ((pszPart = strstr(pszStrTmp,";")) != NULL && pszPart[1] != '\0')
+    while ((pszPart = strstr(pszStrTmp, ";")) != NULL && pszPart[1] != '\0')
     {
         pszStrTmp = &pszPart[1];
         nPartCount++;
@@ -407,14 +407,11 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
         poStyleTool = CreateStyleToolFromStyleString(pszString);
         if ( poStyleTool )
             poStyleTool->SetStyleString(pszString);
-        CSLDestroy( papszStyleString );
-        return poStyleTool;
-    } 
-    else
-    {
-        CSLDestroy(papszStyleString);
-        return NULL;
     }
+
+    CSLDestroy( papszStyleString );
+
+    return poStyleTool;
 } 
 
 
