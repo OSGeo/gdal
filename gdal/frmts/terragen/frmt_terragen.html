@@ -17,30 +17,33 @@ Void elevations are not supported. Pixels are considered points.
 
 <h2>Reading</h2>
 <blockquote>
-dataset::GetProjectionRef() returns a local coordinate system 
+<tt>dataset::GetProjectionRef()</tt> returns a local coordinate system 
 using meters.
 <p>
-band::GetUnitType() returns meters.
+<tt>band::GetUnitType()</tt> returns meters.
 <p>
-Elevations are Int16. You must use the band::GetScale() and 
-band::GetOffset() to convert them to meters.
+Elevations are <tt>Int16</tt>. You must use the <tt>band::GetScale()</tt> and 
+<tt>band::GetOffset()</tt> to convert them to meters.
 <p>&nbsp;<br>
 </blockquote>
 
 <h2>Writing</h2>
 <blockquote>
-Use the Create call. Set the MINUSERPIXELVALUE option (a float) 
+Use the <tt>Create</tt> call. Set the <tt>MINUSERPIXELVALUE</tt> option (a float) 
 to the lowest elevation of your elevation data, and 
-MAXUSERPIXELVALUE to the highest. The units must match 
-the elevation units you will give to band::SetUnitType().
+<tt>MAXUSERPIXELVALUE</tt> to the highest. The units must match 
+the elevation units you will give to <tt>band::SetUnitType()</tt>.
 <p>
-Call dataset::SetProjection() and dataset::SetGeoTransform()
+Call <tt>dataset::SetProjection()</tt> and <tt>dataset::SetGeoTransform()</tt>
 with your coordinate system details. Otherwise, the driver 
 will not encode physical elevations properly. Geographic 
 (degree-based) coordinate systems will be converted to 
 a local meter-based system.
 <p>
-Elevations are Float32.
+To maintain precision, a best-fit baseheight and scaling will 
+be used to use as much of the 16-bit range as possible.
+<p>
+Elevations are <tt>Float32</tt>.
 <p>&nbsp;<br>
 </blockquote>
 
@@ -59,7 +62,8 @@ only uses meters.
 
 <h2>History</h2>
 v1.0 (Mar 26/06): Created.<br>
-v1.1 (Apr 20/06): Added Create() support and SIZE-only read fix. 
+v1.1 (Apr 20/06): Added Create() support and SIZE-only read fix.<br>
+v1.2 (Jun  6/07): Improved baseheight/scale determination when writing. 
 <p>
 
 <h2>See Also:</h2>
