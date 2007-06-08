@@ -58,6 +58,7 @@ VRTSimpleSource::VRTSimpleSource()
 
 {
     poRasterBand = NULL;
+    bNoDataSet = FALSE;
 }
 
 /************************************************************************/
