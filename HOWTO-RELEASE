@@ -1,6 +1,11 @@
 	Notes on Preparing a GDAL Source Release
 	========================================
 
+0) Regenerate configure using autogen.sh and commit if changed.  There
+   is often a reference system on which this should be done (ie. Frank's
+   dev workstation) to avoid unnecessary churn from different autoconf
+   versions.
+
 1) Update the release date, and number information in gcore/gdal_version.h.
 
 2) Update the VERSION file. 
