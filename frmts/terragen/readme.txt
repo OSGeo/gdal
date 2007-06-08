@@ -1,5 +1,5 @@
-Terragen(tm) GDAL Driver 1.1
-Copyright 2006 Daylon Graphics Ltd.
+Terragen(tm) GDAL Driver 1.2
+Copyright 2006-2007 Daylon Graphics Ltd.
 Support: support@daylongraphics.com
 
 
