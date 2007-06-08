@@ -826,7 +826,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 
     nSize = nXSize * (GUIntBig) nYSize 
         * nBands * (GDALGetDataTypeSize(eType) / 8);
-    if( VSIFSeekL( fpBin, nSize, SEEK_SET ) != 0
+    if( VSIFSeekL( fpBin, nSize-1, SEEK_SET ) != 0
         || VSIFWriteL( &byZero, 1, 1, fpBin ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
