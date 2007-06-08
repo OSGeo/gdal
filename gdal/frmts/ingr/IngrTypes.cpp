@@ -395,7 +395,7 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
 //                                                      INGR_GetEnvironVColors()
 // -----------------------------------------------------------------------------
 
-void INGR_GetEnvironVColors( FILE *fp,
+void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
                              uint32 nOffset,
                              uint32 nEntries,
                              GDALColorTable *poColorTable )
