@@ -204,6 +204,46 @@ CPLErr ERSDataset::SetProjection( const char *pszSRS )
                    CPLString().Printf( "\"%s\"", szERSUnits ) );
     poHeader->Set( "CoordinateSpace.Rotation", 
                    "0:0:0.0" );
+
+/* -------------------------------------------------------------------- */
+/*      It seems that CoordinateSpace needs to come before              */
+/*      RasterInfo.  Try moving it up manually.                         */
+/* -------------------------------------------------------------------- */
+    int iRasterInfo = -1;
+    int iCoordSpace = -1;
+    int i;
+
+    for( i = 0; i < poHeader->nItemCount; i++ )
+    {
+        if( EQUAL(poHeader->papszItemName[i],"RasterInfo") )
+            iRasterInfo = i;
+
+        if( EQUAL(poHeader->papszItemName[i],"CoordinateSpace") )
+        {
+            iCoordSpace = i;
+            break;
+        }
+    }
+
+    if( iCoordSpace > iRasterInfo && iRasterInfo != -1 )
+    {
+        for( i = iCoordSpace; i > 0 && i != iRasterInfo; i-- )
+        {
+            char *pszTemp;
+
+            ERSHdrNode *poTemp = poHeader->papoItemChild[i];
+            poHeader->papoItemChild[i] = poHeader->papoItemChild[i-1];
+            poHeader->papoItemChild[i-1] = poTemp;
+
+            pszTemp = poHeader->papszItemName[i];
+            poHeader->papszItemName[i] = poHeader->papszItemName[i-1];
+            poHeader->papszItemName[i-1] = pszTemp;
+
+            pszTemp = poHeader->papszItemValue[i];
+            poHeader->papszItemValue[i] = poHeader->papszItemValue[i-1];
+            poHeader->papszItemValue[i-1] = pszTemp;
+        }
+    }
     
     return CE_None;
 }
@@ -813,8 +853,12 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     VSIFPrintfL( fpERS, "DatasetHeader Begin\n" );
     VSIFPrintfL( fpERS, "\tVersion\t\t = \"6.0\"\n" );
     VSIFPrintfL( fpERS, "\tName\t\t= \"%s\"\n", CPLGetFilename(osErsFile) );
-    VSIFPrintfL( fpERS, "\tLastUpdated\t= %s", 
-                 VSICTime( VSITime( NULL ) ) );
+
+// Last updated requires timezone info which we don't necessarily get
+// get from VSICTime() so perhaps it is better to omit this.
+//    VSIFPrintfL( fpERS, "\tLastUpdated\t= %s", 
+//                 VSICTime( VSITime( NULL ) ) );
+
     VSIFPrintfL( fpERS, "\tDataSetType\t= ERStorage\n" );
     VSIFPrintfL( fpERS, "\tDataType\t= Raster\n" );
     VSIFPrintfL( fpERS, "\tByteOrder\t= LSBFirst\n" );
