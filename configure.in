@@ -2012,10 +2012,24 @@ AC_MSG_CHECKING([for NG SWIG python bindings])
 if test "$with_ngpython" = "yes" ; then
   BINDINGS="python $BINDINGS"
   AC_MSG_RESULT([enabled])
+
+  AC_MSG_CHECKING([for Python setuptools])
+  SETUPTEST='try:
+  import setuptools
+  print 1
+except ImportError:
+  pass'
+  PY_HAVE_SETUPTOOLS=`python -c "$SETUPTEST"`
+  if test "$PY_HAVE_SETUPTOOLS" = "1"; then
+    AC_MSG_RESULT([found])
+  else
+    AC_MSG_RESULT([not found])
+  fi
 else
   AC_MSG_RESULT([disabled])
 fi
 
+AC_SUBST([PY_HAVE_SETUPTOOLS])
 AC_SUBST([BINDINGS])
 
 dnl ---------------------------------------------------------------------------
