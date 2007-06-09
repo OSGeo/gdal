@@ -34,7 +34,11 @@ build:
 	python setup.py build
 
 install:
+ifeq ($(PY_HAVE_SETUPTOOLS),1)
+	python setup.py install --root / --single-version-externally-managed
+else
 	python setup.py install --prefix=$(DESTDIR)$(prefix)
+endif
 
 docs:
 	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrlayer_8cpp.xml ../include/python/docs/ogr_layer_docs.i OGRLayerShadow OGR_L_
