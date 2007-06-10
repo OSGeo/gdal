@@ -564,6 +564,9 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             exit( 1 );
         }
 
+        CPLAssert( NULL != poSourceSRS );
+        CPLAssert( NULL != poOutputSRS );
+
         poCT = OGRCreateCoordinateTransformation( poSourceSRS, poOutputSRS );
         if( poCT == NULL )
         {
@@ -574,7 +577,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                    "are not transformable, or because projection services\n"
                    "(PROJ.4 DLL/.so) could not be loaded.\n" );
             
-            poSrcLayer->GetSpatialRef()->exportToPrettyWkt( &pszWKT, FALSE );
+            poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
             printf( "Source:\n%s\n", pszWKT );
             
             poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
