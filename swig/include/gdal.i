@@ -256,7 +256,6 @@ typedef enum {
 // GDALColorEntry
 //
 //************************************************************************
-#if defined(SWIGCSHARP)
 %rename (ColorEntry) GDALColorEntry;
 typedef struct
 {
@@ -269,7 +268,6 @@ typedef struct
     /*! alpha or blackband */
     short      c4;      
 } GDALColorEntry;
-#endif
 
 //************************************************************************
 //
