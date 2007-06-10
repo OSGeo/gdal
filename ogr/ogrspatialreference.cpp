@@ -1585,6 +1585,12 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         err = importFromProj4( pszBufPtr );
     else
     {
+        if( EQUALN(pszBufPtr,"ESRI::",6) )
+        {
+            bESRI = TRUE;
+            pszBufPtr += 6;
+        }
+
         err = importFromWkt( &pszBufPtr );
         if( err == OGRERR_NONE && bESRI )
             err = morphFromESRI();
