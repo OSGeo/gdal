@@ -606,7 +606,7 @@ int WCSDataset::DescribeCoverage()
     CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, NULL );
 
     if( ProcessError( psResult ) )
-        return CE_Failure;
+        return FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
