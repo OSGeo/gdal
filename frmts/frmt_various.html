@@ -766,6 +766,18 @@ to about 70 colors automatically.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/xpm/xpmdataset.cpp</tt>.<p>
 
+<h2><a name="GFF">GFF - Sandia National Laboratories GSAT File Format</a></h2>
+
+This read-only GDAL driver is designed to provide access to processed data from Sandia National Laboratories' various experimental sensors. The format is essentially an arbitrary length header containing instrument configuration and performance parameters along with a binary matrix of 16- or 32-bit complex or byte real data.<p>
+
+The GFF format was implemented based on the Matlab code provided by Sandia to read the data. The driver supports all types of data (16-bit or 32-bit complex, real bytes) theoretically, however due to a lack of data only 32-bit complex data has been tested.<p>
+
+Sandia provides some sample data at <a href="http://sandia.gov/RADAR/sar-data.html">http://sandia.gov/RADAR/sar-data.html</a>.<p>
+
+The extension for GFF formats is .gff.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/gff/gff_dataset.cpp</tt>.<p>
+
 <hr>
 <p>
 <a href="formats_list.html">Full list of GDAL Raster Formats</a>
