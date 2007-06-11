@@ -10,6 +10,14 @@ OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
 CPPFLAGS	:=	-I../gtiff/libtiff $(GDAL_INCLUDE) $(CPPFLAGS)
 
+ifneq ($(JPEG_SETTING),no)
+CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_SUPPORTED
+endif
+
+ifeq ($(JPEG_SETTING),internal)
+CPPFLAGS	:=	$(CPPFLAGS) -I../jpeg/libjpeg
+endif
+
 default:	$(OBJ)
 
 clean:
