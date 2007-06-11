@@ -614,7 +614,7 @@ int NITFCreate( const char *pszFilename,
     {
         const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
     
-        if( pszIC != NULL && EQUAL(pszIC,"C8") )
+        if( pszIC != NULL && (EQUAL(pszIC,"C8") || EQUAL(pszIC,"C3")) )
             /* don't extend file */;
         else
         {
