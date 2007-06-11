@@ -193,11 +193,44 @@ def nitf_8():
     return 'success'
 
 ###############################################################################
+# Create and read a JPEG encoded NITF file.
+
+def nitf_9():
+
+    src_ds = gdal.Open( 'data/rgbsmall.tif' )
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf9.ntf', src_ds,
+                                                  options = ['IC=C3'] )
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/nitf9.ntf' )
+    
+    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    
+    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+        print mean, stddev
+        gdaltest.post_reason( 'did not get expected mean or standard dev.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['COMPRESSION'] != 'JPEG':
+        gdaltest.post_reason( 'Did not get expected compression value.' )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
     try:
         os.remove( 'tmp/test_4.ntf' )
+    except:
+        pass
+
+    try:
+        os.remove( 'tmp/nitf9.ntf' )
     except:
         pass
 
@@ -212,6 +245,7 @@ gdaltest_list = [
     nitf_6,
     nitf_7,
     nitf_8,
+    nitf_9,
     nitf_cleanup ]
 
 if __name__ == '__main__':
