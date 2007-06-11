@@ -45,6 +45,11 @@ static GDALDataset *poWritableJ2KDataset = NULL;
 static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
                                           int nBand,
                                           GDALColorInterp eInterp );
+#ifdef JPEG_SUPPORTED
+static int NITFWriteJPEGImage( GDALDataset *, FILE *, int, char **,
+                               GDALProgressFunc pfnProgress, 
+                               void * pProgressData );
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2216,6 +2221,7 @@ NITFDataset::NITFCreateCopy(
     GDALRasterBand *poBand1 = poSrcDS->GetRasterBand(1);
     char  **papszFullOptions = CSLDuplicate( papszOptions );
     int   bJPEG2000 = FALSE;
+    int   bJPEG = FALSE;
     NITFDataset *poDstDS = NULL;
     GDALDriver *poJ2KDriver = NULL;
 
@@ -2223,7 +2229,7 @@ NITFDataset::NITFCreateCopy(
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      We disallow any IC value except NC when creating this way.      */
+/*      Only allow supported compression values.                        */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( papszOptions, "IC" ) != NULL )
     {
@@ -2243,6 +2249,17 @@ NITFDataset::NITFCreateCopy(
                 return NULL;
             }
             bJPEG2000 = TRUE;
+        }
+        else if( EQUAL(CSLFetchNameValue( papszOptions, "IC" ),"C3") )
+        {
+            bJPEG = TRUE;
+#ifndef JPEG_SUPPORTED
+            CPLError( 
+                CE_Failure, CPLE_AppDefined, 
+                "Unable to write JPEG compressed NITF file.\n"
+                "Libjpeg is not configured into build." );
+            return NULL;
+#endif
         }
         else
         {
@@ -2364,9 +2381,87 @@ NITFDataset::NITFCreateCopy(
     CSLDestroy( papszFullOptions );
 
 /* ==================================================================== */
+/*      JPEG2000 case.  We need to write the data through a J2K         */
+/*      driver in pixel interleaved form.                               */
+/* ==================================================================== */
+    if( bJPEG2000 )
+    {
+        NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        GDALDataset *poJ2KDataset = NULL;
+        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
+
+        char *pszDSName = CPLStrdup( 
+            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
+                        pszFilename ) );
+
+        NITFClose( psFile );
+
+        poJ2KDataset = 
+            poJ2KDriver->CreateCopy( pszDSName, poSrcDS, FALSE,
+                                     NITFJP2Options(papszOptions),
+                                     pfnProgress, pProgressData );
+        CPLFree( pszDSName );
+        if( poJ2KDataset == NULL )
+            return NULL;
+
+        delete poJ2KDataset;
+
+        // Now we need to figure out the actual length of the file
+        // and correct the image segment size information.
+        GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
+            poSrcDS->GetRasterCount();
+
+        NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount );
+
+        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
+
+        if( poDstDS == NULL )
+            return NULL;
+    }
+
+/* ==================================================================== */
 /*      Loop copying bands to an uncompressed file.                     */
 /* ==================================================================== */
-    if( !bJPEG2000 )
+    else if( bJPEG )
+    {
+#ifdef JPEG_SUPPORTED
+        NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        int bSuccess;
+        
+        bSuccess = 
+            NITFWriteJPEGImage( poSrcDS, psFile->fp, 
+                                psFile->pasSegmentInfo[0].nSegmentStart,
+                                papszOptions,
+                                pfnProgress, pProgressData );
+        
+        if( !bSuccess )
+        {
+            NITFClose( psFile );
+            return NULL;
+        }
+
+        // Now we need to figure out the actual length of the file
+        // and correct the image segment size information.
+        GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
+            poSrcDS->GetRasterCount();
+
+        NITFPatchImageLength( pszFilename, 
+                              psFile->pasSegmentInfo[0].nSegmentStart,
+                              nPixelCount );
+        
+        NITFClose( psFile );
+
+        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
+
+        if( poDstDS == NULL )
+            return NULL;
+#endif /* def JPEG_SUPPORTED */
+    }
+
+/* ==================================================================== */
+/*      Loop copying bands to an uncompressed file.                     */
+/* ==================================================================== */
+    else
     {
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
         if( poDstDS == NULL )
@@ -2426,45 +2521,6 @@ NITFDataset::NITFCreateCopy(
     }
 
 /* -------------------------------------------------------------------- */
-/*      JPEG2000 case.  We need to write the data through a J2K         */
-/*      driver in pixel interleaved form.                               */
-/* -------------------------------------------------------------------- */
-    else if( bJPEG2000 )
-    {
-        NITFFile *psFile = NITFOpen( pszFilename, TRUE );
-        GDALDataset *poJ2KDataset = NULL;
-        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
-
-        char *pszDSName = CPLStrdup( 
-            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
-                        pszFilename ) );
-
-        NITFClose( psFile );
-
-        poJ2KDataset = 
-            poJ2KDriver->CreateCopy( pszDSName, poSrcDS, FALSE,
-                                     NITFJP2Options(papszOptions),
-                                     pfnProgress, pProgressData );
-        CPLFree( pszDSName );
-        if( poJ2KDataset == NULL )
-            return NULL;
-
-        delete poJ2KDataset;
-
-        // Now we need to figure out the actual length of the file
-        // and correct the image segment size information.
-        GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
-            poSrcDS->GetRasterCount();
-
-        NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount );
-
-        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
-
-        if( poDstDS == NULL )
-            return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Set the georeferencing.                                         */
 /* -------------------------------------------------------------------- */
     if( bWriteGeoTransform )
@@ -2520,13 +2576,13 @@ static void NITFPatchImageLength( const char *pszFilename,
     char szIC[2];
     VSIFSeekL( fpVSIL, 779-2, SEEK_SET );
     VSIFReadL( szIC, 2, 1, fpVSIL );
-    if( szIC[0] != 'C' && szIC[1] != '8' )
+    if( szIC[0] != 'C' || (szIC[1] != '8' && szIC[1] != '3') )
     {
         VSIFSeekL( fpVSIL, 839-2, SEEK_SET );
         VSIFReadL( szIC, 2, 1, fpVSIL );
     }
     
-    if( szIC[0] != 'C' && szIC[1] != '8' )
+    if( szIC[0] != 'C' || (szIC[1] != '8' && szIC[1] != '3') )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Unable to locate COMRAT to update in NITF header." );
@@ -2548,6 +2604,200 @@ static void NITFPatchImageLength( const char *pszFilename,
     VSIFCloseL( fpVSIL );
 }
         
+/************************************************************************/
+/*                         NITFWriteJPEGImage()                         */
+/************************************************************************/
+
+#ifdef JPEG_SUPPORTED
+
+CPL_C_START
+#include "jpeglib.h"
+CPL_C_END
+
+void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
+
+
+static int 
+NITFWriteJPEGImage( GDALDataset *poSrcDS, FILE *fp, int nStartOffset, 
+                    char **papszOptions,
+                    GDALProgressFunc pfnProgress, void * pProgressData )
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+    int  anBandList[3] = {1,2,3};
+    int  nQuality = 75;
+    int  bProgressive = FALSE;
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Some some rudimentary checks                                    */
+/* -------------------------------------------------------------------- */
+    if( nBands != 1 && nBands != 3 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
+                  "or 3 (RGB) bands.\n", nBands );
+
+        return FALSE;
+    }
+
+    GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+
+#ifdef JPEG_LIB_MK1
+    if( eDT != GDT_Byte && eDT != GDT_UInt16 && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support data type %s. "
+                  "Only eight and twelve bit bands supported (Mk1 libjpeg).\n",
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return FALSE;
+    }
+
+    if( eDT == GDT_UInt16 || eDT == GDT_Int16 )
+        eDT = GDT_UInt16;
+    else
+        eDT = GDT_Byte;
+
+#else
+    if( eDT != GDT_Byte )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support data type %s. "
+                  "Only eight bit byte bands supported.\n", 
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return FALSE;
+    }
+    
+    eDT = GDT_Byte; // force to 8bit. 
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      What options has the user selected?                             */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
+    {
+        nQuality = atoi(CSLFetchNameValue(papszOptions,"QUALITY"));
+        if( nQuality < 10 || nQuality > 100 )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "QUALITY=%s is not a legal value in the range 10-100.",
+                      CSLFetchNameValue(papszOptions,"QUALITY") );
+            return FALSE;
+        }
+    }
+
+    bProgressive = CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize JPG access to the file.                              */
+/* -------------------------------------------------------------------- */
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+    
+    sCInfo.err = jpeg_std_error( &sJErr );
+    jpeg_create_compress( &sCInfo );
+
+    VSIFSeekL( fp, nStartOffset, SEEK_SET );
+    jpeg_vsiio_dest( &sCInfo, fp );
+    
+    sCInfo.image_width = nXSize;
+    sCInfo.image_height = nYSize;
+    sCInfo.input_components = nBands;
+
+    if( nBands == 1 )
+    {
+        sCInfo.in_color_space = JCS_GRAYSCALE;
+    }
+    else
+    {
+        sCInfo.in_color_space = JCS_RGB;
+    }
+
+    jpeg_set_defaults( &sCInfo );
+    
+#ifdef JPEG_LIB_MK1
+    if( eDT == GDT_UInt16 )
+    {
+        sCInfo.data_precision = 12;
+        sCInfo.bits_in_jsample = 12;
+    }
+    else
+    {
+        sCInfo.data_precision = 8;
+        sCInfo.bits_in_jsample = 8;
+    }
+#endif
+
+    sCInfo.write_JFIF_header = FALSE;
+    jpeg_set_quality( &sCInfo, nQuality, TRUE );
+
+    if( bProgressive )
+        jpeg_simple_progression( &sCInfo );
+
+    jpeg_start_compress( &sCInfo, TRUE );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    GByte 	*pabyScanline;
+    CPLErr      eErr = CE_None;
+
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * 2 );
+
+    for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
+    {
+        JSAMPLE      *ppSamples;
+
+#ifdef JPEG_LIB_MK1
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                  pabyScanline, nXSize, 1, GDT_UInt16,
+                                  nBands, anBandList, 
+                                  nBands*2, nBands * nXSize * 2, 2 );
+#else
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                  pabyScanline, nXSize, 1, GDT_Byte,
+                                  nBands, anBandList, 
+                                  nBands, nBands * nXSize, 1 );
+#endif
+
+        // Should we clip values over 4095 (12bit)? 
+
+        ppSamples = (JSAMPLE *) pabyScanline;
+
+        if( eErr == CE_None )
+            jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+
+        if( eErr == CE_None 
+            && !pfnProgress( (iLine+1) / (double) nYSize,
+                             NULL, pProgressData ) )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt, 
+                      "User terminated CreateCopy()" );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup and close.                                              */
+/* -------------------------------------------------------------------- */
+    CPLFree( pabyScanline );
+
+    if( eErr == CE_None )
+        jpeg_finish_compress( &sCInfo );
+    jpeg_destroy_compress( &sCInfo );
+
+    return eErr == CE_None;
+}
+#endif /* def JPEG_SUPPORTED */
+
 /************************************************************************/
 /*                          GDALRegister_NITF()                         */
 /************************************************************************/
