@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 
 static void NITFPatchImageLength( const char *pszFilename,
                                   long nImageOffset, 
-                                  GIntBig nPixelCount );
+                                  GIntBig nPixelCount, const char *pszIC );
 
 static GDALDataset *poWritableJ2KDataset = NULL;
 static CPLErr NITFSetColorInterpretation( NITFImage *psImage, 
@@ -666,7 +666,8 @@ NITFDataset::~NITFDataset()
         GIntBig nPixelCount = nRasterXSize * ((GIntBig) nRasterYSize) * 
             nBands;
 
-        NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount );
+        NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount, 
+                              "C8" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -947,7 +948,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
             GDALRasterBand *poBand=poDS->poJPEGDataset->GetRasterBand(iBand+1);
-            
+
+            CPLPushErrorHandler( CPLQuietErrorHandler );
             if( EQUAL(psBandInfo->szIREPBAND,"R") )
                 poBand->SetColorInterpretation( GCI_RedBand );
             if( EQUAL(psBandInfo->szIREPBAND,"G") )
@@ -962,6 +964,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                 poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
             if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
                 poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
+            CPLPopErrorHandler();
+            CPLErrorReset();
         }
     }
 
@@ -2411,7 +2415,7 @@ NITFDataset::NITFCreateCopy(
         GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
             poSrcDS->GetRasterCount();
 
-        NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount );
+        NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
 
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
 
@@ -2426,11 +2430,11 @@ NITFDataset::NITFCreateCopy(
     {
 #ifdef JPEG_SUPPORTED
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
+        int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
         int bSuccess;
         
         bSuccess = 
-            NITFWriteJPEGImage( poSrcDS, psFile->fp, 
-                                psFile->pasSegmentInfo[0].nSegmentStart,
+            NITFWriteJPEGImage( poSrcDS, psFile->fp, nImageOffset,
                                 papszOptions,
                                 pfnProgress, pProgressData );
         
@@ -2445,12 +2449,11 @@ NITFDataset::NITFCreateCopy(
         GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) * 
             poSrcDS->GetRasterCount();
 
-        NITFPatchImageLength( pszFilename, 
-                              psFile->pasSegmentInfo[0].nSegmentStart,
-                              nPixelCount );
-        
         NITFClose( psFile );
 
+        NITFPatchImageLength( pszFilename, nImageOffset,
+                              nPixelCount, "C3" );
+        
         poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
 
         if( poDstDS == NULL )
@@ -2544,7 +2547,8 @@ NITFDataset::NITFCreateCopy(
 
 static void NITFPatchImageLength( const char *pszFilename,
                                   long nImageOffset,
-                                  GIntBig nPixelCount )
+                                  GIntBig nPixelCount,
+                                  const char *pszIC )
 
 {
     FILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
@@ -2573,16 +2577,16 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      hard to know right here whether we have an IGEOLO segment,      */
 /*      so the COMRAT will either be at offset 778 or 838.              */
 /* -------------------------------------------------------------------- */
-    char szIC[2];
+    char szICBuf[2];
     VSIFSeekL( fpVSIL, 779-2, SEEK_SET );
-    VSIFReadL( szIC, 2, 1, fpVSIL );
-    if( szIC[0] != 'C' || (szIC[1] != '8' && szIC[1] != '3') )
+    VSIFReadL( szICBuf, 2, 1, fpVSIL );
+    if( !EQUALN(szICBuf,pszIC,2) )
     {
         VSIFSeekL( fpVSIL, 839-2, SEEK_SET );
-        VSIFReadL( szIC, 2, 1, fpVSIL );
+        VSIFReadL( szICBuf, 2, 1, fpVSIL );
     }
     
-    if( szIC[0] != 'C' || (szIC[1] != '8' && szIC[1] != '3') )
+    if( !EQUALN(szICBuf,pszIC,2) )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Unable to locate COMRAT to update in NITF header." );
@@ -2591,13 +2595,21 @@ static void NITFPatchImageLength( const char *pszFilename,
     {
         char szCOMRAT[5];
 
-        double dfRate = (nFileLen-nImageOffset) * 8 / (double) nPixelCount;
-        dfRate = MAX(0.01,MIN(99.99,dfRate));
+        if( EQUAL(pszIC,"C8") ) /* jpeg2000 */
+        {
+            double dfRate = (nFileLen-nImageOffset) * 8 / (double) nPixelCount;
+            dfRate = MAX(0.01,MIN(99.99,dfRate));
         
-        // We emit in wxyz format with an implicit decimal place
-        // between wx and yz as per spec for lossy compression. 
-        // We really should have a special case for lossless compression.
-        sprintf( szCOMRAT, "%04d", (int) (dfRate * 100));
+            // We emit in wxyz format with an implicit decimal place
+            // between wx and yz as per spec for lossy compression. 
+            // We really should have a special case for lossless compression.
+            sprintf( szCOMRAT, "%04d", (int) (dfRate * 100));
+        }
+        else if( EQUAL(pszIC, "C3") ) /* jpeg */
+        {
+            strcpy( szCOMRAT, "00.0" );
+        }
+
         VSIFWriteL( szCOMRAT, 4, 1, fpVSIL );
     }
     
