@@ -363,6 +363,72 @@ def osr_esri_11():
 
     return 'success'
 
+###############################################################################
+# Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
+
+def osr_esri_12():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'ESRI::PROJCS["Lambert Conformal Conic",GEOGCS["grs80",DATUM["D_North_American_1983",SPHEROID["Geodetic_Reference_System_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["standard_parallel_1",34.33333333333334],PARAMETER["standard_parallel_2",36.16666666666666],PARAMETER["latitude_of_origin",33.75],PARAMETER["central_meridian",-79],PARAMETER["false_easting",609601.22],PARAMETER["false_northing",0],UNIT["Meter",1]]' )
+
+    # No MorphFromESRI() is required
+
+    if srs.GetAttrValue( 'PROJECTION' ) != 'Lambert_Conformal_Conic_2SP':
+        gdaltest.post_reason( 'Got wrong PROJECTION name (%s) after ESRI morph.' % \
+                              srs.GetAttrValue( 'PROJECTION' ) )
+        return 'fail'
+    
+    if abs( srs.GetProjParm('standard_parallel_1') - 34.333333333 ) > 0.00001:
+        gdaltest.post_reason( 'Got wrong parameter value (%g) after ESRI morph.' % \
+                              srs.GetProjParm('standard_parallel_1') )
+        return 'fail'
+    
+    if srs.GetAttrValue( 'DATUM' ) != 'North_American_Datum_1983':
+        gdaltest.post_reason( 'Got wrong DATUM name (%s) after ESRI morph.' % \
+                              srs.GetAttrValue( 'DATUM' ) )
+
+    if srs.GetAttrValue( 'UNIT' ) != 'Meter':
+        gdaltest.post_reason( 'Got wrong UNIT name (%s) after ESRI morph.' % \
+                              srs.GetAttrValue( 'UNIT' ) )
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
+# but read directly from file.
+
+def osr_esri_13():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'data/lcc_esri.prj' )
+
+    # No MorphFromESRI() is required
+
+    if srs.GetAttrValue( 'PROJECTION' ) != 'Lambert_Conformal_Conic_2SP':
+        gdaltest.post_reason( 'Got wrong PROJECTION name (%s) after ESRI morph.' % \
+                              srs.GetAttrValue( 'PROJECTION' ) )
+        return 'fail'
+    
+    if abs( srs.GetProjParm('standard_parallel_1') - 34.333333333 ) > 0.00001:
+        gdaltest.post_reason( 'Got wrong parameter value (%g) after ESRI morph.' % \
+                              srs.GetProjParm('standard_parallel_1') )
+        return 'fail'
+    
+    if srs.GetAttrValue( 'DATUM' ) != 'North_American_Datum_1983':
+        gdaltest.post_reason( 'Got wrong DATUM name (%s) after ESRI morph.' % \
+                              srs.GetAttrValue( 'DATUM' ) )
+
+    if srs.GetAttrValue( 'UNIT' ) != 'Meter':
+        gdaltest.post_reason( 'Got wrong UNIT name (%s) after ESRI morph.' % \
+                              srs.GetAttrValue( 'UNIT' ) )
+        return 'fail'
+    
+    return 'success'
+
+
+###############################################################################
+
 gdaltest_list = [ 
     osr_esri_1,
     osr_esri_2,
@@ -375,6 +441,8 @@ gdaltest_list = [
     osr_esri_9,
     osr_esri_10,
     osr_esri_11,
+    osr_esri_12,
+    osr_esri_13,
     None ]
 
 if __name__ == '__main__':
