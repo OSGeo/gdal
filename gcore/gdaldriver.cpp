@@ -157,6 +157,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 {
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
+    
+    CPLErrorReset();
 
 /* -------------------------------------------------------------------- */
 /*      Create destination dataset.                                     */
@@ -165,7 +167,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     int          nXSize = poSrcDS->GetRasterXSize();
     int          nYSize = poSrcDS->GetRasterYSize();
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    CPLErr       eErr;
+    CPLErr       eErr = CE_None;
 
     CPLDebug( "GDAL", "Using default GDALDriver::CreateCopy implementation." );
 
@@ -183,12 +185,12 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Try setting the projection and geotransform if it seems         */
-/*      suitable.  For now we don't try and copy GCPs, though I         */
-/*      suppose we should. Also copy metadata.                          */
+/*      suitable.                                                       */
 /* -------------------------------------------------------------------- */
     double      adfGeoTransform[6];
 
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None 
+    if( eErr == CE_None
+        && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None 
         && (adfGeoTransform[0] != 0.0 
             || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0
@@ -196,30 +198,51 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
             || adfGeoTransform[4] != 0.0
             || adfGeoTransform[5] != 1.0) )
     {
-        poDstDS->SetGeoTransform( adfGeoTransform );
+        eErr = poDstDS->SetGeoTransform( adfGeoTransform );
+        if( !bStrict )
+            eErr = CE_None;
     }
 
-    if( poSrcDS->GetProjectionRef() != NULL
+    if( eErr == CE_None 
+        && poSrcDS->GetProjectionRef() != NULL
         && strlen(poSrcDS->GetProjectionRef()) > 0 )
     {
-        poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+        eErr = poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+        if( !bStrict )
+            eErr = CE_None;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Copy GCPs.                                                      */
+/* -------------------------------------------------------------------- */
+    if( poSrcDS->GetGCPCount() > 0 && eErr == CE_None )
+    {
+        eErr = poDstDS->SetGCPs( poSrcDS->GetGCPCount(),
+                                 poSrcDS->GetGCPs(), 
+                                 poSrcDS->GetGCPProjection() );
+        if( !bStrict )
+            eErr = CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy metadata.                                                  */
+/* -------------------------------------------------------------------- */
     poDstDS->SetMetadata( poSrcDS->GetMetadata() );
 
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+    for( int iBand = 0; 
+         eErr == CE_None && iBand < poSrcDS->GetRasterCount(); 
+         iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
 
 /* -------------------------------------------------------------------- */
-/*      Do we need to copy a colortable or other metadata?              */
+/*      Do we need to copy a colortable.                                */
 /* -------------------------------------------------------------------- */
         GDALColorTable *poCT;
-        char** catNames;
         int bSuccess;
         double dfValue;
 
@@ -227,6 +250,11 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         if( poCT != NULL )
             poDstBand->SetColorTable( poCT );
 
+/* -------------------------------------------------------------------- */
+/*      Do we need to copy other metadata?  Most of this is             */
+/*      non-critical, so lets not bother folks if it fails are we       */
+/*      are not in strict mode.                                         */
+/* -------------------------------------------------------------------- */
         if( !bStrict )
             CPLPushErrorHandler( CPLQuietErrorHandler );
 
@@ -247,16 +275,24 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         if( bSuccess )
             poDstBand->SetNoDataValue( dfValue );
 
-        if( poSrcBand->GetColorInterpretation() != GCI_Undefined )
+        if( poSrcBand->GetColorInterpretation() != GCI_Undefined 
+            && poSrcBand->GetColorInterpretation()
+            != poDstBand->GetColorInterpretation() )
             poDstBand->SetColorInterpretation( 
                 poSrcBand->GetColorInterpretation() );
 
-        catNames = poSrcBand->GetCategoryNames();
-        if (0 != catNames)
-            poDstBand->SetCategoryNames(catNames);
+        char** papszCatNames;
+        papszCatNames = poSrcBand->GetCategoryNames();
+        if (0 != papszCatNames)
+            poDstBand->SetCategoryNames( papszCatNames );
 
         if( !bStrict )
+        {
             CPLPopErrorHandler();
+            CPLErrorReset();
+        }
+        else 
+            eErr = CPLGetLastErrorType();
 
 /* -------------------------------------------------------------------- */
 /*      Copy image data.                                                */
@@ -269,43 +305,36 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "CreateCopy(): Out of memory allocating %d byte line buffer.\n",
                       nXSize * GDALGetDataTypeSize(eType) / 8 );
-            delete poDstDS;
-            Delete( pszFilename );
-            return NULL;
+            eErr = CE_Failure;
         }
 
-        for( int iLine = 0; iLine < nYSize; iLine++ )
+        for( int iLine = 0; iLine < nYSize && eErr != CE_None; iLine++ )
         {
             eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                         pData, nXSize, 1, eType, 0, 0 );
             if( eErr != CE_None )
-            {
-                delete poDstDS;
-                Delete( pszFilename );
-                return NULL;
-            }
+                break;
             
             eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
                                         pData, nXSize, 1, eType, 0, 0 );
-
-            if( eErr != CE_None )
-            {
-                delete poDstDS;
-                return NULL;
-            }
 
             if( !pfnProgress( (iBand + (iLine+1) / (double) nYSize)
                               / (double) poSrcDS->GetRasterCount(), 
                               NULL, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                delete poDstDS;
-                Delete( pszFilename );
-                return NULL;
+                eErr = CE_Failure;
             }
         }
 
         CPLFree( pData );
+    }
+
+    if( eErr != CE_None )
+    {
+        delete poDstDS;
+        Delete( pszFilename );
+        return NULL;
     }
 
     return poDstDS;
