@@ -58,6 +58,11 @@ class ERSDataset : public RawDataset
 
     const char *Find( const char *, const char * );
 
+    int           nGCPCount;
+    GDAL_GCP      *pasGCPList;
+    char          *pszGCPProjection;
+
+    void          ReadGCPs();
   public:
     		ERSDataset();
 	       ~ERSDataset();
@@ -69,6 +74,12 @@ class ERSDataset : public RawDataset
     virtual CPLErr SetProjection( const char * );
     virtual char **GetFileList(void);
     
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -99,6 +110,10 @@ ERSDataset::ERSDataset()
     adfGeoTransform[5] = 1.0;
     poHeader = NULL;
     bHDRDirty = FALSE;
+
+    nGCPCount = 0;
+    pasGCPList = NULL;
+    pszGCPProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -126,6 +141,13 @@ ERSDataset::~ERSDataset()
     }
 
     CPLFree( pszProjection );
+
+    CPLFree( pszGCPProjection );
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
 
     if( poHeader != NULL )
         delete poHeader;
@@ -157,6 +179,121 @@ void ERSDataset::FlushCache()
     }
 
     RawDataset::FlushCache();
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int ERSDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *ERSDataset::GetGCPProjection()
+
+{
+    return pszGCPProjection;
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *ERSDataset::GetGCPs()
+
+{
+    return pasGCPList;
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                            const char *pszGCPProjectionIn )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Clean old gcps.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszGCPProjection );
+    pszGCPProjection = NULL;
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+
+        pasGCPList = NULL;
+        nGCPCount = 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy new ones.                                                  */
+/* -------------------------------------------------------------------- */
+    nGCPCount = nGCPCountIn;
+    pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPListIn );
+    pszGCPProjection = CPLStrdup( pszGCPProjectionIn );
+
+/* -------------------------------------------------------------------- */
+/*      Setup the header contents corresponding to these GCPs.          */
+/* -------------------------------------------------------------------- */
+    bHDRDirty = TRUE;
+
+    poHeader->Set( "RasterInfo.WarpControl.WarpType", "Polynomial" );
+    if( nGCPCount > 6 )
+        poHeader->Set( "RasterInfo.WarpControl.WarpOrder", "2" );
+    else
+        poHeader->Set( "RasterInfo.WarpControl.WarpOrder", "1" );
+    poHeader->Set( "RasterInfo.WarpControl.WarpSampling", "Nearest" );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the projection.                                       */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS( pszGCPProjection );
+    char szERSProj[32], szERSDatum[32], szERSUnits[32];
+
+    oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
+    
+    poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Datum", 
+                   CPLString().Printf( "\"%s\"", szERSDatum ) );
+    poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Projection", 
+                   CPLString().Printf( "\"%s\"", szERSProj ) );
+    poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.CoordinateType", 
+                   CPLString().Printf( "EN" ) );
+    poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Units", 
+                   CPLString().Printf( "\"%s\"", szERSUnits ) );
+    poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Rotation", 
+                   "0:0:0.0" );
+
+/* -------------------------------------------------------------------- */
+/*      Translate the GCPs.                                             */
+/* -------------------------------------------------------------------- */
+    CPLString osControlPoints = "{\n";
+    int iGCP;
+    
+    for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
+    {
+        CPLString osLine;
+        osLine.Printf( "\t\t\t\t\"%s\"\tYes\tYes\t%.6f\t%.6f\t%.15g\t%.15g\n",
+                       pasGCPList[iGCP].pszId,
+                       pasGCPList[iGCP].dfGCPPixel,
+                       pasGCPList[iGCP].dfGCPLine,
+                       pasGCPList[iGCP].dfGCPX,
+                       pasGCPList[iGCP].dfGCPY );
+        osControlPoints += osLine;
+    }
+    osControlPoints += "\t\t}";
+    
+    poHeader->Set( "RasterInfo.WarpControl.ControlPoints", osControlPoints );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -359,6 +496,97 @@ char **ERSDataset::GetFileList()
 }
 
 /************************************************************************/
+/*                              ReadGCPs()                              */
+/*                                                                      */
+/*      Read the GCPs from the header.                                  */
+/************************************************************************/
+
+void ERSDataset::ReadGCPs()
+
+{
+    const char *pszCP = 
+        poHeader->Find( "RasterInfo.WarpControl.ControlPoints", NULL );
+
+    if( pszCP == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the control points.  They will look something like:       */
+/*                                                                      */
+/*   "1035" Yes No 2344.650885 3546.419458 483270.73 3620906.21 3.105   */
+/* -------------------------------------------------------------------- */
+    char **papszTokens = CSLTokenizeStringComplex( pszCP, "{ \t}", TRUE,FALSE);
+    int nItemsPerLine;
+    int nItemCount = CSLCount(papszTokens);
+
+/* -------------------------------------------------------------------- */
+/*      Work out if we have elevation values or not.                    */
+/* -------------------------------------------------------------------- */
+    if( nItemCount == 7 )
+        nItemsPerLine = 7;
+    else if( nItemCount == 8 )
+        nItemsPerLine = 8;
+    else if( nItemCount < 14 )
+    {
+        CPLAssert( FALSE );
+        return;
+    }
+    else if( EQUAL(papszTokens[8],"Yes") || EQUAL(papszTokens[8],"No") )
+        nItemsPerLine = 7;
+    else if( EQUAL(papszTokens[9],"Yes") || EQUAL(papszTokens[9],"No") )
+        nItemsPerLine = 8;
+    else
+    {
+        CPLAssert( FALSE );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup GCPs.                                                     */
+/* -------------------------------------------------------------------- */
+    int iGCP;
+
+    CPLAssert( nGCPCount == 0 );
+
+    nGCPCount = nItemCount / nItemsPerLine;
+    pasGCPList = (GDAL_GCP *) CPLCalloc(nGCPCount,sizeof(GDAL_GCP));
+    GDALInitGCPs( nGCPCount, pasGCPList );
+
+    for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
+    {
+        GDAL_GCP *psGCP = pasGCPList + iGCP;
+
+        CPLFree( psGCP->pszId );
+        psGCP->pszId = CPLStrdup(papszTokens[iGCP*nItemsPerLine+0]);
+        psGCP->dfGCPPixel = atof(papszTokens[iGCP*nItemsPerLine+3]);
+        psGCP->dfGCPLine  = atof(papszTokens[iGCP*nItemsPerLine+4]);
+        psGCP->dfGCPX     = atof(papszTokens[iGCP*nItemsPerLine+5]);
+        psGCP->dfGCPY     = atof(papszTokens[iGCP*nItemsPerLine+6]);
+        if( nItemsPerLine == 8 )
+            psGCP->dfGCPZ = atof(papszTokens[iGCP*nItemsPerLine+7]);
+    }
+    
+    CSLDestroy( papszTokens );
+    
+/* -------------------------------------------------------------------- */
+/*      Parse the GCP projection.                                       */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+
+    CPLString osProjection = poHeader->Find( 
+        "RasterInfo.WarpControl.CoordinateSpace.Projection", "RAW" );
+    CPLString osDatum = poHeader->Find( 
+        "RasterInfo.WarpControl.CoordinateSpace.Datum", "WGS84" );
+    CPLString osUnits = poHeader->Find( 
+        "RasterInfo.WarpControl.CoordinateSpace.Units", "METERS" );
+
+    oSRS.importFromERM( osProjection, osDatum, osUnits );
+
+    CPLFree( pszGCPProjection );
+    oSRS.exportToWkt( &pszGCPProjection );
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -481,25 +709,28 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
 /* -------------------------------------------------------------------- */
+/*      Figure out the name of the target file.                         */
+/* -------------------------------------------------------------------- */
+    CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+    CPLString osDataFile = poHeader->Find( "DataFile", "" );
+    CPLString osDataFilePath;
+
+    if( osDataFile.length() == 0 ) // just strip off extension.
+    {
+        osDataFile = CPLGetFilename( poOpenInfo->pszFilename );
+        osDataFile = osDataFile.substr( 0, osDataFile.find_last_of('.') );
+    }
+        
+    osDataFilePath = CPLFormFilename( osPath, osDataFile, NULL );
+
+/* -------------------------------------------------------------------- */
 /*      DataSetType = Translated files are links to things like ecw     */
 /*      files.                                                          */
 /* -------------------------------------------------------------------- */
     if( EQUAL(poHeader->Find("DataSetType",""),"Translated") )
     {
-        CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-        CPLString osDataFile = poHeader->Find( "DataFile", "" );
-        CPLString osDataFilePath = CPLFormFilename( osPath, osDataFile, NULL );
-
-        if( osDataFile.length() == 0 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "DataFile field not found in ers header." );
-        }
-        else
-        {
-            poDS->poDepFile = (GDALDataset *) 
-                GDALOpenShared( osDataFile, poOpenInfo->eAccess );
-        }
+        poDS->poDepFile = (GDALDataset *) 
+            GDALOpenShared( osDataFile, poOpenInfo->eAccess );
 
         if( poDS->poDepFile != NULL 
             && poDS->poDepFile->GetRasterCount() >= nBands )
@@ -520,27 +751,13 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* ==================================================================== */
     else if( EQUAL(poHeader->Find("DataSetType",""),"ERStorage") )
     {
-        int i;
-
-        // Just strip .ers off for data file.
-        char *pszDataFilename = CPLStrdup(poOpenInfo->pszFilename);
-        for( i = strlen(pszDataFilename)-1; i > 0; i-- )
-        {
-            if( pszDataFilename[i] == '.' )
-            {
-                pszDataFilename[i] = '\0';
-                break;
-            }
-        }
-
         // Open data file.
         if( poOpenInfo->eAccess == GA_Update )
-            poDS->fpImage = VSIFOpenL( pszDataFilename, "r+" );
+            poDS->fpImage = VSIFOpenL( osDataFilePath, "r+" );
         else
-            poDS->fpImage = VSIFOpenL( pszDataFilename, "r" );
+            poDS->fpImage = VSIFOpenL( osDataFilePath, "r" );
 
-        poDS->osRawFilename = pszDataFilename;
-        CPLFree( pszDataFilename );
+        poDS->osRawFilename = osDataFilePath;
 
         if( poDS->fpImage != NULL )
         {
@@ -731,6 +948,12 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLPopErrorHandler();
         
     }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have GCPs.                                                */
+/* -------------------------------------------------------------------- */
+    if( poHeader->FindNode( "RasterInfo.WarpControl" ) )
+        poDS->ReadGCPs();
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
