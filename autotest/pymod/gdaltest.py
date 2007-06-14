@@ -324,7 +324,7 @@ class GDALTest:
 	
 
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
-                       vsimem = 0, new_filename = None ):
+                       vsimem = 0, new_filename = None, strict_in = 0 ):
 	if self.testDriver() == 'fail':
 	    return 'skip'
 
@@ -343,6 +343,7 @@ class GDALTest:
 
         gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
 	new_ds = self.driver.CreateCopy( new_filename, src_ds,
+                                         strict = strict_in,
 	                                 options = self.options )
         gdal.PopErrorHandler()
 	if new_ds is None:
