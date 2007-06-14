@@ -34,7 +34,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_Leveller(void);
@@ -76,7 +75,15 @@ enum
 enum
 {
 	// Measurement unit IDs, OEM version.
-	UNITLABEL_PX		= 0x70780000,
+	UNITLABEL_UNKNOWN	= 0x00000000,
+	UNITLABEL_PIXEL		= 0x70780000,
+	UNITLABEL_PERCENT	= 0x25000000,
+
+	UNITLABEL_RADIAN	= 0x72616400,
+	UNITLABEL_DEGREE	= 0x64656700,
+	UNITLABEL_ARCMINUTE	= 0x6172636D,
+	UNITLABEL_ARCSECOND	= 0x61726373,
+
 	UNITLABEL_YM		= 0x796D0000,
 	UNITLABEL_ZM		= 0x7A6D0000,
 	UNITLABEL_AM		= 0x616D0000,
@@ -147,10 +154,23 @@ static const double kdays_per_year = 365.25;
 static const double kdLStoM = 299792458.0;
 static const double kdLYtoM = kdLStoM * kdays_per_year * 24 * 60 * 60;
 static const double kdInch = 0.3048 / 12;
+static const double kPI = 3.1415926535897932384626433832795;
+
+static const int kFirstLinearMeasureIdx = 9;
 
 static const measurement_unit kUnits[] =
 {
-	{ "px", 1.0, UNITLABEL_PX }, // pixels
+	{ "", 1.0, UNITLABEL_UNKNOWN },
+	{ "px", 1.0, UNITLABEL_PIXEL },
+	{ "%", 1.0, UNITLABEL_PERCENT }, // not actually used
+
+	{ "rad", 1.0, UNITLABEL_RADIAN },
+	{ "°", kPI / 180.0, UNITLABEL_DEGREE },
+	{ "d", kPI / 180.0, UNITLABEL_DEGREE },
+	{ "deg", kPI / 180.0, UNITLABEL_DEGREE },
+	{ "'", kPI / (60.0 * 180.0), UNITLABEL_ARCMINUTE },
+	{ "\"", kPI / (3600.0 * 180.0), UNITLABEL_ARCSECOND },
+
 	{ "ym", 1.0e-24, UNITLABEL_YM },
 	{ "zm", 1.0e-21, UNITLABEL_ZM }, 
 	{ "am", 1.0e-18, UNITLABEL_AM },
@@ -240,7 +260,7 @@ class LevellerDataset : public GDALPamDataset
     int get(double&, FILE*, const char*);
     int get(char*, size_t, FILE*, const char*);
 
-    double convert_measure(double, const char* pszUnitsFrom);
+    int convert_measure(double, double&, const char* pszUnitsFrom);
 	int make_local_coordsys(const char* pszName, const char* pszUnits);
 	int make_local_coordsys(const char* pszName, int);
 	const char* code_to_id(int) const;
@@ -647,7 +667,8 @@ const char* LevellerDataset::code_to_id(int code) const
         if(kUnits[i].oemCode == code)
             return kUnits[i].pszID;
     }
-    CPLAssert(0);
+    CPLError( CE_Failure, CPLE_FileIO, 
+              "Unknown measurement unit code: %08x", code );
     return NULL;
 }
 
@@ -657,21 +678,26 @@ const char* LevellerDataset::code_to_id(int code) const
 /************************************************************************/
 
 
-double LevellerDataset::convert_measure
+int LevellerDataset::convert_measure
 (
 	double d, 
+	double& dResult,
 	const char* pszSpace 
 )
 {
     // Convert a measure to meters.
 
-    for(size_t i = 0; i < array_size(kUnits); i++)
+    for(size_t i = kFirstLinearMeasureIdx; i < array_size(kUnits); i++)
     {
         if(str_equal(pszSpace, kUnits[i].pszID))
-            return d * kUnits[i].dScale;
+		{
+            dResult = d * kUnits[i].dScale;
+			return TRUE;
+		}
     }
-    CPLAssert(0);
-    return d;
+    CPLError( CE_Failure, CPLE_FileIO, 
+              "Unknown linear measurement unit: '%s'", pszSpace );
+    return FALSE;
 }
 
 
@@ -680,17 +706,18 @@ int LevellerDataset::make_local_coordsys(const char* pszName, const char* pszUni
 	OGRSpatialReference sr;
 
 	sr.SetLocalCS(pszName);
-	if(OGRERR_NONE != sr.SetLinearUnits(pszUnits, 
-		this->convert_measure(1.0, pszUnits)))
-		return FALSE;
-
-	return (OGRERR_NONE == sr.exportToWkt(&m_pszProjection));
+	double d;
+	return ( this->convert_measure(1.0, d, pszUnits)
+		&& OGRERR_NONE == sr.SetLinearUnits(pszUnits, d) 
+		&& OGRERR_NONE == sr.exportToWkt(&m_pszProjection) );
 }
 
 
 int LevellerDataset::make_local_coordsys(const char* pszName, int code)
 {
-	return this->make_local_coordsys(pszName, this->code_to_id(code));
+	const char* pszUnitID = this->code_to_id(code);
+	return ( pszUnitID != NULL
+		&& this->make_local_coordsys(pszName, pszUnitID));
 }
 
 
@@ -796,7 +823,13 @@ int LevellerDataset::load_from_file(FILE* file, const char* pszFilename)
 			this->get(m_dElevBase, file, "coordsys_em_base");
 			int unitcode;
 			if(this->get(unitcode, file, "coordsys_em_units"))
-				strcpy(m_szElevUnits, this->code_to_id(unitcode));
+			{
+				const char* pszUnitID = this->code_to_id(unitcode);
+				if(pszUnitID != NULL)
+					strcpy(m_szElevUnits, pszUnitID);
+				else
+					return FALSE;
+			}
 			// datum and localcs are currently unused.
 		}
 	}
