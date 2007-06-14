@@ -308,7 +308,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
             eErr = CE_Failure;
         }
 
-        for( int iLine = 0; iLine < nYSize && eErr != CE_None; iLine++ )
+        for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
         {
             eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
                                         pData, nXSize, 1, eType, 0, 0 );
@@ -336,6 +336,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         Delete( pszFilename );
         return NULL;
     }
+    else
+        CPLErrorReset();
 
     return poDstDS;
 }
