@@ -287,7 +287,7 @@ CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             osId.Printf( "%d", iGCP + 1 );
 
         osLine.Printf( "\t\t\t\t\"%s\"\tYes\tYes\t%.6f\t%.6f\t%.15g\t%.15g\t%.15g\n",
-                       pasGCPList[iGCP].pszId,
+                       osId.c_str(),
                        pasGCPList[iGCP].dfGCPPixel,
                        pasGCPList[iGCP].dfGCPLine,
                        pasGCPList[iGCP].dfGCPX,
