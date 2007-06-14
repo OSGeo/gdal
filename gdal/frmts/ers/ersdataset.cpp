@@ -281,12 +281,18 @@ CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     for( iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
         CPLString osLine;
-        osLine.Printf( "\t\t\t\t\"%s\"\tYes\tYes\t%.6f\t%.6f\t%.15g\t%.15g\n",
+
+        CPLString osId = pasGCPList[iGCP].pszId;
+        if( strlen(osId) == 0 )
+            osId.Printf( "%d", iGCP + 1 );
+
+        osLine.Printf( "\t\t\t\t\"%s\"\tYes\tYes\t%.6f\t%.6f\t%.15g\t%.15g\t%.15g\n",
                        pasGCPList[iGCP].pszId,
                        pasGCPList[iGCP].dfGCPPixel,
                        pasGCPList[iGCP].dfGCPLine,
                        pasGCPList[iGCP].dfGCPX,
-                       pasGCPList[iGCP].dfGCPY );
+                       pasGCPList[iGCP].dfGCPY,
+                       pasGCPList[iGCP].dfGCPZ );
         osControlPoints += osLine;
     }
     osControlPoints += "\t\t}";
