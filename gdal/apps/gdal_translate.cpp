@@ -51,7 +51,7 @@ static void Usage()
         
     printf( "Usage: gdal_translate [--help-general]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
-            "             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]\n"
+            "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
@@ -96,7 +96,7 @@ static int ProxyMain( int argc, char ** argv )
     int			nOXSize = 0, nOYSize = 0;
     char		*pszOXSize=NULL, *pszOYSize=NULL;
     char                **papszCreateOptions = NULL;
-    int                 anSrcWin[4], bStrict = TRUE;
+    int                 anSrcWin[4], bStrict = FALSE;
     const char          *pszProjection;
     int                 bScale = FALSE, bHaveScaleSrc = FALSE;
     double	        dfScaleSrcMin=0.0, dfScaleSrcMax=255.0;
@@ -188,6 +188,9 @@ static int ProxyMain( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-not_strict")  )
             bStrict = FALSE;
+            
+        else if( EQUAL(argv[i],"-strict")  )
+            bStrict = TRUE;
             
         else if( EQUAL(argv[i],"-sds")  )
             bCopySubDatasets = TRUE;
