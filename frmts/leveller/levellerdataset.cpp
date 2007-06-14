@@ -1,5 +1,5 @@
 /******************************************************************************
- * levellerdataset.cpp,v 1.2 
+ * levellerdataset.cpp,v 1.21
  *
  * Project:  Leveller TER Driver
  * Purpose:  Reader for Leveller TER documents
@@ -76,6 +76,7 @@ enum
 enum
 {
 	// Measurement unit IDs, OEM version.
+	UNITLABEL_PX		= 0x70780000,
 	UNITLABEL_YM		= 0x796D0000,
 	UNITLABEL_ZM		= 0x7A6D0000,
 	UNITLABEL_AM		= 0x616D0000,
@@ -149,6 +150,7 @@ static const double kdInch = 0.3048 / 12;
 
 static const measurement_unit kUnits[] =
 {
+	{ "px", 1.0, UNITLABEL_PX }, // pixels
 	{ "ym", 1.0e-24, UNITLABEL_YM },
 	{ "zm", 1.0e-21, UNITLABEL_ZM }, 
 	{ "am", 1.0e-18, UNITLABEL_AM },
@@ -228,7 +230,7 @@ class LevellerDataset : public GDALPamDataset
     FILE*			m_fp;
     vsi_l_offset	m_nDataOffset;
 
-    int         	load_from_file(FILE*);
+    int         	load_from_file(FILE*, const char*);
 
 
     int locate_data(vsi_l_offset&, size_t&, FILE*, const char*);
@@ -672,6 +674,7 @@ double LevellerDataset::convert_measure
     return d;
 }
 
+
 int LevellerDataset::make_local_coordsys(const char* pszName, const char* pszUnits)
 {
 	OGRSpatialReference sr;
@@ -696,7 +699,7 @@ int LevellerDataset::make_local_coordsys(const char* pszName, int code)
 /*                            load_from_file()                            */
 /************************************************************************/
 
-int LevellerDataset::load_from_file(FILE* file)
+int LevellerDataset::load_from_file(FILE* file, const char* pszFilename)
 {
     // get hf dimensions
     if(!this->get(nRasterXSize, file, "hf_w"))
@@ -760,6 +763,13 @@ int LevellerDataset::load_from_file(FILE* file)
 
 				m_pszProjection = (char*)CPLMalloc(strlen(szWKT) + 1);
 				strcpy(m_pszProjection, szWKT);
+			}
+			else
+			{
+				CPLError( CE_Failure, CPLE_OpenFailed,
+						  "Unknown coordinate system type in %s.\n",
+						  pszFilename );
+				return FALSE;
 			}
 
 			// Get ground extents.
@@ -923,7 +933,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Read the file.							                            */
 /* -------------------------------------------------------------------- */
-    if( !poDS->load_from_file( poDS->m_fp ) )
+    if( !poDS->load_from_file( poDS->m_fp, poOpenInfo->pszFilename ) )
     {
         delete poDS;
         return NULL;
