@@ -368,10 +368,10 @@ IdrisiDataset::~IdrisiDataset()
         }
         CSLDestroy( papszRDC );
     }
-
     if( poColorTable )
+    {
         delete poColorTable;
-
+    }
     CPLFree( pszFilename );
     CPLFree( pszDocFilename );
     CPLFree( pszProjection );
@@ -934,17 +934,16 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
             {
                 poBand->SetDefaultRAT( poRAT );
             }
-
-            if( poDS->papszCategories == NULL )
+            else
             {
                 poBand->SetCategoryNames( poSrcBand->GetCategoryNames() );
             }
 
-            if( poDS->poColorTable == NULL || 
-                poDS->poColorTable->GetColorEntryCount() == 0 )
+            if( poDS->poColorTable->GetColorEntryCount() == 0 )
             {
                 poBand->SetColorTable( poSrcBand->GetColorTable() );
             }
+
         }
 
         poSrcBand->GetStatistics( false, true, &dfMin, &dfMax, &dfMean, &dfStdDev );
@@ -1599,8 +1598,152 @@ CPLErr IdrisiRasterBand::SetStatistics( double dfMin, double dfMax, double dfMea
 
 CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 {
+    if( ! poRAT )
+    {
+        return CE_Failure;
+    }
+
     // ----------------------------------------------------------
-    // Update Bands Attribute Table
+    // Get field indexies
+    // ----------------------------------------------------------
+
+	int iValue = -1;
+    int iRed   = poRAT->GetColOfUsage( GFU_Red );
+    int iGreen = poRAT->GetColOfUsage( GFU_Green );
+    int iBlue  = poRAT->GetColOfUsage( GFU_Blue );
+    int iName  = poRAT->GetColOfUsage( GFU_Name );
+
+    // ----------------------------------------------------------
+    // Seek for Value field index
+    // ----------------------------------------------------------
+
+    int i;
+
+    for( i = 0; i < poRAT->GetColumnCount(); i++ )
+    {
+        if EQUALN( "Value", poRAT->GetNameOfCol( i ), 5 )
+        {
+            iValue = i;
+            break;
+        }
+    }
+
+    if( iValue == -1 || iName == -1 )
+    {
+        CPLDebug( "RST", "SetDefaultRAT, inconsistent RAT fields" );
+        return CE_Failure;
+    }
+
+    // ----------------------------------------------------------
+    // Get Entry count
+    // ----------------------------------------------------------
+
+    int nRowCount   = poRAT->GetRowCount();
+    int nEntryCount = 1 + poRAT->GetValueAsInt( nRowCount - 1, iValue );
+
+    // ----------------------------------------------------------
+    // Initialization
+    // ----------------------------------------------------------
+
+    GDALColorTable *poCT = NULL;
+    char **papszNames = NULL;
+
+	double dRed     = 0.0;
+	double dGreen   = 0.0;
+	double dBlue    = 0.0;
+    int nFact       = 1;
+
+    if( iRed != -1 && iGreen != -1 && iBlue != -1 )
+    {
+        poCT  = new GDALColorTable();
+        nFact = poRAT->GetTypeOfCol( iRed ) == GFT_Real ? 255 : 1;
+    }
+
+    // ----------------------------------------------------------
+    // Can we trust in the row index?
+    // ----------------------------------------------------------
+
+    int iEntry;
+
+    bool bRowIndex = FALSE;
+
+    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    {
+        if( poRAT->GetRowOfValue( iEntry ) != -1 )
+        {
+            bRowIndex = TRUE;
+            break;
+        }
+    }
+
+    // ----------------------------------------------------------
+    // Load values
+    // ----------------------------------------------------------
+
+    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    {
+        GDALColorEntry sColor;
+
+        int iRow;
+
+        if( bRowIndex )
+        {
+            iRow = poRAT->GetRowOfValue( iEntry );
+        }
+        else
+        {
+            iRow = iEntry;
+        }
+
+        if( iRow == -1 )
+        {
+            if( poCT )
+            {
+                sColor.c1  = 0;
+                sColor.c2  = 0;
+                sColor.c3  = 0;
+                sColor.c4  = 255;    
+                poCT->SetColorEntry( iEntry, &sColor );
+            }
+    	    papszNames = CSLAddString( papszNames, "" );
+        }
+        else
+        {
+            if( poCT )
+            {
+			    dRed    = poRAT->GetValueAsDouble( iRow, iRed );
+			    dGreen  = poRAT->GetValueAsDouble( iRow, iGreen );
+			    dBlue   = poRAT->GetValueAsDouble( iRow, iBlue );
+                sColor.c1  = (short) ( dRed   * nFact );
+                sColor.c2  = (short) ( dGreen * nFact );
+                sColor.c3  = (short) ( dBlue  * nFact );
+                sColor.c4  = (short) ( 255    / nFact );    
+                poCT->SetColorEntry( iEntry, &sColor );
+            }
+    	    papszNames = CSLAddString( papszNames, 
+                poRAT->GetValueAsString( iRow, iName ) );
+		}
+	}
+
+    // ----------------------------------------------------------
+    // Set Color Table
+    // ----------------------------------------------------------
+
+    if( poCT )
+    {
+        SetColorTable( poCT );
+        delete poCT;
+    }
+
+    // ----------------------------------------------------------
+    // Update Category Names
+    // ----------------------------------------------------------
+
+    SetCategoryNames( papszNames );
+    CSLDestroy( papszNames );
+
+    // ----------------------------------------------------------
+    // Update Attribute Table
     // ----------------------------------------------------------
 
     if( poDefaultRAT ) 
@@ -1609,97 +1752,6 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     }
 
     poDefaultRAT = poRAT->Clone();
-
-    // ----------------------------------------------------------
-    // Get the Colors field indexes
-    // ----------------------------------------------------------
-
-	int iValue = poDefaultRAT->GetColOfUsage( GFU_MinMax );
-    int iRed   = poDefaultRAT->GetColOfUsage( GFU_Red );
-    int iGreen = poDefaultRAT->GetColOfUsage( GFU_Green );
-    int iBlue  = poDefaultRAT->GetColOfUsage( GFU_Blue );
-    int iName  = poDefaultRAT->GetColOfUsage( GFU_Name );
-
-    if( iValue == -1 || iName == -1 )
-    {
-        CPLDebug( "RST", "SetDefaultRAT, inconsistent RAT fields" );
-    }
-
-    bool bHasColorTable = ! ( iRed == -1 || iGreen == -1 || iBlue == -1 );
-
-    // ----------------------------------------------------------
-    // Create entries from 0 to the last VALUE field content
-    // ----------------------------------------------------------
-
-    GDALColorTable *poCT = new GDALColorTable();
-    GDALColorEntry sColor;
-	double dRed     = 0.0;
-	double dGreen   = 0.0;
-	double dBlue    = 0.0;
-    int nFact       = 1;
-
-    char **papszNames = NULL;
-
-	int nEntryCount = poDefaultRAT->GetValueAsInt( 
-        poDefaultRAT->GetRowCount() - 1, iValue );
-    int iEntry      = 0;
-    int iRow        = 0;
-
-    int nValue = poDefaultRAT->GetValueAsInt( 0, iValue );
-
-    if( bHasColorTable )
-    {
-        nFact = poDefaultRAT->GetTypeOfCol( iRed ) == GFT_Real ? 255 : 1;
-    }
-
-    for( iEntry = 0; iEntry < 256 && iRow < nEntryCount; iEntry++ )
-    {
-        if( iEntry == nValue )
-        {
-            if( bHasColorTable )
-            {
-			    dRed    = poDefaultRAT->GetValueAsDouble( iRow, iRed );
-			    dGreen  = poDefaultRAT->GetValueAsDouble( iRow, iGreen );
-			    dBlue   = poDefaultRAT->GetValueAsDouble( iRow, iBlue );
-                sColor.c1  = (short) ( dRed   * nFact );
-                sColor.c2  = (short) ( dGreen * nFact );
-                sColor.c3  = (short) ( dBlue  * nFact );
-                sColor.c4  = (short) ( 255    / nFact );    
-                poCT->SetColorEntry( iEntry, &sColor );
-            }
-    	    papszNames = CSLAddString( papszNames, 
-                poDefaultRAT->GetValueAsString( iRow, iName ) );
-            iRow++;
-            if( iRow < nEntryCount)
-                nValue  = poDefaultRAT->GetValueAsInt( iRow, iValue );
-		}
-        else
-        {
-            sColor.c1  = 0;
-            sColor.c2  = 0;
-            sColor.c3  = 0;
-            sColor.c4  = 255;    
-            poCT->SetColorEntry( iEntry, &sColor );
-    	    papszNames = CSLAddString( papszNames, "" );
-        }
-	}
-
-    // ----------------------------------------------------------
-    // Set Color Table
-    // ----------------------------------------------------------
-
-    if( bHasColorTable )
-    {
-        SetColorTable(poCT);
-        delete poCT;
-    }
-
-    // ----------------------------------------------------------
-    // Update Header File
-    // ----------------------------------------------------------
-
-    SetCategoryNames( papszNames );
-    CSLDestroy( papszNames );
 
     return CE_None;
 }
