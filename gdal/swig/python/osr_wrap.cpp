@@ -2779,11 +2779,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 }
 
 SWIGINTERN OSRSpatialReferenceShadow *new_OSRSpatialReferenceShadow(char const *wkt=""){
-    OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
-    if (sr) {
-      OSRReference( sr );
-    }
-    return sr;
+    return (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
   }
 SWIGINTERN void delete_OSRSpatialReferenceShadow(OSRSpatialReferenceShadow *self){
     if (OSRDereference( self ) == 0 ) {
