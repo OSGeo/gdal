@@ -312,6 +312,27 @@ def ogr_mem_9():
     return 'success'
     
 ###############################################################################
+# Test GetDriver() / name bug (#1674)
+#
+# Mostly we are verifying that this doesn't still cause a crash. 
+
+def ogr_mem_10():
+
+    d = ogr.GetDriverByName( 'Memory' )
+    ds =  d.CreateDataSource('xxxxxx')
+
+    try:
+        d2 = ds.GetDriver()
+    except:
+        d2 = None
+
+    if d2 is not None:
+        gdaltest.post_reason( 'unexpectedly got driver! Perhaps data sources now keep track of driver instead of having to call open?' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_mem_cleanup():
@@ -334,6 +355,7 @@ gdaltest_list = [
     ogr_mem_7,
     ogr_mem_8,
     ogr_mem_9,
+    ogr_mem_10,
     ogr_mem_cleanup ]
 
 if __name__ == '__main__':
