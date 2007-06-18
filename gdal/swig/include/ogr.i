@@ -358,8 +358,13 @@ public:
     OGRDriverShadow* driver;
     OGRDataSourceShadow* ds;
     ds = (OGRDataSourceShadow*)OGROpen((const char *) OGR_DS_GetName(self),0,&driver);
-    OGRReleaseDataSource(ds);
-    return driver;
+    if( ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        return driver;
+    }
+    else
+        return NULL;
   }
   const char * GetName() {
     return OGR_DS_GetName(self);
