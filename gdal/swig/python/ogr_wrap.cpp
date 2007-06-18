@@ -2884,8 +2884,13 @@ SWIGINTERN OGRDriverShadow *OGRDataSourceShadow_GetDriver(OGRDataSourceShadow *s
     OGRDriverShadow* driver;
     OGRDataSourceShadow* ds;
     ds = (OGRDataSourceShadow*)OGROpen((const char *) OGR_DS_GetName(self),0,&driver);
-    OGRReleaseDataSource(ds);
-    return driver;
+    if( ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        return driver;
+    }
+    else
+        return NULL;
   }
 SWIGINTERN char const *OGRDataSourceShadow_GetName(OGRDataSourceShadow *self){
     return OGR_DS_GetName(self);
@@ -3518,13 +3523,27 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 
 
   OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 
 
   OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 
