@@ -326,8 +326,8 @@ def ogr_mem_10():
     except:
         d2 = None
 
-    if d2 is not None:
-        gdaltest.post_reason( 'unexpectedly got driver! Perhaps data sources now keep track of driver instead of having to call open?' )
+    if d2 is None or d2.GetName() != 'Memory':
+        gdaltest.post_reason( 'Did not get expected driver name.' )
         return 'fail'
 
     return 'success'
