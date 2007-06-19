@@ -41,7 +41,7 @@ OGRMemDataSource::OGRMemDataSource( const char *pszFilename,
                                     char **papszOptions)
 
 {
-    pszName = NULL;
+    pszName = CPLStrdup(pszFilename);
     papoLayers = NULL;
     nLayers = 0;
 }
