@@ -351,7 +351,11 @@ See the constants at the top of ogr.py"""
 
     def GetDriver( self ):
         """Returns the driver of the datasource"""
-        return Driver( _gdal.OGR_DS_GetDriver( self._o ) )
+        x = _gdal.OGR_DS_GetDriver( self._o )
+        if x is None or x == 'NULL':
+            return None
+        else:
+            return Driver( x )
     
 #############################################################################
 # OGRLayer
