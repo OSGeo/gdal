@@ -229,6 +229,35 @@ class Driver(MajorObject):
 Driver_swigregister = _gdal.Driver_swigregister
 Driver_swigregister(Driver)
 
+class ColorEntry(_object):
+    """Proxy of C++ ColorEntry class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, ColorEntry, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, ColorEntry, name)
+    __repr__ = _swig_repr
+    __swig_setmethods__["c1"] = _gdal.ColorEntry_c1_set
+    __swig_getmethods__["c1"] = _gdal.ColorEntry_c1_get
+    if _newclass:c1 = _swig_property(_gdal.ColorEntry_c1_get, _gdal.ColorEntry_c1_set)
+    __swig_setmethods__["c2"] = _gdal.ColorEntry_c2_set
+    __swig_getmethods__["c2"] = _gdal.ColorEntry_c2_get
+    if _newclass:c2 = _swig_property(_gdal.ColorEntry_c2_get, _gdal.ColorEntry_c2_set)
+    __swig_setmethods__["c3"] = _gdal.ColorEntry_c3_set
+    __swig_getmethods__["c3"] = _gdal.ColorEntry_c3_get
+    if _newclass:c3 = _swig_property(_gdal.ColorEntry_c3_get, _gdal.ColorEntry_c3_set)
+    __swig_setmethods__["c4"] = _gdal.ColorEntry_c4_set
+    __swig_getmethods__["c4"] = _gdal.ColorEntry_c4_get
+    if _newclass:c4 = _swig_property(_gdal.ColorEntry_c4_get, _gdal.ColorEntry_c4_set)
+    def __init__(self, *args): 
+        """__init__(self) -> ColorEntry"""
+        this = _gdal.new_ColorEntry(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_ColorEntry
+    __del__ = lambda self : None;
+ColorEntry_swigregister = _gdal.ColorEntry_swigregister
+ColorEntry_swigregister(ColorEntry)
+
 class GCP(_object):
     """Proxy of C++ GCP class"""
     __swig_setmethods__ = {}
@@ -712,21 +741,21 @@ class ColorTable(MajorObject):
         return _gdal.ColorTable_GetCount(*args)
 
     def GetColorEntry(*args):
-        """GetColorEntry(self, int entry) -> GDALColorEntry"""
+        """GetColorEntry(self, int entry) -> ColorEntry"""
         return _gdal.ColorTable_GetColorEntry(*args)
 
     def GetColorEntryAsRGB(*args):
-        """GetColorEntryAsRGB(self, int entry, GDALColorEntry centry) -> int"""
+        """GetColorEntryAsRGB(self, int entry, ColorEntry centry) -> int"""
         return _gdal.ColorTable_GetColorEntryAsRGB(*args)
 
     def SetColorEntry(*args):
-        """SetColorEntry(self, int entry, GDALColorEntry centry)"""
+        """SetColorEntry(self, int entry, ColorEntry centry)"""
         return _gdal.ColorTable_SetColorEntry(*args)
 
     def CreateColorRamp(*args):
         """
-        CreateColorRamp(self, int nStartIndex, GDALColorEntry startcolor, int nEndIndex, 
-            GDALColorEntry endcolor)
+        CreateColorRamp(self, int nStartIndex, ColorEntry startcolor, int nEndIndex, 
+            ColorEntry endcolor)
         """
         return _gdal.ColorTable_CreateColorRamp(*args)
 
