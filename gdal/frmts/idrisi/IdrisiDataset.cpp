@@ -1614,7 +1614,16 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     int iName  = poRAT->GetColOfUsage( GFU_Name );
 
     // ----------------------------------------------------------
-    // Seek for Value field index
+    // If here is not Category names or ColorTable
+    // ----------------------------------------------------------
+
+    if( iRed == -1 && iGreen == -1 && iBlue == -1 && iName == -1 )
+    {
+        return CE_None;
+    }
+
+    // ----------------------------------------------------------
+    // Seek for Value field index (ESRI Standards)
     // ----------------------------------------------------------
 
     int i;
@@ -1628,18 +1637,38 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
         }
     }
 
-    if( iValue == -1 || iName == -1 )
-    {
-        CPLDebug( "RST", "SetDefaultRAT, inconsistent RAT fields" );
-        return CE_Failure;
-    }
-
     // ----------------------------------------------------------
     // Get Entry count
     // ----------------------------------------------------------
 
     int nRowCount   = poRAT->GetRowCount();
-    int nEntryCount = 1 + poRAT->GetValueAsInt( nRowCount - 1, iValue );
+    int nEntryCount = nRowCount;
+
+    if( iValue != -1)
+    {
+        nEntryCount = 1 + poRAT->GetValueAsInt( nRowCount - 1, iValue );
+    }
+    else
+    {
+        nEntryCount = UINT_MAX;
+    }
+
+    // ----------------------------------------------------------
+    // Check for row index
+    // ----------------------------------------------------------
+
+    int iEntry;
+
+    bool bRowIndex = FALSE;
+
+    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    {
+        if( poRAT->GetRowOfValue( iEntry ) != -1 )
+        {
+            bRowIndex = TRUE;
+            break;
+        }
+    }
 
     // ----------------------------------------------------------
     // Initialization
@@ -1657,23 +1686,6 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     {
         poCT  = new GDALColorTable();
         nFact = poRAT->GetTypeOfCol( iRed ) == GFT_Real ? 255 : 1;
-    }
-
-    // ----------------------------------------------------------
-    // Can we trust in the row index?
-    // ----------------------------------------------------------
-
-    int iEntry;
-
-    bool bRowIndex = FALSE;
-
-    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
-    {
-        if( poRAT->GetRowOfValue( iEntry ) != -1 )
-        {
-            bRowIndex = TRUE;
-            break;
-        }
     }
 
     // ----------------------------------------------------------
@@ -1720,8 +1732,15 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
                 sColor.c4  = (short) ( 255    / nFact );    
                 poCT->SetColorEntry( iEntry, &sColor );
             }
-    	    papszNames = CSLAddString( papszNames, 
-                poRAT->GetValueAsString( iRow, iName ) );
+            if( iName != -1 )
+            {
+    	        papszNames = CSLAddString( papszNames, 
+                    poRAT->GetValueAsString( iRow, iName ) );
+            }
+            else
+            {
+        	    papszNames = CSLAddString( papszNames, "" );
+            }
 		}
 	}
 
