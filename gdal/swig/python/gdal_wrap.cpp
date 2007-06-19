@@ -2946,6 +2946,29 @@ char const *GDALDriverShadow_HelpTopic_get( GDALDriverShadow *h ) {
 }
 
 
+SWIGINTERN int
+SWIG_AsVal_short (PyObject * obj, short *val)
+{
+  long v;
+  int res = SWIG_AsVal_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v < SHRT_MIN || v > SHRT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< short >(v);
+    }
+  }  
+  return res;
+}
+
+
+SWIGINTERNINLINE PyObject *
+SWIG_From_short  (short value)
+{    
+  return SWIG_From_long  (value);
+}
+
+
   #define SWIG_From_double   PyFloat_FromDouble 
 
 SWIGINTERN GDAL_GCP *new_GDAL_GCP(double x=0.0,double y=0.0,double z=0.0,double pixel=0.0,double line=0.0,char const *info="",char const *id=""){
@@ -5112,6 +5135,360 @@ SWIGINTERN PyObject *Driver_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObjec
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O|swigregister", &obj)) return NULL;
   SWIG_TypeNewClientData(SWIGTYPE_p_GDALDriverShadow, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c1_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short arg2 ;
+  GDALColorEntry ce1 ;
+  short val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:ColorEntry_c1_set",&obj0,&obj1)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  ecode2 = SWIG_AsVal_short(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorEntry_c1_set" "', argument " "2"" of type '" "short""'");
+  } 
+  arg2 = static_cast< short >(val2);
+  if (arg1) (arg1)->c1 = arg2;
+  
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c1_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short result;
+  GDALColorEntry ce1 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ColorEntry_c1_get",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  result = (short) ((arg1)->c1);
+  resultobj = SWIG_From_short(static_cast< short >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c2_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short arg2 ;
+  GDALColorEntry ce1 ;
+  short val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:ColorEntry_c2_set",&obj0,&obj1)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  ecode2 = SWIG_AsVal_short(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorEntry_c2_set" "', argument " "2"" of type '" "short""'");
+  } 
+  arg2 = static_cast< short >(val2);
+  if (arg1) (arg1)->c2 = arg2;
+  
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c2_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short result;
+  GDALColorEntry ce1 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ColorEntry_c2_get",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  result = (short) ((arg1)->c2);
+  resultobj = SWIG_From_short(static_cast< short >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c3_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short arg2 ;
+  GDALColorEntry ce1 ;
+  short val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:ColorEntry_c3_set",&obj0,&obj1)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  ecode2 = SWIG_AsVal_short(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorEntry_c3_set" "', argument " "2"" of type '" "short""'");
+  } 
+  arg2 = static_cast< short >(val2);
+  if (arg1) (arg1)->c3 = arg2;
+  
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c3_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short result;
+  GDALColorEntry ce1 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ColorEntry_c3_get",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  result = (short) ((arg1)->c3);
+  resultobj = SWIG_From_short(static_cast< short >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c4_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short arg2 ;
+  GDALColorEntry ce1 ;
+  short val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:ColorEntry_c4_set",&obj0,&obj1)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  ecode2 = SWIG_AsVal_short(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorEntry_c4_set" "', argument " "2"" of type '" "short""'");
+  } 
+  arg2 = static_cast< short >(val2);
+  if (arg1) (arg1)->c4 = arg2;
+  
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ColorEntry_c4_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  short result;
+  GDALColorEntry ce1 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ColorEntry_c4_get",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  result = (short) ((arg1)->c4);
+  resultobj = SWIG_From_short(static_cast< short >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_ColorEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":new_ColorEntry")) SWIG_fail;
+  {
+    result = (GDALColorEntry *)new GDALColorEntry();
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) GDALColorEntry* */
+    resultobj = Py_BuildValue( "(hhhh)", (*result).c1,(*result).c2,(*result).c3,(*result).c4);
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_ColorEntry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALColorEntry *arg1 = (GDALColorEntry *) 0 ;
+  GDALColorEntry ce1 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_ColorEntry",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) GDALColorEntry* */
+    ce1.c4 = 255;
+    int size = PySequence_Size(obj0);
+    if ( size > 4 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+      SWIG_fail;
+    }
+    if ( size < 3 ) {
+      PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
+      SWIG_fail;
+    }
+    PyArg_ParseTuple( obj0,"hhh|h", &ce1.c1, &ce1.c2, &ce1.c3, &ce1.c4 );
+    arg1 = &ce1;
+  }
+  {
+    delete arg1;
+    
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *ColorEntry_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!PyArg_ParseTuple(args,(char*)"O|swigregister", &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_GDALColorEntry, SWIG_NewClientData(obj));
   return SWIG_Py_Void();
 }
 
@@ -10811,6 +11188,17 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Driver_Register", _wrap_Driver_Register, METH_VARARGS, NULL},
 	 { (char *)"Driver_Deregister", _wrap_Driver_Deregister, METH_VARARGS, NULL},
 	 { (char *)"Driver_swigregister", Driver_swigregister, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c1_set", _wrap_ColorEntry_c1_set, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c1_get", _wrap_ColorEntry_c1_get, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c2_set", _wrap_ColorEntry_c2_set, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c2_get", _wrap_ColorEntry_c2_get, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c3_set", _wrap_ColorEntry_c3_set, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c3_get", _wrap_ColorEntry_c3_get, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c4_set", _wrap_ColorEntry_c4_set, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_c4_get", _wrap_ColorEntry_c4_get, METH_VARARGS, NULL},
+	 { (char *)"new_ColorEntry", _wrap_new_ColorEntry, METH_VARARGS, NULL},
+	 { (char *)"delete_ColorEntry", _wrap_delete_ColorEntry, METH_VARARGS, NULL},
+	 { (char *)"ColorEntry_swigregister", ColorEntry_swigregister, METH_VARARGS, NULL},
 	 { (char *)"GCP_GCPX_set", _wrap_GCP_GCPX_set, METH_VARARGS, NULL},
 	 { (char *)"GCP_GCPX_get", _wrap_GCP_GCPX_get, METH_VARARGS, NULL},
 	 { (char *)"GCP_GCPY_set", _wrap_GCP_GCPY_set, METH_VARARGS, NULL},
