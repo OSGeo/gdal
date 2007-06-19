@@ -2904,16 +2904,7 @@ SWIGINTERN int OGRDataSourceShadow_GetLayerCount(OGRDataSourceShadow *self){
     return OGR_DS_GetLayerCount(self);
   }
 SWIGINTERN OGRDriverShadow *OGRDataSourceShadow_GetDriver(OGRDataSourceShadow *self){
-    OGRDriverShadow* driver;
-    OGRDataSourceShadow* ds;
-    ds = (OGRDataSourceShadow*)OGROpen((const char *) OGR_DS_GetName(self),0,&driver);
-    if( ds != NULL )
-    {
-        OGRReleaseDataSource(ds);
-        return driver;
-    }
-    else
-        return NULL;
+    return (OGRLayerShadow *) OGR_DS_GetDriver( self );
   }
 SWIGINTERN char const *OGRDataSourceShadow_GetName(OGRDataSourceShadow *self){
     return OGR_DS_GetName(self);
