@@ -197,3 +197,143 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
     }
 }
 
+/************************************************************************/
+/*                     CPLHTTPParseMultipartMime()                      */
+/************************************************************************/
+
+int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Is it already done?                                             */
+/* -------------------------------------------------------------------- */
+    if( psResult->nMimePartCount > 0 )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Find the boundary setting in the content type.                  */
+/* -------------------------------------------------------------------- */
+    const char *pszBound = NULL;
+
+    if( psResult->pszContentType != NULL )
+        pszBound = strstr(psResult->pszContentType,"boundary=");
+
+    if( pszBound == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to parse multi-part mime, no boundary setting." );
+        return FALSE;
+    }
+
+    CPLString osBoundary;
+    char **papszTokens = 
+        CSLTokenizeStringComplex( pszBound + 9, "\n ;", 
+                                  TRUE, FALSE );
+
+    if( CSLCount(papszTokens) == 0 || strlen(papszTokens[0]) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to parse multi-part mime, boundary not parsable." );
+        return FALSE;
+    }
+    
+    osBoundary = "--";
+    osBoundary += papszTokens[0];
+    CSLDestroy( papszTokens );
+
+/* -------------------------------------------------------------------- */
+/*      Find the start of the first chunk.                              */
+/* -------------------------------------------------------------------- */
+    char *pszNext;
+    pszNext = strstr((const char *) psResult->pabyData,osBoundary.c_str());
+    
+    if( pszNext == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "No parts found." );
+        return FALSE;
+    }
+
+    pszNext += strlen(osBoundary);
+    while( *pszNext != '\n' && *pszNext != '\0' )
+        pszNext++;
+    if( *pszNext == '\n' )
+        pszNext++;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over parts...                                              */
+/* -------------------------------------------------------------------- */
+    while( TRUE )
+    {
+        psResult->nMimePartCount++;
+        psResult->pasMimePart = (CPLMimePart *)
+            CPLRealloc(psResult->pasMimePart,
+                       sizeof(CPLMimePart) * psResult->nMimePartCount );
+
+        CPLMimePart *psPart = psResult->pasMimePart+psResult->nMimePartCount-1;
+
+        memset( psPart, 0, sizeof(CPLMimePart) );
+
+/* -------------------------------------------------------------------- */
+/*      Collect headers.                                                */
+/* -------------------------------------------------------------------- */
+        while( *pszNext != '\n' && *pszNext != '\0' )
+        {
+            char *pszEOL = strstr(pszNext,"\n");
+
+            if( pszEOL == NULL )
+            {
+                CPLAssert( FALSE );
+                break;
+            }
+
+            *pszEOL = '\0';
+            psPart->papszHeaders = 
+                CSLAddString( psPart->papszHeaders, pszNext );
+            *pszEOL = '\n';
+            
+            pszNext = pszEOL + 1;
+        }
+
+        if( *pszNext == '\n' )
+            pszNext++;
+            
+/* -------------------------------------------------------------------- */
+/*      Work out the data block size.                                   */
+/* -------------------------------------------------------------------- */
+        psPart->pabyData = (GByte *) pszNext;
+
+        int nBytesAvail = psResult->nDataLen - 
+            (pszNext - (const char *) psResult->pabyData);
+
+        while( nBytesAvail > 0
+               && (*pszNext != '-' 
+                   || strncmp(pszNext,osBoundary,strlen(osBoundary)) != 0) )
+        {
+            pszNext++;
+            nBytesAvail--;
+        }
+        
+        if( nBytesAvail == 0 )
+        {
+            CPLAssert( FALSE );
+            break;
+        }
+
+        psPart->nDataLen = pszNext - (const char *) psPart->pabyData;
+        pszNext += strlen(osBoundary);
+
+        if( strncmp(pszNext,"--",2) == 0 )
+        {
+            break;
+        }
+        else if( *pszNext == '\n' )
+            pszNext++;
+        else
+        {
+            CPLAssert( FALSE );
+            break;
+        }
+    }
+
+    return TRUE;
+}
