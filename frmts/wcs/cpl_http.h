@@ -37,6 +37,13 @@
 CPL_C_START
 
 typedef struct {
+    char **papszHeaders;
+    
+    GByte *pabyData;
+    int    nDataLen;
+} CPLMimePart;
+
+typedef struct {
     int     nStatus;            /* 200=success, value < 0 if request failed */
     char    *pszContentType;    /* Content-Type of the response */
     char    *pszErrBuf;         /* Buffer where curl can write errors */
@@ -44,12 +51,16 @@ typedef struct {
     int     nDataLen;
     int     nDataAlloc;
     GByte   *pabyData;
+
+    int     nMimePartCount;
+    CPLMimePart *pasMimePart;
 } CPLHTTPResult;
 
 int CPL_DLL   CPLHTTPEnabled( void );
 CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
+int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
 
 CPL_C_END
 
