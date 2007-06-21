@@ -297,6 +297,7 @@ using namespace std;
 
 #include "ogr_api.h"
 #include "ogr_core.h"
+#include "ogr_srs_api.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
 
@@ -695,8 +696,12 @@ public:
     return OGR_L_RollbackTransaction(self);
   }
   
+  %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
-    return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
+    OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
   
   GIntBig GetFeatureRead() {
@@ -1353,8 +1358,12 @@ public:
     return OGR_G_Transform(self, trans);
   }
   
+  %newobject GetSpatialReference;
   OSRSpatialReferenceShadow* GetSpatialReference() {
-    return (OSRSpatialReferenceShadow*)OGR_G_GetSpatialReference(self);
+    OGRSpatialReferenceH ref =  OGR_G_GetSpatialReference(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
   
   void AssignSpatialReference(OSRSpatialReferenceShadow* reference) {
