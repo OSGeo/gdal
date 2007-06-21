@@ -251,7 +251,7 @@ int TABView::OpenForRead(const char *pszFname,
          i++)
     {
         const char *pszStr = m_papszTABFile[i];
-        while(*pszStr != '\0' && isspace(*pszStr))
+        while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
             pszStr++;
         if (EQUALN(pszStr, "create view", 11))
             bCreateViewFound = TRUE;

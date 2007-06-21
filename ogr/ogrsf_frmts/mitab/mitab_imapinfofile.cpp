@@ -174,7 +174,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
         fp = VSIFOpen(pszAdjFname, "r");
         while(fp && (pszLine = CPLReadLine(fp)) != NULL)
         {
-            while (isspace(*pszLine))  pszLine++;
+            while (isspace((unsigned char)*pszLine))  pszLine++;
             if (EQUALN(pszLine, "Fields", 6))
                 bFoundFields = TRUE;
             else if (EQUALN(pszLine, "create view", 11))

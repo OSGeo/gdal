@@ -220,7 +220,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
     for (int i=0; !bSeamlessFound && papszTABFile && papszTABFile[i]; i++)
     {
         const char *pszStr = papszTABFile[i];
-        while(*pszStr != '\0' && isspace(*pszStr))
+        while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
             pszStr++;
         if (EQUALN(pszStr, "\"\\IsSeamless\" = \"TRUE\"", 21))
             bSeamlessFound = TRUE;
