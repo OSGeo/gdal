@@ -118,6 +118,7 @@ using namespace std;
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 typedef void OSRSpatialReferenceShadow;
 typedef void OGRDriverShadow;
@@ -547,8 +548,11 @@ public:
     return OGR_L_RollbackTransaction(self);
   }
   
+
   OSRSpatialReferenceShadow *GetSpatialRef() {
-    return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
+    OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
+    OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
   
   GIntBig GetFeaturesRead() {
