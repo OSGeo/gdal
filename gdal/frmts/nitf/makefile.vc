@@ -9,7 +9,15 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I..\gtiff\libtiff
+!IFDEF JPEG_SUPPORTED
+!IFDEF JPEG_EXTERNAL_LIB
+JPEG_FLAGS =	-I$(JPEGDIR) -DJPEG_SUPPORT
+!ELSE
+JPEG_FLAGS =	-I..\jpeg\libjpeg -DJPEG_SUPPORT
+!ENDIF
+!ENDIF
+
+EXTRAFLAGS = -I..\gtiff\libtiff $(JPEG_FLAGS)
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
