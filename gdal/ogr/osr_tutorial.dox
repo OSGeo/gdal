@@ -291,7 +291,7 @@ lat/long.
 
 A C interface to the coordinate system services is defined in 
 ogr_srs_api.h, and Python bindings are available via the osr.py module. 
-Methods are close analogs of the C++ methods but in C and Python bindings
+Methods are close analogs of the C++ methods but C and Python bindings
 are missing for some C++ methods. 
 
 <h3>C Bindings</h3>
