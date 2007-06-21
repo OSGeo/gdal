@@ -548,10 +548,11 @@ public:
     return OGR_L_RollbackTransaction(self);
   }
   
-
+  %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
     OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
-    OSRReference(ref);
+    if( ref )
+        OSRReference(ref);
     return (OSRSpatialReferenceShadow*) ref;
   }
   
@@ -1300,8 +1301,12 @@ public:
     return OGR_G_Transform(self, trans);
   }
   
+  %newobject GetSpatialReference;
   OSRSpatialReferenceShadow* GetSpatialReference() {
-    return (OSRSpatialReferenceShadow*)OGR_G_GetSpatialReference(self);
+    OGRSpatialReferenceH ref =  OGR_G_GetSpatialReference(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
   
   void AssignSpatialReference(OSRSpatialReferenceShadow* reference) {
