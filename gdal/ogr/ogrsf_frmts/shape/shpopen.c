@@ -1933,9 +1933,16 @@ SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
 /*      first ring is outer and all others are inner, but eventually    */
 /*      we need to fix this to handle multiple island polygons and      */
 /*      unordered sets of rings.                                        */
+/*                                                                      */
 /* -------------------------------------------------------------------- */
-        dfTestX = psObject->padfX[psObject->panPartStart[iOpRing]];
-        dfTestY = psObject->padfY[psObject->panPartStart[iOpRing]];
+
+        /* Use point in the middle of segment to avoid testing
+         * common points of rings.
+         */
+        dfTestX = ( psObject->padfX[psObject->panPartStart[iOpRing]]
+                    + psObject->padfX[psObject->panPartStart[iOpRing] + 1] ) / 2;
+        dfTestY = ( psObject->padfY[psObject->panPartStart[iOpRing]]
+                    + psObject->padfY[psObject->panPartStart[iOpRing] + 1] ) / 2;
 
         bInner = FALSE;
         for( iCheckRing = 0; iCheckRing < psObject->nParts; iCheckRing++ )
@@ -1963,21 +1970,31 @@ SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
                 else
                     iNext = 0;
 
-                if( (psObject->padfY[iEdge+nVertStart] < dfTestY 
-                     && psObject->padfY[iNext+nVertStart] >= dfTestY)
-                    || (psObject->padfY[iNext+nVertStart] < dfTestY 
-                        && psObject->padfY[iEdge+nVertStart] >= dfTestY) )
+                /* Rule #1:
+                 * Test whether the edge 'straddles' the horizontal ray from the test point (dfTestY,dfTestY)
+                 * The rule #1 also excludes edges collinear with the ray.
+                 */
+                if ( ( psObject->padfY[iEdge+nVertStart] < dfTestY
+                       && dfTestY <= psObject->padfY[iNext+nVertStart] )
+                    || ( psObject->padfY[iNext+nVertStart] < dfTestY
+                         && dfTestY <= psObject->padfY[iEdge+nVertStart] ) )
                 {
-                    if( psObject->padfX[iEdge+nVertStart] 
-                        + (dfTestY - psObject->padfY[iEdge+nVertStart])
-                           / (psObject->padfY[iNext+nVertStart]
-                              - psObject->padfY[iEdge+nVertStart])
-                           * (psObject->padfX[iNext+nVertStart]
-                              - psObject->padfX[iEdge+nVertStart]) < dfTestX )
+                    /* Rule #2:
+                    * Test if edge-ray intersection is on the right from the test point (dfTestY,dfTestY)
+                    */
+                    float const intersect = 
+                        ( psObject->padfX[iEdge+nVertStart]
+                          + ( dfTestY - psObject->padfY[iEdge+nVertStart] ) 
+                          / ( psObject->padfY[iNext+nVertStart] - psObject->padfY[iEdge+nVertStart] )
+                          * ( psObject->padfX[iNext+nVertStart] - psObject->padfX[iEdge+nVertStart] ) );
+
+                    if (intersect  < dfTestX)
+                    {
                         bInner = !bInner;
-                }
+                    }
+                }    
             }
-        }
+        } /* for iCheckRing */
 
 /* -------------------------------------------------------------------- */
 /*      Determine the current order of this ring so we will know if     */
