@@ -336,6 +336,29 @@ def ogr_mitab_9():
     return 'success'
     
 ###############################################################################
+# Verify support for NTF datum with non-greenwich datum per
+#    http://trac.osgeo.org/gdal/ticket/1416
+#
+# This test also excercises srs reference counting as described in issue:
+#    http://trac.osgeo.org/gdal/ticket/1680 
+
+def ogr_mitab_10():
+    
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    ds = ogr.Open( 'data/small_ntf.mif' )
+    srs = ds.GetLayer(0).GetSpatialRef()
+    ds = None
+
+    pm_value = srs.GetAttrValue( 'PROJCS|GEOGCS|PRIMEM',1)
+    if pm_value[:6] != '2.3372':
+        gdaltest.post_reason( 'got unexpected prime meridian, not paris: ' + pm_value )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mitab_cleanup():
@@ -359,6 +382,7 @@ gdaltest_list = [
     ogr_mitab_7,
     ogr_mitab_8,
     ogr_mitab_9,
+    ogr_mitab_10,
     ogr_mitab_cleanup ]
 
 if __name__ == '__main__':
