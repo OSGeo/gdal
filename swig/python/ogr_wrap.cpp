@@ -2580,6 +2580,7 @@ using namespace std;
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 typedef void OSRSpatialReferenceShadow;
 typedef void OGRDriverShadow;
@@ -3061,7 +3062,10 @@ SWIGINTERN OGRErr OGRLayerShadow_RollbackTransaction(OGRLayerShadow *self){
     return OGR_L_RollbackTransaction(self);
   }
 SWIGINTERN OSRSpatialReferenceShadow *OGRLayerShadow_GetSpatialRef(OGRLayerShadow *self){
-    return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
+    OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
 SWIGINTERN GIntBig OGRLayerShadow_GetFeaturesRead(OGRLayerShadow *self){
     return OGR_L_GetFeaturesRead(self);
@@ -3535,7 +3539,10 @@ SWIGINTERN OGRErr OGRGeometryShadow_Transform(OGRGeometryShadow *self,OSRCoordin
     return OGR_G_Transform(self, trans);
   }
 SWIGINTERN OSRSpatialReferenceShadow *OGRGeometryShadow_GetSpatialReference(OGRGeometryShadow *self){
-    return (OSRSpatialReferenceShadow*)OGR_G_GetSpatialReference(self);
+    OGRSpatialReferenceH ref =  OGR_G_GetSpatialReference(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
 SWIGINTERN void OGRGeometryShadow_AssignSpatialReference(OGRGeometryShadow *self,OSRSpatialReferenceShadow *reference){
     OGR_G_AssignSpatialReference(self, reference);
@@ -5736,7 +5743,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetSpatialRef(PyObject *SWIGUNUSEDPARM(self), P
       }
     }
   }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -10742,7 +10749,7 @@ SWIGINTERN PyObject *_wrap_Geometry_GetSpatialReference(PyObject *SWIGUNUSEDPARM
       }
     }
   }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
