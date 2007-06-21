@@ -252,6 +252,11 @@ int OSRReference( OGRSpatialReferenceH hSRS )
 int OGRSpatialReference::Dereference()
 
 {
+    if( nRefCount <= 0 )
+        CPLDebug( "OSR", 
+                  "Dereference() called on an object with refcount %d,"
+                  "likely already destroyed!", 
+                  nRefCount );
     return --nRefCount;
 }
 
