@@ -786,7 +786,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /* -------------------------------------------------------------------- */
 /*      Set prime meridian for 9999 datums.                             */
 /* -------------------------------------------------------------------- */
-    if( nDatum == 9999 )
+    if( nDatum == 9999 || adfDatumParm[7] != 0.0 )
     {
         pszPrimeM = "non-Greenwich";
         dfPMLongToGreenwich = adfDatumParm[7];
