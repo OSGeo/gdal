@@ -733,7 +733,7 @@ int TABFile::ParseTABFileFields()
          * Tokenize the next .TAB line, and check first keyword
          *------------------------------------------------------------*/
         const char *pszStr = m_papszTABFile[iLine];
-        while(*pszStr != '\0' && isspace(*pszStr))
+        while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
             pszStr++;
 
         if (EQUALN(pszStr, "Fields", 6))
