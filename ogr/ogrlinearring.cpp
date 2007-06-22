@@ -371,7 +371,14 @@ void OGRLinearRing::closeRings()
         || getY(0) != getY(nPointCount-1)
         || getZ(0) != getZ(nPointCount-1) )
     {
-        addPoint( getX(0), getY(0), getZ(0) );
+        /* Avoid implicit change of coordinate dimensionality
+         * if z=0.0 and dim=2
+         */
+        if( getCoordinateDimension() == 2 )
+            addPoint( getX(0), getY(0) );
+        else
+            addPoint( getX(0), getY(0), getZ(0) );
+            
     }
 }
 
