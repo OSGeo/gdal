@@ -22,10 +22,10 @@ To install this module type the following:
 In MinGW it is 
 
    perl Makefile.PL
-   make.bat 
-   dmake -f Makefile_Geo__GDAL test
-   clean.bat
-   dmake -f Makefile_Geo__GDAL install
+   make 
+   make test
+   clean
+   make install
 
 You may need to edit the Makefile.PL to add the path to the GDAL DLL.
 
