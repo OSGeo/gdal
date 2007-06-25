@@ -27,10 +27,10 @@ image to establish details about the raster.  This information will be cached
 in the service description file to make future opens faster - no server access
 should be required till imagery is read for future opens.<p>
 
-The WCS driver should support WCS 1.0.0 servers.  It is planned to add 
-WCS 1.1.0 support soon, but WCS 0.7 servers are not supported.  Any return
-format that is a single file, and is in a format supported by GDAL should
-work.  The driver will prefer a format with "tiff" in the name, otherwise
+The WCS driver should support WCS 1.0.0 and 1.1.0 servers, but WCS 0.7 servers 
+are not supported.  Any return format that is a single file, and is in a format
+supported by GDAL should work.  The driver will prefer a format with "tiff" 
+in the name, otherwise
 it will fallback to the first offered format.   Coordinate systems are read
 from the DescribeCoverage result, and are expected to be in the form of 
 <tt>EPSG:n</tt> in the <tt>&gt;supportedCRSs&lt;</tt> element. <p>
@@ -50,6 +50,8 @@ set.<p>
 <li> <b>OverviewCount</b>: The number of overviews to represent bands as having.  Defaults to a number such that the top overview is fairly smaller (less than 1K x 1K or so).
 <li> <b>GetCoverageExtra</b>: An additional set of keywords to add to GetCoverage requests in URL encoded form.  eg. "&RESAMPLE=BILINEAR&Band=1"
 <li> <b>DescribeCoverageExtra</b>: An additional set of keywords to add to DescribeCoverage requests in URL encoded form.  eg. "&CustNo=775"
+<li> <b>Version</b>:  Set a specific WCS version to use.  Currently defaults to 1.0.0 and 1.1.0 is also supported.
+<li> <b>FieldName</b>: Name of the field being accessed.  Used only with WCS 1.1.0+.  Defaults to the first field in the DescribeCoverage result.
 </ul>
 
 See Also:<p>
