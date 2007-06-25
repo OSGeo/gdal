@@ -84,6 +84,7 @@ Msg_reader_core::Msg_reader_core(FILE* fp) {
 
 
 void Msg_reader_core::read_metadata_block(FILE* fin) {
+    _open_success = true;
 
     unsigned int i;
 
@@ -97,7 +98,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         to_string(*hd);
         printf("[%02d] %s %s", i, hd->name, hd->value);
         hd++;
-    }   
+    }
     PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
 
     for (i=0; i < 5; i++) {
@@ -109,8 +110,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         to_string(*hd);
         printf("[%02d] %s %s", i, hd->name, hd->value);
         hd++;
-    }   
-#endif // DEBUG    
+    }
+#endif // DEBUG
 
     // extract data & header positions
 
@@ -118,7 +119,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
         if (strncmp(hdi->name, "15Header", strlen("15Header")) == 0) {
             sscanf(hdi->size, "%d", &_f_header_size);
-            sscanf(hdi->address, "%d", &_f_header_offset);    
+            sscanf(hdi->address, "%d", &_f_header_offset);
         } else
             if (strncmp(hdi->name, "15Data", strlen("15Data")) == 0) {
             sscanf(hdi->size, "%d", &_f_data_size);
@@ -162,11 +163,11 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 
     // extract time fields, assume that SNIT is the correct field:
     sscanf(_main_header.snit.value +  0, "%04d", &_year);
-    sscanf(_main_header.snit.value +  4, "%02d", &_month);    
+    sscanf(_main_header.snit.value +  4, "%02d", &_month);
     sscanf(_main_header.snit.value +  6, "%02d", &_day);
     sscanf(_main_header.snit.value +  8, "%02d", &_hour);
     sscanf(_main_header.snit.value + 10, "%02d", &_minute);
-    
+
     // read radiometric block
     RADIOMETRIC_PROCCESSING_RECORD rad;
     off_t offset = RADIOMETRICPROCESSING_RECORD_OFFSET + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
@@ -179,14 +180,14 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4) {
             printf("Warning: calibration slope (%lf) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);
-            
+
         }
         if (_calibration[i].cal_offset > 0 || _calibration[i].cal_offset < -20) {
             printf("Warning: calibration offset (%lf) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_offset);
         }
     }
-#endif    
-    
+#endif
+
     // read image description block
     IMAGE_DESCRIPTION_RECORD idr;
     offset = RADIOMETRICPROCESSING_RECORD_OFFSET  - IMAGEDESCRIPTION_RECORD_LENGTH + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
@@ -195,8 +196,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     to_native(idr);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
-    
-    
+
+
     // Rather convoluted, but this code is required to compute the real data block sizes
     // It does this by reading in the first line of every band, to get to the packet size field
     GP_PK_HEADER gp_header;
@@ -204,7 +205,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     SUB_VISIRLINE visir_line;
 
     VSIFSeek(fin, _f_data_offset, SEEK_SET);
-    
+
     _hrv_packet_size = 0;
     _interline_spacing = 0;
     visir_line.channelId = 0;
@@ -215,29 +216,39 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         scanned_bands[i] = _bands[i];
         band_count += _bands[i];
     }
-    
+
     do {
         VSIFRead(&gp_header, sizeof(GP_PK_HEADER), 1, fin);
         VSIFRead(&sub_header, sizeof(GP_PK_SH1), 1, fin);
         VSIFRead(&visir_line, sizeof(SUB_VISIRLINE), 1, fin);
         to_native(visir_line);
         to_native(gp_header);
+
         // skip over the actual line data
-        VSIFSeek(fin, 
-            gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1), SEEK_CUR );
-        
+        VSIFSeek(fin,
+            gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
+            SEEK_CUR
+        );
+
+        if (visir_line.channelId < 0 || visir_line.channelId > MSG_NUM_CHANNELS) {
+            _open_success = false;
+            break;
+        }
+
         if (scanned_bands[visir_line.channelId - 1]) {
             scanned_bands[visir_line.channelId - 1] = 0;
             band_count--;
-            
+
             if (visir_line.channelId != 12) { // not the HRV channel
                 _visir_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
-                _visir_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1; 
+                _visir_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing += _visir_packet_size;
             } else {
-                _hrv_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;        
+                _hrv_bytes_per_line = gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
+                _hrv_packet_size = gp_header.packetLength + sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing +=  3*_hrv_packet_size;
-            }   
+                VSIFSeek(fin, 2*gp_header.packetLength, SEEK_CUR );
+            }
         }
     } while (band_count > 0);
 }
