@@ -91,33 +91,28 @@
 
 %perlcode %{
     use Carp;
-    use Geo::GDAL::Const;
-    use Geo::OGR;
-    use Geo::OSR;
     sub GeometryType {
 	my($type_or_name) = @_;
-	if ($type_or_name =~ /^[+-]?\d/) {
-	    for ('Unknown', 'Point', 'LineString', 'Polygon',
-		 'MultiPoint', 'MultiLineString', 'MultiPolygon',
-		 'GeometryCollection', 'None', 'LinearRing',
-		 'Point25D', 'LineString25D', 'Polygon25D',
-		 'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
-		 'GeometryCollection25D') 
-	    {
-		if (eval "\$type_or_name == \$Geo::OGR::wkb$_") {return $_}
+	my @types = ('Unknown', 'Point', 'LineString', 'Polygon',
+		     'MultiPoint', 'MultiLineString', 'MultiPolygon',
+		     'GeometryCollection', 'None', 'LinearRing',
+		     'Point25D', 'LineString25D', 'Polygon25D',
+		     'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
+		     'GeometryCollection25D');
+	if (defined $type_or_name) {
+	    if ($type_or_name =~ /^[+-]?\d/) {
+		for (@types) {
+		    if (eval "\$type_or_name == \$Geo::OGR::wkb$_") {return $_}
+		}
+		croak "unknown geometry type value: $type_or_name";
+	    } else {
+		for (@types) {
+		    if ($type_or_name eq $_) {return eval "\$Geo::OGR::wkb$_"}
+		}
+		croak "unknown geometry type name: $type_or_name";
 	    }
-	    croak "unknown geometry type value: $type_or_name";
 	} else {
-	    for ('Unknown', 'Point', 'LineString', 'Polygon',
-	     'MultiPoint', 'MultiLineString', 'MultiPolygon',
-		 'GeometryCollection', 'None', 'LinearRing',
-		 'Point25D', 'LineString25D', 'Polygon25D',
-		 'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
-		 'GeometryCollection25D')
-	    {
-		if ($type_or_name eq $_) {return eval "\$Geo::OGR::wkb$_"}
-	    }
-	    croak "unknown geometry type name: $type_or_name";
+	    return @types;
 	}
     }
 %}
