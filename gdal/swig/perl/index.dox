@@ -22,4 +22,7 @@ illustrative name is given
 
 arg2 is optional and if left off, will get the value 4 (in this case)
 
+This documentation reflects the version in the GDAL SVN at
+https://svn.osgeo.org/gdal/trunk/gdal
+
 */
