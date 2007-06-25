@@ -63,79 +63,86 @@ public:
     Msg_reader_core(const char* fname);
     Msg_reader_core(FILE* fp);
     virtual ~Msg_reader_core(void) {};
-    
+
+    bool get_open_success(void) { return _open_success; }
+
     #ifndef GDAL_SUPPORT
     virtual void radiance_to_blackbody(int using_chan_no = 0) = 0;   // can override which channel's parameters to use
     virtual double* get_data(int chan_no=0) = 0;
     #endif
-    
+
     unsigned int get_lines(void) { return _lines; }
     unsigned int get_columns(void) { return _columns; }
-    
+
     void get_pixel_geo_coordinates(unsigned int line, unsigned int column, double& longitude, double& latitude); // x and y relative to this image, not full disc image
     void get_pixel_geo_coordinates(double line, double column, double& longitude, double& latitude); // x and y relative to this image, not full disc image
     double compute_pixel_area_sqkm(double line, double column);
-    
+
     static const Blackbody_lut_type Blackbody_LUT[MSG_NUM_CHANNELS+1];
-    
+
     unsigned int get_year(void) { return _year; }
     unsigned int get_month(void) { return _month; }
     unsigned int get_day(void) { return _day; }
     unsigned int get_hour(void) { return _hour; }
     unsigned int get_minute(void) { return _minute; }
-    
+
     unsigned int get_line_start(void) { return _line_start; }
     unsigned int get_col_start(void) { return _col_start; }
-    
+
     float get_col_dir_step(void) { return _col_dir_step; }
     float get_line_dir_step(void) { return _line_dir_step; }
-    
+
     unsigned int get_f_data_offset(void) { return _f_data_offset; }
     unsigned int get_visir_bytes_per_line(void) { return _visir_bytes_per_line; }
     unsigned int get_visir_packet_size(void) { return _visir_packet_size; }
+    unsigned int get_hrv_bytes_per_line(void) { return _hrv_bytes_per_line; }
+    unsigned int get_hrv_packet_size(void) { return _hrv_packet_size; }
     unsigned int get_interline_spacing(void) { return _interline_spacing; }
-    
+
     unsigned char* get_band_map(void) { return _bands; }
-    
+
     CALIBRATION*  get_calibration_parameters(void) { return _calibration; }
-    
+
 private:
     void read_metadata_block(FILE* fp);
-    
+
 protected:
-    
+
     int _chan_to_idx(Msg_channel_names channel);
 
     unsigned int    _lines;
     unsigned int    _columns;
-    
+
     unsigned int    _line_start;
     unsigned int    _col_start;
-    
+
     float           _col_dir_step;
     float           _line_dir_step;
-    
+
     MAIN_PROD_HEADER        _main_header;
     SECONDARY_PROD_HEADER   _sec_header;
     CALIBRATION             _calibration[MSG_NUM_CHANNELS];
-    
+
     unsigned int _f_data_offset;
-    unsigned int _f_data_size;    
+    unsigned int _f_data_size;
     unsigned int _f_header_offset;
     unsigned int _f_header_size;
-    
-    unsigned int _visir_bytes_per_line;   // packed length of a VISIR line,wihtout headers
+
+    unsigned int _visir_bytes_per_line;   // packed length of a VISIR line, without headers
     unsigned int _visir_packet_size;      // effectively, the spacing between lines of consecutive bands in bytes
+    unsigned int _hrv_bytes_per_line;
     unsigned int _hrv_packet_size;
     unsigned int _interline_spacing;
-    
+
     unsigned char _bands[MSG_NUM_CHANNELS];
-    
+
     unsigned int _year;
     unsigned int _month;
     unsigned int _day;
     unsigned int _hour;
     unsigned int _minute;
+
+    bool    _open_success;
 };
 
 }// namespace msg_native_format
