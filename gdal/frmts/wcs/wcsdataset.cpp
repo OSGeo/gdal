@@ -265,6 +265,10 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poTileDS->GetRasterXSize() != nBlockXSize
         || poTileDS->GetRasterYSize() != nBlockYSize )
     {
+        CPLDebug( "WCS", "Got size=%dx%d instead of %dx%d.", 
+                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
+                  nBlockXSize, nBlockYSize );
+
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Returned tile does not match expected configuration." );
         return CE_Failure;
@@ -541,6 +545,10 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
     if( poTileDS->GetRasterXSize() != nBufXSize
         || poTileDS->GetRasterYSize() != nBufYSize )
     {
+        CPLDebug( "WCS", "Got size=%dx%d instead of %dx%d.", 
+                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
+                  nBufXSize, nBufYSize );
+
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Returned tile does not match expected configuration." );
         return CE_Failure;
@@ -690,6 +698,23 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
         dfMaxX -= adfGeoTransform[1];
         dfMinY -= adfGeoTransform[5];
 
+        // Carefully adjust bounds for pixel centered values at new 
+        // sampling density.
+
+        double dfXStep = adfGeoTransform[1];
+        double dfYStep = adfGeoTransform[5];
+
+        if( nBufXSize != nXSize || nBufYSize != nYSize )
+        {
+            dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
+            dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
+            
+            dfMinX = adfGeoTransform[0] + dfXStep * 0.5;
+            dfMaxX = dfMinX + dfXStep * (nBufXSize-1);
+            dfMaxY = adfGeoTransform[3] + dfYStep * 0.5;
+            dfMinY = dfMaxY + dfYStep * (nBufYSize-1);
+        }
+
         osRequest.Printf( 
             "%sSERVICE=WCS&VERSION=%s&REQUEST=GetCoverage&IDENTIFIER=%s"
             "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s%s",
@@ -702,18 +727,17 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             osRangeSubset.c_str(),
             CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
 
-        if( FALSE /* nBufXSize != nXSize || nBufYSize != nYSize */ )
+        if( nBufXSize != nXSize || nBufYSize != nYSize )
         {
-            double dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
-            double dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
-                
             osRequest += CPLString().Printf( 
+                "&GridBaseCRS=%s"
                 "&GridCS=%s"
                 "&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs"
                 "&GridOrigin=%.15g,%.15g"
                 "&GridOffsets=%.15g,%.15g",
                 osCRS.c_str(), 
-                dfMinX, dfMaxY, 
+                osCRS.c_str(), 
+                dfMinX, dfMaxY,
                 dfXStep, dfYStep );
         }
     }
