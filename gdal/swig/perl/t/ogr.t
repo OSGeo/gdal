@@ -39,12 +39,22 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
 
-@types = ('wkbUnknown','wkbPoint','wkbLineString','wkbPolygon',
-	  'wkbMultiPoint','wkbMultiLineString','wkbMultiPolygon','wkbGeometryCollection');
-
 %types = ();
 
-for (@types) {$types{$_} = eval "\$Geo::OGR::$_"};
+@types = Geo::OGR::GeometryType();
+
+ok(@types == 17, "number of geometry types is 17");
+
+for (@types) {
+    my $a = Geo::OGR::GeometryType($_);
+    my $b = Geo::OGR::GeometryType($a);
+    ok($_ eq $b, "geometry type back and forth");
+    next if /25/;
+    next if /Ring/;
+    next if /None/;
+    $types{"wkb$_"} = $a;
+}
+@types = keys %types;
 
 ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
