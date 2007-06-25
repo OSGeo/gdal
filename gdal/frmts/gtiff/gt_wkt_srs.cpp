@@ -215,15 +215,46 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 {
     OGRSpatialReference	oSRS;
 
+/* -------------------------------------------------------------------- */
+/*      Handle non-standard coordinate systems as LOCAL_CS.             */
+/* -------------------------------------------------------------------- */
     if( psDefn->Model != ModelTypeProjected 
         && psDefn->Model != ModelTypeGeographic )
     {
         char	*pszWKT;
-        
-        // We use this ackward alternative to return an empty string
-        // to ensure that it is allocated with GDAL's copy of VSIMalloc()
-        // instead of the one in libtiff as they sometime differ (ie. on
-        // win32 with external libtiff). 
+        char	*pszUnitsName = NULL;
+        char    szPCSName[300];
+        int     nKeyCount = 0;
+        int     nVersion;
+
+        if( hGTIF != NULL )
+            GTIFDirectoryInfo( hGTIF, &nVersion, &nKeyCount );
+
+        if( nKeyCount > 0 ) // Use LOCAL_CS if we have any geokeys at all.
+        {
+            // Handle citation.
+            strcpy( szPCSName, "unnamed" );
+            if( !GTIFKeyGet( hGTIF, GTCitationGeoKey, szPCSName, 
+                             0, sizeof(szPCSName) ) )
+                GTIFKeyGet( hGTIF, GeogCitationGeoKey, szPCSName, 
+                            0, sizeof(szPCSName) );
+
+            GTIFCleanupImagineNames( szPCSName );
+            oSRS.SetLocalCS( szPCSName );
+
+            // Handle units
+            GTIFGetUOMLengthInfo( psDefn->UOMLength, &pszUnitsName, NULL );
+            
+            if( pszUnitsName != NULL && psDefn->UOMLength != KvUserDefined )
+            {
+                oSRS.SetLinearUnits( pszUnitsName, psDefn->UOMLengthInMeters );
+                oSRS.SetAuthority( "LOCAL_CS|UNIT", "EPSG", psDefn->UOMLength);
+            }
+            else
+                oSRS.SetLinearUnits( "unknown", psDefn->UOMLengthInMeters );
+
+            GTIFFreeMemory( pszUnitsName );
+        }
 
         oSRS.exportToWkt( &pszWKT );
 
@@ -710,10 +741,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     }
     else if( pszProjection == NULL )
     {
-	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
-                   ModelTypeGeographic);
+        if( poSRS->IsGeographic() )
+            GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                       ModelTypeGeographic);
+        // otherwise, presumably something like LOCAL_CS.
     }
-
     else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
 	GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
@@ -1463,7 +1495,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
     if( poSRS->GetRoot() != NULL
         && poSRS->GetRoot()->GetChild(0) != NULL 
-        && poSRS->IsProjected() )
+        && (poSRS->IsProjected() || poSRS->IsLocal()) )
     {
         GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
                     poSRS->GetRoot()->GetChild(0)->GetValue() );
