@@ -13,6 +13,12 @@
 ## @cmethod UseExceptions()
 ## @cmethod DontUseExceptions()
 
+## @fn GeometryType($type)
+# @brief Conversion between numeric and human readable geometry type values. 
+# @param $type (optional) numeric or human readable type value
+# @return numeric or human readable type value; 
+# if no parameter is given, returns all (human readable) geometry types in a list
+
 ## @fn CreateGeometryFromWkb($bin_string, $reference = undef)
 # @param $reference Geo::OSR::SpatialReference object
 # @return Geo::OGR::Geometry object
