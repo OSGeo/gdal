@@ -1,3 +1,116 @@
+= GDAL/OGR 1.4.2 - Overview of Changes = 
+
+The GDAL 1.4.1 release is a stable release, and contains the following
+bug fixes.  There should be no noteworthy changes in interfaces or APIs. 
+
+== GDAL ==
+
+WCS Driver:
+ * Fix return value of DescribeCoverage() to improve error handling. #1667
+
+AIGrid Driver:
+ * Support multi-tile grids.  #1198
+
+VRT Driver:
+ * Initialize bNoDataSet to FALSE to fix nodata value problem. 
+ * Fix problem in subwindowing support. #1562
+
+ENVI Driver:
+ * Improve precision of location values in "map info" header line. #1644
+
+HFA (Imagine) Driver:
+ * Fix GetNoDataValue() method to allow pbSuccess to be NULL. #1646
+ * Support reading large metadata values. #1640
+ * Support PE String mechanism for otherwise unsupported SRSes. #1588
+
+GRASS Driver:
+ * Add version detection to handle changes to GRASS error handler 
+   prototype in GRASS 6.3 #1587
+
+JP2KAK (JPEG2000) Driver:
+ * Fix bug in multi-tile datasets. #1636
+
+HDF4 Driver:
+ * Fix handle/memory leak for swath datasets. #1485
+ * Fix crash/corruption for some GRID datasets. #1331
+
+EHDR (ESRI BIL) Driver:
+ * Fixed bug for datasets without NBITS. #1573
+
+== OGR ==
+
+OGR:
+ * Closing a ring no longer forces it to 3D. #1673
+ * Fixed case where pszColor is NULL in GetRGBFromString(). #1571
+ * Fix flattenTo2D() for polygons. #1619
+
+Shapefile Driver:
+ * Fix SHPRewind() confusion when two rings touch at a point. #976, #1415
+
+MapInfo Driver:
+ * Problem with isspace() assertion. #1678
+ * Fix support for non-greenwich prime meridians. #1416
+
+Memory Driver:
+ * Record name of dataset when it is opened or created.  #1674
+
+S-57 Driver:
+ * Avoid crash when applying updates to records without existing ATTF. #1648
+
+UK NTF Driver:
+ * Fix recognision name for NEXTMap Britian DTM product. #1657		
+
+Interlis Driver:
+ * Clone feature in GetNextFeature?(), Applying filters in GetNextFeature?() 
+   and GetExtents?(). #1535
+ * Support ring polygons of type surface. #1561
+ * Fixed compilation problems on Solaris 2.8. #1601
+
+MySQL Driver:
+ * Implemented BLOB support. #1622
+
+SQLite Driver:
+ * Implemented BLOB support. #1623
+
+PG/PostGIS Driver:
+ * Escape schema names with postgres. #1412
+
+ogr2ogr:
+ * Avoid crash with peculiar SRS. #1656
+
+== Other ==
+
+ * Fix libiso8211 to use VSI io functions to avoid crash on windows in
+   some circumstances (S-57, SDTS). #1659
+ * Fix Minixml parser problem with complex doctypes. #755
+ * Fix CPLRemoveXMLChild() in minixml parser. #1598
+ * Rename cpl_vsi_private.h, install and export interfaces. #1585
+
+SWIG (General):
+ * Fix reference counting problem with reference counting via SWIG interfaces
+   of GetSpatialRef() #1680
+ * Reimplement GetDriver() via SWIG to avoid crashes. #1674		
+ * Improved error handling around gdal.Open() #1513, #1635
+ * Improved error handling around ogr.Open() #1636
+ * Added exception handling for osr classes. #1630
+ * Removed OSRReference() call in constructor which caused leaks. #1614
+ * Rework perl docs. 
+
+Building:
+ * Avoid running autoheader in autogen.sh.
+ * Check for Python.h before enabling python. #1508
+ * Export CPLMutexHolder class from DLL for use in plugins. 
+ * WinCE building fixes. #1634
+ * Fixed Python 2.5 build problems on 64bit linux. #1379
+ * Include climits in ILWIS driver to fix build problems. #1579
+
+OGRSpatialReference:
+ * Fix handling of lat and long values when importing old style (ArcInfo 7)
+   Transverse Mercator .prj files. #1649
+ * Make Release() operator safer. #738
+
+-----------------------------------------------------------------------------
+
 = GDAL/OGR 1.4.1 - Overview of Changes =
 
 The GDAL 1.4.1 release is a stable release, and contains the following
