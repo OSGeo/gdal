@@ -1152,6 +1152,10 @@ public:
   void AddPoint(double x, double y, double z = 0) {
     OGR_G_AddPoint( self, x, y, z );
   }
+  
+  void AddPoint_2D(double x, double y) {
+    OGR_G_AddPoint_2D( self, x, y );
+  }
 
 /* The geometry now owns an inner geometry */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow* other};
