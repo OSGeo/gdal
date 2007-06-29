@@ -105,7 +105,6 @@ class WCSRasterBand : public GDALPamRasterBand
 
     int            iOverview;
     int            nResFactor;
-    double         adfGeoTransform[6];
 
     WCSDataset    *poODS;
 
@@ -174,16 +173,6 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDS, int nBand, int iOverview )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Establish possibly reduced resolution geotransform.             */
-/* -------------------------------------------------------------------- */
-    adfGeoTransform[0] = poODS->adfGeoTransform[0];
-    adfGeoTransform[1] = poODS->adfGeoTransform[1] * nResFactor;
-    adfGeoTransform[2] = poODS->adfGeoTransform[2] * nResFactor;
-    adfGeoTransform[3] = poODS->adfGeoTransform[3];
-    adfGeoTransform[4] = poODS->adfGeoTransform[4] * nResFactor;
-    adfGeoTransform[5] = poODS->adfGeoTransform[5] * nResFactor;
-
-/* -------------------------------------------------------------------- */
 /*      If this is the base layer, create the overview layers.          */
 /* -------------------------------------------------------------------- */
     if( iOverview == -1 )
@@ -243,9 +232,10 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLErr eErr;
     CPLHTTPResult *psResult = NULL;
 
-    eErr = poODS->GetCoverage( nBlockXOff * nBlockXSize, 
-                               nBlockYOff * nBlockYSize,
-                               nBlockXSize, nBlockYSize, 
+    eErr = poODS->GetCoverage( nBlockXOff * nBlockXSize * nResFactor, 
+                               nBlockYOff * nBlockYSize * nResFactor,
+                               nBlockXSize * nResFactor, 
+                               nBlockYSize * nResFactor, 
                                nBlockXSize, nBlockYSize, 
                                1, &nBand, &psResult );
     if( eErr != CE_None )
@@ -351,7 +341,9 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nPixelSpace, nLineSpace );
     else
         return poODS->DirectRasterIO( 
-            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            eRWFlag, 
+            nXOff * nResFactor, nYOff * nResFactor, 
+            nXSize * nResFactor, nYSize * nResFactor,
             pData, nBufXSize, nBufYSize, eBufType, 
             1, &nBand, nPixelSpace, nLineSpace, 0 );
 }
@@ -753,7 +745,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     };
 
     CPLErrorReset();
-    
+
     *ppsResult = CPLHTTPFetch( osRequest, apszOptions );
 
     if( ProcessError( *ppsResult ) )
