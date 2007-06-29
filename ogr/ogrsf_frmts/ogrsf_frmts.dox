@@ -119,7 +119,7 @@
 
     ... use the data source ...
 
-    delete hDS;
+    OGRReleaseDataSource( hDS );
   </pre>
 
 */
