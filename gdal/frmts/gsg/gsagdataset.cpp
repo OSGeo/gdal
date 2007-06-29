@@ -371,7 +371,9 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    /* Found sign at end of input, seek back to re-read it */
 	    if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
 	    {
-	    	if( VSIFSeekL( poGDS->fp, -1, SEEK_CUR ) != 0 )
+	    	if( VSIFSeekL( poGDS->fp, 
+                               VSIFTellL( poGDS->fp)-1, 
+                               SEEK_SET ) != 0 )
 	    	{
 		    VSIFree( szLineBuf );
 		    CPLError( CE_Failure, CPLE_FileIO,
