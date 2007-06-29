@@ -51,7 +51,7 @@ CPL_CVSID("$Id$");
  * count, name) and columns that have specific purposes not understood by 
  * the library (long label, suitability_for_growing_wheat, etc).  
  *
- * In the general case each row as a column indicating the minimum pixel
+ * In the general case each row has a column indicating the minimum pixel
  * values falling into that category, and a column indicating the maximum
  * pixel value.  These are indicated with usage values of GFU_Min, and
  * GFU_Max.  In other cases where each row is a discrete pixel value, one
@@ -1237,7 +1237,7 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 
         iMaxCol = GetColOfUsage( GFU_Max );
         if( iMaxCol == -1 )
-            GetColOfUsage( GFU_MinMax );
+            iMaxCol = GetColOfUsage( GFU_MinMax );
 
         if( iMaxCol == -1 || nRowCount == 0 )
             return NULL;
