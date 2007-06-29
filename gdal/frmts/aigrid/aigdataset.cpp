@@ -30,7 +30,9 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+#include "gdal_rat.h"
 #include "aigrid.h"
+#include "avc.h"
 
 CPL_CVSID("$Id$");
 
@@ -62,6 +64,9 @@ class CPL_DLL AIGDataset : public GDALPamDataset
     GDALColorTable *poCT;
 
     void        TranslateColorTable( const char * );
+
+    void        ReadRAT();
+    GDALRasterAttributeTable *poRAT;
 
   public:
                 AIGDataset();
@@ -96,6 +101,7 @@ class AIGRasterBand : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+    virtual const GDALRasterAttributeTable *GetDefaultRAT();
 };
 
 /************************************************************************/
@@ -188,6 +194,17 @@ CPLErr AIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return AIGReadFloatTile( poODS->psInfo, nBlockXOff, nBlockYOff,
                                  (float *) pImage );
     }
+}
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+const GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
+
+{
+    AIGDataset	*poODS = (AIGDataset *) poDS;
+    return poODS->poRAT;
 }
 
 /************************************************************************/
@@ -285,6 +302,7 @@ AIGDataset::AIGDataset()
     papszPrj = NULL;
     pszProjection = CPLStrdup("");
     poCT = NULL;
+    poRAT = NULL;
 }
 
 /************************************************************************/
@@ -302,6 +320,9 @@ AIGDataset::~AIGDataset()
 
     if( poCT != NULL )
         delete poCT;
+
+    if( poRAT != NULL )
+        delete poRAT;
 }
 
 /************************************************************************/
@@ -331,6 +352,114 @@ char **AIGDataset::GetFileList()
     }
     
     return papszFileList;
+}
+
+/************************************************************************/
+/*                              ReadRAT()                               */
+/************************************************************************/
+
+void AIGDataset::ReadRAT()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Attempt to open the VAT table associated with this coverage.    */
+/* -------------------------------------------------------------------- */
+    CPLString osInfoPath, osTableName;
+
+    osInfoPath = psInfo->pszCoverName;
+    osInfoPath += "/../info/";
+
+    osTableName = CPLGetFilename(psInfo->pszCoverName);
+    osTableName += ".VAT";
+
+    AVCBinFile *psFile = 
+        AVCBinReadOpen( osInfoPath, osTableName,
+                        AVCCoverTypeUnknown, AVCFileTABLE, NULL );
+
+    if( psFile == NULL )
+        return;
+
+    AVCTableDef *psTableDef = psFile->hdr.psTableDef;
+
+/* -------------------------------------------------------------------- */
+/*      Setup columns in corresponding RAT.                             */
+/* -------------------------------------------------------------------- */
+    int iField;
+
+    poRAT = new GDALRasterAttributeTable();
+
+    for( iField = 0; iField < psTableDef->numFields; iField++ )
+    {
+        AVCFieldInfo *psFDef = psTableDef->pasFieldDef + iField;
+        GDALRATFieldUsage eFUsage = GFU_Generic;
+        GDALRATFieldType eFType = GFT_String;
+
+        CPLString osFName = psFDef->szName;
+        osFName.Trim();
+
+        if( EQUAL(osFName,"VALUE") )
+            eFUsage = GFU_MinMax;
+        else if( EQUAL(osFName,"COUNT") )
+            eFUsage = GFU_PixelCount;
+        
+        if( psFDef->nType1 * 10 == AVC_FT_BININT )
+            eFType = GFT_Integer;
+        else if( psFDef->nType1 * 10 == AVC_FT_BINFLOAT )
+            eFType = GFT_Real;
+
+        poRAT->CreateColumn( osFName, eFType, eFUsage );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process all records into RAT.                                   */
+/* -------------------------------------------------------------------- */
+    AVCField *pasFields;
+    int iRecord = 0;
+
+    while( (pasFields = AVCBinReadNextTableRec(psFile)) != NULL )
+    {
+        iRecord++;
+
+        for( iField = 0; iField < psTableDef->numFields; iField++ )
+        {
+            switch( psTableDef->pasFieldDef[iField].nType1 * 10 )
+            {
+              case AVC_FT_DATE:
+              case AVC_FT_FIXINT:
+              case AVC_FT_CHAR:
+              case AVC_FT_FIXNUM:
+              {
+                  CPLString osStrValue = pasFields[iField].pszStr;
+                  poRAT->SetValue( iRecord-1, iField, osStrValue.Trim() );
+              }
+              break;
+
+              case AVC_FT_BININT:
+                if( psTableDef->pasFieldDef[iField].nSize == 4 )
+                    poRAT->SetValue( iRecord-1, iField, 
+                                     pasFields[iField].nInt32 );
+                else
+                    poRAT->SetValue( iRecord-1, iField, 
+                                     pasFields[iField].nInt16 );
+                break;
+
+              case AVC_FT_BINFLOAT:
+                if( psTableDef->pasFieldDef[iField].nSize == 4 )
+                    poRAT->SetValue( iRecord-1, iField, 
+                                     pasFields[iField].fFloat );
+                else
+                    poRAT->SetValue( iRecord-1, iField, 
+                                     pasFields[iField].dDouble );
+                break;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+
+    AVCBinReadClose( psFile );
 }
 
 /************************************************************************/
@@ -479,6 +608,11 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new AIGRasterBand( poDS, 1 ) );
 
 /* -------------------------------------------------------------------- */
+/*      Read info raster attribute table, if present.                   */
+/* -------------------------------------------------------------------- */
+    poDS->ReadRAT();
+
+/* -------------------------------------------------------------------- */
 /*	Try to read projection file.					*/
 /* -------------------------------------------------------------------- */
     const char	*pszPrjFilename;
@@ -521,7 +655,6 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return( poDS );
 }
-
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
