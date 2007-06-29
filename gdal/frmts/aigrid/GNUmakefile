@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 AIGOBJ  =	gridlib.o aigopen.o aigccitt.o
 OBJ	=	aigdataset.o $(AIGOBJ)
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr/ogrsf_frmts/avc
 
 default:	$(OBJ)
 
