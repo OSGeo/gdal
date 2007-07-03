@@ -64,6 +64,7 @@ typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
 typedef void GDALColorTableShadow;
+typedef void GDALRasterAttributeTableShadow;
 
 typedef int FALSE_IS_ERR;
 
@@ -443,6 +444,13 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //
 //************************************************************************
 %include "ColorTable.i"
+
+//************************************************************************
+//
+// Define the RasterAttributeTable object.
+//
+//************************************************************************
+%include "RasterAttributeTable.i"
 
 //************************************************************************
 //

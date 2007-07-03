@@ -3439,6 +3439,9 @@ SWIGINTERN char const *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self){
 SWIGINTERN void OGRGeometryShadow_AddPoint(OGRGeometryShadow *self,double x,double y,double z=0){
     OGR_G_AddPoint( self, x, y, z );
   }
+SWIGINTERN void OGRGeometryShadow_AddPoint_2D(OGRGeometryShadow *self,double x,double y){
+    OGR_G_AddPoint_2D( self, x, y );
+  }
 SWIGINTERN OGRErr OGRGeometryShadow_AddGeometryDirectly(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_AddGeometryDirectly( self, other );
   }
@@ -9408,6 +9411,53 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_AddPoint_2D(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Geometry_AddPoint_2D",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_AddPoint_2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_AddPoint_2D" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_AddPoint_2D" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  {
+    OGRGeometryShadow_AddPoint_2D(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -11464,6 +11514,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_ExportToWkb", (PyCFunction) _wrap_Geometry_ExportToWkb, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_ExportToGML", _wrap_Geometry_ExportToGML, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddPoint", (PyCFunction) _wrap_Geometry_AddPoint, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"Geometry_AddPoint_2D", _wrap_Geometry_AddPoint_2D, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddGeometry", _wrap_Geometry_AddGeometry, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Clone", _wrap_Geometry_Clone, METH_VARARGS, NULL},
