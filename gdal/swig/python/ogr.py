@@ -2371,6 +2371,10 @@ class Geometry(_object):
         """AddPoint(self, double x, double y, double z=0)"""
         return _ogr.Geometry_AddPoint(*args, **kwargs)
 
+    def AddPoint_2D(*args):
+        """AddPoint_2D(self, double x, double y)"""
+        return _ogr.Geometry_AddPoint_2D(*args)
+
     def AddGeometryDirectly(*args):
         """AddGeometryDirectly(self, Geometry other) -> OGRErr"""
         return _ogr.Geometry_AddGeometryDirectly(*args)

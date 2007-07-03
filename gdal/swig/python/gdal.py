@@ -692,6 +692,14 @@ class Band(MajorObject):
         """SetRasterColorTable(self, ColorTable arg) -> int"""
         return _gdal.Band_SetRasterColorTable(*args)
 
+    def GetDefaultRAT(*args):
+        """GetDefaultRAT(self) -> RasterAttributeTable"""
+        return _gdal.Band_GetDefaultRAT(*args)
+
+    def SetDefaultRAT(*args):
+        """SetDefaultRAT(self, RasterAttributeTable table) -> int"""
+        return _gdal.Band_SetDefaultRAT(*args)
+
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_obj=None):
         import gdalnumeric
@@ -761,6 +769,89 @@ class ColorTable(MajorObject):
 
 ColorTable_swigregister = _gdal.ColorTable_swigregister
 ColorTable_swigregister(ColorTable)
+
+class RasterAttributeTable(MajorObject):
+    """Proxy of C++ RasterAttributeTable class"""
+    __swig_setmethods__ = {}
+    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    __setattr__ = lambda self, name, value: _swig_setattr(self, RasterAttributeTable, name, value)
+    __swig_getmethods__ = {}
+    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    __getattr__ = lambda self, name: _swig_getattr(self, RasterAttributeTable, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(self) -> RasterAttributeTable"""
+        this = _gdal.new_RasterAttributeTable(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_RasterAttributeTable
+    __del__ = lambda self : None;
+    def Clone(*args):
+        """Clone(self) -> RasterAttributeTable"""
+        return _gdal.RasterAttributeTable_Clone(*args)
+
+    def GetColumnCount(*args):
+        """GetColumnCount(self) -> int"""
+        return _gdal.RasterAttributeTable_GetColumnCount(*args)
+
+    def GetNameOfCol(*args):
+        """GetNameOfCol(self, int iCol) -> char"""
+        return _gdal.RasterAttributeTable_GetNameOfCol(*args)
+
+    def GetUsageOfCol(*args):
+        """GetUsageOfCol(self, int iCol) -> GDALRATFieldUsage"""
+        return _gdal.RasterAttributeTable_GetUsageOfCol(*args)
+
+    def GetTypeOfCol(*args):
+        """GetTypeOfCol(self, int iCol) -> GDALRATFieldType"""
+        return _gdal.RasterAttributeTable_GetTypeOfCol(*args)
+
+    def GetColOfUsage(*args):
+        """GetColOfUsage(self, GDALRATFieldUsage eUsage) -> int"""
+        return _gdal.RasterAttributeTable_GetColOfUsage(*args)
+
+    def GetRowCount(*args):
+        """GetRowCount(self) -> int"""
+        return _gdal.RasterAttributeTable_GetRowCount(*args)
+
+    def GetValueAsString(*args):
+        """GetValueAsString(self, int iRow, int iCol) -> char"""
+        return _gdal.RasterAttributeTable_GetValueAsString(*args)
+
+    def GetValueAsInt(*args):
+        """GetValueAsInt(self, int iRow, int iCol) -> int"""
+        return _gdal.RasterAttributeTable_GetValueAsInt(*args)
+
+    def GetValueAsDouble(*args):
+        """GetValueAsDouble(self, int iRow, int iCol) -> double"""
+        return _gdal.RasterAttributeTable_GetValueAsDouble(*args)
+
+    def SetValueAsString(*args):
+        """SetValueAsString(self, int iRow, int iCol, char pszValue)"""
+        return _gdal.RasterAttributeTable_SetValueAsString(*args)
+
+    def SetValueAsInt(*args):
+        """SetValueAsInt(self, int iRow, int iCol, int nValue)"""
+        return _gdal.RasterAttributeTable_SetValueAsInt(*args)
+
+    def SetValueAsDouble(*args):
+        """SetValueAsDouble(self, int iRow, int iCol, double dfValue)"""
+        return _gdal.RasterAttributeTable_SetValueAsDouble(*args)
+
+    def SetRowCount(*args):
+        """SetRowCount(self, int nCount)"""
+        return _gdal.RasterAttributeTable_SetRowCount(*args)
+
+    def CreateColumn(*args):
+        """CreateColumn(self, char pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage) -> int"""
+        return _gdal.RasterAttributeTable_CreateColumn(*args)
+
+    def GetRowOfValue(*args):
+        """GetRowOfValue(self, double dfValue) -> int"""
+        return _gdal.RasterAttributeTable_GetRowOfValue(*args)
+
+RasterAttributeTable_swigregister = _gdal.RasterAttributeTable_swigregister
+RasterAttributeTable_swigregister(RasterAttributeTable)
 
 
 def VersionInfo(*args):

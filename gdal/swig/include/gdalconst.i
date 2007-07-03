@@ -141,3 +141,29 @@
 %constant CPLES_URL               = CPLES_URL;
 %constant CPLES_SQL               = CPLES_SQL;
 %constant CPLES_CSV               = CPLES_CSV;
+
+// GDALRATFieldType
+%constant GFT_Integer             = GFT_Integer;
+%constant GFT_Real                = GFT_Real;   
+%constant GFT_String              = GFT_String;  
+
+// GDALRATFieldUsage
+%constant GFU_Generic             = GFU_Generic;
+%constant GFU_PixelCount          = GFU_PixelCount;
+%constant GFU_Name                = GFU_Name;
+%constant GFU_Min                 = GFU_Min;
+%constant GFU_Max                 = GFU_Max;
+%constant GFU_MinMax              = GFU_MinMax;
+%constant GFU_Red                 = GFU_Red;
+%constant GFU_Green               = GFU_Green;
+%constant GFU_Blue                = GFU_Blue;
+%constant GFU_Alpha               = GFU_Alpha;
+%constant GFU_RedMin              = GFU_RedMin;
+%constant GFU_GreenMin            = GFU_GreenMin;
+%constant GFU_BlueMin             = GFU_BlueMin;
+%constant GFU_AlphaMin            = GFU_AlphaMin;
+%constant GFU_RedMax              = GFU_RedMax;
+%constant GFU_GreenMax            = GFU_GreenMax;
+%constant GFU_BlueMax             = GFU_BlueMax;
+%constant GFU_AlphaMax            = GFU_AlphaMax;
+%constant GFU_MaxCount            = GFU_MaxCount;

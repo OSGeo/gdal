@@ -228,6 +228,14 @@ public:
   int SetRasterColorTable( GDALColorTableShadow *arg ) {
     return GDALSetRasterColorTable( self, arg );
   }
+ 
+  GDALRasterAttributeTableShadow *GetDefaultRAT() { 
+      return (GDALRasterAttributeTableShadow*) GDALGetDefaultRAT(self);
+  }
+
+  int SetDefaultRAT( GDALRasterAttributeTableShadow *table ) {
+      return GDALSetDefaultRAT(self, table);
+  }
 
 /* NEEDED */
 /* ReadAsArray */
