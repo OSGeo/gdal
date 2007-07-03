@@ -3141,5 +3141,27 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));
   SWIG_Python_SetConstant(d, "CPLES_SQL",SWIG_From_int((int)(CPLES_SQL)));
   SWIG_Python_SetConstant(d, "CPLES_CSV",SWIG_From_int((int)(CPLES_CSV)));
+  SWIG_Python_SetConstant(d, "GFT_Integer",SWIG_From_int((int)(GFT_Integer)));
+  SWIG_Python_SetConstant(d, "GFT_Real",SWIG_From_int((int)(GFT_Real)));
+  SWIG_Python_SetConstant(d, "GFT_String",SWIG_From_int((int)(GFT_String)));
+  SWIG_Python_SetConstant(d, "GFU_Generic",SWIG_From_int((int)(GFU_Generic)));
+  SWIG_Python_SetConstant(d, "GFU_PixelCount",SWIG_From_int((int)(GFU_PixelCount)));
+  SWIG_Python_SetConstant(d, "GFU_Name",SWIG_From_int((int)(GFU_Name)));
+  SWIG_Python_SetConstant(d, "GFU_Min",SWIG_From_int((int)(GFU_Min)));
+  SWIG_Python_SetConstant(d, "GFU_Max",SWIG_From_int((int)(GFU_Max)));
+  SWIG_Python_SetConstant(d, "GFU_MinMax",SWIG_From_int((int)(GFU_MinMax)));
+  SWIG_Python_SetConstant(d, "GFU_Red",SWIG_From_int((int)(GFU_Red)));
+  SWIG_Python_SetConstant(d, "GFU_Green",SWIG_From_int((int)(GFU_Green)));
+  SWIG_Python_SetConstant(d, "GFU_Blue",SWIG_From_int((int)(GFU_Blue)));
+  SWIG_Python_SetConstant(d, "GFU_Alpha",SWIG_From_int((int)(GFU_Alpha)));
+  SWIG_Python_SetConstant(d, "GFU_RedMin",SWIG_From_int((int)(GFU_RedMin)));
+  SWIG_Python_SetConstant(d, "GFU_GreenMin",SWIG_From_int((int)(GFU_GreenMin)));
+  SWIG_Python_SetConstant(d, "GFU_BlueMin",SWIG_From_int((int)(GFU_BlueMin)));
+  SWIG_Python_SetConstant(d, "GFU_AlphaMin",SWIG_From_int((int)(GFU_AlphaMin)));
+  SWIG_Python_SetConstant(d, "GFU_RedMax",SWIG_From_int((int)(GFU_RedMax)));
+  SWIG_Python_SetConstant(d, "GFU_GreenMax",SWIG_From_int((int)(GFU_GreenMax)));
+  SWIG_Python_SetConstant(d, "GFU_BlueMax",SWIG_From_int((int)(GFU_BlueMax)));
+  SWIG_Python_SetConstant(d, "GFU_AlphaMax",SWIG_From_int((int)(GFU_AlphaMax)));
+  SWIG_Python_SetConstant(d, "GFU_MaxCount",SWIG_From_int((int)(GFU_MaxCount)));
 }
 
