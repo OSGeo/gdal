@@ -120,5 +120,27 @@ CPLES_XML = _gdalconst.CPLES_XML
 CPLES_URL = _gdalconst.CPLES_URL
 CPLES_SQL = _gdalconst.CPLES_SQL
 CPLES_CSV = _gdalconst.CPLES_CSV
+GFT_Integer = _gdalconst.GFT_Integer
+GFT_Real = _gdalconst.GFT_Real
+GFT_String = _gdalconst.GFT_String
+GFU_Generic = _gdalconst.GFU_Generic
+GFU_PixelCount = _gdalconst.GFU_PixelCount
+GFU_Name = _gdalconst.GFU_Name
+GFU_Min = _gdalconst.GFU_Min
+GFU_Max = _gdalconst.GFU_Max
+GFU_MinMax = _gdalconst.GFU_MinMax
+GFU_Red = _gdalconst.GFU_Red
+GFU_Green = _gdalconst.GFU_Green
+GFU_Blue = _gdalconst.GFU_Blue
+GFU_Alpha = _gdalconst.GFU_Alpha
+GFU_RedMin = _gdalconst.GFU_RedMin
+GFU_GreenMin = _gdalconst.GFU_GreenMin
+GFU_BlueMin = _gdalconst.GFU_BlueMin
+GFU_AlphaMin = _gdalconst.GFU_AlphaMin
+GFU_RedMax = _gdalconst.GFU_RedMax
+GFU_GreenMax = _gdalconst.GFU_GreenMax
+GFU_BlueMax = _gdalconst.GFU_BlueMax
+GFU_AlphaMax = _gdalconst.GFU_AlphaMax
+GFU_MaxCount = _gdalconst.GFU_MaxCount
 
 
