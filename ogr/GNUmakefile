@@ -15,7 +15,7 @@ CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CP
 
 default:	lib apps
 
-all:	sublibs apps test_ogrsf$(EXE) docs
+all:	sublibs apps test_ogrsf$(EXE) 
 
 ifeq ($(OGR_ENABLED),yes)
 
