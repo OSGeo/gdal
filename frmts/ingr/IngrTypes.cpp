@@ -40,7 +40,7 @@ static INGR_FormatDescription INGR_FormatTable[] = {
     {Complex,                 "Complex",                     GDT_CFloat32},
     {DoublePrecisionComplex,  "Double Precision Complex",    GDT_CFloat64},
     {RunLengthEncoded,        "Run Length Encoded Bitonal",  GDT_Byte},
-    {RunLengthEncodedC,       "Run Length Encoded Color",    GDT_UInt16},
+    {RunLengthEncodedC,       "Run Length Encoded Color",    GDT_Byte},
     {FigureOfMerit,           "Figure of Merit",             GDT_Byte},
     {DTMFlags,                "DTMFlags",                    GDT_Byte},
     {RLEVariableValuesWithZS, "RLE Variable Values With ZS", GDT_Byte},
@@ -216,8 +216,7 @@ void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransfo
 //                                                         INGR_SetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, 
-                                    double *padfGeoTransform )
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 {
     unsigned int i;
 
@@ -598,34 +597,32 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
 // -----------------------------------------------------------------------------
 
 INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
-                                         INGR_Format eFormat,
-                                         int nXSize, 
-                                         int nYSize,
-                                         int nQuality,
-                                         GByte *pabyBuffer,
-                                         int nBufferSize,
-                                         int nBand )
+                                                     INGR_Format eFormat,
+                                                     int nXSize, 
+                                                     int nYSize,
+                                                     int nTileSize,
+                                                     int nQuality,
+                                                     GByte *pabyBuffer,
+                                                     int nBufferSize,
+                                                     int nBand )
 {
     INGR_VirtualFile hVirtual;
 
-    hVirtual.pszFileName = CPLSPrintf( // "/vsimem/%s.virtual",
-        "./%s.virtual", //TODO: remove it
+    hVirtual.pszFileName = CPLSPrintf( "/vsimem/%s.virtual",
         CPLGetBasename( pszFilename ) );
 
     int nJPGComponents = 1;
 
     switch( eFormat )
     {
-    case JPEGCYMK:
-        nJPGComponents = 4;
     case JPEGRGB: 
         nJPGComponents = 3;
     case JPEGGRAY:
         {
             GByte *pabyHeader = (GByte*) CPLCalloc( 1, 2048 );
             int nHeaderSize   = JPGHLP_HeaderMaker( pabyHeader,
-                                                    nXSize,
-                                                    nYSize,
+                                                    nTileSize,
+                                                    nTileSize,
                                                     nJPGComponents,
                                                     0,
                                                     nQuality );
@@ -670,17 +667,17 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
 }
 
 // -----------------------------------------------------------------------------
-//                                                            INGR_ReleaseTiff()
+//                                                            INGR_ReleaseVirtual()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_ReleaseTiff( INGR_VirtualFile *poTiffMem )
+void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMem )
 {
     delete poTiffMem->poDS;
-//  VSIUnlink( poTiffMem->pszFileName );
+    VSIUnlink( poTiffMem->pszFileName );
 }
 
 // -----------------------------------------------------------------------------
-//                                                            INGR_ReleaseTiff()
+//                                                            INGR_ReleaseVirtual()
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
@@ -716,11 +713,11 @@ int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
 }
 
 // -----------------------------------------------------------------------------
-//                                                         INGR_DecodeRunLenth()
+//                                                        INGR_DecodeRunLength()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
-                                     uint32 nSrcBytes, uint32 nBlockSize )
+int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
+                                      uint32 nSrcBytes, uint32 nBlockSize )
 {
     signed char cAtomHead;
 
@@ -756,7 +753,118 @@ int CPL_STDCALL INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
             iInput++;
         }
     }
-    while( (iInput < nSrcBytes) && (iOutput < nBlockSize) );
+    while( ( iInput < nSrcBytes ) && ( iOutput < nBlockSize ) );
+
+    return iOutput;
+}
+
+// -----------------------------------------------------------------------------
+//                                                INGR_DecodeRunLengthPaletted()
+// -----------------------------------------------------------------------------
+
+int CPL_STDCALL INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
+                                              uint32 nSrcBytes, uint32 nBlockSize )
+{
+    unsigned short nColor;
+    unsigned short nCount;
+
+    unsigned int i; 
+    unsigned int iInput;
+    unsigned int iOutput;
+
+    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
+    unsigned int nSrcShorts = nSrcBytes / 2;
+    unsigned short nSize;
+    unsigned short nLine;
+    unsigned short nRun;
+
+    iInput = 0;
+    iOutput = 0;
+
+    do
+    {
+        nColor = pauiSrc[ iInput++ ];
+
+        if( nColor == 0x5900 )
+        {
+            nSize = pauiSrc[ iInput++ ];
+            nLine = pauiSrc[ iInput++ ];
+            nRun  = pauiSrc[ iInput++ ];
+            continue;
+        }
+
+        nCount = pauiSrc[iInput++];
+
+        for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
+        {
+            pabyDstData[iOutput++] = (unsigned char) nColor;
+        }
+    }
+    while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize) );
+
+    return iOutput;
+}
+
+// -----------------------------------------------------------------------------
+//                                                 INGR_DecodeRunLengthBitonal()
+// -----------------------------------------------------------------------------
+
+int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
+                                            uint32 nSrcBytes, uint32 nBlockSize )
+{
+    unsigned short i; 
+    unsigned int   iInput = 0;
+    unsigned int   iOutput = 0;
+    unsigned short *pauiSrc = (unsigned short *) pabySrcData;
+    unsigned int   nSrcShorts = nSrcBytes / 2;
+    unsigned short nRun;
+    unsigned char  nValue = 0;
+
+    if( pauiSrc[0] != 0x5900 )
+    {
+        nValue = 1;
+
+        do
+        {
+            nRun = pauiSrc[ iInput++ ];
+
+            if( nRun == 0 && nValue == 0 )
+            {
+                continue;
+            }
+
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[ iOutput++ ] = nValue;
+            }
+
+            nValue = ( nValue == 1 ? 0 : 1 );
+        }
+        while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+    }
+    else
+    {
+        do
+        {
+            nRun = pauiSrc[ iInput++ ];
+
+            if( nRun == 0x5900 )
+            {
+                iInput++; // line id
+                iInput++; // line data size
+                continue;
+            }
+
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[ iOutput++ ] = nValue;
+            }
+
+            nValue = ( nValue == 1 ? 0 : 1 );
+
+        }
+        while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+    }
 
     return iOutput;
 }
