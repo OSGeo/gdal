@@ -46,6 +46,8 @@ protected:
 
     INGR_Format     eFormat;
     bool            bTiled;
+    uint32          nFullBlocksX;
+    uint32          nFullBlocksY;
 
     GByte	       *pabyBlockBuf;
     uint32          nTiles;

@@ -134,10 +134,26 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     }
 
     // -------------------------------------------------------------------- 
+    // Incomplete tiles have Block Offset greater than: 
+    // -------------------------------------------------------------------- 
+
+    nFullBlocksX  = ( nRasterXSize / nBlockXSize );
+    nFullBlocksY  = ( nRasterYSize / nBlockYSize );
+
+    // -------------------------------------------------------------------- 
     // Get the Data Type from Format
     // -------------------------------------------------------------------- 
 
     this->eDataType = INGR_GetDataType( eFormat );
+
+    // -------------------------------------------------------------------- 
+    // Allocate buffer for a Block of data
+    // -------------------------------------------------------------------- 
+
+    nBlockBufSize = nBlockXSize * nBlockYSize * 
+                    GDALGetDataTypeSize( eDataType ) / 8;
+        
+    pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
 
     // -------------------------------------------------------------------- 
     // More Metadata Information
@@ -153,31 +169,6 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     {
         SetMetadataItem( "INGR_TILED", "NO" ); 
     }
-
-    if( hHeaderOne.RotationAngle != 0.0 )
-        SetMetadataItem( "INGR_ROTATION", 
-            CPLSPrintf ( "%f", hHeaderOne.RotationAngle ) );
-     
-    SetMetadataItem( "INGR_ORIENTATION", INGR_GetOrientation( hHeaderOne.ScanlineOrientation ) );
-
-    if( hHeaderOne.ScannableFlag == HasLineHeader )
-        SetMetadataItem( "INGR_SCANFLAG", "YES" );
-    else
-        SetMetadataItem( "INGR_SCANFLAG", "NO" );
-
-    // -------------------------------------------------------------------- 
-    // Number of bytes in a record
-    // -------------------------------------------------------------------- 
-
-    nBlockBufSize = nBlockXSize * nBlockYSize * 
-                    GDALGetDataTypeSize( eDataType ) / 8;
-        
-    // -------------------------------------------------------------------- 
-    // Allocate buffer for a Block of data
-    // -------------------------------------------------------------------- 
-
-    pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
-
 }
 
 //  ----------------------------------------------------------------------------
@@ -327,22 +318,18 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
                                          int nBlockYOff,
                                          void *pImage )
 {
-    IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
-
-    uint32 nBytesRead;
-
     // --------------------------------------------------------------------
     // Load Block Buffer
     // --------------------------------------------------------------------
 
-    nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
+    uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
 
     if( nBytesRead == 0 )
     {
         memset( pImage, 0, nBlockBufSize );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
-            poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
+            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff );
         return CE_Failure;
     }
 
@@ -350,7 +337,8 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 
-    if( bTiled && nBlockBufSize > nBytesRead )
+    if( nBlockXOff == nFullBlocksX || 
+        nBlockYOff == nFullBlocksY )
     {
         ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
     }
@@ -441,25 +429,15 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
         // Load all rows at once
         // ------------------------------------------------------------
 
-        nBlockYSize = nRasterYSize;
-        nRLESize    = INGR_GetDataBlockSize( poDS->pszFilename, 
-                                             hHeaderTwo.CatenatedFilePointer,
-                                             nDataOffset);
+        nFullBlocksX = 1;
+        nFullBlocksY = 1;
 
-        // ----------------------------------------------------------------
-        // Realocate the decompressed Buffer 
-        // ----------------------------------------------------------------
+        nBlockYSize  = nRasterYSize;
+        nRLESize     = INGR_GetDataBlockSize( poDS->pszFilename, 
+                          hHeaderTwo.CatenatedFilePointer,
+                          nDataOffset);
 
         nBlockBufSize = nBlockXSize * nBlockYSize;
-
-        if( eFormat == AdaptiveRGB ||
-            eFormat == ContinuousTone )
-        {
-            nBlockBufSize *= 3;
-        }
-
-        CPLFree( pabyBlockBuf );
-        pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
     }
     else
     {
@@ -475,12 +453,24 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     }
 
     // ----------------------------------------------------------------
+    // Realocate the decompressed Buffer 
+    // ----------------------------------------------------------------
+
+    if( eFormat == AdaptiveRGB ||
+        eFormat == ContinuousTone )
+    {
+        nBlockBufSize *= 3;
+    }
+
+    CPLFree( pabyBlockBuf );
+    pabyBlockBuf = (GByte*) CPLMalloc( nBlockBufSize );
+
+    // ----------------------------------------------------------------
     // Create a RLE buffer
     // ----------------------------------------------------------------
 
     CPLFree( pabyRLEBlock );
     pabyRLEBlock = (GByte*) CPLMalloc( nRLESize );
-
 }
 
 //  ----------------------------------------------------------------------------
@@ -500,38 +490,64 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
                                       int nBlockYOff,
                                       void *pImage )
 {
-    IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
-
-    uint32 nBytesRead = 0;
-
     // --------------------------------------------------------------------
     // Load Block Buffer
     // --------------------------------------------------------------------
 
-    nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
+    uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
 
     if( nBytesRead == 0 )
     {
         memset( pImage, 0, nBlockBufSize );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
-            poGDS->pszFilename, nBlockXOff, nBlockYOff, 
+            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
             VSIStrerror( errno ) );
         return CE_Failure;
+    }
+
+    // ----------------------------------------------------------------
+	// Calculate the resulting image dimmention
+    // ----------------------------------------------------------------
+
+    int nVirtualXSize = nBlockXSize;
+    int nVirtualYSize = nBlockYSize; 
+
+    if( nBlockXOff == nFullBlocksX )
+    {
+        nVirtualXSize = nRasterXSize % nBlockXSize;
+    }
+
+    if( nBlockYOff == nFullBlocksY )
+    {
+        nVirtualYSize = nRasterYSize % nBlockYSize;
     }
 
     // --------------------------------------------------------------------
     // Decode Run Length
     // --------------------------------------------------------------------
 
-    nBytesRead = INGR_DecodeRunLenth( pabyRLEBlock, pabyBlockBuf,  
-        nRLESize, nBlockBufSize );
+    switch( eFormat )
+    {
+    case RunLengthEncoded:
+        nBytesRead = INGR_DecodeRunLengthBitonal( pabyRLEBlock, pabyBlockBuf,  
+            nRLESize, nBlockBufSize );
+        break;
+    case RunLengthEncodedC:
+        nBytesRead = INGR_DecodeRunLengthPaletted( pabyRLEBlock, pabyBlockBuf,  
+            nRLESize, nBlockBufSize );
+        break;
+    default:
+        nBytesRead = INGR_DecodeRunLength( pabyRLEBlock, pabyBlockBuf,  
+            nRLESize, nBlockBufSize );
+    }
 
     // --------------------------------------------------------------------
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 
-    if( nBlockBufSize > nBytesRead )
+    if( nBlockXOff == nFullBlocksX || 
+        nBlockYOff == nFullBlocksY )
     {
         ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
     }
@@ -545,15 +561,16 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     {
         uint32 i, j;
         GByte *pabyImage = (GByte*) pImage;
-
-        j = ( nRGBIndex - 1 ) * nBlockXSize;
-
-        for ( i = 0; i < nBlockYSize; i++ )
+        j = ( nRGBIndex - 1 ) * nVirtualXSize;
+        for ( i = 0; i < nVirtualYSize; i++ )
         {
             memcpy( &pabyImage[i * nBlockXSize], &pabyBlockBuf[j], nBlockXSize );
-
-            j = j + ( 3 * nBlockXSize );
+            j += ( 3 * nBlockXSize );
         }
+    }
+    else
+    {
+        memcpy( pImage, pabyBlockBuf, nBlockBufSize );
     }
 
     return CE_None;
@@ -658,20 +675,19 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 {
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
-    uint32 nBytesRead;
-
     // ----------------------------------------------------------------
 	// Load the block of a tile or a whole image
     // ----------------------------------------------------------------
 
-    nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBMPSize, pabyBMPBlock );
+    uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBMPSize, pabyBMPBlock );
 
     if( nBytesRead == 0 )
     {
         memset( pImage, 0, nBlockBufSize );
         CPLError( CE_Failure, CPLE_FileIO, 
             "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
-            poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
+            ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff, 
+            VSIStrerror( errno ) );
         return CE_Failure;
     }
 
@@ -682,16 +698,12 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     int nVirtualXSize = nBlockXSize;
     int nVirtualYSize = nBlockYSize; 
 
-    if( bTiled && 
-	  ( nBlockXOff + 1 == nBlocksPerRow ) &&	// left block 
-	  ( nRasterXSize > nVirtualYSize ) )			// smaller than a tile
+    if( nBlockXOff == nFullBlocksX )
     {
         nVirtualXSize = nRasterXSize % nBlockXSize;
     }
 
-    if( bTiled && 
-	  ( nBlockYOff + 1 == nBlocksPerColumn ) &&	// bottom block 
-	  ( nRasterYSize > nVirtualYSize ) )			// smaller than a tile
+    if( nBlockYOff == nFullBlocksY )
     {
         nVirtualYSize = nRasterYSize % nBlockYSize;
     }
@@ -702,8 +714,9 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 
     poGDS->hVirtual = INGR_CreateVirtualFile( poGDS->pszFilename, 
                                               eFormat,
-                                              nVirtualXSize, 
-                                              nVirtualYSize, 
+                                              nVirtualXSize,
+                                              nVirtualYSize,
+                                              hTileDir.TileSize,
                                               nQuality,
                                               pabyBMPBlock, 
                                               nBytesRead, 
@@ -723,19 +736,20 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     // ----------------------------------------------------------------
 
     poGDS->hVirtual.poBand->RasterIO( GF_Read, 0, 0, 
-                    nVirtualXSize, nVirtualYSize, pImage, 
-                    nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0 );
+        nVirtualXSize, nVirtualYSize, pImage, 
+        nVirtualXSize, nVirtualYSize, GDT_Byte, 0, 0 );
 
-    INGR_ReleaseTiff( &poGDS->hVirtual );
-
-	// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
     // Reshape blocks if needed
     // --------------------------------------------------------------------
 
-    if( nVirtualXSize != nBlockXSize && nVirtualXSize != nBlockXSize )
+    if( nBlockXOff == nFullBlocksX || 
+        nBlockYOff == nFullBlocksY )
     {
         ReshapeBlock( nBlockXOff, nBlockYOff, nBlockBufSize, (GByte*) pImage );
     }
+
+    INGR_ReleaseVirtual( &poGDS->hVirtual );
 
     return CE_None;
 } 
@@ -751,8 +765,9 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
 {
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
-    uint32 nSeekOffset   = 0;
-    uint32 nReadSize     = 0;
+    uint32 nSeekOffset  = 0;
+    uint32 nReadSize    = 0;
+    uint32 nBlockId     = 0;
 
     // --------------------------------------------------------------------
     // Read from tiles or read from strip
@@ -760,7 +775,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
 
     if( bTiled )
     {
-        int nBlockId  = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
         if( pahTiles[nBlockId].Start == 0 ) 
         {
