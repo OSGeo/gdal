@@ -1,31 +1,31 @@
 /*****************************************************************************
-* $Id$
-*
-* Project:  Intergraph Raster Format support
-* Purpose:  Read/Write Intergraph Raster Format, dataset support
-* Author:   Ivan Lucena, ivan.lucena@pmldnet.com
-*
-******************************************************************************
-* Copyright (c) 2007, Ivan Lucena
-*
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files ( the "Software" ),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
-*****************************************************************************/
+ * $Id$
+ *
+ * Project:  Intergraph Raster Format support
+ * Purpose:  Read/Write Intergraph Raster Format, dataset support
+ * Author:   Ivan Lucena, ivan.lucena@pmldnet.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2007, Ivan Lucena
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files ( the "Software" ),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_conv.h"
@@ -217,9 +217,6 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // -------------------------------------------------------------------- 
     // Check Scannable Flag
     // -------------------------------------------------------------------- 
-
-    //TODO: Should we expect indexed uncompressed too?
-
 /*
     if (pHeaderOne->ScannableFlag == HasLineHeader)
     {
@@ -784,7 +781,6 @@ void GDALRegister_INGR()
         poDriver->pfnOpen = IntergraphDataset::Open;
         poDriver->pfnCreate    = IntergraphDataset::Create;
         poDriver->pfnCreateCopy = IntergraphDataset::CreateCopy;
-
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }

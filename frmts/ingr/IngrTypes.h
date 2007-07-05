@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "math.h"
 
 CPL_C_START
 #include "tiffio.h"
@@ -468,28 +469,34 @@ INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dVal );
 double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 
 //  ------------------------------------------------------------------
-//    Run Length decoder
+//    Run Length decoders
 //  ------------------------------------------------------------------
 
-int CPL_STDCALL INGR_DecodeRunLenth( GByte *pabySrcData, GByte *pabyDstData,
+int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
                                      uint32 nSrcBytes, uint32 nBlockSize );
 
+int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
+                                             uint32 nSrcBytes, uint32 nBlockSize );
+
+int CPL_STDCALL INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
+                                     uint32 nSrcBytes, uint32 nBlockSize );
 //  ------------------------------------------------------------------
 //    GeoTiff in memory helper
 //  ------------------------------------------------------------------
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
-INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename, 
-        INGR_Format eFormat,
-        int nVirtualXSize, 
-        int nVirtualYSize,
-        int nQuality,
-        GByte *pabyBuffer,
-        int nBufferSize,
-        int nBand );
+INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
+                                                     INGR_Format eFormat,
+                                                     int nXSize, 
+                                                     int nYSize,
+                                                     int nTileSize,
+                                                     int nQuality,
+                                                     GByte *pabyBuffer,
+                                                     int nBufferSize,
+                                                     int nBand );
 
-void CPL_STDCALL INGR_ReleaseTiff( INGR_VirtualFile *poTiffMen );
+void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMen );
 
 int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, 
                           uint32 nAppDataOfseet,
