@@ -2570,6 +2570,21 @@ OGRErr OGRSpatialReference::SetTPED( double dfLat1, double dfLong1,
 }
 
 /************************************************************************/
+/*                             OSRSetTPED()                             */
+/************************************************************************/
+
+OGRErr OSRSetTPED( OGRSpatialReferenceH hSRS,
+                   double dfLat1, double dfLong1,
+                   double dfLat2, double dfLong2,
+                   double dfFalseEasting, double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetTPED( 
+        dfLat1, dfLong1, dfLat2, dfLong2,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                             OSRSetTMSO()                             */
 /************************************************************************/
 
@@ -2713,13 +2728,12 @@ OGRErr OGRSpatialReference::SetBonne(
 /************************************************************************/
 
 OGRErr OSRSetBonne( OGRSpatialReferenceH hSRS, 
-                    double dfStandardParallel, double dfCentralMeridian,
-                    double dfFalseEasting,
-                    double dfFalseNorthing )
+                    double dfStdP1, double dfCentralMeridian,
+                    double dfFalseEasting, double dfFalseNorthing )
     
 {
-    return ((OGRSpatialReference *) hSRS)->SetAE( 
-        dfStandardParallel, dfCentralMeridian,
+    return ((OGRSpatialReference *) hSRS)->SetBonne( 
+        dfStdP1, dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
 }
 
