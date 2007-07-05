@@ -559,7 +559,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     if( eFormat == AdaptiveRGB ||
         eFormat == ContinuousTone )
     {
-        uint32 i, j;
+        int i, j;
         GByte *pabyImage = (GByte*) pImage;
         j = ( nRGBIndex - 1 ) * nVirtualXSize;
         for ( i = 0; i < nVirtualYSize; i++ )
