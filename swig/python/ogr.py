@@ -2942,6 +2942,69 @@ class Geometry(_object):
         result = CreateGeometryFromWkb(state)
         self.this = result.this
 
+    def ExportToJson(self):
+        def get_coordinates(geometry):
+            gtype = geometry.GetGeometryType()
+            geom_count = geometry.GetGeometryCount()
+            coordinates = []
+
+            print 'in get_coordinates...'
+            print 'type: ', gtype
+
+            if gtype == wkbPoint:
+                return [geometry.GetX(0), geometry.GetY(0)]
+                
+            if gtype == wkbMultiPoint:
+                geom_count = geometry.GetGeometryCount()
+                print 'mp geom count: ', geom_count
+                for g in range(geom_count):
+                    geom = geometry.GetGeometryRef(g)
+                    coordinates.append(get_coordinates(geom))
+                return coordinates
+
+            if gtype == wkbLineString:
+                points = []
+                point_count = geometry.GetPointCount()
+                for i in range(point_count):
+                    points.append([geometry.GetX(i), geometry.GetY(i)])
+                return points
+
+            if gtype == wkbMultiLineString:
+                coordinates = []
+                geom_count = geometry.GetGeometryCount()
+                for g in range(geom_count):
+                    geom = geometry.GetGeometryRef(g)        
+                    coordinates.append(get_coordinates(geom))
+                return coordinates
+
+            if gtype == wkbPolygon:
+                geom = geometry.GetGeometryRef(0)
+                coordinates = get_coordinates(geom)
+                return coordinates
+
+            if gtype == wkbMultiPolygon:
+
+                coordinates = []
+                geom_count = geometry.GetGeometryCount()
+                for g in range(geom_count):
+                    geom = geometry.GetGeometryRef(g)
+                    coordinates.append(get_coordinates(geom))
+                return coordinates
+                
+        types = { wkbPoint:'Point',
+                  wkbLineString: 'LineString',
+                  wkbPolygon: 'Polygon',
+                  wkbMultiPoint: 'MultiPoint',
+                  wkbMultiLineString: 'MultiLineString',
+                  wkbMultiPolygon: 'MultiPolygon',
+                  wkbGeometryCollection: 'GeometryCollection'  
+        }
+
+        output = {'type': types[self.GetGeometryType()],
+                  'coordinates': get_coordinates(self)}
+        return output
+        
+
 
 Geometry_swigregister = _ogr.Geometry_swigregister
 Geometry_swigregister(Geometry)
