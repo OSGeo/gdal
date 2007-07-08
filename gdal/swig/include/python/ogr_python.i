@@ -219,9 +219,6 @@ layer[0:4] would return a list of the first four features."""
           geom_count = geometry.GetGeometryCount()
           coordinates = []
 
-          print 'in get_coordinates...'
-          print 'type: ', gtype
-
           if gtype == wkbPoint:
               return [geometry.GetX(0), geometry.GetY(0)]
               
