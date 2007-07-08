@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.17 2007/05/22 14:53:10 dmorissette Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.18 2007/06/11 14:52:31 dmorissette Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.18  2007/06/11 14:52:31  dmorissette
+ * Return a valid m_nCoordDatasize value for Collection objects to prevent
+ * trashing of collection data during object splitting (bug 1728)
+ *
  * Revision 1.17  2007/05/22 14:53:10  dmorissette
  * Fixed error reading compressed text objects introduced in v1.6.0 (bug 1722)
  *
@@ -917,6 +921,10 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_bSmooth = FALSE;
     }
 
+#ifdef TABDUMP
+    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n", 
+           m_nCoordDataSize, m_nCoordBlockPtr);
+#endif
 
     // Number of line segments applies only to MULTIPLINE/REGION but not PLINE
     if (m_nType == TAB_GEOM_PLINE_C ||
@@ -1674,9 +1682,19 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    const int SIZE_OF_PLINE_HDR = 24;
-    const int SIZE_OF_REGION_HDR = 24;
-//    const int SIZE_OF_MULTI_PT_HDR = 24;
+    int SIZE_OF_MINI_HDR = 24;
+
+    /* Figure the size of the mini-header that we find for each of the
+     * 3 optional components (center x,y and mbr)
+     */
+    if (IsCompressedType())
+    {
+        SIZE_OF_MINI_HDR = 12; /* 6 * int16 */
+    }
+    else
+    {
+        SIZE_OF_MINI_HDR = 24; /* 6 * int32 */
+    }
   
     m_nCoordBlockPtr = poObjBlock->ReadInt32();    // pointer into coord block
     m_nNumMultiPoints = poObjBlock->ReadInt32();   // no. points in multi point
@@ -1693,31 +1711,44 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     {
         m_nMPointDataSize = m_nNumMultiPoints * 2 * 4;
     }
-    /* NB. The Region and Pline section headers are supposed to be extended
-     * by 2 bytes to align with a 4 byte boundary.  This extension is included
-     * in the Region and Polyline data sizes read above. In reality the 
-     * extension is nowhere to be found so the actual data sizes are
-     * two bytes shorter per section header.
+
+    /* NB. MapInfo counts 2 extra bytes per Region and Pline section header
+     * in the RegionDataSize and PolylineDataSize values but those 2 extra 
+     * bytes are not present in the section hdr (possibly due to an alignment
+     * to a 4 byte boundary in memory in MapInfo?). The real data size in 
+     * the CoordBlock is actually 2 bytes shorter per section header than 
+     * what is written in RegionDataSize and PolylineDataSize values.
+     *
+     * We'll adjust the values in memory to be the corrected values.
      */
-    m_nTotalRegDataSize = 0;
+    m_nRegionDataSize   = m_nRegionDataSize - (2 * m_nNumRegSections);
+    m_nPolylineDataSize = m_nPolylineDataSize - (2 * m_nNumPLineSections);
+
+    /* Compute total coord block data size, required when splitting blocks */
+    m_nCoordDataSize = 0;
+
     if(m_nNumRegSections > 0)
     {
-        m_nTotalRegDataSize = SIZE_OF_REGION_HDR + m_nRegionDataSize - 
-                           (2 * m_nNumRegSections);
+        m_nCoordDataSize += SIZE_OF_MINI_HDR + m_nRegionDataSize;
     }
-    m_nTotalPolyDataSize = 0;
     if(m_nNumPLineSections > 0)
     {
-        m_nTotalPolyDataSize = SIZE_OF_PLINE_HDR + m_nPolylineDataSize - 
-                            (2 * m_nNumPLineSections);
+        m_nCoordDataSize += SIZE_OF_MINI_HDR + m_nPolylineDataSize;
     }
+    if(m_nNumMultiPoints > 0)
+    {
+        m_nCoordDataSize += SIZE_OF_MINI_HDR + m_nMPointDataSize;
+    }
+
 
 #ifdef TABDUMP
     printf("COLLECTION: id=%d, type=%d (0x%x), "
-           "CoordBlockPtr=%d, numRegionSections=%d, "
-           "numPlineSections=%d, numPoints=%d\n",
+           "CoordBlockPtr=%d, numRegionSections=%d (size=%d+%d), "
+           "numPlineSections=%d (size=%d+%d), numPoints=%d (size=%d+%d)\n",
            m_nId, m_nType, m_nType, m_nCoordBlockPtr, 
-           m_nNumRegSections, m_nNumPLineSections, m_nNumMultiPoints);
+           m_nNumRegSections, m_nRegionDataSize, SIZE_OF_MINI_HDR,
+           m_nNumPLineSections, m_nPolylineDataSize, SIZE_OF_MINI_HDR,
+           m_nNumMultiPoints, m_nMPointDataSize, SIZE_OF_MINI_HDR);
 #endif
 
     // ??? All zeros ???
@@ -1785,10 +1816,24 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
+    /* NB. MapInfo counts 2 extra bytes per Region and Pline section header
+     * in the RegionDataSize and PolylineDataSize values but those 2 extra 
+     * bytes are not present in the section hdr (possibly due to an alignment
+     * to a 4 byte boundary in memory in MapInfo?). The real data size in 
+     * the CoordBlock is actually 2 bytes shorter per section header than 
+     * what is written in RegionDataSize and PolylineDataSize values.
+     *
+     * The values in memory are the corrected values so we need to add 2 bytes
+     * per section header in the values that we write on disk to emulate 
+     * MapInfo's behavior.
+     */
+    GInt32 nRegionDataSizeMI = m_nRegionDataSize + (2*m_nNumRegSections);
+    GInt32 nPolylineDataSizeMI = m_nPolylineDataSize+(2*m_nNumPLineSections);
+
     poObjBlock->WriteInt32(m_nCoordBlockPtr);    // pointer into coord block
     poObjBlock->WriteInt32(m_nNumMultiPoints);   // no. points in multi point
-    poObjBlock->WriteInt32(m_nRegionDataSize);   // size of region data inc. section hdrs
-    poObjBlock->WriteInt32(m_nPolylineDataSize); // size of Mpolyline data inc. sction hdrs
+    poObjBlock->WriteInt32(nRegionDataSizeMI);   // size of region data inc. section hdrs
+    poObjBlock->WriteInt32(nPolylineDataSizeMI); // size of Mpolyline data inc. sction hdrs
     poObjBlock->WriteInt16(m_nNumRegSections);   // Num Region section headers
     poObjBlock->WriteInt16(m_nNumPLineSections); // Num Pline section headers
 

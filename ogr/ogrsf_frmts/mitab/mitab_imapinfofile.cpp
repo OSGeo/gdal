@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.21 2005/05/19 21:10:50 fwarmerdam Exp $
+ * $Id: mitab_imapinfofile.cpp,v 1.24 2007/06/21 14:00:23 dmorissette Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -31,6 +31,16 @@
  **********************************************************************
  *
  * $Log: mitab_imapinfofile.cpp,v $
+ * Revision 1.24  2007/06/21 14:00:23  dmorissette
+ * Added missing cast in isspace() calls to avoid failed assertion on Windows
+ * (MITAB bug 1737, GDAL ticket 1678))
+ *
+ * Revision 1.23  2007/06/12 14:43:19  dmorissette
+ * Use iswspace instead of sispace in IMapInfoFile::SmartOpen() (bug 1737)
+ *
+ * Revision 1.22  2007/06/12 13:52:37  dmorissette
+ * Added IMapInfoFile::SetCharset() method (bug 1734)
+ *
  * Revision 1.21  2005/05/19 21:10:50  fwarmerdam
  * changed to use OGRLayers spatial filter support
  *
@@ -101,7 +111,11 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
-#include <ctype.h>      /* isspace() */
+#ifdef __HP_aCC
+#  include <wchar.h>      /* iswspace() */
+#else
+#  include <wctype.h>      /* iswspace() */
+#endif
 
 /**********************************************************************
  *                   IMapInfoFile::IMapInfoFile()
@@ -113,6 +127,7 @@ IMapInfoFile::IMapInfoFile()
     m_nCurFeatureId = 0;
     m_poCurFeature = NULL;
     m_bBoundsSet = FALSE;
+    m_pszCharset = NULL;
 }
 
 
@@ -128,6 +143,9 @@ IMapInfoFile::~IMapInfoFile()
         delete m_poCurFeature;
         m_poCurFeature = NULL;
     }
+
+    CPLFree(m_pszCharset);
+    m_pszCharset = NULL;
 }
 
 /**********************************************************************
@@ -440,3 +458,23 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     else
         return OGRERR_FAILURE;
 }
+
+
+/**********************************************************************
+ *                   IMapInfoFile::SetCharset()
+ *
+ * Set the charset for the tab header. 
+ *
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int IMapInfoFile::SetCharset(const char* pszCharset)
+{
+    if(pszCharset && strlen(pszCharset) > 0)
+    {
+        CPLFree(m_pszCharset);
+        m_pszCharset = CPLStrdup(pszCharset);
+    }
+    return 0;
+}
+

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.36 2007/03/21 21:15:56 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.38 2007/06/12 12:50:39 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,14 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.38  2007/06/12 12:50:39  dmorissette
+ * Use Quick Spatial Index by default until bug 1732 is fixed (broken files
+ * produced by current coord block splitting technique).
+ *
+ * Revision 1.37  2007/06/05 13:23:57  dmorissette
+ * Fixed memory leak when writing .TAB with new (optimized) spatial index
+ * introduced in v1.6.0 (bug 1725)
+ *
  * Revision 1.36  2007/03/21 21:15:56  dmorissette
  * Added SetQuickSpatialIndexMode() which generates a non-optimal spatial
  * index but results in faster write time (bug 1669)
@@ -174,7 +182,12 @@ TABMAPFile::TABMAPFile()
     m_poHeader = NULL;
     m_poSpIndex = NULL;
     m_poSpIndexLeaf = NULL;
-    m_bQuickSpatialIndexMode = FALSE;
+/* See bug 1732: Optimized spatial index produces broken files because
+ * of the way CoordBlocks are split. For now we have to force using the
+ * Quick (old) spatial index mode by default until bug 1732 is fixed.
+ */
+    m_bQuickSpatialIndexMode = TRUE;
+//  m_bQuickSpatialIndexMode = FALSE;
 
     m_poCurObjBlock = NULL;
     m_nCurObjPtr = -1;
@@ -540,7 +553,7 @@ int TABMAPFile::Close()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::SetQuickSpatialIndexMode()
+int TABMAPFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
 {
     if (m_eAccessMode != TABWrite)
     {
@@ -556,7 +569,7 @@ int TABMAPFile::SetQuickSpatialIndexMode()
         return -1;
     }
 
-    m_bQuickSpatialIndexMode = TRUE;
+    m_bQuickSpatialIndexMode = bQuickSpatialIndexMode;
 
     return 0;
 }
@@ -1813,6 +1826,11 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
         }
     }
 
+    /* Cleanup papoSrcObjHdrs[] */
+    for(int i=0; i<numSrcObj; i++)
+    {
+        delete papoSrcObjHdrs[i];
+    }
     CPLFree(papoSrcObjHdrs);
     papoSrcObjHdrs = NULL;
 

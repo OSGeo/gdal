@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.92 2007/03/30 18:05:49 dmorissette Exp $
+ * $Id: mitab.h,v 1.96 2007/06/12 14:48:44 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,20 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.96  2007/06/12 14:48:44  dmorissette
+ * Set version to 1.6.2-dev
+ *
+ * Revision 1.95  2007/06/12 14:17:16  dmorissette
+ * Added TABFile::TwoPointLineAsPolyline() to allow writing two point lines
+ * as polylines (bug 1735)
+ *
+ * Revision 1.94  2007/06/12 13:52:37  dmorissette
+ * Added IMapInfoFile::SetCharset() method (bug 1734)
+ *
+ * Revision 1.93  2007/06/12 12:50:39  dmorissette
+ * Use Quick Spatial Index by default until bug 1732 is fixed (broken files
+ * produced by current coord block splitting technique).
+ *
  * Revision 1.92  2007/03/30 18:05:49  dmorissette
  * Updated 1.6.1 release date
  *
@@ -129,8 +143,8 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.6.1 (2007-03-30)"
-#define MITAB_VERSION_INT  1006001  /* version x.y.z -> xxxyyyzzz */
+#define MITAB_VERSION      "1.6.2-dev (2007-06-xx)"
+#define MITAB_VERSION_INT  1006002  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -176,6 +190,8 @@ class IMapInfoFile : public OGRLayer
     TABFeature         *m_poCurFeature;
     GBool               m_bBoundsSet;
 
+    char                *m_pszCharset;
+
   public:
     IMapInfoFile() ;
     virtual ~IMapInfoFile();
@@ -186,7 +202,7 @@ class IMapInfoFile : public OGRLayer
                      GBool bTestOpenNoError = FALSE ) = 0;
     virtual int Close() = 0;
 
-    virtual int SetQuickSpatialIndexMode() {return -1;}
+    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE) {return -1;}
 
     virtual const char *GetTableName() = 0;
 
@@ -247,6 +263,8 @@ class IMapInfoFile : public OGRLayer
 
     virtual int SetFieldIndexed(int nFieldId) = 0;
 
+    virtual int SetCharset(const char* charset);
+
     ///////////////
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
@@ -272,7 +290,6 @@ class TABFile: public IMapInfoFile
     TABAccess   m_eAccessMode;
     char        **m_papszTABFile;
     int         m_nVersion;
-    char        *m_pszCharset;
     int         *m_panIndexNo;
     TABTableType m_eTableType;  // NATIVE (.DAT) or DBF
 
@@ -308,7 +325,7 @@ class TABFile: public IMapInfoFile
                      GBool bTestOpenNoError = FALSE );
     virtual int Close();
 
-    virtual int SetQuickSpatialIndexMode();
+    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE);
 
     virtual const char *GetTableName()
                             {return m_poDefn?m_poDefn->GetName():"";};
@@ -395,7 +412,6 @@ class TABView: public IMapInfoFile
     TABAccess   m_eAccessMode;
     char        **m_papszTABFile;
     char        *m_pszVersion;
-    char        *m_pszCharset;
     
     char        **m_papszTABFnames;
     TABFile     **m_papoTABFiles;
@@ -434,7 +450,7 @@ class TABView: public IMapInfoFile
                      GBool bTestOpenNoError = FALSE );
     virtual int Close();
 
-    virtual int SetQuickSpatialIndexMode();
+    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE);
 
     virtual const char *GetTableName()
            {return m_poRelation?m_poRelation->GetFeatureDefn()->GetName():"";};
@@ -626,7 +642,6 @@ class MIFFile: public IMapInfoFile
     char        *m_pszFname;
     TABAccess    m_eAccessMode;
     char        *m_pszVersion;
-    char        *m_pszCharset;
     char        *m_pszDelimiter;
     char        *m_pszUnique;
     char        *m_pszIndex;
@@ -1257,6 +1272,7 @@ class TABPolyline: public TABFeature,
   private:
     GBool       m_bCenterIsSet;
     double      m_dCenterX, m_dCenterY;
+    GBool       m_bWriteTwoPointLineAsPolyline;
 
   public:
              TABPolyline(OGRFeatureDefn *poDefnIn);
@@ -1274,6 +1290,10 @@ class TABPolyline: public TABFeature,
 
     int         ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         TABMAPCoordBlock **ppoCoordBlock);
+
+    GBool       TwoPointLineAsPolyline();
+    void        TwoPointLineAsPolyline(GBool bTwoPointLineAsPolyline);
+
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
 

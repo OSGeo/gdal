@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.69 2007/02/28 20:41:40 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.72 2007/06/12 14:17:16 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,17 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.72  2007/06/12 14:17:16  dmorissette
+ * Added TABFile::TwoPointLineAsPolyline() to allow writing two point lines
+ * as polylines (bug 1735)
+ *
+ * Revision 1.71  2007/06/11 17:57:06  dmorissette
+ * Removed stray calls to poMapFile->GetCurObjBlock()
+ *
+ * Revision 1.70  2007/06/11 14:52:30  dmorissette
+ * Return a valid m_nCoordDatasize value for Collection objects to prevent
+ * trashing of collection data during object splitting (bug 1728)
+ *
  * Revision 1.69  2007/02/28 20:41:40  dmorissette
  * Added missing NULL pointer checks in SetPenFromStyleString(),
  * SetBrushFromStyleString() and SetSymbolFromStyleString() (bug 1670)
@@ -1545,6 +1556,7 @@ TABPolyline::TABPolyline(OGRFeatureDefn *poDefnIn):
 {
     m_bCenterIsSet = FALSE;
     m_bSmooth = FALSE;
+    m_bWriteTwoPointLineAsPolyline = FALSE;
 }
 
 /**********************************************************************
@@ -1691,10 +1703,17 @@ int  TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
         {
             m_nMapInfoType = TAB_GEOM_PLINE;
         }
-        else if ( poLine->getNumPoints() == 2 )
+        else if ( (poLine->getNumPoints() == 2) && 
+                  (m_bWriteTwoPointLineAsPolyline == TRUE) )
+        {
+           m_nMapInfoType = TAB_GEOM_PLINE;
+        }
+        else if ( (poLine->getNumPoints() == 2) && 
+                  (m_bWriteTwoPointLineAsPolyline == FALSE) )
         {
             m_nMapInfoType = TAB_GEOM_LINE;
         }
+        // [/Safe Software]
         else
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -2047,7 +2066,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                        TABMAPObjHdr *poObjHdr)
 {
     GInt32              nX, nY;
-    TABMAPObjectBlock   *poObjBlock;
     OGRGeometry         *poGeom;
     OGRLineString       *poLine=NULL;
 
@@ -2057,8 +2075,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
     CPLErrorReset();
-
-    poObjBlock = poMapFile->GetCurObjBlock();
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry
@@ -2517,6 +2533,25 @@ void TABPolyline::SetCenter(double dX, double dY)
     m_bCenterIsSet = TRUE;
 }
 
+/**********************************************************************
+ *                   TABPolyline::TwoPointLineAsPolyline()
+ *
+ * Returns the value of m_bWriteTwoPointLineAsPolyline
+ **********************************************************************/
+GBool TABPolyline::TwoPointLineAsPolyline()
+{
+    return m_bWriteTwoPointLineAsPolyline;
+}
+
+/**********************************************************************
+*                   TABPolyline::TwoPointLineAsPolyline()
+*
+* Sets the value of m_bWriteTwoPointLineAsPolyline
+**********************************************************************/
+void TABPolyline::TwoPointLineAsPolyline(GBool bTwoPointLineAsPolyline)
+{
+    m_bWriteTwoPointLineAsPolyline = bTwoPointLineAsPolyline;
+}
 
 /*=====================================================================
  *                      class TABRegion
@@ -4172,15 +4207,11 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                        TABMAPObjHdr *poObjHdr)
 {
-    TABMAPObjectBlock   *poObjBlock;
-
     /*-----------------------------------------------------------------
      * We assume that ValidateMapInfoType() was called already and that
      * the type in poObjHdr->m_nType is valid.
      *----------------------------------------------------------------*/
     CPLAssert(m_nMapInfoType == poObjHdr->m_nType);
-
-    poObjBlock = poMapFile->GetCurObjBlock();
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry... Polygon and point are accepted.
@@ -6871,7 +6902,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
         poCollHdr->m_nRegionDataSize = 0;
         poCollHdr->m_nNumRegSections = 0;
-        poCollHdr->m_nTotalRegDataSize = 0;
         poCollHdr->m_nRegionPenId = 0;
         poCollHdr->m_nRegionBrushId = 0;
     }
@@ -6954,7 +6984,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
         poCollHdr->m_nPolylineDataSize = 0;
         poCollHdr->m_nNumPLineSections = 0;
-        poCollHdr->m_nTotalPolyDataSize = 0;
         poCollHdr->m_nPolylinePenId = 0;
     }
 

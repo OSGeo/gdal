@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.34 2006/03/10 19:50:45 fwarmerdam Exp $
+ * $Id: mitab_coordsys.cpp,v 1.35 2007/06/21 13:23:43 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.35  2007/06/21 13:23:43  fwarmerdam
+ * Fixed support for predefined datums with non-greenwich prime meridians
+ *
  * Revision 1.34  2006/03/10 19:50:45  fwarmerdam
  * Coordsys false easting and northing are in the units of the coordsys, not
  * necessarily meters.  Adjusted mitab_coordsys.cpp to reflect this.
