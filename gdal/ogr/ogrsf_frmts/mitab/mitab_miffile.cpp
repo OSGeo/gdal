@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.41 2005/10/13 20:12:03 fwarmerdam Exp $
+ * $Id: mitab_miffile.cpp,v 1.42 2007/06/12 13:52:37 dmorissette Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.42  2007/06/12 13:52:37  dmorissette
+ * Added IMapInfoFile::SetCharset() method (bug 1734)
+ *
  * Revision 1.41  2005/10/13 20:12:03  fwarmerdam
  * layers with just regions can't be set as type wkbPolygon because they may
  * have multipolygons (bug GDAL:958)
@@ -154,7 +157,6 @@ MIFFile::MIFFile()
 {
     m_pszFname = NULL;
     m_pszVersion = NULL;
-    m_pszCharset = NULL;
 
     // Tab is default delimiter in MIF spec if not explicitly specified.  Use
     // that by default for read mode. In write mode, we will use "," as 
@@ -462,11 +464,13 @@ int MIFFile::ParseMIFHeader()
         else if (EQUALN(pszLine,"CHARSET",7))
         {
             papszToken = CSLTokenizeStringComplex(pszLine," ()\t",TRUE,FALSE); 
-             bColumns = FALSE; bCoordSys = FALSE;
+            bColumns = FALSE; bCoordSys = FALSE;
           
             if (CSLCount(papszToken)  == 2)
-              m_pszCharset = CPLStrdup(papszToken[1]);
-
+            {
+                CPLFree(m_pszCharset);
+                m_pszCharset = CPLStrdup(papszToken[1]);
+            }
             CSLDestroy(papszToken);
         
         }
