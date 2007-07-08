@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.31 2006/01/27 13:44:44 fwarmerdam Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.32 2007/06/07 20:27:21 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.32  2007/06/07 20:27:21  dmorissette
+ * Fixed memory leaks when reading multipoint objects from .MIF files
+ *
  * Revision 1.31  2006/01/27 13:44:44  fwarmerdam
  * fixed Mills.mif reading, crash at file end
  *
@@ -1972,6 +1975,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         {
             SetCenter( dfX, dfY );
         }
+        CSLDestroy(papszToken);
     }
 
     if( SetGeometryDirectly( poMultiPoint ) != OGRERR_NONE)
@@ -1996,6 +2000,7 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             SetSymbolColor(atoi(papszToken[2]));
             SetSymbolSize(atoi(papszToken[3]));
         }
+        CSLDestroy(papszToken);
     }
 
     return 0; 
