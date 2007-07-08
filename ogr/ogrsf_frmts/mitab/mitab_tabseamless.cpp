@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_tabseamless.cpp,v 1.7 2007/06/21 14:00:23 dmorissette Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_tabseamless.cpp,v $
+ * Revision 1.7  2007/06/21 14:00:23  dmorissette
+ * Added missing cast in isspace() calls to avoid failed assertion on Windows
+ * (MITAB bug 1737, GDAL ticket 1678))
+ *
  * Revision 1.6  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *

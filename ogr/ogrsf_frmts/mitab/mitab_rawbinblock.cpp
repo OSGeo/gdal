@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.10 2007/02/22 18:35:53 dmorissette Exp $
+ * $Id: mitab_rawbinblock.cpp,v 1.11 2007/06/11 14:40:03 dmorissette Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
+ * Revision 1.11  2007/06/11 14:40:03  dmorissette
+ * Fixed another issue related to attempting to read past EOF while writing
+ * collections (bug 1657)
+ *
  * Revision 1.10  2007/02/22 18:35:53  dmorissette
  * Fixed problem writing collections where MITAB was sometimes trying to
  * read past EOF in write mode (bug 1657).
@@ -544,6 +548,12 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
              * In this case it's okay to place the m_nCurPos at byte 512
              * which is past the end of the block.
              */
+
+            /* Make sure we request the block that ends with requested
+             * address and not the following block that doesn't exist
+             * yet on disk */
+            nNewBlockPtr -= m_nBlockSize;
+
             if ( (nOffset < m_nFileOffset || 
                   nOffset > m_nFileOffset+m_nBlockSize) &&
                  (CommitToFile() != 0 ||
