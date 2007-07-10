@@ -786,7 +786,7 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
 
         for( iBand = 0; iBand < 3; iBand++ )
             transfer_bytes(apabyBandDest[iBand] 
-                           + (nTileOffsetX+nTileOffsetY*nBlockXSize)*nWordSize,
+                           + (nTileOffsetX+(nTileOffsetY+y)*nBlockXSize)*nWordSize,
                            line[iBand], nWordSize, bit_depth, eDataType );
     }
 
