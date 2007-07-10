@@ -428,6 +428,37 @@ def osr_esri_13():
 
 
 ###############################################################################
+# Verify that state plane epsg authority values are not applied if the
+# linear units are changed for old style .prj files (bug #1697)
+
+def osr_esri_14():
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromESRI( [ 'PROJECTION STATEPLANE',
+                          'UNITS feet',
+                          'FIPSZONE 2600',
+                          'DATUM NAD83',
+                          'PARAMETERS' ] )
+    if srs.GetAuthorityCode( 'PROJCS' ) != None:
+        print srs.GetAuthorityCode( 'PROJCS' )
+        gdaltest.post_reason( 'Get epsg authority code inappropriately.' )
+        return 'fail'
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromESRI( [ 'PROJECTION STATEPLANE',
+                          'UNITS meter',
+                          'FIPSZONE 2600',
+                          'DATUM NAD83',
+                          'PARAMETERS' ] )
+    if srs.GetAuthorityCode( 'PROJCS' ) != '32104':
+        print srs.GetAuthorityCode( 'PROJCS' )
+        gdaltest.post_reason( 'Did not get epsg authority code when expected.')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_esri_1,
@@ -443,6 +474,7 @@ gdaltest_list = [
     osr_esri_11,
     osr_esri_12,
     osr_esri_13,
+    osr_esri_14,
     None ]
 
 if __name__ == '__main__':
