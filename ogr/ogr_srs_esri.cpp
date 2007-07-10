@@ -823,6 +823,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     if( IsLocal() || IsProjected() )
     {
         const char *pszValue;
+        double dfOldUnits = GetLinearUnits();
 
         pszValue = OSR_GDS( papszPrj, "Units", NULL );
         if( pszValue == NULL )
@@ -834,6 +835,18 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                                                1.0 / atof(pszValue) );
         else
             SetLinearUnitsAndUpdateParameters( pszValue, 1.0 );
+
+        // If we have reset the linear units we should clear any authority
+        // nodes on the PROJCS.  This especially applies to state plane
+        // per bug 1697
+        double dfNewUnits = GetLinearUnits();
+        if( dfOldUnits != 0.0 
+            && (dfNewUnits / dfOldUnits < 0.9999999
+                || dfNewUnits / dfOldUnits > 1.0000001) )
+        {
+            if( GetRoot()->FindChild( "AUTHORITY" ) != -1 )
+                GetRoot()->DestroyChild(GetRoot()->FindChild( "AUTHORITY" ));
+        }
     }
     
     return OGRERR_NONE;
