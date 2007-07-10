@@ -12,15 +12,15 @@
 ******************************************************************************/
 
 #ifdef __MSDOS__
-#include <io.h>
-#include <alloc.h>
-#include <sys\stat.h>
+#  include <io.h>
+#  include <alloc.h>
+#  include <sys\stat.h>
 #else
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef R6000
-#include <sys/mode.h>
-#endif
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  ifdef R6000
+#    include <sys/mode.h>
+#  endif
 #endif /* __MSDOS__ */
 
 #ifdef unix
@@ -33,6 +33,11 @@
 #include <string.h>
 #include "gif_lib.h"
 #include "gif_lib_private.h"
+
+#if !defined(S_IREAD) && defined(S_IRUSR)
+#  define S_IREAD  S_IRUSR
+#  define S_IWRITE S_IRUSR
+#endif
 
 #define GIF87_STAMP	"GIF87a"         /* First chars in file - GIF stamp. */
 #define GIF89_STAMP	"GIF89a"         /* First chars in file - GIF stamp. */
