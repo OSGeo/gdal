@@ -36,6 +36,7 @@ CPL_CVSID("$Id$");
 static char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
+    "Plate_Carree", SRS_PT_EQUIRECTANGULAR,
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
                                         SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Hotine_Oblique_Mercator_Azimuth_Center", 
@@ -822,6 +823,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     if( IsLocal() || IsProjected() )
     {
         const char *pszValue;
+        double dfOldUnits = GetLinearUnits();
 
         pszValue = OSR_GDS( papszPrj, "Units", NULL );
         if( pszValue == NULL )
@@ -833,6 +835,18 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                                                1.0 / atof(pszValue) );
         else
             SetLinearUnitsAndUpdateParameters( pszValue, 1.0 );
+
+        // If we have reset the linear units we should clear any authority
+        // nodes on the PROJCS.  This especially applies to state plane
+        // per bug 1697
+        double dfNewUnits = GetLinearUnits();
+        if( dfOldUnits != 0.0 
+            && (dfNewUnits / dfOldUnits < 0.9999999
+                || dfNewUnits / dfOldUnits > 1.0000001) )
+        {
+            if( GetRoot()->FindChild( "AUTHORITY" ) != -1 )
+                GetRoot()->DestroyChild(GetRoot()->FindChild( "AUTHORITY" ));
+        }
     }
     
     return OGRERR_NONE;
