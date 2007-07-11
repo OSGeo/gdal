@@ -1430,19 +1430,21 @@ SWIG_Perl_SetModule(swig_module_info *module) {
 #define SWIGTYPE_p_CPLXMLNode swig_types[1]
 #define SWIGTYPE_p_GByte swig_types[2]
 #define SWIGTYPE_p_GDALColorEntry swig_types[3]
-#define SWIGTYPE_p_GDALColorTable swig_types[4]
+#define SWIGTYPE_p_GDALColorTableShadow swig_types[4]
 #define SWIGTYPE_p_GDALDatasetShadow swig_types[5]
 #define SWIGTYPE_p_GDALDriverShadow swig_types[6]
 #define SWIGTYPE_p_GDALMajorObjectShadow swig_types[7]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[8]
-#define SWIGTYPE_p_GDAL_GCP swig_types[9]
-#define SWIGTYPE_p_char swig_types[10]
-#define SWIGTYPE_p_double swig_types[11]
-#define SWIGTYPE_p_int swig_types[12]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[13]
-#define SWIGTYPE_p_p_char swig_types[14]
-static swig_type_info *swig_types[16];
-static swig_module_info swig_module = {swig_types, 15, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALPaletteInterp swig_types[8]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[9]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[10]
+#define SWIGTYPE_p_GDAL_GCP swig_types[11]
+#define SWIGTYPE_p_char swig_types[12]
+#define SWIGTYPE_p_double swig_types[13]
+#define SWIGTYPE_p_int swig_types[14]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[15]
+#define SWIGTYPE_p_p_char swig_types[16]
+static swig_type_info *swig_types[18];
+static swig_module_info swig_module = {swig_types, 17, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1493,6 +1495,8 @@ typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
+typedef void GDALColorTableShadow;
+typedef void GDALRasterAttributeTableShadow;
 
 typedef int FALSE_IS_ERR;
 
@@ -1793,6 +1797,9 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self
   }
 SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *name){
     return GDALDeleteDataset( self, name );
+  }
+SWIGINTERN int GDALDriverShadow_Rename(GDALDriverShadow *self,char const *newName,char const *oldName){
+    return GDALRenameDataset( self, newName, oldName );
   }
 SWIGINTERN int GDALDriverShadow_Register(GDALDriverShadow *self){
     return GDALRegisterDriver( self );
@@ -2229,11 +2236,17 @@ SWIGINTERN CPLErr GDALRasterBandShadow_WriteRaster(GDALRasterBandShadow *self,in
 SWIGINTERN void GDALRasterBandShadow_FlushCache(GDALRasterBandShadow *self){
     GDALFlushRasterCache( self );
   }
-SWIGINTERN GDALColorTable *GDALRasterBandShadow_GetRasterColorTable(GDALRasterBandShadow *self){
-    return (GDALColorTable*) GDALGetRasterColorTable( self );
+SWIGINTERN GDALColorTableShadow *GDALRasterBandShadow_GetRasterColorTable(GDALRasterBandShadow *self){
+    return (GDALColorTableShadow*) GDALGetRasterColorTable( self );
   }
-SWIGINTERN int GDALRasterBandShadow_SetRasterColorTable(GDALRasterBandShadow *self,GDALColorTable *arg){
+SWIGINTERN int GDALRasterBandShadow_SetRasterColorTable(GDALRasterBandShadow *self,GDALColorTableShadow *arg){
     return GDALSetRasterColorTable( self, arg );
+  }
+SWIGINTERN GDALRasterAttributeTableShadow *GDALRasterBandShadow_GetDefaultRAT(GDALRasterBandShadow *self){ 
+      return (GDALRasterAttributeTableShadow*) GDALGetDefaultRAT(self);
+  }
+SWIGINTERN int GDALRasterBandShadow_SetDefaultRAT(GDALRasterBandShadow *self,GDALRasterAttributeTableShadow *table){
+      return GDALSetDefaultRAT(self, table);
   }
 
 GDALDataType GDALRasterBandShadow_DataType_get( GDALRasterBandShadow *h ) {
@@ -2246,6 +2259,88 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterBandYSize( h );
 }
 
+SWIGINTERN GDALColorTableShadow *new_GDALColorTableShadow(GDALPaletteInterp palette=GPI_RGB){
+        return (GDALColorTableShadow*) GDALCreateColorTable(palette);
+    }
+SWIGINTERN void delete_GDALColorTableShadow(GDALColorTableShadow *self){
+        GDALDestroyColorTable(self);
+    }
+SWIGINTERN GDALColorTableShadow *GDALColorTableShadow_Clone(GDALColorTableShadow *self){
+        return (GDALColorTableShadow*) GDALCloneColorTable (self);
+    }
+SWIGINTERN GDALPaletteInterp GDALColorTableShadow_GetPaletteInterpretation(GDALColorTableShadow *self){
+        return GDALGetPaletteInterpretation(self);
+    }
+SWIGINTERN int GDALColorTableShadow_GetColorEntryCount(GDALColorTableShadow *self){
+        return GDALGetColorEntryCount(self);
+    }
+SWIGINTERN GDALColorEntry *GDALColorTableShadow_GetColorEntry(GDALColorTableShadow *self,int entry){
+        return (GDALColorEntry*) GDALGetColorEntry(self, entry);
+    }
+SWIGINTERN int GDALColorTableShadow_GetColorEntryAsRGB(GDALColorTableShadow *self,int entry,GDALColorEntry *centry){
+        return GDALGetColorEntryAsRGB(self, entry, centry);
+    }
+SWIGINTERN void GDALColorTableShadow_SetColorEntry(GDALColorTableShadow *self,int entry,GDALColorEntry const *centry){
+        GDALSetColorEntry(self, entry, centry);
+    }
+SWIGINTERN void GDALColorTableShadow_CreateColorRamp(GDALColorTableShadow *self,int nStartIndex,GDALColorEntry const *startcolor,int nEndIndex,GDALColorEntry const *endcolor){
+        GDALCreateColorRamp(self, nStartIndex, startcolor, nEndIndex, endcolor);
+    }
+SWIGINTERN GDALRasterAttributeTableShadow *new_GDALRasterAttributeTableShadow(){
+        return (GDALRasterAttributeTableShadow*) 
+		GDALCreateRasterAttributeTable();
+    }
+SWIGINTERN void delete_GDALRasterAttributeTableShadow(GDALRasterAttributeTableShadow *self){
+        GDALDestroyRasterAttributeTable(self);
+    }
+SWIGINTERN GDALRasterAttributeTableShadow *GDALRasterAttributeTableShadow_Clone(GDALRasterAttributeTableShadow *self){
+        return (GDALRasterAttributeTableShadow*) GDALRATClone(self);
+    }
+SWIGINTERN int GDALRasterAttributeTableShadow_GetColumnCount(GDALRasterAttributeTableShadow *self){ 
+        return GDALRATGetColumnCount( self );
+    }
+SWIGINTERN char const *GDALRasterAttributeTableShadow_GetNameOfCol(GDALRasterAttributeTableShadow *self,int iCol){ 
+        return GDALRATGetNameOfCol( self, iCol );
+    }
+SWIGINTERN GDALRATFieldUsage GDALRasterAttributeTableShadow_GetUsageOfCol(GDALRasterAttributeTableShadow *self,int iCol){
+        return GDALRATGetUsageOfCol( self, iCol );
+    }
+SWIGINTERN GDALRATFieldType GDALRasterAttributeTableShadow_GetTypeOfCol(GDALRasterAttributeTableShadow *self,int iCol){
+        return GDALRATGetTypeOfCol( self, iCol );
+    }
+SWIGINTERN int GDALRasterAttributeTableShadow_GetColOfUsage(GDALRasterAttributeTableShadow *self,GDALRATFieldUsage eUsage){
+        return GDALRATGetColOfUsage( self, eUsage );
+    }
+SWIGINTERN int GDALRasterAttributeTableShadow_GetRowCount(GDALRasterAttributeTableShadow *self){ 
+        return GDALRATGetRowCount( self );
+    }
+SWIGINTERN char const *GDALRasterAttributeTableShadow_GetValueAsString(GDALRasterAttributeTableShadow *self,int iRow,int iCol){ 
+        return GDALRATGetValueAsString( self, iRow, iCol );
+    }
+SWIGINTERN int GDALRasterAttributeTableShadow_GetValueAsInt(GDALRasterAttributeTableShadow *self,int iRow,int iCol){ 
+        return GDALRATGetValueAsInt( self, iRow, iCol );
+    }
+SWIGINTERN double GDALRasterAttributeTableShadow_GetValueAsDouble(GDALRasterAttributeTableShadow *self,int iRow,int iCol){ 
+        return GDALRATGetValueAsDouble( self, iRow, iCol );
+    }
+SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsString(GDALRasterAttributeTableShadow *self,int iRow,int iCol,char const *pszValue){ 
+        GDALRATSetValueAsString( self, iRow, iCol, pszValue );
+    }
+SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsInt(GDALRasterAttributeTableShadow *self,int iRow,int iCol,int nValue){ 
+        GDALRATSetValueAsInt( self, iRow, iCol, nValue );
+    }
+SWIGINTERN void GDALRasterAttributeTableShadow_SetValueAsDouble(GDALRasterAttributeTableShadow *self,int iRow,int iCol,double dfValue){ 
+        GDALRATSetValueAsDouble( self, iRow, iCol, dfValue );
+    }
+SWIGINTERN void GDALRasterAttributeTableShadow_SetRowCount(GDALRasterAttributeTableShadow *self,int nCount){
+        GDALRATSetRowCount( self, nCount );
+    }
+SWIGINTERN int GDALRasterAttributeTableShadow_CreateColumn(GDALRasterAttributeTableShadow *self,char const *pszName,GDALRATFieldType eType,GDALRATFieldUsage eUsage){
+        return GDALRATCreateColumn( self, pszName, eType, eUsage );
+    }
+SWIGINTERN int GDALRasterAttributeTableShadow_GetRowOfValue(GDALRasterAttributeTableShadow *self,double dfValue){
+        return GDALRATGetRowOfValue( self, dfValue );
+    }
 
 /************************************************************************/
 /*                          XMLTreeToAV()                               */
@@ -2325,14 +2420,35 @@ GDALDriverShadow* GetDriver( int i ) {
 
 
 GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( name, eAccess );
+  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
+  {
+      if ( GDALDereferenceDataset( ds ) <= 0 )
+          GDALClose(ds);
+      ds = NULL;
+  }
   return (GDALDatasetShadow*) ds;
 }
 
 
 GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
+  CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpenShared( name, eAccess );
+  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
+  {
+      if ( GDALDereferenceDataset( ds ) <= 0 )
+          GDALClose(ds);
+      ds = NULL;
+  }
   return (GDALDatasetShadow*) ds;
+}
+
+
+GDALDriverShadow *IdentifyDriver( const char *pszDatasource, 
+				  char **papszSiblings = NULL ) {
+    return (GDALDriverShadow *) GDALIdentifyDriver( pszDatasource, 
+	                                            papszSiblings );
 }
 
 
@@ -2955,6 +3071,56 @@ XS(_wrap_FindFile) {
   fail:
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_ReadDir) {
+  {
+    char *arg1 = (char *) 0 ;
+    char **result = 0 ;
+    int res1 ;
+    char *buf1 = 0 ;
+    int alloc1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: ReadDir(char const *);");
+    }
+    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ReadDir" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = reinterpret_cast< char * >(buf1);
+    {
+      CPLErrorReset();
+      result = (char **)VSIReadDir((char const *)arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) char ** -> ( string ) */
+      AV* av = (AV*)sv_2mortal((SV*)newAV());
+      char **stringarray = result;
+      if ( stringarray != NULL ) {
+        for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
+          av_store(av, i, newSVpv(*stringarray, strlen(*stringarray)));
+        }
+      }
+      ST(argvi) = newRV_noinc((SV*)av);
+      argvi++;
+    }
+    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+    XSRETURN(argvi);
+  fail:
+    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     SWIG_croak_null();
   }
 }
@@ -3921,6 +4087,66 @@ XS(_wrap_Driver_Delete) {
   fail:
     
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Driver_Rename) {
+  {
+    GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
+    char *arg2 = (char *) 0 ;
+    char *arg3 = (char *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int res3 ;
+    char *buf3 = 0 ;
+    int alloc3 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: Driver_Rename(self,newName,oldName);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Rename" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_Rename" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+    res3 = SWIG_AsCharPtrAndSize(ST(2), &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Driver_Rename" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = reinterpret_cast< char * >(buf3);
+    {
+      CPLErrorReset();
+      result = (int)GDALDriverShadow_Rename(arg1,(char const *)arg2,(char const *)arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
     SWIG_croak_null();
   }
 }
@@ -8889,7 +9115,7 @@ XS(_wrap_Band_FlushCache) {
 XS(_wrap_Band_GetRasterColorTable) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
-    GDALColorTable *result = 0 ;
+    GDALColorTableShadow *result = 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
     int argvi = 0;
@@ -8905,7 +9131,7 @@ XS(_wrap_Band_GetRasterColorTable) {
     arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
     {
       CPLErrorReset();
-      result = (GDALColorTable *)GDALRasterBandShadow_GetRasterColorTable(arg1);
+      result = (GDALColorTableShadow *)GDALRasterBandShadow_GetRasterColorTable(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -8914,7 +9140,7 @@ XS(_wrap_Band_GetRasterColorTable) {
         
       }
     }
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTable, 0 | SWIG_SHADOW); argvi++ ;
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTableShadow, 0 | SWIG_SHADOW); argvi++ ;
     
     XSRETURN(argvi);
   fail:
@@ -8927,7 +9153,7 @@ XS(_wrap_Band_GetRasterColorTable) {
 XS(_wrap_Band_SetRasterColorTable) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
-    GDALColorTable *arg2 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg2 = (GDALColorTableShadow *) 0 ;
     int result;
     void *argp1 = 0 ;
     int res1 = 0 ;
@@ -8944,11 +9170,11 @@ XS(_wrap_Band_SetRasterColorTable) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetRasterColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
     }
     arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-    res2 = SWIG_ConvertPtr(ST(1), &argp2,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res2 = SWIG_ConvertPtr(ST(1), &argp2,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Band_SetRasterColorTable" "', argument " "2"" of type '" "GDALColorTable *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Band_SetRasterColorTable" "', argument " "2"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg2 = reinterpret_cast< GDALColorTable * >(argp2);
+    arg2 = reinterpret_cast< GDALColorTableShadow * >(argp2);
     {
       CPLErrorReset();
       result = (int)GDALRasterBandShadow_SetRasterColorTable(arg1,arg2);
@@ -8972,28 +9198,26 @@ XS(_wrap_Band_SetRasterColorTable) {
 }
 
 
-XS(_wrap_new_ColorTable) {
+XS(_wrap_Band_GetDefaultRAT) {
   {
-    GDALPaletteInterp arg1 = (GDALPaletteInterp) GPI_RGB ;
-    GDALColorTable *result = 0 ;
-    int val1 ;
-    int ecode1 = 0 ;
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    GDALRasterAttributeTableShadow *result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 0) || (items > 1)) {
-      SWIG_croak("Usage: new_ColorTable(GDALPaletteInterp);");
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: Band_GetDefaultRAT(self);");
     }
-    if (items > 0) {
-      ecode1 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(0), &val1);
-      if (!SWIG_IsOK(ecode1)) {
-        SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "new_ColorTable" "', argument " "1"" of type '" "GDALPaletteInterp""'");
-      } 
-      arg1 = static_cast< GDALPaletteInterp >(val1);
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetDefaultRAT" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
     }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
     {
       CPLErrorReset();
-      result = (GDALColorTable *)new GDALColorTable(arg1);
+      result = (GDALRasterAttributeTableShadow *)GDALRasterBandShadow_GetDefaultRAT(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9002,7 +9226,7 @@ XS(_wrap_new_ColorTable) {
         
       }
     }
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTable, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 | SWIG_SHADOW); argvi++ ;
     
     XSRETURN(argvi);
   fail:
@@ -9012,9 +9236,101 @@ XS(_wrap_new_ColorTable) {
 }
 
 
+XS(_wrap_Band_SetDefaultRAT) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    GDALRasterAttributeTableShadow *arg2 = (GDALRasterAttributeTableShadow *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    void *argp2 = 0 ;
+    int res2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: Band_SetDefaultRAT(self,table);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetDefaultRAT" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    res2 = SWIG_ConvertPtr(ST(1), &argp2,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Band_SetDefaultRAT" "', argument " "2"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg2 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp2);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterBandShadow_SetDefaultRAT(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_new_ColorTable) {
+  {
+    GDALPaletteInterp arg1 = (GDALPaletteInterp) GPI_RGB ;
+    GDALColorTableShadow *result = 0 ;
+    void *argp1 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 0) || (items > 1)) {
+      SWIG_croak("Usage: new_ColorTable(palette);");
+    }
+    if (items > 0) {
+      {
+        res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_GDALPaletteInterp,  0 );
+        if (!SWIG_IsOK(res1)) {
+          SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_ColorTable" "', argument " "1"" of type '" "GDALPaletteInterp""'"); 
+        }  
+        if (!argp1) {
+          SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_ColorTable" "', argument " "1"" of type '" "GDALPaletteInterp""'");
+        } else {
+          arg1 = *(reinterpret_cast< GDALPaletteInterp * >(argp1));
+        }
+      }
+    }
+    {
+      CPLErrorReset();
+      result = (GDALColorTableShadow *)new_GDALColorTableShadow(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTableShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
+    XSRETURN(argvi);
+  fail:
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_delete_ColorTable) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
     int argvi = 0;
@@ -9023,14 +9339,14 @@ XS(_wrap_delete_ColorTable) {
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: delete_ColorTable(self);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, SWIG_POINTER_DISOWN |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, SWIG_POINTER_DISOWN |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_ColorTable" "', argument " "1"" of type '" "GDALColorTable *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_ColorTable" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     {
       CPLErrorReset();
-      delete arg1;
+      delete_GDALColorTableShadow(arg1);
       
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9052,8 +9368,8 @@ XS(_wrap_delete_ColorTable) {
 
 XS(_wrap_ColorTable_Clone) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
-    GDALColorTable *result = 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
+    GDALColorTableShadow *result = 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
     int argvi = 0;
@@ -9062,14 +9378,14 @@ XS(_wrap_ColorTable_Clone) {
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: ColorTable_Clone(self);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_Clone" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_Clone" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     {
       CPLErrorReset();
-      result = (GDALColorTable *)((GDALColorTable const *)arg1)->Clone();
+      result = (GDALColorTableShadow *)GDALColorTableShadow_Clone(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9078,7 +9394,7 @@ XS(_wrap_ColorTable_Clone) {
         
       }
     }
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTable, 0 | SWIG_SHADOW); argvi++ ;
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALColorTableShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
     
     XSRETURN(argvi);
   fail:
@@ -9090,7 +9406,7 @@ XS(_wrap_ColorTable_Clone) {
 
 XS(_wrap_ColorTable_GetPaletteInterpretation) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
     GDALPaletteInterp result;
     void *argp1 = 0 ;
     int res1 = 0 ;
@@ -9100,14 +9416,14 @@ XS(_wrap_ColorTable_GetPaletteInterpretation) {
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: ColorTable_GetPaletteInterpretation(self);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetPaletteInterpretation" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetPaletteInterpretation" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     {
       CPLErrorReset();
-      result = (GDALPaletteInterp)((GDALColorTable const *)arg1)->GetPaletteInterpretation();
+      result = GDALColorTableShadow_GetPaletteInterpretation(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9116,7 +9432,7 @@ XS(_wrap_ColorTable_GetPaletteInterpretation) {
         
       }
     }
-    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    ST(argvi) = SWIG_NewPointerObj((new GDALPaletteInterp(static_cast< const GDALPaletteInterp& >(result))), SWIGTYPE_p_GDALPaletteInterp, SWIG_POINTER_OWN | 0); argvi++ ;
     
     XSRETURN(argvi);
   fail:
@@ -9128,7 +9444,7 @@ XS(_wrap_ColorTable_GetPaletteInterpretation) {
 
 XS(_wrap_ColorTable_GetCount) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
     int result;
     void *argp1 = 0 ;
     int res1 = 0 ;
@@ -9138,14 +9454,14 @@ XS(_wrap_ColorTable_GetCount) {
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: ColorTable_GetCount(self);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetCount" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetCount" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     {
       CPLErrorReset();
-      result = (int)((GDALColorTable const *)arg1)->GetColorEntryCount();
+      result = (int)GDALColorTableShadow_GetColorEntryCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9166,7 +9482,7 @@ XS(_wrap_ColorTable_GetCount) {
 
 XS(_wrap_ColorTable_GetColorEntry) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
     int arg2 ;
     GDALColorEntry *result = 0 ;
     void *argp1 = 0 ;
@@ -9177,13 +9493,13 @@ XS(_wrap_ColorTable_GetColorEntry) {
     dXSARGS;
     
     if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: ColorTable_GetColorEntry(self,int);");
+      SWIG_croak("Usage: ColorTable_GetColorEntry(self,entry);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetColorEntry" "', argument " "1"" of type '" "GDALColorTable *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetColorEntry" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorTable_GetColorEntry" "', argument " "2"" of type '" "int""'");
@@ -9191,7 +9507,7 @@ XS(_wrap_ColorTable_GetColorEntry) {
     arg2 = static_cast< int >(val2);
     {
       CPLErrorReset();
-      result = (GDALColorEntry *)(arg1)->GetColorEntry(arg2);
+      result = (GDALColorEntry *)GDALColorTableShadow_GetColorEntry(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9226,7 +9542,7 @@ XS(_wrap_ColorTable_GetColorEntry) {
 
 XS(_wrap_ColorTable_GetColorEntryAsRGB) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
     int arg2 ;
     GDALColorEntry *arg3 = (GDALColorEntry *) 0 ;
     int result;
@@ -9243,13 +9559,13 @@ XS(_wrap_ColorTable_GetColorEntryAsRGB) {
       arg3 = &e3;
     }
     if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: ColorTable_GetColorEntryAsRGB(self,int);");
+      SWIG_croak("Usage: ColorTable_GetColorEntryAsRGB(self,entry);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetColorEntryAsRGB" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_GetColorEntryAsRGB" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorTable_GetColorEntryAsRGB" "', argument " "2"" of type '" "int""'");
@@ -9257,7 +9573,7 @@ XS(_wrap_ColorTable_GetColorEntryAsRGB) {
     arg2 = static_cast< int >(val2);
     {
       CPLErrorReset();
-      result = (int)((GDALColorTable const *)arg1)->GetColorEntryAsRGB(arg2,arg3);
+      result = (int)GDALColorTableShadow_GetColorEntryAsRGB(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9296,7 +9612,7 @@ XS(_wrap_ColorTable_GetColorEntryAsRGB) {
 
 XS(_wrap_ColorTable_SetColorEntry) {
   {
-    GDALColorTable *arg1 = (GDALColorTable *) 0 ;
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
     int arg2 ;
     GDALColorEntry *arg3 = (GDALColorEntry *) 0 ;
     void *argp1 = 0 ;
@@ -9309,13 +9625,13 @@ XS(_wrap_ColorTable_SetColorEntry) {
     dXSARGS;
     
     if ((items < 3) || (items > 3)) {
-      SWIG_croak("Usage: ColorTable_SetColorEntry(self,int,GDALColorEntry const *);");
+      SWIG_croak("Usage: ColorTable_SetColorEntry(self,entry,centry);");
     }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_SetColorEntry" "', argument " "1"" of type '" "GDALColorTable *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_SetColorEntry" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
     }
-    arg1 = reinterpret_cast< GDALColorTable * >(argp1);
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorTable_SetColorEntry" "', argument " "2"" of type '" "int""'");
@@ -9346,7 +9662,7 @@ XS(_wrap_ColorTable_SetColorEntry) {
     _saved[0] = ST(2);
     {
       CPLErrorReset();
-      (arg1)->SetColorEntry(arg2,(GDALColorEntry const *)arg3);
+      GDALColorTableShadow_SetColorEntry(arg1,arg2,(GDALColorEntry const *)arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9365,6 +9681,1036 @@ XS(_wrap_ColorTable_SetColorEntry) {
     XSRETURN(argvi);
   fail:
     
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_ColorTable_CreateColorRamp) {
+  {
+    GDALColorTableShadow *arg1 = (GDALColorTableShadow *) 0 ;
+    int arg2 ;
+    GDALColorEntry *arg3 = (GDALColorEntry *) 0 ;
+    int arg4 ;
+    GDALColorEntry *arg5 = (GDALColorEntry *) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    GDALColorEntry e3 ;
+    int val4 ;
+    int ecode4 = 0 ;
+    GDALColorEntry e5 ;
+    int argvi = 0;
+    SV * _saved[2] ;
+    dXSARGS;
+    
+    if ((items < 5) || (items > 5)) {
+      SWIG_croak("Usage: ColorTable_CreateColorRamp(self,nStartIndex,startcolor,nEndIndex,endcolor);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALColorTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ColorTable_CreateColorRamp" "', argument " "1"" of type '" "GDALColorTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ColorTable_CreateColorRamp" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      /* %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e3) */
+      arg3 = &e3;
+      if (! (SvROK(ST(2)) && (SvTYPE(SvRV(ST(2)))==SVt_PVAV))) {
+        croak("argument is not an array ref");
+        SWIG_fail;
+      }
+      AV *av = (AV*)(SvRV(ST(2)));
+      int seq_size = av_len(av);
+      if ( seq_size != 3 ) {
+        croak("color entry argument array must have length 4 (it is %i)",seq_size+1);
+        SWIG_fail;
+      }
+      SV **sv = av_fetch(av, 0, 0);
+      arg3->c1 =  SvIV(*sv);
+      sv = av_fetch(av, 1, 0);
+      arg3->c2 =  SvIV(*sv);
+      sv = av_fetch(av, 2, 0);
+      arg3->c3 =  SvIV(*sv);
+      sv = av_fetch(av, 3, 0);
+      arg3->c4 =  SvIV(*sv);
+    }
+    ecode4 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "ColorTable_CreateColorRamp" "', argument " "4"" of type '" "int""'");
+    } 
+    arg4 = static_cast< int >(val4);
+    {
+      /* %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e5) */
+      arg5 = &e3;
+      if (! (SvROK(ST(4)) && (SvTYPE(SvRV(ST(4)))==SVt_PVAV))) {
+        croak("argument is not an array ref");
+        SWIG_fail;
+      }
+      AV *av = (AV*)(SvRV(ST(4)));
+      int seq_size = av_len(av);
+      if ( seq_size != 3 ) {
+        croak("color entry argument array must have length 4 (it is %i)",seq_size+1);
+        SWIG_fail;
+      }
+      SV **sv = av_fetch(av, 0, 0);
+      arg5->c1 =  SvIV(*sv);
+      sv = av_fetch(av, 1, 0);
+      arg5->c2 =  SvIV(*sv);
+      sv = av_fetch(av, 2, 0);
+      arg5->c3 =  SvIV(*sv);
+      sv = av_fetch(av, 3, 0);
+      arg5->c4 =  SvIV(*sv);
+    }
+    _saved[0] = ST(2);
+    _saved[1] = ST(4);
+    {
+      CPLErrorReset();
+      GDALColorTableShadow_CreateColorRamp(arg1,arg2,(GDALColorEntry const *)arg3,arg4,(GDALColorEntry const *)arg5);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    {
+      /* %typemap(argout) const GDALColorEntry* */
+    }
+    {
+      /* %typemap(argout) const GDALColorEntry* */
+    }
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_new_RasterAttributeTable) {
+  {
+    GDALRasterAttributeTableShadow *result = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 0) || (items > 0)) {
+      SWIG_croak("Usage: new_RasterAttributeTable();");
+    }
+    {
+      CPLErrorReset();
+      result = (GDALRasterAttributeTableShadow *)new_GDALRasterAttributeTableShadow();
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALRasterAttributeTableShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
+    XSRETURN(argvi);
+  fail:
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_delete_RasterAttributeTable) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: delete_RasterAttributeTable(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, SWIG_POINTER_DISOWN |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_RasterAttributeTable" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    {
+      CPLErrorReset();
+      delete_GDALRasterAttributeTableShadow(arg1);
+      
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_Clone) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    GDALRasterAttributeTableShadow *result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: RasterAttributeTable_Clone(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_Clone" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    {
+      CPLErrorReset();
+      result = (GDALRasterAttributeTableShadow *)GDALRasterAttributeTableShadow_Clone(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALRasterAttributeTableShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetColumnCount) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetColumnCount(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetColumnCount" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterAttributeTableShadow_GetColumnCount(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetNameOfCol) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    char *result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetNameOfCol(self,iCol);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetNameOfCol" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetNameOfCol" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      CPLErrorReset();
+      result = (char *)GDALRasterAttributeTableShadow_GetNameOfCol(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetUsageOfCol) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    GDALRATFieldUsage result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetUsageOfCol(self,iCol);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetUsageOfCol" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetUsageOfCol" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      CPLErrorReset();
+      result = (GDALRATFieldUsage)GDALRasterAttributeTableShadow_GetUsageOfCol(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetTypeOfCol) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    GDALRATFieldType result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetTypeOfCol(self,iCol);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetTypeOfCol" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetTypeOfCol" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      CPLErrorReset();
+      result = (GDALRATFieldType)GDALRasterAttributeTableShadow_GetTypeOfCol(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetColOfUsage) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    GDALRATFieldUsage arg2 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetColOfUsage(self,eUsage);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetColOfUsage" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetColOfUsage" "', argument " "2"" of type '" "GDALRATFieldUsage""'");
+    } 
+    arg2 = static_cast< GDALRATFieldUsage >(val2);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterAttributeTableShadow_GetColOfUsage(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetRowCount) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetRowCount(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetRowCount" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterAttributeTableShadow_GetRowCount(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetValueAsString) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    char *result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetValueAsString(self,iRow,iCol);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetValueAsString" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetValueAsString" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_GetValueAsString" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    {
+      CPLErrorReset();
+      result = (char *)GDALRasterAttributeTableShadow_GetValueAsString(arg1,arg2,arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetValueAsInt) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetValueAsInt(self,iRow,iCol);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetValueAsInt" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetValueAsInt" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_GetValueAsInt" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterAttributeTableShadow_GetValueAsInt(arg1,arg2,arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetValueAsDouble) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    double result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetValueAsDouble(self,iRow,iCol);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetValueAsDouble" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetValueAsDouble" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_GetValueAsDouble" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    {
+      CPLErrorReset();
+      result = (double)GDALRasterAttributeTableShadow_GetValueAsDouble(arg1,arg2,arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_SetValueAsString) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    char *arg4 = (char *) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int res4 ;
+    char *buf4 = 0 ;
+    int alloc4 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 4) || (items > 4)) {
+      SWIG_croak("Usage: RasterAttributeTable_SetValueAsString(self,iRow,iCol,pszValue);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_SetValueAsString" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_SetValueAsString" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_SetValueAsString" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    res4 = SWIG_AsCharPtrAndSize(ST(3), &buf4, NULL, &alloc4);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "RasterAttributeTable_SetValueAsString" "', argument " "4"" of type '" "char const *""'");
+    }
+    arg4 = reinterpret_cast< char * >(buf4);
+    {
+      CPLErrorReset();
+      GDALRasterAttributeTableShadow_SetValueAsString(arg1,arg2,arg3,(char const *)arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    
+    
+    if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_SetValueAsInt) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    int arg4 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int val4 ;
+    int ecode4 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 4) || (items > 4)) {
+      SWIG_croak("Usage: RasterAttributeTable_SetValueAsInt(self,iRow,iCol,nValue);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_SetValueAsInt" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_SetValueAsInt" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_SetValueAsInt" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    ecode4 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "RasterAttributeTable_SetValueAsInt" "', argument " "4"" of type '" "int""'");
+    } 
+    arg4 = static_cast< int >(val4);
+    {
+      CPLErrorReset();
+      GDALRasterAttributeTableShadow_SetValueAsInt(arg1,arg2,arg3,arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_SetValueAsDouble) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    double arg4 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    double val4 ;
+    int ecode4 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 4) || (items > 4)) {
+      SWIG_croak("Usage: RasterAttributeTable_SetValueAsDouble(self,iRow,iCol,dfValue);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_SetValueAsDouble" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_SetValueAsDouble" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_SetValueAsDouble" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    ecode4 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "RasterAttributeTable_SetValueAsDouble" "', argument " "4"" of type '" "double""'");
+    } 
+    arg4 = static_cast< double >(val4);
+    {
+      CPLErrorReset();
+      GDALRasterAttributeTableShadow_SetValueAsDouble(arg1,arg2,arg3,arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_SetRowCount) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    int arg2 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: RasterAttributeTable_SetRowCount(self,nCount);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_SetRowCount" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_SetRowCount" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      CPLErrorReset();
+      GDALRasterAttributeTableShadow_SetRowCount(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_CreateColumn) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    char *arg2 = (char *) 0 ;
+    GDALRATFieldType arg3 ;
+    GDALRATFieldUsage arg4 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int val4 ;
+    int ecode4 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 4) || (items > 4)) {
+      SWIG_croak("Usage: RasterAttributeTable_CreateColumn(self,pszName,eType,eUsage);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_CreateColumn" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "RasterAttributeTable_CreateColumn" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RasterAttributeTable_CreateColumn" "', argument " "3"" of type '" "GDALRATFieldType""'");
+    } 
+    arg3 = static_cast< GDALRATFieldType >(val3);
+    ecode4 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "RasterAttributeTable_CreateColumn" "', argument " "4"" of type '" "GDALRATFieldUsage""'");
+    } 
+    arg4 = static_cast< GDALRATFieldUsage >(val4);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterAttributeTableShadow_CreateColumn(arg1,(char const *)arg2,arg3,arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_RasterAttributeTable_GetRowOfValue) {
+  {
+    GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+    double arg2 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    double val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: RasterAttributeTable_GetRowOfValue(self,dfValue);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_GetRowOfValue" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+    ecode2 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RasterAttributeTable_GetRowOfValue" "', argument " "2"" of type '" "double""'");
+    } 
+    arg2 = static_cast< double >(val2);
+    {
+      CPLErrorReset();
+      result = (int)GDALRasterAttributeTableShadow_GetRowOfValue(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
     
     
     SWIG_croak_null();
@@ -9728,19 +11074,25 @@ XS(_wrap_GetPaletteInterpretationName) {
   {
     GDALPaletteInterp arg1 ;
     char *result = 0 ;
-    int val1 ;
-    int ecode1 = 0 ;
+    void *argp1 ;
+    int res1 = 0 ;
     int argvi = 0;
     dXSARGS;
     
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: GetPaletteInterpretationName(GDALPaletteInterp);");
     }
-    ecode1 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(0), &val1);
-    if (!SWIG_IsOK(ecode1)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetPaletteInterpretationName" "', argument " "1"" of type '" "GDALPaletteInterp""'");
-    } 
-    arg1 = static_cast< GDALPaletteInterp >(val1);
+    {
+      res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_GDALPaletteInterp,  0 );
+      if (!SWIG_IsOK(res1)) {
+        SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetPaletteInterpretationName" "', argument " "1"" of type '" "GDALPaletteInterp""'"); 
+      }  
+      if (!argp1) {
+        SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "GetPaletteInterpretationName" "', argument " "1"" of type '" "GDALPaletteInterp""'");
+      } else {
+        arg1 = *(reinterpret_cast< GDALPaletteInterp * >(argp1));
+      }
+    }
     {
       CPLErrorReset();
       result = (char *)GDALGetPaletteInterpretationName(arg1);
@@ -9753,10 +11105,8 @@ XS(_wrap_GetPaletteInterpretationName) {
       }
     }
     ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
-    
     XSRETURN(argvi);
   fail:
-    
     SWIG_croak_null();
   }
 }
@@ -10200,6 +11550,68 @@ XS(_wrap_OpenShared) {
 }
 
 
+XS(_wrap_IdentifyDriver) {
+  {
+    char *arg1 = (char *) 0 ;
+    char **arg2 = (char **) NULL ;
+    GDALDriverShadow *result = 0 ;
+    int res1 ;
+    char *buf1 = 0 ;
+    int alloc1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 2)) {
+      SWIG_croak("Usage: IdentifyDriver(pszDatasource,papszSiblings);");
+    }
+    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "IdentifyDriver" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = reinterpret_cast< char * >(buf1);
+    if (items > 1) {
+      {
+        /* %typemap(in) char **options */
+        if ( ! (SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV)) ) {
+          croak("argument is not an array ref");
+          SWIG_fail;
+        }
+        AV *av = (AV*)(SvRV(ST(1)));
+        for (int i = 0; i < av_len(av)-1; i++) {
+          char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+          arg2 = CSLAddString( arg2, pszItem );
+        }
+      }
+    }
+    {
+      CPLErrorReset();
+      result = (GDALDriverShadow *)IdentifyDriver((char const *)arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDriverShadow, 0 | SWIG_SHADOW); argvi++ ;
+    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+    {
+      /* %typemap(freearg) char **options */
+      CSLDestroy( arg2 );
+    }
+    XSRETURN(argvi);
+  fail:
+    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+    {
+      /* %typemap(freearg) char **options */
+      CSLDestroy( arg2 );
+    }
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_AutoCreateWarpedVRT) {
   {
     GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -10372,19 +11784,27 @@ static void *_p_GDALDatasetShadowTo_p_GDALMajorObjectShadow(void *x) {
 static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x) {
     return (void *)((GDALMajorObjectShadow *)  ((GDALRasterBandShadow *) x));
 }
+static void *_p_GDALColorTableShadowTo_p_GDALMajorObjectShadow(void *x) {
+    return (void *)((GDALMajorObjectShadow *)  ((GDALColorTableShadow *) x));
+}
+static void *_p_GDALRasterAttributeTableShadowTo_p_GDALMajorObjectShadow(void *x) {
+    return (void *)((GDALMajorObjectShadow *)  ((GDALRasterAttributeTableShadow *) x));
+}
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColorEntry *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_GDALColorTable = {"_p_GDALColorTable", "GDALColorTable *", 0, 0, (void*)"Geo::GDAL::ColorTable", 0};
+static swig_type_info _swigt__p_GDALColorTableShadow = {"_p_GDALColorTableShadow", "GDALColorTableShadow *", 0, 0, (void*)"Geo::GDAL::ColorTable", 0};
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)"Geo::GDAL::Dataset", 0};
 static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)"Geo::GDAL::Driver", 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)"Geo::GDAL::MajorObject", 0};
+static swig_type_info _swigt__p_GDALPaletteInterp = {"_p_GDALPaletteInterp", "GDALPaletteInterp *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)"Geo::GDAL::RasterAttributeTable", 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)"Geo::GDAL::Band", 0};
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)"Geo::GDAL::GCP", 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "int *|GDALPaletteInterp *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "int *|GDALRATFieldUsage *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDAL_GCP = {"_p_p_GDAL_GCP", "GDAL_GCP **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 
@@ -10393,10 +11813,12 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLXMLNode,
   &_swigt__p_GByte,
   &_swigt__p_GDALColorEntry,
-  &_swigt__p_GDALColorTable,
+  &_swigt__p_GDALColorTableShadow,
   &_swigt__p_GDALDatasetShadow,
   &_swigt__p_GDALDriverShadow,
   &_swigt__p_GDALMajorObjectShadow,
+  &_swigt__p_GDALPaletteInterp,
+  &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_GDAL_GCP,
   &_swigt__p_char,
@@ -10410,10 +11832,12 @@ static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandl
 static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GByte[] = {  {&_swigt__p_GByte, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_GDALColorTable[] = {  {&_swigt__p_GDALColorTable, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALColorTableShadow[] = {  {&_swigt__p_GDALColorTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDriverShadow[] = {  {&_swigt__p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALColorTableShadow, _p_GDALColorTableShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterAttributeTableShadow, _p_GDALRasterAttributeTableShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALPaletteInterp[] = {  {&_swigt__p_GDALPaletteInterp, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
@@ -10427,10 +11851,12 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLXMLNode,
   _swigc__p_GByte,
   _swigc__p_GDALColorEntry,
-  _swigc__p_GDALColorTable,
+  _swigc__p_GDALColorTableShadow,
   _swigc__p_GDALDatasetShadow,
   _swigc__p_GDALDriverShadow,
   _swigc__p_GDALMajorObjectShadow,
+  _swigc__p_GDALPaletteInterp,
+  _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_GDAL_GCP,
   _swigc__p_char,
@@ -10467,6 +11893,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::PopFinderLocation", _wrap_PopFinderLocation},
 {"Geo::GDALc::FinderClean", _wrap_FinderClean},
 {"Geo::GDALc::FindFile", _wrap_FindFile},
+{"Geo::GDALc::ReadDir", _wrap_ReadDir},
 {"Geo::GDALc::SetConfigOption", _wrap_SetConfigOption},
 {"Geo::GDALc::GetConfigOption", _wrap_GetConfigOption},
 {"Geo::GDALc::CPLBinaryToHex", _wrap_CPLBinaryToHex},
@@ -10481,6 +11908,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::Driver_Create", _wrap_Driver_Create},
 {"Geo::GDALc::Driver_CreateCopy", _wrap_Driver_CreateCopy},
 {"Geo::GDALc::Driver_Delete", _wrap_Driver_Delete},
+{"Geo::GDALc::Driver_Rename", _wrap_Driver_Rename},
 {"Geo::GDALc::Driver_Register", _wrap_Driver_Register},
 {"Geo::GDALc::Driver_Deregister", _wrap_Driver_Deregister},
 {"Geo::GDALc::GCP_GCPX_set", _wrap_GCP_GCPX_set},
@@ -10575,6 +12003,8 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::Band_FlushCache", _wrap_Band_FlushCache},
 {"Geo::GDALc::Band_GetRasterColorTable", _wrap_Band_GetRasterColorTable},
 {"Geo::GDALc::Band_SetRasterColorTable", _wrap_Band_SetRasterColorTable},
+{"Geo::GDALc::Band_GetDefaultRAT", _wrap_Band_GetDefaultRAT},
+{"Geo::GDALc::Band_SetDefaultRAT", _wrap_Band_SetDefaultRAT},
 {"Geo::GDALc::new_ColorTable", _wrap_new_ColorTable},
 {"Geo::GDALc::delete_ColorTable", _wrap_delete_ColorTable},
 {"Geo::GDALc::ColorTable_Clone", _wrap_ColorTable_Clone},
@@ -10583,6 +12013,25 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::ColorTable_GetColorEntry", _wrap_ColorTable_GetColorEntry},
 {"Geo::GDALc::ColorTable_GetColorEntryAsRGB", _wrap_ColorTable_GetColorEntryAsRGB},
 {"Geo::GDALc::ColorTable_SetColorEntry", _wrap_ColorTable_SetColorEntry},
+{"Geo::GDALc::ColorTable_CreateColorRamp", _wrap_ColorTable_CreateColorRamp},
+{"Geo::GDALc::new_RasterAttributeTable", _wrap_new_RasterAttributeTable},
+{"Geo::GDALc::delete_RasterAttributeTable", _wrap_delete_RasterAttributeTable},
+{"Geo::GDALc::RasterAttributeTable_Clone", _wrap_RasterAttributeTable_Clone},
+{"Geo::GDALc::RasterAttributeTable_GetColumnCount", _wrap_RasterAttributeTable_GetColumnCount},
+{"Geo::GDALc::RasterAttributeTable_GetNameOfCol", _wrap_RasterAttributeTable_GetNameOfCol},
+{"Geo::GDALc::RasterAttributeTable_GetUsageOfCol", _wrap_RasterAttributeTable_GetUsageOfCol},
+{"Geo::GDALc::RasterAttributeTable_GetTypeOfCol", _wrap_RasterAttributeTable_GetTypeOfCol},
+{"Geo::GDALc::RasterAttributeTable_GetColOfUsage", _wrap_RasterAttributeTable_GetColOfUsage},
+{"Geo::GDALc::RasterAttributeTable_GetRowCount", _wrap_RasterAttributeTable_GetRowCount},
+{"Geo::GDALc::RasterAttributeTable_GetValueAsString", _wrap_RasterAttributeTable_GetValueAsString},
+{"Geo::GDALc::RasterAttributeTable_GetValueAsInt", _wrap_RasterAttributeTable_GetValueAsInt},
+{"Geo::GDALc::RasterAttributeTable_GetValueAsDouble", _wrap_RasterAttributeTable_GetValueAsDouble},
+{"Geo::GDALc::RasterAttributeTable_SetValueAsString", _wrap_RasterAttributeTable_SetValueAsString},
+{"Geo::GDALc::RasterAttributeTable_SetValueAsInt", _wrap_RasterAttributeTable_SetValueAsInt},
+{"Geo::GDALc::RasterAttributeTable_SetValueAsDouble", _wrap_RasterAttributeTable_SetValueAsDouble},
+{"Geo::GDALc::RasterAttributeTable_SetRowCount", _wrap_RasterAttributeTable_SetRowCount},
+{"Geo::GDALc::RasterAttributeTable_CreateColumn", _wrap_RasterAttributeTable_CreateColumn},
+{"Geo::GDALc::RasterAttributeTable_GetRowOfValue", _wrap_RasterAttributeTable_GetRowOfValue},
 {"Geo::GDALc::VersionInfo", _wrap_VersionInfo},
 {"Geo::GDALc::AllRegister", _wrap_AllRegister},
 {"Geo::GDALc::GetCacheMax", _wrap_GetCacheMax},
@@ -10604,6 +12053,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::GetDriver", _wrap_GetDriver},
 {"Geo::GDALc::Open", _wrap_Open},
 {"Geo::GDALc::OpenShared", _wrap_OpenShared},
+{"Geo::GDALc::IdentifyDriver", _wrap_IdentifyDriver},
 {"Geo::GDALc::AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT},
 {"Geo::GDALc::GeneralCmdLineProcessor", _wrap_GeneralCmdLineProcessor},
 {0,0}
@@ -10903,7 +12353,8 @@ XS(SWIG_init) {
   SWIG_TypeClientData(SWIGTYPE_p_GDAL_GCP, (void*) "Geo::GDAL::GCP");
   SWIG_TypeClientData(SWIGTYPE_p_GDALDatasetShadow, (void*) "Geo::GDAL::Dataset");
   SWIG_TypeClientData(SWIGTYPE_p_GDALRasterBandShadow, (void*) "Geo::GDAL::Band");
-  SWIG_TypeClientData(SWIGTYPE_p_GDALColorTable, (void*) "Geo::GDAL::ColorTable");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALColorTableShadow, (void*) "Geo::GDAL::ColorTable");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALRasterAttributeTableShadow, (void*) "Geo::GDAL::RasterAttributeTable");
   ST(0) = &PL_sv_yes;
   XSRETURN(1);
 }

@@ -209,6 +209,7 @@ sub DESTROY {
 }
 
 *TransformPoint = *Geo::OSRc::CoordinateTransformation_TransformPoint;
+*TransformPoints = *Geo::OSRc::CoordinateTransformation_TransformPoints;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
