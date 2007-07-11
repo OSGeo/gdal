@@ -63,6 +63,7 @@ package Geo::GDAL;
 *PopFinderLocation = *Geo::GDALc::PopFinderLocation;
 *FinderClean = *Geo::GDALc::FinderClean;
 *FindFile = *Geo::GDALc::FindFile;
+*ReadDir = *Geo::GDALc::ReadDir;
 *SetConfigOption = *Geo::GDALc::SetConfigOption;
 *GetConfigOption = *Geo::GDALc::GetConfigOption;
 *CPLBinaryToHex = *Geo::GDALc::CPLBinaryToHex;
@@ -117,6 +118,7 @@ package Geo::GDAL;
 *GetDriver = *Geo::GDALc::GetDriver;
 *Open = *Geo::GDALc::Open;
 *OpenShared = *Geo::GDALc::OpenShared;
+*IdentifyDriver = *Geo::GDALc::IdentifyDriver;
 *AutoCreateWarpedVRT = *Geo::GDALc::AutoCreateWarpedVRT;
 *GeneralCmdLineProcessor = *Geo::GDALc::GeneralCmdLineProcessor;
 
@@ -159,6 +161,7 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *Create = *Geo::GDALc::Driver_Create;
 *CreateCopy = *Geo::GDALc::Driver_CreateCopy;
 *Delete = *Geo::GDALc::Driver_Delete;
+*Rename = *Geo::GDALc::Driver_Rename;
 *Register = *Geo::GDALc::Driver_Register;
 *Deregister = *Geo::GDALc::Driver_Deregister;
 sub DISOWN {
@@ -315,6 +318,8 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *FlushCache = *Geo::GDALc::Band_FlushCache;
 *GetRasterColorTable = *Geo::GDALc::Band_GetRasterColorTable;
 *SetRasterColorTable = *Geo::GDALc::Band_SetRasterColorTable;
+*GetDefaultRAT = *Geo::GDALc::Band_GetDefaultRAT;
+*SetDefaultRAT = *Geo::GDALc::Band_SetDefaultRAT;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
@@ -332,7 +337,7 @@ sub ACQUIRE {
 
 package Geo::GDAL::ColorTable;
 use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
-@ISA = qw( Geo::GDAL );
+@ISA = qw( Geo::GDAL::MajorObject Geo::GDAL );
 %OWNER = ();
 %ITERATORS = ();
 sub new {
@@ -358,6 +363,60 @@ sub DESTROY {
 *GetColorEntry = *Geo::GDALc::ColorTable_GetColorEntry;
 *GetColorEntryAsRGB = *Geo::GDALc::ColorTable_GetColorEntryAsRGB;
 *SetColorEntry = *Geo::GDALc::ColorTable_SetColorEntry;
+*CreateColorRamp = *Geo::GDALc::ColorTable_CreateColorRamp;
+sub DISOWN {
+    my $self = shift;
+    my $ptr = tied(%$self);
+    delete $OWNER{$ptr};
+}
+
+sub ACQUIRE {
+    my $self = shift;
+    my $ptr = tied(%$self);
+    $OWNER{$ptr} = 1;
+}
+
+
+############# Class : Geo::GDAL::RasterAttributeTable ##############
+
+package Geo::GDAL::RasterAttributeTable;
+use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
+@ISA = qw( Geo::GDAL::MajorObject Geo::GDAL );
+%OWNER = ();
+%ITERATORS = ();
+sub new {
+    my $pkg = shift;
+    my $self = Geo::GDALc::new_RasterAttributeTable(@_);
+    bless $self, $pkg if defined($self);
+}
+
+sub DESTROY {
+    return unless $_[0]->isa('HASH');
+    my $self = tied(%{$_[0]});
+    return unless defined $self;
+    delete $ITERATORS{$self};
+    if (exists $OWNER{$self}) {
+        Geo::GDALc::delete_RasterAttributeTable($self);
+        delete $OWNER{$self};
+    }
+}
+
+*Clone = *Geo::GDALc::RasterAttributeTable_Clone;
+*GetColumnCount = *Geo::GDALc::RasterAttributeTable_GetColumnCount;
+*GetNameOfCol = *Geo::GDALc::RasterAttributeTable_GetNameOfCol;
+*GetUsageOfCol = *Geo::GDALc::RasterAttributeTable_GetUsageOfCol;
+*GetTypeOfCol = *Geo::GDALc::RasterAttributeTable_GetTypeOfCol;
+*GetColOfUsage = *Geo::GDALc::RasterAttributeTable_GetColOfUsage;
+*GetRowCount = *Geo::GDALc::RasterAttributeTable_GetRowCount;
+*GetValueAsString = *Geo::GDALc::RasterAttributeTable_GetValueAsString;
+*GetValueAsInt = *Geo::GDALc::RasterAttributeTable_GetValueAsInt;
+*GetValueAsDouble = *Geo::GDALc::RasterAttributeTable_GetValueAsDouble;
+*SetValueAsString = *Geo::GDALc::RasterAttributeTable_SetValueAsString;
+*SetValueAsInt = *Geo::GDALc::RasterAttributeTable_SetValueAsInt;
+*SetValueAsDouble = *Geo::GDALc::RasterAttributeTable_SetValueAsDouble;
+*SetRowCount = *Geo::GDALc::RasterAttributeTable_SetRowCount;
+*CreateColumn = *Geo::GDALc::RasterAttributeTable_CreateColumn;
+*GetRowOfValue = *Geo::GDALc::RasterAttributeTable_GetRowOfValue;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);

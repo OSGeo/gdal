@@ -1615,11 +1615,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 }
 
 SWIGINTERN OSRSpatialReferenceShadow *new_OSRSpatialReferenceShadow(char const *wkt=""){
-    OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
-    if (sr) {
-      OSRReference( sr );
-    }
-    return sr;
+    return (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
   }
 SWIGINTERN void delete_OSRSpatialReferenceShadow(OSRSpatialReferenceShadow *self){
     if (OSRDereference( self ) == 0 ) {
@@ -2116,6 +2112,9 @@ SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_1(OSRCoor
     argout[1] = y;
     argout[2] = z;
     OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
+  }
+SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoints(OSRCoordinateTransformationShadow *self,int nCount,double *x,double *y,double *z){
+    OCTTransform( self, nCount, x, y, z );
   }
 #ifdef PERL_OBJECT
 #define MAGIC_CLASS _wrap_Geo::OSR_var::
@@ -8393,6 +8392,73 @@ XS(_wrap_CoordinateTransformation_TransformPoint) {
 }
 
 
+XS(_wrap_CoordinateTransformation_TransformPoints) {
+  {
+    OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
+    int arg2 ;
+    double *arg3 = (double *) 0 ;
+    double *arg4 = (double *) 0 ;
+    double *arg5 = (double *) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    void *argp3 = 0 ;
+    int res3 = 0 ;
+    void *argp4 = 0 ;
+    int res4 = 0 ;
+    void *argp5 = 0 ;
+    int res5 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 5) || (items > 5)) {
+      SWIG_croak("Usage: CoordinateTransformation_TransformPoints(self,nCount,x,y,z);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    res3 = SWIG_ConvertPtr(ST(2), &argp3,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "3"" of type '" "double *""'"); 
+    }
+    arg3 = reinterpret_cast< double * >(argp3);
+    res4 = SWIG_ConvertPtr(ST(3), &argp4,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "4"" of type '" "double *""'"); 
+    }
+    arg4 = reinterpret_cast< double * >(argp4);
+    res5 = SWIG_ConvertPtr(ST(4), &argp5,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res5)) {
+      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "5"" of type '" "double *""'"); 
+    }
+    arg5 = reinterpret_cast< double * >(argp5);
+    OSRCoordinateTransformationShadow_TransformPoints(arg1,arg2,arg3,arg4,arg5);
+    
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
@@ -8548,6 +8614,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::OSRc::new_CoordinateTransformation", _wrap_new_CoordinateTransformation},
 {"Geo::OSRc::delete_CoordinateTransformation", _wrap_delete_CoordinateTransformation},
 {"Geo::OSRc::CoordinateTransformation_TransformPoint", _wrap_CoordinateTransformation_TransformPoint},
+{"Geo::OSRc::CoordinateTransformation_TransformPoints", _wrap_CoordinateTransformation_TransformPoints},
 {0,0}
 };
 /* -----------------------------------------------------------------------------
