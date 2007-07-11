@@ -332,6 +332,15 @@ sub ogr_tests {
 	}
 		
     }
+
+    # specific tests:
+
+    my $geom = Geo::OGR::Geometry->new(Geo::OGR::GeometryType('Point'));
+    $geom->AddPoint(1,1);
+    ok($geom->GetGeometryType == Geo::OGR::GeometryType('Point'), "Add 2D Point");
+    $geom->AddPoint(1,1,1);
+    ok($geom->GetGeometryType == Geo::OGR::GeometryType('Point25D'), "Add 3D Point upgrades geom type");
+    
 }
 
 sub test_geom {
