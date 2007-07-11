@@ -635,6 +635,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 
     WipeChunkList();
 
+    psOptions->pfnProgress( 1.00001, "", psOptions->pProgressArg );
+
     return CE_None;
 }
 
