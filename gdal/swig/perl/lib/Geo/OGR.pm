@@ -168,7 +168,7 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *CommitTransaction = *Geo::OGRc::Layer_CommitTransaction;
 *RollbackTransaction = *Geo::OGRc::Layer_RollbackTransaction;
 *GetSpatialRef = *Geo::OGRc::Layer_GetSpatialRef;
-*GetFeatureRead = *Geo::OGRc::Layer_GetFeatureRead;
+*GetFeaturesRead = *Geo::OGRc::Layer_GetFeaturesRead;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
@@ -363,7 +363,8 @@ sub new {
 *ExportToWkt = *Geo::OGRc::Geometry_ExportToWkt;
 *ExportToWkb = *Geo::OGRc::Geometry_ExportToWkb;
 *ExportToGML = *Geo::OGRc::Geometry_ExportToGML;
-*AddPoint = *Geo::OGRc::Geometry_AddPoint;
+*AddPoint_3D = *Geo::OGRc::Geometry_AddPoint_3D;
+*AddPoint_2D = *Geo::OGRc::Geometry_AddPoint_2D;
 *AddGeometryDirectly = *Geo::OGRc::Geometry_AddGeometryDirectly;
 *AddGeometry = *Geo::OGRc::Geometry_AddGeometry;
 *Clone = *Geo::OGRc::Geometry_Clone;
@@ -386,6 +387,7 @@ sub new {
 *SymmetricDifference = *Geo::OGRc::Geometry_SymmetricDifference;
 *Distance = *Geo::OGRc::Geometry_Distance;
 *Empty = *Geo::OGRc::Geometry_Empty;
+*IsEmpty = *Geo::OGRc::Geometry_IsEmpty;
 *Intersect = *Geo::OGRc::Geometry_Intersect;
 *Equal = *Geo::OGRc::Geometry_Equal;
 *Disjoint = *Geo::OGRc::Geometry_Disjoint;
@@ -473,4 +475,36 @@ package Geo::OGR;
 *ODsCDeleteLayer = *Geo::OGRc::ODsCDeleteLayer;
 *ODrCCreateDataSource = *Geo::OGRc::ODrCCreateDataSource;
 *ODrCDeleteDataSource = *Geo::OGRc::ODrCDeleteDataSource;
+
+    use Carp;
+    {
+	package Geo::OGR::Geometry;
+	sub AddPoint {
+	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
+	}
+    }
+    sub GeometryType {
+	my($type_or_name) = @_;
+	my @types = ('Unknown', 'Point', 'LineString', 'Polygon',
+		     'MultiPoint', 'MultiLineString', 'MultiPolygon',
+		     'GeometryCollection', 'None', 'LinearRing',
+		     'Point25D', 'LineString25D', 'Polygon25D',
+		     'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
+		     'GeometryCollection25D');
+	if (defined $type_or_name) {
+	    if ($type_or_name =~ /^[+-]?\d/) {
+		for (@types) {
+		    if (eval "\$type_or_name == \$Geo::OGR::wkb$_") {return $_}
+		}
+		croak "unknown geometry type value: $type_or_name";
+	    } else {
+		for (@types) {
+		    if ($type_or_name eq $_) {return eval "\$Geo::OGR::wkb$_"}
+		}
+		croak "unknown geometry type name: $type_or_name";
+	    }
+	} else {
+	    return @types;
+	}
+    }
 1;

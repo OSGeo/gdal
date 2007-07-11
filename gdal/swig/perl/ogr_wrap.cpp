@@ -1483,6 +1483,7 @@ using namespace std;
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 typedef void OSRSpatialReferenceShadow;
 typedef void OGRDriverShadow;
@@ -1783,11 +1784,7 @@ SWIGINTERN int OGRDataSourceShadow_GetLayerCount(OGRDataSourceShadow *self){
     return OGR_DS_GetLayerCount(self);
   }
 SWIGINTERN OGRDriverShadow *OGRDataSourceShadow_GetDriver(OGRDataSourceShadow *self){
-    OGRDriverShadow* driver;
-    OGRDataSourceShadow* ds;
-    ds = (OGRDataSourceShadow*)OGROpen((const char *) OGR_DS_GetName(self),0,&driver);
-    OGRReleaseDataSource(ds);
-    return driver;
+    return (OGRLayerShadow *) OGR_DS_GetDriver( self );
   }
 SWIGINTERN char const *OGRDataSourceShadow_GetName(OGRDataSourceShadow *self){
     return OGR_DS_GetName(self);
@@ -1940,18 +1937,18 @@ SWIGINTERN OGRErr OGRLayerShadow_RollbackTransaction(OGRLayerShadow *self){
     return OGR_L_RollbackTransaction(self);
   }
 SWIGINTERN OSRSpatialReferenceShadow *OGRLayerShadow_GetSpatialRef(OGRLayerShadow *self){
-    return (OSRSpatialReferenceShadow*) OGR_L_GetSpatialRef(self);
+    OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
-SWIGINTERN GIntBig OGRLayerShadow_GetFeatureRead(OGRLayerShadow *self){
+SWIGINTERN GIntBig OGRLayerShadow_GetFeaturesRead(OGRLayerShadow *self){
     return OGR_L_GetFeaturesRead(self);
   }
 SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
   }
 SWIGINTERN OGRFeatureShadow *new_OGRFeatureShadow(OGRFeatureDefnShadow *feature_def=0){
-    if (feature_def == 0) {
-      CPLError(CE_Failure, 1, "Undefined feature definition in new OGRFeature");
-    } else
       return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 SWIGINTERN OGRFeatureDefnShadow *OGRFeatureShadow_GetDefnRef(OGRFeatureShadow *self){
@@ -2338,6 +2335,9 @@ SWIGINTERN char const *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self){
 SWIGINTERN void OGRGeometryShadow_AddPoint(OGRGeometryShadow *self,double x,double y,double z=0){
     OGR_G_AddPoint( self, x, y, z );
   }
+SWIGINTERN void OGRGeometryShadow_AddPoint_2D(OGRGeometryShadow *self,double x,double y){
+    OGR_G_AddPoint_2D( self, x, y );
+  }
 SWIGINTERN OGRErr OGRGeometryShadow_AddGeometryDirectly(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_AddGeometryDirectly( self, other );
   }
@@ -2404,6 +2404,9 @@ SWIGINTERN double OGRGeometryShadow_Distance(OGRGeometryShadow *self,OGRGeometry
 SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
     OGR_G_Empty(self);
   }
+SWIGINTERN bool OGRGeometryShadow_IsEmpty(OGRGeometryShadow *self){
+    return OGR_G_IsEmpty(self);
+  }
 SWIGINTERN bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Intersect(self, other);
   }
@@ -2435,7 +2438,10 @@ SWIGINTERN OGRErr OGRGeometryShadow_Transform(OGRGeometryShadow *self,OSRCoordin
     return OGR_G_Transform(self, trans);
   }
 SWIGINTERN OSRSpatialReferenceShadow *OGRGeometryShadow_GetSpatialReference(OGRGeometryShadow *self){
-    return (OSRSpatialReferenceShadow*)OGR_G_GetSpatialReference(self);
+    OGRSpatialReferenceH ref =  OGR_G_GetSpatialReference(self);
+    if( ref )
+        OSRReference(ref);
+    return (OSRSpatialReferenceShadow*) ref;
   }
 SWIGINTERN void OGRGeometryShadow_AssignSpatialReference(OGRGeometryShadow *self,OSRSpatialReferenceShadow *reference){
     OGR_G_AssignSpatialReference(self, reference);
@@ -2509,13 +2515,27 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 
 
   OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 
 
   OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
+	
     return ds;
   }
 
@@ -4845,7 +4865,7 @@ XS(_wrap_Layer_GetSpatialRef) {
         
       }
     }
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 | SWIG_SHADOW); argvi++ ;
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
     
     XSRETURN(argvi);
   fail:
@@ -4855,7 +4875,7 @@ XS(_wrap_Layer_GetSpatialRef) {
 }
 
 
-XS(_wrap_Layer_GetFeatureRead) {
+XS(_wrap_Layer_GetFeaturesRead) {
   {
     OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
     GIntBig result;
@@ -4865,16 +4885,16 @@ XS(_wrap_Layer_GetFeatureRead) {
     dXSARGS;
     
     if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: Layer_GetFeatureRead(self);");
+      SWIG_croak("Usage: Layer_GetFeaturesRead(self);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetFeatureRead" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetFeaturesRead" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
     }
     arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
     {
       CPLErrorReset();
-      result = OGRLayerShadow_GetFeatureRead(arg1);
+      result = OGRLayerShadow_GetFeaturesRead(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9549,7 +9569,7 @@ XS(_wrap_Geometry_ExportToGML) {
 }
 
 
-XS(_wrap_Geometry_AddPoint) {
+XS(_wrap_Geometry_AddPoint_3D) {
   {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     double arg2 ;
@@ -9567,27 +9587,27 @@ XS(_wrap_Geometry_AddPoint) {
     dXSARGS;
     
     if ((items < 3) || (items > 4)) {
-      SWIG_croak("Usage: Geometry_AddPoint(self,x,y,z);");
+      SWIG_croak("Usage: Geometry_AddPoint_3D(self,x,y,z);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_AddPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_AddPoint_3D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
     }
     arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
     ecode2 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_AddPoint" "', argument " "2"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_AddPoint_3D" "', argument " "2"" of type '" "double""'");
     } 
     arg2 = static_cast< double >(val2);
     ecode3 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_AddPoint" "', argument " "3"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_AddPoint_3D" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
     if (items > 3) {
       ecode4 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
       if (!SWIG_IsOK(ecode4)) {
-        SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Geometry_AddPoint" "', argument " "4"" of type '" "double""'");
+        SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Geometry_AddPoint_3D" "', argument " "4"" of type '" "double""'");
       } 
       arg4 = static_cast< double >(val4);
     }
@@ -9610,6 +9630,63 @@ XS(_wrap_Geometry_AddPoint) {
     XSRETURN(argvi);
   fail:
     
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Geometry_AddPoint_2D) {
+  {
+    OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+    double arg2 ;
+    double arg3 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    double val2 ;
+    int ecode2 = 0 ;
+    double val3 ;
+    int ecode3 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: Geometry_AddPoint_2D(self,x,y);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_AddPoint_2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+    ecode2 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_AddPoint_2D" "', argument " "2"" of type '" "double""'");
+    } 
+    arg2 = static_cast< double >(val2);
+    ecode3 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_AddPoint_2D" "', argument " "3"" of type '" "double""'");
+    } 
+    arg3 = static_cast< double >(val3);
+    {
+      CPLErrorReset();
+      OGRGeometryShadow_AddPoint_2D(arg1,arg2,arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
     
     
     
@@ -10642,6 +10719,44 @@ XS(_wrap_Geometry_Empty) {
 }
 
 
+XS(_wrap_Geometry_IsEmpty) {
+  {
+    OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+    bool result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: Geometry_IsEmpty(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_IsEmpty" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+    {
+      CPLErrorReset();
+      result = (bool)OGRGeometryShadow_IsEmpty(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_Geometry_Intersect) {
   {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -11162,7 +11277,7 @@ XS(_wrap_Geometry_GetSpatialReference) {
         
       }
     }
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 | SWIG_SHADOW); argvi++ ;
+    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
     
     XSRETURN(argvi);
   fail:
@@ -12078,7 +12193,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::OGRc::Layer_CommitTransaction", _wrap_Layer_CommitTransaction},
 {"Geo::OGRc::Layer_RollbackTransaction", _wrap_Layer_RollbackTransaction},
 {"Geo::OGRc::Layer_GetSpatialRef", _wrap_Layer_GetSpatialRef},
-{"Geo::OGRc::Layer_GetFeatureRead", _wrap_Layer_GetFeatureRead},
+{"Geo::OGRc::Layer_GetFeaturesRead", _wrap_Layer_GetFeaturesRead},
 {"Geo::OGRc::delete_Feature", _wrap_delete_Feature},
 {"Geo::OGRc::new_Feature", _wrap_new_Feature},
 {"Geo::OGRc::Feature_GetDefnRef", _wrap_Feature_GetDefnRef},
@@ -12136,7 +12251,8 @@ static swig_command_info swig_commands[] = {
 {"Geo::OGRc::Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt},
 {"Geo::OGRc::Geometry_ExportToWkb", _wrap_Geometry_ExportToWkb},
 {"Geo::OGRc::Geometry_ExportToGML", _wrap_Geometry_ExportToGML},
-{"Geo::OGRc::Geometry_AddPoint", _wrap_Geometry_AddPoint},
+{"Geo::OGRc::Geometry_AddPoint_3D", _wrap_Geometry_AddPoint_3D},
+{"Geo::OGRc::Geometry_AddPoint_2D", _wrap_Geometry_AddPoint_2D},
 {"Geo::OGRc::Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly},
 {"Geo::OGRc::Geometry_AddGeometry", _wrap_Geometry_AddGeometry},
 {"Geo::OGRc::Geometry_Clone", _wrap_Geometry_Clone},
@@ -12159,6 +12275,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::OGRc::Geometry_SymmetricDifference", _wrap_Geometry_SymmetricDifference},
 {"Geo::OGRc::Geometry_Distance", _wrap_Geometry_Distance},
 {"Geo::OGRc::Geometry_Empty", _wrap_Geometry_Empty},
+{"Geo::OGRc::Geometry_IsEmpty", _wrap_Geometry_IsEmpty},
 {"Geo::OGRc::Geometry_Intersect", _wrap_Geometry_Intersect},
 {"Geo::OGRc::Geometry_Equal", _wrap_Geometry_Equal},
 {"Geo::OGRc::Geometry_Disjoint", _wrap_Geometry_Disjoint},
