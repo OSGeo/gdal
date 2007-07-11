@@ -45,6 +45,12 @@
 
 %import typemaps_perl.i
 
+%extend OGRGeometryShadow {
+
+    %rename (AddPoint_3D) AddPoint;
+
+}
+
 %extend OGRFeatureShadow {
 
   const char* GetField(int id) {
@@ -91,6 +97,12 @@
 
 %perlcode %{
     use Carp;
+    {
+	package Geo::OGR::Geometry;
+	sub AddPoint {
+	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
+	}
+    }
     sub GeometryType {
 	my($type_or_name) = @_;
 	my @types = ('Unknown', 'Point', 'LineString', 'Polygon',
