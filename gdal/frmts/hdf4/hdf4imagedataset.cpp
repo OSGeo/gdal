@@ -1609,8 +1609,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     if ( nLatCount && nLongCount && nLatCount == nLongCount
          && pLat && pLong )
     {
-        if ( pszGCPProjection )
-            CPLFree( pszGCPProjection );
+        CPLFree( pszGCPProjection );
+        pszGCPProjection = NULL;
 
         // ASTER Level 1A
         if ( eProduct == PROD_ASTER_L1A )
