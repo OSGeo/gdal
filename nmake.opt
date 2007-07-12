@@ -114,6 +114,9 @@ JPEG_SUPPORTED = 1
 # if using an external libtiff library
 #TIFF_INC =	-Ic:/warmerda/libtiff/libtiff
 #TIFF_LIB =	c:/warmerda/libtiff/libtiff/libtiff_i.lib
+# uncomment following line, if you have libtiff version >= 4.0 to
+# enable BigTIFF support
+#TIFF_OPTS=	-DBIGTIFF_SUPPORT
 
 # if using an external libgeotiff library
 #GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff
