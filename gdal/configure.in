@@ -555,7 +555,7 @@ AC_ARG_WITH(libtiff,[  --with-libtiff=ARG    Libtiff library to use (ARG=interna
 
 if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 
-  # We now effectively require libtiff 3.6.0.
+  dnl We now effectively require libtiff 3.6.0.
   AC_CHECK_LIB(tiff,TIFFGetTagListCount,TIFF_SETTING=external,TIFF_SETTING=internal,)
 
   dnl Cygwin takes a somewhat restrictive view of what should be exported
@@ -563,6 +563,8 @@ if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
   dnl functions.
   if test "$TIFF_SETTING" = "external" ; then
     AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
+    dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
+    AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
   fi
 
   if test "$TIFF_SETTING" = "external" ; then   
@@ -575,6 +577,7 @@ if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 elif test "$with_libtiff" = "internal" ; then
 
   TIFF_SETTING=internal
+  HAVE_BIGTIFF=no
 
   echo "using internal TIFF code."
 
@@ -590,9 +593,20 @@ else
   fi
 
   echo "using libtiff from $with_libtiff."
+
+  dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
+  AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
+
 fi
 
-AC_SUBST(TIFF_SETTING,$TIFF_SETTING)
+if test "${HAVE_BIGTIFF}" = "yes" ; then
+  TIFF_OPTS="-DBIGTIFF_SUPPORT"
+
+  echo "BigTIFF support enabled."
+fi
+
+AC_SUBST(TIFF_SETTING,${TIFF_SETTING})
+AC_SUBST(TIFF_OPTS,${TIFF_OPTS})
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libgeotiff library to use.
@@ -2072,7 +2086,7 @@ LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  NETCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
-LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING}])
+LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
 LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
