@@ -75,7 +75,7 @@ class GTiffDataset : public GDALPamDataset
     
     TIFF	*hTIFF;
 
-    uint32      nDirOffset;
+    toff_t      nDirOffset;
     int		bBase;
 
     uint16	nPlanarConfig;
@@ -113,7 +113,7 @@ class GTiffDataset : public GDALPamDataset
     GDALColorTable *poColorTable;
 
     void	WriteGeoTIFFInfo();
-    int		SetDirectory( uint32 nDirOffset = 0 );
+    int		SetDirectory( toff_t nDirOffset = 0 );
     void        SetupTFW(const char *pszBasename);
 
     int		nOverviewCount;
@@ -150,7 +150,7 @@ class GTiffDataset : public GDALPamDataset
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
                                     GDALProgressFunc, void * );
 
-    CPLErr	   OpenOffset( TIFF *, uint32 nDirOffset, int, GDALAccess );
+    CPLErr	   OpenOffset( TIFF *, toff_t nDirOffset, int, GDALAccess );
 
     static GDALDataset *OpenDir( const char *pszFilename );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -530,8 +530,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 /************************************************************************/
 /*                            IWriteBlock()                             */
-/*                                                                      */
-/*      This is still limited to writing stripped datasets.             */
 /************************************************************************/
 
 CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
@@ -1911,7 +1909,7 @@ void GTiffDataset::Crystalize()
 int GTiffDataset::IsBlockAvailable( int nBlockId )
 
 {
-    uint32 *panByteCounts = NULL;
+    toff_t *panByteCounts = NULL;
 
     if( ( TIFFIsTiled( hTIFF ) 
           && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) )
@@ -2561,7 +2559,7 @@ void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 /*                            SetDirectory()                            */
 /************************************************************************/
 
-int GTiffDataset::SetDirectory( uint32 nNewOffset )
+int GTiffDataset::SetDirectory( toff_t nNewOffset )
 
 {
     Crystalize();
@@ -2606,6 +2604,7 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
         && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
         return FALSE;
 
+#ifndef BIGTIFF_SUPPORT
     if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -2613,9 +2612,12 @@ int GTiffDataset::Identify( GDALOpenInfo * poOpenInfo )
                   "version of GDAL and libtiff." );
         return FALSE;
     }
+#endif
 
     if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
-        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0) )
+        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0)
+        && (poOpenInfo->pabyHeader[2] != 0x2B || poOpenInfo->pabyHeader[3] != 0)
+        && (poOpenInfo->pabyHeader[3] != 0x2B || poOpenInfo->pabyHeader[2] != 0))
         return FALSE;
 
     return TRUE;
@@ -2648,6 +2650,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
         return NULL;
 
+#ifndef BIGTIFF_SUPPORT
     if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -2655,9 +2658,12 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                   "version of GDAL and libtiff." );
         return NULL;
     }
+#endif
 
     if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
-        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0) )
+        && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0)
+        && (poOpenInfo->pabyHeader[2] != 0x2B || poOpenInfo->pabyHeader[3] != 0)
+        && (poOpenInfo->pabyHeader[3] != 0x2B || poOpenInfo->pabyHeader[2] != 0))
         return NULL;
 
     GTiffOneTimeInit();
@@ -2828,7 +2834,7 @@ GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
 /*      full res, and overview pages.                                   */
 /************************************************************************/
 
-CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn, 
+CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn, 
 				 int bBaseIn, GDALAccess eAccess )
 
 {
@@ -3462,6 +3468,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     int			nPlanar;
     const char          *pszValue;
     const char          *pszProfile;
+    int                 bCreateBigTIFF = FALSE;
 
     GTiffOneTimeInit();
 
@@ -3566,18 +3573,31 @@ TIFF *GTiffCreate( const char * pszFilename,
         if( nXSize * ((double)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8)
             > 4200000000.0 )
         {
+#ifndef BIGTIFF_SUPPORT
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "A %d pixels x %d lines x %d bands %s image would be larger than 4GB\n"
                       "but this is the largest size a TIFF can be.  Creation failed.",
                       nXSize, nYSize, nBands, GDALGetDataTypeName(eType) );
             return NULL;
+#else
+            bCreateBigTIFF = TRUE;
+#endif
         }
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create BigTIFF file on user's request, even if total image      */
+/*      size is enough for ClassicTIFF.                                 */
+/* -------------------------------------------------------------------- */
+#ifdef BIGTIFF_SUPPORT
+    if( CSLFetchNameValue(papszParmList, "BigTIFF") != NULL )
+        bCreateBigTIFF = TRUE;
+#endif
+
+/* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    hTIFF = VSI_TIFFOpen( pszFilename, "w+" );
+    hTIFF = VSI_TIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+" );
     if( hTIFF == NULL )
     {
         if( CPLGetLastErrorNo() == 0 )
@@ -4963,6 +4983,9 @@ void GDALRegister_GTiff()
 "       <Value>GDALGeoTIFF</Value>"
 "       <Value>GeoTIFF</value>"
 "       <Value>BASELINE</Value>"
+#ifdef BIGTIFF_SUPPORT
+"   <Option name='BIGTIFF' type='boolean' description='Force creation of BigTIFF file'/>"
+#endif
 "   </Option>"
 "</CreationOptionList>" );
                  
