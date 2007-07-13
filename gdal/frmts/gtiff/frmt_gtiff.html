@@ -83,13 +83,6 @@ default.<p>
 
 <li> <b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.<p>
 
-<li> <b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
-tags are emitted by GDAL.  With <tt>GDALGeoTIFF</tt> (the default) various 
-GDAL custom tags may be written.  With <tt>GeoTIFF</tt> only GeoTIFF tags
-will be added to the baseline.  With <tt>BASELINE</tt> no GDAL or GeoTIFF
-tags will be written.  BASELINE is occationally useful when writing files to
-be read by applications intolerant of unrecognised tags.<p>
-
 <li>
 <b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>: 
 Set the photometric interpretation tag. Default is MINISBLACK, but if the
@@ -100,6 +93,18 @@ override default photometric using this option.<p>
 there are any extra samples.  This is necessary if you want to produce
 a greyscale TIFF file with an alpha band (for instance). <p>
 
+<li> <b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
+tags are emitted by GDAL.  With <tt>GDALGeoTIFF</tt> (the default) various 
+GDAL custom tags may be written.  With <tt>GeoTIFF</tt> only GeoTIFF tags
+will be added to the baseline.  With <tt>BASELINE</tt> no GDAL or GeoTIFF
+tags will be written.  BASELINE is occationally useful when writing files to
+be read by applications intolerant of unrecognised tags.<p>
+
+<li> <b>BIGTIFF=YES</b>: Force creation of BigTIFF file. BigTIFF is a TIFF
+variant which can contain more than 4GiB of data (size of classic TIFF is
+limited by that value). This option available if GDAL is built with libtiff
+library version 4.0 or higher.<p>
+
 </ul>
 
 GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
@@ -109,6 +114,8 @@ See Also:<p>
 <ul>
 <li> <a href="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF Information Page</a>
 <li> <a href="http://www.remotesensing.org/libtiff/">libtiff Page</a>
+<li> <a href="http://www.awaresystems.be/imaging/tiff/bigtiff.html">
+	Details on BigTIFF file format</a>
 
 </ul>
 
