@@ -850,7 +850,11 @@ OGRBoolean OGRPolygon::Equals( OGRGeometry * poOther ) const
     if( getNumInteriorRings() != poOPoly->getNumInteriorRings() )
         return FALSE;
 
-    if( !getExteriorRing()->Equals( poOPoly->getExteriorRing() ) )
+    if( getExteriorRing() == NULL && poOPoly->getExteriorRing() == NULL )
+        /* ok */;
+    else if( getExteriorRing() == NULL || poOPoly->getExteriorRing() == NULL )
+        return FALSE;
+    else if( !getExteriorRing()->Equals( poOPoly->getExteriorRing() ) )
         return FALSE;
     
     // we should eventually test the SRS.
