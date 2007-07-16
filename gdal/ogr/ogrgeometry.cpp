@@ -630,12 +630,32 @@ int OGRGeometry::Equal( OGRGeometry *poOtherGeom ) const
 int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
 
 {
+    if (hGeom == NULL) {
+        CPLError ( CE_Failure, CPLE_ObjectNull, "hGeom was NULL in OGR_G_Equals");
+        return 0;
+    }
+
+    if (hOther == NULL) {
+        CPLError ( CE_Failure, CPLE_ObjectNull, "hOther was NULL in OGR_G_Equals");
+        return 0;
+    }
+    
     return ((OGRGeometry *) hGeom)->Equals( (OGRGeometry *) hOther );
 }
 
 int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
 
 {
+    if (hGeom == NULL) {
+        CPLError ( CE_Failure, CPLE_ObjectNull, "hGeom was NULL in OGR_G_Equal");
+        return 0;
+    }
+
+    if (hOther == NULL) {
+        CPLError ( CE_Failure, CPLE_ObjectNull, "hOther was NULL in OGR_G_Equal");
+        return 0;
+    }
+
     return ((OGRGeometry *) hGeom)->Equals( (OGRGeometry *) hOther );
 }
 
