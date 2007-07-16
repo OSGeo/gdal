@@ -96,6 +96,7 @@ CPL_C_END
 #define CPLE_AssertionFailed            7
 #define CPLE_NoWriteAccess              8
 #define CPLE_UserInterrupt              9
+#define CPLE_ObjectNull                 10
 
 /* 100 - 299 reserved for GDAL */
 
