@@ -1109,16 +1109,16 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 
 {
     if( GetMetadataItem( "STATISTICS_HISTOBINVALUES" ) != NULL 
-        && GetMetadataItem( "STATISTICS_MINIMUM" ) != NULL 
-        && GetMetadataItem( "STATISTICS_MAXIMUM" ) != NULL )
+        && GetMetadataItem( "STATISTICS_HISTOMIN" ) != NULL 
+        && GetMetadataItem( "STATISTICS_HISTOMAX" ) != NULL )
     {
         int i;
         const char *pszNextBin;
         const char *pszBinValues = 
             GetMetadataItem( "STATISTICS_HISTOBINVALUES" );
 
-        *pdfMin = atof(GetMetadataItem("STATISTICS_MINIMUM"));
-        *pdfMax = atof(GetMetadataItem("STATISTICS_MAXIMUM"));
+        *pdfMin = atof(GetMetadataItem("STATISTICS_HISTOMIN"));
+        *pdfMax = atof(GetMetadataItem("STATISTICS_HISTOMAX"));
 
         *pnBuckets = 0;
         for( i = 0; pszBinValues[i] != '\0'; i++ )
