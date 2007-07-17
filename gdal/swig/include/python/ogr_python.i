@@ -224,7 +224,6 @@ layer[0:4] would return a list of the first four features."""
               
           if gtype == wkbMultiPoint:
               geom_count = geometry.GetGeometryCount()
-              print 'mp geom count: ', geom_count
               for g in range(geom_count):
                   geom = geometry.GetGeometryRef(g)
                   coordinates.append(get_coordinates(geom))
@@ -248,7 +247,7 @@ layer[0:4] would return a list of the first four features."""
           if gtype == wkbPolygon:
               geom = geometry.GetGeometryRef(0)
               coordinates = get_coordinates(geom)
-              return coordinates
+              return [coordinates]
 
           if gtype == wkbMultiPolygon:
 
@@ -275,6 +274,76 @@ layer[0:4] would return a list of the first four features."""
 
 }
 }
+
+%pythoncode %{
+  def CreateGeometryFromJson(input):
+      try:
+          import simplejson
+      except ImportError:
+          raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
+      try:
+          input['type']
+      except TypeError:
+          input = simplejson.loads(input)
+
+      types = { 'Point': wkbPoint,
+                'LineString': wkbLineString,
+                'Polygon': wkbPolygon,
+                'MultiPoint': wkbMultiPoint,
+                'MultiLineString': wkbMultiLineString,
+                'MultiPolygon': wkbMultiPolygon,
+                'GeometryCollection': wkbGeometryCollection  
+      }   
+      
+      type = input['type']
+      gtype = types[type]
+
+      geometry = Geometry(type=gtype)
+      coordinates = input['coordinates']
+      print 'gtype: ', gtype
+      print 'Geometry start: ', geometry
+      print 'input: ', input
+      if type == 'Point':
+          geometry.AddPoint_2D(coordinates[0], coordinates[1])
+          
+      if type == 'MultiPoint':
+          for point in coordinates:
+              gring = Geometry(type=wkbPoint)
+              gring.AddPoint_2D(point[0], point[1])              
+              geometry.AddGeometry(gring)
+      
+      if type == 'LineString':
+          for coordinate in coordinates:
+              geometry.AddPoint_2D(coordinate[0], coordinate[1])
+              
+      if type == 'MultiLineString': 
+          for ring in coordinates:
+              gring = Geometry(type=wkbLineString)
+              for coordinate in ring:
+                  gring.AddPoint_2D(coordinate[0], coordinate[1])              
+              geometry.AddGeometry(gring)
+
+              
+      if type == 'Polygon':
+          for ring in coordinates:
+              gring = Geometry(type=wkbLinearRing)
+              for coordinate in ring:
+                  gring.AddPoint_2D(coordinate[0], coordinate[1])              
+              geometry.AddGeometry(gring)
+              
+      if type == 'MultiPolygon':
+          for poly in coordinates:
+              gpoly = Geometry(type=wkbPolygon)
+              for ring in poly:
+                  print ring
+                  gring = Geometry(type=wkbLinearRing)
+                  for coordinate in ring:
+                      print coordinate
+                      gring.AddPoint_2D(coordinate[0], coordinate[1])    
+                  gpoly.AddGeometry(gring)          
+              geometry.AddGeometry(gpoly)
+      return geometry
+%}
 
 %extend OGRFieldDefnShadow {
 %pythoncode {
