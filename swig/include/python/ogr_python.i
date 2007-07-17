@@ -300,9 +300,7 @@ layer[0:4] would return a list of the first four features."""
 
       geometry = Geometry(type=gtype)
       coordinates = input['coordinates']
-      print 'gtype: ', gtype
-      print 'Geometry start: ', geometry
-      print 'input: ', input
+      
       if type == 'Point':
           geometry.AddPoint_2D(coordinates[0], coordinates[1])
           
@@ -335,10 +333,8 @@ layer[0:4] would return a list of the first four features."""
           for poly in coordinates:
               gpoly = Geometry(type=wkbPolygon)
               for ring in poly:
-                  print ring
                   gring = Geometry(type=wkbLinearRing)
                   for coordinate in ring:
-                      print coordinate
                       gring.AddPoint_2D(coordinate[0], coordinate[1])    
                   gpoly.AddGeometry(gring)          
               geometry.AddGeometry(gpoly)
