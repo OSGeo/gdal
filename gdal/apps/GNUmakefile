@@ -7,7 +7,8 @@ include ../GDALmake.opt
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
-			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE)
+			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
+			gdalenhance$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE) gdal_rasterize$(EXE)
@@ -58,6 +59,10 @@ multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
 dumpoverviews$(EXE):	dumpoverviews.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) dumpoverviews.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o dumpoverviews$(EXE)
+
+gdalenhance$(EXE):	gdalenhance.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdalenhance.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o gdalenhance$(EXE)
 
 test1$(EXE):	test1.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
