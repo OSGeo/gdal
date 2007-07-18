@@ -45,13 +45,74 @@ static void Usage()
 
 {
     printf( 
-        "Usage: gdal_rasterize [-b band]\n"
+        "Usage: gdal_rasterize [-b band] [-i]\n"
         "       [-burn value] | [-a attribute_name] | [-3d]\n"
 //      "       [-of format_driver] [-co key=value]\n"       
 //      "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
         "       <src_datasource> <dst_filename>\n" );
     exit( 1 );
+}
+
+static void InvertGeometries( GDALDatasetH hDstDS, 
+                              std::vector<OGRGeometryH> &ahGeometries )
+
+{
+    OGRGeometryH hCollection = 
+        OGR_G_CreateGeometry( wkbGeometryCollection );
+
+/* -------------------------------------------------------------------- */
+/*      Create a ring that is a bit outside the raster dataset.         */
+/* -------------------------------------------------------------------- */
+    OGRGeometryH hUniversePoly, hUniverseRing;
+    double adfGeoTransform[6];
+    int brx = GDALGetRasterXSize( hDstDS ) + 2;
+    int bry = GDALGetRasterYSize( hDstDS ) + 2;
+
+    GDALGetGeoTransform( hDstDS, adfGeoTransform );
+
+    hUniverseRing = OGR_G_CreateGeometry( wkbLinearRing );
+    
+    OGR_G_AddPoint_2D( 
+        hUniverseRing, 
+        adfGeoTransform[0] + -2*adfGeoTransform[1] + -2*adfGeoTransform[2],
+        adfGeoTransform[3] + -2*adfGeoTransform[4] + -2*adfGeoTransform[5] );
+                       
+    OGR_G_AddPoint_2D( 
+        hUniverseRing, 
+        adfGeoTransform[0] + brx*adfGeoTransform[1] + -2*adfGeoTransform[2],
+        adfGeoTransform[3] + brx*adfGeoTransform[4] + -2*adfGeoTransform[5] );
+                       
+    OGR_G_AddPoint_2D( 
+        hUniverseRing, 
+        adfGeoTransform[0] + brx*adfGeoTransform[1] + bry*adfGeoTransform[2],
+        adfGeoTransform[3] + brx*adfGeoTransform[4] + bry*adfGeoTransform[5] );
+                       
+    OGR_G_AddPoint_2D( 
+        hUniverseRing, 
+        adfGeoTransform[0] + -2*adfGeoTransform[1] + bry*adfGeoTransform[2],
+        adfGeoTransform[3] + -2*adfGeoTransform[4] + bry*adfGeoTransform[5] );
+                       
+    OGR_G_AddPoint_2D( 
+        hUniverseRing, 
+        adfGeoTransform[0] + -2*adfGeoTransform[1] + -2*adfGeoTransform[2],
+        adfGeoTransform[3] + -2*adfGeoTransform[4] + -2*adfGeoTransform[5] );
+                       
+    hUniversePoly = OGR_G_CreateGeometry( wkbPolygon );
+    OGR_G_AddGeometryDirectly( hUniversePoly, hUniverseRing );
+
+    OGR_G_AddGeometryDirectly( hCollection, hUniversePoly );
+    
+/* -------------------------------------------------------------------- */
+/*      Add the rest of the geometries into our collection.             */
+/* -------------------------------------------------------------------- */
+    unsigned int iGeom;
+
+    for( iGeom = 0; iGeom < ahGeometries.size(); iGeom++ )
+        OGR_G_AddGeometryDirectly( hCollection, ahGeometries[iGeom] );
+
+    ahGeometries.resize(1);
+    ahGeometries[0] = hCollection;
 }
 
 /************************************************************************/
@@ -64,7 +125,8 @@ static void Usage()
 static void ProcessLayer( 
     OGRLayerH hSrcLayer, 
     GDALDatasetH hDstDS, std::vector<int> anBandList,
-    std::vector<double> &adfBurnValues, int b3D, const char *pszBurnAttribute )
+    std::vector<double> &adfBurnValues, int b3D, int bInverse,
+    const char *pszBurnAttribute )
 
 {
 /* -------------------------------------------------------------------- */
@@ -122,6 +184,16 @@ static void ProcessLayer(
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we are in inverse mode, we add one extra ring around the     */
+/*      whole dataset to invert the concept of insideness and then      */
+/*      merge everything into one geomtry collection.                   */
+/* -------------------------------------------------------------------- */
+    if( bInverse )
+    {
+        InvertGeometries( hDstDS, ahGeometries );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Perform the burn.                                               */
 /* -------------------------------------------------------------------- */
     GDALRasterizeGeometries( hDstDS, anBandList.size(), &(anBandList[0]), 
@@ -146,6 +218,7 @@ int main( int argc, char ** argv )
 
 {
     int i, b3D = FALSE;
+    int bInverse = FALSE;
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     char **papszLayers = NULL;
@@ -178,6 +251,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-3d")  )
         {
             b3D = TRUE;
+        }
+        else if( EQUAL(argv[i],"-i")  )
+        {
+            bInverse = TRUE;
         }
         else if( EQUAL(argv[i],"-burn") && i < argc-1 )
         {
@@ -252,7 +329,7 @@ int main( int argc, char ** argv )
         if( hLayer != NULL )
         {
             ProcessLayer( hLayer, hDstDS, anBandList, 
-                          adfBurnValues, b3D, pszBurnAttribute );
+                          adfBurnValues, b3D, bInverse, pszBurnAttribute );
         }
     }
 
@@ -277,7 +354,7 @@ int main( int argc, char ** argv )
         }
 
         ProcessLayer( hLayer, hDstDS, anBandList, 
-                      adfBurnValues, b3D, pszBurnAttribute );
+                      adfBurnValues, b3D, bInverse, pszBurnAttribute );
     }
 
 /* -------------------------------------------------------------------- */
