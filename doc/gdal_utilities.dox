@@ -731,7 +731,7 @@ Usage:
 \endhtmlonly
 
 \verbatim
-Usage: gdal_rasterize [-b band]
+Usage: gdal_rasterize [-b band] [-i]
        [-burn value] | [-a attribute_name] | [-3d]
        [-l layername]* [-where expression] [-sql select_statement]
        <src_datasource> <dst_filename>
@@ -748,6 +748,11 @@ image.  Vectors are read from OGR supported vector formats.
 <dt> <b>-b</b> <em>band</em>: </dt><dd> 
 The band(s) to burn values into.  Multiple -b arguments may be used to burn 
 into a list of bands.  The default is to burn into band 1.</dd>
+
+<dt> <b>-i</b>: </dt><dd>
+Invert rasterization.  Burn the fixed burn value, or the burn value associated 
+with the first feature into all parts of the image <em>not</em> iside a 
+polygon.</dd>
 
 <dt> <b>-burn</b> <em>value</em>: </dt><dd> 
 A fixed value to burn into a band for all objects.  A list of -burn options 
