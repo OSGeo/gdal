@@ -809,6 +809,13 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    const sqlite_int64 nFID = sqlite3_last_insert_rowid( poDS->GetDB() );
+    if(nFID > 0)
+    {
+        poFeature->SetFID( nFID );
+    }
+
+
 /* -------------------------------------------------------------------- */
 /*      We likely ought to consider fetching the rowid/fid and          */
 /*      putting it back in the feature.                                 */
