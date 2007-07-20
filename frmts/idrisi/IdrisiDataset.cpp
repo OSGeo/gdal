@@ -113,8 +113,8 @@ CPL_C_END
 #define rstINTEGER      "integer"
 #define rstREAL         "real"
 #define rstRGB24        "rgb24"
-#define rstDEGREE       "degrees"
-#define rstMETER        "meters"
+#define rstDEGREE       "deg"
+#define rstMETER        "m"
 #define rstLATLONG      "latlong"
 #define rstPLANE        "plane"
 #define rstUTM          "utm-%d%c"
@@ -197,25 +197,40 @@ const char *GetStateName( int nCode );
 //----- Conversion Table definition
 struct ConvertionTab {
     const char *pszName;
-    int nDefault;
+    int nDefaultI;
+    int nDefaultG;
     double dfConv;
 };
 
 //----- Linear Unit Conversion Table
 static ConvertionTab aoLinearUnitsConv[] = {
-    {"Meters",      0,  1.0},
-    {"Meter",       0,  1.0},
-    {"Metre",       0,  1.0},
-    {"M",           0,  1.0},
-    {"Feet",        4,  0.3048},
-    {"Foot",        4,  0.3048},
-    {"Ft",          4,  0.3048},
-    {"Miles",       7,  1612.9},
-    {"Mi",          7,  1612.9},
-    {"Kilometers",  9,  1000.0},
-    {"Kilometer",   9,  1000.0}, 
-    {"Kilometre",   9,  1000.0},
-    {"Km",          9,  1000.0}
+    {"m",            /*  0 */  0,   1,  1.0},
+    {SRS_UL_METER,   /*  1 */  0,   1,  1.0},
+    {"meters",       /*  2 */  0,   1,  1.0},
+    {"metre",        /*  3 */  0,   1,  1.0},
+
+    {"ft",           /*  4 */  4,   5,  0.3048},
+    {SRS_UL_FOOT,    /*  5 */  4,   5,  0.3048},
+    {"feet",         /*  6 */  4,   5,  0.3048},
+    {"foot_us",      /*  7 */  4,   5,  0.3048006},
+    {"u.s. foot",    /*  8 */  4,   5,  0.3048006},
+
+    {"mi",           /*  9 */  9,  10,  1612.9},
+    {"mile",         /* 10 */  9,  10,  1612.9},
+    {"miles",        /* 11 */  9,  10,  1612.9},
+
+    {"km",           /* 12 */ 12,  13,  1000.0},
+    {"kilometers",   /* 13 */ 12,  13,  1000.0},
+    {"kilometer",    /* 14 */ 12,  13,  1000.0},
+    {"kilometre",    /* 15 */ 12,  13,  1000.0},
+
+    {"deg",          /* 16 */ 16,  17,  0.0},
+    {SRS_UA_DEGREE,  /* 17 */ 16,  17,  0.0},
+    {"degrees",      /* 18 */ 16,  17,  0.0},
+
+    {"rad",          /* 19 */ 19,  20,  0.0},
+    {SRS_UA_RADIAN,  /* 20 */ 19,  20,  0.0},
+    {"radians",      /* 21 */ 19,  20,  0.0}
 };
 #define LINEAR_UNITS_COUNT (sizeof(aoLinearUnitsConv) / sizeof(ConvertionTab))
 
@@ -223,7 +238,10 @@ static ConvertionTab aoLinearUnitsConv[] = {
 int GetUnitIndex( const char *pszUnitName );
 
 //----- Get the defaut name
-const char *GetUnitDefault( const char *pszUnitName );
+const char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter = NULL );
+
+//----- Get the "to meter"
+int GetToMeterIndex( const char *pszToMeter );
 
 //----- Classes pre-definition:
 class IdrisiDataset;
@@ -627,7 +645,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
             0, &sFromColor, ( nEntryCount - 1 ), &sToColor );
     }
 
-#endif
+#endif GDAL_RST_PLUGIN
 
     /* -------------------------------------------------------------------- */
     /*      Check for external overviews.                                   */
@@ -1604,70 +1622,93 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     }
 
     // ----------------------------------------------------------
-    // Get field indexies
+    // Get field indecies
     // ----------------------------------------------------------
 
-	int iValue = -1;
+    int iValue = -1;
     int iRed   = poRAT->GetColOfUsage( GFU_Red );
     int iGreen = poRAT->GetColOfUsage( GFU_Green );
     int iBlue  = poRAT->GetColOfUsage( GFU_Blue );
     int iName  = poRAT->GetColOfUsage( GFU_Name );
-
-    // ----------------------------------------------------------
-    // If here is not Category names or ColorTable
-    // ----------------------------------------------------------
-
-    if( iRed == -1 && iGreen == -1 && iBlue == -1 && iName == -1 )
-    {
-        return CE_None;
-    }
-
-    // ----------------------------------------------------------
-    // Seek for Value field index (ESRI Standards)
-    // ----------------------------------------------------------
-
     int i;
 
-    for( i = 0; i < poRAT->GetColumnCount(); i++ )
+    // ----------------------------------------------------------
+    // Seek for "Value" field index (AGIS standards field name)
+    // ----------------------------------------------------------
+
+    if( iValue == -1 )
     {
-        if EQUALN( "Value", poRAT->GetNameOfCol( i ), 5 )
+        for( i = 0; i < poRAT->GetColumnCount(); i++ )
         {
-            iValue = i;
-            break;
+            if EQUALN( "Value", poRAT->GetNameOfCol( i ), 5 ) 
+            {
+                iValue = i;
+                break;
+            }
+        }
+    }
+
+    /* if still can't find it use the first Integer column */
+
+    if( iValue == -1 )
+    {   
+        for( i = 1; i < poRAT->GetColumnCount(); i++ )
+        {
+            if( poRAT->GetTypeOfCol( i ) == GFT_Integer )
+            {
+                iValue = i;
+                break;
+            }
         }
     }
 
     // ----------------------------------------------------------
-    // Get Entry count
+    // Seek for Name field index
     // ----------------------------------------------------------
 
-    int nRowCount   = poRAT->GetRowCount();
-    int nEntryCount = nRowCount;
-
-    if( iValue != -1)
+    if( iName == -1 )
     {
-        nEntryCount = 1 + poRAT->GetValueAsInt( nRowCount - 1, iValue );
-    }
-    else
-    {
-        nEntryCount = UINT_MAX;
-    }
-
-    // ----------------------------------------------------------
-    // Check for row index
-    // ----------------------------------------------------------
-
-    int iEntry;
-
-    bool bRowIndex = FALSE;
-
-    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
-    {
-        if( poRAT->GetRowOfValue( iEntry ) != -1 )
+        for( i = 0; i < poRAT->GetColumnCount(); i++ )
         {
-            bRowIndex = TRUE;
-            break;
+            if EQUALN( "Class_Name", poRAT->GetNameOfCol( i ), 10 )
+            {
+                iName = i;
+                break;
+            } 
+            else if EQUALN( "Categor", poRAT->GetNameOfCol( i ), 7 )
+            {
+                iName = i;
+                break;
+            } 
+            else if EQUALN( "Name",  poRAT->GetNameOfCol( i ), 4 )
+            {
+                iName = i;
+                break;
+            }
         }
+    }
+
+    /* if still can't find it use the first String column */
+
+    if( iName == -1 )
+    {   
+        for( i = 0; i < poRAT->GetColumnCount(); i++ )
+        {
+            if( poRAT->GetTypeOfCol( i ) == GFT_String )
+            {
+                iName = i;
+                break;
+            }
+        }
+    }
+
+    // ----------------------------------------------------------
+    // Incomplete Attribute Table;
+    // ----------------------------------------------------------
+
+    if( iName == -1 )
+    {
+        iName = iValue;
     }
 
     // ----------------------------------------------------------
@@ -1692,56 +1733,49 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     // Load values
     // ----------------------------------------------------------
 
-    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    GDALColorEntry  sColor;
+    int iEntry      = 0;
+    int iOut        = 0;
+    int nEntryCount = poRAT->GetRowCount();
+    int nValue      = poRAT->GetValueAsInt( iEntry, iValue );
+
+    for( iOut = 0; iOut < 65535 && ( iEntry < nEntryCount ); iOut++ )
     {
-        GDALColorEntry sColor;
-
-        int iRow;
-
-        if( bRowIndex )
-        {
-            iRow = poRAT->GetRowOfValue( iEntry );
-        }
-        else
-        {
-            iRow = iEntry;
-        }
-
-        if( iRow == -1 )
+        if( iOut == nValue )
         {
             if( poCT )
             {
-                sColor.c1  = 0;
-                sColor.c2  = 0;
-                sColor.c3  = 0;
-                sColor.c4  = 255;    
-                poCT->SetColorEntry( iEntry, &sColor );
-            }
-    	    papszNames = CSLAddString( papszNames, "" );
-        }
-        else
-        {
-            if( poCT )
-            {
-			    dRed    = poRAT->GetValueAsDouble( iRow, iRed );
-			    dGreen  = poRAT->GetValueAsDouble( iRow, iGreen );
-			    dBlue   = poRAT->GetValueAsDouble( iRow, iBlue );
+			    dRed    = poRAT->GetValueAsDouble( iEntry, iRed );
+			    dGreen  = poRAT->GetValueAsDouble( iEntry, iGreen );
+			    dBlue   = poRAT->GetValueAsDouble( iEntry, iBlue );
                 sColor.c1  = (short) ( dRed   * nFact );
                 sColor.c2  = (short) ( dGreen * nFact );
                 sColor.c3  = (short) ( dBlue  * nFact );
                 sColor.c4  = (short) ( 255    / nFact );    
                 poCT->SetColorEntry( iEntry, &sColor );
             }
-            if( iName != -1 )
+    	    papszNames = CSLAddString( papszNames, 
+                poRAT->GetValueAsString( iEntry, iName ) );
+
+            /* Advance on the table */
+
+            if( ( ++iEntry ) < nEntryCount )
             {
-    	        papszNames = CSLAddString( papszNames, 
-                    poRAT->GetValueAsString( iRow, iName ) );
+                nValue = poRAT->GetValueAsInt( iEntry, iValue );
             }
-            else
+        }
+        else if( iOut < nValue )
+        {
+            if( poCT )
             {
-        	    papszNames = CSLAddString( papszNames, "" );
+                sColor.c1  = (short) 0;
+                sColor.c2  = (short) 0;
+                sColor.c3  = (short) 0;
+                sColor.c4  = (short) 255;    
+                poCT->SetColorEntry( iEntry, &sColor );
             }
-		}
+        	papszNames = CSLAddString( papszNames, "" );
+        }
 	}
 
     // ----------------------------------------------------------
@@ -1884,8 +1918,8 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 ***/
 
 CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
-                                       const char *pszRefUnits,
-                                       char **pszProjString )
+                                        const char *pszRefUnits,
+                                        char **pszProjString )
 {
     OGRSpatialReference oSRS;
 
@@ -1896,11 +1930,12 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     if( EQUAL( pszRefSystem, rstPLANE ) )
     {
         oSRS.SetLocalCS( "Plane" );
-        int nUnit = GetUnitIndex( GetUnitDefault( pszRefUnits ) );
+        int nUnit = GetUnitIndex( pszRefUnits );
         if( nUnit > -1 )
         {
-            oSRS.SetLinearUnits( aoLinearUnitsConv[nUnit].pszName,
-                aoLinearUnitsConv[nUnit].dfConv );
+            int nDeft = aoLinearUnitsConv[nUnit].nDefaultG;
+            oSRS.SetLinearUnits( aoLinearUnitsConv[nDeft].pszName,
+                aoLinearUnitsConv[nDeft].dfConv );
         }
         oSRS.exportToWkt( pszProjString );
         return CE_None;
@@ -1955,7 +1990,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
         {
             nZone = ( nZone == 1 ? nSPCode : nSPCode + nZone - 1 );
 
-            if( oSRS.SetStatePlane( nZone,( nNAD == 83 ) ) != OGRERR_FAILURE )
+            if( oSRS.SetStatePlane( nZone, ( nNAD == 83 ) ) != OGRERR_FAILURE )
             {
                 oSRS.exportToWkt( pszProjString );
                 return CE_None;
@@ -2003,11 +2038,12 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
         if( oSRS.IsGeographic() == FALSE ) /* see State Plane remarks( * ) */
         {
             oSRS.SetLocalCS( "Unknown" );
-            int nUnit = GetUnitIndex( GetUnitDefault( pszRefUnits ) );
+            int nUnit = GetUnitIndex( pszRefUnits );
             if( nUnit > -1 )
             {
-                oSRS.SetLinearUnits( aoLinearUnitsConv[nUnit].pszName,
-                    aoLinearUnitsConv[nUnit].dfConv );
+                int nDeft = aoLinearUnitsConv[nUnit].nDefaultG;
+                oSRS.SetLinearUnits( aoLinearUnitsConv[nDeft].pszName,
+                    aoLinearUnitsConv[nDeft].dfConv );
             }
         }
         oSRS.exportToWkt( pszProjString );
@@ -2168,10 +2204,10 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     else if( EQUAL( pszProjName, "Hammer Aitoff" ) )
     {
         oSRS.SetProjection( pszProjName );
-        oSRS.SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN,  dfCenterLat );
-        oSRS.SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN,    dfCenterLong );
-        oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING,       dfFalseEasting );
-        oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING,      dfFalseNorthing );
+        oSRS.SetProjParm( SRS_PP_LATITUDE_OF_ORIGIN,  dfCenterLat );
+        oSRS.SetProjParm( SRS_PP_CENTRAL_MERIDIAN,    dfCenterLong );
+        oSRS.SetProjParm( SRS_PP_FALSE_EASTING,       dfFalseEasting );
+        oSRS.SetProjParm( SRS_PP_FALSE_NORTHING,      dfFalseNorthing );
     }
     else if( EQUALN( pszProjName, "Lambert North Polar Azimuthal Equal Area", 15 ) ||
         EQUALN( pszProjName, "Lambert South Polar Azimuthal Equal Area", 15 ) ||
@@ -2217,11 +2253,16 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     //  Set the Linear Units
     // ----------------------------------------------------------------------
 
-    int nUnit = GetUnitIndex( GetUnitDefault( pszRefUnits ) );
+    int nUnit = GetUnitIndex( pszRefUnits );
     if( nUnit > -1 )
     {
-        oSRS.SetLinearUnits( aoLinearUnitsConv[nUnit].pszName,
-            aoLinearUnitsConv[nUnit].dfConv );
+        int nDeft = aoLinearUnitsConv[nUnit].nDefaultG;
+        oSRS.SetLinearUnits( aoLinearUnitsConv[nDeft].pszName,
+            aoLinearUnitsConv[nDeft].dfConv );
+    }
+    else
+    {
+        oSRS.SetLinearUnits( "unknown",  1.0 );
     }
 
     // ----------------------------------------------------------------------
@@ -2252,8 +2293,8 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
 ***/
 
 CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
-                                       const char **pszRefSystem, 
-                                       const char **pszRefUnit )
+                                        const char **pszRefSystem, 
+                                        const char **pszRefUnit )
 {
     // -----------------------------------------------------
     //  Plane with default "Meters"
@@ -2276,7 +2317,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     if( oSRS.IsLocal() )
     {
         *pszRefSystem = CPLStrdup( rstPLANE );
-        *pszRefUnit   = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ) );
+        *pszRefUnit   = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ), 
+                        CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
         return CE_None;
     }
 
@@ -2320,7 +2362,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
         if( ( nZone != 0 ) &&( EQUAL( oSRS.GetAttrValue( "DATUM" ), SRS_DN_WGS84 ) ) )
         {
-            double dfNorth = oSRS.GetNormProjParm( SRS_PP_FALSE_NORTHING );
+            double dfNorth = oSRS.GetProjParm( SRS_PP_FALSE_NORTHING );
             *pszRefSystem  = CPLStrdup( CPLSPrintf( rstUTM, nZone,( dfNorth == 0.0 ? 'n' : 's' ) ) );
             *pszRefUnit    = CPLStrdup( rstMETER );
             return CE_None;
@@ -2330,6 +2372,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     // -----------------------------------------------------
     //  Check for State Plane
     // -----------------------------------------------------
+
+#ifndef GDAL_RST_PLUGIN
 
     if( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) ||
         EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
@@ -2359,13 +2403,16 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                 char *pszState  = CPLStrdup( GetStateName( nSPCode ) );
                 if( ! EQUAL( pszState, "" ) )
                 {
-                    *pszRefSystem   = CPLStrdup( CPLSPrintf( rstSPC, nNADYear, pszState, nZone ) );
-                    *pszRefUnit     = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ) );
+                    *pszRefSystem   = CPLSPrintf( rstSPC, nNADYear, pszState, nZone );
+                    *pszRefUnit     = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ),
+                                      CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
                     return CE_None;
                 }
             }
         }
     }
+
+#endif GDAL_RST_PLUGIN
 
     const char *pszProjectionOut = NULL;
 
@@ -2473,24 +2520,25 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     if( oSRS.IsProjected() )
     {
         pszGeorefName   = CPLStrdup( oSRS.GetAttrValue( "PROJCS" ) );
-        dfCenterLat     = oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL );
-        dfCenterLong    = oSRS.GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0, NULL );
-        dfFalseNorthing = oSRS.GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0, NULL );
-        dfFalseEasting  = oSRS.GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0, NULL );
-        dfScale         = oSRS.GetNormProjParm( SRS_PP_SCALE_FACTOR, 0.0, NULL );
-        dfStdP1         = oSRS.GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, -0.1, NULL );
-        dfStdP2         = oSRS.GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, NULL );  
+        dfCenterLat     = oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL );
+        dfCenterLong    = oSRS.GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0, NULL );
+        dfFalseNorthing = oSRS.GetProjParm( SRS_PP_FALSE_NORTHING, 0.0, NULL );
+        dfFalseEasting  = oSRS.GetProjParm( SRS_PP_FALSE_EASTING, 0.0, NULL );
+        dfScale         = oSRS.GetProjParm( SRS_PP_SCALE_FACTOR, 0.0, NULL );
+        dfStdP1         = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_1, -0.1, NULL );
+        dfStdP2         = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, NULL );  
         if( dfStdP1 != -0.1 )
         {
             nParameters = 1;
             if( dfStdP2 != -0.1 )
                 nParameters = 2;
         }
-        pszLinearUnit   = CPLStrdup( oSRS.GetAttrValue( "PROJCS|UNIT" ) );
+        pszLinearUnit   = GetUnitDefault( oSRS.GetAttrValue( "PROJCS|UNIT" ),
+                          CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
     }
     else
     {
-        pszLinearUnit   = CPLStrdup( pszAngularUnit );
+        pszLinearUnit   = GetUnitDefault( pszAngularUnit );
     }
 
     // ---------------------------------------------------------
@@ -2511,7 +2559,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     papszRef = CSLAddNameValue( papszRef, refORIGIN_X,     CPLSPrintf( "%.9g", dfFalseEasting ) );
     papszRef = CSLAddNameValue( papszRef, refORIGIN_Y,     CPLSPrintf( "%.9g", dfFalseNorthing ) );
     papszRef = CSLAddNameValue( papszRef, refSCALE_FAC,    CPLSPrintf( "%.9g", dfScale ) );
-    papszRef = CSLAddNameValue( papszRef, refUNITS,        pszAngularUnit );
+    papszRef = CSLAddNameValue( papszRef, refUNITS,        pszLinearUnit );
     papszRef = CSLAddNameValue( papszRef, refPARAMETERS,   CPLSPrintf( "%1d",  nParameters ) );
     if( nParameters > 0 )
         papszRef = CSLAddNameValue( papszRef, refSTANDL_1, CPLSPrintf( "%.9g", dfStdP1 ) );
@@ -2580,7 +2628,7 @@ const char *GetStateName( int nCode )
 
 int GetUnitIndex( const char *pszUnitName )
 {
-    unsigned int i;
+    int i;
 
     for( i = 0; i < LINEAR_UNITS_COUNT; i++ )
     {
@@ -2593,21 +2641,48 @@ int GetUnitIndex( const char *pszUnitName )
 }
 
 /************************************************************************/
+/*                            GetToMeterIndex()                         */
+/************************************************************************/
+
+int GetToMeterIndex( const char *pszToMeter )
+{
+    double dfToMeter = atof_nz(pszToMeter);
+
+    if( dfToMeter != 0.0 )
+    {
+        int i;
+
+        for( i = 0; i < LINEAR_UNITS_COUNT; i++ )
+        {
+            if ( abs( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
+            {
+                return i;
+            }
+        }
+    }
+
+    return -1;
+}
+
+/************************************************************************/
 /*                            GetUnitDefault()                          */
 /************************************************************************/
 
-const char *GetUnitDefault( const char *pszUnitName )
+const char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter )
 {
     int nIndex = GetUnitIndex( pszUnitName );
 
+    if( nIndex == -1 && pszToMeter != NULL )
+    {
+        nIndex = GetToMeterIndex( pszToMeter );
+    }
+
     if( nIndex == -1 )
     {
-        return CPLStrdup( "Meter" );
+        return CPLStrdup( "Unknown" );
     }
-    else
-    {
-        return CPLStrdup( aoLinearUnitsConv[aoLinearUnitsConv[nIndex].nDefault].pszName );
-    }
+
+    return CPLStrdup( aoLinearUnitsConv[aoLinearUnitsConv[nIndex].nDefaultI].pszName );
 }
 
 /************************************************************************/
