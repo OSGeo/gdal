@@ -400,17 +400,26 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
 {
     int         nMethodCode, iDXField, iField;
     char        szCode[32];
-    const char *pszFilename = CSVFilename("gcs.csv");
+    const char *pszFilename;
+    char **papszLine;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the line from the GCS table.                              */
 /* -------------------------------------------------------------------- */
-    char **papszLine;
-
+    pszFilename = CSVFilename("gcs.override.csv");
     sprintf( szCode, "%d", nGeogCS );
     papszLine = CSVScanFileByName( pszFilename,
                                    "COORD_REF_SYS_CODE", 
                                    szCode, CC_Integer );
+    if( papszLine == NULL )
+    {
+        pszFilename = CSVFilename("gcs.csv");
+        sprintf( szCode, "%d", nGeogCS );
+        papszLine = CSVScanFileByName( pszFilename,
+                                       "COORD_REF_SYS_CODE", 
+                                       szCode, CC_Integer );
+    }
+
     if( papszLine == NULL )
         return FALSE;
 
@@ -528,17 +537,28 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 {
     char        szSearchKey[24];
     int         nDatum, nPM, nUOMAngle, nEllipsoid;
-    const char  *pszFilename = CSVFilename("gcs.csv");
+    const char  *pszFilename;
 
 
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
 /* -------------------------------------------------------------------- */
+    pszFilename = CSVFilename("gcs.override.csv");
     sprintf( szSearchKey, "%d", nGCSCode );
 
     nDatum = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", 
                                szSearchKey, CC_Integer,
                                "DATUM_CODE" ) );
+
+    if( nDatum < 1 )
+    {
+        pszFilename = CSVFilename("gcs.csv");
+        sprintf( szSearchKey, "%d", nGCSCode );
+        
+        nDatum = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", 
+                                   szSearchKey, CC_Integer,
+                                   "DATUM_CODE" ) );
+    }
 
     if( nDatum < 1 )
         return FALSE;
@@ -732,22 +752,30 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
     int         nProjMethod, i;
     double      adfProjParms[7];
     char        szTRFCode[16];
-    char       *pszFilename = CPLStrdup(CSVFilename( "pcs.csv" ));
+    CPLString   osFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Get the proj method.  If this fails to return a meaningful      */
 /*      number, then the whole function fails.                          */
 /* -------------------------------------------------------------------- */
+    osFilename = CSVFilename( "pcs.override.csv" );
     sprintf( szTRFCode, "%d", nPCS );
     nProjMethod =
-        atoi( CSVGetField( pszFilename,
+        atoi( CSVGetField( osFilename,
                            "COORD_REF_SYS_CODE", szTRFCode, CC_Integer,
                            "COORD_OP_METHOD_CODE" ) );
     if( nProjMethod == 0 )
     {
-        CPLFree( pszFilename );
-        return FALSE;
+        osFilename = CSVFilename( "pcs.csv" );
+        sprintf( szTRFCode, "%d", nPCS );
+        nProjMethod =
+            atoi( CSVGetField( osFilename,
+                               "COORD_REF_SYS_CODE", szTRFCode, CC_Integer,
+                               "COORD_OP_METHOD_CODE" ) );
     }
+
+    if( nProjMethod == 0 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Get the parameters for this projection.                         */
@@ -765,13 +793,13 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
         if( panParmIds != NULL )
             panParmIds[i] = 
-                atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", szTRFCode,
+                atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
                                   CC_Integer, szParamCodeID ));
 
-        nUOM = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", szTRFCode,
+        nUOM = atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
                                  CC_Integer, szParamUOMID ));
         pszValue = CPLStrdup(
-            CSVGetField( pszFilename, "COORD_REF_SYS_CODE", szTRFCode,
+            CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
                          CC_Integer, szParamValueID ));
 
         // there is a bug in the EPSG 6.2.2 database for PCS 2935 and 2936
@@ -818,8 +846,6 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
             padfProjParms[i] = adfProjParms[i];
     }
 
-    CPLFree( pszFilename );
-
     return TRUE;
 }
 
@@ -836,15 +862,25 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 {
     char        **papszRecord;
     char        szSearchKey[24];
-    const char  *pszFilename = CSVFilename( "pcs.csv" );
+    const char  *pszFilename;
     
 /* -------------------------------------------------------------------- */
 /*      Search the units database for this unit.  If we don't find      */
 /*      it return failure.                                              */
 /* -------------------------------------------------------------------- */
+    pszFilename = CSVFilename( "pcs.csv" );
     sprintf( szSearchKey, "%d", nPCSCode );
     papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                      szSearchKey, CC_Integer );
+
+    if( papszRecord == NULL )
+    {
+        pszFilename = CSVFilename( "pcs.override.csv" );
+        sprintf( szSearchKey, "%d", nPCSCode );
+        papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                         szSearchKey, CC_Integer );
+        
+    }
 
     if( papszRecord == NULL )
         return FALSE;
