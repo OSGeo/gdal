@@ -1110,42 +1110,9 @@ int JPGDataset::Identify( GDALOpenInfo * poOpenInfo )
 
     if( pabyHeader[0] != 0xff
         || pabyHeader[1] != 0xd8
-        || pabyHeader[2] != 0xff )
+        || pabyHeader[2] != 0xff 
+        || (pabyHeader[3] & 0xf0) < 0xc0 )
         return FALSE;
-
-    int iChunkOff;
-
-    for( iChunkOff = 2; 
-         iChunkOff < nHeaderBytes-10; 
-         iChunkOff += 10 ) 
-    {
-        if( pabyHeader[0+iChunkOff] != 0xff
-            || (pabyHeader[1+iChunkOff] & 0xf0) < 0xe0 )
-            return FALSE;
-
-        if( pabyHeader[1+iChunkOff] == 0xe0
-            && pabyHeader[4+iChunkOff] == 'J'
-            && pabyHeader[5+iChunkOff] == 'F'
-            && pabyHeader[6+iChunkOff] == 'I'
-            && pabyHeader[7+iChunkOff] == 'F' )
-            break;
-        else if( pabyHeader[1+iChunkOff] == 0xe1
-                 && pabyHeader[4+iChunkOff] == 'E'
-                 && pabyHeader[5+iChunkOff] == 'x'
-                 && pabyHeader[6+iChunkOff] == 'i'
-                 && pabyHeader[7+iChunkOff] == 'f' )
-            break;
-        else if( pabyHeader[1+iChunkOff] == 0xe6
-                 && pabyHeader[4+iChunkOff] == 'N'
-                 && pabyHeader[5+iChunkOff] == 'I'
-                 && pabyHeader[6+iChunkOff] == 'T'
-                 && pabyHeader[7+iChunkOff] == 'F' )
-            break;
-        else if( CSLTestBoolean(
-                     CPLGetConfigOption( "SIMPLE_JPEG_MAGIC", "NO" ) ) )
-            /* Explicit request to allow non-app segment files */
-            break;
-    } /* next chunk */
 
     return TRUE;
 }
