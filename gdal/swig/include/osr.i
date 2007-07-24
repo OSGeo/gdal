@@ -719,7 +719,10 @@ public:
   OGRErr ImportFromProj4( char *ppszInput ) {
     return OSRImportFromProj4( self, ppszInput );
   }
-
+  
+  OGRErr ImportFromUrl( char *url ) {
+    return OSRImportFromUrl( self, url );
+  }
 %apply (char **options) { (char **) };
   OGRErr ImportFromESRI( char **ppszInput ) {
     return OSRImportFromESRI( self, ppszInput );
