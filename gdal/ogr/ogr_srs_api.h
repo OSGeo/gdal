@@ -255,6 +255,7 @@ OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *,
                                   const char * );
 OGRErr OSRImportFromPanorama( OGRSpatialReferenceH, long, long, long, long,
                               double * );
+OGRErr OSRImportFromUrl( OGRSpatialReferenceH, const char * );
 
 OGRErr CPL_DLL CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);

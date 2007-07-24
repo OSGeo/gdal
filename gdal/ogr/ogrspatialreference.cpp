@@ -30,6 +30,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_csv.h"
+#include "cpl_http.h"
 
 CPL_CVSID("$Id$");
 
@@ -1551,6 +1552,10 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
              || strstr(pszDefinition,"+init") != NULL )
         return importFromProj4( pszDefinition );
 
+    if( EQUALN(pszDefinition,"http://",7) )
+    {
+        return importFromUrl (pszDefinition);
+    }
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
@@ -1615,6 +1620,91 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 
 {
     return ((OGRSpatialReference *) hSRS)->SetFromUserInput( pszDef );
+}
+
+
+/************************************************************************/
+/*                          ImportFromUrl()                             */
+/************************************************************************/
+
+/**
+ * Set spatial reference from a URL.
+ *
+ * This method will download the spatial reference at a given URL and 
+ * feed it into SetFromUserInput for you.  
+ *
+ * This method does the same thing as the OSRImportFromUrl() function.
+ * 
+ * @param pszDefinition text definition to try to deduce SRS from.
+ *
+ * @return OGRERR_NONE on success, or an error code with the curl 
+ * error message if it is unable to dowload data.
+ */ 
+
+OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
+
+{
+
+
+    if( !EQUALN(pszUrl,"http://",7) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The given string is not recognized as a URL"
+                  "starting with 'http://' -- %s", pszUrl );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the result.                                               */
+/* -------------------------------------------------------------------- */
+    CPLErrorReset();
+    
+    CPLHTTPResult *psResult = CPLHTTPFetch( pszUrl, NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Try to handle errors.                                           */
+/* -------------------------------------------------------------------- */
+    if( psResult == NULL || psResult->nDataLen == 0 
+        || CPLGetLastErrorNo() != 0 || psResult->pabyData == NULL  )
+    {
+
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No data was returned from the given URL" );
+        CPLHTTPDestroyResult( psResult );
+        return OGRERR_FAILURE;
+    }
+
+    if (psResult->nStatus != 0) 
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Curl reports error: %d: %s", psResult->nStatus, psResult->pszErrBuf );
+        CPLHTTPDestroyResult( psResult );
+        return OGRERR_FAILURE;        
+    }
+
+    if( EQUALN( (const char*) psResult->pabyData,"http://",7) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The data that was downloaded also starts with 'http://' "
+                  "and cannot be passed into SetFromUserInput.  Is this "
+                  "really a spatial reference definition? ");
+        return OGRERR_FAILURE;
+    }
+    SetFromUserInput( (const char *) psResult->pabyData );
+    
+    CPLHTTPDestroyResult( psResult );
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        OSRimportFromUrl()                            */
+/************************************************************************/
+
+OGRErr CPL_STDCALL OSRImportFromUrl( OGRSpatialReferenceH hSRS, 
+                                        const char *pszUrl )
+
+{
+    return ((OGRSpatialReference *) hSRS)->importFromUrl( pszUrl );
 }
 
 /************************************************************************/
