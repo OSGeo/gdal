@@ -897,6 +897,15 @@ CPLErr GDALPamDataset::TryLoadAux()
         CSLDestroy( papszMerged );
     }
 
+    papszMD = poAuxDS->GetMetadata("XFORMS");
+    if( CSLCount(papszMD) > 0 )
+    {
+        char **papszMerged = 
+            CSLMerge( CSLDuplicate(GetMetadata("XFORMS")), papszMD );
+        GDALPamDataset::SetMetadata( papszMerged, "XFORMS" );
+        CSLDestroy( papszMerged );
+    }
+
 /* ==================================================================== */
 /*      Process bands.                                                  */
 /* ==================================================================== */
