@@ -120,6 +120,12 @@ typedef struct {
 	Eprj_Spheroid proSpheroid;	/* projection spheroid */
 } Eprj_ProParameters;
 
+typedef struct {
+    int		order;
+    double      polycoefmtx[12];
+    double      polycoefvector[2];
+} Efga_Polynomial;
+
 /* -------------------------------------------------------------------- */
 /*      Prototypes                                                      */
 /* -------------------------------------------------------------------- */
@@ -192,6 +198,15 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 GIntBig nStackValidFlagsOffset, 
                 GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex );
+
+int CPL_DLL
+HFAReadXFormStack( HFAHandle psInfo, 
+                   Efga_Polynomial **ppasPolyListForward,
+                   Efga_Polynomial **ppasPolyListReverse );
+int CPL_DLL 
+HFAEvaluateXFormStack( int nStepCount, int bForward,
+                       Efga_Polynomial *pasPolyList,
+                       double *pdfX, double *pdfY );
 
 /* -------------------------------------------------------------------- */
 /*      data types.                                                     */

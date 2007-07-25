@@ -968,6 +968,11 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
         || poXForm0->GetIntField( "termcount" ) != 3 )
         return FALSE;
 
+    // Verify that there aren't any further xform steps.
+    if( hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm.XForm1" )
+        != NULL )
+        return FALSE;
+
     // we should check that the exponent list is 0 0 1 0 0 1 but
     // we don't because we are lazy 
 
@@ -2823,3 +2828,218 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     return TRUE;
 }
 
+/************************************************************************/
+/*                       HFAReadAndValidatePoly()                       */
+/************************************************************************/
+
+static int HFAReadAndValidatePoly( HFAEntry *poTarget, 
+                                   const char *pszName,
+                                   Efga_Polynomial *psRetPoly )
+
+{
+    CPLString osFldName;
+
+    memset( psRetPoly, 0, sizeof(Efga_Polynomial) );
+
+    osFldName.Printf( "%sorder", pszName );
+    psRetPoly->order = poTarget->GetIntField(osFldName);
+
+    if( psRetPoly->order < 1 || psRetPoly->order > 2 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Validate that things are in a "well known" form.                */
+/* -------------------------------------------------------------------- */
+    int numdimtransform, numdimpolynomial, termcount;
+
+    osFldName.Printf( "%snumdimtransform", pszName );
+    numdimtransform = poTarget->GetIntField(osFldName);
+    
+    osFldName.Printf( "%snumdimpolynomial", pszName );
+    numdimpolynomial = poTarget->GetIntField(osFldName);
+
+    osFldName.Printf( "%stermcount", pszName );
+    termcount = poTarget->GetIntField(osFldName);
+
+    if( numdimtransform != 2 || numdimpolynomial != 2 )
+        return FALSE;
+
+    if( (psRetPoly->order == 1 && termcount != 3) 
+        || (psRetPoly->order == 2 && termcount != 6) )
+        return FALSE;
+
+    // we don't check the exponent organization for now.  Hopefully
+    // it is always standard.
+
+/* -------------------------------------------------------------------- */
+/*      Get coefficients.                                               */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; i < termcount*2 - 2; i++ )
+    {
+        osFldName.Printf( "%spolycoefmtx[%d]", pszName, i );
+        psRetPoly->polycoefmtx[i] = poTarget->GetDoubleField(osFldName);
+    }
+
+    for( i = 0; i < 2; i++ )
+    {
+        osFldName.Printf( "%spolycoefvector[%d]", pszName, i );
+        psRetPoly->polycoefvector[i] = poTarget->GetDoubleField(osFldName);
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         HFAReadXFormStack()                          */
+/************************************************************************/
+
+
+int HFAReadXFormStack( HFAHandle hHFA, 
+                       Efga_Polynomial **ppasPolyListForward,
+                       Efga_Polynomial **ppasPolyListReverse )
+ 
+{
+    if( hHFA->nBands == 0 )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Get the HFA node.                                               */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poXFormHeader;
+
+    poXFormHeader = hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm" );
+    if( poXFormHeader == NULL )
+        return 0;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over children, collecting XForms.                          */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poXForm;
+    int nStepCount = 0;
+    *ppasPolyListForward = NULL;
+    *ppasPolyListReverse = NULL;
+
+    for( poXForm = poXFormHeader->GetChild(); 
+         poXForm != NULL;
+         poXForm = poXForm->GetNext() )
+    {
+        int bSuccess = FALSE;
+        Efga_Polynomial sForward, sReverse;
+
+        if( EQUAL(poXForm->GetType(),"Efga_Polynomial") )
+        {
+            bSuccess = 
+                HFAReadAndValidatePoly( poXForm, "", &sForward );
+
+            if( bSuccess )
+            {
+                double adfGT[6], adfInvGT[6];
+
+                adfGT[0] = sForward.polycoefvector[0];
+                adfGT[1] = sForward.polycoefmtx[0];
+                adfGT[2] = sForward.polycoefmtx[2];
+                adfGT[3] = sForward.polycoefvector[1];
+                adfGT[4] = sForward.polycoefmtx[1];
+                adfGT[5] = sForward.polycoefmtx[3];
+
+                bSuccess = HFAInvGeoTransform( adfGT, adfInvGT );
+
+                memset( &sReverse, 0, sizeof(sReverse) );
+
+                sReverse.order = sForward.order;
+                sReverse.polycoefvector[0] = adfInvGT[0];
+                sReverse.polycoefmtx[0]    = adfInvGT[1];
+                sReverse.polycoefmtx[2]    = adfInvGT[2];
+                sReverse.polycoefvector[1] = adfInvGT[3];
+                sReverse.polycoefmtx[1]    = adfInvGT[4];
+                sReverse.polycoefmtx[3]    = adfInvGT[5];
+            }
+        }
+        else if( EQUAL(poXForm->GetType(),"GM_PolyPair") )
+        {
+            bSuccess = 
+                HFAReadAndValidatePoly( poXForm, "forward.", &sForward );
+            bSuccess = bSuccess && 
+                HFAReadAndValidatePoly( poXForm, "reverse.", &sReverse );
+        }
+
+        if( bSuccess )
+        {
+            nStepCount++;
+            *ppasPolyListForward = (Efga_Polynomial *) 
+                CPLRealloc( *ppasPolyListForward, 
+                            sizeof(Efga_Polynomial) * nStepCount);
+            memcpy( *ppasPolyListForward + nStepCount - 1, 
+                    &sForward, sizeof(sForward) );
+
+            *ppasPolyListReverse = (Efga_Polynomial *) 
+                CPLRealloc( *ppasPolyListReverse, 
+                            sizeof(Efga_Polynomial) * nStepCount);
+            memcpy( *ppasPolyListReverse + nStepCount - 1, 
+                    &sReverse, sizeof(sReverse) );
+        }
+    }
+    
+    return nStepCount;
+}
+
+/************************************************************************/
+/*                       HFAEvaluateXFormStack()                        */
+/************************************************************************/
+
+int HFAEvaluateXFormStack( int nStepCount, int bForward,
+                           Efga_Polynomial *pasPolyList,
+                           double *pdfX, double *pdfY )
+
+{
+    int iStep;
+
+    for( iStep = 0; iStep < nStepCount; iStep++ )
+    {
+        double dfXOut, dfYOut;
+        Efga_Polynomial *psStep;
+
+        if( bForward )
+            psStep = pasPolyList + iStep;
+        else
+            psStep = pasPolyList + nStepCount - iStep - 1;
+
+        if( psStep->order == 1 )
+        {
+            dfXOut = psStep->polycoefvector[0] 
+                + psStep->polycoefmtx[0] * *pdfX
+                + psStep->polycoefmtx[2] * *pdfY;
+
+            dfYOut = psStep->polycoefvector[1] 
+                + psStep->polycoefmtx[1] * *pdfX
+                + psStep->polycoefmtx[3] * *pdfY;
+
+            *pdfX = dfXOut;
+            *pdfY = dfYOut;
+        }
+        else if( psStep->order == 2 )
+        {
+            dfXOut = psStep->polycoefvector[0] 
+                + psStep->polycoefmtx[0] * *pdfX
+                + psStep->polycoefmtx[2] * *pdfY
+                + psStep->polycoefmtx[4] * *pdfX * *pdfX
+                + psStep->polycoefmtx[6] * *pdfX * *pdfY
+                + psStep->polycoefmtx[8] * *pdfY * *pdfY;
+            dfYOut = psStep->polycoefvector[1] 
+                + psStep->polycoefmtx[1] * *pdfX
+                + psStep->polycoefmtx[3] * *pdfY
+                + psStep->polycoefmtx[5] * *pdfX * *pdfX
+                + psStep->polycoefmtx[7] * *pdfX * *pdfY
+                + psStep->polycoefmtx[9] * *pdfY * *pdfY;
+
+            *pdfX = dfXOut;
+            *pdfY = dfYOut;
+        }
+        else
+            return FALSE;
+    }
+
+    return TRUE;
+}
