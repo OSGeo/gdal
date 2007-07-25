@@ -1700,7 +1700,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 /*                        OSRimportFromUrl()                            */
 /************************************************************************/
 
-OGRErr CPL_STDCALL OSRImportFromUrl( OGRSpatialReferenceH hSRS, 
+OGRErr OSRImportFromUrl( OGRSpatialReferenceH hSRS, 
                                         const char *pszUrl )
 
 {
