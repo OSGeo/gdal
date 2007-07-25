@@ -271,6 +271,13 @@ class CPL_DLL HFADataset : public GDALPamDataset
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
 
+    int		nGCPCount;
+    GDAL_GCP	asGCPList[36];
+
+    void        UseXFormStack( int nStepCount,
+                               Efga_Polynomial *pasPolyListForward,
+                               Efga_Polynomial *pasPolyListReverse );
+
   protected:
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -299,6 +306,10 @@ class CPL_DLL HFADataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
@@ -1314,8 +1325,10 @@ HFADataset::HFADataset()
     hHFA = NULL;
     bGeoDirty = FALSE;
     pszProjection = CPLStrdup("");
-    this->bMetadataDirty = FALSE;
+    bMetadataDirty = FALSE;
     bIgnoreUTM = FALSE;
+
+    nGCPCount = 0;
 }
 
 /************************************************************************/
@@ -1331,6 +1344,8 @@ HFADataset::~HFADataset()
         HFAClose( hHFA );
 
     CPLFree( pszProjection );
+    if( nGCPCount > 0 )
+        GDALDeinitGCPs( 36, asGCPList );
 }
 
 /************************************************************************/
@@ -1362,6 +1377,11 @@ void HFADataset::FlushCache()
             HFASetMetadata( hHFA, iBand+1, poBand->GetMetadata() );
             poBand->bMetadataDirty = FALSE;
         }
+    }
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, asGCPList );
     }
 }
 
@@ -2495,9 +2515,26 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get geotransform.                                               */
+/*      Get geotransform, or if that fails, try to find XForms to 	*/
+/*	build gcps, and metadata.					*/
 /* -------------------------------------------------------------------- */
-    HFAGetGeoTransform( hHFA, poDS->adfGeoTransform );
+    if( !HFAGetGeoTransform( hHFA, poDS->adfGeoTransform ) )
+    {
+        Efga_Polynomial *pasPolyListForward = NULL;
+        Efga_Polynomial *pasPolyListReverse = NULL;
+        int nStepCount = 
+            HFAReadXFormStack( hHFA, &pasPolyListForward, 
+                               &pasPolyListReverse );
+
+        if( nStepCount > 0 )
+        {
+            poDS->UseXFormStack( nStepCount, 
+                                 pasPolyListForward, 
+                                 pasPolyListReverse );
+            CPLFree( pasPolyListForward );
+            CPLFree( pasPolyListReverse );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the projection.                                             */
@@ -2686,6 +2723,146 @@ CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
                                     nPixelSpace, nLineSpace, nBandSpace );
+}
+
+/************************************************************************/
+/*                           UseXFormStack()                            */
+/************************************************************************/
+
+void HFADataset::UseXFormStack( int nStepCount,
+                                Efga_Polynomial *pasPLForward,
+                                Efga_Polynomial *pasPLReverse )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Generate GCPs using the transform.                              */
+/* -------------------------------------------------------------------- */
+    double dfXRatio, dfYRatio;
+
+    nGCPCount = 0;
+    GDALInitGCPs( 36, asGCPList );
+
+    for( dfYRatio = 0.0; dfYRatio < 1.001; dfYRatio += 0.2 )
+    {
+        for( dfXRatio = 0.0; dfXRatio < 1.001; dfXRatio += 0.2 )
+        {
+            double dfLine = 0.5 + (GetRasterYSize()-1) * dfYRatio;
+            double dfPixel = 0.5 + (GetRasterXSize()-1) * dfXRatio;
+            int iGCP = nGCPCount;
+
+            asGCPList[iGCP].dfGCPPixel = dfPixel;
+            asGCPList[iGCP].dfGCPLine = dfLine;
+
+            asGCPList[iGCP].dfGCPX = dfPixel;
+            asGCPList[iGCP].dfGCPY = dfLine;
+            asGCPList[iGCP].dfGCPZ = 0.0;
+
+            if( HFAEvaluateXFormStack( nStepCount, FALSE, pasPLReverse,
+                                       &(asGCPList[iGCP].dfGCPX),
+                                       &(asGCPList[iGCP].dfGCPY) ) )
+                nGCPCount++;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Store the transform as metadata.                                */
+/* -------------------------------------------------------------------- */
+    int iStep, i;
+
+    GDALMajorObject::SetMetadataItem( 
+        "XFORM_STEPS", 
+        CPLString().Printf("%d",nStepCount),
+        "XFORMS" );
+
+    for( iStep = 0; iStep < nStepCount; iStep++ )
+    {
+        GDALMajorObject::SetMetadataItem( 
+            CPLString().Printf("XFORM%d_ORDER", iStep),
+            CPLString().Printf("%d",pasPLForward[iStep].order),
+            "XFORMS" );
+
+        if( pasPLForward[iStep].order == 1 )
+        {
+            for( i = 0; i < 4; i++ )
+                GDALMajorObject::SetMetadataItem( 
+                    CPLString().Printf("XFORM%d_POLYCOEFMTX[%d]", iStep, i),
+                    CPLString().Printf("%.15g",
+                                       pasPLForward[iStep].polycoefmtx[i]),
+                    "XFORMS" );
+            
+            for( i = 0; i < 2; i++ )
+                GDALMajorObject::SetMetadataItem( 
+                    CPLString().Printf("XFORM%d_POLYCOEFVECTOR[%d]", iStep, i),
+                    CPLString().Printf("%.15g",
+                                       pasPLForward[iStep].polycoefvector[i]),
+                    "XFORMS" );
+            
+            continue;
+        }
+
+        CPLAssert( pasPLForward[iStep].order == 2 );
+
+        for( i = 0; i < 10; i++ )
+            GDALMajorObject::SetMetadataItem( 
+                CPLString().Printf("XFORM%d_FWD_POLYCOEFMTX[%d]", iStep, i),
+                CPLString().Printf("%.15g",
+                                   pasPLForward[iStep].polycoefmtx[i]),
+                "XFORMS" );
+            
+        for( i = 0; i < 2; i++ )
+            GDALMajorObject::SetMetadataItem( 
+                CPLString().Printf("XFORM%d_FWD_POLYCOEFVECTOR[%d]", iStep, i),
+                CPLString().Printf("%.15g",
+                                   pasPLForward[iStep].polycoefvector[i]),
+                "XFORMS" );
+            
+        for( i = 0; i < 10; i++ )
+            GDALMajorObject::SetMetadataItem( 
+                CPLString().Printf("XFORM%d_REV_POLYCOEFMTX[%d]", iStep, i),
+                CPLString().Printf("%.15g",
+                                   pasPLReverse[iStep].polycoefmtx[i]),
+                "XFORMS" );
+            
+        for( i = 0; i < 2; i++ )
+            GDALMajorObject::SetMetadataItem( 
+                CPLString().Printf("XFORM%d_REV_POLYCOEFVECTOR[%d]", iStep, i),
+                CPLString().Printf("%.15g",
+                                   pasPLReverse[iStep].polycoefvector[i]),
+                "XFORMS" );
+    }
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int HFADataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *HFADataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *HFADataset::GetGCPs()
+
+{
+    return asGCPList;
 }
 
 /************************************************************************/
