@@ -1163,19 +1163,16 @@ void HFAField::DumpInstValue( FILE *fpOut,
 
           case 'b':
           {
-              GInt32 nRows, nColumns;
-
-              GInt16 nBaseItemType;
+              double dfValue;
         
-              memcpy( &nRows, pabyData+8, 4 );
-              HFAStandard( 4, &nRows );
-              memcpy( &nColumns, pabyData+12, 4 );
-              HFAStandard( 4, &nColumns );
-              memcpy( &nBaseItemType, pabyData+16, 2 );
-              HFAStandard( 2, &nBaseItemType );
-              
-              VSIFPrintf( fpOut, "%dx%d basedata of type %s\n",
-                          nRows, nColumns, HFAGetDataTypeName(nBaseItemType) );
+              if( ExtractInstValue( NULL, iEntry, 
+                                    pabyData, nDataOffset, nDataSize, 
+                                    'd', &dfValue ) )
+                  VSIFPrintf( fpOut, "%.15g\n", 
+                              pszPrefix, dfValue );
+              else
+                  VSIFPrintf( fpOut, "(access failed)\n", 
+                              pszPrefix );
           }
           break;
 
