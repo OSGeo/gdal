@@ -41,7 +41,7 @@ def osr_url_1():
     
     srs = osr.SpatialReference()
     try:
-        srs.ImportFromUrl( 'http://spatialreference.org/epsg/4326/proj4' )
+        srs.ImportFromUrl( 'http://spatialreference.org/ref/epsg/4326/proj4' )
     except:
         return 'fail'
 
