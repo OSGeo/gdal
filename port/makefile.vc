@@ -19,7 +19,8 @@ OBJ	=	cpl_conv.obj \
 		cpl_getexecpath.obj \
 		cpl_vsil.obj \
 		cpl_vsi_mem.obj \
-		$(ODBC_OBJ)
+                cpl_http.obj \
+		$(ODBC_OBJ) 
 
 LIB	=	cpl.lib
 
