@@ -357,9 +357,14 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 /*      Parse end of field name, possible index value and               */
 /*      establish where the remaining fields (if any) would start.      */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszFieldPath,'[') != NULL )
+    const char *pszFirstArray = strchr(pszFieldPath,'[');
+    const char *pszFirstDot = strchr(pszFieldPath,'.');
+
+    if( pszFirstArray != NULL
+        && (pszFirstDot == NULL
+            || pszFirstDot > pszFirstArray) )
     {
-        const char	*pszEnd = strchr(pszFieldPath,'[');
+        const char	*pszEnd = pszFirstArray;
         
         nArrayIndex = atoi(pszEnd+1);
         nNameLen = pszEnd - pszFieldPath;
@@ -369,9 +374,9 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
             pszRemainder++;
     }
 
-    else if( strchr(pszFieldPath,'.') != NULL )
+    else if( pszFirstDot != NULL )
     {
-        const char	*pszEnd = strchr(pszFieldPath,'.');
+        const char	*pszEnd = pszFirstDot;
         
         nNameLen = pszEnd - pszFieldPath;
 
