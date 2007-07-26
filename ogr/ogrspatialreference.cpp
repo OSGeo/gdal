@@ -1664,7 +1664,10 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 /* -------------------------------------------------------------------- */
 /*      Try to handle errors.                                           */
 /* -------------------------------------------------------------------- */
-    if( psResult == NULL || psResult->nDataLen == 0 
+
+    if ( psResult == NULL)
+        return OGRERR_FAILURE;
+    if( psResult->nDataLen == 0 
         || CPLGetLastErrorNo() != 0 || psResult->pabyData == NULL  )
     {
 
@@ -1688,6 +1691,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
                   "The data that was downloaded also starts with 'http://' "
                   "and cannot be passed into SetFromUserInput.  Is this "
                   "really a spatial reference definition? ");
+        CPLHTTPDestroyResult( psResult );
         return OGRERR_FAILURE;
     }
     SetFromUserInput( (const char *) psResult->pabyData );
