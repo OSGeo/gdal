@@ -93,6 +93,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     CURL *http_handle;
     char szCurlErrBuf[CURL_ERROR_SIZE+1];
     CPLHTTPResult *psResult;
+    struct curl_slist *headers=NULL; 
+
 
     CPLDebug( "HTTP", "Fetch(%s)", pszURL );
 
@@ -115,7 +117,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     /* Set Headers.*/
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
     if( pszHeaders != NULL ) {
-        struct curl_slist *headers=NULL; 
+        CPLDebug ("HTTP", "These HTTP headers were set: %s", pszHeaders);
         headers = curl_slist_append(headers, pszHeaders);
         curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
     }
@@ -159,6 +161,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
     curl_easy_cleanup( http_handle );
+    curl_slist_free_all(headers);
 
     return psResult;
 #endif /* def HAVE_CURL */
