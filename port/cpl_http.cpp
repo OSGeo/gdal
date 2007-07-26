@@ -112,6 +112,14 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, 
                          atoi(pszTimeout) );
 
+    /* Set Headers.*/
+    const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
+    if( pszHeaders != NULL ) {
+        struct curl_slist *headers=NULL; 
+        headers = curl_slist_append(headers, pszHeaders);
+        curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
+    }
+                         
     /* NOSIGNAL should be set to true for timeout to work in multithread
      * environments on Unix, requires libcurl 7.10 or more recent.
      * (this force avoiding the use of sgnal handlers)
