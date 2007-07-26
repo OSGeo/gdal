@@ -45,6 +45,7 @@ def osr_url_1():
     try:
         srs.ImportFromUrl( 'http://spatialreference.org/ref/epsg/4326/proj4' )
     except Exception, msg:
+        gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported.":
             return 'skip'
         else:
