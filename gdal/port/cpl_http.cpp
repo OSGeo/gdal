@@ -245,7 +245,8 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /*      Find the start of the first chunk.                              */
 /* -------------------------------------------------------------------- */
     char *pszNext;
-    pszNext = strstr((const char *) psResult->pabyData,osBoundary.c_str());
+    pszNext = (char *) 
+        strstr((const char *) psResult->pabyData,osBoundary.c_str());
     
     if( pszNext == NULL )
     {
