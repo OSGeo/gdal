@@ -1658,8 +1658,15 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    
-    CPLHTTPResult *psResult = CPLHTTPFetch( pszUrl, NULL );
+
+    CPLString osHeaders = "HEADERS=";
+    osHeaders += "Accept: application/x-ogcwkt";
+    char *apszOptions[] = { 
+        (char *) osHeaders.c_str(),
+        NULL 
+    };
+        
+    CPLHTTPResult *psResult = CPLHTTPFetch( pszUrl, apszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Try to handle errors.                                           */
