@@ -881,6 +881,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
             GDALRasterBand *poBand=poDS->poJ2KDataset->GetRasterBand(iBand+1);
             
+            CPLPushErrorHandler( CPLQuietErrorHandler );
             if( EQUAL(psBandInfo->szIREPBAND,"R") )
                 poBand->SetColorInterpretation( GCI_RedBand );
             if( EQUAL(psBandInfo->szIREPBAND,"G") )
@@ -895,6 +896,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                 poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
             if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
                 poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
+            CPLPopErrorHandler();
+            CPLErrorReset();
         }
     }
 
