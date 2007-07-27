@@ -40,6 +40,7 @@ import osr
 def osr_url_1():
     
     srs = osr.SpatialReference()
+    srs.ImportFromUrl( 'http://spatialreference.org/ref/epsg/4326/' )
     import gdal
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' ) 
     try:
