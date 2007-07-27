@@ -3243,6 +3243,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromWkt(OSRSpatialReferenceSha
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromProj4(OSRSpatialReferenceShadow *self,char *ppszInput){
     return OSRImportFromProj4( self, ppszInput );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromUrl(OSRSpatialReferenceShadow *self,char *url){
+    return OSRImportFromUrl( self, url );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromESRI(OSRSpatialReferenceShadow *self,char **ppszInput){
     return OSRImportFromESRI( self, ppszInput );
   }
@@ -8823,6 +8826,64 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUrl(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  OGRErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_ImportFromUrl",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ImportFromUrl" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_ImportFromUrl" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    result = (OGRErr)OSRSpatialReferenceShadow_ImportFromUrl(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0) {
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) OGRErr */
+    if (resultobj == Py_None ) {
+      Py_DECREF(resultobj);
+      resultobj = 0;
+    }
+    if (resultobj == 0) {
+      resultobj = PyInt_FromLong( 0 );
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -10463,6 +10524,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetProjCS", _wrap_SpatialReference_SetProjCS, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromWkt", _wrap_SpatialReference_ImportFromWkt, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromProj4", _wrap_SpatialReference_ImportFromProj4, METH_VARARGS, NULL},
+	 { (char *)"SpatialReference_ImportFromUrl", _wrap_SpatialReference_ImportFromUrl, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromESRI", _wrap_SpatialReference_ImportFromESRI, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromEPSG", _wrap_SpatialReference_ImportFromEPSG, METH_VARARGS, NULL},
 	 { (char *)"SpatialReference_ImportFromPCI", _wrap_SpatialReference_ImportFromPCI, METH_VARARGS, NULL},
