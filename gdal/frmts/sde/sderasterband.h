@@ -8,6 +8,7 @@
 /*                            SDERasterBand                             */
 /* ==================================================================== */
 /************************************************************************/
+class SDEDataset;
 
 class SDERasterBand : public GDALRasterBand
 {
@@ -38,7 +39,7 @@ class SDERasterBand : public GDALRasterBand
         
     public:
 
-        SDERasterBand( SDEDataset * poDS, 
+        SDERasterBand( SDEDataset* poDS, 
                        int nBand, 
                        int nOverview, 
                        const SE_RASBANDINFO* band);
