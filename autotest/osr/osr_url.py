@@ -54,7 +54,7 @@ def osr_url_1():
     return 'success'
 
 gdaltest_list = [ 
-#    osr_url_1,
+    osr_url_1,
     None ]
 
 if __name__ == '__main__':
