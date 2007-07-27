@@ -105,6 +105,70 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
+def CreateGeometryFromJson(input):
+    try:
+        import simplejson
+    except ImportError:
+        raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
+    try:
+        input['type']
+    except TypeError:
+        input = simplejson.loads(input)
+
+    types = { 'Point': wkbPoint,
+              'LineString': wkbLineString,
+              'Polygon': wkbPolygon,
+              'MultiPoint': wkbMultiPoint,
+              'MultiLineString': wkbMultiLineString,
+              'MultiPolygon': wkbMultiPolygon,
+              'GeometryCollection': wkbGeometryCollection  
+    }   
+    
+    type = input['type']
+    gtype = types[type]
+
+    geometry = Geometry(type=gtype)
+    coordinates = input['coordinates']
+    
+    if type == 'Point':
+        geometry.AddPoint_2D(coordinates[0], coordinates[1])
+        
+    if type == 'MultiPoint':
+        for point in coordinates:
+            gring = Geometry(type=wkbPoint)
+            gring.AddPoint_2D(point[0], point[1])              
+            geometry.AddGeometry(gring)
+    
+    if type == 'LineString':
+        for coordinate in coordinates:
+            geometry.AddPoint_2D(coordinate[0], coordinate[1])
+            
+    if type == 'MultiLineString': 
+        for ring in coordinates:
+            gring = Geometry(type=wkbLineString)
+            for coordinate in ring:
+                gring.AddPoint_2D(coordinate[0], coordinate[1])              
+            geometry.AddGeometry(gring)
+
+            
+    if type == 'Polygon':
+        for ring in coordinates:
+            gring = Geometry(type=wkbLinearRing)
+            for coordinate in ring:
+                gring.AddPoint_2D(coordinate[0], coordinate[1])              
+            geometry.AddGeometry(gring)
+            
+    if type == 'MultiPolygon':
+        for poly in coordinates:
+            gpoly = Geometry(type=wkbPolygon)
+            for ring in poly:
+                gring = Geometry(type=wkbLinearRing)
+                for coordinate in ring:
+                    gring.AddPoint_2D(coordinate[0], coordinate[1])    
+                gpoly.AddGeometry(gring)          
+            geometry.AddGeometry(gpoly)
+    return geometry
+
 import osr
 class Driver(_object):
     """Proxy of C++ Driver class"""
@@ -2948,15 +3012,11 @@ class Geometry(_object):
             geom_count = geometry.GetGeometryCount()
             coordinates = []
 
-            print 'in get_coordinates...'
-            print 'type: ', gtype
-
             if gtype == wkbPoint:
                 return [geometry.GetX(0), geometry.GetY(0)]
                 
             if gtype == wkbMultiPoint:
                 geom_count = geometry.GetGeometryCount()
-                print 'mp geom count: ', geom_count
                 for g in range(geom_count):
                     geom = geometry.GetGeometryRef(g)
                     coordinates.append(get_coordinates(geom))
@@ -2980,7 +3040,7 @@ class Geometry(_object):
             if gtype == wkbPolygon:
                 geom = geometry.GetGeometryRef(0)
                 coordinates = get_coordinates(geom)
-                return coordinates
+                return [coordinates]
 
             if gtype == wkbMultiPolygon:
 

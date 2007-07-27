@@ -500,6 +500,10 @@ class SpatialReference(_object):
         """ImportFromProj4(self, char ppszInput) -> OGRErr"""
         return _osr.SpatialReference_ImportFromProj4(*args)
 
+    def ImportFromUrl(*args):
+        """ImportFromUrl(self, char url) -> OGRErr"""
+        return _osr.SpatialReference_ImportFromUrl(*args)
+
     def ImportFromESRI(*args):
         """ImportFromESRI(self, char ppszInput) -> OGRErr"""
         return _osr.SpatialReference_ImportFromESRI(*args)

@@ -2940,17 +2940,12 @@ OGRErrMessages( int rc ) {
 }
 
 SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_CreateLayer(OGRDataSourceShadow *self,char const *name,OSRSpatialReferenceShadow *reference=NULL,OGRwkbGeometryType geom_type=wkbUnknown,char **options=0){
-    if (name == NULL) {
-      CPLError(CE_Failure, 1, "Undefined layer name in CreateLayer");
-      return NULL;
-    } else {
-      OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
-								    name,
-								    reference,
-								    geom_type,
-								    options);
-      return layer;
-    }
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
+								  name,
+								  reference,
+								  geom_type,
+								  options);
+    return layer;
   }
 SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_CopyLayer(OGRDataSourceShadow *self,OGRLayerShadow *src_layer,char const *new_name,char **options=0){
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CopyLayer( self,
