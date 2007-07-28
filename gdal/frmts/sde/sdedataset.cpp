@@ -232,6 +232,7 @@ const char *SDEDataset::GetProjectionRef()
     SE_coordref_free(coordref);
 
     OGRSpatialReference *poSRS;
+    CPLDebug ("SDERASTER", "SDE says the coordinate system is: %s'", szWKT);
     poSRS = new OGRSpatialReference(szWKT);
     poSRS->morphFromESRI();
 
@@ -257,6 +258,9 @@ SDEDataset::SDEDataset(  )
     paohSDERasterBands  = NULL;
     hStream             = NULL;
     hRasterColumn       = NULL;
+    pszWKT		= NULL;
+    pszLayerName 	= NULL;
+    pszColumnName 	= NULL;
     nBands              = 0;
     nRasterXSize        = 0;
     nRasterYSize        = 0;
@@ -394,6 +398,8 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         poDS->pszColumnName = CPLStrdup( "RASTER" );
     }
+    
+    CPLDebug ("SDERASTER", "SDE Column name is '%s'", poDS->pszColumnName);
 
     if (CSLCount( papszTokens ) == 6 ) {
 
