@@ -793,14 +793,46 @@ int OGR_G_Centroid( OGRGeometryH hPolygon, OGRGeometryH hCentroidPoint )
 /*                           PointOnSurface()                           */
 /************************************************************************/
 
-int OGRPolygon::PointOnSurface( OGRPoint * ) const
+int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
 
 {
-    // notdef ... not implemented yet.
-    
+    if( poPoint == NULL )
+        return OGRERR_FAILURE;
+ 
+#ifndef HAVE_GEOS
     return OGRERR_FAILURE;
+#else
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hOtherGeosGeom = NULL;
+     
+    hThisGeosGeom = exportToGEOS();
+ 
+    if( hThisGeosGeom != NULL )
+    {
+     	hOtherGeosGeom = GEOSPointOnSurface( hThisGeosGeom );
+        OGRPoint *poInsidePoint = (OGRPoint *) 
+            OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
+ 
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+ 
+        if( poPoint == NULL 
+            || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
+            return OGRERR_FAILURE;
+ 
+ 	poPoint->setX( poInsidePoint->getX() );
+ 	poPoint->setY( poInsidePoint->getY() );
+ 
+        delete poInsidePoint;
+ 
+     	return OGRERR_NONE;
+    }
+    else
+    {
+     	return OGRERR_FAILURE;
+    }
+#endif /* HAVE_GEOS */
 }
-
 
 
 /************************************************************************/
