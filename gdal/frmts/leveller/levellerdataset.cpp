@@ -973,7 +973,7 @@ bool LevellerDataset::write(size_t n)
 
 bool LevellerDataset::write(double d)
 {
-	CPL_LSBPTR64(&n);
+	CPL_LSBPTR64(&d);
 	return (1 == VSIFWriteL(&d, sizeof(d), 1, m_fp));
 }
 
