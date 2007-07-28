@@ -387,14 +387,18 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      query for subdatasets.                                          */
 /* -------------------------------------------------------------------- */
 
+    // Get the RASTER column name if it was set
+    if (CSLCount (papszTokens) == 7) {
+        poDS->pszColumnName = CPLStrdup( papszTokens[6] );
+    }
+    else {
+        poDS->pszColumnName = CPLStrdup( "RASTER" );
+    }
 
     if (CSLCount( papszTokens ) == 6 ) {
-//
+
         poDS->pszLayerName = CPLStrdup( papszTokens[5] );
-//        
-//        // FIXME this needs to be a configuration option or allow it to
-//        // come in via the arguments
-        poDS->pszColumnName = CPLStrdup( "RASTER" );
+
         
         nSDEErr =   SE_rascolinfo_create  (&(poDS->hRasterColumn));
         if( nSDEErr != SE_SUCCESS )
