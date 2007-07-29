@@ -3012,24 +3012,24 @@ class Geometry(_object):
             geom_count = geometry.GetGeometryCount()
             coordinates = []
 
-            if gtype == wkbPoint:
+            if gtype == wkbPoint or gtype == wkbPoint25D:
                 return [geometry.GetX(0), geometry.GetY(0)]
                 
-            if gtype == wkbMultiPoint:
+            if gtype == wkbMultiPoint or gtype == wkbMultiPoint25D:
                 geom_count = geometry.GetGeometryCount()
                 for g in range(geom_count):
                     geom = geometry.GetGeometryRef(g)
                     coordinates.append(get_coordinates(geom))
                 return coordinates
 
-            if gtype == wkbLineString:
+            if gtype == wkbLineString or gtype == wkbLineString25D:
                 points = []
                 point_count = geometry.GetPointCount()
                 for i in range(point_count):
                     points.append([geometry.GetX(i), geometry.GetY(i)])
                 return points
 
-            if gtype == wkbMultiLineString:
+            if gtype == wkbMultiLineString or gtype == wkbMultiLineString25D:
                 coordinates = []
                 geom_count = geometry.GetGeometryCount()
                 for g in range(geom_count):
@@ -3037,12 +3037,12 @@ class Geometry(_object):
                     coordinates.append(get_coordinates(geom))
                 return coordinates
 
-            if gtype == wkbPolygon:
+            if gtype == wkbPolygon or gtype == wkbPolygon25D:
                 geom = geometry.GetGeometryRef(0)
                 coordinates = get_coordinates(geom)
                 return [coordinates]
 
-            if gtype == wkbMultiPolygon:
+            if gtype == wkbMultiPolygon or gtype == wkbMultiPolygon25D:
 
                 coordinates = []
                 geom_count = geometry.GetGeometryCount()
