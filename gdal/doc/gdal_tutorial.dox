@@ -478,6 +478,7 @@ In C++:
                                     papszOptions, GDALTermProgress, NULL );
     if( poDstDS != NULL )
         delete poDstDS;
+    CSLDestroy( papszOptions );
 \endcode
 
 In C:
@@ -492,6 +493,7 @@ In C:
                              papszOptions, GDALTermProgres, NULL );
     if( hDstDS != NULL )
         GDALClose( hDstDS );
+    CSLDestroy( papszOptions );
 \endcode
 
 In Python:
