@@ -949,6 +949,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     szProj4[0] = '\0';
 
+    if( GetRoot() == NULL )
+    {
+        *ppszProj4 = CPLStrdup("");
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "No translation an empty SRS to PROJ.4 format is known.", 
+                  pszProjection );
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a PROJ.4 override definition?                        */
 /* -------------------------------------------------------------------- */
