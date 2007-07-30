@@ -30,11 +30,14 @@
 
 import os
 import sys
+import string
+import gdal
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import osr
+import ogr
 
 ###############################################################################
 # Test the the +k_0 flag works as well as +k when consuming PROJ.4 format.
@@ -68,9 +71,52 @@ def osr_proj4_2():
 
     return 'success'
 
+###############################################################################
+# Verify that empty srs'es don't cause a crash (#1718).
+#
+
+def osr_proj4_3():
+    
+    srs = osr.SpatialReference()
+
+    try:
+        proj4 = srs.ExportToProj4()
+        
+    except RuntimeError:
+        pass
+
+    if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
+        return 'success'
+
+    gdaltest.post_reason( 'empty srs not handled properly' )
+    return 'fail'
+
+###############################################################################
+# Verify that unrecognised projections return an error, not those
+# annoying ellipsoid-only results.
+#
+
+def osr_proj4_4():
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( '+proj=utm +zone=11 +datum=WGS84' )
+    srs.SetAttrValue( 'PROJCS|PROJECTION', 'FakeTransverseMercator' )
+    
+    try:
+        proj4 = srs.ExportToProj4()
+        
+    except RuntimeError:
+        if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
+            return 'success'
+
+    gdaltest.post_reason( 'unknown srs not handled properly' )
+    return 'fail'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
+    osr_proj4_3,
+    osr_proj4_4,
     None ]
 
 if __name__ == '__main__':
