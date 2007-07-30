@@ -362,13 +362,25 @@ void AIGDataset::ReadRAT()
 
 {
 /* -------------------------------------------------------------------- */
-/*      Attempt to open the VAT table associated with this coverage.    */
+/*      Check if we have an associated info directory.  If not          */
+/*      return quietly.                                                 */
 /* -------------------------------------------------------------------- */
     CPLString osInfoPath, osTableName;
+    VSIStatBufL sStatBuf;
 
     osInfoPath = psInfo->pszCoverName;
     osInfoPath += "/../info/";
+    
+    if( VSIStatL( osInfoPath, &sStatBuf ) != 0 )
+    {
+        CPLDebug( "AIG", "No associated info directory at: %s, skip RAT.",
+                  osInfoPath.c_str() );
+        return;
+    }
 
+/* -------------------------------------------------------------------- */
+/*      Attempt to open the VAT table associated with this coverage.    */
+/* -------------------------------------------------------------------- */
     osTableName = CPLGetFilename(psInfo->pszCoverName);
     osTableName += ".VAT";
 
@@ -376,6 +388,7 @@ void AIGDataset::ReadRAT()
         AVCBinReadOpen( osInfoPath, osTableName,
                         AVCCoverTypeUnknown, AVCFileTABLE, NULL );
 
+    CPLErrorReset();
     if( psFile == NULL )
         return;
 
