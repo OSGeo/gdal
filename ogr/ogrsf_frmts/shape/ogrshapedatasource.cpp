@@ -575,6 +575,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         }
 
         CPLFree( pszWKT );
+
+        poSRS->morphFromESRI();
     }
 
 /* -------------------------------------------------------------------- */
