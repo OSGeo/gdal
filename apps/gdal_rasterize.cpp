@@ -54,6 +54,10 @@ static void Usage()
     exit( 1 );
 }
 
+/************************************************************************/
+/*                          InvertGeometries()                          */
+/************************************************************************/
+
 static void InvertGeometries( GDALDatasetH hDstDS, 
                               std::vector<OGRGeometryH> &ahGeometries )
 
