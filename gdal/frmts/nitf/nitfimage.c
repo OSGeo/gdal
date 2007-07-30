@@ -2096,42 +2096,6 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage, GDAL_GCP *psIGEOLOGCPs )
 static void NITFLoadLocationTable( NITFImage *psImage )
 
 {
-#ifdef notdef
-/* -------------------------------------------------------------------- */
-/*      Get the location table position from within the RPFHDR TRE      */
-/*      structure.                                                      */
-/*                                                                      */
-/*      This is the old approach, but since some RPFHDR segments are    */
-/*      written wrong, it is not very stable.  See bug                  */
-/*      http://bugzilla.remotesensing.org/show_bug.cgi?id=1313          */
-/* -------------------------------------------------------------------- */
-    GUInt32  nLocTableOffset;
-    GUInt16  nLocCount;
-    int      iLoc;
-    const char *pszTRE;
-
-    pszTRE= NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, "RPFHDR", NULL );
-    if( pszTRE == NULL )
-        return;
-
-    memcpy( &nLocTableOffset, pszTRE + 44, 4 );
-    nLocTableOffset = CPL_MSBWORD32( nLocTableOffset );
-    
-    if( nLocTableOffset == 0 )
-        return;
-
-/* -------------------------------------------------------------------- */
-/*      Read the count of entries in the location table.                */
-/* -------------------------------------------------------------------- */
-    VSIFSeekL( psFile->fp, nLocTableOffset + 6, SEEK_SET );
-    VSIFReadL( &nLocCount, 1, 2, psFile->fp );
-    nLocCount = CPL_MSBWORD16( nLocCount );
-    psFile->nLocCount = nLocCount;
-
-    psFile->pasLocations = (NITFLocation *) 
-        CPLCalloc(sizeof(NITFLocation), nLocCount);
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Get the location table out of the RPFIMG TRE on the image.      */
 /* -------------------------------------------------------------------- */
@@ -2177,11 +2141,13 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     }
 
 /* -------------------------------------------------------------------- */
-/*      It seems that sometimes (at least for bug 1313) all the         */
-/*      locations in the location table are off by a fixed amount.      */
-/*      We can establish that amount by checking if the RPFHDR TRE      */
-/*      is at the location indicated in the location table.  If not,    */
-/*      offset all locations by the difference.                         */
+/*      It seems that sometimes (at least for bug #1313 and #1714)      */
+/*      the RPF headers are improperly placed.  We check by looking     */
+/*      to see if the RPFHDR is where it should be.  If not, we         */
+/*      disregard the location table.                                   */
+/*                                                                      */
+/*      The NITF21_CGM_ANNO_Uncompressed_unmasked.ntf sample data       */
+/*      file (see gdal data downloads) is an example of this.           */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < psImage->nLocCount; i++ )
     {
@@ -2202,28 +2168,11 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 
         if( !EQUALN(achHeaderChunk,"RPFHDR",6) )
         {
-            int nOffset = 0;
-
-            for( i = 1; i < sizeof(achHeaderChunk)-6; i++ )
-            {
-                if( EQUALN(achHeaderChunk+i,"RPFHDR",6) )
-                {
-                    nOffset = i;
-                    break;
-                }
-            }
-
-            if( nOffset != 0 )
-            {
-                CPLDebug( "NITF", 
-                          "Location table offsets off by %d bytes, adjusting accordingly.",
-                          nOffset );
-                
-                for( i = 0; i < psImage->nLocCount; i++ )
-                {
-                    psImage->pasLocations[i].nLocOffset += nOffset;
-                }
-            }
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Ignoring NITF RPF Location table since it seems to be corrupt." );
+            CPLFree( psImage->pasLocations );
+            psImage->pasLocations = NULL;
+            psImage->nLocCount = 0;
         }
     }
 }
