@@ -528,7 +528,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /* -------------------------------------------------------------------- */
     memset( pszFieldSrc, ' ', nFieldLen );
     strncpy( pszFieldSrc, pszNewValue, 
-             MIN(strlen(pszFieldSrc),strlen(pszNewValue)) );
+             MIN(nFieldLen,strlen(pszNewValue)) );
 
 /* -------------------------------------------------------------------- */
 /*      Write all headers back to disk.                                 */
