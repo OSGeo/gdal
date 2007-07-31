@@ -106,8 +106,10 @@ def osr_proj4_4():
         proj4 = srs.ExportToProj4()
         
     except RuntimeError:
-        if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
-            return 'success'
+        pass
+
+    if string.find(gdal.GetLastErrorMsg(),'No translation') != -1:
+        return 'success'
 
     gdaltest.post_reason( 'unknown srs not handled properly' )
     return 'fail'
