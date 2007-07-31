@@ -2090,7 +2090,9 @@ CPLErr GTiffDataset::IBuildOverviews(
             nOvFactor = (int) 
                 (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
 
-            if( nOvFactor == panOverviewList[i] )
+            if( nOvFactor == panOverviewList[i] 
+                || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
+                                                    GetRasterXSize() ) )
                 panOverviewList[i] *= -1;
         }
 
