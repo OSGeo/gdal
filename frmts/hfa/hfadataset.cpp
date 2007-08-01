@@ -499,10 +499,14 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         {
             GDALColorEntry   sEntry;
 
-            sEntry.c1 = (short) (padfRed[iColor]   * 255);
-            sEntry.c2 = (short) (padfGreen[iColor] * 255);
-            sEntry.c3 = (short) (padfBlue[iColor]  * 255);
-            sEntry.c4 = (short) (padfAlpha[iColor]  * 255);
+            // The following mapping assigns "equal sized" section of 
+            // the [0...1] range to each possible output value and avoid
+            // rounding issues for the "normal" values generated using n/255.
+            // See bug #1732 for some discussion.
+            sEntry.c1 = MIN(255,(short) (padfRed[iColor]   * 256));
+            sEntry.c2 = MIN(255,(short) (padfGreen[iColor] * 256));
+            sEntry.c3 = MIN(255,(short) (padfBlue[iColor]  * 256));
+            sEntry.c4 = MIN(255,(short) (padfAlpha[iColor] * 256));
             poCT->SetColorEntry( iColor, &sEntry );
         }
     }
