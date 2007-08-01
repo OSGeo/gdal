@@ -767,9 +767,14 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         {
             SetWellKnownGeogCS( pszDatum );
         }
-        else if( EQUAL( pszDatum, "EUR" ) )
+        else if( EQUAL( pszDatum, "EUR" )
+                 || EQUAL( pszDatum, "ED50" ) )
         {
             SetWellKnownGeogCS( "EPSG:4230" );
+        }
+        else if( EQUAL( pszDatum, "GDA94" ) )
+        {
+            SetWellKnownGeogCS( "EPSG:4283" );
         }
         else
         {
