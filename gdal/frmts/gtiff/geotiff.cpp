@@ -3523,12 +3523,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     }
     else 
     {
-        if( nBands == 1 
-            || EQUAL(pszProfile,"BASELINE") 
-            || EQUAL(pszProfile,"GeoTIFF") )
-            nPlanar = PLANARCONFIG_CONTIG;
-        else
-            nPlanar = PLANARCONFIG_SEPARATE;
+        nPlanar = PLANARCONFIG_CONTIG;
     }
 
     pszValue = CSLFetchNameValue( papszParmList, "COMPRESS" );
