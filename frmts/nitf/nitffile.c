@@ -708,6 +708,9 @@ static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
                     pszValue, MIN(iSize,strlen(pszValue)) );
         }
 
+        // required field - semantics unknown. 
+        memcpy( pachTRE + nOldOffset + 14 + 118, "010.0", 5);
+
 /* -------------------------------------------------------------------- */
 /*      Increment values.                                               */
 /* -------------------------------------------------------------------- */
