@@ -1008,8 +1008,8 @@ void WriteGeoStatSat(string csFileName, OGRSpatialReference oSRS)
  * Export coordinate system in ILWIS projection definition.
  *
  * Converts the loaded coordinate reference system into ILWIS projection
- * definition to the extent possible.																		*/	
-
+ * definition to the extent possible.	
+ */	
 CPLErr ILWISDataset::WriteProjection() 
 
 {
@@ -1018,9 +1018,9 @@ CPLErr ILWISDataset::WriteProjection()
     int                 bHaveSRS;
     char		*pszP = pszProjection;
 		
-    string csFileName = CPLResetExtension(pszFileName, "csy" );
-    string pszBaseName = string(CPLGetBasename( pszFileName ));
-    string pszPath = string(CPLGetPath( pszFileName ));
+    string csFileName = CPLResetExtension(osFileName, "csy" );
+    string pszBaseName = string(CPLGetBasename( osFileName ));
+    string pszPath = string(CPLGetPath( osFileName ));
     bool fProjection = ((strlen(pszProjection)>0) && (pszProjection != NULL));
     if( fProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
     {
@@ -1042,7 +1042,7 @@ CPLErr ILWISDataset::WriteProjection()
         poGeogSRS = oSRS.CloneGeogCS();
     }
 
-    string grFileName = CPLResetExtension(pszFileName, "grf" );
+    string grFileName = CPLResetExtension(osFileName, "grf" );
     string csy;
     if( poGeogSRS )
     {
@@ -1077,10 +1077,9 @@ CPLErr ILWISDataset::WriteProjection()
 /* -------------------------------------------------------------------- */
 /*	Determine to write a geo-referencing file for the dataset to create */
 /* -------------------------------------------------------------------- */
-    if( GetGeoTransform( adfGeoTransform ) == CE_None
-        && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
-            || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-            || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0))
+    if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
+        || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
+        || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0)
         WriteElement("GeoRef", "CoordSystem", grFileName, csy);
 
 /* -------------------------------------------------------------------- */
