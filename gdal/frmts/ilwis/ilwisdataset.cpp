@@ -549,12 +549,11 @@ CPLErr ILWISDataset::WriteGeoReference()
     int   nXSize = GetRasterXSize();
     int   nYSize = GetRasterYSize();
 		
-    if( GetGeoTransform( adfGeoTransform ) == CE_None
-        && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
-            || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-            || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0))
+    if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
+        || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
+        || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0 )
     {
-        SetGeoTransform( adfGeoTransform );
+        SetGeoTransform( adfGeoTransform ); // is this needed?
         if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
         {
             //check wheather we should write out a georeference file. 
@@ -642,9 +641,10 @@ CPLErr ILWISDataset::GetGeoTransform( double * padfTransform )
 CPLErr ILWISDataset::SetGeoTransform( double * padfTransform )
 
 {
-    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
-		if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
-			bGeoDirty = TRUE;
+    memmove( adfGeoTransform, padfTransform, sizeof(double)*6 );
+
+    if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+        bGeoDirty = TRUE;
 
     return CE_None;
 }
@@ -1278,9 +1278,24 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
 }
 
 /************************************************************************/
+/*                          ~ILWISRasterBand()                          */
+/************************************************************************/
+
+ILWISRasterBand::~ILWISRasterBand()
+
+{
+    if( fpRaw != NULL )
+    {
+        VSIFClose( fpRaw );
+        fpRaw = NULL;
+    }
+}
+
+
+/************************************************************************/
 /*                             ILWISOpen()                             */
 /************************************************************************/
-void ILWISRasterBand::ILWISOpen(  string pszFileName)
+void ILWISRasterBand::ILWISOpen( string pszFileName )
 {
     string pszDataFile;
     pszDataFile = string(CPLResetExtension( pszFileName.c_str(), "mp#" ));
@@ -1289,11 +1304,11 @@ void ILWISRasterBand::ILWISOpen(  string pszFileName)
 #ifdef WIN32
     if (_access(pszDataFile.c_str(), 2) == 0)
 #else
-        if (access(pszDataFile.c_str(), 2) == 0)
+    if (access(pszDataFile.c_str(), 2) == 0)
 #endif
-            fpRaw = VSIFOpen( pszDataFile.c_str(), "rb+");
-        else
-            fpRaw = VSIFOpen( pszDataFile.c_str(), "rb");
+        fpRaw = VSIFOpen( pszDataFile.c_str(), "rb+");
+    else
+        fpRaw = VSIFOpen( pszDataFile.c_str(), "rb");
 }
 
 /************************************************************************/
