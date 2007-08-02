@@ -60,43 +60,43 @@ CPL_C_END
 
 enum ilwisStoreType
 {	
-		stByte,
-		stInt,
-		stLong,
+    stByte,
+    stInt,
+    stLong,
     stFloat,
-		stReal
+    stReal
 };
 
 class ValueRange
 {
 public:
-	ValueRange(double min, double max);	// step = 1
-	ValueRange(double min, double max, double step);	
-	ValueRange(string str);
-	string ToString();
-	double get_Minimum() { return _rLo; }
-	double get_Maximum() { return _rHi; }
-	double get_StepSize() { return _rStep; }
+    ValueRange(double min, double max);	// step = 1
+    ValueRange(double min, double max, double step);	
+    ValueRange(string str);
+    string ToString();
+    double get_Minimum() { return _rLo; }
+    double get_Maximum() { return _rHi; }
+    double get_StepSize() { return _rStep; }
 
 public:
-	ilwisStoreType get_NeededStoreType() { return st; }
-	double get_rLo() { return _rLo; }
-	double get_rHi() { return _rHi; }
-	double get_rStep() { return _rStep; }
-	double get_rRaw0() { return _r0; }	
-	int get_iDec() { return _iDec; }	
-	double rValue(int raw);
-	int iRaw(double value);
+    ilwisStoreType get_NeededStoreType() { return st; }
+    double get_rLo() { return _rLo; }
+    double get_rHi() { return _rHi; }
+    double get_rStep() { return _rStep; }
+    double get_rRaw0() { return _r0; }	
+    int get_iDec() { return _iDec; }	
+    double rValue(int raw);
+    int iRaw(double value);
 private:
-	void init(double rRaw0);
-	void init();
-  double _rLo, _rHi;
-  double _rStep;
-  int _iDec;
-  double _r0;
-  int iRawUndef;
-  short _iWidth;
-  ilwisStoreType st;
+    void init(double rRaw0);
+    void init();
+    double _rLo, _rHi;
+    double _rStep;
+    int _iDec;
+    double _r0;
+    int iRawUndef;
+    short _iWidth;
+    ilwisStoreType st;
 };
 
 /************************************************************************/
@@ -105,11 +105,11 @@ private:
 
 struct ILWISInfo
 {
-		ILWISInfo() : vr(0, 0){}
-		bool bValue;
-		ValueRange vr;
-		ilwisStoreType stStoreType;
-		string stDomain;
+    ILWISInfo() : vr(0, 0){}
+    bool bValue;
+    ValueRange vr;
+    ilwisStoreType stStoreType;
+    string stDomain;
 };
 
 /************************************************************************/
@@ -120,22 +120,23 @@ class ILWISDataset;
 
 class ILWISRasterBand : public GDALPamRasterBand
 {
-  friend class ILWISDataset;
-	public:
-				FILE *fpRaw;
-				ILWISInfo psInfo;
-				int nSizePerPixel;
+    friend class ILWISDataset;
+public:
+    FILE *fpRaw;
+    ILWISInfo psInfo;
+    int nSizePerPixel;
 
-				ILWISRasterBand( ILWISDataset *, int );
-				CPLErr GetILWISInfo(string pszFileName);
-				void ILWISOpen( string pszFilename);
+    ILWISRasterBand( ILWISDataset *, int );
+    ~ILWISRasterBand();
+    CPLErr GetILWISInfo(string pszFileName);
+    void ILWISOpen( string pszFilename);
 				
-  virtual CPLErr IReadBlock( int, int, void * );
-	virtual CPLErr IWriteBlock( int, int, void * ); 
-	virtual double GetNoDataValue( int *pbSuccess );
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * ); 
+    virtual double GetNoDataValue( int *pbSuccess );
 
-  private:
-        void FillWithNoData(void * pImage);
+private:
+    void FillWithNoData(void * pImage);
 };
 
 /************************************************************************/
@@ -144,7 +145,7 @@ class ILWISRasterBand : public GDALPamRasterBand
 class ILWISDataset : public GDALPamDataset
 {
     friend class ILWISRasterBand;
-    const char *pszFileName;
+    CPLString osFileName;
     string pszIlwFileName;
     char	 *pszProjection;
     double adfGeoTransform[6];
