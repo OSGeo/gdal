@@ -478,9 +478,9 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
     pszRefName = "";
     string georef;
     if ( EQUAL(pszFileType.c_str(),"Map") )
-        georef = ReadElement("Map", "GeoRef", pszFileName);
+        georef = ReadElement("Map", "GeoRef", osFileName);
     else
-        georef = ReadElement("MapList", "GeoRef", pszFileName);
+        georef = ReadElement("MapList", "GeoRef", osFileName);
 
     transform(georef.begin(), georef.end(), georef.begin(), tolower);
 
@@ -490,7 +490,7 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
     {
         //Form the geo-referencing name
         string pszBaseName = string(CPLGetBasename(georef.c_str()) );
-        string pszPath = string(CPLGetPath( pszFileName ));
+        string pszPath = string(CPLGetPath( osFileName ));
         pszRefName = string(CPLFormFilename(pszPath.c_str(),
                                             pszBaseName.c_str(),"grf" ));
 
@@ -542,7 +542,7 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
 
 CPLErr ILWISDataset::WriteGeoReference()
 {
-    string grFileName = CPLResetExtension(pszFileName, "grf" );
+    string grFileName = CPLResetExtension(osFileName, "grf" );
     double dLLLat, dLLLong, dURLat, dURLong;
     string georef;
 		
@@ -577,18 +577,18 @@ CPLErr ILWISDataset::WriteGeoReference()
 
             //Re-write the GeoRef property to raster ODF
             //Form band file name  
-            string sBaseName = string(CPLGetBasename(pszFileName) );
-            string sPath = string(CPLGetPath(pszFileName));
+            string sBaseName = string(CPLGetBasename(osFileName) );
+            string sPath = string(CPLGetPath(osFileName));
             if (nBands == 1) 
             {
-                WriteElement("Map", "GeoRef", pszFileName, sBaseName + ".grf");
+                WriteElement("Map", "GeoRef", osFileName, sBaseName + ".grf");
             }
             else
             {
                 for( int iBand = 0; iBand < nBands; iBand++ )
                 {
                     if (iBand == 0)
-                      WriteElement("MapList", "GeoRef", pszFileName, sBaseName + ".grf");
+                      WriteElement("MapList", "GeoRef", osFileName, sBaseName + ".grf");
                     char pszName[100];
                     sprintf(pszName, "%s_band_%d", sBaseName.c_str(),iBand + 1 );
                     string pszODFName = string(CPLFormFilename(sPath.c_str(),pszName,"mpr"));
@@ -762,7 +762,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         return FALSE;
     poDS->nRasterXSize = Col;
     poDS->nRasterYSize = Row;
-    poDS->pszFileName = poOpenInfo->pszFilename;
+    poDS->osFileName = poOpenInfo->pszFilename;
     poDS->pszFileType = sFileType;  
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -799,7 +799,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
                 !(EQUALN( csy.c_str(), "LatlonWGS84.csy", 15 )))			
             {
                 string pszBaseName = string(CPLGetBasename(csy.c_str()) );
-                string pszPath = string(CPLGetPath( poDS->pszFileName ));
+                string pszPath = string(CPLGetPath( poDS->osFileName ));
                 csy = string(CPLFormFilename(pszPath.c_str(),
                                              pszBaseName.c_str(),"csy" ));
                 pszProj = ReadElement("CoordSystem", "Type", csy);
@@ -972,7 +972,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     poDS->bNewDataset = TRUE;
     poDS->SetDescription(pszFilename);
     poDS->pszProjection = CPLStrdup("");
-    poDS->pszFileName = pszFileName.c_str();
+    poDS->osFileName = pszFileName;
     poDS->pszIlwFileName = string(pszFileName);
     if ( nBands == 1 )
         poDS->pszFileType = "Map";
@@ -1229,14 +1229,14 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
 {
     string sBandName;
     if ( EQUAL(poDS->pszFileType.c_str(),"Map"))  		
-        sBandName = string(poDS->pszFileName);
+        sBandName = string(poDS->osFileName);
     else //map list
     {
         //Form the band name
         char cBandName[45];
         sprintf( cBandName, "Map%d", nBand-1);
-        sBandName = ReadElement("MapList", string(cBandName), string(poDS->pszFileName));
-        string sInputPath = string(CPLGetPath( poDS->pszFileName));	
+        sBandName = ReadElement("MapList", string(cBandName), string(poDS->osFileName));
+        string sInputPath = string(CPLGetPath( poDS->osFileName));	
         string sBandPath = string(CPLGetPath( sBandName.c_str()));
         string sBandBaseName = string(CPLGetBasename( sBandName.c_str()));
         if ( 0==sBandPath.length() )
