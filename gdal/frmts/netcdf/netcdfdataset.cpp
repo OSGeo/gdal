@@ -1494,8 +1494,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     netCDFDataset 	*poDS;
     poDS = new netCDFDataset();
 
-    poDS->papszName = CSLTokenizeString2(  poOpenInfo->pszFilename,
-					   ":", CSLT_HONOURSTRINGS );
+    poDS->papszName = 
+        CSLTokenizeString2( poOpenInfo->pszFilename,
+                            ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
 
     if( EQUAL( poDS->papszName[0], "NETCDF" ) ) {
 	if( ( CSLCount(poDS->papszName) == 3  ) ){
