@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalwarper.h 11407 2007-05-03 17:30:09Z dron $
+ * $Id$
  *
  * Project:  GDAL Gridder.
  * Purpose:  Implementation of GDAL scattered data gridder.
@@ -29,7 +29,7 @@
 
 #include "gdalgridder.h"
 
-CPL_CVSID("$Id: gdalwarper.cpp 11308 2007-04-20 16:52:45Z dron $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                   GDALGridInverseDistanceToAPower()                  */
