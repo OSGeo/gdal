@@ -427,6 +427,7 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession );
 
+    CPLDebug( "ODBC", "ExecuteSQL(%s) called.", pszSQLCommand );
     poStmt->Append( pszSQLCommand );
     if( !poStmt->ExecuteSQL() )
     {
