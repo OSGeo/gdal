@@ -596,7 +596,6 @@ int NITFCreate( const char *pszFilename,
 /*      Update the image header length in the file header and the       */
 /*      total file size.                                                */
 /* -------------------------------------------------------------------- */
-    nOffset += 3; /* I don't know why! */
     nIHSize = nOffset;
 
     PLACE(achHeader+ 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
