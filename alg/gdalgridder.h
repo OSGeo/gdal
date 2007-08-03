@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdalwarper.h 11407 2007-05-03 17:30:09Z dron $
+ * $Id$
  *
  * Project:  GDAL Gridder.
  * Purpose:  Prototypes, and definitions for of GDAL scattered data gridder.
