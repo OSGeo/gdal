@@ -467,8 +467,15 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 
     if( HFAGetDataTypeBits( nHFADataType ) < 8 )
     {
-        GDALMajorObject::SetMetadataItem( "NBITS", 
-                                          CPLString().Printf("%d", HFAGetDataTypeBits( nHFADataType ) ) );
+        GDALMajorObject::SetMetadataItem( 
+            "NBITS", 
+            CPLString().Printf("%d", HFAGetDataTypeBits( nHFADataType ) ) );
+    }
+
+    if( nHFADataType == EPT_s8 )
+    {
+        GDALMajorObject::SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", 
+                                          "IMAGE_STRUCTURE" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2918,9 +2925,16 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 {
     int		nHfaDataType;
     int         nBits = 0;
+    const char *pszPixelType;
+
 
     if( CSLFetchNameValue( papszParmList, "NBITS" ) != NULL )
         nBits = atoi(CSLFetchNameValue(papszParmList,"NBITS"));
+
+    pszPixelType = 
+        CSLFetchNameValue( papszParmList, "PIXELTYPE" );
+    if( pszPixelType == NULL )
+        pszPixelType = "";
 
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
@@ -2934,6 +2948,8 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
             nHfaDataType = EPT_u2;
         else if( nBits == 4 )
             nHfaDataType = EPT_u4;
+        else if( EQUAL(pszPixelType,"SIGNEDBYTE") )
+            nHfaDataType = EPT_s8;
         else
             nHfaDataType = EPT_u8;
         break;
@@ -3024,6 +3040,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALDataType eType = GDT_Byte;
     int          iBand;
     int          nBandCount = poSrcDS->GetRasterCount();
+    char         **papszModOptions = CSLDuplicate( papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Do we really just want to create an .aux file?                  */
@@ -3042,11 +3059,32 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
     }
 
+/* -------------------------------------------------------------------- */
+/*      If we have PIXELTYPE metadadata in the source, pass it          */
+/*      through as a creation option.                                   */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == NULL
+        && nBandCount > 0 
+        && eType == GDT_Byte
+        && poSrcDS->GetRasterBand(1)->GetMetadataItem( "PIXELTYPE", 
+                                                       "IMAGE_STRUCTURE" ) )
+    {
+        papszModOptions = 
+            CSLSetNameValue( papszModOptions, "PIXELTYPE", 
+                             poSrcDS->GetRasterBand(1)->GetMetadataItem( 
+                                 "PIXELTYPE", "IMAGE_STRUCTURE" ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the file.                                                */
+/* -------------------------------------------------------------------- */
     poDS = (HFADataset *) Create( pszFilename,
                                   poSrcDS->GetRasterXSize(),
                                   poSrcDS->GetRasterYSize(),
                                   nBandCount,
-                                  eType, papszOptions );
+                                  eType, papszModOptions );
+
+    CSLDestroy( papszModOptions );
 
     if( poDS == NULL )
         return NULL;
