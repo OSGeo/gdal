@@ -37,10 +37,13 @@ recognised only by GDAL, not in the .rrd format produced by Imagine.<p>
 Creation Options:<p>
 
 <ul>
-	<li> <b>SPILL_FILE=YES</b>: Force the generation of a spill file
-	(by default spill file created for images larger 2GiB only).<p>
-	<li> <b>COMPRESS=YES</b>: Create file as compressed. Use of spill file disables compression.<p>
-	<li> <b>NBITS=1/2/4</b>: Create file with special sub-byte data types.<p>
+<li> <b>SPILL_FILE=YES</b>: Force the generation of a spill file
+(by default spill file created for images larger 2GiB only).<p>
+<li> <b>COMPRESS=YES</b>: Create file as compressed. Use of spill file disables compression.<p>
+<li> <b>NBITS=1/2/4</b>: Create file with special sub-byte data types.<p>
+<li> <b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 
+new Byte file can be forced to be written as signed byte.<p>
+
 </ul>
 
 Erdas Imagine supports external creation of overviews (with gdaladdo for 
