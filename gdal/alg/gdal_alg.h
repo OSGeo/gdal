@@ -260,6 +260,28 @@ GDALRasterizeGeometries( GDALDatasetH hDS,
                          GDALProgressFunc pfnProgress, 
                          void * pProgressArg );
 
+/************************************************************************/
+/*  Gridding interface.                                                 */
+/************************************************************************/
+
+/*! Gridding Algorithm */
+typedef enum {
+  /*! Inverse distance to a power */ GGA_InverseDistanceToAPower = 1
+} GDALGridAlgorithm;
+
+/** Inverse distance to a power method control options */
+typedef struct
+{
+    /*! Weighting power */
+    double  dfPower;
+} GDALGridInverseDistanceToAPowerOptions;
+
+CPLErr
+GDALGridCreate( GDALGridAlgorithm, void *, GUInt32,
+                double *, double *, double *, double, double, double, double,
+                GUInt32, GUInt32, GDALDataType, void *,
+                GDALProgressFunc, void *);
+
 CPL_C_END
                             
 #endif /* ndef GDAL_ALG_H_INCLUDED */
