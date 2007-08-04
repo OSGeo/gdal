@@ -240,7 +240,13 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     eDataType = GDT_Unknown;
 
     if( poDS->nBitsPerSample <= 8 )
+    {
         eDataType = GDT_Byte;
+        if( nSampleFormat == SAMPLEFORMAT_INT )
+            GDALMajorObject::SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", 
+                                              "IMAGE_STRUCTURE" );
+            
+    }
     else if( poDS->nBitsPerSample <= 16 )
     {
         if( nSampleFormat == SAMPLEFORMAT_INT )
@@ -3571,12 +3577,14 @@ TIFF *GTiffCreate( const char * pszFilename,
             > 4200000000.0 )
         {
 #ifndef BIGTIFF_SUPPORT
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_NotSupported, 
                       "A %d pixels x %d lines x %d bands %s image would be larger than 4GB\n"
                       "but this is the largest size a TIFF can be.  Creation failed.",
                       nXSize, nYSize, nBands, GDALGetDataTypeName(eType) );
             return NULL;
 #else
+            CPLDebug( "GTiff", 
+                 "Automatically flipping to Bigtiff due to large file size" );
             bCreateBigTIFF = TRUE;
 #endif
         }
@@ -3586,10 +3594,18 @@ TIFF *GTiffCreate( const char * pszFilename,
 /*      Create BigTIFF file on user's request, even if total image      */
 /*      size is enough for ClassicTIFF.                                 */
 /* -------------------------------------------------------------------- */
-#ifdef BIGTIFF_SUPPORT
     if( CSLFetchNameValue(papszParmList, "BigTIFF") != NULL )
-        bCreateBigTIFF = TRUE;
+    {
+        bCreateBigTIFF = CSLFetchBoolean( papszParmList, "BIGTIFF", 
+                                          bCreateBigTIFF );
+#ifndef BIGTIFF_SUPPORT
+        if( bCreateBigTIFF )
+            CPLError( CE_Warning, CPLE_NotSupported,
+                      "BIGTIFF requested, but GDAL built without BigTIFF\n"
+                      "enabled libtiff, request ignored." );
+        bCreateBigTIFF = FALSE;
 #endif
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -3618,13 +3634,21 @@ TIFF *GTiffCreate( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a custom pixel type (just used for signed byte now). */
+/* -------------------------------------------------------------------- */
+    const char *pszPixelType = CSLFetchNameValue( papszParmList, "PIXELTYPE" );
+    if( pszPixelType == NULL )
+        pszPixelType = "";
+
+/* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
 /* -------------------------------------------------------------------- */
     TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, nBitsPerSample );
 
-    if( eType == GDT_Int16 || eType == GDT_Int32 )
+    if( (eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE"))
+        || eType == GDT_Int16 || eType == GDT_Int32 )
         nSampleFormat = SAMPLEFORMAT_INT;
     else if( eType == GDT_CInt16 || eType == GDT_CInt32 )
         nSampleFormat = SAMPLEFORMAT_COMPLEXINT;
@@ -3969,6 +3993,16 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         papszCreateOptions = 
             CSLSetNameValue( papszCreateOptions, "NBITS",
                              poPBand->GetMetadataItem( "NBITS" ) );
+    }
+
+    if( CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == NULL
+        && eType == GDT_Byte
+        && poPBand->GetMetadataItem( "PIXELTYPE", "IMAGE_STRUCTURE" ) )
+    {
+        papszCreateOptions = 
+            CSLSetNameValue( papszCreateOptions, "PIXELTYPE", 
+                             poPBand->GetMetadataItem( 
+                                 "PIXELTYPE", "IMAGE_STRUCTURE" ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -4958,7 +4992,7 @@ void GDALRegister_GTiff()
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100, default 75.'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7)'/>"
-"   <Option name='INTERLEAVE' type='string-select'>"
+"   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
 "   </Option>"
@@ -4976,14 +5010,18 @@ void GDALRegister_GTiff()
 "       <Value>ICCLAB</Value>"
 "       <Value>ITULAB</Value>"
 "   </Option>"
-"   <Option name='PROFILE' type='string-select'>"
+"   <Option name='PROFILE' type='string-select' default='GDALGeoTIFF'>"
 "       <Value>GDALGeoTIFF</Value>"
 "       <Value>GeoTIFF</value>"
 "       <Value>BASELINE</Value>"
+"   </Option>"
+"   <Option name='PIXELTYPE' type='string-select'>"
+"       <Value>DEFAULT</Value>"
+"       <Value>SIGNEDBYTE</value>"
+"   </Option>"
 #ifdef BIGTIFF_SUPPORT
 "   <Option name='BIGTIFF' type='boolean' description='Force creation of BigTIFF file'/>"
 #endif
-"   </Option>"
 "</CreationOptionList>" );
                  
 /* -------------------------------------------------------------------- */
