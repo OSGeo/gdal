@@ -29,7 +29,10 @@ install:	default
 	test -d ${GRASSTABLES_DIR} || mkdir ${GRASSTABLES_DIR}
 	test -d ${GRASSTABLES_DIR}/etc || mkdir ${GRASSTABLES_DIR}/etc
 	cp @GRASS_GISBASE@/etc/ellipse.table ${GRASSTABLES_DIR}/etc
-	cp @GRASS_GISBASE@/etc/datum.table ${GRASSTABLES_DIR}/etc	
+	cp @GRASS_GISBASE@/etc/datum.table @GRASS_GISBASE@/etc/datumtransform.table ${GRASSTABLES_DIR}/etc
+	test -d ${GRASSTABLES_DIR}/driver || mkdir ${GRASSTABLES_DIR}/driver
+	test -d ${GRASSTABLES_DIR}/driver/db || mkdir ${GRASSTABLES_DIR}/driver/db
+	cp -r @GRASS_GISBASE@/driver/db/* ${GRASSTABLES_DIR}/driver/db/
 
 clean:
 	rm -f $(OLIBNAME) $(GLIBNAME) *.o 
