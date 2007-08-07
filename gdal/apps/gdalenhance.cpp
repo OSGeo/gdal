@@ -93,7 +93,7 @@ int main( int argc, char ** argv )
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 nLUTBins = 256;
     const char         *pszMethod = "minmax";
-    double              dfStdDevMult = 0.0;
+//    double              dfStdDevMult = 0.0;
     double             *padfScaleMin = NULL;
     double             *padfScaleMax = NULL;
     int               **papanLUTs = NULL;
@@ -282,7 +282,7 @@ int main( int argc, char ** argv )
 
         if( CSLCount(papszLines) != nBandCount )
         {
-            fprintf( stderr, "Did not get %d lines in config file as expected.\n" );
+            fprintf( stderr, "Did not get %d lines in config file as expected.\n", nBandCount );
             exit( 1 );
         }
 
