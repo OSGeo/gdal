@@ -2473,6 +2473,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         DDFField *poDstATTF = poTarget->FindField( "ATTF" );
         int     nRepeatCount = poSrcATTF->GetRepeatCount();
 
+        if( poDstATTF == NULL )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Unable to apply ATTF change to target record without an ATTF field (see GDAL/OGR Bug #1648)" );
+            return FALSE;
+        }
+
         poSrcATVLDefn = poSrcATTF->GetFieldDefn()->FindSubfieldDefn( "ATVL" );
 
         for( int iAtt = 0; iAtt < nRepeatCount; iAtt++ )
