@@ -537,7 +537,7 @@ OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppsz
  * is possible error conditions will develop. 
  */
  
-OGRErr  OGRSpatialReference::exportToWkt( char ** ppszResult ) const
+OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 
 {
     if( poRoot == NULL )
@@ -555,7 +555,14 @@ OGRErr  OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 /*                           OSRExportToWkt()                           */
 /************************************************************************/
 
-OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS, char ** ppszReturn )
+/** 
+ * Convert this SRS into WKT format.
+ *
+ * This function is the same as OGRSpatialReference::exportToWkt().
+ */
+
+OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
+                                   char ** ppszReturn )
 
 {
     *ppszReturn = NULL;
@@ -601,6 +608,12 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 /************************************************************************/
 /*                          OSRImportFromWkt()                          */
 /************************************************************************/
+
+/**
+ * Import from WKT string.
+ *
+ * This function is the same as OGRSpatialReference::importFromWkt().
+ */
 
 OGRErr OSRImportFromWkt( OGRSpatialReferenceH hSRS, char **ppszInput )
 
