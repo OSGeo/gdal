@@ -72,6 +72,9 @@ void OGRRegisterAll()
 #ifdef MEM_ENABLED
     RegisterOGRMEM();
 #endif
+#ifdef BNA_ENABLED
+    RegisterOGRBNA();
+#endif
 #ifdef CSV_ENABLED
     RegisterOGRCSV();
 #endif

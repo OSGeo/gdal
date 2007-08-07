@@ -330,6 +330,7 @@ void CPL_DLL RegisterOGRDXFDWG();
 void CPL_DLL RegisterOGRSDE();
 void CPL_DLL RegisterOGRIDB();
 void CPL_DLL RegisterOGRGMT();
+void CPL_DLL RegisterOGRBNA();
 
 CPL_C_END
 
