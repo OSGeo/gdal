@@ -2043,7 +2043,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    unsigned short	anTRed[65536], anTGreen[65536], anTBlue[65536];
+    std::vector<unsigned short> anTRed, anTGreen, anTBlue;
     unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
@@ -2054,6 +2054,10 @@ CPLErr GTiffDataset::IBuildOverviews(
             nColors = 256;
         else
             nColors = 65536;
+        
+        anTRed.resize(nColors,0);
+        anTGreen.resize(nColors,0);
+        anTBlue.resize(nColors,0);
         
         for( int iColor = 0; iColor < nColors; iColor++ )
         {
@@ -2073,9 +2077,9 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
         }
 
-        panRed = anTRed;
-        panGreen = anTGreen;
-        panBlue = anTBlue;
+        panRed = &(anTRed[0]);
+        panGreen = &(anTGreen[0]);
+        panBlue = &(anTBlue[0]);
     }
         
 /* -------------------------------------------------------------------- */
@@ -4103,8 +4107,12 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
              && poSrcDS->GetRasterBand(1)->GetColorTable() != NULL 
              && eType == GDT_UInt16 )
     {
-        unsigned short	anTRed[65536], anTGreen[65536], anTBlue[65536];
+        unsigned short	*panTRed, *panTGreen, *panTBlue;
         GDALColorTable *poCT;
+
+        panTRed   = (unsigned short *) CPLMalloc(65536*sizeof(unsigned short));
+        panTGreen = (unsigned short *) CPLMalloc(65536*sizeof(unsigned short));
+        panTBlue  = (unsigned short *) CPLMalloc(65536*sizeof(unsigned short));
 
         poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
         
@@ -4116,19 +4124,23 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 poCT->GetColorEntryAsRGB( iColor, &sRGB );
 
-                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+                panTRed[iColor] = (unsigned short) (256 * sRGB.c1);
+                panTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+                panTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
             }
             else
             {
-                anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+                panTRed[iColor] = panTGreen[iColor] = panTBlue[iColor] = 0;
             }
         }
 
         if( !bForcePhotometric )
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE );
-        TIFFSetField( hTIFF, TIFFTAG_COLORMAP, anTRed, anTGreen, anTBlue );
+        TIFFSetField( hTIFF, TIFFTAG_COLORMAP, panTRed, panTGreen, panTBlue );
+
+        CPLFree( panTRed );
+        CPLFree( panTGreen );
+        CPLFree( panTBlue );
     }
     else if( poSrcDS->GetRasterBand(1)->GetColorTable() != NULL )
         CPLError( CE_Warning, CPLE_AppDefined,
