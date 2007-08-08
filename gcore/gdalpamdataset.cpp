@@ -46,13 +46,13 @@ CPL_CVSID("$Id$");
  * etc) not supported by a file format via an "auxilary metadata" file
  * with the .aux.xml extension.  
  * 
- * \subsection using_pam Enabling PAM
+ * <h3>Enabling PAM</h3>
  * 
  * PAM support can be enabled in GDAL by setting the GDAL_PAM_ENABLED
  * configuration option (via CPLSetConfigOption(), or the environment) to 
  * the value of YES.  
  *
- * \subsection pam_proxy PAM Proxy Files
+ * <h3>PAM Proxy Files</h3>
  * 
  * In order to be able to record auxilary information about files on 
  * read-only media such as CDROMs or in directories where the user does not
@@ -63,7 +63,7 @@ CPL_CVSID("$Id$");
  * To enable this, set the GDAL_PAM_PROXY_DIR configuration open to be
  * the name of the directory where the proxies should be kept.  
  *
- * \subsection driver_imp Adding PAM to Drivers
+ * <h3>Adding PAM to Drivers</h3>
  *
  * Drivers for physical file formats that wish to support persistent auxilary 
  * metadata in addition to that for the format itself should derive their 
