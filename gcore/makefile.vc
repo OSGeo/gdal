@@ -5,7 +5,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdalcolortable.obj overview.obj gdaldefaultoverviews.obj \
 		gdalmajorobject.obj gdalpamdataset.obj gdalpamrasterband.obj \
 		gdaljp2metadata.obj gdaljp2box.obj gdalgmlcoverage.obj \
-		gdalmultidomainmetadata.obj
+		gdalmultidomainmetadata.obj gdalpamproxydb.obj 
 		
 
 RES	=	Version.res
