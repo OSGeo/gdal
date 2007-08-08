@@ -175,6 +175,7 @@ def ogr_sqlite_4():
     
         dst_feat.SetGeometryDirectly( geom )
         dst_feat.SetField( 'PRFEDEA', item )
+        dst_feat.SetFID( -1 )
         gdaltest.sl_lyr.CreateFeature( dst_feat )
         
         ######################################################################
