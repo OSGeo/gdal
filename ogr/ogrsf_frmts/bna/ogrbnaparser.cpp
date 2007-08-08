@@ -148,7 +148,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
     int dotFound = 0;
     int numChar = 0;
     const char* detailedErrorMsg = NULL;
-    BNAFeatureType currentFeatureType = -1;
+    BNAFeatureType currentFeatureType = (BNAFeatureType) -1;
     int nbExtraId = 0;
     char tmpBuffer[NB_MAX_BNA_IDS][TMP_BUFFER_SIZE+1];
     int  tmpBufferLength[NB_MAX_BNA_IDS] = {0, 0, 0};
