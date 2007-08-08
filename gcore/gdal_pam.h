@@ -274,4 +274,10 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
                        int nBuckets, int * panHistogram,
                        int bIncludeOutOfRange, int bApprox );
 
+// For managing the proxy file database.
+const char CPL_DLL * PamGetProxy( const char * );
+const char CPL_DLL * PamAllocateProxy( const char * );
+const char CPL_DLL * PamDeallocateProxy( const char * );
+void CPL_DLL PamCleanProxyDB( void );
+
 #endif /* ndef GDAL_PAM_H_INCLUDED */

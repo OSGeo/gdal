@@ -420,9 +420,15 @@ const char *GDALPamDataset::BuildPamFilename()
     if( GetDescription() == NULL || strlen(GetDescription()) == 0 )
         return NULL;
 
-    psPam->pszPamFilename = (char *) CPLMalloc(strlen(GetDescription()) + 10 );
-    strcpy( psPam->pszPamFilename, GetDescription() );
-    strcat( psPam->pszPamFilename, ".aux.xml" );
+    const char *pszProxyPam = PamGetProxy( GetDescription() );
+    if( pszProxyPam != NULL )
+        psPam->pszPamFilename = CPLStrdup(pszProxyPam);
+    else
+    {
+        psPam->pszPamFilename = (char*) CPLMalloc(strlen(GetDescription())+10);
+        strcpy( psPam->pszPamFilename, GetDescription() );
+        strcat( psPam->pszPamFilename, ".aux.xml" );
+    }
 
     return psPam->pszPamFilename;
 }
@@ -514,10 +520,30 @@ CPLErr GDALPamDataset::TrySaveXML()
 
     if( psTree != NULL )
     {
-        if( CPLSerializeXMLTreeToFile( psTree, psPam->pszPamFilename ) )
+        const char *pszNewPam;
+        int bSaved;
+
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        bSaved = CPLSerializeXMLTreeToFile( psTree, psPam->pszPamFilename );
+        CPLPopErrorHandler();
+
+        if( bSaved )
             eErr = CE_None;
+        else if( PamGetProxy(GetDescription()) == NULL 
+                 && ((pszNewPam = PamAllocateProxy(GetDescription())) != NULL))
+        {
+            CPLErrorReset();
+            CPLFree( psPam->pszPamFilename );
+            psPam->pszPamFilename = CPLStrdup(pszNewPam);
+            eErr = TrySaveXML();
+        }
         else
-            eErr = CE_Failure;
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Unable to save auxilary information in %s.",
+                      psPam->pszPamFilename );
+            eErr = CE_Warning;
+        }
     }
     
     CPLDestroyXMLNode( psTree );
