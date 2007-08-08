@@ -38,6 +38,73 @@ CPL_CVSID("$Id$");
 /*                           GDALPamDataset()                           */
 /************************************************************************/
 
+/**
+ * \class GDALPamDataset "gdal_pam.h"
+ * 
+ * A subclass of GDALDataset which introduces the ability to save and
+ * restore auxilary information (coordinate system, gcps, metadata, 
+ * etc) not supported by a file format via an "auxilary metadata" file
+ * with the .aux.xml extension.  
+ * 
+ * \subsection using_pam Enabling PAM
+ * 
+ * PAM support can be enabled in GDAL by setting the GDAL_PAM_ENABLED
+ * configuration option (via CPLSetConfigOption(), or the environment) to 
+ * the value of YES.  
+ *
+ * \subsection pam_proxy PAM Proxy Files
+ * 
+ * In order to be able to record auxilary information about files on 
+ * read-only media such as CDROMs or in directories where the user does not
+ * have write permissions, it is possible to enable the "PAM Proxy Database".
+ * When enabled the .aux.xml files are kept in a different directory, writable
+ * by the user. 
+ *
+ * To enable this, set the GDAL_PAM_PROXY_DIR configuration open to be
+ * the name of the directory where the proxies should be kept.  
+ *
+ * \subsection driver_imp Adding PAM to Drivers
+ *
+ * Drivers for physical file formats that wish to support persistent auxilary 
+ * metadata in addition to that for the format itself should derive their 
+ * dataset class from GDALPamDataset instead of directly from GDALDataset.
+ * The raster band classes should also be derived from GDALPamRasterBand.
+ *
+ * They should also call something like this near the end of the Open() 
+ * method:
+ * 
+ *  poDS->SetDescription( poOpenInfo->pszFilename );
+ *  poDS->TryLoadXML();
+ *
+ * The SetDescription() is necessary so that the dataset will have a valid
+ * filename set as the description before TryLoadXML() is called.  TryLoadXML()
+ * will look for an .aux.xml file with the same basename as the dataset and
+ * in the same directory.  If found the contents will be loaded and kept
+ * track of in the GDALPamDataset and GDALPamRasterBand objects.  When a 
+ * call like GetProjectionRef() is not implemented by the format specific
+ * class, it will fall through to the PAM implementation which will return
+ * information if it was in the .aux.xml file. 
+ *
+ * Drivers should also try to call the GDALPamDataset/GDALPamRasterBand
+ * methods as a fallback if their implementation does not find information.
+ * This allows using the .aux.xml for variations that can't be stored in
+ * the format.  For instance, the GeoTIFF driver GetProjectionRef() looks
+ * like this:
+ *
+ *        if( EQUAL(pszProjection,"") )
+ *            return GDALPamDataset::GetProjectionRef();
+ *        else
+ *            return( pszProjection );
+ *
+ * So if the geotiff header is missing, the .aux.xml file will be 
+ * consulted. 
+ *
+ * Similarly, if SetProjection() were called with a coordinate system
+ * not supported by GeoTIFF, the SetProjection() method should pass it on
+ * to the GDALPamDataset::SetProjection() method after issuing a warning
+ * that the information can't be represented within the file itself. 
+ */
+
 GDALPamDataset::GDALPamDataset()
 
 {
