@@ -303,12 +303,15 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                   int *pnOutXSize, int *pnOutYSize )
 
 {
-    int bSrcWinSet = nSrcXOff != -1 || nSrcXSize != -1 
-        || nSrcYOff != -1 || nSrcYSize != -1;
     int bDstWinSet = nDstXOff != -1 || nDstXSize != -1 
         || nDstYOff != -1 || nDstYSize != -1;
 
+#ifdef DEBUG
+    int bSrcWinSet = nSrcXOff != -1 || nSrcXSize != -1 
+        || nSrcYOff != -1 || nSrcYSize != -1;
+
     CPLAssert( bSrcWinSet == bDstWinSet );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      If the input window completely misses the portion of the        */
