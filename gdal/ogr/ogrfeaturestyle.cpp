@@ -385,7 +385,7 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
     char **papszStyleString;
     const char *pszStyle;
     const char *pszString;
-    OGRStyleTool    *poStyleTool;
+    OGRStyleTool    *poStyleTool = NULL;
 
     if (pszStyleString)
       pszStyle = pszStyleString; 
