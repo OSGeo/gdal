@@ -645,7 +645,7 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
             0, &sFromColor, ( nEntryCount - 1 ), &sToColor );
     }
 
-#endif GDAL_RST_PLUGIN
+#endif // GDAL_RST_PLUGIN
 
     /* -------------------------------------------------------------------- */
     /*      Check for external overviews.                                   */
@@ -2412,7 +2412,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         }
     }
 
-#endif GDAL_RST_PLUGIN
+#endif // GDAL_RST_PLUGIN
 
     const char *pszProjectionOut = NULL;
 
@@ -2630,7 +2630,7 @@ int GetUnitIndex( const char *pszUnitName )
 {
     int i;
 
-    for( i = 0; i < LINEAR_UNITS_COUNT; i++ )
+    for( i = 0; i < (int) LINEAR_UNITS_COUNT; i++ )
     {
         if EQUAL( pszUnitName, aoLinearUnitsConv[i].pszName )
         {
@@ -2652,9 +2652,9 @@ int GetToMeterIndex( const char *pszToMeter )
     {
         int i;
 
-        for( i = 0; i < LINEAR_UNITS_COUNT; i++ )
+        for( i = 0; i < (int) LINEAR_UNITS_COUNT; i++ )
         {
-            if ( abs( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
+            if ( ABS( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
             {
                 return i;
             }
