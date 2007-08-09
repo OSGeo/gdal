@@ -359,7 +359,6 @@ class digital_axis
 		double scaling(size_t pixels) const
 		{
 			CPLAssert(pixels > 1);
-			double d;
 			if(m_eStyle == LEV_DA_PIXEL_SIZED)
 				return m_d[1 - m_fixedEnd];
 
@@ -486,7 +485,7 @@ CPLErr LevellerRasterBand::IWriteBlock
        ds.m_fp, ds.m_nDataOffset + nBlockYOff * rowbytes, 
        SEEK_SET))
 	{
-		for(size_t x = 0; x < nBlockXSize; x++)
+		for(size_t x = 0; x < (size_t)nBlockXSize; x++)
 		{
 			// Convert logical elevations to physical.
 			m_pLine[x] = 
@@ -573,7 +572,7 @@ CPLErr LevellerRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if(poGDS->m_version < 6)
     {
         GInt32* pi = (int*)pImage;
-        for(size_t i = 0; i < nBlockXSize; i++)
+        for(size_t i = 0; i < (size_t)nBlockXSize; i++)
             pf[i] = (float)pi[i] / 65536;
     }
 
@@ -729,7 +728,6 @@ bool LevellerDataset::compute_elev_scaling
 	m_dElevBase = m_dLogSpan[0];
 
 	// Convert from ground units to elev units.
-	const double dfLinear = sr.GetLinearUnits();
 	const measurement_unit* puG = this->get_uom(pszGroundUnits);
 	const measurement_unit* puE = this->get_uom(m_szElevUnits);
 
@@ -1048,7 +1046,7 @@ bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, FILE* fp, c
             return false;
 
         const size_t descriptorLen = c;
-        if(descriptorLen == 0 || descriptorLen > kMaxDescLen)
+        if(descriptorLen == 0 || descriptorLen > (size_t)kMaxDescLen)
             return false;
 
         char descriptor[kMaxDescLen+1];

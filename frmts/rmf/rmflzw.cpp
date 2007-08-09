@@ -123,7 +123,7 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
 {
     GUInt32         nCount = TABSIZE - 256;
     GUInt32         iCode, iOldCode, iInCode;
-    GByte           iFinChar, bLastChar;
+    GByte           iFinChar, bLastChar=FALSE;
     LZWStringTab    *poCodeTab;
     int             bBitsleft;
 
