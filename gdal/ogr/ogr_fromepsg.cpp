@@ -1142,7 +1142,7 @@ static double OGR_FetchParm( double *padfProjParms, int *panParmIds,
 static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
 {
-    int         nGCSCode, nUOMAngleCode, nUOMLength, nTRFCode, nProjMethod;
+    int         nGCSCode, nUOMAngleCode, nUOMLength, nTRFCode, nProjMethod=0;
     int         anParmIds[7];
     char        *pszPCSName = NULL, *pszUOMLengthName = NULL;
     double      adfProjParms[7], dfInMeters, dfFromGreenwich;

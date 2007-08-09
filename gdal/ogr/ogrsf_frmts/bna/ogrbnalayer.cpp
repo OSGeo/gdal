@@ -71,7 +71,7 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     int i;
     for(i=0;i<NB_MAX_BNA_IDS;i++)
     {
-        if (i < sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0]))
+        if (i < (int) (sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0])) )
         {
             sprintf(tmp, "%s ID", iKnowHowToCount[i]);
             OGRFieldDefn oFieldID(tmp, OFTString );
