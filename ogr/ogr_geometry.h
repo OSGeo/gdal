@@ -300,8 +300,6 @@ class CPL_DLL OGRLineString : public OGRCurve
 
 /************************************************************************/
 /*                            OGRLinearRing                             */
-/*                                                                      */
-/*      This is an alias for OGRLineString for now.                     */
 /************************************************************************/
 
 /**
@@ -309,7 +307,17 @@ class CPL_DLL OGRLineString : public OGRCurve
  *
  * This class is functionally equivelent to an OGRLineString, but has a
  * separate identity to maintain alignment with the OpenGIS simple feature
- * data model.  It exists to serve as a component of an OGRPolygon.
+ * data model.  It exists to serve as a component of an OGRPolygon.  
+ *
+ * The OGRLinearRing has no corresponding free standing well known binary
+ * representation, so importFromWkb() and exportToWkb() will not actually
+ * work.  There is a non-standard GDAL WKT representation though.
+ *
+ * Because OGRLinearRing is not a "proper" free standing simple features 
+ * object, it cannot be directly used on a feature via SetGeometry(), and
+ * cannot genearally be used with GEOS for operations like Intersects(). 
+ * Instead the polygon should be used, or the OGRLinearRing should be
+ * converted to an OGRLineString for such operations. 
  */
 
 class CPL_DLL OGRLinearRing : public OGRLineString
