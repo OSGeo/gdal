@@ -234,8 +234,10 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get overall image information.                                  */
 /* -------------------------------------------------------------------- */
+#ifdef DEBUG
     int nBands = 
         atoi(CPLGetXMLValue( psImageAttributes, "NBANDS", "-1" ));
+#endif
 
     poDS->nRasterXSize = 
         atoi(CPLGetXMLValue( psImageAttributes, "NCOLS", "-1" ));
