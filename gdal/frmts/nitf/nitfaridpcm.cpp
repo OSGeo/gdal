@@ -209,7 +209,7 @@ get_delta( unsigned char *srcdata,
     int level_index = level_index_table[pixel_index];
     int *bits_per_level = bits_per_level_by_busycode_75[busy_code];
     int delta_bits = bits_per_level[level_index];
-    int delta_offset;
+    int delta_offset = 0;
 
     if( delta_bits == 0 )
         return 0;
