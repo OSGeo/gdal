@@ -158,6 +158,13 @@ int OGRSDELayer::Initialize( const char *pszTableName,
             nWidth = asColumnDefs[iCol].size;
             break;
 
+#ifdef SE_NSTRING_TYPE
+          case SE_NSTRING_TYPE:
+            eOGRType = ORTString;
+            nWidth = asColumnDefs[iCol].size;
+            break;
+#endif
+
           case SE_BLOB_TYPE:
             eOGRType = OFTBinary;
             break;
