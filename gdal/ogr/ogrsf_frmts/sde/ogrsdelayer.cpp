@@ -160,7 +160,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 
 #ifdef SE_NSTRING_TYPE
           case SE_NSTRING_TYPE:
-            eOGRType = ORTString;
+            eOGRType = OFTString;
             nWidth = asColumnDefs[iCol].size;
             break;
 #endif
