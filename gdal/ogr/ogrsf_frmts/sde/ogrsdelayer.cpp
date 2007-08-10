@@ -154,13 +154,16 @@ int OGRSDELayer::Initialize( const char *pszTableName,
             break;
 
           case SE_STRING_TYPE:
+#ifdef SE_UUID_TYPE
+          case SE_UUID_TYPE:
+#endif
             eOGRType = OFTString;
             nWidth = asColumnDefs[iCol].size;
             break;
 
 #ifdef SE_NSTRING_TYPE
           case SE_NSTRING_TYPE:
-            eOGRType = OFTString;
+            eOGRType = OFTWideString;
             nWidth = asColumnDefs[iCol].size;
             break;
 #endif
@@ -984,6 +987,26 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           }
           break;
 
+
+#ifdef SE_UUID_TYPE
+          case SE_UUID_TYPE:
+          {
+              char *pszTempString = (char *)
+                  CPLMalloc(poFieldDef->GetWidth()+1);
+
+              nSDEErr = SE_stream_get_uuid( hStream, anFieldMap[i]+1, 
+                                              pszTempString );
+              if( nSDEErr == SE_SUCCESS )
+                  poFeat->SetField( i, pszTempString );
+              else if( nSDEErr != SE_NULL_VALUE )
+              {
+                  poDS->IssueSDEError( nSDEErr, "SE_stream_get_string" );
+                  return NULL;
+              }
+              CPLFree( pszTempString );
+          }
+          break;
+#endif
           case SE_BLOB_TYPE:
           {
               SE_BLOB_INFO sBlobVal;
