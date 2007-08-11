@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _JP2READER_H_INCLUDED 
-#define _JP2READER_H_INCLUDED 
+#ifndef GDAL_JP2READER_H_INCLUDED
+#define GDAL_JP2READER_H_INCLUDED
 
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
@@ -143,8 +143,4 @@ public:
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
 };
 
-
-
-#endif /* ndef _JP2READER_H_INCLUDED */
-
-
+#endif /* ndef GDAL_JP2READER_H_INCLUDED */
