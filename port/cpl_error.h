@@ -82,6 +82,21 @@ void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int );
 
 CPL_C_END
 
+/*
+ * Helper macros used for input parameters validation.
+ */
+#define VALIDATE_POINTER0(ptr, func) \
+   do { if( NULL == ptr ) \
+      { CPLError( CE_Failure, CPLE_ObjectNull, \
+           "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
+         return; }} while(false)
+
+#define VALIDATE_POINTER1(ptr, func, rc) \
+   do { if( NULL == ptr ) \
+      { CPLError( CE_Failure, CPLE_ObjectNull, \
+           "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
+        return (rc); }} while(false)
+
 /* ==================================================================== */
 /*      Well known error codes.                                         */
 /* ==================================================================== */
