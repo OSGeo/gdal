@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_CORE_H_INCLUDED
-#define _OGR_CORE_H_INCLUDED
+#ifndef OGR_CORE_H_INCLUDED
+#define OGR_CORE_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -300,5 +300,4 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 
 CPL_C_END
 
-#endif /* ndef _OGR_CORE_H_INCLUDED */
-
+#endif /* ndef OGR_CORE_H_INCLUDED */

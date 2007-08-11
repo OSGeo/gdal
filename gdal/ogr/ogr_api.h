@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _OGR_API_H_INCLUDED
-#define _OGR_API_H_INCLUDED
+#ifndef OGR_API_H_INCLUDED
+#define OGR_API_H_INCLUDED
 
 /**
  * \file ogr_api.h
@@ -345,6 +345,4 @@ void CPL_DLL OGRCleanupAll(void);
 
 CPL_C_END
 
-#endif /* ndef _OGR_API_H_INCLUDED */
-
-
+#endif /* ndef OGR_API_H_INCLUDED */
