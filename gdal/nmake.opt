@@ -1,11 +1,31 @@
+# $Id$
 #
-# Check for additional file to include 
+# nmake.opt - main configuration file for NMAKE makefiles.
+#
+###############################################################################
+# For convenience, user may put custom settings to private mynmake.opt
+# and use EXT_NMAKE_OPT option while calling nmake.exe, as follows:
+#
 # nmake -f makefile.vc EXT_NMAKE_OPT=mynmake.opt
 !IFDEF EXT_NMAKE_OPT
 !INCLUDE $(EXT_NMAKE_OPT)
 !ENDIF
 
+###############################################################################
+# Check version of Visual C++ compiler:
+# nmake -f makefile.vc MSVC_VER=xxxx
+# where xxxx is one of following:
+# 1400 = 8.0 (2005) - specific compilation flags, different from older VC++
+# 1310 = 7.1 (2003)
+# 1300 = 7.0 (2002)
+# 1200 = 6.0
 #
+!IFNDEF MSVC_VER
+#assume msvc 7.1
+MSVC_VER=1310
+!ENDIF
+
+###############################################################################
 # Location to install .exe, .dll and python stuff
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
@@ -45,15 +65,7 @@ JAVA=$(JAVA_HOME)\bin\java
 JAR=$(JAVA_HOME)\bin\jar
 JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 
-# Check compiler version given in command line
-# nmake -f makefile.vc MSVC_VER=xxxx
-# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
-#
-!IFNDEF MSVC_VER
-#assume msvc 7.1
-MSVC_VER=1310
-!ENDIF
-
+# Compilation flags
 !IF $(MSVC_VER) == 1400
 # Uncomment the first for an optimized build or the second for a debug build.
 #OPTFLAGS=	/nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE

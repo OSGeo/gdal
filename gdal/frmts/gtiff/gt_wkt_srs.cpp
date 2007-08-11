@@ -32,7 +32,7 @@
 
 #include "cpl_serv.h"
 #include "geo_tiffp.h"
-#define _CPL_ERROR_H_INCLUDED_
+#define CPL_ERROR_H_INCLUDED
 
 #include "geo_normalize.h"
 #include "geovalues.h"
