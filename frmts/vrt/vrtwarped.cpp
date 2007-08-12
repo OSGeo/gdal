@@ -212,6 +212,8 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
                      GDALWarpOptions *psOptions )
     
 {
+    VALIDATE_POINTER1( hSrcDS, "GDALCreateWarpedVRT", NULL );
+
 /* -------------------------------------------------------------------- */
 /*      Create the VRTDataset and populate it with bands.               */
 /* -------------------------------------------------------------------- */

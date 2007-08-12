@@ -651,6 +651,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 CPLErr GDALChunkAndWarpImage( GDALWarpOperationH hOperation,
     int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
 {
+    VALIDATE_POINTER1( hOperation, "GDALChunkAndWarpImage", CE_Failure );
+
     return ( (GDALWarpOperation *)hOperation )->
         ChunkAndWarpImage( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 }
@@ -820,6 +822,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 CPLErr GDALChunkAndWarpMulti( GDALWarpOperationH hOperation,
     int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
 {
+    VALIDATE_POINTER1( hOperation, "GDALChunkAndWarpMulti", CE_Failure );
+
     return ( (GDALWarpOperation *)hOperation )->
         ChunkAndWarpMulti( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 }

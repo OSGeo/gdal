@@ -515,6 +515,8 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
                       void *pProgressData )
 
 {
+    VALIDATE_POINTER1( hSrcBand, "GDALComputeBandStats", CE_Failure );
+
     GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
     int         iLine, nWidth, nHeight;
     GDALDataType eType = poSrcBand->GetRasterDataType();

@@ -238,6 +238,8 @@ GDALColorTable *GDALColorTable::Clone() const
 GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 
 {
+    VALIDATE_POINTER1( hTable, "GDALCloneColorTable", NULL );
+
     return (GDALColorTableH) ((GDALColorTable *) hTable)->Clone();
 }
 
@@ -396,6 +398,8 @@ GDALCreateColorRamp( GDALColorTableH hTable,
             int nStartIndex, const GDALColorEntry *psStartColor,
             int nEndIndex, const GDALColorEntry *psEndColor )
 {
+    VALIDATE_POINTER0( hTable, "GDALCreateColorRamp" );
+
     ((GDALColorTable *) hTable)->CreateColorRamp( nStartIndex, psStartColor, 
                                                   nEndIndex, psEndColor );
 }

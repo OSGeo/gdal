@@ -1188,6 +1188,8 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
                    int nBitCount, int nStepCount )
 
 {
+    VALIDATE_POINTER0( pabySrcData, "GDALCopyBits" );
+
     int iStep;
     int iBit;
 
