@@ -28,8 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _CPL_ERROR_H_INCLUDED_
-#define _CPL_ERROR_H_INCLUDED_
+#ifndef CPL_ERROR_H_INCLUDED
+#define CPL_ERROR_H_INCLUDED
 
 #include "cpl_port.h"
 
@@ -115,4 +115,4 @@ CPL_C_END
 
 /* 100 - 299 reserved for GDAL */
 
-#endif /* _CPL_ERROR_H_INCLUDED_ */
+#endif /* CPL_ERROR_H_INCLUDED */
