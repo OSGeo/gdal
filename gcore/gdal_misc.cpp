@@ -356,6 +356,8 @@ const char * CPL_STDCALL GDALGetDataTypeName( GDALDataType eDataType )
 GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
 
 {
+    VALIDATE_POINTER1( pszName, "GDALGetDataTypeByName", GDT_Unknown );
+
     int	iType;
     
     for( iType = 1; iType < GDT_TypeCount; iType++ )

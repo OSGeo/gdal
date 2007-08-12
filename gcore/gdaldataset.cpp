@@ -1670,13 +1670,16 @@ GDALDatasetH CPL_STDCALL
 GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
+    VALIDATE_POINTER1( pszFilename, "GDALOpen", NULL );
+        
     int         iDriver;
     GDALDriverManager *poDM = GetGDALDriverManager();
     GDALOpenInfo oOpenInfo( pszFilename, eAccess );
     CPLLocaleC  oLocaleForcer;
 
     CPLErrorReset();
-    
+    CPLAssert( NULL != poDM );
+
     for( iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
     {
         GDALDriver      *poDriver = poDM->GetDriver( iDriver );
@@ -1747,6 +1750,8 @@ GDALDatasetH CPL_STDCALL
 GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 
 {
+    VALIDATE_POINTER1( pszFilename, "GDALOpenShared", NULL );
+
 /* -------------------------------------------------------------------- */
 /*      First scan the existing list to see if it could already         */
 /*      contain the requested dataset.                                  */
@@ -1799,6 +1804,8 @@ GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER0( hDS, "GDALClose" );
+
     GDALDataset *poDS = (GDALDataset *) hDS;
     int         i;
     CPLMutexHolderD( &hDLMutex );
@@ -1844,6 +1851,8 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
    
 {
+    VALIDATE_POINTER1( fp, "GDALDumpOpenDatasets", 0 );
+
     CPLMutexHolderD( &hDLMutex );
     int         i;
 

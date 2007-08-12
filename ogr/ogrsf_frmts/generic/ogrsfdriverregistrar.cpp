@@ -183,6 +183,8 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
                         OGRSFDriverH *pahDriverList )
 
 {
+    VALIDATE_POINTER1( pszName, "OGROpen", NULL );
+
     if (poRegistrar)
         return poRegistrar->Open( pszName, bUpdate, 
                                   (OGRSFDriver **) pahDriverList );
@@ -292,6 +294,8 @@ OGRDataSourceH OGROpenShared( const char *pszName, int bUpdate,
                               OGRSFDriverH *pahDriverList )
 
 {
+    VALIDATE_POINTER1( pszName, "OGROpenShared", NULL );
+
     OGRSFDriverRegistrar::GetRegistrar();
     return poRegistrar->OpenShared( pszName, bUpdate, 
                                     (OGRSFDriver **) pahDriverList );
@@ -386,6 +390,8 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
 OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "OGRReleaseDataSource", OGRERR_FAILURE );
+
     OGRSFDriverRegistrar::GetRegistrar();
     return poRegistrar->ReleaseDataSource((OGRDataSource *) hDS);
 }
@@ -459,6 +465,8 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
 void OGRRegisterDriver( OGRSFDriverH hDriver )
 
 {
+    VALIDATE_POINTER0( hDriver, "OGRRegisterDriver" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 
         (OGRSFDriver *) hDriver );
 }
@@ -506,6 +514,8 @@ OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int iDriver )
 OGRSFDriverH OGRGetDriver( int iDriver )
 
 {
+    VALIDATE_POINTER1( poRegistrar, "OGRGetDriver", NULL );
+
     return (OGRSFDriverH) poRegistrar->GetDriver( iDriver );
 }
 
@@ -533,7 +543,8 @@ OGRSFDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName )
 OGRSFDriverH OGRGetDriverByName( const char *pszName )
 
 {
-    ;
+    VALIDATE_POINTER1( pszName, "OGRGetDriverByName", NULL );
+
     return (OGRSFDriverH) 
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }
