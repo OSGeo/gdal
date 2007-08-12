@@ -1512,11 +1512,14 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
                          int nPrecision )
 
 {
+    VALIDATE_POINTER1( pszAxis, "CPLDecToDMS", "" );
+
     int         nDegrees, nMinutes;
     double      dfSeconds, dfABSAngle, dfEpsilon;
     char        szFormat[30];
-    static CPL_THREADLOCAL char szBuffer[50];
     const char  *pszHemisphere;
+    static CPL_THREADLOCAL char szBuffer[50] = { 0 };
+    
     
     dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
 
