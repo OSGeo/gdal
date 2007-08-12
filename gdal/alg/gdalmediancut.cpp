@@ -122,6 +122,10 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                          void * pProgressArg )
 
 {
+    VALIDATE_POINTER1( hRed, "GDALComputeMedianCutPCT", CE_Failure );
+    VALIDATE_POINTER1( hGreen, "GDALComputeMedianCutPCT", CE_Failure );
+    VALIDATE_POINTER1( hBlue, "GDALComputeMedianCutPCT", CE_Failure );
+
     int		nXSize, nYSize;
 
 /* -------------------------------------------------------------------- */

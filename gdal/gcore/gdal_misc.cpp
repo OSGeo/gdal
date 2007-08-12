@@ -490,8 +490,11 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                          double adfMinMax[2] )
 
 {
-    double       dfMin=0.0, dfMax=0.0;
-    GDALRasterBand *poBand;
+    VALIDATE_POINTER0( hBand, "GDALComputeRasterMinMax" );
+
+    double dfMin = 0.0;
+    double dfMax = 0.0;
+    GDALRasterBand *poBand = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Does the driver already know the min/max?                       */
