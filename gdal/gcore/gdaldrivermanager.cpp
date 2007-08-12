@@ -75,6 +75,8 @@ GDALDriverManager * GetGDALDriverManager()
             poDM = new GDALDriverManager();
     }
 
+    CPLAssert( NULL != poDM );
+
     return( (GDALDriverManager *) poDM );
 }
 
@@ -328,6 +330,8 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
 
 {
+    VALIDATE_POINTER1( hDriver, "GDALRegisterDriver", 0 );
+
     return GetGDALDriverManager()->RegisterDriver( (GDALDriver *) hDriver );
 }
 
@@ -380,6 +384,8 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 
 {
+    VALIDATE_POINTER0( hDriver, "GDALDeregisterDriver" );
+
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
 }
 
@@ -425,6 +431,8 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 GDALDriverH CPL_STDCALL GDALGetDriverByName( const char * pszName )
 
 {
+    VALIDATE_POINTER1( pszName, "GDALGetDriverByName", NULL );
+
     return( GetGDALDriverManager()->GetDriverByName( pszName ) );
 }
 
