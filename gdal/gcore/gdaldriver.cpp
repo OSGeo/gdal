@@ -140,7 +140,6 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 
 {
     VALIDATE_POINTER1( hDriver, "GDALCreate", NULL );
-    VALIDATE_POINTER1( pszFilename, "GDALCreate", NULL );
 
     return( ((GDALDriver *) hDriver)->Create( pszFilename,
                                               nXSize, nYSize, nBands,
@@ -440,8 +439,7 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
 {
     VALIDATE_POINTER1( hDriver, "GDALCreateCopy", NULL );
     VALIDATE_POINTER1( hSrcDS, "GDALCreateCopy", NULL );
-    VALIDATE_POINTER1( pszFilename, "GDALCreateCopy", NULL );
-
+    
     return (GDALDatasetH) ((GDALDriver *) hDriver)->
         CreateCopy( pszFilename, (GDALDataset *) hSrcDS, bStrict, papszOptions,
                     pfnProgress, pProgressData );
@@ -537,8 +535,6 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
 CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver, const char * pszFilename )
 
 {
-    VALIDATE_POINTER1( pszFilename, "GDALDeleteDataset", CE_Failure );
-
     if( hDriver == NULL )
         hDriver = GDALIdentifyDriver( pszFilename, NULL );
 
@@ -650,9 +646,6 @@ CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver,
                                       const char * pszOldName )
 
 {
-    VALIDATE_POINTER1( pszNewName, "GDALRenameDataset", CE_Failure );
-    VALIDATE_POINTER1( pszOldName, "GDALRenameDataset", CE_Failure );
-
     if( hDriver == NULL )
         hDriver = GDALIdentifyDriver( pszOldName, NULL );
     
@@ -760,9 +753,6 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH hDriver,
                                          const char * pszOldName )
 
 {
-    VALIDATE_POINTER1( pszNewName, "GDALCopyDatasetFiles", CE_Failure );
-    VALIDATE_POINTER1( pszOldName, "GDALCopyDatasetFiles", CE_Failure );
-
     if( hDriver == NULL )
         hDriver = GDALIdentifyDriver( pszOldName, NULL );
     

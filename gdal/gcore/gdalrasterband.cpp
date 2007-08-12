@@ -588,7 +588,9 @@ void CPL_STDCALL
 GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
 
 {
-    GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
+    VALIDATE_POINTER0( hBand, "GDALGetBlockSize" );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
 
     poBand->GetBlockSize( pnXSize, pnYSize );
 }
@@ -2199,6 +2201,8 @@ int GDALRasterBand::GetBand()
 int CPL_STDCALL GDALGetBandNumber( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetBandNumber", 0 );
+
     return ((GDALRasterBand *) hBand)->GetBand();
 }
 
@@ -2235,6 +2239,8 @@ GDALDataset *GDALRasterBand::GetDataset()
 GDALDatasetH CPL_STDCALL GDALGetBandDataset( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetBandDataset", NULL );
+
     return (GDALDatasetH) ((GDALRasterBand *) hBand)->GetDataset();
 }
 
@@ -2586,6 +2592,8 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
                                 void *pProgressData )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetDefaultHistogram", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->GetDefaultHistogram( 
         pdfMin, pdfMax, pnBuckets, ppanHistogram, bForce, 
         pfnProgress, pProgressData );
@@ -3134,6 +3142,8 @@ const GDALRasterAttributeTable *GDALRasterBand::GetDefaultRAT()
 GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetDefaultRAT", NULL );
+
     return (GDALRasterAttributeTableH) 
         ((GDALRasterBand *) hBand)->GetDefaultRAT();
 }
