@@ -240,6 +240,8 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     GDALWarpOptions *psOptions )
     
 {
+    VALIDATE_POINTER1( hSrcDS, "GDALCreateAndReprojectImage", CE_Failure );
+
 /* -------------------------------------------------------------------- */
 /*      Default a few parameters.                                       */
 /* -------------------------------------------------------------------- */

@@ -1421,6 +1421,8 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
                             GDALProgressFunc pfnProgress, void *pProgressArg )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALContourGenerate", CE_Failure );
+
     OGRContourWriterInfo oCWI;
 
     if( pfnProgress == NULL )
