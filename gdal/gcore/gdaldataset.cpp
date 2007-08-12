@@ -324,6 +324,8 @@ CPLErr CPL_STDCALL GDALAddBand( GDALDatasetH hDataset,
                     GDALDataType eType, char **papszOptions )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALAddBand", CE_Failure );
+
     return ((GDALDataset *) hDataset)->AddBand( eType, papszOptions );
 }
 
@@ -407,6 +409,8 @@ int GDALDataset::GetRasterXSize()
 int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALGetRasterXSize", 0 );
+
     return ((GDALDataset *) hDataset)->GetRasterXSize();
 }
 
@@ -442,6 +446,8 @@ int GDALDataset::GetRasterYSize()
 int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALGetRasterYSize", 0 );
+
     return ((GDALDataset *) hDataset)->GetRasterYSize();
 }
 
@@ -487,6 +493,8 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 GDALRasterBandH CPL_STDCALL GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetRasterBand", NULL );
+
     return( (GDALRasterBandH) ((GDALDataset *) hDS)->GetRasterBand(nBandId) );
 }
 
@@ -519,6 +527,8 @@ int GDALDataset::GetRasterCount()
 int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetRasterCount", 0 );
+
     return( ((GDALDataset *) hDS)->GetRasterCount() );
 }
 
@@ -561,6 +571,8 @@ const char *GDALDataset::GetProjectionRef()
 const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetProjectionRef", NULL );
+
     return( ((GDALDataset *) hDS)->GetProjectionRef() );
 }
 
@@ -669,6 +681,8 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetGeoTransform", CE_Failure );
+
     return( ((GDALDataset *) hDS)->GetGeoTransform(padfTransform) );
 }
 
@@ -749,6 +763,8 @@ void * CPL_STDCALL
 GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetInternalHandle", NULL );
+
     return( ((GDALDataset *) hDS)->GetInternalHandle(pszRequest) );
 }
 
@@ -917,6 +933,8 @@ int GDALDataset::GetGCPCount()
 int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetGCPCount", 0 );
+
     return ((GDALDataset *) hDS)->GetGCPCount();
 }
 
@@ -951,6 +969,8 @@ const char *GDALDataset::GetGCPProjection()
 const char * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetGCPProjection", NULL );
+
     return ((GDALDataset *) hDS)->GetGCPProjection();
 }
 
@@ -984,6 +1004,8 @@ const GDAL_GCP *GDALDataset::GetGCPs()
 const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetGCPs", NULL );
+
     return ((GDALDataset *) hDS)->GetGCPs();
 }
 
@@ -1133,6 +1155,8 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
                            void * pProgressData )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALBuildOverviews", CE_Failure );
+
     return ((GDALDataset *) hDataset)->BuildOverviews(
         pszResampling, nOverviews, panOverviewList, nListBands, panBandList, 
         pfnProgress, pProgressData );
@@ -1464,6 +1488,8 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 
 {
+    VALIDATE_POINTER0( ppahDSList, "GDALGetOpenDatasets" );
+
     *ppahDSList = (GDALDatasetH *) GDALDataset::GetOpenDatasets( pnCount);
 }
 

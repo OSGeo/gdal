@@ -299,6 +299,8 @@ GDALPaletteInterp CPL_STDCALL
 GDALGetPaletteInterpretation( GDALColorTableH hTable )
 
 {
+    VALIDATE_POINTER1( hTable, "GDALGetPaletteInterpretation", GPI_Gray );
+
     return ((GDALColorTable *) hTable)->GetPaletteInterpretation();
 }
 
