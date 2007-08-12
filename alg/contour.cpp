@@ -181,6 +181,8 @@ GDAL_CT_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue,
 CPLErr GDAL_CG_FeedLine( GDALContourGeneratorH hCG, double *padfScanline )
 
 {
+    VALIDATE_POINTER1( hCG, "GDAL_CG_FeedLine", CE_Failure );
+
     return ((GDALContourGenerator *) hCG)->FeedLine( padfScanline );
 }
 
