@@ -868,6 +868,8 @@ GDALGetRasterSampleOverview( GDALRasterBandH hBand,
                              int nDesiredSamples )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterSampleOverview", NULL );
+
     double dfBestSamples; 
     GDALRasterBandH hBestBand = hBand;
 
@@ -903,9 +905,12 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                            float *pafSampleBuf )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRandomRasterSample", 0 );
+
     GDALRasterBand *poBand;
 
     poBand = (GDALRasterBand *) GDALGetRasterSampleOverview( hBand, nSamples );
+    CPLAssert( NULL != poBand );
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the ratio of blocks we will read to get an           */
@@ -1054,6 +1059,8 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
 
 {
+    VALIDATE_POINTER0( psGCP, "GDALInitGCPs" );
+
     for( int iGCP = 0; iGCP < nCount; iGCP++ )
     {
         memset( psGCP, 0, sizeof(GDAL_GCP) );
@@ -1070,6 +1077,8 @@ void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
 void CPL_STDCALL GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
 
 {
+    VALIDATE_POINTER0( psGCP, "GDALDeinitGCPs" );
+
     for( int iGCP = 0; iGCP < nCount; iGCP++ )
     {
         CPLFree( psGCP->pszId );

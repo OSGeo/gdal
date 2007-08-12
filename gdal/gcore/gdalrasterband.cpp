@@ -538,6 +538,8 @@ GDALDataType GDALRasterBand::GetRasterDataType()
 GDALDataType CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterDataType", GDT_Unknown );
+
     return( ((GDALRasterBand *) hBand)->GetRasterDataType() );
 }
 
@@ -1234,6 +1236,8 @@ GDALAccess GDALRasterBand::GetAccess()
 GDALAccess CPL_STDCALL GDALGetRasterAccess( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterAccess", GA_ReadOnly );
+
     return ((GDALRasterBand *) hBand)->GetAccess();
 }
 
@@ -1273,6 +1277,8 @@ char **GDALRasterBand::GetCategoryNames()
 char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterCategoryNames", NULL );
+
     return ((GDALRasterBand *) hBand)->GetCategoryNames();
 }
 
@@ -1361,6 +1367,8 @@ double CPL_STDCALL
 GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterNoDataValue", 0 );
+
     return ((GDALRasterBand *) hBand)->GetNoDataValue( pbSuccess );
 }
 
@@ -1486,6 +1494,8 @@ double CPL_STDCALL
 GDALGetRasterMaximum( GDALRasterBandH hBand, int *pbSuccess )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterMaximum", 0 );
+
     return ((GDALRasterBand *) hBand)->GetMaximum( pbSuccess );
 }
 
@@ -1563,6 +1573,8 @@ double CPL_STDCALL
 GDALGetRasterMinimum( GDALRasterBandH hBand, int *pbSuccess )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterMinimum", 0 );
+
     return ((GDALRasterBand *) hBand)->GetMinimum( pbSuccess );
 }
 
@@ -1600,6 +1612,8 @@ GDALColorInterp CPL_STDCALL
 GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterColorInterpretation", GCI_Undefined );
+
     return ((GDALRasterBand *) hBand)->GetColorInterpretation();
 }
 
@@ -1674,6 +1688,8 @@ GDALColorTable *GDALRasterBand::GetColorTable()
 GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterColorTable", NULL );
+
     return (GDALColorTableH) ((GDALRasterBand *) hBand)->GetColorTable();
 }
 
@@ -1757,6 +1773,8 @@ int GDALRasterBand::HasArbitraryOverviews()
 int CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALHasArbitraryOverviews", 0 );
+
     return ((GDALRasterBand *) hBand)->HasArbitraryOverviews();
 }
 
@@ -1792,6 +1810,8 @@ int GDALRasterBand::GetOverviewCount()
 int CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetOverviewCount", 0 );
+
     return ((GDALRasterBand *) hBand)->GetOverviewCount();
 }
 
@@ -1830,6 +1850,8 @@ GDALRasterBand * GDALRasterBand::GetOverview( int i )
 GDALRasterBandH CPL_STDCALL GDALGetOverview( GDALRasterBandH hBand, int i )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetOverview", NULL );
+
     return (GDALRasterBandH) ((GDALRasterBand *) hBand)->GetOverview(i);
 }
 
@@ -1921,6 +1943,8 @@ double GDALRasterBand::GetOffset( int *pbSuccess )
 double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterOffset", 0 );
+
     return ((GDALRasterBand *) hBand)->GetOffset( pbSuccess );
 }
 
@@ -2001,6 +2025,8 @@ double GDALRasterBand::GetScale( int *pbSuccess )
 double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterScale", 0 );
+
     return ((GDALRasterBand *) hBand)->GetScale( pbSuccess );
 }
 
@@ -2074,6 +2100,8 @@ const char *GDALRasterBand::GetUnitType()
 const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterUnitType", NULL );
+
     return ((GDALRasterBand *) hBand)->GetUnitType();
 }
 
@@ -2132,6 +2160,8 @@ int GDALRasterBand::GetXSize()
 int CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterBandXSize", 0 );
+
     return ((GDALRasterBand *) hBand)->GetXSize();
 }
 
@@ -2164,6 +2194,8 @@ int GDALRasterBand::GetYSize()
 int CPL_STDCALL GDALGetRasterBandYSize( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterBandYSize", 0 );
+
     return ((GDALRasterBand *) hBand)->GetYSize();
 }
 
@@ -2489,6 +2521,8 @@ GDALGetRasterHistogram( GDALRasterBandH hBand,
                         void *pProgressData )
     
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterHistogram", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->
         GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
                       bIncludeOutOfRange, bApproxOK,
@@ -2775,6 +2809,8 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(
         double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALGetRasterStatistics", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->GetStatistics( 
         bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
 }
