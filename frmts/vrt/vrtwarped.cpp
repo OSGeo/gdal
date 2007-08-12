@@ -91,6 +91,8 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
     GDALWarpOptions *psWO;
     int i;
 
+    VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
+
 /* -------------------------------------------------------------------- */
 /*      Populate the warp options.                                      */
 /* -------------------------------------------------------------------- */
@@ -554,6 +556,8 @@ CPLErr CPL_STDCALL
 GDALInitializeWarpedVRT( GDALDatasetH hDS, GDALWarpOptions *psWO )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALInitializeWarpedVRT", CE_Failure );
+
     return ((VRTWarpedDataset *) hDS)->Initialize( psWO );
 }
 

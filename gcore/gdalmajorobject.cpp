@@ -170,6 +170,8 @@ char ** CPL_STDCALL
 GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 
 {
+    VALIDATE_POINTER1( hObject, "GDALGetMetadata", NULL );
+
     return ((GDALMajorObject *) hObject)->GetMetadata(pszDomain);
 }
 
@@ -252,6 +254,8 @@ const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject,
                                  const char *pszDomain )
 
 {
+    VALIDATE_POINTER1( hObject, "GDALGetMetadataItem", NULL );
+
     return ((GDALMajorObject *) hObject)->GetMetadataItem( pszName, pszDomain);
 }
 
