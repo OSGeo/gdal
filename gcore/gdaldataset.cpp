@@ -782,6 +782,8 @@ GDALDriver * GDALDataset::GetDriver()
 GDALDriverH CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH hDataset )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALGetDatasetDriver", NULL );
+
     return (GDALDriverH) ((GDALDataset *) hDataset)->GetDriver();
 }
 
@@ -1475,6 +1477,8 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 
 int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
 {
+    VALIDATE_POINTER1( hDS, "GDALGetAccess", 0 );
+
     return ((GDALDataset *) hDS)->GetAccess();
 }
 
@@ -1638,6 +1642,8 @@ char **GDALDataset::GetFileList()
 char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALGetFileList", NULL );
+
     return ((GDALDataset *) hDS)->GetFileList();
 }
 
