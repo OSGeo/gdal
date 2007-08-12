@@ -88,6 +88,8 @@ const char *GDALMajorObject::GetDescription() const
 const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
 
 {
+    VALIDATE_POINTER1( hObject, "GDALGetDescription", NULL );
+
     return ((GDALMajorObject *) hObject)->GetDescription();
 }
 
