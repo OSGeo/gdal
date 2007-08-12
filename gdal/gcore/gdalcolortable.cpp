@@ -117,6 +117,8 @@ const GDALColorEntry * CPL_STDCALL
 GDALGetColorEntry( GDALColorTableH hTable, int i )
 
 {
+    VALIDATE_POINTER1( hTable, "GDALGetColorEntry", NULL );
+
     return ((GDALColorTable *) hTable)->GetColorEntry( i );
 }
 
@@ -160,6 +162,9 @@ int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i,
                             GDALColorEntry *poEntry )
 
 {
+    VALIDATE_POINTER1( hTable, "GDALGetColorEntryAsRGB", 0 );
+    VALIDATE_POINTER1( poEntry, "GDALGetColorEntryAsRGB", 0 );
+
     return ((GDALColorTable *) hTable)->GetColorEntryAsRGB( i, poEntry );
 }
 
@@ -261,6 +266,8 @@ int GDALColorTable::GetColorEntryCount() const
 int CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH hTable )
 
 {
+    VALIDATE_POINTER1( hTable, "GDALGetColorEntryCount", 0 );
+
     return ((GDALColorTable *) hTable)->GetColorEntryCount();
 }
 
