@@ -3056,6 +3056,8 @@ CPLErr CPL_STDCALL GDALComputeRasterStatistics(
         GDALProgressFunc pfnProgress, void *pProgressData )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALComputeRasterStatistics", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->ComputeStatistics( 
         bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev,
         pfnProgress, pProgressData );

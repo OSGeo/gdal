@@ -58,6 +58,8 @@ GDALChecksumImage( GDALRasterBandH hBand,
                    int nXOff, int nYOff, int nXSize, int nYSize )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALChecksumImage", 0 );
+
     const static int anPrimes[11] = 
         { 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43 };
 
