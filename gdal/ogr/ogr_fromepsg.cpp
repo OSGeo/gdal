@@ -1463,6 +1463,8 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSG", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );
 }
 
@@ -1597,6 +1599,8 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetStatePlane", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83 );
 }
 
@@ -1610,6 +1614,8 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                   double dfOverrideUnit )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetStatePlaneWithUnits", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83,
                                                           pszOverrideUnitName,
                                                           dfOverrideUnit );
@@ -1792,5 +1798,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRAutoIdentifyEPSG", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->AutoIdentifyEPSG();
 }
