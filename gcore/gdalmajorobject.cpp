@@ -216,6 +216,8 @@ GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD,
                  const char *pszDomain )
 
 {
+    VALIDATE_POINTER1( hObject, "GDALSetMetadata", CE_Failure );
+
     return ((GDALMajorObject *) hObject)->SetMetadata( papszMD, pszDomain );
 }
 
@@ -300,6 +302,8 @@ GDALSetMetadataItem( GDALMajorObjectH hObject,
                      const char *pszDomain )
 
 {
+    VALIDATE_POINTER1( hObject, "GDALSetMetadataItem", CE_Failure );
+
     return ((GDALMajorObject *) hObject)->SetMetadataItem( pszName, pszValue,
                                                            pszDomain );
 }

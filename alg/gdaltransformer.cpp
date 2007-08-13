@@ -150,7 +150,9 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          int *pnPixels, int *pnLines )
 
 {
-    double adfExtent[4];
+    VALIDATE_POINTER1( hSrcDS, "GDALSuggestedWarpOutput", CE_Failure );
+
+    double adfExtent[4] = { 0 };
 
     return GDALSuggestedWarpOutput2( hSrcDS, pfnTransformer, pTransformArg, 
                                      padfGeoTransformOut, pnPixels, pnLines, 
@@ -211,11 +213,17 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           double *padfExtent, int nOptions )
 
 {
+    VALIDATE_POINTER1( hSrcDS, "GDALSuggestedWarpOutput2", CE_Failure );
+
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
-    int    nSamplePoints=0, abSuccess[441];
-    double adfX[441], adfY[441], adfZ[441], dfRatio;
+    int    nSamplePoints = 0;
+    int    abSuccess[441] = { 0 };;
+    double adfX[441] = { 0 };
+    double adfY[441] = { 0 };
+    double adfZ[441] = { 0 };
+    double dfRatio = 0;
     int    nInXSize = GDALGetRasterXSize( hSrcDS );
     int    nInYSize = GDALGetRasterYSize( hSrcDS );
 

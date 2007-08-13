@@ -1184,6 +1184,8 @@ CPLErr GDALWarpRegion( GDALWarpOperationH hOperation,
                        int nSrcXSize, int nSrcYSize )
 
 {
+    VALIDATE_POINTER1( hOperation, "GDALWarpRegion", CE_Failure );
+
     return ( (GDALWarpOperation *)hOperation )->
         WarpRegion( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                     nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize);
@@ -1533,6 +1535,8 @@ CPLErr GDALWarpRegionToBuffer( GDALWarpOperationH hOperation,
     int nSrcXOff, int nSrcYOff, int nSrcXSize, int nSrcYSize )
 
 {
+    VALIDATE_POINTER1( hOperation, "GDALWarpRegionToBuffer", CE_Failure );
+
     return ( (GDALWarpOperation *)hOperation )->
         WarpRegionToBuffer( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                             pDataBuf, eBufDataType,
