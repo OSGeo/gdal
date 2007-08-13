@@ -765,6 +765,8 @@ OGRErr OGRSpatialReference::Validate()
 OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRValidate", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->Validate();
 }
 
