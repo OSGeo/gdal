@@ -155,6 +155,8 @@ char **OSRProj4Tokenize( const char *pszFull )
 OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRImportFromProj4", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->importFromProj4( pszProj4 );
 }
 
@@ -914,6 +916,8 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
                                      char ** ppszReturn )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRExportToProj4", CE_Failure );
+
     *ppszReturn = NULL;
 
     return ((OGRSpatialReference *) hSRS)->exportToProj4( ppszReturn );
