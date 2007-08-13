@@ -158,6 +158,8 @@ void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 void GDALDestroyTPSTransformer( void *pTransformArg )
 
 {
+    VALIDATE_POINTER0( pTransformArg, "GDALDestroyTPSTransformer" );
+
     TPSTransformInfo *psInfo = (TPSTransformInfo *) pTransformArg;
 
     delete psInfo->poForward;
@@ -232,8 +234,10 @@ int GDALTPSTransform( void *pTransformArg, int bDstToSrc,
 CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
 
 {
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeTPSTransformer", NULL );
+
     CPLXMLNode *psTree;
-    TPSTransformInfo *psInfo = (TPSTransformInfo *) pTransformArg;
+    TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode( NULL, CXT_Element, "TPSTransformer" );
 

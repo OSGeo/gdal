@@ -691,6 +691,8 @@ GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
 void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 
 {
+    VALIDATE_POINTER0( psOptions, "GDALDestroyWarpOptions" );
+
     CSLDestroy( psOptions->papszWarpOptions );
     CPLFree( psOptions->panSrcBands );
     CPLFree( psOptions->panDstBands );
