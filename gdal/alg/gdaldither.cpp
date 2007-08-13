@@ -96,6 +96,12 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
                    void * pProgressArg )
 
 {
+    VALIDATE_POINTER1( hRed, "GDALDitherRGB2PCT", CE_Failure );
+    VALIDATE_POINTER1( hGreen, "GDALDitherRGB2PCT", CE_Failure );
+    VALIDATE_POINTER1( hBlue, "GDALDitherRGB2PCT", CE_Failure );
+    VALIDATE_POINTER1( hTarget, "GDALDitherRGB2PCT", CE_Failure );
+    VALIDATE_POINTER1( hColorTable, "GDALDitherRGB2PCT", CE_Failure );
+
     int		nXSize, nYSize;
     
 /* -------------------------------------------------------------------- */

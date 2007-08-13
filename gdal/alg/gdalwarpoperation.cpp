@@ -553,7 +553,7 @@ GDALWarpOperationH GDALCreateWarpOperation(
 void GDALDestroyWarpOperation( GDALWarpOperationH hOperation )
 {
     if ( hOperation )
-        delete (GDALWarpOperation *)hOperation;
+        delete static_cast<GDALWarpOperation *>(hOperation);
 }
 
 /************************************************************************/

@@ -212,6 +212,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                       int *panSuccess )
 
 {
+    VALIDATE_POINTER1( pTransformArg, "GDALRPCTransform", 0 );
+
     GDALRPCTransformInfo *psTransform = (GDALRPCTransformInfo *) pTransformArg;
     GDALRPCInfo *psRPC = &(psTransform->sRPC);
     int i;
