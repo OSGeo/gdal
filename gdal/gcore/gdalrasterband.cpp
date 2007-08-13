@@ -508,7 +508,9 @@ CPLErr CPL_STDCALL GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
                        void * pData )
 
 {
-    GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
+    VALIDATE_POINTER1( hBand, "GDALWriteBlock", CE_Failure );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand *>( hBand );
 
     return( poBand->WriteBlock( nXOff, nYOff, pData ) );
 }
@@ -1332,6 +1334,8 @@ CPLErr CPL_STDCALL
 GDALSetRasterCategoryNames( GDALRasterBandH hBand, char ** papszNames )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterCategoryNames", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetCategoryNames( papszNames );
 }
 
@@ -1422,6 +1426,8 @@ CPLErr CPL_STDCALL
 GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterNoDataValue", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetNoDataValue( dfValue );
 }
 
@@ -1661,6 +1667,8 @@ GDALSetRasterColorInterpretation( GDALRasterBandH hBand,
                                   GDALColorInterp eColorInterp )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterColorInterpretation", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetColorInterpretation(eColorInterp);
 }
 
@@ -1743,6 +1751,8 @@ CPLErr CPL_STDCALL
 GDALSetRasterColorTable( GDALRasterBandH hBand, GDALColorTableH hCT )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterColorTable", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetColorTable( (GDALColorTable *) hCT );
 }
 
@@ -1990,6 +2000,8 @@ CPLErr CPL_STDCALL
 GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterOffset", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetOffset( dfNewOffset );
 }
 
@@ -2072,6 +2084,8 @@ CPLErr CPL_STDCALL
 GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterScale", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetScale( dfNewOffset );
 }
 
@@ -3132,6 +3146,8 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
         double dfMin, double dfMax, double dfMean, double dfStdDev )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetRasterStatistics", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetStatistics( 
         dfMin, dfMax, dfMean, dfStdDev );
 }

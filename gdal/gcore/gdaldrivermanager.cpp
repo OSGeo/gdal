@@ -77,7 +77,7 @@ GDALDriverManager * GetGDALDriverManager()
 
     CPLAssert( NULL != poDM );
 
-    return( (GDALDriverManager *) poDM );
+    return const_cast<GDALDriverManager *>( poDM );
 }
 
 /************************************************************************/

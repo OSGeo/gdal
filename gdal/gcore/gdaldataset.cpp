@@ -617,6 +617,8 @@ CPLErr GDALDataset::SetProjection( const char * )
 CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS, const char * pszProjection )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALSetProjection", CE_Failure );
+
     return( ((GDALDataset *) hDS)->SetProjection(pszProjection) );
 }
 
@@ -729,6 +731,8 @@ CPLErr CPL_STDCALL
 GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALSetGeoTransform", CE_Failure );
+
     return( ((GDALDataset *) hDS)->SetGeoTransform(padfTransform) );
 }
 
