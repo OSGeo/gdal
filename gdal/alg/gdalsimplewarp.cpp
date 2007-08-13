@@ -83,6 +83,9 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                      char **papszWarpOptions )
     
 {
+    VALIDATE_POINTER1( hSrcDS, "GDALSimpleImageWarp", 0 );
+    VALIDATE_POINTER1( hDstDS, "GDALSimpleImageWarp", 0 );
+
     int		iBand, bCancelled = FALSE;
 
 /* -------------------------------------------------------------------- */
