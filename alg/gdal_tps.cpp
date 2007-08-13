@@ -202,6 +202,8 @@ int GDALTPSTransform( void *pTransformArg, int bDstToSrc,
                       int *panSuccess )
 
 {
+    VALIDATE_POINTER1( pTransformArg, "GDALTPSTransform", 0 );
+
     int    i;
     TPSTransformInfo *psInfo = (TPSTransformInfo *) pTransformArg;
 
