@@ -119,6 +119,7 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
         }
     }
 
+    CPLAssert( NULL != poSRS );
     return poSRS;
 }
 
@@ -235,6 +236,8 @@ int OGRSpatialReference::Reference()
 int OSRReference( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRReference", 0 );
+
     return ((OGRSpatialReference *) hSRS)->Reference();
 }
 
@@ -268,6 +271,8 @@ int OGRSpatialReference::Dereference()
 int OSRDereference( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRDereference", 0 );
+
     return ((OGRSpatialReference *) hSRS)->Dereference();
 }
 
@@ -309,6 +314,8 @@ void OGRSpatialReference::Release()
 void OSRRelease( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER0( hSRS, "OSRRelease" );
+
     ((OGRSpatialReference *) hSRS)->Release();
 }
 
@@ -434,6 +441,8 @@ const char * CPL_STDCALL OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                              const char * pszKey, int iChild )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetAttrValue", NULL );
+
     return ((OGRSpatialReference *) hSRS)->GetAttrValue( pszKey, iChild );
 }
 
@@ -469,6 +478,8 @@ OGRSpatialReference *OGRSpatialReference::Clone() const
 OGRSpatialReferenceH CPL_STDCALL OSRClone( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRClone", NULL );
+
     return (OGRSpatialReferenceH) ((OGRSpatialReference *) hSRS)->Clone();
 }
 
@@ -513,6 +524,8 @@ OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppsz
                              int bSimplify)
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRExportToPrettyWkt", CE_Failure );
+
     *ppszReturn = NULL;
 
     return ((OGRSpatialReference *) hSRS)->exportToPrettyWkt( ppszReturn,
@@ -565,6 +578,8 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
                                    char ** ppszReturn )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRExportToWkt", CE_Failure );
+
     *ppszReturn = NULL;
 
     return ((OGRSpatialReference *) hSRS)->exportToWkt( ppszReturn );
@@ -618,6 +633,8 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 OGRErr OSRImportFromWkt( OGRSpatialReferenceH hSRS, char **ppszInput )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRImportFromWkt", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->importFromWkt( ppszInput );
 }
 
@@ -706,6 +723,8 @@ OGRErr CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                         const char * pszPath, const char * pszValue )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetAttrValue", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetNode( pszPath, pszValue );
 }
 
@@ -792,6 +811,8 @@ OGRErr OSRSetAngularUnits( OGRSpatialReferenceH hSRS,
                            const char * pszUnits, double dfInRadians )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetAngularUnits", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetAngularUnits( pszUnits, 
                                                             dfInRadians );
 }
@@ -853,6 +874,8 @@ double OGRSpatialReference::GetAngularUnits( char ** ppszName ) const
 double OSRGetAngularUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetAngularUnits", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetAngularUnits( ppszName );
 }
 
@@ -989,6 +1012,8 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
                           const char * pszUnits, double dfInMeters )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetLinearUnits", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetLinearUnits( pszUnits, 
                                                            dfInMeters );
 }
@@ -1053,6 +1078,8 @@ double OGRSpatialReference::GetLinearUnits( char ** ppszName ) const
 double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetLinearUnits", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetLinearUnits( ppszName );
 }
 
@@ -1107,6 +1134,8 @@ double OGRSpatialReference::GetPrimeMeridian( char **ppszName ) const
 double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetPrimeMeridian", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetPrimeMeridian( ppszName );
 }
 
@@ -1287,6 +1316,8 @@ OGRErr OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                      double dfConvertToRadians )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetGeogCS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetGeogCS( 
         pszGeogName, pszDatumName, 
         pszSpheroidName, dfSemiMajor, dfInvFlattening, 
@@ -1382,6 +1413,8 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetWellKnownGeogCS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetWellKnownGeogCS( pszName );
 }
 
@@ -1453,6 +1486,9 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
                           OGRSpatialReferenceH hSrcSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRCopyGeogCSFrom", CE_Failure );
+    VALIDATE_POINTER1( hSrcSRS, "OSRCopyGeogCSFrom", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->CopyGeogCSFrom( 
         (const OGRSpatialReference *) hSrcSRS );
 }
@@ -1632,6 +1668,8 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
                                         const char *pszDef )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetFromUserInput", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetFromUserInput( pszDef );
 }
 
@@ -1724,10 +1762,11 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 /*                        OSRimportFromUrl()                            */
 /************************************************************************/
 
-OGRErr OSRImportFromUrl( OGRSpatialReferenceH hSRS, 
-                                        const char *pszUrl )
+OGRErr OSRImportFromUrl( OGRSpatialReferenceH hSRS, const char *pszUrl )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRImportFromUrl", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->importFromUrl( pszUrl );
 }
 
@@ -2025,6 +2064,8 @@ double OGRSpatialReference::GetSemiMajor( OGRErr * pnErr ) const
 double OSRGetSemiMajor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetSemiMajor", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetSemiMajor( pnErr );
 }
 
@@ -2071,6 +2112,8 @@ double OGRSpatialReference::GetInvFlattening( OGRErr * pnErr ) const
 double OSRGetInvFlattening( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetInvFlattening", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetInvFlattening( pnErr );
 }
 
@@ -2110,6 +2153,8 @@ double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr ) const
 double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetSemiMinor", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetSemiMinor( pnErr );
 }
 
@@ -2157,6 +2202,8 @@ OGRErr OGRSpatialReference::SetLocalCS( const char * pszName )
 OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetLocalCS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetLocalCS( pszName );
 }
 
@@ -2214,6 +2261,8 @@ OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
 OGRErr OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetProjCS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetProjCS( pszName );
 }
 
@@ -2342,6 +2391,8 @@ OGRErr OSRSetProjParm( OGRSpatialReferenceH hSRS,
                        const char * pszParmName, double dfValue )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetProjParm", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetProjParm( pszParmName, dfValue );
 }
 
@@ -2437,6 +2488,8 @@ double OSRGetProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
                        double dfDefaultValue, OGRErr *pnErr )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetProjParm", 0 );
+
     return ((OGRSpatialReference *) hSRS)->
         GetProjParm(pszName, dfDefaultValue, pnErr);
 }
@@ -2504,6 +2557,8 @@ double OSRGetNormProjParm( OGRSpatialReferenceH hSRS, const char *pszName,
                            double dfDefaultValue, OGRErr *pnErr )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetNormProjParm", 0 );
+
     return ((OGRSpatialReference *) hSRS)->
         GetNormProjParm(pszName, dfDefaultValue, pnErr);
 }
@@ -2560,6 +2615,8 @@ OGRErr OSRSetNormProjParm( OGRSpatialReferenceH hSRS,
                            const char * pszParmName, double dfValue )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetNormProjParm", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->
         SetNormProjParm( pszParmName, dfValue );
 }
@@ -2595,6 +2652,8 @@ OGRErr OSRSetTM( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetTM", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetTM( 
         dfCenterLat, dfCenterLong, 
         dfScale, 
@@ -2635,6 +2694,8 @@ OGRErr OSRSetTMVariant( OGRSpatialReferenceH hSRS,
                         double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetTMVariant", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetTMVariant( 
         pszVariantName,
         dfCenterLat, dfCenterLong, 
@@ -2693,6 +2754,8 @@ OGRErr OSRSetTPED( OGRSpatialReferenceH hSRS,
                    double dfFalseEasting, double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetTPED", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetTPED( 
         dfLat1, dfLong1, dfLat2, dfLong2,
         dfFalseEasting, dfFalseNorthing );
@@ -2709,6 +2772,8 @@ OGRErr OSRSetTMSO( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetTMSO", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetTMSO( 
         dfCenterLat, dfCenterLong, 
         dfScale, 
@@ -2743,6 +2808,8 @@ OGRErr OSRSetTMG( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetTMG", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetTMG( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -2780,6 +2847,8 @@ OGRErr OSRSetACEA( OGRSpatialReferenceH hSRS,
                    double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetACEA", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetACEA( 
         dfStdP1, dfStdP2, 
         dfCenterLat, dfCenterLong, 
@@ -2814,6 +2883,8 @@ OGRErr OSRSetAE( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetACEA", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetAE( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -2846,6 +2917,8 @@ OGRErr OSRSetBonne( OGRSpatialReferenceH hSRS,
                     double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetBonne", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetBonne( 
         dfStdP1, dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -2878,6 +2951,8 @@ OGRErr OSRSetCEA( OGRSpatialReferenceH hSRS,
                   double dfFalseEasting, double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetCEA", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetCEA( 
         dfStdP1, dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -2911,6 +2986,8 @@ OGRErr OSRSetCS( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetCS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetCS( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -2948,6 +3025,8 @@ OGRErr OSRSetEC( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetEC", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetEC( 
         dfStdP1, dfStdP2, 
         dfCenterLat, dfCenterLong, 
@@ -3002,6 +3081,8 @@ OGRErr OSRSetEckert( OGRSpatialReferenceH hSRS,
                      double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetEckert", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetEckert( 
         nVariation, dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -3036,6 +3117,8 @@ OGRErr OSRSetEckertIV( OGRSpatialReferenceH hSRS,
                        double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetEckertIV", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetEckertIV( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -3070,6 +3153,8 @@ OGRErr OSRSetEckertVI( OGRSpatialReferenceH hSRS,
                        double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetEckertVI", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetEckertVI( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -3104,6 +3189,8 @@ OGRErr OSRSetEquirectangular( OGRSpatialReferenceH hSRS,
                               double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetEquirectangular", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetEquirectangular( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3136,6 +3223,8 @@ OGRErr OSRSetGS( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetGS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetGS( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -3168,6 +3257,8 @@ OGRErr OSRSetGH( OGRSpatialReferenceH hSRS,
                  double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetGH", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetGH( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -3203,6 +3294,8 @@ OGRErr OSRSetGEOS( OGRSpatialReferenceH hSRS,
                    double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetGEOS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetGEOS( 
         dfCentralMeridian, dfSatelliteHeight,
         dfFalseEasting, dfFalseNorthing );
@@ -3237,6 +3330,8 @@ OGRErr OSRSetGnomonic( OGRSpatialReferenceH hSRS,
                        double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetGnomonic", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetGnomonic( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3294,6 +3389,8 @@ OGRErr OSRSetHOM( OGRSpatialReferenceH hSRS,
                   double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetHOM", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetHOM( 
         dfCenterLat, dfCenterLong, 
         dfAzimuth, dfRectToSkew, 
@@ -3356,6 +3453,8 @@ OGRErr OSRSetHOM2PNO( OGRSpatialReferenceH hSRS,
                       double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetHOM2PNO", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetHOM2PNO( 
         dfCenterLat,
         dfLat1, dfLong1,
@@ -3400,6 +3499,8 @@ OGRErr OSRSetKrovak( OGRSpatialReferenceH hSRS,
                      double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetKrovak", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetKrovak( 
         dfCenterLat, dfCenterLong, 
         dfAzimuth, dfPseudoStdParallel1,
@@ -3434,6 +3535,8 @@ OGRErr OSRSetLAEA( OGRSpatialReferenceH hSRS,
                    double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetLAEA", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetLAEA( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3470,6 +3573,8 @@ OGRErr OSRSetLCC( OGRSpatialReferenceH hSRS,
                   double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetLCC", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetLCC( 
         dfStdP1, dfStdP2, 
         dfCenterLat, dfCenterLong, 
@@ -3506,6 +3611,8 @@ OGRErr OSRSetLCC1SP( OGRSpatialReferenceH hSRS,
                      double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetLCC1SP", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetLCC1SP( 
         dfCenterLat, dfCenterLong, 
         dfScale,
@@ -3543,6 +3650,8 @@ OGRErr OSRSetLCCB( OGRSpatialReferenceH hSRS,
                    double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetLCCB", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetLCCB( 
         dfStdP1, dfStdP2, 
         dfCenterLat, dfCenterLong, 
@@ -3576,6 +3685,8 @@ OGRErr OSRSetMC( OGRSpatialReferenceH hSRS,
                  double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetMC", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetMC( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3611,6 +3722,8 @@ OGRErr OSRSetMercator( OGRSpatialReferenceH hSRS,
                        double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetMercator", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetMercator( 
         dfCenterLat, dfCenterLong, 
         dfScale,
@@ -3648,6 +3761,8 @@ OGRErr OSRSetMercator2SP( OGRSpatialReferenceH hSRS,
                           double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetMercator2SP", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetMercator2SP( 
         dfStdP1, 
         dfCenterLat, dfCenterLong, 
@@ -3680,6 +3795,8 @@ OGRErr OSRSetMollweide( OGRSpatialReferenceH hSRS,
                         double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetMollweide", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetMollweide( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -3712,6 +3829,8 @@ OGRErr OSRSetNZMG( OGRSpatialReferenceH hSRS,
                    double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetNZMG", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetNZMG( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3747,6 +3866,8 @@ OGRErr OSRSetOS( OGRSpatialReferenceH hSRS,
                  double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetOS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetOS( 
         dfOriginLat, dfCMeridian,
         dfScale,
@@ -3780,6 +3901,8 @@ OGRErr OSRSetOrthographic( OGRSpatialReferenceH hSRS,
                            double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetOrthographic", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetOrthographic( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3815,6 +3938,8 @@ OGRErr OSRSetPolyconic( OGRSpatialReferenceH hSRS,
                         double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetPolyconic", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetPolyconic( 
         dfCenterLat, dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3850,6 +3975,8 @@ OGRErr OSRSetPS( OGRSpatialReferenceH hSRS,
                  double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetPS", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetPS( 
         dfCenterLat, dfCenterLong, 
         dfScale,
@@ -3882,6 +4009,8 @@ OGRErr OSRSetRobinson( OGRSpatialReferenceH hSRS,
                         double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetRobinson", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetRobinson( 
         dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3913,6 +4042,8 @@ OGRErr OSRSetSinusoidal( OGRSpatialReferenceH hSRS,
                          double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetSinusoidal", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetSinusoidal( 
         dfCenterLong, 
         dfFalseEasting, dfFalseNorthing );
@@ -3949,6 +4080,8 @@ OGRErr OSRSetStereographic( OGRSpatialReferenceH hSRS,
                             double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetStereographic", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetStereographic( 
         dfOriginLat, dfCMeridian,
         dfScale,
@@ -3989,6 +4122,8 @@ OGRErr OSRSetSOC( OGRSpatialReferenceH hSRS,
                   double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetSOC", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetSOC( 
         dfLatitudeOfOrigin, dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -4020,6 +4155,8 @@ OGRErr OSRSetVDG( OGRSpatialReferenceH hSRS,
                   double dfFalseEasting, double dfFalseNorthing )
     
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetVDG", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetVDG( 
         dfCentralMeridian,
         dfFalseEasting, dfFalseNorthing );
@@ -4085,6 +4222,8 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
 OGRErr OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetUTM", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetUTM( nZone, bNorth );
 }
 
@@ -4151,6 +4290,8 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
 int OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetUTMZone", 0 );
+
     return ((OGRSpatialReference *) hSRS)->GetUTMZone( pbNorth );
 }
 
@@ -4221,6 +4362,8 @@ OGRErr OSRSetAuthority( OGRSpatialReferenceH hSRS,
                         int nCode )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetAuthority", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetAuthority( pszTargetKey, 
                                                          pszAuthority,
                                                          nCode );
@@ -4291,6 +4434,8 @@ const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
                                  const char *pszTargetKey )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetAuthorityCode", NULL );
+
     return ((OGRSpatialReference *) hSRS)->GetAuthorityCode( pszTargetKey );
 }
 
@@ -4358,6 +4503,8 @@ const char *OSRGetAuthorityName( OGRSpatialReferenceH hSRS,
                                  const char *pszTargetKey )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetAuthorityName", NULL );
+
     return ((OGRSpatialReference *) hSRS)->GetAuthorityName( pszTargetKey );
 }
 
@@ -4414,6 +4561,8 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 OGRErr OSRStripCTParms( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRStripCTParms", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->StripCTParms( NULL );
 }
 
@@ -4449,6 +4598,8 @@ int OGRSpatialReference::IsProjected() const
 int OSRIsProjected( OGRSpatialReferenceH hSRS ) 
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRIsProjected", 0 );
+
     return ((OGRSpatialReference *) hSRS)->IsProjected();
 }
 
@@ -4481,6 +4632,8 @@ int OGRSpatialReference::IsGeographic() const
 int OSRIsGeographic( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRIsGeographic", 0 );
+
     return ((OGRSpatialReference *) hSRS)->IsGeographic();
 }
 
@@ -4513,6 +4666,8 @@ int OGRSpatialReference::IsLocal() const
 int OSRIsLocal( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRIsLocal", 0 );
+
     return ((OGRSpatialReference *) hSRS)->IsLocal();
 }
 
@@ -4543,6 +4698,8 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
 OGRSpatialReferenceH CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH hSource )
 
 {
+    VALIDATE_POINTER1( hSource, "OSRCloneGeogCS", NULL );
+
     return (OGRSpatialReferenceH) 
         ((OGRSpatialReference *) hSource)->CloneGeogCS();
 }
@@ -4631,6 +4788,9 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
 int OSRIsSameGeogCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
 {
+    VALIDATE_POINTER1( hSRS1, "OSRIsSameGeogCS", 0 );
+    VALIDATE_POINTER1( hSRS2, "OSRIsSameGeogCS", 0 );
+
     return ((OGRSpatialReference *) hSRS1)->IsSameGeogCS( 
         (OGRSpatialReference *) hSRS2 );
 }
@@ -4723,6 +4883,9 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
 {
+    VALIDATE_POINTER1( hSRS1, "OSRIsSame", 0 );
+    VALIDATE_POINTER1( hSRS2, "OSRIsSame", 0 );
+
     return ((OGRSpatialReference *) hSRS1)->IsSame( 
         (OGRSpatialReference *) hSRS2 );
 }
@@ -4815,6 +4978,8 @@ OGRErr OSRSetTOWGS84( OGRSpatialReferenceH hSRS,
                       double dfPPM )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetTOWGS84", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetTOWGS84( dfDX, dfDY, dfDZ, 
                                                        dfEX, dfEY, dfEZ, 
                                                        dfPPM );
@@ -4861,6 +5026,8 @@ OGRErr OSRGetTOWGS84( OGRSpatialReferenceH hSRS,
                       double * padfCoeff, int nCoeffCount )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRGetTOWGS84", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->GetTOWGS84( padfCoeff, nCoeffCount);
 }
 
@@ -4979,6 +5146,8 @@ OGRErr OGRSpatialReference::FixupOrdering()
 OGRErr OSRFixupOrdering( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRFixupOrdering", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->FixupOrdering();
 }
 
@@ -5042,6 +5211,8 @@ OGRErr OGRSpatialReference::Fixup()
 OGRErr OSRFixup( OGRSpatialReferenceH hSRS )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRFixup", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->Fixup();
 }
 

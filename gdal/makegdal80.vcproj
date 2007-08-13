@@ -151,6 +151,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\port\cpl_http.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\port\cpl_list.cpp"
 					>
 				</File>
@@ -175,11 +179,19 @@
 					>
 				</File>
 				<File
+					RelativePath=".\port\cpl_strtod.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\port\cpl_vsi_mem.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\port\cpl_vsil.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\port\cpl_vsil_simple.cpp"
 					>
 				</File>
 				<File
@@ -2801,6 +2813,10 @@
 				Name="port"
 				>
 				<File
+					RelativePath=".\port\cpl_config.h"
+					>
+				</File>
+				<File
 					RelativePath=".\port\cpl_config.h.vc"
 					>
 					<FileConfiguration
@@ -2837,6 +2853,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\port\cpl_http.h"
+					>
+				</File>
+				<File
 					RelativePath=".\port\cpl_list.h"
 					>
 				</File>
@@ -2862,6 +2882,10 @@
 				</File>
 				<File
 					RelativePath=".\port\cpl_vsi.h"
+					>
+				</File>
+				<File
+					RelativePath=".\port\cpl_vsi_virtual.h"
 					>
 				</File>
 			</Filter>
