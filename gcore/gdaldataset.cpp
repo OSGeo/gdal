@@ -192,6 +192,8 @@ void GDALDataset::FlushCache()
 void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 
 {
+    VALIDATE_POINTER0( hDS, "GDALFlushCache" );
+
     ((GDALDataset *) hDS)->FlushCache();
 }
 
@@ -834,6 +836,8 @@ int GDALDataset::Reference()
 int CPL_STDCALL GDALReferenceDataset( GDALDatasetH hDataset )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALReferenceDataset", 0 );
+
     return ((GDALDataset *) hDataset)->Reference();
 }
 
@@ -869,6 +873,8 @@ int GDALDataset::Dereference()
 int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
 
 {
+    VALIDATE_POINTER1( hDataset, "GDALDereferenceDataset", 0 );
+
     return ((GDALDataset *) hDataset)->Dereference();
 }
 
@@ -1068,6 +1074,8 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
                     const char *pszGCPProjection )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALSetDescription", CE_Failure );
+
     return ((GDALDataset *) hDS)->SetGCPs( nGCPCount, pasGCPList, 
                                            pszGCPProjection );
 }
@@ -1444,6 +1452,8 @@ GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                      int nPixelSpace, int nLineSpace, int nBandSpace )
     
 {
+    VALIDATE_POINTER1( hDS, "GDALDatasetRasterIO", CE_Failure );
+
     GDALDataset    *poDS = (GDALDataset *) hDS;
     
     return( poDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -1596,6 +1606,8 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
                        int nBandCount, int *panBandMap,char **papszOptions )
     
 {
+    VALIDATE_POINTER1( hDS, "GDALDatasetAdviseRead", CE_Failure );
+
     return ((GDALDataset *) hDS)->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
                                               nBufXSize, nBufYSize, eDT, 
                                               nBandCount, panBandMap, 

@@ -127,6 +127,8 @@ void GDALMajorObject::SetDescription( const char * pszNewDesc )
 void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject, const char *pszNewDesc )
 
 {
+    VALIDATE_POINTER0( hObject, "GDALSetDescription" );
+
     ((GDALMajorObject *) hObject)->SetDescription( pszNewDesc );
 }
 

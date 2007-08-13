@@ -242,6 +242,8 @@ void GDALDestroyGCPTransformer( void *pTransformArg )
 {
     GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
 
+    VALIDATE_POINTER0( pTransformArg, "GDALDestroyGCPTransformer" );
+
     GDALDeinitGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
     CPLFree( psInfo->pasGCPList );
 
@@ -320,6 +322,8 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 {
     CPLXMLNode *psTree;
     GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
+
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGCPTransformer", NULL );
 
     psTree = CPLCreateXMLNode( NULL, CXT_Element, "GCPTransformer" );
 

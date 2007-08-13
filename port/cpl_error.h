@@ -89,13 +89,13 @@ CPL_C_END
    do { if( NULL == ptr ) \
       { CPLError( CE_Failure, CPLE_ObjectNull, \
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
-         return; }} while(false)
+         return; }} while(0)
 
 #define VALIDATE_POINTER1(ptr, func, rc) \
    do { if( NULL == ptr ) \
       { CPLError( CE_Failure, CPLE_ObjectNull, \
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
-        return (rc); }} while(false)
+        return (rc); }} while(0)
 
 /* ==================================================================== */
 /*      Well known error codes.                                         */
