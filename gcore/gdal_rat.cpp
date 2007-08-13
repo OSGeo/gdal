@@ -131,7 +131,7 @@ GDALDestroyRasterAttributeTable( GDALRasterAttributeTableH hRAT )
 
 {
     if( hRAT != NULL )
-        delete (GDALRasterAttributeTable *) hRAT;
+        delete static_cast<GDALRasterAttributeTable *>(hRAT);
 }
 
 /************************************************************************/
@@ -180,6 +180,8 @@ int GDALRasterAttributeTable::GetColumnCount() const
 int CPL_STDCALL GDALRATGetColumnCount( GDALRasterAttributeTableH hRAT )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetColumnCount", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetColumnCount();
 }
 
@@ -216,6 +218,8 @@ const char *CPL_STDCALL GDALRATGetNameOfCol( GDALRasterAttributeTableH hRAT,
                                              int iCol )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetNameOfCol", NULL );
+
     // we don't just wrap the normal operator because we don't want to
     // return a temporary string, we want to return a pointer to the
     // internal column name. 
@@ -261,6 +265,8 @@ GDALRATFieldUsage CPL_STDCALL
 GDALRATGetUsageOfCol( GDALRasterAttributeTableH hRAT, int iCol )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetUsageOfCol", GFU_Generic );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetUsageOfCol( iCol );
 }
 
@@ -296,6 +302,8 @@ GDALRATFieldType CPL_STDCALL
 GDALRATGetTypeOfCol( GDALRasterAttributeTableH hRAT, int iCol )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetTypeOfCol", GFT_Integer );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetTypeOfCol( iCol );
 }
 
@@ -339,6 +347,8 @@ GDALRATGetColOfUsage( GDALRasterAttributeTableH hRAT,
                       GDALRATFieldUsage eUsage )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetColOfUsage", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetColOfUsage( eUsage );
 }
 
@@ -368,6 +378,8 @@ int CPL_STDCALL
 GDALRATGetRowCount( GDALRasterAttributeTableH hRAT )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetRowCount", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetRowCount();
 }
 
@@ -444,6 +456,8 @@ const char * CPL_STDCALL
 GDALRATGetValueAsString( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsString", NULL );
+
     GDALRasterAttributeTable *poRAT = (GDALRasterAttributeTable *) hRAT;
 
     poRAT->osWorkingResult = poRAT->GetValueAsString( iRow, iField );
@@ -513,6 +527,8 @@ int CPL_STDCALL
 GDALRATGetValueAsInt( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsInt", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetValueAsInt( iRow, iField );
 }
 
@@ -578,6 +594,8 @@ double CPL_STDCALL
 GDALRATGetValueAsDouble( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsDouble", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetValueAsDouble(iRow,iField);
 }
 
@@ -633,6 +651,8 @@ void CPL_STDCALL
 GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
 
 {
+    VALIDATE_POINTER0( hRAT, "GDALRATSetRowCount" );
+
     ((GDALRasterAttributeTable *) hRAT)->SetRowCount( nNewCount );
 }
 
@@ -702,6 +722,8 @@ GDALRATSetValueAsString( GDALRasterAttributeTableH hRAT, int iRow, int iField,
                          const char *pszValue )
 
 {
+    VALIDATE_POINTER0( hRAT, "GDALRATSetValueAsString" );
+
     ((GDALRasterAttributeTable *) hRAT)->SetValue( iRow, iField, pszValue );
 }
 
@@ -776,6 +798,8 @@ GDALRATSetValueAsInt( GDALRasterAttributeTableH hRAT, int iRow, int iField,
                       int nValue )
 
 {
+    VALIDATE_POINTER0( hRAT, "GDALRATSetValueAsInt" );
+
     ((GDALRasterAttributeTable *) hRAT)->SetValue( iRow, iField, nValue);
 }
 
@@ -850,6 +874,8 @@ GDALRATSetValueAsDouble( GDALRasterAttributeTableH hRAT, int iRow, int iField,
                          double dfValue )
 
 {
+    VALIDATE_POINTER0( hRAT, "GDALRATSetValueAsDouble" );
+
     ((GDALRasterAttributeTable *) hRAT)->SetValue( iRow, iField, dfValue );
 }
 
@@ -967,6 +993,8 @@ int CPL_STDCALL
 GDALRATGetRowOfValue( GDALRasterAttributeTableH hRAT, double dfValue )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetRowOfValue", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetRowOfValue( dfValue );
 }
 
@@ -1009,6 +1037,8 @@ GDALRATSetLinearBinning( GDALRasterAttributeTableH hRAT,
                          double dfRow0Min, double dfBinSize )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATSetLinearBinning", CE_Failure );
+
     return ((GDALRasterAttributeTable *) hRAT)->SetLinearBinning(
         dfRow0Min, dfBinSize );
 }
@@ -1052,6 +1082,8 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
                          double *pdfRow0Min, double *pdfBinSize )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATGetLinearBinning", 0 );
+
     return ((GDALRasterAttributeTable *) hRAT)->GetLinearBinning(
         pdfRow0Min, pdfBinSize );
 }
@@ -1110,6 +1142,8 @@ CPLErr CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH hRAT,
                                         GDALRATFieldUsage eFieldUsage )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATCreateColumn", CE_Failure );
+
     return ((GDALRasterAttributeTable *) hRAT)->CreateColumn( pszFieldName, 
                                                               eFieldType,
                                                               eFieldUsage );
@@ -1188,6 +1222,8 @@ GDALRATInitializeFromColorTable( GDALRasterAttributeTableH hRAT,
                                  
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATInitializeFromColorTable", CE_Failure );
+
     return ((GDALRasterAttributeTable *) hRAT)->
         InitializeFromColorTable( (GDALColorTable *) hCT );
 }
@@ -1294,6 +1330,8 @@ GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
                                  
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATTranslateToColorTable", NULL );
+
     return ((GDALRasterAttributeTable *) hRAT)->
         TranslateToColorTable( nEntryCount );
 }
@@ -1496,6 +1534,8 @@ void CPL_STDCALL
 GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 
 {
+    VALIDATE_POINTER0( hRAT, "GDALRATDumpReadable" );
+
     ((GDALRasterAttributeTable *) hRAT)->DumpReadable( fp );
 }
 
@@ -1528,5 +1568,7 @@ GDALRasterAttributeTableH CPL_STDCALL
 GDALRATClone( GDALRasterAttributeTableH hRAT )
 
 {
+    VALIDATE_POINTER1( hRAT, "GDALRATClone", NULL );
+
     return ((GDALRasterAttributeTable *) hRAT)->Clone();
 }

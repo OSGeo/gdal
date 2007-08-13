@@ -637,6 +637,8 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                  void *pProgressData )
 
 {
+    VALIDATE_POINTER1( hBaseBand, "GDALOverviewMagnitudeCorrection", CE_Failure );
+
     CPLErr      eErr;
     double      dfOrigMean, dfOrigStdDev;
 

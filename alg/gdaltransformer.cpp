@@ -671,8 +671,10 @@ void GDALSetGenImgProjTransformerDstGeoTransform(
     void *hTransformArg, const double *padfGeoTransform )
 
 {
+    VALIDATE_POINTER0( hTransformArg, "GDALSetGenImgProjTransformerDstGeoTransform" );
+
     GDALGenImgProjTransformInfo *psInfo = 
-        (GDALGenImgProjTransformInfo *) hTransformArg;
+        static_cast<GDALGenImgProjTransformInfo *>( hTransformArg );
 
     memcpy( psInfo->adfDstGeoTransform, padfGeoTransform, sizeof(double) * 6 );
     GDALInvGeoTransform( psInfo->adfDstGeoTransform, 
@@ -695,6 +697,8 @@ void GDALSetGenImgProjTransformerDstGeoTransform(
 void GDALDestroyGenImgProjTransformer( void *hTransformArg )
 
 {
+    VALIDATE_POINTER0( hTransformArg, "GDALDestroyGenImgProjTransformer" );
+
     GDALGenImgProjTransformInfo *psInfo = 
         (GDALGenImgProjTransformInfo *) hTransformArg;
 
@@ -1242,6 +1246,8 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 void GDALDestroyReprojectionTransformer( void *pTransformAlg )
 
 {
+    VALIDATE_POINTER0( pTransformAlg, "GDALDestroyReprojectionTransformer" );
+
     GDALReprojectionTransformInfo *psInfo = 
         (GDALReprojectionTransformInfo *) pTransformAlg;		
 
@@ -1514,6 +1520,8 @@ void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
 void GDALDestroyApproxTransformer( void * pCBData )
 
 {
+    VALIDATE_POINTER0( pCBData, "GDALDestroyApproxTransformer" );
+
     ApproxTransformInfo	*psATInfo = (ApproxTransformInfo *) pCBData;
 
     if( psATInfo->bOwnSubtransformer ) 
@@ -1755,7 +1763,9 @@ CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc pfnFunc,
                                       void *pTransformArg )
 
 {
-    GDALTransformerInfo *psInfo = (GDALTransformerInfo *) pTransformArg;
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeTransformer", NULL );
+
+    GDALTransformerInfo *psInfo = static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( psInfo == NULL || !EQUAL(psInfo->szSignature,"GTI") )
     {

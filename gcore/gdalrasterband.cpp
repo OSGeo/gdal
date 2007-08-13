@@ -241,6 +241,8 @@ GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
               int nPixelSpace, int nLineSpace )
     
 {
+    VALIDATE_POINTER1( hBand, "GDALRasterIO", CE_Failure );
+
     GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
 
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -387,6 +389,8 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
                       void * pData )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALReadBlock", CE_Failure );
+
     GDALRasterBand      *poBand = (GDALRasterBand *) hBand;
 
     return( poBand->ReadBlock( nXOff, nYOff, pData ) );
@@ -816,6 +820,8 @@ CPLErr GDALRasterBand::FlushCache()
 CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALFlushRasterCache", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->FlushCache();
 }
 
@@ -1203,7 +1209,10 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
  * @return CE_Failure if the write fails, otherwise CE_None
  */
 CPLErr CPL_STDCALL GDALFillRaster(GDALRasterBandH hBand, double dfRealValue, 
-		      double dfImaginaryValue) {
+		      double dfImaginaryValue)
+{
+    VALIDATE_POINTER1( hBand, "GDALFillRaster", CE_Failure );
+
     return ((GDALRasterBand*) hBand)->Fill(dfRealValue, dfImaginaryValue);
 }
 
@@ -2694,6 +2703,8 @@ GDALRasterAdviseRead( GDALRasterBandH hRB,
                       GDALDataType eDT, char **papszOptions )
     
 {
+    VALIDATE_POINTER1( hRB, "GDALRasterAdviseRead", CE_Failure );
+
     return ((GDALRasterBand *) hRB)->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
                                                  nBufXSize, nBufYSize, eDT, 
                                                  papszOptions );
@@ -3149,6 +3160,8 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
                                             int nBuckets, int *panHistogram )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetDefaultHistogram", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetDefaultHistogram(
         dfMin, dfMax, nBuckets, panHistogram );
 }
@@ -3221,7 +3234,10 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
                                       GDALRasterAttributeTableH hRAT )
 
 {
+    VALIDATE_POINTER1( hBand, "GDALSetDefaultRAT", CE_Failure );
+    VALIDATE_POINTER1( hRAT, "GDALSetDefaultRAT", CE_Failure );
+
     return ((GDALRasterBand *) hBand)->SetDefaultRAT( 
-        (GDALRasterAttributeTable *) hRAT );
+        static_cast<GDALRasterAttributeTable *>(hRAT) );
 }
 

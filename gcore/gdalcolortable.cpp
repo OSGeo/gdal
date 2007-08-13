@@ -211,6 +211,8 @@ void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
                         const GDALColorEntry * poEntry )
 
 {
+    VALIDATE_POINTER0( hTable, "GDALSetColorEntry" );
+
     ((GDALColorTable *) hTable)->SetColorEntry( i, poEntry );
 }
 
