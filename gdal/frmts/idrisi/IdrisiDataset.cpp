@@ -243,6 +243,9 @@ const char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter = NU
 //----- Get the "to meter"
 int GetToMeterIndex( const char *pszToMeter );
 
+//----- FormatCRLF
+void FormatCRLF( const char *pszFilename );
+
 //----- Classes pre-definition:
 class IdrisiDataset;
 class IdrisiRasterBand;
@@ -383,6 +386,9 @@ IdrisiDataset::~IdrisiDataset()
         {            
             CSLSetNameValueSeparator( papszRDC, ": " );
             CSLSave( papszRDC, pszDocFilename );
+#ifndef WIN32        
+            FormatCRLF( pszDocFilename );
+#endif 
         }
         CSLDestroy( papszRDC );
     }
@@ -754,6 +760,9 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
 
     CSLSetNameValueSeparator( papszLRDC, ": " );
     CSLSave( papszLRDC, pszLDocFilename );
+#ifndef WIN32        
+    FormatCRLF( pszLDocFilename );
+#endif 
     CSLDestroy( papszLRDC );
 
     // ---------------------------------------------------------------- 
@@ -2567,6 +2576,9 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         papszRef = CSLAddNameValue( papszRef, refSTANDL_2, CPLSPrintf( "%.9g", dfStdP2 ) );
     CSLSetNameValueSeparator( papszRef, ": " );
     CSLSave( papszRef, CPLResetExtension( pszFilename, extREF ) );
+#ifndef WIN32        
+    FormatCRLF( CPLResetExtension( pszFilename, extREF ) );
+#endif 
     CSLDestroy( papszRef );
 
     *pszRefSystem = CPLStrdup( CPLGetBasename( pszFilename ) );
@@ -2683,6 +2695,80 @@ const char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter )
     }
 
     return CPLStrdup( aoLinearUnitsConv[aoLinearUnitsConv[nIndex].nDefaultI].pszName );
+}
+
+/************************************************************************/
+/*                               FormatCRLF()                           */
+/************************************************************************/
+
+void FormatCRLF( const char *pszFilename )
+{
+    const char *pszTempfile;
+    FILE *fpIn;
+    FILE *fpOut;
+    char ch;
+
+    pszTempfile = CPLResetExtension( pszFilename, "$$$" );
+
+    fpIn  = VSIFOpen( pszFilename, "r" );
+    fpOut = VSIFOpen( pszTempfile, "w" );
+
+    if ( fpIn == NULL )
+    {
+        return;
+    }
+
+    if ( fpOut == NULL )
+    {
+        VSIFClose( fpIn );
+        return;
+    }
+
+    // Copy data
+
+    ch = VSIFGetc( fpIn );
+
+    while( VSIFEof( fpIn ) == FALSE )
+    {
+        VSIFPutc( ch, fpOut );
+        ch = VSIFGetc( fpIn );
+    }
+
+    VSIFClose( fpIn );
+    VSIFClose( fpOut );
+
+    // Convert format
+
+    fpIn  = VSIFOpen( pszTempfile, "r" );
+    fpOut = VSIFOpen( pszFilename, "w" );
+
+    if ( fpIn == NULL )
+    {
+        return;
+    }
+
+    if ( fpOut == NULL )
+    {
+        VSIFClose( fpIn );
+        return;
+    }
+
+    ch = VSIFGetc( fpIn );
+
+    while( VSIFEof( fpIn ) == FALSE )
+    {
+	if( ch == '\012' )
+        {
+            VSIFPutc( '\015', fpOut );
+        }     
+        VSIFPutc( ch, fpOut );
+        ch = VSIFGetc( fpIn );
+    }
+
+    VSIFClose( fpIn );
+    VSIFClose( fpOut );
+
+    VSIUnlink( pszTempfile );    
 }
 
 /************************************************************************/
