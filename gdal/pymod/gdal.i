@@ -2289,11 +2289,16 @@ py_OSRExportToProj4(PyObject *self, PyObject *args) {
     }
 	
     err = OSRExportToProj4( _arg0, &wkt );
-    if( wkt == NULL )
-	wkt = "";
+    if( wkt != NULL )
+    {
+        ret = Py_BuildValue( "s", wkt );
+        OGRFree( wkt );
+    }
+    else
+    {
+        ret = Py_BuildValue( "s", "");
+    }
 
-    ret = Py_BuildValue( "s", wkt );
-    OGRFree( wkt );
     return ret;
 }
 %}
