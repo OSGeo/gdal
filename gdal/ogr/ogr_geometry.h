@@ -341,6 +341,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual const char *getGeometryName() const;
     virtual OGRGeometry *clone() const;
     virtual int isClockwise() const;
+    virtual void reverseWindingOrder();
     virtual void closeRings();
     virtual double get_Area() const;
     OGRBoolean isPointInRing(const OGRPoint* pt) const;
