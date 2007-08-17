@@ -140,7 +140,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
 {
     BNARecord* record;
     char c;
-    int inComma = FALSE;
+    int inQuotes = FALSE;
     int numField = 0;
     const char* ptrBeginningOfNumber = NULL;
     int exponentFound = 0;
@@ -192,7 +192,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
         numChar = ptrCurLine - ptrBeginLine;
         c = *ptrCurLine;
         if (c == 0) c = 10;
-        if (inComma)
+        if (inQuotes)
         {
           if (c == 10)
           {
@@ -212,7 +212,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
           }
           else if (c == '"')
           {
-            inComma = FALSE;
+            inQuotes = FALSE;
           }
           else
           {
@@ -282,6 +282,22 @@ BNARecord* BNA_GetNextRecord(FILE* f,
         }
         else if (c == 10 || c == ',')
         {
+          /* Eat a comma placed at end of line */
+          if (c == ',')
+          {
+              const char* ptr = ptrCurLine+1;
+              while(*ptr)
+              {
+                  if (*ptr != ' ' && *ptr != '\t')
+                      break;
+                  ptr++;
+              }
+              if (*ptr == 0)
+              {
+                  c = 10;
+              }
+          }
+
           if (numField == 0)
           {
             /* Maybe not so mandatory.. Atlas MapMaker(TM) exports BNA files with empty primaryID */
@@ -295,12 +311,13 @@ BNARecord* BNA_GetNextRecord(FILE* f,
           }
           else if (numField == NB_MIN_BNA_IDS + nbExtraId)
           {
+            int nCoords;
             if (ptrBeginningOfNumber == NULL)
             {
               detailedErrorMsg = INTEGER_NUMBER_EXPECTED;
               goto error;
             }
-            int nCoords = atoi(ptrBeginningOfNumber);
+            nCoords = atoi(ptrBeginningOfNumber);
             if (nCoords == 0 || nCoords == -1)
             {
               detailedErrorMsg = INVALID_GEOMETRY_TYPE;
@@ -326,6 +343,9 @@ BNARecord* BNA_GetNextRecord(FILE* f,
               currentFeatureType = record->featureType = BNA_POLYLINE;
               record->nCoords = -nCoords;
             }
+
+            record->nIDs = NB_MIN_BNA_IDS + nbExtraId;
+
             if (interestFeatureType == BNA_READ_ALL ||
                 interestFeatureType == currentFeatureType)
             {
@@ -387,7 +407,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
         {
           if (numField < NB_MIN_BNA_IDS)
           {
-            inComma = TRUE;
+            inQuotes = TRUE;
           }
           else if (numField >= NB_MIN_BNA_IDS && currentFeatureType == -1)
           {
@@ -399,7 +419,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
                 goto error;
               }
               nbExtraId ++;
-              inComma = TRUE;
+              inQuotes = TRUE;
             }
             else
             {

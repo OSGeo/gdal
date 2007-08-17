@@ -86,6 +86,18 @@ class CPL_DLL OGREnvelope
             MinY = MaxY = dfY;
         }
     }
+
+    int Intersects(OGREnvelope& other)
+    {
+        return MinX <= other.MaxX && MaxX >= other.MinX && 
+               MinY <= other.MaxY && MaxY >= other.MinY;
+    }
+
+    int Contains(OGREnvelope& other)
+    {
+        return MinX <= other.MinX && MinY <= other.MinY &&
+               MaxX >= other.MaxX && MaxY >= other.MaxY;
+    }
 };
 #else
 typedef struct
