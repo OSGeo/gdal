@@ -207,7 +207,7 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
     {
         case GTIFF_LOCAL:
             /* store value into data value */
-            *(pinfo_t *)(&keyptr->gk_data) = entptr->ent_val_offset;
+            *(pinfo_t *)GK_DATA_STRUCT_ADDR(keyptr) = entptr->ent_val_offset;
             break;
         case GTIFF_GEOKEYDIRECTORY:
             keyptr->gk_data = (char *)(gt->gt_short+offset);

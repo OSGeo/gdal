@@ -1342,12 +1342,12 @@ bool LevellerDataset::load_from_file(FILE* file, const char* pszFilename)
 
 			if(csclass == LEV_COORDSYS_LOCAL)
 			{
-				UNITLABEL unitcode;
+				int unitcode;
 				//char szLocalUnits[8];
 				if(!this->get((int&)unitcode, file, "coordsys_units"))
 					unitcode = UNITLABEL_M;
 
-				if(!this->make_local_coordsys("Leveller", unitcode))
+				if(!this->make_local_coordsys("Leveller", (UNITLABEL)unitcode))
 				{
 					CPLError( CE_Failure, CPLE_OpenFailed,
 								  "Cannot define local coordinate system." );
@@ -1393,10 +1393,10 @@ bool LevellerDataset::load_from_file(FILE* file, const char* pszFilename)
 		{
 			this->get(m_dElevScale, file, "coordsys_em_scale");
 			this->get(m_dElevBase, file, "coordsys_em_base");
-			UNITLABEL unitcode;
+			int unitcode;
 			if(this->get((int&)unitcode, file, "coordsys_em_units"))
 			{
-				const char* pszUnitID = this->code_to_id(unitcode);
+				const char* pszUnitID = this->code_to_id((UNITLABEL)unitcode);
 				if(pszUnitID != NULL)
 					strcpy(m_szElevUnits, pszUnitID);
 				else

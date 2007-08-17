@@ -431,7 +431,7 @@ TIFFClientOpen(
 		 * 'm' flag in the open mode (see above).
 		 */
 		if ((tif->tif_flags & TIFF_MAPPED) &&
-	!TIFFMapFileContents(tif, (tdata_t*) &tif->tif_base, &tif->tif_size))
+	!TIFFMapFileContents(tif, (tdata_t*) ((char*)tif + (int)&(((TIFF*)0)->tif_base)), &tif->tif_size))
 			tif->tif_flags &= ~TIFF_MAPPED;
 		if (TIFFReadDirectory(tif)) {
 			tif->tif_rawcc = -1;

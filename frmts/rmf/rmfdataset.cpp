@@ -737,9 +737,10 @@ CPLErr RMFDataset::WriteHeader()
         if ( oSRS.importFromWkt( &pszProj ) == OGRERR_NONE )
         {
             double  adfPrjParams[7];
-
-            oSRS.exportToPanorama( (long *)&sHeader.iProjection, &iDatum,
+            long iProjection = sHeader.iProjection;
+            oSRS.exportToPanorama( &iProjection, &iDatum,
                                    &iEllips, &iZone, adfPrjParams );
+            sHeader.iProjection = iProjection;
             sHeader.dfStdP1 = adfPrjParams[0];
             sHeader.dfStdP2 = adfPrjParams[1];
             sHeader.dfCenterLat = adfPrjParams[2];

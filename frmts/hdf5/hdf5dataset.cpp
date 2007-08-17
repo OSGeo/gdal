@@ -539,7 +539,7 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     unsigned int            nAttrElmts;
     hsize_t        nAttrSize;
     hsize_t        i;
-    void           *buf;
+    void           *buf = NULL;
     unsigned int             nAttrDims;
 
 
@@ -877,7 +877,9 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     
     poRootGroup->nbAttrs = H5Aget_num_attrs( hGroupID );
 
-    H5Gget_num_objs( hGroupID, (hsize_t *) &( poRootGroup->nbObjs ) );
+    hsize_t nbObjs;
+    H5Gget_num_objs( hGroupID, &nbObjs );
+    poRootGroup->nbObjs = nbObjs;
     
     if( poRootGroup->nbObjs > 0 ) {
 	poRootGroup->poHchild = ( HDF5GroupObjects * ) 

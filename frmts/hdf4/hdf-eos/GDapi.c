@@ -6887,7 +6887,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
     float64         xMtr;	/* X value in meters from GCTP */
     float64         yMtr;	/* Y value in meters from GCTP */
     float64         lonrad0;	/* Longitude in radians of upleft point */
-    float64         latrad0;	/* Latitude in radians of upleft point */
+    float64         latrad0 = 0;	/* Latitude in radians of upleft point */
     float64         lonrad;	/* Longitude in radians of point */
     float64         latrad;	/* Latitude in radians of point */
     float64         scaleX;	/* X scale factor */
@@ -7160,8 +7160,8 @@ GDij2ll(int32 projcode, int32 zonecode, float64 projparm[],
     int32(*inv_trans[100]) ();	/* GCTP function pointer */
     int32(*for_trans[100]) ();	/* GCTP function pointer */
 
-    float64         pixadjX;	/* Pixel adjustment (x) */
-    float64         pixadjY;	/* Pixel adjustment (y) */
+    float64         pixadjX = 0;	/* Pixel adjustment (x) */
+    float64         pixadjY = 0;	/* Pixel adjustment (y) */
     float64         lonrad0;	/* Longitude in radians of upleft point */
     float64         latrad0;	/* Latitude in radians of upleft point */
     float64         scaleX;	/* X scale factor */
@@ -7495,8 +7495,8 @@ GDrs2ll(int32 projcode, float64 projparm[],
     int32           errorcode = 0;	/* GCTP error code */
     int32(*inv_trans[100]) ();	/* GCTP function pointer */
 
-    float64         pixadjX;	/* Pixel adjustment (x) */
-    float64         pixadjY;	/* Pixel adjustment (y) */
+    float64         pixadjX = 0;	/* Pixel adjustment (x) */
+    float64         pixadjY = 0;	/* Pixel adjustment (y) */
     float64         lonrad;	/* Longitude in radians of point */
     float64         latrad;	/* Latitude in radians of point */
     float64         EHconvAng();/* Angle conversion routine */
@@ -7504,8 +7504,8 @@ GDrs2ll(int32 projcode, float64 projparm[],
     float64         yMtr;	/* Y value in meters from GCTP */
     float64         epsilon;
     float64         beta;
-    float64         qp_cea;
-    float64         kz_cea;
+    float64         qp_cea = 0;
+    float64         kz_cea = 0;
     float64         eccen, eccen_sq;
     float64         phi1, sinphi1, cosphi1;
     float64         scaleX, scaleY;
@@ -8520,7 +8520,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
     int32           fid;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           regionID;	/* Region ID */
+    int32           regionID = 0;	/* Region ID */
     int32           xdimsize;	/* XDim size */
     int32           ydimsize;	/* YDim size */
     int32           projcode;	/* Projection code */
@@ -8528,10 +8528,10 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
     int32           spherecode;	/* Sphere code */
     int32           row[32];	/* Row array */
     int32           col[32];	/* Column array */
-    int32           minCol;	/* Minimun column value */
-    int32           minRow;	/* Minimun row value */
-    int32           maxCol;	/* Maximun column value */
-    int32           maxRow;	/* Maximun row value */
+    int32           minCol = 0;	/* Minimun column value */
+    int32           minRow = 0;	/* Minimun row value */
+    int32           maxCol = 0;	/* Maximun column value */
+    int32           maxRow = 0;	/* Maximun row value */
     int32           npnts;	/* Number of boundary (edge & tangent) pnts */
 
     float64         longitude[32];	/* Longitude array */
@@ -10947,8 +10947,8 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     float64         projparm[16];	/* Projection parameters */
     float64         xVal;	/* "Exact" x location of interpolated point */
     float64         yVal;	/* "Exact" y location of interpolated point */
-    float64         tNum;	/* Interpolation numerator value 1 */
-    float64         uNum;	/* Interpolation numerator value 2 */
+    float64         tNum = 0;	/* Interpolation numerator value 1 */
+    float64         uNum = 0;	/* Interpolation numerator value 2 */
 
     int16           i16[4];	/* Working buffer (int16) */
     int32           i32[4];	/* Working buffer (int132) */

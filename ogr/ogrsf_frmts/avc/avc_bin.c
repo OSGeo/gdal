@@ -1537,7 +1537,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
 
     AVCRawBinFSeek(psFile, 10, SEEK_CUR);     /* Skip 10 bytes */
     
-    AVCRawBinReadBytes(psFile, 2, psArcDir->szExternal);
+    AVCRawBinReadBytes(psFile, 2, (GByte *)psArcDir->szExternal);
     psArcDir->szExternal[2] = '\0';
 
     AVCRawBinFSeek(psFile, 300, SEEK_CUR);  /* Skip the remaining 300 bytes */
@@ -1853,7 +1853,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
         {
             /* Read the relative file path, and remove trailing spaces.
              */
-            AVCRawBinReadBytes(hFile, 80, sTableDef.szDataFile);
+            AVCRawBinReadBytes(hFile, 80, (GByte *)sTableDef.szDataFile);
             sTableDef.szDataFile[80] = '\0';
 
             for(i = strlen(sTableDef.szDataFile)-1;

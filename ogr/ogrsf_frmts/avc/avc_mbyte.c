@@ -453,7 +453,7 @@ static const char *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
 
     pszOut[iDst] = '\0';
 
-    return psDBCSInfo->pszDBCSBuf;
+    return (char*)psDBCSInfo->pszDBCSBuf;
 }
 
 
@@ -517,6 +517,6 @@ static const char *_AVCArcDBCS2JapaneseShiftJIS(AVCDBCSInfo *psDBCSInfo,
 
     pszOut[iDst] = '\0';
 
-    return psDBCSInfo->pszDBCSBuf;
+    return (char*)psDBCSInfo->pszDBCSBuf;
 }
 

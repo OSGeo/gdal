@@ -265,18 +265,18 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
  *
  * pBuf should be allocated with a size of at least nBytesToRead+1 bytes.
  **********************************************************************/
-void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
+void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, char *pBuf)
 {
     const GByte *pszConvBuf;
 
-    AVCRawBinReadBytes(psFile, nBytesToRead, pBuf);
+    AVCRawBinReadBytes(psFile, nBytesToRead, (GByte*)pBuf);
 
     pBuf[nBytesToRead] = '\0';
 
-    pszConvBuf = AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo, pBuf, 
+    pszConvBuf = (GByte *)AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo, pBuf, 
                                           nBytesToRead);
 
-    if (pszConvBuf != pBuf)
+    if (pszConvBuf != (GByte *)pBuf)
     {
         memcpy(pBuf, pszConvBuf, nBytesToRead);
     }
@@ -373,7 +373,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
          * the EOF error message from AVCRawBinReadBytes().
          */
         bDisableReadBytesEOFError = TRUE;
-        AVCRawBinReadBytes(psFile, 1, &c);
+        AVCRawBinReadBytes(psFile, 1, (GByte *)&c);
         bDisableReadBytesEOFError = FALSE;
 
         if (psFile->nCurPos > 0)

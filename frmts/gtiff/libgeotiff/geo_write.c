@@ -132,7 +132,7 @@ static int WriteKey(GTIF* gt, TempKeyData* tempData,
     if (count==1 && keyptr->gk_type==TYPE_SHORT)
     {
         entptr->ent_location = GTIFF_LOCAL;
-        entptr->ent_val_offset = *(pinfo_t*)&keyptr->gk_data;
+        entptr->ent_val_offset = *(pinfo_t*)GK_DATA_STRUCT_ADDR(keyptr);
         return 1;
     }
 		  

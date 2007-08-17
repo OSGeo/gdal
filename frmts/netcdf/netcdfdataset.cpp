@@ -1477,7 +1477,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     char         attname[NC_MAX_NAME];
     int          ndims, nvars, ngatts, unlimdimid;
     int          nCount=0;
-    int          nVarID;
+    int          nVarID = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
