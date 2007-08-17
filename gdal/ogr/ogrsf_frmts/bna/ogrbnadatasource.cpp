@@ -42,8 +42,12 @@ OGRBNADataSource::OGRBNADataSource()
 {
     papoLayers = NULL;
     nLayers = 0;
+    
+    fpOutput = NULL;
 
     pszName = NULL;
+    
+    pszCoordinateSeparator = NULL;
 
     bUpdate = FALSE;
 }
@@ -55,9 +59,16 @@ OGRBNADataSource::OGRBNADataSource()
 OGRBNADataSource::~OGRBNADataSource()
 
 {
+    if ( fpOutput != NULL )
+    {
+        VSIFClose( fpOutput);
+    }
+
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+    
+    CPLFree( pszCoordinateSeparator );
 
     CPLFree( pszName );
 }
@@ -70,7 +81,7 @@ int OGRBNADataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return FALSE;
+        return TRUE;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return FALSE;
     else
@@ -88,6 +99,51 @@ OGRLayer *OGRBNADataSource::GetLayer( int iLayer )
         return NULL;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer * OGRBNADataSource::CreateLayer( const char * pszLayerName,
+                                          OGRSpatialReference *poSRS,
+                                          OGRwkbGeometryType eType,
+                                          char ** papszOptions )
+
+{
+    BNAFeatureType bnaFeatureType;
+    
+    switch(eType)
+    {
+        case wkbPolygon:
+        case wkbPolygon25D:
+        case wkbMultiPolygon:
+        case wkbMultiPolygon25D:
+            bnaFeatureType = BNA_POLYGON;
+            break;
+        
+        case wkbPoint:
+        case wkbPoint25D:
+            bnaFeatureType = BNA_POINT;
+            break;
+            
+        case wkbLineString:
+        case wkbLineString25D:
+            bnaFeatureType = BNA_POLYLINE;
+            break;
+            
+        default:
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "Geometry type of `%s' not supported in BNAs.\n",
+                    OGRGeometryTypeToName(eType) );
+            return NULL;
+    }
+    
+    nLayers++;
+    papoLayers = (OGRBNALayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRBNALayer*));
+    papoLayers[nLayers-1] = new OGRBNALayer( pszName, pszLayerName, bnaFeatureType, eType, TRUE, this );
+    
+    return papoLayers[nLayers-1];
 }
 
 /************************************************************************/
@@ -115,13 +171,17 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
 // --------------------------------------------------------------------
     if( !EQUAL( CPLGetExtension(pszFilename), "bna" ) )
         return FALSE;
-
-    FILE* f = VSIFOpen(pszFilename, "rb");
-    if (f)
+    
+    FILE* fp = VSIFOpen(pszFilename, "r");
+    if (fp)
     {
         BNARecord* record;
         int curLine = 0;
-        record = BNA_GetNextRecord(f, &ok, &curLine, 0, BNA_READ_NONE);
+        const char* layerRadixName[] = { "points", "polygons", "lines", "ellipses"};
+        OGRwkbGeometryType wkbGeomTypes[] = { wkbPoint, wkbMultiPolygon, wkbLineString, wkbPolygon };
+        int i;
+#if defined(BNA_FAST_DS_OPEN)
+        record = BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
         BNA_FreeRecord(record);
 
         if (ok)
@@ -129,15 +189,217 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
             nLayers = 4;
 
             papoLayers = (OGRBNALayer **) CPLMalloc(nLayers * sizeof(OGRBNALayer*));
-            papoLayers[0] = new OGRBNALayer( pszFilename, "points", BNA_POINT, wkbPoint );
-            papoLayers[1] = new OGRBNALayer( pszFilename, "lines", BNA_POLYLINE, wkbLineString );
-            papoLayers[2] = new OGRBNALayer( pszFilename, "polygons", BNA_POLYGON, wkbMultiPolygon );
-            papoLayers[3] = new OGRBNALayer( pszFilename, "ellipses", BNA_ELLIPSE, wkbPolygon );
+            for(i=0;i<4;i++)
+                papoLayers[i] = new OGRBNALayer( pszFilename,
+                                                 layerRadixName[i],
+                                                 (BNAFeatureType)i, wkbGeomTypes[i], FALSE, this );
+        }
+#else
+        int nFeatures[4] = { 0, 0, 0, 0 };
+        OffsetAndLine* offsetAndLineFeaturesTable[4] = { NULL, NULL, NULL, NULL };
+        int nIDs[4] = {0, 0, 0, 0};
+        int partialIndexTable = TRUE;
+
+        while(1)
+        {
+            int offset = VSIFTell(fp);
+            int line = curLine;
+            record =  BNA_GetNextRecord(fp, &ok, &curLine, FALSE, BNA_READ_NONE);
+            if (ok == FALSE)
+            {
+                BNA_FreeRecord(record);
+                if (line != 0)
+                    ok = TRUE;
+                break;
+            }
+            if (record == NULL)
+            {
+                /* end of file */
+                ok = TRUE;
+
+                /* and we have finally build the whole index table */
+                partialIndexTable = FALSE;
+                break;
+            }
+
+            if (record->nIDs > nIDs[record->featureType])
+                nIDs[record->featureType] = record->nIDs;
+
+            nFeatures[record->featureType]++;
+            offsetAndLineFeaturesTable[record->featureType] =
+                (OffsetAndLine*)CPLRealloc(offsetAndLineFeaturesTable[record->featureType],
+                                           nFeatures[record->featureType] * sizeof(OffsetAndLine));
+            offsetAndLineFeaturesTable[record->featureType][nFeatures[record->featureType]-1].offset = offset;
+            offsetAndLineFeaturesTable[record->featureType][nFeatures[record->featureType]-1].line = line;
+
+            BNA_FreeRecord(record);
         }
 
-        VSIFClose(f);
+        nLayers = (nFeatures[0] != 0) + (nFeatures[1] != 0) + (nFeatures[2] != 0) + (nFeatures[3] != 0);
+        papoLayers = (OGRBNALayer **) CPLMalloc(nLayers * sizeof(OGRBNALayer*));
+        int iLayer = 0;
+        for(i=0;i<4;i++)
+        {
+            if (nFeatures[i])
+            {
+                papoLayers[iLayer] = new OGRBNALayer( pszFilename,
+                                                      layerRadixName[i],
+                                                      (BNAFeatureType)i,
+                                                      wkbGeomTypes[i],
+                                                      FALSE,
+                                                      this,
+                                                      nIDs[i]);
+                papoLayers[iLayer]->SetFeatureIndexTable(nFeatures[i],
+                                                        offsetAndLineFeaturesTable[i],
+                                                        partialIndexTable);
+                iLayer++;
+            }
+        }
+#endif
+        VSIFClose(fp);
     }
 
     return ok;
 }
 
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+int OGRBNADataSource::Create( const char *pszFilename, 
+                              char **papszOptions )
+{
+    if( fpOutput != NULL)
+    {
+        CPLAssert( FALSE );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*     Do not override exiting file.                                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+
+    if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
+        return FALSE;
+    
+/* -------------------------------------------------------------------- */
+/*      Create the output file.                                         */
+/* -------------------------------------------------------------------- */
+    pszName = CPLStrdup( pszFilename );
+
+    if( EQUAL(pszFilename,"stdout") )
+        fpOutput = stdout;
+    else
+        fpOutput = VSIFOpen( pszFilename, "w" );
+    if( fpOutput == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create BNA file %s.", 
+                  pszFilename );
+        return FALSE;
+    }
+    
+    /* EOL token */
+    const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
+
+    if( pszCRLFFormat == NULL )
+    {
+#ifdef WIN32
+        bUseCRLF = TRUE;
+#else
+        bUseCRLF = FALSE;
+#endif
+    }
+    else if( EQUAL(pszCRLFFormat,"CRLF") )
+        bUseCRLF = TRUE;
+    else if( EQUAL(pszCRLFFormat,"LF") )
+        bUseCRLF = FALSE;
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "LINEFORMAT=%s not understood, use one of CRLF or LF.",
+                  pszCRLFFormat );
+#ifdef WIN32
+        bUseCRLF = TRUE;
+#else
+        bUseCRLF = FALSE;
+#endif
+    }
+
+    /* Multi line or single line format ? */
+    bMultiLine = CSLFetchBoolean( papszOptions, "MULTILINE", TRUE);
+    
+    /* Number of identifiers per record */
+    const char* pszNbOutID = CSLFetchNameValue ( papszOptions, "NB_IDS");
+    if (pszNbOutID == NULL)
+    {
+        nbOutID = NB_MIN_BNA_IDS;
+    }
+    else if (EQUAL(pszNbOutID, "NB_SOURCE_FIELDS"))
+    {
+        nbOutID = -1;
+    }
+    else
+    {
+        nbOutID = atoi(pszNbOutID);
+        if (nbOutID <= 0)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                  "NB_ID=%s not understood. Must be >=%d and <=%d or equal to NB_SOURCE_FIELDS",
+                  pszNbOutID, NB_MIN_BNA_IDS, NB_MAX_BNA_IDS );
+            nbOutID = NB_MIN_BNA_IDS;
+        }
+        if (nbOutID > NB_MAX_BNA_IDS)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                  "NB_ID=%s not understood. Must be >=%d and <=%d or equal to NB_SOURCE_FIELDS",
+                  pszNbOutID, NB_MIN_BNA_IDS, NB_MAX_BNA_IDS );
+            nbOutID = NB_MAX_BNA_IDS;
+        }
+    }
+    
+    /* Ellipses export as ellipses or polygons ? */
+    bEllipsesAsEllipses = CSLFetchBoolean( papszOptions, "ELLIPSES_AS_ELLIPSES", TRUE);
+    
+    /* Number of coordinate pairs per line */
+    const char* pszNbPairPerLine = CSLFetchNameValue( papszOptions, "NB_PAIRS_PER_LINE");
+    if (pszNbPairPerLine)
+    {
+        nbPairPerLine = atoi(pszNbPairPerLine);
+        if (nbPairPerLine <= 0)
+            nbPairPerLine = (bMultiLine == FALSE) ? 1000000000 : 1;
+        if (bMultiLine == FALSE)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, "NB_PAIR_PER_LINE option is ignored when MULTILINE=NO");
+        }
+    }
+    else
+    {
+        nbPairPerLine = (bMultiLine == FALSE) ? 1000000000 : 1;
+    }
+    
+    /* Coordinate precision */
+    const char* pszCoordinatePrecision = CSLFetchNameValue( papszOptions, "COORDINATE_PRECISION");
+    if (pszCoordinatePrecision)
+    {
+        coordinatePrecision = atoi(pszCoordinatePrecision);
+        if (coordinatePrecision <= 0)
+            coordinatePrecision = 0;
+        else if (coordinatePrecision >= 20)
+            coordinatePrecision = 20;
+    }
+    else
+    {
+        coordinatePrecision = 10;
+    }
+    
+    pszCoordinateSeparator = (char*)CSLFetchNameValue( papszOptions, "COORDINATE_SEPARATOR");
+    if (pszCoordinateSeparator == NULL)
+        pszCoordinateSeparator = CPLStrdup(",");
+    else
+        pszCoordinateSeparator = CPLStrdup(pszCoordinateSeparator);
+
+    return TRUE;
+}

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrbnalayer.cpp 10646 2007-01-18 02:38:10Z warmerdam $
+ * $Id: ogrbnalayer.cpp
  *
  * Project:  BNA Translator
  * Purpose:  Implements OGRBNALayer class.
@@ -46,13 +46,20 @@
 OGRBNALayer::OGRBNALayer( const char *pszFilename,
                           const char* layerName,
                           BNAFeatureType bnaFeatureType,
-                          OGRwkbGeometryType eLayerGeomType )
+                          OGRwkbGeometryType eLayerGeomType,
+                          int bWriter,
+                          OGRBNADataSource* poDS,
+                          int nIDs)
 
 {
     eof = FALSE;
     failed = FALSE;
     curLine = 0;
     nNextFID = 0;
+    
+    this->bWriter = bWriter;
+    this->poDS = poDS;
+    this->nIDs = nIDs;
 
     nFeatures = 0;
     partialIndexTable = TRUE;
@@ -68,35 +75,42 @@ OGRBNALayer::OGRBNALayer( const char *pszFilename,
     poFeatureDefn->SetGeomType( eLayerGeomType );
     this->bnaFeatureType = bnaFeatureType;
 
-    int i;
-    for(i=0;i<NB_MAX_BNA_IDS;i++)
+    if (! bWriter )
     {
-        if (i < (int) (sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0])) )
+        int i;
+        for(i=0;i<nIDs;i++)
         {
-            sprintf(tmp, "%s ID", iKnowHowToCount[i]);
-            OGRFieldDefn oFieldID(tmp, OFTString );
-            poFeatureDefn->AddFieldDefn( &oFieldID );
+            if (i < (int) (sizeof(iKnowHowToCount)/sizeof(iKnowHowToCount[0])) )
+            {
+                sprintf(tmp, "%s ID", iKnowHowToCount[i]);
+                OGRFieldDefn oFieldID(tmp, OFTString );
+                poFeatureDefn->AddFieldDefn( &oFieldID );
+            }
+            else
+            {
+                sprintf(tmp, "%dth ID", i+1);
+                OGRFieldDefn oFieldID(tmp, OFTString );
+                poFeatureDefn->AddFieldDefn( &oFieldID );
+            }
         }
-        else
-        {
-            sprintf(tmp, "%dth ID", i+1);
-            OGRFieldDefn oFieldID(tmp, OFTString );
-            poFeatureDefn->AddFieldDefn( &oFieldID );
-        }
-    }
-    
-    if (bnaFeatureType == BNA_ELLIPSE)
-    {
-        OGRFieldDefn oFieldMajorRadius( "Major radius", OFTReal );
-        poFeatureDefn->AddFieldDefn( &oFieldMajorRadius );
-      
-        OGRFieldDefn oFieldMinorRadius( "Minor radius", OFTReal );
-        poFeatureDefn->AddFieldDefn( &oFieldMinorRadius );
-    }
 
-    fpBNA = VSIFOpen( pszFilename, "rb" );
-    if( fpBNA == NULL )
-        return;
+        if (bnaFeatureType == BNA_ELLIPSE)
+        {
+            OGRFieldDefn oFieldMajorRadius( "Major radius", OFTReal );
+            poFeatureDefn->AddFieldDefn( &oFieldMajorRadius );
+
+            OGRFieldDefn oFieldMinorRadius( "Minor radius", OFTReal );
+            poFeatureDefn->AddFieldDefn( &oFieldMinorRadius );
+        }
+
+        fpBNA = VSIFOpen( pszFilename, "r" );
+        if( fpBNA == NULL )
+            return;
+    }
+    else
+    {
+        fpBNA = NULL;
+    }
 }
 
 /************************************************************************/
@@ -112,6 +126,16 @@ OGRBNALayer::~OGRBNALayer()
 
     if (fpBNA)
         VSIFClose( fpBNA );
+}
+
+/************************************************************************/
+/*                         SetFeatureIndexTable()                       */
+/************************************************************************/
+void  OGRBNALayer::SetFeatureIndexTable(int nFeatures, OffsetAndLine* offsetAndLineFeaturesTable, int partialIndexTable)
+{
+    this->nFeatures = nFeatures;
+    this->offsetAndLineFeaturesTable = offsetAndLineFeaturesTable;
+    this->partialIndexTable = partialIndexTable;
 }
 
 /************************************************************************/
@@ -154,6 +178,7 @@ OGRFeature *OGRBNALayer::GetNextFeature()
         record =  BNA_GetNextRecord(fpBNA, &ok, &curLine, TRUE, bnaFeatureType);
         if (ok == FALSE)
         {
+            BNA_FreeRecord(record);
             failed = TRUE;
             return NULL;
         }
@@ -161,7 +186,7 @@ OGRFeature *OGRBNALayer::GetNextFeature()
         {
             /* end of file */
             eof = TRUE;
-        
+
             /* and we have finally build the whole index table */
             partialIndexTable = FALSE;
             return NULL;
@@ -169,32 +194,563 @@ OGRFeature *OGRBNALayer::GetNextFeature()
 
         if (record->featureType == bnaFeatureType)
         {
-            break;
+            if (nNextFID >= nFeatures)
+            {
+                nFeatures++;
+                offsetAndLineFeaturesTable =
+                    (OffsetAndLine*)CPLRealloc(offsetAndLineFeaturesTable, nFeatures * sizeof(OffsetAndLine));
+                offsetAndLineFeaturesTable[nFeatures-1].offset = offset;
+                offsetAndLineFeaturesTable[nFeatures-1].line = line;
+            }
+
+            poFeature = BuildFeatureFromBNARecord(record, nNextFID++);
+
+            BNA_FreeRecord(record);
+
+            if(   (m_poFilterGeom == NULL
+                || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            {
+                 return poFeature;
+            }
+
+            delete poFeature;
         }
         else
         {
             BNA_FreeRecord(record);
         }
     }
-    
-    if (nNextFID >= nFeatures)
-    {
-        nFeatures++;
-        offsetAndLineFeaturesTable =
-            (OffsetAndLine*)CPLRealloc(offsetAndLineFeaturesTable, nFeatures * sizeof(OffsetAndLine));
-        offsetAndLineFeaturesTable[nFeatures-1].offset = offset;
-        offsetAndLineFeaturesTable[nFeatures-1].line = line;
+}
+
+
+void OGRBNALayer::WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature )
+{
+    int i;
+    OGRFieldDefn *poField;
+    int nbOutID = poDS->GetNbOutId();
+    if (nbOutID < 0)
+        nbOutID = poFeatureDefn->GetFieldCount();
+    for(i=0;i<nbOutID;i++)
+    { 
+        if (i < poFeatureDefn->GetFieldCount())
+        {
+            poField = poFeatureDefn->GetFieldDefn( i );
+            if( poFeature->IsFieldSet( i ) )
+            {
+                const char *pszRaw = poFeature->GetFieldAsString( i );
+                VSIFPrintf( fp, "\"%s\",", pszRaw);
+            }
+            else
+            {
+                VSIFPrintf( fp, "\"\",");
+            }
+        }
+        else
+        {
+            VSIFPrintf( fp, "\"\",");
+        }
     }
-
-    poFeature = BuildFeatureFromBNARecord(record, nNextFID++);
-
-    BNA_FreeRecord(record);
-
-    return poFeature;
 }
 
 /************************************************************************/
-/*                           BuildFeatureFromBNARecord()                          */
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
+
+{
+    int i,j,k,n;
+    OGRGeometry     *poGeom = poFeature->GetGeometryRef();
+    char eol[3];
+    const char* partialEol = (poDS->GetMultiLine()) ? eol : poDS->GetCoordinateSeparator();
+    
+    if (poDS->GetUseCRLF())
+    {
+        eol[0] = 13;
+        eol[1] = 10;
+        eol[2] = 0;
+    }
+    else
+    {
+        eol[0] = 10;
+        eol[1] = 0;
+    }
+    
+    if ( ! bWriter )
+    {
+        return OGRERR_FAILURE;
+    }
+    
+    if( poFeature->GetFID() == OGRNullFID )
+        poFeature->SetFID( nFeatures++ );
+    
+    FILE* fp = poDS->GetOutputFP();
+    int nbPairPerLine = poDS->GetNbPairPerLine();
+    char formatCoordinates[32];
+    sprintf(formatCoordinates, "%%s%%.%df%s%%.%df",
+            poDS->GetCoordinatePrecision(), poDS->GetCoordinateSeparator(), poDS->GetCoordinatePrecision());
+
+    switch( poGeom->getGeometryType() )
+    {
+        case wkbPoint:
+        case wkbPoint25D:
+        {
+            OGRPoint* point = (OGRPoint*)poGeom;
+            WriteFeatureAttributes(fp, poFeature);
+            VSIFPrintf( fp, "1");
+            VSIFPrintf( fp, formatCoordinates, partialEol, point->getX(), point->getY());
+            VSIFPrintf( fp, "%s", eol);
+            break;
+        }
+            
+        case wkbPolygon:
+        case wkbPolygon25D:
+        {
+            OGRPolygon* polygon = (OGRPolygon*)poGeom;
+            OGRLinearRing* ring = polygon->getExteriorRing();
+            double firstX = ring->getX(0);
+            double firstY = ring->getY(0);
+            int nBNAPoints = ring->getNumPoints();
+            int is_ellipse = FALSE;
+            
+            /* This code tries to detect an ellipse in a polygon geometry */
+            /* This will only work presumably on ellipses already read from a BNA file */
+            /* Mostly a BNA to BNA feature... */
+            if (poDS->GetEllipsesAsEllipses() &&
+                polygon->getNumInteriorRings() == 0 &&
+                nBNAPoints == 361)
+            {
+                double oppositeX = ring->getX(180);
+                double oppositeY = ring->getY(180);
+                double quarterX = ring->getX(90);
+                double quarterY = ring->getY(90);
+                double antiquarterX = ring->getX(270);
+                double antiquarterY = ring->getY(270);
+                double center1X = 0.5*(firstX + oppositeX);
+                double center1Y = 0.5*(firstY + oppositeY);
+                double center2X = 0.5*(quarterX + antiquarterX);
+                double center2Y = 0.5*(quarterY + antiquarterY);
+                if (fabs(center1X - center2X) < 1e-5 && fabs(center1Y - center2Y) < 1e-5 &&
+                    fabs(oppositeY - firstY) < 1e-5 &&
+                    fabs(quarterX - antiquarterX) < 1e-5)
+                {
+                    double major_radius = fabs(firstX - center1X);
+                    double minor_radius = fabs(quarterY - center1Y);
+                    is_ellipse = TRUE;
+                    for(i=0;i<360;i++)
+                    {
+                        if (!(fabs(center1X + major_radius * cos(i * (M_PI / 180)) - ring->getX(i)) < 1e-5 &&
+                              fabs(center1Y + minor_radius * sin(i * (M_PI / 180)) - ring->getY(i)) < 1e-5))
+                        {
+                            is_ellipse = FALSE;
+                            break;
+                        }
+                    }
+                    if ( is_ellipse == TRUE )
+                    {
+                        WriteFeatureAttributes(fp, poFeature);
+                        VSIFPrintf( fp, "2");
+                        VSIFPrintf( fp, formatCoordinates, partialEol, center1X, center1Y);
+                        VSIFPrintf( fp, formatCoordinates,  partialEol, major_radius, minor_radius);
+                        VSIFPrintf( fp, "%s", eol);
+                    }
+                }
+            }
+
+            if ( is_ellipse == FALSE)
+            {
+                int nInteriorRings = polygon->getNumInteriorRings();
+                for(i=0;i<nInteriorRings;i++)
+                {
+                    nBNAPoints += polygon->getInteriorRing(i)->getNumPoints() + 1;
+                }
+                if (nBNAPoints <= 3)
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid geometry" );
+                    return OGRERR_FAILURE;
+                }
+                WriteFeatureAttributes(fp, poFeature);
+                VSIFPrintf( fp, "%d", nBNAPoints);
+                n = ring->getNumPoints();
+                int nbPair = 0;
+                for(i=0;i<n;i++)
+                {
+                    VSIFPrintf( fp, formatCoordinates,
+                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(i), ring->getY(i));
+                    nbPair++;
+                }
+                for(i=0;i<nInteriorRings;i++)
+                {
+                    ring = polygon->getInteriorRing(i);
+                    n = ring->getNumPoints();
+                    for(j=0;i<n;i++)
+                    {
+                        VSIFPrintf( fp, formatCoordinates,
+                                    ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(j), ring->getY(j));
+                        nbPair++;
+                    }
+                    VSIFPrintf( fp, formatCoordinates,
+                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", firstX, firstY);
+                    nbPair++;
+                }
+                VSIFPrintf( fp, "%s", eol);
+            }
+            break;
+        }
+
+        case wkbMultiPolygon:
+        case wkbMultiPolygon25D:
+        {
+            OGRMultiPolygon* multipolygon = (OGRMultiPolygon*)poGeom;
+            int N = multipolygon->getNumGeometries();
+            int nBNAPoints = 0;
+            double firstX = 0, firstY = 0; 
+            for(i=0;i<N;i++)
+            {
+                OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
+                OGRLinearRing* ring = polygon->getExteriorRing();
+                if (nBNAPoints)
+                    nBNAPoints ++;
+                else
+                {
+                    firstX = ring->getX(0);
+                    firstY = ring->getY(0);
+                }
+                nBNAPoints += ring->getNumPoints();
+                int nInteriorRings = polygon->getNumInteriorRings();
+                for(j=0;j<nInteriorRings;j++)
+                {
+                    nBNAPoints += polygon->getInteriorRing(j)->getNumPoints() + 1;
+                }
+            }
+            if (nBNAPoints <= 3)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Invalid geometry" );
+                return OGRERR_FAILURE;
+            }
+            WriteFeatureAttributes(fp, poFeature);
+            VSIFPrintf( fp, "%d", nBNAPoints);
+            int nbPair = 0;
+            for(i=0;i<N;i++)
+            {
+                OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
+                OGRLinearRing* ring = polygon->getExteriorRing();
+                n = ring->getNumPoints();
+                int nInteriorRings = polygon->getNumInteriorRings();
+                for(j=0;j<n;j++)
+                {
+                    VSIFPrintf( fp, formatCoordinates,
+                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ",ring->getX(j), ring->getY(j));
+                    nbPair++;
+                }
+                if (i != 0)
+                {
+                    VSIFPrintf( fp, formatCoordinates,
+                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ",firstX, firstY);
+                    nbPair++;
+                }
+                for(j=0;j<nInteriorRings;j++)
+                {
+                    ring = polygon->getInteriorRing(j);
+                    n = ring->getNumPoints();
+                    for(k=0;k<n;k++)
+                    {
+                        VSIFPrintf( fp, formatCoordinates, 
+                                    ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", ring->getX(k), ring->getY(k));
+                        nbPair++;
+                    }
+                    VSIFPrintf( fp, formatCoordinates,
+                                ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", firstX, firstY);
+                    nbPair++;
+                }
+            }
+            VSIFPrintf( fp, "%s", eol);
+            break;
+        }
+
+        case wkbLineString:
+        case wkbLineString25D:
+        {
+            OGRLineString* line = (OGRLineString*)poGeom;
+            int n = line->getNumPoints();
+            int i;
+            if (n < 2)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Invalid geometry" );
+                return OGRERR_FAILURE;
+            }
+            WriteFeatureAttributes(fp, poFeature);
+            VSIFPrintf( fp, "-%d", n);
+            int nbPair = 0;
+            for(i=0;i<n;i++)
+            {
+                VSIFPrintf( fp, formatCoordinates,
+                            ((nbPair % nbPairPerLine) == 0) ? partialEol : " ", line->getX(i), line->getY(i));
+                nbPair++;
+            }
+            VSIFPrintf( fp, "%s", eol);
+            break;
+        }
+            
+        default:
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unsupported geometry type : %s.",
+                      poGeom->getGeometryName() );
+
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+    }
+    
+    return OGRERR_NONE;
+}
+
+
+
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRBNALayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+
+{
+    if( !bWriter || nFeatures != 0)
+        return OGRERR_FAILURE;
+
+    poFeatureDefn->AddFieldDefn( poField );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           MakeMultiPolygon()                         */
+/************************************************************************/
+
+/* This is indeed of general use and may relate really closely with bug #1217 */
+/* If it works correctly, maybe a candidate for upper level exposition */ 
+
+enum
+{
+    CONTAINS,
+    IS_CONTAINED_BY,
+    NOT_RELATED
+};
+
+static OGRMultiPolygon *  MakeMultiPolygon (OGRPolygon** polygons,
+                                            int nbPolygons,
+                                            int* pIsValidGeometry)
+{
+    int i, j;
+    OGRMultiPolygon* multipolygon = new OGRMultiPolygon();
+    
+    if (nbPolygons == 1)
+    {
+        multipolygon->addGeometry(polygons[0]);
+    }
+    else
+    {
+#ifndef HAVE_GEOS
+        static int firstTime = 1;
+        if (firstTime)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, 
+                     "GDAL should be built with GEOS support enabled in order the "
+                     "BNA driver to provide reliable results on complex polygons.");
+            firstTime = 0;
+        }
+#endif
+
+        OGREnvelope* envelopes = new OGREnvelope[nbPolygons];
+        int** relations = new int*[nbPolygons];
+        double* areas = new double[nbPolygons];
+        int go_on = 1;
+        for(i=0;i<nbPolygons;i++)
+        {
+            relations[i] = new int[nbPolygons];
+            polygons[i]->getEnvelope(&envelopes[i]);
+            areas[i] = polygons[i]->get_Area();
+        }
+        
+        /* This a several step algorithm :
+           1) Compute in a matrix how polygons relate to each other
+              (this is the moment for detecting pathological intersections and exiting)
+           2) For each polygon, find the smallest enclosing polygon
+           3) For each polygon, compute its inclusion depth (0 means toplevel)
+           4) For each polygon of odd depth (= inner ring), add it to its outer ring
+        
+           Complexity : O(nbPolygons^2)
+        */
+        
+        /* Compute how each polygon relate to the other ones
+           To save a bit of computation we always begin the computation by a test on the
+           enveloppe. We also take into account the areas to avoid some useless tests.
+           (A contains B implies envelop(A) contains envelop(B) and area(A) > area(B))
+           In practise, we can hope that few full geometry intersection of inclusion test is done:
+             * if the polygons are well separated geographically
+                (a set of islands for example), no full geometry intersection or inclusion
+                test is done. (the envelopes don't intersect each other)
+             * if the polygons are 'lake inside an island inside a lake inside an area' and
+               that each polygon is much smaller than its enclosing one, their bounding boxes
+               are stricly contained into each oter, and thus, no full geometry intersection or inclusion
+               test is done
+        */
+        for(i=0;go_on && i<nbPolygons;i++)
+        {
+            for(j=i+1;go_on && j<nbPolygons;j++)
+            {
+                if (envelopes[i].Contains(envelopes[j])
+                    && areas[i] > areas[j]
+#ifdef HAVE_GEOS
+                    && polygons[i]->Contains(polygons[j])
+#endif
+                   )
+                {
+                    relations[i][j] = CONTAINS;
+                    relations[j][i] = IS_CONTAINED_BY;
+                }
+                else if (envelopes[j].Contains(envelopes[i])
+                         && areas[j] > areas[i]
+#ifdef HAVE_GEOS
+                         && polygons[j]->Contains(polygons[i])
+#endif
+                        )
+                {
+                    relations[j][i] = CONTAINS;
+                    relations[i][j] = IS_CONTAINED_BY;
+                }
+                else if (envelopes[i].Intersects(envelopes[j]) == FALSE
+#ifdef HAVE_GEOS
+                         /* We use Overlaps instead of Intersects to be more tolerant about touching polygons */ 
+                         || polygons[i]->Overlaps(polygons[j]) == FALSE
+#endif
+                        )
+                {
+                    relations[i][j] = NOT_RELATED;
+                    relations[j][i] = NOT_RELATED;
+                }
+                else
+                {
+                    /* Bad... The polygons are intersecting but no one is
+                       contained inside the other one. This is a really broken
+                       case. We just make a multipolygon with the whole set of
+                       polygons */
+                    go_on = 0;
+#if 0
+                    fprintf(stderr, "bad intersection for polygons %d and %d\n", i, j);
+                    char* wkt1;
+                    char* wkt2;
+                    polygons[i]->exportToWkt(&wkt1);
+                    polygons[j]->exportToWkt(&wkt2);
+                    fprintf(stderr, "geom %d : %s\n", i, wkt1);
+                    fprintf(stderr, "geom %d : %s\n", j, wkt2);
+                    CPLFree(wkt1);
+                    CPLFree(wkt2);
+#endif
+                }
+            }
+        }
+        
+        if (pIsValidGeometry)
+            *pIsValidGeometry = go_on;
+
+        if (go_on == 0)
+        {
+            for(i=0;i<nbPolygons;i++)
+            {
+                multipolygon->addGeometry(polygons[i]);
+            }
+        }
+        else
+        {
+            int* directContainerIndex = new int[nbPolygons];
+            
+            /* Find the smallest enclosing polygon of each polygon */
+            for(i=0;i<nbPolygons;i++)
+            {
+                int jSmallestContainer = -1;
+                double areaSmallestContainer = 0;
+                for(j=0;j<nbPolygons;j++)
+                {
+                    if (i != j)
+                    {
+                        if (relations[i][j] == IS_CONTAINED_BY)
+                        {
+                            if (jSmallestContainer < 0 || areas[j] < areaSmallestContainer)
+                            {
+                                jSmallestContainer = j;
+                                areaSmallestContainer = areas[j];
+                            }
+                        }
+                    }
+                }
+                directContainerIndex[i] = jSmallestContainer;
+            }
+            
+            /* Compute the inclusion depth of each polygon */
+            int* containedDepth = new int [nbPolygons];
+            for(i=0;i<nbPolygons;i++)
+            {
+                int depth = 0;
+                int j = directContainerIndex[i];
+                while (j >= 0)
+                {
+                    j = directContainerIndex[j];
+                    depth++;
+                }
+                containedDepth[i] = depth;
+//                fprintf(stderr, "%d is of depth %d\n", i, depth);
+            }
+            
+            OGRPolygon** tempPolygons = new OGRPolygon*[nbPolygons]; 
+    
+            /* Create a copy of toplevel polygons */
+            for(i=0;i<nbPolygons;i++)
+            {
+                if ((containedDepth[i] % 2) == 0)
+                {
+                    tempPolygons[i] = (OGRPolygon*)polygons[i]->clone();
+                }
+            }
+            
+            /* Add interior rings to toplevel polygons */
+            for(i=0;i<nbPolygons;i++)
+            {
+                if ((containedDepth[i] % 2) == 1)
+                {
+                    tempPolygons[directContainerIndex[i]]->addRing(polygons[i]->getExteriorRing());
+                }
+            }
+            
+            /* Add toplevel polygons to the multipolygon */
+            for(i=0;i<nbPolygons;i++)
+            {
+                if ((containedDepth[i] % 2) == 0)
+                {
+                    multipolygon->addGeometryDirectly(tempPolygons[i]);
+                }
+            }
+    
+            delete[] tempPolygons;
+            delete[] directContainerIndex;
+            delete[] containedDepth;
+        }
+
+        for(i=0;i<nbPolygons;i++)
+        {
+            delete[] relations[i];
+        }
+        delete[] relations;
+        delete[] areas;
+        delete[] envelopes;
+    }
+
+    return multipolygon;
+}
+
+/************************************************************************/
+/*                           BuildFeatureFromBNARecord()                */
 /************************************************************************/
 OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
 {
@@ -202,7 +758,7 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
     int i;
 
     poFeature = new OGRFeature( poFeatureDefn );
-    for(i=0;i<NB_MAX_BNA_IDS;i++)
+    for(i=0;i<nIDs;i++)
     {
         poFeature->SetField( i, record->ids[i] ? record->ids[i] : "");
     }
@@ -224,50 +780,39 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
     }
     else if (bnaFeatureType == BNA_POLYGON)
     {
-        OGRMultiPolygon* multipolygon = new OGRMultiPolygon();
-
         double firstX = record->tabCoords[0][0];
         double firstY = record->tabCoords[0][1];
-        double doubleArea = 0;
         int isFirstPolygon = 1;
         double secondaryFirstX = 0, secondaryFirstY = 0;
-
+  
         OGRLinearRing* ring = new OGRLinearRing ();
         ring->setCoordinateDimension(2);
         ring->addPoint(record->tabCoords[0][0], record->tabCoords[0][1] );
-
+  
         /* record->nCoords is really a safe upper bound */
         int nbPolygons = 0;
         OGRPolygon** tabPolygons =
             (OGRPolygon**)CPLMalloc(record->nCoords * sizeof(OGRPolygon*));
-        double* tabPolygonsDoubleSignedArea =
-            (double*)CPLMalloc(record->nCoords * sizeof(double));
 
         for(i=1;i<record->nCoords;i++)
         {
             ring->addPoint(record->tabCoords[i][0], record->tabCoords[i][1] );
-            doubleArea += record->tabCoords[i-1][0] * record->tabCoords[i][1] -
-                record->tabCoords[i][0] * record->tabCoords[i-1][1];
             if (isFirstPolygon == 1 &&
                 record->tabCoords[i][0] == firstX &&
                 record->tabCoords[i][1] == firstY)
             {
-                /* First polygon : just add it to the multipolygon */
                 OGRPolygon* polygon = new OGRPolygon ();
                 polygon->addRingDirectly(ring);
-                multipolygon-> addGeometryDirectly (polygon);
                 tabPolygons[nbPolygons] = polygon;
-                tabPolygonsDoubleSignedArea[nbPolygons] = doubleArea;
                 nbPolygons++;
-
+    
                 if (i == record->nCoords - 1)
                 {
                     break;
                 }
-
+    
                 isFirstPolygon = 0;
-
-                doubleArea = 0;
+    
                 i ++;
                 secondaryFirstX = record->tabCoords[i][0];
                 secondaryFirstY = record->tabCoords[i][1];
@@ -276,45 +821,14 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
                 ring->addPoint(record->tabCoords[i][0], record->tabCoords[i][1] );
             }
             else if (isFirstPolygon == 0 &&
-                     record->tabCoords[i][0] == secondaryFirstX &&
-                     record->tabCoords[i][1] == secondaryFirstY)
+                    record->tabCoords[i][0] == secondaryFirstX &&
+                    record->tabCoords[i][1] == secondaryFirstY)
             {
-                /* More than one polygons in that feature. We must find if this polygon is a
-                   new one or an internal ring of the smallest enclosing existing polygon of
-                   same winding.
-                   Assumption : an lake into a polygon appears after the enclosing polygon.
-                   The BNA 'specification' does not say it, but it seems to be a reasonable
-                   assumption.
-                */
-                int j;
-                int bestCandidate = -1;
-                double bestCandidateArea = 0;
-                for(j=0;j<nbPolygons;j++)
-                {
-                    if (tabPolygonsDoubleSignedArea[j] * doubleArea > 0 &&
-                        tabPolygons[j]->getExteriorRing()->Contains(ring))
-                    {
-                        if (bestCandidate < 0 ||
-                            tabPolygonsDoubleSignedArea[j] < bestCandidateArea)
-                        {
-                            bestCandidate = j;
-                            bestCandidateArea = tabPolygonsDoubleSignedArea[j];
-                        }
-                    }
-                }
-                if (bestCandidate >= 0)
-                {
-                    tabPolygons[bestCandidate]->addRingDirectly( ring );
-                }
-                else
-                {
-                    OGRPolygon* polygon = new OGRPolygon ();
-                    polygon->addRingDirectly(ring);
-                    multipolygon-> addGeometryDirectly (polygon);
-                    tabPolygons[nbPolygons] = polygon;
-                    tabPolygonsDoubleSignedArea[nbPolygons] = doubleArea;
-                    nbPolygons++;
-                }
+
+                OGRPolygon* polygon = new OGRPolygon ();
+                polygon->addRingDirectly(ring);
+                tabPolygons[nbPolygons] = polygon;
+                nbPolygons++;
 
                 if (i < record->nCoords - 1)
                 {
@@ -328,13 +842,15 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
                     }
                     else
                     {
+#if 0
                         CPLError(CE_Warning, CPLE_AppDefined, 
-                                 "Geometry of polygon of fid %d starting at line %d is not strictly conformant. Trying to go on...\n",
+                                 "Geometry of polygon of fid %d starting at line %d is not strictly conformant. "
+                                 "Trying to go on...\n",
                                  fid,
-                                 offsetAndLineFeaturesTable[fid].line);
+                                 offsetAndLineFeaturesTable[fid].line + 1);
+#endif
                     }
 
-                    doubleArea = 0;
                     i ++;
                     secondaryFirstX = record->tabCoords[i][0];
                     secondaryFirstY = record->tabCoords[i][1];
@@ -344,10 +860,12 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
                 }
                 else
                 {
+#if 0
                     CPLError(CE_Warning, CPLE_AppDefined, 
-                             "Geometry of polygon of fid %d starting at line %d is not strictly conformant. Trying to go on...\n",
-                             fid,
-                             offsetAndLineFeaturesTable[fid].line);
+                        "Geometry of polygon of fid %d starting at line %d is not strictly conformant. Trying to go on...\n",
+                        fid,
+                        offsetAndLineFeaturesTable[fid].line + 1);
+#endif
                 }
             }
         }
@@ -356,17 +874,47 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
             /* Let's be a bit tolerant abount non closing polygons */
             if (isFirstPolygon)
             {
-                OGRPolygon* polygon = new OGRPolygon();
                 ring->addPoint(record->tabCoords[0][0], record->tabCoords[0][1] );
-                polygon->addRingDirectly  (  ring );
-                multipolygon-> addGeometryDirectly (polygon);
+
+                OGRPolygon* polygon = new OGRPolygon ();
+                polygon->addRingDirectly(ring);
+                tabPolygons[nbPolygons] = polygon;
+                nbPolygons++;
             }
         }
-      
-        CPLFree(tabPolygons);
-        CPLFree(tabPolygonsDoubleSignedArea);
+        
+        if (nbPolygons == 1)
+        {
+            /* Special optimization here : we directly put the polygon into the multipolygon. */
+            /* This should save quite a few useless copies */
+            OGRMultiPolygon* multipolygon = new OGRMultiPolygon();
+            multipolygon->addGeometryDirectly(tabPolygons[0]);
+            poFeature->SetGeometryDirectly(multipolygon);
+        }
+        else
+        {
+            int isValidGeometry;
+            poFeature->SetGeometryDirectly(
+                MakeMultiPolygon(tabPolygons, nbPolygons, &isValidGeometry));
+            
+            if (!isValidGeometry)
+            {
+#ifdef HAVE_GEOS
+                CPLError(CE_Warning, CPLE_AppDefined, 
+                        "Geometry of polygon of fid %d starting at line %d cannot be translated to Simple Geometry. "
+                        "All polygons will be contained in a multipolygon.\n",
+                        fid,
+                        offsetAndLineFeaturesTable[fid].line + 1);
+#endif
+            }
 
-        poFeature->SetGeometryDirectly(multipolygon);
+            for(i=0;i<nbPolygons;i++)
+            {
+                delete tabPolygons[i];
+            }
+        }
+
+        CPLFree(tabPolygons);
     }
     else
     {
@@ -390,8 +938,8 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
         polygon->addRingDirectly  (  ring );
         poFeature->SetGeometryDirectly(polygon);
 
-        poFeature->SetField( NB_MAX_BNA_IDS, major_radius);
-        poFeature->SetField( NB_MAX_BNA_IDS+1, minor_radius);
+        poFeature->SetField( nIDs, major_radius);
+        poFeature->SetField( nIDs+1, minor_radius);
     }
     
     return poFeature;
@@ -435,7 +983,7 @@ void OGRBNALayer::FastParseUntil ( int interestFID)
             {
                 /* end of file */
                 eof = TRUE;
-        
+
                 /* and we have finally build the whole index table */
                 partialIndexTable = FALSE;
                 return;
@@ -448,17 +996,22 @@ void OGRBNALayer::FastParseUntil ( int interestFID)
                     (OffsetAndLine*)CPLRealloc(offsetAndLineFeaturesTable, nFeatures * sizeof(OffsetAndLine));
                 offsetAndLineFeaturesTable[nFeatures-1].offset = offset;
                 offsetAndLineFeaturesTable[nFeatures-1].line = line;
-            }
-            BNA_FreeRecord(record);
 
-            if (nFeatures - 1 == interestFID)
-                return;
+                BNA_FreeRecord(record);
+
+                if (nFeatures - 1 == interestFID)
+                  return;
+            }
+            else
+            {
+                BNA_FreeRecord(record);
+            }
         }
     }
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                           GetFeature()                               */
 /************************************************************************/
 
 OGRFeature *  OGRBNALayer::GetFeature( long nFID )
@@ -487,16 +1040,6 @@ OGRFeature *  OGRBNALayer::GetFeature( long nFID )
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
-/************************************************************************/
-
-int  OGRBNALayer::GetFeatureCount( int )
-{
-    FastParseUntil(-1);
-    return nFeatures;
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -504,9 +1047,9 @@ int OGRBNALayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCSequentialWrite) )
-        return FALSE;
+        return bWriter;
     else if( EQUAL(pszCap,OLCCreateField) )
-        return FALSE;
+        return bWriter && nFeatures == 0;
     else
         return FALSE;
 }
