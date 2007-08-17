@@ -971,7 +971,9 @@ int WCSDataset::ExtractGridInfo100()
     {
         CPLXMLNode *psSF = CPLGetXMLNode( psCO, "supportedFormats" );
         CPLXMLNode *psNode;
+        char **papszFormatList = NULL;
         CPLString osPreferredFormat;
+        int iFormat;
 
         if( psSF == NULL )
         {
@@ -985,20 +987,49 @@ int WCSDataset::ExtractGridInfo100()
         {
             if( psNode->eType == CXT_Element 
                 && EQUAL(psNode->pszValue,"formats") 
+                && psNode->psChild != NULL 
                 && psNode->psChild->eType == CXT_Text )
             {
-                if( strlen(osPreferredFormat) == 0 )
-                    osPreferredFormat = psNode->psChild->pszValue;
-
-                if( strstr(psNode->psChild->pszValue,"tiff") != NULL 
-                    || strstr(psNode->psChild->pszValue,"TIFF") != NULL
-                    || strstr(psNode->psChild->pszValue,"Tiff") != NULL )
+                // This check is looking for deprecated WCS 1.0 capabilities
+                // with multiple formats space delimited in a single <formats>
+                // element per GDAL ticket 1748 (done by MapServer 4.10 and
+                // earlier for instance). 
+                if( papszFormatList == NULL
+                    && psNode->psNext == NULL
+                    && strstr(psNode->psChild->pszValue," ") != NULL
+                    && strstr(psNode->psChild->pszValue,";") == NULL )
                 {
-                    osPreferredFormat = psNode->psChild->pszValue;
-                    break;
+                    char **papszSubList = 
+                        CSLTokenizeString( psNode->psChild->pszValue );
+                    papszFormatList = CSLInsertStrings( papszFormatList, 
+                                                        -1, papszSubList );
+                    CSLDestroy( papszSubList );
+                }
+                else
+                {
+                    papszFormatList = CSLAddString( papszFormatList, 
+                                                    psNode->psChild->pszValue);
                 }
             }
         }
+        
+        for( iFormat = 0; 
+             papszFormatList != NULL && papszFormatList[iFormat] != NULL;
+             iFormat++ )
+        {
+            if( strlen(osPreferredFormat) == 0 )
+                osPreferredFormat = papszFormatList[iFormat];
+            
+            if( strstr(papszFormatList[iFormat],"tiff") != NULL 
+                    || strstr(papszFormatList[iFormat],"TIFF") != NULL
+                    || strstr(papszFormatList[iFormat],"Tiff") != NULL )
+            {
+                osPreferredFormat = papszFormatList[iFormat];
+                break;
+            }
+        }
+
+        CSLDestroy( papszFormatList );
 
         if( strlen(osPreferredFormat) > 0 )
         {
@@ -1029,11 +1060,13 @@ int WCSDataset::ExtractGridInfo100()
 /*      specific configuration.  The rangeset my have one axis named    */
 /*      "Band", with a set of ascending numerical values.               */
 /* -------------------------------------------------------------------- */
+    osBandIdentifier = CPLGetXMLValue( psService, "BandIdentifier", "" );
     CPLXMLNode * psAD = CPLGetXMLNode( psService, 
       "CoverageOffering.rangeSet.RangeSet.axisDescription.AxisDescription" );
     CPLXMLNode *psValues;
 
-    if( psAD != NULL 
+    if( strlen(osBandIdentifier) == 0
+        && psAD != NULL 
         && EQUAL(CPLGetXMLValue(psAD,"name",""),"Band") 
         && ( (psValues = CPLGetXMLNode( psAD, "values" )) != NULL ) )
     {
