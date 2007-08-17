@@ -544,7 +544,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /* -------------------------------------------------------------------- */
             else if( nDataType == EPT_f32 )
             {
-                float fValue = *((float *) &nDataMin);
+                GUInt32* ptr = &nDataMin;
+                float fValue = *((float *) ptr);
 
                 if( nNumBits == 16 )
                     fValue = fValue + 0.25 * (nRawValue / 65536.0);
