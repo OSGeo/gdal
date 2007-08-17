@@ -58,6 +58,7 @@ typedef enum
 typedef struct
 {
   char*          ids[NB_MAX_BNA_IDS];
+  int            nIDs;
   BNAFeatureType featureType;
   int            nCoords;
   double        (*tabCoords)[2];
