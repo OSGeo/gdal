@@ -276,7 +276,7 @@ typedef struct
     double  dfPower;
 } GDALGridInverseDistanceToAPowerOptions;
 
-CPLErr
+CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, void *, GUInt32,
                 double *, double *, double *, double, double, double, double,
                 GUInt32, GUInt32, GDALDataType, void *,
