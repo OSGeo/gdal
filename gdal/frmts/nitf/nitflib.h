@@ -99,6 +99,17 @@ typedef struct {
     int nLocSize;
 } NITFLocation;
 
+typedef struct
+{
+  unsigned short   tableId;
+  unsigned int     nRecords;
+  unsigned char    elementLength;
+  unsigned short   histogramRecordLength;
+  unsigned int     colorTableOffset;
+  unsigned int     histogramTableOffset;
+} NITFColormapRecord;
+
+
 typedef struct {
     NITFFile  *psFile;
     int        iSegment;
