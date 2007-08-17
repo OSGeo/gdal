@@ -44,6 +44,7 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
 #endif
 
 static void NITFLoadLocationTable( NITFImage *psImage );
+static void NITFLoadColormapSubSection( NITFImage *psImage );
 static int NITFLoadVQTables( NITFImage *psImage );
 
 void NITFGetGCP ( const char* pachCoord, GDAL_GCP *psIGEOLOGCPs, int iCoord );
@@ -524,6 +525,10 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      Is there a location table to load?                              */
 /* -------------------------------------------------------------------- */
     NITFLoadLocationTable( psImage );
+    
+    /* Fix bug #1744 */
+    if (psImage->nBands == 1)
+        NITFLoadColormapSubSection ( psImage );
 
 /* -------------------------------------------------------------------- */
 /*      Setup some image access values.  Some of these may not apply    */
@@ -2087,6 +2092,163 @@ int NITFReadBLOCKA_GCPs( NITFImage *psImage, GDAL_GCP *psIGEOLOGCPs )
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                       NITFLoadColormapSubSection()                   */
+/************************************************************************/
+
+/* This function is directly inspired by function parse_clut coming from ogdi/driver/rpf/utils.c
+   and placed under the following copyright */
+
+/*
+ ******************************************************************************
+ * Copyright (C) 1995 Logiciels et Applications Scientifiques (L.A.S.) Inc
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies, that
+ * both the copyright notice and this permission notice appear in
+ * supporting documentation, and that the name of L.A.S. Inc not be used 
+ * in advertising or publicity pertaining to distribution of the software 
+ * without specific, written prior permission. L.A.S. Inc. makes no
+ * representations about the suitability of this software for any purpose.
+ * It is provided "as is" without express or implied warranty.
+ ******************************************************************************
+ */
+
+
+static void NITFLoadColormapSubSection( NITFImage *psImage )
+{
+    int nLocBaseColorGrayscaleSection = 0;
+    int nLocBaseColormapSubSection = 0;
+    int colorGrayscaleSectionSize = 0;
+    int colormapSubSectionSize = 0;
+    NITFFile *psFile = psImage->psFile;
+    int i, j;
+    unsigned char nOffsetRecs;
+    NITFColormapRecord* colormapRecords;
+    unsigned int colormapOffsetTableOffset;
+    unsigned short offsetRecLen;
+    
+    NITFBandInfo *psBandInfo = psImage->pasBandInfo;
+  
+    for( i = 0; i < psImage->nLocCount; i++ )
+    {
+        if( psImage->pasLocations[i].nLocId == LID_ColorGrayscaleSectionSubheader )
+        {
+            nLocBaseColorGrayscaleSection = psImage->pasLocations[i].nLocOffset;
+            colorGrayscaleSectionSize = psImage->pasLocations[i].nLocSize;
+        }
+        else if( psImage->pasLocations[i].nLocId == LID_ColormapSubsection )
+        {
+            nLocBaseColormapSubSection = psImage->pasLocations[i].nLocOffset;
+            colormapSubSectionSize = psImage->pasLocations[i].nLocSize;
+        }
+    }
+    if (nLocBaseColorGrayscaleSection == 0)
+    {
+        //fprintf(stderr, "nLocBaseColorGrayscaleSection == 0\n");
+        return;
+    }
+    if (nLocBaseColormapSubSection == 0)
+    {
+        //fprintf(stderr, "nLocBaseColormapSubSection == 0\n");
+        return;
+    }
+    
+    if( VSIFSeekL( psFile->fp, nLocBaseColorGrayscaleSection, 
+                  SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to seek to %d.",
+                  nLocBaseColorGrayscaleSection );
+        return;
+    }
+    
+    
+    VSIFReadL( &nOffsetRecs, 1, 1, psFile->fp );
+    
+    if( VSIFSeekL( psFile->fp, nLocBaseColormapSubSection, 
+                  SEEK_SET ) != 0  )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to seek to %d.",
+                  nLocBaseColormapSubSection );
+        return;
+    }
+    
+    colormapRecords = (NITFColormapRecord*)CPLMalloc(nOffsetRecs * sizeof(NITFColormapRecord));
+
+     /* colormap offset table offset length */
+    VSIFReadL( &colormapOffsetTableOffset, 1, sizeof(colormapOffsetTableOffset),  psFile->fp );
+    CPL_MSBPTR32( &colormapOffsetTableOffset );
+
+     /* offset record length */
+    VSIFReadL( &offsetRecLen, 1, sizeof(offsetRecLen),  psFile->fp );
+    CPL_MSBPTR16( &offsetRecLen );
+    
+    for (i = 0; i < nOffsetRecs; i++)
+    {
+        VSIFReadL( &colormapRecords[i].tableId, 1, sizeof(colormapRecords[i].tableId),  psFile->fp );
+        CPL_MSBPTR16( &colormapRecords[i].tableId );
+        
+        VSIFReadL( &colormapRecords[i].nRecords, 1, sizeof(colormapRecords[i].nRecords),  psFile->fp );
+        CPL_MSBPTR32( &colormapRecords[i].nRecords );
+        
+        VSIFReadL( &colormapRecords[i].elementLength, 1, sizeof(colormapRecords[i].elementLength),  psFile->fp );
+    
+        VSIFReadL( &colormapRecords[i].histogramRecordLength, 1, sizeof(colormapRecords[i].histogramRecordLength),  psFile->fp );
+        CPL_MSBPTR16( &colormapRecords[i].histogramRecordLength );
+    
+        VSIFReadL( &colormapRecords[i].colorTableOffset, 1, sizeof(colormapRecords[i].colorTableOffset),  psFile->fp );
+        CPL_MSBPTR32( &colormapRecords[i].colorTableOffset );
+    
+        VSIFReadL( &colormapRecords[i].histogramTableOffset, 1, sizeof(colormapRecords[i].histogramTableOffset),  psFile->fp );
+        CPL_MSBPTR32( &colormapRecords[i].histogramTableOffset );
+    }
+    
+    for (i=0; i<nOffsetRecs; i++)
+    {
+        if( VSIFSeekL( psFile->fp, nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset, 
+                    SEEK_SET ) != 0  )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                    "Failed to seek to %d.",
+                    nLocBaseColormapSubSection + colormapRecords[i].colorTableOffset );
+            CPLFree(colormapRecords);
+            return;
+        }
+        
+        /* This test is very CADRG specific. See MIL-C-89038, paragraph 3.12.5.a */
+        if (i == 0 &&
+            colormapRecords[i].tableId == 2 &&
+            colormapRecords[i].elementLength == 4 &&
+            colormapRecords[i].nRecords == 216)   /* read, use colortable */
+        {
+            GByte* rgbm = (GByte*)CPLMalloc(colormapRecords[i].nRecords * 4);
+            if (VSIFReadL(rgbm, 1, colormapRecords[i].nRecords * 4, 
+                     psFile->fp ) != colormapRecords[i].nRecords * 4 )
+            {
+                CPLError( CE_Failure, CPLE_FileIO, 
+                          "Failed to read %d byte rgbm.",
+                           colormapRecords[i].nRecords * 4);
+                CPLFree(rgbm);
+                CPLFree(colormapRecords);
+                return;
+            }
+            for (j = 0; j < colormapRecords[i].nRecords; j++)
+            {
+                psBandInfo->pabyLUT[j] = rgbm[4*j];
+                psBandInfo->pabyLUT[j+256] = rgbm[4*j+1];
+                psBandInfo->pabyLUT[j+512] = rgbm[4*j+2];
+            }
+            CPLFree(rgbm);
+        }
+    } 
+
+    CPLFree(colormapRecords);
+}
+
+
 
 
 /************************************************************************/
