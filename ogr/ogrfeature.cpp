@@ -99,6 +99,8 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
 OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 
 {
+    VALIDATE_POINTER1( hDefn, "OGR_F_Create", NULL );
+
     return (OGRFeatureH) new OGRFeature( (OGRFeatureDefn *) hDefn );
 }
 
@@ -255,6 +257,8 @@ void OGRFeature::DestroyFeature( OGRFeature *poFeature )
 OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetDefnRef", NULL );
+
     return ((OGRFeature *) hFeat)->GetDefnRef();
 }
 
@@ -316,6 +320,9 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", CE_Failure );
+    VALIDATE_POINTER1( hGeom, "OGR_F_SetGeometryDirectly", CE_Failure );
+
     return ((OGRFeature *) hFeat)->SetGeometryDirectly((OGRGeometry *) hGeom);
 }
 
@@ -380,6 +387,9 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", CE_Failure );
+    VALIDATE_POINTER1( hGeom, "OGR_F_SetGeometry", CE_Failure );
+
     return ((OGRFeature *) hFeat)->SetGeometry((OGRGeometry *) hGeom);
 }
 
@@ -440,6 +450,8 @@ OGRGeometry *OGRFeature::StealGeometry()
 OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", NULL );
+
     return ((OGRFeature *) hFeat)->GetGeometryRef();
 }
 
@@ -497,6 +509,8 @@ OGRFeature *OGRFeature::Clone()
 OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_Clone", NULL );
+
     return (OGRFeatureH) ((OGRFeature *) hFeat)->Clone();
 }
 
@@ -532,6 +546,8 @@ OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldCount", 0 );
+
     return ((OGRFeature *) hFeat)->GetFieldCount();
 }
 
@@ -571,6 +587,8 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldDefnRef", NULL );
+
     return (OGRFieldDefnH) ((OGRFeature *) hFeat)->GetFieldDefnRef(i);
 }
 
@@ -612,6 +630,8 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldIndex", 0 );
+
     return ((OGRFeature *) hFeat)->GetFieldIndex( pszName );
 }
 
@@ -649,6 +669,8 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 int OGR_F_IsFieldSet( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldSet", 0 );
+
     return ((OGRFeature *)hFeat)->IsFieldSet( iField );
 }
 
@@ -716,6 +738,8 @@ void OGRFeature::UnsetField( int iField )
 void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_UnsetField" );
+
     ((OGRFeature *) hFeat)->UnsetField( iField );
 }
 
@@ -755,6 +779,8 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetRawFieldRef", NULL );
+
     return ((OGRFeature *)hFeat)->GetRawFieldRef( iField );
 }
 
@@ -838,6 +864,8 @@ int OGRFeature::GetFieldAsInteger( int iField )
 int OGR_F_GetFieldAsInteger( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsInteger", 0 );
+
     return ((OGRFeature *)hFeat)->GetFieldAsInteger(iField);
 }
 
@@ -921,6 +949,8 @@ double OGRFeature::GetFieldAsDouble( int iField )
 double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDouble", 0 );
+
     return ((OGRFeature *)hFeat)->GetFieldAsDouble(iField);
 }
 
@@ -1224,6 +1254,8 @@ const char *OGRFeature::GetFieldAsString( int iField )
 const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsString", NULL );
+
     return ((OGRFeature *)hFeat)->GetFieldAsString(iField);
 }
 
@@ -1299,6 +1331,8 @@ const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
                                   int *pnCount )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsIntegerList", NULL );
+
     return ((OGRFeature *)hFeat)->GetFieldAsIntegerList(iField, pnCount);
 }
 
@@ -1374,6 +1408,8 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
                                           int *pnCount )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDoubleList", NULL );
+
     return ((OGRFeature *)hFeat)->GetFieldAsDoubleList(iField, pnCount);
 }
 
@@ -1438,6 +1474,8 @@ char **OGRFeature::GetFieldAsStringList( int iField ) const
 char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsStringList", NULL );
+
     return ((OGRFeature *)hFeat)->GetFieldAsStringList(iField);
 }
 
@@ -1507,6 +1545,8 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
 GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsBinary", NULL );
+
     return ((OGRFeature *)hFeat)->GetFieldAsBinary(iField,pnBytes);
 }
 
@@ -1607,6 +1647,8 @@ int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
                               int *pnTZFlag )
     
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
+
     return ((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
                                                       pnYear, pnMonth, pnDay,
                                                       pnHour, pnMinute,pnSecond,
@@ -1686,6 +1728,8 @@ void OGRFeature::SetField( int iField, int nValue )
 void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldInteger" );
+
     ((OGRFeature *)hFeat)->SetField( iField, nValue );
 }
 
@@ -1762,6 +1806,8 @@ void OGRFeature::SetField( int iField, double dfValue )
 void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDouble" );
+
     ((OGRFeature *)hFeat)->SetField( iField, dfValue );
 }
 
@@ -1841,6 +1887,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldString" );
+
     ((OGRFeature *)hFeat)->SetField( iField, pszValue );
 }
 
@@ -1901,6 +1949,8 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
                                 int nCount, int *panValues )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldIntegerList" );
+
     ((OGRFeature *)hFeat)->SetField( iField, nCount, panValues );
 }
 
@@ -1961,6 +2011,8 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
                                int nCount, double *padfValues )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDoubleList" );
+
     ((OGRFeature *)hFeat)->SetField( iField, nCount, padfValues );
 }
 
@@ -2019,6 +2071,8 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
                                char ** papszValues )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldStringList" );
+
     ((OGRFeature *)hFeat)->SetField( iField, papszValues );
 }
 
@@ -2078,6 +2132,8 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
                            int nBytes, GByte *pabyData )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldBinary" );
+
     ((OGRFeature *)hFeat)->SetField( iField, nBytes, pabyData );
 }
 
@@ -2156,6 +2212,8 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
 
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTime" );
+
     ((OGRFeature *)hFeat)->SetField( iField, nYear, nMonth, nDay,
                                      nHour, nMinute, nSecond, nTZFlag );
 }
@@ -2324,6 +2382,8 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
 void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldRaw" );
+
     ((OGRFeature *)hFeat)->SetField( iField, psValue );
 }
 
@@ -2395,6 +2455,8 @@ void OGRFeature::DumpReadable( FILE * fpOut )
 void OGR_F_DumpReadable( OGRFeatureH hFeat, FILE *fpOut )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_DumpReadable" );
+
     ((OGRFeature *) hFeat)->DumpReadable( fpOut );
 }
 
@@ -2429,6 +2491,8 @@ void OGR_F_DumpReadable( OGRFeatureH hFeat, FILE *fpOut )
 long OGR_F_GetFID( OGRFeatureH hFeat )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFID", 0 );
+
     return ((OGRFeature *) hFeat)->GetFID();
 }
 
@@ -2482,6 +2546,8 @@ OGRErr OGRFeature::SetFID( long nFID )
 OGRErr OGR_F_SetFID( OGRFeatureH hFeat, long nFID )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFID", CE_Failure );
+
     return ((OGRFeature *) hFeat)->SetFID(nFID);
 }
 
@@ -2546,6 +2612,9 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
 int OGR_F_Equal( OGRFeatureH hFeat, OGRFeatureH hOtherFeat )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_Equal", 0 );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_Equal", 0 );
+
     return ((OGRFeature *) hFeat)->Equal( (OGRFeature *) hOtherFeat );
 }
 
@@ -2677,6 +2746,9 @@ OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
                       int bForgiving )
 
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
+
     return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
                                            bForgiving );
 }
@@ -2721,6 +2793,8 @@ const char *OGRFeature::GetStyleString()
 
 const char *OGR_F_GetStyleString( OGRFeatureH hFeat )
 {
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleString", NULL );
+
     return ((OGRFeature *)hFeat)->GetStyleString();
 }
 
@@ -2768,6 +2842,8 @@ void OGRFeature::SetStyleString(const char *pszString)
 void OGR_F_SetStyleString( OGRFeatureH hFeat, const char *pszStyle )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleString" );
+
     ((OGRFeature *)hFeat)->SetStyleString( pszStyle );
 }
 
@@ -2811,6 +2887,8 @@ void OGRFeature::SetStyleStringDirectly(char *pszString)
 void OGR_F_SetStyleStringDirectly( OGRFeatureH hFeat, char *pszStyle )
 
 {
+    VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleStringDirectly" );
+
     ((OGRFeature *)hFeat)->SetStyleStringDirectly( pszStyle );
 }
 
@@ -2875,3 +2953,4 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
 
     return OGRERR_NONE;
 }
+
