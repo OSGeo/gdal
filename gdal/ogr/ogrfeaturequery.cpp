@@ -132,11 +132,13 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
     const char  *pszError;
     OGRErr      eErr = OGRERR_NONE;
+    swq_expr*   pTmpSWSExpr = (swq_expr*)pSWQExpr;
 
     poTargetDefn = poDefn;
     pszError = swq_expr_compile( pszExpression, nFieldCount,
                                  papszFieldNames, paeFieldTypes, 
-                                 (swq_expr **) &pSWQExpr );
+                                 &pTmpSWSExpr );
+    pSWQExpr = pTmpSWSExpr;
     if( pszError != NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

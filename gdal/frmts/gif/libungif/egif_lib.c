@@ -219,7 +219,7 @@ int EGifPutScreenDesc(GifFileType *GifFile,
 
 /* First write the version prefix into the file. */
 #ifndef DEBUG_NO_PREFIX
-    if (WRITE(GifFile, GifVersionPrefix, strlen(GifVersionPrefix)) !=
+    if (WRITE(GifFile, (unsigned char*)GifVersionPrefix, strlen(GifVersionPrefix)) !=
 						strlen(GifVersionPrefix)) {
 	_GifError = E_GIF_ERR_WRITE_FAILED;
 	return GIF_ERROR;
@@ -553,7 +553,7 @@ static int EGifPutWord(int Word, GifFileType *GifFile)
     c[0] = Word & 0xff;
     c[1] = (Word >> 8) & 0xff;
 #ifndef DEBUG_NO_PREFIX
-    if (WRITE(GifFile, c, 2) == 2)
+    if (WRITE(GifFile, (unsigned char*)c, 2) == 2)
 	return GIF_OK;
     else
 	return GIF_ERROR;
@@ -816,7 +816,7 @@ int EGifSpew(GifFileType *GifFileOut)
 	for (j = 0; j < SavedHeight; j++)
 	{
 	    if (EGifPutLine(GifFileOut,
-			    sp->RasterBits + j * SavedWidth,
+			    (unsigned char*)(sp->RasterBits + j * SavedWidth),
 			    SavedWidth) == GIF_ERROR)
 		return(GIF_ERROR);
 	}
