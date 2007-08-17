@@ -1080,7 +1080,10 @@ void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
 void CPL_STDCALL GDALDeinitGCPs( int nCount, GDAL_GCP * psGCP )
 
 {
-    VALIDATE_POINTER0( psGCP, "GDALDeinitGCPs" );
+    if ( nCount > 0 )
+    {
+        VALIDATE_POINTER0( psGCP, "GDALDeinitGCPs" );
+    }
 
     for( int iGCP = 0; iGCP < nCount; iGCP++ )
     {
