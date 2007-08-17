@@ -1516,7 +1516,7 @@ SWfinfo(int32 swathID, char *fieldtype, char *fieldname, int32 *rank,
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           fsize;	/* field size in bytes */
-    int32           ndims = 0;	/* Number of dimensions */
+    int32           ndims;	/* Number of dimensions */
     int32           slen[8];	/* Length of each entry in parsed string */
     int32           dum;	/* Dummy variable */
     int32           vdataID;	/* 1d field vdata ID */
@@ -4183,7 +4183,7 @@ SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           nFld = 0;	/* Number of mappings */
     int32           slen[8];	/* String length array */
-    int32           ntype = 0;	/* Data Type */
+    int32           ntype;	/* Data Type */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -4521,9 +4521,9 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           nEntries = 0;	/* Number of entries */
     int32           metaflag;	/* Old (0), New (1) metadata flag) */
-    int32           nVal = 0;	/* Number of strings to search for */
+    int32           nVal;	/* Number of strings to search for */
 
-    char           *metabuf = NULL;	/* Pointer to structural metadata (SM) */
+    char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
     char            swathname[80];	/* Swath Name */
     char           *utlstr;	/* Utility string */
@@ -6488,7 +6488,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     intn            k;		/* Loop index */
 
     intn            l=0;	/* Loop index */
-    intn            tmpVal = 0;     /* temp value for start region Delyth Jones*/
+    intn            tmpVal;     /* temp value for start region Delyth Jones*/
   /*intn            j1;  */     /* Loop index */
     intn            status;	/* routine return status variable */
     intn	    mapstatus;	/* status for type of mapping */
@@ -7124,7 +7124,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 
     intn            i;		/* Loop index */
     intn            j;		/* Loop index */
-    intn            k = 0;		/* Loop index */
+    intn            k;		/* Loop index */
     intn            status;	/* routine return status variable */
     intn            statTime;	/* Status from SWfieldinfo for time */
 
@@ -7143,7 +7143,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
     int32           dum;	/* Dummy (loop) variable */
 
     float64         time64Test;	/* Time test value */
-    float64        *time64 = NULL;	/* Time data array */
+    float64        *time64;	/* Time data array */
 
     char            dimlist[256];	/* Dimension list (geolocation
 					 * fields) */
@@ -7460,7 +7460,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
     int32           rank = 0;	/* Field rank */
     int32           rk = 0;	/* Field rank */
     int32           ntype = 0;	/* Field number type */
-    int32           bufOffset = 0;	/* Output buffer offset */
+    int32           bufOffset;	/* Output buffer offset */
     int32           size;	/* Size of data buffer */
     int32           idxMapElem = -1;	/* Number of index map elements  */
     int32          *idxmap = NULL;	/* Pointer to index mapping array */
@@ -10224,8 +10224,8 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], int32 mode)
 
     int32           regionID = -1;	/* Region ID (return) */
 
-    float64	    scan[2] = {0, 0};
-    float64	    original_scan[2] = {0, 0};
+    float64	    scan[2];
+    float64	    original_scan[2];
 
     char            dimlist[256];	/* Dimension list */
     char	    swathname[80];

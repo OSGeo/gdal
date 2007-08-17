@@ -47,15 +47,12 @@ typedef enum {
     SWQ_OTHER
 } swq_field_type;
 
-typedef struct swq_field_op swq_expr;
-typedef struct swq_field_op swq_field_op;
-
-struct swq_field_op {
+typedef struct {
     swq_op      operation;
 
     /* only for logical expression on subexpression */
-    swq_expr   *first_sub_expr;
-    swq_expr   *second_sub_expr;
+    struct swq_node_s  *first_sub_expr;
+    struct swq_node_s  *second_sub_expr;
 
     /* only for binary field operations */
     int         field_index;
@@ -64,8 +61,9 @@ struct swq_field_op {
     char        *string_value;
     int         int_value;
     double      float_value;
-};
+} swq_field_op;
 
+typedef swq_field_op swq_expr;
 
 typedef int (*swq_op_evaluator)(swq_field_op *op, void *record_handle);
 
