@@ -1552,38 +1552,11 @@ CPLErr GDALWarpRegionToBuffer( GDALWarpOperationH hOperation,
 /*      "DstValid", and "DstDensity".                                   */
 /************************************************************************/
 
-/* -------------------------------------------------------------------- */
-/*      Allocate if needed.                                             */
-/* -------------------------------------------------------------------- */
-static void* CreateKernelMaskAlloc(int  nXSize, int nYSize, int nBitsPerPixel, int nDefault, const char *pszType)
-{
-    void* pMask;
-    int nBytes;
-
-    if( nBitsPerPixel == 32 )
-        nBytes = nXSize * nYSize * 4;
-    else
-        nBytes = (nXSize * nYSize + 31) / 8;
-
-    pMask = VSIMalloc( nBytes );
-
-    if( pMask == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                    "Out of memory allocating %d bytes for %s mask.", 
-                    nBytes, pszType );
-        return NULL;
-    }
-
-    memset( pMask, nDefault, nBytes );
-    
-    return pMask;
-}
-
 CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
                                             int iBand, const char *pszType )
 
 {
+    void **ppMask;
     int  nXSize, nYSize, nBitsPerPixel, nDefault;
 
 /* -------------------------------------------------------------------- */
@@ -1594,74 +1567,44 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         if( poKernel->papanBandSrcValid == NULL )
             poKernel->papanBandSrcValid = (GUInt32 **)
                 CPLCalloc( sizeof(void*),poKernel->nBands);
-
+                
+        ppMask = (void **) &(poKernel->papanBandSrcValid[iBand]);
         nXSize = poKernel->nSrcXSize;
         nYSize = poKernel->nSrcYSize;
         nBitsPerPixel = 1;
         nDefault = 0xff;
-        if (poKernel->papanBandSrcValid[iBand] == NULL)
-        {
-            poKernel->papanBandSrcValid[iBand] =
-                    (GUInt32*)CreateKernelMaskAlloc(nXSize, nYSize, nBitsPerPixel, nDefault, pszType);
-            if (poKernel->papanBandSrcValid[iBand] == NULL)
-                return CE_Failure;
-        }
     }
     else if( EQUAL(pszType,"UnifiedSrcValid") )
     {
+        ppMask = (void **) &(poKernel->panUnifiedSrcValid);
         nXSize = poKernel->nSrcXSize;
         nYSize = poKernel->nSrcYSize;
         nBitsPerPixel = 1;
         nDefault = 0xff;
-        if (poKernel->panUnifiedSrcValid == NULL)
-        {
-            poKernel->panUnifiedSrcValid =
-                    (GUInt32*)CreateKernelMaskAlloc(nXSize, nYSize, nBitsPerPixel, nDefault, pszType);
-            if (poKernel->panUnifiedSrcValid == NULL)
-                return CE_Failure;
-        }
     }
     else if( EQUAL(pszType,"UnifiedSrcDensity") )
     {
+        ppMask = (void **) &(poKernel->pafUnifiedSrcDensity);
         nXSize = poKernel->nSrcXSize;
         nYSize = poKernel->nSrcYSize;
         nBitsPerPixel = 32;
         nDefault = 0;
-        if (poKernel->pafUnifiedSrcDensity == NULL)
-        {
-            poKernel->pafUnifiedSrcDensity =
-                    (float*)CreateKernelMaskAlloc(nXSize, nYSize, nBitsPerPixel, nDefault, pszType);
-            if (poKernel->pafUnifiedSrcDensity == NULL)
-                return CE_Failure;
-        }
     }
     else if( EQUAL(pszType,"DstValid") )
     {
+        ppMask = (void **) &(poKernel->panDstValid);
         nXSize = poKernel->nDstXSize;
         nYSize = poKernel->nDstYSize;
         nBitsPerPixel = 1;
         nDefault = 0xff;
-        if (poKernel->panDstValid == NULL)
-        {
-            poKernel->panDstValid =
-                    (GUInt32*)CreateKernelMaskAlloc(nXSize, nYSize, nBitsPerPixel, nDefault, pszType);
-            if (poKernel->panDstValid == NULL)
-                return CE_Failure;
-        }
     }
     else if( EQUAL(pszType,"DstDensity") )
     {
+        ppMask = (void **) &(poKernel->pafDstDensity);
         nXSize = poKernel->nDstXSize;
         nYSize = poKernel->nDstYSize;
         nBitsPerPixel = 32;
         nDefault = 0;
-        if (poKernel->pafDstDensity == NULL)
-        {
-            poKernel->pafDstDensity =
-                    (float*)CreateKernelMaskAlloc(nXSize, nYSize, nBitsPerPixel, nDefault, pszType);
-            if (poKernel->pafDstDensity == NULL)
-                return CE_Failure;
-        }
     }
     else
     {
@@ -1669,6 +1612,31 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
                   "Internal error in CreateKernelMask(%s).",
                   pszType );
         return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate if needed.                                             */
+/* -------------------------------------------------------------------- */
+    if( *ppMask == NULL )
+    {
+        int nBytes;
+
+        if( nBitsPerPixel == 32 )
+            nBytes = nXSize * nYSize * 4;
+        else
+            nBytes = (nXSize * nYSize + 31) / 8;
+
+        *ppMask = VSIMalloc( nBytes );
+
+        if( *ppMask == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Out of memory allocating %d bytes for %s mask.", 
+                      nBytes, pszType );
+            return CE_Failure;
+        }
+
+        memset( *ppMask, nDefault, nBytes );
     }
 
     return CE_None;

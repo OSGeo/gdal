@@ -24,8 +24,6 @@ struct GeoKey {
 };
 typedef struct GeoKey GeoKey;
 
-#define GK_DATA_STRUCT_ADDR(x)  ((char*)x + (int)&(((GeoKey*)0)->gk_data))
-
 /*
  *  This structure represents the file-organization of
  *  the key entry. Note that it assumes that short entries

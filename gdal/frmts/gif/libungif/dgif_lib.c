@@ -121,7 +121,7 @@ GifFileType *DGifOpenFileHandle(int FileHandle)
     GifFile->UserData = 0;  /* TVT */
 
     /* Lets see if this is a GIF file: */
-    if (READ(GifFile,(unsigned char*)Buf, GIF_STAMP_LEN) != GIF_STAMP_LEN) {
+    if (READ(GifFile,Buf, GIF_STAMP_LEN) != GIF_STAMP_LEN) {
         _GifError = D_GIF_ERR_READ_FAILED;
         fclose(f);
         free((char *) Private);
@@ -185,7 +185,7 @@ GifFileType *DGifOpen( void* userData, InputFunc readFunc )
 	GifFile->UserData = userData;    /* TVT */
 
     /* Lets see if this is a GIF file: */
-    if ( READ( GifFile, (unsigned char*)Buf, GIF_STAMP_LEN) != GIF_STAMP_LEN) {
+    if ( READ( GifFile, Buf, GIF_STAMP_LEN) != GIF_STAMP_LEN) {
 	  _GifError = D_GIF_ERR_READ_FAILED;
 	  free((char *) Private);
 	  free((char *) GifFile);
@@ -941,9 +941,9 @@ int DGifSlurp(GifFileType *GifFile)
 		ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
 
 		sp->RasterBits
-		    = (char*) malloc(ImageSize * sizeof(GifPixelType));
+		    = (GifPixelType*) malloc(ImageSize * sizeof(GifPixelType));
 
-		if (DGifGetLine(GifFile, (unsigned char*)sp->RasterBits, ImageSize)
+		if (DGifGetLine(GifFile, sp->RasterBits, ImageSize)
 		    == GIF_ERROR)
 		    return(GIF_ERROR);
 
@@ -970,7 +970,7 @@ int DGifSlurp(GifFileType *GifFile)
 		while (ExtData != NULL) {
             
             /* Create an extension block with our data */
-            if (AddExtensionBlock(&temp_save, ExtData[0], (char*)&ExtData[1])
+            if (AddExtensionBlock(&temp_save, ExtData[0], &ExtData[1])
                == GIF_ERROR)
                 return (GIF_ERROR); 
             
