@@ -1331,12 +1331,12 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     int32   nDataFields, nDimMaps;
     void    *pLat = NULL, *pLong = NULL;
     void    *pLatticeX = NULL, *pLatticeY = NULL;
-    int32   iLatticeType, iLatticeDataSize, iRank;
+    int32   iLatticeType, iLatticeDataSize = 0, iRank;
     int32   nLatCount = 0, nLongCount = 0;
     int32   nXPoints=0, nYPoints=0;
     int32   nStrBufSize;
     int32   aiDimSizes[MAX_VAR_DIMS];
-    int     i, j, iDataSize, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
+    int     i, j, iDataSize = 0, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
     char    **papszGeolocations = NULL, **papszDimMap = NULL;

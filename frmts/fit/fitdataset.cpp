@@ -941,7 +941,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("FIT", "Loading file with header version 01");
 
         // map old style header into new header structure
-	FIThead01* head01 = (FIThead01*)&head;
+	FIThead01* head01 = (FIThead01*)head;
         gst_swapb(head->dataOffset);
 	info->dataOffset = head01->dataOffset;
 

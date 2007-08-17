@@ -982,11 +982,12 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
     float       *pfValue;
     char        *pcValue;
     double      *pdValue;
+    GInt32      *pnValue = &nValue;
+    GInt32      *panVal = anVal;
 
-
-    pfValue = (float*)(&nValue);
+    pfValue = (float*)pnValue;
     pcValue = (char*)(&nValue);
-    pdValue = (double*)anVal;
+    pdValue = (double*)panVal;
 
     pn16Val1 = (GInt16*)(pcValue+2);
     pn16Val2 = (GInt16*)(pcValue);

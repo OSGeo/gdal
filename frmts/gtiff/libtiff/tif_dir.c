@@ -480,7 +480,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
             
     
 	    if (fip->field_type == TIFF_ASCII)
-		    _TIFFsetString((char **)&tv->value, va_arg(ap, char *));
+		    _TIFFsetString((char **)((char*)tv + (int)&(((TIFFTagValue*)0)->value)), va_arg(ap, char *));
 	    else {
 		tv->value = _TIFFCheckMalloc(tif, tv_size, tv->count,
 					     "Tag Value");
