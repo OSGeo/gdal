@@ -665,7 +665,7 @@ GInt32      AVCRawBinReadInt32(AVCRawBinFile *psInfo);
 float       AVCRawBinReadFloat(AVCRawBinFile *psInfo);
 double      AVCRawBinReadDouble(AVCRawBinFile *psInfo);
 void        AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, 
-                                char *pBuf);
+                                GByte *pBuf);
 
 void        AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
                                 GByte *pBuf);

@@ -575,13 +575,10 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
     if( strcmp(tokens[0],"(") == 0 )
     {
         int     sub_consumed = 0;
-        swq_expr* first_sub_expr = (swq_expr*) op->first_sub_expr;
 
         error = swq_subexpr_compile( tokens + 1, field_list, 
-                                     &first_sub_expr, 
+                                     (swq_expr **) &(op->first_sub_expr), 
                                      &sub_consumed );
-        op->first_sub_expr = first_sub_expr;
-
         if( error != NULL )
         {
             swq_expr_free( op );
@@ -767,7 +764,7 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
         op = (swq_field_op *) SWQ_MALLOC(sizeof(swq_field_op));
         memset( op, 0, sizeof(swq_field_op) );
         op->field_index = -1;
-        op->second_sub_expr = *expr_out;
+        op->second_sub_expr = (struct swq_node_s *) *expr_out;
         op->operation = SWQ_NOT;
 
         *expr_out = op;
@@ -803,8 +800,8 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
         memset( parent, 0, sizeof(swq_field_op) );
         parent->field_index = -1;
 
-        parent->first_sub_expr = *expr_out;
-        parent->second_sub_expr = remainder;
+        parent->first_sub_expr = (struct swq_node_s *) *expr_out;
+        parent->second_sub_expr = (struct swq_node_s *) remainder;
         parent->operation = op_code;
 
         *expr_out = parent;
