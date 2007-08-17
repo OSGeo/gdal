@@ -48,34 +48,48 @@ typedef struct
 
 class OGRBNALayer : public OGRLayer
 {
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn*    poFeatureDefn;
+    
+    OGRBNADataSource*  poDS;
+    int                bWriter;
 
+    int                nIDs;
     int                eof;
     int                failed;
     int                curLine;
     int                nNextFID;
-    FILE               *fpBNA;
+    FILE*              fpBNA;
     int                nFeatures;
     int                partialIndexTable;
     OffsetAndLine*     offsetAndLineFeaturesTable;
 
     BNAFeatureType     bnaFeatureType;
-    
+
     OGRFeature *       BuildFeatureFromBNARecord (BNARecord* record, long fid);
     void               FastParseUntil ( int interestFID);
+    void               WriteFeatureAttributes(FILE* fp, OGRFeature *poFeature);
+    
   public:
-    OGRBNALayer( const char *pszFilename,
-                 const char* layerName,
-                 BNAFeatureType bnaFeatureType,
-                 OGRwkbGeometryType eLayerGeomType );
-    ~OGRBNALayer();
+                        OGRBNALayer(const char *pszFilename,
+                                    const char* layerName,
+                                    BNAFeatureType bnaFeatureType,
+                                    OGRwkbGeometryType eLayerGeomType,
+                                    int bWriter,
+                                    OGRBNADataSource* poDS,
+                                    int nIDs = NB_MAX_BNA_IDS);
+                        ~OGRBNALayer();
+
+    void                SetFeatureIndexTable(int nFeatures,
+                                             OffsetAndLine* offsetAndLineFeaturesTable,
+                                             int partialIndexTable);
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
+    
+    OGRErr              CreateFeature( OGRFeature *poFeature );
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    
-    int                 GetFeatureCount( int );
     
     OGRFeature *        GetFeature( long nFID );
 
@@ -89,24 +103,51 @@ class OGRBNALayer : public OGRLayer
 
 class OGRBNADataSource : public OGRDataSource
 {
-    char                *pszName;
+    char*               pszName;
 
-    OGRBNALayer       **papoLayers;
+    OGRBNALayer**       papoLayers;
     int                 nLayers;
 
     int                 bUpdate;
+    
+    /*  Export related */
+    FILE                *fpOutput;
+    int                 bUseCRLF;
+    int                 bMultiLine;
+    int                 nbOutID;
+    int                 bEllipsesAsEllipses;
+    int                 nbPairPerLine;
+    int                 coordinatePrecision;
+    char*               pszCoordinateSeparator;
     
   public:
                         OGRBNADataSource();
                         ~OGRBNADataSource();
 
+    FILE                *GetOutputFP() { return fpOutput; }
+    int                 GetUseCRLF() { return bUseCRLF; }
+    int                 GetMultiLine() { return bMultiLine; }
+    int                 GetNbOutId() { return nbOutID; }
+    int                 GetEllipsesAsEllipses() { return bEllipsesAsEllipses; }
+    int                 GetNbPairPerLine() { return nbPairPerLine; }
+    int                 GetCoordinatePrecision() { return coordinatePrecision; }
+    const char*         GetCoordinateSeparator() { return pszCoordinateSeparator; }
+
     int                 Open( const char * pszFilename,
                               int bUpdate );
     
-    const char          *GetName() { return pszName; }
+    int                 Create( const char *pszFilename, 
+                              char **papszOptions );
+    
+    const char*         GetName() { return pszName; }
 
     int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    OGRLayer*           GetLayer( int );
+    
+    OGRLayer *          CreateLayer( const char * pszLayerName,
+                                    OGRSpatialReference *poSRS,
+                                    OGRwkbGeometryType eType,
+                                    char ** papszOptions );
 
     int                 TestCapability( const char * );
 };
@@ -120,9 +161,11 @@ class OGRBNADriver : public OGRSFDriver
   public:
                 ~OGRBNADriver();
 
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    int         TestCapability( const char * );
+    const char*         GetName();
+    OGRDataSource*      Open( const char *, int );
+    OGRDataSource*      CreateDataSource( const char * pszName, char **papszOptions );
+    int                 DeleteDataSource( const char *pszFilename );
+    int                 TestCapability( const char * );
     
 };
 

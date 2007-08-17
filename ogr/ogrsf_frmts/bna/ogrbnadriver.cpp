@@ -68,6 +68,38 @@ OGRDataSource *OGRBNADriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRBNADriver::CreateDataSource( const char * pszName,
+                                                 char **papszOptions )
+
+{
+    OGRBNADataSource   *poDS = new OGRBNADataSource();
+
+    if( !poDS->Create( pszName, papszOptions ) )
+    {
+        delete poDS;
+        poDS = NULL;
+    }
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                          DeleteDataSource()                          */
+/************************************************************************/
+
+OGRErr OGRBNADriver::DeleteDataSource( const char *pszFilename )
+
+{
+    if( VSIUnlink( pszFilename ) == 0 )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -75,9 +107,9 @@ int OGRBNADriver::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return FALSE;
+        return TRUE;
     else if( EQUAL(pszCap,ODrCDeleteDataSource) )
-        return FALSE;
+        return TRUE;
     else
         return FALSE;
 }
