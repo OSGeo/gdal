@@ -789,15 +789,55 @@ void CPLDestroyMutex( void *hMutexIn )
 
 /************************************************************************/
 /*                            CPLLockFile()                             */
+/*                                                                      */
+/*      This is really a stub implementation, see first                 */
+/*      CPLLockFile() for caveats.                                      */
 /************************************************************************/
 
 void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported, 
-              "PThreads CPLLockFile() not implemented yet." );
+    FILE      *fpLock;
+    char      *pszLockFilename;
+    
+/* -------------------------------------------------------------------- */
+/*      We use a lock file with a name derived from the file we want    */
+/*      to lock to represent the file being locked.  Note that for      */
+/*      the stub implementation the target file does not even need      */
+/*      to exist to be locked.                                          */
+/* -------------------------------------------------------------------- */
+    pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
+    sprintf( pszLockFilename, "%s.lock", pszPath );
 
-    return NULL;
+    fpLock = fopen( pszLockFilename, "r" );
+    while( fpLock != NULL && dfWaitInSeconds > 0.0 )
+    {
+        fclose( fpLock );
+        CPLSleep( MIN(dfWaitInSeconds,0.5) );
+        dfWaitInSeconds -= 0.5;
+
+        fpLock = fopen( pszLockFilename, "r" );
+    }
+        
+    if( fpLock != NULL )
+    {
+        fclose( fpLock );
+        CPLFree( pszLockFilename );
+        return NULL;
+    }
+
+    fpLock = fopen( pszLockFilename, "w" );
+
+    if( fpLock == NULL )
+    {
+        CPLFree( pszLockFilename );
+        return NULL;
+    }
+
+    fwrite( "held\n", 1, 5, fpLock );
+    fclose( fpLock );
+
+    return pszLockFilename;
 }
 
 /************************************************************************/
@@ -807,6 +847,14 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 void CPLUnlockFile( void *hLock )
 
 {
+    char *pszLockFilename = (char *) hLock;
+
+    if( hLock == NULL )
+        return;
+    
+    VSIUnlink( pszLockFilename );
+    
+    CPLFree( pszLockFilename );
 }
 
 /************************************************************************/
