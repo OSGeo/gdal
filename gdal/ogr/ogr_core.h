@@ -87,13 +87,13 @@ class CPL_DLL OGREnvelope
         }
     }
 
-    int Intersects(OGREnvelope& other)
+    int Intersects(OGREnvelope const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX && 
                MinY <= other.MaxY && MaxY >= other.MinY;
     }
 
-    int Contains(OGREnvelope& other)
+    int Contains(OGREnvelope const& other) const
     {
         return MinX <= other.MinX && MinY <= other.MinY &&
                MaxX >= other.MaxX && MaxY >= other.MaxY;
