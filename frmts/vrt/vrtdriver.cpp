@@ -152,26 +152,14 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
     {
-        FILE *fpVRT = NULL;
-
-        fpVRT = VSIFOpen( pszFilename, "w" );
-
-        if( NULL == fpVRT )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Can not open virtual dataset (\'%s\') for writing.",
-                      pszFilename );
-            return NULL;
-        }
 
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
         CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML( pszVRTPath );
-        char *pszXML;
-        
-        pszXML = CPLSerializeXMLTree( psDSTree );
+
+        char *pszXML = CPLSerializeXMLTree( psDSTree );
         
         CPLDestroyXMLNode( psDSTree );
 
@@ -180,14 +168,30 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
     /* -------------------------------------------------------------------- */
-        CPLAssert( NULL != fpVRT );
+        GDALDataset* pCopyDS = NULL;
 
-        VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
-        VSIFClose( fpVRT );
+        if( 0 != strlen( pszFilename ) )
+        {
+            FILE *fpVRT = NULL;
+
+            fpVRT = VSIFOpen( pszFilename, "w" );
+            CPLAssert( NULL != fpVRT );
+
+            VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
+            VSIFClose( fpVRT );
+
+            pCopyDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        }
+        else
+        {
+            /* No destination file is given, so pass serialized XML directly. */
+
+            pCopyDS = (GDALDataset *) GDALOpen( pszXML, GA_Update );
+        }
 
         CPLFree( pszXML );
-        
-        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+
+        return pCopyDS;
     }
 
 /* -------------------------------------------------------------------- */
