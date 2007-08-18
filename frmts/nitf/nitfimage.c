@@ -45,6 +45,7 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
 
 static void NITFLoadLocationTable( NITFImage *psImage );
 static void NITFLoadColormapSubSection( NITFImage *psImage );
+static void NITFLoadSubframeMaskTable( NITFImage *psImage );
 static int NITFLoadVQTables( NITFImage *psImage );
 
 void NITFGetGCP ( const char* pachCoord, GDAL_GCP *psIGEOLOGCPs, int iCoord );
@@ -601,6 +602,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 
         for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
             psImage->panBlockStart[i] = nLocBase + 6144 * i;
+        
+        /* Fix bug #913 */
+        NITFLoadSubframeMaskTable ( psImage );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2318,6 +2322,91 @@ static void NITFLoadColormapSubSection( NITFImage *psImage )
 }
 
 
+/************************************************************************/
+/*                       NITFLoadSubframeMaskTable()                        */
+/************************************************************************/
+
+/* Fixes bug #913 */
+static void NITFLoadSubframeMaskTable( NITFImage *psImage )
+{
+    int i;
+    NITFFile *psFile = psImage->psFile;
+    NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + psImage->iSegment;
+    GUInt32  nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
+    GUInt32  nLocBaseMaskSubsection = 0;
+    GUInt16 subframeSequenceRecordLength, transparencySequenceRecordLength, transparencyOutputPixelCodeLength;
+
+    for( i = 0; i < psImage->nLocCount; i++ )
+    {
+        if( psImage->pasLocations[i].nLocId == LID_SpatialDataSubsection )
+        {
+            nLocBaseSpatialDataSubsection = psImage->pasLocations[i].nLocOffset;
+        }
+        else if( psImage->pasLocations[i].nLocId == LID_MaskSubsection )
+        {
+            nLocBaseMaskSubsection = psImage->pasLocations[i].nLocOffset;
+        }
+    }
+    if (nLocBaseMaskSubsection == 0)
+    {
+        //fprintf(stderr, "nLocBase(LID_MaskSubsection) == 0\n");
+        return;
+    }
+    
+    //fprintf(stderr, "nLocBaseMaskSubsection = %d\n", nLocBaseMaskSubsection);
+    if( VSIFSeekL( psFile->fp, nLocBaseMaskSubsection, 
+                    SEEK_SET ) != 0  )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                "Failed to seek to %d.",
+                nLocBaseMaskSubsection );
+        return;
+    }
+    
+    VSIFReadL( &subframeSequenceRecordLength, 1, sizeof(subframeSequenceRecordLength),  psFile->fp );
+    CPL_MSBPTR16( &subframeSequenceRecordLength );
+    
+    VSIFReadL( &transparencySequenceRecordLength, 1, sizeof(transparencySequenceRecordLength),  psFile->fp );
+    CPL_MSBPTR16( &transparencySequenceRecordLength );
+    
+    /* in bits */
+    VSIFReadL( &transparencyOutputPixelCodeLength, 1, sizeof(transparencyOutputPixelCodeLength),  psFile->fp );
+    CPL_MSBPTR16( &transparencyOutputPixelCodeLength );
+
+    //fprintf(stderr, "transparencyOutputPixelCodeLength=%d\n", transparencyOutputPixelCodeLength);
+
+    if( transparencyOutputPixelCodeLength == 8 )
+    {
+      GByte byNodata;
+
+      psImage->bNoDataSet = TRUE;
+      VSIFReadL( &byNodata, 1, 1, psFile->fp );
+      psImage->nNoDataValue = byNodata;
+    }
+    else
+    {
+      VSIFSeekL( psFile->fp, (transparencyOutputPixelCodeLength+7)/8, SEEK_CUR );
+    }
+
+    /* Fix for rpf/cjnc/cjncz01/0001f023.jn1 */
+    if (subframeSequenceRecordLength != 4)
+    {
+      //fprintf(stderr, "subframeSequenceRecordLength=%d\n", subframeSequenceRecordLength);
+      return;
+    }
+
+    for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
+    {
+        unsigned int offset;
+        VSIFReadL( &offset, 1, sizeof(offset),  psFile->fp );
+        CPL_MSBPTR32( &offset );
+        //fprintf(stderr, "%d : %d\n", i, offset);
+        if (offset == 0xffffffff)
+            psImage->panBlockStart[i] = 0xffffffff;
+        else
+            psImage->panBlockStart[i] = nLocBaseSpatialDataSubsection + offset;
+    }
+}
 
 
 /************************************************************************/
