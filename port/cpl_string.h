@@ -4,7 +4,7 @@
  * Name:     cpl_string.h
  * Project:  CPL - Common Portability Library
  * Purpose:  String and StringList functions.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@mapgears.com
  *
  **********************************************************************
  * Copyright (c) 1998, Daniel Morissette
@@ -86,6 +86,8 @@ char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                          int nNumToRemove, char ***ppapszRetStrings);
 int CPL_DLL CSLFindString( char **, const char * );
+int CPL_DLL CSLPartialFindString( char **papszHaystack, 
+	const char * pszNeedle );
 int CPL_DLL CSLTestBoolean( const char *pszValue );
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey, 
                              int bDefault );
