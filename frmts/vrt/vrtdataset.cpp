@@ -149,7 +149,8 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
     /* -------------------------------------------------------------------- */
     /*      Setup root node and attributes.                                 */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psDSTree, *psMD;
+    CPLXMLNode *psDSTree = NULL;
+    CPLXMLNode *psMD = NULL;
     char       szNumber[128];
 
     psDSTree = CPLCreateXMLNode( NULL, CXT_Element, "VRTDataset" );
