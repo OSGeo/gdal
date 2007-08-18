@@ -704,13 +704,56 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         }
         else if( nBMRLNTH == 4 )
         {
+            int isM4 = EQUAL(psImage->szIC,"M4");
             VSIFReadL( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
             for( i=0; i < nBlockCount; i++ )
             {
                 CPL_MSBPTR32( psImage->panBlockStart + i );
                 if( psImage->panBlockStart[i] != 0xffffffff )
+                {
+                    if (isM4 && (psImage->panBlockStart[i] % 6144) != 0)
+                    {
+                        break;
+                    }
                     psImage->panBlockStart[i] 
                         += psSegInfo->nSegmentStart + nIMDATOFF;
+                }
+            }
+            /* This is a fix for a problem with rpf/cjga/cjgaz01/0105f033.ja1 and */
+            /* rpf/cjga/cjgaz03/0034t0b3.ja3 CADRG products (bug 1754). */
+            /* These products have the strange particularity that their block start table begins */
+            /* one byte after its theoretical beginning, for an unknown reason */
+            /* We detect this situation when the block start offset is not a multiple of 6144 */
+            /* Hopefully there's something in the NITF/CADRG standard that can account for it,  */
+            /* but I've not found it */
+            if (isM4 && i != nBlockCount)
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Block start for block %d is wrong. Retrying with one extra byte shift...", i);
+                VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart +
+                                       4 + /* nIMDATOFF */
+                                       2 + /* nBMRLNTH */
+                                       2 + /* nTMRLNTH */
+                                       2 + /* nTPXCDLNTH */
+                                       (nTPXCDLNTH+7)/8 +
+                                       1, /* MAGIC here ! One byte shift... */
+                            SEEK_SET );
+                VSIFReadL( psImage->panBlockStart, 4, nBlockCount, psFile->fp );
+                for( i=0; i < nBlockCount; i++ )
+                {
+                    CPL_MSBPTR32( psImage->panBlockStart + i );
+                    if( psImage->panBlockStart[i] != 0xffffffff )
+                    {
+                        if ((psImage->panBlockStart[i] % 6144) != 0)
+                        {
+                            CPLError( CE_Warning, CPLE_AppDefined, 
+                                      "Block start for block %d is still wrong. Display will be wrong.", i );
+                            break;
+                        }
+                        psImage->panBlockStart[i] 
+                            += psSegInfo->nSegmentStart + nIMDATOFF;
+                    }
+                }
             }
         }
         else
