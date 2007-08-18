@@ -314,13 +314,6 @@ directly to gdalce_dll.sln and build everything together.
 </ol>
 
 
-\subsection wince_building_geos Enable GEOS support
-
-GEOS support is optional.
-
-\todo This section will be updated soon, after project files for GEOS are prepared and uploaded to the GEOS SVN repository.
-
-
 \section wince_help How can I help?
 
 I'd like to encourage everyone interested in using GDAL on Windows CE devices to help in its development.
