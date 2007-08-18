@@ -851,6 +851,17 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         }
     }
 
+    /* Bug #1750 */
+    /* Fix for cjnc/cjncz01/000k1023.jn1 (and similar) from NIMA GNCJNCN CDROM: */
+    /* this product is crossing meridian 180deg and the upper and lower right longitudes are negative */
+    /* which causes problems in OpenEV, etc... So we are adjusting their value by setting them above +180 */
+    if( (psImage->chICORDS == 'G' || psImage->chICORDS == 'D') &&
+        (psImage->dfURX < psImage->dfULX && psImage->dfLRX < psImage->dfLLX))
+    {
+        psImage->dfURX += 360;
+        psImage->dfLRX += 360;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Are the VQ tables to load up?                                   */
 /* -------------------------------------------------------------------- */
