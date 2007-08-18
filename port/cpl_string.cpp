@@ -90,11 +90,26 @@ char **CSLAddString(char **papszStrList, const char *pszNewString)
     return papszStrList;
 }
 
-/**********************************************************************
- *                       CSLCount()
+/************************************************************************/
+/*                              CSLCount()                              */
+/************************************************************************/
+
+/**
+ * Return number of items in a string list.
  *
- * Return the number of lines in a Stringlist.
- **********************************************************************/
+ * Returns the number of items in a string list, not counting the 
+ * terminating NULL.  Passing in NULL is safe, and will result in a count
+ * of zero.  
+ *
+ * Lists are counted by iterating through them so long lists will
+ * take more time than short lists.  Care should be taken to avoid using
+ * CSLCount() as an end condition for loops as it will result in O(n^2)
+ * behavior. 
+ *
+ * @param papszStrList the string list to count.
+ * 
+ * @return the number of entries.
+ */
 int CSLCount(char **papszStrList)
 {
     int nItems=0;
@@ -138,11 +153,18 @@ const char * CSLGetField( char ** papszStrList, int iField )
     return( papszStrList[iField] );
 }
 
-/**********************************************************************
- *                       CSLDestroy()
+/************************************************************************/
+/*                             CSLDestroy()                             */
+/************************************************************************/
+
+/**
+ * Free string list.
+ * 
+ * Frees the passed string list (null terminated array of strings).
+ * It is safe to pass NULL. 
  *
- * Free all memory used by a StringList.
- **********************************************************************/
+ * @param papszStrList the list to free.
+ */
 void CPL_STDCALL CSLDestroy(char **papszStrList)
 {
     char **papszPtr;
@@ -160,13 +182,22 @@ void CPL_STDCALL CSLDestroy(char **papszStrList)
     }
 }
 
+/************************************************************************/
+/*                            CSLDuplicate()                            */
+/************************************************************************/
 
-/**********************************************************************
- *                       CSLDuplicate()
+/**
+ * Clone a string list.
  *
- * Allocate and return a copy of a StringList.
- **********************************************************************/
-char    **CSLDuplicate(char **papszStrList)
+ * Efficiently allocates a copy of a string list.  The returned list is
+ * owned by the caller and should be freed with CSLDestroy().
+ *
+ * @param papszStrList the input string list.
+ * 
+ * @return newly allocated copy.
+ */
+
+char **CSLDuplicate(char **papszStrList)
 {
     char **papszNewList, **papszSrc, **papszDst;
     int  nLines;
@@ -232,13 +263,25 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
     return papszOrig;
 }
 
-/**********************************************************************
- *                       CSLLoad()
+/************************************************************************/
+/*                              CSLLoad()                               */
+/************************************************************************/
+
+/**
+ * Load a text file into a string list.
  *
- * Load a test file into a stringlist.
+ * The VSI*L API is used, so VSIFOpenL() supported objects that aren't
+ * physical files can also be accessed.  Files are returned as a string list,
+ * with one item in the string list per line.  End of line markers are
+ * stripped (by CPLReadLineL()). 
  *
- * Lines are limited in length by the size of the CPLReadLine() buffer.
- **********************************************************************/
+ * If reading the file fails a CPLError() will be issued and NULL returned.
+ *
+ * @param pszFname the name of the file to read.
+ * 
+ * @return a string list with the files lines, now owned by caller.
+ */
+
 char **CSLLoad(const char *pszFname)
 {
     FILE        *fp;
@@ -529,11 +572,20 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
 
 /************************************************************************/
 /*                           CSLFindString()                            */
-/*                                                                      */
-/*      Find a string within a string list.  The string must match      */
-/*      the full length, but the comparison is case insensitive.        */
-/*      Return -1 on failure.                                           */
 /************************************************************************/
+
+/**
+ * Find a string within a string list.
+ *
+ * Returns the index of the entry in the string list that contains the 
+ * target string.  The string in the string list must be a full match for
+ * the target, but the search is case insensitive. 
+ * 
+ * @param papszList the string list to be searched.
+ * @param pszTarget the string to be searched for. 
+ * 
+ * @return the index of the string within the list or -1 on failure.
+ */
 
 int CSLFindString( char ** papszList, const char * pszTarget )
 
@@ -551,6 +603,39 @@ int CSLFindString( char ** papszList, const char * pszTarget )
 
     return -1;
 }
+
+/************************************************************************/
+/*                           CSLPartialFindString()                     */
+/************************************************************************/
+
+/**
+ * Find a substring within a string list.
+ *
+ * Returns the index of the entry in the string list that contains the 
+ * target string as a substring.  The search is case sensitive (unlike 
+ * CSLFindString()). 
+ * 
+ * @param papszHaystack the string list to be searched.
+ * @param pszNeedle the substring to be searched for. 
+ * 
+ * @return the index of the string within the list or -1 on failure.
+ */
+
+int CSLPartialFindString( char **papszHaystack, const char * pszNeedle )
+{
+    int i;
+    if (papszHaystack == NULL || pszNeedle == NULL)
+        return -1;
+
+    for (i = 0; papszHaystack[i] != NULL; i++) 
+    {
+        if (strstr(papszHaystack[i],pszNeedle))
+            return i;
+    }
+
+    return -1;
+}
+
 
 /**********************************************************************
  *                       CSLTokenizeString()
@@ -586,9 +671,54 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 
 /************************************************************************/
 /*                         CSLTokenizeString2()                         */
-/*                                                                      */
-/*      The ultimate tokenizer?                                         */
 /************************************************************************/
+
+/**
+ * Tokenize a string. 
+ *
+ * This function will split a string into tokens based on specified'
+ * delimeter(s) with a variety of options.  The returned result is a
+ * string list that should be freed with CSLDestroy() when no longer
+ * needed.
+ * 
+ * The available parsing options are:
+ * 
+ * - CSLT_ALLOWEMPTYTOKENS: Allow the return of empty tokens when two 
+ * delimiters in a row occur with no other text between them.  If not set, 
+ * empty tokens will be discarded.
+ * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should 
+ * not be broken into multiple tokens.  
+ * - CSLT_PRESERVEQUOTES: String quotes are carried into the tokens when this
+ * is set, otherwise they are removed. 
+ * - CSLT_PRESERVEESCAPES: If set backslash escapes (for backslash itself, 
+ * and for literal double quotes) will be preserved in the tokens, otherwise
+ * the backslashes will be removed in processing.
+ *
+ * \b Example:
+ * 
+ * Parse a string into tokens based on various white space (space, newline, 
+ * tab) and then print out results and cleanup.  Quotes may be used to hold 
+ * white space in tokens.
+
+\code
+    char **papszTokens;
+    int i;
+
+    papszTokens = 
+        CSLTokenizeString2( pszCommand, " \t\n", 
+                            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
+
+    for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+        printf( "arg %d: '%s'", papszTokens[i] );
+    CSLDestroy( papszTokens );
+\endcode
+
+ * @param pszString the string to be split into tokens.
+ * @param pszDelimeters one or more characters to be used as token delimeters.
+ * @param nCSLTFlags an ORing of one or more of the CSLT_ flag values.
+ *
+ * @return a string list of tokens owned by the caller.
+ */
 
 char ** CSLTokenizeString2( const char * pszString,
                             const char * pszDelimiters,
@@ -731,7 +861,7 @@ char ** CSLTokenizeString2( const char * pszString,
  * My own version of CPLSPrintf() that works with 10 static buffer.
  *
  * It returns a ref. to a static buffer that should not be freed and
- * is valid only until the next call to CPLSPrintf().
+ * is valid only until the next call to CPLSPrintf(). 
  *
  * NOTE: This function should move to cpl_conv.cpp. 
  **********************************************************************/
@@ -1551,9 +1681,11 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
 /**
  * Hexadecimal to binary translation
  *
- * @param 
-
-*/
+ * @param pszHex the input hex encoded string.
+ * @param pnBytes the returned count of decoded bytes placed here.
+ *
+ * @return returns binary buffer of data - free with CPLFree().
+ */
 
 GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 
