@@ -837,8 +837,8 @@ VRTDataset::Create( const char * pszName,
                     GDALDataType eType, char ** papszOptions )
 
 {
-    VRTDataset *poDS;
-    int        iBand;
+    VRTDataset *poDS = NULL;
+    int        iBand = 0;
 
     (void) papszOptions;
 

@@ -138,10 +138,12 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    VRTDataset *poVRTDS;
+    VRTDataset *poVRTDS = NULL;
 
     (void) bStrict;
     (void) papszOptions;
+
+    CPLAssert( NULL != poSrcDS );
 
 /* -------------------------------------------------------------------- */
 /*      If the source dataset is a virtual dataset then just write      */
@@ -150,9 +152,17 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
     {
-        FILE *fpVRT;
+        FILE *fpVRT = NULL;
 
         fpVRT = VSIFOpen( pszFilename, "w" );
+
+        if( NULL == fpVRT )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Can not open virtual dataset (\'%s\') for writing.",
+                      pszFilename );
+            return NULL;
+        }
 
     /* -------------------------------------------------------------------- */
     /*      Convert tree to a single block of XML text.                     */
@@ -170,6 +180,8 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
     /* -------------------------------------------------------------------- */
+        CPLAssert( NULL != fpVRT );
+
         VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
         VSIFClose( fpVRT );
 
