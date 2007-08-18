@@ -771,6 +771,21 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         }
     }
 
+    /* Bug #1751 : Add a transparent color if they are none. Absent subblocks will be then transparent */
+    if (psImage->bNoDataSet == FALSE && psImage->nBands == 1 && psImage->nBitsPerSample == 8)
+    {
+      NITFBandInfo *psBandInfo = psImage->pasBandInfo;
+      if (psBandInfo->nSignificantLUTEntries < 256-1)
+      {
+        psBandInfo->pabyLUT[0+psBandInfo->nSignificantLUTEntries] = 0;
+        psBandInfo->pabyLUT[256+psBandInfo->nSignificantLUTEntries] = 0;
+        psBandInfo->pabyLUT[512+psBandInfo->nSignificantLUTEntries] = 0;
+        psImage->bNoDataSet = TRUE;
+        psImage->nNoDataValue = psBandInfo->nSignificantLUTEntries;
+        psBandInfo->nSignificantLUTEntries ++;
+      }
+    }
+
 /* -------------------------------------------------------------------- */
 /*  We override the coordinates found in IGEOLO in case a BLOCKA is     */
 /*  present. According to the BLOCKA specification, it repeats earth    */
