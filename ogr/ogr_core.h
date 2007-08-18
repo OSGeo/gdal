@@ -55,8 +55,8 @@ class CPL_DLL OGREnvelope
     double      MinY;
     double      MaxY;
 
-    int  IsInit() { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
-    void Merge( OGREnvelope & sOther ) {
+    int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
+    void Merge( OGREnvelope const& sOther ) {
         if( IsInit() )
         {
             MinX = MIN(MinX,sOther.MinX);
