@@ -27679,7 +27679,7 @@ echo "  enable pthread support:    ${PTHREAD_ENABLED}"
 
 echo ""
 
-if test "x$CFG" != "xdebug"; then
+if test "x$CFG" != "xdebug" -a "x$CFG" != "xDEBUG" ; then
     DEBUG_MODE="no"
 else
     DEBUG_MODE="yes"
