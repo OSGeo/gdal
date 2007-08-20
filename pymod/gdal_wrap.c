@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 /***********************************************************************
- * $Header$
+ * $Header:$
  * swig_lib/python/python.cfg
  *
  * This file contains coded needed to add variable linking to the
@@ -32,6 +32,7 @@
  * Also contains supporting code for building python under Windows
  * and things like that.
  *
+ * $Log:$
  ************************************************************************/
 
 #ifdef __cplusplus
@@ -228,7 +229,7 @@ SWIG_addvarlink(PyObject *p, char *name,
 
 
 /*****************************************************************************
- * $Header$
+ * $Header:$
  *
  * swigptr.swg
  *
