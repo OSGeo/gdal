@@ -27,7 +27,7 @@ clean:
 	$(RM) *.o *.$(SO_EXT) *.la
 
 gdal_wrap.c:	gdal.i
-	-swig -python gdal.i
+	-swig11pl5 -python gdal.i
 
 $(GDALMODULE_SO):	$(OBJ) $(EXE_DEP_LIBS)
 	$(PY_LD_SHARED) $(OBJ) \
