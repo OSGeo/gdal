@@ -64,7 +64,9 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
                                         char ** papszOptions )
 
 {
-    OGRSFDriver* poDriver = (OGRSFDriver *)hDriver;
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_CreateDataSource", NULL );
+
+    OGRSFDriver* poDriver = static_cast<OGRSFDriver *>(hDriver);
 
     OGRDataSource* poDS = NULL;
     poDS = poDriver->CreateDataSource( pszName, papszOptions );
@@ -99,6 +101,9 @@ OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver,
                                 const char *pszDataSource )
 
 {
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_DeleteDataSource",
+                       OGRERR_INVALID_HANDLE );
+
     return ((OGRSFDriver *) hDriver)->DeleteDataSource( pszDataSource );
 }
 
@@ -109,6 +114,8 @@ OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver,
 const char *OGR_Dr_GetName( OGRSFDriverH hDriver )
 
 {
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_GetName", NULL );
+
     return ((OGRSFDriver *) hDriver)->GetName();
 }
 
@@ -120,6 +127,8 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
                             int bUpdate )
 
 {
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_Open", NULL );
+
     return ((OGRSFDriver *)hDriver)->Open( pszName, bUpdate );
 }
 
@@ -130,6 +139,8 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
 int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
 
 {
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_TestCapability", NULL );
+
     return ((OGRSFDriver *) hDriver)->TestCapability( pszCap );
 }
 
@@ -183,6 +194,9 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
                                       char **papszOptions )
                                       
 {
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_CopyDataSource", NULL );
+    VALIDATE_POINTER1( hSrcDS, "OGR_Dr_CopyDataSource", NULL );
+
     return ((OGRSFDriver *) hDriver)->CopyDataSource( 
         (OGRDataSource *) hSrcDS, pszNewName, papszOptions );
 }
