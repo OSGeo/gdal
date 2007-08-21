@@ -436,7 +436,7 @@ success.
  Returns the name of the data source.  This string should be sufficient to
  open the data source if passed to the same OGRSFDriver that this data
  source was opened with, but it need not be exactly the same string that
- was used to open the data source.  Normally this a filename. 
+ was used to open the data source.  Normally this is a filename. 
 
  This method is the same as the C function OGR_DS_GetName().
 
@@ -451,7 +451,7 @@ success.
  Returns the name of the data source.  This string should be sufficient to
  open the data source if passed to the same OGRSFDriver that this data
  source was opened with, but it need not be exactly the same string that
- was used to open the data source.  Normally this a filename. 
+ was used to open the data source.  Normally this is a filename. 
 
  This function is the same as the C++ method OGRDataSource::GetName().
 
