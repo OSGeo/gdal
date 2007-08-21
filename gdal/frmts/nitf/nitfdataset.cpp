@@ -159,7 +159,6 @@ class NITFRasterBand : public GDALPamRasterBand
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
-
 /************************************************************************/
 /*                           NITFRasterBand()                           */
 /************************************************************************/
@@ -725,11 +724,19 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
-        
+    
     if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
         && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
         && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
         return FALSE;
+
+    int i;
+    /* Check that it's not in fact a NITF A.TOC file, which is handled by the RPFTOC driver */
+    for(i=0;i<(int)poOpenInfo->nHeaderBytes-(int)strlen("A.TOC");i++)
+    {
+        if (EQUALN((const char*)poOpenInfo->pabyHeader + i, "A.TOC", strlen("A.TOC")))
+            return FALSE;
+    }
 
     return TRUE;
 }
@@ -769,7 +776,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     psFile = NITFOpen( pszFilename, poOpenInfo->eAccess == GA_Update );
     if( psFile == NULL )
+    {
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Is there an image to operate on?                                */
@@ -1503,6 +1512,15 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         sprintf( szValue, "%d", sChipInfo.FI_COL );
         poDS->SetMetadataItem( "ICHIP_FI_COL", szValue );
 
+    }
+    
+    const NITFSeries* series = NITFGetSeriesInfo(pszFilename);
+    if (series)
+    {
+        poDS->SetMetadataItem("NITF_SERIES_ABBREVIATION",
+                            (series->abbreviation) ? series->abbreviation : "Unknown");
+        poDS->SetMetadataItem("NITF_SERIES_NAME",
+                            (series->name) ? series->name : "Unknown");
     }
 
 /* -------------------------------------------------------------------- */

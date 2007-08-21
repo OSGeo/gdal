@@ -333,6 +333,21 @@ int CPL_DLL NITFReadICHIPB( NITFImage *psImage, NITFICHIPBInfo * );
 double CPL_DLL 
         NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat );
 
+
+
+
+typedef struct
+{
+    const char* code;
+    const char* abbreviation;
+    const char* scaleResolution;
+    const char* name;
+    const char* rpfDataType;
+} NITFSeries;
+
+/** Return not freeable (maybe NULL if no matching) */
+const NITFSeries CPL_DLL *NITFGetSeriesInfo(const char* pszFilename);
+
 CPL_C_END
 
 #endif /* ndef NITFLIB_H_INCLUDED */

@@ -46,6 +46,7 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
     pszProjection = NULL;
 
     bNeedsFlush = FALSE;
+    bWritable = TRUE;
 
     bGeoTransformSet = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -93,7 +94,7 @@ void VRTDataset::FlushCache()
 {
     GDALDataset::FlushCache();
 
-    if( !bNeedsFlush )
+    if( !bNeedsFlush || bWritable == FALSE)
         return;
 
     bNeedsFlush = FALSE;
