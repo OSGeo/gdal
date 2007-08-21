@@ -88,6 +88,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_nitf
     GDALRegister_NITF();
+    GDALRegister_RPFTOC();
 #endif
 
 #ifdef FRMT_hfa
