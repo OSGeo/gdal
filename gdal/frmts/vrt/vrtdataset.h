@@ -84,6 +84,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     char          *pszGCPProjection;
 
     int            bNeedsFlush;
+    int            bWritable;
     
     char          *pszVRTPath;
 
@@ -93,6 +94,8 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     void          SetNeedsFlush() { bNeedsFlush = TRUE; }
     virtual void  FlushCache();
+    
+    void SetWritable(int bWritable) { this->bWritable = bWritable; }
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
