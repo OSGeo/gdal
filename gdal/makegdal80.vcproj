@@ -365,6 +365,14 @@
 				<Filter
 					Name="ogrsf_frmts"
 					>
+					<File
+						RelativePath=".\ogr\ogrsf_frmts\ogr_attrind.h"
+						>
+					</File>
+					<File
+						RelativePath=".\ogr\ogrsf_frmts\ogrsf_frmts.h"
+						>
+					</File>
 					<Filter
 						Name="avc"
 						>
