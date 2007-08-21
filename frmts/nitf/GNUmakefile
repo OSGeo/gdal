@@ -2,13 +2,13 @@
 
 include ../../GDALmake.opt
 
-GDAL_OBJ	=	nitfdataset.o
+GDAL_OBJ	=	nitfdataset.o rpftocdataset.o
 NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o nitfaridpcm.o \
-			nitfbilevel.o
+			nitfbilevel.o rpftocfile.o
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
-CPPFLAGS	:=	-I../gtiff/libtiff $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../gtiff/libtiff -I../vrt $(GDAL_INCLUDE) $(CPPFLAGS)
 
 ifneq ($(JPEG_SETTING),no)
 CPPFLAGS	:=	$(CPPFLAGS) -DJPEG_SUPPORTED

@@ -1,7 +1,7 @@
 
-GDAL_OBJ	=	nitfdataset.obj
+GDAL_OBJ	=	nitfdataset.obj rpfdocdataset.obj
 NITFLIB_OBJ	=	nitffile.obj nitfimage.obj mgrs.obj nitfaridpcm.obj \
-			nitfbilevel.obj
+			nitfbilevel.obj rpffile.obj
 
 OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
 
@@ -17,7 +17,7 @@ JPEG_FLAGS =	-I..\jpeg\libjpeg -DJPEG_SUPPORTED
 !ENDIF
 !ENDIF
 
-EXTRAFLAGS = -I..\gtiff\libtiff $(JPEG_FLAGS)
+EXTRAFLAGS = -I..\gtiff\libtiff -I..\vrt $(JPEG_FLAGS)
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

@@ -941,3 +941,122 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat )
     return dfLat;
 }
 
+
+/************************************************************************/
+/*                        NITFGetSeriesInfo()                           */
+/************************************************************************/
+
+static const NITFSeries nitfSeries[] =
+{
+    { "GN", "GNC", "1:5M", "Global Navigation Chart", "CADRG"},
+    { "JN", "JNC", "1:2M", "Jet Navigation Chart", "CADRG"},
+    { "OH", "VHRC", "1:1M", "VFR Helicopter Route Chart", "CADRG"},
+    { "ON", "ONC", "1:1M", "Operational Navigation Chart", "CADRG"},
+    { "OW", "WAC", "1:1M", "High Flying Chart - Host Nation", "CADRG"},
+    { "TP", "TPC", "1:500K", "Tactical Pilotage Chart", "CADRG"},
+    { "LF", "LFC-FR (Day)", "1:500K", "Low Flying Chart (Day) - Host Nation", "CADRG"},
+    { "L1", "LFC-1", "1:500K", "Low Flying Chart (TED #1)", "CADRG"},
+    { "L2", "LFC-2", "1:500K", "Low Flying Chart (TED #2)", "CADRG"},
+    { "L3", "LFC-3", "1:500K", "Low Flying Chart (TED #3)", "CADRG"},
+    { "L4", "LFC-4", "1:500K", "Low Flying Chart (TED #4)", "CADRG"},
+    { "L5", "LFC-5", "1:500K", "Low Flying Chart (TED #5)", "CADRG"},
+    { "LN", "LN (Night)", "1:500K", "Low Flying Chart (Night) - Host Nation", "CADRG"},
+    { "JG", "JOG", "1:250K", "Joint Operation Graphic", "CADRG"},
+    { "JA", "JOG-A", "1:250K", "Joint Operation Graphic - Air", "CADRG"},
+    { "JR", "JOG-R", "1:250K", "Joint Operation Graphic - Radar", "CADRG"},
+    { "JO", "OPG", "1:250K", "Operational Planning Graphic", "CADRG"},
+    { "VT", "VTAC", "1:250K", "VFR Terminal Area Chart", "CADRG"},
+    { "F1", "TFC-1", "1:250K", "Transit Flying Chart (TED #1)", "CADRG"},
+    { "F2", "TFC-2", "1:250K", "Transit Flying Chart (TED #2)", "CADRG"},
+    { "F3", "TFC-3", "1:250K", "Transit Flying Chart (TED #3)", "CADRG"},
+    { "F4", "TFC-4", "1:250K", "Transit Flying Chart (TED #4)", "CADRG"},
+    { "F5", "TFC-5", "1:250K", "Transit Flying Chart (TED #5)", "CADRG"},
+    { "AT", "ATC", "1:200K", "Series 200 Air Target Chart", "CADRG"},
+    { "VH", "HRC", "1:125K", "Helicopter Route Chart", "CADRG"},
+    { "TN", "TFC (Night)", "1:250K", "Transit Flying Charget (Night) - Host Nation", "CADRG"},
+    { "TR", "TLM 200", "1:200K", "Topographic Line Map 1:200,000 scale", "CADRG"},
+    { "TC", "TLM 100", "1:100K", "Topographic Line Map 1:100,000 scale", "CADRG"},
+    { "RV", "Riverine", "1:50K", "Riverine Map 1:50,000 scale", "CADRG"},
+    { "TL", "TLM 50", "1:50K", "Topographic Line Map 1:50,000 scale", "CADRG"},
+    { "UL", "TLM 50 - Other", "1:50K", "Topographic Line Map (other 1:50,000 scale)", "CADRG"},
+    { "TT", "TLM 25", "1:25K", "Topographic Line Map 1:25,000 scale", "CADRG"},
+    { "TQ", "TLM 24", "1:24K", "Topographic Line Map 1:24,000 scale", "CADRG"},
+    { "HA", "HA", "Various", "Harbor and Approach Charts", "CADRG"},
+    { "CO", "CO", "Various", "Coastal Charts", "CADRG"},
+    { "OA", "OPAREA", "Various", "Naval Range Operation Area Chart", "CADRG"},
+    { "CG", "CG", "Various", "City Graphics", "CADRG"},
+    { "C1", "CG", "1:10000", "City Graphics", "CADRG"},
+    { "C2", "CG", "1:10560", "City Graphics", "CADRG"},
+    { "C3", "CG", "1:11000", "City Graphics", "CADRG"},
+    { "C4", "CG", "1:11800", "City Graphics", "CADRG"},
+    { "C5", "CG", "1:12000", "City Graphics", "CADRG"},
+    { "C6", "CG", "1:12500", "City Graphics", "CADRG"},
+    { "C7", "CG", "1:12800", "City Graphics", "CADRG"},
+    { "C8", "CG", "1:14000", "City Graphics", "CADRG"},
+    { "C9", "CG", "1:14700", "City Graphics", "CADRG"},
+    { "CA", "CG", "1:15000", "City Graphics", "CADRG"},
+    { "CB", "CG", "1:15500", "City Graphics", "CADRG"},
+    { "CC", "CG", "1:16000", "City Graphics", "CADRG"},
+    { "CD", "CG", "1:16666", "City Graphics", "CADRG"},
+    { "CE", "CG", "1:17000", "City Graphics", "CADRG"},
+    { "CF", "CG", "1:17500", "City Graphics", "CADRG"},
+    { "CH", "CG", "1:18000", "City Graphics", "CADRG"},
+    { "CJ", "CG", "1:20000", "City Graphics", "CADRG"},
+    { "CK", "CG", "1:21000", "City Graphics", "CADRG"},
+    { "CL", "CG", "1:21120", "City Graphics", "CADRG"},
+    { "CN", "CG", "1:22000", "City Graphics", "CADRG"},
+    { "CP", "CG", "1:23000", "City Graphics", "CADRG"},
+    { "CQ", "CG", "1:25000", "City Graphics", "CADRG"},
+    { "CR", "CG", "1:26000", "City Graphics", "CADRG"},
+    { "CS", "CG", "1:35000", "City Graphics", "CADRG"},
+    { "CT", "CG", "1:36000", "City Graphics", "CADRG"},
+    { "CM", "CM", "Various", "Combat Charts", "CADRG"},
+    { "A1", "CM", "1:10K", "Combat Charts (1:10K)", "CADRG"},
+    { "A2", "CM", "1:25K", "Combat Charts (1:25K)", "CADRG"},
+    { "A3", "CM", "1:50K", "Combat Charts (1:50K)", "CADRG"},
+    { "A4", "CM", "1:100K", "Combat Charts (1:100K)", "CADRG"},
+    { "MI", "MIM", "1:50K", "Military Installation Maps", "CADRG"},
+    { "M1", "MIM", "Various", "Military Installation Maps (TED #1)", "CADRG"},
+    { "M2", "MIM", "Various", "Military Installation Maps (TED #2)", "CADRG"},
+    { "VN", "VNC", "1:500K", "Visual Navigation Charts", "CADRG"},
+    { "MM", "", "Various", "(Miscellaneous Maps & Charts)", "CADRG"},
+    
+    { "I1", "", "10m", "Imagery, 10 meter resolution", "CIB"},
+    { "I2", "", "5m", "Imagery, 5 meter resolution", "CIB"},
+    { "I3", "", "2m", "Imagery, 2 meter resolution", "CIB"},
+    { "I4", "", "1m", "Imagery, 1 meter resolution", "CIB"},
+    { "I5", "", ".5m", "Imagery, .5 (half) meter resolution", "CIB"},
+    { "IV", "", "Various > 10m", "Imagery, greater than 10 meter resolution", "CIB"},
+    
+    { "D1", "", "100m", "Elevation Data from DTED level 1", "CDTED"},
+    { "D2", "", "30m", "Elevation Data from DTED level 2", "CDTED"},
+};
+
+/* See 24111CN1.pdf paragraph 5.1.4 */
+const NITFSeries* NITFGetSeriesInfo(const char* pszFilename)
+{
+    int i;
+    char seriesCode[3] = {0,0,0};
+    if (pszFilename == NULL) return NULL;
+    for (i=strlen(pszFilename)-1;i>=0;i--)
+    {
+        if (pszFilename[i] == '.')
+        {
+            if (i < strlen(pszFilename) - 3)
+            {
+                seriesCode[0] = pszFilename[i+1];
+                seriesCode[1] = pszFilename[i+2];
+                for(i=0;i<sizeof(nitfSeries) / sizeof(nitfSeries[0]); i++)
+                {
+                    if (strcasecmp(seriesCode, nitfSeries[i].code) == 0)
+                    {
+                        return &nitfSeries[i];
+                    }
+                }
+                return NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
