@@ -1559,7 +1559,7 @@ if test "$LIBCURL_CONFIG" != "no" ; then
   CURL_LIB=`$LIBCURL_CONFIG --libs`
   CURL_SETTING=yes
 
-  OPT_GDAL_FORMATS="wcs $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms $OPT_GDAL_FORMATS"
 else
   CURL_SETTING=no
   CURL_INC=
@@ -2102,7 +2102,7 @@ fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
-LOC_MSG([  CURL support (wcs):        ${CURL_SETTING}])
+LOC_MSG([  CURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
