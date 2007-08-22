@@ -56,7 +56,7 @@ GDALWMSMiniDriverFactory *GDALWMSMiniDriverManager::Find(const CPLString &name) 
 
 	for (std::list<GDALWMSMiniDriverFactory *>::iterator it = m_mdfs.begin(); it != m_mdfs.end(); ++it) {
 		GDALWMSMiniDriverFactory *const mdf = *it;
-		if (strcasecmp(mdf->GetName().c_str(), name.c_str()) == 0) return mdf;
+		if (EQUAL(mdf->GetName().c_str(), name.c_str())) return mdf;
 	}
 	return NULL;
 }
