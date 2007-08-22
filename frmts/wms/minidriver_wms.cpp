@@ -39,7 +39,7 @@ void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageReque
 	URLAppendF(url, "&format=%s", m_image_format.c_str());
 	URLAppendF(url, "&width=%d", iri.m_sx);
 	URLAppendF(url, "&height=%d", iri.m_sy);
-	URLAppendF(url, "&bbox=%f,%f,%f,%f", iri.m_x0, std::min(iri.m_y0, iri.m_y1), iri.m_x1, std::max(iri.m_y0, iri.m_y1));
+	URLAppendF(url, "&bbox=%f,%f,%f,%f", iri.m_x0, MIN(iri.m_y0, iri.m_y1), iri.m_x1, MAX(iri.m_y0, iri.m_y1));
 }
 
 void GDALWMSMiniDriver_WMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
