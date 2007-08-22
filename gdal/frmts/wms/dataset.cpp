@@ -11,7 +11,6 @@ GDALWMSDataset::~GDALWMSDataset() {
 	if (m_mini_driver) delete m_mini_driver;
 	if (m_cache) delete m_cache;
 }
-
 CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 	CPLErr ret = CE_None;
 
@@ -39,8 +38,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 		if (overview_count[0] != '\0') {
 			m_overview_count = atoi(overview_count);
 		} else {
-			double a = log2(static_cast<double>(std::min(m_data_window.m_sx, m_data_window.m_sy))) - 5.0;
-			m_overview_count = std::max(0, std::min(static_cast<int>(a), 32));
+			double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy)))/log(2.0) - 5.0;
+			m_overview_count = MAX(0, MIN(static_cast<int>(a), 32));
 		}
 	}
 	if (ret == CE_None) {
