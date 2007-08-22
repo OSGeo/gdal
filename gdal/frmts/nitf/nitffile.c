@@ -1032,10 +1032,6 @@ static const NITFSeries nitfSeries[] =
     { "D2", "", "30m", "Elevation Data from DTED level 2", "CDTED"},
 };
 
-#if defined _MSC_VER
-#define strcasecmp _stricmp
-#endif
-
 /* See 24111CN1.pdf paragraph 5.1.4 */
 const NITFSeries* NITFGetSeriesInfo(const char* pszFilename)
 {
@@ -1052,7 +1048,7 @@ const NITFSeries* NITFGetSeriesInfo(const char* pszFilename)
                 seriesCode[1] = pszFilename[i+2];
                 for(i=0;i<sizeof(nitfSeries) / sizeof(nitfSeries[0]); i++)
                 {
-                    if (strcasecmp(seriesCode, nitfSeries[i].code) == 0)
+                    if (EQUAL(seriesCode, nitfSeries[i].code))
                     {
                         return &nitfSeries[i];
                     }
