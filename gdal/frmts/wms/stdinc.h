@@ -1,0 +1,32 @@
+/* #define _LARGEFILE64_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
+#include <math.h>
+#include <sys/types.h>
+#include <dirent.h>*/
+#include <functional>
+#include <algorithm>
+#include <string>
+#include <map>
+#include <deque>
+#include <vector>
+#include <list>
+#include <curl/curl.h>
+#include <gdal.h>
+#include <gdalwarper.h>
+#include <gdal_alg.h>
+#include <ogr_srs_api.h>
+#include <ogr_spatialref.h>
+#include <cpl_string.h>
+#include <gdal_priv.h>
+#include <gdal_pam.h>
+#include <cpl_multiproc.h>
+
+#include "md5.h"
+#include "gdalhttp.h"
+#include "wmsdriver.h"
+#include "minidriver_wms.h"
