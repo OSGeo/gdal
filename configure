@@ -23011,7 +23011,7 @@ echo "${ECHO_T}        found libcurl version $CURL_VER" >&6
   CURL_LIB=`$LIBCURL_CONFIG --libs`
   CURL_SETTING=yes
 
-  OPT_GDAL_FORMATS="wcs $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms $OPT_GDAL_FORMATS"
 else
   CURL_SETTING=no
   CURL_INC=
@@ -27598,7 +27598,7 @@ echo "  MrSID support:             ${HAVE_MRSID}"
 echo "  GRIB support:              ${HAVE_GRIB}"
 
 
-echo "  CURL support (wcs):        ${CURL_SETTING}"
+echo "  CURL support (wms/wcs/...):${CURL_SETTING}"
 
 
 echo "  POSTGRESQL support:        ${HAVE_PG}"
