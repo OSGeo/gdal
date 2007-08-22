@@ -778,7 +778,7 @@ int WCSDataset::DescribeCoverage()
             CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
     else
         osRequest.Printf( 
-            "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&IDENTIFIERS=%s%s", 
+            "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&IDENTIFIERS=%s%s&FORMAT=text/xml", 
             CPLGetXMLValue( psService, "ServiceURL", "" ),
             CPLGetXMLValue( psService, "Version", "1.0.0" ),
             CPLGetXMLValue( psService, "CoverageName", "" ),
