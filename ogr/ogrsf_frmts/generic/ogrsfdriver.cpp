@@ -67,14 +67,21 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
     VALIDATE_POINTER1( hDriver, "OGR_Dr_CreateDataSource", NULL );
 
     OGRSFDriver* poDriver = static_cast<OGRSFDriver *>(hDriver);
+    CPLAssert( NULL != poDriver );
 
     OGRDataSource* poDS = NULL;
     poDS = poDriver->CreateDataSource( pszName, papszOptions );
-    CPLAssert( NULL != poDS );
 
     /* This fix is explained in Ticket #1223 */
-    poDS->SetDriver( poDriver );
-    CPLAssert( NULL != poDS->GetDriver() );
+    if( NULL != poDS )
+    {
+        poDS->SetDriver( poDriver );
+        CPLAssert( NULL != poDS->GetDriver() );
+    }
+    else
+    {
+        CPLDebug( "OGR", "CreateDataSource operation failed. NULL pointer returned." );
+    }
 
     return poDS;
 }
