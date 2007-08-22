@@ -117,7 +117,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             if( !bTestOpen )
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Failed to open shapefile %s.\n"
-                          "It may be corrupt.\n",
+                          "It may be corrupt or read-only file accessed in update mode.\n",
                           pszNewName );
 
             return FALSE;
@@ -151,7 +151,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Failed to open shapefile %s.\n"
-                          "It may be corrupt.\n",
+                          "It may be corrupt or read-only file accessed in update mode.\n",
                           pszFilename );
                 CPLFree( pszFilename );
                 return FALSE;
@@ -212,7 +212,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Failed to open dbf file %s.\n"
-                          "It may be corrupt.\n",
+                          "It may be corrupt or read-only file accessed in update mode.\n",
                           pszFilename );
                 CPLFree( pszFilename );
                 return FALSE;
