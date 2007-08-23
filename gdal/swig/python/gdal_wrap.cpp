@@ -7524,9 +7524,10 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   } 
   arg5 = static_cast< int >(val5);
   {
-    Py_ssize_t   safeLen = arg6;
+    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     PyString_AsStringAndSize(obj5, &arg7, &safeLen );
+    arg6 = (int) safeLen;
   }
   if (obj6) {
     {
@@ -9043,9 +9044,10 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   } 
   arg5 = static_cast< int >(val5);
   {
-    Py_ssize_t   safeLen = arg6;
+    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     PyString_AsStringAndSize(obj5, &arg7, &safeLen );
+    arg6 = (int) safeLen;
   }
   if (obj6) {
     {
