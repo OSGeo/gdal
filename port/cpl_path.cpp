@@ -202,22 +202,15 @@ const char *CPLGetDirname( const char *pszFilename )
  *
  * @param pszFullFilename the full filename potentially including a path.
  *
- *  @return just the non-directory portion of the path in an internal string
- * which must not be freed.  The string
- * may be destroyed by the next CPL filename handling call.
+ *  @return just the non-directory portion of the path (points back into original string).
  */
 
 const char *CPLGetFilename( const char *pszFullFilename )
 
 {
     int iFileStart = CPLFindFilenameStart( pszFullFilename );
-    char       *pszStaticResult = CPLGetStaticResult();
 
-    strncpy( pszStaticResult, pszFullFilename + iFileStart, 
-             CPL_PATH_BUF_SIZE );
-    pszStaticResult[CPL_PATH_BUF_SIZE - 1] = '\0';
-
-    return pszStaticResult;
+    return pszFullFilename + iFileStart;
 }
 
 /************************************************************************/
