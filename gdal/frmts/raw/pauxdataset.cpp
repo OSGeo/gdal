@@ -646,7 +646,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we have a .aux file?                                         */
 /* -------------------------------------------------------------------- */
     if( CSLFindString( poOpenInfo->papszSiblingFiles, 
-                       osAuxFilename ) == -1 )
+                       CPLGetFilename(osAuxFilename) ) == -1 )
     {
         return NULL;
     }
