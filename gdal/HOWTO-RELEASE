@@ -1,59 +1,59 @@
 	Notes on Preparing a GDAL Source Release
 	========================================
 
-0) Regenerate configure using autogen.sh and commit if changed.  There
+1) Regenerate configure using autogen.sh and commit if changed.  There
    is often a reference system on which this should be done (ie. Frank's
    dev workstation) to avoid unnecessary churn from different autoconf
    versions.
 
-1) Update the release date, and number information in gcore/gdal_version.h.
+2) Update the release date, and number information in gcore/gdal_version.h.
 
-2) Update the VERSION file. 
+3) Update the VERSION file. 
 
-3) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
+4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION. 
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
    - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
 
-4) Prepare release overview in the NEWS file.  The Trac revision log for
+5) Prepare release overview in the NEWS file.  The Trac revision log for
    trunk or the stable branch can be helpful.
 
     http://trac.osgeo.org/gdal/log/branches/1.4
 
-5) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to 
+6) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to 
    refer to the latest available source. 
 
-5.9) If this is a major release, prepare a branch. 
+7) If this is a major release, prepare a branch. 
 
    svn copy https://svn.osgeo.org/gdal/trunk \
             https://svn.osgeo.org/gdal/branches/1.5
 
-6) Tag the release set in CVS: 
+8) Tag the release set in CVS: 
 
    svn copy https://svn.osgeo.org/gdal/branches/1.4 \
             https://svn.osgeo.org/gdal/tags/1.4.1
 
-7) Create the source distributions using the mkgdaldist.sh script.  The
+9) Create the source distributions using the mkgdaldist.sh script.  The
    argument should be the version number (ie. 1.4.1). 
 
    eg.
    % mkgdaldist.sh 1.4.1
 
-7.5) Create a snapshot of the documentation.
+10) Create a snapshot of the documentation.
 
  ie. On www.gdal.org:
  % cd /osgeo/gdal
  % ./gdalhtmlupdate.sh
  % zip -r /osgeo/download/gdal/gdal150doc.zip gdal-web/*.* gdal-web/ogr
 
-7.6) Create a snapshot of gdalautotest (make sure it doesn't include .svn's)
+11) Create a snapshot of gdalautotest (make sure it doesn't include .svn's)
 
-8) Publish the resulting files in download.osgeo.org/gdal.
+12) Publish the resulting files in download.osgeo.org/gdal.
 
-9) Announce release to the gdal-dev@lists.maptools.org, 
+13) Announce release to the gdal-dev@lists.maptools.org, 
    gdal-announce@lists.osgeo.org, freegis@freegis.org and news_item@osgeo.org. 
 
-10) Update the freshmeat.net entry for GDAL. 
+14) Update the freshmeat.net entry for GDAL. 
 
-11) Update the freegis.org entry for GDAL.
+15) Update the freegis.org entry for GDAL.
 
