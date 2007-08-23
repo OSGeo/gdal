@@ -5,7 +5,7 @@ OBJ	=	cache.o dataset.o datawindow.o gdalhttp.o md5.o minidriver.o minidriver_wm
 
 
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) 
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(CURL_INC)
 
 default:	$(OBJ)
 
