@@ -12,7 +12,10 @@
 GDAL_VERSION = 14
 
 # GDAL library
+!IFNDEF GDAL_ROOT
 GDAL_ROOT = ..\..\gdal
+!ENDIF
+
 GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
 
 # GEOS sources location, DLL and Import library
