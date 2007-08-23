@@ -7,7 +7,8 @@ top_builddir	=	$(GDAL_ROOT)
 HAVE_LIBTOOL	=	@HAVE_LIBTOOL@
 LIBTOOL	=	@LIBTOOL@
 ifeq ($(HAVE_LIBTOOL),yes)
-LIBTOOL_COMPILE	=	$(LIBTOOL) --mode=compile
+LIBTOOL_COMPILE_CC =	$(LIBTOOL) --mode=compile --tag=CC
+LIBTOOL_COMPILE_CXX =	$(LIBTOOL) --mode=compile --tag=CXX
 LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
 LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
@@ -16,8 +17,8 @@ else
 LIBTOOL_FINISH	=	@BINTRUE@
 endif
 
-CC	=	$(LIBTOOL_COMPILE) --tag=CC @CC@
-CXX	=	$(LIBTOOL_COMPILE) --tag=CXX @CXX@
+CC	=	$(LIBTOOL_COMPILE_CC) @CC@
+CXX	=	$(LIBTOOL_COMPILE_CXX) @CXX@
 LD	=	$(LIBTOOL_LINK)	@CXX@
 RM	=	$(LIBTOOL_CLEAN) /bin/rm -f *.lo
 INSTALL = 	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
