@@ -282,8 +282,9 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        if (alreadyExistingProjectionRefValid == FALSE)
+        else
         {
+            alreadyExistingProjectionRefValid = TRUE;
             alreadyExistingProjectionRef = CPLStrdup(projectionRef);
         }
 
