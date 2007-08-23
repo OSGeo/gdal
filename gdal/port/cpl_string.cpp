@@ -329,12 +329,11 @@ int  CSLSave(char **papszStrList, const char *pszFname)
 
     if (papszStrList)
     {
-        if ((fp = VSIFOpen(pszFname, "wt")) != NULL)
+        if ((fp = VSIFOpenL(pszFname, "wt")) != NULL)
         {
             while(*papszStrList != NULL)
             {
-                if (VSIFPuts(*papszStrList, fp) == EOF ||
-                    VSIFPutc('\n', fp) == EOF)
+                if( VSIFPrintfL( fp, "%s\n", *papszStrList ) < 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "CSLSave(%s): %s", pszFname, 
@@ -346,7 +345,7 @@ int  CSLSave(char **papszStrList, const char *pszFname)
                 papszStrList++;
             }
 
-            VSIFClose(fp);
+            VSIFCloseL(fp);
         }
         else
         {
