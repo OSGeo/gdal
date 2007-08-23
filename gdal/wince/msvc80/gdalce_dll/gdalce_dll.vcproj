@@ -28,7 +28,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="*** Making GDAL config files for Windows CE ***"
-				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)"
+				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -114,7 +114,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="*** Making GDAL config files for Windows CE ***"
-				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)"
+				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -198,7 +198,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="*** Making GDAL config files for Windows CE ***"
-				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)"
+				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -283,7 +283,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="*** Making GDAL config files for Windows CE ***"
-				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)"
+				CommandLine="echo **** Copying $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince to $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\port\$(CPL_CONFIG_H).wince $(GDAL_DIR)\port\$(CPL_CONFIG_H)&#x0D;&#x0A;echo **** Copying $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince to $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;copy /Y $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H).wince $(GDAL_DIR)\frmts\gtiff\libtiff\$(TIF_CONFIG_H)&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -454,6 +454,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\port\cpl_string.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\port\cpl_strtod.cpp"
 				>
 			</File>
 			<File
