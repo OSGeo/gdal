@@ -8935,9 +8935,10 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:CreateGeometryFromWkb",kwnames,&obj0,&obj1)) SWIG_fail;
   {
-    Py_ssize_t   safeLen = arg1;
+    Py_ssize_t   safeLen;
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     PyString_AsStringAndSize(obj0, &arg2, &safeLen );
+    arg1 = (int) safeLen;
   }
   if (obj1) {
     res3 = SWIG_ConvertPtr(obj1, &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
