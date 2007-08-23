@@ -239,9 +239,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
-  Py_ssize_t   safeLen = $1;
+  Py_ssize_t   safeLen;
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
   PyString_AsStringAndSize($input, &$2, &safeLen );
+  $1 = (int) safeLen;
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
         (int nLen, char *pBuf)
