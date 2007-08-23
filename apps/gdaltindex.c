@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     int nExistingFiles;
     int skip_different_projection = FALSE;
     char** existingFilesTab = NULL;
+    int alreadyExistingProjectionRefValid = FALSE;
     char* alreadyExistingProjectionRef = NULL;
 
     GDALAllRegister();
@@ -176,6 +177,7 @@ int main(int argc, char *argv[])
                 GDALDatasetH hDS = GDALOpen(existingFilesTab[i], GA_ReadOnly );
                 if (hDS)
                 {
+                    alreadyExistingProjectionRefValid = TRUE;
                     alreadyExistingProjectionRef = CPLStrdup(GDALGetProjectionRef(hDS));
                     GDALClose(hDS);
                 }
@@ -206,8 +208,11 @@ int main(int argc, char *argv[])
         SHPObject	*psOutline;
         char* fileNameToWrite;
         const char* projectionRef;
+        VSIStatBuf sStatBuf;
 
-        if (write_absolute_path && CPLIsFilenameRelative( argv[i_arg] ) )
+        /* Make sure it is a file before building absolute path name */
+        if (write_absolute_path && CPLIsFilenameRelative( argv[i_arg] ) &&
+            VSIStat( argv[i_arg], &sStatBuf ) == 0)
         {
             fileNameToWrite = CPLStrdup(CPLProjectRelativeFilename(current_path, argv[i_arg]));
         }
@@ -256,11 +261,15 @@ int main(int argc, char *argv[])
         }
 
         projectionRef = GDALGetProjectionRef(hDS);
-        if (projectionRef && projectionRef[0])
+        if (alreadyExistingProjectionRefValid)
         {
-            int hasProjectionRef = alreadyExistingProjectionRef && alreadyExistingProjectionRef[0] ;
-            if ((hasProjectionRef && EQUAL(projectionRef, alreadyExistingProjectionRef) == 0) ||
-                (!hasProjectionRef))
+            int projectionRefNotNull, alreadyExistingProjectionRefNotNull;
+            projectionRefNotNull = projectionRef && projectionRef[0];
+            alreadyExistingProjectionRefNotNull = alreadyExistingProjectionRef && alreadyExistingProjectionRef[0];
+            if ((projectionRefNotNull &&
+                 alreadyExistingProjectionRefNotNull &&
+                 EQUAL(projectionRef, alreadyExistingProjectionRef) == 0) ||
+                (projectionRefNotNull != alreadyExistingProjectionRefNotNull))
             {
                 fprintf(stderr, "Warning : %s is not using the same projection system as "
                                 "other files in the tileindex. This may cause problems when "
@@ -273,7 +282,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        if (alreadyExistingProjectionRef == NULL)
+        if (alreadyExistingProjectionRefValid == FALSE)
         {
             alreadyExistingProjectionRef = CPLStrdup(projectionRef);
         }
