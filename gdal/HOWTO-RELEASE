@@ -31,7 +31,7 @@
 6) Tag the release set in CVS: 
 
    svn copy https://svn.osgeo.org/gdal/branches/1.4 \
-            https://svn.osgeo.org/gdal/1.4.1
+            https://svn.osgeo.org/gdal/tags/1.4.1
 
 7) Create the source distributions using the mkgdaldist.sh script.  The
    argument should be the version number (ie. 1.4.1). 
