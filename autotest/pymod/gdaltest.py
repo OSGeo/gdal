@@ -458,7 +458,11 @@ class GDALTest:
 
         for band in range(1,out_bands+1):
             if new_ds.GetRasterBand(band).Checksum() != self.chksum:
-                post_reason('Did not get expected checksum on still-open file.')
+                post_reason( 
+                    'Did not get expected checksum on still-open file.\n' \
+                    '    Got %d instead of %d.' \
+                    % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
+
                 return 'fail'
         
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax:
