@@ -1,8 +1,8 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	cache.o dataset.o datawindow.o gdalhttp.o md5.o minidriver.o minidriver_wms.o rasterband.o stuff.o wmsdriver.o
-
+OBJ	=	cache.o dataset.o datawindow.o gdalhttp.o md5.o minidriver.o rasterband.o stuff.o wmsdriver.o \
+		minidriver_wms.o minidriver_tileservice.o
 
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(CURL_INC)

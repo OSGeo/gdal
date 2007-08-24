@@ -29,38 +29,39 @@
 
 #include "stdinc.h"
 
-CPLErr GDALWMSDataWindow::Initialize(CPLXMLNode *config) {
-    CPLErr ret = CE_None;
+CPP_GDALWMSMiniDriverFactory(TileService)
 
-    const char *ulx = CPLGetXMLValue(config, "UpperLeftX", "");
-    const char *uly = CPLGetXMLValue(config, "UpperLeftY", "");
-    const char *lrx = CPLGetXMLValue(config, "LowerRightX", "");
-    const char *lry = CPLGetXMLValue(config, "LowerRightY", "");
-    const char *sx = CPLGetXMLValue(config, "SizeX", "");
-    const char *sy = CPLGetXMLValue(config, "SizeY", "");
-    const char *tx = CPLGetXMLValue(config, "TileX", "0");
-    const char *ty = CPLGetXMLValue(config, "TileY", "0");
-    const char *tlevel = CPLGetXMLValue(config, "TileLevel", "0");
+GDALWMSMiniDriver_TileService::GDALWMSMiniDriver_TileService() {
+}
 
-    if (ret == CE_None) {
-        if ((ulx[0] != '\0') && (uly[0] != '\0') && (lrx[0] != '\0') && (lry[0] != '\0') && (sx[0] != '\0') && (sy[0] != '\0')) {
-            m_x0 = atof(ulx);
-            m_y0 = atof(uly);
-            m_x1 = atof(lrx);
-            m_y1 = atof(lry);
-            m_sx = atoi(sx);
-            m_sy = atoi(sy);
-        } else {
-            ret = CE_Failure;
-        }
-    }
-    if (ret == CE_None) {
-        if ((tx[0] != '\0') && (ty[0] != '\0') && (tlevel[0] != '\0')) {
-            m_tx = atoi(tx);
-            m_ty = atoi(ty);
-            m_tlevel = atoi(tlevel);
-        }
-    }
+GDALWMSMiniDriver_TileService::~GDALWMSMiniDriver_TileService() {
+}
 
-    return ret;
+CPLErr GDALWMSMiniDriver_TileService::Initialize(CPLXMLNode *config) {
+    m_version = CPLGetXMLValue(config, "Version", "1");
+    m_base_url = CPLGetXMLValue(config, "ServerUrl", "");
+    m_dataset = CPLGetXMLValue(config, "Dataset", "");
+
+    return CE_None;
+}
+
+void GDALWMSMiniDriver_TileService::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+    caps->m_has_arb_overviews = 0;
+    caps->m_has_image_request = 0;
+    caps->m_has_tiled_image_requeset = 1;
+    caps->m_max_overview_count = 32;
+}
+
+void GDALWMSMiniDriver_TileService::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+}
+
+void GDALWMSMiniDriver_TileService::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+    // http://s0.tileservice.worldwindcentral.com/getTile?interface=map&version=1&dataset=bmng.topo.bathy.200401&level=5&x=18&y=6
+    *url = m_base_url;
+    URLAppend(url, "&interface=map");
+    URLAppendF(url, "&version=%s", m_version.c_str());
+    URLAppendF(url, "&dataset=%s", m_dataset.c_str());
+    URLAppendF(url, "&level=%d", tiri.m_level);
+    URLAppendF(url, "&x=%d", tiri.m_x);
+    URLAppendF(url, "&y=%d", tiri.m_y);
 }

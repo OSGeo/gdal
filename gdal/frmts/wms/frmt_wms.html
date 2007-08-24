@@ -1,0 +1,48 @@
+<html>
+<head>
+<title>WMS -- OGC Web Map Service</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>WMS -- OGC Web Map Service</h1>
+
+Accessing a WMS server is accomplished by creating a local service description
+xml file looking something like the following. It is important that there be no
+spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.<p>
+
+<pre>
+&lt;GDAL_WMS&gt;
+    &lt;Service name="WMS"&gt;
+        &lt;Version&gt;1.1.1&lt;/Version&gt;
+        &lt;ServerUrl&gt;http://onearth.jpl.nasa.gov/wms.cgi?&lt;/ServerUrl&gt;
+        &lt;CRS&gt;CRS:83&lt;/CRS&gt;
+        &lt;ImageFormat&gt;image/jpeg&lt;/ImageFormat&gt;
+        &lt;Layers&gt;modis,global_mosaic&lt;/Layers&gt;
+        &lt;Styles&gt;&lt;/Styles&gt;
+    &lt;/Service&gt;
+    &lt;DataWindow&gt;
+        &lt;UpperLeftX&gt;-180.0&lt;/UpperLeftX&gt;
+        &lt;UpperLeftY&gt;90.0&lt;/UpperLeftY&gt;
+        &lt;LowerRightX&gt;180.0&lt;/LowerRightX&gt;
+        &lt;LowerRightY&gt;-90.0&lt;/LowerRightY&gt;
+        &lt;SizeX&gt;2666666&lt;/SizeX&gt;
+        &lt;SizeY&gt;1333333&lt;/SizeY&gt;
+    &lt;/DataWindow&gt;
+    &lt;Projection&gt;EPSG:4326&lt;/Projection&gt;
+    &lt;BandsCount&gt;3&lt;/BandsCount&gt;
+&lt;/GDAL_WMS&gt;
+</pre>
+
+<ul>
+<li> <b> </b>: 
+</ul>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.opengeospatial.org/standards/wms">OGC WMS Standards</a>
+</ul>
+
+</body>
+</html>

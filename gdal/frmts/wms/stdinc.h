@@ -1,13 +1,4 @@
-/* #define _LARGEFILE64_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
 #include <math.h>
-#include <sys/types.h>
-#include <dirent.h>*/
 #include <functional>
 #include <algorithm>
 #include <string>
@@ -30,3 +21,4 @@
 #include "gdalhttp.h"
 #include "wmsdriver.h"
 #include "minidriver_wms.h"
+#include "minidriver_tileservice.h"
