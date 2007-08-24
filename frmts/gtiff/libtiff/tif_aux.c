@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.20 2006/06/08 14:24:13 dron Exp $ */
+/* $Id: tif_aux.c,v 1.22 2007/07/19 13:11:59 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -33,12 +33,12 @@
 #include "tif_predict.h"
 #include <math.h>
 
-tdata_t
-_TIFFCheckRealloc(TIFF* tif, tdata_t buffer,
-		  size_t nmemb, size_t elem_size, const char* what)
+void*
+_TIFFCheckRealloc(TIFF* tif, void* buffer,
+		  tmsize_t nmemb, tmsize_t elem_size, const char* what)
 {
-	tdata_t cp = NULL;
-	tsize_t	bytes = nmemb * elem_size;
+	void* cp = NULL;
+	tmsize_t bytes = nmemb * elem_size;
 
 	/*
 	 * XXX: Check for integer overflow.
@@ -53,20 +53,20 @@ _TIFFCheckRealloc(TIFF* tif, tdata_t buffer,
 	return cp;
 }
 
-tdata_t
-_TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
+void*
+_TIFFCheckMalloc(TIFF* tif, tmsize_t nmemb, tmsize_t elem_size, const char* what)
 {
-	return _TIFFCheckRealloc(tif, NULL, nmemb, elem_size, what);
+	return _TIFFCheckRealloc(tif, NULL, nmemb, elem_size, what);  
 }
 
 static int
 TIFFDefaultTransferFunction(TIFFDirectory* td)
 {
 	uint16 **tf = td->td_transferfunction;
-	tsize_t i, n, nbytes;
+	tmsize_t i, n, nbytes;
 
 	tf[0] = tf[1] = tf[2] = 0;
-	if (td->td_bitspersample >= sizeof(tsize_t) * 8 - 2)
+	if (td->td_bitspersample >= sizeof(tmsize_t) * 8 - 2)
 		return 0;
 
 	n = 1<<td->td_bitspersample;
@@ -109,7 +109,7 @@ bad:
  *	place in the library -- in TIFFDefaultDirectory.
  */
 int
-TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
+TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
@@ -261,7 +261,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
  * value if the tag is not present in the directory.
  */
 int
-TIFFGetFieldDefaulted(TIFF* tif, ttag_t tag, ...)
+TIFFGetFieldDefaulted(TIFF* tif, uint32 tag, ...)
 {
 	int ok;
 	va_list ap;
@@ -272,4 +272,46 @@ TIFFGetFieldDefaulted(TIFF* tif, ttag_t tag, ...)
 	return (ok);
 }
 
+struct _Int64Parts {
+	int32 low, high;
+};
+
+typedef union {
+	struct _Int64Parts part;
+	int64 value;
+} _Int64;
+
+float
+_TIFFUInt64ToFloat(uint64 ui64)
+{
+	_Int64 i;
+
+	i.value = ui64;
+	if (i.part.high >= 0) {
+		return (float)i.value;
+	} else {
+		long double df;
+		df = (long double)i.value;
+		df += 18446744073709551616.0; /* adding 2**64 */
+		return (float)df;
+	}
+}
+
+double
+_TIFFUInt64ToDouble(uint64 ui64)
+{
+	_Int64 i;
+
+	i.value = ui64;
+	if (i.part.high >= 0) {
+		return (double)i.value;
+	} else {
+		long double df;
+		df = (long double)i.value;
+		df += 18446744073709551616.0; /* adding 2**64 */
+		return (double)df;
+	}
+}
+
 /* vim: set ts=8 sts=8 sw=8 noet: */
+
