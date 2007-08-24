@@ -19812,7 +19812,7 @@ fi
 elif test "$with_libtiff" = "internal" ; then
 
   TIFF_SETTING=internal
-  HAVE_BIGTIFF=no
+  HAVE_BIGTIFF=yes
 
   echo "using internal TIFF code."
 
