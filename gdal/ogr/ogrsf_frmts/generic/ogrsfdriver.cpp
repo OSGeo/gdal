@@ -146,7 +146,7 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
 int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
 
 {
-    VALIDATE_POINTER1( hDriver, "OGR_Dr_TestCapability", NULL );
+    VALIDATE_POINTER1( hDriver, "OGR_Dr_TestCapability", 0 );
 
     return ((OGRSFDriver *) hDriver)->TestCapability( pszCap );
 }
