@@ -1,5 +1,6 @@
 
-OBJ	=	cache.obj dataset.obj datawindow.obj gdalhttp.obj md5.obj minidriver.obj minidriver_wms.obj rasterband.obj stuff.obj wmsdriver.obj
+OBJ	=	cache.obj dataset.obj datawindow.obj gdalhttp.obj md5.obj minidriver.obj rasterband.obj stuff.obj wmsdriver.obj \
+		minidriver_wms.obj minidriver_tileservice.obj
 
 EXTRAFLAGS = 	$(CURL_INC) -DHAVE_CURL
 

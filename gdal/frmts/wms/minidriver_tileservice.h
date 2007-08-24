@@ -27,40 +27,21 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-#include "stdinc.h"
+H_GDALWMSMiniDriverFactory(TileService)
 
-CPLErr GDALWMSDataWindow::Initialize(CPLXMLNode *config) {
-    CPLErr ret = CE_None;
+class GDALWMSMiniDriver_TileService : public GDALWMSMiniDriver {
+public:
+    GDALWMSMiniDriver_TileService();
+    virtual ~GDALWMSMiniDriver_TileService();
 
-    const char *ulx = CPLGetXMLValue(config, "UpperLeftX", "");
-    const char *uly = CPLGetXMLValue(config, "UpperLeftY", "");
-    const char *lrx = CPLGetXMLValue(config, "LowerRightX", "");
-    const char *lry = CPLGetXMLValue(config, "LowerRightY", "");
-    const char *sx = CPLGetXMLValue(config, "SizeX", "");
-    const char *sy = CPLGetXMLValue(config, "SizeY", "");
-    const char *tx = CPLGetXMLValue(config, "TileX", "0");
-    const char *ty = CPLGetXMLValue(config, "TileY", "0");
-    const char *tlevel = CPLGetXMLValue(config, "TileLevel", "0");
+public:
+    virtual CPLErr Initialize(CPLXMLNode *config);
+    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
 
-    if (ret == CE_None) {
-        if ((ulx[0] != '\0') && (uly[0] != '\0') && (lrx[0] != '\0') && (lry[0] != '\0') && (sx[0] != '\0') && (sy[0] != '\0')) {
-            m_x0 = atof(ulx);
-            m_y0 = atof(uly);
-            m_x1 = atof(lrx);
-            m_y1 = atof(lry);
-            m_sx = atoi(sx);
-            m_sy = atoi(sy);
-        } else {
-            ret = CE_Failure;
-        }
-    }
-    if (ret == CE_None) {
-        if ((tx[0] != '\0') && (ty[0] != '\0') && (tlevel[0] != '\0')) {
-            m_tx = atoi(tx);
-            m_ty = atoi(ty);
-            m_tlevel = atoi(tlevel);
-        }
-    }
-
-    return ret;
-}
+protected:
+    CPLString m_base_url;
+    CPLString m_version;
+    CPLString m_dataset;
+};
