@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.15 2006/09/28 16:26:03 dron Exp $ */
+/* $Id: tif_pixarlog.c,v 1.29 2007/07/09 09:26:57 dron Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -108,7 +108,7 @@ static float  LogK1, LogK2;
 #define REPEAT(n, op)   { int i; i=n; do { i--; op; } while (i>0); }
 
 static void
-horizontalAccumulateF(uint16 *wp, int n, int stride, float *op, 
+horizontalAccumulateF(uint16 *wp, int n, int stride, float *op,
 	float *ToLinearF)
 {
     register unsigned int  cr, cg, cb, ca, mask;
@@ -587,13 +587,12 @@ PixarLogMakeTables(PixarLogState *sp)
     return 1;
 }
 
-#define	DecoderState(tif)	((PixarLogState*) (tif)->tif_data)
-#define	EncoderState(tif)	((PixarLogState*) (tif)->tif_data)
+#define DecoderState(tif)	((PixarLogState*) (tif)->tif_data)
+#define EncoderState(tif)	((PixarLogState*) (tif)->tif_data)
 
-static	int PixarLogEncode(TIFF*, tidata_t, tsize_t, tsample_t);
-static	int PixarLogDecode(TIFF*, tidata_t, tsize_t, tsample_t);
+static int PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s);
+static int PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s);
 
-#define N(a)   (sizeof(a)/sizeof(a[0]))
 #define PIXARLOGDATAFMT_UNKNOWN	-1
 
 static int
@@ -631,10 +630,10 @@ PixarLogGuessDataFmt(TIFFDirectory *td)
 	return guess;
 }
 
-static uint32
-multiply(size_t m1, size_t m2)
+static tmsize_t
+multiply_ms(tmsize_t m1, tmsize_t m2)
 {
-	uint32	bytes = m1 * m2;
+	tmsize_t bytes = m1 * m2;
 
 	if (m1 && bytes / m1 != m2)
 		bytes = 0;
@@ -643,27 +642,34 @@ multiply(size_t m1, size_t m2)
 }
 
 static int
+PixarLogFixupTags(TIFF* tif)
+{
+	(void) tif;
+	return (1);
+}
+
+static int
 PixarLogSetupDecode(TIFF* tif)
 {
+	static const char module[] = "PixarLogSetupDecode";
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState* sp = DecoderState(tif);
-	tsize_t tbuf_size;
-	static const char module[] = "PixarLogSetupDecode";
+	tmsize_t tbuf_size;
 
 	assert(sp != NULL);
 
 	/* Make sure no byte swapping happens on the data
 	 * after decompression. */
-	tif->tif_postdecode = _TIFFNoPostDecode;
+	tif->tif_postdecode = _TIFFNoPostDecode;  
 
 	/* for some reason, we can't do this in TIFFInitPixarLog */
 
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	    td->td_samplesperpixel : 1);
-	tbuf_size = multiply(multiply(multiply(sp->stride, td->td_imagewidth),
+	tbuf_size = multiply_ms(multiply_ms(multiply_ms(sp->stride, td->td_imagewidth),
 				      td->td_rowsperstrip), sizeof(uint16));
 	if (tbuf_size == 0)
-		return (0);
+		return (0);   /* TODO: this is an error return without error report through TIFFErrorExt */
 	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size);
 	if (sp->tbuf == NULL)
 		return (0);
@@ -677,7 +683,7 @@ PixarLogSetupDecode(TIFF* tif)
 	}
 
 	if (inflateInit(&sp->stream) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s: %s", tif->tif_name, sp->stream.msg);
+		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg);
 		return (0);
 	} else {
 		sp->state |= PLSTATE_INIT;
@@ -689,24 +695,36 @@ PixarLogSetupDecode(TIFF* tif)
  * Setup state for decoding a strip.
  */
 static int
-PixarLogPreDecode(TIFF* tif, tsample_t s)
+PixarLogPreDecode(TIFF* tif, uint16 s)
 {
+	static const char module[] = "PixarLogPreDecode";
 	PixarLogState* sp = DecoderState(tif);
 
 	(void) s;
 	assert(sp != NULL);
 	sp->stream.next_in = tif->tif_rawdata;
-	sp->stream.avail_in = tif->tif_rawcc;
+	assert(sizeof(sp->stream.avail_in)==4);  /* if this assert gets raised,
+	    we need to simplify this code to reflect a ZLib that is likely updated
+	    to deal with 8byte memory sizes, though this code will respond
+	    apropriately even before we simplify it */
+	sp->stream.avail_in = (uInt) tif->tif_rawcc;
+	if ((tmsize_t)sp->stream.avail_in != tif->tif_rawcc)
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
+		return (0);
+	}
 	return (inflateReset(&sp->stream) == Z_OK);
 }
 
 static int
-PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
+PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 {
+	static const char module[] = "PixarLogDecode";
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState* sp = DecoderState(tif);
-	static const char module[] = "PixarLogDecode";
-	int i, nsamples, llen;
+	tmsize_t i;
+	tmsize_t nsamples;
+	int llen;
 	uint16 *up;
 
 	switch (sp->user_datafmt) {
@@ -723,7 +741,7 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		nsamples = occ;
 		break;
 	default:
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExt(tif->tif_clientdata, module,
 			"%d bit input not supported in PixarLog",
 			td->td_bitspersample);
 		return 0;
@@ -734,7 +752,16 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	(void) s;
 	assert(sp != NULL);
 	sp->stream.next_out = (unsigned char *) sp->tbuf;
-	sp->stream.avail_out = nsamples * sizeof(uint16);
+	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
+	    we need to simplify this code to reflect a ZLib that is likely updated
+	    to deal with 8byte memory sizes, though this code will respond
+	    apropriately even before we simplify it */
+	sp->stream.avail_out = (uInt) (nsamples * sizeof(uint16));
+	if (sp->stream.avail_out != nsamples * sizeof(uint16))
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
+		return (0);
+	}
 	do {
 		int state = inflate(&sp->stream, Z_PARTIAL_FLUSH);
 		if (state == Z_STREAM_END) {
@@ -742,15 +769,15 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		}
 		if (state == Z_DATA_ERROR) {
 			TIFFErrorExt(tif->tif_clientdata, module,
-			    "%s: Decoding error at scanline %d, %s",
-			    tif->tif_name, tif->tif_row, sp->stream.msg);
+			    "Decoding error at scanline %lud, %s",
+			    (unsigned long) tif->tif_row, sp->stream.msg);
 			if (inflateSync(&sp->stream) != Z_OK)
 				return (0);
 			continue;
 		}
 		if (state != Z_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module, "%s: zlib error: %s",
-			    tif->tif_name, sp->stream.msg);
+			TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
+			    sp->stream.msg);
 			return (0);
 		}
 	} while (sp->stream.avail_out > 0);
@@ -758,8 +785,8 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	/* hopefully, we got all the bytes we needed */
 	if (sp->stream.avail_out != 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "%s: Not enough data at scanline %d (short %d bytes)",
-		    tif->tif_name, tif->tif_row, sp->stream.avail_out);
+		    "Not enough data at scanline %lud (short %llud bytes)",
+		    (unsigned long) tif->tif_row, (unsigned long long) sp->stream.avail_out);
 		return (0);
 	}
 
@@ -768,15 +795,15 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	if (tif->tif_flags & TIFF_SWAB)
 		TIFFSwabArrayOfShort(up, nsamples);
 
-	/* 
+	/*
 	 * if llen is not an exact multiple of nsamples, the decode operation
 	 * may overflow the output buffer, so truncate it enough to prevent
 	 * that but still salvage as much data as possible.
 	 */
 	if (nsamples % llen) { 
 		TIFFWarningExt(tif->tif_clientdata, module,
-			"%s: stride %lu is not a multiple of sample count, "
-			"%lu, data truncated.", tif->tif_name, llen, nsamples);
+			"stride %lu is not a multiple of sample count, "
+			"%lu, data truncated.", (unsigned long) llen, (unsigned long) nsamples);
 		nsamples -= nsamples % llen;
 	}
 
@@ -813,8 +840,8 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 			op += llen * sizeof(unsigned char);
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
-				  "PixarLogDecode: unsupported bits/sample: %d", 
+			TIFFErrorExt(tif->tif_clientdata, module,
+				  "Unsupported bits/sample: %d",
 				  td->td_bitspersample);
 			return (0);
 		}
@@ -826,10 +853,10 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 static int
 PixarLogSetupEncode(TIFF* tif)
 {
+	static const char module[] = "PixarLogSetupEncode";
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState* sp = EncoderState(tif);
-	tsize_t tbuf_size;
-	static const char module[] = "PixarLogSetupEncode";
+	tmsize_t tbuf_size;
 
 	assert(sp != NULL);
 
@@ -837,10 +864,10 @@ PixarLogSetupEncode(TIFF* tif)
 
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	    td->td_samplesperpixel : 1);
-	tbuf_size = multiply(multiply(multiply(sp->stride, td->td_imagewidth),
+	tbuf_size = multiply_ms(multiply_ms(multiply_ms(sp->stride, td->td_imagewidth),
 				      td->td_rowsperstrip), sizeof(uint16));
 	if (tbuf_size == 0)
-		return (0);
+		return (0);  /* TODO: this is an error return without error report through TIFFErrorExt */
 	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size);
 	if (sp->tbuf == NULL)
 		return (0);
@@ -852,7 +879,7 @@ PixarLogSetupEncode(TIFF* tif)
 	}
 
 	if (deflateInit(&sp->stream, sp->quality) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s: %s", tif->tif_name, sp->stream.msg);
+		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg);
 		return (0);
 	} else {
 		sp->state |= PLSTATE_INIT;
@@ -864,21 +891,30 @@ PixarLogSetupEncode(TIFF* tif)
  * Reset encoding state at the start of a strip.
  */
 static int
-PixarLogPreEncode(TIFF* tif, tsample_t s)
+PixarLogPreEncode(TIFF* tif, uint16 s)
 {
+	static const char module[] = "PixarLogPreEncode";
 	PixarLogState *sp = EncoderState(tif);
 
 	(void) s;
 	assert(sp != NULL);
 	sp->stream.next_out = tif->tif_rawdata;
+	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
+	    we need to simplify this code to reflect a ZLib that is likely updated
+	    to deal with 8byte memory sizes, though this code will respond
+	    apropriately even before we simplify it */
 	sp->stream.avail_out = tif->tif_rawdatasize;
+	if ((tmsize_t)sp->stream.avail_out != tif->tif_rawdatasize)
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
+		return (0);
+	}
 	return (deflateReset(&sp->stream) == Z_OK);
 }
 
 static void
 horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 {
-
     int32 r1, g1, b1, a1, r2, g2, b2, a2, mask;
     float fltsize = Fltsize;
 
@@ -1043,12 +1079,14 @@ horizontalDifference8(unsigned char *ip, int n, int stride,
  * Encode a chunk of pixels.
  */
 static int
-PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
+PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 {
+	static const char module[] = "PixarLogEncode";
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState *sp = EncoderState(tif);
-	static const char module[] = "PixarLogEncode";
-	int	i, n, llen;
+	tmsize_t i;
+	tmsize_t n;
+	int llen;
 	unsigned short * up;
 
 	(void) s;
@@ -1067,7 +1105,7 @@ PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 		n = cc;
 		break;
 	default:
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExt(tif->tif_clientdata, module,
 			"%d bit input not supported in PixarLog",
 			td->td_bitspersample);
 		return 0;
@@ -1093,7 +1131,7 @@ PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 			bp += llen * sizeof(unsigned char);
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			TIFFErrorExt(tif->tif_clientdata, module,
 				"%d bit input not supported in PixarLog",
 				td->td_bitspersample);
 			return 0;
@@ -1101,19 +1139,28 @@ PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	}
  
 	sp->stream.next_in = (unsigned char *) sp->tbuf;
+	assert(sizeof(sp->stream.avail_in)==4);  /* if this assert gets raised,
+	    we need to simplify this code to reflect a ZLib that is likely updated
+	    to deal with 8byte memory sizes, though this code will respond
+	    apropriately even before we simplify it */
 	sp->stream.avail_in = n * sizeof(uint16);
+	if (sp->stream.avail_in != n * sizeof(uint16))
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
+		return (0);
+	}
 
 	do {
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module, "%s: Encoder error: %s",
-			    tif->tif_name, sp->stream.msg);
+			TIFFErrorExt(tif->tif_clientdata, module, "Encoder error: %s",
+			    sp->stream.msg);
 			return (0);
 		}
 		if (sp->stream.avail_out == 0) {
 			tif->tif_rawcc = tif->tif_rawdatasize;
 			TIFFFlushData1(tif);
 			sp->stream.next_out = tif->tif_rawdata;
-			sp->stream.avail_out = tif->tif_rawdatasize;
+			sp->stream.avail_out = (uInt) tif->tif_rawdatasize;  /* this is a safe typecast, as check is made already in PixarLogPreEncode */
 		}
 	} while (sp->stream.avail_in > 0);
 	return (1);
@@ -1127,8 +1174,8 @@ PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 static int
 PixarLogPostEncode(TIFF* tif)
 {
-	PixarLogState *sp = EncoderState(tif);
 	static const char module[] = "PixarLogPostEncode";
+	PixarLogState *sp = EncoderState(tif);
 	int state;
 
 	sp->stream.avail_in = 0;
@@ -1138,17 +1185,17 @@ PixarLogPostEncode(TIFF* tif)
 		switch (state) {
 		case Z_STREAM_END:
 		case Z_OK:
-		    if (sp->stream.avail_out != (uint32)tif->tif_rawdatasize) {
+		    if ((tmsize_t)sp->stream.avail_out != tif->tif_rawdatasize) {
 			    tif->tif_rawcc =
 				tif->tif_rawdatasize - sp->stream.avail_out;
 			    TIFFFlushData1(tif);
 			    sp->stream.next_out = tif->tif_rawdata;
-			    sp->stream.avail_out = tif->tif_rawdatasize;
+			    sp->stream.avail_out = (uInt) tif->tif_rawdatasize;  /* this is a safe typecast, as check is made already in PixarLogPreEncode */
 		    }
 		    break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, module, "%s: zlib error: %s",
-			tif->tif_name, sp->stream.msg);
+			TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
+			sp->stream.msg);
 		    return (0);
 		}
 	} while (state != Z_STREAM_END);
@@ -1160,9 +1207,11 @@ PixarLogClose(TIFF* tif)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
-	/* In a really sneaky maneuver, on close, we covertly modify both
-	 * bitspersample and sampleformat in the directory to indicate
-	 * 8-bit linear.  This way, the decode "just works" even for
+	/* In a really sneaky (and really incorrect, and untruthfull, and
+	 * troublesome, and error-prone) maneuver that completely goes against
+	 * the spirit of TIFF, and breaks TIFF, on close, we covertly
+	 * modify both bitspersample and sampleformat in the directory to
+	 * indicate 8-bit linear.  This way, the decode "just works" even for
 	 * readers that don't know about PixarLog, or how to set
 	 * the PIXARLOGDATFMT pseudo-tag.
 	 */
@@ -1203,26 +1252,26 @@ PixarLogCleanup(TIFF* tif)
 }
 
 static int
-PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
+PixarLogVSetField(TIFF* tif, uint32 tag, va_list ap)
 {
+    static const char module[] = "PixarLogVSetField";
     PixarLogState *sp = (PixarLogState *)tif->tif_data;
     int result;
-    static const char module[] = "PixarLogVSetField";
 
     switch (tag) {
      case TIFFTAG_PIXARLOGQUALITY:
-		sp->quality = va_arg(ap, int);
+		sp->quality = (int) va_arg(ap, int);
 		if (tif->tif_mode != O_RDONLY && (sp->state&PLSTATE_INIT)) {
 			if (deflateParams(&sp->stream,
 			    sp->quality, Z_DEFAULT_STRATEGY) != Z_OK) {
-				TIFFErrorExt(tif->tif_clientdata, module, "%s: zlib error: %s",
-					tif->tif_name, sp->stream.msg);
+				TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
+					sp->stream.msg);
 				return (0);
 			}
 		}
 		return (1);
      case TIFFTAG_PIXARLOGDATAFMT:
-	sp->user_datafmt = va_arg(ap, int);
+	sp->user_datafmt = (int) va_arg(ap, int);
 	/* Tweak the TIFF header so that the rest of libtiff knows what
 	 * size of data will be passed between app and library, and
 	 * assume that the app knows what it is doing and is not
@@ -1254,7 +1303,7 @@ PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	/*
 	 * Must recalculate sizes should bits/sample change.
 	 */
-	tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
+	tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tmsize_t)(-1);
 	tif->tif_scanlinesize = TIFFScanlineSize(tif);
 	result = 1;		/* NB: pseudo tag */
 	break;
@@ -1265,7 +1314,7 @@ PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
 }
 
 static int
-PixarLogVGetField(TIFF* tif, ttag_t tag, va_list ap)
+PixarLogVGetField(TIFF* tif, uint32 tag, va_list ap)
 {
     PixarLogState *sp = (PixarLogState *)tif->tif_data;
 
@@ -1282,22 +1331,34 @@ PixarLogVGetField(TIFF* tif, ttag_t tag, va_list ap)
     return (1);
 }
 
-static const TIFFFieldInfo pixarlogFieldInfo[] = {
-    {TIFFTAG_PIXARLOGDATAFMT,0,0,TIFF_ANY,  FIELD_PSEUDO,FALSE,FALSE,""},
-    {TIFFTAG_PIXARLOGQUALITY,0,0,TIFF_ANY,  FIELD_PSEUDO,FALSE,FALSE,""}
+static const TIFFField pixarlogFields[] = {
+    {TIFFTAG_PIXARLOGDATAFMT, 0, 0, TIFF_ANY, 0, TIFF_SETGET_INT, TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, FALSE, FALSE, "", NULL},
+    {TIFFTAG_PIXARLOGQUALITY, 0, 0, TIFF_ANY, 0, TIFF_SETGET_INT, TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, FALSE, FALSE, "", NULL}
 };
 
 int
 TIFFInitPixarLog(TIFF* tif, int scheme)
 {
+	const char module[] = "TIFFInitPixarLog";
+
 	PixarLogState* sp;
 
 	assert(scheme == COMPRESSION_PIXARLOG);
 
 	/*
+	 * Merge codec-specific tag information.
+	 */
+	if (!_TIFFMergeFields(tif, pixarlogFields,
+			      TIFFArrayCount(pixarlogFields))) {
+		TIFFErrorExt(tif->tif_clientdata, module,
+			     "Merging PixarLog codec-specific tags failed");
+		return 0;
+	}
+
+	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (PixarLogState));
+	tif->tif_data = (uint8*) _TIFFmalloc(sizeof (PixarLogState));
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = (PixarLogState*) tif->tif_data;
@@ -1308,22 +1369,22 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 	/*
 	 * Install codec methods.
 	 */
+	tif->tif_fixuptags = PixarLogFixupTags; 
 	tif->tif_setupdecode = PixarLogSetupDecode;
 	tif->tif_predecode = PixarLogPreDecode;
 	tif->tif_decoderow = PixarLogDecode;
-	tif->tif_decodestrip = PixarLogDecode;
+	tif->tif_decodestrip = PixarLogDecode;  
 	tif->tif_decodetile = PixarLogDecode;
 	tif->tif_setupencode = PixarLogSetupEncode;
 	tif->tif_preencode = PixarLogPreEncode;
 	tif->tif_postencode = PixarLogPostEncode;
-	tif->tif_encoderow = PixarLogEncode;
+	tif->tif_encoderow = PixarLogEncode;  
 	tif->tif_encodestrip = PixarLogEncode;
-	tif->tif_encodetile = PixarLogEncode;
+	tif->tif_encodetile = PixarLogEncode;  
 	tif->tif_close = PixarLogClose;
 	tif->tif_cleanup = PixarLogCleanup;
 
 	/* Override SetField so we can handle our private pseudo-tag */
-	_TIFFMergeFieldInfo(tif, pixarlogFieldInfo, N(pixarlogFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield = PixarLogVGetField;   /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
@@ -1345,7 +1406,7 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, "TIFFInitPixarLog",
+	TIFFErrorExt(tif->tif_clientdata, module,
 		     "No space for PixarLog state block");
 	return (0);
 }

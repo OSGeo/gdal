@@ -1,5 +1,5 @@
 /* Get the common system configuration switches from the main file. */
-#include "cpl_config.h"
+#include "cpl_port.h"
 
 /* Libtiff specific switches. */
 
@@ -40,5 +40,34 @@
 /* Enable SubIFD tag (330) support */
 #define SUBIFD_SUPPORT 1
 
+/* Signed 16-bit type */
+#define TIFF_INT16_T GInt16
+
+/* Signed 32-bit type */
+#define TIFF_INT32_T GInt32
+
+/* Signed 64-bit type */
+#define TIFF_INT64_T GIntBig
+
+/* Signed 8-bit type */
+#define TIFF_INT8_T signed char
+
+/* Pointer difference type */
+#define TIFF_PTRDIFF_T ptrdiff_t
+
+/* Signed size type */
+#define TIFF_SSIZE_T signed long
+
+/* Unsigned 16-bit type */
+#define TIFF_UINT16_T GUInt16
+
+/* Unsigned 32-bit type */
+#define TIFF_UINT32_T GUInt32
+
+/* Unsigned 64-bit type */
+#define TIFF_UINT64_T GUIntBig
+
+/* Unsigned 8-bit type */
+#define TIFF_UINT8_T unsigned char
 
 
