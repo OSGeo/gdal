@@ -227,3 +227,5 @@ protected:
 
 GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo);
 GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager();
+void DestroyWMSMiniDriverManager(void);
+
