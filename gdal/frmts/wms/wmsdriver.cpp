@@ -68,7 +68,6 @@ static void GDALDeregister_WMS( GDALDriver * )
 
 void GDALRegister_WMS() {
     GDALDriver *driver;
-
     if (GDALGetDriverByName("WMS") == NULL) {
         driver = new GDALDriver();
         driver->SetDescription("WMS");
@@ -77,10 +76,10 @@ void GDALRegister_WMS() {
         driver->pfnOpen = GDALWMSDatasetOpen;
         driver->pfnUnloadDriver = GDALDeregister_WMS;
         GetGDALDriverManager()->RegisterDriver(driver);
-        
 
         GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
         mdm->Register(new GDALWMSMiniDriverFactory_WMS());
         mdm->Register(new GDALWMSMiniDriverFactory_TileService());
+        mdm->Register(new GDALWMSMiniDriverFactory_WorldWind());
     }
 }
