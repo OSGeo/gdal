@@ -134,6 +134,12 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
                     }
                     VSIUnlink(file_name.c_str());
                 }
+            } else if (download_requests[i].nStatus == 204) {
+                void *p = 0;
+                if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
+                if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
+                    ret = CE_Failure;
+                }
             } else {
                 ret = CE_Failure;
             }
@@ -269,6 +275,41 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
         GDALClose(ds);
     } else {
         ret = CE_Failure;
+    }
+
+    return ret;
+}
+
+CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buffer) {
+    CPLErr ret = CE_None;
+
+    for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
+        if (ret == CE_None) {
+            void *p = NULL;
+            GDALRasterBlock *b = NULL;
+            if ((buffer != NULL) && (ib == to_buffer_band)) {
+                p = buffer;
+            } else {
+                GDALWMSRasterBand *band = static_cast<GDALWMSRasterBand *>(m_parent_dataset->GetRasterBand(ib));
+                if (m_overview >= 0) band = static_cast<GDALWMSRasterBand *>(band->GetOverview(m_overview));
+                if (!band->IsBlockInCache(x, y)) {
+                    b = band->GetLockedBlockRef(x, y, true);
+                    if (b != NULL) {
+                        p = b->GetDataRef();
+                    }
+                }
+            }
+            if (p != NULL) {
+                unsigned char *b = reinterpret_cast<unsigned char *>(p);
+                int block_size = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
+                for (int i = 0; i < block_size; ++i) b[i] = 0;
+            } else {
+                ret = CE_Failure;
+            }
+            if (b != NULL) {
+                b->DropLock();
+            }
+        }
     }
 
     return ret;
