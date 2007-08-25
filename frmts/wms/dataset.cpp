@@ -44,12 +44,81 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
-        CPLXMLNode *n = CPLGetXMLNode(config, "DataWindow");
-        if (n == NULL) {
+        const char *block_size_x = CPLGetXMLValue(config, "BlockSizeX", "256");
+        const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "256");
+        m_block_size_x = atoi(block_size_x);
+        m_block_size_y = atoi(block_size_y);
+    }
+    if (ret == CE_None) {
+        CPLXMLNode *data_window_node = CPLGetXMLNode(config, "DataWindow");
+        if (data_window_node == NULL) {
             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow missing.\n");
             ret = CE_Failure;
         } else {
-            m_data_window.Initialize(n);
+            const char *overview_count = CPLGetXMLValue(config, "OverviewCount", "");
+            const char *ulx = CPLGetXMLValue(data_window_node, "UpperLeftX", "");
+            const char *uly = CPLGetXMLValue(data_window_node, "UpperLeftY", "");
+            const char *lrx = CPLGetXMLValue(data_window_node, "LowerRightX", "");
+            const char *lry = CPLGetXMLValue(data_window_node, "LowerRightY", "");
+            const char *sx = CPLGetXMLValue(data_window_node, "SizeX", "");
+            const char *sy = CPLGetXMLValue(data_window_node, "SizeY", "");
+            const char *tx = CPLGetXMLValue(data_window_node, "TileX", "0");
+            const char *ty = CPLGetXMLValue(data_window_node, "TileY", "0");
+            const char *tlevel = CPLGetXMLValue(data_window_node, "TileLevel", "");
+            const char *str_tile_count_x = CPLGetXMLValue(data_window_node, "TileCountX", "1");
+            const char *str_tile_count_y = CPLGetXMLValue(data_window_node, "TileCountY", "1");
+
+            if (ret == CE_None) {
+                if ((ulx[0] != '\0') && (uly[0] != '\0') && (lrx[0] != '\0') && (lry[0] != '\0')) {
+                    m_data_window.m_x0 = atof(ulx);
+                    m_data_window.m_y0 = atof(uly);
+                    m_data_window.m_x1 = atof(lrx);
+                    m_data_window.m_y1 = atof(lry);
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: UpperLeftX, UpperLeftY, LowerRightX, LowerRightY\n");
+                    ret = CE_Failure;
+                }
+            }
+            if (ret == CE_None) {
+                if (tlevel[0] != '\0') {
+                    m_data_window.m_tlevel = atoi(tlevel);
+                } else {
+                    m_data_window.m_tlevel = 0;
+                }
+            }
+            if (ret == CE_None) {
+                if ((sx[0] != '\0') && (sy[0] != '\0')) {
+                    m_data_window.m_sx = atoi(sx);
+                    m_data_window.m_sy = atoi(sy);
+                } else if ((tlevel[0] != '\0') && (str_tile_count_x[0] != '\0') && (str_tile_count_y[0] != '\0')) {
+                    int tile_count_x = atoi(str_tile_count_x);
+                    int tile_count_y = atoi(str_tile_count_y);
+                    m_data_window.m_sx = tile_count_x * m_block_size_x * (1 << m_data_window.m_tlevel);
+                    m_data_window.m_sy = tile_count_y * m_block_size_y * (1 << m_data_window.m_tlevel);
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: SizeX, SizeY\n");
+                    ret = CE_Failure;
+                }
+            }
+            if (ret == CE_None) {
+                if ((tx[0] != '\0') && (ty[0] != '\0')) {
+                    m_data_window.m_tx = atoi(tx);
+                    m_data_window.m_ty = atoi(ty);
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: TileX, TileY\n");
+                    ret = CE_Failure;
+                }
+            }
+            if (ret == CE_None) {
+                if (overview_count[0] != '\0') {
+                    m_overview_count = atoi(overview_count);
+                } else if (tlevel[0] != '\0') {
+                    m_overview_count = m_data_window.m_tlevel;
+                } else {
+                    double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy)))/log(2.0) - 5.0;
+                    m_overview_count = MAX(0, MIN(static_cast<int>(a), 32));
+                }
+            }
         }
     }
     if (ret == CE_None) {
@@ -63,51 +132,39 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         }
     }
     if (ret == CE_None) {
-        const char *overview_count = CPLGetXMLValue(config, "OverviewCount", "");
-        if (overview_count[0] != '\0') {
-            m_overview_count = atoi(overview_count);
-        } else {
-            double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy)))/log(2.0) - 5.0;
-            m_overview_count = MAX(0, MIN(static_cast<int>(a), 32));
-        }
-    }
-    if (ret == CE_None) {
-        const char *block_size_x = CPLGetXMLValue(config, "BlockSizeX", "256");
-        const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "256");
-        m_block_size_x = atoi(block_size_x);
-        m_block_size_y = atoi(block_size_y);
-    }
-    if (ret == CE_None) {
         const char *bands_count = CPLGetXMLValue(config, "BandsCount", "3");
         m_bands_count = atoi(bands_count);
     }
-
     if (ret == CE_None) {
-        CPLXMLNode *n = CPLGetXMLNode(config, "Cache");
-        if (n != NULL) {
+        CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
+        if (cache_node != NULL) {
             m_cache = new GDALWMSCache();
-            if (m_cache->Initialize(n) != CE_None) {
+            if (m_cache->Initialize(cache_node) != CE_None) {
                 delete m_cache;
                 m_cache = NULL;
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize cache.\n");
                 ret = CE_Failure;
             }
         }
     }
-
     if (ret == CE_None) {
-        CPLXMLNode *service = CPLGetXMLNode(config, "Service");
-        if (service != NULL) {
-            const char *service_name = CPLGetXMLValue(service, "name", "");
+        CPLXMLNode *service_node = CPLGetXMLNode(config, "Service");
+        if (service_node != NULL) {
+            const char *service_name = CPLGetXMLValue(service_node, "name", "");
             if (service_name[0] != '\0') {
                 GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
                 GDALWMSMiniDriverFactory *const mdf = mdm->Find(CPLString(service_name));
                 if (mdf != NULL) {
                     m_mini_driver = mdf->New();
-                    if (m_mini_driver->Initialize(service) == CE_None) {
+                    m_mini_driver->m_parent_dataset = this;
+                    if (m_mini_driver->Initialize(service_node) == CE_None) {
                         m_mini_driver->GetCapabilities(&m_mini_driver_caps);
                     } else {
                         delete m_mini_driver;
                         m_mini_driver = NULL;
+
+                        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize minidriver.\n");
+                        ret = CE_Failure;
                     }
                 } else {
                     CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No mini-driver registered for '%s'.\n", service_name);
@@ -122,7 +179,6 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             ret = CE_Failure;
         }
     }
-
     if (ret == CE_None) {
         nRasterXSize = m_data_window.m_sx;
         nRasterYSize = m_data_window.m_sy;
@@ -180,4 +236,16 @@ CPLErr GDALWMSDataset::GetGeoTransform(double *gt) {
 
 CPLErr GDALWMSDataset::SetGeoTransform(double *gt) {
     return CE_Failure;
+}
+
+const GDALWMSDataWindow *GDALWMSDataset::WMSGetDataWindow() const {
+    return &m_data_window;
+}
+
+const int GDALWMSDataset::WMSGetBlockSizeX() const {
+    return m_block_size_x;
+}
+
+const int GDALWMSDataset::WMSGetBlockSizeY() const {
+    return m_block_size_y;
 }

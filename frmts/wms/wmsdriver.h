@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+class GDALWMSDataset;
+class GDALWMSRasterBand;
+
 CPLString MD5String(const char *s);
 CPLString ProjToWKT(const CPLString &proj);
 void URLAppend(CPLString *url, const char *s);
@@ -48,9 +51,6 @@ public:
     double m_x1, m_y1;
     int m_sx, m_sy;
     int m_tx, m_ty, m_tlevel;
-
-public:
-    CPLErr Initialize(CPLXMLNode *config);
 };
 
 class GDALWMSTiledImageRequestInfo {
@@ -76,6 +76,7 @@ public:
 };
 
 class GDALWMSMiniDriver {
+friend class GDALWMSDataset;
 public:
     GDALWMSMiniDriver();
     virtual ~GDALWMSMiniDriver();
@@ -87,6 +88,9 @@ public:
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+
+protected:
+    GDALWMSDataset *m_parent_dataset;
 };
 
 class GDALWMSMiniDriverFactory {
@@ -166,7 +170,6 @@ protected:
     int m_cache_depth;
 };
 
-class GDALWMSRasterBand;
 class GDALWMSDataset : public GDALPamDataset {
     friend class GDALWMSRasterBand;
     friend GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo);
@@ -186,6 +189,11 @@ protected:
 
 protected:
     CPLErr Initialize(CPLXMLNode *config);
+
+public:
+    const GDALWMSDataWindow *WMSGetDataWindow() const;
+    const int WMSGetBlockSizeX() const;
+    const int WMSGetBlockSizeY() const;
 
 protected:
     GDALWMSDataWindow m_data_window;
@@ -217,6 +225,7 @@ protected:
     bool IsBlockInCache(int x, int y);
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer);
+    CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
 
 protected:
     GDALWMSDataset *m_parent_dataset;
