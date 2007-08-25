@@ -52,6 +52,20 @@ GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo) {
     return ds;
 }
 
+/************************************************************************/
+/*                         GDALDeregister_WMS()                         */
+/************************************************************************/
+
+static void GDALDeregister_WMS( GDALDriver * )
+
+{
+    DestroyWMSMiniDriverManager();
+}
+
+/************************************************************************/
+/*                          GDALRegister_WMS()                          */
+/************************************************************************/
+
 void GDALRegister_WMS() {
     GDALDriver *driver;
 
@@ -61,7 +75,9 @@ void GDALRegister_WMS() {
         driver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Map Service");
         driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_wms.html");
         driver->pfnOpen = GDALWMSDatasetOpen;
+        driver->pfnUnloadDriver = GDALDeregister_WMS;
         GetGDALDriverManager()->RegisterDriver(driver);
+        
 
         GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
         mdm->Register(new GDALWMSMiniDriverFactory_WMS());
