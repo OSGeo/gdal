@@ -249,6 +249,7 @@ Usage:
 
 \verbatim
 ogrtindex [-lnum n]... [-lname name]... [-f output_format]
+          [-write_absolute_path] [-skip_different_projection]
                  output_dataset src_dataset...
 \endverbatim
 
@@ -271,6 +272,9 @@ to layers using the OGR connection type.
         is to create a shapefile.</dd>
 <dt><b>-tileindex</b> <em>field_name</em>:</dt><dd> The name to use for the dataset name.
         Defaults to LOCATION.</dd>
+<dt><b>-write_absolute_path</b>:</dt><dd> Filenames are written with absolute paths</dd>
+<dt><b>-skip_different_projection</b>:</dt><dd> Only layers with same projection ref
+        as layers already inserted in the tileindex will be inserted.</dd>
 </dl>
 
 If no -lnum or -lname arguments are given it is assumed that
