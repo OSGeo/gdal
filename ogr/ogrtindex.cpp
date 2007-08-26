@@ -49,6 +49,9 @@ int main( int nArgc, char ** papszArgv )
     const char *pszFormat = "ESRI Shapefile";
     const char *pszTileIndexField = "LOCATION";
     const char *pszOutputName = NULL;
+    int write_absolute_path = FALSE;
+    int skip_different_projection = FALSE;
+    char* current_path = NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
@@ -63,6 +66,14 @@ int main( int nArgc, char ** papszArgv )
         if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
         {
             pszFormat = papszArgv[++iArg];
+        }
+        else if( EQUAL(papszArgv[iArg],"-write_absolute_path"))
+        {
+            write_absolute_path = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-skip_different_projection"))
+        {
+            skip_different_projection = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"-tileindex") && iArg < nArgc-1 )
         {
@@ -175,6 +186,63 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
 
+    /* Load in memory existing file names in SHP */
+    int nExistingLayers = 0;
+    char** existingLayersTab = NULL;
+    OGRSpatialReference* alreadyExistingSpatialRef = NULL;
+    int alreadyExistingSpatialRefValid = FALSE;
+    nExistingLayers = poDstLayer->GetFeatureCount();
+    if (nExistingLayers)
+    {
+        int i;
+        existingLayersTab = (char**)CPLMalloc(nExistingLayers * sizeof(char*));
+        for(i=0;i<nExistingLayers;i++)
+        {
+            OGRFeature* feature = poDstLayer->GetNextFeature();
+            existingLayersTab[i] = CPLStrdup(feature->GetFieldAsString( iTileIndexField));
+            if (i == 0)
+            {
+                OGRDataSource       *poDS;
+                char* filename = CPLStrdup(existingLayersTab[i]);
+                int j;
+                for(j=strlen(filename)-1;j>=0;j--)
+                {
+                    if (filename[j] == ',')
+                        break;
+                }
+                if (j >= 0)
+                {
+                    int iLayer = atoi(filename + j + 1);
+                    filename[j] = 0;
+                    poDS = OGRSFDriverRegistrar::Open(filename, 
+                                                    FALSE );
+                    if (poDS)
+                    {
+                        OGRLayer *poLayer = poDS->GetLayer(iLayer);
+                        if (poLayer)
+                        {
+                            alreadyExistingSpatialRefValid = TRUE;
+                            alreadyExistingSpatialRef =
+                                    (poLayer->GetSpatialRef()) ? poLayer->GetSpatialRef()->Clone() : NULL;
+                        }
+                        delete poDS;
+                    }
+                }
+            }
+        }
+    }
+
+
+    if (write_absolute_path)
+    {
+        current_path = CPLGetCurrentDir();
+        if (current_path == NULL)
+        {
+            fprintf( stderr, "This system does not support the CPLGetCurrentDir call. "
+                             "The option -write_absolute_path will have no effect\n");
+            write_absolute_path = FALSE;
+        }
+    }
 /* ==================================================================== */
 /*      Process each input datasource in turn.                          */
 /* ==================================================================== */
@@ -182,12 +250,26 @@ int main( int nArgc, char ** papszArgv )
 
 	for(; nFirstSourceDataset < nArgc; nFirstSourceDataset++ )
     {
+        int i;
         OGRDataSource       *poDS;
 
         if( papszArgv[nFirstSourceDataset][0] == '-' )
         {
             nFirstSourceDataset++;
             continue;
+        }
+        
+        char* fileNameToWrite;
+        VSIStatBuf sStatBuf;
+
+        if (write_absolute_path && CPLIsFilenameRelative( papszArgv[nFirstSourceDataset] ) &&
+            VSIStat( papszArgv[nFirstSourceDataset], &sStatBuf ) == 0)
+        {
+            fileNameToWrite = CPLStrdup(CPLProjectRelativeFilename(current_path,papszArgv[nFirstSourceDataset]));
+        }
+        else
+        {
+            fileNameToWrite = CPLStrdup(papszArgv[nFirstSourceDataset]);
         }
 
         poDS = OGRSFDriverRegistrar::Open( papszArgv[nFirstSourceDataset], 
@@ -197,6 +279,7 @@ int main( int nArgc, char ** papszArgv )
         {
             printf( "Failed to open dataset %s, skipping.\n", 
                     papszArgv[nFirstSourceDataset] );
+            CPLFree(fileNameToWrite);
             continue;
         }
 
@@ -223,6 +306,47 @@ int main( int nArgc, char ** papszArgv )
 
             if( !bRequested )
                 continue;
+
+            /* Checks that the layer is not already in tileindex */
+            for(i=0;i<nExistingLayers;i++)
+            {
+                char        szLocation[5000];
+                sprintf( szLocation, "%s,%d", 
+                        fileNameToWrite, iLayer );
+                if (EQUAL(szLocation, existingLayersTab[i]))
+                {
+                    fprintf(stderr, "Layer %d of %s is already in tileindex. Skipping it.\n",
+                            iLayer, papszArgv[nFirstSourceDataset]);
+                    break;
+                }
+            }
+            if (i != nExistingLayers)
+            {
+                continue;
+            }
+
+            OGRSpatialReference* spatialRef = poLayer->GetSpatialRef();
+            if (alreadyExistingSpatialRefValid)
+            {
+                if ((spatialRef != NULL && alreadyExistingSpatialRef != NULL &&
+                     spatialRef->IsSame(alreadyExistingSpatialRef) == FALSE) ||
+                    ((spatialRef != NULL) != (alreadyExistingSpatialRef != NULL)))
+                {
+                    fprintf(stderr, "Warning : layer %d of %s is not using the same projection system as "
+                                "other files in the tileindex. This may cause problems when "
+                                "using it in MapServer for example.%s\n", iLayer, papszArgv[nFirstSourceDataset],
+                                (skip_different_projection) ? " Skipping it" : "");
+                    if (skip_different_projection)
+                    {
+                        continue;
+                    }
+                }
+            }
+            else
+            {
+                alreadyExistingSpatialRefValid = TRUE;
+                alreadyExistingSpatialRef = (spatialRef) ? spatialRef->Clone() : NULL;
+            }
 
 /* -------------------------------------------------------------------- */
 /*		Check if all layers in dataset have the same attributes	schema. */
@@ -298,7 +422,7 @@ int main( int nArgc, char ** papszArgv )
             OGRFeature  oTileFeat( poDstLayer->GetLayerDefn() );
 
             sprintf( szLocation, "%s,%d", 
-                     papszArgv[nFirstSourceDataset], iLayer );
+                     fileNameToWrite, iLayer );
             oTileFeat.SetGeometry( &oRegion );
             oTileFeat.SetField( iTileIndexField, szLocation );
 
@@ -313,6 +437,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Cleanup this data source.                                       */
 /* -------------------------------------------------------------------- */
+        CPLFree(fileNameToWrite);
         delete poDS;
     }
 
@@ -321,6 +446,21 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     delete poDstDS;
 	delete poFeatureDefn;
+  
+    if (alreadyExistingSpatialRef != NULL)
+        delete alreadyExistingSpatialRef;
+  
+    CPLFree(current_path);
+    
+    if (nExistingLayers)
+    {
+        int i;
+        for(i=0;i<nExistingLayers;i++)
+        {
+            CPLFree(existingLayersTab[i]);
+        }
+        CPLFree(existingLayersTab);
+    }
 
     return 0;
 }
@@ -333,6 +473,7 @@ static void Usage()
 
 {
     printf( "Usage: ogrtindex [-lnum n]... [-lname name]... [-f output_format]\n"
+            "                 [-write_absolute_path] [-skip_different_projection]\n"
             "                 output_dataset src_dataset...\n" );
     printf( "\n" );
     printf( "  -lnum n: Add layer number 'n' from each source file\n"
@@ -343,6 +484,9 @@ static void Usage()
             "                    is to create a shapefile.\n" );
     printf( "  -tileindex field_name: The name to use for the dataset name.\n"
             "                         Defaults to LOCATION.\n" );
+    printf( "  -write_absolute_path: Filenames are written with absolute paths.\n" );
+    printf( "  -skip_different_projection: Only layers with same projection ref \n"
+            "        as layers already inserted in the tileindex will be inserted.\n" );
     printf( "\n" );
     printf( "If no -lnum or -lname arguments are given it is assumed that\n"
             "all layers in source datasets should be added to the tile index\n"
