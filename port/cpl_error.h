@@ -85,15 +85,25 @@ CPL_C_END
 /*
  * Helper macros used for input parameters validation.
  */
+#ifdef DEBUG
+#  define VALIDATE_POINTER_ERR CE_Fatal
+#else
+#  define VALIDATE_POINTER_ERR CE_Failure
+#endif
+
 #define VALIDATE_POINTER0(ptr, func) \
    do { if( NULL == ptr ) \
-      { CPLError( CE_Failure, CPLE_ObjectNull, \
+      { \
+        CPLErr const ret = VALIDATE_POINTER_ERR; \
+        CPLError( ret, CPLE_ObjectNull, \
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
          return; }} while(0)
 
 #define VALIDATE_POINTER1(ptr, func, rc) \
    do { if( NULL == ptr ) \
-      { CPLError( CE_Failure, CPLE_ObjectNull, \
+      { \
+          CPLErr const ret = VALIDATE_POINTER_ERR; \
+          CPLError( ret, CPLE_ObjectNull, \
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
         return (rc); }} while(0)
 
