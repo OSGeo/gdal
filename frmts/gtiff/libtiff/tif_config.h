@@ -56,7 +56,7 @@
 #define TIFF_PTRDIFF_T ptrdiff_t
 
 /* Signed size type */
-#if WIN64
+#ifdef _WIN64
 #  define TIFF_SSIZE_T GIntBig
 #else
 #  define TIFF_SSIZE_T signed long
