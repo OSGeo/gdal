@@ -142,7 +142,7 @@ class RPFTOCSubDataset : public VRTDataset
     {
     }
     
-    static GDALDataset* CreateDataSetFromTocEntry(RPFTocEntry* entry);
+    static GDALDataset* CreateDataSetFromTocEntry(RPFTocEntry* entry, int isRGBA);
 };
         
 /************************************************************************/
@@ -315,18 +315,24 @@ class RPFTOCProxyRasterDataSet : public GDALDataset
     int checkOK;
     const char* projectionRef;
     double nwLong, nwLat;
+    GDALColorTable* colorTableRef;
     
     public:
         RPFTOCProxyRasterDataSet(const char* fileName,
                                 int nRasterXSize, int nRasterYSize,
                                 int nBlockXSize, int nBlockYSize,
-                                const char* projectionRef, double nwLong, double nwLat);
+                                const char* projectionRef, double nwLong, double nwLat,
+                                int nBands);
 
         ~RPFTOCProxyRasterDataSet()
         {
             if (fileName)
                 CPLFree(fileName);
         }
+        
+        void SetReferenceColorTable(GDALColorTable* colorTableRef) { this->colorTableRef = colorTableRef;}
+        
+        const GDALColorTable* GetReferenceColorTable() { return colorTableRef; }
 
         const char* GetFileName() { return fileName; }
         
@@ -335,11 +341,11 @@ class RPFTOCProxyRasterDataSet : public GDALDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                        RPFTOCProxyRasterBand                          */
+/*                     RPFTOCProxyRasterBandRGBA                        */
 /* ==================================================================== */
 /************************************************************************/
 
-class RPFTOCProxyRasterBand : public GDALPamRasterBand
+class RPFTOCProxyRasterBandRGBA : public GDALPamRasterBand
 {
     int initDone;
     unsigned char colorTable[256];
@@ -349,8 +355,8 @@ class RPFTOCProxyRasterBand : public GDALPamRasterBand
         void Expand(void* pImage, const void* srcImage);
 
     public:
-        RPFTOCProxyRasterBand(int nRasterXSize, int nRasterYSize,
-                             int nBlockXSize, int nBlockYSize)
+        RPFTOCProxyRasterBandRGBA(int nRasterXSize, int nRasterYSize,
+                                  int nBlockXSize, int nBlockYSize)
         {
             RPFTOCGDALDatasetCache::Ref();
             this->eAccess = GA_ReadOnly;
@@ -363,7 +369,7 @@ class RPFTOCProxyRasterBand : public GDALPamRasterBand
             initDone = FALSE;
         }
 
-        ~RPFTOCProxyRasterBand()
+        ~RPFTOCProxyRasterBandRGBA()
         {
             RPFTOCGDALDatasetCache::Unref();
         }
@@ -378,7 +384,7 @@ class RPFTOCProxyRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 /* Expand the  array or indexed colors to an array of their corresponding R,G,B or A component */
-void  RPFTOCProxyRasterBand::Expand(void* pImage, const void* srcImage)
+void  RPFTOCProxyRasterBandRGBA::Expand(void* pImage, const void* srcImage)
 {
     int i;
     if ((blockByteSize & (~3)) != 0)
@@ -401,13 +407,14 @@ void  RPFTOCProxyRasterBand::Expand(void* pImage, const void* srcImage)
                     colorTable[four_pixels & 0xFF];
         }
     }
+
 }
 
 /************************************************************************/
 /*                    IReadBlock()                                      */
 /************************************************************************/
 
-CPLErr RPFTOCProxyRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
                                          void * pImage )
 {
     CPLErr ret;
@@ -464,6 +471,151 @@ CPLErr RPFTOCProxyRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             Expand(pImage, cachedImage);
             ret = CE_None;
         }
+
+    }
+    else
+        ret = CE_Failure;
+    return ret;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                 RPFTOCProxyRasterBandPalette                         */
+/* ==================================================================== */
+/************************************************************************/
+
+class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
+{
+    int initDone;
+    int blockByteSize;
+    int samePalette;
+    unsigned char remapLUT[256];
+
+    public:
+        RPFTOCProxyRasterBandPalette(int nRasterXSize, int nRasterYSize,
+                                     int nBlockXSize, int nBlockYSize)
+        {
+            RPFTOCGDALDatasetCache::Ref();
+            this->eAccess = GA_ReadOnly;
+            this->eDataType = GDT_Byte;
+            this->nBlockXSize = nBlockXSize;
+            this->nBlockYSize = nBlockYSize;
+            this->nRasterXSize = nRasterXSize;
+            this->nRasterYSize = nRasterYSize;
+            blockByteSize = nBlockXSize * nBlockYSize;
+            initDone = FALSE;
+        }
+
+        ~RPFTOCProxyRasterBandPalette()
+        {
+            RPFTOCGDALDatasetCache::Unref();
+        }
+
+    protected:
+        virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
+                                   void * pImage );
+};
+
+/************************************************************************/
+/*                    IReadBlock()                                      */
+/************************************************************************/
+
+CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                                 void * pImage )
+{
+    CPLErr ret;
+    const char* fileName = ((RPFTOCProxyRasterDataSet*)poDS)->GetFileName();
+    GDALDataset* ds = RPFTOCGDALDatasetCache::GetDataset(fileName);
+    if (ds)
+    {
+        if (((RPFTOCProxyRasterDataSet*)poDS)->SanityCheckOK(ds) == FALSE)
+            return CE_Failure;
+
+        GDALRasterBand* srcBand = ds->GetRasterBand(1);
+        if (initDone == FALSE)
+        {
+            GDALColorTable* srcColorTable = srcBand->GetColorTable();
+            int i,j;
+            int bHasNoDataValue;
+            int noDataValue = (int)srcBand->GetNoDataValue(&bHasNoDataValue);
+            int nEntries = srcColorTable->GetColorEntryCount();
+            const GDALColorTable* colorTableRef = ((RPFTOCProxyRasterDataSet*)poDS)->GetReferenceColorTable();
+            samePalette = TRUE;
+            for(i=0;i<nEntries;i++)
+            {
+                const GDALColorEntry* entry = srcColorTable->GetColorEntry(i);
+                const GDALColorEntry* entryRef = colorTableRef->GetColorEntry(i);
+                if (entry->c1 != entryRef->c1 ||
+                    entry->c2 != entryRef->c2 ||
+                    entry->c3 != entryRef->c3)
+                {
+                    samePalette = FALSE;
+                }
+            }
+            if (samePalette == FALSE)
+            {
+                /* Trying to remap the product palette on the subdataset palette */
+                int nRefEntries = srcColorTable->GetColorEntryCount();
+                int first_msg = 1;
+                for(i=0;i<nEntries;i++)
+                {
+                    const GDALColorEntry* entry = srcColorTable->GetColorEntry(i);
+                    for(j=0;j<nRefEntries;j++)
+                    {
+                        const GDALColorEntry* entryRef = colorTableRef->GetColorEntry(j);
+                        if (entry->c1 == entryRef->c1 &&
+                            entry->c2 == entryRef->c2 &&
+                            entry->c3 == entryRef->c3)
+                        {
+                            remapLUT[i] = j;
+                            break;
+                        }
+                    }
+                    if (j == nEntries)
+                    {
+                        /* No exact match. Looking for closest color now... */
+                        if (first_msg)
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                    "Palette for %s is different from reference palette. "
+                                     "Coudln't remap color %d. Trying to find closest match.\n", fileName, i);
+                            first_msg = 0;
+                        }
+                        int best_j = 0;
+                        int best_distance = 0;
+                        for(j=0;j<nRefEntries;j++)
+                        {
+                            const GDALColorEntry* entryRef = colorTableRef->GetColorEntry(j);
+                            int distance = (entry->c1 - entryRef->c1) * (entry->c1 - entryRef->c1) +
+                                           (entry->c2 - entryRef->c2) * (entry->c2 - entryRef->c2) +
+                                           (entry->c3 - entryRef->c3) * (entry->c3 - entryRef->c3);
+                            if (j == 0 || distance < best_distance)
+                            {
+                                best_j = j;
+                                best_distance = distance;
+                            }
+                        }
+                        remapLUT[i] = best_j;
+                    }
+                }
+                if (bHasNoDataValue)
+                    remapLUT[noDataValue] = noDataValue;
+            }
+            initDone = TRUE;
+        }
+
+
+        ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
+        if (samePalette == FALSE)
+        {
+            unsigned char* data = (unsigned char*)pImage;
+            int i;
+            for(i=0;i<blockByteSize;i++)
+            {
+                data[i] = remapLUT[data[i]];
+            }
+        }
+
     }
     else
         ret = CE_Failure;
@@ -478,7 +630,8 @@ RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet
         (const char* fileName,
          int nRasterXSize, int nRasterYSize,
          int nBlockXSize, int nBlockYSize,
-         const char* projectionRef, double nwLong, double nwLat)
+         const char* projectionRef, double nwLong, double nwLat,
+         int nBands)
 {
     int i;
     this->fileName = CPLStrdup(fileName);
@@ -488,13 +641,19 @@ RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet
     this->projectionRef = projectionRef;
     this->nwLong = nwLong;
     this->nwLat = nwLat;
+    colorTableRef = NULL;
     bShared = TRUE;
     checkDone = FALSE;
     checkOK = FALSE;
-    for(i=0;i<4;i++)
+    if (nBands == 4)
     {
-        SetBand(i+1, new RPFTOCProxyRasterBand(nRasterXSize, nRasterYSize, nBlockXSize, nBlockYSize));
+        for(i=0;i<4;i++)
+        {
+            SetBand(i+1, new RPFTOCProxyRasterBandRGBA(nRasterXSize, nRasterYSize, nBlockXSize, nBlockYSize));
+        }
     }
+    else
+        SetBand(1, new RPFTOCProxyRasterBandPalette(nRasterXSize, nRasterYSize, nBlockXSize, nBlockYSize));
 }
 
 /************************************************************************/
@@ -602,7 +761,7 @@ char **RPFTOCDataset::GetMetadata( const char *pszDomain )
 #define ASSERT_CREATE_VRT(x) do { if (!(x)) { CPLError(CE_Failure, CPLE_AppDefined, "For %s, assert '" #x "' failed", entry->frameEntries[i].fullFilePath); if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); return NULL;} } while(0)
 
 /* Builds a RPFTOCSubDataset from the set of files of the toc entry */
-GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry)
+GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int isRGBA)
 {
     int i, j;
     GDALDriver *poDriver;
@@ -691,16 +850,48 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry)
     geoTransf[GEOTRSFRM_TOPLEFT_Y] = entry->nwLat;
     poVirtualDS->SetGeoTransform(geoTransf);
     
-    /* We must create a RGBA dataset. In most cases, all the files inside */
-    /* a TOC entry share the same palette and we could use it for the VRT. */
-    /* Unfortunately there is the remaining 1%... */
-    /* This is the case for CADRG801_France_250K (TOC entry CADRG_250K_2_2) where */
+    int nBands;
+    
+    /* In most cases, all the files inside a TOC entry share the same */
+    /* palette and we could use it for the VRT. */
+    /* In other cases like for CADRG801_France_250K (TOC entry CADRG_250K_2_2), */
     /* the file for Corsica and the file for Sardegna do not share the same palette */
-    for (i=0;i<4;i++)
+    /* however they contain the same RGB triplets and are just ordered differently */
+    /* So we can use the same palette */
+    /* In the unlikely event where palettes would be incompatible, we can use the RGBA */
+    /* option through the config option RPFTOC_FORCE_RGBA */
+    if (isRGBA == FALSE)
     {
         poVirtualDS->AddBand(GDT_Byte, NULL);
-        GDALRasterBand *poBand = poVirtualDS->GetRasterBand( i + 1 );
-        poBand->SetColorInterpretation((GDALColorInterp)(GCI_RedBand+i));
+        GDALRasterBand *poBand = poVirtualDS->GetRasterBand( 1 );
+        poBand->SetColorInterpretation(GCI_PaletteIndex);
+        nBands = 1;
+        
+        for(i=0;i<N; i++)
+        {
+            if (!entry->frameEntries[i].fileExists)
+                continue;
+            
+            GDALDataset *poSrcDS = (GDALDataset *) GDALOpenShared( entry->frameEntries[i].fullFilePath, GA_ReadOnly );
+            poBand->SetColorTable(poSrcDS->GetRasterBand(1)->GetColorTable());
+            
+            int bHasNoDataValue;
+            double noDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoDataValue);
+            if (bHasNoDataValue)
+                poBand->SetNoDataValue(noDataValue);
+            GDALClose(poSrcDS);
+            break;
+        }
+    }
+    else
+    {
+        for (i=0;i<4;i++)
+        {
+            poVirtualDS->AddBand(GDT_Byte, NULL);
+            GDALRasterBand *poBand = poVirtualDS->GetRasterBand( i + 1 );
+            poBand->SetColorInterpretation((GDALColorInterp)(GCI_RedBand+i));
+        }
+        nBands = 4;
     }
 
     CPLFree(projectionRef);
@@ -718,15 +909,20 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry)
         /* So the idea is to warp the datasets into a proxy and open the underlying dataset only when it is */
         /* needed (IRasterIO operation). To improve a bit efficiency, we have a cache of opened */
         /* underlying datasets */
-        GDALDataset* ds = new RPFTOCProxyRasterDataSet(
+        RPFTOCProxyRasterDataSet* ds = new RPFTOCProxyRasterDataSet(
                 entry->frameEntries[i].fullFilePath,
                 sizeX, sizeY,
                 nBlockXSize, nBlockYSize,
                 poVirtualDS->GetProjectionRef(),
                 entry->nwLong + entry->frameEntries[i].frameCol * entry->horizInterval * sizeX, 
-                entry->nwLat - entry->frameEntries[i].frameRow * entry->vertInterval * sizeY);
+                entry->nwLat - entry->frameEntries[i].frameRow * entry->vertInterval * sizeY,
+                nBands);
+        if (nBands == 1)
+        {
+            ds->SetReferenceColorTable(poVirtualDS->GetRasterBand( 1 )->GetColorTable());
+        }
 
-        for(j=0;j<4;j++)
+        for(j=0;j<nBands;j++)
         {
             VRTSourcedRasterBand *poBand = (VRTSourcedRasterBand*)poVirtualDS->GetRasterBand( j + 1 );
             /* Place the raster band at the right position in the VRT */
@@ -809,6 +1005,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         }
         VSIFReadL(buffer, 1, 48, fp);
     }
+    int isRGBA = CSLTestBoolean(CPLGetConfigOption("RPFTOC_FORCE_RGBA", "NO"));
     RPFToc* toc = (psFile) ? RPFTOCRead( pszFilename, psFile ) :
                               RPFTOCReadFromBuffer( pszFilename, fp, buffer);
 
@@ -821,7 +1018,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
             {
                 if (EQUAL(entryName, MakeTOCEntryName(&toc->entries[i])))
                 {
-                    GDALDataset* ds = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i]);
+                    GDALDataset* ds = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i], isRGBA);
                     if (ds)
                     {
                         int iFile = 0;
@@ -866,7 +1063,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         {
             if (!toc->entries[i].isOverview)
             {
-                GDALDataset* tmpDS = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i]);
+                GDALDataset* tmpDS = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i], isRGBA);
                 if (tmpDS)
                 {
                     tmpDS->GetGeoTransform(adfGeoTransform);
