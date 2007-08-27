@@ -13,6 +13,10 @@ For a complete change history, please see the CVS log comments.
 CHANGES - Current Version:
 --------------------------
 
+
+Version 1.6.2 (2007-07-12)
+--------------------------
+
 ***   ***   ***   ***   ***
 - IMPORTANT: The optimized spatial index introduced in V1.6.0 has been 
   disabled by default in this release after we found that the current block
@@ -49,6 +53,8 @@ CHANGES - Current Version:
 
 - Added support for building libmitab.so shared lib (contrib by UffeK and
   MaximV, bug 1746)
+
+- Avoid deprecation warnings for some common functions with VC7+ (bug 1749)
 
 
 Version 1.6.1 (2007-03-30)
@@ -806,5 +812,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.188 2007/07/04 16:55:46 dmorissette Exp $
+$Id: HISTORY.TXT,v 1.190 2007/07/31 21:06:51 dmorissette Exp $
 ------------
