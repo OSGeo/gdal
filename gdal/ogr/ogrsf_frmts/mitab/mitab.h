@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.96 2007/06/12 14:48:44 dmorissette Exp $
+ * $Id: mitab.h,v 1.97 2007/07/12 12:39:59 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.97  2007/07/12 12:39:59  dmorissette
+ * Set version to 1.6.2
+ *
  * Revision 1.96  2007/06/12 14:48:44  dmorissette
  * Set version to 1.6.2-dev
  *
@@ -143,7 +146,7 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.6.2-dev (2007-06-xx)"
+#define MITAB_VERSION      "1.6.2 (2007-07-12)"
 #define MITAB_VERSION_INT  1006002  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI

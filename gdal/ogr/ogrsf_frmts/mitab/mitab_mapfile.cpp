@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.38 2007/06/12 12:50:39 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.39 2007/07/11 15:51:52 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.39  2007/07/11 15:51:52  dmorissette
+ * Fixed duplicate 'int i' definition build errors in SplitObjBlock()
+ *
  * Revision 1.38  2007/06/12 12:50:39  dmorissette
  * Use Quick Spatial Index by default until bug 1732 is fixed (broken files
  * produced by current coord block splitting technique).
@@ -1678,7 +1681,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
                                              int nSizeOfObjToAdd)
 {
     TABMAPObjHdr **papoSrcObjHdrs = NULL, *poObjHdr=NULL;
-    int numSrcObj = 0;
+    int i, numSrcObj = 0;
 
     /*-----------------------------------------------------------------
      * Read all object headers
@@ -1723,7 +1726,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
      *----------------------------------------------------------------*/
     TABMAPIndexEntry *pasSrcEntries = 
         (TABMAPIndexEntry*)CPLMalloc(numSrcObj*sizeof(TABMAPIndexEntry));
-    for (int i=0; i<numSrcObj; i++)
+    for (i=0; i<numSrcObj; i++)
     {
         pasSrcEntries[i].XMin = papoSrcObjHdrs[i]->m_nMinX;
         pasSrcEntries[i].YMin = papoSrcObjHdrs[i]->m_nMinY;
@@ -1827,7 +1830,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     }
 
     /* Cleanup papoSrcObjHdrs[] */
-    for(int i=0; i<numSrcObj; i++)
+    for(i=0; i<numSrcObj; i++)
     {
         delete papoSrcObjHdrs[i];
     }
