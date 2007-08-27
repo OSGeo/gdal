@@ -544,6 +544,13 @@ CPLErr PAuxDataset::GetGeoTransform( double * padfGeoTransform )
     }
     else
     {
+        padfGeoTransform[0] = 0.0;
+        padfGeoTransform[1] = 1.0;
+        padfGeoTransform[2] = 0.0;
+        padfGeoTransform[3] = 0.0;
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = 1.0;
+
         return CE_Failure;
     }
 }
