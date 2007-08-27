@@ -1610,9 +1610,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 	nc_inq_varname( cdfid, nVarID, szVarName);
 
-	strcpy( pszNETCDFFilename,"NETCDF:" );
+	strcpy( pszNETCDFFilename,"NETCDF:\"" );
 	strcat( pszNETCDFFilename,poOpenInfo->pszFilename );
-	strcat( pszNETCDFFilename,":" );
+	strcat( pszNETCDFFilename,"\":" );
 	strcat( pszNETCDFFilename, szVarName );
 
 	CPLDebug( "GDAL_netCDF", "NETCDFFilename = %s\n", 
