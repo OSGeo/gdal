@@ -577,7 +577,7 @@ if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 elif test "$with_libtiff" = "internal" ; then
 
   TIFF_SETTING=internal
-  HAVE_BIGTIFF=yes
+  HAVE_BIGTIFF=no
 
   echo "using internal TIFF code."
 
@@ -1418,6 +1418,75 @@ AC_SUBST(HAVE_XERCES,$HAVE_XERCES)
 AC_SUBST(XERCES_INCLUDE,$XERCES_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for Expat configuration.
+dnl ---------------------------------------------------------------------------
+
+HAVE_EXPAT=no
+
+AC_MSG_CHECKING([for Expat C++])
+
+AC_ARG_WITH(expat,
+    AS_HELP_STRING([--with-expat[=ARG]], [Include Expat support (for KML driver)]),,)
+AC_ARG_WITH(expat_inc,
+    AS_HELP_STRING([--with-expat-inc[=ARG]], [Expat include directory]),,)
+AC_ARG_WITH(expat_lib,
+    AS_HELP_STRING([--with-expat-lib[=ARG]], [Expat link option(s)]),,)
+
+if test "$with_expat" = "" -o "$with_expat" = "no" ; then
+
+  AC_MSG_RESULT([disabled])
+
+else
+
+  if test "$with_expat" = "yes" ; then
+    if test -f /usr/local/include/expat.h; then 
+      with_expat=/usr/local
+    else 
+      with_expat=/usr
+    fi
+  fi
+
+  if test "$with_expat_lib" != "" ; then
+    LIBS="$with_expat_lib $LIBS"
+  else
+    LIBS="-L$with_expat/lib -lexpat $LIBS"
+  fi
+
+  if test "$with_expat_inc" != "" ; then
+    EXPAT_INCLUDE="-I$with_expat_inc"
+  else
+    EXPAT_INCLUDE="-I$with_expat/include"
+  fi
+
+  echo '#include <expat.h>' >> conftest.cpp
+  echo 'int main() {  XML_Parser p = XML_ParserCreate(NULL); XML_ParserFree(p); }' >> conftest.cpp
+  CMD="${CXX} ${EXPAT_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
+
+  if test -z "`$CMD 2>&1 | grep -v warning | grep -v skipping`" ; then
+    HAVE_EXPAT=yes
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([requested, but compile or link fails!])
+
+    echo
+    echo $CMD
+    echo
+    $CMD
+    echo
+    echo cat conftest.cpp
+    cat conftest.cpp
+    
+    AC_MSG_ERROR([Please correct Expat options, or don't enable Expat.])
+  fi
+  rm -f conftest*
+
+fi
+
+AC_SUBST([HAVE_EXPAT], $HAVE_EXPAT)
+AC_SUBST([EXPAT_INCLUDE], $EXTRA_INCLUDES)
+
+
+dnl ---------------------------------------------------------------------------
 dnl Check for ODBC support.
 dnl ---------------------------------------------------------------------------
 
@@ -1559,7 +1628,7 @@ if test "$LIBCURL_CONFIG" != "no" ; then
   CURL_LIB=`$LIBCURL_CONFIG --libs`
   CURL_SETTING=yes
 
-  OPT_GDAL_FORMATS="wcs wms $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs $OPT_GDAL_FORMATS"
 else
   CURL_SETTING=no
   CURL_INC=
@@ -2102,10 +2171,11 @@ fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
-LOC_MSG([  CURL support (wms/wcs/...):${CURL_SETTING}])
+LOC_MSG([  CURL support (wcs):        ${CURL_SETTING}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
+LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGEO support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
@@ -2134,7 +2204,7 @@ LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG()
-if test "x$CFG" != "xdebug" -a "x$CFG" != "xDEBUG" ; then
+if test "x$CFG" != "xdebug"; then
     DEBUG_MODE="no"
 else
     DEBUG_MODE="yes"
