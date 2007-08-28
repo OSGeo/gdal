@@ -33,6 +33,7 @@
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "gdalexif.h"
+#include "zlib.h"
 
 #include <setjmp.h>
 
@@ -57,10 +58,12 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 /************************************************************************/
 
 class JPGRasterBand;
+class JPGMaskBand;
 
 class JPGDataset : public GDALPamDataset
 {
     friend class JPGRasterBand;
+    friend class JPGMaskBand;
 
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
@@ -98,6 +101,16 @@ class JPGDataset : public GDALPamDataset
     void   LoadDefaultTables(int);
 
     static void ErrorExit(j_common_ptr cinfo);
+
+    void   CheckForMask();
+    void   DecompressMask();
+
+    JPGMaskBand *poMaskBand;
+    GByte  *pabyBitMask;
+
+    GByte  *pabyCMask;
+    int    nCMaskSize;
+
   public:
                  JPGDataset();
                  ~JPGDataset();
@@ -129,6 +142,24 @@ class JPGRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
+
+    virtual GDALRasterBand *GetMaskBand();
+    virtual int             GetMaskFlags();
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             JPGMaskBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class JPGMaskBand : public GDALRasterBand
+{
+  protected:
+    virtual CPLErr IReadBlock( int, int, void * );
+
+  public:
+    		JPGMaskBand( JPGDataset *poDS );
 };
 
 /************************************************************************/
@@ -609,6 +640,58 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 }
 
 /************************************************************************/
+/*                            JPGMaskBand()                             */
+/************************************************************************/
+
+JPGMaskBand::JPGMaskBand( JPGDataset *poDS )
+
+{
+    this->poDS = poDS;
+    nBand = 0;
+
+    nRasterXSize = poDS->GetRasterXSize();
+    nRasterYSize = poDS->GetRasterYSize();
+
+    eDataType = GDT_Byte;
+    nBlockXSize = nRasterXSize;
+    nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, void *pImage )
+
+{
+    JPGDataset *poJDS = (JPGDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Make sure the mask is loaded and decompressed.                  */
+/* -------------------------------------------------------------------- */
+    poJDS->DecompressMask();
+    if( poJDS->pabyBitMask == NULL )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Set mask based on bitmask for this scanline.                    */
+/* -------------------------------------------------------------------- */
+    int iX;
+    int iBit = nBlockY * nBlockXSize;
+
+    for( iX = 0; iX < nBlockXSize; iX++ )
+    {
+        if( poJDS->pabyBitMask[iBit>>3] & (0x1 << (iBit&7)) )
+            ((GByte *) pImage)[iX] = 255;
+        else
+            ((GByte *) pImage)[iX] = 0;
+        iBit++;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           JPGRasterBand()                            */
 /************************************************************************/
 
@@ -716,6 +799,42 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*                            GetMaskBand()                             */
+/************************************************************************/
+
+GDALRasterBand *JPGRasterBand::GetMaskBand()
+
+{
+    JPGDataset *poJDS = (JPGDataset *) poDS;
+
+    if( poJDS->pabyCMask )
+    {
+        if( poJDS->poMaskBand == NULL )
+            poJDS->poMaskBand = new JPGMaskBand( (JPGDataset *) poDS );
+
+        return poJDS->poMaskBand;
+    }
+    else
+        return GDALPamRasterBand::GetMaskBand();
+}
+
+/************************************************************************/
+/*                            GetMaskFlags()                            */
+/************************************************************************/
+
+int JPGRasterBand::GetMaskFlags()
+
+{
+    JPGDataset *poJDS = (JPGDataset *) poDS;
+
+    GetMaskBand();
+    if( poJDS->poMaskBand != NULL )
+        return GMF_PER_DATASET;
+    else
+        return GDALPamRasterBand::GetMaskFlags();
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                             JPGDataset                               */
 /* ==================================================================== */
@@ -744,6 +863,11 @@ JPGDataset::JPGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    poMaskBand = NULL;
+    pabyBitMask = NULL;
+    pabyCMask = NULL;
+    nCMaskSize = 0;
 }
 
 /************************************************************************/
@@ -765,6 +889,10 @@ JPGDataset::~JPGDataset()
         CPLFree( pabyScanline );
     if( papszMetadata != NULL )
       CSLDestroy( papszMetadata );
+
+    CPLFree( pabyBitMask );
+    CPLFree( pabyCMask );
+    delete poMaskBand;
 }
 
 /************************************************************************/
@@ -1238,6 +1366,14 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check for a bitmask appended to the file.                       */
+/* -------------------------------------------------------------------- */
+    poDS->CheckForMask();
+
+/* -------------------------------------------------------------------- */
+/*      Move to the start of jpeg data.                                 */
+/* -------------------------------------------------------------------- */
     poDS->nSubfileOffset = subfile_offset;
     VSIFSeekL( poDS->fpImage, poDS->nSubfileOffset, SEEK_SET );
 
@@ -1364,6 +1500,103 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                            CheckForMask()                            */
+/************************************************************************/
+
+void JPGDataset::CheckForMask()
+
+{
+    GIntBig nFileSize;
+    GUInt32 nImageSize;
+
+/* -------------------------------------------------------------------- */
+/*      Go to the end of the file, pull off four bytes, and see if      */
+/*      it is plausibly the size of the real image data.                */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( fpImage, 0, SEEK_END );
+    nFileSize = VSIFTellL( fpImage );
+    VSIFSeekL( fpImage, nFileSize - 4, SEEK_SET );
+    
+    VSIFReadL( &nImageSize, 4, 1, fpImage );
+    CPL_LSBPTR32( &nImageSize );
+
+    if( nImageSize < nFileSize / 2 || nImageSize > nFileSize - 4 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      If that seems ok, seek back, and verify that just preceeding    */
+/*      the bitmask is an apparent end-of-jpeg-data marker.             */
+/* -------------------------------------------------------------------- */
+    GByte abyEOD[2];
+
+    VSIFSeekL( fpImage, nImageSize - 2, SEEK_SET );
+    VSIFReadL( abyEOD, 2, 1, fpImage );
+    if( abyEOD[0] != 0xff || abyEOD[1] != 0xd9 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      We seem to have a mask.  Read it in.                            */
+/* -------------------------------------------------------------------- */
+    nCMaskSize = (int) (nFileSize - nImageSize - 4);
+    pabyCMask = (GByte *) CPLMalloc(nCMaskSize);
+    VSIFReadL( pabyCMask, nCMaskSize, 1, fpImage );
+
+    CPLDebug( "JPEG", "Got %d byte compressed bitmask.",
+              nCMaskSize );
+}
+
+/************************************************************************/
+/*                           DecompressMask()                           */
+/************************************************************************/
+
+void JPGDataset::DecompressMask()
+
+{
+    if( pabyCMask == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate 1bit buffer - may be slightly larger than needed.      */
+/* -------------------------------------------------------------------- */
+    int nBufSize = nRasterYSize * ((nRasterXSize+7)/8);
+    pabyBitMask = (GByte *) CPLMalloc( nBufSize );
+    
+/* -------------------------------------------------------------------- */
+/*      Decompress                                                      */
+/* -------------------------------------------------------------------- */
+    z_stream sStream;
+
+    memset( &sStream, 0, sizeof(z_stream) );
+    
+    inflateInit( &sStream );
+    
+    sStream.next_in = pabyCMask;
+    sStream.avail_in = nCMaskSize;
+
+    sStream.next_out = pabyBitMask;
+    sStream.avail_out = nBufSize;
+
+    int nResult = inflate( &sStream, Z_FINISH );
+
+    inflateEnd( &sStream );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup if an error occurs.                                     */
+/* -------------------------------------------------------------------- */
+    if( nResult != Z_STREAM_END )
+    {
+        
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failure decoding JPEG validity bitmask." );
+        CPLFree( pabyCMask );
+        pabyCMask = NULL;
+
+        CPLFree( pabyBitMask );
+        pabyBitMask = NULL;
+    }
+}
+
+/************************************************************************/
 /*                             ErrorExit()                              */
 /************************************************************************/
 
@@ -1380,6 +1613,123 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 
     /* Return control to the setjmp point */
     longjmp(poDS->setjmp_buffer, 1);
+}
+
+/************************************************************************/
+/*                           JPGAppendMask()                            */
+/*                                                                      */
+/*      This function appends a zlib compressed bitmask to a JPEG       */
+/*      file (or really any file) pulled from an existing mask band.    */
+/************************************************************************/
+
+static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
+
+{
+    int nXSize = poMask->GetXSize();
+    int nYSize = poMask->GetYSize();
+    int nBitBufSize = nYSize * ((nXSize+7)/8);
+    int iX, iY;
+    GByte *pabyBitBuf, *pabyMaskLine;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate uncompressed bit buffer.                               */
+/* -------------------------------------------------------------------- */
+    pabyBitBuf = (GByte *) CPLCalloc(1,nBitBufSize);
+
+    pabyMaskLine = (GByte *) CPLMalloc(nXSize);
+
+/* -------------------------------------------------------------------- */
+/*      Set bit buffer from mask band, scanline by scanline.            */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
+    int iBit = 0;
+    for( iY = 0; iY < nYSize; iY++ )
+    {
+        eErr = poMask->RasterIO( GF_Read, 0, iY, nXSize, 1,
+                                 pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
+        if( eErr != CE_None )
+            break;
+
+        for( iX = 0; iX < nXSize; iX++ )
+        {
+            if( pabyMaskLine[iX] != 0 )
+                pabyBitBuf[iBit>>3] |= (0x80 >> (iBit&7));
+        }
+    }
+    
+    CPLFree( pabyMaskLine );
+
+/* -------------------------------------------------------------------- */
+/*      Compress                                                        */
+/* -------------------------------------------------------------------- */
+    GByte *pabyCMask = NULL;
+    z_stream sStream;
+
+    if( eErr == CE_None )
+    {
+        pabyCMask = (GByte *) CPLMalloc(nBitBufSize + 30);
+
+        memset( &sStream, 0, sizeof(z_stream) );
+        
+        deflateInit( &sStream, 9 );
+        
+        sStream.next_in = pabyBitBuf;
+        sStream.avail_in = nBitBufSize;
+        
+        sStream.next_out = pabyCMask;
+        sStream.avail_out = nBitBufSize + 30;
+        
+        int nResult = deflate( &sStream, Z_FINISH );
+        
+        deflateEnd( &sStream );
+
+        if( nResult != Z_STREAM_END )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Deflate compression of jpeg bit mask failed." );
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write to disk, along with image file size.                      */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None )
+    {
+        FILE *fpOut;
+        GUInt32 nImageSize;
+
+        fpOut = VSIFOpenL( pszJPGFilename, "r+" );
+        if( fpOut == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Failed to open jpeg to append bitmask." );
+            eErr = CE_Failure;
+        }
+        else
+        {
+            VSIFSeekL( fpOut, 0, SEEK_END );
+
+            nImageSize = VSIFTellL( fpOut );
+            CPL_LSBPTR32( &nImageSize );
+
+            if( VSIFWriteL( pabyCMask, 1, sStream.total_out, fpOut ) 
+                != sStream.total_out )
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failure writing compressed bitmask.\n%s",
+                          VSIStrerror( errno ) );
+                eErr = CE_Failure;
+            }
+            else
+                VSIFWriteL( &nImageSize, 4, 1, fpOut );
+
+            VSIFCloseL( fpOut );
+        }
+    }
+
+    CPLFree( pabyBitBuf );
+    CPLFree( pabyCMask );
 }
 
 /************************************************************************/
@@ -1581,6 +1931,17 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         VSIUnlink( pszFilename );
         return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does the source have a mask?  If so, append it to the jpeg file.*/
+/* -------------------------------------------------------------------- */
+    int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    if( !(nMaskFlags & GMF_ALL_VALID) 
+        && (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) )
+    {
+        CPLDebug( "JPEG", "Appending Mask Bitmap" ); 
+        JPGAppendMask( pszFilename, poSrcDS->GetRasterBand(1)->GetMaskBand() );
     }
 
 /* -------------------------------------------------------------------- */
