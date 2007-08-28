@@ -577,7 +577,7 @@ if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
 elif test "$with_libtiff" = "internal" ; then
 
   TIFF_SETTING=internal
-  HAVE_BIGTIFF=no
+  HAVE_BIGTIFF=yes
 
   echo "using internal TIFF code."
 
@@ -1628,7 +1628,7 @@ if test "$LIBCURL_CONFIG" != "no" ; then
   CURL_LIB=`$LIBCURL_CONFIG --libs`
   CURL_SETTING=yes
 
-  OPT_GDAL_FORMATS="wcs $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms $OPT_GDAL_FORMATS"
 else
   CURL_SETTING=no
   CURL_INC=
@@ -2171,7 +2171,7 @@ fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
-LOC_MSG([  CURL support (wcs):        ${CURL_SETTING}])
+LOC_MSG([  CURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
@@ -2204,7 +2204,7 @@ LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG()
-if test "x$CFG" != "xdebug"; then
+if test "x$CFG" != "xdebug" -a "x$CFG" != "xDEBUG" ; then 
     DEBUG_MODE="no"
 else
     DEBUG_MODE="yes"
