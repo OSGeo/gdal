@@ -6,7 +6,8 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalcolortable.o gdalmajorobject.o overview.o \
 		gdaldefaultoverviews.o gdalpamdataset.o gdalpamrasterband.o \
 		gdaljp2metadata.o gdaljp2box.o gdalmultidomainmetadata.o \
-		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o
+		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o \
+		gdalallvalidmaskband.o gdalnodatamaskband.o
 
 # Enable the following if you want to use MITAB's code to convert
 # .tab coordinate systems into well known text.  But beware that linking

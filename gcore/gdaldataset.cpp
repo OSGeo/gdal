@@ -1667,6 +1667,16 @@ char **GDALDataset::GetFileList()
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have a known overview file?                               */
+/* -------------------------------------------------------------------- */
+    if( oOvManager.HaveMaskFile() )
+    {
+        char **papszMskList = oOvManager.poMaskDS->GetFileList();
+        papszList = CSLInsertStrings( papszList, -1, papszMskList );
+        CSLDestroy( papszMskList );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      should we try for world file(s)?   Not for now.                 */
 /* -------------------------------------------------------------------- */
 
@@ -1687,6 +1697,34 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
     VALIDATE_POINTER1( hDS, "GDALGetFileList", NULL );
 
     return ((GDALDataset *) hDS)->GetFileList();
+}
+
+/************************************************************************/
+/*                           CreateMaskBand()                           */
+/************************************************************************/
+
+CPLErr GDALDataset::CreateMaskBand( int nFlags )
+
+{
+    if( oOvManager.IsInitialized() )
+        return oOvManager.CreateMaskBand( nFlags, -1 );
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "CreateMaskBand() not supported for this dataset." );
+    
+    return( CE_Failure );
+}
+
+/************************************************************************/
+/*                     GDALCreateDatasetMaskBand()                      */
+/************************************************************************/
+
+CPLErr GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
+
+{
+    VALIDATE_POINTER1( hDS, "GDALCreateDatasetMaskBand", CE_Failure );
+
+    return ((GDALDataset *) hDS)->CreateMaskBand( nFlags );
 }
 
 /************************************************************************/
@@ -1930,3 +1968,4 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
     
     return nGDALDatasetCount;
 }
+

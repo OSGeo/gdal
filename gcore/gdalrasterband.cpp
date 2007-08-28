@@ -60,6 +60,10 @@ GDALRasterBand::GDALRasterBand()
     bSubBlockingActive = FALSE;
     papoBlocks = NULL;
 
+    poMask = NULL;
+    bOwnMask = false;
+    nMaskFlags = 0;
+
     nBlockReads = 0;
     bForceCachedIO =  CSLTestBoolean( 
         CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
@@ -85,6 +89,14 @@ GDALRasterBand::~GDALRasterBand()
         CPLDebug( "GDAL", "%d block reads on %d block band 1 of %s.",
                   nBlockReads, nBlocksPerRow * nBlocksPerColumn, 
                   poDS->GetDescription() );
+    }
+
+    if( bOwnMask )
+    {
+        delete poMask;
+        poMask = NULL;
+        nMaskFlags = 0;
+        bOwnMask = false;
     }
 }
 
@@ -3257,3 +3269,145 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
         static_cast<GDALRasterAttributeTable *>(hRAT) );
 }
 
+/************************************************************************/
+/*                            GetMaskBand()                             */
+/************************************************************************/
+
+GDALRasterBand *GDALRasterBand::GetMaskBand()
+
+{
+    if( poMask != NULL )
+        return poMask;
+
+/* -------------------------------------------------------------------- */
+/*      Check for a mask in a .msk file.                                */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDS = GetDataset();
+
+    if( poDS != NULL && poDS->oOvManager.HaveMaskFile() )
+    {
+        poMask = poDS->oOvManager.GetMaskBand( nBand );
+        if( poMask != NULL )
+        {
+            nMaskFlags = poDS->oOvManager.GetMaskFlags( nBand );
+            return poMask;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for nodata case.                                          */
+/* -------------------------------------------------------------------- */
+    int bHaveNoData;
+
+    GetNoDataValue( &bHaveNoData );
+    
+    if( bHaveNoData )
+    {
+        nMaskFlags = GMF_NODATA;
+        poMask = new GDALNoDataMaskBand( this );
+        bOwnMask = true;
+        return poMask;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for alpha case.                                           */
+/* -------------------------------------------------------------------- */
+    if( poDS != NULL 
+        && poDS->GetRasterCount() == 2
+        && this == poDS->GetRasterBand(1)
+        && poDS->GetRasterBand(2)->GetColorInterpretation() == GCI_AlphaBand
+        && poDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte )
+    {
+        nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+        poMask = poDS->GetRasterBand(2);
+        return poMask;
+    }
+
+    if( poDS != NULL 
+        && poDS->GetRasterCount() == 4
+        && (this == poDS->GetRasterBand(1)
+            || this == poDS->GetRasterBand(2)
+            || this == poDS->GetRasterBand(3))
+        && poDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand
+        && poDS->GetRasterBand(4)->GetRasterDataType() == GDT_Byte )
+    {
+        nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
+        poMask = poDS->GetRasterBand(4);
+        return poMask;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fallback to all valid case.                                     */
+/* -------------------------------------------------------------------- */
+    nMaskFlags = GMF_ALL_VALID;
+    poMask = new GDALAllValidMaskBand( this );
+    bOwnMask = true;
+
+    return poMask;
+}
+
+/************************************************************************/
+/*                          GDALGetMaskBand()                           */
+/************************************************************************/
+
+GDALRasterBandH GDALGetMaskBand( GDALRasterBandH hBand )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALGetMaskBand", NULL );
+    return (GDALRasterBandH) ((GDALRasterBand *) hBand)->GetMaskBand();
+}
+
+/************************************************************************/
+/*                            GetMaskFlags()                            */
+/************************************************************************/
+
+int GDALRasterBand::GetMaskFlags()
+
+{
+    // If we don't have a band yet, force this now so that the masks value
+    // will be initialized.
+
+    if( poMask == NULL )
+        GetMaskBand();
+
+    return nMaskFlags;
+}
+
+/************************************************************************/
+/*                          GDALGetMaskFlags()                          */
+/************************************************************************/
+
+int GDALGetMaskFlags( GDALRasterBandH hBand )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALGetMaskFlags", GMF_ALL_VALID );
+    return ((GDALRasterBand *) hBand)->GetMaskFlags();
+}
+
+/************************************************************************/
+/*                           CreateMaskBand()                           */
+/************************************************************************/
+
+CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
+
+{
+    if( poDS != NULL && poDS->oOvManager.IsInitialized() )
+        return poDS->oOvManager.CreateMaskBand( nFlags, nBand );
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "CreateMaskBand() not supported for this band." );
+    
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                         GDALCreateMaskBand()                         */
+/************************************************************************/
+
+CPLErr GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALCreateMaskBand", CE_Failure );
+
+    return ((GDALRasterBand *) hBand)->CreateMaskBand( nFlags );
+}

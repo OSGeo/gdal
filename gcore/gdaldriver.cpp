@@ -147,6 +147,120 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 }
 
 /************************************************************************/
+/*                         CopyBandImageData()                          */
+/*                                                                      */
+/*      Local helper function to copy image data from source to         */
+/*      destination band.                                               */
+/************************************************************************/
+
+static CPLErr CopyBandImageData( GDALRasterBand *poSrcBand,
+                                 GDALRasterBand *poDstBand,
+                                 GDALProgressFunc pfnProgress, 
+                                 void *pProgressData, 
+                                 double dfProgBase, double dfProgRatio )
+
+{
+    void           *pData;
+    GDALDataType   eType = poDstBand->GetRasterDataType();
+    int            nXSize = poSrcBand->GetXSize();
+    int            nYSize = poSrcBand->GetYSize();
+    int            iLine;
+    CPLErr         eErr = CE_None;
+
+    pData = VSIMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
+    if( pData == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "CreateCopy(): Out of memory allocating %d byte line buffer.\n",
+                  nXSize * GDALGetDataTypeSize(eType) / 8 );
+        eErr = CE_Failure;
+    }
+
+    for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
+    {
+        eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                    pData, nXSize, 1, eType, 0, 0 );
+        if( eErr != CE_None )
+            break;
+            
+        eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
+                                    pData, nXSize, 1, eType, 0, 0 );
+
+        if( !pfnProgress( ((iLine+1) / (double) nYSize) * dfProgRatio
+                          + dfProgBase, NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
+    }
+
+    CPLFree( pData );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          DefaultCopyMasks()                          */
+/************************************************************************/
+
+CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
+                                     GDALDataset *poDstDS,
+                                     int bStrict )
+
+{
+    CPLErr eErr = CE_None;	
+
+/* -------------------------------------------------------------------- */
+/*      Try to copy mask if it seems appropriate.                       */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; 
+         eErr == CE_None && iBand < poSrcDS->GetRasterCount(); 
+         iBand++ )
+    {
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
+
+        int nMaskFlags = poSrcBand->GetMaskFlags();
+        if( eErr == CE_None
+            && !(nMaskFlags & (GMF_ALL_VALID|GMF_PER_DATASET|GMF_ALPHA|GMF_NODATA) ) )
+        {
+            eErr = poDstBand->CreateMaskBand( nMaskFlags );
+            if( eErr == CE_None )
+            {
+                eErr = CopyBandImageData( 
+                    poSrcBand->GetMaskBand(),
+                    poDstBand->GetMaskBand(),
+                    GDALDummyProgress, NULL, 0.0, 0.0 );
+            }
+            else if( !bStrict )
+                eErr = CE_None;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to copy a per-dataset mask if we have one.                  */
+/* -------------------------------------------------------------------- */
+    int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    if( eErr == CE_None
+        && !(nMaskFlags & (GMF_ALL_VALID|GMF_ALPHA|GMF_NODATA) ) 
+        && (nMaskFlags & GMF_PER_DATASET) )
+    {
+        eErr = poDstDS->CreateMaskBand( nMaskFlags );
+        if( eErr == CE_None )
+        {
+            eErr = CopyBandImageData( 
+                poSrcDS->GetRasterBand(1)->GetMaskBand(),
+                poDstDS->GetRasterBand(1)->GetMaskBand(),
+                GDALDummyProgress, NULL, 0.0, 0.0 );
+        }
+        else if( !bStrict )
+            eErr = CE_None;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                         DefaultCreateCopy()                          */
 /************************************************************************/
 
@@ -299,39 +413,22 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy image data.                                                */
 /* -------------------------------------------------------------------- */
-        void           *pData;
+        eErr = CopyBandImageData( poSrcBand, poDstBand, 
+                                  pfnProgress, pProgressData,
+                                  iBand / (double) poSrcDS->GetRasterCount(),
+                                  1.0 / (double) poSrcDS->GetRasterCount() );
 
-        pData = VSIMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
-        if( pData == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "CreateCopy(): Out of memory allocating %d byte line buffer.\n",
-                      nXSize * GDALGetDataTypeSize(eType) / 8 );
-            eErr = CE_Failure;
-        }
-
-        for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
-        {
-            eErr = poSrcBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                        pData, nXSize, 1, eType, 0, 0 );
-            if( eErr != CE_None )
-                break;
-            
-            eErr = poDstBand->RasterIO( GF_Write, 0, iLine, nXSize, 1, 
-                                        pData, nXSize, 1, eType, 0, 0 );
-
-            if( !pfnProgress( (iBand + (iLine+1) / (double) nYSize)
-                              / (double) poSrcDS->GetRasterCount(), 
-                              NULL, pProgressData ) )
-            {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                eErr = CE_Failure;
-            }
-        }
-
-        CPLFree( pData );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Should we copy some masks over?                                 */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None )
+        eErr = DefaultCopyMasks( poSrcDS, poDstDS, eErr );
+
+/* -------------------------------------------------------------------- */
+/*      Try to cleanup the output dataset if the translation failed.    */
+/* -------------------------------------------------------------------- */
     if( eErr != CE_None )
     {
         delete poDstDS;
