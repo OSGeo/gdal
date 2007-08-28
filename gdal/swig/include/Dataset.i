@@ -162,6 +162,10 @@ public:
     return GDALAddBand( self, datatype, options );
   }
 
+  CPLErr CreateMaskBand( int nFlags ) {
+      return GDALCreateDatasetMaskBand( self, nFlags );
+  }
+
 #ifndef SWIGCSHARP
 %feature("kwargs") WriteRaster;
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };

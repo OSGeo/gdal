@@ -237,6 +237,18 @@ public:
       return GDALSetDefaultRAT(self, table);
   }
 
+  GDALRasterBandShadow *GetMaskBand() {
+      return (GDALRasterBandShadow *) GDALGetMaskBand( self );
+  }
+
+  int GetMaskFlags() {
+      return GDALGetMaskFlags( self );
+  }
+
+  CPLErr CreateMaskBand( int nFlags ) {
+      return GDALCreateMaskBand( self, nFlags );
+  }
+
 /* NEEDED */
 /* ReadAsArray */
 /* WriteArray */
