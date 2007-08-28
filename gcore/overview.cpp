@@ -532,7 +532,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     nWidth = poSrcBand->GetXSize();
     nHeight = poSrcBand->GetYSize();
 
-    if( nSampleStep >= nHeight )
+    if( nSampleStep >= nHeight || nSampleStep < 1 )
         nSampleStep = 1;
 
     bComplex = GDALDataTypeIsComplex(eType);
