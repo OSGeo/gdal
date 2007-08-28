@@ -318,6 +318,9 @@ void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **hDS, int *pnCount )
 int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
 void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
 
+CPLErr CPL_DLL CPL_STDCALL 
+              GDALCreateDatasetMaskBand( GDALDatasetH hBand, int nFlags );
+
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
@@ -450,6 +453,16 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH,
                                               GDALRasterAttributeTableH );
 CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
                                     GDALDerivedPixelFunc pfnPixelFunc );
+
+GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand );
+int CPL_DLL CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand );
+CPLErr CPL_DLL CPL_STDCALL 
+                       GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags );
+
+#define GMF_ALL_VALID     0x01
+#define GMF_PER_DATASET   0x02
+#define GMF_ALPHA         0x04
+#define GMF_NODATA        0x08
 
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */

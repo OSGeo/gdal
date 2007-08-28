@@ -2,11 +2,12 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Helper code to implement overview support in different drivers.
+ * Purpose:  Helper code to implement overview and mask support for many 
+ *           drivers with no inherent format support.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2000, Frank Warmerdam
+ * Copyright (c) 2000, 2007, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,6 +43,9 @@ GDALDefaultOverviews::GDALDefaultOverviews()
     poDS = NULL;
     poODS = NULL;
     bOvrIsAux = FALSE;
+
+    bCheckedForMask = FALSE;
+    poMaskDS = NULL;
 }
 
 /************************************************************************/
@@ -57,6 +61,13 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
         GDALClose( poODS );
         poODS = NULL;
     }
+
+    if( poMaskDS != NULL )
+    {
+        poMaskDS->FlushCache();
+        GDALClose( poMaskDS );
+        poMaskDS = NULL;
+    }
 }
 
 /************************************************************************/
@@ -65,11 +76,10 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
 
 void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
                                        const char * pszBasename,
+                                       char **papszSiblingFiles,
                                        int bNameIsOVR )
 
 {
-    VSIStatBufL sStatBuf;
-
 /* -------------------------------------------------------------------- */
 /*      If we were already initialized, destroy the old overview        */
 /*      file handle.                                                    */
@@ -78,6 +88,8 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     {
         GDALClose( poODS );
         poODS = NULL;
+
+        CPLDebug( "GDAL", "GDALDefaultOverviews::Initialize() called twice - this is odd and perhaps dangerous!" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -95,13 +107,15 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     else
         osOvrFilename.Printf( "%s.ovr", pszBasename );
 
-    bExists = VSIStatL( osOvrFilename, &sStatBuf ) == 0;
+    bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
+                               papszSiblingFiles );
 
 #if !defined(WIN32)
-    if( !bNameIsOVR && !bExists )
+    if( !bNameIsOVR && !bExists && !papszSiblingFiles )
     {
         osOvrFilename.Printf( "%s.OVR", pszBasename );
-        bExists = VSIStatL( osOvrFilename, &sStatBuf ) == 0;
+        bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
+                                   papszSiblingFiles );
         if( !bExists )
             osOvrFilename.Printf( "%s.ovr", pszBasename );
     }
@@ -127,6 +141,13 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
             osOvrFilename = poODS->GetDescription();
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we have sibling files, we should try to find the mask        */
+/*      file now, while we still have the list.                         */
+/* -------------------------------------------------------------------- */
+    if( papszSiblingFiles )
+        HaveMaskFile( papszSiblingFiles, pszBasename );
 }
 
 /************************************************************************/
@@ -425,3 +446,199 @@ GDALDefaultOverviews::BuildOverviews(
     return eErr;
 }
 
+/************************************************************************/
+/*                           CreateMaskBand()                           */
+/************************************************************************/
+
+CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
+
+{
+    if( nBand < 1 )
+        nFlags |= GMF_PER_DATASET;
+
+/* -------------------------------------------------------------------- */
+/*      ensure existing file gets opened if there is one.               */
+/* -------------------------------------------------------------------- */
+    HaveMaskFile();
+
+/* -------------------------------------------------------------------- */
+/*      Try creating the mask file.                                     */
+/* -------------------------------------------------------------------- */
+    if( poMaskDS == NULL )
+    {
+        CPLString osMskFilename;
+        GDALDriver *poDr = (GDALDriver *) GDALGetDriverByName( "GTiff" );
+        char **papszOpt = NULL;
+        int  nBX, nBY;
+        int  nBands;
+        
+        if( poDr == NULL )
+            return CE_Failure;
+
+        GDALRasterBand *poTBand = poDS->GetRasterBand(1);
+        if( poTBand == NULL )
+            return CE_Failure;
+
+        if( nFlags & GMF_PER_DATASET )
+            nBands = 1;
+        else
+            nBands = poDS->GetRasterCount();
+
+
+        papszOpt = CSLSetNameValue( papszOpt, "COMPRESS", "DEFLATE" );
+        papszOpt = CSLSetNameValue( papszOpt, "INTERLEAVE", "BAND" );
+
+        poTBand->GetBlockSize( &nBX, &nBY );
+
+        // try to create matching tile size if legal in TIFF.
+        if( (nBX % 16) == 0 && (nBY % 16) == 0 )
+        {
+            papszOpt = CSLSetNameValue( papszOpt, "TILED", "YES" );
+            papszOpt = CSLSetNameValue( papszOpt, "BLOCKXSIZE",
+                                        CPLString().Printf("%d",nBX) );
+            papszOpt = CSLSetNameValue( papszOpt, "BLOCKYSIZE",
+                                        CPLString().Printf("%d",nBY) );
+        }
+
+        osMskFilename.Printf( "%s.msk", poDS->GetDescription() );
+        poMaskDS = poDr->Create( osMskFilename, 
+                                 poDS->GetRasterXSize(),
+                                 poDS->GetRasterYSize(),
+                                 nBands, GDT_Byte, papszOpt );
+        CSLDestroy( papszOpt );
+
+        if( poMaskDS == NULL ) // presumably error already issued.
+            return CE_Failure;
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Save the mask flags for this band.                              */
+/* -------------------------------------------------------------------- */
+    if( nBand > poMaskDS->GetRasterCount() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create a mask band for band %d of %s,\n"
+                  "but the .msk file has a PER_DATASET mask.", 
+                  nBand, poDS->GetDescription() );
+        return CE_Failure;
+    }
+    
+    int iBand; 
+
+    for( iBand = 0; iBand < poDS->GetRasterCount(); iBand++ )
+    {
+        // we write only the info for this band, unless we are
+        // using PER_DATASET in which case we write for all.
+        if( nBand != iBand + 1 && !(nFlags | GMF_PER_DATASET) )
+            continue;
+
+        poMaskDS->SetMetadataItem( 
+            CPLString().Printf("INTERNAL_MASK_FLAGS_%d", iBand+1 ),
+            CPLString().Printf("%d", nFlags ) );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetMaskBand()                             */
+/************************************************************************/
+
+GDALRasterBand *GDALDefaultOverviews::GetMaskBand( int nBand )
+
+{
+    int nFlags = GetMaskFlags( nBand );
+
+    if( nFlags == 0x8000 ) // secret code meaning we don't handle this band.
+        return NULL;
+        
+    if( nFlags & GMF_PER_DATASET )
+        return poMaskDS->GetRasterBand(1);
+
+    if( nBand > 0 )
+        return poMaskDS->GetRasterBand( nBand );
+    else 
+        return NULL;
+}
+
+/************************************************************************/
+/*                            GetMaskFlags()                            */
+/************************************************************************/
+
+int GDALDefaultOverviews::GetMaskFlags( int nBand )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch this band's metadata entry.  They are of the form:        */
+/*        INTERNAL_MASK_FLAGS_n: flags                                  */
+/* -------------------------------------------------------------------- */
+    if( !HaveMaskFile() )
+        return 0;
+    
+    const char *pszValue = 
+        poMaskDS->GetMetadataItem( 
+            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", MAX(nBand,1)) );
+
+    if( pszValue == NULL )
+        return 0x8000;
+    else
+        return atoi(pszValue);
+}
+
+/************************************************************************/
+/*                            HaveMaskFile()                            */
+/*                                                                      */
+/*      Check for a mask file if we haven't already done so.            */
+/*      Returns TRUE if we have one, otherwise FALSE.                   */
+/************************************************************************/
+
+int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
+                                        const char *pszBasename )
+
+{
+    if( !IsInitialized() )
+        return FALSE;
+
+    if( bCheckedForMask )
+        return poMaskDS != NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Check for .msk file.                                            */
+/* -------------------------------------------------------------------- */
+    CPLString osMskFilename;
+    bCheckedForMask = TRUE;
+
+    if( pszBasename == NULL )
+        pszBasename = poDS->GetDescription();
+
+    // Don't bother checking for masks of masks. 
+    if( EQUAL(CPLGetExtension(pszBasename),".msk") )
+        return FALSE;
+
+    osMskFilename.Printf( "%s.msk", pszBasename );
+
+    int bExists = CPLCheckForFile( (char *) osMskFilename.c_str(), 
+                                   papszSiblingFiles );
+
+#if !defined(WIN32)
+    if( !bExists && !papszSiblingFiles )
+    {
+        osMskFilename.Printf( "%s.MSK", pszBasename );
+        bExists = CPLCheckForFile( (char *) osMskFilename.c_str(), 
+                                   papszSiblingFiles );
+    }
+#endif
+
+    if( !bExists )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Open the file.                                                  */
+/* -------------------------------------------------------------------- */
+    poMaskDS = (GDALDataset *) GDALOpen( osMskFilename, poDS->GetAccess() );
+
+    if( poMaskDS == NULL )
+        return FALSE;
+    
+    return TRUE;
+}
