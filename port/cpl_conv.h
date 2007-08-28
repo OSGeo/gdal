@@ -146,6 +146,7 @@ const char CPL_DLL *CPLCleanTrailingSlash( const char * );
 char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename, 
                                            const char *pszNewFilename, 
                                            char **papszFileList );
+int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
