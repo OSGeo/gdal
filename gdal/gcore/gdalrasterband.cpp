@@ -3350,7 +3350,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /*                          GDALGetMaskBand()                           */
 /************************************************************************/
 
-GDALRasterBandH GDALGetMaskBand( GDALRasterBandH hBand )
+GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
 
 {
     VALIDATE_POINTER1( hBand, "GDALGetMaskBand", NULL );
@@ -3377,7 +3377,7 @@ int GDALRasterBand::GetMaskFlags()
 /*                          GDALGetMaskFlags()                          */
 /************************************************************************/
 
-int GDALGetMaskFlags( GDALRasterBandH hBand )
+int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
 
 {
     VALIDATE_POINTER1( hBand, "GDALGetMaskFlags", GMF_ALL_VALID );
@@ -3404,7 +3404,7 @@ CPLErr GDALRasterBand::CreateMaskBand( int nFlags )
 /*                         GDALCreateMaskBand()                         */
 /************************************************************************/
 
-CPLErr GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
+CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
 
 {
     VALIDATE_POINTER1( hBand, "GDALCreateMaskBand", CE_Failure );
