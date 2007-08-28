@@ -206,7 +206,7 @@ typedef unsigned long    GUIntBig;
 #endif
 #endif
 
-// Should optional (normally private) interfaces be exported?
+/* Should optional (normally private) interfaces be exported? */
 #ifdef CPL_OPTIONAL_APIS
 #  define CPL_ODLL CPL_DLL
 #else

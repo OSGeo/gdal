@@ -32,10 +32,12 @@
 
 #include "cpl_port.h"
 
-// There are three primary implementations of the multi-process support
-// controlled by one of CPL_MULTIPROC_WIN32, CPL_MULTIPROC_PTHREAD or
-// CPL_MULTIPROC_STUB being defined.  If none are defined, the stub
-// implementation will be used.
+/*
+** There are three primary implementations of the multi-process support
+** controlled by one of CPL_MULTIPROC_WIN32, CPL_MULTIPROC_PTHREAD or
+** CPL_MULTIPROC_STUB being defined.  If none are defined, the stub
+** implementation will be used.
+*/
 
 #if defined(WIN32) && !defined(CPL_MULTIPROC_STUB)
 #  define CPL_MULTIPROC_WIN32
