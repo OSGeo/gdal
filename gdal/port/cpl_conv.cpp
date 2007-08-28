@@ -2086,3 +2086,62 @@ CPLLocaleC::~CPLLocaleC()
     }
 }
 
+/************************************************************************/
+/*                          CPLCheckForFile()                           */
+/************************************************************************/
+
+/**
+ * Check for file existance.
+ *
+ * The function checks if a named file exists in the filesystem, hopefully
+ * in an efficient fashion if a sibling file list is available.   It exists
+ * primarily to do faster file checking for functions like GDAL open methods
+ * that get a list of files from the target directory. 
+ *
+ * If the sibling file list exists (is not NULL) it is assumed to be a list
+ * of files in the same directory as the target file, and it will be checked
+ * (case insensitively) for a match.  If a match is found, pszFilename is
+ * updated with the correct case and TRUE is returned. 
+ *
+ * If papszSiblingFiles is NULL, a VSIStatL() is used to test for the files
+ * existance, and no case insensitive testing is done. 
+ *
+ * @param pszFilename name of file to check for - filename case updated in some cases.
+ * @param papszSiblingFiles a list of files in the same directory as 
+ * pszFilename if available, or NULL. This list should have no path components.
+ *
+ * @return TRUE if a match is found, or FALSE if not.
+ */
+
+int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Fallback case if we don't have a sibling file list.             */
+/* -------------------------------------------------------------------- */
+    if( papszSiblingFiles == NULL )
+    {
+        VSIStatBufL sStatBuf;
+
+        return VSIStatL( pszFilename, &sStatBuf ) == 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We have sibling files, compare the non-path filename portion    */
+/*      of pszFilename too all entries.                                 */
+/* -------------------------------------------------------------------- */
+    CPLString osFileOnly = CPLGetFilename( pszFilename );
+    int i;
+
+    for( i = 0; papszSiblingFiles[i] != NULL; i++ )
+    {
+        if( EQUAL(papszSiblingFiles[i],osFileOnly) )
+        {
+            strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly), 
+                    papszSiblingFiles[i] );
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
