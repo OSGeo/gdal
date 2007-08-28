@@ -510,6 +510,10 @@ class Dataset(MajorObject):
         """AddBand(self, GDALDataType datatype=GDT_Byte, char options=0) -> CPLErr"""
         return _gdal.Dataset_AddBand(*args, **kwargs)
 
+    def CreateMaskBand(*args):
+        """CreateMaskBand(self, int nFlags) -> CPLErr"""
+        return _gdal.Dataset_CreateMaskBand(*args)
+
     def WriteRaster(*args, **kwargs):
         """
         WriteRaster(self, int xoff, int yoff, int xsize, int ysize, int buf_len, 
@@ -699,6 +703,18 @@ class Band(MajorObject):
     def SetDefaultRAT(*args):
         """SetDefaultRAT(self, RasterAttributeTable table) -> int"""
         return _gdal.Band_SetDefaultRAT(*args)
+
+    def GetMaskBand(*args):
+        """GetMaskBand(self) -> Band"""
+        return _gdal.Band_GetMaskBand(*args)
+
+    def GetMaskFlags(*args):
+        """GetMaskFlags(self) -> int"""
+        return _gdal.Band_GetMaskFlags(*args)
+
+    def CreateMaskBand(*args):
+        """CreateMaskBand(self, int nFlags) -> CPLErr"""
+        return _gdal.Band_CreateMaskBand(*args)
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_obj=None):
