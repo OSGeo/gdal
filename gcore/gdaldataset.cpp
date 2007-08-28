@@ -1719,7 +1719,7 @@ CPLErr GDALDataset::CreateMaskBand( int nFlags )
 /*                     GDALCreateDatasetMaskBand()                      */
 /************************************************************************/
 
-CPLErr GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
+CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
 
 {
     VALIDATE_POINTER1( hDS, "GDALCreateDatasetMaskBand", CE_Failure );
