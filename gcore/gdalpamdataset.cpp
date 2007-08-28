@@ -723,6 +723,14 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Copy masks.  These are really copied at a lower level using     */
+/*      GDALDefaultOverviews, for formats with no native mask           */
+/*      support but this is a convenient central point to put this      */
+/*      for most drivers.                                               */
+/* -------------------------------------------------------------------- */
+    GDALDriver::DefaultCopyMasks( poSrcDS, this, FALSE );
+
+/* -------------------------------------------------------------------- */
 /*      Restore MO flags.                                               */
 /* -------------------------------------------------------------------- */
     SetMOFlags( nSavedMOFlags );

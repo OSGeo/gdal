@@ -139,17 +139,24 @@ class CPL_DLL GDALDefaultOverviews
     GDALDataset *poDS;
     GDALDataset *poODS;
     
-    CPLString  osOvrFilename;
+    CPLString   osOvrFilename;
 
-    int        bOvrIsAux;
-    
+    int         bOvrIsAux;
+
+    int         bCheckedForMask;
+    GDALDataset *poMaskDS;
+
   public:
                GDALDefaultOverviews();
                ~GDALDefaultOverviews();
 
     void       Initialize( GDALDataset *poDS, const char *pszName = NULL, 
+                           char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
+
     int        IsInitialized() { return poDS != NULL; }
+
+    // Overview Related
 
     int        GetOverviewCount(int);
     GDALRasterBand *GetOverview(int,int);
@@ -160,6 +167,16 @@ class CPL_DLL GDALDefaultOverviews
                                int nBands, int * panBandList,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData );
+
+    // Mask Related
+
+    CPLErr     CreateMaskBand( int nFlags, int nBand = -1 );
+    GDALRasterBand *GetMaskBand( int nBand );
+    int        GetMaskFlags( int nBand );
+
+    int        HaveMaskFile( char **papszSiblings = NULL, 
+                             const char *pszBasename = NULL );
+    
 };
 
 /* ******************************************************************** */
@@ -243,6 +260,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                GDALDataType eDT, 
                                int nBandCount, int *panBandList,
                                char **papszOptions );
+
+    virtual CPLErr          CreateMaskBand( int nFlags );
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
@@ -377,6 +396,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int         nBlockReads;
     int         bForceCachedIO;
 
+    GDALRasterBand *poMask;
+    bool        bOwnMask;
+    int         nMaskFlags;
+
     friend class GDALDataset;
     friend class GDALRasterBlock;
 
@@ -476,6 +499,44 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual const GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+
+    virtual GDALRasterBand *GetMaskBand();
+    virtual int             GetMaskFlags();
+    virtual CPLErr          CreateMaskBand( int nFlags );
+};
+
+/* ******************************************************************** */
+/*                         GDALAllValidMaskBand                         */
+/* ******************************************************************** */
+
+class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
+{
+  protected:
+    virtual CPLErr IReadBlock( int, int, void * );
+
+  public:
+                GDALAllValidMaskBand( GDALRasterBand * );
+    virtual     ~GDALAllValidMaskBand();
+
+    virtual GDALRasterBand *GetMaskBand();
+    virtual int             GetMaskFlags();
+};
+
+/* ******************************************************************** */
+/*                         GDALNoDataMaskBand                           */
+/* ******************************************************************** */
+
+class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
+{
+    double          dfNoDataValue;
+    GDALRasterBand *poParent;
+
+  protected:
+    virtual CPLErr IReadBlock( int, int, void * );
+
+  public:
+                GDALNoDataMaskBand( GDALRasterBand * );
+    virtual     ~GDALNoDataMaskBand();
 };
 
 /* ******************************************************************** */
@@ -546,11 +607,6 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData );
     
-    GDALDataset         *DefaultCreateCopy( const char *, GDALDataset *, 
-                                            int, char **,
-                                            GDALProgressFunc pfnProgress, 
-                                            void * pProgressData );
-    
 /* -------------------------------------------------------------------- */
 /*      The following are semiprivate, not intended to be accessed      */
 /*      by anyone but the formats instantiating and populating the      */
@@ -580,6 +636,17 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                       const char * pszOldName );
     CPLErr              (*pfnCopyFiles)( const char * pszNewName,
                                          const char * pszOldName );
+
+/* -------------------------------------------------------------------- */
+/*      Helper methods.                                                 */
+/* -------------------------------------------------------------------- */
+    GDALDataset         *DefaultCreateCopy( const char *, GDALDataset *, 
+                                            int, char **,
+                                            GDALProgressFunc pfnProgress, 
+                                            void * pProgressData );
+    static CPLErr        DefaultCopyMasks( GDALDataset *poSrcDS, 
+                                           GDALDataset *poDstDS, 
+                                           int bStrict );
 };
 
 /* ******************************************************************** */
