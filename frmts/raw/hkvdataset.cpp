@@ -1520,7 +1520,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Handle overviews.                                               */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, pszOvrFilename, TRUE );
+    poDS->oOvManager.Initialize( poDS, pszOvrFilename, NULL, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
