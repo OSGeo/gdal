@@ -389,10 +389,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\port\cpl_dir.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\port\cpl_error.cpp"
 				>
 			</File>
