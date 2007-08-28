@@ -19,7 +19,7 @@ OBJ	=	jpgdataset.o vsidataio.o
 XTRA_OPT	=	
 endif
 
-CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS) -I../zlib
 
 default:	$(OBJ)
 
