@@ -2036,7 +2036,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 
     CPLFree( pabyBuffer );
 
-    return 0;
+    return nRet;
 }
 
 /************************************************************************/
