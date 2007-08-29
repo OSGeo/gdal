@@ -1993,6 +1993,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     GByte *pabyBuffer;
     size_t nBufferSize;
     size_t nBytesRead;
+    int nRet = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Open old and new file.                                          */
@@ -2017,11 +2018,12 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     do { 
         nBytesRead = VSIFReadL( pabyBuffer, 1, nBufferSize, fpOld );
         if( nBytesRead < 0 )
-            return -1;
+            nRet = -1;
 
-        if( VSIFWriteL( pabyBuffer, 1, nBytesRead, fpNew ) < nBytesRead )
-            return -1;
-    } while( nBytesRead == nBufferSize );
+        if( nRet == 0
+            && VSIFWriteL( pabyBuffer, 1, nBytesRead, fpNew ) < nBytesRead )
+            nRet = -1;
+    } while( nRet == 0 && nBytesRead == nBufferSize );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
