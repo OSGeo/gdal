@@ -44,22 +44,22 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
-        const char *block_size_x = CPLGetXMLValue(config, "BlockSizeX", "256");
-        const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "256");
+        const char *block_size_x = CPLGetXMLValue(config, "BlockSizeX", "1024");
+        const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "1024");
         m_block_size_x = atoi(block_size_x);
         m_block_size_y = atoi(block_size_y);
     }
     if (ret == CE_None) {
         CPLXMLNode *data_window_node = CPLGetXMLNode(config, "DataWindow");
         if (data_window_node == NULL) {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow missing.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow missing.");
             ret = CE_Failure;
         } else {
             const char *overview_count = CPLGetXMLValue(config, "OverviewCount", "");
-            const char *ulx = CPLGetXMLValue(data_window_node, "UpperLeftX", "");
-            const char *uly = CPLGetXMLValue(data_window_node, "UpperLeftY", "");
-            const char *lrx = CPLGetXMLValue(data_window_node, "LowerRightX", "");
-            const char *lry = CPLGetXMLValue(data_window_node, "LowerRightY", "");
+            const char *ulx = CPLGetXMLValue(data_window_node, "UpperLeftX", "-180.0");
+            const char *uly = CPLGetXMLValue(data_window_node, "UpperLeftY", "90.0");
+            const char *lrx = CPLGetXMLValue(data_window_node, "LowerRightX", "180.0");
+            const char *lry = CPLGetXMLValue(data_window_node, "LowerRightY", "-90.0");
             const char *sx = CPLGetXMLValue(data_window_node, "SizeX", "");
             const char *sy = CPLGetXMLValue(data_window_node, "SizeY", "");
             const char *tx = CPLGetXMLValue(data_window_node, "TileX", "0");
@@ -75,7 +75,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                     m_data_window.m_x1 = atof(lrx);
                     m_data_window.m_y1 = atof(lry);
                 } else {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: UpperLeftX, UpperLeftY, LowerRightX, LowerRightY\n");
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: UpperLeftX, UpperLeftY, LowerRightX, LowerRightY.");
                     ret = CE_Failure;
                 }
             }
@@ -96,7 +96,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                     m_data_window.m_sx = tile_count_x * m_block_size_x * (1 << m_data_window.m_tlevel);
                     m_data_window.m_sy = tile_count_y * m_block_size_y * (1 << m_data_window.m_tlevel);
                 } else {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: SizeX, SizeY\n");
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: SizeX, SizeY.");
                     ret = CE_Failure;
                 }
             }
@@ -105,7 +105,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                     m_data_window.m_tx = atoi(tx);
                     m_data_window.m_ty = atoi(ty);
                 } else {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: TileX, TileY\n");
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Mandatory elements of DataWindow missing: TileX, TileY.");
                     ret = CE_Failure;
                 }
             }
@@ -115,8 +115,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                 } else if (tlevel[0] != '\0') {
                     m_overview_count = m_data_window.m_tlevel;
                 } else {
-                    double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy)))/log(2.0) - 5.0;
-                    m_overview_count = MAX(0, MIN(static_cast<int>(a), 32));
+                    const int min_overview_size = MAX(32, MIN(m_block_size_x, m_block_size_y));
+                    double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy))) / log(2.0) 
+                                - log(static_cast<double>(min_overview_size)) / log(2.0);
+                    m_overview_count = MAX(0, MIN(static_cast<int>(ceil(a)), 32));
                 }
             }
         }
@@ -126,7 +128,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         if (proj[0] != '\0') {
             m_projection = ProjToWKT(proj);
             if (m_projection.size() == 0) {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Bad projection specified.\n");
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Bad projection specified.");
                 ret = CE_Failure;
             }
         }
@@ -142,7 +144,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             if (m_cache->Initialize(cache_node) != CE_None) {
                 delete m_cache;
                 m_cache = NULL;
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize cache.\n");
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize cache.");
                 ret = CE_Failure;
             }
         }
@@ -158,24 +160,29 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                     m_mini_driver = mdf->New();
                     m_mini_driver->m_parent_dataset = this;
                     if (m_mini_driver->Initialize(service_node) == CE_None) {
+                        m_mini_driver_caps.m_capabilities_version = -1;
                         m_mini_driver->GetCapabilities(&m_mini_driver_caps);
+                        if (m_mini_driver_caps.m_capabilities_version == -1) {
+                            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Internal error, mini-driver capabilities version not set.");
+                            ret = CE_Failure;
+                        }
                     } else {
                         delete m_mini_driver;
                         m_mini_driver = NULL;
 
-                        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize minidriver.\n");
+                        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize minidriver.");
                         ret = CE_Failure;
                     }
                 } else {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No mini-driver registered for '%s'.\n", service_name);
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No mini-driver registered for '%s'.", service_name);
                     ret = CE_Failure;
                 }
             } else {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No Service specified.\n");
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No Service specified.");
                 ret = CE_Failure;
             }
         } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No Service specified.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: No Service specified.");
             ret = CE_Failure;
         }
     }
@@ -189,6 +196,16 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             for (int j = 0; j < m_overview_count; ++j) {
                 band->AddOverview(scale);
                 scale *= 0.5;
+            }
+        }
+    }
+
+    if (ret == CE_None) {
+        /* If we dont have projection already set ask mini-driver. */
+        if (!m_projection.size()) {
+            const char *proj = m_mini_driver->GetProjectionInWKT();
+            if (proj != NULL) {
+                m_projection = proj;
             }
         }
     }
@@ -210,7 +227,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, 
     m_hint.m_overview = -1;
     m_hint.m_valid = true;
     //	printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
-    ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsx, bdt, band_count, band_map, pixel_space, line_space, band_space);
+    ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, band_count, band_map, pixel_space, line_space, band_space);
     m_hint.m_valid = false;
 
     return ret;

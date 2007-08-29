@@ -39,13 +39,20 @@ public:
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+    virtual const char *GetProjectionInWKT();
+
+protected:
+    double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
 
 protected:
     CPLString m_base_url;
     CPLString m_version;
+    int m_iversion;
     CPLString m_layers;
     CPLString m_styles;
     CPLString m_srs;
     CPLString m_crs;
     CPLString m_image_format;
+    CPLString m_projection_wkt;
+    CPLString m_bbox_order;
 };
