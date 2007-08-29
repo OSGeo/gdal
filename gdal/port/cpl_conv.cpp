@@ -2004,7 +2004,10 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 
     fpNew = VSIFOpenL( pszNewPath, "wb" );
     if( fpNew == NULL )
+    {
+        VSIFCloseL( fpOld );
         return -1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Prepare buffer.                                                 */
