@@ -357,7 +357,7 @@ int main( int argc, char ** argv )
     {
         double      dfMin, dfMax, adfCMinMax[2], dfNoData;
         int         bGotMin, bGotMax, bGotNodata, bSuccess;
-        int         nBlockXSize, nBlockYSize;
+        int         nBlockXSize, nBlockYSize, nMaskFlags;
         double      dfMean, dfStdDev;
         GDALColorTableH	hTable;
         CPLErr      eErr;
@@ -444,6 +444,21 @@ int main( int argc, char ** argv )
         if( GDALHasArbitraryOverviews( hBand ) )
         {
             printf( "  Overviews: arbitrary\n" );
+        }
+        
+        nMaskFlags = GDALGetMaskFlags( hBand );
+        if( (nMaskFlags & (GMF_NODATA|GMF_ALL_VALID)) == 0 )
+        {
+            printf( "  Mask Flags: " );
+            if( nMaskFlags & GMF_PER_DATASET )
+                printf( "PER_DATASET " );
+            if( nMaskFlags & GMF_ALPHA )
+                printf( "ALPHA " );
+            if( nMaskFlags & GMF_NODATA )
+                printf( "NODATA " );
+            if( nMaskFlags & GMF_ALL_VALID )
+                printf( "ALL_VALID " );
+            printf( "\n" );
         }
 
         if( strlen(GDALGetRasterUnitType(hBand)) > 0 )
