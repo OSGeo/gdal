@@ -3,6 +3,7 @@
   <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
     <ColorInterp>Gray</ColorInterp>
+    <NodataValue>107</NodataValue>
     <SimpleSource>
       <SourceFilename>./data/byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
