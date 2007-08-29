@@ -114,6 +114,7 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
 
     if (request_count > 0) {
         if (CPLHTTPFetchMulti(download_requests, request_count) != CE_None) {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: CPLHTTPFetchMulti failed.");
             ret = CE_Failure;
         }
     }
@@ -123,14 +124,29 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
             if ((download_requests[i].nStatus == 200) && (download_requests[i].pabyData != NULL) && (download_requests[i].nDataLen > 0)) {
                 CPLString file_name(BufferToVSIFile(download_requests[i].pabyData, download_requests[i].nDataLen));
                 if (file_name.size() > 0) {
-                    void *p = 0;
-                    if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
-                    if (ReadBlockFromFile(download_blocks[i].x, download_blocks[i].y, file_name.c_str(), nBand, p) == CE_None) {
-                        if (cache != NULL) {
-                            cache->Write(download_requests[i].pszURL, file_name);
+                    /* check for error xml */
+                    if (download_requests[i].nDataLen >= 20) {
+                        const char *download_data = reinterpret_cast<char *>(download_requests[i].pabyData);
+                        if (EQUALN(download_data, "<?xml ", 6) 
+                        || EQUALN(download_data, "<!DOCTYPE ", 10)
+                        || EQUALN(download_data, "<ServiceException", 17)) {
+                            if (ReportWMSException(file_name.c_str()) != CE_None) {
+                                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: The server returned unknown exception.");
+                            }
+                            ret = CE_Failure;
                         }
-                    } else {
-                        ret = CE_Failure;
+                    }
+                    if (ret == CE_None) {
+                        void *p = 0;
+                        if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
+                        if (ReadBlockFromFile(download_blocks[i].x, download_blocks[i].y, file_name.c_str(), nBand, p) == CE_None) {
+                            if (cache != NULL) {
+                                cache->Write(download_requests[i].pszURL, file_name);
+                            }
+                        } else {
+                            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ReadBlockFromFile failed.");
+                            ret = CE_Failure;
+                        }
                     }
                     VSIUnlink(file_name.c_str());
                 }
@@ -138,9 +154,12 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
                 void *p = 0;
                 if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
                 if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
                     ret = CE_Failure;
                 }
             } else {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d (%s). HTTP status code: %d",
+                    download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus);
                 ret = CE_Failure;
             }
         }
@@ -172,7 +191,8 @@ CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int s
 }
 
 int GDALWMSRasterBand::HasArbitraryOverviews() {
-    return m_parent_dataset->m_mini_driver_caps.m_has_arb_overviews;
+//    return m_parent_dataset->m_mini_driver_caps.m_has_arb_overviews;
+    return 0; // not implemented yet
 }
 
 int GDALWMSRasterBand::GetOverviewCount() {
@@ -213,14 +233,19 @@ void GDALWMSRasterBand::AskMiniDriverForBlock(CPLString *url, int x, int y) {
     GDALWMSImageRequestInfo iri;
     GDALWMSTiledImageRequestInfo tiri;
 
+    const int x0 = MIN(MAX(0, x * nBlockXSize), nRasterXSize);
+    const int y0 = MIN(MAX(0, y * nBlockYSize), nRasterYSize);
+    const int x1 = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize);
+    const int y1 = MIN(MAX(0, (y + 1) * nBlockYSize), nRasterYSize);
     const double rx = (m_parent_dataset->m_data_window.m_x1 - m_parent_dataset->m_data_window.m_x0) / static_cast<double>(nRasterXSize);
     const double ry = (m_parent_dataset->m_data_window.m_y1 - m_parent_dataset->m_data_window.m_y0) / static_cast<double>(nRasterYSize);
-    iri.m_x0 = x * nBlockXSize * rx + m_parent_dataset->m_data_window.m_x0;
-    iri.m_y0 = y * nBlockYSize * ry + m_parent_dataset->m_data_window.m_y0;
-    iri.m_x1 = (x + 1) * nBlockXSize * rx + m_parent_dataset->m_data_window.m_x0;
-    iri.m_y1 = (y + 1) * nBlockYSize * ry + m_parent_dataset->m_data_window.m_y0;
-    iri.m_sx = nBlockXSize;
-    iri.m_sy = nBlockYSize;
+    /* Use different method for x0,y0 and x1,y1 to make sure calculated values are exact for corner requests */
+    iri.m_x0 = x0 * rx + m_parent_dataset->m_data_window.m_x0;
+    iri.m_y0 = y0 * ry + m_parent_dataset->m_data_window.m_y0;
+    iri.m_x1 = m_parent_dataset->m_data_window.m_x1 - (nRasterXSize - x1) * rx;
+    iri.m_y1 = m_parent_dataset->m_data_window.m_y1 - (nRasterYSize - y1) * ry;
+    iri.m_sx = x1 - x0;
+    iri.m_sy = y1 - y0;
 
     int level = m_overview + 1;
     tiri.m_x = (m_parent_dataset->m_data_window.m_tx >> level) + x;
@@ -233,15 +258,55 @@ void GDALWMSRasterBand::AskMiniDriverForBlock(CPLString *url, int x, int y) {
 CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer) {
     CPLErr ret = CE_None;
     GDALDataset *ds = 0;
+    GByte *color_table = NULL;
 
+    /* expected size */
+    const int esx = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize) - MIN(MAX(0, x * nBlockXSize), nRasterXSize);
+    const int esy = MIN(MAX(0, (y + 1) * nBlockYSize), nRasterYSize) - MIN(MAX(0, y * nBlockYSize), nRasterYSize);
     ds = reinterpret_cast<GDALDataset*>(GDALOpen(file_name, GA_ReadOnly));
     if (ds != NULL) {
-        if ((ds->GetRasterXSize() != nBlockXSize) || (ds->GetRasterYSize() != nBlockYSize)) {
+        int sx = ds->GetRasterXSize();
+        int sy = ds->GetRasterYSize();
+        /* Allow bigger than expected so pre-tiled constant size images work on corners */
+        if ((sx > nBlockXSize) || (sy > nBlockYSize) || (sx < esx) || (sy < esy)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect size %d x %d of downloaded block, expected %d x %d, max %d x %d.",
+                sx, sy, esx, esy, nBlockXSize, nBlockYSize);
             ret = CE_Failure;
         }
         if (ret == CE_None) {
             if (ds->GetRasterCount() != m_parent_dataset->m_bands_count) {
-                ret = CE_Failure;
+                /* Maybe its an image with color table */
+                bool accepted_as_ct = false;
+                if ((eDataType == GDT_Byte) && (ds->GetRasterCount() == 1)) {
+                    GDALRasterBand *rb = ds->GetRasterBand(1);
+                    if (rb->GetRasterDataType() == GDT_Byte) {
+                        GDALColorTable *ct = rb->GetColorTable();
+                        if (ct != NULL) {
+                            color_table = new GByte[256 * 4];
+                            const int count = MIN(256, ct->GetColorEntryCount());
+                            for (int i = 0; i < count; ++i) {
+                                GDALColorEntry ce;
+                                ct->GetColorEntryAsRGB(i, &ce);
+                                color_table[i] = static_cast<GByte>(ce.c1);
+                                color_table[i + 256] = static_cast<GByte>(ce.c2);
+                                color_table[i + 512] = static_cast<GByte>(ce.c3);
+                                color_table[i + 768] = static_cast<GByte>(ce.c4);
+                            }
+                            for (int i = count; i < 256; ++i) {
+                                color_table[i] = 0;
+                                color_table[i + 256] = 0;
+                                color_table[i + 512] = 0;
+                                color_table[i + 768] = 0;
+                            }
+                            accepted_as_ct = true;
+                        }
+                    }
+                }
+                if (!accepted_as_ct) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
+                        ds->GetRasterCount(), m_parent_dataset->m_bands_count);
+                    ret = CE_Failure;
+                }
             }
         }
         for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
@@ -261,10 +326,34 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                     }
                 }
                 if (p != NULL) {
-                    if (ds->RasterIO(GF_Read, 0, 0, nBlockXSize, nBlockYSize, p, nBlockXSize, nBlockYSize, eDataType, 1, &ib, 0, 0, 0) != CE_None) {
+                    int pixel_space = GDALGetDataTypeSize(eDataType) / 8;
+                    int line_space = pixel_space * nBlockXSize;
+                    if (color_table == NULL) {
+                        if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, &ib, pixel_space, line_space, 0) != CE_None) {
+                            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                            ret = CE_Failure;
+                        }
+                    } else if (ib <= 4) {
+                        if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, eDataType, 1, NULL, pixel_space, line_space, 0) != CE_None) {
+                            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                            ret = CE_Failure;
+                        }
+                        if (ret == CE_None) {
+                            GByte *band_color_table = color_table + 256 * (ib - 1);
+                            GByte *byte_buffer = reinterpret_cast<GByte *>(p);
+                            for (int y = 0; y < sy; ++y) {
+                                for (int x = 0; x < sx; ++x) {
+                                    const int offset = x + y * line_space;
+                                    byte_buffer[offset] = band_color_table[byte_buffer[offset]];
+                                }
+                            }
+                        }
+                    } else {
+                        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Color table supports at most 4 components.");
                         ret = CE_Failure;
                     }
                 } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
                     ret = CE_Failure;
                 }
                 if (b != NULL) {
@@ -274,7 +363,12 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
         }
         GDALClose(ds);
     } else {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to open downloaded block.");
         ret = CE_Failure;
+    }
+
+    if (color_table != NULL) {
+        delete[] color_table;
     }
 
     return ret;
@@ -304,12 +398,59 @@ CPLErr GDALWMSRasterBand::ZeroBlock(int x, int y, int to_buffer_band, void *buff
                 int block_size = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
                 for (int i = 0; i < block_size; ++i) b[i] = 0;
             } else {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: GetDataRef returned NULL.");
                 ret = CE_Failure;
             }
             if (b != NULL) {
                 b->DropLock();
             }
         }
+    }
+
+    return ret;
+}
+
+CPLErr GDALWMSRasterBand::ReportWMSException(const char *file_name) {
+    CPLErr ret = CE_None;
+    int reported_errors_count = 0;
+
+    CPLXMLNode *orig_root = CPLParseXMLFile(file_name);
+    CPLXMLNode *root = orig_root;
+    if (root != NULL) {
+        root = CPLGetXMLNode(root, "=ServiceExceptionReport");
+    }
+    if (root != NULL) {
+        CPLXMLNode *n = CPLGetXMLNode(root, "ServiceException");
+        while (n != NULL) {
+            const char *exception = CPLGetXMLValue(n, "=ServiceException", "");
+            const char *exception_code = CPLGetXMLValue(n, "=ServiceException.code", "");
+            if (exception[0] != '\0') {
+                if (exception_code[0] != '\0') {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: The server returned exception code '%s': %s", exception_code, exception);
+                    ++reported_errors_count;
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: The server returned exception: %s", exception);
+                    ++reported_errors_count;
+                }
+            } else if (exception_code[0] != '\0') {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: The server returned exception code '%s'.", exception_code);
+                ++reported_errors_count;
+            }
+
+            n = n->psNext;
+            if (n != NULL) {
+                n = CPLGetXMLNode(n, "=ServiceException");
+            }
+        }
+    } else {
+        ret = CE_Failure;
+    }
+    if (orig_root != NULL) {
+        CPLDestroyXMLNode(orig_root);
+    }
+
+    if (reported_errors_count == 0) {
+        ret = CE_Failure;
     }
 
     return ret;
