@@ -167,3 +167,9 @@
 %constant GFU_BlueMax             = GFU_BlueMax;
 %constant GFU_AlphaMax            = GFU_AlphaMax;
 %constant GFU_MaxCount            = GFU_MaxCount;
+
+%constant GMF_ALL_VALID           = 0x01;
+%constant GMF_PER_DATASET         = 0x02;
+%constant GMF_ALPHA               = 0x04;
+%constant GMF_NODATA              = 0x08;
+
