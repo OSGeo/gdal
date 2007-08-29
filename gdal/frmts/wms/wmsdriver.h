@@ -38,6 +38,9 @@ void URLAppend(CPLString *url, const CPLString &s);
 CPLString BufferToVSIFile(GByte *buffer, size_t size);
 CPLErr MakeDirs(const char *path);
 
+/* Convert a.b.c.d to a * 0x1000000 + b * 0x10000 + c * 0x100 + d */
+int VersionStringToInt(const char *version);
+
 class GDALWMSImageRequestInfo {
 public:
     double m_x0, m_y0;
@@ -69,12 +72,18 @@ public:
 
 class GDALWMSMiniDriverCapabilities {
 public:
-    int m_has_image_request : 1;
-    int m_has_tiled_image_requeset : 1;
-    int m_has_arb_overviews : 1;
-    int m_max_overview_count;
+/* Version N capabilities require all version N and earlier variables to be set to correct values */
+    int m_capabilities_version;
+
+/* Version 1 capabilities */
+    int m_has_image_request : 1;            // 1 if ImageRequest method is implemented
+    int m_has_tiled_image_requeset : 1;     // 1 if TiledImageRequest method is implemented
+    int m_has_arb_overviews : 1;            // 1 if ImageRequest method supports arbitrary overviews / resolutions
+    int m_max_overview_count;               // Maximum number of overviews supported if known, -1 otherwise
 };
 
+/* All data returned by mini-driver as pointer should remain valid for mini-driver lifetime
+   and should be freed by mini-driver destructor unless otherwise specified. */
 class GDALWMSMiniDriver {
 friend class GDALWMSDataset;
 public:
@@ -82,12 +91,16 @@ public:
     virtual ~GDALWMSMiniDriver();
 
 public:
+/* Read mini-driver specific configuration. */
     virtual CPLErr Initialize(CPLXMLNode *config);
 
 public:
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+
+/* Return data projection in WKT format, NULL or empty string if unknown */
+    virtual const char *GetProjectionInWKT();
 
 protected:
     GDALWMSDataset *m_parent_dataset;
@@ -226,6 +239,7 @@ protected:
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
+    CPLErr ReportWMSException(const char *file_name);
 
 protected:
     GDALWMSDataset *m_parent_dataset;
@@ -237,4 +251,3 @@ protected:
 GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo);
 GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager();
 void DestroyWMSMiniDriverManager(void);
-

@@ -1,6 +1,11 @@
 <html>
 <head>
 <title>WMS -- Web Map Services</title>
+	<STYLE type="text/css">
+		td.xml { font-family: monospace; white-space: pre; padding-right: 20px; }
+		td.desc { }
+		span.value { color: #00B000; }
+	</STYLE>
 </head>
 
 <body bgcolor="#ffffff">
@@ -13,6 +18,155 @@
   local service description XML file -- there are examples below for 
   each of the supported image services.
 </p>
+
+	<table>
+		<tr>
+			<td class="xml">&lt;GDAL_WMS&gt;</td>
+			<td class="desc"> </td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Service name="<span class="value">WMS</span>"&gt;</td>
+			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService. (required)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Version&gt;<span class="value">1.1.1</span>&lt;/Version&gt;</td>
+			<td class="desc">WMS version. (optional, defaults to 1.1.1)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;ServerURL&gt;<span class="value">http://onearth.jpl.nasa.gov/wms.cgi?</span>&lt;/ServerUrl&gt;</td>
+			<td class="desc">WMS server URL. (required)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;SRS&gt;<span class="value">EPSG:4326</span>&lt;/SRS&gt;</td>
+			<td class="desc">Image projection (optional, defaults to EPSG:4326, WMS version 1.1.1 or below only)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;CRS&gt;<span class="value">CRS:83</span>&lt;/CRS&gt;</td>
+			<td class="desc">Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;ImageFormat&gt;<span class="value">image/jpeg</span>&lt;/ImageFormat&gt;</td>
+			<td class="desc">Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Layers&gt;<span class="value">modis,global_mosaic</span>&lt;/Layers&gt;</td>
+			<td class="desc">Comma separated list of layers. (required)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Styles&gt;&lt;/Styles&gt;</td>
+			<td class="desc">Comma separated list of styles. (optional)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;BBoxOrder&gt;xyXY&lt;/BBoxOrder&gt;</td>
+			<td class="desc">Reorder bbox coordinates arbitrarly. May be required for version 1.3 servers. (optional)<br>
+				x - low X coordinate, y - low Y coordinate, X - high X coordinate, Y - high Y coordinate
+			</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;/Service&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;DataWindow&gt;</td>
+			<td class="desc">Define size and extents of the data. (required)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;UpperLeftX&gt;<span class="value">-180.0</span>&lt;/UpperLeftX&gt;</td>
+			<td class="desc">X (longitude) coordinate of upper-left corner. (optional, defaults to -180.0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;UpperLeftY&gt;<span class="value">90.0</span>&lt;/UpperLeftY&gt;</td>
+			<td class="desc">Y (latitude) coordinate of upper-left corner. (optional, defaults to 90.0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;LowerRightX&gt;<span class="value">180.0</span>&lt;/LowerRightX&gt;</td>
+			<td class="desc">X (longitude) coordinate of lower-right corner. (optional, defaults to 180.0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;LowerRightY&gt;<span class="value">-90.0</span>&lt;/LowerRightY&gt;</td>
+			<td class="desc">Y (latitude) coordinate of lower-right corner. (optional, defaults to -90.0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;SizeX&gt;<span class="value">2666666</span>&lt;/SizeX&gt;</td>
+			<td class="desc">Image size in pixels.</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;SizeY&gt;<span class="value">1333333</span>&lt;/SizeY&gt;</td>
+			<td class="desc">Image size in pixels.</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileX&gt;<span class="value">0</span>&lt;/TileX&gt;</td>
+			<td class="desc">Added to tile X value at highest resolution. (ignored for WMS, tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileY&gt;<span class="value">0</span>&lt;/TileY&gt;</td>
+			<td class="desc">Added to tile Y value at highest resolution. (ignored for WMS, tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileLevel&gt;<span class="value">0</span>&lt;/TileLevel&gt;</td>
+			<td class="desc">Tile level at highest resolution. (ignored for WMS, tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileCountX&gt;<span class="value">0</span>&lt;/TileCountX&gt;</td>
+			<td class="desc">Can be used to define image size, SizeX = TileCountX * BlockSizeX * 2<sup>TileLevel</sup>. (tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;TileCountY&gt;<span class="value">0</span>&lt;/TileCountY&gt;</td>
+			<td class="desc">Can be used to define image size, SizeY = TileCountY * BlockSizeY * 2<sup>TileLevel</sup>. (tiled image sources only, optional, defaults to 0)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;/DataWindow&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Projection&gt;<span class="value">EPSG:4326</span>&lt;/Projection&gt;</td>
+			<td class="desc">Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;BandsCount&gt;<span class="value">3</span>&lt;/BandsCount&gt;</td>
+			<td class="desc">Number of bands/channels, 1 for grayscale data, 3 for RGB. (optional, defaults to 3)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;BlockSizeX&gt;<span class="value">1024</span>&lt;/BlockSizeX&gt;</td>
+			<td class="desc">Block size in pixels. (optional, defaults to 1024)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;BlockSizeY&gt;<span class="value">1024</span>&lt;/BlockSizeY&gt;</td>
+			<td class="desc">Block size in pixels. (optional, defaults to 1024)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;OverviewCount&gt;<span class="value">10</span>&lt;/OverviewCount&gt;</td>
+			<td class="desc">Count of reduced resolution layers each having 2 times lower resolution. (optional, default is calculated at runtime)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Cache&gt;</td>
+			<td class="desc">Enable local disk cache. Allows for offline operation. (optional, defaults to no cache)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Path&gt;<span class="value">./gdalwmscache</span>&lt;/Path&gt;</td>
+			<td class="desc">Location where to store cache files. It is safe to use same cache path for different data sources. (optional, defaults to ./gdalwmscache)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Depth&gt;<span class="value">2</span>&lt;/Depth&gt;</td>
+			<td class="desc">Number of directory layers. 2 will result in files being written as cache_path/A/B/ABCDEF... (optional, defaults to 2)</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Extension&gt;<span class="value">.jpg</span>&lt;/Extension&gt;</td>
+			<td class="desc">Append to cache files. (optional, defaults to none)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;/Cache&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml">&lt;/GDAL_WMS&gt;</td>
+			<td class="desc"></td>
+		</tr>
+		<tr>
+			<td class="xml"></td>
+			<td class="desc"></td>
+		</tr>
+	</table>
 
 <h2>OGC Web Map Service</h2>
 

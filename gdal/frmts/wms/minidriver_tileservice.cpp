@@ -38,14 +38,36 @@ GDALWMSMiniDriver_TileService::~GDALWMSMiniDriver_TileService() {
 }
 
 CPLErr GDALWMSMiniDriver_TileService::Initialize(CPLXMLNode *config) {
-    m_version = CPLGetXMLValue(config, "Version", "1");
-    m_base_url = CPLGetXMLValue(config, "ServerUrl", "");
+    CPLErr ret = CE_None;
+
+    if (ret == CE_None) {
+        const char *version = CPLGetXMLValue(config, "Version", "1");
+        if (version[0] != '\0') {
+            m_version = version;
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
+        if (base_url[0] != '\0') {
+            /* Try the old name */
+            base_url = CPLGetXMLValue(config, "ServerUrl", "");
+        }
+        if (base_url[0] != '\0') {
+            m_base_url = base_url;
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, TileService mini-driver: ServerURL missing.");
+            ret = CE_Failure;
+        }
+    }
+
     m_dataset = CPLGetXMLValue(config, "Dataset", "");
 
-    return CE_None;
+    return ret;
 }
 
 void GDALWMSMiniDriver_TileService::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+    caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
     caps->m_has_tiled_image_requeset = 1;
