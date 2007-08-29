@@ -85,8 +85,8 @@ int ILI1Reader::OpenFile( const char *pszFilename ) {
     fpItf = VSIFOpen( pszFilename, "r" );
     if( fpItf == NULL )
     {
-          CPLError( CE_Failure, CPLE_OpenFailed, 
-                    "Failed to open ILI file `%s'.", 
+          CPLError( CE_Failure, CPLE_OpenFailed,
+                    "Failed to open ILI file `%s'.",
                     pszFilename );
 
         return FALSE;
@@ -180,7 +180,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
 
   iom_init();
 
-  // set error listener to a iom provided one, that just 
+  // set error listener to a iom provided one, that just
   // dumps all errors to stderr
   iom_seterrlistener(iom_stderrlistener);
 
@@ -269,14 +269,14 @@ int ILI1Reader::ReadFeatures() {
     const char *pszLine;
     const char *topic = NULL;
     int ret = TRUE;
-    
+
     while (ret && (tokens = ReadParseLine()))
     {
       firsttok = tokens[0];
       if (EQUAL(firsttok, "SCNT"))
       {
         //read description
-        do 
+        do
         {
           pszLine = CPLReadLine( fpItf );
         }
@@ -286,7 +286,7 @@ int ILI1Reader::ReadFeatures() {
       else if (EQUAL(firsttok, "MOTR"))
       {
         //read model
-        do 
+        do
         {
           pszLine = CPLReadLine( fpItf );
         }
@@ -337,7 +337,7 @@ int ILI1Reader::ReadFeatures() {
       {
         CPLDebug( "OGR_ILI", "Unexpected token: %s", firsttok );
       }
-      
+
       CSLDestroy(tokens);
     }
     return ret;
@@ -365,31 +365,43 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
     return TRUE;
 }
 
-OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
+OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )
 {
     OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
+
+    if (poLines->getNumGeometries() == 0) return poPolygon;
 
 #if defined(POLYGONIZE_AREAS)
     GEOSGeom *ahInGeoms = NULL;
     int       i = 0;
-    
-    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poLines->getNumGeometries());
-    for( i = 0; i < poLines->getNumGeometries(); i++ )
-        ahInGeoms[i] = poLines->getGeometryRef(i)->exportToGEOS();
+    OGRGeometryCollection *poNoncrossingLines = poLines;
+    GEOSGeom hResultGeom = NULL;
+    OGRGeometry *poMP = NULL;
 
-    
-    GEOSGeom hResultGeom = GEOSPolygonize( ahInGeoms, 
-                                           poLines->getNumGeometries() );
+    if (fix_crossing_lines)
+    {
+        CPLDebug( "OGR_ILI", "Fixing crossing lines");
+        poNoncrossingLines = (OGRGeometryCollection*)poLines->Union(poLines->getGeometryRef(0));
+        CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
+    }
 
-    for( i = 0; i < poLines->getNumGeometries(); i++ )
+    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries());
+    for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
+          ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->exportToGEOS();
+
+    hResultGeom = GEOSPolygonize( ahInGeoms,
+                                  poNoncrossingLines->getNumGeometries() );
+
+    for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
         GEOSGeom_destroy( ahInGeoms[i] );
     CPLFree( ahInGeoms );
+    if (poNoncrossingLines != poLines) delete poNoncrossingLines;
 
     if( hResultGeom == NULL )
         return NULL;
 
-    OGRGeometry *poMP = OGRGeometryFactory::createFromGEOS( hResultGeom );
-    
+    poMP = OGRGeometryFactory::createFromGEOS( hResultGeom );
+
     GEOSGeom_destroy( hResultGeom );
 
     return (OGRMultiPolygon *) poMP;
@@ -416,6 +428,12 @@ void ILI1Reader::PolygonizeAreaLayers()
       //polygonize lines
       CPLDebug( "OGR_ILI", "Polygonizing layer %s with %d multilines", poAreaLayer->GetLayerDefn()->GetName(), gc->getNumGeometries());
       OGRMultiPolygon* polys = Polygonize( gc );
+      if (polys->getNumGeometries() != poAreaLayer->GetFeatureCount())
+      {
+          delete polys;
+          polys = Polygonize( gc, true ); //try again with crossing line fix
+      }
+      delete gc;
 
       //associate polygon feature with data row according to centroid
       int i;
@@ -480,7 +498,7 @@ void ILI1Reader::JoinSurfaceLayers()
 
 
 int ILI1Reader::ReadTable() {
-    
+
     char **tokens = NULL;
     const char *firsttok = NULL;
     int ret = TRUE;
@@ -530,7 +548,7 @@ int ILI1Reader::ReadTable() {
               featureDef->AddFieldDefn(fieldDef);
             }
           }
-  
+
           int fieldno = 0;
           for (fIndex=1; fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount(); fIndex++, fieldno++)
           {
@@ -591,16 +609,16 @@ int ILI1Reader::ReadTable() {
       {
         CPLDebug( "OGR_ILI", "Unexpected token: %s", firsttok );
       }
-      
+
       CSLDestroy(tokens);
       fpos = VSIFTell(fpItf);
     }
-    
+
     return ret;
 }
 
 void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *feature) {
-    
+
     char **tokens = NULL;
     const char *firsttok = NULL;
     int end = FALSE;
@@ -696,7 +714,7 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
       {
         CPLDebug( "OGR_ILI", "Unexpected token: %s", firsttok );
       }
-    
+
       CSLDestroy(tokens);
     }
 }
@@ -710,7 +728,7 @@ void ILI1Reader::AddLayer( OGRILI1Layer * poNewLayer )
 {
     papoLayers = (OGRILI1Layer **)
         CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
-    
+
     papoLayers[nLayers-1] = poNewLayer;
 }
 
@@ -727,7 +745,7 @@ void ILI1Reader::AddAreaLayer( OGRILI1Layer * poAreaLayer,  OGRILI1Layer * poLin
         CPLRealloc( papoAreaLayers, sizeof(void*) * nAreaLayers );
     papoAreaLineLayers = (OGRILI1Layer **)
         CPLRealloc( papoAreaLineLayers, sizeof(void*) * nAreaLayers );
-    
+
     papoAreaLayers[nAreaLayers-1] = poAreaLayer;
     papoAreaLineLayers[nAreaLayers-1] = poLineLayer;
 }
@@ -745,7 +763,7 @@ void ILI1Reader::AddSurfaceLayer( OGRILI1Layer * poDataLayer,  OGRILI1Layer * po
         CPLRealloc( papoSurfaceLayers, sizeof(void*) * nSurfaceLayers );
     papoSurfacePolyLayers = (OGRILI1Layer **)
         CPLRealloc( papoSurfacePolyLayers, sizeof(void*) * nSurfaceLayers );
-    
+
     papoSurfaceLayers[nSurfaceLayers-1] = poDataLayer;
     papoSurfacePolyLayers[nSurfaceLayers-1] = poPolyLayer;
 }
@@ -800,31 +818,31 @@ char ** ILI1Reader::ReadParseLine()
     CPLAssert( fpItf != NULL );
     if( fpItf == NULL )
         return( NULL );
-    
+
     pszLine = CPLReadLine( fpItf );
     if( pszLine == NULL )
         return( NULL );
-    
+
     if (strlen(pszLine) == 0) return NULL;
-      
+
     tokens = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
     token = tokens[CSLCount(tokens)-1];
-    
+
     //Append CONT lines
     while (strlen(pszLine) && EQUALN(token, "\\", 2))
     {
        //remove last token
       CPLFree(tokens[CSLCount(tokens)-1]);
       tokens[CSLCount(tokens)-1] = NULL;
-      
+
       pszLine = CPLReadLine( fpItf );
       conttok = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
       if (!conttok || !EQUAL(conttok[0], "CONT")) break;
-      
+
       //append
       tokens = CSLInsertStrings(tokens, -1, &conttok[1]);
       token = tokens[CSLCount(tokens)-1];
-      
+
       CSLDestroy(conttok);
     }
     return tokens;
