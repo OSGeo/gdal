@@ -46,7 +46,7 @@ CPLString MD5String(const char *s) {
 }
 
 CPLString ProjToWKT(const CPLString &proj) {
-    char* wkt;
+    char* wkt = NULL;
     OGRSpatialReference sr;
     CPLString srs;
 
@@ -99,4 +99,16 @@ CPLErr MakeDirs(const char *path) {
     VSIMkdir(p, 0744);
     CPLFree(p);
     return CE_None;
+}
+
+int VersionStringToInt(const char *version) {
+    if (version == NULL) return -1;
+    const char *p = version;
+    int v = 0;
+    for (int i = 3; i >= 0; --i) {
+        v += (1 << (i * 8)) * atoi(p);
+        for (; (*p != '\0') && (*p != '.'); ++p);
+        if (*p != '\0') ++p;
+    }
+    return v;
 }

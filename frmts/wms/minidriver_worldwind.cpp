@@ -38,13 +38,30 @@ GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {
 }
 
 CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config) {
-    m_base_url = CPLGetXMLValue(config, "ServerUrl", "");
-    m_dataset = CPLGetXMLValue(config, "Layer", "");
+    CPLErr ret = CE_None;
 
-    return CE_None;
+    if (ret == CE_None) {
+        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
+        if (base_url[0] != '\0') {
+            /* Try the old name */
+            base_url = CPLGetXMLValue(config, "ServerUrl", "");
+        }
+        if (base_url[0] != '\0') {
+            m_base_url = base_url;
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, WorldWind mini-driver: ServerURL missing.");
+            ret = CE_Failure;
+        }
+    }
+
+    m_dataset = CPLGetXMLValue(config, "Layer", "");
+    m_projection_wkt = ProjToWKT("EPSG:4326");
+
+    return ret;
 }
 
 void GDALWMSMiniDriver_WorldWind::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+    caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
     caps->m_has_tiled_image_requeset = 1;
@@ -63,4 +80,8 @@ void GDALWMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWM
     URLAppendF(url, "&L=%d", tiri.m_level);
     URLAppendF(url, "&X=%d", tiri.m_x);
     URLAppendF(url, "&Y=%d", worldwind_y);
+}
+
+const char *GDALWMSMiniDriver_WorldWind::GetProjectionInWKT() {
+    return m_projection_wkt.c_str();
 }
