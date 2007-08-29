@@ -142,5 +142,9 @@ GFU_GreenMax = _gdalconst.GFU_GreenMax
 GFU_BlueMax = _gdalconst.GFU_BlueMax
 GFU_AlphaMax = _gdalconst.GFU_AlphaMax
 GFU_MaxCount = _gdalconst.GFU_MaxCount
+GMF_ALL_VALID = _gdalconst.GMF_ALL_VALID
+GMF_PER_DATASET = _gdalconst.GMF_PER_DATASET
+GMF_ALPHA = _gdalconst.GMF_ALPHA
+GMF_NODATA = _gdalconst.GMF_NODATA
 
 

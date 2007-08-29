@@ -3163,5 +3163,9 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GFU_BlueMax",SWIG_From_int((int)(GFU_BlueMax)));
   SWIG_Python_SetConstant(d, "GFU_AlphaMax",SWIG_From_int((int)(GFU_AlphaMax)));
   SWIG_Python_SetConstant(d, "GFU_MaxCount",SWIG_From_int((int)(GFU_MaxCount)));
+  SWIG_Python_SetConstant(d, "GMF_ALL_VALID",SWIG_From_int((int)(0x01)));
+  SWIG_Python_SetConstant(d, "GMF_PER_DATASET",SWIG_From_int((int)(0x02)));
+  SWIG_Python_SetConstant(d, "GMF_ALPHA",SWIG_From_int((int)(0x04)));
+  SWIG_Python_SetConstant(d, "GMF_NODATA",SWIG_From_int((int)(0x08)));
 }
 
