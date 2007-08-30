@@ -178,6 +178,8 @@ class CPL_DLL OGRStyleTable
   private:
     char **m_papszStyleTable;
 
+    CPLString osLastRequestedStyleName;
+
   public:
     OGRStyleTable();
     ~OGRStyleTable();
