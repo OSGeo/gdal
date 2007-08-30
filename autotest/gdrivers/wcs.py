@@ -44,6 +44,11 @@ import gdaltest
 def wcs_1():
 
     try:
+        #For now we trigger an error here to disable running the WCS
+        #driver as our "test server" is currently inaccessable.
+
+        a = x
+        
         gdaltest.wcs_drv = gdal.GetDriverByName( 'WCS' )
     except:
 	gdaltest.wcs_drv = None
