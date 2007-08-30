@@ -131,7 +131,7 @@ static int LoadProjLibrary()
     const char *pszLibName = LIBNAME;
     
     if( bTriedToLoad )
-        return( pfn_pj_init != NULL );
+        return( pfn_pj_transform != NULL );
 
     bTriedToLoad = TRUE;
 
@@ -447,8 +447,12 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
 /* -------------------------------------------------------------------- */
-    char        *pszProj4Defn = NULL;
+    // OGRThreadSafety: The following variable is not a thread safety issue 
+    // since the only issue is incrementing while accessing which at worse 
+    // means debug output could be one "increment" late. 
     static int   nDebugReportCount = 0;
+
+    char        *pszProj4Defn = NULL;
 
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
     {
