@@ -1647,14 +1647,14 @@ CPLErr GTiffDataset::FlushBlockBuf()
     if( nLoadedBlock < 0 || !bLoadedBlockDirty )
         return CE_None;
 
+    bLoadedBlockDirty = FALSE;
+
     SetDirectory();
 
     if( TIFFIsTiled(hTIFF) )
         nBlockBufSize = TIFFTileSize( hTIFF );
     else
         nBlockBufSize = TIFFStripSize( hTIFF );
-
-    bLoadedBlockDirty = FALSE;
 
     if( TIFFIsTiled( hTIFF ) )
     {
@@ -2487,6 +2487,8 @@ int GTiffDataset::SetDirectory( uint32 nNewOffset )
 
 {
     Crystalize();
+
+    FlushBlockBuf();
 
     if( nNewOffset == 0 )
         nNewOffset = nDirOffset;
