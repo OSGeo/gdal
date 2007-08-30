@@ -35,6 +35,7 @@ import gdal
 sys.path.append( '../pymod' )
 
 import gdaltest
+import gdalconst
 
 ###############################################################################
 # Perform simple read test.
@@ -88,6 +89,60 @@ def jpeg_3():
     return 'success'
     
 ###############################################################################
+# Verify masked jpeg. 
+
+def jpeg_4():
+
+    try:
+        gdalconst.GMF_ALL_VALID
+    except:
+        return 'skip'
+    
+    ds = gdal.Open('data/masked.jpg')
+
+    refband = ds.GetRasterBand(1)
+
+    if refband.GetMaskFlags() != gdalconst.GMF_PER_DATASET:
+        gdaltest.post_reason( 'wrong mask flags' )
+        return 'fail'
+
+    cs = refband.GetMaskBand().Checksum()
+    if cs != 770:
+        gdaltest.post_reason( 'Wrong mask checksum' )
+        print cs
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Verify CreateCopy() of masked jpeg.
+
+def jpeg_5():
+
+    try:
+        gdalconst.GMF_ALL_VALID
+    except:
+        return 'skip'
+    
+    ds = gdal.Open('data/masked.jpg')
+
+    ds2 = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/masked.jpg', ds )
+
+    refband = ds2.GetRasterBand(1)
+
+    if refband.GetMaskFlags() != gdalconst.GMF_PER_DATASET:
+        gdaltest.post_reason( 'wrong mask flags' )
+        return 'fail'
+
+    cs = refband.GetMaskBand().Checksum()
+    if cs != 770:
+        gdaltest.post_reason( 'Wrong checksum on copied images mask.')
+        print cs
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
 
 def jpeg_cleanup():
@@ -98,6 +153,8 @@ gdaltest_list = [
     jpeg_1,
     jpeg_2,
     jpeg_3,
+    jpeg_4,
+    jpeg_5,
     jpeg_cleanup
     ]
   
