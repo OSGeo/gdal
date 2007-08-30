@@ -494,13 +494,6 @@ const char *OGRStyleTable::GetStyleName(const char *pszStyleString)
 {
     int i;
     const char *pszStyleStringBegin;
-    static char *pszName  = NULL;
-    char *pszTmp;
-    
-    if (pszName)
-      CPLFree(pszName);
-
-    pszName = NULL;
 
     for (i=0;i<CSLCount(m_papszStyleTable);i++)
     {
@@ -509,15 +502,19 @@ const char *OGRStyleTable::GetStyleName(const char *pszStyleString)
         if (pszStyleStringBegin && EQUAL(&pszStyleStringBegin[1],
                                          pszStyleString))
         {
-            pszName = CPLStrdup(m_papszStyleTable[i]);
-            pszTmp = strstr(pszName,":");
-            if (pszTmp)
-              pszTmp[0] = '\0';
-            break;
+            int nColon;
+
+            osLastRequestedStyleName = m_papszStyleTable[i];
+            nColon = osLastRequestedStyleName.find( ':' );
+            if( nColon != -1 )
+                osLastRequestedStyleName = 
+                    osLastRequestedStyleName.substr(0,nColon);
+
+            return osLastRequestedStyleName;
         }
     }
         
-    return pszName;
+    return NULL;
 }
 
 /****************************************************************************/
