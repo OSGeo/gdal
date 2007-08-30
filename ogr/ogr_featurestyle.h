@@ -31,6 +31,7 @@
 #define OGR_FEATURESTYLE_INCLUDE
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 class OGRFeature;
 
