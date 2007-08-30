@@ -46,7 +46,7 @@ def tiff_ovr_1():
 
     src_ds = gdal.Open('data/mfloat32.vrt')
     gdaltest.tiff_drv.CreateCopy( 'tmp/mfloat32.tif', src_ds,
-                                  options = ['INTERLEAVE=BAND'] )
+                                  options = ['INTERLEAVE=PIXEL'] )
     src_ds = None
 
     ds = gdal.Open( 'tmp/mfloat32.tif' )
