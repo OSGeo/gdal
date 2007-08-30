@@ -1653,7 +1653,9 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
         for( iX = 0; iX < nXSize; iX++ )
         {
             if( pabyMaskLine[iX] != 0 )
-                pabyBitBuf[iBit>>3] |= (0x80 >> (iBit&7));
+                pabyBitBuf[iBit>>3] |= (0x1 << (iBit&7));
+
+            iBit++;
         }
     }
     
@@ -1748,6 +1750,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  anBandList[3] = {1,2,3};
     int  nQuality = 75;
     int  bProgressive = FALSE;
+    int  nCloneFlags = GCIF_PAM_DEFAULT;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
@@ -1942,10 +1945,11 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLDebug( "JPEG", "Appending Mask Bitmap" ); 
         JPGAppendMask( pszFilename, poSrcDS->GetRasterBand(1)->GetMaskBand() );
+        nCloneFlags &= (~GCIF_MASK);
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we need a world file?                                          */
+/*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
@@ -1961,7 +1965,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     JPGDataset *poDS = (JPGDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        poDS->CloneInfo( poSrcDS, nCloneFlags );
 
     return poDS;
 }
