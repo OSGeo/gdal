@@ -261,36 +261,65 @@ int DDFSubfieldDefn::GetDataLength( const char * pachSourceData,
     else
     {
         int     nLength = 0;
-        int     bCheckFieldTerminator = TRUE;
+        int     bAsciiField = TRUE;
+        int     extraConsumedBytes = 0;
 
         /* We only check for the field terminator because of some buggy 
          * datasets with missing format terminators.  However, we have found
-         * the field terminator is a legal character within the fields of
-         * some extended datasets (such as JP34NC94.000).  So we don't check
-         * for the field terminator if the field appears to be multi-byte
-         * which we established by the first character being out of the 
-         * ASCII printable range (32-127). 
+         * the field terminator and unit terminators are legal characters 
+         * within the fields of some extended datasets (such as JP34NC94.000).
+         * So we don't check for the field terminator and unit terminators as 
+         * a single byte if the field appears to be multi-byte which we 
+         * established by the first character being out of the ASCII printable
+         * range (32-127). 
+         *
+         * In the case of S57, the subfield ATVL of the NATF field can be 
+         * encoded in lexical level 2 (see S57 specification, Edition 3.1, 
+         * paragraph 2.4 and 2.5). In that case the Unit Terminator and Field 
+         * Terminator are followed by the NULL character.
+         * A better fix would be to read the NALL tag in the DSSI to check 
+         * that the lexical level is 2, instead of relying on the value of 
+         * the first byte as we are doing. 
+         * (Fix for bug #1526)
          */
 
-        if( pachSourceData[0] < 32 || pachSourceData[0] >= 127 )
-            bCheckFieldTerminator = FALSE;
-        
-        while( nLength < nMaxBytes
-               && pachSourceData[nLength] != chFormatDelimeter )
+        if( (unsigned char)pachSourceData[0] < 32 || (unsigned char)pachSourceData[0] >= 127 )
+            bAsciiField = FALSE;
+        if (pachSourceData[0] != chFormatDelimeter)
         {
-            if( bCheckFieldTerminator 
-                && pachSourceData[nLength] == DDF_FIELD_TERMINATOR )
-                break;
-
-            nLength++;
+            while( nLength < nMaxBytes)
+            {
+                if (bAsciiField)
+                {
+                    if (pachSourceData[nLength] == chFormatDelimeter ||
+                        pachSourceData[nLength] == DDF_FIELD_TERMINATOR)
+                        break;
+                }
+                else
+                {
+                    if ((pachSourceData[nLength] == chFormatDelimeter ||
+                        pachSourceData[nLength] == DDF_FIELD_TERMINATOR) &&
+                        nLength+1 < nMaxBytes &&
+                        pachSourceData[nLength+1] == 0)
+                    {
+                        extraConsumedBytes = 1;
+                        if (nLength+2 < nMaxBytes &&
+                            pachSourceData[nLength+2] == DDF_FIELD_TERMINATOR)
+                            extraConsumedBytes++;
+                        break;
+                    } 
+                }
+    
+                nLength++;
+            }
         }
 
         if( pnConsumedBytes != NULL )
         {
             if( nMaxBytes == 0 )
-                *pnConsumedBytes = nLength;
+                *pnConsumedBytes = nLength + extraConsumedBytes;
             else
-                *pnConsumedBytes = nLength+1;
+                *pnConsumedBytes = nLength + extraConsumedBytes + 1;
         }
         
         return nLength;
