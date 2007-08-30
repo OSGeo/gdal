@@ -166,7 +166,8 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
 static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry, 
                                   char **ppszText, int *pnLength, 
-                                  int *pnMaxLength )
+                                  int *pnMaxLength,
+                                  int bIsSubGeometry )
 
 {
 
@@ -178,10 +179,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
     char szSrsName[30] = { 0 }; 
     int nSrsNameLength = 0;
     OGRBoolean bAddSrsName = FALSE; 
-
-    // Flag used to filter Geometry Collection members that do not
-    // need their own srsName attribute.
-    static OGRBoolean bIsSubGeometry = FALSE;
 
     const OGRSpatialReference* poSRS = NULL;
     poSRS = poGeometry->getSpatialReference();
@@ -200,8 +197,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         pszAuthName = poSRS->GetAuthorityName( pszTarget );
         if( NULL != pszAuthName )
         {
-            CPLDebug( "OGR", "Authority Name: %s", pszAuthName );
-
             if( EQUAL( pszAuthName, "EPSG" ) )
             {
                 pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
@@ -212,9 +207,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
                     /* Yes, attach srsName attribute per geometry. */
                     bAddSrsName = TRUE; 
-                    bIsSubGeometry = FALSE;
-
-                    CPLDebug( "OGR", "  %s", szSrsName );
                 }
             }
         }
@@ -333,7 +325,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         CPLFree( pszPolyTagName );
 
         // Don't add srsName to polygon rings
-        bIsSubGeometry = TRUE;
 
         if( poPolygon->getExteriorRing() != NULL )
         {
@@ -341,7 +332,8 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
                           "<gml:outerBoundaryIs>" );
 
             if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(), 
-                                        ppszText, pnLength, pnMaxLength ) )
+                                        ppszText, pnLength, pnMaxLength,
+                                        TRUE ) )
             {
                 return FALSE;
             }
@@ -358,7 +350,7 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
                           "<gml:innerBoundaryIs>" );
             
             if( !OGR2GMLGeometryAppend( poRing, ppszText, pnLength, 
-                                        pnMaxLength ) )
+                                        pnMaxLength, TRUE ) )
                 return FALSE;
             
             AppendString( ppszText, pnLength, pnMaxLength,
@@ -367,8 +359,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendString( ppszText, pnLength, pnMaxLength,
                       "</gml:Polygon>" );
-
-        bIsSubGeometry = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -423,9 +413,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
-        // Don't add srsName to geometry collection members
-        bIsSubGeometry = TRUE;
-
         for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
@@ -434,7 +421,8 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
             
             if( !OGR2GMLGeometryAppend( poMember, 
-                                        ppszText, pnLength, pnMaxLength ) )
+                                        ppszText, pnLength, pnMaxLength,
+                                        TRUE ) )
             {
                 return FALSE;
             }
@@ -442,8 +430,6 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
         }
-
-        bIsSubGeometry = FALSE;
 
         AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
@@ -554,7 +540,7 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
     pszText[0] = '\0';
 
     if( !OGR2GMLGeometryAppend( (OGRGeometry *) hGeometry, &pszText, 
-                                &nLength, &nMaxLength ))
+                                &nLength, &nMaxLength, FALSE ))
     {
         CPLFree( pszText );
         return NULL;
