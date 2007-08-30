@@ -27,6 +27,7 @@
 
 import os
 import sys
+import string
 
 sys.path.append( '../pymod' )
 
@@ -254,6 +255,13 @@ def gml_out_multipolygon_srs():
 
     if gml[0:38] != '<gml:MultiPolygon srsName="EPSG:4326">':
         gdaltest.post_reason( 'No srsName attribute in GML output')
+        print gml
+        return 'fail'
+
+    # Verify we have no other srsName's on subelements.
+    if string.find(gml[39:],'srsName') != -1:
+        gdaltest.post_reason( 'Got extra srsName attributes on subelements.' )
+        print gml
         return 'fail'
 
     return 'success'
