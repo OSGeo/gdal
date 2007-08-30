@@ -728,7 +728,10 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 /*      support but this is a convenient central point to put this      */
 /*      for most drivers.                                               */
 /* -------------------------------------------------------------------- */
-    GDALDriver::DefaultCopyMasks( poSrcDS, this, FALSE );
+    if( nCloneFlags & GCIF_MASK )
+    {
+        GDALDriver::DefaultCopyMasks( poSrcDS, this, FALSE );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Restore MO flags.                                               */
