@@ -3411,3 +3411,138 @@ CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
 
     return ((GDALRasterBand *) hBand)->CreateMaskBand( nFlags );
 }
+
+/************************************************************************/
+/*                    GetIndexColorTranslationTo()                      */
+/************************************************************************/
+
+/**
+ * When the raster band has a palette index, it may be usefull to compute
+ * the "translation" of this palette to the palette of another band.
+ * The translation tries to do exact matching first, and then approximate
+ * matching if no exact matching is possible.
+ * This method returns a table such that table[i] = j where i is an index
+ * of the 'this' rasterband and j the corresponding index for the reference
+ * rasterband.
+ *
+ * This method is thought as internal to GDAL and is used for drivers
+ * like RPFTOC.
+ *
+ * The implementation only supports 1-byte palette rasterbands.
+ *
+ * @param poReferenceBand the raster band
+ * @param pTranslationTable an already allocated translation table (at least 256 bytes),
+ *                          or NULL to let the method allocate it
+ * @param poApproximateMatching a pointer to a flag that is set if the matching
+ *                              is approximate. May be NULL.
+ *
+ * @return a translation table if the two bands are palette index and that they do
+ *         not match or NULL in other cases.
+ *         The table must be freed with CPLFree if NULL was passed for pTranslationTable.
+ */
+
+unsigned char* GDALRasterBand::GetIndexColorTranslationTo(GDALRasterBand* poReferenceBand,
+                                                          unsigned char* pTranslationTable,
+                                                          int* pApproximateMatching )
+{
+    if (poReferenceBand == NULL)
+        return NULL;
+
+    if (poReferenceBand->GetColorInterpretation() == GCI_PaletteIndex &&
+        GetColorInterpretation() == GCI_PaletteIndex &&
+        poReferenceBand->GetRasterDataType() == GDT_Byte &&
+        GetRasterDataType() == GDT_Byte)
+    {
+        GDALColorTable* srcColorTable = GetColorTable();
+        GDALColorTable* destColorTable = poReferenceBand->GetColorTable();
+        if (srcColorTable != NULL && destColorTable != NULL)
+        {
+            int nEntries = srcColorTable->GetColorEntryCount();
+            int nRefEntries = destColorTable->GetColorEntryCount();
+            int bHasNoDataValueSrc;
+            int noDataValueSrc = (int)GetNoDataValue(&bHasNoDataValueSrc);
+            int bHasNoDataValueRef;
+            int noDataValueRef = (int)poReferenceBand->GetNoDataValue(&bHasNoDataValueRef);
+            int samePalette;
+            int i, j;
+
+            if (pApproximateMatching)
+                *pApproximateMatching = FALSE;
+
+            if (nEntries == nRefEntries && bHasNoDataValueSrc == bHasNoDataValueRef &&
+                (bHasNoDataValueSrc == FALSE || noDataValueSrc == noDataValueRef))
+            {
+                samePalette = TRUE;
+                for(i=0;i<nEntries;i++)
+                {
+                    if (noDataValueSrc == i)
+                        continue;
+                    const GDALColorEntry* entry = srcColorTable->GetColorEntry(i);
+                    const GDALColorEntry* entryRef = destColorTable->GetColorEntry(i);
+                    if (entry->c1 != entryRef->c1 ||
+                        entry->c2 != entryRef->c2 ||
+                        entry->c3 != entryRef->c3)
+                    {
+                        samePalette = FALSE;
+                    }
+                }
+            }
+            else
+            {
+                samePalette = FALSE;
+            }
+            if (samePalette == FALSE)
+            {
+                if (pTranslationTable == NULL)
+                    pTranslationTable = (unsigned char*)CPLMalloc(256);
+
+                /* Trying to remap the product palette on the subdataset palette */
+                for(i=0;i<nEntries;i++)
+                {
+                    if (bHasNoDataValueSrc && bHasNoDataValueRef && noDataValueSrc == i)
+                        continue;
+                    const GDALColorEntry* entry = srcColorTable->GetColorEntry(i);
+                    for(j=0;j<nRefEntries;j++)
+                    {
+                        if (bHasNoDataValueRef && noDataValueRef == j)
+                            continue;
+                        const GDALColorEntry* entryRef = destColorTable->GetColorEntry(j);
+                        if (entry->c1 == entryRef->c1 &&
+                            entry->c2 == entryRef->c2 &&
+                            entry->c3 == entryRef->c3)
+                        {
+                            pTranslationTable[i] = j;
+                            break;
+                        }
+                    }
+                    if (j == nEntries)
+                    {
+                        /* No exact match. Looking for closest color now... */
+                        int best_j = 0;
+                        int best_distance = 0;
+                        if (pApproximateMatching)
+                            *pApproximateMatching = TRUE;
+                        for(j=0;j<nRefEntries;j++)
+                        {
+                            const GDALColorEntry* entryRef = destColorTable->GetColorEntry(j);
+                            int distance = (entry->c1 - entryRef->c1) * (entry->c1 - entryRef->c1) +
+                                           (entry->c2 - entryRef->c2) * (entry->c2 - entryRef->c2) +
+                                           (entry->c3 - entryRef->c3) * (entry->c3 - entryRef->c3);
+                            if (j == 0 || distance < best_distance)
+                            {
+                                best_j = j;
+                                best_distance = distance;
+                            }
+                        }
+                        pTranslationTable[i] = best_j;
+                    }
+                }
+                if (bHasNoDataValueRef && bHasNoDataValueSrc)
+                    pTranslationTable[noDataValueSrc] = noDataValueRef;
+
+                return pTranslationTable;
+            }
+        }
+    }
+    return NULL;
+}

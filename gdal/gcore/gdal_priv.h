@@ -443,6 +443,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                         int bJustInitialize = FALSE );
     CPLErr      FlushBlock( int = -1, int = -1 );
 
+    unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
+                                               unsigned char* pTranslationTable = NULL,
+                                               int* pApproximateMatching = NULL);
+
     // New OpengIS CV_SampleDimension stuff.
 
     virtual CPLErr FlushCache();
