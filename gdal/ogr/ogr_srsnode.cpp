@@ -834,17 +834,17 @@ void OGR_SRSNode::StripNodes( const char * pszName )
  * wrong.  
  */
 
-static char *apszPROJCSRule[] = 
+static const char * const apszPROJCSRule[] = 
 { "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "AUTHORITY", 
   NULL };
 
-static char *apszDATUMRule[] = 
+static const char * const apszDATUMRule[] = 
 { "DATUM", "SPHEROID", "TOWGS84", "AUTHORITY", NULL };
 
-static char *apszGEOGCSRule[] = 
+static const char * const apszGEOGCSRule[] = 
 { "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
 
-static char **apszOrderingRules[] = {
+static const char * const *apszOrderingRules[] = {
     apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, NULL };
 
 OGRErr OGR_SRSNode::FixupOrdering()
@@ -864,7 +864,7 @@ OGRErr OGR_SRSNode::FixupOrdering()
 /* -------------------------------------------------------------------- */
 /*      Is this a node for which an ordering rule exists?               */
 /* -------------------------------------------------------------------- */
-    char **papszRule = NULL;
+    const char * const * papszRule = NULL;
 
     for( i = 0; apszOrderingRules[i] != NULL; i++ )
     {
@@ -887,7 +887,8 @@ OGRErr OGR_SRSNode::FixupOrdering()
 
     for( i = 1; i < GetChildCount(); i++ )
     {
-        panChildKey[i] = CSLFindString( papszRule, GetChild(i)->GetValue() );
+        panChildKey[i] = CSLFindString( (char**) papszRule, 
+                                        GetChild(i)->GetValue() );
         if( panChildKey[i] == -1 )
         {
             CPLDebug( "OGRSpatialReference", 
