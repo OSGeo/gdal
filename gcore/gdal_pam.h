@@ -50,6 +50,7 @@ class GDALPamRasterBand;
 #define GCIF_COLORINTERP        0x020000
 #define GCIF_BAND_METADATA      0x040000
 #define GCIF_RAT                0x080000
+#define GCIF_MASK               0x100000
 
 #define GCIF_ONLY_IF_MISSING    0x10000000
 #define GCIF_PROCESS_BANDS      0x20000000
@@ -60,7 +61,7 @@ class GDALPamRasterBand;
                                  GCIF_MINMAX | GCIF_SCALEOFFSET |          \
                                  GCIF_UNITTYPE | GCIF_COLORTABLE |         \
                                  GCIF_COLORINTERP | GCIF_BAND_METADATA |   \
-                                 GCIF_RAT |                                \
+                                 GCIF_RAT | GCIF_MASK |                    \
                                  GCIF_ONLY_IF_MISSING | GCIF_PROCESS_BANDS )
 
 /* GDAL PAM Flags */
