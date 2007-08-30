@@ -316,6 +316,8 @@ class RPFTOCProxyRasterDataSet : public GDALDataset
     const char* projectionRef;
     double nwLong, nwLat;
     GDALColorTable* colorTableRef;
+    int bHasNoDataValue;
+    double noDataValue;
     
     public:
         RPFTOCProxyRasterDataSet(const char* fileName,
@@ -329,6 +331,18 @@ class RPFTOCProxyRasterDataSet : public GDALDataset
             if (fileName)
                 CPLFree(fileName);
         }
+        
+        void SetNoDataValue(double noDataValue) {
+            this->noDataValue = noDataValue;
+            bHasNoDataValue = TRUE;
+        }
+        
+        double GetNoDataValue(int* bHasNoDataValue)
+        {
+            if (bHasNoDataValue)
+                *bHasNoDataValue = this->bHasNoDataValue;
+            return noDataValue;
+        } 
         
         void SetReferenceColorTable(GDALColorTable* colorTableRef) { this->colorTableRef = colorTableRef;}
         
@@ -372,6 +386,11 @@ class RPFTOCProxyRasterBandRGBA : public GDALPamRasterBand
         ~RPFTOCProxyRasterBandRGBA()
         {
             RPFTOCGDALDatasetCache::Unref();
+        }
+        
+        virtual GDALColorInterp GetColorInterpretation()
+        {
+            return (GDALColorInterp)(GCI_RedBand + nBand - 1);
         }
 
     protected:
@@ -510,6 +529,21 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
         {
             RPFTOCGDALDatasetCache::Unref();
         }
+        
+        virtual GDALColorInterp GetColorInterpretation()
+        {
+            return GCI_PaletteIndex;
+        }
+        
+        virtual double GetNoDataValue(int* bHasNoDataValue)
+        {
+            return ((RPFTOCProxyRasterDataSet*)poDS)->GetNoDataValue(bHasNoDataValue);
+        }
+        
+        virtual GDALColorTable *GetColorTable()
+        {
+            return (GDALColorTable *) ((RPFTOCProxyRasterDataSet*)poDS)->GetReferenceColorTable();
+        }
 
     protected:
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
@@ -532,80 +566,29 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
             return CE_Failure;
 
         GDALRasterBand* srcBand = ds->GetRasterBand(1);
+        ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
+        
         if (initDone == FALSE)
         {
-            GDALColorTable* srcColorTable = srcBand->GetColorTable();
-            int i,j;
-            int bHasNoDataValue;
-            int noDataValue = (int)srcBand->GetNoDataValue(&bHasNoDataValue);
-            int nEntries = srcColorTable->GetColorEntryCount();
-            const GDALColorTable* colorTableRef = ((RPFTOCProxyRasterDataSet*)poDS)->GetReferenceColorTable();
-            samePalette = TRUE;
-            for(i=0;i<nEntries;i++)
+            int approximateMatching;
+            if (srcBand->GetIndexColorTranslationTo(this, remapLUT, &approximateMatching ))
             {
-                const GDALColorEntry* entry = srcColorTable->GetColorEntry(i);
-                const GDALColorEntry* entryRef = colorTableRef->GetColorEntry(i);
-                if (entry->c1 != entryRef->c1 ||
-                    entry->c2 != entryRef->c2 ||
-                    entry->c3 != entryRef->c3)
+                samePalette = FALSE;
+                if (approximateMatching)
                 {
-                    samePalette = FALSE;
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Palette for %s is different from reference palette. "
+                              "Coudln't remap exactly all colors. Trying to find closest matches.\n", fileName);
                 }
             }
-            if (samePalette == FALSE)
+            else
             {
-                /* Trying to remap the product palette on the subdataset palette */
-                int nRefEntries = srcColorTable->GetColorEntryCount();
-                int first_msg = 1;
-                for(i=0;i<nEntries;i++)
-                {
-                    const GDALColorEntry* entry = srcColorTable->GetColorEntry(i);
-                    for(j=0;j<nRefEntries;j++)
-                    {
-                        const GDALColorEntry* entryRef = colorTableRef->GetColorEntry(j);
-                        if (entry->c1 == entryRef->c1 &&
-                            entry->c2 == entryRef->c2 &&
-                            entry->c3 == entryRef->c3)
-                        {
-                            remapLUT[i] = j;
-                            break;
-                        }
-                    }
-                    if (j == nEntries)
-                    {
-                        /* No exact match. Looking for closest color now... */
-                        if (first_msg)
-                        {
-                            CPLError( CE_Failure, CPLE_AppDefined,
-                                    "Palette for %s is different from reference palette. "
-                                     "Coudln't remap color %d. Trying to find closest match.\n", fileName, i);
-                            first_msg = 0;
-                        }
-                        int best_j = 0;
-                        int best_distance = 0;
-                        for(j=0;j<nRefEntries;j++)
-                        {
-                            const GDALColorEntry* entryRef = colorTableRef->GetColorEntry(j);
-                            int distance = (entry->c1 - entryRef->c1) * (entry->c1 - entryRef->c1) +
-                                           (entry->c2 - entryRef->c2) * (entry->c2 - entryRef->c2) +
-                                           (entry->c3 - entryRef->c3) * (entry->c3 - entryRef->c3);
-                            if (j == 0 || distance < best_distance)
-                            {
-                                best_j = j;
-                                best_distance = distance;
-                            }
-                        }
-                        remapLUT[i] = best_j;
-                    }
-                }
-                if (bHasNoDataValue)
-                    remapLUT[noDataValue] = noDataValue;
+                samePalette = TRUE;
             }
             initDone = TRUE;
         }
 
 
-        ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
         if (samePalette == FALSE)
         {
             unsigned char* data = (unsigned char*)pImage;
@@ -641,6 +624,8 @@ RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet
     this->projectionRef = projectionRef;
     this->nwLong = nwLong;
     this->nwLat = nwLat;
+    bHasNoDataValue = FALSE;
+    noDataValue = 0;
     colorTableRef = NULL;
     bShared = TRUE;
     checkDone = FALSE;
@@ -919,7 +904,12 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int
                 nBands);
         if (nBands == 1)
         {
-            ds->SetReferenceColorTable(poVirtualDS->GetRasterBand( 1 )->GetColorTable());
+            GDALRasterBand *poBand = poVirtualDS->GetRasterBand( 1 );
+            ds->SetReferenceColorTable(poBand->GetColorTable());
+            int bHasNoDataValue;
+            double noDataValue = poBand->GetNoDataValue(&bHasNoDataValue);
+            if (bHasNoDataValue)
+                ds->SetNoDataValue(noDataValue);
         }
 
         for(j=0;j<nBands;j++)
