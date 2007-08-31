@@ -81,7 +81,7 @@ CPL_CVSID("$Id$");
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
 /************************************************************************/
 
-static long aoEllips[] =
+static const long aoEllips[] =
 {
     7008,   // Clarke, 1866 (NAD1927)
     7034,   // Clarke, 1880
