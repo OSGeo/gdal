@@ -30,6 +30,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 
 /************************************************************************/
 /*                              parseURN()                              */
@@ -238,6 +239,9 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
 static void addGMLId( CPLXMLNode *psParent )
 
 {
+    static void *hGMLIdMutex = NULL;
+    CPLMutexHolderD( &hGMLIdMutex );
+
     CPLXMLNode *psId;
     static int nNextGMLId = 1;
     char   szIdText[40];
