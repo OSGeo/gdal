@@ -1416,42 +1416,52 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /*      If we get it as an unsupported code, try looking it up in       */
 /*      the PROJ.4 support file(s).                                     */
 /* -------------------------------------------------------------------- */
-    static int bLoopingToProj4 = FALSE;
-
-    if( eErr == OGRERR_UNSUPPORTED_SRS && !bLoopingToProj4 )
+    if( eErr == OGRERR_UNSUPPORTED_SRS )
     {
         char szWrkDefn[100];
+        char *pszNormalized;
 
         sprintf( szWrkDefn, "+init=epsg:%d", nCode );
-        bLoopingToProj4 = TRUE;
-        CPLPushErrorHandler( CPLQuietErrorHandler );
-        eErr = SetFromUserInput( szWrkDefn );
-        CPLPopErrorHandler();
-        bLoopingToProj4 = FALSE;
+        
+        pszNormalized = OCTProj4Normalize( szWrkDefn );
 
-        if( eErr != OGRERR_NONE )
-            eErr = OGRERR_UNSUPPORTED_SRS;
-        else
-        {
-            if( IsProjected() )
-                SetAuthority( "PROJCS", "EPSG", nCode );
-            else if( IsGeographic() )
-                SetAuthority( "GEOGCS", "EPSG", nCode );
-        }
+        if( strstr(pszNormalized,"proj=") != NULL )
+            eErr = importFromProj4( pszNormalized );
+        
+        CPLFree( pszNormalized );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Push in authority information if we were successful, and it     */
+/*      is not already present.                                         */
+/* -------------------------------------------------------------------- */
+    const char *pszAuthName;
+
+    if( IsProjected() )
+        pszAuthName = GetAuthorityName( "PROJCS" );
+    else
+        pszAuthName = GetAuthorityName( "GEOGCS" );
+
+
+    if( eErr == OGRERR_NONE && pszAuthName == NULL )
+    {
+        if( IsProjected() )
+            SetAuthority( "PROJCS", "EPSG", nCode );
+        else if( IsGeographic() )
+            SetAuthority( "GEOGCS", "EPSG", nCode );
+
+        eErr = FixupOrdering();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise officially issue an error message.                    */
+/* -------------------------------------------------------------------- */
     if( eErr == OGRERR_UNSUPPORTED_SRS )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "EPSG PCS/GCS code %d not found in EPSG support files.  Is this a valid\nEPSG coordinate system?", 
                   nCode );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Make sure any peculiarities in the ordering are fixed up.       */
-/* -------------------------------------------------------------------- */
-    if( eErr == OGRERR_NONE )
-        eErr = FixupOrdering();
 
     return eErr;
 }
