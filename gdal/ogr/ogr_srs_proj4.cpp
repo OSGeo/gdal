@@ -240,10 +240,11 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     CPLFree( pszCleanCopy );
     
 /* -------------------------------------------------------------------- */
-/*      If we have an EPSG based init string, try to process it         */
-/*      directly to get the fullest possible EPSG definition.           */
+/*      If we have an EPSG based init string, and no existing +proj     */
+/*      portion then try to normalize into into a PROJ.4 string.        */
 /* -------------------------------------------------------------------- */
-    if( strstr(pszNormalized,"init=epsg:") != NULL )
+    if( strstr(pszNormalized,"init=epsg:") != NULL 
+        && strstr(pszNormalized,"proj=") == NULL )
     {
         OGRErr eErr;
         const char *pszNumber = strstr(pszNormalized,"init=epsg:") + 10;
