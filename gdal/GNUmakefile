@@ -135,12 +135,20 @@ docs:
 	cp doc/images/*.* html
 	cp frmts/*.html frmts/*/frmt_*.html html
 
+man:
+# Generate man pages
+	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+
 all:	default ogr-all
 
 install-docs:
 	(cd ogr; $(MAKE) install-docs)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/gdal
 	cp html/*.* $(DESTDIR)$(INST_DOCS)/gdal
+
+install-man:
+	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
+	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
 web-update:	docs
 	cp html/*.* $(WEB_DIR)
