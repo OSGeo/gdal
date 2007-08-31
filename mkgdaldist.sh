@@ -71,7 +71,7 @@ if test "$forcedate" != "no" ; then
   mv gdal/gcore/gdal_new.h gdal/gcore/gdal.h
 fi
 
-echo "* Cleaning .svn directories..."
+echo "* Cleaning .svn directories under $PWD..."
 find gdal -name .svn | xargs rm -rf
 
 #
