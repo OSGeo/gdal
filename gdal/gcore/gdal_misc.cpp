@@ -1062,7 +1062,10 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 void CPL_STDCALL GDALInitGCPs( int nCount, GDAL_GCP * psGCP )
 
 {
-    VALIDATE_POINTER0( psGCP, "GDALInitGCPs" );
+    if( nCount > 0 )
+    {
+        VALIDATE_POINTER0( psGCP, "GDALInitGCPs" );
+    }
 
     for( int iGCP = 0; iGCP < nCount; iGCP++ )
     {
