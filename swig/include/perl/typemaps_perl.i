@@ -1,60 +1,5 @@
 /*
- * $Id$
- */
-
-/*
- * $Log$
- * Revision 1.16  2006/12/11 20:42:24  ajolma
- * typemap(out) char **free for GetParameterList
- *
- * Revision 1.15  2006/12/11 20:32:28  ajolma
- * typemaps for GIntBig and char **CSL
- *
- * Revision 1.13  2006/06/07 16:06:49  ajolma
- * prefer CPLGetLastErrorMsg() in OGRErr
- *
- * Revision 1.12  2006/04/11 12:47:55  ajolma
- * removed now deprecated "perl5," from typemaps
- *
- * Revision 1.11  2005/10/11 14:11:42  kruland
- * Fix memory bug in typemap(out) char **options.  The returned array of strings
- * is owned by the dataset.
- *
- * Revision 1.10  2005/10/11 01:49:07  kruland
- * Back out previous change.  It introduced a memory leak.
- *
- * Revision 1.9  2005/10/03 20:28:51  kruland
- * Fixed bug in  %typemap(out) char **dict.
- *
- * Revision 1.8  2005/09/30 18:52:28  kruland
- * Fixed typo.
- *
- * Revision 1.7  2005/09/29 14:00:19  kruland
- * Fixed: %typemap(perl5,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
- * Fixed: %typemap(perl5,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs )
- *
- * Revision 1.6  2005/09/27 14:32:01  kruland
- * Fixed the in,numinputs=1 int nLen, char *pBuf typemap used by
- * ReadRaster & WriteRaster (thanks Ari).
- *
- * Revision 1.5  2005/09/16 20:42:49  kruland
- * Magical adjustments to some list length calls.
- *
- * Revision 1.4  2005/09/14 15:01:33  kruland
- * Removed accidental debug message.
- *
- * Revision 1.3  2005/09/13 03:02:43  kruland
- * Added OGRErr out typemap which uses ogr_error_map.i.
- *
- * Revision 1.2  2005/09/13 02:10:52  kruland
- * Added Colormap typemaps.
- *
- * Revision 1.1  2005/09/06 01:40:26  kruland
- * Perl typemaps.
- *
- */
-
-/*
+ * Perl typemaps for GDAL SWIG bindings
  * Copyright Ari Jolma 2005.  Based on typemaps_python.i
  * You may distribute this file under the same terms as GDAL itself.
  */
@@ -713,4 +658,96 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 {
   /* %typemap(ret) (CPLXMLNode*) */
   if ( $1 ) CPLDestroyXMLNode( $1 );
+}
+
+/* non NULL input pointer checks */
+
+%typemap(check) (const char *pszNewDesc)
+{
+  /* %typemap(check) (const char *pszNewDesc) */
+  if (!$1) {
+    croak("Description must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (const char *cap)
+{
+  /* %typemap(check) (const char *cap) */
+  if (!$1) {
+    croak("Capability must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (const char* statement)
+{
+  /* %typemap(check) (const char* statement) */
+  if (!$1) {
+    croak("Statement must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (OGRFeatureShadow *feature)
+{
+  /* %typemap(check) (OGRFeatureShadow *feature) */
+  if (!$1) {
+    croak("Feature must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (OGRFieldDefnShadow* field_def)
+{
+  /* %typemap(check) (OGRFieldDefnShadow* field_def) */
+  if (!$1) {
+    croak("FieldDefinition must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (OGRFieldDefnShadow* defn)
+{
+  /* %typemap(check) (OGRFieldDefnShadow* defn) */
+  if (!$1) {
+    croak("FieldDefinition must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) OGRGeometryShadow*
+{
+  /* %typemap(check) OGRGeometryShadow* */
+  if (!$1) {
+    croak("The geometry must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) OSRCoordinateTransformationShadow*
+{
+  /* %typemap(check) OSRCoordinateTransformationShadow* */
+  if (!$1) {
+    croak("The coordinate transformation must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (const char *name)
+{
+  /* %typemap(check) (const char *name) */
+  if (!$1) {
+    croak("The name must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) (char *method)
+{
+  /* %typemap(check) (char *method) */
+  if (!$1) {
+    croak("The method must not be undefined");
+    SWIG_fail;  
+  }
 }
