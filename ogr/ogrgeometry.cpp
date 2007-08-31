@@ -31,6 +31,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_geos.h"
+#include "cpl_multiproc.h"
 #include <assert.h>
 
 CPL_CVSID("$Id$");
@@ -1315,7 +1316,10 @@ GEOSGeom OGRGeometry::exportToGEOS() const
 
 #else
 
+    static void *hGEOSInitMutex = NULL;
     static int bGEOSInitialized = FALSE;
+
+    CPLMutexHolderD( &hGEOSInitMutex );
 
     if( !bGEOSInitialized )
     {
