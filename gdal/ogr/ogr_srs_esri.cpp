@@ -524,8 +524,8 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
-static const char*OSR_GDS( char **papszNV, const char * pszField, 
-                           const char *pszDefaultValue )
+static CPLString OSR_GDS( char **papszNV, const char * pszField, 
+                          const char *pszDefaultValue )
 
 {
     int         iLine;
@@ -542,7 +542,7 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
         return pszDefaultValue;
     else
     {
-        static char     szResult[80];
+        char     szResult[80];
         char    **papszTokens;
         
         papszTokens = CSLTokenizeString(papszNV[iLine]);
@@ -627,19 +627,19 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    const char *pszProj = OSR_GDS( papszPrj, "Projection", NULL );
+    CPLString osProj = OSR_GDS( papszPrj, "Projection", NULL );
 
-    if( pszProj == NULL )
+    if( osProj == NULL )
     {
         CPLDebug( "OGR_ESRI", "Can't find Projection\n" );
         return OGRERR_CORRUPT_DATA;
     }
 
-    else if( EQUAL(pszProj,"GEOGRAPHIC") )
+    else if( EQUAL(osProj,"GEOGRAPHIC") )
     {
     }
     
-    else if( EQUAL(pszProj,"utm") )
+    else if( EQUAL(osProj,"utm") )
     {
         if( (int) OSR_GDV( papszPrj, "zone", 0.0 ) != 0 )
         {
@@ -661,7 +661,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         }
     }
 
-    else if( EQUAL(pszProj,"STATEPLANE") )
+    else if( EQUAL(osProj,"STATEPLANE") )
     {
         int nZone = (int) OSR_GDV( papszPrj, "zone", 0.0 );
         if( nZone != 0 )
@@ -678,8 +678,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         }
     }
 
-    else if( EQUAL(pszProj,"GREATBRITIAN_GRID") 
-             || EQUAL(pszProj,"GREATBRITAIN_GRID") )
+    else if( EQUAL(osProj,"GREATBRITIAN_GRID") 
+             || EQUAL(osProj,"GREATBRITAIN_GRID") )
     {
         const char *pszWkt = 
             "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1]]";
@@ -687,7 +687,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         importFromWkt( (char **) &pszWkt );
     }
 
-    else if( EQUAL(pszProj,"ALBERS") )
+    else if( EQUAL(osProj,"ALBERS") )
     {
         SetACEA( OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
                  OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
@@ -697,7 +697,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                  OSR_GDV( papszPrj, "PARAM_6", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"LAMBERT") )
+    else if( EQUAL(osProj,"LAMBERT") )
     {
         SetLCC( OSR_GDV( papszPrj, "PARAM_1", 0.0 ),
                 OSR_GDV( papszPrj, "PARAM_2", 0.0 ),
@@ -707,7 +707,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                 OSR_GDV( papszPrj, "PARAM_6", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"EQUIDISTANT_CONIC") )
+    else if( EQUAL(osProj,"EQUIDISTANT_CONIC") )
     {
         int     nStdPCount = (int) OSR_GDV( papszPrj, "PARAM_1", 0.0 );
 
@@ -731,7 +731,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         }
     }
 
-    else if( EQUAL(pszProj,"TRANSVERSE") )
+    else if( EQUAL(osProj,"TRANSVERSE") )
     {
         SetTM( OSR_GDV( papszPrj, "PARAM_3", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
@@ -740,7 +740,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                OSR_GDV( papszPrj, "PARAM_5", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"POLAR") )
+    else if( EQUAL(osProj,"POLAR") )
     {
         SetPS( OSR_GDV( papszPrj, "PARAM_2", 0.0 ), 
                OSR_GDV( papszPrj, "PARAM_1", 0.0 ), 
@@ -751,8 +751,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 
     else
     {
-        CPLDebug( "OGR_ESRI", "Unsupported projection: %s", pszProj );
-        SetLocalCS( pszProj );
+        CPLDebug( "OGR_ESRI", "Unsupported projection: %s", osProj.c_str() );
+        SetLocalCS( osProj );
     }
 
 /* -------------------------------------------------------------------- */
@@ -760,57 +760,57 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /* -------------------------------------------------------------------- */
     if( !IsLocal() && GetAttrNode( "GEOGCS" ) == NULL )
     {
-        const char *pszDatum;
+        CPLString osDatum;
 
-        pszDatum = OSR_GDS( papszPrj, "Datum", "");
+        osDatum = OSR_GDS( papszPrj, "Datum", "");
 
-        if( EQUAL(pszDatum,"NAD27") || EQUAL(pszDatum,"NAD83")
-            || EQUAL(pszDatum,"WGS84") || EQUAL(pszDatum,"WGS72") )
+        if( EQUAL(osDatum,"NAD27") || EQUAL(osDatum,"NAD83")
+            || EQUAL(osDatum,"WGS84") || EQUAL(osDatum,"WGS72") )
         {
-            SetWellKnownGeogCS( pszDatum );
+            SetWellKnownGeogCS( osDatum );
         }
-        else if( EQUAL( pszDatum, "EUR" )
-                 || EQUAL( pszDatum, "ED50" ) )
+        else if( EQUAL( osDatum, "EUR" )
+                 || EQUAL( osDatum, "ED50" ) )
         {
             SetWellKnownGeogCS( "EPSG:4230" );
         }
-        else if( EQUAL( pszDatum, "GDA94" ) )
+        else if( EQUAL( osDatum, "GDA94" ) )
         {
             SetWellKnownGeogCS( "EPSG:4283" );
         }
         else
         {
-            const char *pszSpheroid;
+            CPLString osSpheroid;
 
-            pszSpheroid = OSR_GDS( papszPrj, "Spheroid", "");
+            osSpheroid = OSR_GDS( papszPrj, "Spheroid", "");
             
-            if( EQUAL(pszSpheroid,"INT1909") 
-                || EQUAL(pszSpheroid,"INTERNATIONAL1909") )
+            if( EQUAL(osSpheroid,"INT1909") 
+                || EQUAL(osSpheroid,"INTERNATIONAL1909") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4022 );
                 CopyGeogCSFrom( &oGCS );
             }
-            else if( EQUAL(pszSpheroid,"AIRY") )
+            else if( EQUAL(osSpheroid,"AIRY") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4001 );
                 CopyGeogCSFrom( &oGCS );
             }
-            else if( EQUAL(pszSpheroid,"CLARKE1866") )
+            else if( EQUAL(osSpheroid,"CLARKE1866") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4008 );
                 CopyGeogCSFrom( &oGCS );
             }
-            else if( EQUAL(pszSpheroid,"GRS80") )
+            else if( EQUAL(osSpheroid,"GRS80") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4019 );
                 CopyGeogCSFrom( &oGCS );
             }
-            else if( EQUAL(pszSpheroid,"KRASOVSKY") 
-                     || EQUAL(pszSpheroid,"KRASSOVSKY") )
+            else if( EQUAL(osSpheroid,"KRASOVSKY") 
+                     || EQUAL(osSpheroid,"KRASSOVSKY") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4024 );
@@ -829,19 +829,19 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /* -------------------------------------------------------------------- */
     if( IsLocal() || IsProjected() )
     {
-        const char *pszValue;
+        CPLString osValue;
         double dfOldUnits = GetLinearUnits();
 
-        pszValue = OSR_GDS( papszPrj, "Units", NULL );
-        if( pszValue == NULL )
+        osValue = OSR_GDS( papszPrj, "Units", NULL );
+        if( osValue == NULL )
             SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
-        else if( EQUAL(pszValue,"FEET") )
+        else if( EQUAL(osValue,"FEET") )
             SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
-        else if( atof(pszValue) != 0.0 )
+        else if( atof(osValue) != 0.0 )
             SetLinearUnitsAndUpdateParameters( "user-defined", 
-                                               1.0 / atof(pszValue) );
+                                               1.0 / atof(osValue) );
         else
-            SetLinearUnitsAndUpdateParameters( pszValue, 1.0 );
+            SetLinearUnitsAndUpdateParameters( osValue, 1.0 );
 
         // If we have reset the linear units we should clear any authority
         // nodes on the PROJCS.  This especially applies to state plane
@@ -1242,6 +1242,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
         else
             SetNode( "PROJCS|PROJECTION", 
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
+
+        pszProjection = GetAttrValue("PROJECTION");
     }
 
 /* -------------------------------------------------------------------- */
