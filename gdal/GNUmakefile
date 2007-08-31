@@ -135,10 +135,6 @@ docs:
 	cp doc/images/*.* html
 	cp frmts/*.html frmts/*/frmt_*.html html
 
-man:
-	# Generate man pages
-	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
-
 all:	default ogr-all
 
 install-docs:
@@ -180,7 +176,6 @@ endif
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
-	(cd man; $(MAKE) install)
 ifneq ($(PYTHON_DEV),no)
 	(cd pymod; $(MAKE) install)
 endif
