@@ -131,11 +131,13 @@ docs:
 	(cat Doxyfile ; echo "HTML_HEADER=html/header_ru.html"; echo "INPUT=doc/ru"; echo "OUTPUT_LANGUAGE=Russian") | doxygen -
 # Generate HTML docs
 	doxygen Doxyfile
-# Generate man pages
-	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
 	cp frmts/*.html frmts/*/frmt_*.html html
+
+man:
+	# Generate man pages
+	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
 
 all:	default ogr-all
 
