@@ -42,6 +42,7 @@ fi
 #
 # Checkout GDAL sources from the repository
 #
+echo "* Downloading GDAL sources from SVN..."
 rm -rf dist_wrk  
 mkdir dist_wrk
 cd dist_wrk
@@ -53,15 +54,16 @@ SVNMODULE="gdal"
 svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
 
 if [ \! -d gdal ] ; then
-    echo "svn checkout reported an error ... abandoning mkgdaldist"
-  cd ..
-  rm -rf dist_wrk
-  exit
+	echo "svn checkout reported an error ... abandoning mkgdaldist"
+	cd ..
+	rm -rf dist_wrk
+	exit
 fi
 
 #
 # Make some updates and cleaning
 #
+echo "* Updating release date..."
 if test "$forcedate" != "no" ; then
   echo "Forcing Date To: $forcedate"
   rm -f gdal/gcore/gdal_new.h  
@@ -69,24 +71,30 @@ if test "$forcedate" != "no" ; then
   mv gdal/gcore/gdal_new.h gdal/gcore/gdal.h
 fi
 
-find gdal -name .svn -exec rm -rf {} \;
+echo "* Cleaning .svn directories..."
+find gdal -name .svn | xargs rm -rf
 
 #
 # Generate man pages
 #
+echo "* Generating man pages..."
 CWD=${PWD}
 cd gdal
-if test -d "gdal/man"; then
+if test -d "man"; then
     rm -rf man
 fi
-make man
-if test ! -d "gdal/man"; then
-    echo "make man failed"
+
+(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+
+if test ! -d "man"; then
+    echo " make man failed"
 fi
+cd ${CWD}
 
 #
 # Generate SWIG interface for C#
 #
+echo "* Generating SWIG interfaces..."
 CWD=${PWD}
 cd gdal/swig/csharp
 ./mkinterface.sh
@@ -95,6 +103,7 @@ cd ${CWD}
 #
 # Make distribution packages
 #
+echo "* Making distribution packages..."
 rm -rf gdal/viewer
 rm -rf gdal/dist_docs
 
@@ -109,14 +118,16 @@ tar cf ../gdal-${GDAL_VERSION}.tar gdal-${GDAL_VERSION}
 gzip -9 ../gdal-${GDAL_VERSION}.tar
 zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 
+echo "* Cleaning..."
 cd ..
 rm -rf dist_wrk
 
 TARGETDIR=remotesensing.org:/ftp/remotesensing/pub/gdal
 if test "$2" = "-install" ; then
 
-  echo "Installing: " $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz 
-  echo "       and: " $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
+  echo "Installing: $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz"
+  echo "       and: $TARGETDIR/gdal${COMPRESSED_VERSION}.zip"
   scp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR/gdal${COMPRESSED_VERSION}.zip $TARGETDIR
 fi
 
+echo "*** The End ***"
