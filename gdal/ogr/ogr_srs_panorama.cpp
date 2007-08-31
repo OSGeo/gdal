@@ -59,7 +59,7 @@ CPL_CVSID("$Id$");
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
 /************************************************************************/
 
-static long aoDatums[] =
+static const long aoDatums[] =
 {
     0,
     4284,   // Pulkovo, 1942
@@ -72,7 +72,7 @@ static long aoDatums[] =
 /*  Correspondence between "Panorama" and EPSG ellipsoid codes.         */
 /************************************************************************/
 
-static long aoEllips[] =
+static const long aoEllips[] =
 {
     0,
     7024,   // Krassovsky, 1940

@@ -42,7 +42,7 @@ typedef struct
     double dfSemiMinor;
 } PCIDatums;
 
-static PCIDatums aoDatums[] =
+static const PCIDatums aoDatums[] =
 {
     { "D-01", 4267, 0, 0 },   // NAD27 (USA, NADCON)
     { "D-03", 4267, 0, 0 },   // NAD27 (Canada, NTv1)
@@ -91,7 +91,7 @@ static PCIDatums aoDatums[] =
     { NULL, 0 }
 };
 
-static PCIDatums aoEllips[] =
+static const PCIDatums aoEllips[] =
 {
     { "E000", 7008, 0, 0 },   // Clarke, 1866 (NAD1927)
     { "E001", 7034, 0, 0 },   // Clarke, 1880
@@ -576,7 +576,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     if( strlen(szEarthModel) > 0 
         && (poRoot == NULL || IsProjected() || IsGeographic()) )
     {
-        PCIDatums   *paoDatum = aoDatums;
+        const PCIDatums   *paoDatum = aoDatums;
 
         // Search for matching datum
         while ( paoDatum->pszPCIDatum )
@@ -1043,7 +1043,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         double      dfSemiMajor = GetSemiMajor();
         double      dfInvFlattening = GetInvFlattening();
 
-        PCIDatums   *paoDatum = aoEllips;
+        const PCIDatums   *paoDatum = aoEllips;
 
 #ifdef DEBUG
         CPLDebug( "OSR_PCI",
