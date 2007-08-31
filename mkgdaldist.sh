@@ -1,5 +1,7 @@
 #!/bin/sh
-
+#
+# mkgdaldist.sh - prepares GDAL source distribution package
+#
 if [ $# -lt 1 ] ; then
   echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-install]"
   echo " <version> - version number used in name of generated archive."
@@ -10,6 +12,9 @@ if [ $# -lt 1 ] ; then
   exit
 fi
 
+#
+# Processing script input arguments
+#
 GDAL_VERSION=$1
 COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
 
@@ -33,7 +38,10 @@ if test "$2" = "-branch"; then
 else
   forcebranch="trunk"
 fi
-  
+ 
+#
+# Checkout GDAL sources from the repository
+#
 rm -rf dist_wrk  
 mkdir dist_wrk
 cd dist_wrk
@@ -44,7 +52,6 @@ SVNMODULE="gdal"
 
 svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
 
-
 if [ \! -d gdal ] ; then
     echo "svn checkout reported an error ... abandoning mkgdaldist"
   cd ..
@@ -52,6 +59,9 @@ if [ \! -d gdal ] ; then
   exit
 fi
 
+#
+# Make some updates and cleaning
+#
 if test "$forcedate" != "no" ; then
   echo "Forcing Date To: $forcedate"
   rm -f gdal/gcore/gdal_new.h  
@@ -61,12 +71,30 @@ fi
 
 find gdal -name .svn -exec rm -rf {} \;
 
+#
+# Generate man pages
+#
+CWD=${PWD}
+cd gdal
+if test -d "gdal/man"; then
+    rm -rf man
+fi
+make man
+if test ! -d "gdal/man"; then
+    echo "make man failed"
+fi
+
+#
 # Generate SWIG interface for C#
-cwd=${PWD}
+#
+CWD=${PWD}
 cd gdal/swig/csharp
 ./mkinterface.sh
-cd ${cwd}
+cd ${CWD}
 
+#
+# Make distribution packages
+#
 rm -rf gdal/viewer
 rm -rf gdal/dist_docs
 
@@ -91,3 +119,4 @@ if test "$2" = "-install" ; then
   echo "       and: " $TARGETDIR/gdal${COMPRESSED_VERSION}.zip
   scp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR/gdal${COMPRESSED_VERSION}.zip $TARGETDIR
 fi
+
