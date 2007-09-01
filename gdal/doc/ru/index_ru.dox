@@ -6,7 +6,7 @@ Translator Andrey Kiselev <dron@ak4719.spb.edu>
 
 /*! \page index_ru GDAL - Geospatial Data Abstraction Library
 
-<center><b>Select language</b>: <a href="index.html">[English]</a>[Russian]</center>
+<center><b>Select language</b>: <a href="index.html">[English]</a>[Russian]<a href="index_br.html">[Portuguese]</a></center>
 
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
 --- это библиотека для работы с растровыми географическими форматами файлов
