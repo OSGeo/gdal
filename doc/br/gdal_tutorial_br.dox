@@ -1,0 +1,612 @@
+/* $Id: gdal_tutorial_br.dox $ */
+
+/*! \page gdal_tutorial_br Tutorial da API do GDAL
+
+\section gdal_tutorial_open Opening the File
+
+Antes de abrir um dataset raster suportado por GDAL da é necessário 
+registar os drivers. Há um driver para cada formato suportado. O registro
+dos driver é realizado normalmente com a função de GDALAllRegister() que tenta 
+registar todos os drivers conhecidos, including aqueles auto-carregados 
+de arquivos de bilioteca dinâmicas usando GDALDriverManager::AutoLoadDrivers(). 
+Se alguma aplicações necessetitar de limitar o conjunto de drivers pode 
+ser útil rever o código de <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
+
+Uma vez que os drivers são registados, a aplicação deve chamar a 
+função GDALOpen() para abrir dataset, passando o nome do dataset e a forma de acesso 
+desejados (GA_ReadOnly ou GA_Update).
+
+Em C++:
+\code
+#include "gdal_priv.h"
+
+int main()
+{
+    GDALDataset  *poDataset;
+
+    GDALAllRegister();
+
+    poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    if( poDataset == NULL )
+    {
+	...;
+    }
+\endcode
+
+Em C:
+\code
+#include "gdal.h"
+
+int main()
+{
+    GDALDatasetH  hDataset;
+
+    GDALAllRegister();
+
+    hDataset = GDALOpen( pszFilename, GA_ReadOnly );
+    if( hDataset == NULL )
+    {
+	...;
+    }
+\endcode
+
+Em Python:
+\code
+    import gdal
+    from gdalconst import *
+
+    dataset = gdal.Open( filename, GA_ReadOnly )
+    if dataset is None:
+        ...
+\endcode
+
+Note que se GDALOpen() retornar NULL significa que ocorreu uma falhada, e 
+que as mensagens de erro deverão ter sido emitidas através de CPLError(). 
+Se você quiser controlar como os erros estão relatados revise a  
+a documentação do usuário de função CPLError(). 
+Em geral, todo o GDAL usa CPLError() para o relatório de erro. 
+Note também que o pszFilename não necessita 
+realmente ser o nome de uma arquivo físico (no entando geralmente é). 
+É interpretação é dependente do driver, e pôde ser um URL, 
+um nome de arquivo com os parâmetros adicionais adicionados na 
+string para controlar a abertura do arquivo quase qualquer coisa. 
+Tente por favor não limitar diálogos da seleção da arquivo de 
+GDAL somente a selecionar arquivos físicos.
+
+\section gdal_tutorial_dataset Extraindo Informação do Arquivo
+
+Como descrita em <a href="gdal_datamodel.html">GDAL Data Model</a>, um 
+GDALDataset contem uma lista de bandas raster, todas pertencendo 
+à uma mesma área, e tendo a mesma definição. Tem também metadata, um sistema 
+coordenado, transformação geográfica, tamanho da raster e várias outras informações.
+
+\code
+    adfGeoTransform[0] /* top left x */
+    adfGeoTransform[1] /* w-e pixel resolution */
+    adfGeoTransform[2] /* rotation, 0 if image is "north up" */
+    adfGeoTransform[3] /* top left y */
+    adfGeoTransform[4] /* rotation, 0 if image is "north up" */
+    adfGeoTransform[5] /* n-s pixel resolution */
+\endcode
+
+Se nós quiséssemos imprimir alguma informação geral sobre a série 
+de dados nós pudemos fazer o seguinte:
+
+Em C++:
+\code
+    double        adfGeoTransform[6];
+
+    printf( "Driver: %s/%s\n",
+            poDataset->GetDriver()->GetDescription(), 
+            poDataset->GetDriver()->GetMetadataItem( GDAL_DMD_LONGNAME ) );
+
+    printf( "Size is %dx%dx%d\n", 
+            poDataset->GetRasterXSize(), poDataset->GetRasterYSize(),
+            poDataset->GetRasterCount() );
+
+    if( poDataset->GetProjectionRef()  != NULL )
+        printf( "Projection is `%s'\n", poDataset->GetProjectionRef() );
+
+    if( poDataset->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        printf( "Origin = (%.6f,%.6f)\n",
+                adfGeoTransform[0], adfGeoTransform[3] );
+
+        printf( "Pixel Size = (%.6f,%.6f)\n",
+                adfGeoTransform[1], adfGeoTransform[5] );
+    }
+\endcode
+
+Em C:
+\code
+    GDALDriverH   hDriver;
+    double        adfGeoTransform[6];
+
+    hDriver = GDALGetDatasetDriver( hDataset );
+    printf( "Driver: %s/%s\n",
+            GDALGetDriverShortName( hDriver ),
+            GDALGetDriverLongName( hDriver ) );
+
+    printf( "Size is %dx%dx%d\n",
+	    GDALGetRasterXSize( hDataset ), 
+            GDALGetRasterYSize( hDataset ),
+            GDALGetRasterCount( hDataset ) );
+
+    if( GDALGetProjectionRef( hDataset ) != NULL )
+        printf( "Projection is `%s'\n", GDALGetProjectionRef( hDataset ) );
+
+    if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
+    {
+        printf( "Origin = (%.6f,%.6f)\n",
+                adfGeoTransform[0], adfGeoTransform[3] );
+
+        printf( "Pixel Size = (%.6f,%.6f)\n",
+                adfGeoTransform[1], adfGeoTransform[5] );
+    }
+\endcode
+
+Em Python:
+\code
+    print 'Driver: ', dataset.GetDriver().ShortName,'/', \
+          dataset.GetDriver().LongName
+    print 'Size is ',dataset.RasterXSize,'x',dataset.RasterYSize, \
+          'x',dataset.RasterCount
+    print 'Projection is ',dataset.GetProjection()
+    
+    geotransform = dataset.GetGeoTransform()
+    if not geotransform is None:
+	print 'Origin = (',geotransform[0], ',',geotransform[3],')'
+	print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
+\endcode
+
+\section gdal_tutorial_band Extraindo uma Banda Raster
+
+Neste ponto o acesso aos dados da raster através de GDAL pode ser feito 
+uma banda de cada vez. Também, há os metadata, tamanho de block, tabelas da cor, 
+e vário a outra informação disponível em uma banda na classe GDALRasterBand. 
+Os seguintes códigos buscam um objeto de GDALRasterBand da série de dados 
+(numerada a partir de 1 em GetRasterCount()) e a exposições de algums 
+informações sobre ela.
+
+Em C++:
+\code
+	GDALRasterBand  *poBand;
+        int             nBlockXSize, nBlockYSize;
+        int             bGotMin, bGotMax;
+        double          adfMinMax[2];
+	
+        poBand = poDataset->GetRasterBand( 1 );
+	poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+        printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+                nBlockXSize, nBlockYSize,
+                GDALGetDataTypeName(poBand->GetRasterDataType()),
+                GDALGetColorInterpretationName(
+                    poBand->GetColorInterpretation()) );
+
+        adfMinMax[0] = poBand->GetMinimum( &bGotMin );
+        adfMinMax[1] = poBand->GetMaximum( &bGotMax );
+        if( ! (bGotMin && bGotMax) )
+            GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+
+        printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+        
+        if( poBand->GetOverviewCount() > 0 )
+            printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
+
+        if( poBand->GetColorTable() != NULL )
+            printf( "Band has a color table with %d entries.\n", 
+                     poBand->GetColorTable()->GetColorEntryCount() );
+\endcode
+
+Em C:
+\code
+	GDALRasterBandH hBand;
+        int             nBlockXSize, nBlockYSize;
+        int             bGotMin, bGotMax;
+        double          adfMinMax[2];
+	
+        hBand = GDALGetRasterBand( hDataset, 1 );
+        GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+        printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+                nBlockXSize, nBlockYSize,
+                GDALGetDataTypeName(GDALGetRasterDataType(hBand)),
+                GDALGetColorInterpretationName(
+                    GDALGetRasterColorInterpretation(hBand)) );
+
+        adfMinMax[0] = GDALGetRasterMinimum( hBand, &bGotMin );
+        adfMinMax[1] = GDALGetRasterMaximum( hBand, &bGotMax );
+        if( ! (bGotMin && bGotMax) )
+            GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
+
+        printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+        
+        if( GDALGetOverviewCount(hBand) > 0 )
+            printf( "Band has %d overviews.\n", GDALGetOverviewCount(hBand));
+
+        if( GDALGetRasterColorTable( hBand ) != NULL )
+            printf( "Band has a color table with %d entries.\n", 
+                     GDALGetColorEntryCount(
+                         GDALGetRasterColorTable( hBand ) ) );
+\endcode
+
+In Python (note several bindings are missing):
+\code
+	band = dataset.GetRasterBand(1)
+
+	print 'Band Type=',gdal.GetDataTypeName(band.DataType)
+
+	min = band.GetMinimum()
+	max = band.GetMaximum()
+	if min is not None and max is not None:
+	    (min,max) = ComputeRasterMinMax(1)
+	print 'Min=%.3f, Max=%.3f' % (min,max)
+
+	if band.GetOverviewCount() > 0:
+	    print 'Band has ', band.GetOverviewCount(), ' overviews.'
+
+        if not band.GetRasterColorTable() is None:
+	    print 'Band has a color table with ', \
+	    band.GetRasterColorTable().GetCount(), ' entries.'
+\endcode
+
+\section gdal_tutorial_read Lendo dato Raster
+
+Há algumas maneiras diferentes de ler dados da raster, mas o mais comum é 
+através do Método GDALRasterBand::RasterIO(). Este método tomará 
+automaticamente cuidado do tipo de dados conversão, amostragem e qual a janela
+de dados requerida. O seguinte código lerá o primeiro scanline dos dados em um 
+buffer em tamanho similar à quantidade lida, convertendo os valores para ponto 
+flutuando como parte da operação.
+
+Em C++:
+\code
+	float *pafScanline;
+        int   nXSize = poBand->GetXSize();
+
+        pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+        poBand->RasterIO( GF_Read, 0, 0, nXSize, 1, 
+                          pafScanline, nXSize, 1, GDT_Float32, 
+                          0, 0 );
+\endcode
+
+Em C:
+\code
+	float *pafScanline;
+        int   nXSize = GDALGetRasterBandXSize( hBand );
+
+        pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+	    GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1, 
+                      pafScanline, nXSize, 1, GDT_Float32, 
+                      0, 0 );
+\endcode
+
+Em Python:
+ 
+\code
+  	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
+                                     band.XSize, 1, GDT_Float32 )
+\endcode
+ 
+Note que o scanline retornado é do tipo char*, e contem os 
+bytes xsize*4 de dados binários crus do ponto flutuando. Isto 
+pode ser convertido em Python usando o módulo do <b>struct</b> 
+da biblioteca padrão:
+
+\code
+	import struct
+
+	tuple_of_floats = struct.unpack('f' * b2.XSize, scanline)
+\endcode
+
+A chamada de RasterIO espera os seguintes argumentos.
+\code
+CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace,
+                                 int nLineSpace )
+\endcode
+
+Note que a mesma chamada de RasterIO() poderá ler, ou escrevê-lo baseado no 
+ajuste do eRWFlag (GF_Read ou GF_Write). Os argumentos nXOff, nYOff, nXSize, nYSize 
+descreve a janela de dados da raster para ler (ou para escrever). 
+Não necessita ser coincidente com os limites da image embora o acesso pode ser mais eficiente se for.
+
+O pData é o buffer de memória para os dados que serão lidos ou gravados. 
+É verdadeiro tipo de dado deve aquele passado por eBufType, tal como GDT_Float32, 
+ou GDT_Byte. A chamada de RasterIO() cuidará de converter-se entre o tipo 
+de dados do buffer e o tipo de dados da banda. Anotar que ao converter dados do 
+ponto flutuando para o inteiro RasterIO arredonda para baixo, e ao converter de 
+para fora dos limites de valores válidos para o tipo de saída, será escolhido o mais
+próximo valor possível. 
+Isto implica, por exemplo, que os dados 16bit lidos em um buffer de GDT_Byte 
+converterão todos os valores maiores de 255 para 255, os <b>dados não é escalado!</b>
+
+ Os valores nBufXSize e nBufYSize descrevem o tamanho do buffer. Ao carregar dados na 
+ definição cheia este seria o mesmo que o tamanho da janela. Entretanto, para carregar 
+ uma vista de solução reduzida (overview) isto podia ser ajustado para menos do que a janela 
+ no arquivo. Neste caso o RasterIO() utilizará overview para fazer 
+ mais eficientemente o IO se as overview forem apropriadas.
+
+O nPixelSpace, e o nLineSpace são normalmente zero indicando que os valores default
+devem ser usados. Entretanto, podem ser usados controlar o acesso à dados da memória, 
+permitindo a leitura em um buffer que contem dados intercalados (interleave) pixel por exemplo.  
+
+\section gdal_tutorial_close Fechando o Dataset
+
+Tenha em mente por favor que os objetos de GDALRasterBand estão possuídos por sua 
+dataset, e nunca devem ser destruídos com o operador delete de C++. 
+GDALDataset podem ser fechado chamando GDALClose() ou usando o operador delete 
+no GDALDataset. Um ou outro resultado na finalização apropriada, e resolver 
+gravações pendentes.
+
+\section gdal_tutorial_creation Técnicas para criar arquivos
+
+As arquivos em formatos suportados GDAL podem ser criadas se o driver do formato 
+suportar a criação. Há duas técnicas gerais para criar arquivos, usando CreateCopy() e Create(). 
+O método de CreateCopy envolve chamar o método CreateCopy() do driver do formato, e 
+passar como parâmetro dataset que será copiado. O método criar envolve chamar o 
+método Create() do driver, e então explicitamente escrever todos os metadata, e dados 
+da raster com as chamadas separadas. Todos os drivers que suportam criar arquivos 
+novas suportam o método de CreateCopy(), mas somente algum sustentação o método Create().
+
+Para determinar se o driver de um formato suporta Create ou CreateCopy é necessário verificar o 
+DCAP_CREATE e os metadata de DCAP_CREATECOPY no driver do formato 
+objetam. Assegurar-se de que GDALAllRegister() tenha sido chamado antes de chamar GetDriverByName(). 
+
+Em C++:
+\code
+#include "cpl_string.h"
+...
+    const char *pszFormat = "GTiff";
+    GDALDriver *poDriver;
+    char **papszMetadata;
+
+    poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
+
+    if( poDriver == NULL )
+        exit( 1 );
+
+    papszMetadata = poDriver->GetMetadata();
+    if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
+        printf( "Driver %s supports Create() method.\n", pszFormat );
+    if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
+        printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
+\endcode
+
+Em C:
+\code
+#include "cpl_string.h"
+...
+    const char *pszFormat = "GTiff";
+    GDALDriver hDriver = GDALGetDriverByName( pszFormat );
+    char **papszMetadata;
+
+    if( hDriver == NULL )
+        exit( 1 );
+
+    papszMetadata = GDALGetMetadata( hDriver, NULL );
+    if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
+        printf( "Driver %s supports Create() method.\n", pszFormat );
+    if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
+        printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
+\endcode
+
+Em Python:
+
+\code
+    format = "GTiff"
+    driver = gdal.GetDriverByName( format )
+    metadata = driver.GetMetadata()
+    if metadata.has_key(gdal.DCAP_CREATE) \
+       and metadata[gdal.DCAP_CREATE] == 'YES':
+        print 'Driver %s supports Create() method.' % format
+    if metadata.has_key(gdal.DCAP_CREATECOPY) \
+       and metadata[gdal.DCAP_CREATECOPY] == 'YES':
+        print 'Driver %s supports CreateCopy() method.' % format
+\endcode
+
+Note que um número de drivers são de leitura apenas e não suportarão 
+Create() ou CreateCopy ().
+
+\section gdal_tutorial_createcopy Usando CreateCopy()
+
+O GDALDriver:: O método de CreateCopy () pode ser usado razoavelmente 
+simplesmente enquanto a maioria de informação é coletada da série de 
+dados da fonte. Entretanto, inclui opções para passar a formato opções 
+específicas da criação, e para relatar o progresso ao usuário enquanto 
+uma cópia longa da série de dados ocorre. Uma cópia simples de uma arquivo 
+nomeou o pszSrcFilename, a uma arquivo nova nomeada pszDstFilename usando 
+opções de defeito em um formato cujo o driver fosse buscado previamente 
+pudesse olhar como este:
+
+Em C++:
+\code
+    GDALDataset *poSrcDS = 
+       (GDALDataset *) GDALOpen( pszSrcFilename, GA_ReadOnly );
+    GDALDataset *poDstDS;
+
+    poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
+                                    NULL, NULL, NULL );
+    if( poDstDS != NULL )
+        delete poDstDS;
+\endcode
+
+Em C:
+\code
+    GDALDatasetH hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
+    GDALDatasetH hDstDS;
+
+    hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE, 
+                             NULL, NULL, NULL );
+    if( hDstDS != NULL )
+        GDALClose( hDstDS );
+\endcode
+
+Em Python:
+
+\code
+    src_ds = gdal.Open( src_filename )
+    dst_ds = driver.CreateCopy( dst_filename, src_ds, 0 )
+\endcode
+
+Note que o método de CreateCopy () retorna dataset writeable, 
+e que deve ser fechado corretamente à escrita completa e a nivelar a série 
+de dados ao disco. No Python encaixotar isto ocorre automaticamente quando 
+os “dst_ds” saem do espaço. O valor FALSO (ou 0) usado para a opção do 
+bStrict imediatamente depois que o nome de arquivo do destino na chamada 
+de CreateCopy () indica que a chamada de CreateCopy () deve proseguir sem
+um erro fatal mesmo se a série de dados do destino não puder ser criada 
+para combinar exatamente a série de dados da entrada. Isto pôde ser porque 
+o formato da saída não suporta o datatype do pixel da série de dados da 
+entrada, ou porque o destino não pode suportar a escrita que georeferencing 
+por exemplo.
+
+Um caso mais complexo pôde envolver passar opções da criação, e usar
+um monitor predefinido do progresso como este:
+
+Em C++:
+\code
+#include "cpl_string.h"
+...
+    char **papszOptions = NULL;
+    
+    papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
+    papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
+    poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
+                                    papszOptions, GDALTermProgress, NULL );
+    if( poDstDS != NULL )
+        delete poDstDS;
+    CSLDestroy( papszOptions );
+\endcode
+
+Em C:
+\code
+#include "cpl_string.h"
+...
+    char **papszOptions = NULL;
+    
+    papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
+    papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
+    hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE, 
+                             papszOptions, GDALTermProgres, NULL );
+    if( hDstDS != NULL )
+        GDALClose( hDstDS );
+    CSLDestroy( papszOptions );
+\endcode
+
+Em Python:
+
+\code
+    src_ds = gdal.Open( src_filename )
+    dst_ds = driver.CreateCopy( dst_filename, src_ds, 0, 
+                                [ 'TILED=YES', 'COMPRESS=PACKBITS' ] )
+\endcode
+
+\section gdal_tutorial_create Usando Create()
+
+Que as situações em que você não é justo exportando uma arquivo existente para uma arquivo nova, é geralmente necessário use o GDALDriver:: Criar () o método (embora algumas opções interessantes são possíveis com o uso de arquivos virtuais ou de arquivos da em-memória). O método criar () faz exame de uma lista de opções bem como CreateCopy (), mas o tamanho da imagem, número das bandas e o tipo da banda deve ser fornecido explicitamente.
+<p>
+
+Em C++:
+\code
+    GDALDataset *poDstDS;	
+    char **papszOptions = NULL;
+
+    poDstDS = poDriver->Create( pszDstFilename, 512, 512, 1, GDT_Byte, 
+                                papszOptions );
+\endcode
+
+Em C:
+\code
+    GDALDatasetH hDstDS;	
+    char **papszOptions = NULL;
+
+    hDstDS = GDALCreate( hDriver, pszDstFilename, 512, 512, 1, GDT_Byte, 
+                         papszOptions );
+\endcode
+
+Em Python:
+
+\code
+    dst_ds = driver.Create( dst_filename, 512, 512, 1, gdal.GDT_Byte )
+\endcode
+
+Uma vez que a série de dados é criada com sucesso, todos os metadata e dados apropriados 
+da raster devem ser escritos à arquivo. O que este é variará de acordo com o uso, 
+mas um caso simples com uns dados da projeção, do geotransform e da raster é 
+coberto aqui.<p>
+
+Em C++:
+\code
+    double adfGeoTransform[6] = { 444720, 30, 0, 3751320, 0, -30 };
+    OGRSpatialReference oSRS;
+    char *pszSRS_WKT = NULL;
+    GDALRasterBand *poBand;
+    GByte abyRaster[512*512];
+
+    poDstDS->SetGeoTransform( adfGeoTransform );
+    
+    oSRS.SetUTM( 11, TRUE );
+    oSRS.SetWellKnownGeogCS( "NAD27" );
+    oSRS.exportToWkt( &pszSRS_WKT );
+    poDstDS->SetProjection( pszSRS_WKT );
+    CPLFree( pszSRS_WKT );
+
+    poBand = poDstDS->GetRasterBand(1);
+    poBand->RasterIO( GF_Write, 0, 0, 512, 512, 
+                      abyRaster, 512, 512, GDT_Byte, 0, 0 );    
+
+    delete poDstDS;
+\endcode
+
+Em C:
+\code
+    double adfGeoTransform[6] = { 444720, 30, 0, 3751320, 0, -30 };
+    OGRSpatialReferenceH hSRS;
+    char *pszSRS_WKT = NULL;
+    GDALRasterBandH hBand;
+    GByte abyRaster[512*512];
+
+    GDALSetGeoTransform( hDstDS, adfGeoTransform );
+
+    hSRS = OSRNewSpatialReference( NULL );
+    OSRSetUTM( hSRS, 11, TRUE );
+    OSRSetWellKnownGeogCS( hSRS, "NAD27" );			
+    OSRExportToWkt( hSRS, &pszSRS_WKT );
+    OSRDestroySpatialReference( hSRS );
+
+    GDALSetProjection( hDstDS, pszSRS_WKT );
+    CPLFree( pszSRS_WKT );
+
+    hBand = GDALGetRasterBand( hDstDS, 1 );
+    GDALRasterIO( hBand, GF_Write, 0, 0, 512, 512, 
+                  abyRaster, 512, 512, GDT_Byte, 0, 0 );    
+
+    GDALClose( hDstDS );
+\endcode
+
+Em Python:
+
+\code
+    import Numeric, osr
+
+    dst_ds.SetGeoTransform( [ 444720, 30, 0, 3751320, 0, -30 ] )
+    
+    srs = osr.SpatialReference()
+    srs.SetUTM( 11, 1 )
+    srs.SetWellKnownGeogCS( 'NAD27' )
+    dst_ds.SetProjection( srs.ExportToWkt() )
+
+    raster = Numeric.zeros( (512, 512) )    
+    dst_ds.GetRasterBand(1).WriteArray( raster )
+\endcode
+
+\htmlonly
+<p>
+$Id: gdal_tutorial_br.dox $
+</p>
+\endhtmlonly
+
+*/

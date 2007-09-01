@@ -1,0 +1,311 @@
+/* $Id: gdal_datamodel_br.dox $ */
+
+/*! \page gdal_datamodel_br Modelo de Dados de GDAL
+
+Este documento descreve o Modelo de Dados implementado pela bilbioteca GDAL, 
+os tipos de informação que GDAL pode conter e a sua semântica.<p>
+
+\section gdal_datamodel_dataset Dataset
+
+Um dataset (representado pela classe GDALDataset) é um agrupamento de bandas 
+"raster" e um conjunto de informação comum a estas bandas. 
+Em particular, um dataset possui o conceito de tamanho (em pixels e em linhas)
+que se aplica à todas as bandas. 
+O Dataset também é reponsável pelas definições de referência geográficas e
+sistema de coordenadas comum a todas as bandas.
+O Dataset também pode possuir metadado, representado por uma lista de 
+pares de strings no formato nome=valor.
+
+Note que o GDALDataet e o modelo de banda "raster" em GDAL possue algum relação
+com à especificação Grid Coverage do OpenGIS.
+
+\subsection gdal_datamodel_dataset_cs Sistema de Coordenadas
+
+O sistema de coordenadas de um dataset é representado por uma string no 
+formato chamado "Well Kown Text" que contém:
+
+<ul>
+<li> Nome geral para o sistema de coordenadas.
+<li> Nome do sistema de coordenadas geográficas.
+<li> Nome do datum.
+<li> Nome da Elipsóide, semi-eixo maior e o inverso do achatamento.
+<li> Nome do meridiano de origem e sua distância de Greenwich. 
+<li> Nome da projeção (ex. Transverse Mercator). 
+<li> List de parametros de projeção (ex. meridiano central). 
+<li> Nome das unidades e fator de conversão para metros ou radianos.
+<li> Nome e order dos eixos.
+<li> A Códigos para relacionar a maioria dos items acima com tabelas de autoridades tais como EPSG. 
+</ul>
+
+Para maiores informações sobre o sistema de coordenadas OpenGIS WKT, e seu o mecanismo 
+de manipulação, refira-se ao documento <a href="ogr/osr_tutorial.html">
+osr_tutorial</a> e/ou a documentação da classe OGRSpatialReference.
+
+O sistema de coordenadas retornado pelo método GDALDataset::GetProjectionRef()
+descreve as coordenadas geo-referenciadas que devem ser usadas na transformação afim
+retornada pelo método GDALDataset::GetGeoTransform().
+O sistema de coordenadas retornado pelo métido GDALDataset::GetGCPProjection()
+descreve as coordenadas geo-referenciadas dos GCPs retornados pelo
+método GDALDataset::GetGCPs().
+
+Note que se a string do sistema de coordenada retornado for igual a "" isto
+indica que nada se sabe sobre o sistema de coordenadas do referido dataset.
+
+\subsection gdal_datamodel_dataset_gtm Transformação afim
+
+GDAL datasets tem duas formas de descrever o relationamento entre
+poisição em raster (coordenadas de pixel) e coordenadas geográficas.
+O primeiro e mais usado é a transformação afim (O outro is the GCPs).
+
+A transformação afim consiste em seis coeficiente retornados por
+GDALDataset::GetGeoTransform() que mapeiam coordenadas de pixel/linhas 
+em coordenadas referenciadas spacialmente usango o seguinte relacionamento:
+
+<pre>
+    Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
+    Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
+</pre>
+
+No caso de imagens orientadas em direção ao norte, o coeficientes de GT(2) e GT(4) são igual a zero, e
+o GT(1) é a largura en pixels, e GT(5) é a altura en pixels. O posição (GT(0), GT(3))
+é o canto superior esquerdo do pixel no canto superior esquerdo da imagem.
+
+Note that the pixel/line coordinates in the above are from (0.0,0.0) at the
+top left corner of the top left pixel to (width_in_pixels,height_in_pixels)
+at the bottom right corner of the bottom right pixel.  The pixel/line location
+of the center of the top left pixel would therefore be (0.5,0.5). 
+
+\subsection gdal_datamodel_dataset_gcp GCPs
+
+Um dataset pode possuir um conjunto de pontos de controle relacionando uma ou mais posições
+no raster com coordenadas geo-referenciadas. Todos os GCPs compartilham o mesmo sistema
+de coordanadas (retornado pelo GDALDataset::GetGCPProjection()). Cada GCP (representado 
+pelo classe GDAL_GCP) contain as seguintes strutura:
+
+<pre>
+typedef struct
+{
+    char	*pszId; 
+    char	*pszInfo;
+    double 	dfGCPPixel;
+    double	dfGCPLine;
+    double	dfGCPX;
+    double	dfGCPY;
+    double	dfGCPZ;
+} GDAL_GCP;
+</pre>
+
+A string pszId deve conter um único (e geralmente, mas nem sempre, numérico)
+identificador para cada GCP dentro do conjunto de GCPs do dataset.
+A string pszInfo é usualmente vazia mas pode conter qualquer texto associado ao
+GCP que o usuário defina. Potencialmente pszInfo poderá conter informação, 
+decodificável automaticamente, sobre o estado do GCP. O que no entando ainda não
+tem sido feito até o momento.
+
+Os campos (Pixel, Line) contém a localização do GCP no raster. Os
+campos (X,Y,Z) estão associados com a localixação geo-referenciada sendo 
+que Z é normalmente zero.
+
+O modelo de dados de GDAL nao impõe nenhum mecanismo de transformação que
+deve ser generado a partir dos GCPs. Isto é deixado para o applicação. No
+entanto polinomios de primeiro a quinto grau são comument utilizados.
+
+Normalmente um dataset ira conter transformações afins (geotransform), GCPs
+or nenhum dos dois. É incomum encontrar os dois é neste caso existe uma definição
+de qual deve ter precedência.
+
+\subsection gdal_datamodel_dataset_metadata Metadados
+
+O metado do GDAL é um format auxiliar de dado textual especifico 
+para cada aplicação que contém uma lista de pares nome=valor. É requerido
+que os nomes sejam chaves facilmente distintas (sem espaço e caracteres estranhso).
+O valor pode ser de qualquer tamanho e pode conter qualquer coisa, exceto um caracter núlo (zero ASCII).
+
+O sistema de manipulação de metadas não é apropriado para suportar grandes volume de metada. 
+Mais de 100K bytes de metada para um dataset provavelmente causará degradação na performance.
+
+Com o tempo espera-se que nomes bem conhecidos sejam identificados e bem estabelicidos semanticamente,
+no entanto isto ainda não tem ocorrido até o momento.
+
+Alguns formatos suportam metados genéricos (definidos pelo usuário), enquanto outros 
+formatos supportam nomes specificos. Por exemplo o TIFF driver retorna algumas de suas
+"tags" na forma de metadas tais como data e hora:
+
+<pre>
+TIFFTAG_DATETIME=1999:05:11 11:29:56
+</pre>
+
+O matado é dividido em grupos chamados domínios (domains). O domínio default
+tem o nome em branco (NULL ou ""). Existem alguns domínios specificos para
+propósitos especiais. Note que correntement não existe uma forma de enumarar
+todos os domínios disponíveis para um dado objeto mas as aplicações podem testar
+a existencia de domínios conhecidos.
+
+\subsubsection gdal_datamodel_subdatasets Domínio de SUBDATASETS
+
+Os domínios SUBDATASETS podem listar uma hierarquia de datasets filhos.
+Normalmente isto é usado para prover endereços para várias imagens (ou datasets)
+internas à um único arquivo de images (como HDF ou NITF). Por exemplo, um arquivo
+NITF com quatro imagens pode ter a seguinte list a de subdataset:
+
+<pre>
+  SUBDATASET_1_NAME=NITF_IM:0:multi_1b.ntf
+  SUBDATASET_1_DESC=Image 1 of multi_1b.ntf
+  SUBDATASET_2_NAME=NITF_IM:1:multi_1b.ntf
+  SUBDATASET_2_DESC=Image 2 of multi_1b.ntf
+  SUBDATASET_3_NAME=NITF_IM:2:multi_1b.ntf
+  SUBDATASET_3_DESC=Image 3 of multi_1b.ntf
+  SUBDATASET_4_NAME=NITF_IM:3:multi_1b.ntf
+  SUBDATASET_4_DESC=Image 4 of multi_1b.ntf
+  SUBDATASET_5_NAME=NITF_IM:4:multi_1b.ntf
+  SUBDATASET_5_DESC=Image 5 of multi_1b.ntf
+</pre>
+
+O valor de _NAME é a string que pode ser usada em uma chamada à GDALOpen()
+para acessar o arquivo. O valor de _DESC tem a intensão de apresentar uma
+descrição ao usuário no caso da seleção de subdataset.
+
+\subsubsection gdal_datamodel_image_structure Domínio IMAGE_STRUCTURE 
+
+O domínio defult do metadata ("") está relacionado à image e não particularmente
+a forma como a image é organizada no arquivo.
+Isto significa que este domínio é apropriado para se copiar junto com o dataset
+quanto a image é copida para um novo format.
+Alguma informações pertence somente a um particular format de arquivo e sua forma
+de armazenamento.
+Para que esta informação não seja copiada inadvertidamente este tipo de informação
+é colocado num domínio especial chamado IMAGE_STRUCTURE que não normalmente não deve ser
+copiado de um formato para outro.
+
+Um item que aparedce no domínio IMAGE_STRUCTURE é o esquema de compressão usado
+pelo formato. O nome deste item no metada é COMPRESSION mas o valor dele pode
+um formato specifico.
+
+\subsubsection gdal_datamodel_xml Domínio xml:
+
+Qualquer domínio cujo o prefix do nome é "xml:" não é um item de metada normal mas sim
+um único documento XML armazenado numa string longa.
+
+\section gdal_datamodel_rasterband Banda de Imagem Raster
+
+Uma banda de image raster é representada em GDAL pela classe GDALRaseterBand.
+Ela representa uma única band, chamal or layer. Não representa necessáriamente
+uma imagem inteira. Por Exemplo, numa imagem 24bit RGB é normalmente representada
+por um dataset com três bandas, uma para vermelho, uma pra verde e outra para azul.
+
+Um banda raster tem as seguintes propriedades:
+
+<ul>
+
+<li> Altura e largura em número de pixels e linhas. O mesmo valor definido para o dataset,
+caso seje uma banda de resolução total.
+
+<li> Um tipo de dato. Podendo ser Byte, UInt16, Int16, UInt32, Int32, 
+Float32, Float64, and the complex types CInt16, CInt32, CFloat32, and CFloat64.
+
+<li> Um tamanho de bloco, que seria o valor preferido (eficiente) para se acessar 
+um pedaço do arquivo. Para imagens dividida em "tiles" este seria o tamanho de um bloco.
+Para image organizadas por linha de varredura (scanLine), tamalho de bloc seria a 
+largura do "scanline".
+
+<li> Lista de pares nome/valor do metada, no mesmo formato que o dataset mas com 
+informações que sejam potencialmente especificas da banda.
+
+<li> Um string com uma descrição opcional
+
+<li> Uma lista de nomes de categorias (efetivamente, nome de classe numa imagem temática)
+
+<li> Opcionalmente, valores pixel mínimos é máximos.
+
+<li> Opcionalmente, o valor do deslocamento e da escala para transformar os valores de
+banda raster em valores significativoes (ex. para traduzir altura para metros).
+
+<li> Opcionalmente, o nome da unidade do raster. Indicando, por exemplo, a unidade linear 
+para um dado de elevação.
+
+<li> A tipo de interpretação das cores da banda, que pode ser:
+
+  <ul> 
+  <li> GCI_Undefined: O default, Nada ou desconhecido
+  <li> GCI_GrayIndex: Image em toms de cinza independente
+  <li> GCI_PaletteIndex: A banda representa índice para tabela de cores
+  <li> GCI_RedBand: A banda representa a proção vermelha de uma image RGB ou RGBA
+  <li> GCI_GreenBand: A banda representa a proção verde de uma image RGB ou RGBA
+  <li> GCI_BlueBand: A banda representa a proção azul de uma image RGB ou RGBA
+  <li> GCI_AlphaBand: A banda representa a proção alpha de uma image RGBA
+  <li> GCI_HueBand: A banda representa a proção intensidade de uma image HLS
+  <li> GCI_SaturationBand: A banda representa a proção saturação de uma image HLS
+  <li> GCI_LightnessBand: A banda representa a proção luz de uma image HLS
+  <li> GCI_CyanBand: A banda representa a proção ciano de uma image CMY ou CMYK
+  <li> GCI_MagentaBand: A banda representa a proção magenta de uma image CMY ou CMYK
+  <li> GCI_YellowBand: A banda representa a proção amarelo de uma image CMY ou CMYK
+  <li> GCI_BlackBand: A banda representa a proção preto de uma image CMYK
+  </ul>
+
+<li> Uma tabela de cores. A ser detalhada porteriormente.
+
+<li> Indicação da existência de versões reduzida de banda (piramides).
+
+</ul>
+
+\section gdal_datamodel_rasterband_ct Tabela de cores
+
+A tabela de cores consiste de zero ou mais items decritos em C na seguinte estrucura:
+
+<pre>
+typedef struct
+{
+    /- gray, red, cyan or hue -/
+    short      c1;      
+
+    /- green, magenta, or lightness -/    
+    short      c2;      
+
+    /- blue, yellow, or saturation -/
+    short      c3;      
+
+    /- alpha or blackband -/
+    short      c4;      
+} GDALColorEntry;
+</pre>
+
+A tabela de cores também possiu um valor de interpretação (GDALPaletteInterp)
+com um dos seguintes valores, que indica como os valores de c1/c2/c3/c4 dos 
+item da tabela devem ser interpretados. 
+
+<ul>
+<li> GPI_Gray: Usa c1 como valor de tom de cinza.
+<li> GPI_RGB: Usa c1 como vermelho, c2 como verde, c3 como azul e c4 como alpha.
+<li> GPI_CMYK: Usa c1 como ciano, c2 como magenta, c3 como amarelo e c4 como preto.
+<li> GPI_HLS: Usa c1 como intensidade, c2 como saturação, c3 como luminosidade.
+</ul>
+
+Para associar a cor com o pixel, o valor de pixel deve ser usado como um
+subscritor dentro da tabela de cores. Isto significa que as cores devem ser 
+sempre aplicadas começando do zero em diante. Não existe provisão para
+macanismo de pre-escala antes de se buscar valores na tabela de cores.
+
+\section gdal_datamodel_rasterband_overviews Overviews
+
+Uma banda pode ter zero ou mais overviews. Cada overview é representada
+por um banda GDALRasterBand independente. O tamanho (em pixels e linhas) de
+um overview é diferente do raster que ela representa, mas a região geográfica
+coverta pela overview é a mesma da image de resolução total.
+
+As overviews são usadas para mostrar uma image de resolução reduzida
+mais rápido do que acessar os dados da imagem de resolução total e depois 
+reduzir-la por amostragem.
+
+Bandas podem também a propriedadde HasArbitraryOverviews que indica se, caso
+seja verdadeira, o raster pode ser lido a qualquer resolução mas sem nenhuma
+distinção de overviews. Isto se aplica a algumas images codificadas tipo FFT, ou
+imagens capturadas via servidores (como OGDI) onde a amostragem pode ser executada
+mais eficentemente do que na máquina remota.
+
+\htmlonly
+<p>
+$Id: gdal_datamodel_br.dox $
+</p>
+\endhtmlonly
+
+*/
