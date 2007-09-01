@@ -356,7 +356,8 @@ but only a few support the Create() method.
 To determine if a particular format supports Create or CreateCopy 
 it is possible to check the DCAP_CREATE  and DCAP_CREATECOPY metadata on the
 format driver object.  Ensure that GDALAllRegister() has been called before
-calling GetDriverByName().  In this example we 
+calling GetDriverByName().  In this example we fetch a driver, and determine
+whether it supports Create() and/or CreateCopy().
 
 In C++:
 \code
