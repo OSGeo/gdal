@@ -29,6 +29,7 @@
 
 #include "dted_api.h"
 #include "gdal_pam.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -380,6 +381,22 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Checks the input SRS                                            */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference ogrsr_input;
+    OGRSpatialReference ogrsr_wgs84;
+    char* c = (char*)poSrcDS->GetProjectionRef();
+    ogrsr_input.importFromWkt(&c);
+    ogrsr_wgs84.SetWellKnownGeogCS( "WGS84" );
+    if ( ogrsr_input.IsSameGeogCS(&ogrsr_wgs84) == FALSE)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "The source projection coordinate system is %s. Only WGS 84 is supported.\n"
+                  "The DTED driver will generate a file as if the source was WGS 84 projection coordinate system.",
+                  poSrcDS->GetProjectionRef() );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Work out the LL origin.                                         */
 /* -------------------------------------------------------------------- */
     int  nLLOriginLat, nLLOriginLong;
@@ -392,6 +409,36 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
               + poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5);
     
     nLLOriginLong = (int) floor(adfGeoTransform[0] + 0.5);
+
+    if (fabs(nLLOriginLat - (adfGeoTransform[3] 
+              + (poSrcDS->GetRasterYSize() - 0.5) * adfGeoTransform[5])) > 1e-10 ||
+        fabs(nLLOriginLong - (adfGeoTransform[0] + 0.5 * adfGeoTransform[1])) > 1e-10)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+               "The corner coordinates of the source are not properly "
+               "aligned on plain latitude/longitude boundaries.");
+    }
+
+/* -------------------------------------------------------------------- */
+/*     Check horizontal source size.                                    */
+/* -------------------------------------------------------------------- */
+    int expectedXSize;
+    if( ABS(nLLOriginLat) >= 80 )
+        expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 6 + 1;
+    else if( ABS(nLLOriginLat) >= 75 )
+        expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 4 + 1;
+    else if( ABS(nLLOriginLat) >= 70 )
+        expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 3 + 1;
+    else if( ABS(nLLOriginLat) >= 50 )
+        expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 2 + 1;
+
+    if (poSrcDS->GetRasterXSize() != expectedXSize)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+               "The horizontal source size is not conformant with the one "
+               "expected by DTED Level %d at this latitude (%d pixels found instead of %d).", nLevel,
+                poSrcDS->GetRasterXSize(), expectedXSize);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the output dted file.                                    */
