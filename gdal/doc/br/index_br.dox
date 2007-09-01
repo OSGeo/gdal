@@ -1,0 +1,109 @@
+#ifndef DOXYGEN_SKIP                                                            
+/* $Id: index_br.dox $ */               
+Translation corresponds to index.dox "11836 2007-08-02 21:24:45Z warmerdam"
+Translator Ivan Lucena <ivan.lucena@pmldnet.com>
+#endif /* DOXYGEN_SKIP */                                                       
+
+/*! \page index_br GDAL - Biblioteca de Abstrações de Dados Geo-Espaciais
+
+<center>
+<b>Selecione o idioma</b>: 
+<a href="index.html">[English] </a>
+<a href="index_ru.html">[Russian] </a>
+[Portuguese]
+</center>
+
+\htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
+é uma bibliotéca para tradução de formatos de dados geográficos distribuída pela 
+<a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a> sob a licença 
+<a href="faq.html#license">X/MIT</a> estilo 
+<a href="http://www.opensource.org/"> Open Source</a>. 
+Aplicações que à utilizam acessam todos os formats 
+supportados pela biblioteca através de 
+\link gdal_datamodel_br.html um único modelo abstrato de dados\endlink.
+GDAL tamém conta com um variadade de programas 
+\link gdal_utilities.html utilitários de linha de comando \endlink 
+para a tradução de formats e outras funções. 
+A página 
+<a href="http://trac.osgeo.org/gdal/wiki/Release/1.4.2-News">novidades</a> descreve o 
+lançamento em Junho de 2007 da release 1.4.2 da biblioteca GDAL/OGR.
+
+A bilioteca <a href="ogr">OGR</a> (cujo código fonte pertence a árvore de código da GDAL) possue
+funcionalidades semelhantes à GDAL para datos vetorias (Simple Features).
+
+Página Principal: http://www.gdal.org<br>
+Download: 
+ <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
+ <a href="http://download.osgeo.org/gdal">http at download.osgeo.org</a>
+
+\section index_userdocs Documentação para usuário
+
+<ul>
+<li> <a href="http://trac.osgeo.org/gdal/">Wiki</a> - Documentação e dicas mantidas por vários desenvolvedores e contribuidores
+<li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">Downloads</a> - Programas executáveis prontos para usar
+<li> <a href="formats_list.html">Formatos Suportados</a>
+<li> <a href="gdal_utilities.html">Programs Utilitários</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/FAQ">Perguntas Mais Frequentes</a>
+<li> <a href="gdal_datamodel.html">Modelo de dados</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/GovernanceAndCommunity">Governança e participação comunitária</a>
+<li> <a href="credits.html">Patrocinadores, Agradecimentos e Créditos</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/SoftwareUsingGdal">Software que usam GDAL</a>
+</ul>
+
+\section index_devdocs Documentação para desenvolvedor
+
+<ul>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/BuildHints">Como compilar GDAL</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadSource">Downloads</a> - código fonte
+<li> <a href="hierarchy.html">Documentação de referencia da API</a>
+<li> <a href="gdal_tutorial.html">Tutorial da API do GDAL</a>
+<li> <a href="gdal_drivertut.html">Tutorial de implementação de drivers</a>
+<li> <a href="warptut.html">Tutorial de transformação geométrica</a>
+<li> <a href="ogr/osr_tutorial.html">Tutorial de Referência Espacial</a>
+<li> <a href="gdal_8h.html">GDAL API para C</a>
+<li> <a href="classGDALDataset.html">GDALDataset</a>
+<li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
+<li> <a href="wince.html">GDAL para Windows CE</a>
+</ul>
+
+\section index_maillist Lista de discussão por correio eletrônico
+
+A lista gdal-announce <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">subscription</a>
+é uma lista de pequeno volume de mensagens usada somente para anunciar lançamento de 
+versões e desenvolvimentos significativos.
+
+A lista <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a>
+pode ser usada para a discussão sobre o desenvolvimento e uso da GDAL e tecnologias relaciadas.
+A inscrição e o acesso aos arquivo da lista podem ser feitos 
+<a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/"> nesta página</a>. 
+Os arquivos da lista também estão disponíveis (somente para leitura) através do
+<a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>
+ou na página 
+<a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.<p>
+
+Usuários e desenvolvedores da GDAL/OGR podem constantemente ser achados no canal IRC 
+<a href="irc://irc.freenode.net/#gdal">#gdal</a> do irc.freenode.net.<p>
+
+\section index_bugs Como Reportar Problemas (Bugs)
+
+Bugs em GDAL podem ser 
+<a href="http://trac.osgeo.org/gdal/newticket">reportados</a> e também 
+<a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">listados</a> através do software Trac.<p>
+
+\section index_bindings GDAL em outras linguagens
+
+Lista de linguagens de programção supportadas por GDAL:
+
+<ul>
+<li> <a href="http://map.hut.fi/gdal-perl/">Perl</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInPython">Python</a>
+<li> <a href="vb6_tutorial.html">VB6 Bindings</a> (sem o uso de SWIG)
+<li> <a href="http://rgdal.sourceforge.net/">GDAL interface para R</a>
+by Timothy H. Keitt.
+<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInRuby">Ruby</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInJava">Java</a>
+<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInCsharp">C# / .Net</a>
+
+</ul>
+
+*/
