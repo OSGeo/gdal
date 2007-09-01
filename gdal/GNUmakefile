@@ -148,7 +148,7 @@ install-docs:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/gdal
 	cp html/*.* $(DESTDIR)$(INST_DOCS)/gdal
 
-install-man: man
+install-man:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
 	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
@@ -157,7 +157,7 @@ web-update:	docs
 
 install:	default install-actions
 
-install-actions: install-lib install-man
+install-actions: install-lib
 	$(INSTALL_DIR) $(DESTDIR)$(INST_BIN)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DATA)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_INCLUDE)
