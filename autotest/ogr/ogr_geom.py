@@ -52,6 +52,28 @@ def ogr_geom_area():
     
     return 'success'
 
+###############################################################################
+# Test Area calculation for a LinearRing (which excersises special case of
+# getGeometryType value).
+
+def ogr_geom_area_linearring():
+
+    geom = ogr.Geometry( type = ogr.wkbLinearRing )
+    geom.AddPoint_2D( 0, 0)
+    geom.AddPoint_2D( 10, 0)
+    geom.AddPoint_2D( 10, 10)
+    geom.AddPoint_2D( 0, 10)
+    geom.AddPoint_2D( 0, 0)
+
+    area = geom.GetArea()
+    if abs(area - 100.0) > 0.00000000001:
+        gdaltest.post_reason( 'Area result wrong, got %g.' % area )
+        return 'fail'
+
+    geom.Destroy()
+    
+    return 'success'
+
 def ogr_geom_empty():
     try:
         ogr.Geometry.IsEmpty
@@ -101,6 +123,7 @@ def ogr_geom_pickle():
         return 'fail'
     geom.Destroy()
     return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -109,6 +132,7 @@ def ogr_geom_cleanup():
 
 gdaltest_list = [ 
     ogr_geom_area,
+    ogr_geom_area_linearring,
     ogr_geom_empty,
     ogr_geom_pickle,
     ogr_geom_cleanup ]
