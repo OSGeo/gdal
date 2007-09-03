@@ -634,22 +634,38 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 double OGR_G_GetArea( OGRGeometryH hGeom )
 
 {
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetArea", 0 );
+
+    double fArea = 0.0;
+
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
     {
       case wkbPolygon:
-        return ((OGRPolygon *) hGeom)->get_Area();
+        fArea = ((OGRPolygon *) hGeom)->get_Area();
         break;
 
       case wkbMultiPolygon:
-        return ((OGRMultiPolygon *) hGeom)->get_Area();
+        fArea = ((OGRMultiPolygon *) hGeom)->get_Area();
         break;
 
       case wkbLinearRing:
-        return ((OGRLinearRing *) hGeom)->get_Area();
+      case wkbLineString:
+        /* This test below is required to filter out wkbLineString geometries
+         * not being of type of wkbLinearRing.
+         */
+        if( EQUAL( ((OGRGeometry*) hGeom)->getGeometryName(), "LINEARRING" ) )
+        {
+            fArea = ((OGRLinearRing *) hGeom)->get_Area();
+        }
         break;
-        
+
       default:
-        return 0.0;
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "OGR_G_GetArea() called against non-surface geometry type." );
+
+        fArea = 0.0;
     }
+
+    return fArea;
 }
 
