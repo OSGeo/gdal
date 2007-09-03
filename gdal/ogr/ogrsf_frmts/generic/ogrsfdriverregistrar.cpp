@@ -34,9 +34,10 @@
 
 CPL_CVSID("$Id$");
 
+static void *hDRMutex = NULL;
 static OGRSFDriverRegistrar *poRegistrar = NULL;
 
-static char *pszUpdatableINST_DATA = 
+static const char *pszUpdatableINST_DATA = 
 "__INST_DATA_TARGET:                                                                                                                                      ";
 /************************************************************************/
 /*                         OGRSFDriverRegistrar                         */
@@ -107,6 +108,8 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 void OGRCleanupAll()
 
 {
+    CPLMutexHolderD( &hDRMutex );
+
     if( poRegistrar != NULL )
         delete poRegistrar;
     OSRCleanup();
@@ -124,6 +127,8 @@ void OGRCleanupAll()
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 
 {
+    CPLMutexHolderD( &hDRMutex );
+    
     if( poRegistrar == NULL )
         poRegistrar = new OGRSFDriverRegistrar();
 
