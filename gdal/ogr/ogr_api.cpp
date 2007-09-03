@@ -634,8 +634,6 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 double OGR_G_GetArea( OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetArea", 0 );
-
     double fArea = 0.0;
 
     switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
