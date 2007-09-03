@@ -46,7 +46,7 @@ def mask_1():
         x = gdalconst.GMF_ALL_VALID
         gdaltest.have_ng = 1
     except:
-        gdaltest.have_ng = 1
+        gdaltest.have_ng = 0
         return 'skip'
 
     ds = gdal.Open('data/byte.tif')
@@ -148,7 +148,7 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pam_md' )
+    gdaltest.setup_run( 'mask' )
 
     gdaltest.run_tests( gdaltest_list )
 
