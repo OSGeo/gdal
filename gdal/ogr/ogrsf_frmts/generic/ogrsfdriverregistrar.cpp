@@ -390,7 +390,7 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
 OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGRReleaseDataSource", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hDS, "OGRReleaseDataSource", OGRERR_INVALID_HANDLE );
 
     OGRSFDriverRegistrar::GetRegistrar();
     return poRegistrar->ReleaseDataSource((OGRDataSource *) hDS);
@@ -680,3 +680,4 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
 
     CSLDestroy( papszSearchPath );
 }
+

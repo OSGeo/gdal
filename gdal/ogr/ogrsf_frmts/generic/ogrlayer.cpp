@@ -257,7 +257,7 @@ OGRErr OGRLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 OGRErr OGR_L_GetExtent( OGRLayerH hLayer, OGREnvelope *psExtent, int bForce )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_GetExtent", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetExtent", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hLayer)->GetExtent( psExtent, bForce );
 }
@@ -310,7 +310,7 @@ OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
 OGRErr OGR_L_SetAttributeFilter( OGRLayerH hLayer, const char *pszQuery )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_SetAttributeFilter", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_SetAttributeFilter", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hLayer)->SetAttributeFilter( pszQuery );
 }
@@ -377,7 +377,7 @@ OGRErr OGRLayer::SetNextByIndex( long nIndex )
 OGRErr OGR_L_SetNextByIndex( OGRLayerH hLayer, long nIndex )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_SetNextByIndex", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_SetNextByIndex", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)hLayer)->SetNextByIndex( nIndex );
 }
@@ -411,8 +411,8 @@ OGRErr OGRLayer::SetFeature( OGRFeature * )
 OGRErr OGR_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_SetFeature", OGRERR_FAILURE );
-    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_SetFeature", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)hLayer)->SetFeature( (OGRFeature *) hFeat );
 }
@@ -434,8 +434,8 @@ OGRErr OGRLayer::CreateFeature( OGRFeature * )
 OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_CreateFeature", OGRERR_FAILURE );
-    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_CreateFeature", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hLayer)->CreateFeature( (OGRFeature *) hFeat );
 }
@@ -475,8 +475,8 @@ OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField,
                           int bApproxOK )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_CreateField", OGRERR_FAILURE );
-    VALIDATE_POINTER1( hField, "OGR_L_CreateField", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_CreateField", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( hField, "OGR_L_CreateField", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hLayer)->CreateField( (OGRFieldDefn *) hField, 
                                                bApproxOK );
@@ -499,7 +499,7 @@ OGRErr OGRLayer::StartTransaction()
 OGRErr OGR_L_StartTransaction( OGRLayerH hLayer )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_StartTransaction", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_StartTransaction", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)hLayer)->StartTransaction();
 }
@@ -521,7 +521,7 @@ OGRErr OGRLayer::CommitTransaction()
 OGRErr OGR_L_CommitTransaction( OGRLayerH hLayer )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_CommitTransaction", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_CommitTransaction", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)hLayer)->CommitTransaction();
 }
@@ -543,7 +543,7 @@ OGRErr OGRLayer::RollbackTransaction()
 OGRErr OGR_L_RollbackTransaction( OGRLayerH hLayer )
 
 {
-    VALIDATE_POINTER1( hLayer, "OGR_L_RollbackTransaction", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hLayer, "OGR_L_RollbackTransaction", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)hLayer)->RollbackTransaction();
 }
@@ -851,7 +851,7 @@ OGRErr OGRLayer::SyncToDisk()
 OGRErr OGR_L_SyncToDisk( OGRLayerH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_L_SyncToDisk", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hDS, "OGR_L_SyncToDisk", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hDS)->SyncToDisk();
 }
@@ -873,7 +873,7 @@ OGRErr OGRLayer::DeleteFeature( long nFID )
 OGRErr OGR_L_DeleteFeature( OGRLayerH hDS, long nFID )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_L_DeleteFeature", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hDS, "OGR_L_DeleteFeature", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hDS)->DeleteFeature( nFID );
 }
