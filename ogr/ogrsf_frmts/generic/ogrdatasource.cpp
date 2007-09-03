@@ -351,7 +351,7 @@ OGRErr OGRDataSource::DeleteLayer( int iLayer )
 OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_DeleteLayer", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hDS, "OGR_DS_DeleteLayer", OGRERR_INVALID_HANDLE );
 
     return ((OGRDataSource *) hDS)->DeleteLayer( iLayer );
 }
@@ -939,7 +939,7 @@ OGRErr OGRDataSource::SyncToDisk()
 OGRErr OGR_DS_SyncToDisk( OGRDataSourceH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_SyncToDisk", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hDS, "OGR_DS_SyncToDisk", OGRERR_INVALID_HANDLE );
 
     return ((OGRDataSource *) hDS)->SyncToDisk();
 }
