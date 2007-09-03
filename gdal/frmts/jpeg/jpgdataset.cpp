@@ -472,7 +472,9 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
         pszName[0] = '\0';
 
         for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
-            if(poExifTags->tag == poTIFFDirEntry->tdir_tag){
+            if(poExifTags->tag == poTIFFDirEntry->tdir_tag) {
+                CPLAssert( NULL != poExifTags && NULL != poExifTags->name );
+
                 strcpy(pszName, poExifTags->name);
                 break;
             }
@@ -481,6 +483,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
         if( nOffset == nGPSOffset) {
             for( poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++ ) 
                 if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
+                    CPLAssert( NULL != poGPSTags && NULL != poGPSTags->name );
                     strcpy(pszName, poGPSTags->name);
                     break;
                 }
@@ -491,6 +494,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
         if( nOffset == nInterOffset ) {
             for(poInterTags = intr_tags; poInterTags->tag; poInterTags++)
                 if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
+                    CPLAssert( NULL != poInterTags && NULL != poInterTags->name );
                     strcpy(pszName, poInterTags->name);
                     break;
                 }
