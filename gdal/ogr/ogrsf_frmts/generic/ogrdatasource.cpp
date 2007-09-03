@@ -108,6 +108,8 @@ int OGRDataSource::Reference()
 int OGR_DS_Reference( OGRDataSourceH hDataSource )
 
 {
+    VALIDATE_POINTER1( hDataSource, "OGR_DS_Reference", 0 );
+
     return ((OGRDataSource *) hDataSource)->Reference();
 }
 
@@ -128,6 +130,8 @@ int OGRDataSource::Dereference()
 int OGR_DS_Dereference( OGRDataSourceH hDataSource )
 
 {
+    VALIDATE_POINTER1( hDataSource, "OGR_DS_Dereference", 0 );
+
     return ((OGRDataSource *) hDataSource)->Dereference();
 }
 
@@ -148,6 +152,8 @@ int OGRDataSource::GetRefCount() const
 int OGR_DS_GetRefCount( OGRDataSourceH hDataSource )
 
 {
+    VALIDATE_POINTER1( hDataSource, "OGR_DS_GetRefCount", 0 );
+
     return ((OGRDataSource *) hDataSource)->GetRefCount();
 }
 
@@ -175,6 +181,8 @@ int OGRDataSource::GetSummaryRefCount() const
 int OGR_DS_GetSummaryRefCount( OGRDataSourceH hDataSource )
 
 {
+    VALIDATE_POINTER1( hDataSource, "OGR_DS_GetSummaryRefCount", 0 );
+
     return ((OGRDataSource *) hDataSource)->GetSummaryRefCount();
 }
 
@@ -210,7 +218,10 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
                               char ** papszOptions )
 
 {
-    if (pszName == NULL) {
+    VALIDATE_POINTER1( hDS, "OGR_DS_CreateLayer", NULL );
+
+    if (pszName == NULL)
+    {
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in OGR_DS_CreateLayer");
         return 0;
     }
@@ -312,6 +323,9 @@ OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
                             char **papszOptions )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_CopyLayer", NULL );
+    VALIDATE_POINTER1( hSrcLayer, "OGR_DS_CopyLayer", NULL );
+
     return ((OGRDataSource *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
                                                pszNewName, papszOptions );
 }
@@ -337,6 +351,8 @@ OGRErr OGRDataSource::DeleteLayer( int iLayer )
 OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_DeleteLayer", OGRERR_FAILURE );
+
     return ((OGRDataSource *) hDS)->DeleteLayer( iLayer );
 }
 
@@ -380,6 +396,8 @@ OGRLayer *OGRDataSource::GetLayerByName( const char *pszName )
 OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszName )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerByName", NULL );
+
     return (OGRLayerH) ((OGRDataSource *) hDS)->GetLayerByName( pszName );
 }
 
@@ -811,6 +829,8 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
                              const char *pszDialect )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_ExecuteSQL", NULL );
+
     return (OGRLayerH) 
         ((OGRDataSource *)hDS)->ExecuteSQL( pszStatement,
                                             (OGRGeometry *) hSpatialFilter,
@@ -834,6 +854,8 @@ void OGRDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer )
 
 {
+    VALIDATE_POINTER0( hDS, "OGR_DS_ReleaseResultSet" );
+
     ((OGRDataSource *) hDS)->ReleaseResultSet( (OGRLayer *) hLayer );
 }
 
@@ -844,6 +866,8 @@ void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer )
 int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_TestCapability", 0 );
+
     return ((OGRDataSource *) hDS)->TestCapability( pszCap );
 }
 
@@ -854,6 +878,8 @@ int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap )
 int OGR_DS_GetLayerCount( OGRDataSourceH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerCount", 0 );
+
     return ((OGRDataSource *)hDS)->GetLayerCount();
 }
 
@@ -864,6 +890,8 @@ int OGR_DS_GetLayerCount( OGRDataSourceH hDS )
 OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayer", NULL );
+
     return (OGRLayerH) ((OGRDataSource*)hDS)->GetLayer( iLayer );
 }
 
@@ -874,6 +902,8 @@ OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 const char *OGR_DS_GetName( OGRDataSourceH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetName", NULL );
+
     return ((OGRDataSource*)hDS)->GetName();
 }
 
@@ -909,6 +939,8 @@ OGRErr OGRDataSource::SyncToDisk()
 OGRErr OGR_DS_SyncToDisk( OGRDataSourceH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_SyncToDisk", OGRERR_FAILURE );
+
     return ((OGRDataSource *) hDS)->SyncToDisk();
 }
 
@@ -929,6 +961,8 @@ OGRSFDriver *OGRDataSource::GetDriver() const
 OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS )
 
 {
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetDriver", NULL );
+
     return (OGRSFDriverH) ((OGRDataSource *) hDS)->GetDriver();
 }
 
