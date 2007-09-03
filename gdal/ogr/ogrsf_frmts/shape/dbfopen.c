@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.72 2007/09/03 19:34:06 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.73 2007/09/03 19:48:11 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.73  2007/09/03 19:48:11  fwarmerdam
+ * move DBFReadAttribute() static dDoubleField into dbfinfo
+ *
  * Revision 1.72  2007/09/03 19:34:06  fwarmerdam
  * Avoid use of static tuple buffer in DBFReadTuple()
  *
@@ -105,7 +108,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.72 2007/09/03 19:34:06 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.73 2007/09/03 19:48:11 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -707,8 +710,6 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
     unsigned char	*pabyRec;
     void	*pReturnField = NULL;
 
-    static double dDoubleField;
-
 /* -------------------------------------------------------------------- */
 /*      Verify selection.                                               */
 /* -------------------------------------------------------------------- */
@@ -754,9 +755,9 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
 /* -------------------------------------------------------------------- */
     if( chReqType == 'N' )
     {
-        dDoubleField = atof(psDBF->pszWorkField);
+        psDBF->dfDoubleField = atof(psDBF->pszWorkField);
 
-	pReturnField = &dDoubleField;
+	pReturnField = &(psDBF->dfDoubleField);
     }
 
 /* -------------------------------------------------------------------- */
