@@ -412,6 +412,7 @@ OGRErr OGR_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_SetFeature", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_FAILURE );
 
     return ((OGRLayer *)hLayer)->SetFeature( (OGRFeature *) hFeat );
 }
@@ -434,6 +435,7 @@ OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_CreateFeature", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_FAILURE );
 
     return ((OGRLayer *) hLayer)->CreateFeature( (OGRFeature *) hFeat );
 }
@@ -474,6 +476,7 @@ OGRErr OGR_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField,
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_CreateField", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hField, "OGR_L_CreateField", OGRERR_FAILURE );
 
     return ((OGRLayer *) hLayer)->CreateField( (OGRFieldDefn *) hField, 
                                                bApproxOK );
