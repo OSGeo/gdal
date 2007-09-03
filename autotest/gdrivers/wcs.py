@@ -32,6 +32,7 @@ import os
 import sys
 import string
 import array
+import urllib2
 import gdal
 
 sys.path.append( '../pymod' )
@@ -51,7 +52,18 @@ def wcs_1():
         
         gdaltest.wcs_drv = gdal.GetDriverByName( 'WCS' )
     except:
-	gdaltest.wcs_drv = None
+        gdaltest.wcs_drv = None
+
+
+    # NOTE - mloskot:
+    # This is a dirty hack checking if remote WCS service is online.
+    # Nothing genuine but helps to keep the buildbot waterfall green.
+    try:
+        srv = 'http://geodata.telascience.org/cgi-bin/mapserv_dem?'
+        web = urllib2.urlopen(srv)
+    except urllib2.HTTPError, e:
+        print 'Test WCS service is down (HTTP Error: %d)' % e.code
+        gdaltest.wcs_drv = None
 
     if gdaltest.wcs_drv is None:
         return 'skip'
