@@ -56,10 +56,17 @@ def jpeg_2():
 
     try:
         if md['EXIF_GPSLatitudeRef'] != 'N' \
-           or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)':
+           or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)' \
+           or md['EXIF_PixelXDimension'] != '361' \
+           or md['EXIF_GPSVersionID'] != '0x2 00 00 00' \
+           or md['EXIF_ExifVersion'] != '021' \
+           or md['EXIF_XResolution'] != '(96)' \
+           or md['EXIF_GPSLatitudeRef'] != 'N':
+            print md
             gdaltest.post_reason( 'Exif metadata wrong.' )
             return 'fail'
     except:
+        print md
         gdaltest.post_reason( 'Exit metadata apparently missing.' )
         return 'fail'
 
