@@ -244,7 +244,7 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
     break;
 	  
   case TIFF_ASCII:
-    //sprintf(pszData, "%s", data);
+    /* NOTE: Using dirty sprintf() causes segmentation fault on Mac OS X. */
     snprintf(pszData, count, "%s", data);
     break;
 
