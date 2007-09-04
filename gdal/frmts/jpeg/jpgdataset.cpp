@@ -212,7 +212,7 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
     break;
 	  
   case TIFF_ASCII:
-    sprintf(pszData, "%s", data);
+    snprintf(pszData, count, "%s", data); 
     break;
 
   case TIFF_SHORT: {
