@@ -41,7 +41,7 @@ import gdaltest
 
 def ers_1():
 
-    tst = gdaltest.GDALTest( 'ERS', 'srtm.ers', 1, 244 )
+    tst = gdaltest.GDALTest( 'ERS', 'srtm.ers', 1, 64864 )
     return tst.testOpen()
 
 ###############################################################################
