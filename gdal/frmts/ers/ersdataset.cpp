@@ -707,10 +707,10 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     int bNative;
 
 #ifdef CPL_LSB
-    bNative = EQUAL(poHeader->Find( "RasterInfo.ByteOrder", "LSBFirst" ),
+    bNative = EQUAL(poHeader->Find( "ByteOrder", "LSBFirst" ),
                     "LSBFirst");
 #else
-    bNative = EQUAL(poHeader->Find( "RasterInfo.ByteOrder", "MSBFirst" ),
+    bNative = EQUAL(poHeader->Find( "ByteOrder", "MSBFirst" ),
                     "MSBFirst");
 #endif
 
