@@ -93,8 +93,6 @@ class JPGDataset : public GDALPamDataset
     
     CPLErr EXIFExtractMetadata(FILE *, int);
     int    EXIFInit(FILE *);
-    void   EXIFPrintByte(char *, const char*, TIFFDirEntry* );
-    void   EXIFPrintShort(char *, const char*, TIFFDirEntry*);
     void   EXIFPrintData(char *, GUInt16, GUInt32, unsigned char* );
 
     int    nQLevel;
@@ -161,59 +159,6 @@ class JPGMaskBand : public GDALRasterBand
   public:
     		JPGMaskBand( JPGDataset *poDS );
 };
-
-/************************************************************************/
-/*                         EXIFPrintByte()                              */
-/************************************************************************/
-void JPGDataset::EXIFPrintByte(char *pszData, 
-			       const char* fmt, TIFFDirEntry* dp)
-{
-  char* sep = "";
-  
-  if (bSwabflag) {
-    switch ((int)dp->tdir_count) {
-    case 4: sprintf(pszData, fmt, sep, dp->tdir_offset&0xff);
-      sep = " ";
-    case 3: sprintf(pszData, fmt, sep, (dp->tdir_offset>>8)&0xff);
-      sep = " ";
-    case 2: sprintf(pszData, fmt, sep, (dp->tdir_offset>>16)&0xff);
-      sep = " ";
-    case 1: sprintf(pszData, fmt, sep, dp->tdir_offset>>24);
-    }
-  } else {
-    switch ((int)dp->tdir_count) {
-    case 4: sprintf(pszData, fmt, sep, dp->tdir_offset>>24);
-      sep = " ";
-    case 3: sprintf(pszData, fmt, sep, (dp->tdir_offset>>16)&0xff);
-      sep = " ";
-    case 2: sprintf(pszData, fmt, sep, (dp->tdir_offset>>8)&0xff);
-      sep = " ";
-    case 1: sprintf(pszData, fmt, sep, dp->tdir_offset&0xff);
-    }
-  }
-}
-
-/************************************************************************/
-/*                         EXIFPrintShort()                             */
-/************************************************************************/
-void JPGDataset::EXIFPrintShort(char *pszData, const char* fmt, 
-			     TIFFDirEntry* dp)
-{
-  char *sep = "";
-  if (bSwabflag) {
-    switch (dp->tdir_count) {
-    case 2: sprintf(pszData, fmt, sep, dp->tdir_offset&0xffff);
-      sep = " ";
-    case 1: sprintf(pszData, fmt, sep, dp->tdir_offset>>16);
-    }
-  } else {
-    switch (dp->tdir_count) {
-    case 2: sprintf(pszData, fmt, sep, dp->tdir_offset>>16);
-      sep = " ";
-    case 1: sprintf(pszData, fmt, sep, dp->tdir_offset&0xffff);
-    }
-  }
-}
 
 /************************************************************************/
 /*                         EXIFPrintData()                              */
@@ -556,55 +501,35 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /*      This is at most 4 byte data so we can read it from tdir_offset  */
 /* -------------------------------------------------------------------- */
         if (space >= 0 && space <= 4) {
-            switch (poTIFFDirEntry->tdir_type) {
-              case TIFF_FLOAT: 
-              {
-                  unsigned char data[4];
-                  memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
-                  if (bSwabflag)
-                      TIFFSwabLong((GUInt32*) data);
 
-                  EXIFPrintData(pszTemp,
-                                poTIFFDirEntry->tdir_type, 
-                                poTIFFDirEntry->tdir_count, data);
+            unsigned char data[4];
+            memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
+            if (bSwabflag)
+            {
+                // Unswab 32bit value, and reswab per data type.
+                TIFFSwabLong((GUInt32*) data);
+
+                switch (poTIFFDirEntry->tdir_type) {
+                  case TIFF_LONG:
+                  case TIFF_SLONG:
+                  case TIFF_FLOAT: 
+                    TIFFSwabLong((GUInt32*) data);
+                    break;
+
+                  case TIFF_SSHORT:
+                  case TIFF_SHORT:
+                    TIFFSwabArrayOfShort((GUInt16*) data, 
+                                         poTIFFDirEntry->tdir_count);
                   break;
-              }
 
-              case TIFF_ASCII: 
-                EXIFPrintData(pszTemp,
-                              poTIFFDirEntry->tdir_type, 
-                              poTIFFDirEntry->tdir_count, 
-                              (unsigned char *)&(poTIFFDirEntry->tdir_offset));
-                break;
-
-              case TIFF_UNDEFINED:
-              case TIFF_BYTE:
-                EXIFPrintByte(pszTemp, "%s%#02x", poTIFFDirEntry);
-                break;
-
-              case TIFF_SBYTE:
-                EXIFPrintByte(pszTemp, "%s%d", poTIFFDirEntry);
-                break;
-
-              case TIFF_SHORT:
-                EXIFPrintShort(pszTemp, "%s%u", poTIFFDirEntry);
-                break;
-
-              case TIFF_SSHORT:
-                EXIFPrintShort(pszTemp, "%s%d", poTIFFDirEntry);
-                break;
-
-              case TIFF_LONG:
-                // should this be swabbed?
-                sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);
-                break;
-
-              case TIFF_SLONG:
-                // should this be swabbed?
-                sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);
-                break;
+                  default:
+                    break;
+                }
             }
-	
+
+            EXIFPrintData(pszTemp,
+                          poTIFFDirEntry->tdir_type, 
+                          poTIFFDirEntry->tdir_count, data);
         }
 /* -------------------------------------------------------------------- */
 /*      The data is being read where tdir_offset point to in the file   */
