@@ -55,9 +55,9 @@ class CPL_DLL OGRLayer
 {
   protected:
     int          m_bFilterIsEnvelope;
-    OGRGeometry  *m_poFilterGeom;
+    OGRGeometry *m_poFilterGeom;
     OGREnvelope  m_sFilterEnvelope;
-
+    
     int          FilterGeometry( OGRGeometry * );
     int          InstallFilter( OGRGeometry * );
 
@@ -152,6 +152,8 @@ class CPL_DLL OGRLayer
 class CPL_DLL OGRDataSource
 {
     friend class OGRSFDriverRegistrar;
+
+    void        *m_hMutex;
 
   public:
 
