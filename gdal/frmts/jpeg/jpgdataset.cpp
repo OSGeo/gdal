@@ -557,9 +557,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
         if (space >= 0 && space <= 4) {
             switch (poTIFFDirEntry->tdir_type) {
-              case TIFF_FLOAT:
-              case TIFF_UNDEFINED:
-              case TIFF_ASCII: {
+              case TIFF_FLOAT: 
+              {
                   unsigned char data[4];
                   memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
                   if (bSwabflag)
@@ -571,22 +570,37 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
                   break;
               }
 
+              case TIFF_ASCII: 
+                EXIFPrintData(pszTemp,
+                              poTIFFDirEntry->tdir_type, 
+                              poTIFFDirEntry->tdir_count, 
+                              (unsigned char *)&(poTIFFDirEntry->tdir_offset));
+                break;
+
+              case TIFF_UNDEFINED:
               case TIFF_BYTE:
                 EXIFPrintByte(pszTemp, "%s%#02x", poTIFFDirEntry);
                 break;
+
               case TIFF_SBYTE:
                 EXIFPrintByte(pszTemp, "%s%d", poTIFFDirEntry);
                 break;
+
               case TIFF_SHORT:
                 EXIFPrintShort(pszTemp, "%s%u", poTIFFDirEntry);
                 break;
+
               case TIFF_SSHORT:
                 EXIFPrintShort(pszTemp, "%s%d", poTIFFDirEntry);
                 break;
+
               case TIFF_LONG:
-                sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);	
+                // should this be swabbed?
+                sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);
                 break;
+
               case TIFF_SLONG:
+                // should this be swabbed?
                 sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);
                 break;
             }
