@@ -993,6 +993,7 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
         return FALSE;
 
     while( *pszHeaderNext != '\0' 
+           && *pszHeaderNext != '=' 
            && !isspace(*pszHeaderNext) )
     {
         if( *pszHeaderNext == '"' )
