@@ -32,6 +32,7 @@
 #include "ogr_p.h"
 #include "ogr_gensql.h"
 #include "ogr_attrind.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -45,6 +46,7 @@ OGRDataSource::OGRDataSource()
     m_poStyleTable = NULL;
     m_nRefCount = 0;
     m_poDriver = NULL;
+    m_hMutex = NULL;
 }
 
 /************************************************************************/
@@ -59,6 +61,9 @@ OGRDataSource::~OGRDataSource()
         delete m_poStyleTable;
         m_poStyleTable = NULL;
     }
+
+    if( m_hMutex != NULL )
+        CPLDestroyMutex( m_hMutex );
 }
 
 /************************************************************************/
@@ -165,6 +170,7 @@ int OGR_DS_GetRefCount( OGRDataSourceH hDataSource )
 int OGRDataSource::GetSummaryRefCount() const
 
 {
+    CPLMutexHolderD( (void **) &m_hMutex );
     int nSummaryCount = m_nRefCount;
     int iLayer;
     OGRDataSource *poUseThis = (OGRDataSource *) this;
@@ -364,6 +370,8 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 OGRLayer *OGRDataSource::GetLayerByName( const char *pszName )
 
 {
+    CPLMutexHolderD( &m_hMutex );
+
     if ( ! pszName )
         return NULL;
 
@@ -440,21 +448,25 @@ OGRErr OGRDataSource::ProcessSQLCreateIndex( const char *pszSQLCommand )
     int  i;
     OGRLayer *poLayer = NULL;
 
-    for( i = 0; i < GetLayerCount(); i++ )
     {
-        poLayer = GetLayer(i);
-        
-        if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
-            break;
-    }
+        CPLMutexHolderD( &m_hMutex );
 
-    if( i >= GetLayerCount() )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "CREATE INDEX ON failed, no such layer as `%s'.",
-                  papszTokens[3] );
-        CSLDestroy( papszTokens );
-        return OGRERR_FAILURE;
+        for( i = 0; i < GetLayerCount(); i++ )
+        {
+            poLayer = GetLayer(i);
+            
+            if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
+                break;
+        }
+        
+        if( i >= GetLayerCount() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "CREATE INDEX ON failed, no such layer as `%s'.",
+                      papszTokens[3] );
+            CSLDestroy( papszTokens );
+            return OGRERR_FAILURE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -538,21 +550,25 @@ OGRErr OGRDataSource::ProcessSQLDropIndex( const char *pszSQLCommand )
     int  i;
     OGRLayer *poLayer=NULL;
 
-    for( i = 0; i < GetLayerCount(); i++ )
     {
-        poLayer = GetLayer(i);
-        
-        if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
-            break;
-    }
+        CPLMutexHolderD( &m_hMutex );
 
-    if( i >= GetLayerCount() )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "CREATE INDEX ON failed, no such layer as `%s'.",
-                  papszTokens[3] );
-        CSLDestroy( papszTokens );
-        return OGRERR_FAILURE;
+        for( i = 0; i < GetLayerCount(); i++ )
+        {
+            poLayer = GetLayer(i);
+        
+            if( EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[3]) )
+                break;
+        }
+
+        if( i >= GetLayerCount() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "CREATE INDEX ON failed, no such layer as `%s'.",
+                      papszTokens[3] );
+            CSLDestroy( papszTokens );
+            return OGRERR_FAILURE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -915,6 +931,7 @@ const char *OGR_DS_GetName( OGRDataSourceH hDS )
 OGRErr OGRDataSource::SyncToDisk()
 
 {
+    CPLMutexHolderD( &m_hMutex );
     int i;
     OGRErr eErr;
 
