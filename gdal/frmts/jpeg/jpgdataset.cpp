@@ -87,6 +87,7 @@ class JPGDataset : public GDALPamDataset
     int	   bSwabflag;
     int    nTiffDirStart;
     int    nTIFFHEADER;
+    int    bHasDoneJpegStartDecompress;
 
     CPLErr LoadScanline(int);
     void   Restart();
@@ -807,6 +808,7 @@ JPGDataset::JPGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    bHasDoneJpegStartDecompress = FALSE;
 
     poMaskBand = NULL;
     pabyBitMask = NULL;
@@ -848,6 +850,12 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 {
     if( nLoadedScanline == iLine )
         return CE_None;
+
+    if (!bHasDoneJpegStartDecompress)
+    {
+        jpeg_start_decompress( &sDInfo );
+        bHasDoneJpegStartDecompress = TRUE;
+    }
 
     if( pabyScanline == NULL )
         pabyScanline = (GByte *)
@@ -1390,8 +1398,6 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
-
-    jpeg_start_decompress( &(poDS->sDInfo) );
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
