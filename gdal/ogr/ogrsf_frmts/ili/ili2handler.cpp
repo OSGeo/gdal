@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 
 #include "ili2readerp.h"
+#include <xercesc/sax2/Attributes.hpp>
 
 CPL_CVSID("$Id$");
 
