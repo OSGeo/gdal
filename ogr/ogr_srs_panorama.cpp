@@ -41,19 +41,27 @@ CPL_CVSID("$Id$");
 /*  "Panorama" projection codes.                                        */
 /************************************************************************/
 
-#define NONE    -1L
-#define TM      1L      // Gauss-Kruger (Transverse Mercator)
-#define LAEA    4L      // Lambert Azimuthal Equal Area
-#define STEREO  5L      // Stereographic
-#define AE      6L      // Azimuthal Equidistant (Postel)
-#define MERCAT  8L      // Mercator
-#define POLYC   11L     // Polyconic
-#define PS      13L     // Polar Stereographic
-#define GNOMON  15L     // Gnomonic
-#define UTM     17L     // Universal Transverse Mercator (UTM)
-#define MOLL    19L     // Mollweide
-#define EC      20L     // Equidistant Conic
+#define PAN_PROJ_NONE   -1L
+#define PAN_PROJ_TM     1L      // Gauss-Kruger (Transverse Mercator)
+#define PAN_PROJ_LAEA   4L      // Lambert Azimuthal Equal Area
+#define PAN_PROJ_STEREO 5L      // Stereographic
+#define PAN_PROJ_AE     6L      // Azimuthal Equidistant (Postel)
+#define PAN_PROJ_MERCAT 8L      // Mercator
+#define PAN_PROJ_POLYC  11L     // Polyconic
+#define PAN_PROJ_PS     13L     // Polar Stereographic
+#define PAN_PROJ_GNOMON 15L     // Gnomonic
+#define PAN_PROJ_UTM    17L     // Universal Transverse Mercator (PAN_PROJ_UTM)
+#define PAN_PROJ_MOLL   19L     // Mollweide
+#define PAN_PROJ_EC     20L     // Equidistant Conic
 
+
+/************************************************************************/
+/*  "Panorama" datum codes.                                             */
+/************************************************************************/
+
+#define PAN_DATUM_NONE      -1L
+#define PAN_DATUM_PULKOVO42 1L  // Pulkovo 1942
+#define PAN_DATUM_WGS84     2L  // WGS84
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
@@ -280,7 +288,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *      11: Polyconic
  *      13: Polar Stereographic
  *      15: Gnomonic
- *      17: Universal Transverse Mercator (UTM)
+ *      17: Universal Transverse Mercator (PAN_PROJ_UTM)
  *      19: Mollweide
  *      20: Equidistant Conic
  * </pre>
@@ -308,7 +316,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *       9: WGS, 1984 (GPS)
  * </pre>
  *
- * @param iZone Input zone for UTM projection system.
+ * @param iZone Input zone for PAN_PROJ_UTM projection system.
  *
  * @param padfPrjParams Array of 7 coordinate system parameters:
  *
@@ -354,37 +362,37 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
     switch ( iProjSys )
     {
-        case NONE:
+        case PAN_PROJ_NONE:
             break;
 
-        case UTM:
+        case PAN_PROJ_UTM:
             if ( iZone >= 0 )
                 SetUTM( iZone, TRUE );
             else
                 SetUTM( -iZone, FALSE );
             break;
 
-        case MERCAT:
+        case PAN_PROJ_MERCAT:
             SetMercator( TO_DEGREES * padfPrjParams[2],
                          TO_DEGREES * padfPrjParams[3],
                          padfPrjParams[4],
                          padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case PS:
+        case PAN_PROJ_PS:
             SetPS( TO_DEGREES * padfPrjParams[2],
                    TO_DEGREES * padfPrjParams[3],
                    padfPrjParams[4],
                    padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case POLYC:
+        case PAN_PROJ_POLYC:
             SetPolyconic( TO_DEGREES * padfPrjParams[2],
                           TO_DEGREES * padfPrjParams[3],
                           padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case EC:
+        case PAN_PROJ_EC:
             SetEC( TO_DEGREES * padfPrjParams[0],
                    TO_DEGREES * padfPrjParams[1],
                    TO_DEGREES * padfPrjParams[2],
@@ -392,39 +400,39 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                    padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case TM:
+        case PAN_PROJ_TM:
             SetTM( TO_DEGREES * padfPrjParams[2],
                    TO_DEGREES * padfPrjParams[3],
                    padfPrjParams[4],
                    padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case STEREO:
+        case PAN_PROJ_STEREO:
             SetStereographic( TO_DEGREES * padfPrjParams[2],
                               TO_DEGREES * padfPrjParams[3],
                               padfPrjParams[4],
                               padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case LAEA:
+        case PAN_PROJ_LAEA:
             SetLAEA( TO_DEGREES * padfPrjParams[2],
                      TO_DEGREES * padfPrjParams[3],
                      padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case AE:
+        case PAN_PROJ_AE:
             SetAE( TO_DEGREES * padfPrjParams[2],
                    TO_DEGREES * padfPrjParams[3],
                    padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case GNOMON:
+        case PAN_PROJ_GNOMON:
             SetGnomonic( TO_DEGREES * padfPrjParams[2],
                          TO_DEGREES * padfPrjParams[3],
                          padfPrjParams[5], padfPrjParams[6] );
             break;
 
-        case MOLL:
+        case PAN_PROJ_MOLL:
             SetMollweide( TO_DEGREES * padfPrjParams[3],
                           padfPrjParams[5], padfPrjParams[6] );
             break;
@@ -539,7 +547,7 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
  * @param piEllips Pointer to variable, where the spheroid code will be
  * returned.
  * 
- * @param piZone Pointer to variable, where the zone for UTM projection
+ * @param piZone Pointer to variable, where the zone for PAN_PROJ_UTM projection
  * system will be returned.
  *
  * @param padfPrjParams an existing 7 double buffer into which the
@@ -573,7 +581,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /*      Handle the projection definition.                               */
 /* ==================================================================== */
     if( IsLocal() )
-        *piProjSys = NONE;
+        *piProjSys = PAN_PROJ_NONE;
 
     else if( pszProjection == NULL )
     {
@@ -581,12 +589,12 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         CPLDebug( "OSR_Panorama",
                   "Empty projection definition, considered as Geographic" );
 #endif
-        *piProjSys = NONE;
+        *piProjSys = PAN_PROJ_NONE;
     }
 
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
     {
-        *piProjSys = MERCAT;
+        *piProjSys = PAN_PROJ_MERCAT;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
@@ -598,7 +606,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
     {
-        *piProjSys = PS;
+        *piProjSys = PAN_PROJ_PS;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
@@ -610,7 +618,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_POLYCONIC) )
     {
-        *piProjSys = POLYC;
+        *piProjSys = PAN_PROJ_POLYC;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
@@ -621,7 +629,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC) )
     {
-        *piProjSys = EC;
+        *piProjSys = PAN_PROJ_EC;
         padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
         padfPrjParams[1] = 
@@ -642,13 +650,13 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
         if( *piZone != 0 )
         {
-            *piProjSys = UTM;
+            *piProjSys = PAN_PROJ_UTM;
             if( !bNorth )
                 *piZone = - *piZone;
         }            
         else
         {
-            *piProjSys = TM;
+            *piProjSys = PAN_PROJ_TM;
             padfPrjParams[3] =
                 TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
             padfPrjParams[2] = 
@@ -664,7 +672,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC) )
     {
-        *piProjSys = STEREO;
+        *piProjSys = PAN_PROJ_STEREO;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
@@ -676,7 +684,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
-        *piProjSys = LAEA;
+        *piProjSys = PAN_PROJ_LAEA;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
@@ -687,7 +695,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
-        *piProjSys = AE;
+        *piProjSys = PAN_PROJ_AE;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 );
         padfPrjParams[2] = 
@@ -698,7 +706,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_GNOMONIC) )
     {
-        *piProjSys = GNOMON;
+        *piProjSys = PAN_PROJ_GNOMON;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
@@ -709,7 +717,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 
     else if( EQUAL(pszProjection, SRS_PT_MOLLWEIDE) )
     {
-        *piProjSys = MOLL;
+        *piProjSys = PAN_PROJ_MOLL;
         padfPrjParams[3] =
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
@@ -722,7 +730,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         CPLDebug( "OSR_Panorama",
                   "Projection \"%s\" unsupported by \"Panorama\" GIS. "
                   "Geographic system will be used.", pszProjection );
-        *piProjSys = NONE;
+        *piProjSys = PAN_PROJ_NONE;
     }
  
 /* -------------------------------------------------------------------- */
@@ -730,10 +738,12 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
     const char  *pszDatum = GetAttrValue( "DATUM" );
 
-    if ( EQUAL( pszDatum, "Pulkovo_1942" ) )
-        *piDatum = 1L;
-    if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
-        *piDatum = 2L;
+    if ( pszDatum == NULL )
+        *piDatum = PAN_DATUM_NONE;
+    else if ( EQUAL( pszDatum, "Pulkovo_1942" ) )
+        *piDatum = PAN_DATUM_PULKOVO42;
+    else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
+        *piDatum = PAN_DATUM_WGS84;
 
     // If not found well known datum, translate ellipsoid
     else
