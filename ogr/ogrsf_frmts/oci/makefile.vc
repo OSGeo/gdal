@@ -24,6 +24,8 @@ clean:
 ogr_OCI.dll:	$(OBJ)
 	link /dll /out:ogr_OCI.dll $(OBJ) \
 		$(GDAL_ROOT)/gdal_i.lib $(OCI_LIB)
+	if exist ogr_OCI.dll.manifest mt -manifest ogr_OCI.dll.manifest \
+		-outputresource:ogr_OCI.dll;2
 
 ocitest.exe:	$(LL_OBJ) ocitest.obj
 	cl /Zi ocitest.obj $(LL_OBJ) \
