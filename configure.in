@@ -1397,6 +1397,22 @@ else
   if test -z "`$CMD 2>&1 | grep -v warning | grep -v skipping`" ; then
     HAVE_XERCES=yes
     AC_MSG_RESULT([yes])
+
+    # Detecting Xerces version
+    xerces_major=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
+                    grep '^#define.*XERCES_VERSION_MAJOR.*[0-9]$' | \
+                    sed -e 's/#define XERCES_VERSION_MAJOR.//'`
+
+    xerces_minor=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
+                    grep '^#define.*XERCES_VERSION_MINOR.*[0-9]$' | \
+                    sed -e 's/#define XERCES_VERSION_MINOR.//'`
+
+    xerces_revision=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
+                    grep '^#define.*XERCES_VERSION_REVISION.*[0-9]$' | \
+                    sed -e 's/#define XERCES_VERSION_REVISION.//'`
+    XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
+ 
+    AC_MSG_NOTICE([Xerces $XERCES_VERSION has been found])
   else
     AC_MSG_RESULT([requested, but compile or link fails!])
 
