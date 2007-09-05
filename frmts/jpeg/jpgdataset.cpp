@@ -1348,6 +1348,15 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     jpeg_create_decompress( &(poDS->sDInfo) );
 
+    /* This is to address bug related in ticket #1795 */
+    if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+    {
+        /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
+        /* that at least 500 MB will be used before creating the temporary file */
+        poDS->sDInfo.mem->max_memory_to_use =
+                MAX(poDS->sDInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Preload default NITF JPEG quantization tables.                  */
 /* -------------------------------------------------------------------- */
