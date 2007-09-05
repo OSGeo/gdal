@@ -660,7 +660,27 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 %typemap(out,fragment="XMLTreeToPyList") (CPLXMLNode*)
 {
   /* %typemap(out) (CPLXMLNode*) */
-  $result = XMLTreeToPyList( $1 );
+
+  CPLXMLNode *psXMLTree = $1;
+  int         bFakeRoot = FALSE;
+
+  if( psXMLTree != NULL && psXMLTree->psNext != NULL )
+  {
+	CPLXMLNode *psFirst = psXMLTree;
+
+	/* create a "pseudo" root if we have multiple elements */
+        psXMLTree = CPLCreateXMLNode( NULL, CXT_Element, "" );
+	psXMLTree->psChild = psFirst;
+        bFakeRoot = TRUE;
+  }
+
+  $result = XMLTreeToPyList( psXMLTree );
+
+  if( bFakeRoot )
+  {
+        psXMLTree->psChild = NULL;
+        CPLDestroyXMLNode( psXMLTree );
+  }
 }
 %typemap(ret) (CPLXMLNode*)
 {
