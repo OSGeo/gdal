@@ -11764,7 +11764,27 @@ SWIGINTERN PyObject *_wrap_ParseXMLString(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   {
     /* %typemap(out) (CPLXMLNode*) */
-    resultobj = XMLTreeToPyList( result );
+    
+    CPLXMLNode *psXMLTree = result;
+    int         bFakeRoot = FALSE;
+    
+    if( psXMLTree != NULL && psXMLTree->psNext != NULL )
+    {
+      CPLXMLNode *psFirst = psXMLTree;
+      
+      /* create a "pseudo" root if we have multiple elements */
+      psXMLTree = CPLCreateXMLNode( NULL, CXT_Element, "" );
+      psXMLTree->psChild = psFirst;
+      bFakeRoot = TRUE;
+    }
+    
+    resultobj = XMLTreeToPyList( psXMLTree );
+    
+    if( bFakeRoot )
+    {
+      psXMLTree->psChild = NULL;
+      CPLDestroyXMLNode( psXMLTree );
+    }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
