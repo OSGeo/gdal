@@ -733,15 +733,16 @@ CPLErr RMFDataset::WriteHeader()
     if( pszProjection && !EQUAL( pszProjection, "" ) )
     {
         OGRSpatialReference oSRS;
-        long            iDatum, iEllips, iZone;
+        long            iProjection, iDatum, iEllips, iZone;
         char            *pszProj =  pszProjection;
 
         if ( oSRS.importFromWkt( &pszProj ) == OGRERR_NONE )
         {
             double  adfPrjParams[7];
 
-            oSRS.exportToPanorama( (long *)&sHeader.iProjection, &iDatum,
-                                   &iEllips, &iZone, adfPrjParams );
+            oSRS.exportToPanorama( &iProjection, &iDatum, &iEllips, &iZone,
+                                   adfPrjParams );
+            sHeader.iProjection = iProjection;
             sHeader.dfStdP1 = adfPrjParams[0];
             sHeader.dfStdP2 = adfPrjParams[1];
             sHeader.dfCenterLat = adfPrjParams[2];
