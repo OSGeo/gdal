@@ -616,6 +616,8 @@ RMFDataset::RMFDataset()
     memset( abyHeader, 0, RMF_HEADER_SIZE ); 
     memset( &sHeader, 0, sizeof(sHeader) );
 
+    Decompress = NULL;
+
     bHeaderDirty = FALSE;
 }
 
