@@ -192,6 +192,7 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_ASCII:
     /* NOTE: Using dirty sprintf() causes segmentation fault on Mac OS X. */
     snprintf(pszData, count, "%s", data);
+    pszData[count] = '\0';
     break;
 
   case TIFF_SHORT: {
