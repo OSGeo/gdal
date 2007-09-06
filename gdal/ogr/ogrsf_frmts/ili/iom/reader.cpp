@@ -23,16 +23,13 @@
  * @{
  */
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 #include <xercesc/util/XMLString.hpp>
+#include <xercesc/sax/Locator.hpp>
 #include <xercesc/sax2/XMLReaderFactory.hpp>
-
-#if _XERCES_VERSION >= 30000
-# include <xercesc/sax/Locator.hpp>
-# include <xercesc/sax2/Attributes.hpp>
-#endif
+#include <xercesc/sax2/Attributes.hpp>
 
 #include <iom/iom_p.h>
 
