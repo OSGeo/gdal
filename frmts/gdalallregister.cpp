@@ -253,16 +253,16 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JP2KAK();
 #endif
 
+#ifdef FRMT_ecw
+    GDALRegister_ECW();
+    GDALRegister_JP2ECW();
+#endif
+
 #ifdef FRMT_jpeg2000
 // JPEG2000 support using JasPer toolkit
 // This one should always be placed after other JasPer supported formats,
 // such as BMP or PNM. In other case we will get bad side effects.
     GDALRegister_JPEG2000();
-#endif
-
-#ifdef FRMT_ecw
-    GDALRegister_ECW();
-    GDALRegister_JP2ECW();
 #endif
 
 #ifdef FRMT_l1b
