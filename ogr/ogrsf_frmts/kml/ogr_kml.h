@@ -4,10 +4,12 @@
  * Project:  KML Driver
  * Purpose:  Declarations for OGR wrapper classes for KML, and OGR->KML
  *           translation of geometry.
- * Author:   Christopher Condit, condit@sdsc.edu
+ * Author:   Christopher Condit, condit@sdsc.edu;
+ *           Jens Oberender, j.obi@troja.net
  *
  ******************************************************************************
  * Copyright (c) 2006, Christopher Condit
+ *               2007, Jens Oberender
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +33,7 @@
 #define OGR_KML_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "kmlreader.h"
+#include "kmlvector.h"
 
 class OGRKMLDataSource;
 
@@ -41,17 +43,19 @@ class OGRKMLDataSource;
 
 class OGRKMLLayer : public OGRLayer
 {
+private:
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
 
-    int                 iNextKMLId;
+    unsigned short      iNextKMLId;
+    unsigned short      nNextFID;
     int                 nTotalKMLCount;
 
     int                 bWriter;
 
     OGRKMLDataSource    *poDS;
 
-    KMLFeatureClass     *poFClass;
+    unsigned short      nLayerNumber;
 
   public:
                         OGRKMLLayer( const char * pszName, 
@@ -69,13 +73,15 @@ class OGRKMLLayer : public OGRLayer
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
     virtual OGRSpatialReference *GetSpatialRef();
+    
+    void                SetLayerNumber(unsigned short);
     
     int                 TestCapability( const char * );
 };
@@ -86,13 +92,11 @@ class OGRKMLLayer : public OGRLayer
 
 class OGRKMLDataSource : public OGRDataSource
 {
-    OGRKMLLayer     **papoLayers;
+    OGRKMLLayer         **papoLayers;
     int                 nLayers;
     
     char                *pszName;
     
-    OGRKMLLayer         *TranslateKMLSchema( KMLFeatureClass * );
-
     //The name of the field to use for 
     char                *pszNameField;
     
@@ -105,8 +109,7 @@ class OGRKMLDataSource : public OGRDataSource
     
     int                 nSchemaInsertLocation;
 
-    // input related parameters.
-    //IKMLReader          *poReader;
+    KML	                *poKMLFile;
 
     void                InsertHeader();
 
@@ -131,9 +134,10 @@ class OGRKMLDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 
     FILE                *GetOutputFP() { return fpOutput; }
-    //IKMLReader          *GetReader() { return poReader; }
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
+    
+    KML*                GetKMLFile() { return poKMLFile; };
     
 };
 
@@ -156,3 +160,4 @@ class OGRKMLDriver : public OGRSFDriver
 };
 
 #endif /* OGR_KML_H_INCLUDED */
+

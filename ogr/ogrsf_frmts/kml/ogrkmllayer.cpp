@@ -4,6 +4,7 @@
  * Project:  KML Driver
  * Purpose:  Implementation of OGRKMLLayer class.
  * Author:   Christopher Condit, condit@sdsc.edu
+ *           Jens Oberender, j.obi@troja.net
  *
  ******************************************************************************
  * Copyright (c) 2006, Christopher Condit
@@ -32,7 +33,7 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 
-// Function utility to dump OGRGeoemtry to KML text
+/* Function utility to dump OGRGeoemtry to KML text. */
 char *OGR_G_ExportToKML( OGRGeometryH hGeometry );
 
 /************************************************************************/
@@ -44,26 +45,32 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRKMLDataSource *poDSIn )
 {
     if( poSRSIn == NULL )
-        poSRS = NULL;
+        this->poSRS = NULL;
     else
-        poSRS = poSRSIn->Clone();        
+        this->poSRS = poSRSIn->Clone();        
     
-    iNextKMLId = 0;
-    nTotalKMLCount = -1;
+    this->iNextKMLId = 0;
+    this->nTotalKMLCount = -1;
     
-    poDS = poDSIn;
+    this->poDS = poDSIn;
     
-    poFeatureDefn = new OGRFeatureDefn( pszName );
-    poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( eReqType );
+    this->poFeatureDefn = new OGRFeatureDefn( pszName );
+    this->poFeatureDefn->Reference();
+    this->poFeatureDefn->SetGeomType( eReqType );
 
-    bWriter = bWriterIn;
+    OGRFieldDefn *oFieldTemplate = new OGRFieldDefn( "Name", OFTString );
+    this->poFeatureDefn->AddFieldDefn( oFieldTemplate );
+    delete oFieldTemplate;
+    oFieldTemplate = new OGRFieldDefn( "Description", OFTString );
+    this->poFeatureDefn->AddFieldDefn( oFieldTemplate );
+    delete oFieldTemplate;
 
-    poFClass = NULL;    
+    this->bWriter = bWriterIn;
+
 }
 
 /************************************************************************/
-/*                           ~OGRKMLLayer()                           */
+/*                           ~OGRKMLLayer()                             */
 /************************************************************************/
 OGRKMLLayer::~OGRKMLLayer()
 {
@@ -87,10 +94,89 @@ void OGRKMLLayer::ResetReading()
 /************************************************************************/
 OGRFeature *OGRKMLLayer::GetNextFeature()
 {
-	CPLError( CE_Failure, CPLE_AppDefined, 
-              "OGRKMLLayer::GetExtent: KML driver is write-only!\n");
+    CPLDebug("KML", "GetNextFeature(#%d)", this->iNextKMLId);
+    Feature *poFeatureKML;
+    unsigned short nCount, nCount2;
+    KML *poKMLFile = poDS->GetKMLFile();
+    poKMLFile->selectLayer(this->nLayerNumber);
 
-    return NULL;
+    poFeatureKML = poKMLFile->getFeature(this->iNextKMLId++);
+
+    if(poFeatureKML == NULL)
+        return NULL;
+    if(this->poFeatureDefn == NULL)
+        CPLDebug("KML", "Ohoh");
+
+    OGRFeature *poFeature = new OGRFeature( this->poFeatureDefn );
+    
+    // Handle a Point
+    if(poFeatureKML->eType == Point)
+    {
+        poFeature->SetGeometryDirectly(
+                new OGRPoint( poFeatureKML->pvpsCoordinates->at(0)->dfLongitude, poFeatureKML->pvpsCoordinates->at(0)->dfLatitude, poFeatureKML->pvpsCoordinates->at(0)->dfAltitude)
+                );
+    }
+    // Handle a LineString
+    else if(poFeatureKML->eType == LineString)
+    {
+        OGRLineString *poLS = new OGRLineString();
+        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
+        {
+            poLS->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
+        }
+        poFeature->SetGeometryDirectly(poLS);
+    }
+    // Handle a Polygon
+    else if(poFeatureKML->eType == Polygon)
+    {
+        OGRPolygon *poPG = new OGRPolygon();
+        OGRLinearRing *poLR = new OGRLinearRing();
+        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
+        {
+            poLR->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
+        }
+        poPG->addRingDirectly(poLR);
+        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
+        {
+            poLR = new OGRLinearRing();
+            for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
+            {
+                poLR->addPoint(poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLongitude, 
+                    poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLatitude, 
+                    poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfAltitude);
+            }
+            poPG->addRingDirectly(poLR);
+        }
+        poFeature->SetGeometryDirectly(poPG);
+    }
+
+    // Add fields
+    poFeature->SetField( poFeatureDefn->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
+    poFeature->SetField( poFeatureDefn->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
+    poFeature->SetFID( this->nNextFID++ );
+
+    // Clean up
+    for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
+    {
+        delete poFeatureKML->pvpsCoordinates->at(nCount);
+    }
+
+    if(poFeatureKML->pvpsCoordinatesExtra != NULL)
+    {
+        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
+        {
+            for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
+                delete poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2);
+            delete poFeatureKML->pvpsCoordinatesExtra->at(nCount);
+        }
+        delete poFeatureKML->pvpsCoordinatesExtra;
+    }
+
+    delete poFeatureKML->pvpsCoordinates;
+    delete poFeatureKML;
+
+    // Return the feature
+    return poFeature;
 }
 
 /************************************************************************/
@@ -98,13 +184,10 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /************************************************************************/
 int OGRKMLLayer::GetFeatureCount( int bForce )
 {
-    if( poFClass == NULL )
-        return 0;
+    KML *poKMLFile = poDS->GetKMLFile();
+    poKMLFile->selectLayer(this->nLayerNumber);
 
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
-        return OGRLayer::GetFeatureCount( bForce );
-    else
-        return poFClass->GetFeatureCount();
+    return poKMLFile->getNumFeatures();
 }
 
 /************************************************************************/
@@ -114,10 +197,22 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 {
     CPLAssert( NULL != psExtent );
 
-	CPLError( CE_Failure, CPLE_AppDefined, 
-              "OGRKMLLayer::GetExtent: KML driver is write-only!\n");
+    double dfXMin, dfXMax, dfYMin, dfYMax;
 
-    return OGRERR_NONE;	
+    KML *poKMLFile = poDS->GetKMLFile();
+    poKMLFile->selectLayer(this->nLayerNumber);
+
+    if(poKMLFile->getExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ))
+    {
+        psExtent->MinX = dfXMin;
+        psExtent->MaxX = dfXMax;
+        psExtent->MinY = dfYMin;
+        psExtent->MaxY = dfYMax;
+
+        return OGRERR_NONE;
+    }
+    else 
+        return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -125,7 +220,7 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
 {
-    FILE        *fp = poDS->GetOutputFP();
+    FILE *fp = poDS->GetOutputFP();
 
     if( !bWriter )
         return OGRERR_FAILURE;
@@ -143,8 +238,8 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
         {        
             OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
 
-            if ( poFeature->IsFieldSet( iField ) && 
-                !strcmp(poField->GetNameRef(), poDS->GetNameField()))
+            if( poFeature->IsFieldSet( iField )
+                && !strcmp(poField->GetNameRef(), poDS->GetNameField()) )
             {           
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
@@ -159,6 +254,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
     }
     
 	VSIFPrintf( fp, "    <description><![CDATA[\n" );
+
     // Write all "set" fields that aren't being used for the name element
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {        
@@ -226,22 +322,22 @@ int OGRKMLLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        double  dfXMin, dfXMax, dfYMin, dfYMax;
+//        double  dfXMin, dfXMax, dfYMin, dfYMax;
 
-        if( poFClass == NULL )
+//        if( poFClass == NULL )
             return FALSE;
 
-        return poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax );
+//        return poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax );
     }
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
-        if( poFClass == NULL 
-            || m_poFilterGeom != NULL 
-            || m_poAttrQuery != NULL )
+//        if( poFClass == NULL 
+//            || m_poFilterGeom != NULL 
+//            || m_poAttrQuery != NULL )
             return FALSE;
 
-        return poFClass->GetFeatureCount() != -1;
+//        return poFClass->GetFeatureCount() != -1;
     }
 
     else 
@@ -269,4 +365,13 @@ OGRSpatialReference *OGRKMLLayer::GetSpatialRef()
 {
     return poSRS;
 }
+
+/************************************************************************/
+/*                           SetLayerNumber()                           */
+/************************************************************************/
+void OGRKMLLayer::SetLayerNumber(unsigned short nNum)
+{
+    this->nLayerNumber = nNum;
+}
+
 
