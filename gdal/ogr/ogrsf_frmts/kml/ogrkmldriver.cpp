@@ -3,10 +3,12 @@
  *
  * Project:  KML Driver
  * Purpose:  Implementation of OGRKMLDriver class.
- * Author:   Christopher Condit, condit@sdsc.edu
+ * Author:   Christopher Condit, condit@sdsc.edu;
+ *           Jens Oberender, j.obi@troja.net
  *
  ******************************************************************************
  * Copyright (c) 2006, Christopher Condit
+ *               2007, Jens Oberender
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,9 +62,18 @@ OGRDataSource *OGRKMLDriver::Open( const char * pszFilename,
 
     poDS = new OGRKMLDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE )
-        || poDS->GetLayerCount() == 0 )
+    if( !poDS->Open( pszFilename, TRUE ) )
     {
+        delete poDS;
+        return NULL;
+    }
+
+    if( poDS->GetLayerCount() == 0 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "No layers in KML file: `%s'.", 
+                  pszFilename );
+
         delete poDS;
         return NULL;
     }
@@ -108,4 +119,5 @@ void RegisterOGRKML()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRKMLDriver );
 }
+
 
