@@ -3,10 +3,12 @@
  *
  * Project:  KML Driver
  * Purpose:  Implementation of OGRKMLDataSource class.
- * Author:   Christopher Condit, condit@sdsc.edu
+ * Author:   Christopher Condit, condit@sdsc.edu;
+ *           Jens Oberender, j.obi@troja.net
  *
  ******************************************************************************
  * Copyright (c) 2006, Christopher Condit
+ *               2007, Jens Oberender
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,9 +32,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+#include "cpl_minixml.h"
 
 /************************************************************************/
-/*                         OGRKMLDataSource()                         */
+/*                         OGRKMLDataSource()                           */
 /************************************************************************/
 OGRKMLDataSource::OGRKMLDataSource()
 {
@@ -47,7 +50,7 @@ OGRKMLDataSource::OGRKMLDataSource()
 }
 
 /************************************************************************/
-/*                        ~OGRKMLDataSource()                         */
+/*                        ~OGRKMLDataSource()                           */
 /************************************************************************/
 OGRKMLDataSource::~OGRKMLDataSource()
 {
@@ -71,6 +74,8 @@ OGRKMLDataSource::~OGRKMLDataSource()
     
     CPLFree( papoLayers );
     
+    if(this->poKMLFile != NULL)
+        delete this->poKMLFile;
 }
 
 /************************************************************************/
@@ -78,62 +83,122 @@ OGRKMLDataSource::~OGRKMLDataSource()
 /************************************************************************/
 int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 {
-    FILE        *fp;
-    char        szHeader[1000];	
-	
+    int nCount;
+    OGRKMLLayer *poLayer;
+    OGRwkbGeometryType poGeotype;
+
     CPLAssert( NULL != pszNewName );
 
 /* -------------------------------------------------------------------- */
-/*      Open the source file.                                           */
+/*      Create a KML object and open the source file.                   */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszNewName, "r" );
-    if( fp == NULL )
-    {
-        if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open KML file `%s'.", 
-                      pszNewName );
+    this->poKMLFile = new KMLvector();
+    if( !this->poKMLFile->open( pszNewName )) {
+        delete this->poKMLFile;
+        this->poKMLFile = NULL;
+        return FALSE;
+    }
+    this->pszName = CPLStrdup( pszNewName );
 
+/* -------------------------------------------------------------------- */
+/*      If we aren't sure it is KML, validate it by start parsing       */
+/* -------------------------------------------------------------------- */
+    if( bTestOpen && !poKMLFile->isValid())
+    {
+        delete this->poKMLFile;
+        this->poKMLFile = NULL;
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we aren't sure it is KML, load a header chunk and check      */
-/*      for signs it is KML                                             */
+/*      Prescan the KML file so we can later work with the structure    */
 /* -------------------------------------------------------------------- */
-    if( bTestOpen )
-    {
-        VSIFRead( szHeader, 1, sizeof(szHeader), fp );
-        szHeader[sizeof(szHeader)-1] = '\0';
-			
-        if( szHeader[0] != '<' 
-            || strstr(szHeader, "http://earth.google.com/kml/2.0") == NULL )
-        {			
-            VSIFClose( fp );
-            return FALSE;
+    this->poKMLFile->parse();
+
+/* -------------------------------------------------------------------- */
+/*      Classify the nodes                                              */
+/* -------------------------------------------------------------------- */
+    this->poKMLFile->classifyNodes();
+
+/* -------------------------------------------------------------------- */
+/*      Eliminate the empty containers                                  */
+/* -------------------------------------------------------------------- */
+    this->poKMLFile->eliminateEmpty();
+
+/* -------------------------------------------------------------------- */
+/*      Find layers to use in the KML structure                         */
+/* -------------------------------------------------------------------- */
+    this->poKMLFile->findLayers(NULL);
+
+/* -------------------------------------------------------------------- */
+/*      Print the structure                                             */
+/* -------------------------------------------------------------------- */
+    this->poKMLFile->print(3);
+
+    nLayers = this->poKMLFile->numLayers();
+
+/* -------------------------------------------------------------------- */
+/*      Allocate memory for the Layers                                  */
+/* -------------------------------------------------------------------- */
+    papoLayers = (OGRKMLLayer **)
+        CPLMalloc( sizeof(OGRKMLLayer *) * nLayers );
+
+    OGRSpatialReference *poSRS = new OGRSpatialReference("GEOGCS[\"WGS 84\", "
+        "   DATUM[\"WGS_1984\","
+        "       SPHEROID[\"WGS 84\",6378137,298.257223563,"
+        "           AUTHORITY[\"EPSG\",\"7030\"]],"
+        "           AUTHORITY[\"EPSG\",\"6326\"]],"
+        "       PRIMEM[\"Greenwich\",0,"
+        "           AUTHORITY[\"EPSG\",\"8901\"]],"
+        "       UNIT[\"degree\",0.01745329251994328,"
+        "           AUTHORITY[\"EPSG\",\"9122\"]],"
+        "           AUTHORITY[\"EPSG\",\"4326\"]]");
+
+/* -------------------------------------------------------------------- */
+/*      Create the Layers and fill them                                 */
+/* -------------------------------------------------------------------- */
+    for(nCount = 0; nCount < nLayers; nCount++) {
+        CPLDebug("KML", "Loading Layer #%d", nCount);
+        if(!this->poKMLFile->selectLayer(nCount)) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "There are no layers or a layer can not be found!");
+            break;
         }
+
+        if(this->poKMLFile->getCurrentType() == Point)
+            poGeotype = wkbPoint;
+        else if(this->poKMLFile->getCurrentType() == LineString)
+            poGeotype = wkbLineString;
+        else if(this->poKMLFile->getCurrentType() == Polygon)
+            poGeotype = wkbPolygon;
+        else
+            poGeotype = wkbUnknown;
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+        std::string sName = this->poKMLFile->getCurrentName();
+        if(sName.compare("") == 0) {
+            char *pszName = new char[10];
+            snprintf(pszName, 10, "Layer #%d", nCount);
+            sName = pszName;
+            if(pszName != NULL)
+                delete pszName;
+        }
+
+        poLayer = new OGRKMLLayer( sName.c_str(), poSRS, FALSE, poGeotype, this );
+
+        poLayer->SetLayerNumber(nCount);
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+        papoLayers[nCount] = poLayer;
     }
     
-	VSIFClose( fp );
-	
-	CPLError( CE_Failure, CPLE_AppDefined, 
-              "Reading KML files is not currently supported\n");
-
+    poSRS->Release();
+    
     return TRUE;	
-}
-
-/************************************************************************/
-/*                         TranslateKMLSchema()                         */
-/************************************************************************/
-OGRKMLLayer *OGRKMLDataSource::TranslateKMLSchema( KMLFeatureClass *poClass )
-{
-    CPLAssert( NULL != poClass );
-
-    OGRKMLLayer *poLayer;
-    poLayer = new OGRKMLLayer( poClass->GetName(), NULL, FALSE, 
-                               wkbUnknown, this );
-
-    return poLayer;
 }
 
 /************************************************************************/
@@ -210,7 +275,7 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Close the previous layer (if there is one open)         */
+/*      Close the previous layer (if there is one open)                 */
 /* -------------------------------------------------------------------- */
     if (GetLayerCount() > 0)
         VSIFPrintf( fpOutput, "</Folder>\n");
@@ -265,6 +330,7 @@ int OGRKMLDataSource::TestCapability( const char * pszCap )
 /************************************************************************/
 OGRLayer *OGRKMLDataSource::GetLayer( int iLayer )
 {
+    CPLDebug("KML", "Get Layer #%d", iLayer);
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
     else
