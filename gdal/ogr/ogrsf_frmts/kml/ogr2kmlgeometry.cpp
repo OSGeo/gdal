@@ -235,30 +235,15 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength,
                       "<Polygon>" );
 
-        OGRLinearRing *poExteriorRing = poPolygon->getExteriorRing(); 
-        if( poExteriorRing != NULL )
+        if( poPolygon->getExteriorRing() != NULL )
         {
-            /* Test if we need to reverse the winding order. The KML specification
-             * defines the front of a face as a LinearRing with anti-clockwise
-             * winding order. Full 3D implementations of KML, such as Google Earth,
-             * light the front of the face, not the rear.
-             * For the present case it's safe to assume that all faces exported
-             * from OGR should have anti-clockwise winding orders. 
-             */
-            if ( poExteriorRing->isClockwise() )
-            { 
-                poExteriorRing->reverseWindingOrder(); 
-            } 
-
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<outerBoundaryIs>" );
 
-            if( !OGR2KMLGeometryAppend( poExteriorRing,
+            if( !OGR2KMLGeometryAppend( poPolygon->getExteriorRing(), 
                                         ppszText, pnLength, pnMaxLength ) )
-            {
                 return FALSE;
-            }
-
+            
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</outerBoundaryIs>" );
         }
@@ -266,12 +251,6 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         for( int iRing = 0; iRing < poPolygon->getNumInteriorRings(); iRing++ )
         {
             OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
-
-            /* Perform the winding test again. */
-            if( poRing->isClockwise() ) 
-            { 
-                poRing->reverseWindingOrder(); 
-            } 
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<innerBoundaryIs>" );
