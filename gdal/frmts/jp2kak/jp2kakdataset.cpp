@@ -1093,7 +1093,7 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check header                                                    */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < (int) sizeof(jp2_header) )
     {
         const char  *pszExtension = NULL;
 
@@ -1122,9 +1122,11 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
         const char  *pszExtension = NULL;
 
         pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
-            && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
-            && !EQUAL(pszExtension,"j2c") )
+        if( EQUAL(pszExtension,"jpc") 
+            || EQUAL(pszExtension,"j2k") 
+            || EQUAL(pszExtension,"jp2") 
+            || EQUAL(pszExtension,"jpx") 
+            || EQUAL(pszExtension,"j2c") )
             return TRUE;
     }
 
@@ -1151,7 +1153,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
     pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-    if( poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 16 )
     {
         if( (EQUALN(poOpenInfo->pszFilename,"http://",7)
              || EQUALN(poOpenInfo->pszFilename,"https://",8)
@@ -1187,9 +1189,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        if( poOpenInfo->nHeaderBytes < 16 )
-            return NULL;
-
         pabyHeader = poOpenInfo->pabyHeader;
     }
 
@@ -1198,7 +1197,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      If the header is a JP2 header, mark this as a JP2 dataset.      */
 /* -------------------------------------------------------------------- */
-    if( memcmp(pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
+    if( pabyHeader && memcmp(pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
         pszExtension = "jp2";
 
 /* -------------------------------------------------------------------- */
@@ -1406,7 +1405,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for supporting coordinate system information.              */
 /* -------------------------------------------------------------------- */
-        if( poOpenInfo->fp != NULL )
+        if( poOpenInfo->nHeaderBytes > 0 )
         {
             GDALJP2Metadata oJP2Geo;
         
