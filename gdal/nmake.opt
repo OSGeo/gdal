@@ -152,9 +152,9 @@ JPEG_SUPPORTED = 1
 #		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
 
 # Uncomment for Expat support (required for KML read support).
-EXPAT_DIR =	"C:\Program Files\Expat 2.0.1"
-EXPAT_INCLUDE = -I$(EXPAT_DIR)/source/lib
-EXPAT_LIB = $(EXPAT_DIR)/bin/libexpat.lib
+#EXPAT_DIR = "C:\Program Files\Expat 2.0.1"
+#EXPAT_INCLUDE = -I$(EXPAT_DIR)/source/lib
+#EXPAT_LIB = $(EXPAT_DIR)/bin/libexpat.lib
 
 # Uncomment for Xerces based GML support.
 #XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_2_6_0
