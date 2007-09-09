@@ -122,6 +122,20 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // -------------------------------------------------------------------- 
+    // Check Grid File Version (VER)
+    // -------------------------------------------------------------------- 
+
+    if( pHeaderOne->GridFileVersion != 1 &&
+        pHeaderOne->GridFileVersion != 2 &&
+        pHeaderOne->GridFileVersion != 3 )
+    {
+        return NULL;
+    }
+
+    /* Now, we must fix endianness if necessary */
+    INGR_HeaderOneDiskToMem(pHeaderOne);
+
+    // -------------------------------------------------------------------- 
     // Check Words To Follow (WTC) Minimum Value
     // -------------------------------------------------------------------- 
 
@@ -141,39 +155,6 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    // -------------------------------------------------------------------- 
-    // Check Grid File Version (VER)
-    // -------------------------------------------------------------------- 
-
-    if( pHeaderOne->GridFileVersion != 1 &&
-        pHeaderOne->GridFileVersion != 2 &&
-        pHeaderOne->GridFileVersion != 3 )
-    {
-        return NULL;
-    }
-
-    // -------------------------------------------------------------------- 
-    // Convert WAX REAL*8 to IEEE double
-    // -------------------------------------------------------------------- 
-
-    if( pHeaderOne->GridFileVersion < 3 )
-    {
-        DGN2IEEEDouble( &pHeaderOne->XViewOrigin );                
-        DGN2IEEEDouble( &pHeaderOne->YViewOrigin );                
-        DGN2IEEEDouble( &pHeaderOne->ZViewOrigin );                
-        DGN2IEEEDouble( &pHeaderOne->XViewExtent );                
-        DGN2IEEEDouble( &pHeaderOne->YViewExtent );                
-        DGN2IEEEDouble( &pHeaderOne->ZViewExtent );                
-        DGN2IEEEDouble( &pHeaderOne->RotationAngle );              
-        DGN2IEEEDouble( &pHeaderOne->SkewAngle );                  
-
-        uint8 i;
-
-        for( i = 0; i < 16; i++ )
-        {
-            DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
-        }
-    }
 
     // -------------------------------------------------------------------- 
     // Get Data Type Code (DTC) => Format Type
@@ -198,6 +179,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
                 "Error reading tiles header" );
             return NULL;
         }
+        INGR_TileHeaderDiskToMem(&hTileDir);
 
         if( !
           ( hTileDir.ApplicationType     == 1 &&
@@ -312,7 +294,9 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         VSIFSeekL( poDS->fp, nBandOffset, SEEK_SET );
         VSIFReadL( &poDS->hHeaderOne, 1, SIZEOF_HDR1,   poDS->fp );
+        INGR_HeaderOneDiskToMem(&poDS->hHeaderOne);
         VSIFReadL( &poDS->hHeaderTwo, 1, SIZEOF_HDR2_A, poDS->fp );
+        INGR_HeaderTwoADiskToMem(&poDS->hHeaderTwo);
 
         switch( eFormat )
         {
@@ -422,7 +406,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
 
     if( pszCompression == NULL )
     {
-        pszCompression = CPLStrdup( "None" );
+        pszCompression = "None";
     }
 
     if( EQUAL( pszCompression, INGR_GetFormatName( CCITTGroup4 ) )       == FALSE &&
@@ -441,6 +425,10 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     INGR_HeaderTwoA hHdr2;
     INGR_ColorTable256 hCTab;
     int             i;
+    
+    memset(&hHdr1, 0, SIZEOF_HDR1);
+    memset(&hHdr2, 0, SIZEOF_HDR2_A);
+    memset(&hCTab, 0, SIZEOF_CTAB);
 
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
@@ -491,12 +479,6 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
         hHdr2.Reserved[i]       = 0;
     hHdr2.ApplicationPacketLength   = 0;
     hHdr2.ApplicationPacketPointer  = 0;
-    for( i = 0; i < 256; i++ )
-    {
-        hCTab.Entry[i].v_red   = ( uint8 ) 0;
-        hCTab.Entry[i].v_green = ( uint8 ) 0;
-        hCTab.Entry[i].v_blue  = ( uint8 ) 0;
-    }
 
     // -------------------------------------------------------------------- 
     //  RGB Composite assumption
@@ -521,6 +503,9 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
             "Attempt to create file %s' failed.\n", pszFilename );
         return NULL;
     }
+
+    INGR_HeaderOneMemToDisk(&hHdr1);
+    INGR_HeaderTwoAMemToDisk(&hHdr2);
 
     VSIFWriteL( &hHdr1, 1, SIZEOF_HDR1, fp );
     VSIFWriteL( &hHdr2, 1, SIZEOF_HDR2_A, fp );
@@ -584,7 +569,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
     if( pszCompression == NULL )
     {
-        pszCompression = CPLStrdup( "None" );
+        pszCompression = "None";
     }
 
     // -------------------------------------------------------------------- 
@@ -607,6 +592,12 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     double dfMax;
     double dfMean;
     double dfStdDev = -1;
+    
+    for( int i = 1; i <= poDstDS->nBands; i++)
+    {
+        delete poDstDS->GetRasterBand(i);
+    }
+    poDstDS->nBands = 0;
 
     if( poDstDS->hHeaderOne.DataTypeCode == Uncompressed24bit )
     {
