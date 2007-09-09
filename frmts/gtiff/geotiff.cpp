@@ -2439,6 +2439,12 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                     TIFFSetField( hTIFF, TIFFTAG_SOFTWARE, pszItemValue );
                 else if( EQUAL(pszItemName,"TIFFTAG_DATETIME") )
                     TIFFSetField( hTIFF, TIFFTAG_DATETIME, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_ARTIST") )
+                    TIFFSetField( hTIFF, TIFFTAG_ARTIST, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_HOSTCOMPUTER") )
+                    TIFFSetField( hTIFF, TIFFTAG_HOSTCOMPUTER, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_COPYRIGHT") )
+                    TIFFSetField( hTIFF, TIFFTAG_COPYRIGHT, pszItemValue );
                 else if( EQUAL(pszItemName,"TIFFTAG_XRESOLUTION") )
                     TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, atof(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
@@ -3242,6 +3248,15 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 
         if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
             SetMetadataItem( "TIFFTAG_DATETIME", pszText );
+
+        if( TIFFGetField( hTIFF, TIFFTAG_ARTIST, &pszText ) )
+            SetMetadataItem( "TIFFTAG_ARTIST", pszText );
+
+        if( TIFFGetField( hTIFF, TIFFTAG_HOSTCOMPUTER, &pszText ) )
+            SetMetadataItem( "TIFFTAG_HOSTCOMPUTER", pszText );
+
+        if( TIFFGetField( hTIFF, TIFFTAG_COPYRIGHT, &pszText ) )
+            SetMetadataItem( "TIFFTAG_COPYRIGHT", pszText );
 
         if( TIFFGetField( hTIFF, TIFFTAG_XRESOLUTION, &fResolution ) )
         {
