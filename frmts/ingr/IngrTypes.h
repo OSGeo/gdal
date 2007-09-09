@@ -70,8 +70,13 @@ typedef float               real32;
 #pragma pack( 1 )
 
 typedef struct {
+#if defined(CPL_LSB)
     uint16 Version   : 6;        // ??????00 00000000 
     uint16 Is2Dor3D  : 2;        // 000000?? 00000000 
+#else
+    uint16 Is2Dor3D  : 2;        // 000000?? 00000000 
+    uint16 Version   : 6;        // ??????00 00000000 
+#endif
     uint16 Type      : 8;        // 00000000 ???????? 
 } INGR_HeaderType;
 
@@ -523,6 +528,19 @@ typedef     struct {
 //  ------------------------------------------------------------------
 //    JPEG Tables
 //  ------------------------------------------------------------------
+
+
+//  ------------------------------------------------------------------
+//    Fix Endianness issues
+//  ------------------------------------------------------------------
+
+void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne);
+void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne);
+void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo);
+void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo);
+void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader);
+void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem);
+void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData);
 
 #endif
 
