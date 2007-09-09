@@ -47,6 +47,7 @@ OGRKMLDataSource::OGRKMLDataSource()
     fpOutput = NULL;
 
     papszCreateOptions = NULL;
+    poKMLFile = NULL;
 }
 
 /************************************************************************/
@@ -74,8 +75,8 @@ OGRKMLDataSource::~OGRKMLDataSource()
     
     CPLFree( papoLayers );
     
-    if(this->poKMLFile != NULL)
-        delete this->poKMLFile;
+    if(poKMLFile != NULL)
+        delete poKMLFile;
 }
 
 /************************************************************************/
@@ -92,10 +93,10 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create a KML object and open the source file.                   */
 /* -------------------------------------------------------------------- */
-    this->poKMLFile = new KMLvector();
-    if( !this->poKMLFile->open( pszNewName )) {
-        delete this->poKMLFile;
-        this->poKMLFile = NULL;
+    poKMLFile = new KMLvector();
+    if( !poKMLFile->open( pszNewName )) {
+        delete poKMLFile;
+        poKMLFile = NULL;
         return FALSE;
     }
     this->pszName = CPLStrdup( pszNewName );
@@ -105,37 +106,37 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen && !poKMLFile->isValid())
     {
-        delete this->poKMLFile;
-        this->poKMLFile = NULL;
+        delete poKMLFile;
+        poKMLFile = NULL;
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Prescan the KML file so we can later work with the structure    */
 /* -------------------------------------------------------------------- */
-    this->poKMLFile->parse();
+    poKMLFile->parse();
 
 /* -------------------------------------------------------------------- */
 /*      Classify the nodes                                              */
 /* -------------------------------------------------------------------- */
-    this->poKMLFile->classifyNodes();
+    poKMLFile->classifyNodes();
 
 /* -------------------------------------------------------------------- */
 /*      Eliminate the empty containers                                  */
 /* -------------------------------------------------------------------- */
-    this->poKMLFile->eliminateEmpty();
+    poKMLFile->eliminateEmpty();
 
 /* -------------------------------------------------------------------- */
 /*      Find layers to use in the KML structure                         */
 /* -------------------------------------------------------------------- */
-    this->poKMLFile->findLayers(NULL);
+    poKMLFile->findLayers(NULL);
 
 /* -------------------------------------------------------------------- */
 /*      Print the structure                                             */
 /* -------------------------------------------------------------------- */
-    this->poKMLFile->print(3);
+    poKMLFile->print(3);
 
-    nLayers = this->poKMLFile->numLayers();
+    nLayers = poKMLFile->numLayers();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate memory for the Layers                                  */
@@ -159,17 +160,17 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     for(nCount = 0; nCount < nLayers; nCount++) {
         CPLDebug("KML", "Loading Layer #%d", nCount);
-        if(!this->poKMLFile->selectLayer(nCount)) {
+        if(!poKMLFile->selectLayer(nCount)) {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "There are no layers or a layer can not be found!");
             break;
         }
 
-        if(this->poKMLFile->getCurrentType() == Point)
+        if(poKMLFile->getCurrentType() == Point)
             poGeotype = wkbPoint;
-        else if(this->poKMLFile->getCurrentType() == LineString)
+        else if(poKMLFile->getCurrentType() == LineString)
             poGeotype = wkbLineString;
-        else if(this->poKMLFile->getCurrentType() == Polygon)
+        else if(poKMLFile->getCurrentType() == Polygon)
             poGeotype = wkbPolygon;
         else
             poGeotype = wkbUnknown;
@@ -177,13 +178,11 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-        std::string sName = this->poKMLFile->getCurrentName();
+        std::string sName = poKMLFile->getCurrentName();
         if(sName.compare("") == 0) {
-            char *pszName = new char[10];
+            char pszName[10];
             snprintf(pszName, 10, "Layer #%d", nCount);
             sName = pszName;
-            if(pszName != NULL)
-                delete pszName;
         }
 
         poLayer = new OGRKMLLayer( sName.c_str(), poSRS, FALSE, poGeotype, this );
