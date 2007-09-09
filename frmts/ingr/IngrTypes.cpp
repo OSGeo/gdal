@@ -30,7 +30,7 @@
 #include "IngrTypes.h"
 #include "JpegHelper.h"
 
-static INGR_FormatDescription INGR_FormatTable[] = {
+static const INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},
     {ByteInteger,             "Byte Integer",                GDT_Byte},
     {WordIntegers,            "Word Integers",               GDT_Int16},
@@ -65,7 +65,7 @@ static INGR_FormatDescription INGR_FormatTable[] = {
     {LineArt,                 "LineArt",                     GDT_Byte}
 };
 
-static char *IngrOrientation[] = {
+static const char *IngrOrientation[] = {
     "Upper Left Vertical",
     "Upper Right Vertical",
     "Lower Left Vertical",
@@ -75,7 +75,7 @@ static char *IngrOrientation[] = {
     "Lower Left Horizontal",
     "Lower Right Horizontal"};
 
-static GByte BitReverseTable[256] =
+static const GByte BitReverseTable[256] =
 {
     0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
     0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
@@ -142,7 +142,7 @@ const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
     {
         if( eCode == INGR_FormatTable[i].eFormatCode )
         {
-            return CPLStrdup( INGR_FormatTable[i].pszName );
+            return INGR_FormatTable[i].pszName;
         }
     }
 
@@ -200,16 +200,12 @@ const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
 
 void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
 {
-    padfGeoTransform[0] = padfMatrix[3];
+    padfGeoTransform[0] = padfMatrix[3] - padfMatrix[0] / 2;
     padfGeoTransform[1] = padfMatrix[0];
     padfGeoTransform[2] = padfMatrix[1];
-    padfGeoTransform[3] = padfMatrix[7];
+    padfGeoTransform[3] = padfMatrix[7] + padfMatrix[5] / 2;
     padfGeoTransform[4] = padfMatrix[4];
-    padfGeoTransform[5] = padfMatrix[5];
-
-    padfGeoTransform[0] -= ( padfGeoTransform[1] / 2 );
-    padfGeoTransform[3] += ( padfGeoTransform[5] / 2 );
-    padfGeoTransform[5] *= -1;
+    padfGeoTransform[5] = - padfMatrix[5];
 }
 
 // -----------------------------------------------------------------------------
@@ -227,16 +223,12 @@ void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransfo
 
     padfMatrix[15] = 1.0;
 
-    padfMatrix[3] = padfGeoTransform[0];
+    padfMatrix[3] = padfGeoTransform[0] + padfGeoTransform[1] / 2;
     padfMatrix[0] = padfGeoTransform[1];
     padfMatrix[1] = padfGeoTransform[2];
-    padfMatrix[7] = padfGeoTransform[3];
+    padfMatrix[7] = padfGeoTransform[3] + padfGeoTransform[5] / 2;
     padfMatrix[4] = padfGeoTransform[4];
-    padfMatrix[5] = padfGeoTransform[5];
-
-    padfMatrix[5] *= -1;
-    padfMatrix[3] -= ( padfMatrix[5] / 2 );
-    padfMatrix[7] -= ( padfMatrix[5] / 2 );
+    padfMatrix[5] = - padfGeoTransform[5];
 }
 
 // -----------------------------------------------------------------------------
@@ -252,9 +244,9 @@ uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
     {
         poColorTable->GetColorEntryAsRGB( i, &oEntry );
-        pColorTableIGDS->Entry->v_red   = (uint8) oEntry.c1;
-        pColorTableIGDS->Entry->v_green = (uint8) oEntry.c2;
-        pColorTableIGDS->Entry->v_blue  = (uint8) oEntry.c3;
+        pColorTableIGDS->Entry[i].v_red   = (uint8) oEntry.c1;
+        pColorTableIGDS->Entry[i].v_green = (uint8) oEntry.c2;
+        pColorTableIGDS->Entry[i].v_blue  = (uint8) oEntry.c3;
     }
 
     return i;
@@ -290,6 +282,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
         CPLDebug("INGR", "Error reading tiles header");
         return 0;
     }
+    INGR_TileHeaderDiskToMem(pTileDir);
 
     // ----------------------------------------------------------------
     // Calculate the number of tiles
@@ -315,6 +308,11 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( FILE *fp,
     {
         CPLDebug("INGR", "Error reading tiles table");
         return 1;
+    }
+    unsigned int i;
+    for(i=1;i<nTiles;i++)
+    {
+        INGR_TileItemDiskToMem(&((*pahTiles)[i]));
     }
 
     return nTiles;
@@ -358,11 +356,13 @@ void CPL_STDCALL INGR_GetIGDSColors( FILE *fp,
     GDALColorEntry oEntry;
     unsigned int i;
 
+    oEntry.c4 = 255;
+
     for( i = 0; i < nEntries; i++ )
     {
-        oEntry.c1 = (short) hIGDSColors.Entry[i].v_red;
-        oEntry.c2 = (short) hIGDSColors.Entry[i].v_green;
-        oEntry.c2 = (short) hIGDSColors.Entry[i].v_blue;
+        oEntry.c1 = hIGDSColors.Entry[i].v_red;
+        oEntry.c2 = hIGDSColors.Entry[i].v_green;
+        oEntry.c3 = hIGDSColors.Entry[i].v_blue;
         poColorTable->SetColorEntry( i, &oEntry );
     }
 }
@@ -381,10 +381,10 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
     {
         poColorTable->GetColorEntryAsRGB( i, &oEntry );
-        pEnvironTable->Entry->v_slot  = (uint16) i;
-        pEnvironTable->Entry->v_red   = (uint16) ( oEntry.c1 * fNormFactor );
-        pEnvironTable->Entry->v_green = (uint16) ( oEntry.c2 * fNormFactor );
-        pEnvironTable->Entry->v_blue  = (uint16) ( oEntry.c3 * fNormFactor );
+        pEnvironTable->Entry[i].v_slot  = (uint16) i;
+        pEnvironTable->Entry[i].v_red   = (uint16) ( oEntry.c1 * fNormFactor );
+        pEnvironTable->Entry[i].v_green = (uint16) ( oEntry.c2 * fNormFactor );
+        pEnvironTable->Entry[i].v_blue  = (uint16) ( oEntry.c3 * fNormFactor );
     }
 
     return i;
@@ -432,6 +432,16 @@ void CPL_STDCALL INGR_GetEnvironVColors( FILE *fp,
     bool bContinue = true; // Inproved bubble sort.
     uint32 i;              // This is the best sort techique when you
     uint32 j;              // suspect that the data is already sorted
+
+#if defined(CPL_MSB)
+    for (i = 0; i < nEntries; i++)
+    {
+        CPL_LSBPTR16(&hVLTColors.Entry[i].v_slot);
+        CPL_LSBPTR16(&hVLTColors.Entry[i].v_red);
+        CPL_LSBPTR16(&hVLTColors.Entry[i].v_green);
+        CPL_LSBPTR16(&hVLTColors.Entry[i].v_blue);
+    }
+#endif
 
     for( j = 1; j < nEntries && bContinue; j++ )
     {
@@ -698,6 +708,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( FILE *fp, uint32 nAppDataOfseet,
         {
             return INGR_JPEGQDEFAULT;
         }
+        INGR_JPEGAppDataDiskToMem(&hJpegData);
 
         nNext += hJpegData.RemainingLength;
 
@@ -783,17 +794,22 @@ int CPL_STDCALL INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDst
 
     do
     {
-        nColor = pauiSrc[ iInput++ ];
+        nColor = CPL_LSBWORD16(pauiSrc[ iInput ]);
+        iInput++;
 
         if( nColor == 0x5900 )
         {
-            nSize = pauiSrc[ iInput++ ];
-            nLine = pauiSrc[ iInput++ ];
-            nRun  = pauiSrc[ iInput++ ];
+            nSize = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
+            nLine = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
+            nRun  = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
             continue;
         }
 
-        nCount = pauiSrc[iInput++];
+        nCount = CPL_LSBWORD16(pauiSrc[iInput]);
+        iInput++;
 
         for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
         {
@@ -820,13 +836,14 @@ int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstD
     unsigned short nRun;
     unsigned char  nValue = 0;
 
-    if( pauiSrc[0] != 0x5900 )
+    if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
     {
         nValue = 1;
 
         do
         {
-            nRun = pauiSrc[ iInput++ ];
+            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
 
             if( nRun == 0 && nValue == 0 )
             {
@@ -846,7 +863,8 @@ int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstD
     {
         do
         {
-            nRun = pauiSrc[ iInput++ ];
+            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            iInput++;
 
             if( nRun == 0x5900 )
             {
@@ -867,4 +885,189 @@ int CPL_STDCALL INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstD
     }
 
     return iOutput;
+}
+
+
+void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne)
+{
+#if defined(CPL_MSB)
+    CPL_LSBPTR16(&pHeaderOne->WordsToFollow);
+    CPL_LSBPTR16(&pHeaderOne->DataTypeCode);
+    CPL_LSBPTR16(&pHeaderOne->ApplicationType);
+    CPL_LSBPTR32(&pHeaderOne->PixelsPerLine);
+    CPL_LSBPTR32(&pHeaderOne->NumberOfLines);
+    CPL_LSBPTR16(&pHeaderOne->DeviceResolution);
+    CPL_LSBPTR16(&pHeaderOne->DataTypeModifier);
+    switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
+    {
+        case GDT_Byte:    pHeaderOne->Minimum.AsUint8 = *(uint8*)&(pHeaderOne->Minimum);
+                          pHeaderOne->Maximum.AsUint8 = *(uint8*)&(pHeaderOne->Maximum); break;
+        case GDT_Int16:   pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
+                          pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); break;
+        case GDT_UInt16:  pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
+                          pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum)); break;
+        case GDT_Int32:   pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
+                          pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); break;
+        case GDT_UInt32:  pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
+                          pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); break;
+        /* FIXME ? I'm not sure this is correct for floats */
+        case GDT_Float32: pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
+                          pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum)); break;
+        case GDT_Float64: CPL_LSBPTR64(&pHeaderOne->Minimum); CPL_LSBPTR64(&pHeaderOne->Maximum); break;
+        default: break;
+    }
+#endif
+
+    // -------------------------------------------------------------------- 
+    // Convert WAX REAL*8 to IEEE double
+    // -------------------------------------------------------------------- 
+
+    if( pHeaderOne->GridFileVersion < 3 )
+    {
+        DGN2IEEEDouble( &pHeaderOne->XViewOrigin );
+        DGN2IEEEDouble( &pHeaderOne->YViewOrigin );
+        DGN2IEEEDouble( &pHeaderOne->ZViewOrigin );
+        DGN2IEEEDouble( &pHeaderOne->XViewExtent );
+        DGN2IEEEDouble( &pHeaderOne->YViewExtent );
+        DGN2IEEEDouble( &pHeaderOne->ZViewExtent );
+        DGN2IEEEDouble( &pHeaderOne->RotationAngle );
+        DGN2IEEEDouble( &pHeaderOne->SkewAngle );
+
+        uint8 i;
+
+        for( i = 0; i < 16; i++ )
+        {
+            DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
+        }
+    }
+    else if (pHeaderOne->GridFileVersion == 3)
+    {
+#ifdef CPL_MSB
+        CPL_LSBPTR64( &pHeaderOne->XViewOrigin );
+        CPL_LSBPTR64( &pHeaderOne->YViewOrigin );
+        CPL_LSBPTR64( &pHeaderOne->ZViewOrigin );
+        CPL_LSBPTR64( &pHeaderOne->XViewExtent );
+        CPL_LSBPTR64( &pHeaderOne->YViewExtent );
+        CPL_LSBPTR64( &pHeaderOne->ZViewExtent );
+        CPL_LSBPTR64( &pHeaderOne->RotationAngle );
+        CPL_LSBPTR64( &pHeaderOne->SkewAngle );
+
+        uint8 i;
+
+        for( i = 0; i < 16; i++ )
+        {
+            CPL_LSBPTR64( &pHeaderOne->TransformationMatrix[i]);
+        }
+#endif
+    }
+}
+
+void CPL_STDCALL INGR_HeaderOneMemToDisk(INGR_HeaderOne* pHeaderOne)
+{
+#if defined(CPL_MSB)
+    switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
+    {
+        case GDT_Byte:    *(uint8*)&(pHeaderOne->Minimum) = pHeaderOne->Minimum.AsUint8;
+                          *(uint8*)&(pHeaderOne->Maximum) = pHeaderOne->Maximum.AsUint8; break;
+        case GDT_Int16:   *(uint16*)&(pHeaderOne->Minimum) = CPL_LSBWORD16(pHeaderOne->Minimum.AsUint16);
+                          *(uint16*)&(pHeaderOne->Maximum) = CPL_LSBWORD16(pHeaderOne->Maximum.AsUint16); break;
+        case GDT_UInt16:  *(uint16*)&(pHeaderOne->Minimum) = CPL_LSBWORD16(pHeaderOne->Minimum.AsUint16);
+                          *(uint16*)&(pHeaderOne->Maximum) = CPL_LSBWORD16(pHeaderOne->Maximum.AsUint16); break;
+        case GDT_Int32:   *(uint32*)&(pHeaderOne->Minimum) = CPL_LSBWORD32(pHeaderOne->Minimum.AsUint32);
+                          *(uint32*)&(pHeaderOne->Maximum) = CPL_LSBWORD32(pHeaderOne->Maximum.AsUint32); break;
+        case GDT_UInt32:  *(uint32*)&(pHeaderOne->Minimum) = CPL_LSBWORD32(pHeaderOne->Minimum.AsUint32);
+                          *(uint32*)&(pHeaderOne->Maximum) = CPL_LSBWORD32(pHeaderOne->Maximum.AsUint32); break;
+        /* FIXME ? I'm not sure this is correct for floats */
+        case GDT_Float32: *(uint32*)&(pHeaderOne->Minimum) = CPL_LSBWORD32(pHeaderOne->Minimum.AsUint32);
+                          *(uint32*)&(pHeaderOne->Maximum) = CPL_LSBWORD32(pHeaderOne->Maximum.AsUint32); break;
+        case GDT_Float64: CPL_LSBPTR64(&pHeaderOne->Minimum); CPL_LSBPTR64(&pHeaderOne->Maximum); break;
+        default: break;
+    }
+
+    CPL_LSBPTR16(&pHeaderOne->WordsToFollow);
+    CPL_LSBPTR16(&pHeaderOne->DataTypeCode);
+    CPL_LSBPTR16(&pHeaderOne->ApplicationType);
+    CPL_LSBPTR32(&pHeaderOne->PixelsPerLine);
+    CPL_LSBPTR32(&pHeaderOne->NumberOfLines);
+    CPL_LSBPTR16(&pHeaderOne->DeviceResolution);
+    CPL_LSBPTR16(&pHeaderOne->DataTypeModifier);
+
+    if (pHeaderOne->GridFileVersion == 3)
+    {
+        CPL_LSBPTR64( &pHeaderOne->XViewOrigin );
+        CPL_LSBPTR64( &pHeaderOne->YViewOrigin );
+        CPL_LSBPTR64( &pHeaderOne->ZViewOrigin );
+        CPL_LSBPTR64( &pHeaderOne->XViewExtent );
+        CPL_LSBPTR64( &pHeaderOne->YViewExtent );
+        CPL_LSBPTR64( &pHeaderOne->ZViewExtent );
+        CPL_LSBPTR64( &pHeaderOne->RotationAngle );
+        CPL_LSBPTR64( &pHeaderOne->SkewAngle );
+
+        uint8 i;
+
+        for( i = 0; i < 16; i++ )
+        {
+            CPL_LSBPTR64( &pHeaderOne->TransformationMatrix[i]);
+        }
+    }
+#endif
+}
+
+void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo)
+{
+#if defined(CPL_MSB)
+    CPL_LSBPTR64(&pHeaderTwo->AspectRatio);
+    CPL_LSBPTR32(&pHeaderTwo->CatenatedFilePointer);
+    CPL_LSBPTR16(&pHeaderTwo->ColorTableType);
+    CPL_LSBPTR32(&pHeaderTwo->NumberOfCTEntries);
+    CPL_LSBPTR32(&pHeaderTwo->ApplicationPacketPointer);
+    CPL_LSBPTR32(&pHeaderTwo->ApplicationPacketLength);
+#endif
+}
+
+void CPL_STDCALL INGR_HeaderTwoAMemToDisk(INGR_HeaderTwoA* pHeaderTwo)
+{
+#if defined(CPL_MSB)
+    CPL_LSBPTR64(&pHeaderTwo->AspectRatio);
+    CPL_LSBPTR32(&pHeaderTwo->CatenatedFilePointer);
+    CPL_LSBPTR16(&pHeaderTwo->ColorTableType);
+    CPL_LSBPTR32(&pHeaderTwo->NumberOfCTEntries);
+    CPL_LSBPTR32(&pHeaderTwo->ApplicationPacketPointer);
+    CPL_LSBPTR32(&pHeaderTwo->ApplicationPacketLength);
+#endif
+}
+
+void CPL_STDCALL INGR_TileHeaderDiskToMem(INGR_TileHeader* pTileHeader)
+{
+#if defined(CPL_MSB)
+    CPL_LSBPTR16(&pTileHeader->ApplicationType);
+    CPL_LSBPTR16(&pTileHeader->SubTypeCode);
+    CPL_LSBPTR32(&pTileHeader->WordsToFollow);
+    CPL_LSBPTR16(&pTileHeader->PacketVersion);
+    CPL_LSBPTR16(&pTileHeader->Identifier);
+    CPL_LSBPTR16(&pTileHeader->Properties);
+    CPL_LSBPTR16(&pTileHeader->DataTypeCode);
+    CPL_LSBPTR32(&pTileHeader->TileSize);
+    INGR_TileItemDiskToMem(&pTileHeader->First);
+#endif
+}
+
+void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem)
+{
+#if defined(CPL_MSB)
+    CPL_LSBPTR32(&pTileItem->Start);
+    CPL_LSBPTR32(&pTileItem->Allocated);
+    CPL_LSBPTR32(&pTileItem->Used);
+#endif
+}
+
+void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData)
+{
+#if defined(CPL_MSB)
+    CPL_LSBPTR16(&pJPEGAppData->ApplicationType);
+    CPL_LSBPTR16(&pJPEGAppData->SubTypeCode);
+    CPL_LSBPTR32(&pJPEGAppData->RemainingLength);
+    CPL_LSBPTR16(&pJPEGAppData->PacketVersion);
+    CPL_LSBPTR16(&pJPEGAppData->JpegQuality);
+#endif
 }

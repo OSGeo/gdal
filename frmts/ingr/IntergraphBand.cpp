@@ -290,7 +290,8 @@ CPLErr IntergraphRasterBand::SetColorTable( GDALColorTable *poColorTable )
         return CE_None;
     }
 
-    this->poColorTable = poColorTable;
+    delete this->poColorTable;
+    this->poColorTable = poColorTable->Clone();
 
     return CE_None;
 }
@@ -350,9 +351,13 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     memcpy( pImage, pabyBlockBuf, nBlockXSize * nBlockYSize * 
         GDALGetDataTypeSize( eDataType ) / 8 );
 
-#ifdef CPL_MSB    
-    if( eDataType == GDT_Float32  )
+#ifdef CPL_MSB
+    if( eDataType == GDT_Int16 || eDataType == GDT_UInt16)
+        GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize, 2  );
+    else if( eDataType == GDT_Int32 || eDataType == GDT_UInt32 || eDataType == GDT_Float32  )
         GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4  );
+    else if (eDataType == GDT_Float64  )
+        GDALSwapWords( pImage, 8, nBlockXSize * nBlockYSize, 8  );
 #endif
 
     return CE_None;
@@ -865,11 +870,6 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
 {
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
-#ifdef CPL_MSB    
-    if( eDataType == GDT_Float32  )
-        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4  );
-#endif
-
     if( ( nBlockXOff == 0 ) && ( nBlockYOff == 0 ) )
     {
         FlushBandHeader();
@@ -891,11 +891,15 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
     else
     {
         memcpy( pabyBlockBuf, pImage, nBlockBufSize );
-    }
-#ifdef CPL_MSB    
-    if( eDataType == GDT_Float32  )
-        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4  );
+#ifdef CPL_MSB
+        if( eDataType == GDT_Int16 || eDataType == GDT_UInt16)
+            GDALSwapWords( pabyBlockBuf, 2, nBlockXSize * nBlockYSize, 2  );
+        else if( eDataType == GDT_Int32 || eDataType == GDT_UInt32 || eDataType == GDT_Float32  )
+            GDALSwapWords( pabyBlockBuf, 4, nBlockXSize * nBlockYSize, 4  );
+        else if (eDataType == GDT_Float64  )
+            GDALSwapWords( pabyBlockBuf, 8, nBlockXSize * nBlockYSize, 8  );
 #endif
+    }
 
     VSIFSeekL( poGDS->fp, nDataOffset + ( nBlockBufSize * nBlockYOff ), SEEK_SET );
 
@@ -935,7 +939,19 @@ void IntergraphRasterBand::FlushBandHeader( void )
     }
 
     VSIFSeekL( poGDS->fp, nBandStart, SEEK_SET );
+#ifdef CPL_MSB
+    INGR_HeaderOne hdr1ForDisk;
+    memcpy(&hdr1ForDisk, &hHeaderOne, SIZEOF_HDR1);
+    INGR_HeaderOneMemToDisk(&hdr1ForDisk);
+    VSIFWriteL( &hdr1ForDisk, 1, SIZEOF_HDR1,   poGDS->fp );
+
+    INGR_HeaderTwoA hdr2ForDisk;
+    memcpy(&hdr2ForDisk, &hHeaderTwo, SIZEOF_HDR2_A);
+    INGR_HeaderTwoAMemToDisk(&hdr2ForDisk);
+    VSIFWriteL( &hdr2ForDisk, 1, SIZEOF_HDR2_A, poGDS->fp );
+#else
     VSIFWriteL( &hHeaderOne, 1, SIZEOF_HDR1,   poGDS->fp );
     VSIFWriteL( &hHeaderTwo, 1, SIZEOF_HDR2_A, poGDS->fp );
+#endif
     VSIFWriteL( &hCTab,      1, SIZEOF_CTAB,   poGDS->fp );
 }
