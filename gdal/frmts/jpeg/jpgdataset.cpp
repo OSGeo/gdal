@@ -133,6 +133,12 @@ class JPGRasterBand : public GDALPamRasterBand
 {
     friend class JPGDataset;
 
+    /* We have to keep a pointer to the JPGDataset that this JPGRasterBand
+       belongs to. In some case, we may have this->poGDS != this->poDS
+       For example for a JPGRasterBand that is set to a NITFDataset...
+       In other words, this->poDS doesn't necessary point to a JPGDataset
+       See ticket #1807.
+    */
     JPGDataset 	   *poGDS;
 
   public:
