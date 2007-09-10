@@ -750,14 +750,12 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
 GDALRasterBand *JPGRasterBand::GetMaskBand()
 
 {
-    JPGDataset *poJDS = (JPGDataset *) poDS;
-
-    if( poJDS->pabyCMask )
+    if( poGDS->pabyCMask )
     {
-        if( poJDS->poMaskBand == NULL )
-            poJDS->poMaskBand = new JPGMaskBand( (JPGDataset *) poDS );
+        if( poGDS->poMaskBand == NULL )
+            poGDS->poMaskBand = new JPGMaskBand( (JPGDataset *) poDS );
 
-        return poJDS->poMaskBand;
+        return poGDS->poMaskBand;
     }
     else
         return GDALPamRasterBand::GetMaskBand();
@@ -770,10 +768,8 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
 int JPGRasterBand::GetMaskFlags()
 
 {
-    JPGDataset *poJDS = (JPGDataset *) poDS;
-
     GetMaskBand();
-    if( poJDS->poMaskBand != NULL )
+    if( poGDS->poMaskBand != NULL )
         return GMF_PER_DATASET;
     else
         return GDALPamRasterBand::GetMaskFlags();
