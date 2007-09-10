@@ -320,13 +320,15 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *
  * @param padfPrjParams Array of 7 coordinate system parameters:
  *
- * [0]  Latitude of the first standard parallel (radians)
- * [1]  Latitude of the second standard parallel (radians)
- * [2]  Latitude of center of projection (radians)
- * [3]  Longitude of center of projection (radians)
- * [4]  Scaling factor
- * [5]  False Easting
- * [6]  False Northing
+ * <pre>
+ *      [0]  Latitude of the first standard parallel (radians)
+ *      [1]  Latitude of the second standard parallel (radians)
+ *      [2]  Latitude of center of projection (radians)
+ *      [3]  Longitude of center of projection (radians)
+ *      [4]  Scaling factor
+ *      [5]  False Easting
+ *      [6]  False Northing
+ * </pre>
  *
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If NULL supplied instead of array pointer default values will be used
