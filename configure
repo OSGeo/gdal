@@ -458,7 +458,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP CXX_PIC C_PIC LD_SHARED SO_EXT HAVE_LIBTOOL LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP CXX_PIC C_PIC LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1023,6 +1023,7 @@ Optional Packages:
   --without-libtool     Don't use libtool to build the library
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
+  --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=linkoptInclude thread safe support
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
@@ -4982,13 +4983,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4985: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4986: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4988: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4989: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4991: output\"" >&5)
+  (eval echo "\"\$as_me:4992: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6037,7 +6038,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6040 "configure"' > conftest.$ac_ext
+  echo '#line 6041 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7720,11 +7721,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7723: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7724: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7727: \$? = $ac_status" >&5
+   echo "$as_me:7728: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8042,11 +8043,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8045: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8046: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8049: \$? = $ac_status" >&5
+   echo "$as_me:8050: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8147,11 +8148,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8150: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8151: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8154: \$? = $ac_status" >&5
+   echo "$as_me:8155: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8202,11 +8203,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8205: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8206: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8209: \$? = $ac_status" >&5
+   echo "$as_me:8210: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10992,7 +10993,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10995 "configure"
+#line 10996 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11092,7 +11093,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11095 "configure"
+#line 11096 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13122,11 +13123,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13125: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13126: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13129: \$? = $ac_status" >&5
+   echo "$as_me:13130: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13221,11 +13222,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13224: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13225: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13228: \$? = $ac_status" >&5
+   echo "$as_me:13229: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13273,11 +13274,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13276: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13277: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13280: \$? = $ac_status" >&5
+   echo "$as_me:13281: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18036,6 +18037,58 @@ OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
 
+
+
+# Check whether --with-with_hide_internal_symbols or --without-with_hide_internal_symbols was given.
+if test "${with_with_hide_internal_symbols+set}" = set; then
+  withval="$with_with_hide_internal_symbols"
+
+fi;
+
+HAVE_HIDE_INTERNAL_SYMBOLS=no
+
+if test "$with_hide_internal_symbols" = "yes"; then
+
+    echo "$as_me:$LINENO: checking whether we should hide internal symbols" >&5
+echo $ECHO_N "checking whether we should hide internal symbols... $ECHO_C" >&6
+
+    rm -f hiddensymbols.c
+    echo 'int visible() { return 0; } __attribute__ ((visibility("default")))' >> hiddensymbols.c
+    echo 'int hidden() { return 0; }' >> hiddensymbols.c
+    if test -z "`${CC} -fvisibility=hidden -c hiddensymbols.c 2>&1`" ; then
+      HAVE_HIDE_INTERNAL_SYMBOLS=yes
+    else
+      HAVE_HIDE_INTERNAL_SYMBOLS=no
+    fi
+    if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes"; then
+        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+        CFLAGS="$CFLAGS -fvisibility=hidden"
+        CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+    else
+        echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    fi
+    rm -f hiddensymbols.*
+else
+  echo "$as_me:$LINENO: checking whether we should hide internal symbols" >&5
+echo $ECHO_N "checking whether we should hide internal symbols... $ECHO_C" >&6
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+
+cat >>confdefs.h <<_ACEOF
+#define USE_GCC_VISIBILITY_FLAG 1
+_ACEOF
+
+fi
+
+HAVE_HIDE_INTERNAL_SYMBOLS=$HAVE_HIDE_INTERNAL_SYMBOLS
+
+
+
 echo "$as_me:$LINENO: checking for local include/lib path" >&5
 echo $ECHO_N "checking for local include/lib path... $ECHO_C" >&6
 
@@ -22310,21 +22363,26 @@ else
 echo "${ECHO_T}yes" >&6
 
     # Detecting Xerces version
-    xerces_major=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
-                    grep '^#define.*XERCES_VERSION_MAJOR.*[0-9]$' | \
-                    sed -e 's/#define XERCES_VERSION_MAJOR.//'`
+    if test -f "$with_xerces_inc/xercesc/util/XercesVersion.hpp"; then
+        xerces_major=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
+                        grep '^#define.*XERCES_VERSION_MAJOR.*[0-9]$' | \
+                        sed -e 's/#define XERCES_VERSION_MAJOR.//'`
 
-    xerces_minor=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
-                    grep '^#define.*XERCES_VERSION_MINOR.*[0-9]$' | \
-                    sed -e 's/#define XERCES_VERSION_MINOR.//'`
+        xerces_minor=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
+                        grep '^#define.*XERCES_VERSION_MINOR.*[0-9]$' | \
+                        sed -e 's/#define XERCES_VERSION_MINOR.//'`
 
-    xerces_revision=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
-                    grep '^#define.*XERCES_VERSION_REVISION.*[0-9]$' | \
-                    sed -e 's/#define XERCES_VERSION_REVISION.//'`
-    XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
+        xerces_revision=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
+                        grep '^#define.*XERCES_VERSION_REVISION.*[0-9]$' | \
+                        sed -e 's/#define XERCES_VERSION_REVISION.//'`
+        XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
 
-    { echo "$as_me:$LINENO: Xerces $XERCES_VERSION has been found" >&5
+        { echo "$as_me:$LINENO: Xerces $XERCES_VERSION has been found" >&5
 echo "$as_me: Xerces $XERCES_VERSION has been found" >&6;}
+    else
+        { echo "$as_me:$LINENO: XercesVersion.hpp is missing. Unable to determine Xerces version." >&5
+echo "$as_me: XercesVersion.hpp is missing. Unable to determine Xerces version." >&6;}
+    fi
   else
     echo "$as_me:$LINENO: result: requested, but compile or link fails!" >&5
 echo "${ECHO_T}requested, but compile or link fails!" >&6
@@ -26187,6 +26245,7 @@ s,@C_PIC@,$C_PIC,;t t
 s,@LD_SHARED@,$LD_SHARED,;t t
 s,@SO_EXT@,$SO_EXT,;t t
 s,@HAVE_LIBTOOL@,$HAVE_LIBTOOL,;t t
+s,@HAVE_HIDE_INTERNAL_SYMBOLS@,$HAVE_HIDE_INTERNAL_SYMBOLS,;t t
 s,@LIBZ_SETTING@,$LIBZ_SETTING,;t t
 s,@PG_CONFIG@,$PG_CONFIG,;t t
 s,@HAVE_PG@,$HAVE_PG,;t t
@@ -27753,9 +27812,6 @@ echo "  GEOS support:              ${HAVE_GEOS}"
 
 echo ""
 
-
-echo "  Statically link PROJ.4:    ${PROJ_STATIC}"
-
 if test ! -z "`uname | grep Darwin`" ; then
 
 echo "  Mac OS X Framework :       ${MACOSX_FRAMEWORK}"
@@ -27779,16 +27835,13 @@ echo "  NG SWIG Bindings:          ${WHAT_BINDINGS}"
 echo ""
 
 
+echo "  Statically link PROJ.4:    ${PROJ_STATIC}"
+
+
 echo "  enable OGR building:       ${OGR_ENABLED}"
 
 
-echo ""
-
-
 echo "  enable pthread support:    ${PTHREAD_ENABLED}"
-
-
-echo ""
 
 if test "x$CFG" != "xdebug" -a "x$CFG" != "xDEBUG" ; then
     DEBUG_MODE="no"
@@ -27799,5 +27852,9 @@ fi
 echo "  enable debug mode:         ${DEBUG_MODE}"
 
 
+echo "  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}"
+
+
 echo ""
+
 
