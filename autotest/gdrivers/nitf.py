@@ -221,6 +221,15 @@ def nitf_9():
     return 'success'
 
 ###############################################################################
+# For esoteric reasons, createcopy from jpeg compressed nitf files can be
+# tricky.  Verify this is working. 
+
+def nitf_10():
+
+    tst = gdaltest.GDALTest( 'NITF', '../tmp/nitf9.ntf', 2, 22296 )
+    return tst.testCreateCopy()
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -246,6 +255,7 @@ gdaltest_list = [
     nitf_7,
     nitf_8,
     nitf_9,
+    nitf_10,
     nitf_cleanup ]
 
 if __name__ == '__main__':
