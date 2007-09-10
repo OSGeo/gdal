@@ -237,7 +237,6 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    unsigned short	anTRed[65536], anTGreen[65536], anTBlue[65536];
     unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE )
@@ -245,9 +244,9 @@ GTIFFBuildOverviews( const char * pszFilename,
         GDALColorTable *poCT = papoBandList[0]->GetColorTable();
         int nColorCount = MIN(65536,poCT->GetColorEntryCount());
 
-        memset( anTRed, 0, 65536 * 2 );
-        memset( anTGreen, 0, 65536 * 2 );
-        memset( anTBlue, 0, 65536 * 2 );
+        panRed   = (unsigned short *) CPLCalloc(nColorCount,sizeof(unsigned short));
+        panGreen = (unsigned short *) CPLCalloc(nColorCount,sizeof(unsigned short));
+        panBlue  = (unsigned short *) CPLCalloc(nColorCount,sizeof(unsigned short));
 
         for( int iColor = 0; iColor < nColorCount; iColor++ )
         {
@@ -255,14 +254,10 @@ GTIFFBuildOverviews( const char * pszFilename,
 
             poCT->GetColorEntryAsRGB( iColor, &sRGB );
 
-            anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-            anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-            anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            panRed[iColor] = (unsigned short) (256 * sRGB.c1);
+            panGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+            panBlue[iColor] = (unsigned short) (256 * sRGB.c3);
         }
-
-        panRed = anTRed;
-        panGreen = anTGreen;
-        panBlue = anTBlue;
     }
         
 /* -------------------------------------------------------------------- */
@@ -285,6 +280,14 @@ GTIFFBuildOverviews( const char * pszFilename,
                                 nPhotometric, nSampleFormat, 
                                 panRed, panGreen, panBlue, 
                                 FALSE );
+    }
+
+    if (panRed)
+    {
+        CPLFree(panRed);
+        CPLFree(panGreen);
+        CPLFree(panBlue);
+        panRed = panGreen = panBlue = NULL;
     }
 
     XTIFFClose( hOTIFF );
