@@ -3,6 +3,9 @@
 /* Define if you want to use pthreads based multiprocessing support */
 #undef CPL_MULTIPROC_PTHREAD
 
+/* Define to 1 if you want to use the -fvisibility GCC flag */
+#undef USE_GCC_VISIBILITY_FLAG
+
 /* --prefix directory for GDAL install */
 #undef GDAL_PREFIX
 

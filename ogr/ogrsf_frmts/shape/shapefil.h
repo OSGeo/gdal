@@ -146,7 +146,12 @@ extern "C" {
 #endif
 
 #ifndef SHPAPI_CALL
-#  define SHPAPI_CALL
+#  if defined(USE_GCC_VISIBILITY_FLAG)
+#    define SHPAPI_CALL     __attribute__ ((visibility("default")))
+#    define SHPAPI_CALL1(x) __attribute__ ((visibility("default")))     x
+#  else
+#    define SHPAPI_CALL
+#  endif
 #endif
 
 #ifndef SHPAPI_CALL1
