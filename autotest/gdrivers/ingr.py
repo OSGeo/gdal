@@ -164,7 +164,7 @@ def ingr_14():
 def ingr_15():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 21227,
-                             options = 'FORMAT=CCITT Group 4' )
+                             options = ['FORMAT=CCITT Group 4'] )
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -173,7 +173,7 @@ def ingr_15():
 def ingr_16():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 21227,
-                             options = 'FORMAT=CCITT Group 4' )
+                             options = ['FORMAT=CCITT Group 4'] )
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
