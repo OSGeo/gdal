@@ -82,7 +82,7 @@ IntergraphDataset::~IntergraphDataset()
 
 GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 {
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 1024 )
+    if( poOpenInfo->nHeaderBytes < 1024 )
     {
         return NULL;
     }
@@ -163,6 +163,27 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     INGR_Format eFormat = (INGR_Format) pHeaderOne->DataTypeCode;
 
     // -------------------------------------------------------------------- 
+    // We need to scan around the file, so we open it now. 
+    // -------------------------------------------------------------------- 
+    FILE   *fp;
+
+    if( poOpenInfo->eAccess == GA_ReadOnly  )
+    {
+        fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    } 
+    else 
+    {
+        fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+    }
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "%s", VSIStrerror( errno ) );
+        return NULL;
+    }
+
+    // -------------------------------------------------------------------- 
     // Get Format Type from the tile directory
     // -------------------------------------------------------------------- 
 
@@ -172,9 +193,10 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
         int nOffset = 2 + ( 2 * ( pHeaderOne->WordsToFollow + 1 ) );
 
-        if( (VSIFSeek( poOpenInfo->fp, nOffset, SEEK_SET ) == -1 )  ||
-            (VSIFRead( &hTileDir, 1, SIZEOF_TDIR, poOpenInfo->fp ) == 0) )
+        if( (VSIFSeekL( fp, nOffset, SEEK_SET ) == -1 )  ||
+            (VSIFReadL( &hTileDir, 1, SIZEOF_TDIR, fp ) == 0) )
         {
+            VSIFCloseL( fp );
             CPLError( CE_Failure, CPLE_AppDefined, 
                 "Error reading tiles header" );
             return NULL;
@@ -190,6 +212,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                 "Cannot recognize tiles header info");
+            VSIFCloseL( fp );
             return NULL;
         }
             
@@ -204,6 +227,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
             "Intergraph Raster Scannable Line Header not supported yet" );
+        VSIFCloseL( fp );
         return NULL;
     }
 */
@@ -230,6 +254,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined, 
             "Intergraph Raster Format %d ( \"%s\" ) not supported",
             pHeaderOne->DataTypeCode, INGR_GetFormatName( eFormat ) );
+        VSIFCloseL( fp );
         return NULL;
     }
 
@@ -242,20 +267,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS = new IntergraphDataset();
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->pszFilename = CPLStrdup( poOpenInfo->pszFilename );
-
-    if( poOpenInfo->eAccess == GA_ReadOnly  )
-    {
-        poDS->fp = VSIFOpenL( poDS->pszFilename, "rb" );
-    } 
-    else 
-    {
-        poDS->fp = VSIFOpenL( poDS->pszFilename, "r+b" );
-    }
-
-    if( poDS->fp == NULL )
-    {
-        return NULL;
-    }
+    poDS->fp = fp;
 
     // -------------------------------------------------------------------- 
     // Get X Size from Pixels Per Line (PPL)
