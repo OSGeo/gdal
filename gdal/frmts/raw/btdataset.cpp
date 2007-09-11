@@ -101,6 +101,7 @@ class BTRasterBand : public GDALRasterBand
 
     virtual const char* GetUnitType();
     virtual CPLErr SetUnitType(const char*);
+	virtual double GetNoDataValue( int* = NULL );
 };
 
 
@@ -247,6 +248,16 @@ CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     return CE_None;
 }
+
+
+double BTRasterBand::GetNoDataValue( int* pbSuccess /*= NULL */ )
+{
+	if(pbSuccess != NULL)
+		*pbSuccess = TRUE;
+
+	return -32768;
+}
+
 
 /************************************************************************/
 /*                            GetUnitType()                             */
