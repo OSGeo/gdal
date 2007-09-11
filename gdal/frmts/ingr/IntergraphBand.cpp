@@ -474,7 +474,6 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     // Create a RLE buffer
     // ----------------------------------------------------------------
 
-    CPLFree( pabyRLEBlock );
     pabyRLEBlock = (GByte*) CPLMalloc( nRLESize );
 }
 
