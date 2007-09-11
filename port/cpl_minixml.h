@@ -62,7 +62,7 @@ typedef enum
  * for a document can be represented as a tree of CPLXMLNode structures. 
  */
 
-typedef struct _CPLXMLNode
+typedef struct CPLXMLNode
 {
     /** 
      * \brief Node type
@@ -102,7 +102,7 @@ typedef struct _CPLXMLNode
      * one that has the same parent as this node.  NULL if this node is the
      * last child of the parent element. 
      */
-    struct _CPLXMLNode  *psNext;     
+    struct CPLXMLNode  *psNext;     
 
     /** 
      * \brief Child node.
@@ -114,7 +114,7 @@ typedef struct _CPLXMLNode
      * psNext's starting with the psChild node. 
      */
 
-    struct _CPLXMLNode  *psChild;    
+    struct CPLXMLNode  *psChild;    
 } CPLXMLNode;
 
 
