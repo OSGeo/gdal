@@ -52,6 +52,10 @@ gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		-o gdaltindex$(EXE)
 
+gdalbuildvrt$(EXE):	gdalbuildvrt.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdalbuildvrt.o $(XTRAOBJ) $(CONFIG_LIBS)  \
+		-o gdalbuildvrt$(EXE)
+		
 multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) multireadtest.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o multireadtest$(EXE)
