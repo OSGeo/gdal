@@ -284,8 +284,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 /*                           GDALRasterBlock                            */
 /* ******************************************************************** */
 
-/*! A cached raster block ... to be documented later. */
-
 class CPL_DLL GDALRasterBlock
 {
     GDALDataType        eType;
@@ -341,6 +339,8 @@ class CPL_DLL GDALRasterBlock
 /* ******************************************************************** */
 /*                             GDALColorTable                           */
 /* ******************************************************************** */
+
+/*! A color table / palette. */
 
 class CPL_DLL GDALColorTable
 {
