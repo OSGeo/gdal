@@ -769,6 +769,14 @@ void GDALRegister_INGR()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_IntergraphRaster.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
             "Byte Int16 Int32 Float32 Float64" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='FORMAT' type='string-select'>"
+"       <Value>None</Value>"
+"       <Value>CCITT Group 4</value>"
+"   </Option>"
+"</CreationOptionList>\n" );
+
         poDriver->pfnOpen = IntergraphDataset::Open;
         poDriver->pfnCreate    = IntergraphDataset::Create;
         poDriver->pfnCreateCopy = IntergraphDataset::CreateCopy;
