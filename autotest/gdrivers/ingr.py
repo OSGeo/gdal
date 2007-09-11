@@ -53,7 +53,7 @@ def ingr_2():
     return tst.testOpen()
 
 ###############################################################################
-# Test paletted file, including checking the palette.
+# Test paletted file, including checking the palette (format 02 I think).
 
 def ingr_3():
 
@@ -71,6 +71,112 @@ def ingr_3():
     return 'success'
 
 ###############################################################################
+# frmt02 is a plain byte format
+
+def ingr_4():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
+    return tst.testOpen()
+
+###############################################################################
+# Test creation.
+
+def ingr_5():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
+    return tst.testCreate()
+
+###############################################################################
+# Test createcopy.
+
+def ingr_6():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
+    return tst.testCreate()
+
+###############################################################################
+# JPEG 8bit
+
+def ingr_7():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt30.cot', 1, 29718 )
+    return tst.testOpen()
+
+###############################################################################
+# Read simple RLE
+
+def ingr_8():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt09.cot', 1, 2480 )
+    return tst.testOpen()
+
+###############################################################################
+# Read Simple RLE Variable
+
+def ingr_9():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt10.cot', 1, 47031 )
+    return tst.testOpen()
+
+###############################################################################
+# CCITT bitonal
+
+def ingr_10():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 21227 )
+    return tst.testOpen()
+
+###############################################################################
+# Adaptive RLE - 24 bit.
+
+def ingr_11():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt27.cot', 2, 45616 )
+    return tst.testOpen()
+
+###############################################################################
+# Uncompressed RGB
+
+def ingr_12():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt28.cot', 2, 45616 )
+    return tst.testOpen()
+
+###############################################################################
+# Adaptive RLE 8bit.
+
+def ingr_13():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt29.cot', 1, 26968 )
+    return tst.testOpen()
+
+###############################################################################
+# JPEG RGB
+
+def ingr_14():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt31.cot', 1, 11466 )
+    return tst.testOpen()
+
+###############################################################################
+# Test writing CCITT Group 4 compressed.
+
+def ingr_15():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 21227,
+                             options = 'FORMAT=CCITT Group 4' )
+    return tst.testCreateCopy()
+
+###############################################################################
+# Same, but through vsimem all in memory.
+
+def ingr_16():
+
+    tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 21227,
+                             options = 'FORMAT=CCITT Group 4' )
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
 # Cleanup.
 
 def ingr_cleanup():
@@ -81,6 +187,19 @@ gdaltest_list = [
     ingr_1,
     ingr_2,
     ingr_3,
+    ingr_4,
+    ingr_5,
+    ingr_6,
+    ingr_7,
+    ingr_8,
+    ingr_9,
+    ingr_10,
+    ingr_11,
+    ingr_12,
+    ingr_13,
+    ingr_14,
+    ingr_15,
+    ingr_16,
     ingr_cleanup ]
 
 if __name__ == '__main__':
