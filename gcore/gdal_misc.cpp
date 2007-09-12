@@ -1552,13 +1552,51 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 {
+    static char szResult[128];
+    
+/* -------------------------------------------------------------------- */
+/*      LICENSE is a special case. We try to find and read the          */
+/*      LICENSE.TXT file from the GDAL_DATA directory and return        */
+/*      it.  We leak memory. Applications are discouraged from          */
+/*      deallocating the returned memory in this case since in the      */
+/*      future we may resolve the leak issue internally.                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszRequest,"LICENSE") )
+    {
+        const char *pszFilename = CPLFindFile( "etc", "LICENSE.TXT" );
+        FILE *fp = NULL;
+        int  nLength;
+        char *pszLICENSE;
+
+        if( pszFilename != NULL )
+            fp = VSIFOpenL( pszFilename, "r" );
+
+        if( fp == NULL )
+        {
+            sprintf( szResult, 
+                     "GDAL/OGR is released under the MIT/X license.\n"
+                     "The LICENSE.TXT distributed with GDAL/OGR should\n"
+                     "contain additional details.\n" );
+            return szResult;
+        }
+        
+        VSIFSeekL( fp, 0, SEEK_END );
+        nLength = VSIFTellL( fp ) + 1;
+        VSIFSeekL( fp, SEEK_SET, 0 );
+
+        pszLICENSE = (char *) CPLCalloc(1,nLength);
+        VSIFReadL( pszLICENSE, 1, nLength-1, fp );
+        
+        VSIFCloseL( fp );
+
+        return pszLICENSE;
+    }
+
     // NOTE: There is a slight risk of a multithreaded race condition if
     // one thread is in the process of sprintf()ing into this buffer while
     // another is using it but that seems pretty low risk.  All threads
     // want the same value in the buffer.
 
-    static char szResult[128];
-    
     if( pszRequest == NULL || EQUAL(pszRequest,"VERSION_NUM") )
         sprintf( szResult, "%d", GDAL_VERSION_NUM );
     else if( EQUAL(pszRequest,"RELEASE_DATE") )
@@ -1840,6 +1878,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  * commandline options:
  *  
  *  --version: report version of GDAL in use. 
+ *  --license: report GDAL license info.
  *  --formats: report all format drivers configured.
  *  --format [format]: report details of one format driver. 
  *  --optfile filename: expand an option file into the argument list. 
@@ -1894,6 +1933,16 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         if( EQUAL(papszArgv[iArg],"--version") )
         {
             printf( "%s\n", GDALVersionInfo( "--version" ) );
+            CSLDestroy( papszReturn );
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --license                                                       */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--license") )
+        {
+            printf( "%s\n", GDALVersionInfo( "LICENSE" ) );
             CSLDestroy( papszReturn );
             return 0;
         }
@@ -2134,6 +2183,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         {
             printf( "Generic GDAL utility command options:\n" );
             printf( "  --version: report version of GDAL in use.\n" );
+            printf( "  --license: report GDAL license info.\n" );
             printf( "  --formats: report all configured format drivers.\n" );
             printf( "  --format [format]: details of one format.\n" );
             printf( "  --optfile filename: expand an option file into the argument list.\n" );
