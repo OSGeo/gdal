@@ -431,6 +431,8 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 3 + 1;
     else if( ABS(nLLOriginLat) >= 50 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 2 + 1;
+    else
+        expectedXSize = poSrcDS->GetRasterYSize();
 
     if (poSrcDS->GetRasterXSize() != expectedXSize)
     {
