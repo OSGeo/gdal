@@ -729,6 +729,14 @@
  * PNG_NO_MMX_CODE disables the use of MMX code without changing the API.
  * When MMX code is off, then optimized C replacement functions are used.
 */
+
+/* Frank Warmerdam / Even Rouault: This patch should disable assembly code
+   on x86_64 systems since it won't build */
+
+#ifndef __i386__ /* change this if MMX/SSE become supported on x86_64! */
+#define PNG_NO_ASSEMBLER_CODE
+#endif
+
 #if defined(PNG_READ_SUPPORTED) && !defined(PNG_NO_ASSEMBLER_CODE)
 #  ifndef PNG_ASSEMBLER_CODE_SUPPORTED
 #    define PNG_ASSEMBLER_CODE_SUPPORTED
