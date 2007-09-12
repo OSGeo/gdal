@@ -159,21 +159,11 @@ def ingr_14():
     return tst.testOpen()
 
 ###############################################################################
-# Test writing CCITT Group 4 compressed.
+# Same, but through vsimem all in memory.
 
 def ingr_15():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 23035,
-                             options = ['FORMAT=CCITT Group 4'] )
-    return tst.testCreateCopy()
-
-###############################################################################
-# Same, but through vsimem all in memory.
-
-def ingr_16():
-
-    tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 23035,
-                             options = ['FORMAT=CCITT Group 4'] )
+    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
@@ -199,7 +189,6 @@ gdaltest_list = [
     ingr_13,
     ingr_14,
     ingr_15,
-    ingr_16,
     ingr_cleanup ]
 
 if __name__ == '__main__':
