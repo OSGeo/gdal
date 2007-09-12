@@ -11,7 +11,8 @@ BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalenhance$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
-BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE) gdal_rasterize$(EXE)
+BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE) \
+			gdal_rasterize$(EXE) gdalgrid$(EXE)
 endif
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
@@ -68,6 +69,9 @@ gdalenhance$(EXE):	gdalenhance.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalenhance.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o gdalenhance$(EXE)
 
+gdalgrid$(EXE):	gdalgrid.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdalgrid.o $(CONFIG_LIBS) -o gdalgrid$(EXE)
+
 test1$(EXE):	test1.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o test1$(EXE)
@@ -89,6 +93,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_DEP_LIBS="$(LIBS)"' >> gdal-config
 	echo 'CONFIG_PREFIX="$(GDAL_ROOT)"' >> gdal-config
 	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts"' >> gdal-config
+	echo 'CONFIG_DATA="$(GDAL_ROOT)/data"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
 	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config
@@ -102,6 +107,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_DEP_LIBS="$(LIBS)"' >> gdal-config-inst
 	echo 'CONFIG_PREFIX="$(INST_PREFIX)"' >> gdal-config-inst
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
+	echo 'CONFIG_DATA="$(INST_DATA)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
 	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config-inst
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config-inst
