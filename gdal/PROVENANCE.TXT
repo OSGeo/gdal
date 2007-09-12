@@ -63,7 +63,6 @@ Historical and Current:
 * libpng: gdal/frmts/png/libpng
 * libgif/libungif: gdal/frmts/gif/libungif
 * libcsf: gdal/frmts/pcraster/libcsf
-* rstlib: gdal/frmts/idrisi/rstlib
 * hdfeoslib: gdal/frmts/hdf4/hdf-eos
 
 == Non-free Libraries ==
@@ -198,8 +197,7 @@ Note: all the following are build options, not required.
 
 * ili level code copyright Pirmin Kalberer (Sourcepole), MIT/X. 
 * iom/ili2c.jar is ambiguous.  '''TO_RESOLVE''' (#1812)
-* iom source code is all LGPL (per iom/README.src.txt) but none of the
-  source files have a copyright or license header.  '''TO_RESOLVE''' (#1812)
+* iom source code is all LGPL (per iom/README.src.txt) but none of the source files have a copyright or license header.  '''TO_RESOLVE''' (#1812)
 
 === gdal/ogr/ogrsf_frmts/mem ===
 
