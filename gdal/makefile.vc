@@ -174,6 +174,7 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	if exist $(PYDIR)\python.exe $(MAKE) /f makefile.vc install
 	cd ..
 	xcopy /y /r /d /f data\*.* $(DATADIR)
+	xcopy /y /r /d LICENSE.TXT $(DATADIR)
 !IFDEF HTMLDIR
 	-mkdir $(HTMLDIR)
 	cd frmts
