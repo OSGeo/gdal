@@ -107,14 +107,14 @@ Note: all the following are build options, not required.
 === gdal/data ===
 
 * Contains various data files without copyright messages embedded.
-* cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. 
-* ecw_cs.dat: Derived via much processing from ERMapper GDT definitions, rights unclear. 
-* esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. 
-* ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Redistribution may violate the EPSG "distribute as a whole" requirement. 
-* seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear. 
-* NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear. 
+* cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. '''TO_RESOLVE''' (emailed Edric)
+* ecw_cs.dat: Derived via much processing from ERMapper GDT definitions, rights unclear. '''TO_RESOLVE'''
+* esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. '''TO_RESOLVE'''
+* ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Modifications to EPSG data violate the EPSG use agreement (if we are to still attribute it to EPSG) so I have segregated changes into override files (ie. gcs.override.csv). 
+* seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear. '''TO_RESOLVE'''
+* NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear.  '''TO_RESOLVE'''
 
-'''TO_RESOLVE'''
+
 
 === gdal/apps === 
 
@@ -170,8 +170,8 @@ Note: all the following are build options, not required.
 === gdal/ogr/ogrsf_rmts/dgn ===
 
 * Copyright Avenza Systems (MIT/X).
-* dgn_pge.cpp, dgn_pge.h, pge_test.cpp, vbe_pge.cpp: copyright Pacific Gas and Electric, all rights reserved!  '''TO_RESOLVE'''
-* web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree  '''TO_RESOLVE'''
+* dgn_pge.cpp, dgn_pge.h, pge_test.cpp, vbe_pge.cpp: copyright Pacific Gas and Electric, all rights reserved!  (this has all been removed from trunk)
+* web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree  '''TO_RESOLVE''' (#1813)
 
 === gdal/ogr/ogrsf_frmts/dods ===
 
@@ -179,11 +179,11 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/dxfdwg ===
 
-* OdFileBuf.h, OdFileBuf.cpp is derived from DWGdirect source code.  No copyright message! '''TO_RESOLVE'''
+* OdFileBuf.h, OdFileBuf.cpp is derived from DWGdirect source code.  No copyright message! '''TO_RESOLVE''' (#1816)
 
 === gdal/ogr/ogrsf_frmts/fme ===
 
-* All code is Copyright Safe Software, "All Rights Reserved"! '''TO_RESOLVE'''
+* All code is Copyright Safe Software, "All Rights Reserved"! - License changed to MIT/X with explicit permission from Dale Lutz.  Copyright still held by Safe.
 
 === gdal/ogr/ogrsf_frmts/gml ===
 
@@ -197,9 +197,9 @@ Note: all the following are build options, not required.
 === gdal/ogr/ogrsf_frmts/ili ===
 
 * ili level code copyright Pirmin Kalberer (Sourcepole), MIT/X. 
-* iom/ili2c.jar is ambiguous.  '''TO_RESOLVE'''
+* iom/ili2c.jar is ambiguous.  '''TO_RESOLVE''' (#1812)
 * iom source code is all LGPL (per iom/README.src.txt) but none of the
-  source files have a copyright or license header.  '''TO_RESOLVE'''
+  source files have a copyright or license header.  '''TO_RESOLVE''' (#1812)
 
 === gdal/ogr/ogrsf_frmts/mem ===
 
@@ -284,7 +284,7 @@ Note: all the following are build options, not required.
 * SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  (removed)
 * ogr_capi_test.c: no copyright message, written by Daniel Morissette. Added copyright.
 * oledbgis.h: No copyright message, mostly OGC spec constants. 
-* swq.h, swq.c: Has alternate form of MIT/X license (should review). '''TO_RESOLVE'''
+* swq.h, swq.c: Has alternate form of MIT/X license.  On review this license is functionally equililent to the general GDAL license.
 * Copyright holders include Frank Warmerdam, Daniel Morissette, Softmap Inc., Stephane Villeneuve., Andrey Kiselev, Information Interoperability Institute
 
 
@@ -300,9 +300,9 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/sfcom_oledb ===
 
-* sfcom_oledb/ICommandWidthParametersImpl.h: Provided by ESRI without clear copyright/license terms.  '''TO_RESOLVE'''
-* atl_net/ICRRowsetImpl.h,IFRowsetImpl.h,CCRRowsetImpl.h,SFAccessorImpl.h: Modified form of code from ATLDB.H, properly credited in the header. Copyright claim is dubious. '''TO_RESOLVE'''
-* atl_net/IColumnsRowsetImpl.h: Derived from code for article by Len Holgate, JetByte Limited.  It is not clear if the code is properly licensed, though it is attributed. '''TO_RESOLVE'''
+* sfcom_oledb/ICommandWidthParametersImpl.h: Provided by ESRI without clear copyright/license terms.  '''TO_RESOLVE''' (#1817)
+* atl_net/ICRRowsetImpl.h,IFRowsetImpl.h,CCRRowsetImpl.h,SFAccessorImpl.h: Modified form of code from ATLDB.H, properly credited in the header. Copyright claim is dubious. '''TO_RESOLVE''' (#1817)
+* atl_net/IColumnsRowsetImpl.h: Derived from code for article by Len Holgate, JetByte Limited.  It is not clear if the code is properly licensed, though it is attributed. '''TO_RESOLVE''' (#1817)
 * Similar issues to above in atl_vc6 directory.
 * Code Copyright Softmap, FrankW, 
 * Some files lack headers (mostly MS Visual Studio generated files). 
@@ -378,7 +378,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 === gdal/frmts/gif ===
 
 * FrankW, clean.
-* Contains a copy of libungif with ambigious licensing terms. '''TO_RESOLVE'''
+* Contains a copy of libungif with ambigious licensing terms. '''TO_RESOLVE'''  (#1818)
 
 === gdal/frmts/grass ===
 
@@ -387,10 +387,10 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 
 === gdal/frmts/gtiff ===
 
-* tif_float.c: Industrial Light and Magic - MIT/X style, but with a credit requirement. '''TO_RESOLVE'''
+* tif_float.c: Industrial Light and Magic - MIT/X style, but with a credit requirement. Added license notice in gdal/LICENSE.TXT, setup ticket #1819 to streamline it's use. 
 * tif_memio.c: FrankW, Mike Johnson and MancTec AB - MIT/X. 
 * Contains copy of libtiff, license terms explicit in source files. 
-* Contains copy of libgeotiff, license terms not made clear.  '''TO_RESOLVE'''
+* Contains copy of libgeotiff, license terms not made clear.  '''TO_RESOLVE''' (Emailed Niles about using MIT/X license for his libgeotiff code). 
 
 === gdal/frmts/gxf ===
 
@@ -413,7 +413,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
  copyright notice appear in all copies and that both that copyright notice and 
  this permission notice appear in supporting documentation.
 
-We should look into credit requirement.  '''TO_RESOLVE'''
+I have added this license to LICENSE.TXT to satisfy the credit requirement.
 
 * cfortHdf.h had "cfortran.h" strings, and has been removed.
 
@@ -423,7 +423,7 @@ We should look into credit requirement.  '''TO_RESOLVE'''
 
 === gdal/frmts/hdf ===
 
-* geoextra.c: Derived by public domain contribution to libgeotiff from PCI but the terms are not clear.  (this also affects libgeotiff) '''TO_RESOLVE'''
+* geoextra.c: Derived by public domain contribution to libgeotiff from PCI but the terms are not clear.  (this also affects libgeotiff) '''TO_RESOLVE'''  Email send to Dave Stanley to allow relicensing under MIT/X license.
 * Mostly copyright Intergraph Corporation, clean. 
 * hfacompress.cpp: Sam Gillingham, clean.
 
@@ -447,8 +447,8 @@ We should look into credit requirement.  '''TO_RESOLVE'''
 
 === gdal/frmts/jp2kak ===
 
-* dbg_file_source.h: Derived from Kakadu, no copyright or other history. '''TO_RESOLVE'''
-* jp2kak_roi.h: Derived from Kakadu with proper credit.  But re-copyrighted FrankW improperly.  '''TO_RESOLVE'''
+* dbg_file_source.h: Derived from Kakadu, no copyright or other history. '''TO_RESOLVE''' (#1820)
+* jp2kak_roi.h: Derived from Kakadu with proper credit.  But re-copyrighted FrankW improperly.  '''TO_RESOLVE''' (#1820)
 * Otherwise FrankW, clean.
 
 === gdal/frmts/jpeg ===
@@ -478,7 +478,7 @@ We should look into credit requirement.  '''TO_RESOLVE'''
 
 === gdal/frmts/msg ===
 
-* xritheaderparser.cpp, xritheaderparser.h: Copyright ITC and R. Alblas and released under the GPL.  '''TO_RESOLVE'''
+* xritheaderparser.cpp, xritheaderparser.h: Copyright ITC and R. Alblas and released under the GPL.  '''TO_RESOLVE'''  (#1821)
 * the rest, ITC, clean
 
 === gdal/frmts/msgn ===
@@ -505,10 +505,9 @@ We should look into credit requirement.  '''TO_RESOLVE'''
 === gdal/frmts/pcraster ===
 
 * Kor de Jong holds copyright.
-* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcpcrasterutil.cpp, pcrasterutil.h
-* libcsf: license and copyright implicit in AUTHORS and COPYING documents. '''TO_RESOLVE'''
-* libcsf COPYING indicates an MIT-like agreement but with more explicit requirements
-  for notice in binaries. '''TO_RESOLVE'''
+* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcpcrasterutil.cpp, pcrasterutil.h (#1822).
+* libcsf: license and copyright implicit in AUTHORS and COPYING documents. 
+* libcsf COPYING indicates an MIT-like agreement but with more explicit requirements for notice in binaries.  Added to gdal/LICENSE.TXT
 
  Copyright (c) 1997-2003, Utrecht University
  All rights reserved.
