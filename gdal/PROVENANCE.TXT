@@ -376,7 +376,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 === gdal/frmts/gif ===
 
 * FrankW, clean.
-* Contains a copy of libungif with ambigious licensing terms. '''TO_RESOLVE'''  (#1818)
+* libungif is under the MIT/X license as established in ticket #1818.
 
 === gdal/frmts/grass ===
 
