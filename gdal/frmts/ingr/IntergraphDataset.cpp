@@ -411,25 +411,6 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     }
 
     // -------------------------------------------------------------------- 
-    //  Get Format option
-    // -------------------------------------------------------------------- 
-
-    const char *pszCompression = CSLFetchNameValue( papszOptions, "FORMAT" );
-
-    if( pszCompression == NULL )
-    {
-        pszCompression = "None";
-    }
-
-    if( EQUAL( pszCompression, INGR_GetFormatName( CCITTGroup4 ) )       == FALSE &&
-        EQUAL( pszCompression, "None" ) == FALSE )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "Compression option (%s) not supported", pszCompression );
-        return NULL;
-    }
-
-    // -------------------------------------------------------------------- 
     //  Fill headers with minimun information
     // -------------------------------------------------------------------- 
 
@@ -445,7 +426,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
     hHdr1.HeaderType.Is2Dor3D   = INGR_HEADER_2D;
-    hHdr1.DataTypeCode          = INGR_GetFormat( eType, pszCompression );
+    hHdr1.DataTypeCode          = INGR_GetFormat( eType, "None" );
     hHdr1.WordsToFollow         = ( ( SIZEOF_HDR1 * 3 ) / 2 ) - 2;
     hHdr1.ApplicationType       = GenericRasterImageFile;
     hHdr1.XViewOrigin           = 0.0;
@@ -496,8 +477,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     //  RGB Composite assumption
     // -------------------------------------------------------------------- 
 
-    if(  EQUAL( pszCompression, "None" ) && 
-        eType == GDT_Byte  &&
+    if( eType  == GDT_Byte  &&
         nBands == 3 )
     {
         hHdr1.DataTypeCode = Uncompressed24bit;
@@ -542,7 +522,6 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                                            GDALProgressFunc pfnProgress, 
                                            void *pProgressData )
 {
-    //TODO: Clear INGR Metadata from the output
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
     {
@@ -571,17 +550,6 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     if( poDstDS == NULL )
     {
         return NULL;
-    }
-
-    // -------------------------------------------------------------------- 
-    //  Get compression option
-    // -------------------------------------------------------------------- 
-
-    const char *pszCompression = CSLFetchNameValue( papszOptions, "FORMAT" );
-
-    if( pszCompression == NULL )
-    {
-        pszCompression = "None";
     }
 
     // -------------------------------------------------------------------- 
@@ -781,14 +749,6 @@ void GDALRegister_INGR()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_IntergraphRaster.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
             "Byte Int16 Int32 Float32 Float64" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
-"<CreationOptionList>\n"
-"   <Option name='FORMAT' type='string-select'>"
-"       <Value>None</Value>"
-"       <Value>CCITT Group 4</value>"
-"   </Option>"
-"</CreationOptionList>\n" );
-
         poDriver->pfnOpen = IntergraphDataset::Open;
         poDriver->pfnCreate    = IntergraphDataset::Create;
         poDriver->pfnCreateCopy = IntergraphDataset::CreateCopy;
