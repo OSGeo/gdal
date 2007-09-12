@@ -1,7 +1,10 @@
 This code is from libungif 4.1.0
 
-In theory it comes from:
-  http://prtr-13.ucsc.edu/~badger/software/libungif.shtml
+In theory it comes from (URL probably broken):
+http://prtr-13.ucsc.edu/~badger/software/libungif.shtml
+
+This seems to be the new location of the libungif project:
+http://sourceforge.net/projects/libungif
 
 But I don't think this works any more. I generally dig up 
 source RPMs to dig up the code.  
@@ -11,4 +14,24 @@ Changes:
  o Fix a few warnings about unused variables. 
  o Hack private include file to avoid VersionString warnings.
  o Hacked in O_BINARY support whereever O_BINARY is defined.
+
+History:
+
+This package was originally written by Gershon Elber in 1990 on an IBM PC
+under MS-DOS using Borland Turbo C. He made it portable to several UNIX
+environments.
+
+v1.0 (4 Jul 89) created by Gershon Elber.
+v2.1 featured substantial changes and additions by Eric S. Raymond.
+
+Status:
+
+The libungif is now an integral part of GIFLIB.
+Current maintainer is Eric S. Raymond.
+GIFLIB is not under active development, but bug fixes are being accepted.
+
+License:
+
+The GIFLIB is available under terms of MIT License.
+Also, refer to COPYING file.
 
