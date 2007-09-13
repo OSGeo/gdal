@@ -3,11 +3,6 @@
 #define INCLUDED_IOSTREAM
 #endif
 
-#ifndef INCLUDED_CASSERT
-#include <cassert>
-#define INCLUDED_CASSERT
-#endif
-
 #ifndef INCLUDED_ALGORITHM
 #include <algorithm>
 #define INCLUDED_ALGORITHM
