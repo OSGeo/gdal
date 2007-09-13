@@ -11,8 +11,9 @@ BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalenhance$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
-BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE) \
-			gdal_rasterize$(EXE) gdalgrid$(EXE)
+BIN_LIST += gdal_contour$(EXE) \
+			gdaltindex$(EXE) \
+			gdal_rasterize$(EXE)
 endif
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
@@ -68,9 +69,6 @@ dumpoverviews$(EXE):	dumpoverviews.o $(DEP_LIBS)
 gdalenhance$(EXE):	gdalenhance.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalenhance.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o gdalenhance$(EXE)
-
-gdalgrid$(EXE):	gdalgrid.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) gdalgrid.o $(CONFIG_LIBS) -o gdalgrid$(EXE)
 
 test1$(EXE):	test1.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
