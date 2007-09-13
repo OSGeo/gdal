@@ -779,8 +779,8 @@ CPLErr RMFDataset::WriteHeader()
     RMF_WRITE_DOUBLE( sHeader.dfScale, 136 );
     RMF_WRITE_DOUBLE( sHeader.dfResolution, 144 );
     RMF_WRITE_DOUBLE( sHeader.dfPixelSize, 152 );
-    RMF_WRITE_DOUBLE( sHeader.dfLLX, 160 );
-    RMF_WRITE_DOUBLE( sHeader.dfLLY, 168 );
+    RMF_WRITE_DOUBLE( sHeader.dfLLY, 160 );
+    RMF_WRITE_DOUBLE( sHeader.dfLLX, 168 );
     RMF_WRITE_DOUBLE( sHeader.dfStdP1, 176 );
     RMF_WRITE_DOUBLE( sHeader.dfStdP2, 184 );
     RMF_WRITE_DOUBLE( sHeader.dfCenterLong, 192 );
@@ -924,8 +924,8 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     RMF_READ_DOUBLE( poDS->sHeader.dfScale, 136 );
     RMF_READ_DOUBLE( poDS->sHeader.dfResolution, 144 );
     RMF_READ_DOUBLE( poDS->sHeader.dfPixelSize, 152 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfLLX, 160 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfLLY, 168 );
+    RMF_READ_DOUBLE( poDS->sHeader.dfLLY, 160 );
+    RMF_READ_DOUBLE( poDS->sHeader.dfLLX, 168 );
     RMF_READ_DOUBLE( poDS->sHeader.dfStdP1, 176 );
     RMF_READ_DOUBLE( poDS->sHeader.dfStdP2, 184 );
     RMF_READ_DOUBLE( poDS->sHeader.dfCenterLong, 192 );
@@ -1136,13 +1136,13 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         padfPrjParams[1] = poDS->sHeader.dfStdP2;
         padfPrjParams[2] = poDS->sHeader.dfCenterLat;
         padfPrjParams[3] = poDS->sHeader.dfCenterLong;
-        padfPrjParams[4] = 0.9996;
-        padfPrjParams[5] = 500000.0;
+        padfPrjParams[4] = 1.0;
+        padfPrjParams[5] = 0.0;
         padfPrjParams[6] = 0.0;
 
         // XXX: Ellipsoid and datum are not specified in RMF file, but they
         // are always Krassovsky/Pulkovo, 1942.
-        oSRS.importFromPanorama( nProj, 1, 1, 0, padfPrjParams );
+        oSRS.importFromPanorama( nProj, 1, 1, padfPrjParams );
         if ( poDS->pszProjection )
             CPLFree( poDS->pszProjection );
         oSRS.exportToWkt( &poDS->pszProjection );
