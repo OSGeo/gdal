@@ -172,7 +172,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromPCI( const char *, const char * = NULL,
                                double * = NULL );
     OGRErr      importFromUSGS( long, long, double *, long );
-    OGRErr      importFromPanorama( long, long, long, long, double* );
+    OGRErr      importFromPanorama( long, long, long, double* );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
     OGRErr      importFromDict( const char *pszDict, const char *pszCode );
