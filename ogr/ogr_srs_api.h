@@ -253,7 +253,7 @@ OGRErr CPL_DLL OSRImportFromUSGS( OGRSpatialReferenceH,
 OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *, 
                                   const char * );
-OGRErr OSRImportFromPanorama( OGRSpatialReferenceH, long, long, long, long,
+OGRErr OSRImportFromPanorama( OGRSpatialReferenceH, long, long, long,
                               double * );
 OGRErr CPL_DLL OSRImportFromUrl( OGRSpatialReferenceH, const char * );
 
