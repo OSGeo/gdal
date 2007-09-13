@@ -37,6 +37,14 @@ CPL_CVSID("$Id$");
 #define TO_DEGREES (180.0 / 3.14159265358979323846)
 #define TO_RADIANS (3.14159265358979323846 / 180.0)
 
+// XXX: this macro computes zone number from the central meridian parameter.
+// Note, that "Panorama" parameters are set in radians.
+// In degrees it means formulae:
+//
+//              zone = (central_meridian + 3) / 6
+//
+#define TO_ZONE(x) (((x) + 0.052359877559829883) / 0.10471975511965977)
+
 /************************************************************************/
 /*  "Panorama" projection codes.                                        */
 /************************************************************************/
@@ -256,11 +264,11 @@ PanoramaGetEllipsoidInfo( int nCode, char ** ppszName,
 
 OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
                               long iProjSys, long iDatum, long iEllips,
-                              long iZone, double *padfPrjParams )
+                              double *padfPrjParams )
 
 {
-    return ((OGRSpatialReference *) hSRS)->importFromPanorama( iProjSys, iDatum,
-                                                               iEllips, iZone,
+    return ((OGRSpatialReference *) hSRS)->importFromPanorama( iProjSys,
+                                                               iDatum,iEllips,
                                                                padfPrjParams );
 }
 
@@ -316,8 +324,6 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *       9: WGS, 1984 (GPS)
  * </pre>
  *
- * @param iZone Input zone for PAN_PROJ_UTM projection system.
- *
  * @param padfPrjParams Array of 7 coordinate system parameters:
  *
  * <pre>
@@ -338,7 +344,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  */
 
 OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
-                                                long iEllips, long iZone,
+                                                long iEllips,
                                                 double *padfPrjParams )
 
 {
@@ -368,10 +374,12 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             break;
 
         case PAN_PROJ_UTM:
-            if ( iZone >= 0 )
-                SetUTM( iZone, TRUE );
-            else
-                SetUTM( -iZone, FALSE );
+            {
+                long nZone = (long)TO_ZONE(padfPrjParams[3]);
+                // XXX: no way to determine south hemisphere. Always assume
+                // nothern hemisphere.
+                SetUTM( nZone, TRUE );
+            }
             break;
 
         case PAN_PROJ_MERCAT:
@@ -403,10 +411,19 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             break;
 
         case PAN_PROJ_TM:
-            SetTM( TO_DEGREES * padfPrjParams[2],
-                   TO_DEGREES * padfPrjParams[3],
-                   padfPrjParams[4],
-                   padfPrjParams[5], padfPrjParams[6] );
+            {
+                // XXX: we need zone number to compute false easting
+                // parameter, because usually it is not contained in the
+                // "Panorama" projection definition.
+                // FIXME: what to do with negative values?
+                long nZone = (long)TO_ZONE(padfPrjParams[3]);
+                padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
+                padfPrjParams[4] = 0.9996;
+                SetTM( TO_DEGREES * padfPrjParams[2],
+                       TO_DEGREES * padfPrjParams[3],
+                       padfPrjParams[4],
+                       padfPrjParams[5], padfPrjParams[6] );
+            }
             break;
 
         case PAN_PROJ_STEREO:
@@ -485,7 +502,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                           "Failed to lookup ellipsoid code %d, likely due to"
                           " missing GDAL gcs.csv\n"
                           " file.  Falling back to use WGS84.", iEllips );
-                SetWellKnownGeogCS("WGS84" );
+                SetWellKnownGeogCS( "WGS84" );
             }
 
             if ( pszName )
