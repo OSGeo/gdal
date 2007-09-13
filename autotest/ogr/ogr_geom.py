@@ -125,6 +125,114 @@ def ogr_geom_pickle():
     return 'success'
 
 ###############################################################################
+# Test OGRGeometry::getBoundary() result for point.
+
+def ogr_geom_boundary_point():
+    
+    geom_wkt = 'POINT(1 1)'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
+    try:
+        bnd = geom.GetBoundary()
+    except:
+        gdaltest.have_geos = 0
+        return 'skip'
+
+    gdaltest.have_geos = 1
+
+    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+        gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
+        return 'fail'
+
+    bnd.Destroy()
+    geom.Destroy()
+    
+    return 'success'
+
+###############################################################################
+# Test OGRGeometry::getBoundary() result for multipoint.
+
+def ogr_geom_boundary_multipoint():
+    
+    if gdaltest.have_geos == 0:
+        return 'skip'
+
+    geom_wkt = 'MULTIPOINT((0 0),(1 1))'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
+    bnd = geom.GetBoundary()
+    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+        gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
+        return 'fail'
+
+    bnd.Destroy()
+    geom.Destroy()
+    
+    return 'success'
+
+###############################################################################
+# Test OGRGeometry::getBoundary() result for linestring.
+
+def ogr_geom_boundary_linestring():
+    
+    if gdaltest.have_geos == 0:
+        return 'skip'
+
+    geom_wkt = 'LINESTRING(0 0, 1 1, 2 2, 3 2, 4 2)'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
+    bnd = geom.GetBoundary()
+    if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
+        gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
+        return 'fail'
+
+    if bnd.GetGeometryCount() != 2:
+        gdaltest.post_reason( 'Boundary not reported as MULTIPOINT consisting of 2 points' )
+        return 'fail'
+
+    bnd.Destroy()
+    geom.Destroy()
+ 
+    geom_wkt = 'LINESTRING(0 0, 1 0, 1 1, 0 1, 0 0)'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
+    bnd = geom.GetBoundary()
+    if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
+        gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
+        return 'fail'
+
+    if bnd.GetGeometryCount() != 0:
+        gdaltest.post_reason( 'Boundary not reported as MULTIPOINT EMPTY' )
+        return 'fail'
+
+   
+    bnd.Destroy()
+    geom.Destroy()
+ 
+    return 'success'
+
+###############################################################################
+# Test OGRGeometry::getBoundary() result for polygon.
+
+def ogr_geom_boundary_polygon():
+    
+    if gdaltest.have_geos == 0:
+        return 'skip'
+
+    geom_wkt = 'POLYGON((0 0,1 1,1 0,0 0))'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
+
+    bnd = geom.GetBoundary()
+    if bnd.GetGeometryType() is not ogr.wkbLineString:
+        gdaltest.post_reason( 'Boundary not reported as non-empty LINESTRING' )
+        return 'fail'
+
+    bnd.Destroy()
+    geom.Destroy()
+    
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -135,6 +243,10 @@ gdaltest_list = [
     ogr_geom_area_linearring,
     ogr_geom_empty,
     ogr_geom_pickle,
+    ogr_geom_boundary_point,
+    ogr_geom_boundary_multipoint,
+    ogr_geom_boundary_linestring,
+    ogr_geom_boundary_polygon,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
