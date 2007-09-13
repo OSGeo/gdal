@@ -1544,7 +1544,7 @@ else
 fi
 
 AC_SUBST([HAVE_EXPAT], $HAVE_EXPAT)
-AC_SUBST([EXPAT_INCLUDE], $EXTRA_INCLUDES)
+AC_SUBST([EXPAT_INCLUDE], $EXPAT_INCLUDE)
 
 
 dnl ---------------------------------------------------------------------------
