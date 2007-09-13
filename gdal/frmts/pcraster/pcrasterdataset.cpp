@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "gdal_pam.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -36,25 +37,9 @@ CPL_CVSID("$Id$");
 #define INCLUDED_PCRASTERDATASET
 #endif
 
-// Library headers.
-#ifndef INCLUDED_CASSERT
-#include <cassert>
-#define INCLUDED_CASSERT
-#endif
-
-#ifndef INCLUDED_CSTDLIB
-#include <cstdlib>
-#define INCLUDED_CSTDLIB
-#endif
-
 #ifndef INCLUDED_IOSTREAM
 #include <iostream>
 #define INCLUDED_IOSTREAM
-#endif
-
-#ifndef INCLUDED_CPL_STRING
-#include "cpl_string.h"
-#define INCLUDED_CPL_STRING
 #endif
 
 // PCRaster library headers.
