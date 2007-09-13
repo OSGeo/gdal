@@ -2680,8 +2680,8 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
     for( iUpdate = 1; bSuccess; iUpdate++ )
     {
         //Creaing file extension
-        std::string extension;
-        std::string dirname;
+        CPLString extension;
+        CPLString dirname;
         if( 1 <= iUpdate &&  iUpdate < 10 )
         {
             char buf[2];
@@ -2712,10 +2712,10 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         char    *pszUpdateFilename = 
             CPLStrdup(CPLResetExtension(pszPath,extension.c_str()));
 
-        std::ifstream file(pszUpdateFilename);
+        FILE *file = VSIFOpen( pszUpdateFilename, "r" );
         if( file )
         {
-            file.close();
+            VSIFClose( file );
             bSuccess = oUpdateModule.Open( pszUpdateFilename, TRUE );
             if( bSuccess )
                 CPLDebug( "S57", "Applying feature updates from %s.", 
@@ -2728,10 +2728,10 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         }
         else // file is store on Primar generated cd
         {
-            file.close();
             char* pszBaseFileDir = CPLStrdup(CPLGetDirname(pszPath));
             char* pszFileDir = CPLStrdup(CPLGetDirname(pszBaseFileDir));
-            std::string remotefile(pszFileDir);
+
+            CPLString remotefile(pszFileDir);
             remotefile.append( "/" );
             remotefile.append( dirname );
             remotefile.append( "/" );
