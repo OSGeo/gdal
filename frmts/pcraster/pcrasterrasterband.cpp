@@ -3,12 +3,6 @@
 #define INCLUDED_PCRASTERRASTERBAND
 #endif
 
-// Library headers.
-#ifndef INCLUDED_CASSERT
-#include <cassert>
-#define INCLUDED_CASSERT
-#endif
-
 // PCRaster library headers.
 #ifndef INCLUDED_CSF
 #include "csf.h"
