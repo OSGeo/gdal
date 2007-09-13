@@ -476,7 +476,7 @@ I have added this license to LICENSE.TXT to satisfy the credit requirement.
 
 === gdal/frmts/msg ===
 
-* xritheaderparser.cpp, xritheaderparser.h: Copyright ITC and R. Alblas and released under the GPL.  '''TO_RESOLVE'''  (#1821)
+* xritheaderparser.cpp, xritheaderparser.h: Copyright ITC and R. Alblas and released under the GPL.   (#1821)  The GPL code has been removed and reimplemented a different way.  Problem resolved.
 * the rest, ITC, clean
 
 === gdal/frmts/msgn ===
