@@ -73,7 +73,7 @@ void GDALWMSMiniDriver_WorldWind::ImageRequest(CPLString *url, const GDALWMSImag
 
 void GDALWMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     const GDALWMSDataWindow *data_window = m_parent_dataset->WMSGetDataWindow();
-    int worldwind_y = static_cast<int>(round((data_window->m_y1 - data_window->m_y0) / (iri.m_y1 - iri.m_y0))) - tiri.m_y - 1;
+    int worldwind_y = static_cast<int>(floor(((data_window->m_y1 - data_window->m_y0) / (iri.m_y1 - iri.m_y0)) + 0.5)) - tiri.m_y - 1;
     // http://worldwind25.arc.nasa.gov/tile/tile.aspx?T=geocover2000&L=0&X=86&Y=39
     *url = m_base_url;
     URLAppendF(url, "&T=%s", m_dataset.c_str());

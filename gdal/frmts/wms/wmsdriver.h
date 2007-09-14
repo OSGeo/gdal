@@ -76,9 +76,9 @@ public:
     int m_capabilities_version;
 
 /* Version 1 capabilities */
-    int m_has_image_request : 1;            // 1 if ImageRequest method is implemented
-    int m_has_tiled_image_requeset : 1;     // 1 if TiledImageRequest method is implemented
-    int m_has_arb_overviews : 1;            // 1 if ImageRequest method supports arbitrary overviews / resolutions
+    int m_has_image_request;            // 1 if ImageRequest method is implemented
+    int m_has_tiled_image_requeset;     // 1 if TiledImageRequest method is implemented
+    int m_has_arb_overviews;            // 1 if ImageRequest method supports arbitrary overviews / resolutions
     int m_max_overview_count;               // Maximum number of overviews supported if known, -1 otherwise
 };
 
