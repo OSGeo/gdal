@@ -32,15 +32,7 @@
 
 #include "gdal_priv.h"
 #include "gdal_pam.h"
-#include "cpl_minixml.h"
-
-CPL_C_START
-void	GDALRegister_VRT(void);
-typedef CPLErr
-(*VRTImageReadFunc)( void *hCBData,
-                     int nXOff, int nYOff, int nXSize, int nYSize,
-                     void *pData );
-CPL_C_END
+#include "gdal_vrt.h"
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
@@ -192,13 +184,11 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
   public:
 
-    		   VRTRasterBand();
+                    VRTRasterBand();
     virtual        ~VRTRasterBand();
 
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
-
-#define VRT_NODATA_UNSET -1234.56
 
     virtual CPLErr SetNoDataValue( double );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
@@ -250,11 +240,11 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     void           Initialize( int nXSize, int nYSize );
 
   public:
-    int		   nSources;
+    int            nSources;
     VRTSource    **papoSources;
     int            bEqualAreas;
 
-    		   VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
+                   VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
                    VRTSourcedRasterBand( GDALDataType eType, 
                                          int nXSize, int nYSize );
                    VRTSourcedRasterBand( GDALDataset *poDS, int nBand, 
@@ -333,7 +323,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 
     VRTDerivedRasterBand(GDALDataset *poDS, int nBand);
     VRTDerivedRasterBand(GDALDataset *poDS, int nBand, 
-			 GDALDataType eType, int nXSize, int nYSize);
+                         GDALDataType eType, int nXSize, int nYSize);
     virtual        ~VRTDerivedRasterBand();
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
@@ -341,7 +331,7 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
                               int, int );
 
     static CPLErr AddPixelFunction
-	(const char *pszFuncName, GDALDerivedPixelFunc pfnPixelFunc);
+        (const char *pszFuncName, GDALDerivedPixelFunc pfnPixelFunc);
     static GDALDerivedPixelFunc GetPixelFunction(const char *pszFuncName);
 
     void SetPixelFunctionName(const char *pszFuncName);
@@ -494,8 +484,8 @@ public:
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr XMLInit( CPLXMLNode *, const char * );
 
-    int		   bDoScaling;
-    double	   dfScaleOff;
+    int            bDoScaling;
+    double         dfScaleOff;
     double         dfScaleRatio;
 
 };
