@@ -1908,10 +1908,12 @@ dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
 GEOS_INIT(2.2.0)
+HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
   LIBS="${GEOS_LIBS} ${LIBS}"
+  HAVE_GEOS_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -2246,7 +2248,7 @@ LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  PANORAMA GIS support:      ${HAVE_PANORAMA}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
-LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
+LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])
