@@ -131,15 +131,23 @@ def ogr_geom_boundary_point():
     
     geom_wkt = 'POINT(1 1)'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
+    tmp = ogr.CreateGeometryFromWkt(geom_wkt)
 
+    # Detect GEOS support
     try:
-        bnd = geom.GetBoundary()
+        result = geom.Union(tmp)
     except:
+        result = None
+
+    tmp.Destroy()
+
+    if result is None:
         gdaltest.have_geos = 0
         return 'skip'
 
     gdaltest.have_geos = 1
 
+    bnd = geom.GetBoundary()
     if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
