@@ -292,9 +292,9 @@ PCRasterDataset::PCRasterDataset(MAP* map)
   d_north = static_cast<double>(RgetYUL(d_map));
   d_cellSize = static_cast<double>(RgetCellSize(d_map));
   d_cellRepresentation = RgetUseCellRepr(d_map);
-  assert(d_cellRepresentation != CR_UNDEFINED);
+  CPLAssert(d_cellRepresentation != CR_UNDEFINED);
   d_valueScale = RgetValueScale(d_map);
-  assert(d_valueScale != VS_UNDEFINED);
+  CPLAssert(d_valueScale != VS_UNDEFINED);
   d_missingValue = ::missingValue(d_cellRepresentation);
 
   // Create band information objects.
