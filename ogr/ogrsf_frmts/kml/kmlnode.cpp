@@ -36,7 +36,8 @@
 /*                           Help functions                             */
 /************************************************************************/
 
-std::string Nodetype2String(Nodetype t) {
+std::string Nodetype2String(Nodetype t)
+{
     if(t == Empty)
         return "Empty";
     else if(t == Rest)
@@ -100,7 +101,9 @@ Coordinate* ParseCoordinate(std::string sIn)
 /************************************************************************/
 /*                         KMLnode methods                              */
 /************************************************************************/
-KMLnode::KMLnode() {
+
+KMLnode::KMLnode()
+{
     this->sName = "";
     this->poParent = NULL;
     this->pvpoChildren = new std::vector<KMLnode*>;
@@ -111,27 +114,38 @@ KMLnode::KMLnode() {
 	this->psExtent = NULL;
 }
 
-KMLnode::~KMLnode() {
-    for(unsigned short z = 0; z < this->pvpoChildren->size();z++)
+KMLnode::~KMLnode()
+{
+    kml_nodes_t::size_type nCount = 0;
+
+    for( nCount = 0; nCount < pvpoChildren->size(); ++nCount )
     {
-        delete(this->pvpoChildren->at(z));
+        delete (pvpoChildren->at( nCount ));
     }
+
     delete(this->pvpoChildren);
     delete(this->pvsContent);
-    for(unsigned short z = 0; z < this->pvoAttributes->size();z++)
+
+    for( nCount = 0; nCount < pvoAttributes->size(); ++nCount)
     {
-        delete this->pvoAttributes->at(z);
+        delete pvoAttributes->at(nCount);
     }
-    delete(this->pvoAttributes);
-    if(this->psExtent != NULL)
-        delete this->psExtent;
+    
+    delete(pvoAttributes);
+
+    if( psExtent != NULL )
+        delete psExtent;
 }
 
-void KMLnode::print(unsigned int what) {
+void KMLnode::print(unsigned int what)
+{
     std::string indent("");
+
     for(unsigned int z = 0; z < this->nLevel; z++)
         indent += " ";
-    if(this->nLevel > 0) {
+
+    if(this->nLevel > 0)
+    {
         if(this->nLayerNumber > -1)
             if(this->psExtent != NULL)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren: %d pvsContent: %d pvoAttributes: %d) (%f|%f|%f|%f) <--- Layer #%d", 
@@ -166,7 +180,8 @@ void KMLnode::print(unsigned int what) {
         this->pvpoChildren->at(z)->print(what);
 }
 
-void KMLnode::classify(KML *kmlclass) {
+void KMLnode::classify(KML *kmlclass)
+{
     Nodetype curr = Unknown, all = Empty;
     
     CPLDebug("KML", "Start -- sName: %s\tnLevel: %d\t", this->sName.c_str(), this->nLevel);
@@ -210,7 +225,8 @@ void KMLnode::classify(KML *kmlclass) {
         this->eType = all;
 }
 
-void KMLnode::eliminateEmpty(KML *kmlclass) {
+void KMLnode::eliminateEmpty(KML *kmlclass)
+{
     for(unsigned int z = 0; z < this->pvpoChildren->size(); z++) {
         if(this->pvpoChildren->at(z)->eType == Empty && 
                 (kmlclass->isContainer(this->pvpoChildren->at(z)->sName) || 
@@ -225,112 +241,142 @@ void KMLnode::eliminateEmpty(KML *kmlclass) {
     this->calcExtent(kmlclass);
 }
 
-void KMLnode::setType(Nodetype oNotet) {
+void KMLnode::setType(Nodetype oNotet)
+{
     this->eType = oNotet;
 }
 
-Nodetype KMLnode::getType() {
+Nodetype KMLnode::getType()
+{
     return this->eType;
 }
 
-void KMLnode::setName(std::string const& sIn) {
+void KMLnode::setName(std::string const& sIn)
+{
     this->sName = sIn;
 }
 
-std::string KMLnode::getName() {
+std::string KMLnode::getName()
+{
     return this->sName;
 }
 
-void KMLnode::setLevel(unsigned int nLev) {
+void KMLnode::setLevel(unsigned int nLev)
+{
     this->nLevel = nLev;
 }
 
-unsigned int KMLnode::getLevel() {
+unsigned int KMLnode::getLevel()
+{
     return this->nLevel;
 }
 
-void KMLnode::addAttribute(Attribute *poAttr) {
+void KMLnode::addAttribute(Attribute *poAttr)
+{
     this->pvoAttributes->push_back(poAttr);
 }
 
-void KMLnode::setParent(KMLnode* poPar) {
+void KMLnode::setParent(KMLnode* poPar)
+{
     this->poParent = poPar;
 }
 
-KMLnode* KMLnode::getParent() {
+KMLnode* KMLnode::getParent()
+{
     return this->poParent;
 }
 
-void KMLnode::addChildren(KMLnode *poChil) {
+void KMLnode::addChildren(KMLnode *poChil)
+{
     this->pvpoChildren->push_back(poChil);
 }
 
-unsigned short KMLnode::countChildren() {
+unsigned short KMLnode::countChildren()
+{
     return this->pvpoChildren->size();
 }
 
-KMLnode* KMLnode::getChild(unsigned short nNum) {
+KMLnode* KMLnode::getChild(unsigned short nNum)
+{
     return this->pvpoChildren->at(nNum);
 }
 
-void KMLnode::addContent(std::string const& sCon) {
+void KMLnode::addContent(std::string const& sCon)
+{
     this->pvsContent->push_back(sCon);
 }
 
-void KMLnode::appendContent(std::string sCon) {
+void KMLnode::appendContent(std::string sCon)
+{
     this->pvsContent->at(this->pvsContent->size()-1) += sCon;
 }
 
-std::string KMLnode::getContent(unsigned short nNum) {
+std::string KMLnode::getContent(unsigned short nNum)
+{
     if(nNum >= this->pvsContent->size())
         return NULL;
     return this->pvsContent->at(nNum);
 }
 
-void KMLnode::deleteContent(unsigned short nNum) {
+void KMLnode::deleteContent(unsigned short nNum)
+{
     if(nNum >= this->pvsContent->size())
         return;
     this->pvsContent->erase(this->pvsContent->begin() + nNum);
 }
 
-unsigned short KMLnode::numContent() {
+unsigned short KMLnode::numContent()
+{
     return this->pvsContent->size();
 }
 
-void KMLnode::setLayerNumber(short nNum) {
+void KMLnode::setLayerNumber(short nNum)
+{
     this->nLayerNumber = nNum;
 }
 
-short KMLnode::getLayerNumber() {
+short KMLnode::getLayerNumber()
+{
     return this->nLayerNumber;
 }
 
-KMLnode* KMLnode::getLayer(unsigned short nNum) {
+KMLnode* KMLnode::getLayer(unsigned short nNum)
+{
     KMLnode *poTmp;
     if(this->nLayerNumber == nNum)
         return this;
+
     for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++)
+    {
         if((poTmp = this->pvpoChildren->at(nCount)->getLayer(nNum)) != NULL)
             return poTmp;
+    }
+
     return NULL;
 }
 
-std::string KMLnode::getNameElement() {
+std::string KMLnode::getNameElement()
+{
     std::string sContent;
+
     for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++)
     {
         if(this->pvpoChildren->at(nCount)->sName.compare("name") == 0)
         {
             sContent = this->pvpoChildren->at(nCount)->pvsContent->at(0);
             for(unsigned short nCount2 = 1; nCount2 < this->pvpoChildren->at(nCount)->pvsContent->size(); nCount2++)
+            {
                 sContent += " " + this->pvpoChildren->at(nCount)->pvsContent->at(nCount2);
+            }
             return sContent;
         }
     }
-    return "";
+
+    return sContent;
 }
 
-std::string KMLnode::getDescriptionElement() {
+std::string KMLnode::getDescriptionElement()
+{
     std::string sContent;
     for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++)
     {
@@ -338,14 +384,17 @@ std::string KMLnode::getDescriptionElement() {
         {
             sContent = this->pvpoChildren->at(nCount)->pvsContent->at(0);
             for(unsigned short nCount2 = 1; nCount2 < this->pvpoChildren->at(nCount)->pvsContent->size(); nCount2++)
+            {
                 sContent += " " + this->pvpoChildren->at(nCount)->pvsContent->at(nCount2);
+            }
             return sContent;
         }
     }
     return "";
 }
 
-short KMLnode::getNumFeatures() {
+short KMLnode::getNumFeatures()
+{
     short nNum = 0;
     for(unsigned short z = 0; z < this->pvpoChildren->size();z++)
     {
@@ -596,29 +645,39 @@ Feature* KMLnode::getFeature(unsigned short nNum)
     return NULL;
 }
 
-void KMLnode::calcExtent(KML *poKMLClass) {
+void KMLnode::calcExtent(KML *poKMLClass)
+{
     KMLnode *poTmp;
     Coordinate *psCoors;
     
     if(this->psExtent != NULL)
         return;
     // Handle Features
-    if(poKMLClass->isFeature(this->sName)) {
+    if(poKMLClass->isFeature(this->sName))
+    {
         this->psExtent = new Extent;
         this->psExtent->dfX1 = this->psExtent->dfX2 = this->psExtent->dfY1 = this->psExtent->dfY2 = 0.0;
         // Special for Polygons
-        if(this->sName.compare("Polygon") == 0) {
-            for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++) {
-                if(this->pvpoChildren->at(nCount)->sName.compare("outerBoundaryIs") == 0 || 
-                    this->pvpoChildren->at(nCount)->sName.compare("innerBoundaryIs") == 0) {
-                    if(this->pvpoChildren->at(nCount)->pvpoChildren->size() == 1) {
+        if(this->sName.compare("Polygon") == 0)
+        {
+            for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++)
+            {
+                if(this->pvpoChildren->at(nCount)->sName.compare("outerBoundaryIs") == 0
+                   || this->pvpoChildren->at(nCount)->sName.compare("innerBoundaryIs") == 0)
+                {
+                    if(this->pvpoChildren->at(nCount)->pvpoChildren->size() == 1)
+                    {
                         poTmp = this->pvpoChildren->at(nCount)->pvpoChildren->at(0);
-                        for(unsigned short nCount3 = 0; nCount3 < poTmp->pvpoChildren->size(); nCount3++) {
-                            if(poTmp->pvpoChildren->at(nCount3)->sName.compare("coordinates") == 0) {
-                                for(unsigned short nCount2 = 0; nCount2 < 
-                                        poTmp->pvpoChildren->at(nCount3)->pvsContent->size(); nCount2++) {
+                        for(unsigned short nCount3 = 0; nCount3 < poTmp->pvpoChildren->size(); nCount3++)
+                        {
+                            if(poTmp->pvpoChildren->at(nCount3)->sName.compare("coordinates") == 0)
+                            {
+                                for(unsigned short nCount2 = 0;
+                                    nCount2 < poTmp->pvpoChildren->at(nCount3)->pvsContent->size(); nCount2++)
+                                {
                                     psCoors = ParseCoordinate(poTmp->pvpoChildren->at(nCount3)->pvsContent->at(nCount2));
-                                    if(psCoors != NULL) {
+                                    if(psCoors != NULL)
+                                    {
                                         if(psCoors->dfLongitude < this->psExtent->dfX1 || this->psExtent->dfX1 == 0)
                                             this->psExtent->dfX1 = psCoors->dfLongitude;
                                         if(psCoors->dfLongitude > this->psExtent->dfX2 || this->psExtent->dfX2 == 0)
@@ -636,13 +695,19 @@ void KMLnode::calcExtent(KML *poKMLClass) {
                 }
             }
         // General for LineStrings and Points
-        } else {
-            for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++) {
-                if(this->pvpoChildren->at(nCount)->sName.compare("coordinates") == 0) {
+        }
+        else
+        {
+            for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++)
+            {
+                if(this->pvpoChildren->at(nCount)->sName.compare("coordinates") == 0)
+                {
                     poTmp = this->pvpoChildren->at(nCount);
-                    for(unsigned short nCount2 = 0; nCount2 < poTmp->pvsContent->size(); nCount2++) {
+                    for(unsigned short nCount2 = 0; nCount2 < poTmp->pvsContent->size(); nCount2++)
+                    {
                         psCoors = ParseCoordinate(poTmp->pvsContent->at(nCount2));
-                        if(psCoors != NULL) {
+                        if(psCoors != NULL)
+                        {
                             if(psCoors->dfLongitude < this->psExtent->dfX1 || this->psExtent->dfX1 == 0.0)
                                 this->psExtent->dfX1 = psCoors->dfLongitude;
                             if(psCoors->dfLongitude > this->psExtent->dfX2 || this->psExtent->dfX2 == 0.0)
@@ -658,13 +723,17 @@ void KMLnode::calcExtent(KML *poKMLClass) {
             }
         }
     // Summarize Containers
-    } else if(poKMLClass->isFeatureContainer(this->sName) || 
-            poKMLClass->isContainer(this->sName)) {
+    }
+    else if( poKMLClass->isFeatureContainer(this->sName)
+             || poKMLClass->isContainer(this->sName))
+    {
         this->psExtent = new Extent;
         this->psExtent->dfX1 = this->psExtent->dfX2 = this->psExtent->dfY1 = this->psExtent->dfY2 = 0.0;
-        for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++) {
+        for(unsigned short nCount = 0; nCount < this->pvpoChildren->size(); nCount++)
+        {
             this->pvpoChildren->at(nCount)->calcExtent(poKMLClass);
-            if(this->pvpoChildren->at(nCount)->psExtent != NULL) {
+            if(this->pvpoChildren->at(nCount)->psExtent != NULL)
+            {
                 if(this->pvpoChildren->at(nCount)->psExtent->dfX1 < this->psExtent->dfX1 || 
                         this->psExtent->dfX1 == 0)
                     this->psExtent->dfX1 = this->pvpoChildren->at(nCount)->psExtent->dfX1;
@@ -682,7 +751,8 @@ void KMLnode::calcExtent(KML *poKMLClass) {
     }
 }
 
-Extent* KMLnode::getExtents() {
+Extent* KMLnode::getExtents()
+{
     return this->psExtent;
 }
 
