@@ -59,6 +59,8 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
     int by0 = y;
     int bx1 = x;
     int by1 = y;
+    int i;
+
     if ((m_parent_dataset->m_hint.m_valid) && (m_parent_dataset->m_hint.m_overview == m_overview)) {
         int tbx0 = m_parent_dataset->m_hint.m_x0 / nBlockXSize;
         int tby0 = m_parent_dataset->m_hint.m_y0 / nBlockYSize;
@@ -119,7 +121,7 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer) {
         }
     }
 
-    for (int i = 0; i < request_count; ++i) {
+    for (i = 0; i < request_count; ++i) {
         if (ret == CE_None) {
             if ((download_requests[i].nStatus == 200) && (download_requests[i].pabyData != NULL) && (download_requests[i].nDataLen > 0)) {
                 CPLString file_name(BufferToVSIFile(download_requests[i].pabyData, download_requests[i].nDataLen));
@@ -205,6 +207,7 @@ GDALRasterBand *GDALWMSRasterBand::GetOverview(int n) {
 }
 
 void GDALWMSRasterBand::AddOverview(double scale) {
+    int i;
     GDALWMSRasterBand *overview = new GDALWMSRasterBand(m_parent_dataset, nBand - 1, scale);
     std::vector<GDALWMSRasterBand *>::iterator it = m_overviews.begin();
     for (; it != m_overviews.end(); ++it) {
@@ -213,7 +216,7 @@ void GDALWMSRasterBand::AddOverview(double scale) {
     }
     m_overviews.insert(it, overview);
     it = m_overviews.begin();
-    for (int i = 0; it != m_overviews.end(); ++it, ++i) {
+    for (i = 0; it != m_overviews.end(); ++it, ++i) {
         GDALWMSRasterBand *p = *it;
         p->m_overview = i;
     }
@@ -259,6 +262,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     CPLErr ret = CE_None;
     GDALDataset *ds = 0;
     GByte *color_table = NULL;
+    int i;
 
     /* expected size */
     const int esx = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize) - MIN(MAX(0, x * nBlockXSize), nRasterXSize);
@@ -284,7 +288,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         if (ct != NULL) {
                             color_table = new GByte[256 * 4];
                             const int count = MIN(256, ct->GetColorEntryCount());
-                            for (int i = 0; i < count; ++i) {
+                            for (i = 0; i < count; ++i) {
                                 GDALColorEntry ce;
                                 ct->GetColorEntryAsRGB(i, &ce);
                                 color_table[i] = static_cast<GByte>(ce.c1);
@@ -292,7 +296,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                 color_table[i + 512] = static_cast<GByte>(ce.c3);
                                 color_table[i + 768] = static_cast<GByte>(ce.c4);
                             }
-                            for (int i = count; i < 256; ++i) {
+                            for (i = count; i < 256; ++i) {
                                 color_table[i] = 0;
                                 color_table[i + 256] = 0;
                                 color_table[i + 512] = 0;
