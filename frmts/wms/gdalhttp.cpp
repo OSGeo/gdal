@@ -148,13 +148,14 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount) {
     CPLErr ret = CE_None;
     CURLM *curl_multi = 0;
     int still_running;
-
+    int i;
+    
     curl_multi = curl_multi_init();
     if (curl_multi == NULL) {
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): Unable to create CURL multi-handle.");
     }
 
-    for (int i = 0; i < nRequestCount; ++i) {
+    for (i = 0; i < nRequestCount; ++i) {
         CPLHTTPRequest *const psRequest = &pasRequest[i];
 
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
@@ -176,7 +177,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount) {
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
 
-    for (int i = 0; i < nRequestCount; ++i) {
+    for (i = 0; i < nRequestCount; ++i) {
         CPLHTTPRequest *const psRequest = &pasRequest[i];
 
         long response_code = 0;
