@@ -229,6 +229,23 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
 }
 
 /************************************************************************/
+/*                              VRTAddSource()                          */
+/************************************************************************/
+
+/**
+ * @see VRTSourcedRasterBand::AddSource().
+ */
+
+CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
+                                 VRTSourceH hNewSource )
+{
+    VALIDATE_POINTER1( hVRTBand, "VRTAddSource", CE_Failure );
+
+    return ((VRTSourcedRasterBand *) hVRTBand)->
+        AddSource( (VRTSource *)hNewSource );
+}
+
+/************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
 
@@ -395,17 +412,45 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource( GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
+/*                         VRTAddSimpleSource()                         */
+/************************************************************************/
+
+/**
+ * @see VRTSourcedRasterBand::AddSimpleSource().
+ */
+
+CPLErr CPL_STDCALL VRTAddSimpleSource( VRTSourcedRasterBandH hVRTBand,
+                                       GDALRasterBandH hSrcBand, 
+                                       int nSrcXOff, int nSrcYOff, 
+                                       int nSrcXSize, int nSrcYSize, 
+                                       int nDstXOff, int nDstYOff, 
+                                       int nDstXSize, int nDstYSize,
+                                       const char *pszResampling,
+                                       double dfNoDataValue )
+{
+    VALIDATE_POINTER1( hVRTBand, "VRTAddSimpleSource", CE_Failure );
+
+    return ((VRTSourcedRasterBand *) hVRTBand)->AddSimpleSource(
+                                            (GDALRasterBand *)hSrcBand, 
+                                            nSrcXOff, nSrcYOff, 
+                                            nSrcXSize, nSrcYSize, 
+                                            nDstXOff, nDstYOff, 
+                                            nDstXSize, nDstYSize,
+                                            pszResampling, dfNoDataValue );
+}
+
+/************************************************************************/
 /*                          AddComplexSource()                          */
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::AddComplexSource( GDALRasterBand *poSrcBand, 
-                                        int nSrcXOff, int nSrcYOff, 
-                                        int nSrcXSize, int nSrcYSize, 
-                                        int nDstXOff, int nDstYOff, 
-                                        int nDstXSize, int nDstYSize,
-                                        double dfScaleOff, 
-                                        double dfScaleRatio,
-                                        double dfNoDataValue )
+                                               int nSrcXOff, int nSrcYOff, 
+                                               int nSrcXSize, int nSrcYSize, 
+                                               int nDstXOff, int nDstYOff, 
+                                               int nDstXSize, int nDstYSize,
+                                               double dfScaleOff,
+                                               double dfScaleRatio,
+                                               double dfNoDataValue )
 
 {
 /* -------------------------------------------------------------------- */
@@ -465,6 +510,36 @@ CPLErr VRTSourcedRasterBand::AddComplexSource( GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
+/*                         VRTAddComplexSource()                        */
+/************************************************************************/
+
+/**
+ * @see VRTSourcedRasterBand::AddComplexSource().
+ */
+
+CPLErr CPL_STDCALL VRTAddComplexSource( VRTSourcedRasterBandH hVRTBand,
+                                        GDALRasterBandH hSrcBand, 
+                                        int nSrcXOff, int nSrcYOff, 
+                                        int nSrcXSize, int nSrcYSize, 
+                                        int nDstXOff, int nDstYOff, 
+                                        int nDstXSize, int nDstYSize,
+                                        double dfScaleOff, 
+                                        double dfScaleRatio,
+                                        double dfNoDataValue )
+{
+    VALIDATE_POINTER1( hVRTBand, "VRTAddComplexSource", CE_Failure );
+
+    return ((VRTSourcedRasterBand *) hVRTBand)->AddComplexSource(
+                                            (GDALRasterBand *)hSrcBand, 
+                                            nSrcXOff, nSrcYOff, 
+                                            nSrcXSize, nSrcYSize, 
+                                            nDstXOff, nDstYOff, 
+                                            nDstXSize, nDstYSize,
+                                            dfScaleOff, dfScaleRatio,
+                                            dfNoDataValue );
+}
+
+/************************************************************************/
 /*                           AddFuncSource()                            */
 /************************************************************************/
 
@@ -486,6 +561,24 @@ CPLErr VRTSourcedRasterBand::AddFuncSource( VRTImageReadFunc pfnReadFunc,
 /*      add to list.                                                    */
 /* -------------------------------------------------------------------- */
     return AddSource( poFuncSource );
+}
+
+/************************************************************************/
+/*                          VRTAddFuncSource()                          */
+/************************************************************************/
+
+/**
+ * @see VRTSourcedRasterBand::AddFuncSource().
+ */
+
+CPLErr CPL_STDCALL VRTAddFuncSource( VRTSourcedRasterBandH hVRTBand,
+                                     VRTImageReadFunc pfnReadFunc, 
+                                     void *pCBData, double dfNoDataValue )
+{
+    VALIDATE_POINTER1( hVRTBand, "VRTAddFuncSource", CE_Failure );
+
+    return ((VRTSourcedRasterBand *) hVRTBand)->
+        AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
 }
 
 /************************************************************************/
