@@ -375,9 +375,11 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
 /*                       OGR_G_GetGeometryCount()                       */
 /************************************************************************/
 /**
- * Fetch the number of elements in a geometry.
+ * Fetch the number of elements in a geometry or number of geometries in
+ * container.
  *
- * @param hGeom geometry from which to get the number of elements.
+ * @param hGeom single geometry or geometry container from which to get
+ * the number of elements.
  * @return the number of elements.
  */
 
