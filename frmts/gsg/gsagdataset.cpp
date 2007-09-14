@@ -31,10 +31,9 @@
 #include "cpl_conv.h"
 
 #include <sstream>
-#include <cfloat>
-#include <climits>
-#include <cmath>
-#include <cassert>
+#include <float.h>
+#include <limits.h>
+#include <assert.h>
 
 #include "gdal_pam.h"
 
