@@ -555,7 +555,7 @@ char *OGRPGTableLayer::BuildFields()
             {
                 nSize += 10;
                 sprintf( pszFieldList+strlen(pszFieldList),
-                         "AsBinary(\"%s\")", pszGeomColumn );
+                         "AsEWKB(\"%s\")", pszGeomColumn );
             }
             else
             if ( poDS->sPostGISVersion.nMajor >= 1 )
