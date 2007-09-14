@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cfloat>
-#include <climits>
-#include <cmath>
-#include <cassert>
+#include <float.h>
+#include <limits.h>
+#include <math.h>
+#include <assert.h>
 
 #include "gdal_pam.h"
 
