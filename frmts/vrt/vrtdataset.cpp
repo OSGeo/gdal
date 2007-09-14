@@ -67,6 +67,20 @@ VRTDataset::VRTDataset( int nXSize, int nYSize )
 }
 
 /************************************************************************/
+/*                              VRTCreate()                             */
+/************************************************************************/
+
+/**
+ * @see VRTDataset::VRTDataset()
+ */
+
+VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
+
+{
+    return ( new VRTDataset(nXSize, nYSize) );
+}
+
+/************************************************************************/
 /*                            ~VRTDataset()                            */
 /************************************************************************/
 
@@ -138,6 +152,21 @@ void VRTDataset::FlushCache()
     VSIFCloseL( fpVRT );
 
     CPLFree( pszXML );
+}
+
+/************************************************************************/
+/*                            VRTFlushCache()                           */
+/************************************************************************/
+
+/**
+ * @see VRTDataset::FlushCache()
+ */
+
+void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
+{
+    VALIDATE_POINTER0( hDataset, "VRTFlushCache" );
+
+    ((VRTDataset *)hDataset)->FlushCache();
 }
 
 /************************************************************************/
@@ -244,6 +273,22 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
     }
 
     return psDSTree;
+}
+
+/************************************************************************/
+/*                          VRTSerializeToXML()                         */
+/************************************************************************/
+
+/**
+ * @see VRTDataset::SerializeToXML()
+ */
+
+CPLXMLNode * CPL_STDCALL VRTSerializeToXML( VRTDatasetH hDataset,
+                                            const char *pszVRTPath )
+{
+    VALIDATE_POINTER1( hDataset, "VRTSerializeToXML", NULL );
+
+    return ((VRTDataset *)hDataset)->SerializeToXML(pszVRTPath);
 }
 
 /************************************************************************/
@@ -830,7 +875,24 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 }
 
 /************************************************************************/
-/*                             VRTCreate()                              */
+/*                              VRTAddBand()                            */
+/************************************************************************/
+
+/**
+ * @see VRTDataset::VRTAddBand().
+ */
+
+int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType, 
+                            char **papszOptions )
+
+{
+    VALIDATE_POINTER1( hDataset, "VRTAddBand", 0 );
+
+    return ((VRTDataset *) hDataset)->AddBand(eType, papszOptions);
+}
+
+/************************************************************************/
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *
