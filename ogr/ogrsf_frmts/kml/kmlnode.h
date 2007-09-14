@@ -42,12 +42,20 @@ bool isNumberDigit(const char cIn);
 class KMLnode
 {
 private:
-    std::string sName;
-    unsigned int nLevel;
+
+    typedef std::vector<KMLnode*> kml_nodes_t;
+    kml_nodes_t* pvpoChildren;
+
+    typedef std::vector<std::string> kml_content_t;
+    kml_content_t* pvsContent;
+
+    typedef std::vector<Attribute*> kml_attributes_t;
+    kml_attributes_t* pvoAttributes;
+
     KMLnode *poParent;
-    std::vector<KMLnode*> *pvpoChildren;
-    std::vector<std::string> *pvsContent;
-    std::vector<Attribute*> *pvoAttributes;
+    unsigned int nLevel;
+    std::string sName;
+
     Nodetype eType;
 	// Layer number
 	short nLayerNumber;
