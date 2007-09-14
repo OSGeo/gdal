@@ -263,7 +263,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             continue;
         }
         /* Handle binary cursor result */
-        else if ( EQUAL(PQfname(hCursorResult,iField),"AsBinary") )
+        else if ( EQUAL(PQfname(hCursorResult,iField),"AsEWKB") )
         {
             GByte * pabyWkb = (GByte *)PQgetvalue( hCursorResult,
                                                    iRecord, iField);
