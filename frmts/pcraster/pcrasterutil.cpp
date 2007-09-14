@@ -214,7 +214,7 @@ CSF_VS GDALType2ValueScale(GDALDataType type)
       break;
     }
     default: {
-      assert(false);
+      CPLAssert(false);
       break;
     }
   }
@@ -306,13 +306,13 @@ double missingValue(CSF_CR cellRepresentation)
     }
     case CR_REAL4: {
       // using <limits> breaks on gcc 2.95
-      // assert(std::numeric_limits<REAL4>::is_iec559);
+      // CPLAssert(std::numeric_limits<REAL4>::is_iec559);
       // missingValue = -std::numeric_limits<REAL4>::max();
       missingValue = -FLT_MAX;
       break;
     }
     default: {
-      assert(false);
+      CPLAssert(false);
       break;
     }
   }
@@ -362,7 +362,7 @@ void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
       break;
     }
     default: {
-      assert(false);
+      CPLAssert(false);
       break;
     }
   }
@@ -399,7 +399,7 @@ void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
       break;
     }
     default: {
-      assert(false);
+      CPLAssert(false);
       break;
     }
   }
