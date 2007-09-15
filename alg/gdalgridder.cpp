@@ -41,23 +41,42 @@ CPL_CVSID("$Id$");
  * The Inverse Distance to a Power gridding method is a weighted average
  * interpolator. You should supply the input arrays with the scattered data
  * values including coordinates of every data point and output grid geometry.
- * The function will calculate interpolated value for the given position in
+ * The function will compute interpolated value for the given position in
  * output grid.
+ *
+ * For every grid node the resulting value will be calculated using formula:
+ *
+ * \f[
+ *      Z=\frac{\sum_{i=1}^n{\frac{Z_i}{r_i^p}}}{\sum_{i=1}^n{\frac{1}{r_i^p}}}
+ * \f]
+ *
+ *  where 
+ *  <ul>
+ *      <li> \f$r\f$ is a distance from the grid node to point \f$i\f$,
+ *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+ *      <li> \f$p\f$ is a weighting power.
+ *  </ul>
+ *
+ *  In this method the weighting factor \f$w\f$ is
+ *
+ *  \f[
+ *      w=\frac{1}{r^p}
+ *  \f]
  *
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridInverseDistanceToAPowerOptions object. 
  * @param nPoints Number of elements in input arrays.
- * @param dfX Input array of X coordinates. 
- * @param dfY Input array of Y coordinates. 
- * @param dfZ Input array of Z values. 
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
  * @param dfXMin Lowest X border of output grid.
  * @param dfXMax Highest X border of output grid.
  * @param dfYMin Lowest Y border of output grid.
  * @param dfYMax Highest Y border of output grid.
  * @param nXSize Number of columns in output grid.
  * @param nYSize Number of rows in output grid.
- * @param nXPoint X position of the point to calculate.  
- * @param nYPoint Y position of the point to calculate.
+ * @param nXPoint X position of the point to compute.  
+ * @param nYPoint Y position of the point to compute.
  * @param pdfValue Pointer to variable where the calculated value will be
  * returned.
  *
@@ -66,7 +85,7 @@ CPL_CVSID("$Id$");
 
 CPLErr
 GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
-                                 double *dfX, double *dfY, double *dfZ,
+                                 double *pdfX, double *pdfY, double *pdfZ,
                                  double dfXMin, double dfXMax,
                                  double dfYMin, double dfYMax,
                                  GUInt32 nXSize, GUInt32 nYSize,
@@ -77,24 +96,28 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
     GUInt32 i = 0;
     double  dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
     double  dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
-    double  dfXBase = dfXMin + dfDeltaX / 2;
-    double  dfYBase = dfYMin + dfDeltaY / 2;
+    double  dfXBase = dfXMin + (nXPoint + 0.5) * dfDeltaX;
+    double  dfYBase = dfYMin + (nYPoint + 0.5) * dfDeltaY;
     double dfPower =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
 
     while ( i < nPoints )
     {
-        double  dfRX = dfXBase + nXPoint * dfDeltaX - dfX[i];
-        double  dfRY = dfYBase + nYPoint * dfDeltaY - dfY[i];
-        if ( dfRX == 0.0 && dfRY == 0.0 )
+        double  dfRX = dfXBase - pdfX[i];
+        double  dfRY = dfYBase - pdfY[i];
+
+        if ( CPLIsEqual(dfRX, 0.0) && CPLIsEqual(dfRY, 0.0) )
         {
-            (*pdfValue) = dfZ[i];
+            (*pdfValue) = pdfZ[i];
             return CE_None;
         }
-        double  dfH = pow( sqrt(dfRX * dfRX + dfRY * dfRY), dfPower );
-        dfNominator += dfZ[i] / dfH;
-        dfDenominator += 1.0 / dfH;
-        i++;
+        else
+        {
+            double  dfH = pow( sqrt(dfRX * dfRX + dfRY * dfRY), dfPower );
+            dfNominator += pdfZ[i] / dfH;
+            dfDenominator += 1.0 / dfH;
+            i++;
+        }
     }
 
     (*pdfValue) = dfNominator / dfDenominator;
@@ -117,9 +140,9 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
  * @param eAlgorithm Gridding method. 
  * @param poOptions Options to control choosen gridding method.
  * @param nPoints Number of elements in input arrays.
- * @param dfX Input array of X coordinates. 
- * @param dfY Input array of Y coordinates. 
- * @param dfZ Input array of Z values. 
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
  * @param dfXMin Lowest X border of output grid.
  * @param dfXMax Highest X border of output grid.
  * @param dfYMin Lowest Y border of output grid.
@@ -137,15 +160,15 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
 
 CPLErr
 GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
-                GUInt32 nPoints, double *dfX, double *dfY, double *dfZ,
+                GUInt32 nPoints, double *pdfX, double *pdfY, double *pdfZ,
                 double dfXMin, double dfXMax, double dfYMin, double dfYMax,
                 GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
                 GDALProgressFunc pfnProgress, void *pProgressArg )
 {
     CPLAssert( poOptions );
-    CPLAssert( dfX );
-    CPLAssert( dfY );
-    CPLAssert( dfZ );
+    CPLAssert( pdfX );
+    CPLAssert( pdfY );
+    CPLAssert( pdfZ );
     CPLAssert( pData );
 
     GDALGridFunction    pfnGDALGridMethod;
@@ -169,7 +192,7 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
         for ( nXPoint = 0; nXPoint < nXSize; nXPoint++ )
         {
             double  dfValue = 0.0;
-            if ( (*pfnGDALGridMethod)( poOptions, nPoints, dfX, dfY, dfZ,
+            if ( (*pfnGDALGridMethod)( poOptions, nPoints, pdfX, pdfY, pdfZ,
                                        dfXMin, dfXMax, dfYMin, dfYMax,
                                        nXSize, nYSize,
                                        nXPoint, nYPoint, &dfValue ) != CE_None )
