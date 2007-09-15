@@ -65,4 +65,15 @@ void DontUseExceptions() {
       SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
 #endif
     }
+
+#if defined(SWIGPERL)
+    /* 
+    Make warnings regular Perl warnings. This duplicates the warning
+    message if DontUseExceptions() is in effect (it is not by default).
+    */
+    if ( eclass == CE_Warning ) {
+      warn( CPLGetLastErrorMsg() );
+    }
+#endif
+
 }
