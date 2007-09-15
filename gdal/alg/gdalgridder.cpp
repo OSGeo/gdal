@@ -31,6 +31,8 @@
 
 CPL_CVSID("$Id$");
 
+#define TO_RADIANS (3.14159265358979323846 / 180.0)
+
 /************************************************************************/
 /*                   GDALGridInverseDistanceToAPower()                  */
 /************************************************************************/
@@ -77,8 +79,8 @@ CPL_CVSID("$Id$");
  * @param nYSize Number of rows in output grid.
  * @param nXPoint X position of the point to compute.  
  * @param nYPoint Y position of the point to compute.
- * @param pdfValue Pointer to variable where the calculated value will be
- * returned.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
@@ -93,13 +95,13 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
                                  double *pdfValue )
 {
     double  dfNominator = 0.0, dfDenominator = 0.0;
-    GUInt32 i = 0;
     double  dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
     double  dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
     double  dfXBase = dfXMin + (nXPoint + 0.5) * dfDeltaX;
     double  dfYBase = dfYMin + (nYPoint + 0.5) * dfDeltaY;
     double dfPower =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+    GUInt32 i = 0;
 
     while ( i < nPoints )
     {
@@ -121,6 +123,107 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
     }
 
     (*pdfValue) = dfNominator / dfDenominator;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        GDALGridMovingAverage()                       */
+/************************************************************************/
+
+/**
+ * Moving average.
+ *
+ * The Moving Average is a simple data averaging algorithm. It uses a moving
+ * window of elliptic form to search values and averages all data points
+ * within the window. Search ellipse can be rotated by specified angle, the
+ * center of ellipse located at the grid node. Also the minimum number of data
+ * points to average can be set, if there are not enough points in window, the
+ * grid node considered empty and will be filled with specified NODATA value.
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridMovingAverageOptions object. 
+ * @param nPoints Number of elements in input arrays.
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
+ * @param dfXMin Lowest X border of output grid.
+ * @param dfXMax Highest X border of output grid.
+ * @param dfYMin Lowest Y border of output grid.
+ * @param dfYMax Highest Y border of output grid.
+ * @param nXSize Number of columns in output grid.
+ * @param nYSize Number of rows in output grid.
+ * @param nXPoint X position of the point to compute.  
+ * @param nYPoint Y position of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
+                       double *pdfX, double *pdfY, double *pdfZ,
+                       double dfXMin, double dfXMax,
+                       double dfYMin, double dfYMax,
+                       GUInt32 nXSize, GUInt32 nYSize,
+                       GUInt32 nXPoint, GUInt32 nYPoint,
+                       double *pdfValue )
+{
+    double  dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
+    double  dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
+    double  dfXBase = dfXMin + (nXPoint + 0.5) * dfDeltaX;
+    double  dfYBase = dfYMin + (nYPoint + 0.5) * dfDeltaY;
+
+    double  dfRadius1 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius1;
+    dfRadius1 *= dfRadius1;
+    double  dfRadius2 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius2;
+    dfRadius2 *= dfRadius2;
+    double  dfR12 = dfRadius1 * dfRadius2;
+
+    double  dfCoeff1 = 0.0, dfCoeff2 = 0.0;
+    double  dfAngle =
+        TO_RADIANS * ((GDALGridMovingAverageOptions *)poOptions)->dfAngle;
+    bool    bRotated = ( dfAngle == 0.0 ) ? false : true;
+    if ( bRotated )
+    {
+        dfCoeff1 = cos(dfAngle);
+        dfCoeff2 = sin(dfAngle);
+    }
+
+    double  dfAccumulator = 0.0;
+    GUInt32 i = 0, n = 0;
+
+    while ( i < nPoints )
+    {
+        double  dfRX = pdfX[i] - dfXBase;
+        double  dfRY = pdfY[i] - dfYBase;
+
+        if ( bRotated )
+        {
+            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+            dfRX = dfRXRotated;
+            dfRY = dfRYRotated;
+        }
+
+        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        {
+            dfAccumulator += pdfZ[i];
+            n++;
+        }
+
+        i++;
+    }
+
+    if ( n < ((GDALGridMovingAverageOptions *)poOptions)->nMinPoints )
+    {
+        (*pdfValue) =
+            ((GDALGridMovingAverageOptions *)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = dfAccumulator / n;
 
     return CE_None;
 }
@@ -150,7 +253,7 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
  * @param nXSize Number of columns in output grid.
  * @param nYSize Number of rows in output grid.
  * @param eType Data type of output array.  
- * @param pData Pointer to array where the calculated grid will be stored.
+ * @param pData Pointer to array where the computed grid will be stored.
  * @param pfnProgress a GDALProgressFunc() compatible callback function for
  * reporting progress or NULL.
  * @param pProgressArg argument to be passed to pfnProgress.  May be NULL.
@@ -177,6 +280,10 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
     {
         case GGA_InverseDistanceToAPower:
             pfnGDALGridMethod = GDALGridInverseDistanceToAPower;
+            break;
+
+        case GGA_MovingAverage:
+            pfnGDALGridMethod = GDALGridMovingAverage;
             break;
 
         default:
