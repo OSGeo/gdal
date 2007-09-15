@@ -51,7 +51,12 @@ GDALGridInverseDistanceToAPower( void *, GUInt32,
                                  double, double, double, double,
                                  GUInt32, GUInt32, GUInt32, GUInt32,
                                  double * );
-
+CPLErr
+GDALGridMovingAverage( void *, GUInt32,
+                       double *, double *, double *,
+                       double, double, double, double,
+                       GUInt32, GUInt32, GUInt32, GUInt32,
+                       double * );
 CPL_C_END
 
 #endif /* GDALGRIDDER_H_INCLUDED */
