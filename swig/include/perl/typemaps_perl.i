@@ -716,11 +716,20 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
   }
 }
 
-%typemap(check) OGRGeometryShadow*
+%typemap(check) OGRGeometryShadow* geom
 {
-  /* %typemap(check) OGRGeometryShadow* */
+  /* %typemap(check) OGRGeometryShadow* geom */
   if (!$1) {
     croak("The geometry must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) OGRGeometryShadow* other
+{
+  /* %typemap(check) OGRGeometryShadow* other */
+  if (!$1) {
+    croak("The other geometry must not be undefined");
     SWIG_fail;  
   }
 }
