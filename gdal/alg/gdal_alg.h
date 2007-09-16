@@ -267,7 +267,8 @@ GDALRasterizeGeometries( GDALDatasetH hDS,
 /*! Gridding Algorithms */
 typedef enum {
   /*! Inverse distance to a power */    GGA_InverseDistanceToAPower = 1,
-  /*! MovingAverage */                  GGA_MovingAverage = 2
+  /*! Moving Average */                 GGA_MovingAverage = 2,
+  /*! Nearest Neighbor */               GGA_NearestNeighbor = 3
 } GDALGridAlgorithm;
 
 /** Inverse distance to a power method control options */
@@ -298,6 +299,22 @@ typedef struct
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
 } GDALGridMovingAverageOptions;
+
+/** Nearest neighbor method control options */
+typedef struct
+{
+    /*! The first radius (X axis if rotation angle is 0) of search ellipse */
+    double  dfRadius1;
+    /*! The first radius (Y axis if rotation angle is 0) of search ellipse */
+    double  dfRadius2;
+    /*! Angle of ellipse rotation in degrees.
+     *
+     * Ellipse rotated counter clockwise.
+     */
+    double  dfAngle;
+    /*! No data marker to fill empty points. */
+    double  dfNoDataValue;
+} GDALGridNearestNeighborOptions;
 
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, void *, GUInt32,
