@@ -42,21 +42,19 @@ CPL_C_START
 
 typedef CPLErr (*GDALGridFunction)(void *, GUInt32,
                                    double *, double *, double *,
-                                   double, double, double, double,
-                                   GUInt32, GUInt32, GUInt32, GUInt32,
-                                   double *);
+                                   double, double, double *);
 CPLErr
 GDALGridInverseDistanceToAPower( void *, GUInt32,
                                  double *, double *, double *,
-                                 double, double, double, double,
-                                 GUInt32, GUInt32, GUInt32, GUInt32,
-                                 double * );
+                                 double, double, double * );
 CPLErr
 GDALGridMovingAverage( void *, GUInt32,
                        double *, double *, double *,
-                       double, double, double, double,
-                       GUInt32, GUInt32, GUInt32, GUInt32,
-                       double * );
+                       double, double, double * );
+CPLErr
+GDALGridNearestNeighbor( void *, GUInt32,
+                         double *, double *, double *,
+                         double, double, double * );
 CPL_C_END
 
 #endif /* GDALGRIDDER_H_INCLUDED */
