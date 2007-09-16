@@ -71,12 +71,8 @@ CPL_CVSID("$Id$");
  * @param pdfX Input array of X coordinates. 
  * @param pdfY Input array of Y coordinates. 
  * @param pdfZ Input array of Z values. 
- * @param dfXMin Lowest X border of output grid.
- * @param dfXMax Highest X border of output grid.
- * @param dfYMin Lowest Y border of output grid.
- * @param dfYMax Highest Y border of output grid.
- * @param nXSize Number of columns in output grid.
- * @param nYSize Number of rows in output grid.
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
  * @param nXPoint X position of the point to compute.  
  * @param nYPoint Y position of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
@@ -88,25 +84,18 @@ CPL_CVSID("$Id$");
 CPLErr
 GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
                                  double *pdfX, double *pdfY, double *pdfZ,
-                                 double dfXMin, double dfXMax,
-                                 double dfYMin, double dfYMax,
-                                 GUInt32 nXSize, GUInt32 nYSize,
-                                 GUInt32 nXPoint, GUInt32 nYPoint,
+                                 double dfXPoint, double dfYPoint,
                                  double *pdfValue )
 {
     double  dfNominator = 0.0, dfDenominator = 0.0;
-    double  dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
-    double  dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
-    double  dfXBase = dfXMin + (nXPoint + 0.5) * dfDeltaX;
-    double  dfYBase = dfYMin + (nYPoint + 0.5) * dfDeltaY;
     double dfPower =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
     GUInt32 i = 0;
 
     while ( i < nPoints )
     {
-        double  dfRX = dfXBase - pdfX[i];
-        double  dfRY = dfYBase - pdfY[i];
+        double  dfRX = dfXPoint - pdfX[i];
+        double  dfRY = dfYPoint - pdfY[i];
 
         if ( CPLIsEqual(dfRX, 0.0) && CPLIsEqual(dfRY, 0.0) )
         {
@@ -147,14 +136,8 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
  * @param pdfX Input array of X coordinates. 
  * @param pdfY Input array of Y coordinates. 
  * @param pdfZ Input array of Z values. 
- * @param dfXMin Lowest X border of output grid.
- * @param dfXMax Highest X border of output grid.
- * @param dfYMin Lowest Y border of output grid.
- * @param dfYMax Highest Y border of output grid.
- * @param nXSize Number of columns in output grid.
- * @param nYSize Number of rows in output grid.
- * @param nXPoint X position of the point to compute.  
- * @param nYPoint Y position of the point to compute.
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
  *
@@ -164,23 +147,15 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
 CPLErr
 GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
                        double *pdfX, double *pdfY, double *pdfZ,
-                       double dfXMin, double dfXMax,
-                       double dfYMin, double dfYMax,
-                       GUInt32 nXSize, GUInt32 nYSize,
-                       GUInt32 nXPoint, GUInt32 nYPoint,
-                       double *pdfValue )
+                       double dfXPoint, double dfYPoint, double *pdfValue )
 {
-    double  dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
-    double  dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
-    double  dfXBase = dfXMin + (nXPoint + 0.5) * dfDeltaX;
-    double  dfYBase = dfYMin + (nYPoint + 0.5) * dfDeltaY;
-
     double  dfRadius1 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius1;
     dfRadius1 *= dfRadius1;
     double  dfRadius2 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius2;
     dfRadius2 *= dfRadius2;
     double  dfR12 = dfRadius1 * dfRadius2;
 
+    // Compute coefficients for coordinate system rotation.
     double  dfCoeff1 = 0.0, dfCoeff2 = 0.0;
     double  dfAngle =
         TO_RADIANS * ((GDALGridMovingAverageOptions *)poOptions)->dfAngle;
@@ -196,8 +171,8 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
 
     while ( i < nPoints )
     {
-        double  dfRX = pdfX[i] - dfXBase;
-        double  dfRY = pdfY[i] - dfYBase;
+        double  dfRX = pdfX[i] - dfXPoint;
+        double  dfRY = pdfY[i] - dfYPoint;
 
         if ( bRotated )
         {
@@ -208,6 +183,7 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
             dfRY = dfRYRotated;
         }
 
+        // Does this point located inside the search ellipse?
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
             dfAccumulator += pdfZ[i];
@@ -224,6 +200,97 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
     }
     else
         (*pdfValue) = dfAccumulator / n;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        GDALGridNearestNeighbor()                     */
+/************************************************************************/
+
+/**
+ * Nearest neighbor.
+ *
+ * The Nearest Neighbor method doesn't perform any interpolation or smoothing,
+ * it just takes the value of nearest point found in grid node search ellipse
+ * and returns it as a result. If there are no points found, the specified
+ * NODATA value will be returned.
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridNearestNeighborOptions object. 
+ * @param nPoints Number of elements in input arrays.
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridNearestNeighbor( void *poOptions, GUInt32 nPoints,
+                         double *pdfX, double *pdfY, double *pdfZ,
+                         double dfXPoint, double dfYPoint, double *pdfValue )
+{
+    double  dfRadius1 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
+    dfRadius1 *= dfRadius1;
+    double  dfRadius2 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2;
+    dfRadius2 *= dfRadius2;
+    double  dfR12 = dfRadius1 * dfRadius2;
+
+    // Compute coefficients for coordinate system rotation.
+    double  dfCoeff1 = 0.0, dfCoeff2 = 0.0;
+    double  dfAngle =
+        TO_RADIANS * ((GDALGridNearestNeighborOptions *)poOptions)->dfAngle;
+    bool    bRotated = ( dfAngle == 0.0 ) ? false : true;
+    if ( bRotated )
+    {
+        dfCoeff1 = cos(dfAngle);
+        dfCoeff2 = sin(dfAngle);
+    }
+
+    // If the nearest point will not be found, its value remains as NODATA.
+    double  dfNearestValue =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfNoDataValue;
+    // Nearest distance will be initialized with a largest ellipse semi-axis.
+    // All nearest points should be located in this range.
+    double  dfNearestR = MAX(dfRadius1, dfRadius2);
+    GUInt32 i = 0;
+
+    while ( i < nPoints )
+    {
+        double  dfRX = pdfX[i] - dfXPoint;
+        double  dfRY = pdfY[i] - dfYPoint;
+
+        if ( bRotated )
+        {
+            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+            dfRX = dfRXRotated;
+            dfRY = dfRYRotated;
+        }
+
+        // Does this point located inside the search ellipse?
+        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        {
+            double  dfR2 = dfRX * dfRX + dfRY * dfRY;
+            if ( dfR2 < dfNearestR )
+            {
+                dfNearestR = dfR2;
+                dfNearestValue = pdfZ[i];
+            }
+        }
+
+        i++;
+    }
+
+    (*pdfValue) = dfNearestValue;
 
     return CE_None;
 }
@@ -274,6 +341,13 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
     CPLAssert( pdfZ );
     CPLAssert( pData );
 
+    if ( nXSize == 0 || nYSize == 0 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Output raster dimesions should have non-zero size." );
+        return CE_Failure;
+    }
+
     GDALGridFunction    pfnGDALGridMethod;
 
     switch ( eAlgorithm )
@@ -286,23 +360,30 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
             pfnGDALGridMethod = GDALGridMovingAverage;
             break;
 
+        case GGA_NearestNeighbor:
+            pfnGDALGridMethod = GDALGridNearestNeighbor;
+            break;
+
         default:
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "GDAL does not support gridding method %d", eAlgorithm );
 	    return CE_Failure;
     }
 
-    GUInt32             nXPoint, nYPoint;
+    GUInt32 nXPoint, nYPoint;
+    double  dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
+    double  dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
 
     for ( nYPoint = 0; nYPoint < nYSize; nYPoint++ )
     {
+        double  dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
         for ( nXPoint = 0; nXPoint < nXSize; nXPoint++ )
         {
+            double  dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
             double  dfValue = 0.0;
             if ( (*pfnGDALGridMethod)( poOptions, nPoints, pdfX, pdfY, pdfZ,
-                                       dfXMin, dfXMax, dfYMin, dfYMax,
-                                       nXSize, nYSize,
-                                       nXPoint, nYPoint, &dfValue ) != CE_None )
+                                       dfXPoint, dfYPoint,
+                                       &dfValue ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
