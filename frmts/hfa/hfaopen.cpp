@@ -2786,6 +2786,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         HFAStandard( 4, &nValue32 );
         VSIFWriteL( &nValue32, 4, 1, fpVSIL );
         nValue32 = 0x30000;	// Unknown
+        HFAStandard( 4, &nValue32 );
         VSIFWriteL( &nValue32, 4, 1, fpVSIL );
 
         iRemainder = nBlocksPerRow % 8;
