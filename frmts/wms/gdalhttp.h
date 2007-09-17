@@ -50,6 +50,6 @@ typedef struct {
     char *m_curl_error;
 } CPLHTTPRequest;
 
-void CPL_DLL CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL = 0, const char **papszOptions = 0);
+void CPL_DLL CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL = 0, const char *const *papszOptions = 0);
 void CPL_DLL CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest);
-CPLErr CPL_DLL CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount = 1);
+CPLErr CPL_DLL CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount = 1, const char *const *papszOptions = 0);

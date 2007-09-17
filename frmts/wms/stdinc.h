@@ -1,9 +1,4 @@
 #include <math.h>
-#include <functional>
-#include <algorithm>
-#include <string>
-#include <map>
-#include <deque>
 #include <vector>
 #include <list>
 #include <curl/curl.h>

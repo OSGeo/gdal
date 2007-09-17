@@ -159,6 +159,17 @@
 			<td class="desc"></td>
 		</tr>
 		<tr>
+			<td class="xml">    &lt;OfflineMode&gt;<span class="value">true</span>&lt;/OfflineMode&gt;</td>
+			<td class="desc">Do not download any new images, use only what is in cache. Usefull only with cache enabled. (optional, defaults to false)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;AdviseRead&gt;<span class="value">true</span>&lt;/AdviseRead&gt;</td>
+			<td class="desc">Enable AdviseRead API call - download images into cache. (optional, defaults to false)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;VerifyAdviseRead&gt;<span class="value">true</span>&lt;/VerifyAdviseRead&gt;</td>
+			<td class="desc">Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)</td>
+		</tr>
 			<td class="xml">&lt;/GDAL_WMS&gt;</td>
 			<td class="desc"></td>
 		</tr>

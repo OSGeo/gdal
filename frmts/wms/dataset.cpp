@@ -44,6 +44,58 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
+        const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");
+        if (max_conn[0] != '\0') {
+            m_http_max_conn = atoi(max_conn);
+        } else {
+            m_http_max_conn = 2;
+        }
+    }
+    if (ret == CE_None) {
+        const char *offline_mode = CPLGetXMLValue(config, "OfflineMode", "");
+        if (offline_mode[0] != '\0') {
+            const int offline_mode_bool = StrToBool(offline_mode);
+            if (offline_mode_bool == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in OfflineMode, true / false expected.");
+                ret = CE_Failure;
+            } else {
+                m_offline_mode = offline_mode_bool;
+            }
+        } else {
+            m_offline_mode = 0;
+        }
+    }
+    if (ret == CE_None) {
+        const char *advise_read = CPLGetXMLValue(config, "AdviseRead", "");
+        if (advise_read[0] != '\0') {
+            const int advise_read_bool = StrToBool(advise_read);
+            if (advise_read_bool == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in AdviseRead, true / false expected.");
+                ret = CE_Failure;
+            } else {
+                m_use_advise_read = advise_read_bool;
+            }
+        } else {
+            m_use_advise_read = 0;
+        }
+    }
+    if (ret == CE_None) {
+        const char *verify_advise_read = CPLGetXMLValue(config, "VerifyAdviseRead", "");
+        if (m_use_advise_read) {
+            if (verify_advise_read[0] != '\0') {
+                const int verify_advise_read_bool = StrToBool(verify_advise_read);
+                if (verify_advise_read_bool == -1) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value in VerifyAdviseRead, true / false expected.");
+                    ret = CE_Failure;
+                } else {
+                    m_verify_advise_read = verify_advise_read_bool;
+                }
+            } else {
+                m_verify_advise_read = 1;
+            }
+        }
+    }
+    if (ret == CE_None) {
         const char *block_size_x = CPLGetXMLValue(config, "BlockSizeX", "1024");
         const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "1024");
         m_block_size_x = atoi(block_size_x);
@@ -265,4 +317,14 @@ const int GDALWMSDataset::WMSGetBlockSizeX() const {
 
 const int GDALWMSDataset::WMSGetBlockSizeY() const {
     return m_block_size_y;
+}
+
+CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) {
+//    printf("AdviseRead(%d, %d, %d, %d)\n", x0, y0, sx, sy);
+    if (m_offline_mode || !m_use_advise_read) return CE_None;
+    if (m_cache == NULL) return CE_Failure;
+
+    GDALRasterBand *band = GetRasterBand(1);
+    if (band == NULL) return CE_Failure;
+    return band->AdviseRead(x0, y0, sx, sy, bsx, bsy, bdt, options);
 }
