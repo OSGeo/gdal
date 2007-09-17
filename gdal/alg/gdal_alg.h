@@ -276,6 +276,8 @@ typedef struct
 {
     /*! Weighting power */
     double  dfPower;
+    /*! Smoothing */
+    double  dfSmoothing;
 } GDALGridInverseDistanceToAPowerOptions;
 
 /** Moving average method control options */

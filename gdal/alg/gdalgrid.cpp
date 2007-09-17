@@ -46,7 +46,8 @@ CPL_CVSID("$Id$");
  * The function will compute interpolated value for the given position in
  * output grid.
  *
- * For every grid node the resulting value will be calculated using formula:
+ * For every grid node the resulting value \f$Z\f$ will be calculated using
+ * formula:
  *
  * \f[
  *      Z=\frac{\sum_{i=1}^n{\frac{Z_i}{r_i^p}}}{\sum_{i=1}^n{\frac{1}{r_i^p}}}
@@ -90,23 +91,26 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
     double  dfNominator = 0.0, dfDenominator = 0.0;
     double dfPower =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+    double dfSmoothing =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
     GUInt32 i = 0;
 
     while ( i < nPoints )
     {
-        double  dfRX = dfXPoint - pdfX[i];
-        double  dfRY = dfYPoint - pdfY[i];
+        double  dfRX = pdfX[i] - dfXPoint;
+        double  dfRY = pdfY[i] - dfYPoint;
+        double  dfR2 = dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
 
-        if ( CPLIsEqual(dfRX, 0.0) && CPLIsEqual(dfRY, 0.0) )
+        if ( CPLIsEqual(dfR2, 0.0) )
         {
             (*pdfValue) = pdfZ[i];
             return CE_None;
         }
         else
         {
-            double  dfH = pow( sqrt(dfRX * dfRX + dfRY * dfRY), dfPower );
-            dfNominator += pdfZ[i] / dfH;
-            dfDenominator += 1.0 / dfH;
+            double  dfW = pow( sqrt(dfR2), dfPower );
+            dfNominator += pdfZ[i] / dfW;
+            dfDenominator += 1.0 / dfW;
             i++;
         }
     }
