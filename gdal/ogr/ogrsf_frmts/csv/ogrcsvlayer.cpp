@@ -169,6 +169,12 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
                 oField.SetType(OFTReal);
             else if (EQUAL(papszFieldTypes[iField], "String"))
                 oField.SetType(OFTString);
+            else if (EQUAL(papszFieldTypes[iField], "Date"))
+                oField.SetType(OFTDate); 
+            else if (EQUAL(papszFieldTypes[iField], "Time"))
+                oField.SetType(OFTTime);
+            else if (EQUAL(papszFieldTypes[iField], "DateTime"))
+                oField.SetType(OFTDateTime); 
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
