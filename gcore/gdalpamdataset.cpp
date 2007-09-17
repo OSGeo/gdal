@@ -274,10 +274,17 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
 void GDALPamDataset::PamInitialize()
 
 {
+#ifdef PAM_ENABLED
+    static const char *pszPamDefault = "YES";
+#else
+    static const char *pszPamDefault = "NO";
+#endif
+    
     if( psPam || (nPamFlags & GPF_DISABLED) )
         return;
 
-    if( !CSLTestBoolean( CPLGetConfigOption( "GDAL_PAM_ENABLED", "NO" ) ) )
+    if( !CSLTestBoolean( CPLGetConfigOption( "GDAL_PAM_ENABLED", 
+                                             pszPamDefault ) ) )
     {
         nPamFlags |= GPF_DISABLED;
         return;
@@ -286,7 +293,13 @@ void GDALPamDataset::PamInitialize()
     if( EQUAL( CPLGetConfigOption( "GDAL_PAM_MODE", "PAM" ), "AUX") )
         nPamFlags |= GPF_AUXMODE;
 
-    psPam = (GDALDatasetPamInfo *) CPLCalloc(sizeof(GDALDatasetPamInfo),1);
+    psPam = new GDALDatasetPamInfo;
+    psPam->pszPamFilename = NULL;
+    psPam->pszProjection = NULL;
+    psPam->bHaveGeoTransform = FALSE;
+    psPam->nGCPCount = 0;
+    psPam->pasGCPList = NULL;
+    psPam->pszGCPProjection = NULL;
 
     int iBand;
     
@@ -312,9 +325,7 @@ void GDALPamDataset::PamClear()
     if( psPam )
     {
         CPLFree( psPam->pszPamFilename );
-
         CPLFree( psPam->pszProjection );
-
         CPLFree( psPam->pszGCPProjection );
         if( psPam->nGCPCount > 0 )
         {
@@ -322,7 +333,7 @@ void GDALPamDataset::PamClear()
             CPLFree( psPam->pasGCPList );
         }
 
-        CPLFree( psPam );
+        delete psPam;
         psPam = NULL;
     }
 }
@@ -472,6 +483,32 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 }
 
 /************************************************************************/
+/*                        SetPhysicalFilename()                         */
+/************************************************************************/
+
+void GDALPamDataset::SetPhysicalFilename( const char *pszFilename )
+
+{
+    PamInitialize();
+
+    if( psPam )
+        psPam->osPhysicalFilename = pszFilename;
+}
+
+/************************************************************************/
+/*                         SetSubdatasetName()                          */
+/************************************************************************/
+
+void GDALPamDataset::SetSubdatasetName( const char *pszSubdataset )
+
+{
+    PamInitialize();
+
+    if( psPam )
+        psPam->osSubdatasetName = pszSubdataset;
+}
+
+/************************************************************************/
 /*                          BuildPamFilename()                          */
 /************************************************************************/
 
@@ -481,19 +518,31 @@ const char *GDALPamDataset::BuildPamFilename()
     if( psPam == NULL )
         return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      What is the name of the physical file we are referencing?       */
+/*      We allow an override via the psPam->pszPhysicalFile item.       */
+/* -------------------------------------------------------------------- */
     if( psPam->pszPamFilename != NULL )
         return psPam->pszPamFilename;
-    
-    if( GetDescription() == NULL || strlen(GetDescription()) == 0 )
+
+    const char *pszPhysicalFile = psPam->osPhysicalFilename;
+
+    if( strlen(pszPhysicalFile) == 0 && GetDescription() != NULL )
+        pszPhysicalFile = GetDescription();
+
+    if( strlen(pszPhysicalFile) == 0 )
         return NULL;
 
-    const char *pszProxyPam = PamGetProxy( GetDescription() );
+/* -------------------------------------------------------------------- */
+/*      Try a proxy lookup, otherwise just add .aux.xml.                */
+/* -------------------------------------------------------------------- */
+    const char *pszProxyPam = PamGetProxy( pszPhysicalFile );
     if( pszProxyPam != NULL )
         psPam->pszPamFilename = CPLStrdup(pszProxyPam);
     else
     {
-        psPam->pszPamFilename = (char*) CPLMalloc(strlen(GetDescription())+10);
-        strcpy( psPam->pszPamFilename, GetDescription() );
+        psPam->pszPamFilename = (char*) CPLMalloc(strlen(pszPhysicalFile)+10);
+        strcpy( psPam->pszPamFilename, pszPhysicalFile );
         strcat( psPam->pszPamFilename, ".aux.xml" );
     }
 
@@ -507,7 +556,6 @@ const char *GDALPamDataset::BuildPamFilename()
 CPLErr GDALPamDataset::TryLoadXML()
 
 {
-    char *pszVRTPath = NULL;
     CPLXMLNode *psTree = NULL;
 
     PamInitialize();
@@ -540,6 +588,37 @@ CPLErr GDALPamDataset::TryLoadXML()
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we are looking for a subdataset, search for it's subtree     */
+/*      now.                                                            */
+/* -------------------------------------------------------------------- */
+    if( psTree && psPam->osSubdatasetName.size() )
+    {
+        CPLXMLNode *psSubTree;
+        
+        for( psSubTree = psTree->psChild; 
+             psSubTree != NULL;
+             psSubTree = psSubTree->psNext )
+        {
+            if( psSubTree->eType != CXT_Element
+                || !EQUAL(psSubTree->pszValue,"Subdataset") )
+                continue;
+
+            if( !EQUAL(CPLGetXMLValue( psSubTree, "name", "" ),
+                       psPam->osSubdatasetName) )
+                continue;
+
+            psSubTree = CPLGetXMLNode( psSubTree, "PAMDataset" );
+            break;
+        }
+        
+        if( psSubTree != NULL )
+            psSubTree = CPLCloneXMLTree( psSubTree );
+
+        CPLDestroyXMLNode( psTree );
+        psTree = psSubTree;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we fail, try .aux.                                           */
 /* -------------------------------------------------------------------- */
     if( psTree == NULL )
@@ -550,9 +629,8 @@ CPLErr GDALPamDataset::TryLoadXML()
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    pszVRTPath = CPLStrdup(CPLGetPath(psPam->pszPamFilename));
-    eErr = XMLInit( psTree, pszVRTPath );
-    CPLFree( pszVRTPath );
+    CPLString osVRTPath = CPLStrdup(CPLGetPath(psPam->pszPamFilename));
+    eErr = XMLInit( psTree, osVRTPath );
 
     CPLDestroyXMLNode( psTree );
 
@@ -570,49 +648,116 @@ CPLErr GDALPamDataset::TrySaveXML()
 
 {
     CPLXMLNode *psTree;
-    char *pszVRTPath;
     CPLErr eErr = CE_None;
 
     nPamFlags &= ~GPF_DIRTY;
 
-    if( psPam == NULL )
+    if( psPam == NULL || (nPamFlags & GPF_NOSAVE) )
         return CE_None;
 
+/* -------------------------------------------------------------------- */
+/*      Make sure we know the filename we want to store in.             */
+/* -------------------------------------------------------------------- */
     if( !BuildPamFilename() )
         return CE_None;
 
-    pszVRTPath = CPLStrdup(CPLGetPath(psPam->pszPamFilename));
-    psTree = SerializeToXML( pszVRTPath );
-    CPLFree( pszVRTPath );
+/* -------------------------------------------------------------------- */
+/*      Build the XML representation of the auxilary metadata.          */
+/* -------------------------------------------------------------------- */
+    CPLString osVRTPath = CPLGetPath(psPam->pszPamFilename);
 
-    if( psTree != NULL )
+    psTree = SerializeToXML( osVRTPath );
+
+    if( psTree == NULL )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      If we are working with a subdataset, we need to integrate       */
+/*      the subdataset tree within the whole existing pam tree,         */
+/*      after removing any old version of the same subdataset.          */
+/* -------------------------------------------------------------------- */
+    if( psPam->osSubdatasetName.size() != 0 )
     {
-        const char *pszNewPam;
-        int bSaved;
+        CPLXMLNode *psOldTree, *psSubTree;
 
+        CPLErrorReset();
         CPLPushErrorHandler( CPLQuietErrorHandler );
-        bSaved = CPLSerializeXMLTreeToFile( psTree, psPam->pszPamFilename );
+        psOldTree = CPLParseXMLFile( psPam->pszPamFilename );
         CPLPopErrorHandler();
 
-        if( bSaved )
-            eErr = CE_None;
-        else if( PamGetProxy(GetDescription()) == NULL 
-                 && ((pszNewPam = PamAllocateProxy(GetDescription())) != NULL))
+        if( psOldTree == NULL )
+            psOldTree = CPLCreateXMLNode( NULL, CXT_Element, "PAMDataset" );
+
+        for( psSubTree = psTree->psChild; 
+             psSubTree != NULL;
+             psSubTree = psSubTree->psNext )
         {
-            CPLErrorReset();
-            CPLFree( psPam->pszPamFilename );
-            psPam->pszPamFilename = CPLStrdup(pszNewPam);
-            eErr = TrySaveXML();
+            if( psSubTree->eType != CXT_Element
+                || !EQUAL(psSubTree->pszValue,"Subdataset") )
+                continue;
+
+            if( !EQUAL(CPLGetXMLValue( psSubTree, "name", "" ),
+                       psPam->osSubdatasetName) )
+                continue;
+
+            break;
         }
-        else
+
+        if( psSubTree == NULL )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Unable to save auxilary information in %s.",
-                      psPam->pszPamFilename );
-            eErr = CE_Warning;
+            psSubTree = CPLCreateXMLNode( psOldTree, CXT_Element, 
+                                          "Subdataset" );
+            CPLCreateXMLNode( 
+                CPLCreateXMLNode( psSubTree, CXT_Attribute, "name" ),
+                CXT_Text, psPam->osSubdatasetName );
         }
+        
+        CPLXMLNode *psOldPamDataset = CPLGetXMLNode( psSubTree, "PAMDataset");
+        if( psOldPamDataset != NULL )
+        {
+            CPLRemoveXMLChild( psSubTree, psOldPamDataset );
+            CPLDestroyXMLNode( psOldPamDataset );
+        }
+
+        CPLAddXMLChild( psSubTree, psTree );
+        psTree = psOldTree;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try saving the auxilary metadata.                               */
+/* -------------------------------------------------------------------- */
+    const char *pszNewPam;
+    int bSaved;
+    
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+    bSaved = CPLSerializeXMLTreeToFile( psTree, psPam->pszPamFilename );
+    CPLPopErrorHandler();
+
+/* -------------------------------------------------------------------- */
+/*      If it fails, check if we have a proxy directory for auxilary    */
+/*      metadata to be stored in, and try to save there.                */
+/* -------------------------------------------------------------------- */
+    if( bSaved )
+        eErr = CE_None;
+    else if( PamGetProxy(GetDescription()) == NULL 
+             && ((pszNewPam = PamAllocateProxy(GetDescription())) != NULL))
+    {
+        CPLErrorReset();
+        CPLFree( psPam->pszPamFilename );
+        psPam->pszPamFilename = CPLStrdup(pszNewPam);
+        eErr = TrySaveXML();
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Unable to save auxilary information in %s.",
+                  psPam->pszPamFilename );
+        eErr = CE_Warning;
     }
     
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
     CPLDestroyXMLNode( psTree );
 
     return eErr;
@@ -955,12 +1100,21 @@ CPLErr GDALPamDataset::TryLoadAux()
         return CE_None;
 
 /* -------------------------------------------------------------------- */
-/*      Try to open .aux file.                                          */
+/*      What is the name of the physical file we are referencing?       */
+/*      We allow an override via the psPam->pszPhysicalFile item.       */
 /* -------------------------------------------------------------------- */
-    if( GetDescription() == NULL || strlen(GetDescription()) == 0 )
+    const char *pszPhysicalFile = psPam->osPhysicalFilename;
+
+    if( strlen(pszPhysicalFile) == 0 && GetDescription() != NULL )
+        pszPhysicalFile = GetDescription();
+
+    if( strlen(pszPhysicalFile) == 0 )
         return CE_None;
 
-    GDALDataset *poAuxDS = GDALFindAssociatedAuxFile( GetDescription(), 
+/* -------------------------------------------------------------------- */
+/*      Try to open .aux file.                                          */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poAuxDS = GDALFindAssociatedAuxFile( pszPhysicalFile, 
                                                       GA_ReadOnly );
 
     if( poAuxDS == NULL )
