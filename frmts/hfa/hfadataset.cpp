@@ -3388,16 +3388,6 @@ xx
 }
 
 /************************************************************************/
-/*                               Delete()                               */
-/************************************************************************/
-
-CPLErr HFADataset::Delete( const char *pszFilename )
-
-{
-    return HFADelete( pszFilename );
-}
-
-/************************************************************************/
 /*                          GDALRegister_HFA()                          */
 /************************************************************************/
 
@@ -3429,7 +3419,6 @@ void GDALRegister_HFA()
         poDriver->pfnOpen = HFADataset::Open;
         poDriver->pfnCreate = HFADataset::Create;
         poDriver->pfnCreateCopy = HFADataset::CreateCopy;
-        poDriver->pfnDelete = HFADataset::Delete;
         poDriver->pfnIdentify = HFADataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
