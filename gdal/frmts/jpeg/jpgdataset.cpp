@@ -1445,6 +1445,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( !bIsSubfile )
         poDS->TryLoadXML();
+    else
+        poDS->nPamFlags |= GPF_NOSAVE;
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
