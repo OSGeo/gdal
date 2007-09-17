@@ -154,21 +154,13 @@ def envi_6():
 
     return gdaltest.envi_tst.testSetProjection( prj = prj )
 
-###############################################################################
-# Cleanup
-
-def envi_cleanup():
-    gdaltest.clean_tmp()
-    return 'success'
-
 gdaltest_list = [
     envi_1,
     envi_2,
     envi_3,
     envi_4,
     envi_5,
-    envi_6,
-    envi_cleanup
+    envi_6
     ]
   
 
