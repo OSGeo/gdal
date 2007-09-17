@@ -69,6 +69,7 @@ class GDALPamRasterBand;
 #define GPF_TRIED_READ_FAILED   0x02  // no need to keep trying to read .pam.
 #define GPF_DISABLED            0x04  // do not try any PAM stuff. 
 #define GPF_AUXMODE             0x08  // store info in .aux (HFA) file.
+#define GPF_NOSAVE              0x10  // do not try to save pam info.
 
 /* ==================================================================== */
 /*      GDALDatasetPamInfo                                              */
@@ -78,8 +79,10 @@ class GDALPamRasterBand;
 /*      the GDALPamDataset.  It is an effort to reduce ABI churn for    */
 /*      driver plugins.                                                 */
 /* ==================================================================== */
-typedef struct {
-    char       *pszPamFilename;
+class GDALDatasetPamInfo
+{
+public:
+    char        *pszPamFilename;
 
     char	*pszProjection;
 
@@ -90,7 +93,9 @@ typedef struct {
     GDAL_GCP   *pasGCPList;
     char       *pszGCPProjection;
 
-} GDALDatasetPamInfo;
+    CPLString   osPhysicalFilename;
+    CPLString   osSubdatasetName;
+};
 
 /* ******************************************************************** */
 /*                           GDALPamDataset                             */
@@ -119,6 +124,9 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     void   PamInitialize();
     void   PamClear();
+
+    void   SetPhysicalFilename( const char * );
+    void   SetSubdatasetName( const char *);
 
   public:
     virtual     ~GDALPamDataset();
@@ -151,10 +159,12 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
     GDALDatasetPamInfo *GetPamInfo() { return psPam; }
+    int    GetPamFlags() { return nPamFlags; }
+    void   SetPamFlags(int nValue ) { nPamFlags = nValue; }
 };
 
 /* ==================================================================== */
-/*      GDALDatasetPamInfo                                              */
+/*      GDALRasterBandPamInfo                                           */
 /*                                                                      */
 /*      We make these things a seperate structure of information        */
 /*      primarily so we can modify it without altering the size of      */
