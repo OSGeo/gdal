@@ -93,6 +93,7 @@ class NITFDataset : public GDALPamDataset
     CPLErr       ScanJPEGBlocks( void );
     CPLErr       ReadJPEGBlock( int, int );
 
+    int          nIMIndex;
     CPLString    osNITFFilename;
 
   public:
@@ -700,6 +701,12 @@ void NITFDataset::FlushCache()
     if( poJ2KDataset != NULL && bJP2Writing)
         poJ2KDataset->FlushCache();
 
+    // If the JPEG dataset has dirty pam info, then we should consider 
+    // ourselves to as well.
+    if( poJPEGDataset != NULL 
+        && (((GDALPamDataset *) poJPEGDataset)->GetPamFlags() & GPF_DIRTY) )
+        MarkPamDirty();
+
     GDALPamDataset::FlushCache();
 }
 
@@ -823,6 +830,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psImage = psImage;
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->osNITFFilename = pszFilename;
+    poDS->nIMIndex = nIMIndex;
 
     if( psImage )
     {
@@ -1527,6 +1535,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If there are multiple image segments, and we are the zeroth,    */
 /*      then setup the subdataset metadata.                             */
 /* -------------------------------------------------------------------- */
+    int nSubDSCount = 0;
+
     if( nIMIndex == -1 )
     {
         char **papszSubdatasets = NULL;
@@ -1553,8 +1563,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        if( CSLCount(papszSubdatasets) > 2 )
-            poDS->GDALMajorObject::SetMetadata( papszSubdatasets, "SUBDATASETS" );
+        nSubDSCount = CSLCount(papszSubdatasets) / 2;
+        if( nSubDSCount > 1 )
+            poDS->GDALMajorObject::SetMetadata( papszSubdatasets, 
+                                                "SUBDATASETS" );
         
         CSLDestroy( papszSubdatasets );
     }
@@ -1568,6 +1580,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetPhysicalFilename( pszFilename );
+    
+    if( nSubDSCount > 1 || nIMIndex != -1 )
+    {
+        if( nIMIndex == -1 )
+            nIMIndex = 0;
+
+        poDS->SetSubdatasetName( CPLString().Printf("%d",nIMIndex) );
+    }
+
     poDS->TryLoadXML();
 
     return( poDS );
