@@ -418,7 +418,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // FIXME: what to do with negative values?
                 long nZone = (long)TO_ZONE(padfPrjParams[3]);
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
-                padfPrjParams[4] = 0.9996;
+                padfPrjParams[4] = 1.0;
                 SetTM( TO_DEGREES * padfPrjParams[2],
                        TO_DEGREES * padfPrjParams[3],
                        padfPrjParams[4],
