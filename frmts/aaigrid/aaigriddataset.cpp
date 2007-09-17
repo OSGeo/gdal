@@ -57,6 +57,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 
     double      adfGeoTransform[6];
     char        **papszPrj;
+    CPLString   osPrjFilename;
     char        *pszProjection;
 
     int         bNoDataSet;
@@ -73,6 +74,8 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
   public:
                 AAIGDataset();
                 ~AAIGDataset();
+
+    virtual char **GetFileList(void);
 
     static GDALDataset *Open( GDALOpenInfo * );
     static CPLErr       Delete( const char *pszFilename );
@@ -344,6 +347,21 @@ char AAIGDataset::Getc()
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **AAIGDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    if( papszPrj != NULL )
+        papszFileList = CSLAddString( papszFileList, osPrjFilename );
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -537,20 +555,19 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to read projection file.                                    */
 /* -------------------------------------------------------------------- */
     char        *pszDirname, *pszBasename;
-    const char  *pszPrjFilename;
     VSIStatBufL   sStatBuf;
 
     pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
-    pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
-    int nRet = VSIStatL( pszPrjFilename, &sStatBuf );
+    poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+    int nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
 
 #ifndef WIN32
     if( nRet != 0 )
     {
-        pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
-        nRet = VSIStatL( pszPrjFilename, &sStatBuf );
+        poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
+        nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
     }
 #endif
 
@@ -558,9 +575,10 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         OGRSpatialReference     oSRS;
 
-        poDS->papszPrj = CSLLoad( pszPrjFilename );
+        poDS->papszPrj = CSLLoad( poDS->osPrjFilename );
 
-        CPLDebug( "AAIGrid", "Loaded SRS from %s", pszPrjFilename );
+        CPLDebug( "AAIGrid", "Loaded SRS from %s", 
+                  poDS->osPrjFilename.c_str() );
 
         if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
         {
@@ -824,49 +842,6 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                               Remove()                               */
-/*    Called from the Delete()                                          */
-/************************************************************************/
-
-CPLErr AAIGDataset::Remove( const char * pszFilename, int bRepError )
-
-{
-    VSIStatBufL      sStat;
-
-    if( VSIStatL( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
-    {
-        if( VSIUnlink( pszFilename ) == 0 )
-            return CE_None;
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to unlink %s failed.\n", pszFilename );
-            return CE_Failure;
-        }
-    }
-    else if( bRepError )
-    {
-        
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to delete %s, not a file.\n", pszFilename );
-        return CE_Failure;
-    }
-    
-    return CE_None;
-}
-
-/************************************************************************/
-/*                               Delete()                               */
-/************************************************************************/
-
-CPLErr AAIGDataset::Delete( const char *pszFilename )
-
-{
-    Remove( CPLResetExtension( pszFilename, "prj" ), FALSE );
-    return Remove( pszFilename, TRUE );
-}
-
-/************************************************************************/
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
@@ -932,7 +907,6 @@ void GDALRegister_AAIGrid()
 
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnCreateCopy = AAIGCreateCopy;
-        poDriver->pfnDelete = AAIGDataset::Delete;
         
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
