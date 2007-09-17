@@ -2635,6 +2635,14 @@
 					</File>
 				</Filter>
 				<Filter
+					Name="srtmhgt"
+					>
+					<File
+						RelativePath=".\frmts\srtmhgt\srtmhgtdataset.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
 					Name="terragen"
 					>
 					<File

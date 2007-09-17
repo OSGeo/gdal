@@ -204,6 +204,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SGI();
 #endif
 
+#ifdef FRMT_srtmhgt
+    GDALRegister_SRTMHGT();
+#endif
+
 #ifdef FRMT_leveller
     GDALRegister_Leveller();
 #endif
