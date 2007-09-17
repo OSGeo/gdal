@@ -164,14 +164,14 @@ def ingr_14():
 def ingr_15():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
-    return tst.testCreateCopy( vsimem = 1 )
+    result = tst.testCreateCopy( vsimem = 1 )
 
-###############################################################################
-# Cleanup.
+    try:
+        os.remove( 'data/frmt02.cot.aux.xml' )
+    except:
+        pass
 
-def ingr_cleanup():
-    gdaltest.clean_tmp()
-    return 'success'
+    return result
 
 gdaltest_list = [
     ingr_1,
@@ -188,8 +188,7 @@ gdaltest_list = [
     ingr_12,
     ingr_13,
     ingr_14,
-    ingr_15,
-    ingr_cleanup ]
+    ingr_15 ]
 
 if __name__ == '__main__':
 
