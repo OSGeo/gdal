@@ -31,7 +31,7 @@
 #define GDALGRIDDER_H_INCLUDED
 
 /**
- * \file gdalgridder.h
+ * \file gdalgrid.h
  *
  * GDAL gridder related entry points and definitions.
  */
