@@ -88,26 +88,14 @@ def vrtwarp_3():
         return 'fail'
 
     gdaltest.vrtwarp_ds = None
+    gdal.GetDriverByName('VRT').Delete( 'tmp/warp.vrt' )
     
-    return 'success'
-
-###############################################################################
-# Cleanup.
-
-def vrtwarp_cleanup():
-    gdaltest.warp_ds = None
-        
-    try:
-        os.remove( 'tmp/warp.vrt' )
-    except:
-        pass
     return 'success'
 
 gdaltest_list = [
     vrtwarp_1,
     vrtwarp_2,
-    vrtwarp_3,
-    vrtwarp_cleanup ]
+    vrtwarp_3 ]
 
 if __name__ == '__main__':
 
