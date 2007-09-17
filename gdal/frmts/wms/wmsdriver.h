@@ -37,6 +37,7 @@ void URLAppendF(CPLString *url, const char *s, ...);
 void URLAppend(CPLString *url, const CPLString &s);
 CPLString BufferToVSIFile(GByte *buffer, size_t size);
 CPLErr MakeDirs(const char *path);
+int StrToBool(const char *p);
 
 /* Convert a.b.c.d to a * 0x1000000 + b * 0x10000 + c * 0x100 + d */
 int VersionStringToInt(const char *version);
@@ -196,6 +197,7 @@ public:
     virtual CPLErr SetProjection(const char *proj);
     virtual CPLErr GetGeoTransform(double *gt);
     virtual CPLErr SetGeoTransform(double *gt);
+    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options);
 
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, int pixel_space, int line_space, int band_space);
@@ -219,6 +221,10 @@ protected:
     int m_block_size_x, m_block_size_y;
     int m_bands_count;
     GDALWMSRasterIOHint m_hint;
+    int m_use_advise_read;
+    int m_verify_advise_read;
+    int m_offline_mode;
+    int m_http_max_conn;
 };
 
 class GDALWMSRasterBand : public GDALPamRasterBand {
@@ -228,7 +234,11 @@ public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
     virtual ~GDALWMSRasterBand();
 
+public:
+    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
+
 protected:
+    CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);
     virtual CPLErr IReadBlock(int x, int y, void *buffer);
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt, int pixel_space, int line_space);
     virtual int HasArbitraryOverviews();
@@ -237,7 +247,7 @@ protected:
     void AddOverview(double scale);
     bool IsBlockInCache(int x, int y);
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
-    CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer);
+    CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
     CPLErr ReportWMSException(const char *file_name);
 

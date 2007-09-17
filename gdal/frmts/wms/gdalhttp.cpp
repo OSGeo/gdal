@@ -29,7 +29,6 @@
 
 #include "stdinc.h"
 
-//#ifdef HAVE_CURL
 static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *req) {
     CPLHTTPRequest *psRequest = reinterpret_cast<CPLHTTPRequest *>(req);
     size_t size = count * nmemb;
@@ -54,9 +53,8 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
     psRequest->pabyData[psRequest->nDataLen] = 0;
     return nmemb;
 }
-//#endif /* def HAVE_CURL */
 
-void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, const char **papszOptions) {
+void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, const char *const *papszOptions) {
     psRequest->pszURL = CPLStrdup(pszURL);
     psRequest->papszOptions = CSLDuplicate(const_cast<char **>(papszOptions));
     psRequest->nStatus = 0;
@@ -144,29 +142,51 @@ void CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest) {
     }
 }
 
-CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount) {
+CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const char *const *papszOptions) {
     CPLErr ret = CE_None;
     CURLM *curl_multi = 0;
     int still_running;
-    int i;
-    
+    int max_conn;
+    int i, conn_i;
+
+    const char *max_conn_opt = CSLFetchNameValue(const_cast<char **>(papszOptions), "MAXCONN");
+    if (max_conn_opt && (max_conn_opt[0] != '\0')) {
+        max_conn = MAX(1, MIN(atoi(max_conn_opt), 1000));
+    } else {
+        max_conn = 5;
+    }
+
     curl_multi = curl_multi_init();
     if (curl_multi == NULL) {
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): Unable to create CURL multi-handle.");
     }
 
-    for (i = 0; i < nRequestCount; ++i) {
-        CPLHTTPRequest *const psRequest = &pasRequest[i];
-
+    // add at most max_conn requests
+    for (conn_i = 0; conn_i < MIN(nRequestCount, max_conn); ++conn_i) {
+        CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
     }
 
     while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
-    while (still_running) {
+    while (still_running || (conn_i != nRequestCount)) {
         struct timeval timeout;
         fd_set fdread, fdwrite, fdexcep;
         int maxfd;
+        CURLMsg *msg;
+        int msgs_in_queue;
 
+        do {
+            msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
+            if (msg != NULL) {
+                if (msg->msg == CURLMSG_DONE) { // transfer completed, check if we have more waiting and add them
+                    if (conn_i < nRequestCount) {
+                        CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
+                        curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
+                        ++conn_i;
+                    }
+                }
+            }
+        } while (msg != NULL);
         FD_ZERO(&fdread);
         FD_ZERO(&fdwrite);
         FD_ZERO(&fdexcep);
@@ -177,6 +197,9 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount) {
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
 
+    if (conn_i != nRequestCount) { // something gone really really wrong
+        CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): conn_i != nRequestCount, this should never happen ...");
+    }
     for (i = 0; i < nRequestCount; ++i) {
         CPLHTTPRequest *const psRequest = &pasRequest[i];
 

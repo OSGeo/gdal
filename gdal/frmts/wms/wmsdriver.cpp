@@ -33,13 +33,12 @@ GDALDataset *GDALWMSDatasetOpen(GDALOpenInfo *poOpenInfo) {
     CPLXMLNode *config = NULL;
     CPLErr ret = CE_None;
 
-    /*if ((poOpenInfo->nHeaderBytes == 0) && EQUALN((const char *) poOpenInfo->pszFilename, "wms:", 4)) {
-    psService = CPLParseXMLString( poOpenInfo->pszFilename );
-    } else */
-    if ((poOpenInfo->nHeaderBytes >= 10) && EQUALN((const char *) poOpenInfo->pabyHeader, "<GDAL_WMS>", 10)) {
+    if ((poOpenInfo->nHeaderBytes == 0) && EQUALN((const char *) poOpenInfo->pszFilename, "<GDAL_WMS>", 10)) {
+        config = CPLParseXMLString(poOpenInfo->pszFilename);
+    } else if ((poOpenInfo->nHeaderBytes >= 10) && EQUALN((const char *) poOpenInfo->pabyHeader, "<GDAL_WMS>", 10)) {
         config = CPLParseXMLFile(poOpenInfo->pszFilename);
-        if (config == NULL) return NULL;
     } else return NULL;
+    if (config == NULL) return NULL;
 
     GDALWMSDataset *ds = new GDALWMSDataset();
     ret = ds->Initialize(config);
