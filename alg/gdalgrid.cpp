@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdalgridder.h"
+#include "gdalgrid.h"
 
 CPL_CVSID("$Id$");
 
