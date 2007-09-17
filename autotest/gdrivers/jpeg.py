@@ -92,6 +92,9 @@ def jpeg_3():
         print ds.GetRasterBand(1).Checksum()
         return 'fail'
 
+    ds = None
+    gdal.GetDriverByName('JPEG').Delete( 'tmp/byte.jpg' )
+    
     return 'success'
     
 ###############################################################################
@@ -146,23 +149,17 @@ def jpeg_5():
         print cs
         return 'fail'
 
+    ds2 = None
+    gdal.GetDriverByName('JPEG').Delete( 'tmp/masked.jpg' )
+    
     return 'success'
     
-###############################################################################
-# Create simple copy and check (greyscale) using progressive option.
-
-def jpeg_cleanup():
-    gdaltest.clean_tmp()
-    return 'success'
-
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
     jpeg_3,
     jpeg_4,
-    jpeg_5,
-    jpeg_cleanup
-    ]
+    jpeg_5 ]
   
 
 
