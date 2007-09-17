@@ -135,15 +135,12 @@ def png_7():
         gdaltest.post_reason( 'NODATA_VALUES wrong' )
         return 'fail'
 
+    dstds = None
+
+    drv.Delete( 'tmp/png7.png' )
+
     return 'success'
 
-
-###############################################################################
-# Cleanup.
-
-def png_cleanup():
-    gdaltest.clean_tmp()
-    return 'success'
 
 gdaltest_list = [
     png_1,
@@ -152,8 +149,7 @@ gdaltest_list = [
     png_4,
     png_5,
     png_6,
-    png_7,
-    png_cleanup ]
+    png_7 ]
 
 if __name__ == '__main__':
 
