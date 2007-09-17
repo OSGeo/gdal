@@ -35,7 +35,6 @@
 
 CPL_C_START
 #include "tiffio.h"
-#include "tiffiop.h"
 CPL_C_END
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
