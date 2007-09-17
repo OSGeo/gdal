@@ -915,8 +915,6 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
 
     double dfMin;
     double dfMax;
-    double dfMean;
-    double dfStdDev;
 
     dfMin = poBand->GetMinimum( &bSuccessMin );
     dfMax = poBand->GetMaximum( &bSuccessMax );
@@ -1011,8 +1009,7 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
 
 		dfMin = poSrcBand->GetMinimum( NULL );
 		dfMax = poSrcBand->GetMaximum( NULL );
-// 		poSrcBand->GetStatistics( false, false, &dfMin, &dfMax, &dfMean, &dfStdDev );
-  		poBand->SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+  		poBand->SetStatistics( dfMin, dfMax, 0.0, 0.0 );
         dfNoDataValue = poSrcBand->GetNoDataValue( &bHasNoDataValue );
         if( bHasNoDataValue )
             poBand->SetNoDataValue( dfNoDataValue );
