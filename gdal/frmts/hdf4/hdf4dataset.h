@@ -31,6 +31,7 @@
 #define _HDF4DATASET_H_INCLUDED_
 
 #include "cpl_list.h"
+#include "gdal_pam.h"
 
 typedef enum			// Types of dataset:
 {
@@ -59,7 +60,7 @@ typedef enum			// Types of data products:
 /* ==================================================================== */
 /************************************************************************/
 
-class HDF4Dataset : public GDALDataset
+class HDF4Dataset : public GDALPamDataset
 {
 
   private:

@@ -1065,6 +1065,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     
     poDS->nRasterXSize = poDS->nRasterYSize = 512; // XXX: bogus values
 
+    // Make sure we don't try to do any pam stuff with this dataset.
+    poDS->nPamFlags |= GPF_NOSAVE;
+
 /* -------------------------------------------------------------------- */
 /*      If we have single subdataset only, open it immediately          */
 /* -------------------------------------------------------------------- */
