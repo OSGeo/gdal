@@ -137,7 +137,7 @@ class HDF4ImageDataset : public HDF4Dataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HDF4ImageRasterBand : public GDALRasterBand
+class HDF4ImageRasterBand : public GDALPamRasterBand
 {
     friend class HDF4ImageDataset;
 
@@ -1939,12 +1939,25 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Collect the remain (post filename) components to treat as       */
+/*      the subdataset name.                                            */
+/* -------------------------------------------------------------------- */
+    CPLString osSubdatasetName;
+
+    osSubdatasetName = papszSubdatasetName[3];
+    if( papszSubdatasetName[4] != NULL )
+    {
+        osSubdatasetName += ":";
+        osSubdatasetName += papszSubdatasetName[4];
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
     char        szAttrName[MAX_NC_NAME];
     double      dfNoData = 0.0;
-    int         bNoDataSet = FALSE;
+    int         bNoDataSet = FALSE, nBands = 0;
     
 /* -------------------------------------------------------------------- */
 /*      Select SDS or GR to read from.                                  */
@@ -2024,15 +2037,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 // Search for the "Bands" name or take the first dimension
                 // as a number of bands
                 if ( poDS->iRank == 2 )
-                    poDS->nBands = 1;
+                    nBands = 1;
                 else
                 {
-                    poDS->nBands = poDS->aiDimSizes[0];
+                    nBands = poDS->aiDimSizes[0];
                     /*for ( i = 0; i < nDimCount; i++ )
                       {
                       if ( EQUALN( papszDimList[i], "Band", 4 ) )
                       {
-                      poDS->nBands = poDS->aiDimSizes[i];
+                      nBands = poDS->aiDimSizes[i];
                       break;
                       }
                       }*/
@@ -2147,7 +2160,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 // Search for the "Band" word in the name of dimension
                 // or take the first one as a number of bands
                 if ( poDS->iRank == 2 )
-                    poDS->nBands = 1;
+                    nBands = 1;
                 else
                 {
                     for ( i = 0; i < nDimCount; i++ )
@@ -2155,14 +2168,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         if ( strstr( papszDimList[i], "Band" ) )
                         {
                             poDS->iBandDim = i;
-                            poDS->nBands = poDS->aiDimSizes[i];
+                            nBands = poDS->aiDimSizes[i];
                             // Handle 4D datasets
                             if ( poDS->iRank > 3 && i < nDimCount - 1 )
                             {
                                 // FIXME: is there a better way to search for
                                 // the 4th dimension?
                                 poDS->i4Dim = i + 1;
-                                poDS->nBands *= poDS->aiDimSizes[poDS->i4Dim];
+                                nBands *= poDS->aiDimSizes[poDS->i4Dim];
                             }
                             break;
                         }
@@ -2196,7 +2209,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     else if( poDS->iXDim != 2 && poDS->iYDim != 2 )
                         poDS->iBandDim = 2;
 
-                    poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
+                    nBands = poDS->aiDimSizes[poDS->iBandDim];
                 }
 
                 // Fetch projection information
@@ -2355,7 +2368,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           switch( poDS->iRank )
           {
             case 2:
-              poDS->nBands = 1;
+              nBands = 1;
               poDS->iXDim = 1;
               poDS->iYDim = 0;
               break;
@@ -2383,10 +2396,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                   }
               }
-              poDS->nBands = poDS->aiDimSizes[poDS->iBandDim];
+              nBands = poDS->aiDimSizes[poDS->iBandDim];
               break;
             case 4: // FIXME
-              poDS->nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
+              nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
               break;
             default:
               break;
@@ -2471,7 +2484,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->iXDim = 0;
         poDS->iYDim = 1;
-        poDS->nBands = poDS->iRank;
+        nBands = poDS->iRank;
         break;
       default:
         return NULL;
@@ -2485,13 +2498,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         // XXX: Hyperion SDSs has Height x Bands x Width dimensions scheme
         if ( poDS->iRank > 2 )
         {
-            poDS->nBands = poDS->aiDimSizes[1];
+            nBands = poDS->aiDimSizes[1];
             poDS->nRasterXSize = poDS->aiDimSizes[2];
             poDS->nRasterYSize = poDS->aiDimSizes[0];
         }
         else
         {
-            poDS->nBands = poDS->aiDimSizes[0];
+            nBands = poDS->aiDimSizes[0];
             poDS->nRasterXSize = poDS->aiDimSizes[1];
             poDS->nRasterYSize = 1;
         }
@@ -2500,11 +2513,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i <= poDS->nBands; i++ )
+    for( i = 1; i <= nBands; i++ )
     {
-        HDF4ImageRasterBand *poBand = new HDF4ImageRasterBand( poDS, i,
-                                                               poDS->GetDataType( poDS->iNumType ) );
+        HDF4ImageRasterBand *poBand = 
+            new HDF4ImageRasterBand( poDS, i,
+                                     poDS->GetDataType( poDS->iNumType ) );
         poDS->SetBand( i, poBand );
+
         if ( bNoDataSet )
             poBand->SetNoDataValue( dfNoData );
     }
@@ -2704,6 +2719,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
       default:
         break;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Setup PAM info for this subdataset                              */
+/* -------------------------------------------------------------------- */
+    poDS->SetPhysicalFilename( poDS->pszFilename );
+    poDS->SetSubdatasetName( osSubdatasetName );
+
+    poDS->TryLoadXML();
 
     return( poDS );
 }
