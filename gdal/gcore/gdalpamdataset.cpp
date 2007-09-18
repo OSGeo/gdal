@@ -73,8 +73,10 @@ CPL_CVSID("$Id$");
  * They should also call something like this near the end of the Open() 
  * method:
  * 
- *  poDS->SetDescription( poOpenInfo->pszFilename );
- *  poDS->TryLoadXML();
+ * \code
+ *      poDS->SetDescription( poOpenInfo->pszFilename );
+ *      poDS->TryLoadXML();
+ * \endcode
  *
  * The SetDescription() is necessary so that the dataset will have a valid
  * filename set as the description before TryLoadXML() is called.  TryLoadXML()
@@ -91,10 +93,12 @@ CPL_CVSID("$Id$");
  * the format.  For instance, the GeoTIFF driver GetProjectionRef() looks
  * like this:
  *
- *        if( EQUAL(pszProjection,"") )
- *            return GDALPamDataset::GetProjectionRef();
- *        else
- *            return( pszProjection );
+ * \code
+ *      if( EQUAL(pszProjection,"") )
+ *          return GDALPamDataset::GetProjectionRef();
+ *      else
+ *          return( pszProjection );
+ * \endcode
  *
  * So if the geotiff header is missing, the .aux.xml file will be 
  * consulted. 
@@ -103,6 +107,18 @@ CPL_CVSID("$Id$");
  * not supported by GeoTIFF, the SetProjection() method should pass it on
  * to the GDALPamDataset::SetProjection() method after issuing a warning
  * that the information can't be represented within the file itself. 
+ * 
+ * Drivers for subdataset based formats will also need to declare the
+ * name of the physical file they are related to, and the name of their 
+ * subdataset before calling TryLoadXML(). 
+ *
+ * \code
+ *      poDS->SetDescription( poOpenInfo->pszFilename );
+ *      poDS->SetPhysicalFilename( poDS->pszFilename );
+ *      poDS->SetSubdatasetName( osSubdatasetName );
+ * 
+ *      poDS->TryLoadXML();
+ * \endcode
  */
 
 GDALPamDataset::GDALPamDataset()
