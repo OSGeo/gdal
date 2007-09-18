@@ -2,8 +2,10 @@
 /* $Id: gdal_building_br.dox $ */
 #endif /* DOXYGEN_SKIP */
 
+\~Brazilian
+
 /*! \page gdal_building_br Como compilar GDAL
 
-Este tópico mudo-se para o endereço wiki: http://trac.osgeo.org/gdal/wiki/BuildHints
+Este t&oacute;pico mudo-se para o endere&ccedil;o wiki: http://trac.osgeo.org/gdal/wiki/BuildHints
 
 */
