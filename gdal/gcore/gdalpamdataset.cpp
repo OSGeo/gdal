@@ -898,6 +898,13 @@ char **GDALPamDataset::GetFileList()
     VSIStatBufL sStatBuf;
     char **papszFileList = GDALDataset::GetFileList();
 
+    if( psPam && psPam->osPhysicalFilename.size() > 0 
+        && CSLCount( papszFileList ) == 0 )
+    {
+        papszFileList = CSLAddString( papszFileList, 
+                                      psPam->osPhysicalFilename );
+    }
+
     if( psPam && psPam->pszPamFilename 
         && (nPamFlags & GPF_DIRTY 
             || VSIStatL( psPam->pszPamFilename, &sStatBuf ) == 0) )
