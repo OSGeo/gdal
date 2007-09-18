@@ -28,8 +28,8 @@ GDAL_ROOT = ..
 
 !INCLUDE ..\nmake.opt
 
-!IFDEF ODBC_SUPPORTED
-ODBC_OBJ = 	cpl_odbc.obj
+!IFDEF CURL_INC
+EXTRAFLAGS =	-DHAVE_CURL $(CURL_INC)
 !ENDIF
 
 default:	cpl_config.h $(LIB)
