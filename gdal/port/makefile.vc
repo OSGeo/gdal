@@ -32,6 +32,10 @@ GDAL_ROOT = ..
 EXTRAFLAGS =	-DHAVE_CURL $(CURL_INC)
 !ENDIF
 
+!IFDEF ODBC_SUPPORTED
+ODBC_OBJ =	cpl_odbc.obj
+!ENDIF
+
 default:	cpl_config.h $(LIB)
 
 $(LIB):	$(OBJ)
