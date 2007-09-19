@@ -705,6 +705,7 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
             OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
             
             poGeom->closeRings();
+            poGeom->flattenTo2D();
             poGeom->exportToWkt( &pszWKT );
         }
 
