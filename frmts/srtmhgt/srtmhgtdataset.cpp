@@ -348,6 +348,8 @@ void GDALRegister_SRTMHGT()
     poDriver->SetDescription("SRTMHGT");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "SRTMHGT File Format");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hgt");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, 
+                              "frmt_various.html#SRTMHGT" );
     poDriver->pfnIdentify = SRTMHGTDataset::Identify;
     poDriver->pfnOpen = SRTMHGTDataset::Open;
     GetGDALDriverManager()->RegisterDriver(poDriver);
