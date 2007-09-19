@@ -100,7 +100,7 @@ Some GDAL/OGR users and developers can also often be found in the
 \section index_bugs Bug Reporting
 
 GDAL bugs 
-<a href="http://trac.osgeo.org/gdal/newticket">can be reported</a>, and 
+<a href="http://trac.osgeo.org/gdal">can be reported</a>, and 
 <a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">can be 
 listed</a> using Trac.<p>
 
