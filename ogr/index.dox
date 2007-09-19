@@ -106,28 +106,4 @@ C/C++ APIs.  The interface classes can be browsed in the pymod/ogr.py
 (coordinate systems) python modules.  The pymod/samples/assemblepoly.py
 sample script is one demonstration of using the python API.<p>
 
-<h2>OGR and OpenGIS Simple Features for OLE DB</h2>
-
-With the support of <a href="http://www.softmaptech.com/">SoftMap</a> and
-<a href="http://www.safe.com/">Safe Software</a> an OLE DB provider on top 
-of OGR has been implemented, attempting
-to adhere to the OpenGIS Simple Features for COM specification to the
-extent possible.  This implementation is not certified as compliant with 
-the OpenGIS specification.<p>
-
-While OGR can be used via the OLE DB interface, it can also just be called
-directly as a C++ library.  OGR attempts to provide an OpenGIS Simple 
-Features inspired terminology and view of datasets even when used in this 
-fashion.  Note that there is no OpenGIS specification for a C or C++ 
-interface.<p>
-
-OGR stands for "OGR"... its meaning is irrelevant today.  The original
-name for the lib was "OpenGIS Simple Features Reference Implementation"
-and that's where OGR comes from.  However, since OGR is not fully
-compliant with the Simple Feature specification and is not approved as a
-reference implementation of the spec the name was changed to "OGR Simple
-Features Library" ... and the only meaning of OGR in this name is
-historical.  "OGR" is also the prefix used everywhere in the source of
-the library for class names, filenames, etc.<p>
-
 */
