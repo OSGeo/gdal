@@ -13,8 +13,6 @@ GDAL_ROOT = 	..
 EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
 !ENDIF
 
-OLE_LIBS =	oledb.lib ole32.lib oleaut32.lib 
-
 ALL_LIBS =	$(OLE_LIBS) $(GDAL_ROOT)/port/cpl.lib $(EXTERNAL_LIBS) $(LIBS)
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
@@ -30,9 +28,6 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogr2gmlgeometry.obj gml2ogrgeometry.obj ogr_srs_pci.obj \
 		ogr_srs_usgs.obj ogr_srs_dict.obj ogr_srs_panorama.obj \
 		ogr_srs_erm.obj 
-
-OBJ_OLEDB =	oledb_sup.obj \
-		sfcenumerator.obj sfcdatasource.obj sfctable.obj
 
 !IFDEF DLLBUILD
 LINKARGS =	..\gdal_i.lib $(LIBS)
@@ -53,29 +48,10 @@ frmts:
 	$(MAKE) 
 	cd ..
 
-oledb:	ogroledb.lib 
-	cd sfcom_oledb
-	$(MAKE)
-	cd ..
-
-all:	frmts default oledb sfcdump.exe
-
-geometryidl.h: geometryidl.idl spatialreferenceidl.h
-	midl geometryidl.idl
-
-spatialreferenceidl.h: spatialreferenceidl.idl
-	midl spatialreferenceidl.idl
+all:	frmts default
 
 ogr.lib:	$(OBJ_OGR)
 	lib /nologo /out:ogr.lib $(OBJ_OGR)
-
-ogroledb.lib:	$(OBJ_OLEDB)
-	lib /nologo /out:ogroledb.lib $(OBJ_OLEDB)
-
-sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
-	cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
-		/link $(LINKER_FLAGS)
-    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 test1.exe:	test1.obj $(OBJ_OGR) $(DEPLIBS)
 	cl $(LINKFLAGS) test1.obj $(OBJ_OGR) $(ALL_LIBS) \
@@ -138,8 +114,6 @@ clean:
 
 allclean:	clean
 	cd ogrsf_frmts
-	$(MAKE) clean
-	cd ..\sfcom_oledb
 	$(MAKE) clean
 	cd ..
 
