@@ -3703,7 +3703,10 @@ OGRErr OGRSpatialReference::SetMercator( double dfCenterLat, double dfCenterLong
 
 {
     SetProjection( SRS_PT_MERCATOR_1SP );
-    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+
+    if( dfCenterLat != 0.0 )
+        SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
@@ -3742,8 +3745,11 @@ OGRErr OGRSpatialReference::SetMercator2SP(
 
 {
     SetProjection( SRS_PT_MERCATOR_2SP );
+
     SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
-    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    if( dfCenterLat != 0.0 )
+        SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
