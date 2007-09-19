@@ -70,7 +70,7 @@ details on getting the source and building it. <p>
 <h2>Bug Reporting</h2>
 
 GDAL/OGR bugs 
-<a href="http://trac.osgeo.org/gdal/newticket">can be reported</a>, and 
+<a href="http://trac.osgeo.org/gdal">can be reported</a>, and 
 <a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">can be 
 listed</a> using Trac.<p>
 
