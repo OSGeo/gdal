@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.57 2007/08/24 20:49:38 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.58 2007/09/20 19:57:58 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -465,7 +465,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			{
 				if (!isTiled(tif))
 				{
-					if (!TIFFWriteDirectoryTagShortLongLong8Array(tif,&ndir,dir,TIFFTAG_STRIPBYTECOUNTS,tif->tif_dir.td_nstrips,tif->tif_dir.td_stripbytecount))
+					if (!TIFFWriteDirectoryTagLongLong8Array(tif,&ndir,dir,TIFFTAG_STRIPBYTECOUNTS,tif->tif_dir.td_nstrips,tif->tif_dir.td_stripbytecount))
 						goto bad;
 				}
 				else
@@ -478,7 +478,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			{
 				if (!isTiled(tif))
 				{
-					if (!TIFFWriteDirectoryTagShortLongLong8Array(tif,&ndir,dir,TIFFTAG_STRIPOFFSETS,tif->tif_dir.td_nstrips,tif->tif_dir.td_stripoffset))
+					if (!TIFFWriteDirectoryTagLongLong8Array(tif,&ndir,dir,TIFFTAG_STRIPOFFSETS,tif->tif_dir.td_nstrips,tif->tif_dir.td_stripoffset))
 						goto bad;
 				}
 				else
@@ -1388,49 +1388,62 @@ TIFFWriteDirectoryTagShortLong(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint1
 		return(TIFFWriteDirectoryTagCheckedLong(tif,ndir,dir,tag,value));
 }
 
+/************************************************************************/
+/*                TIFFWriteDirectoryTagLongLong8Array()                 */
+/*                                                                      */
+/*      Write out LONG8 array as LONG8 for BigTIFF or LONG for          */
+/*      Classic TIFF with some checking.                                */
+/************************************************************************/
+
 static int
 TIFFWriteDirectoryTagLongLong8Array(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, uint64* value)
 {
-	static const char module[] = "TIFFWriteDirectoryTagLongLong8Array";
-	uint64* ma;
-	uint32 mb;
-	uint8 n;
-	int o;
-	if (dir==NULL)
-	{
-		(*ndir)++;
-		return(1);
-	}
-	n=0;
-	for (ma=value, mb=0; mb<count; ma++, mb++)
-	{
-		if (*ma>0xFFFFFFFF)
-		{
-			n=1;
-			break;
-		}
-	}
-	if (n==0)
-	{
-		uint32* p;
-		uint32* q;
-		p=_TIFFmalloc(count*sizeof(uint32));
-		if (p==NULL)
-		{
-			TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
-			return(0);
-		}
-		for (ma=value, mb=0, q=p; mb<count; ma++, mb++, q++)
-			*q=(uint32)(*ma);
-		o=TIFFWriteDirectoryTagCheckedLongArray(tif,ndir,dir,tag,count,p);
-		_TIFFfree(p);
-	}
-	else
-	{
-		assert(n==1);
-		o=TIFFWriteDirectoryTagCheckedLong8Array(tif,ndir,dir,tag,count,value);
-	}
-	return(o);
+    static const char module[] = "TIFFWriteDirectoryTagLongLong8Array";
+    uint64* ma;
+    uint32 mb;
+    uint32* p;
+    uint32* q;
+    int o;
+
+    if (dir==NULL)
+    {
+        (*ndir)++;  /* crash - makes tracebacks easier */
+        return(1);  /* why do we return success? */
+    }
+
+    /* We always write LONG8 for BigTIFF, no checking needed. */
+    if( tif->tif_flags&TIFF_BIGTIFF )
+        return TIFFWriteDirectoryTagCheckedLong8Array(tif,ndir,dir,
+                                                      tag,count,value);
+
+    /*
+    ** For classic tiff we want to verify everything is in range for LONG
+    ** and convert to long format.
+    */
+
+    p = _TIFFmalloc(count*sizeof(uint32));
+    if (p==NULL)
+    {
+        TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
+        return(0);
+    }
+
+    for (q=p, ma=value, mb=0; mb<count; ma++, mb++, q++)
+    {
+        if (*ma>0xFFFFFFFF)
+        {
+            TIFFErrorExt(tif->tif_clientdata,module,
+                         "Attempt to write value larger than 0xFFFFFFFF in Classic TIFF file.");
+            _TIFFfree(p);
+            return(0);
+        }
+        *q= (uint32)(*ma);
+    }
+
+    o=TIFFWriteDirectoryTagCheckedLongArray(tif,ndir,dir,tag,count,p);
+    _TIFFfree(p);
+
+    return(o);
 }
 
 static int
