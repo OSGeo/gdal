@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.130 2007/08/24 20:46:00 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.132 2007/09/20 19:20:54 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3339,16 +3339,18 @@ TIFFReadDirectory(TIFF* tif)
 	uint16 di;
 	const TIFFField* fip;
 	uint32 fii;
+        toff_t nextdiroff;
 	tif->tif_diroff=tif->tif_nextdiroff;
 	if (!TIFFCheckDirOffset(tif,tif->tif_nextdiroff))
 		return 0;           /* last offset or bad offset (IFD looping) */
 	(*tif->tif_cleanup)(tif);   /* cleanup any previous compression state */
 	tif->tif_curdir++;
-	dircount=TIFFFetchDirectory(tif,tif->tif_nextdiroff,&dir,&tif->tif_nextdiroff);
+        nextdiroff = tif->tif_nextdiroff;
+	dircount=TIFFFetchDirectory(tif,nextdiroff,&dir,&tif->tif_nextdiroff);
 	if (!dircount)
 	{
 		TIFFErrorExt(tif->tif_clientdata,module,
-		    "Failed to read directory at offset %llu",tif->tif_nextdiroff);
+		    "Failed to read directory at offset %llu",nextdiroff);
 		return 0;
 	}
 	TIFFReadDirectoryCheckOrder(tif,dir,dircount);
@@ -4245,9 +4247,9 @@ CheckDirCount(TIFF* tif, TIFFDirEntry* dir, uint32 count)
  */
 static uint16
 TIFFFetchDirectory(TIFF* tif, uint64 diroff, TIFFDirEntry** pdir,
-    uint64 *nextdiroff)
+                   uint64 *nextdiroff)
 {
-	static const char module[] = "TIFFFetchDirectoryClassic";
+	static const char module[] = "TIFFFetchDirectory";
 
 	void* origdir;
 	uint16 dircount16;
