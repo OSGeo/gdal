@@ -59,7 +59,7 @@ typedef struct
     unsigned char *pabyRow1Blocks;
     unsigned char *pabyRow2Blocks;
 
-    int		nDirOffset;
+    toff_t	nDirOffset;
     TIFF	*hTIFF;
     int		bTiled;
     
@@ -81,7 +81,7 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
                                int nBlockXSize, int nBlockYSize,
                                int nSampleFormat, const char * pszResampling );
 
-uint32 TIFF_WriteOverview( TIFF *, int, int, int, int, int, int, int,
+toff_t TIFF_WriteOverview( TIFF *, int, int, int, int, int, int, int,
                            int, int, int, int, unsigned short *,
                            unsigned short *, unsigned short *, int );
 

@@ -79,7 +79,7 @@ void TIFFBuildOverviews( TIFF *, int, int *, int, const char *,
 /*      function is called.                                             */
 /************************************************************************/
 
-uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
+toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
                            int nBitsPerPixel, int nPlanarConfig, int nSamples, 
                            int nBlockXSize, int nBlockYSize,
                            int bTiled, int nCompressFlag, int nPhotometric,
@@ -90,8 +90,8 @@ uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
                            int bUseSubIFDs )
 
 {
-    uint32	nBaseDirOffset;
-    uint32	nOffset;
+    toff_t	nBaseDirOffset;
+    toff_t	nOffset;
 
     nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
@@ -563,7 +563,7 @@ void TIFFBuildOverviews( TIFF *hTIFF, int nOverviews, int * panOvList,
     for( i = 0; i < nOverviews; i++ )
     {
         int	nOXSize, nOYSize, nOBlockXSize, nOBlockYSize;
-        uint32  nDirOffset;
+        toff_t  nDirOffset;
 
         nOXSize = (nXSize + panOvList[i] - 1) / panOvList[i];
         nOYSize = (nYSize + panOvList[i] - 1) / panOvList[i];
