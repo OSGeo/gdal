@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL Gridder.
+ * Project:  GDAL Gridding API.
  * Purpose:  Prototypes, and definitions for of GDAL scattered data gridder.
  * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef GDALGRIDDER_H_INCLUDED
-#define GDALGRIDDER_H_INCLUDED
+#ifndef GDALGRID_H_INCLUDED
+#define GDALGRID_H_INCLUDED
 
 /**
  * \file gdalgrid.h
@@ -57,4 +57,4 @@ GDALGridNearestNeighbor( void *, GUInt32,
                          double, double, double * );
 CPL_C_END
 
-#endif /* GDALGRIDDER_H_INCLUDED */
+#endif /* GDALGRID_H_INCLUDED */
