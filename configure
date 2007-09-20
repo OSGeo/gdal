@@ -458,7 +458,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP CXX_PIC C_PIC LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP CXX_PIC C_PIC LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PAM_SETTING PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1075,6 +1075,7 @@ Optional Packages:
   --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
   --with-geos=ARG       Include GEOS support (ARG=yes, no or geos-config path)
+  --without-pam         Disable PAM (.aux.xml) support
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -4983,13 +4984,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4986: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4987: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4989: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4990: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4992: output\"" >&5)
+  (eval echo "\"\$as_me:4993: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6038,7 +6039,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6041 "configure"' > conftest.$ac_ext
+  echo '#line 6042 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7721,11 +7722,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7724: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7725: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7728: \$? = $ac_status" >&5
+   echo "$as_me:7729: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8043,11 +8044,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8046: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8047: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8050: \$? = $ac_status" >&5
+   echo "$as_me:8051: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8148,11 +8149,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8151: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8152: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8155: \$? = $ac_status" >&5
+   echo "$as_me:8156: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8203,11 +8204,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8206: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8207: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8210: \$? = $ac_status" >&5
+   echo "$as_me:8211: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10993,7 +10994,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10996 "configure"
+#line 10997 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11093,7 +11094,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11096 "configure"
+#line 11097 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13123,11 +13124,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13126: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13127: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13130: \$? = $ac_status" >&5
+   echo "$as_me:13131: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13222,11 +13223,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13225: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13226: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13229: \$? = $ac_status" >&5
+   echo "$as_me:13230: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13274,11 +13275,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13277: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13278: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13281: \$? = $ac_status" >&5
+   echo "$as_me:13282: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -24598,12 +24599,39 @@ fi
 
   fi
 
+HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   { echo "$as_me:$LINENO: Using C API from GEOS $GEOS_VERSION" >&5
 echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
   LIBS="${GEOS_LIBS} ${LIBS}"
+  HAVE_GEOS_RESULT="yes"
 fi
+
+
+echo "$as_me:$LINENO: checking whether to enable PAM" >&5
+echo $ECHO_N "checking whether to enable PAM... $ECHO_C" >&6
+
+
+# Check whether --with-pam or --without-pam was given.
+if test "${with_pam+set}" = set; then
+  withval="$with_pam"
+
+fi;
+
+export PAM_SETTING=
+
+if test "x$with_pam" = "xno" ; then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+else
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  PAM_SETTING=-DPAM_ENABLED
+fi
+
+PAM_SETTING=$PAM_SETTING
+
 
 
 echo "$as_me:$LINENO: checking how to link PROJ.4 library" >&5
@@ -26722,6 +26750,7 @@ s,@GEOS_CFLAGS@,$GEOS_CFLAGS,;t t
 s,@HAVE_GEOS@,$HAVE_GEOS,;t t
 s,@GEOS_VERSION@,$GEOS_VERSION,;t t
 s,@GEOS_CONFIG@,$GEOS_CONFIG,;t t
+s,@PAM_SETTING@,$PAM_SETTING,;t t
 s,@PROJ_STATIC@,$PROJ_STATIC,;t t
 s,@PROJ_INCLUDE@,$PROJ_INCLUDE,;t t
 s,@GDAL_VERSION_MAJOR@,$GDAL_VERSION_MAJOR,;t t
@@ -28213,7 +28242,7 @@ echo "  PANORAMA GIS support:      ${HAVE_PANORAMA}"
 echo "  INFORMIX DataBlade support:${HAVE_IDB}"
 
 
-echo "  GEOS support:              ${HAVE_GEOS}"
+echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
 
 
 echo ""
