@@ -1917,6 +1917,25 @@ if test "${HAVE_GEOS}" = "yes" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if geos library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([whether to enable PAM])
+
+AC_ARG_WITH(pam,[  --without-pam         Disable PAM (.aux.xml) support],,)
+
+export PAM_SETTING=
+
+if test "x$with_pam" = "xno" ; then
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([yes])
+  PAM_SETTING=-DPAM_ENABLED
+fi
+
+AC_SUBST(PAM_SETTING, $PAM_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
 dnl ---------------------------------------------------------------------------
 
