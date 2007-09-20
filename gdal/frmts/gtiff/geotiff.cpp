@@ -2108,7 +2108,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 
         if( panOverviewList[i] > 0 )
         {
-            uint32	nOverviewOffset;
+            toff_t	nOverviewOffset;
             int         nOXSize, nOYSize;
 
             nOXSize = (GetRasterXSize() + panOverviewList[i] - 1) 
@@ -2182,6 +2182,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                                         poBand->GetXSize() ) )
                 {
                     papoOverviewBands[nNewOverviews++] = poOverview;
+                    break;
                 }
             }
         }
@@ -2774,7 +2775,7 @@ GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
 /* -------------------------------------------------------------------- */
     const char *pszFilename = pszCompositeName + 10;
     int        bAbsolute = FALSE;
-    uint32     nOffset;
+    toff_t     nOffset;
     
     if( EQUALN(pszFilename,"off:",4) )
     {
@@ -3421,7 +3422,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         while( !TIFFLastDirectory( hTIFF ) 
                && TIFFReadDirectory( hTIFF ) != 0 )
         {
-            uint32	nThisDir = TIFFCurrentDirOffset(hTIFF);
+            toff_t	nThisDir = TIFFCurrentDirOffset(hTIFF);
             uint32	nSubType;
 
             if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType)
