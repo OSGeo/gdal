@@ -89,6 +89,10 @@ STDCALL=YES
 # Version number embedded in DLL name. 
 VERSION =	14
 
+# Comment the following out if you want PAM supported disabled
+# by default.  
+PAM_SETTING=-DPAM_ENABLED
+
 # Uncomment the following to link OGR utilities against main GDAL DLL
 # instead of statically linking against OGR libraries.
 DLLBUILD=1
