@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GDAL Gridder.
+ * Project:  GDAL Gridding API.
  * Purpose:  Implementation of GDAL scattered data gridder.
  * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
@@ -88,34 +88,78 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue )
 {
-    double  dfNominator = 0.0, dfDenominator = 0.0;
-    double dfPower =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
-    double dfSmoothing =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
-    GUInt32 i = 0;
+    // Pre-compute search ellipse parameters
+    double  dfRadius1 =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfRadius1;
+    double  dfRadius2 =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfRadius2;
+    double  dfR12;
 
-    while ( i < nPoints )
+    dfRadius1 *= dfRadius1;
+    dfRadius2 *= dfRadius2;
+    dfR12 = dfRadius1 * dfRadius2;
+
+    // Compute coefficients for coordinate system rotation.
+    double  dfCoeff1 = 0.0, dfCoeff2 = 0.0;
+    double  dfAngle = TO_RADIANS
+        * ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfAngle;
+    bool    bRotated = ( dfAngle == 0.0 ) ? false : true;
+    if ( bRotated )
+    {
+        dfCoeff1 = cos(dfAngle);
+        dfCoeff2 = sin(dfAngle);
+    }
+
+    double  dfNominator = 0.0, dfDenominator = 0.0;
+    double  dfPower =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+    double  dfSmoothing =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
+    GUInt32 nMaxPoints = 
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->nMaxPoints;
+    GUInt32 i, n;
+
+    for ( i = 0, n = 0; i < nPoints && n < nMaxPoints; i++ )
     {
         double  dfRX = pdfX[i] - dfXPoint;
         double  dfRY = pdfY[i] - dfYPoint;
         double  dfR2 = dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
 
-        if ( CPLIsEqual(dfR2, 0.0) )
+        if ( bRotated )
         {
-            (*pdfValue) = pdfZ[i];
-            return CE_None;
+            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+            dfRX = dfRXRotated;
+            dfRY = dfRYRotated;
         }
-        else
+
+        // Does this point located inside the search ellipse?
+        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
-            double  dfW = pow( sqrt(dfR2), dfPower );
-            dfNominator += pdfZ[i] / dfW;
-            dfDenominator += 1.0 / dfW;
-            i++;
+            if ( CPLIsEqual(dfR2, 0.0) )
+            {
+                (*pdfValue) = pdfZ[i];
+                return CE_None;
+            }
+            else
+            {
+                double  dfW = pow( sqrt(dfR2), dfPower );
+                dfNominator += pdfZ[i] / dfW;
+                dfDenominator += 1.0 / dfW;
+                n++;
+            }
         }
     }
 
-    (*pdfValue) = dfNominator / dfDenominator;
+    if ( n < ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->nMinPoints
+         || dfDenominator == 0.0 )
+    {
+        (*pdfValue) =
+            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = dfNominator / dfDenominator;
 
     return CE_None;
 }
@@ -153,11 +197,14 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
                        double *pdfX, double *pdfY, double *pdfZ,
                        double dfXPoint, double dfYPoint, double *pdfValue )
 {
+    // Pre-compute search ellipse parameters
     double  dfRadius1 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius1;
-    dfRadius1 *= dfRadius1;
     double  dfRadius2 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius2;
+    double  dfR12;
+
+    dfRadius1 *= dfRadius1;
     dfRadius2 *= dfRadius2;
-    double  dfR12 = dfRadius1 * dfRadius2;
+    dfR12 = dfRadius1 * dfRadius2;
 
     // Compute coefficients for coordinate system rotation.
     double  dfCoeff1 = 0.0, dfCoeff2 = 0.0;
@@ -197,7 +244,8 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
         i++;
     }
 
-    if ( n < ((GDALGridMovingAverageOptions *)poOptions)->nMinPoints )
+    if ( n < ((GDALGridMovingAverageOptions *)poOptions)->nMinPoints
+         || n == 0 )
     {
         (*pdfValue) =
             ((GDALGridMovingAverageOptions *)poOptions)->dfNoDataValue;
@@ -239,13 +287,15 @@ GDALGridNearestNeighbor( void *poOptions, GUInt32 nPoints,
                          double *pdfX, double *pdfY, double *pdfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue )
 {
+    // Pre-compute search ellipse parameters
     double  dfRadius1 =
         ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
-    dfRadius1 *= dfRadius1;
     double  dfRadius2 =
         ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2;
+    double  dfR12;
+    dfRadius1 *= dfRadius1;
     dfRadius2 *= dfRadius2;
-    double  dfR12 = dfRadius1 * dfRadius2;
+    dfR12 = dfRadius1 * dfRadius2;
 
     // Compute coefficients for coordinate system rotation.
     double  dfCoeff1 = 0.0, dfCoeff2 = 0.0;

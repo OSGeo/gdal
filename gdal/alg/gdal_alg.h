@@ -278,6 +278,29 @@ typedef struct
     double  dfPower;
     /*! Smoothing */
     double  dfSmoothing;
+    /*! The first radius (X axis if rotation angle is 0) of search ellipse */
+    double  dfRadius1;
+    /*! The first radius (Y axis if rotation angle is 0) of search ellipse */
+    double  dfRadius2;
+    /*! Angle of ellipse rotation in degrees.
+     *
+     * Ellipse rotated counter clockwise.
+     */
+    double  dfAngle;
+    /*! Maximum number of data points to use.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMaxPoints;
+    /*! Minimum number of data points to use.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPoints;
+    /*! No data marker to fill empty points. */
+    double  dfNoDataValue;
 } GDALGridInverseDistanceToAPowerOptions;
 
 /** Moving average method control options */
