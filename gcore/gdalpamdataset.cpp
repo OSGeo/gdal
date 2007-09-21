@@ -261,8 +261,8 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
         GDALPamRasterBand *poBand = (GDALPamRasterBand *)
             GetRasterBand(iBand+1);
 
-        // we really should be testing if poBand is a really derived
-        // from PamRasterBand or not. 
+        if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
+            continue;
 
         psBandTree = poBand->SerializeToXML( pszVRTPath );
 
@@ -324,9 +324,9 @@ void GDALPamDataset::PamInitialize()
         GDALPamRasterBand *poBand = (GDALPamRasterBand *)
             GetRasterBand(iBand+1);
         
-        // we really should be testing if poBand is a really derived
-        // from PamRasterBand or not. 
-        
+        if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
+            continue;
+
         poBand->PamInitialize();
     }
 }
@@ -481,11 +481,8 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         GDALPamRasterBand *poBand = (GDALPamRasterBand *)
             GetRasterBand(nBand);
 
-        if( poBand == NULL )
+        if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
-
-        // we really should be testing if poBand is a really derived
-        // from PamRasterBand or not. 
 
         poBand->XMLInit( psBandTree, pszVRTPath );
     }
@@ -872,7 +869,7 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
             GDALPamRasterBand *poBand = (GDALPamRasterBand *)
                 GetRasterBand(iBand+1);
 
-            if( !(poBand->GetMOFlags() | GMO_PAM_CLASS) )
+            if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
                 continue;
 
             if( poSrcDS->GetRasterCount() >= iBand+1 )
