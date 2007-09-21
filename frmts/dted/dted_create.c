@@ -150,7 +150,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "wb" );
+    fp = VSIFOpenL( pszFilename, "wb" );
 
     if( fp == NULL )
     {
@@ -177,7 +177,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 51, "%04d", nYSize );
     DTEDFormat( achRecord + 55, "%c", '0' );
 
-    if( VSIFWrite( achRecord, DTED_UHL_SIZE, 1, fp ) != 1 )
+    if( VSIFWriteL( achRecord, DTED_UHL_SIZE, 1, fp ) != 1 )
         return "UHL record write failed.";
 
 /* -------------------------------------------------------------------- */
@@ -233,7 +233,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
     DTEDFormat( achRecord + 285, "%04d", nXSize );
     DTEDFormat( achRecord + 289, "%02d", 0 );
 
-    if( VSIFWrite( achRecord, DTED_DSI_SIZE, 1, fp ) != 1 )
+    if( VSIFWriteL( achRecord, DTED_DSI_SIZE, 1, fp ) != 1 )
         return "DSI record write failed.";
 
 /* -------------------------------------------------------------------- */
@@ -250,7 +250,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
 
     DTEDFormat( achRecord + 55, "00" );
     
-    if( VSIFWrite( achRecord, DTED_ACC_SIZE, 1, fp ) != 1 )
+    if( VSIFWriteL( achRecord, DTED_ACC_SIZE, 1, fp ) != 1 )
         return "ACC record write failed.";
 
 /* -------------------------------------------------------------------- */
@@ -270,11 +270,11 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
         achRecord[4] = (GByte) (iProfile / 256);
         achRecord[5] = (GByte) (iProfile % 256);
 
-        if( VSIFWrite( achRecord, nYSize*2 + 12, 1, fp ) != 1 )
+        if( VSIFWriteL( achRecord, nYSize*2 + 12, 1, fp ) != 1 )
             return "Data record write failed.";
     }
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     return NULL;
 }

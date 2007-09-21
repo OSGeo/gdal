@@ -99,7 +99,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     else
         pszAccess = "r+b";
     
-    fp = VSIFOpen( pszFilename, pszAccess );
+    fp = VSIFOpenL( pszFilename, pszAccess );
 
     if( fp == NULL )
     {
@@ -121,7 +121,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     do
     {
-        if( VSIFRead( achRecord, 1, DTED_UHL_SIZE, fp ) != DTED_UHL_SIZE )
+        if( VSIFReadL( achRecord, 1, DTED_UHL_SIZE, fp ) != DTED_UHL_SIZE )
         {
 #ifndef AVOID_CPL
             if( !bTestOpen )
@@ -129,7 +129,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                           "Unable to read header, %s is not DTED.",
                           pszFilename );
 #endif
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return NULL;
         }
 
@@ -144,7 +144,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                       pszFilename );
 #endif
         
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return NULL;
     }
     
@@ -160,17 +160,17 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     psDInfo->nXSize = atoi(DTEDGetField(achRecord,48,4));
     psDInfo->nYSize = atoi(DTEDGetField(achRecord,52,4));
 
-    psDInfo->nUHLOffset = VSIFTell( fp ) - DTED_UHL_SIZE;
+    psDInfo->nUHLOffset = VSIFTellL( fp ) - DTED_UHL_SIZE;
     psDInfo->pachUHLRecord = (char *) CPLMalloc(DTED_UHL_SIZE);
     memcpy( psDInfo->pachUHLRecord, achRecord, DTED_UHL_SIZE );
 
-    psDInfo->nDSIOffset = VSIFTell( fp );
+    psDInfo->nDSIOffset = VSIFTellL( fp );
     psDInfo->pachDSIRecord = (char *) CPLMalloc(DTED_DSI_SIZE);
-    VSIFRead( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp );
+    VSIFReadL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, fp );
     
-    psDInfo->nACCOffset = VSIFTell( fp );
+    psDInfo->nACCOffset = VSIFTellL( fp );
     psDInfo->pachACCRecord = (char *) CPLMalloc(DTED_ACC_SIZE);
-    VSIFRead( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp );
+    VSIFReadL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, fp );
 
     if( !EQUALN(psDInfo->pachDSIRecord,"DSI",3)
         || !EQUALN(psDInfo->pachACCRecord,"ACC",3) )
@@ -183,11 +183,11 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                  "DSI or ACC record missing.  DTED access to\n%s failed.",
                  pszFilename );
         
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return NULL;
     }
 
-    psDInfo->nDataOffset = VSIFTell( fp );
+    psDInfo->nDataOffset = VSIFTellL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Parse out position information.  Note that we are extracting    */
@@ -246,8 +246,8 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
     
     nOffset = psDInfo->nDataOffset + nColumnOffset * (12+psDInfo->nYSize*2);
 
-    if( VSIFSeek( psDInfo->fp, nOffset, SEEK_SET ) != 0
-        || VSIFRead( pabyRecord, (12+psDInfo->nYSize*2), 1, psDInfo->fp ) != 1)
+    if( VSIFSeekL( psDInfo->fp, nOffset, SEEK_SET ) != 0
+        || VSIFReadL( pabyRecord, (12+psDInfo->nYSize*2), 1, psDInfo->fp ) != 1)
     {
 #ifndef AVOID_CPL
         CPLError( CE_Failure, CPLE_FileIO,
@@ -353,8 +353,8 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
 /* -------------------------------------------------------------------- */
     nOffset = psDInfo->nDataOffset + nColumnOffset * (12+psDInfo->nYSize*2);
 
-    if( VSIFSeek( psDInfo->fp, nOffset, SEEK_SET ) != 0
-        || VSIFWrite( pabyRecord,(12+psDInfo->nYSize*2),1,psDInfo->fp ) != 1)
+    if( VSIFSeekL( psDInfo->fp, nOffset, SEEK_SET ) != 0
+        || VSIFWriteL( pabyRecord,(12+psDInfo->nYSize*2),1,psDInfo->fp ) != 1)
     {
         CPLFree( pabyRecord );
 #ifndef AVOID_CPL
@@ -533,14 +533,14 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /* -------------------------------------------------------------------- */
 /*      Write all headers back to disk.                                 */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
-    VSIFWrite( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
+    VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
+    VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
 
-    VSIFSeek( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
-    VSIFWrite( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
+    VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
+    VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
 
-    VSIFSeek( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
-    VSIFWrite( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
+    VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
+    VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
 
     return TRUE;
 }
@@ -552,7 +552,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 void DTEDClose( DTEDInfo * psDInfo )
 
 {
-    VSIFClose( psDInfo->fp );
+    VSIFCloseL( psDInfo->fp );
 
     CPLFree( psDInfo->pachUHLRecord );
     CPLFree( psDInfo->pachDSIRecord );
