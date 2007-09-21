@@ -61,16 +61,16 @@
 #endif
 #endif
 
-#define VSIFTell ftell
-#define VSIFOpen fopen
-#define VSIFClose fclose
-#define VSIFRead fread
+#define VSIFTellL ftell
+#define VSIFOpenL fopen
+#define VSIFCloseL fclose
+#define VSIFReadL fread
 #define CPLMalloc malloc
 #define CPLCalloc calloc
 #define CPLFree free
 #define GInt16  short
 #define GByte   unsigned char
-#define VSIFSeek fseek
+#define VSIFSeekL fseek
 #define CPLAssert assert
 
 #endif
