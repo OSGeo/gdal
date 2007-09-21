@@ -210,7 +210,7 @@ void GDALPamRasterBand::PamInitialize()
 
     GDALPamDataset *poParentDS = (GDALPamDataset *) GetDataset();
 
-    if( poParentDS == NULL || !(poParentDS->GetMOFlags() | GMO_PAM_CLASS) )
+    if( poParentDS == NULL || !(poParentDS->GetMOFlags() & GMO_PAM_CLASS) )
         return;
 
     poParentDS->PamInitialize();
