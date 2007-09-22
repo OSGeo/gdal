@@ -238,6 +238,7 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
     int         nOffset;
     int         i;
     GByte       *pabyRecord;
+    static int  verifyChecksum = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Read data record from disk.                                     */
@@ -257,6 +258,7 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                   "Failed to seek to, or read profile %d at offset %d\n"
                   "in DTED file.\n",
                   nColumnOffset, nOffset );
+        CPLFree( pabyRecord );
         return FALSE;
     }
 
@@ -293,6 +295,52 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                               "will be issued in this session about this operation." );
                 }
             }
+        }
+    }
+    if (verifyChecksum < 0)
+    {
+        verifyChecksum = EQUAL(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"), "YES");
+    }
+
+    if (verifyChecksum == TRUE)
+    {
+        unsigned int nCheckSum = 0;
+        unsigned int fileCheckSum;
+
+        /* -------------------------------------------------------------------- */
+        /*      Verify the checksum.                                            */
+        /* -------------------------------------------------------------------- */
+
+        for( i = 0; i < psDInfo->nYSize*2 + 8; i++ )
+            nCheckSum += pabyRecord[i];
+
+        fileCheckSum = (pabyRecord[8+psDInfo->nYSize*2+0] << 24) |
+                        (pabyRecord[8+psDInfo->nYSize*2+1] << 16) |
+                        (pabyRecord[8+psDInfo->nYSize*2+2] << 8) |
+                        pabyRecord[8+psDInfo->nYSize*2+3];
+
+        if (fileCheckSum > 0xff * (8+psDInfo->nYSize*2))
+        {
+            static int bWarned = FALSE;
+            if (! bWarned)
+            {
+                bWarned = TRUE;
+                CPLError( CE_Warning, CPLE_AppDefined,
+                            "The DTED driver has read from the file a checksum "
+                            "with an impossible value (0x%X) at column %d.\n"
+                            "Check with your file producer.\n"
+                            "No more warnings will be issued in this session about this operation.",
+                            fileCheckSum, nColumnOffset);
+            }
+        }
+        else if (fileCheckSum != nCheckSum)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "The DTED driver has found a computed and read checksum "
+                      "that do not match at column %d.\n",
+                      nColumnOffset);
+            CPLFree( pabyRecord );
+            return FALSE;
         }
     }
 
@@ -365,6 +413,7 @@ int DTEDWriteProfile( DTEDInfo * psDInfo, int nColumnOffset,
                   "Failed to seek to, or write profile %d at offset %d\n"
                   "in DTED file.\n",
                   nColumnOffset, nOffset );
+        CPLFree( pabyRecord );
         return FALSE;
     }
 
