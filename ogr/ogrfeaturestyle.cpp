@@ -43,27 +43,31 @@ CPL_C_END
 /*                                                                          */
 /*      The order of all parameter MUST be the same than in the definition  */
 /****************************************************************************/
-OGRStyleParamId asStylePen[] = {{OGRSTPenColor,"c",FALSE,OGRSTypeString},
-                                {OGRSTPenWidth,"w",TRUE,OGRSTypeDouble},
-                                {OGRSTPenPattern,"p",TRUE,OGRSTypeString},
-                                {OGRSTPenId,"id",FALSE,OGRSTypeString},
-                                {OGRSTPenPerOffset,"dp",TRUE,OGRSTypeDouble},
-                                {OGRSTPenCap,"cap",FALSE,OGRSTypeString},
-                                {OGRSTPenJoin,"j",FALSE,OGRSTypeString},
-                                {OGRSTPenPriority, "l", FALSE, OGRSTypeInteger
-                                }};
+static const OGRStyleParamId asStylePen[] =
+{
+    {OGRSTPenColor,"c",FALSE,OGRSTypeString},
+    {OGRSTPenWidth,"w",TRUE,OGRSTypeDouble},
+    {OGRSTPenPattern,"p",TRUE,OGRSTypeString},
+    {OGRSTPenId,"id",FALSE,OGRSTypeString},
+    {OGRSTPenPerOffset,"dp",TRUE,OGRSTypeDouble},
+    {OGRSTPenCap,"cap",FALSE,OGRSTypeString},
+    {OGRSTPenJoin,"j",FALSE,OGRSTypeString},
+    {OGRSTPenPriority, "l", FALSE, OGRSTypeInteger}
+};
 
-OGRStyleParamId asStyleBrush[] = {{OGRSTBrushFColor,"fc",FALSE,OGRSTypeString},
-                                {OGRSTBrushBColor,"bc",FALSE,OGRSTypeString},
-                                {OGRSTBrushId,"id",FALSE,OGRSTypeString},
-                                {OGRSTBrushAngle,"a",TRUE,OGRSTypeDouble},
-                                {OGRSTBrushSize,"s",TRUE,OGRSTypeDouble},
-                                {OGRSTBrushDx,"dx",TRUE,OGRSTypeDouble},
-                                {OGRSTBrushDy,"dy",TRUE,OGRSTypeDouble},
-                                {OGRSTBrushPriority,"l",FALSE,OGRSTypeInteger 
-                                }};
+static const OGRStyleParamId asStyleBrush[] =
+{
+    {OGRSTBrushFColor,"fc",FALSE,OGRSTypeString},
+    {OGRSTBrushBColor,"bc",FALSE,OGRSTypeString},
+    {OGRSTBrushId,"id",FALSE,OGRSTypeString},
+    {OGRSTBrushAngle,"a",TRUE,OGRSTypeDouble},
+    {OGRSTBrushSize,"s",TRUE,OGRSTypeDouble},
+    {OGRSTBrushDx,"dx",TRUE,OGRSTypeDouble},
+    {OGRSTBrushDy,"dy",TRUE,OGRSTypeDouble},
+    {OGRSTBrushPriority,"l",FALSE,OGRSTypeInteger}
+};
 
-OGRStyleParamId asStyleSymbol[] = 
+static const OGRStyleParamId asStyleSymbol[] = 
 {
     {OGRSTSymbolId,"id",FALSE,OGRSTypeString},
     {OGRSTSymbolAngle,"a",FALSE,OGRSTypeDouble},
@@ -78,55 +82,43 @@ OGRStyleParamId asStyleSymbol[] =
     {OGRSTSymbolFontName,"f",FALSE,OGRSTypeString}
 };
 
-OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
-                                  {OGRSTLabelSize,"s",TRUE,OGRSTypeDouble},
-                                  {OGRSTLabelTextString,"t",FALSE,
-                                   OGRSTypeString},
-                                  {OGRSTLabelAngle,"a",FALSE,OGRSTypeDouble},
-                                  {OGRSTLabelFColor,"c",FALSE,OGRSTypeString},
-                                  {OGRSTLabelBColor,"b",FALSE,OGRSTypeString},
-                                  {OGRSTLabelPlacement,"m",FALSE,
-                                   OGRSTypeString},
-                                  {OGRSTLabelAnchor,"p",FALSE,OGRSTypeInteger},
-                                  {OGRSTLabelDx,"dx",TRUE,OGRSTypeDouble},
-                                  {OGRSTLabelDy,"dy",TRUE,OGRSTypeDouble},
-                                  {OGRSTLabelPerp,"dp",TRUE,OGRSTypeDouble},
-                                  {OGRSTLabelBold,"bo",FALSE,OGRSTypeBoolean},
-                                  {OGRSTLabelItalic,"it",FALSE,OGRSTypeBoolean},
-                                  {OGRSTLabelUnderline,"un",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTLabelPriority,"l",FALSE,
-                                   OGRSTypeInteger},
-                                  {OGRSTLabelStrikeout,"st",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTLabelStretch,"w",FALSE, OGRSTypeDouble},
-                                  {OGRSTLabelAdjHor,"ah",FALSE,
-                                   OGRSTypeString},
-                                  {OGRSTLabelAdjVert,"av",FALSE,
-                                   OGRSTypeString},
-                                  {OGRSTLabelHColor,"h",FALSE,OGRSTypeString}
-                                 };
+static const OGRStyleParamId asStyleLabel[] =
+{
+    {OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
+    {OGRSTLabelSize,"s",TRUE,OGRSTypeDouble},
+    {OGRSTLabelTextString,"t",FALSE, OGRSTypeString},
+    {OGRSTLabelAngle,"a",FALSE,OGRSTypeDouble},
+    {OGRSTLabelFColor,"c",FALSE,OGRSTypeString},
+    {OGRSTLabelBColor,"b",FALSE,OGRSTypeString},
+    {OGRSTLabelPlacement,"m",FALSE, OGRSTypeString},
+    {OGRSTLabelAnchor,"p",FALSE,OGRSTypeInteger},
+    {OGRSTLabelDx,"dx",TRUE,OGRSTypeDouble},
+    {OGRSTLabelDy,"dy",TRUE,OGRSTypeDouble},
+    {OGRSTLabelPerp,"dp",TRUE,OGRSTypeDouble},
+    {OGRSTLabelBold,"bo",FALSE,OGRSTypeBoolean},
+    {OGRSTLabelItalic,"it",FALSE,OGRSTypeBoolean},
+    {OGRSTLabelUnderline,"un",FALSE, OGRSTypeBoolean},
+    {OGRSTLabelPriority,"l",FALSE, OGRSTypeInteger},
+    {OGRSTLabelStrikeout,"st",FALSE, OGRSTypeBoolean},
+    {OGRSTLabelStretch,"w",FALSE, OGRSTypeDouble},
+    {OGRSTLabelAdjHor,"ah",FALSE, OGRSTypeString},
+    {OGRSTLabelAdjVert,"av",FALSE, OGRSTypeString},
+    {OGRSTLabelHColor,"h",FALSE,OGRSTypeString}
+};
 
-OGRStyleParamId asStyleVector[] = {{OGRSTVectorId,"id",FALSE,OGRSTypeString},
-                                  {OGRSTVectorNoCompress,"nc",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTVectorSprain,"sp",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTVectorNoSlope,"ns",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTVectorMirroring,"m",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTVectorCentering,"c",FALSE,
-                                   OGRSTypeBoolean},
-                                  {OGRSTVectorPriority,"l",FALSE,
-                                   OGRSTypeInteger},
-                                  {OGRSTVectorPlacement,"p",FALSE,
-                                   OGRSTypeString},
-                                  {OGRSTVectorLength,"len",TRUE,
-                                   OGRSTypeDouble},
-                                  {OGRSTVectorEven,"e",FALSE,
-                                   OGRSTypeBoolean}
-                                 };
+static const OGRStyleParamId asStyleVector[] =
+{
+    {OGRSTVectorId,"id",FALSE,OGRSTypeString},
+    {OGRSTVectorNoCompress,"nc",FALSE, OGRSTypeBoolean},
+    {OGRSTVectorSprain,"sp",FALSE, OGRSTypeBoolean},
+    {OGRSTVectorNoSlope,"ns",FALSE, OGRSTypeBoolean},
+    {OGRSTVectorMirroring,"m",FALSE, OGRSTypeBoolean},
+    {OGRSTVectorCentering,"c",FALSE, OGRSTypeBoolean},
+    {OGRSTVectorPriority,"l",FALSE, OGRSTypeInteger},
+    {OGRSTVectorPlacement,"p",FALSE, OGRSTypeString},
+    {OGRSTVectorLength,"len",TRUE, OGRSTypeDouble},
+    {OGRSTVectorEven,"e",FALSE, OGRSTypeBoolean}
+};
 
 /* ======================================================================== */
 /* OGRStyleMgr                                                              */
@@ -744,8 +736,9 @@ void OGRStyleTool::SetStyleString(const char *pszStyleString)
 /*                          OGRStyleValue *pasStyleValue, int nSize)        */
 /*                                                                          */
 /****************************************************************************/
-const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
-                            OGRStyleValue *pasStyleValue, int nSize)
+const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
+                                         OGRStyleValue *pasStyleValue,
+                                         int nSize)
 {
     if (IsStyleModified())
     {
@@ -917,7 +910,7 @@ void OGRStyleTool::SetUnit(OGRSTUnitId eUnit,double dfScale)
 /************************************************************************/
 /*                               Parse()                                */
 /************************************************************************/
-GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
+GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
                           OGRStyleValue *pasValue,
                           int nCount)
 {
@@ -1227,7 +1220,7 @@ int   OGRStyleTool::ComputeWithUnit(int nValue, OGRSTUnitId eUnit)
 /************************************************************************/
 /*                            GetParamStr()                             */
 /************************************************************************/
-const char *OGRStyleTool::GetParamStr(OGRStyleParamId &sStyleParam ,
+const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam ,
                                       OGRStyleValue &sStyleValue,
                                       GBool &bValueIsNull)
 {
@@ -1276,9 +1269,9 @@ const char *OGRStyleTool::GetParamStr(OGRStyleParamId &sStyleParam ,
 /*                               GBool &bValueIsNull)                       */
 /*                                                                          */
 /****************************************************************************/
-int OGRStyleTool::GetParamNum(OGRStyleParamId &sStyleParam ,
-                                 OGRStyleValue &sStyleValue,
-                                 GBool &bValueIsNull)
+int OGRStyleTool::GetParamNum(const OGRStyleParamId &sStyleParam ,
+                              OGRStyleValue &sStyleValue,
+                              GBool &bValueIsNull)
 {
     return (int)GetParamDbl(sStyleParam,sStyleValue,bValueIsNull);
 }
@@ -1289,7 +1282,7 @@ int OGRStyleTool::GetParamNum(OGRStyleParamId &sStyleParam ,
 /*                               GBool &bValueIsNull)                       */
 /*                                                                          */
 /****************************************************************************/
-double OGRStyleTool::GetParamDbl(OGRStyleParamId &sStyleParam ,
+double OGRStyleTool::GetParamDbl(const OGRStyleParamId &sStyleParam ,
                                  OGRStyleValue &sStyleValue,
                                  GBool &bValueIsNull)
 {
@@ -1340,7 +1333,7 @@ double OGRStyleTool::GetParamDbl(OGRStyleParamId &sStyleParam ,
 /*                             const char *pszParamString)                  */
 /*                                                                          */
 /****************************************************************************/
-void OGRStyleTool::SetParamStr(OGRStyleParamId &sStyleParam ,
+void OGRStyleTool::SetParamStr(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
                                const char *pszParamString)
 {
@@ -1374,7 +1367,7 @@ void OGRStyleTool::SetParamStr(OGRStyleParamId &sStyleParam ,
 /*                             int nParam)                                  */
 /*                                                                          */
 /****************************************************************************/
-void OGRStyleTool::SetParamNum(OGRStyleParamId &sStyleParam ,
+void OGRStyleTool::SetParamNum(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
                                int nParam)
 {
@@ -1408,7 +1401,7 @@ void OGRStyleTool::SetParamNum(OGRStyleParamId &sStyleParam ,
 /*                             double dfParam)                              */
 /*                                                                          */
 /****************************************************************************/
-void OGRStyleTool::SetParamDbl(OGRStyleParamId &sStyleParam ,
+void OGRStyleTool::SetParamDbl(const OGRStyleParamId &sStyleParam ,
                                OGRStyleValue &sStyleValue,
                                double dfParam)
 { 
