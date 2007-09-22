@@ -91,18 +91,23 @@ enum {          // AVHRR Earth location indication
         DESCEND
 };
 
-const char *paszChannelsDesc[] =                            // AVHRR band widths
-{                                                           // NOAA-7 -- NOAA-17 channels
-"AVHRR Channel 1:  0.58  micrometers -- 0.68 micrometers",
-"AVHRR Channel 2:  0.725 micrometers -- 1.10 micrometers",
-"AVHRR Channel 3:  3.55  micrometers -- 3.93 micrometers",
-"AVHRR Channel 4:  10.3  micrometers -- 11.3 micrometers",
-"AVHRR Channel 5:  11.5  micrometers -- 12.5 micrometers",  // not in NOAA-6,-8,-10
-"AVHRR Channel 5:  11.4  micrometers -- 12.4 micrometers",  // NOAA-13
-                                                            // NOAA-15 -- NOAA-17
-"AVHRR Channel 3A: 1.58  micrometers -- 1.64 micrometers",
-"AVHRR Channel 3B: 3.55  micrometers -- 3.93 micrometers"
-};
+/************************************************************************/
+/*                      AVHRR band widths                               */
+/************************************************************************/
+static const char *apszBandDesc[] =
+{
+    // NOAA-7 -- NOAA-17 channels
+    "AVHRR Channel 1:  0.58  micrometers -- 0.68 micrometers",
+    "AVHRR Channel 2:  0.725 micrometers -- 1.10 micrometers",
+    "AVHRR Channel 3:  3.55  micrometers -- 3.93 micrometers",
+    "AVHRR Channel 4:  10.3  micrometers -- 11.3 micrometers",
+    "AVHRR Channel 5:  11.5  micrometers -- 12.5 micrometers",  // not in NOAA-6,-8,-10
+    // NOAA-13
+    "AVHRR Channel 5:  11.4  micrometers -- 12.4 micrometers",
+    // NOAA-15 -- NOAA-17
+    "AVHRR Channel 3A: 1.58  micrometers -- 1.64 micrometers",
+    "AVHRR Channel 3B: 3.55  micrometers -- 3.93 micrometers"
+    };
 
 #define TBM_HEADER_SIZE 122
 
@@ -115,11 +120,12 @@ const char *paszChannelsDesc[] =                            // AVHRR band widths
 /* ==================================================================== */
 /************************************************************************/
 
+#define L1B_TIMECODE_LENGTH 100
 class TimeCode {
     long        lYear;
     long        lDay;
     long        lMillisecond;
-    char        pszString[100];
+    char        pszString[L1B_TIMECODE_LENGTH];
 
   public:
     void SetYear(long year)
@@ -136,10 +142,13 @@ class TimeCode {
     }
     char* PrintTime()
     {
-        sprintf(pszString, "year: %ld, day: %ld, millisecond: %ld", lYear, lDay, lMillisecond);
+        snprintf(pszString, L1B_TIMECODE_LENGTH,
+                 "year: %ld, day: %ld, millisecond: %ld",
+                 lYear, lDay, lMillisecond);
         return pszString;
     }
 };
+#undef L1B_TIMECODE_LENGTH
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1109,13 +1118,13 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             if ( !(i & 0x01) && poDS->iChannels & 0x01 )
             {
-                poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[0] );
+                poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[0] );
                 i |= 0x01;
                 continue;
             }
             if ( !(i & 0x02) && poDS->iChannels & 0x02 )
             {
-                poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[1] );
+                poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[1] );
                 i |= 0x02;
                 continue;
             }
@@ -1123,30 +1132,30 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 if (poDS->iSpacecraftID >= NOAA15 && poDS->iSpacecraftID <= NOAA17)
                     if (poDS->iInstrumentStatus & 0x0400)
-                        poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[7] );
+                        poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[7] );
                     else
-                        poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[6] );
+                        poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[6] );
                 else    
-                    poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[2] );
+                    poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[2] );
                 i |= 0x04;
                 continue;
             }
             if ( !(i & 0x08) && poDS->iChannels & 0x08 )
             {
-                poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[3] );
+                poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[3] );
                 i |= 0x08;
                 continue;
             }
             if ( !(i & 0x10) && poDS->iChannels & 0x10 )
             {
                 if (poDS->iSpacecraftID == NOAA13)              // 5 NOAA-13
-                    poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[5] );
+                    poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[5] );
                 else if (poDS->iSpacecraftID == NOAA6 ||
                          poDS->iSpacecraftID == NOAA8 ||
                          poDS->iSpacecraftID == NOAA10)         // 4 NOAA-6,-8,-10
-                    poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[3] );
+                    poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[3] );
                 else
-                    poDS->GetRasterBand(iBand)->SetDescription( paszChannelsDesc[4] );
+                    poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[4] );
                 i |= 0x10;
                 continue;
             }
