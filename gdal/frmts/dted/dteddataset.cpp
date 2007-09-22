@@ -477,12 +477,15 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poSrcBand->RasterIO( GF_Read, 0, 0, psDTED->nXSize, psDTED->nYSize, 
                          (void *) panData, psDTED->nXSize, psDTED->nYSize, 
                          GDT_Int16, 0, 0 );
+    
+    int bSrcBandHasNoData;
+    double srcBandNoData = poSrcBand->GetNoDataValue(&bSrcBandHasNoData);
 
 /* -------------------------------------------------------------------- */
 /*      Write all the profiles.                                         */
 /* -------------------------------------------------------------------- */
     GInt16      anProfData[3601];
-    double       dfNodataCount=0.0;
+    int         dfNodataCount=0;
     GByte       iPartialCell;
 
     for( int iProfile = 0; iProfile < psDTED->nXSize; iProfile++ )
@@ -490,8 +493,13 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         for( int iY = 0; iY < psDTED->nYSize; iY++ )
         {
             anProfData[iY] = panData[iProfile + iY * psDTED->nXSize];
-            if ( anProfData[iY] == DTED_NODATA_VALUE )
-                dfNodataCount = dfNodataCount+1.0;
+            if ( bSrcBandHasNoData && anProfData[iY] == srcBandNoData)
+            {
+                anProfData[iY] = DTED_NODATA_VALUE;
+                dfNodataCount++;
+            }
+            else if ( anProfData[iY] == DTED_NODATA_VALUE )
+                dfNodataCount++;
         }
         DTEDWriteProfile( psDTED, iProfile, anProfData );
     }
@@ -502,7 +510,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     char pszPartialCell[2];
     
-    if ( dfNodataCount < 0.5 )
+    if ( dfNodataCount == 0 )
         iPartialCell = 0;
     else
     {
