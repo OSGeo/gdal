@@ -155,10 +155,10 @@ typedef enum ogr_style_type
 typedef struct ogr_style_param
 {
     int              eParam;
-    char            *pszToken;
+    const char       *pszToken;
     GBool            bGeoref;
     OGRSType         eType;
-}OGRStyleParamId;
+} OGRStyleParamId;
 
 
 typedef struct ogr_style_value
@@ -168,7 +168,7 @@ typedef struct ogr_style_value
     int              nValue; // Used for both integer and boolean types
     GBool            bValid;
     OGRSTUnitId      eUnit;
-}OGRStyleValue;
+} OGRStyleValue;
 
 
 //Everytime a pszStyleString gived in parameter is NULL, 
@@ -255,7 +255,7 @@ class CPL_DLL OGRStyleTool
     virtual GBool Parse() = 0;
 
   protected:
-    GBool Parse(OGRStyleParamId* pasStyle,
+    GBool Parse(const OGRStyleParamId* pasStyle,
                 OGRStyleValue* pasValue,
                 int nCount);
 
@@ -290,30 +290,30 @@ for Each style tools.*/
     
     virtual const char *GetStyleString() = 0;
     void SetStyleString(const char *pszStyleString);
-    const char *GetStyleString(OGRStyleParamId *pasStyleParam ,
+    const char *GetStyleString(const OGRStyleParamId *pasStyleParam ,
                             OGRStyleValue *pasStyleValue, int nSize);
 
-    const char *GetParamStr(OGRStyleParamId &sStyleParam ,
+    const char *GetParamStr(const OGRStyleParamId &sStyleParam ,
                             OGRStyleValue &sStyleValue,
                             GBool &bValueIsNull);
 
-    int GetParamNum(OGRStyleParamId &sStyleParam ,
-                       OGRStyleValue &sStyleValue,
-                       GBool &bValueIsNull);
+    int GetParamNum(const OGRStyleParamId &sStyleParam ,
+                    OGRStyleValue &sStyleValue,
+                    GBool &bValueIsNull);
 
-    double GetParamDbl(OGRStyleParamId &sStyleParam ,
+    double GetParamDbl(const OGRStyleParamId &sStyleParam ,
                        OGRStyleValue &sStyleValue,
                        GBool &bValueIsNull);
     
-    void SetParamStr(OGRStyleParamId &sStyleParam ,
+    void SetParamStr(const OGRStyleParamId &sStyleParam ,
                      OGRStyleValue &sStyleValue,
                      const char *pszParamString);
     
-    void SetParamNum(OGRStyleParamId &sStyleParam ,
+    void SetParamNum(const OGRStyleParamId &sStyleParam ,
                      OGRStyleValue &sStyleValue,
                      int nParam);
 
-    void SetParamDbl(OGRStyleParamId &sStyleParam ,
+    void SetParamDbl(const OGRStyleParamId &sStyleParam ,
                      OGRStyleValue &sStyleValue,
                      double dfParam);
 
@@ -321,8 +321,6 @@ for Each style tools.*/
     int    ComputeWithUnit(int , OGRSTUnitId);
 
 };
-
-extern OGRStyleParamId CPL_DLL asStylePen[];
 
 class CPL_DLL OGRStylePen : public OGRStyleTool
 {
@@ -369,8 +367,6 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     const char *GetStyleString();
 };
 
-extern OGRStyleParamId CPL_DLL asStyleBrush[];
-
 class CPL_DLL OGRStyleBrush : public OGRStyleTool
 {
   private:
@@ -414,8 +410,6 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
      void SetParamDbl(OGRSTBrushParam eParam, double dfParam);
      const char *GetStyleString();
 };
-
-extern OGRStyleParamId CPL_DLL asStyleSymbol[];
 
 class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 {
@@ -469,8 +463,6 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
      void SetParamDbl(OGRSTSymbolParam eParam, double dfParam);
      const char *GetStyleString();
 };
-
-extern OGRStyleParamId CPL_DLL asStyleLabel[];
 
 class CPL_DLL OGRStyleLabel : public OGRStyleTool
 {
@@ -540,8 +532,6 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
      void SetParamDbl(OGRSTLabelParam eParam, double dfParam);
      const char *GetStyleString();
 };
-
-extern OGRStyleParamId CPL_DLL asStyleVector[];
 
 class CPL_DLL OGRStyleVector : public OGRStyleTool
 {
