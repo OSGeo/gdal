@@ -150,7 +150,8 @@ typedef enum {
     DTEDMD_HORIZACCURACY = 16,          /* ACC 4+4 */
     DTEDMD_REL_HORIZACCURACY = 17,      /* ACC 12+4 */
     DTEDMD_REL_VERTACCURACY = 18,       /* ACC 16+4 */
-    DTEDMD_MAX = 18
+    DTEDMD_HORIZDATUM = 19,             /* DSI 145+5 */ 
+    DTEDMD_MAX = 19
 } DTEDMetaDataCode;
 
     
