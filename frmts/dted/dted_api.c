@@ -434,6 +434,11 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         *pnLength = 3;
         break;
 
+      case DTEDMD_HORIZDATUM: 
+        *ppszLocation = psDInfo->pachDSIRecord + 144; 
+        *pnLength = 5; 
+        break; 
+
       case DTEDMD_DIGITIZING_SYS:
         *ppszLocation = psDInfo->pachDSIRecord + 149;
         *pnLength = 10;
