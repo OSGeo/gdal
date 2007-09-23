@@ -322,7 +322,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
     VSIFReadL( &frameFileIndexRecordLength, 1, sizeof(frameFileIndexRecordLength), fp);
     CPL_MSBPTR16( &frameFileIndexRecordLength );
     
-    for (i=0;i<nFrameFileIndexRecords;i++)
+    for (i=0;i<(int)nFrameFileIndexRecords;i++)
     {
         RPFTocEntry* entry;
         RPFTocFrameEntry* frameEntry;
@@ -467,14 +467,14 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         
         {
             char* baseDir = CPLStrdup(CPLGetDirname(pszFilename));
-            VSIStatBuf sStatBuf;
+            VSIStatBufL sStatBuf;
             char* subdir;
             if (frameEntry->directory[0] == '.')
                 subdir = CPLStrdup(baseDir);
             else
                 subdir = CPLStrdup(CPLFormFilename(baseDir, frameEntry->directory, NULL));
 #if !defined(_WIN32) && !defined(_WIN32_CE)
-            if( VSIStat( subdir, &sStatBuf ) != 0 )
+            if( VSIStatL( subdir, &sStatBuf ) != 0 && subdir[strlen(baseDir)] != 0)
             {
                 char* c = subdir + strlen(baseDir)+1;
                 while(*c)
@@ -488,7 +488,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
             frameEntry->fullFilePath = CPLStrdup(CPLFormFilename(
                     subdir,
                     frameEntry->filename, NULL));
-            if( VSIStat( frameEntry->fullFilePath, &sStatBuf ) != 0 )
+            if( VSIStatL( frameEntry->fullFilePath, &sStatBuf ) != 0 )
             {
 #if !defined(_WIN32) && !defined(_WIN32_CE)
                 char* c = frameEntry->fullFilePath + strlen(subdir)+1;
@@ -498,7 +498,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
                         *c += 'a' - 'A';
                     c++;
                 }
-                if( VSIStat( frameEntry->fullFilePath, &sStatBuf ) != 0 )
+                if( VSIStatL( frameEntry->fullFilePath, &sStatBuf ) != 0 )
 #endif
                 {
                     frameEntry->fileExists = 0;
@@ -540,7 +540,7 @@ void RPFTOCFree(RPFToc*  toc)
 
     for(i=0;i<toc->nEntries;i++)
     {
-        for(j=0;j<toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames; j++)
+        for(j=0;j<(int)(toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames); j++)
         {
             CPLFree(toc->entries[i].frameEntries[j].fullFilePath);
             CPLFree(toc->entries[i].frameEntries[j].directory);
