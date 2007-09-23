@@ -55,7 +55,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     NITFFile    *psFile;
     int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
     char        szTemp[128], achFSDWNG[6];
-    GIntBig     nFileLength;
+    GIntBig     currentPos;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -118,9 +118,9 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     szTemp[6] = '\0';
     nHeaderLen = atoi(szTemp);
 
-    VSIFSeekL( fp, 0, SEEK_END );
-    nFileLength = VSIFTellL( fp ) ;
-    if( nHeaderLen < nHeaderLenOffset || nHeaderLen > nFileLength )
+    VSIFSeekL( fp, nHeaderLen, SEEK_SET );
+    currentPos = VSIFTellL( fp ) ;
+    if( nHeaderLen < nHeaderLenOffset || nHeaderLen > currentPos )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "NITF Header Length (%d) seems to be corrupt.",
