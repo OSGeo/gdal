@@ -514,11 +514,11 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
     const char  *pszPrjFile = CPLResetExtension( GetDescription(), "prj" );
     FILE * fp;
 
-    fp = VSIFOpen( pszPrjFile, "wt" );
+    fp = VSIFOpenL( pszPrjFile, "wt" );
     if( fp != NULL )
     {
-        VSIFPrintf( fp, "%s\n", pszProjection );
-        VSIFClose( fp );
+        VSIFPrintfL( fp, "%s\n", pszProjection );
+        VSIFCloseL( fp );
         abyHeader[60] = 1;
     }
     else
@@ -542,7 +542,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify that this is some form of binterr file.                  */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 256 || poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 256)
         return NULL;
 
     if( strncmp( (const char *) poOpenInfo->pabyHeader, "binterr", 7 ) != 0 )
@@ -618,7 +618,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
                                                      "prj" );
         FILE *fp;
 
-        fp = VSIFOpen( pszPrjFile, "rt" );
+        fp = VSIFOpenL( pszPrjFile, "rt" );
         if( fp != NULL )
         {
             char *pszBuffer, *pszBufPtr;
@@ -626,8 +626,8 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             int nBytes;
 
             pszBuffer = (char *) CPLMalloc(nBufMax);
-            nBytes = VSIFRead( pszBuffer, 1, nBufMax-1, fp );
-            VSIFClose( fp );
+            nBytes = VSIFReadL( pszBuffer, 1, nBufMax-1, fp );
+            VSIFCloseL( fp );
 
             pszBuffer[nBytes] = '\0';
 
@@ -752,8 +752,6 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Re-open the file with the desired access.                       */
 /* -------------------------------------------------------------------- */
-    VSIFClose( poOpenInfo->fp );
-    poOpenInfo->fp = NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
         poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
