@@ -46,7 +46,7 @@ Download:
 <li> <a href="formats_list.html">Formatos Suportados</a>
 <li> <a href="gdal_utilities.html">Programs Utilit&aacute;rios</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/FAQ">Perguntas Mais Frequentes</a>
-<li> <a href="gdal_datamodel.html">Modelo de dados</a>
+<li> <a href="gdal_datamodel_br.html">Modelo de dados</a> <b>(em portugu&ecirc;s)</b>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/GovernanceAndCommunity">Governan&ccedil;a e participa&ccedil;&atilde;o comunit&aacute;ria</a>
 <li> <a href="credits.html">Patrocinadores, Agradecimentos e Cr&eacute;ditos</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/SoftwareUsingGdal">Software que usam GDAL</a>
@@ -58,7 +58,7 @@ Download:
 <li> <a href="http://trac.osgeo.org/gdal/wiki/BuildHints">Como compilar GDAL</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadSource">Downloads</a> - c&oacute;digo fonte
 <li> <a href="hierarchy.html">Documenta&ccedil;&atilde;o de referencia da API</a>
-<li> <a href="gdal_tutorial.html">Tutorial da API do GDAL</a>
+<li> <a href="gdal_tutorial_br.html">Tutorial da API do GDAL</a> <b>(em portugu&ecirc;s)</b>
 <li> <a href="gdal_drivertut.html">Tutorial de implementa&ccedil;&atilde;o de drivers</a>
 <li> <a href="warptut.html">Tutorial de transforma&ccedil;&atilde;o geom&eacute;trica</a>
 <li> <a href="ogr/osr_tutorial.html">Tutorial de Referência Espacial</a>
