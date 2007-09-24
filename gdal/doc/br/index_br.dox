@@ -22,7 +22,7 @@ Translator Ivan Lucena <ivan.lucena@pmldnet.com>
 <a href="http://www.opensource.org/"> Open Source</a>. 
 Aplica&ccedil;&otilde;es que &agrave; utilizam acessam todos os formats 
 supportados pela biblioteca atrav&eacute;s de 
-\link gdal_datamodel_br.html um único modelo abstrato de dados\endlink.
+\link gdal_datamodel_br.html um &uacute;nico modelo abstrato de dados\endlink.
 GDAL tam&eacute;m conta com um variadade de programas 
 \link gdal_utilities.html utilit&aacute;rios de linha de comando \endlink 
 para a tradu&ccedil;&atilde;o de formats e outras fun&ccedil;&otilde;es. 
