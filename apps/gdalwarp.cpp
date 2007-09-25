@@ -392,7 +392,8 @@ int main( int argc, char ** argv )
         if( hSrcDS == NULL )
             exit( 2 );
 
-        printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
+        if( !bQuiet )
+            printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
 
         if( strlen(osThisSourceSRS) == 0 )
         {
