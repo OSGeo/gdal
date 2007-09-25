@@ -292,8 +292,8 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // Set Metadata Information
     // -------------------------------------------------------------------- 
 
-    poDS->SetMetadataItem( "FILE_VERSION", 
-        CPLSPrintf ( "%d", pHeaderOne->GridFileVersion ) );
+    poDS->SetMetadataItem( "VERSION", 
+        CPLSPrintf ( "%d", pHeaderOne->GridFileVersion ), "IMAGE_STRUCTURE" );
 
     // -------------------------------------------------------------------- 
     // Create Band Information

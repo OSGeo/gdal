@@ -159,15 +159,17 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     // More Metadata Information
     // -------------------------------------------------------------------- 
 
-    SetMetadataItem( "INGR_FORMAT", INGR_GetFormatName( eFormat ) );
+    SetMetadataItem( "FORMAT", INGR_GetFormatName( eFormat ), 
+        "IMAGE_STRUCTURE" );
 
     if( bTiled )
     {
-        SetMetadataItem( "INGR_TILESSIZE", CPLSPrintf ("%d", hTileDir.TileSize) );
+        SetMetadataItem( "TILESSIZE", CPLSPrintf ("%d", hTileDir.TileSize), 
+            "IMAGE_STRUCTURE" );
     }
     else
     {
-        SetMetadataItem( "INGR_TILED", "NO" ); 
+        SetMetadataItem( "TILED", "NO", "IMAGE_STRUCTURE" ); 
     }
 }
 
