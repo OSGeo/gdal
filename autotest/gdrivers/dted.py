@@ -62,7 +62,7 @@ def dted_2():
         return 'fail'
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]':
         gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
         return 'fail'
 
