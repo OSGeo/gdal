@@ -321,7 +321,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If we aren't prefixed with SDE: then ignore this datasource.    */
 /* -------------------------------------------------------------------- */
     if( !EQUALN(poOpenInfo->pszFilename,"SDE:",4) )
-        return FALSE;
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments on comma.  We expect (layer is optional):       */
@@ -344,7 +344,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The layer name value is optional.\n"
                   "Got '%s'", 
                   poOpenInfo->pszFilename );
-        return FALSE;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -370,7 +370,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_connection_create" );
-        return FALSE;
+        return NULL;
     }
 
 
@@ -383,7 +383,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nSDEErr != SE_SUCCESS) {
         IssueSDEError( nSDEErr, NULL );
-        return FALSE;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -410,7 +410,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_rastercolumn_create" );
-            return FALSE;
+            return NULL;
         }
         CPLDebug( "SDERASTER", "'%s' raster layer specified... "\
                                "using it directly with '%s' as the raster column name.", 
@@ -423,7 +423,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_rastercolumn_get_info_by_name" );
-            return FALSE;
+            return NULL;
         }
         poDS->ComputeRasterInfo();
 
@@ -437,7 +437,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
-            return FALSE;
+            return NULL;
         }
 
         CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
@@ -459,11 +459,11 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             if( nSDEErr != SE_SUCCESS )
             {
                 IssueSDEError( nSDEErr, "SE_rascolinfo_get_raster_column" );
-                return FALSE;
+                return NULL;
             }
         }
 
-    return FALSE;
+    return NULL;
     }
     CSLDestroy( papszTokens);
     return( poDS );
