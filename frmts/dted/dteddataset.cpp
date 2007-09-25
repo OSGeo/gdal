@@ -375,7 +375,7 @@ const char *DTEDDataset::GetProjectionRef()
     const char* pszProjection = GetMetadataItem( "DTED_HorizontalDatum");
     if (EQUAL(pszProjection, "WGS84"))
     {
-      return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],AUTHORITY[\"EPSG\",\"4326\"]]" );
+      return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
     }
     else if (EQUAL(pszProjection, "WGS72"))
     {
@@ -404,7 +404,7 @@ const char *DTEDDataset::GetProjectionRef()
                   "The DTED driver is going to consider it as WGS84.\n"
                   "No more warnings will be issued in this session about this operation.", GetFileName(),pszProjection );
       }
-      return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],AUTHORITY[\"EPSG\",\"4326\"]]" );
+      return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
     }
 }
 
