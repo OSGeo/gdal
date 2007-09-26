@@ -97,16 +97,188 @@ def dted_4():
                              5, 5, 5, 5 )
     return tst.testOpen()
 
+###############################################################################
+# Test a DTED Level 1 (made from a DTED Level 0)
+
+def dted_5():
+
+    ds = gdal.Open( 'data/n43.dt0' )
+    
+    bandSrc = ds.GetRasterBand(1)
+    
+    driver = gdal.GetDriverByName( "GTiff" );
+    dsDst = driver.Create( 'tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16 )
+    dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+    dsDst.SetGeoTransform((-80.0004166666666663, 0.0008333333333333, 0, 44.0004166666666670, 0, -0.0008333333333333))
+
+    bandDst = dsDst.GetRasterBand(1)
+    
+    data = bandSrc.ReadRaster( 0, 0, 121, 121, 1201, 1201, gdal.GDT_Int16 )
+    bandDst.WriteRaster( 0, 0, 1201, 1201, data, 1201, 1201, gdal.GDT_Int16 )
+
+    bandDst.FlushCache()
+
+    ds = None
+    dsDst = None
+
+    ds = gdal.Open( 'tmp/n43.dt1.tif' )
+    driver = gdal.GetDriverByName( "DTED" );
+    dsDst = driver.CreateCopy( 'tmp/n43.dt1', ds)
+
+    band = dsDst.GetRasterBand(1)
+    chksum = band.Checksum()
+
+    if chksum != 60918:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test a DTED Level 2 (made from a DTED Level 0)
+
+def dted_6():
+
+    ds = gdal.Open( 'tmp/n43.dt1' )
+    
+    bandSrc = ds.GetRasterBand(1)
+    
+    driver = gdal.GetDriverByName( "GTiff" );
+    dsDst = driver.Create( 'tmp/n43.dt2.tif', 3601, 3601, 1, gdal.GDT_Int16 )
+    dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+    dsDst.SetGeoTransform((-80.0001388888888888888, 0.0002777777777777777, 0, 44.0001388888888888, 0, -0.0002777777777777777))
+
+    bandDst = dsDst.GetRasterBand(1)
+    
+    data = bandSrc.ReadRaster( 0, 0, 1201, 1201, 3601, 3601, gdal.GDT_Int16 )
+    bandDst.WriteRaster( 0, 0, 3601, 3601, data, 3601, 3601, gdal.GDT_Int16 )
+
+    bandDst.FlushCache()
+
+    ds = None
+    dsDst = None
+
+    ds = gdal.Open( 'tmp/n43.dt2.tif' )
+    driver = gdal.GetDriverByName( "DTED" );
+    dsDst = driver.CreateCopy( 'tmp/n43.dt2', ds)
+
+    band = dsDst.GetRasterBand(1)
+    chksum = band.Checksum()
+
+    if chksum != 41374:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test a WGS72 georeferenced DTED
+
+def dted_7():
+    # a warning is issued
+    ds = gdal.Open( 'data/n43_wgs72.dt0' )
+
+    prj = ds.GetProjection()
+    if prj != 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]':
+        gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test a file whose checksum is corrupted
+
+def dted_8():
+    ds = gdal.Open( 'data/n43_bad_crc.dt0' )
+    band = ds.GetRasterBand(1)
+    
+    # numerous errors would be reported 
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    chksum = band.Checksum()
+    gdal.PopErrorHandler()
+    
+    # 49187 is the checksum of data is the DTED is read without checking its checksum
+    # so we should not get this value
+    if chksum == 49187:
+        gdaltest.post_reason('DTED_VERIFY_CHECKSUM=YES has had no effect!')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test a DTED Level 1 above latitude 50 (made from a DTED Level 0)
+
+def dted_9():
+
+    ds = gdal.Open( 'data/n43.dt0' )
+    
+    bandSrc = ds.GetRasterBand(1)
+    
+    driver = gdal.GetDriverByName( "GTiff" );
+    dsDst = driver.Create( 'tmp/n53.dt1.tif', 601, 1201, 1, gdal.GDT_Int16 )
+    dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+    dsDst.SetGeoTransform((-80.0008333333333333, 0.001666666666667, 0, 54.0004166666666670, 0, -0.0008333333333333))
+
+    bandDst = dsDst.GetRasterBand(1)
+    
+    data = bandSrc.ReadRaster( 0, 0, 121, 121, 601, 1201, gdal.GDT_Int16 )
+    bandDst.WriteRaster( 0, 0, 601, 1201, data, 601, 1201, gdal.GDT_Int16 )
+
+    bandDst.FlushCache()
+
+    ds = None
+    dsDst = None
+
+    ds = gdal.Open( 'tmp/n53.dt1.tif' )
+    driver = gdal.GetDriverByName( "DTED" );
+    dsDst = driver.CreateCopy( 'tmp/n53.dt1', ds)
+
+    band = dsDst.GetRasterBand(1)
+    chksum = band.Checksum()
+
+    if chksum != 36542:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Cleanup.
+
+def dted_cleanup():
+    try:
+        os.remove( 'tmp/n43.dt1.tif' )
+        os.remove( 'tmp/n43.dt1.aux.xml' )
+        os.remove( 'tmp/n43.dt1' )
+        os.remove( 'tmp/n53.dt1.tif' )
+        os.remove( 'tmp/n53.dt1.aux.xml' )
+        os.remove( 'tmp/n53.dt1' )
+        os.remove( 'tmp/n43.dt2.tif' )
+        os.remove( 'tmp/n43.dt2.aux.xml' )
+        os.remove( 'tmp/n43.dt2' )
+    except:
+        pass
+    return 'success'
+
 gdaltest_list = [
     dted_1,
     dted_2,
     dted_3,
-    dted_4
+    dted_4,
+    dted_5,
+    dted_6,
+    dted_7,
+    dted_8,
+    dted_9,
+    dted_cleanup
     ]
   
 
 
 if __name__ == '__main__':
+    
+    # this will enable DTED_VERIFY_CHECKSUM for dted_8 test
+    os.environ['DTED_VERIFY_CHECKSUM'] = 'YES'
 
     gdaltest.setup_run( 'dted' )
 
