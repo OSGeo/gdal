@@ -258,7 +258,7 @@ typedef unsigned long    GUIntBig;
 /*      effects.                                                        */
 /* -------------------------------------------------------------------- */
 #ifndef CPLIsEqual
-#  define CPLIsEqual(x,y) (fabs(fabs(x) - fabs(y)) < 0.0000000000001)
+#  define CPLIsEqual(x,y) (fabs((x) - (y)) < 0.0000000000001)
 #endif
 
 #ifndef EQUAL
