@@ -56,5 +56,42 @@
    images to mutiple strips of ~8Kb to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP
 
+/* Default size of the strip in bytes (when strip chopping enabled) */
+#define STRIP_SIZE_DEFAULT 8192
+
 /* Enable SubIFD tag (330) support */
 #define SUBIFD_SUPPORT 1
+
+/* Signed 16-bit type */
+#define TIFF_INT16_T short
+
+/* Signed 32-bit type */
+#define TIFF_INT32_T int
+
+/* Signed 64-bit type */
+#define TIFF_INT64_T long
+
+/* Signed 8-bit type */
+#define TIFF_INT8_T signed char
+
+/* Pointer difference type */
+#define TIFF_PTRDIFF_T ptrdiff_t
+
+/* Signed size type */
+#ifdef _WIN64
+#  define TIFF_SSIZE_T long
+#else
+#  define TIFF_SSIZE_T signed long
+#endif
+
+/* Unsigned 16-bit type */
+#define TIFF_UINT16_T short
+
+/* Unsigned 32-bit type */
+#define TIFF_UINT32_T unsigned int
+
+/* Unsigned 64-bit type */
+#define TIFF_UINT64_T unsigned long
+
+/* Unsigned 8-bit type */
+#define TIFF_UINT8_T unsigned char
