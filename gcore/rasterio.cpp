@@ -558,6 +558,89 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
         return;
     }
 
+/* ----------------------------------------------------------------------- */
+/* Special case when the source data is always the same value              */
+/* (for VRTSourcedRasterBand::IRasterIO and VRTDerivedRasterBand::IRasterIO*/
+/*  for example)                                                           */
+/* ----------------------------------------------------------------------- */
+    if (nSrcPixelOffset == 0 && nWordCount > 1)
+    {
+        /* Let the general translation case do the necessary conversions */
+        /* on the first destination element */
+        GDALCopyWords(pSrcData, eSrcType, nSrcPixelOffset,
+                      pDstData, eDstType, nDstPixelOffset,
+                      1 );
+
+        /* Now copy the first element to the nWordCount - 1 following destination */
+        /* elements */
+        nWordCount--;
+        GByte *pabyDstWord = ((GByte *)pDstData) + nDstPixelOffset;
+
+        switch (eDstType)
+        {
+            case GDT_Byte:
+            {
+                if (nDstPixelOffset == 1)
+                {
+                    memset(pabyDstWord, *(GByte*)pDstData, nWordCount - 1);
+                }
+                else
+                {
+                    GByte valSet = *(GByte*)pDstData;
+                    while(nWordCount--)
+                    {
+                        *pabyDstWord = valSet;
+                        pabyDstWord += nDstPixelOffset;
+                    }
+                }
+                break;
+            }
+
+#define CASE_DUPLICATE_SIMPLE(enum_type, c_type) \
+            case enum_type:\
+            { \
+                c_type valSet = *(c_type*)pDstData; \
+                while(nWordCount--) \
+                { \
+                    *(c_type*)pabyDstWord = valSet; \
+                    pabyDstWord += nDstPixelOffset; \
+                } \
+                break; \
+            }
+
+            CASE_DUPLICATE_SIMPLE(GDT_UInt16, GUInt16)
+            CASE_DUPLICATE_SIMPLE(GDT_Int16,  GInt16)
+            CASE_DUPLICATE_SIMPLE(GDT_UInt32, GUInt32)
+            CASE_DUPLICATE_SIMPLE(GDT_Int32,  GInt32)
+            CASE_DUPLICATE_SIMPLE(GDT_Float32,float)
+            CASE_DUPLICATE_SIMPLE(GDT_Float64,double)
+
+#define CASE_DUPLICATE_COMPLEX(enum_type, c_type) \
+            case enum_type:\
+            { \
+                c_type valSet1 = ((c_type*)pDstData)[0]; \
+                c_type valSet2 = ((c_type*)pDstData)[1]; \
+                while(nWordCount--) \
+                { \
+                    ((c_type*)pabyDstWord)[0] = valSet1; \
+                    ((c_type*)pabyDstWord)[1] = valSet2; \
+                    pabyDstWord += nDstPixelOffset; \
+                } \
+                break; \
+            }
+
+            CASE_DUPLICATE_COMPLEX(GDT_CInt16, GInt16)
+            CASE_DUPLICATE_COMPLEX(GDT_CInt32, GInt32)
+            CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
+            CASE_DUPLICATE_COMPLEX(GDT_CFloat64, double)
+
+            default:
+                CPLAssert( FALSE );
+        }
+
+        return;
+    }
+    
 /* ==================================================================== */
 /*      General translation case                                        */
 /* ==================================================================== */
