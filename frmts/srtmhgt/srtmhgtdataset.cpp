@@ -263,16 +263,16 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   strncpy(latLonValueString, &fileName[4], 3);
   int southWestLon = atoi(latLonValueString);
 
-  if(fileName[0] == 'N')
+  if(fileName[0] == 'N' || fileName[0] == 'n')
     southWestLat = southWestLat;
-  else if(fileName[0] == 'S')
+  else if(fileName[0] == 'S' || fileName[0] == 's')
     southWestLat = southWestLat * -1;
   else
     return NULL;
 
-  if(fileName[3] == 'E')
+  if(fileName[3] == 'E' || fileName[3] == 'e')
     southWestLon = southWestLon;
-  else if(fileName[3] == 'W')
+  else if(fileName[3] == 'W' || fileName[3] == 'w')
     southWestLon = southWestLon * -1;
   else
     return NULL;
