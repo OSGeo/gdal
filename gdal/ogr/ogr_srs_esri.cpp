@@ -627,9 +627,9 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    CPLString osProj = OSR_GDS( papszPrj, "Projection", NULL );
+    CPLString osProj = OSR_GDS( papszPrj, "Projection", "" );
 
-    if( osProj == NULL )
+    if( EQUAL(osProj,"") )
     {
         CPLDebug( "OGR_ESRI", "Can't find Projection\n" );
         return OGRERR_CORRUPT_DATA;
@@ -832,8 +832,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         CPLString osValue;
         double dfOldUnits = GetLinearUnits();
 
-        osValue = OSR_GDS( papszPrj, "Units", NULL );
-        if( osValue == NULL )
+        osValue = OSR_GDS( papszPrj, "Units", "" );
+        if( EQUAL(osValue, "" ) )
             SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
         else if( EQUAL(osValue,"FEET") )
             SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
