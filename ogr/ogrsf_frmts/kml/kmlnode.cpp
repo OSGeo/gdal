@@ -363,16 +363,21 @@ std::string KMLnode::getNameElement()
     {
         if(this->pvpoChildren->at(nCount)->sName.compare("name") == 0)
         {
-            sContent = this->pvpoChildren->at(nCount)->pvsContent->at(0);
-            for(unsigned short nCount2 = 1; nCount2 < this->pvpoChildren->at(nCount)->pvsContent->size(); nCount2++)
+            unsigned int nSize = this->pvpoChildren->at(nCount)->pvsContent->size();
+            if (nSize > 0)
             {
-                sContent += " " + this->pvpoChildren->at(nCount)->pvsContent->at(nCount2);
+                sContent = this->pvpoChildren->at(nCount)->pvsContent->at(0);
+                for(unsigned int nCount2 = 1; nCount2 < nSize; nCount2++)
+                {
+                    sContent += " " + this->pvpoChildren->at(nCount)->pvsContent->at(nCount2);
+                }
+                return sContent;
             }
-            return sContent;
+            break;
         }
     }
 
-    return sContent;
+    return "";
 }
 
 std::string KMLnode::getDescriptionElement()
@@ -382,12 +387,17 @@ std::string KMLnode::getDescriptionElement()
     {
         if(this->pvpoChildren->at(nCount)->sName.compare("description") == 0)
         {
-            sContent = this->pvpoChildren->at(nCount)->pvsContent->at(0);
-            for(unsigned short nCount2 = 1; nCount2 < this->pvpoChildren->at(nCount)->pvsContent->size(); nCount2++)
+            unsigned int nSize = this->pvpoChildren->at(nCount)->pvsContent->size();
+            if (nSize > 0)
             {
-                sContent += " " + this->pvpoChildren->at(nCount)->pvsContent->at(nCount2);
+                sContent = this->pvpoChildren->at(nCount)->pvsContent->at(0);
+                for(unsigned int nCount2 = 1; nCount2 < nSize; nCount2++)
+                {
+                    sContent += " " + this->pvpoChildren->at(nCount)->pvsContent->at(nCount2);
+                }
+                return sContent;
             }
-            return sContent;
+            break;
         }
     }
     return "";
