@@ -16,14 +16,10 @@ from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
 # Function to find numpy's include directory
 def get_numpy_include():
-    for directory in sys.path:
-        d = os.walk(directory)
-        for i in d:
-            if 'numpy' in i[0]:
-                if 'core' in i[0]:
-                    if 'include' in i[0]:
-                        return i[0]
-    return '.'
+    if HAVE_NUMPY:
+        return numpy.get_include()
+    else:
+        return '.'
 
 HAVE_NUMPY=False
 
@@ -154,38 +150,38 @@ else:
     extra_link_args = []
 
 
-gdal_module = Extension('_gdal',
-                        sources=['gdal_wrap.cpp'],
+gdal_module = Extension('osgeo._gdal',
+                        sources=['extensions/gdal_wrap.cpp'],
                         include_dirs = include_dirs,
                         libraries = libraries,
                         library_dirs = library_dirs,
                         extra_compile_args = ['-g'],
                         extra_link_args = extra_link_args)
 
-gdalconst_module = Extension('_gdalconst',
-                    sources=['gdalconst_wrap.c'],
+gdalconst_module = Extension('osgeo._gdalconst',
+                    sources=['extensions/gdalconst_wrap.c'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
                     extra_link_args = extra_link_args)
 
-osr_module = Extension('_osr',
-                    sources=['osr_wrap.cpp'],
+osr_module = Extension('osgeo._osr',
+                    sources=['extensions/osr_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
                     extra_link_args = extra_link_args)
 
-ogr_module = Extension('_ogr',
-                    sources=['ogr_wrap.cpp'],
+ogr_module = Extension('osgeo._ogr',
+                    sources=['extensions/ogr_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
                     extra_link_args = extra_link_args)
 
 
-array_module = Extension('_gdal_array',
-                    sources=['_gdal_array.cpp'],
+array_module = Extension('osgeo._gdal_array',
+                    sources=['extensions/_gdal_array.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
@@ -203,12 +199,13 @@ py_modules = ['gdal',
               
 if HAVE_NUMPY:
     ext_modules.append(array_module)
-    py_modules.append('gdal_array')
-    py_modules.append('gdalnumeric')
+#    py_modules.append('gdal_array')
+#    py_modules.append('gdalnumeric')
     
 setup( name = 'GDAL-OGR',
        version = gdal_version,
        description = 'GDAL-OGR Python Bindings',
        py_modules = py_modules,
+       packages = ["osgeo"],
        url="http://www.gdal.org",
        ext_modules = ext_modules )

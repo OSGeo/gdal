@@ -7,17 +7,28 @@ all:
 BINDING = python
 include ../SWIGmake.base
 
+PACKAGE_DIR=osgeo
+SWIGOUTPUTDIR=extensions/
+
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
-PY_MODULES      =       gdal.py ogr.py osr.py gdalconst.py
+PY_MODULES      =       ${PACKAGE_DIR}/gdal.py ${PACKAGE_DIR}/ogr.py ${PACKAGE_DIR}/osr.py ${PACKAGE_DIR}/gdalconst.py
 
 clean:
 	-rm -rf build
 
+SWIGARGS += -outdir "${PACKAGE_DIR}" 
+
+
 veryclean: clean
 	-rm -f ${WRAPPERS} ${PY_MODULES}
+	-rm -f ${PACKAGE_DIR}/*.pyc
 	-rm -f *.pyc
+	-rm -f ${SWIGOUTPUTDIR}/gdal_wrap.cpp 
+	-rm -f ${SWIGOUTPUTDIR}/gdalconst_wrap.c
+	-rm -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp
+	-rm -f ${SWIGOUTPUTDIR}/osr_wrap.cpp
 	-rm -rf dist
 	-rm -f *.so
 	-rm -rf *.egg-info
