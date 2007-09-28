@@ -17,6 +17,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref rgb2pct - Convert a 24bit RGB image to 8bit paletted.
 <li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
 <li> \ref gdal_merge - Build a quick mosaic from a set of images.
+<li> \ref gdal2tiles - Create a TMS tile structure, KML and simple web viewer.
 <li> \ref gdal_rasterize - Rasterize vectors into raster file.
 <li> \ref nearblack - Convert nearly black/white borders to exact value.
 <li> \ref gdal-config - Get options required to build software using GDAL.
@@ -1044,6 +1045,65 @@ with Python support.
 \if man
 \section mauthor AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdal2tiles gdal2tiles.py
+
+generates directory with TMS tiles, KMLs and simple web viewers
+
+\if man
+\section msynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+gdal2tiles.py [-title "Title"] [-publishurl http://yourserver/dir/]
+              [-nogooglemaps] [-noopenlayers] [-nokml]
+              [-googlemapskey KEY] [-forcekml] [-v]
+              input_file [output_dir]
+\endverbatim
+\if man
+\section mdescription DESCRIPTION
+\endif
+
+This utility generates a directory with small tiles and metadata, following OSGeo Tile Map Service Specification.
+Simple webpages with viewers based on Google Maps and OpenLayers are generated as well - so anybody can comfortably explore your maps on-line and you do not need to install or configure any special software (like mapserver) and the map displays very fast in the webbrowser. You only need to upload generated directory into a webserver.
+
+GDAL2Tiles creates also necessary metadata for Google Earth (KML SuperOverlay), in case the supplied map uses EPSG:4326 projection.
+
+World files and embeded georeference is used during tile generation, but you can publish a picture without proper georeference too. 
+
+<dl>
+<dt> <b>-title</b> <i>"Title"</i>:</dt>
+  <dd>Title used for generated metadata, web viewers and KML files.</dd>
+<dt> <b>-publishurl</b> <i>http://yourserver/dir/</i>:</dt>
+  <dd>Address of a directory into which you are going to upload the result. It should end with slash.</dd>
+<dt> <b>-nogooglemaps</b>:</dt>
+  <dd>Do not generate Google Maps based html page.</dd>
+<dt> <b>-noopenlayers</b>:</dt>
+  <dd>Do not generate OpenLayers based html page.</dd>
+<dt> <b>-nokml</b>:</dt>
+  <dd>Do not generate KML files for Google Earth.</dd>
+<dt> <b>-googlemapskey</b> <i>KEY</i>:</dt>
+  <dd>Key for your domain generated on Google Maps API webpage (http://www.google.com/apis/maps/signup.html).</dd>
+<dt> <b>-forcekml</b></dt>
+  <dd>Force generating of KML files. Input file must use EPSG:4326 coordinates!</dd>
+<dt> <b>-v</b></dt>
+  <dd> Generate verbose output of tile generation.</dd>
+</dl>
+
+
+NOTE: gdal2tiles.py is a Python script, and will only work if GDAL was built
+with Python support.
+
+\if man
+\section mauthor AUTHORS
+Klokan Petr Pridal <klokan@klokan.cz> as a Google SoC 2007 Project.
 \endif
 */
 
