@@ -4,7 +4,7 @@ DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt bna \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(SDE_DIR) $(IDB_DIR)
+			$(SDE_DIR) $(IDB_DIR) $(KMLDIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
