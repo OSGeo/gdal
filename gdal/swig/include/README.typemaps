@@ -79,7 +79,8 @@ argout typemaps.
 
 out OGRErr - 
 
-
+out (char **CSL) - Required - The return value is a list that is copied
+into a list in the target language and then CSLDestroyed
 
 
 
