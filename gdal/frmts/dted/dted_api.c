@@ -233,12 +233,16 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
 int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                      GInt16 * panData )
+{
+    return DTEDReadProfileEx( psDInfo, nColumnOffset, panData, FALSE);
+}
 
+int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
+                       GInt16 * panData, int bVerifyChecksum )
 {
     int         nOffset;
     int         i;
     GByte       *pabyRecord;
-    static int  verifyChecksum = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Read data record from disk.                                     */
@@ -297,12 +301,8 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
             }
         }
     }
-    if (verifyChecksum < 0)
-    {
-        verifyChecksum = EQUAL(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"), "YES");
-    }
 
-    if (verifyChecksum == TRUE)
+    if (bVerifyChecksum)
     {
         unsigned int nCheckSum = 0;
         unsigned int fileCheckSum;

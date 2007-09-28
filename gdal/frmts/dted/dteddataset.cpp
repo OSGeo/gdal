@@ -51,6 +51,7 @@ class DTEDDataset : public GDALPamDataset
 
     char        *pszFilename;
     DTEDInfo    *psDTED;
+    int         bVerifyChecksum;
 
   public:
                  DTEDDataset();
@@ -127,7 +128,8 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Read the data.                                                  */
 /* -------------------------------------------------------------------- */
     panData = (GInt16 *) pImage;
-    if( !DTEDReadProfile( poDTED_DS->psDTED, nBlockXOff, panData ) )
+    if( !DTEDReadProfileEx( poDTED_DS->psDTED, nBlockXOff, panData,
+                            poDTED_DS->bVerifyChecksum ) )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -166,6 +168,7 @@ double DTEDRasterBand::GetNoDataValue( int * pbSuccess )
 DTEDDataset::DTEDDataset()
 {
     pszFilename = CPLStrdup("unknown");
+    bVerifyChecksum = EQUAL(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"), "YES");
 }
 
 /************************************************************************/

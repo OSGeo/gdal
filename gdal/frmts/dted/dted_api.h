@@ -121,6 +121,12 @@ DTEDInfo *DTEDOpen( const char * pszFilename, const char * pszAccess,
 
 int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                      GInt16 * panData );
+
+/* Extented version of DTEDReadProfile that enable the user to specify */
+/* whether he wants the checksums to be verified */
+int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
+                       GInt16 * panData, int bVerifyChecksum );
+
 int DTEDWriteProfile( DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData);
 
 void DTEDClose( DTEDInfo * );
