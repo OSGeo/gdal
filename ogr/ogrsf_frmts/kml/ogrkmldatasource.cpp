@@ -41,6 +41,7 @@ OGRKMLDataSource::OGRKMLDataSource()
 {
     pszName = NULL;
     pszNameField = NULL;
+    pszDescriptionField = NULL;
     papoLayers = NULL;
     nLayers = 0;
     
@@ -67,6 +68,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
     CSLDestroy( papszCreateOptions );
     CPLFree( pszName );
     CPLFree( pszNameField );
+    CPLFree( pszDescriptionField );
 
     for( int i = 0; i < nLayers; i++ )
     {
@@ -214,8 +216,17 @@ int OGRKMLDataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
-    pszNameField = CPLStrdup(CSLFetchNameValue(papszOptions, "NameField"));
+    if (CSLFetchNameValue(papszOptions, "NameField"))
+        pszNameField = CPLStrdup(CSLFetchNameValue(papszOptions, "NameField"));
+    else
+        pszNameField = CPLStrdup("Name");
     CPLDebug("KML", "Using the field '%s' for name element", pszNameField);
+    
+    if (CSLFetchNameValue(papszOptions, "DescriptionField"))
+        pszDescriptionField = CPLStrdup(CSLFetchNameValue(papszOptions, "DescriptionField"));
+    else
+        pszDescriptionField = CPLStrdup("Description");
+    CPLDebug("KML", "Using the field '%s' for description element", pszDescriptionField);
     
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */

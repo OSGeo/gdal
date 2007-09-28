@@ -21,7 +21,8 @@ Each input layer is translated into a separate KML "Folder" element.</p>
 <h2>Creation Options</h2>
 <p>The following creation options are supported:
 <ul>
-<li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element.
+<li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Name'</li>
+<li><b>DescriptionField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Description'</li>
 <pre>ogr2ogr -f KML output.kml input.shp -dsco NameField=RegionName</pre>
 </li>
 </ul>
