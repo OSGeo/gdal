@@ -51,6 +51,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     
     this->iNextKMLId = 0;
     this->nTotalKMLCount = -1;
+    this->nNextFID = 0;
     
     this->poDS = poDSIn;
     
