@@ -7,7 +7,7 @@
 
 #include "gdal_priv.h"
 #include "Python.h"
-#include "../../frmts/mem/memdataset.h"
+#include "../../../frmts/mem/memdataset.h"
 #include "numpy/arrayobject.h"
 
 class NUMPYDataset : public GDALDataset
