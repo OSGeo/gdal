@@ -45,6 +45,14 @@
 
 %import typemaps_perl.i
 
+%import destroy.i
+
+ALTERED_DESTROY(OGRDataSourceShadow, OGRc, delete_DataSource)
+ALTERED_DESTROY(OGRFeatureShadow, OGRc, delete_Feature)
+ALTERED_DESTROY(OGRFeatureDefnShadow, OGRc, delete_FeatureDefn)
+ALTERED_DESTROY(OGRFieldDefnShadow, OGRc, delete_FieldDefn)
+ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
+
 %extend OGRGeometryShadow {
 
     %rename (AddPoint_3D) AddPoint;
