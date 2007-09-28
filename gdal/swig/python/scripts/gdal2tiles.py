@@ -34,7 +34,8 @@ import gdal
 import sys, os, tempfile
 from gdalconst import GA_ReadOnly
 from osr import SpatialReference
-from math import ceil, log
+from math import ceil, log10
+import operator
 
 verbose = False
 
@@ -714,8 +715,13 @@ if __name__ == '__main__':
         print >> sys.stderr, "so KML file can not be generated."
         sys.exit( 1 )
 
+
+    # Python 2.2 compatibility.
+    log2 = lambda x: log10(x) / log10(2) # log2 (base 2 logarithm)
+    sum = lambda seq, start=0: reduce( operator.add, seq, start)
+
     # Zoom levels of the pyramid.
-    maxzoom = int(max( ceil(log(xsize/float(tilesize), 2)), ceil(log(ysize/float(tilesize), 2))))
+    maxzoom = int(max( ceil(log2(xsize/float(tilesize))), ceil(log2(ysize/float(tilesize)))))
     zoompixels = [geotransform[1] * 2.0**(maxzoom-zoom) for zoom in range(0, maxzoom+1)]
     tilecount = sum( [
         int( ceil( xsize / (2.0**(maxzoom-zoom)*tilesize))) * \
