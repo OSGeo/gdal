@@ -37,6 +37,10 @@
 #include <string>
 #include <vector>
 
+#ifndef XMLCALL
+#error "Old version of expat, please upgrade to expat 2.x
+#endif
+
 class KMLnode;
 
 class KML
