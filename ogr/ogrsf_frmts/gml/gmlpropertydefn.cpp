@@ -83,20 +83,6 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
 
 {
 /* -------------------------------------------------------------------- */
-/*      We can't get more general than string, so at this point just    */
-/*      give up on changing.                                            */
-/* -------------------------------------------------------------------- */
-    if( m_eType == GMLPT_String )
-    {
-        /* grow the Width to the length of the string passed in */
-        int nWidth;
-        nWidth = strlen(pszValue);
-        if ( m_nWidth < nWidth ) 
-            SetWidth( nWidth );
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      If it is a zero length string, just return.  We can't deduce    */
 /*      much from this.                                                 */
 /* -------------------------------------------------------------------- */
@@ -120,11 +106,21 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
         else 
         {
             m_eType = GMLPT_String;
-            return;
+
+            /* Skip forward to calculate property width. */
+            break;
         }
     }
 
-    if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
+    if( m_eType == GMLPT_String )
+    {
+        /* grow the Width to the length of the string passed in */
+        int nWidth;
+        nWidth = strlen(pszValue);
+        if ( m_nWidth < nWidth ) 
+            SetWidth( nWidth );
+    }
+    else if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
     {
         if( bIsReal )
             m_eType = GMLPT_Real;
