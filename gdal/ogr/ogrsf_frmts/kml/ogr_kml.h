@@ -99,6 +99,7 @@ class OGRKMLDataSource : public OGRDataSource
     
     //The name of the field to use for 
     char                *pszNameField;
+    char                *pszDescriptionField;
     
     char               **papszCreateOptions;
 
@@ -123,6 +124,7 @@ class OGRKMLDataSource : public OGRDataSource
 
     const char          *GetName() { return pszName; }
     const char          *GetNameField() { return pszNameField; }
+    const char          *GetDescriptionField() { return pszDescriptionField; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
