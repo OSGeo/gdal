@@ -126,6 +126,11 @@ def generate_rootkml( **args ):
   <Document>
     <name>%(title)s</name>
     <description></description>
+    <Style>
+      <ListStyle id="hideChildren">
+        <listItemType>checkHideChildren</listItemType>
+      </ListStyle>
+    </Style>
     <Region>
       <LatLonAltBox>
         <north>%(north).20f</north>
@@ -673,11 +678,6 @@ if __name__ == '__main__':
     ysize = dataset.RasterYSize
 
     geotransform = dataset.GetGeoTransform()
-
-    if (abs(geotransform[1]) != abs(geotransform[5])):
-        print >> sys.stderr, "Geographic area covered by one pixel must be square for generating TMS tiles"
-        sys.exit( 1 )
-
     projection = dataset.GetProjection()
 
     north = geotransform[3]
