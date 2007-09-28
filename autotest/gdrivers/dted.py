@@ -189,14 +189,17 @@ def dted_7():
 # Test a file whose checksum is corrupted
 
 def dted_8():
+    # this will enable DTED_VERIFY_CHECKSUM
+    os.environ['DTED_VERIFY_CHECKSUM'] = 'YES'
+
     ds = gdal.Open( 'data/n43_bad_crc.dt0' )
     band = ds.GetRasterBand(1)
-    
+
     # numerous errors would be reported 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     chksum = band.Checksum()
     gdal.PopErrorHandler()
-    
+
     # 49187 is the checksum of data is the DTED is read without checking its checksum
     # so we should not get this value
     if chksum == 49187:
@@ -268,9 +271,7 @@ gdaltest_list = [
     dted_5,
     dted_6,
     dted_7,
-# rouault : I'm commenting dted_8 as it fails on the buildbots...
-# maybe something related with os.environ['DTED_VERIFY_CHECKSUM'] = 'YES' below
-#    dted_8,
+    dted_8,
     dted_9,
     dted_cleanup
     ]
@@ -279,9 +280,6 @@ gdaltest_list = [
 
 if __name__ == '__main__':
     
-    # this will enable DTED_VERIFY_CHECKSUM for dted_8 test
-    os.environ['DTED_VERIFY_CHECKSUM'] = 'YES'
-
     gdaltest.setup_run( 'dted' )
 
     gdaltest.run_tests( gdaltest_list )
