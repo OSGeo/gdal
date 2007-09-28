@@ -156,6 +156,8 @@ typedef int OGRErr;
 %include osr_csharp.i
 #elif defined(SWIGJAVA)
 %include osr_java.i
+#elif defined(SWIGPERL)
+%include osr_perl.i
 #else
 %include gdal_typemaps.i
 #endif
@@ -199,7 +201,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 /************************************************************************/
 /*
  * Python has it's own custom interface to GetProjectionMethods().which returns
- * fairly complex strucutre.
+ * fairly complex structure.
  *
  * All other languages will have a more simplistic interface which is
  * exactly the same as the C api.
@@ -208,38 +210,18 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 
 #if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
-#if defined(SWIGPERL)
 %apply (char **CSL) {(char **)};
-#endif
 char **OPTGetProjectionMethods();
-#if defined(SWIGPERL)
 %clear (char **);
-#endif
 
 %rename (GetProjectionMethodParameterList) OPTGetParameterList;
-#if defined(SWIGPERL)
-%apply (char **free) {(char **)};
-%apply (char **argout) {(char **username)};
-#endif
+%apply (char **CSL) {(char **)};
 char **OPTGetParameterList( char *method, char **username );
-#if defined(SWIGPERL)
 %clear (char **);
-%clear (char **username);
-#endif
 
 %rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
-#if defined(SWIGPERL)
-%apply (char **argout) {(char **usrname)};
-%apply (char **argout) {(char **type)};
-%apply (double *OUTPUT){(double *defaultval)};
-#endif
 void OPTGetParameterInfo( char *method, char *param, char **usrname,
                           char **type, double *defaultval );
-#if defined(SWIGPERL)
-%clear (double *defaultval);
-%clear (char **type);
-%clear (char **usrname);
-#endif
 #endif
 
 /******************************************************************************
