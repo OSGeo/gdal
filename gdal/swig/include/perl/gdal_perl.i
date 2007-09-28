@@ -38,7 +38,18 @@
 %ignore GetMetadata_List;
 
 %import typemaps_perl.i
-    
+
+%import destroy.i
+
+ALTERED_DESTROY(GDALBandShadow, GDALc, delete_Band)
+ALTERED_DESTROY(GDALColorTableShadow, GDALc, delete_ColorTable)
+ALTERED_DESTROY(GDALConstShadow, GDALc, delete_Const)
+ALTERED_DESTROY(GDALDatasetShadow, GDALc, delete_Dataset)
+ALTERED_DESTROY(GDALDriverShadow, GDALc, delete_Driver)
+ALTERED_DESTROY(GDAL_GCP, GDALc, delete_GCP)
+ALTERED_DESTROY(GDALMajorObjectShadow, GDALc, delete_MajorObject)
+ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTable)
+
 %perlcode %{
     use Carp;
     use Geo::GDAL::Const;
