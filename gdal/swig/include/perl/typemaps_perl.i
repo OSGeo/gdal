@@ -11,6 +11,7 @@
 %include "typemaps.i"
 
 %apply (double *OUTPUT) { double *argout };
+%apply (double *OUTPUT) { double *defaultval };
 
 /*
  * double *val, int*hasval, is a special contrived typemap used for
@@ -485,7 +486,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
 }
-%typemap(argout) (char **argout)
+%typemap(argout) (char **argout), (char **username), (char **usrname), (char **type)
 {
   /* %typemap(argout) (char **argout) */
   $result = sv_newmortal();
