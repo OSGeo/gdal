@@ -642,7 +642,7 @@ CPLErr GDALPamDataset::TryLoadXML()
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    CPLString osVRTPath = CPLStrdup(CPLGetPath(psPam->pszPamFilename));
+    CPLString osVRTPath(CPLGetPath(psPam->pszPamFilename));
     eErr = XMLInit( psTree, osVRTPath );
 
     CPLDestroyXMLNode( psTree );
