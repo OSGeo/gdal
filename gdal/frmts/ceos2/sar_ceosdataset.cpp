@@ -1571,6 +1571,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         || poOpenInfo->pabyHeader[7] != 0x12 )
         return NULL;
 
+    // some products (#1862) have byte swapped record length/number
+    // values and will blow stuff up -- explicitly ignore if record index
+    // value appears to be little endian.
+    if( poOpenInfo->pabyHeader[0] != 0 )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
