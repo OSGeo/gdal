@@ -691,7 +691,7 @@ static const char* MakeTOCEntryName(RPFTocEntry* tocEntry )
     char* c = str;
     while(*c)
     {
-        if (*c == ':')
+        if (*c == ':' || *c == ' ')
             *c = '_';
         c++;
     }
