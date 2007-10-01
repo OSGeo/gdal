@@ -129,8 +129,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        VSIFRead( szHeader, 1, sizeof(szHeader), fp );
-        szHeader[sizeof(szHeader)-1] = '\0';
+        int nRead = VSIFRead( szHeader, 1, sizeof(szHeader), fp );
+        if (nRead <= 0)
+        {
+            VSIFClose( fp );
+            return FALSE;
+        }
+        szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Check for a UTF-8 BOM and skip if found                         */
