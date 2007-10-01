@@ -56,7 +56,7 @@ std::string Nodetype2String(Nodetype t)
 
 bool isNumberDigit(const char cIn)
 {
-    return ( cIn == '-' || c == '+' || 
+    return ( cIn == '-' || cIn == '+' || 
             (cIn >= '0' && cIn <= '9') ||
              cIn == '.' || cIn == 'e' || cIn == 'E' );
 }
