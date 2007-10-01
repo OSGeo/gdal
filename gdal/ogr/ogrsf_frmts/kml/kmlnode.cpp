@@ -56,19 +56,9 @@ std::string Nodetype2String(Nodetype t)
 
 bool isNumberDigit(const char cIn)
 {
-    if( cIn == '-' ||
-        cIn == '0' ||
-        cIn == '1' ||
-        cIn == '2' ||
-        cIn == '3' ||
-        cIn == '4' ||
-        cIn == '5' ||
-        cIn == '6' ||
-        cIn == '7' ||
-        cIn == '8' ||
-        cIn == '9' ||
-        cIn == '.') return TRUE;
-    return FALSE;
+    return ( cIn == '-' || c == '+' || 
+            (cIn >= '0' && cIn <= '9') ||
+             cIn == '.' || cIn == 'e' || cIn == 'E' );
 }
 
 Coordinate* ParseCoordinate(std::string sIn)
