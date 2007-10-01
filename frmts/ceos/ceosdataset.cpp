@@ -147,7 +147,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Before trying CEOSOpen() we first verify that the first         */
 /*      record is in fact a CEOS file descriptor record.                */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 100 )
+    if( poOpenInfo->nHeaderBytes < 100 )
         return NULL;
 
     if( poOpenInfo->pabyHeader[4] != 0x3f

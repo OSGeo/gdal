@@ -63,7 +63,7 @@ static long CEOSScanInt( const char * pszString, int nMaxChars )
 /*      return the record.                                              */
 /************************************************************************/
 
-CEOSRecord * CEOSReadRecord( FILE * fp )
+CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 
 {
     GByte	abyHeader[12];
@@ -72,10 +72,10 @@ CEOSRecord * CEOSReadRecord( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Read the standard CEOS header.                                  */
 /* -------------------------------------------------------------------- */
-    if( VSIFEof( fp ) )
+    if( VSIFEof( psImage->fpImage ) )
         return NULL;
 
-    if( VSIFRead( abyHeader, 1, 12, fp ) != 12 )
+    if( VSIFRead( abyHeader, 1, 12, psImage->fpImage ) != 12 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Ran out of data reading CEOS record." );
@@ -86,6 +86,12 @@ CEOSRecord * CEOSReadRecord( FILE * fp )
 /*      Extract this information.                                       */
 /* -------------------------------------------------------------------- */
     psRecord = (CEOSRecord *) CPLMalloc(sizeof(CEOSRecord));
+    if( psImage->bLittleEndian )
+    {
+        CPL_SWAP32PTR( abyHeader + 0 );
+        CPL_SWAP32PTR( abyHeader + 8 );
+    }
+
     psRecord->nRecordNum = abyHeader[0] * 256 * 256 * 256
                          + abyHeader[1] * 256 * 256
                          + abyHeader[2] * 256
@@ -132,7 +138,8 @@ CEOSRecord * CEOSReadRecord( FILE * fp )
 
     memcpy( psRecord->pachData, abyHeader, 12 );
 
-    if( (int)VSIFRead( psRecord->pachData + 12, 1, psRecord->nLength-12, fp )
+    if( (int)VSIFRead( psRecord->pachData + 12, 1, psRecord->nLength-12, 
+                       psImage->fpImage )
         != psRecord->nLength - 12 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -180,6 +187,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
     CEOSRecord  *psRecord;
     CEOSImage   *psImage;
     int		nSeqNum, i;
+    GByte       abyHeader[16];
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the imagery file.                                   */
@@ -195,9 +203,27 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create a CEOSImage structure, and initialize it.                */
+/* -------------------------------------------------------------------- */
+    psImage = (CEOSImage *) CPLCalloc(1,sizeof(CEOSImage));
+    psImage->fpImage = fp;
+
+    psImage->nPixels = psImage->nLines = psImage->nBands = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Preread info on the first record, to establish if it is         */
+/*      little endian.                                                  */
+/* -------------------------------------------------------------------- */
+    VSIFRead( abyHeader, 16, 1, fp );
+    VSIFSeek( fp, 0, SEEK_SET );
+    
+    if( abyHeader[0] != 0 || abyHeader[1] != 0 )
+        psImage->bLittleEndian = TRUE;
+    
+/* -------------------------------------------------------------------- */
 /*      Try to read the header record.                                  */
 /* -------------------------------------------------------------------- */
-    psRecord = CEOSReadRecord( fp );
+    psRecord = CEOSReadRecord( psImage );
     if( psRecord == NULL )
         return NULL;
 
@@ -225,14 +251,6 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
                   "Continuing to access anyways.\n", 
                   nSeqNum, pszFilename );
     }
-    
-/* -------------------------------------------------------------------- */
-/*      Create a CEOSImage structure, and initialize it.                */
-/* -------------------------------------------------------------------- */
-    psImage = (CEOSImage *) CPLMalloc(sizeof(CEOSImage));
-    psImage->fpImage = fp;
-
-    psImage->nPixels = psImage->nLines = psImage->nBands = 0;
     
 /* -------------------------------------------------------------------- */
 /*      Extract various information.                                    */
