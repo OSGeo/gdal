@@ -72,6 +72,8 @@ typedef struct {
     /* private information */
     FILE	*fpImage;
 
+    int         bLittleEndian;
+
     int		nImageRecCount;
     int		nImageRecLength;
 
@@ -87,16 +89,16 @@ typedef struct {
 /*      External Prototypes                                             */
 /* -------------------------------------------------------------------- */
 
-CEOSImage CPL_DLL *CEOSOpen( const char *, const char * );
-void CPL_DLL 	CEOSClose( CEOSImage * );
-CPLErr CPL_DLL 	CEOSReadScanline( CEOSImage *psImage, int nBand,
-                                  int nScanline, void * pData );
+CEOSImage CPL_ODLL *CEOSOpen( const char *, const char * );
+void CPL_ODLL 	    CEOSClose( CEOSImage * );
+CPLErr CPL_ODLL     CEOSReadScanline( CEOSImage *psImage, int nBand,
+                                      int nScanline, void * pData );
 
 /* -------------------------------------------------------------------- */
 /*      Internal prototypes.                                            */
 /* -------------------------------------------------------------------- */
-CEOSRecord CPL_DLL *CEOSReadRecord( FILE * );
-void CPL_DLL	CEOSDestroyRecord( CEOSRecord * );
+CEOSRecord CPL_ODLL *CEOSReadRecord( CEOSImage * );
+void CPL_ODLL	     CEOSDestroyRecord( CEOSRecord * );
 
 CPL_C_END
 
