@@ -628,6 +628,45 @@ software which is not liberal to this value.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/pnmdataset.cpp</tt>. 
 
+<h2><a name="RPFTOC">Raster Product Format/RPF (a.toc)</a></h2>
+
+<p>This is a read-only reader for RPF products, like CADRG or CIB, that use the table of
+content file - A.TOC - from a RPF exchange.</p>
+<p>The driver will report a different subdataset for each subdataset found in the A.TOC
+file.</p>
+
+Result of a gdalinfo on a A.TOC file.
+<pre>
+Subdatasets:
+  SUBDATASET_1_NAME=NITF_TOC_ENTRY:CADRG_GNC_5M_1_1:GNCJNCN/rpf/a.toc
+  SUBDATASET_1_DESC=CADRG:GNC:Global Navigation Chart:5M:1:1
+[...]
+  SUBDATASET_5_NAME=NITF_TOC_ENTRY:CADRG_GNC_5M_7_5:GNCJNCN/rpf/a.toc
+  SUBDATASET_5_DESC=CADRG:GNC:Global Navigation Chart:5M:7:5
+  SUBDATASET_6_NAME=NITF_TOC_ENTRY:CADRG_JNC_2M_1_6:GNCJNCN/rpf/a.toc
+  SUBDATASET_6_DESC=CADRG:JNC:Jet Navigation Chart:2M:1:6
+[...]
+  SUBDATASET_13_NAME=NITF_TOC_ENTRY:CADRG_JNC_2M_8_13:GNCJNCN/rpf/a.toc
+  SUBDATASET_13_DESC=CADRG:JNC:Jet Navigation Chart:2M:8:13
+</pre>
+
+<p>A gdalinfo on one of this subdataset will return the various NITF metadata, as well
+as the list of the NITF tiles of the subdataset.</p>
+
+See Also:<p>
+
+<ul>
+<li> <a href="frmt_ogdi.html">OGDI Bridge</a> : the RPFTOC driver gives an equivalent
+     functionnality to the RPF driver from the OGDI library. </li>
+<li> <a href="RPF">MIL-PRF-89038</a> : specifications of RPF, CADRG, CIB</li>
+</ul>
+
+
+<p>This driver gives an equivalent functionnality to the RPF driver from the
+OGDI library, that can be accessed through the  <a href="frmt_ogdi.html">OGDI Bridge</a></p>
+
+NOTE: Implemented as <tt>gdal/frmts/nitf/rpftocdataset.cpp</tt>
+
 <h2><a name="SAR_CEOS">SAR_CEOS -- CEOS SAR Image</a></h2>
 
 This is a read-only reader for CEOS SAR image files.  To use, select
