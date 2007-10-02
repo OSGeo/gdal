@@ -2984,7 +2984,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
 	// Build inverted palette if we have inverted photometric.
 	// Pixel values remains unchanged.
-	if( nPhotometric == PHOTOMETRIC_MINISWHITE )
+	if( (nBitsPerSample == 8 || nBitsPerSample == 16) && nPhotometric == PHOTOMETRIC_MINISWHITE )
 	{
 	    GDALColorEntry  oEntry;
 	    int		    iColor, nColorCount;
