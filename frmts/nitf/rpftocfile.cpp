@@ -248,7 +248,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
     
     for(i=0;i<toc->nEntries;i++)
     {
-        toc->entries[i].isOverview = 0;
+        toc->entries[i].isOverviewOrLegend = 0;
         
         VSIFReadL( toc->entries[i].type, 1, 5, fp);
         toc->entries[i].type[5] = 0;
@@ -447,13 +447,15 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         VSIFReadL( frameEntry->filename, 1, 12, fp);
         frameEntry->filename[12] = '\0';
 
-        /* Check if the filename is an overview */
+        /* Check if the filename is an overview or legend */
         for (j=0;j<12;j++)
         {
             if (strcmp(&(frameEntry->filename[j]),".OVR") == 0 ||
-                strcmp(&(frameEntry->filename[j]),".ovr") == 0)
+                strcmp(&(frameEntry->filename[j]),".ovr") == 0 ||
+                strcmp(&(frameEntry->filename[j]),".LGD") == 0 ||
+                strcmp(&(frameEntry->filename[j]),".lgd") == 0)
             {
-                entry->isOverview = TRUE;
+                entry->isOverviewOrLegend = TRUE;
                 break;
             }
         }
