@@ -1721,12 +1721,11 @@ else
     else
         LIBS="$LIBS -L$with_sqlite/lib -lsqlite3"
         SQLITE_INC="-I$with_sqlite/include"
-        AC_MSG_RESULT(setting DODS root directory to $with_sqlite)
+        AC_MSG_RESULT(setting SQLite root directory to $with_sqlite)
     fi
     HAVE_SQLITE=yes
 fi
 
-dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(SQLITE_INC)
 AC_SUBST(HAVE_SQLITE)
 
