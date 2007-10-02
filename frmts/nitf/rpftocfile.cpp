@@ -276,15 +276,47 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         VSIFReadL( toc->entries[i].producer, 1, 5, fp);
         toc->entries[i].producer[5] = 0;
         RPFTOCTrim(toc->entries[i].producer);
+
+        VSIFReadL( &toc->entries[i].nwLat, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].nwLat);
+
+        VSIFReadL( &toc->entries[i].nwLong, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].nwLong);
+
+        VSIFReadL( &toc->entries[i].swLat, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].swLat);
+
+        VSIFReadL( &toc->entries[i].swLong, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].swLong);
+
+        VSIFReadL( &toc->entries[i].neLat, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].neLat);
+
+        VSIFReadL( &toc->entries[i].neLong, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].neLong);
+
+        VSIFReadL( &toc->entries[i].seLat, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].seLat);
         
-        VSIFReadL( &toc->entries[i].nwLat, 1, 12 * sizeof(toc->entries[i].nwLat), fp);
-        for(j = 0; j < 12; j++)
-            CPL_MSBPTR64( &toc->entries[i].nwLat + j);
+        VSIFReadL( &toc->entries[i].seLong, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].seLong);
         
-        VSIFReadL( &toc->entries[i].nVertFrames, 1, sizeof(toc->entries[i].nVertFrames), fp);
+        VSIFReadL( &toc->entries[i].vertResolution, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].vertResolution);
+        
+        VSIFReadL( &toc->entries[i].horizResolution, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].horizResolution);
+        
+        VSIFReadL( &toc->entries[i].vertInterval, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].vertInterval);
+
+        VSIFReadL( &toc->entries[i].horizInterval, 1, sizeof(double), fp);
+        CPL_MSBPTR64( &toc->entries[i].horizInterval);
+        
+        VSIFReadL( &toc->entries[i].nVertFrames, 1, sizeof(int), fp);
         CPL_MSBPTR32( &toc->entries[i].nVertFrames );
         
-        VSIFReadL( &toc->entries[i].nHorizFrames, 1, sizeof(toc->entries[i].nHorizFrames), fp);
+        VSIFReadL( &toc->entries[i].nHorizFrames, 1, sizeof(int), fp);
         CPL_MSBPTR32( &toc->entries[i].nHorizFrames );
         
         toc->entries[i].frameEntries = (RPFTocFrameEntry*)
