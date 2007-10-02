@@ -1051,7 +1051,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         double adfGeoTransform[6];
         for(i=0;i<toc->nEntries;i++)
         {
-            if (!toc->entries[i].isOverview)
+            if (!toc->entries[i].isOverviewOrLegend)
             {
                 GDALDataset* tmpDS = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i], isRGBA);
                 if (tmpDS)
