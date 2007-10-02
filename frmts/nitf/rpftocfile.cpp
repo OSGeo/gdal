@@ -100,11 +100,8 @@ RPFToc* RPFTOCRead(const char* pszFilename, NITFFile* psFile)
 }
 
 
-/* This function is directly inspired by function parse_toc coming from ogdi/driver/rpf/utils.c
-   and placed under the following copyright */
+/* This function is directly inspired by function parse_toc coming from ogdi/driver/rpf/utils.c */
 
-
-//#define DEBUG_TOC
 RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocHeader)
 {
     int i, j;
@@ -323,11 +320,10 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
                 CPLMalloc(toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
         memset(toc->entries[i].frameEntries, 0,
                toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
-#ifdef DEBUG_TOC
-        fprintf(stderr, "%s,%s,%s,%s,%s,%d,%d\n",
-                toc->entries[i].type, toc->entries[i].compression, toc->entries[i].scale,
-                toc->entries[i].zone, toc->entries[i].producer, toc->entries[i].nVertFrames, toc->entries[i].nHorizFrames);
-#endif
+        
+        CPLDebug("RPFTOC", "[%d] type=%s, compression=%s, scale=%s, zone=%s, producer=%s, nVertFrames=%d, nHorizFrames=%d",
+                 i, toc->entries[i].type, toc->entries[i].compression, toc->entries[i].scale,
+                 toc->entries[i].zone, toc->entries[i].producer, toc->entries[i].nVertFrames, toc->entries[i].nHorizFrames);
     }
     
     if( VSIFSeekL( fp, frameFileIndexSectionSubHeaderPhysIndex, SEEK_SET ) != 0)
@@ -553,9 +549,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
             CPLFree(baseDir);
         }
 
-#ifdef DEBUG_TOC
-        fprintf(stderr, "entry %d : %s,%s (%d, %d)\n", boundaryId, frameEntry->directory, frameEntry->filename, frameRow, frameCol);
-#endif
+        CPLDebug("RPFTOC", "Entry %d : %s,%s (%d, %d)", boundaryId, frameEntry->directory, frameEntry->filename, frameRow, frameCol);
 
         frameEntry->exists = 1;
     }
