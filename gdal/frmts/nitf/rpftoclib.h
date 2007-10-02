@@ -74,7 +74,7 @@ typedef struct
     unsigned int  nHorizFrames;
     
     int           boundaryId;
-    int           isOverview;
+    int           isOverviewOrLegend;
     
     const char*   seriesAbbreviation;  /* (may be NULL) eg "GNC" */
     const char*   seriesName;          /* (may be NULL) eg "Global Navigation Chart" */
