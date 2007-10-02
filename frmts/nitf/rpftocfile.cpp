@@ -536,6 +536,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
                         "File %s does not exist.", frameEntry->fullFilePath );
                 }
 #if !defined(_WIN32) && !defined(_WIN32_CE)
+                else
                 {
                     frameEntry->fileExists = 1;
                 }
