@@ -45,6 +45,7 @@ init_list = [ \
     ('int32.tif', 1, 4672, None),
     ('uint32.tif', 1, 4672, None),
     ('float32.tif', 1, 4672, None),
+    ('float32_minwhite.tif', 1, 1, None),
     ('float64.tif', 1, 4672, None),
     ('cint16.tif', 1, 5028, None),
     ('cint32.tif', 1, 5028, None),
