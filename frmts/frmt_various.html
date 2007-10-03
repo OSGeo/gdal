@@ -163,7 +163,8 @@ and thirty-two bit integer raster data types are supported as well as 32
 bit floating point.  Coordinate systems (from a .prj file), and georeferencing
 are supported.  Unrecognised options in the .hdr file are ignored.  To 
 open a dataset select the file with the image file (often with the extension
-.bil).  If present .clr color table files are read, but not written.<p>
+.bil).  If present .clr color table files are read, but not written. If present,
+image.rep file will be read to extract the projection system of SpatioCarte Defense 1.0 raster products.<p>
 
 This driver may be sufficient to read GTOPO30, SRTM30 + SRTM90 data and Geospot products.<p>
 
@@ -175,6 +176,7 @@ See Also: <p>
    <li> <a href="http://downloads.esri.com/support/whitepapers/other_/eximgav.pdf">ESRI whitepaper: + Extendable Image Formats for ArcView GIS 3.1 and 3.2</a>  (BIL, see p. 5)<p>
    <li> <a href="http://edcdaac.usgs.gov/gtopo30/gtopo30.html">GTOPO30 - Global Topographic Data</a><p>
    <li> <a href="http://edcdaac.usgs.gov/gtopo30/README.html">GTOPO30 Documentation</a><p>
+   <li> <a href="http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download">SpatioCarte Defense 1.0 specification</a> (in French)<p>
 </ul>
 
 <h2><a name="ENVI">ENVI - ENVI .hdr Labelled Raster</h2>
