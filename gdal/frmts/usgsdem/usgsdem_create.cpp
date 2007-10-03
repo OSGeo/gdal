@@ -1468,12 +1468,18 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     if( pszProduct == NULL || EQUAL(pszProduct,"DEFAULT") )
     {
         if ( !USGSDEMProductSetup_DEFAULT( &sWInfo ) )
+        {
+            USGSDEMWriteCleanup( &sWInfo );
             return NULL;
+        }
     }
     else if( EQUAL(pszProduct,"CDED50K") )
     {
         if( !USGSDEMProductSetup_CDED50K( &sWInfo ) )
+        {
+            USGSDEMWriteCleanup( &sWInfo );
             return NULL;
+        }
     }
     else
     {
