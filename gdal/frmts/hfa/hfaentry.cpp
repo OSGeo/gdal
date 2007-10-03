@@ -302,6 +302,21 @@ GByte *HFAEntry::MakeData( int nSize )
         nDataSize = nSize;
 
         MarkDirty();
+
+/* -------------------------------------------------------------------- */
+/*      If the data already had a file position, we now need to         */
+/*      clear that, forcing it to be rewritten at the end of the        */
+/*      file.  Referencing nodes will need to be marked dirty so        */
+/*      they are rewritten.                                             */
+/* -------------------------------------------------------------------- */
+        if( nFilePos != 0 )
+        {
+            nFilePos = 0;
+            if (poPrev != NULL) poPrev->MarkDirty(); 
+            if (poNext != NULL) poNext->MarkDirty(); 
+            if (poChild != NULL) poChild->MarkDirty(); 
+            if (poParent != NULL) poParent->MarkDirty(); 
+        }
     }
 
     return pabyData;
