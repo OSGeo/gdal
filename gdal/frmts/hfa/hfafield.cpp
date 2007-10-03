@@ -664,6 +664,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                                           nDataSize - nExtraOffset,
                                           chReqType, pValue ) );
             }
+            else
+            {
+                CPLAssert( FALSE );
+                return CE_Failure;
+            }
         }
         break;
 
