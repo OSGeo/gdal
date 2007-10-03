@@ -859,6 +859,16 @@ char **EHdrDataset::GetFileList()
     if( VSIStatL( osFilename, &sStatBuf ) == 0 )
         papszFileList = CSLAddString( papszFileList, osFilename );
     
+    osFilename = CPLFormCIFilename( osPath, "image", "rep" );
+    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osFilename );
+    else
+    {
+        osFilename = CPLFormCIFilename( CPLGetDirname(osPath), "image", "rep" );
+        if( VSIStatL( osFilename, &sStatBuf ) == 0 )
+            papszFileList = CSLAddString( papszFileList, osFilename );
+    }
+    
     return papszFileList;
 }
 
@@ -1247,6 +1257,142 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         CSLDestroy( papszLines );
+    }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*  Check for IMAGE.REP (Spatiocarte Defense 1.0)                       */
+/*  For the specification (in French),                                  */
+/*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
+/* -------------------------------------------------------------------- */
+
+        const char  *pszImageRepFilename = CPLFormCIFilename( osPath, "image", "rep" );
+        fp = VSIFOpen( pszPrjFilename, "r" );
+        if( fp == NULL )
+        {
+            /* Try in the upper directory if not found in the BIL image directory */
+            pszImageRepFilename = CPLFormCIFilename( CPLGetDirname(osPath), "image", "rep" );
+            fp = VSIFOpen( pszPrjFilename, "r" );
+        }
+
+        if (fp != NULL)
+        {
+            char	**papszLines;
+            char  **iter;
+            int bUTM = FALSE;
+            int bWGS84 = FALSE;
+            int bNorth = FALSE;
+            int bSouth = FALSE;
+            int utmZone = 0;
+
+            VSIFClose( fp );
+
+            iter = papszLines = CSLLoad( pszPrjFilename );
+            while (iter && *iter)
+            {
+                if (strncmp(*iter, "PROJ_ID", strlen("PROJ_ID")) == 0 &&
+                    strstr(*iter, "UTM"))
+                {
+                    bUTM = TRUE;
+                }
+                else if (strncmp(*iter, "PROJ_ZONE", strlen("PROJ_ZONE")) == 0)
+                {
+                    char* c = strchr(*iter, '"');
+                    if (c)
+                    {
+                        c++;
+                        if (*c >= '0' && *c <= '9')
+                        {
+                            utmZone = atoi(c);
+                            if (utmZone >= 1 && utmZone <= 60)
+                            {
+                                if (strstr(*iter, "Nord") || strstr(*iter, "NORD"))
+                                {
+                                    bNorth = TRUE;
+                                }
+                                else if (strstr(*iter, "Sud") || strstr(*iter, "SUD"))
+                                {
+                                    bSouth = TRUE;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (strncmp(*iter, "PROJ_CODE", strlen("PROJ_CODE")) == 0 &&
+                         strstr(*iter, "FR-MINDEF"))
+                {
+                    char* c = strchr(*iter, 'A');
+                    if (c)
+                    {
+                        c++;
+                        if (*c >= '0' && *c <= '9')
+                        {
+                            utmZone = atoi(c);
+                            if (utmZone >= 1 && utmZone <= 60)
+                            {
+                                if (c[1] == 'N' || c[2] == 'N')
+                                {
+                                    bNorth = TRUE;
+                                }
+                                else if (c[1] == 'S' || c[2] == 'S')
+                                {
+                                    bSouth = TRUE;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (strncmp(*iter, "HORIZ_DATUM", strlen("HORIZ_DATUM")) == 0 &&
+                         (strstr(*iter, "WGS 84") || strstr(*iter, "WGS84")))
+                {
+                    bWGS84 = TRUE;
+                }
+                else if (strncmp(*iter, "MAP_NUMBER", strlen("MAP_NUMBER")) == 0)
+                {
+                    char* c = strchr(*iter, '"');
+                    if (c)
+                    {
+                        char* c2 = strchr(c+1, '"');
+                        if (c2) *c2 = 0;
+                        poDS->SetMetadataItem("SPDF_MAP_NUMBER", c + 1);
+                    }
+                }
+                else if (strncmp(*iter, "PRODUCTION_DATE", strlen("PRODUCTION_DATE")) == 0)
+                {
+                    char* c = *iter + strlen("PRODUCTION_DATE");
+                    while(*c == ' ')
+                        c++;
+                    if (*c)
+                    {
+                        poDS->SetMetadataItem("SPDF_PRODUCTION_DATE", c );
+                    }
+                }
+                iter++;
+            }
+
+            if (utmZone != 0 && bUTM && bWGS84 && (bNorth || bSouth))
+            {
+                char projCSStr[64];
+                OGRSpatialReference oSRS;
+
+                sprintf(projCSStr, "WGS 84 / UTM zone %d%c",
+                        utmZone, (bNorth) ? 'N' : 'S');
+                oSRS.SetProjCS(projCSStr);
+                oSRS.SetWellKnownGeogCS( "WGS84" );
+                oSRS.SetUTM(utmZone, bNorth);
+                oSRS.SetAuthority("PROJCS", "EPSG", ((bNorth) ? 32600 : 32700) + utmZone);
+                oSRS.AutoIdentifyEPSG();
+
+                CPLFree( poDS->pszProjection );
+                oSRS.exportToWkt( &(poDS->pszProjection) );
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_NotSupported, "Cannot retrive projection from IMAGE.REP");
+            }
+
+            CSLDestroy( papszLines );
+        }
     }
 
 /* -------------------------------------------------------------------- */
