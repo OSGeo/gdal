@@ -655,14 +655,18 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                 }
             }
 
-            if( pszField != NULL && strlen(pszField) > 0
-                && nExtraOffset < nDataSize )
+            if( pszField != NULL && strlen(pszField) > 0 )
             {
                 return( poItemObjectType->
                             SetInstValue( pszField, pabyData + nExtraOffset,
                                           nDataOffset + nExtraOffset,
                                           nDataSize - nExtraOffset,
                                           chReqType, pValue ) );
+            }
+            else
+            {
+                CPLAssert( FALSE );
+                return CE_Failure;
             }
         }
         break;
