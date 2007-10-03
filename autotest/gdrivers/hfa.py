@@ -380,6 +380,36 @@ def hfa_metadata_2():
     return 'success'
  
 ###############################################################################
+# Verify we can grow the RRD list in cases where this requires
+# moving the HFAEntry to the end of the file.  (bug #1109)
+
+def hfa_grow_rrdlist():
+
+    # copy work file to tmp directory.
+    open('tmp/bug_1109.img','w').write(open('data/bug_1109.img').read())
+
+    # Add two overview levels.
+    ds = gdal.Open('tmp/bug_1109.img',gdal.GA_Update)
+    result = ds.BuildOverviews( overviewlist = [4,8] )
+    ds = None
+
+    if result != 0:
+        gdaltest.post_reason( 'BuildOverviews failed.' )
+        return 'fail'
+
+    # Verify overviews are now findable.
+    ds = gdal.Open( 'tmp/bug_1109.img' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 3:
+        gdaltest.post_reason( 'Overview count wrong.' )
+        print ds.GetRasterBand(1).GetOverviewCount()
+        return 'fail'
+
+    ds = None
+    gdal.GetDriverByName('HFA').Delete( 'tmp/bug_1109.img' )
+    
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -394,7 +424,8 @@ gdaltest_list = [
     hfa_pe_read,
     hfa_pe_write,
     hfa_metadata_1,
-    hfa_metadata_2]
+    hfa_metadata_2,
+    hfa_grow_rrdlist ]
 
 if __name__ == '__main__':
 
