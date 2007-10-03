@@ -77,7 +77,7 @@ if sys.platform == 'win32' and not mingw:
     except IOError, e:
       raise IOError, '%s. %s' % (e, "Has GDAL been made?")
     gdal_basedir = fp.readline()
-    gdal_version = fp.readline()
+    old_version = fp.readline()
     gdal_libs = fp.readline()
     gdal_includes = fp.readline()
     lib_opts = gdal_libs.split()
