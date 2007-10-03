@@ -1577,7 +1577,11 @@ int HFABand::CreateOverview( int nOverviewLevel )
 
     // TODO: Need to add to end of array (thats pretty hard).
     if( poRRDNamesList->SetStringField( szName, osLayerName ) != CE_None )
-        return -1;
+    {
+        poRRDNamesList->MakeData( poRRDNamesList->GetDataSize() + 3000 );
+        if( poRRDNamesList->SetStringField( szName, osLayerName ) != CE_None )
+            return -1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add to the list of overviews for this band.                     */
