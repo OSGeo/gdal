@@ -845,7 +845,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
     fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
-        CPLDebug( "Unable to find NTS mapsheet lookup file: %s", 
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s", 
                   pszNTSFilename );
         return FALSE;
     }
@@ -902,7 +902,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
     fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
-        CPLDebug( "Unable to find NTS mapsheet lookup file: %s", 
+        CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s", 
                   pszNTSFilename );
         return FALSE;
     }
