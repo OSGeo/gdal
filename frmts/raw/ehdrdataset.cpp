@@ -1267,12 +1267,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
         const char  *pszImageRepFilename = CPLFormCIFilename( osPath, "image", "rep" );
-        fp = VSIFOpen( pszPrjFilename, "r" );
+        fp = VSIFOpen( pszImageRepFilename, "r" );
         if( fp == NULL )
         {
             /* Try in the upper directory if not found in the BIL image directory */
             pszImageRepFilename = CPLFormCIFilename( CPLGetDirname(osPath), "image", "rep" );
-            fp = VSIFOpen( pszPrjFilename, "r" );
+            fp = VSIFOpen( pszImageRepFilename, "r" );
         }
 
         if (fp != NULL)
