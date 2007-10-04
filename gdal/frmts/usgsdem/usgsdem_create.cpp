@@ -971,7 +971,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
             return FALSE;
 
         if( EQUALN(pszNTS+6,"e",1) )
-            dfULX += 0.25;
+            dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
     // Try looking up TOPLEFT as a NTS mapsheet name.
@@ -987,7 +987,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
             return FALSE;
 
         if( EQUAL(pszTOPLEFT+6,"e") )
-            dfULX += 0.25;
+            dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
     // Assume TOPLEFT is a long/lat corner.
@@ -1028,7 +1028,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
             return FALSE;
 
         if( EQUALN(psWInfo->pszFilename+7,"e",1) )
-            dfULX += 0.25;
+            dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
              
     else if( strlen(psWInfo->pszFilename) == 14 
@@ -1044,7 +1044,7 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
             return FALSE;
 
         if( EQUALN(psWInfo->pszFilename+9,"e",1) )
-            dfULX += 0.25;
+            dfULX += (( dfULY < 68.1 ) ? 0.25 : ( dfULY < 80.1 ) ? 0.5 : 1);
     }
 
 /* -------------------------------------------------------------------- */
