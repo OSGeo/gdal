@@ -87,6 +87,7 @@ class EHdrDataset : public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
+    static CPLString GetImageRepFilename(const char* pszFilename);
 };
 
 /************************************************************************/
@@ -825,6 +826,57 @@ CPLErr EHdrDataset::ReadSTX()
     return CE_None;
 }
 
+
+/************************************************************************/
+/*                      GetImageRepFilename()                           */
+/************************************************************************/
+
+/* -------------------------------------------------------------------- */
+/*  Check for IMAGE.REP (Spatiocarte Defense 1.0)                       */
+/*  For the specification (in French),                                  */
+/*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
+/* -------------------------------------------------------------------- */
+
+CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
+{
+    VSIStatBufL sStatBuf;
+
+    if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
+        EQUAL(CPLGetFilename(pszFilename), "haspatio.bil"))
+    {
+        CPLString osPath = CPLGetPath( pszFilename );
+        CPLString pszImageRepFilename(CPLFormCIFilename( osPath, "image", "rep" ));
+        if( VSIStatL( (const char*)pszImageRepFilename, &sStatBuf ) == 0 )
+            return pszImageRepFilename;
+
+        /* Try in the upper directories if not found in the BIL image directory */
+        CPLString dirName(CPLGetDirname(osPath));
+        if (CPLIsFilenameRelative((const char*)osPath))
+        {
+            char* cwd = CPLGetCurrentDir();
+            if (cwd)
+            {
+                dirName = CPLFormFilename(cwd, (const char*)dirName, NULL);
+                CPLFree(cwd);
+            }
+        }
+        while (dirName[0] != 0 && EQUAL(dirName, ".") == FALSE && EQUAL(dirName, "/") == FALSE)
+        {
+            pszImageRepFilename = CPLFormCIFilename( (const char*)dirName, "image", "rep" );
+            if( VSIStatL( (const char*)pszImageRepFilename, &sStatBuf ) == 0 )
+                return pszImageRepFilename;
+
+            /* Don't try to recurse above the 'image' subdirectory */
+            if (EQUAL(dirName, "image"))
+            {
+                break;
+            }
+            dirName = CPLString(CPLGetDirname(dirName));
+        }
+    }
+    return "";
+}
+
 /************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
@@ -859,15 +911,9 @@ char **EHdrDataset::GetFileList()
     if( VSIStatL( osFilename, &sStatBuf ) == 0 )
         papszFileList = CSLAddString( papszFileList, osFilename );
     
-    osFilename = CPLFormCIFilename( osPath, "image", "rep" );
-    if( VSIStatL( osFilename, &sStatBuf ) == 0 )
-        papszFileList = CSLAddString( papszFileList, osFilename );
-    else
-    {
-        osFilename = CPLFormCIFilename( CPLGetDirname(osPath), "image", "rep" );
-        if( VSIStatL( osFilename, &sStatBuf ) == 0 )
-            papszFileList = CSLAddString( papszFileList, osFilename );
-    }
+    CPLString imageRepFilename = GetImageRepFilename( GetDescription() );
+    if (imageRepFilename[0])
+        papszFileList = CSLAddString( papszFileList, (const char*)imageRepFilename );
     
     return papszFileList;
 }
@@ -1265,16 +1311,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*  For the specification (in French),                                  */
 /*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
 /* -------------------------------------------------------------------- */
-
-        const char  *pszImageRepFilename = CPLFormCIFilename( osPath, "image", "rep" );
-        fp = VSIFOpen( pszImageRepFilename, "r" );
-        if( fp == NULL )
+        CPLString pszImageRepFilename = GetImageRepFilename(poOpenInfo->pszFilename );
+        if (pszImageRepFilename[0])
         {
-            /* Try in the upper directory if not found in the BIL image directory */
-            pszImageRepFilename = CPLFormCIFilename( CPLGetDirname(osPath), "image", "rep" );
-            fp = VSIFOpen( pszImageRepFilename, "r" );
+            fp = VSIFOpen( (const char*)pszImageRepFilename, "r" );
         }
-
         if (fp != NULL)
         {
             char	**papszLines;
