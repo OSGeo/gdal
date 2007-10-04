@@ -1079,7 +1079,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         CPLString osDatumName = papszPI[iDatum];
         if( osDatumName.find_first_of("abcdefghijklmnopqrstuvwxyz"
                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ") 
-                                      != std::string::npos )
+            != std::string::npos )
         {
             SetENVIDatum( &oSRS, osDatumName );
         }
@@ -1094,26 +1094,26 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /*      Try to process specialized units.                               */
 /* -------------------------------------------------------------------- */
     if( EQUALN( papszFields[nCount-1],"units",5))
-	{
+    {
         /* Handle linear units first. */
         if (EQUAL(papszFields[nCount-1],"units=Feet") )
-            oSRS.SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
         else if (EQUAL(papszFields[nCount-1],"units=Meters") )
-            oSRS.SetLinearUnits( SRS_UL_METER, 1. );
+            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1. );
         else if (EQUAL(papszFields[nCount-1],"units=Km") )
-            oSRS.SetLinearUnits( "Kilometer", 1000.  );
+            oSRS.SetLinearUnitsAndUpdateParameters( "Kilometer", 1000.  );
         else if (EQUAL(papszFields[nCount-1],"units=Yards") )
-            oSRS.SetLinearUnits( "Yard", .9144 );
+            oSRS.SetLinearUnitsAndUpdateParameters( "Yard", .9144 );
         else if (EQUAL(papszFields[nCount-1],"units=Miles") )
-            oSRS.SetLinearUnits( "Mile", 1609.344 );
+            oSRS.SetLinearUnitsAndUpdateParameters( "Mile", 1609.344 );
         else if (EQUAL(papszFields[nCount-1],"units=Nautical Miles") )
-            oSRS.SetLinearUnits( SRS_UL_NAUTICAL_MILE, atof(SRS_UL_NAUTICAL_MILE_CONV) );
+            oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_NAUTICAL_MILE, atof(SRS_UL_NAUTICAL_MILE_CONV) );
 	    
         /* Only handle angular units if we know the projection is geographic. */
         if (oSRS.IsGeographic()) 
         {
             if (EQUAL(papszFields[nCount-1],"units=Radians") )
-	            oSRS.SetAngularUnits( SRS_UA_RADIAN, 1. );
+                oSRS.SetAngularUnits( SRS_UA_RADIAN, 1. );
             else 
             {
                 /* Degrees, minutes and seconds will all be represented as degrees. */
