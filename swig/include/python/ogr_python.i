@@ -191,7 +191,20 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFieldAsDouble(fld_index)
         # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
-        
+    
+    def keys(self):
+        names = []
+        for i in range(self.GetFieldCount()):
+            fieldname = self.GetFieldDefnRef(i).GetName()
+            names.append(fieldname)
+        return names
+    
+    def items(self):
+        keys = self.keys()
+        output = {}
+        for key in keys:
+            output[key] = self.GetField(key)
+        return output
 }
 
 }
