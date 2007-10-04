@@ -1852,7 +1852,8 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
 /*      an error won't be reported in this case. (#1179)                */
 /* -------------------------------------------------------------------- */
     int nBlockReqSize = nBlockBufSize;
-    int nBlockYOff = nBlockId % nBlocksPerBand;
+    int nBlocksPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
 
     if( (int)((nBlockYOff+1) * nBlockYSize) > nRasterYSize )
     {
