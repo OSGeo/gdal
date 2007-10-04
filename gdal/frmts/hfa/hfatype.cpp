@@ -323,7 +323,8 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
 /* -------------------------------------------------------------------- */
-    return( papoFields[iField]->GetInstCount( pabyData + nByteOffset ) );
+    return( papoFields[iField]->GetInstCount( pabyData + nByteOffset,
+                                              nDataSize - nByteOffset ) );
 }
 
 /************************************************************************/

@@ -306,7 +306,7 @@ class HFAField
                      const char *pszPrefix = NULL );
     
     int		GetInstBytes( GByte *, int );
-    int		GetInstCount( GByte * pabyData );
+    int		GetInstCount( GByte * pabyData, int nDataSize );
 };
 
 
