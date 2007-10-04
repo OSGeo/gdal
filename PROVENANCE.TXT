@@ -298,12 +298,13 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/sfcom_oledb ===
 
-* sfcom_oledb/ICommandWidthParametersImpl.h: Provided by ESRI without clear copyright/license terms.  '''TO_RESOLVE''' (#1817)
-* atl_net/ICRRowsetImpl.h,IFRowsetImpl.h,CCRRowsetImpl.h,SFAccessorImpl.h: Modified form of code from ATLDB.H, properly credited in the header. Copyright claim is dubious. '''TO_RESOLVE''' (#1817)
-* atl_net/IColumnsRowsetImpl.h: Derived from code for article by Len Holgate, JetByte Limited.  It is not clear if the code is properly licensed, though it is attributed. '''TO_RESOLVE''' (#1817)
+* sfcom_oledb/ICommandWidthParametersImpl.h: Provided by ESRI without clear copyright/license terms.   (#1817)
+* atl_net/ICRRowsetImpl.h,IFRowsetImpl.h,CCRRowsetImpl.h,SFAccessorImpl.h: Modified form of code from ATLDB.H, properly credited in the header. Copyright claim is dubious.  (#1817)
+* atl_net/IColumnsRowsetImpl.h: Derived from code for article by Len Holgate, JetByte Limited.  It is not clear if the code is properly licensed, though it is attributed.  (#1817)
 * Similar issues to above in atl_vc6 directory.
 * Code Copyright Softmap, FrankW, 
 * Some files lack headers (mostly MS Visual Studio generated files). 
+* Whole tree moved to /spike/sfcom_oledb to avoid problems by act of the PSC.
 
 === gdal/ogr/sfcom_serv === 
 
