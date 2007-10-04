@@ -1879,7 +1879,20 @@ class Feature(_object):
             return self.GetFieldAsDouble(fld_index)
         
         return self.GetFieldAsString(fld_index)
-        
+
+    def keys(self):
+        names = []
+        for i in range(self.GetFieldCount()):
+            fieldname = self.GetFieldDefnRef(i).GetName()
+            names.append(fieldname)
+        return names
+
+    def items(self):
+        keys = self.keys()
+        output = {}
+        for key in keys:
+            output[key] = self.GetField(key)
+        return output
 
 Feature_swigregister = _ogr.Feature_swigregister
 Feature_swigregister(Feature)
