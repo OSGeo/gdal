@@ -50,7 +50,12 @@ init_list = [ \
     ('cint16.tif', 1, 5028, None),
     ('cint32.tif', 1, 5028, None),
     ('cfloat32.tif', 1, 5028, None),
-    ('cfloat64.tif', 1, 5028, None)]
+    ('cfloat64.tif', 1, 5028, None),
+# The following four related partial final strip/tiles (#1179)
+    ('separate_tiled.tif', 2, 15234, None), 
+    ('seperate_strip.tif', 2, 15234, None),
+    ('contig_tiled.tif', 2, 15234, None),
+    ('contig_strip.tif', 2, 15234, None)]
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
