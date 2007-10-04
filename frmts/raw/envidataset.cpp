@@ -227,6 +227,7 @@ class ENVIDataset : public RawDataset
 
     int         ReadHeader( FILE * );
     int         ProcessMapinfo( const char * );
+    void        ProcessRPCinfo( const char * );
     void        SetENVIDatum( OGRSpatialReference *, const char * );
     void        SetENVIEllipse( OGRSpatialReference *, char ** );
     void        WriteProjectionInfo();
@@ -885,7 +886,7 @@ void ENVIDataset::SetENVIDatum( OGRSpatialReference *poSRS,
     else 
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unrecognised datum '%s', defaulting to WGS84." );
+                  "Unrecognised datum '%s', defaulting to WGS84.", pszENVIDatumName);
         poSRS->SetWellKnownGeogCS( "WGS84" );
     }
 }
@@ -1092,22 +1093,46 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /* -------------------------------------------------------------------- */
 /*      Try to process specialized units.                               */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(papszFields[nCount-1],"units=Feet") )
-    {
-        oSRS.SetLinearUnits( SRS_UL_US_FOOT, atof(SRS_UL_US_FOOT_CONV) );
-    }
-    else if( EQUAL(papszFields[nCount-1],"units=Seconds") 
-             && oSRS.IsGeographic() )
-    {
-        /* convert geographic coordinate systems in seconds to degrees */
-        adfGeoTransform[0] /= 3600.0;
-        adfGeoTransform[1] /= 3600.0;
-        adfGeoTransform[2] /= 3600.0;
-        adfGeoTransform[3] /= 3600.0;
-        adfGeoTransform[4] /= 3600.0;
-        adfGeoTransform[5] /= 3600.0;
-    }
+    if( EQUALN( papszFields[nCount-1],"units",5))
+	{
+        /* Handle linear units first. */
+        if (EQUAL(papszFields[nCount-1],"units=Feet") )
+            oSRS.SetLinearUnits( SRS_UL_FOOT, atof(SRS_UL_FOOT_CONV) );
+        else if (EQUAL(papszFields[nCount-1],"units=Meters") )
+            oSRS.SetLinearUnits( SRS_UL_METER, 1. );
+        else if (EQUAL(papszFields[nCount-1],"units=Km") )
+            oSRS.SetLinearUnits( "Kilometer", 1000.  );
+        else if (EQUAL(papszFields[nCount-1],"units=Yards") )
+            oSRS.SetLinearUnits( "Yard", .9144 );
+        else if (EQUAL(papszFields[nCount-1],"units=Miles") )
+            oSRS.SetLinearUnits( "Mile", 1609.344 );
+        else if (EQUAL(papszFields[nCount-1],"units=Nautical Miles") )
+            oSRS.SetLinearUnits( SRS_UL_NAUTICAL_MILE, atof(SRS_UL_NAUTICAL_MILE_CONV) );
+	    
+        /* Only handle angular units if we know the projection is geographic. */
+        if (oSRS.IsGeographic()) 
+        {
+            if (EQUAL(papszFields[nCount-1],"units=Radians") )
+	            oSRS.SetAngularUnits( SRS_UA_RADIAN, 1. );
+            else 
+            {
+                /* Degrees, minutes and seconds will all be represented as degrees. */
+                oSRS.SetAngularUnits( SRS_UA_DEGREE,  atof(SRS_UA_DEGREE_CONV));
 
+                double conversionFactor = 1.;
+                if (EQUAL(papszFields[nCount-1],"units=Minutes") )
+                    conversionFactor = 60.;
+                else if( EQUAL(papszFields[nCount-1],"units=Seconds") )
+                    conversionFactor = 3600.;
+                adfGeoTransform[0] /= conversionFactor;
+                adfGeoTransform[1] /= conversionFactor;
+                adfGeoTransform[2] /= conversionFactor;
+                adfGeoTransform[3] /= conversionFactor;
+                adfGeoTransform[4] /= conversionFactor;
+                adfGeoTransform[5] /= conversionFactor;
+            }
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Turn back into WKT.                                             */
 /* -------------------------------------------------------------------- */
@@ -1125,6 +1150,91 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     CSLDestroy( papszFields );
     CSLDestroy( papszPI );
     return TRUE;
+}
+
+/************************************************************************/
+/*                           ProcessRPCinfo()                           */
+/*                                                                      */
+/*      Extract RPC transformation coefficients if they are present     */
+/*      and sets into the standard metadata fields for RPC.             */
+/************************************************************************/
+
+void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo )
+{
+    char	**papszFields;
+    char    sVal[1280];
+    int         nCount;
+
+    papszFields = SplitList( pszRPCinfo );
+    nCount = CSLCount(papszFields);
+
+    if( nCount < 90 )
+    {
+        CSLDestroy( papszFields );
+        return;
+    }
+	
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[0]));
+    SetMetadataItem("RPC_LINE_OFF",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[5]));
+    SetMetadataItem("RPC_LINE_SCALE",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[1]));
+    SetMetadataItem("RPC_SAMP_OFF",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[6]));
+    SetMetadataItem("RPC_SAMP_SCALE",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[2]));
+    SetMetadataItem("RPC_LAT_OFF",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[7]));
+    SetMetadataItem("RPC_LAT_SCALE",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[3]));
+    SetMetadataItem("RPC_LONG_OFF",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[8]));
+    SetMetadataItem("RPC_LONG_SCALE",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[4]));
+    SetMetadataItem("RPC_HEIGHT_OFF",sVal);
+    snprintf(sVal, sizeof(sVal),  "%.16f",atof(papszFields[9]));
+    SetMetadataItem("RPC_HEIGHT_SCALE",sVal);
+
+    sVal[0] = '\0'; 
+    for(int i = 0; i < 20; i++ )
+       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16f ", 
+           atof(papszFields[10+i]));
+    SetMetadataItem("RPC_LINE_NUM_COEFF",sVal);
+
+    sVal[0] = '\0'; 
+    for(int i = 0; i < 20; i++ )
+       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16f ",
+           atof(papszFields[30+i]));
+    SetMetadataItem("RPC_LINE_DEN_COEFF",sVal);
+      
+    sVal[0] = '\0'; 
+    for(int i = 0; i < 20; i++ )
+       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16f ",
+           atof(papszFields[50+i]));
+    SetMetadataItem("RPC_SAMP_NUM_COEFF",sVal);
+      
+    sVal[0] = '\0'; 
+    for(int i = 0; i < 20; i++ )
+       snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16f ",
+           atof(papszFields[70+i]));
+    SetMetadataItem("RPC_SAMP_DEN_COEFF",sVal);
+	
+    snprintf(sVal, sizeof(sVal), "%.16f", 
+        atof(papszFields[3]) - atof(papszFields[8]) / 2.0 );
+    SetMetadataItem("RPC_MIN_LONG",sVal);
+
+    snprintf(sVal, sizeof(sVal), "%.16f", 
+        atof(papszFields[3]) + atof(papszFields[8]) / 2.0 );
+    SetMetadataItem("RPC_MAX_LONG",sVal);
+
+    snprintf(sVal, sizeof(sVal), "%.16f",
+        atof(papszFields[2]) - atof(papszFields[7]) / 2.0 );
+    SetMetadataItem("RPC_MIN_LAT",sVal);
+
+    snprintf(sVal, sizeof(sVal), "%.16f",
+        atof(papszFields[2]) + atof(papszFields[7]) / 2.0 );
+    SetMetadataItem("RPC_MAX_LAT",sVal);
+
 }
 
 /************************************************************************/
@@ -1333,6 +1443,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nLines == 0 || nSamples == 0 || nBands == 0 || pszInterleave == NULL )
     {
+        delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file appears to have an associated ENVI header, but\n"
                   "one or more of the samples, lines, bands and interleave\n"
@@ -1391,6 +1502,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             /* 14=Int64, 15=UInt64 */
 
           default:
+            delete poDS;
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "The file has a 'data type' value of '%s'.  This value\n"
                       "isn't recognised by the GDAL ENVI driver.",
@@ -1416,6 +1528,25 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Warn about unsupported file types virtual mosaic and meta file.*/
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue(poDS->papszHeader,"file_type" ) != NULL )
+    {
+        const char * pszEnviFileType;
+        pszEnviFileType = CSLFetchNameValue(poDS->papszHeader,"file_type");
+        if(!EQUAL(pszEnviFileType, "ENVI Standard") &&
+           !EQUAL(pszEnviFileType, "ENVI Classification"))
+        {
+            delete poDS;
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "File %s contains an invalid file type in the ENVI .hdr\n"
+                      "GDAL does not support '%s' type files.",
+                      poOpenInfo->pszFilename, pszEnviFileType );
+            return NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Warn about compressed datasets.                                 */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(poDS->papszHeader,"file_compression" ) != NULL )
@@ -1423,12 +1554,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         if( atoi(CSLFetchNameValue(poDS->papszHeader,"file_compression" )) 
             != 0 )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
+            delete poDS;
+			CPLError( CE_Failure, CPLE_OpenFailed, 
                       "File %s is marked as compressed in the ENVI .hdr\n"
                       "GDAL does not support auto-decompression of ENVI data\n"
-                      "files.  If the data appears corrupt please decompress\n"
-                      "manually and then retry.",
+                      "files.",
                       poOpenInfo->pszFilename );
+            return NULL;
         }
     }
 
@@ -1449,10 +1581,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->fpImage == NULL )
     {
+	    delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to re-open %s within ENVI driver.\n", 
                   poOpenInfo->pszFilename );
-	delete poDS;
         return NULL;
     }
 
@@ -1486,10 +1618,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
+	    delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The interleaving type of the file (%s) is not supported.",
                   pszInterleave );
-        return NULL;
+	    return NULL;
     }
     
 /* -------------------------------------------------------------------- */
@@ -1543,8 +1676,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                                 "class_lookup" ) );
         int nColorValueCount = CSLCount(papszClassColors);
         GDALColorTable oCT;
-
-        for( i = 0; i*3 < nColorValueCount; i++ )
+		
+        for( i = 0; i*3+2 < nColorValueCount; i++ )
         {
             GDALColorEntry sEntry;
 
@@ -1560,15 +1693,34 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->GetRasterBand(1)->SetColorTable( &oCT );
         poDS->GetRasterBand(1)->SetColorInterpretation( GCI_PaletteIndex );
     }
-    
+
 /* -------------------------------------------------------------------- */
-/*      Look for mapinfo						*/
+/*      Set the nodata value if it is present                           */
+/* -------------------------------------------------------------------- */	
+    if( CSLFetchNameValue(poDS->papszHeader,"data_ignore_value" ) != NULL )
+	{
+        for( i = 0; i < poDS->nBands; i++ )
+            ((RawRasterBand*)poDS->GetRasterBand(i+1))->StoreNoDataValue(atof(
+                CSLFetchNameValue(poDS->papszHeader,"data_ignore_value")));
+	}
+
+/* -------------------------------------------------------------------- */
+/*      Look for mapinfo                                                */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( poDS->papszHeader, "map_info" ) != NULL )
     {
         poDS->bFoundMapinfo = 
             poDS->ProcessMapinfo( 
                 CSLFetchNameValue(poDS->papszHeader,"map_info") );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Look for RPC mapinfo                                            */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( poDS->papszHeader, "rpc_info" ) != NULL )
+    {
+		poDS->ProcessRPCinfo( 
+			CSLFetchNameValue(poDS->papszHeader,"rpc_info") );
     }
     
 /* -------------------------------------------------------------------- */
