@@ -152,7 +152,7 @@ else:
 extra_compile_args = []
 
 # might need to tweak for Python 2.4 on OSX to be these
-#extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/'],
+#extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/']
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
