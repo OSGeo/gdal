@@ -149,13 +149,17 @@ else:
     library_dirs = ['../../.libs','../..']
     extra_link_args = []
 
+extra_compile_args = []
+
+# might need to tweak for Python 2.4 on OSX to be these
+#extra_compile_args = ['-g', '-arch', 'i386', '-isysroot','/'],
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
                         include_dirs = include_dirs,
                         libraries = libraries,
                         library_dirs = library_dirs,
-                        extra_compile_args = ['-g'],
+                        extra_compile_args = extra_compile_args,
                         extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
@@ -163,6 +167,7 @@ gdalconst_module = Extension('osgeo._gdalconst',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
+                    extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 osr_module = Extension('osgeo._osr',
@@ -170,6 +175,7 @@ osr_module = Extension('osgeo._osr',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
+                    extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
@@ -177,6 +183,7 @@ ogr_module = Extension('osgeo._ogr',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
+                    extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 
@@ -185,6 +192,7 @@ array_module = Extension('osgeo._gdal_array',
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
+                    extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 ext_modules = [gdal_module,
