@@ -1274,7 +1274,7 @@ GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
 GDALColorTable *GTiffBitmapBand::GetColorTable()
 
 {
-     return poColorTable;
+    return poColorTable;
 }
 
 /************************************************************************/
