@@ -324,6 +324,7 @@ def hfa_pe_write():
         gdaltest.post_reason( 'failed to write pe string as expected.' )
         return 'fail'
 
+    ds = None
     drv.Delete( 'tmp/87test.img' )
     return 'success'
  
@@ -375,6 +376,7 @@ def hfa_metadata_2():
         gdaltest.post_reason('got wrong metadata back')
         return 'fail'
 
+    ds = None
     gdal.GetDriverByName('HFA').Delete( 'tmp/md_1.img' )
     
     return 'success'
