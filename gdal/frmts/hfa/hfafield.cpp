@@ -698,7 +698,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     char		*pszStringRet = NULL;
     int			nIntRet = 0;
     double		dfDoubleRet = 0.0;
-    int			nInstItemCount = GetInstCount( pabyData );
+    int			nInstItemCount = GetInstCount( pabyData, nDataSize );
     GByte		*pabyRawData = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -835,6 +835,9 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
       {
           GInt32 nRows, nColumns;
           GInt16 nBaseItemType;
+
+          if( nDataSize < 12 )
+              return FALSE;
         
           memcpy( &nRows, pabyData, 4 );
           HFAStandard( 4, &nRows );
@@ -1079,7 +1082,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
 /*      this is extracted from the data itself.                         */
 /************************************************************************/
 
-int HFAField::GetInstCount( GByte * pabyData )
+int HFAField::GetInstCount( GByte * pabyData, int nDataSize )
 
 {
     if( chPointer == '\0' )
@@ -1087,6 +1090,9 @@ int HFAField::GetInstCount( GByte * pabyData )
     else if( chItemType == 'b' )
     {
         GInt32 nRows, nColumns;
+
+        if( nDataSize < 20 )
+            return 0;
 
         memcpy( &nRows, pabyData+8, 4 );
         HFAStandard( 4, &nRows );
@@ -1098,6 +1104,9 @@ int HFAField::GetInstCount( GByte * pabyData )
     else
     {
         GInt32 nCount;
+
+        if( nDataSize < 4 )
+            return 0;
 
         memcpy( &nCount, pabyData, 4 );
         HFAStandard( 4, &nCount );
@@ -1118,7 +1127,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
     void	*pReturn;
     char	szLongFieldName[256];
 
-    nEntries = GetInstCount( pabyData );
+    nEntries = GetInstCount( pabyData, nDataSize );
 
 /* -------------------------------------------------------------------- */
 /*      Special case for arrays of chars or uchars which are printed    */
