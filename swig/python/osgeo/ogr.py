@@ -3069,7 +3069,7 @@ class Geometry(_object):
                     geom = geometry.GetGeometryRef(g)
                     coordinates.append(get_coordinates(geom))
                 return coordinates
-                
+                           
         types = { wkbPoint:'Point',
                   wkbPoint25D:'Point',
                   wkbLineString: 'LineString',
@@ -3086,8 +3086,19 @@ class Geometry(_object):
                   wkbGeometryCollection25D: 'GeometryCollection'  
         }
 
-        output = {'type': types[self.GetGeometryType()],
-                  'coordinates': get_coordinates(self)}
+        if self.GetGeometryType() == ogr.wkbGeometryCollection or \
+           self.GetGeometryType() == ogr.wkbGeometryCollection25D:
+            geometries = []    
+            geom_count = geometry.GetGeometryCount()
+            for g in range(geom_count):
+                geom = self.GetGeometryRef(g)
+                geometries.append(geom.ExportToJson())
+                output = {'type': types[self.GetGeometryType()],
+                          'geometries': geometries}
+        else:
+            output = {'type': types[geometry.GetGeometryType()],
+                      'coordinates': get_coordinates(geometry)}   
+
         return output
         
 
