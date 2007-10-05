@@ -293,17 +293,17 @@ layer[0:4] would return a list of the first four features."""
                 wkbGeometryCollection25D: 'GeometryCollection'  
       }
 
-      if self.GetGeometryType() == ogr.wkbGeometryCollection or \
-         self.GetGeometryType() == ogr.wkbGeometryCollection25D:
+      if self.GetGeometryType() == wkbGeometryCollection or \
+         self.GetGeometryType() == wkbGeometryCollection25D:
           geometries = []    
-          geom_count = geometry.GetGeometryCount()
+          geom_count = self.GetGeometryCount()
           for g in range(geom_count):
               geom = self.GetGeometryRef(g)
               geometries.append(geom.ExportToJson())
               output = {'type': types[self.GetGeometryType()],
                         'geometries': geometries}
       else:
-          output = {'type': types[geometry.GetGeometryType()],
+          output = {'type': types[self.GetGeometryType()],
                     'coordinates': get_coordinates(geometry)}   
 
       return output
