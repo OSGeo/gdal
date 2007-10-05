@@ -23620,8 +23620,8 @@ echo "${ECHO_T}enabled" >&6
     else
         LIBS="$LIBS -L$with_sqlite/lib -lsqlite3"
         SQLITE_INC="-I$with_sqlite/include"
-        echo "$as_me:$LINENO: result: setting DODS root directory to $with_sqlite" >&5
-echo "${ECHO_T}setting DODS root directory to $with_sqlite" >&6
+        echo "$as_me:$LINENO: result: setting SQLite root directory to $with_sqlite" >&5
+echo "${ECHO_T}setting SQLite root directory to $with_sqlite" >&6
     fi
     HAVE_SQLITE=yes
 fi
@@ -25177,7 +25177,7 @@ cat >>confdefs.h <<_ACEOF
 #define MACOSX_FRAMEWORK 1
 _ACEOF
 
-    prefix='/Library/Frameworks/GDAL.framework/Versions/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}'
+    prefix="/Library/Frameworks/GDAL.framework/Versions/${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
     exec_prefix='${prefix}'
     includedir='${prefix}/Headers'
     datadir='${prefix}/Resources/gdal'
