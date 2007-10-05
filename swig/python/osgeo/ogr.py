@@ -3025,8 +3025,11 @@ class Geometry(_object):
             geom_count = geometry.GetGeometryCount()
             coordinates = []
 
-            if gtype == wkbPoint or gtype == wkbPoint25D:
+            if gtype == wkbPoint:
                 return [geometry.GetX(0), geometry.GetY(0)]
+      
+            if gtype == wkbPoint25D:
+                return [geometry.GetX(0), geometry.GetY(0), geometry.GetZ(0)]
                 
             if gtype == wkbMultiPoint or gtype == wkbMultiPoint25D:
                 geom_count = geometry.GetGeometryCount()
@@ -3068,12 +3071,19 @@ class Geometry(_object):
                 return coordinates
                 
         types = { wkbPoint:'Point',
+                  wkbPoint25D:'Point',
                   wkbLineString: 'LineString',
+                  wkbLineString25D:'LineString',
                   wkbPolygon: 'Polygon',
+                  wkbPolygon25D: 'Polygon',
                   wkbMultiPoint: 'MultiPoint',
+                  wkbMultiPoint25D: 'MultiPoint',
                   wkbMultiLineString: 'MultiLineString',
+                  wkbMultiLineString25D: 'MultiLineString',
                   wkbMultiPolygon: 'MultiPolygon',
-                  wkbGeometryCollection: 'GeometryCollection'  
+                  wkbMultiPolygon25D: 'MultiPolygon',
+                  wkbGeometryCollection: 'GeometryCollection',
+                  wkbGeometryCollection25D: 'GeometryCollection'  
         }
 
         output = {'type': types[self.GetGeometryType()],
