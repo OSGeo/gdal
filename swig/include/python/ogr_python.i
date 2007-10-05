@@ -304,7 +304,7 @@ layer[0:4] would return a list of the first four features."""
                         'geometries': geometries}
       else:
           output = {'type': types[self.GetGeometryType()],
-                    'coordinates': get_coordinates(geometry)}   
+                    'coordinates': get_coordinates(self)}   
 
       return output
       
