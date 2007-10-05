@@ -258,9 +258,12 @@ layer[0:4] would return a list of the first four features."""
               return coordinates
 
           if gtype == wkbPolygon or gtype == wkbPolygon25D:
-              geom = geometry.GetGeometryRef(0)
-              coordinates = get_coordinates(geom)
-              return [coordinates]
+              coordinates = []
+              geom_count = geometry.GetGeometryCount()
+              for g in range(geom_count):
+                  geom = geometry.GetGeometryRef(g)
+                  coordinates.append(get_coordinates(geom))
+              return coordinates
 
           if gtype == wkbMultiPolygon or gtype == wkbMultiPolygon25D:
 
