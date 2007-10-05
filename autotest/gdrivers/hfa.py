@@ -387,8 +387,10 @@ def hfa_metadata_2():
 
 def hfa_grow_rrdlist():
 
-    # copy work file to tmp directory.
-    open('tmp/bug_1109.img','w').write(open('data/bug_1109.img').read())
+    import shutil
+
+    shutil.copyfile('data/bug_1109.img' , 'tmp/bug_1109.img')
+    #os.system("copy data\\bug_1109.img tmp")
 
     # Add two overview levels.
     ds = gdal.Open('tmp/bug_1109.img',gdal.GA_Update)
