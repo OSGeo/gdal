@@ -145,6 +145,15 @@ layer[0:4] would return a list of the first four features."""
             raise StopIteration
         else:
             return feature
+
+    def schema(self):
+        output = []
+        defn = self.GetLayerDefn()
+        for n in range(defn.GetFieldCount()):
+            output.append(defn.GetFieldDefn(n))
+        return output
+    schema = property(schema)
+
   }
 
 }
@@ -394,6 +403,7 @@ layer[0:4] would return a list of the first four features."""
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
     self.__del__()
     self.thisown = 0
+
 }
 }
 
