@@ -1764,6 +1764,27 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     psInfo->poRoot = new HFAEntry( psInfo, "root", "root", NULL );
 
+/* -------------------------------------------------------------------- */
+/*      If an .ige or .rrd file exists with the same base name,         */
+/*      delete them.  (#1784)                                           */
+/* -------------------------------------------------------------------- */
+    CPLString osExtension = CPLGetExtension(pszFilename);
+    if( !EQUAL(osExtension,"rrd") && !EQUAL(osExtension,"aux") )
+    {
+        CPLString osPath = CPLGetPath( pszFilename );
+        CPLString osBasename = CPLGetBasename( pszFilename );
+        VSIStatBufL sStatBuf;
+        CPLString osSupFile = CPLFormCIFilename( osPath, osBasename, "rrd" );
+
+        if( VSIStatL( osSupFile, &sStatBuf ) == 0 )
+            VSIUnlink( osSupFile );
+
+        osSupFile = CPLFormCIFilename( osPath, osBasename, "ige" );
+
+        if( VSIStatL( osSupFile, &sStatBuf ) == 0 )
+            VSIUnlink( osSupFile );
+    }
+
     return psInfo;
 }
 
