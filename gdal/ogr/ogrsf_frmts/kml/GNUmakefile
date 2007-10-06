@@ -8,7 +8,7 @@ OGR_OBJ =	ogrkmldriver.o ogrkmldatasource.o ogrkmllayer.o kml.o kmlvector.o kmln
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS :=	-I.. -I../.. $(EXPAT_INCLUDE) $(GDAL_INCLUDE)  $(CPPFLAGS) -Wall -ansi
+CPPFLAGS :=	-I.. -I../.. $(EXPAT_INCLUDE) $(GDAL_INCLUDE)  $(CPPFLAGS)
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 
 default:	$(O_OBJ)
