@@ -414,6 +414,40 @@ def hfa_grow_rrdlist():
     return 'success'
  
 ###############################################################################
+# Make sure an old .ige file is deleted when creating a new dataset. (#1784)
+
+def hfa_clean_ige():
+
+    # Create an imagine file, forcing creation of an .ige file.
+
+    drv = gdal.GetDriverByName('HFA')
+    src_ds = gdal.Open('data/byte.tif')
+
+    drv.CreateCopy( 'tmp/igetest.img', src_ds,
+                    options = [ 'USE_SPILL=YES' ] )
+
+    try:
+        open( 'tmp/igetest.ige' )
+    except:
+        gdaltest.post_reason( 'ige file not created with USE_SPILL=YES' )
+        return 'fail'
+
+    # Create a file without a spill file, and verify old ige cleaned up.
+    
+    drv.CreateCopy( 'tmp/igetest.img', src_ds )
+
+    try:
+        open( 'tmp/igetest.ige' )
+        gdaltest.post_reason( 'ige file not cleaned up properly.' )
+        return 'fail'
+    except:
+        pass
+
+    drv.Delete( 'tmp/igetest.img' )
+
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -429,7 +463,8 @@ gdaltest_list = [
     hfa_pe_write,
     hfa_metadata_1,
     hfa_metadata_2,
-    hfa_grow_rrdlist ]
+    hfa_grow_rrdlist,
+    hfa_clean_ige ]
 
 if __name__ == '__main__':
 
