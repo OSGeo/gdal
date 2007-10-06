@@ -387,6 +387,19 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nBlockId = nBlockIdBand0;
         
 /* -------------------------------------------------------------------- */
+/*      The bottom most partial tiles and strips are sometimes only     */
+/*      partially encoded.  This code reduces the requested data so     */
+/*      an error won't be reported in this case. (#1179)                */
+/* -------------------------------------------------------------------- */
+    int nBlockReqSize = nBlockBufSize;
+
+    if( (nBlockYOff+1) * nBlockYSize > nRasterYSize )
+    {
+        nBlockReqSize = (nBlockBufSize / nBlockYSize) 
+            * (nBlockYSize - (((nBlockYOff+1) * nBlockYSize) % nRasterYSize));
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle the case of a strip or tile that doesn't exist yet.      */
 /*      Just set to zeros and return.                                   */
 /* -------------------------------------------------------------------- */
@@ -404,10 +417,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poGDS->nBands == 1
         || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
+        if( nBlockReqSize < nBlockBufSize )
+            memset( pImage, 0, nBlockBufSize );
+
         if( TIFFIsTiled( poGDS->hTIFF ) )
         {
             if( TIFFReadEncodedTile( poGDS->hTIFF, nBlockId, pImage,
-                                     nBlockBufSize ) == -1 )
+                                     nBlockReqSize ) == -1 )
             {
                 memset( pImage, 0, nBlockBufSize );
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -419,7 +435,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             if( TIFFReadEncodedStrip( poGDS->hTIFF, nBlockId, pImage,
-                                      nBlockBufSize ) == -1 )
+                                      nBlockReqSize ) == -1 )
             {
                 memset( pImage, 0, nBlockBufSize );
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -1743,6 +1759,22 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
     }
     
 /* -------------------------------------------------------------------- */
+/*      The bottom most partial tiles and strips are sometimes only     */
+/*      partially encoded.  This code reduces the requested data so     */
+/*      an error won't be reported in this case. (#1179)                */
+/* -------------------------------------------------------------------- */
+    int nBlockReqSize = nBlockBufSize;
+    int nBlocksPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
+
+    if( (int)((nBlockYOff+1) * nBlockYSize) > nRasterYSize )
+    {
+        nBlockReqSize = (nBlockBufSize / nBlockYSize) 
+            * (nBlockYSize - (((nBlockYOff+1) * nBlockYSize) % nRasterYSize));
+        memset( pabyBlockBuf, 0, nBlockBufSize );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we don't have this block already loaded, and we know it      */
 /*      doesn't yet exist on disk, just zero the memory buffer and      */
 /*      pretend we loaded it.                                           */
@@ -1760,7 +1792,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
     if( TIFFIsTiled( hTIFF ) )
     {
         if( TIFFReadEncodedTile(hTIFF, nBlockId, pabyBlockBuf,
-                                nBlockBufSize) == -1 )
+                                nBlockReqSize) == -1 )
         {
             /* Once TIFFError() is properly hooked, this can go away */
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -1774,7 +1806,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
     else
     {
         if( TIFFReadEncodedStrip(hTIFF, nBlockId, pabyBlockBuf,
-                                 nBlockBufSize) == -1 )
+                                 nBlockReqSize) == -1 )
         {
             /* Once TIFFError() is properly hooked, this can go away */
             CPLError( CE_Failure, CPLE_AppDefined,
