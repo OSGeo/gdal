@@ -1295,6 +1295,15 @@ class Layer(_object):
         else:
             return feature
 
+    def schema(self):
+        output = []
+        defn = self.GetLayerDefn()
+        for n in range(defn.GetFieldCount()):
+            output.append(defn.GetFieldDefn(n))
+        return output
+    schema = property(schema)
+
+
 Layer_swigregister = _ogr.Layer_swigregister
 Layer_swigregister(Layer)
 
@@ -2105,6 +2114,7 @@ class FeatureDefn(_object):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
       self.__del__()
       self.thisown = 0
+
 
 FeatureDefn_swigregister = _ogr.FeatureDefn_swigregister
 FeatureDefn_swigregister(FeatureDefn)
