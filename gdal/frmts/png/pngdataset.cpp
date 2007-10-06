@@ -861,7 +861,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
+                                 poOpenInfo->papszSiblingFiles );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1301,42 +1302,42 @@ void GDALRegister_PNG()
 
 CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
 {
-	// rcg, added to support Create().
+    // rcg, added to support Create().
 
-	PNGDataset& ds = *(PNGDataset*)poDS;
-
-
-	// Write the block (or consolidate into multichannel block)
-	// and then write.
-
-	const GDALDataType dt = this->GetRasterDataType();
-	const size_t wordsize = ds.m_nBitDepth / 8;
-	GDALCopyWords( pvData, dt, wordsize,
-               ds.m_pabyBuffer + (nBand-1) * wordsize,
-			   dt, ds.nBands * wordsize,
-               nBlockXSize );
-
-	// See if we got all the bands.
-	size_t i;
-	m_bBandProvided[nBand - 1] = TRUE;
-	for(i = 0; i < ds.nBands; i++)
-	{
-		if(!m_bBandProvided[i])
-			return CE_None;
-	}
-
-	// We received all the bands, so
-	// reset band flags and write pixels out.
-	this->reset_band_provision_flags();
+    PNGDataset& ds = *(PNGDataset*)poDS;
 
 
-	// If first block, write out file header.
-	if(x == 0 && y == 0)
-	{
-		CPLErr err = ds.write_png_header();
-		if(err != CE_None)
-			return err;
-	}
+    // Write the block (or consolidate into multichannel block)
+    // and then write.
+
+    const GDALDataType dt = this->GetRasterDataType();
+    const size_t wordsize = ds.m_nBitDepth / 8;
+    GDALCopyWords( pvData, dt, wordsize,
+                   ds.m_pabyBuffer + (nBand-1) * wordsize,
+                   dt, ds.nBands * wordsize,
+                   nBlockXSize );
+
+    // See if we got all the bands.
+    size_t i;
+    m_bBandProvided[nBand - 1] = TRUE;
+    for(i = 0; i < ds.nBands; i++)
+    {
+        if(!m_bBandProvided[i])
+            return CE_None;
+    }
+
+    // We received all the bands, so
+    // reset band flags and write pixels out.
+    this->reset_band_provision_flags();
+
+
+    // If first block, write out file header.
+    if(x == 0 && y == 0)
+    {
+        CPLErr err = ds.write_png_header();
+        if(err != CE_None)
+            return err;
+    }
 
 #ifdef CPL_LSB
     if( ds.m_nBitDepth == 16 )
@@ -1344,7 +1345,7 @@ CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
 #endif
     png_write_rows( ds.m_hPNG, &ds.m_pabyBuffer, 1 );
 
-	return CE_None;
+    return CE_None;
 }
 
 
@@ -1354,7 +1355,7 @@ CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
 
 CPLErr PNGDataset::SetGeoTransform( double * padfTransform )
 {
-	// rcg, added to support Create().
+    // rcg, added to support Create().
 
     CPLErr eErr = CE_None;
 
@@ -1380,30 +1381,30 @@ CPLErr PNGDataset::SetGeoTransform( double * padfTransform )
 
 CPLErr PNGRasterBand::SetColorTable(GDALColorTable* poCT)
 {
-	// rcg, added to support Create().
-	// We get called even for grayscale files, since some 
-	// formats need a palette even then. PNG doesn't, so
-	// if a gray palette is given, just ignore it.
+    // rcg, added to support Create().
+    // We get called even for grayscale files, since some 
+    // formats need a palette even then. PNG doesn't, so
+    // if a gray palette is given, just ignore it.
 
-	GDALColorEntry sEntry;
-	for( size_t i = 0; i < poCT->GetColorEntryCount(); i++ )
-	{
-		poCT->GetColorEntryAsRGB( i, &sEntry );
-		if( sEntry.c1 != sEntry.c2 || sEntry.c1 != sEntry.c3)
-		{
-			CPLErr err = GDALPamRasterBand::SetColorTable(poCT);
-			if(err != CE_None)
-				return err;
+    GDALColorEntry sEntry;
+    for( size_t i = 0; i < poCT->GetColorEntryCount(); i++ )
+    {
+        poCT->GetColorEntryAsRGB( i, &sEntry );
+        if( sEntry.c1 != sEntry.c2 || sEntry.c1 != sEntry.c3)
+        {
+            CPLErr err = GDALPamRasterBand::SetColorTable(poCT);
+            if(err != CE_None)
+                return err;
 
-			PNGDataset& ds = *(PNGDataset*)poDS;
-			ds.m_nColorType = PNG_COLOR_TYPE_PALETTE;
-			break;
-			// band::IWriteBlock will emit color table as part of 
-			// header preceding first block write.
-		}
-	}
+            PNGDataset& ds = *(PNGDataset*)poDS;
+            ds.m_nColorType = PNG_COLOR_TYPE_PALETTE;
+            break;
+            // band::IWriteBlock will emit color table as part of 
+            // header preceding first block write.
+        }
+    }
 
-	return CE_None;
+    return CE_None;
 }
 
 
@@ -1413,21 +1414,21 @@ CPLErr PNGRasterBand::SetColorTable(GDALColorTable* poCT)
 
 CPLErr PNGDataset::write_png_header()
 {
-	/* -------------------------------------------------------------------- */
-	/*      Initialize PNG access to the file.                              */
-	/* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Initialize PNG access to the file.                              */
+/* -------------------------------------------------------------------- */
+    
+    m_hPNG = png_create_write_struct( 
+        PNG_LIBPNG_VER_STRING, NULL, 
+        png_gdal_error, png_gdal_warning );
 
-	m_hPNG = png_create_write_struct( 
-		PNG_LIBPNG_VER_STRING, NULL, 
-		png_gdal_error, png_gdal_warning );
+    m_psPNGInfo = png_create_info_struct( m_hPNG );
 
-	m_psPNGInfo = png_create_info_struct( m_hPNG );
+    png_set_write_fn( m_hPNG, m_fpImage, png_vsi_write_data, png_vsi_flush );
 
-	png_set_write_fn( m_hPNG, m_fpImage, png_vsi_write_data, png_vsi_flush );
-
-	png_set_IHDR( m_hPNG, m_psPNGInfo, nRasterXSize, nRasterYSize, 
-				  m_nBitDepth, m_nColorType, PNG_INTERLACE_NONE, 
-				  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
+    png_set_IHDR( m_hPNG, m_psPNGInfo, nRasterXSize, nRasterYSize, 
+                  m_nBitDepth, m_nColorType, PNG_INTERLACE_NONE, 
+                  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
     png_set_compression_level(m_hPNG, Z_BEST_COMPRESSION);
 
@@ -1438,66 +1439,66 @@ CPLErr PNGDataset::write_png_header()
 /*      paletted images, we save the effect to apply as part of         */
 /*      palette).                                                       */
 /* -------------------------------------------------------------------- */
-	//m_bHaveNoData = FALSE;
-	//m_dfNoDataValue = -1;
-	png_color_16 sTRNSColor;
+    //m_bHaveNoData = FALSE;
+    //m_dfNoDataValue = -1;
+    png_color_16 sTRNSColor;
 
 
     int		bHaveNoData = FALSE;
     double	dfNoDataValue = -1;
 
-	if( m_nColorType == PNG_COLOR_TYPE_GRAY )
-	{
-       dfNoDataValue = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+    if( m_nColorType == PNG_COLOR_TYPE_GRAY )
+    {
+        dfNoDataValue = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
-       if ( dfNoDataValue > 0 && dfNoDataValue < 65536 )
-	   {
-		  sTRNSColor.gray = (png_uint_16) dfNoDataValue;
-		  png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
-	   }
-	}
+        if ( dfNoDataValue > 0 && dfNoDataValue < 65536 )
+        {
+            sTRNSColor.gray = (png_uint_16) dfNoDataValue;
+            png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
+        }
+    }
 
     // RGB nodata.
     if( nColorType == PNG_COLOR_TYPE_RGB )
     {
-       // First try to use the NODATA_VALUES metadata item.
-       if ( this->GetMetadataItem( "NODATA_VALUES" ) != NULL )
-       {
-           char **papszValues = CSLTokenizeString(
-               this->GetMetadataItem( "NODATA_VALUES" ) );
+        // First try to use the NODATA_VALUES metadata item.
+        if ( this->GetMetadataItem( "NODATA_VALUES" ) != NULL )
+        {
+            char **papszValues = CSLTokenizeString(
+                this->GetMetadataItem( "NODATA_VALUES" ) );
            
-           if( CSLCount(papszValues) >= 3 )
-           {
-               sTRNSColor.red   = (png_uint_16) atoi(papszValues[0]);
-               sTRNSColor.green = (png_uint_16) atoi(papszValues[1]);
-               sTRNSColor.blue  = (png_uint_16) atoi(papszValues[2]);
-               png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
-           }
+            if( CSLCount(papszValues) >= 3 )
+            {
+                sTRNSColor.red   = (png_uint_16) atoi(papszValues[0]);
+                sTRNSColor.green = (png_uint_16) atoi(papszValues[1]);
+                sTRNSColor.blue  = (png_uint_16) atoi(papszValues[2]);
+                png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
+            }
 
-           CSLDestroy( papszValues );
-       }
-       // Otherwise, get the nodata value from the bands.
-       else
-       {
-          int	  bHaveNoData = FALSE;
-          double dfNoDataValueRed = -1;
-          double dfNoDataValueGreen = -1;
-          double dfNoDataValueBlue = -1;
+            CSLDestroy( papszValues );
+        }
+        // Otherwise, get the nodata value from the bands.
+        else
+        {
+            int	  bHaveNoData = FALSE;
+            double dfNoDataValueRed = -1;
+            double dfNoDataValueGreen = -1;
+            double dfNoDataValueBlue = -1;
 
-          dfNoDataValueRed  = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
-          dfNoDataValueGreen= this->GetRasterBand(2)->GetNoDataValue( &bHaveNoData );
-          dfNoDataValueBlue = this->GetRasterBand(3)->GetNoDataValue( &bHaveNoData );
+            dfNoDataValueRed  = this->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
+            dfNoDataValueGreen= this->GetRasterBand(2)->GetNoDataValue( &bHaveNoData );
+            dfNoDataValueBlue = this->GetRasterBand(3)->GetNoDataValue( &bHaveNoData );
 
-          if ( ( dfNoDataValueRed > 0 && dfNoDataValueRed < 65536 ) &&
-             ( dfNoDataValueGreen > 0 && dfNoDataValueGreen < 65536 ) &&
-             ( dfNoDataValueBlue > 0 && dfNoDataValueBlue < 65536 ) )
-          {
-             sTRNSColor.red   = (png_uint_16) dfNoDataValueRed;
-             sTRNSColor.green = (png_uint_16) dfNoDataValueGreen;
-             sTRNSColor.blue  = (png_uint_16) dfNoDataValueBlue;
-             png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
-          }
-       }
+            if ( ( dfNoDataValueRed > 0 && dfNoDataValueRed < 65536 ) &&
+                 ( dfNoDataValueGreen > 0 && dfNoDataValueGreen < 65536 ) &&
+                 ( dfNoDataValueBlue > 0 && dfNoDataValueBlue < 65536 ) )
+            {
+                sTRNSColor.red   = (png_uint_16) dfNoDataValueRed;
+                sTRNSColor.green = (png_uint_16) dfNoDataValueGreen;
+                sTRNSColor.blue  = (png_uint_16) dfNoDataValueBlue;
+                png_set_tRNS( m_hPNG, m_psPNGInfo, NULL, 0, &sTRNSColor );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1519,7 +1520,7 @@ CPLErr PNGDataset::write_png_header()
         poCT = this->GetRasterBand(1)->GetColorTable();
 
         m_pasPNGColors = (png_color *) CPLMalloc(sizeof(png_color) *
-                                               poCT->GetColorEntryCount());
+                                                 poCT->GetColorEntryCount());
 
         for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
         {
@@ -1557,8 +1558,8 @@ CPLErr PNGDataset::write_png_header()
         }
     }
 
-	png_write_info( m_hPNG, m_psPNGInfo );
-	return CE_None;
+    png_write_info( m_hPNG, m_psPNGInfo );
+    return CE_None;
 }
 
 
@@ -1579,9 +1580,9 @@ GDALDataset *PNGDataset::Create
     if( eType != GDT_Byte && eType != GDT_UInt16)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-              "Attempt to create PNG dataset with an illegal\n"
-              "data type (%s), only Byte and UInt16 supported by the format.\n",
-              GDALGetDataTypeName(eType) );
+                  "Attempt to create PNG dataset with an illegal\n"
+                  "data type (%s), only Byte and UInt16 supported by the format.\n",
+                  GDALGetDataTypeName(eType) );
 
         return NULL;
     }
@@ -1590,7 +1591,7 @@ GDALDataset *PNGDataset::Create
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "PNG driver doesn't support %d bands. "
-				  "Must be 1 (gray/indexed color),\n"
+                  "Must be 1 (gray/indexed color),\n"
                   "2 (gray+alpha), 3 (rgb) or 4 (rgba) bands.\n", 
                   nBands );
 
@@ -1598,18 +1599,18 @@ GDALDataset *PNGDataset::Create
     }
 
 
-	// Bands are:
-	// 1: grayscale or indexed color
-	// 2: gray plus alpha
-	// 3: rgb
-	// 4: rgb plus alpha
+    // Bands are:
+    // 1: grayscale or indexed color
+    // 2: gray plus alpha
+    // 3: rgb
+    // 4: rgb plus alpha
 
-	if(nXSize < 1 || nYSize < 1)
-	{
+    if(nXSize < 1 || nYSize < 1)
+    {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Specified pixel dimensions (% d x %d) are bad.\n",
                   nXSize, nYSize );
-	}
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup some parameters.                                          */
@@ -1623,29 +1624,29 @@ GDALDataset *PNGDataset::Create
     poDS->nBands = nBands;
 
 
-	switch(nBands)
-	{
-		case 1:
-			poDS->m_nColorType = PNG_COLOR_TYPE_GRAY;
-			break;// if a non-gray palette is set, we'll change this.
+    switch(nBands)
+    {
+      case 1:
+        poDS->m_nColorType = PNG_COLOR_TYPE_GRAY;
+        break;// if a non-gray palette is set, we'll change this.
 
-		case 2:
-			poDS->m_nColorType = PNG_COLOR_TYPE_GRAY_ALPHA;
-			break;
+      case 2:
+        poDS->m_nColorType = PNG_COLOR_TYPE_GRAY_ALPHA;
+        break;
 
-		case 3:
-			poDS->m_nColorType = PNG_COLOR_TYPE_RGB;
-			break;
+      case 3:
+        poDS->m_nColorType = PNG_COLOR_TYPE_RGB;
+        break;
 	
-		case 4:
-	        poDS->m_nColorType = PNG_COLOR_TYPE_RGB_ALPHA;
-			break;
-	}
+      case 4:
+        poDS->m_nColorType = PNG_COLOR_TYPE_RGB_ALPHA;
+        break;
+    }
 
-	poDS->m_nBitDepth = (eType == GDT_Byte ? 8 : 16);
+    poDS->m_nBitDepth = (eType == GDT_Byte ? 8 : 16);
 
     poDS->m_pabyBuffer = (GByte *) CPLMalloc(
-		 nBands * nXSize * poDS->m_nBitDepth / 8 );
+        nBands * nXSize * poDS->m_nBitDepth / 8 );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -1671,13 +1672,13 @@ GDALDataset *PNGDataset::Create
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Unable to create PNG file %s.\n", 
                   pszFilename );
-		delete poDS;
+        delete poDS;
         return NULL;
     }
 
     poDS->m_pszFilename = CPLStrdup(pszFilename);
 
-	return poDS;
+    return poDS;
 }
 
 #endif
