@@ -324,12 +324,13 @@ layer[0:4] would return a list of the first four features."""
 %pythoncode %{
   def CreateGeometryFromJson(input):
       try:
-          import simplejson
-      except ImportError:
-          raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
-      try:
           input['type']
       except TypeError:
+          try:
+              import simplejson
+          except ImportError:
+              raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
+
           input = simplejson.loads(input)
 
       types = { 'Point': wkbPoint,
