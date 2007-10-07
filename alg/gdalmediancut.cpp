@@ -154,10 +154,10 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
         return CE_Failure;
     }
 
-    if ( num_colors <= 0 )
+    if ( nColors <= 0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALComputeMedianCutPCT() : num_colors must be strictly greater than 1." );
+                  "GDALComputeMedianCutPCT() : nColors must be strictly greater than 1." );
 
         return CE_Failure;
     }
