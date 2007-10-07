@@ -74,6 +74,8 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap );
  * inappropriate.  Likewise the hTarget band will be written with 8bit values
  * and must match the width and height of the source bands. 
  *
+ * The color table cannot have more than 256 entries.
+ *
  * @param hRed Red input band. 
  * @param hGreen Green input band. 
  * @param hBlue Blue input band. 
@@ -140,6 +142,16 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
     int		nColors, anPCT[768], iColor;
 
     nColors = GDALGetColorEntryCount( hColorTable );
+    
+    if (nColors > 256)
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "GDALDitherRGB2PCT(): "
+                  "Color table cannot have more than 256 entries.\n" );
+
+        return CE_Failure;
+    }
+    
     for( iColor = 0; iColor < nColors; iColor++ )
     {
         GDALColorEntry	sEntry;
