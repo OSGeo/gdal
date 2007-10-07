@@ -96,6 +96,9 @@ static	Colorbox* largest_box(void);
  * be clipped to 8bit during reading, so non-eight bit bands are generally
  * inappropriate. 
  *
+ * Please note that the current implementation of this function is not 
+ * thread-safe.
+ *
  * @param hRed Red input band. 
  * @param hGreen Green input band. 
  * @param hBlue Blue input band. 
