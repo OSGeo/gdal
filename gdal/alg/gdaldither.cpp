@@ -143,7 +143,15 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
 
     nColors = GDALGetColorEntryCount( hColorTable );
     
-    if (nColors > 256)
+    if (nColors == 0 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "GDALDitherRGB2PCT(): "
+                  "Color table must not be empty.\n" );
+
+        return CE_Failure;
+    }
+    else if (nColors > 256)
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "GDALDitherRGB2PCT(): "
