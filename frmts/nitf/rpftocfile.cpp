@@ -499,8 +499,8 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
             char* baseDir = CPLStrdup(CPLGetDirname(pszFilename));
             VSIStatBufL sStatBuf;
             char* subdir;
-            if (frameEntry->directory[0] == '.')
-                subdir = CPLStrdup(baseDir);
+            if (CPLIsFilenameRelative(frameEntry->directory) == FALSE)
+                subdir = CPLStrdup(frameEntry->directory);
             else
                 subdir = CPLStrdup(CPLFormFilename(baseDir, frameEntry->directory, NULL));
 #if !defined(_WIN32) && !defined(_WIN32_CE)
