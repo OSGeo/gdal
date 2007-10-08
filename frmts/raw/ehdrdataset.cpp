@@ -832,8 +832,9 @@ CPLErr EHdrDataset::ReadSTX()
 /************************************************************************/
 
 /* -------------------------------------------------------------------- */
-/*  Check for IMAGE.REP (Spatiocarte Defense 1.0)                       */
-/*  For the specification (in French),                                  */
+/*  Check for IMAGE.REP (Spatiocarte Defense 1.0) or name_of_image.rep  */
+/*  if it's a GIS-GeoSPOT image                                         */
+/*  For the specification of SPDF (in French),                          */
 /*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
 /* -------------------------------------------------------------------- */
 
@@ -841,10 +842,16 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
 {
     VSIStatBufL sStatBuf;
 
+    CPLString osPath = CPLGetPath( pszFilename );
+    CPLString osName = CPLGetBasename( pszFilename );
+    CPLString osREPFilename =
+        CPLFormCIFilename( osPath, osName, "rep" );
+    if( VSIStatL( (const char*)osREPFilename, &sStatBuf ) == 0 )
+        return osREPFilename;
+
     if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
         EQUAL(CPLGetFilename(pszFilename), "haspatio.bil"))
     {
-        CPLString osPath = CPLGetPath( pszFilename );
         CPLString pszImageRepFilename(CPLFormCIFilename( osPath, "image", "rep" ));
         if( VSIStatL( (const char*)pszImageRepFilename, &sStatBuf ) == 0 )
             return pszImageRepFilename;
@@ -1307,8 +1314,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
 /* -------------------------------------------------------------------- */
-/*  Check for IMAGE.REP (Spatiocarte Defense 1.0)                       */
-/*  For the specification (in French),                                  */
+/*  Check for IMAGE.REP (Spatiocarte Defense 1.0) or name_of_image.rep  */
+/*  if it's a GIS-GeoSPOT image                                         */
+/*  For the specification of SPDF (in French),                          */
 /*   see http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download */
 /* -------------------------------------------------------------------- */
         CPLString pszImageRepFilename = GetImageRepFilename(poOpenInfo->pszFilename );
