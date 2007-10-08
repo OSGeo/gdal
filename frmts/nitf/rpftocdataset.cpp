@@ -938,12 +938,12 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int
 /* Check whether the file is a TOC file without NITF header */
 int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo * poOpenInfo, const char* pszFilename )
 {
-    char pattern[] = { 0, 0, '0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'A', '.', 'T', 'O', 'C', 0 };
+    const char pattern[] = { 0, 0, '0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'A', '.', 'T', 'O', 'C' };
     if (poOpenInfo)
     {
         if (poOpenInfo->nHeaderBytes < 48 )
             return FALSE;
-        return memcmp(pattern, poOpenInfo->pabyHeader, 16) == 0;
+        return memcmp(pattern, poOpenInfo->pabyHeader, 15) == 0;
     }
     else
     {
@@ -956,7 +956,7 @@ int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo * poOpenInfo, const char* pszFi
         }
 
         int ret = (VSIFReadL(buffer, 1, 48, fp) == 48) &&
-                   memcmp(pattern, buffer, 16) == 0;
+                   memcmp(pattern, buffer, 15) == 0;
         VSIFCloseL(fp);
         return ret;
     }
