@@ -931,6 +931,10 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int
     return poVirtualDS;
 }
 
+/************************************************************************/
+/*                          IsNonNITFFileTOC()                          */
+/************************************************************************/
+
 /* Check whether the file is a TOC file without NITF header */
 int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo * poOpenInfo, const char* pszFilename )
 {
@@ -958,6 +962,10 @@ int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo * poOpenInfo, const char* pszFi
     }
 }
 
+/************************************************************************/
+/*                             IsNITFFileTOC()                          */
+/************************************************************************/
+
 /* Check whether this NITF file is a TOC file */
 int RPFTOCDataset::IsNITFFileTOC(NITFFile *psFile)
 {
@@ -972,6 +980,10 @@ int RPFTOCDataset::IsNITFFileTOC(NITFFile *psFile)
     }
     return FALSE;
 }
+
+/************************************************************************/
+/*                                OpenFileTOC()                         */
+/************************************************************************/
 
 /* Create a dataset from a TOC file */
 /* If psFile == NULL, the TOC file has no NITF header */
@@ -1011,6 +1023,9 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
                     GDALDataset* ds = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i], isRGBA);
                     if (ds)
                     {
+                        if (psFile)
+                            ds->SetMetadata( psFile->papszMetadata );
+
                         int iFile = 0;
                         if (psFile)
                             ds->SetMetadata(psFile->papszMetadata);
@@ -1044,6 +1059,9 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
     if (toc)
     {
         RPFTOCDataset* ds = new RPFTOCDataset();
+        if (psFile)
+            ds->SetMetadata( psFile->papszMetadata );
+
         int i;
         int ok = FALSE;
         char* projectionRef = NULL;
