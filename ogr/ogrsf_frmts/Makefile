@@ -1,10 +1,10 @@
 GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml \
-			avc rec mem vrt csv gmt bna \
+			avc rec mem vrt csv gmt bna kml \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(SDE_DIR) $(IDB_DIR) $(KMLDIR)
+			$(SDE_DIR) $(IDB_DIR) 
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -62,12 +62,6 @@ ILI_OBJ = ili\*.obj ili\iom\*.obj
 IDB_DIR = idb
 IDB_OBJ = idb\*.obj
 !ENDIF
-
-!IFDEF EXPAT_LIB
-KMLDIR =	kml	
-KMLOBJ =	kml\*.obj
-!ENDIF
-
 
 default:
 	for %d in ( $(DIRLIST) ) do \
