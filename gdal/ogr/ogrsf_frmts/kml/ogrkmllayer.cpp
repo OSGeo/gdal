@@ -95,6 +95,9 @@ void OGRKMLLayer::ResetReading()
 /************************************************************************/
 OGRFeature *OGRKMLLayer::GetNextFeature()
 {
+#ifndef HAVE_EXPAT
+    return NULL;
+#else
     CPLDebug("KML", "GetNextFeature(#%d)", this->iNextKMLId);
     Feature *poFeatureKML;
     unsigned short nCount, nCount2;
@@ -178,6 +181,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 
     // Return the feature
     return poFeature;
+#endif /* HAVE_EXPAT */
 }
 
 /************************************************************************/
@@ -185,17 +189,23 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /************************************************************************/
 int OGRKMLLayer::GetFeatureCount( int bForce )
 {
+#ifdef HAVE_EXPAT
     KML *poKMLFile = poDS->GetKMLFile();
     poKMLFile->selectLayer(this->nLayerNumber);
 
     return poKMLFile->getNumFeatures();
+#else
+    return 0;
+#endif
 }
 
 /************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
+
 OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 {
+#ifdef HAVE_EXPAT
     CPLAssert( NULL != psExtent );
 
     double dfXMin, dfXMax, dfYMin, dfYMax;
@@ -214,6 +224,10 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     }
     else 
         return OGRERR_FAILURE;
+
+#else /* ndef HAVE_EXPAT */
+    return OGRERR_FAILURE;
+#endif
 }
 
 /************************************************************************/
@@ -244,7 +258,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
             {           
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
-                pszRaw++;
+                    pszRaw++;
 
                 char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
 
@@ -266,7 +280,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
             {           
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
-                pszRaw++;
+                    pszRaw++;
 
                 char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
 
@@ -327,15 +341,15 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
         poDS->GrowExtents( &sGeomBounds );
     }
     
-	if ( (wkbPolygon == poFeatureDefn->GetGeomType() ) ||
-		 (wkbMultiPolygon == poFeatureDefn->GetGeomType() ) ||
-		 (wkbLineString == poFeatureDefn->GetGeomType() ) ||
-		 (wkbMultiLineString == poFeatureDefn->GetGeomType() ) )	
-	{
-	  //If we're dealing with a polygon, add a line style that will stand out a bit
-      VSIFPrintf( fp, "  <Style><LineStyle><color>ff0000ff</color></LineStyle>");
-	  VSIFPrintf( fp, "  <PolyStyle><fill>0</fill></PolyStyle></Style>\n" );
-	}
+    if ( (wkbPolygon == poFeatureDefn->GetGeomType() ) ||
+         (wkbMultiPolygon == poFeatureDefn->GetGeomType() ) ||
+         (wkbLineString == poFeatureDefn->GetGeomType() ) ||
+         (wkbMultiLineString == poFeatureDefn->GetGeomType() ) )	
+    {
+        //If we're dealing with a polygon, add a line style that will stand out a bit
+        VSIFPrintf( fp, "  <Style><LineStyle><color>ff0000ff</color></LineStyle>");
+        VSIFPrintf( fp, "  <PolyStyle><fill>0</fill></PolyStyle></Style>\n" );
+    }
     VSIFPrintf( fp, "  </Placemark>\n" );
 
     return OGRERR_NONE;
