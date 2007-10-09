@@ -104,7 +104,7 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     CPLAssert( nLayers == 0 && poSession == NULL );
 
 /* -------------------------------------------------------------------- */
-/*      Verify postgresql prefix.                                       */
+/*      Verify Oracle prefix.                                           */
 /* -------------------------------------------------------------------- */
     if( !EQUALN(pszNewName,"OCI:",3) )
     {
