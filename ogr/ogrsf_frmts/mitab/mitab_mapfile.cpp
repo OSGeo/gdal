@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.39 2007/07/11 15:51:52 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.40 2007/09/14 18:30:19 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.40  2007/09/14 18:30:19  dmorissette
+ * Fixed the splitting of object blocks with the optimized spatial
+ * index mode that was producing files with misaligned bytes that
+ * confused MapInfo (bug 1732)
+ *
  * Revision 1.39  2007/07/11 15:51:52  dmorissette
  * Fixed duplicate 'int i' definition build errors in SplitObjBlock()
  *
@@ -1910,10 +1915,16 @@ int TABMAPFile::MoveObjToBlock(TABMAPObjHdr       *poObjHdr,
 {
     /*-----------------------------------------------------------------
      * Copy Coord data if applicable
+     * We use a temporary TABFeature object to handle the reading/writing
+     * of coord block data.
      *----------------------------------------------------------------*/
     if (m_poHeader->MapObjectUsesCoordBlock(poObjHdr->m_nType))
     {
         TABMAPObjHdrWithCoord *poObjHdrCoord =(TABMAPObjHdrWithCoord*)poObjHdr;
+        OGRFeatureDefn * poDummyDefn = new OGRFeatureDefn;
+        TABFeature *poFeature = 
+            TABFeature::CreateFromMapInfoType(poObjHdr->m_nType, poDummyDefn);
+
 
         if (PrepareCoordBlock(poObjHdrCoord->m_nType, 
                               poDstObjBlock, ppoDstCoordBlock) != 0)
@@ -1921,29 +1932,32 @@ int TABMAPFile::MoveObjToBlock(TABMAPObjHdr       *poObjHdr,
 
         GInt32 nSrcCoordPtr = poObjHdrCoord->m_nCoordBlockPtr;
 
-        poObjHdrCoord->m_nCoordBlockPtr = (*ppoDstCoordBlock)->GetCurAddress();
-
-        GByte *pabyBuf = (GByte*)CPLMalloc(poObjHdrCoord->m_nCoordDataSize*sizeof(GByte));
-
-        /* Pass second arg to GotoByteInFile() to force reading from file
+        /* Copy Coord data
+         * poObjHdrCoord->m_nCoordBlockPtr will be set by WriteGeometry...
+         * We pass second arg to GotoByteInFile() to force reading from file
          * if nSrcCoordPtr is not in current block
          */
         if (poSrcCoordBlock->GotoByteInFile(nSrcCoordPtr, TRUE) != 0 ||
-            poSrcCoordBlock->ReadBytes(poObjHdrCoord->m_nCoordDataSize,
-                                       pabyBuf) != 0 ||
-            (*ppoDstCoordBlock)->WriteBytes(poObjHdrCoord->m_nCoordDataSize,
-                                          pabyBuf) != 0)
+            poFeature->ReadGeometryFromMAPFile(this, poObjHdr,
+                                               TRUE /* bCoordDataOnly */,
+                                               &poSrcCoordBlock) != 0 ||
+            poFeature->WriteGeometryToMAPFile(this, poObjHdr,
+                                              TRUE /* bCoordDataOnly */,
+                                              ppoDstCoordBlock) != 0)
         {
-            CPLFree(pabyBuf);
+            delete poFeature;
+            delete poDummyDefn;
             return -1;
         }
 
-        CPLFree(pabyBuf);
 
         // Update the references to dest coord block in the MAPObjBlock
         // in case new block has been alloc'd since PrepareCoordBlock()
         //
         poDstObjBlock->AddCoordBlockRef((*ppoDstCoordBlock)->GetStartAddress());
+        /* Cleanup */
+        delete poFeature;
+        delete poDummyDefn;
     }
 
     /*-----------------------------------------------------------------

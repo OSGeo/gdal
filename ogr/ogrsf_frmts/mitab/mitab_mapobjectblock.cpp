@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.18 2007/06/11 14:52:31 dmorissette Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.19 2007/09/18 17:43:56 dmorissette Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.19  2007/09/18 17:43:56  dmorissette
+ * Fixed another index splitting issue: compr coordinates origin was not
+ * stored in the TABFeature in ReadGeometry... (bug 1732)
+ *
  * Revision 1.18  2007/06/11 14:52:31  dmorissette
  * Return a valid m_nCoordDatasize value for Collection objects to prevent
  * trashing of collection data during object splitting (bug 1728)
@@ -620,6 +624,8 @@ int     TABMAPObjectBlock::CommitNewObject(TABMAPObjHdr *poObjHdr)
 
 void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
 {
+    CPLErrorReset();
+
     if (fpOut == NULL)
         fpOut = stdout;
 
@@ -644,6 +650,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         /* We need the mapfile's header block */
         TABRawBinBlock *poBlock;
         TABMAPHeaderBlock *poHeader;
+        TABMAPObjHdr *poObjHdr;
 
         poBlock = TABCreateMAPBlockFromFile(m_fp, 0, 512);
         if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
@@ -654,13 +661,18 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         }
         poHeader = (TABMAPHeaderBlock *)poBlock;
 
-        while(AdvanceToNextObject(poHeader) != -1)
+        Rewind();
+        while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != NULL)
         {
             fprintf(fpOut, 
-                    "   object id=%d, type=%d, offset=%d (%d), size=%d \n",
+                    "   object id=%d, type=%d, offset=%d (%d), size=%d\n"
+                    "          MBR=(%d, %d, %d, %d)\n",
                     m_nCurObjectId, m_nCurObjectType, m_nCurObjectOffset,
                     m_nFileOffset + m_nCurObjectOffset,
-                    poHeader->GetMapObjectSize( m_nCurObjectType ) );
+                    poHeader->GetMapObjectSize( m_nCurObjectType ),
+                    poObjHdr->m_nMinX, poObjHdr->m_nMinY,
+                    poObjHdr->m_nMaxX,poObjHdr->m_nMaxY);
+            delete poObjHdr;
         }
 
         delete poHeader;
