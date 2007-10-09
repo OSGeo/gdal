@@ -250,7 +250,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     OGRFieldDefn        oField( poFieldIn );
 
 /* -------------------------------------------------------------------- */
-/*      Do we want to "launder" the column names into Postgres          */
+/*      Do we want to "launder" the column names into Oracle            */
 /*      friendly format?                                                */
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
@@ -263,7 +263,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     }
     
 /* -------------------------------------------------------------------- */
-/*      Work out the PostgreSQL type.                                   */
+/*      Work out the Oracle type.                                       */
 /* -------------------------------------------------------------------- */
     if( oField.GetType() == OFTInteger )
     {
