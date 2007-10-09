@@ -53,6 +53,7 @@ const char *OGRKMLDriver::GetName()
 OGRDataSource *OGRKMLDriver::Open( const char * pszFilename,
                                    int bUpdate )
 {
+#ifdef HAVE_EXPAT
     CPLAssert( NULL != pszFilename );
     
     OGRKMLDataSource    *poDS = NULL;
@@ -79,6 +80,9 @@ OGRDataSource *OGRKMLDriver::Open( const char * pszFilename,
     }
     
     return poDS;
+#else
+    return NULL;
+#endif
 }
 
 /************************************************************************/

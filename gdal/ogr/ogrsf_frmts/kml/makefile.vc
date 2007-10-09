@@ -1,19 +1,19 @@
 
-LL_OBJ	=	kml.obj kmlvector.obj ogr2kmlgeometry.obj kmlnode.obj
-OGR_OBJ	=	ogrkmldriver.obj ogrkmldatasource.obj ogrkmllayer.obj
-
-OBJ	=	$(LL_OBJ) $(OGR_OBJ)
+EXPAT_OBJ =	kml.obj kmlvector.obj kmlnode.obj
+OGR_OBJ	=	ogrkmldriver.obj ogrkmldatasource.obj ogrkmllayer.obj \
+		ogr2kmlgeometry.obj 
 
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IFDEF EXPAT_DIR
+OBJ	=	$(EXPAT_OBJ) $(OGR_OBJ)
 EXTRAFLAGS =	-I.. -I..\.. $(EXPAT_INCLUDE) -DHAVE_EXPAT=1 
 !ELSE
-EXTRAFLAGS =	-I.. -I..\.. -DHAVE_EXPAT=0
+OBJ	=	$(OGR_OBJ)
+EXTRAFLAGS =	-I.. -I..\..
 !ENDIF
-
 
 default:	$(OBJ)
 
