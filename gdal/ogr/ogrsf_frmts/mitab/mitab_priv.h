@@ -1481,6 +1481,10 @@ class TABDATFile
     int         InitWriteHeader();
     int         WriteHeader();
 
+	// We know that character strings are limited to 254 chars in MapInfo
+	// Using a buffer pr. class instance to avoid threading issues with the library
+	char		m_szBuffer[256];
+
    public:
     TABDATFile();
     ~TABDATFile();
