@@ -242,21 +242,30 @@ GTIFFBuildOverviews( const char * pszFilename,
     if( nPhotometric == PHOTOMETRIC_PALETTE )
     {
         GDALColorTable *poCT = papoBandList[0]->GetColorTable();
-        int nColorCount = MIN(65536,poCT->GetColorEntryCount());
+        int nColorCount;
 
-        panRed   = (unsigned short *) CPLCalloc(nColorCount,sizeof(unsigned short));
-        panGreen = (unsigned short *) CPLCalloc(nColorCount,sizeof(unsigned short));
-        panBlue  = (unsigned short *) CPLCalloc(nColorCount,sizeof(unsigned short));
+        if( nBitsPerPixel <= 8 )
+            nColorCount = 256;
+        else
+            nColorCount = 65536;
+
+        panRed   = (unsigned short *) 
+            CPLCalloc(nColorCount,sizeof(unsigned short));
+        panGreen = (unsigned short *) 
+            CPLCalloc(nColorCount,sizeof(unsigned short));
+        panBlue  = (unsigned short *) 
+            CPLCalloc(nColorCount,sizeof(unsigned short));
 
         for( int iColor = 0; iColor < nColorCount; iColor++ )
         {
             GDALColorEntry  sRGB;
 
-            poCT->GetColorEntryAsRGB( iColor, &sRGB );
-
-            panRed[iColor] = (unsigned short) (256 * sRGB.c1);
-            panGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-            panBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            if( poCT->GetColorEntryAsRGB( iColor, &sRGB ) )
+            {
+                panRed[iColor] = (unsigned short) (256 * sRGB.c1);
+                panGreen[iColor] = (unsigned short) (256 * sRGB.c2);
+                panBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+            }
         }
     }
         
@@ -347,6 +356,8 @@ GTIFFBuildOverviews( const char * pszFilename,
             return eErr;
         }
     }
+
+    CPLFree( papoOverviews );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
