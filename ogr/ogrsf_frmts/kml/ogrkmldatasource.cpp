@@ -48,7 +48,10 @@ OGRKMLDataSource::OGRKMLDataSource()
     fpOutput = NULL;
 
     papszCreateOptions = NULL;
+
+#ifdef HAVE_EXPAT
     poKMLFile = NULL;
+#endif
 }
 
 /************************************************************************/
@@ -76,14 +79,18 @@ OGRKMLDataSource::~OGRKMLDataSource()
     }
     
     CPLFree( papoLayers );
-    
+
+#ifdef HAVE_EXPAT    
     if(poKMLFile != NULL)
         delete poKMLFile;
+#endif
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
+
+#ifdef HAVE_EXPAT
 int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 {
     int nCount;
@@ -201,6 +208,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
     
     return TRUE;	
 }
+#endif /* HAVE_EXPAT */
 
 /************************************************************************/
 /*                               Create()                               */
