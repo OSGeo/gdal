@@ -1339,7 +1339,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     int     i, j, iDataSize, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
-    char    **papszGeolocations = NULL, **papszDimMap = NULL;
+    char    **papszGeolocations = NULL;
     char    *pszDimMaps = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1444,8 +1444,13 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     }
 #endif
 
+    char **papszDimMap;
+
     papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
                                       CSLT_HONOURSTRINGS );
+    CPLFree( pszDimMaps );
+    pszDimMaps = NULL;
+
     for ( i = 0; i < CSLCount(papszDimMap); i++ )
     {
         if ( strstr(papszDimMap[i], papszDimList[iXDim]) )
@@ -1465,6 +1470,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
                 *pszTemp = '\0';
         }
     }
+    CSLDestroy( papszDimMap );
+    papszDimMap = NULL;
 
     for ( i = 0; i < CSLCount(papszGeolocations); i++ )
     {
