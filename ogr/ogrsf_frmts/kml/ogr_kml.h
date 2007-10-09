@@ -33,7 +33,10 @@
 #define OGR_KML_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "kmlvector.h"
+
+#ifdef HAVE_EXPAT
+#  include "kmlvector.h"
+#endif
 
 class OGRKMLDataSource;
 
@@ -110,7 +113,9 @@ class OGRKMLDataSource : public OGRDataSource
     
     int                 nSchemaInsertLocation;
 
+#ifdef HAVE_EXPAT
     KML	                *poKMLFile;
+#endif
 
     void                InsertHeader();
 
@@ -139,7 +144,9 @@ class OGRKMLDataSource : public OGRDataSource
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
     
+#ifdef HAVE_EXPAT
     KML*                GetKMLFile() { return poKMLFile; };
+#endif
     
 };
 

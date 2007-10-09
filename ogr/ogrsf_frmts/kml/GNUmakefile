@@ -4,9 +4,14 @@ include ../../../GDALmake.opt
 
 CORE_OBJ =	ogr2kmlgeometry.o
 
-OGR_OBJ =	ogrkmldriver.o ogrkmldatasource.o ogrkmllayer.o kml.o kmlvector.o kmlnode.o
+OGR_OBJ =	ogrkmldriver.o ogrkmldatasource.o ogrkmllayer.o
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
+
+ifeq ($(HAVE_EXPAT),yes)
+OGR_OBJ  +=   kml.o kmlnode.o kmlvector.o
+CPPFLAGS +=   -DHAVE_EXPAT
+endif
 
 CPPFLAGS :=	-I.. -I../.. $(EXPAT_INCLUDE) $(GDAL_INCLUDE)  $(CPPFLAGS)
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
