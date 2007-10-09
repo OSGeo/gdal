@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.47 2007/06/12 12:50:39 dmorissette Exp $
+ * $Id: mitab_priv.h,v 1.48 2007/10/09 17:43:16 fwarmerdam Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.48  2007/10/09 17:43:16  fwarmerdam
+ * Remove static variables that interfere with reentrancy. (GDAL #1883)
+ *
  * Revision 1.47  2007/06/12 12:50:39  dmorissette
  * Use Quick Spatial Index by default until bug 1732 is fixed (broken files
  * produced by current coord block splitting technique).
@@ -1572,6 +1575,10 @@ class TABDATFile
 
     int         InitWriteHeader();
     int         WriteHeader();
+
+	// We know that character strings are limited to 254 chars in MapInfo
+	// Using a buffer pr. class instance to avoid threading issues with the library
+	char		m_szBuffer[256];
 
    public:
     TABDATFile();

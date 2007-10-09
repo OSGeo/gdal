@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.17 2004/06/30 20:29:03 dmorissette Exp $
+ * $Id: mitab_datfile.cpp,v 1.18 2007/10/09 17:43:16 fwarmerdam Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.18  2007/10/09 17:43:16  fwarmerdam
+ * Remove static variables that interfere with reentrancy. (GDAL #1883)
+ *
  * Revision 1.17  2004/06/30 20:29:03  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -819,9 +822,6 @@ int   TABDATFile::GetFieldPrecision(int nFieldId)
  **********************************************************************/
 const char *TABDATFile::ReadCharField(int nWidth)
 {
-    // We know that character strings are limited to 254 chars in MapInfo
-    static char szBuf[256];
-
     // If current record has been deleted, then return an acceptable 
     // default value.
     if (m_bCurRecordDeletedFlag)
@@ -841,21 +841,21 @@ const char *TABDATFile::ReadCharField(int nWidth)
         return "";
     }
 
-    if (m_poRecordBlock->ReadBytes(nWidth, (GByte*)szBuf) != 0)
+    if (m_poRecordBlock->ReadBytes(nWidth, (GByte*)m_szBuffer) != 0)
         return "";
 
-    szBuf[nWidth] = '\0';
+    m_szBuffer[nWidth] = '\0';
 
     // NATIVE tables are padded with '\0' chars, but DBF tables are padded
     // with spaces... get rid of the trailing spaces.
     if (m_eTableType == TABTableDBF)
     {
-        int nLen = strlen(szBuf)-1;
-        while(nLen>=0 && szBuf[nLen] == ' ')
-            szBuf[nLen--] = '\0';
+        int nLen = strlen(m_szBuffer)-1;
+        while(nLen>=0 && m_szBuffer[nLen] == ' ')
+            m_szBuffer[nLen--] = '\0';
     }
 
-    return szBuf;
+    return m_szBuffer;
 }
 
 /**********************************************************************
@@ -1011,7 +1011,6 @@ const char *TABDATFile::ReadLogicalField(int nWidth)
 const char *TABDATFile::ReadDateField(int nWidth)
 {
     int nDay, nMonth, nYear;
-    static char szBuf[20];
 
     // If current record has been deleted, then return an acceptable 
     // default value.
@@ -1038,9 +1037,9 @@ const char *TABDATFile::ReadDateField(int nWidth)
     if (CPLGetLastErrorNo() != 0 || (nYear==0 && nMonth==0 && nDay==0))
         return "";
 
-    sprintf(szBuf, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
+    sprintf(m_szBuffer, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
 
-    return szBuf;
+    return m_szBuffer;
 }
 
 /**********************************************************************
