@@ -13,6 +13,30 @@ For a complete change history, please see the CVS log comments.
 CHANGES - Current Version:
 --------------------------
 
+Version 1.6.3-beta2 (2007-09-18)
+--------------------------------
+
+- Fixed another issue related to splitting of object blocks with the 
+  optimized spatial index. The compressed coordinate origin values were
+  not initialized properly before being written (bug 1732)
+
+- Remove static variables that interfere with reentrancy. 
+  http://trac.osgeo.org/gdal/ticket/1883
+
+
+Version 1.6.3-beta1 (2007-09-14)
+--------------------------------
+
+- Fixed the splitting of object blocks with the optimized spatial
+  index mode that was producing files with misaligned bytes that
+  confused MapInfo (bug 1732)
+  Note that even if this bug is (hopefully) fixed, the optimized spatial
+  index is still disabled by default in this release and we still use
+  the quick (i.e. traditional) spatial index mode by default.
+
+- Fixed problem with MIF parser being confused by special attribute 
+  names (bug 1795)
+
 
 Version 1.6.2 (2007-07-12)
 --------------------------
@@ -812,5 +836,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.190 2007/07/31 21:06:51 dmorissette Exp $
+$Id: HISTORY.TXT,v 1.195 2007/10/09 17:43:16 fwarmerdam Exp $
 ------------
