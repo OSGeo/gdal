@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.64 2007/06/21 14:00:23 dmorissette Exp $
+ * $Id: mitab_tabfile.cpp,v 1.65 2007/09/12 20:22:31 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,9 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.65  2007/09/12 20:22:31  dmorissette
+ * Added TABFeature::CreateFromMapInfoType()
+ *
  * Revision 1.64  2007/06/21 14:00:23  dmorissette
  * Added missing cast in isspace() calls to avoid failed assertion on Windows
  * (MITAB bug 1737, GDAL ticket 1678))
@@ -1318,82 +1321,11 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
 
     /*-----------------------------------------------------------------
      * Create new feature object of the right type
+     * Unsupported object types are returned as raw TABFeature (i.e. NONE
+     * geometry)
      *----------------------------------------------------------------*/
-    switch(m_poMAPFile->GetCurObjType())
-    {
-      case TAB_GEOM_NONE:
-        m_poCurFeature = new TABFeature(m_poDefn);
-        break;
-      case TAB_GEOM_SYMBOL_C:
-      case TAB_GEOM_SYMBOL:
-        m_poCurFeature = new TABPoint(m_poDefn);
-        break;
-      case TAB_GEOM_FONTSYMBOL_C:
-      case TAB_GEOM_FONTSYMBOL:
-        m_poCurFeature = new TABFontPoint(m_poDefn);
-        break;
-      case TAB_GEOM_CUSTOMSYMBOL_C:
-      case TAB_GEOM_CUSTOMSYMBOL:
-        m_poCurFeature = new TABCustomPoint(m_poDefn);
-        break;
-      case TAB_GEOM_LINE_C:
-      case TAB_GEOM_LINE:
-      case TAB_GEOM_PLINE_C:
-      case TAB_GEOM_PLINE:
-      case TAB_GEOM_MULTIPLINE_C:
-      case TAB_GEOM_MULTIPLINE:
-      case TAB_GEOM_V450_MULTIPLINE_C:
-      case TAB_GEOM_V450_MULTIPLINE:
-       m_poCurFeature = new TABPolyline(m_poDefn);
-        break;
-      case TAB_GEOM_ARC_C:
-      case TAB_GEOM_ARC:
-        m_poCurFeature = new TABArc(m_poDefn);
-        break;
-
-      case TAB_GEOM_REGION_C:
-      case TAB_GEOM_REGION:
-      case TAB_GEOM_V450_REGION_C:
-      case TAB_GEOM_V450_REGION:
-        m_poCurFeature = new TABRegion(m_poDefn);
-        break;
-      case TAB_GEOM_RECT_C:
-      case TAB_GEOM_RECT:
-      case TAB_GEOM_ROUNDRECT_C:
-      case TAB_GEOM_ROUNDRECT:
-        m_poCurFeature = new TABRectangle(m_poDefn);
-        break;
-      case TAB_GEOM_ELLIPSE_C:
-      case TAB_GEOM_ELLIPSE:
-        m_poCurFeature = new TABEllipse(m_poDefn);
-        break;
-      case TAB_GEOM_TEXT_C:
-      case TAB_GEOM_TEXT:
-        m_poCurFeature = new TABText(m_poDefn);
-        break;
-      case TAB_GEOM_MULTIPOINT_C:
-      case TAB_GEOM_MULTIPOINT:
-        m_poCurFeature = new TABMultiPoint(m_poDefn);
-        break;
-      case TAB_GEOM_COLLECTION_C:
-      case TAB_GEOM_COLLECTION:
-        m_poCurFeature = new TABCollection(m_poDefn);  
-        break;
-      default:
-        /*-------------------------------------------------------------
-         * Unsupported feature type... we still return a valid feature
-         * with NONE geometry after producing a Warning.
-         * Callers can trap that case by checking CPLGetLastErrorNo() 
-         * against TAB_WarningFeatureTypeNotSupported
-         *------------------------------------------------------------*/
-//        m_poCurFeature = new TABDebugFeature(m_poDefn);
-        m_poCurFeature = new TABFeature(m_poDefn);
-
-        CPLError(CE_Warning, TAB_WarningFeatureTypeNotSupported,
-                 "Unsupported object type %d (0x%2.2x).  Feature will be "
-                 "returned with NONE geometry.", 
-                 m_poMAPFile->GetCurObjType(), m_poMAPFile->GetCurObjType() );
-    }
+    m_poCurFeature = TABFeature::CreateFromMapInfoType(m_poMAPFile->GetCurObjType(), 
+                                                       m_poDefn);
 
     /*-----------------------------------------------------------------
      * Read fields from the .DAT file

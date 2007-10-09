@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.42 2007/06/12 13:52:37 dmorissette Exp $
+ * $Id: mitab_miffile.cpp,v 1.43 2007/09/14 15:35:21 dmorissette Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.43  2007/09/14 15:35:21  dmorissette
+ * Fixed problem with MIF parser being confused by special attribute
+ * names (bug 1795)
+ *
  * Revision 1.42  2007/06/12 13:52:37  dmorissette
  * Added IMapInfoFile::SetCharset() method (bug 1734)
  *
@@ -451,7 +455,25 @@ int MIFFile::ParseMIFHeader()
         while(pszLine && (*pszLine == ' ' || *pszLine == '\t') )
             pszLine++;  // skip leading spaces
 
-        if (EQUALN(pszLine,"VERSION",7))
+        if (bColumns == TRUE && nColumns >0)
+        {
+            if (nColumns == 0)
+            {
+                // Permit to 0 columns
+                bColumns = FALSE;
+            }
+            else if (AddFields(pszLine) == 0)
+            {
+                nColumns--;
+                if (nColumns == 0)
+                  bColumns = FALSE;
+            }
+            else
+            {
+                bColumns = FALSE;
+            }
+        }
+        else if (EQUALN(pszLine,"VERSION",7))
         {
             papszToken = CSLTokenizeStringComplex(pszLine," ()\t",TRUE,FALSE); 
             bColumns = FALSE; bCoordSys = FALSE;
@@ -554,24 +576,6 @@ int MIFFile::ParseMIFHeader()
                 m_nAttribut = 0;
             }
             CSLDestroy(papszToken);
-        }
-        else if (bColumns == TRUE && nColumns >0)
-        {
-            if (nColumns == 0)
-            {
-                // Permit to 0 columns
-                bColumns = FALSE;
-            }
-            else if (AddFields(pszLine) == 0)
-            {
-                nColumns--;
-                if (nColumns == 0)
-                  bColumns = FALSE;
-            }
-            else
-            {
-                bColumns = FALSE;
-            }
         }
         else if (bCoordSys == TRUE)
         {
