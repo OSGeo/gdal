@@ -52,6 +52,8 @@ CPL_C_END
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
+static const char szWGS84[] = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]";
+
 /************************************************************************/
 /* ==================================================================== */
 /*  List of HDF-EOS Swath product types.                                */
@@ -110,6 +112,7 @@ class HDF4ImageDataset : public HDF4Dataset
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
     void                CaptureNRLGeoTransform(void);
     void                CaptureCoastwatchGCTPInfo(void);
+    void                ProcessModisSDSGeolocation(void);
     int                 ProcessSwathGeolocation( int32 hSW, 
                                                  char **papszDimList );
 
@@ -1309,6 +1312,81 @@ char**  HDF4ImageDataset::GetGridAttrs( int32 hGD, char **papszMetadata )
 }
 
 /************************************************************************/
+/*                     ProcessModisSDSGeolocation()                     */
+/*                                                                      */
+/*      Recognise latitude and longitude geolocation arrays in          */
+/*      simple SDS datasets like:                                       */
+/*                                                                      */
+/*      download.osgeo.org/gdal/data/hdf4/A2006005182000.L2_LAC_SST.x.hdf */
+/*                                                                      */
+/*      As reported in ticket #1895.                                    */
+/*                                                                      */
+/*      Note that we don't check that the dimensions of the latitude    */
+/*      and longitude exactly match the dimensions of the basedata,     */
+/*      though we ought to.                                             */
+/************************************************************************/
+
+void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
+
+{
+    int iDSIndex, iXIndex=-1, iYIndex=-1;
+
+    // No point in assigning geolocation to the geolocation SDSes themselves.
+    if( EQUAL(szName,"longitude") || EQUAL(szName,"latitude") )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Scan for latitude and longitude sections.                       */
+/* -------------------------------------------------------------------- */
+    for( iDSIndex = 0; iDSIndex < nDatasets; iDSIndex++ )
+    {
+        int32 	    iRank, iNumType, nAttrs, iSDS;
+        char        szName[65];
+        int32       aiDimSizes[MAX_VAR_DIMS];
+        
+	iSDS = SDselect( hSD, iDSIndex );
+
+	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
+                       &nAttrs) != 0 )
+            continue;
+
+        if( EQUAL(szName,"latitude") )
+            iYIndex = iDSIndex;
+
+        if( EQUAL(szName,"longitude") )
+            iXIndex = iDSIndex;
+
+        
+    }
+
+    if( iXIndex == -1 || iYIndex == -1 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      We found geolocation information.  Record it as metadata.       */
+/* -------------------------------------------------------------------- */
+    CPLString  osWrk;
+    
+    SetMetadataItem( "SRS", szWGS84, "GEOLOCATION" );
+    
+    osWrk.Printf( "HDF4_SDS:UNKNOWN:\"%s\":%d", 
+                  pszFilename, iXIndex );
+    SetMetadataItem( "X_DATASET", osWrk, "GEOLOCATION" );
+    SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
+
+    osWrk.Printf( "HDF4_SDS:UNKNOWN:\"%s\":%d", 
+                  pszFilename, iYIndex );
+    SetMetadataItem( "Y_DATASET", osWrk, "GEOLOCATION" );
+    SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
+
+    SetMetadataItem( "PIXEL_OFFSET", "0", "GEOLOCATION" );
+    SetMetadataItem( "PIXEL_STEP", "1", "GEOLOCATION" );
+
+    SetMetadataItem( "LINE_OFFSET", "0", "GEOLOCATION" );
+    SetMetadataItem( "LINE_STEP", "1", "GEOLOCATION" );
+}
+
+/************************************************************************/
 /*                      ProcessSwathGeolocation()                       */
 /*                                                                      */
 /*      Handle the swath geolocation data for a swath.  Attach          */
@@ -1743,7 +1821,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
         // MODIS L1B
         else if ( eProduct == PROD_MODIS_L1B )
         {
-            pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+            pszGCPProjection = CPLStrdup( szWGS84 );
         }
     }
 
@@ -2426,10 +2504,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->CaptureNRLGeoTransform();
           }
 
-          // Special cast for coastwatch hdf files. 
+          // Special case for coastwatch hdf files. 
           if( CSLFetchNameValue( poDS->papszGlobalMetadata, 
                                  "gctp_sys" ) != NULL )
               poDS->CaptureCoastwatchGCTPInfo();
+
+          // Special case for MODIS geolocation
+          poDS->ProcessModisSDSGeolocation();
       }
       break;
 
