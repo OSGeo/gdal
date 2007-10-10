@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 SUBDIRS-yes	:= \
-	generic avc bna csv dgn gml gmt mem \
+	generic avc bna csv dgn gml gmt mem kml \
 	mitab ntf rec s57 sdts shape tiger vrt
 
 SUBDIRS-$(HAVE_DODS)	+= dods
@@ -11,7 +11,6 @@ SUBDIRS-$(HAVE_FME)		+= fme
 SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_IDB)		+= idb
 SUBDIRS-$(HAVE_XERCES)	+= ili
-SUBDIRS-$(HAVE_KML)		+= kml
 SUBDIRS-$(HAVE_MYSQL)	+= mysql
 SUBDIRS-$(ODBC_SETTING)	+= odbc pgeo
 SUBDIRS-$(HAVE_OGDI)	+= ogdi
