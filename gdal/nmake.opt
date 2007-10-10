@@ -253,8 +253,9 @@ JPEG_SUPPORTED = 1
 #PROJ_LIBRARY = d:\projects\proj.4\src\proj_i.lib
 
 # Add ORACLE support.
-
+# Uncomment the following line to enable OCI Oracle Spatial support.
 #ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1
+# Uncomment the following if you prefer to build OCI support as a plugin.
 #OCI_PLUGIN = YES
 
 !IFDEF ORACLE_HOME
