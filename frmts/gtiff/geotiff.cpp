@@ -4307,6 +4307,13 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLFree( padfTiePoints );
         
         pszProjection = poSrcDS->GetGCPProjection();
+        
+        if( CSLFetchBoolean( papszOptions, "TFW", FALSE ) 
+            || CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "TFW=ON or WORLDFILE=ON creation options are ignored when GCPs are available");
+        }
     }
 
     else
