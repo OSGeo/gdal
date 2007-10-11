@@ -1,7 +1,5 @@
 /* $Id: gdal_datamodel_br.dox $ */
 
-\~Brazilian
-
 /*! \page gdal_datamodel_br Modelo de Dados de GDAL
 
 Este documento descreve o Modelo de Dados implementado pela bilbioteca GDAL, 
@@ -53,7 +51,7 @@ m&eacute;todo GDALDataset::GetGCPs().
 Note que se a string do sistema de coordenada retornado for igual a "" isto
 indica que nada se sabe sobre o sistema de coordenadas do referido dataset.
 
-\subsection gdal_datamodel_dataset_gtm Transformação afim
+\subsection gdal_datamodel_dataset_gtm Transformacao afim
 
 GDAL datasets tem duas formas de descrever o relationamento entre
 poisi&ccedil;&atilde;o em raster (coordenadas de pixel) e coordenadas geogr&aacute;ficas.
@@ -143,7 +141,7 @@ prop&oacute;sitos especiais. Note que correntement n&atilde;o existe uma forma d
 todos os dom&iacute;nios dispon&iacute;veis para um dado objeto mas as aplica&ccedil;&otilde;es podem testar
 a existencia de dom&iacute;nios conhecidos.
 
-\subsubsection gdal_datamodel_subdatasets Domínio de SUBDATASETS
+\subsubsection gdal_datamodel_subdatasets Dominio de SUBDATASETS
 
 Os dom&iacute;nios SUBDATASETS podem listar uma hierarquia de datasets filhos.
 Normalmente isto &eacute; usado para prover endere&ccedil;os para v&aacute;rias imagens (ou datasets)
@@ -167,7 +165,7 @@ O valor de _NAME &eacute; a string que pode ser usada em uma chamada &agrave; GD
 para acessar o arquivo. O valor de _DESC tem a intens&atilde;o de apresentar uma
 descri&ccedil;&atilde;o ao usu&aacute;rio no caso da sele&ccedil;&atilde;o de subdataset.
 
-\subsubsection gdal_datamodel_image_structure Domínio IMAGE_STRUCTURE 
+\subsubsection gdal_datamodel_image_structure Dominio IMAGE_STRUCTURE 
 
 O dom&iacute;nio defult do metadata ("") est&aacute; relacionado &agrave; image e n&atilde;o particularmente
 a forma como a image &eacute; organizada no arquivo.
@@ -183,7 +181,7 @@ Um item que aparedce no dom&iacute;nio IMAGE_STRUCTURE &eacute; o esquema de com
 pelo formato. O nome deste item no metada &eacute; COMPRESSION mas o valor dele pode
 um formato specifico.
 
-\subsubsection gdal_datamodel_xml Domínio xml:
+\subsubsection gdal_datamodel_xml Dominio xml:
 
 Qualquer dom&iacute;nio cujo o prefix do nome &eacute; "xml:" n&atilde;o &eacute; um item de metada normal mas sim
 um único documento XML armazenado numa string longa.
