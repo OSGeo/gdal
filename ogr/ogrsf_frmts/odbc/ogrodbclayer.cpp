@@ -301,6 +301,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
                     break;
                 case OGRERR_CORRUPT_DATA:
                     pszMessage = "Corrupt data";
+                    break;
                 default:
                     pszMessage = "Unrecognized error";
             }
