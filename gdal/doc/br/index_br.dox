@@ -4,9 +4,7 @@ Translation corresponds to index.dox "11836 2007-08-02 21:24:45Z warmerdam"
 Translator Ivan Lucena <ivan.lucena@pmldnet.com>
 #endif /* DOXYGEN_SKIP */                                                       
 
-\~Brazilian
-
-/*! \page index_br GDAL - Biblioteca de Abstrações de Dados Geo-Espaciais
+/*! \page index_br GDAL - Biblioteca de Abstracoes de Dados Geo-Espaciais
 
 <center>
 <b>Selecione o idioma</b>: 
@@ -38,7 +36,7 @@ Download:
  <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
  <a href="http://download.osgeo.org/gdal">http at download.osgeo.org</a>
 
-\section index_userdocs Documentação para usuário
+\section index_userdocs Documentacao para usuario
 
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/">Wiki</a> - Documenta&ccedil;&atilde;o e dicas mantidas por v&aacute;rios desenvolvedores e contribuidores
@@ -52,7 +50,7 @@ Download:
 <li> <a href="http://trac.osgeo.org/gdal/wiki/SoftwareUsingGdal">Software que usam GDAL</a>
 </ul>
 
-\section index_devdocs Documentação para desenvolvedor
+\section index_devdocs Documentacao para desenvolvedor
 
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/BuildHints">Como compilar GDAL</a>
@@ -68,7 +66,7 @@ Download:
 <li> <a href="wince.html">GDAL para Windows CE</a>
 </ul>
 
-\section index_maillist Lista de discussão por correio eletrônico
+\section index_maillist Lista de discussao por correio eletronico
 
 A lista gdal-announce <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">subscription</a>
 &eacute; uma lista de pequeno volume de mensagens usada somente para anunciar lan&ccedil;amento de 

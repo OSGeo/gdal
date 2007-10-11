@@ -1,7 +1,5 @@
 /* $Id: gdal_tutorial_br.dox $ */
 
-\~Brazilian
-
 /*! \page gdal_tutorial_br Tutorial da API do GDAL
 
 \section gdal_tutorial_open Abrindo um Arquivo
@@ -75,7 +73,7 @@ string para controlar a abertura do arquivo ou qualquer outra coisa.
 Tente por favor n&atilde;o limitar di&aacute;logos da sele&ccedil;&atilde;o da arquivo de 
 GDAL somente a selecionar arquivos f&iacute;sicos.
 
-\section gdal_tutorial_dataset Extraindo Informações do Arquivo
+\section gdal_tutorial_dataset Extraindo Informacoes do Arquivo
 
 Como descrita em <a href="gdal_datamodel.html">GDAL Data Model</a>, um 
 GDALDataset contem uma lista de bandas raster, todas pertencendo 
@@ -343,7 +341,7 @@ GDALDataset podem ser fechado chamando GDALClose() ou usando o operador delete
 no GDALDataset. Um ou outro resultado na finaliza&ccedil;&atilde;o apropriada, e resolver 
 grava&ccedil;&otilde;es pendentes.
 
-\section gdal_tutorial_creation Técnicas para criar arquivos
+\section gdal_tutorial_creation Tecnicas para criar arquivos
 
 As arquivos em formatos suportados GDAL podem ser criadas se o driver do formato 
 suportar a cria&ccedil;&atilde;o. H&aacute; duas t&eacute;cnicas gerais para criar arquivos, usando CreateCopy() e Create(). 
