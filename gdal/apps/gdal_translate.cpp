@@ -197,6 +197,7 @@ static int ProxyMain( int argc, char ** argv )
             
         else if( EQUAL(argv[i],"-gcp") && i < argc - 4 )
         {
+            char* endptr = NULL;
             /* -gcp pixel line easting northing [elev] */
 
             nGCPCount++;
@@ -209,8 +210,13 @@ static int ProxyMain( int argc, char ** argv )
             pasGCPs[nGCPCount-1].dfGCPX = atof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPY = atof(argv[++i]);
             if( argv[i+1] != NULL 
-                && (atof(argv[i+1]) != 0.0 || argv[i+1][0] == '0') )
-                pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
+                && (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
+            {
+                /* Check that last argument is really a number and not a filename */
+                /* looking like a number (see ticket #863) */
+                if (endptr && *endptr == 0)
+                    pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
+            }
 
             /* should set id and info? */
         }   
