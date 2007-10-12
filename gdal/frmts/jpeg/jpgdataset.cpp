@@ -1730,6 +1730,14 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+    if (nBands == 1 &&
+        poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    {
+        CPLError( CE_Warning, CPLE_NotSupported, 
+                  "JPEG driver ignores color table. "
+                  "The source raster band will be considered as grey level.\n" );
+    }
+
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #ifdef JPEG_LIB_MK1
