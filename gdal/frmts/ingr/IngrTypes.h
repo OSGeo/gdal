@@ -411,10 +411,10 @@ typedef     struct {
 //  ----------------------------------------------------------------------------
 
 //  ------------------------------------------------------------------
-//    From the DNG OGR Driver
+//    Copied the DNG OGR Driver
 //  ------------------------------------------------------------------
 
-void   DGN2IEEEDouble(void * dbl);
+void   INGR_DGN2IEEEDouble(void * dbl);
 
 //  ------------------------------------------------------------------
 //    Compression, Data Format, Data Type related funtions

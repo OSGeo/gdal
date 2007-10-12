@@ -922,22 +922,25 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne)
     // Convert WAX REAL*8 to IEEE double
     // -------------------------------------------------------------------- 
 
-    if( pHeaderOne->GridFileVersion < 3 )
+    if( pHeaderOne->GridFileVersion == 1 ||
+      ( pHeaderOne->GridFileVersion == 2 &&
+        ( pHeaderOne->TransformationMatrix[10] != 1.0 && 
+          pHeaderOne->TransformationMatrix[15] != 1.0 ) ) )
     {
-        DGN2IEEEDouble( &pHeaderOne->XViewOrigin );
-        DGN2IEEEDouble( &pHeaderOne->YViewOrigin );
-        DGN2IEEEDouble( &pHeaderOne->ZViewOrigin );
-        DGN2IEEEDouble( &pHeaderOne->XViewExtent );
-        DGN2IEEEDouble( &pHeaderOne->YViewExtent );
-        DGN2IEEEDouble( &pHeaderOne->ZViewExtent );
-        DGN2IEEEDouble( &pHeaderOne->RotationAngle );
-        DGN2IEEEDouble( &pHeaderOne->SkewAngle );
+        INGR_DGN2IEEEDouble( &pHeaderOne->XViewOrigin );
+        INGR_DGN2IEEEDouble( &pHeaderOne->YViewOrigin );
+        INGR_DGN2IEEEDouble( &pHeaderOne->ZViewOrigin );
+        INGR_DGN2IEEEDouble( &pHeaderOne->XViewExtent );
+        INGR_DGN2IEEEDouble( &pHeaderOne->YViewExtent );
+        INGR_DGN2IEEEDouble( &pHeaderOne->ZViewExtent );
+        INGR_DGN2IEEEDouble( &pHeaderOne->RotationAngle );
+        INGR_DGN2IEEEDouble( &pHeaderOne->SkewAngle );
 
         uint8 i;
 
         for( i = 0; i < 16; i++ )
         {
-            DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
+            INGR_DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
         }
     }
     else if (pHeaderOne->GridFileVersion == 3)
@@ -1069,5 +1072,109 @@ void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData)
     CPL_LSBPTR32(&pJPEGAppData->RemainingLength);
     CPL_LSBPTR16(&pJPEGAppData->PacketVersion);
     CPL_LSBPTR16(&pJPEGAppData->JpegQuality);
+#endif
+}
+
+
+//  ------------------------------------------------------------------
+//    Pasted from the DNG OGR Driver to avoid dependency on OGR
+//  ------------------------------------------------------------------
+
+typedef struct dbl {
+    GUInt32 hi;
+    GUInt32 lo;
+} double64_t;
+
+/************************************************************************/
+/*                           INGR_DGN2IEEEDouble()                      */
+/************************************************************************/
+
+void    INGR_DGN2IEEEDouble(void * dbl)
+
+{
+    double64_t  dt;
+    GUInt32     sign;
+    GUInt32     exponent;
+    GUInt32     rndbits;
+    unsigned char       *src;
+    unsigned char       *dest;
+
+/* -------------------------------------------------------------------- */
+/*      Arrange the VAX double so that it may be accessed by a          */
+/*      double64_t structure, (two GUInt32s).                           */
+/* -------------------------------------------------------------------- */
+    src =  (unsigned char *) dbl;
+    dest = (unsigned char *) &dt;
+#ifdef CPL_LSB
+    dest[2] = src[0];
+    dest[3] = src[1];
+    dest[0] = src[2];
+    dest[1] = src[3];
+    dest[6] = src[4];
+    dest[7] = src[5];
+    dest[4] = src[6];
+    dest[5] = src[7];
+#else
+    dest[1] = src[0];
+    dest[0] = src[1];
+    dest[3] = src[2];
+    dest[2] = src[3];
+    dest[5] = src[4];
+    dest[4] = src[5];
+    dest[7] = src[6];
+    dest[6] = src[7];
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Save the sign of the double                                     */
+/* -------------------------------------------------------------------- */
+    sign         = dt.hi & 0x80000000;
+
+/* -------------------------------------------------------------------- */
+/*      Adjust the exponent so that we may work with it                 */      
+/* -------------------------------------------------------------------- */
+    exponent = dt.hi >> 23;
+    exponent = exponent & 0x000000ff;
+
+    if (exponent)
+        exponent = exponent -129 + 1023;
+
+/* -------------------------------------------------------------------- */
+/*      Save the bits that we are discarding so we can round properly   */
+/* -------------------------------------------------------------------- */
+    rndbits = dt.lo & 0x00000007;
+        
+    dt.lo = dt.lo >> 3;
+    dt.lo = (dt.lo & 0x1fffffff) | (dt.hi << 29);
+
+    if (rndbits)
+        dt.lo = dt.lo | 0x00000001;
+
+/* -------------------------------------------------------------------- */
+/*      Shift the hi-order int over 3 and insert the exponent and sign  */
+/* -------------------------------------------------------------------- */
+    dt.hi = dt.hi >> 3;
+    dt.hi = dt.hi & 0x000fffff;
+    dt.hi = dt.hi | (exponent << 20) | sign;
+
+
+
+#ifdef CPL_LSB
+/* -------------------------------------------------------------------- */
+/*      Change the number to a byte swapped format                      */
+/* -------------------------------------------------------------------- */
+    src = (unsigned char *) &dt;
+    dest = (unsigned char *) dbl;
+
+    dest[0] = src[4];
+    dest[1] = src[5];
+    dest[2] = src[6];
+    dest[3] = src[7];
+    dest[4] = src[0];
+    dest[5] = src[1];
+    dest[6] = src[2];
+    dest[7] = src[3];
+#else
+    memcpy( dbl, &dt, 8 );
 #endif
 }
