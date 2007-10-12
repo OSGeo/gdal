@@ -49,7 +49,7 @@ void Usage()
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]\n"
-            "                [-mdd domain]* datasetname\n" );
+            "                [-noct] [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
 
@@ -69,6 +69,7 @@ int main( int argc, char ** argv )
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
+    int                 bShowColorTable = TRUE;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL, **papszFileList;
     const char  *pszProjection = NULL;
@@ -103,6 +104,8 @@ int main( int argc, char ** argv )
             bShowGCPs = FALSE;
         else if( EQUAL(argv[i], "-nomd") )
             bShowMetadata = FALSE;
+        else if( EQUAL(argv[i], "-noct") )
+            bShowColorTable = FALSE;
         else if( EQUAL(argv[i], "-mdd") && i < argc-1 )
             papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
                                                 argv[++i] );
@@ -512,17 +515,20 @@ int main( int argc, char ** argv )
                         GDALGetPaletteInterpretation( hTable )), 
                     GDALGetColorEntryCount( hTable ) );
 
-            for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
+            if (bShowColorTable)
             {
-                GDALColorEntry	sEntry;
-
-                GDALGetColorEntryAsRGB( hTable, i, &sEntry );
-                printf( "  %3d: %d,%d,%d,%d\n", 
-                        i, 
-                        sEntry.c1,
-                        sEntry.c2,
-                        sEntry.c3,
-                        sEntry.c4 );
+                for( i = 0; i < GDALGetColorEntryCount( hTable ); i++ )
+                {
+                    GDALColorEntry	sEntry;
+    
+                    GDALGetColorEntryAsRGB( hTable, i, &sEntry );
+                    printf( "  %3d: %d,%d,%d,%d\n", 
+                            i, 
+                            sEntry.c1,
+                            sEntry.c2,
+                            sEntry.c3,
+                            sEntry.c4 );
+                }
             }
         }
 
