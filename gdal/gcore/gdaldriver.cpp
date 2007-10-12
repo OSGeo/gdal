@@ -925,6 +925,176 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
 }
 
 /************************************************************************/
+/*                   GDALValidateCreationOptions()                      */
+/************************************************************************/
+int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
+                                             char** papszCreationOptions)
+{
+    int bRet = TRUE;
+    VALIDATE_POINTER1( hDriver, "GDALValidateCreationOptions", FALSE );
+
+    const char *pszOptionList = 
+        ((GDALDriver *) hDriver)->GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
+
+    if( papszCreationOptions == NULL || *papszCreationOptions == NULL)
+        return TRUE;
+    if( pszOptionList == NULL )
+        return TRUE;
+    
+    CPLXMLNode* psNode = CPLParseXMLString(pszOptionList);
+    if (psNode == NULL)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Could not parse creation option list of driver %s. Assuming creation options are valid.",
+                 ((GDALDriver *) hDriver)->GetDescription());
+        return TRUE;
+    }
+
+    while(*papszCreationOptions)
+    {
+        char* pszKey = NULL;
+        const char* pszValue = CPLParseNameValue(*papszCreationOptions, &pszKey);
+        CPLXMLNode* psChildNode = psNode->psChild;
+        while(psChildNode)
+        {
+            if (EQUAL(psChildNode->pszValue, "OPTION"))
+            {
+                if (EQUAL(CPLGetXMLValue(psChildNode, "name", ""), pszKey))
+                {
+                    break;
+                }
+            }
+            psChildNode = psChildNode->psNext;
+        }
+        if (psChildNode == NULL)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Driver %s does not support %s creation option",
+                     ((GDALDriver *) hDriver)->GetDescription(),
+                     pszKey);
+            CPLFree(pszKey);
+            bRet = FALSE;
+            break;
+        }
+        const char* pszType = CPLGetXMLValue(psChildNode, "type", NULL);
+        if (pszType != NULL)
+        {
+            if (EQUAL(pszType, "INT") || EQUAL(pszType, "INTEGER"))
+            {
+                const char* pszValueIter = pszValue;
+                while (*pszValueIter)
+                {
+                    if (!((*pszValueIter >= '0' && *pszValueIter <= '9') ||
+                           *pszValueIter == '+' || *pszValueIter == '-'))
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                             "'%s' is an unexpected value for %s creation option of type int.",
+                             pszValue, pszKey);
+                        bRet = FALSE;
+                        break;
+                    }
+                    pszValueIter++;
+                }
+            }
+            else if (EQUAL(pszType, "UNSIGNED INT"))
+            {
+                const char* pszValueIter = pszValue;
+                while (*pszValueIter)
+                {
+                    if (!((*pszValueIter >= '0' && *pszValueIter <= '9') ||
+                           *pszValueIter == '+'))
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                             "'%s' is an unexpected value for %s creation option of type unsigned int.",
+                             pszValue, pszKey);
+                        bRet = FALSE;
+                        break;
+                    }
+                    pszValueIter++;
+                }
+            }
+            else if (EQUAL(pszType, "FLOAT"))
+            {
+                char* endPtr = NULL;
+                CPLStrtod(pszValue, &endPtr);
+                if (endPtr != NULL)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "'%s' is an unexpected value for %s creation option of type float.",
+                             pszValue, pszKey);
+                    bRet = FALSE;
+                    break;
+                }
+            }
+            else if (EQUAL(pszType, "BOOLEAN"))
+            {
+                if (!(EQUAL(pszValue, "ON") || EQUAL(pszValue, "TRUE") || EQUAL(pszValue, "YES") ||
+                      EQUAL(pszValue, "OFF") || EQUAL(pszValue, "FALSE") || EQUAL(pszValue, "NO")))
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "'%s' is an unexpected value for %s creation option of type boolean.",
+                             pszValue, pszKey);
+                    bRet = FALSE;
+                    break;
+                }
+            }
+            else if (EQUAL(pszType, "STRING-SELECT"))
+            {
+                int bMatchFound = FALSE;
+                CPLXMLNode* psStringSelect = psChildNode->psChild;
+                while(psStringSelect)
+                {
+                    CPLXMLNode* psOptionNode = psStringSelect->psChild;
+                    if (psOptionNode && EQUAL(psStringSelect->pszValue, "Value"))
+                    {
+                        if (EQUAL(psOptionNode->pszValue, pszValue))
+                        {
+                            bMatchFound = TRUE;
+                            break;
+                        }
+                    }
+                    psStringSelect = psStringSelect->psNext;
+                }
+                if (!bMatchFound)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "'%s' is an unexpected value for %s creation option of type string-select.",
+                             pszValue, pszKey);
+                    bRet = FALSE;
+                    break;
+                }
+            }
+            else if (EQUAL(pszType, "STRING"))
+            {
+                /* Nothing to check */
+            }
+            else
+            {
+                /* Driver error */
+                CPLError(CE_Warning, CPLE_NotSupported,
+                     "Driver %s : type '%s' for %s creation option is not recognized.",
+                     ((GDALDriver *) hDriver)->GetDescription(),
+                     pszType,
+                     pszKey);
+            }
+        }
+        else
+        {
+            /* Driver error */
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Driver %s : no type for %s creation option.",
+                     ((GDALDriver *) hDriver)->GetDescription(),
+                     pszKey);
+        }
+        CPLFree(pszKey);
+        papszCreationOptions++;
+    }
+
+    CPLDestroyXMLNode(psNode);
+    return bRet;
+}
+
+/************************************************************************/
 /*                         GDALIdentifyDriver()                         */
 /************************************************************************/
 
