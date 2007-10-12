@@ -3827,6 +3827,8 @@ TIFF *GTiffCreate( const char * pszFilename,
             v[i] = EXTRASAMPLE_UNSPECIFIED;
 
         TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples, v );
+        
+        CPLFree(v);
     }
     
 /* -------------------------------------------------------------------- */
