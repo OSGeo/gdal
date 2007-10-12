@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import string
 
 sys.path.append( '../pymod' )
 
@@ -154,14 +155,38 @@ def jpeg_5():
     
     return 'success'
     
+###############################################################################
+# Verify ability to open file with corrupt metadata (#1904).  Note the file
+# data/vophead.jpg is truncated to keep the size small, but this should
+# not affect opening the file which just reads the header.
+
+def jpeg_6():
+
+    ds = gdal.Open('data/vophead.jpg')
+
+    # Did we get an exif related warning?
+    if gdal.GetLastErrorType() != 2 \
+       or string.find(gdal.GetLastErrorMsg(),'Ignoring EXIF') == -1:
+        gdaltest.post_reason( 'we did not get expected error.')
+        return 'fail'
+
+    md = ds.GetMetadata()
+    if len(md) != 1 or md['EXIF_Software'] != 'IrfanView':
+        gdaltest.post_reason( 'did not get expected metadata.' )
+        print md
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
     jpeg_3,
     jpeg_4,
-    jpeg_5 ]
-  
-
+    jpeg_5,
+    jpeg_6 ]
 
 if __name__ == '__main__':
 
