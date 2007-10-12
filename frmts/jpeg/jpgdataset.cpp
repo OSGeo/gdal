@@ -381,11 +381,14 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET);
-
-    if(VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16)) 
+    if( VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET) != 0 
+        || VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16) )
+    {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Error directory count");
+                  "Error reading EXIF Directory count at %d.",
+                  nOffset + nTIFFHEADER );
+        return CE_Failure;
+    }
 
     if (bSwabflag)
         TIFFSwabShort(&nEntryCount);
@@ -394,19 +397,34 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
     if( nEntryCount == 0 )  
         return CE_None;
 
+    // Some files are corrupt, a large entry count is a sign of this.
+    if( nEntryCount > 125 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Ignoring EXIF directory with unlikely entry count (%d).",
+                  nEntryCount );
+        return CE_Warning;
+    }
+
     poTIFFDir = (TIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(TIFFDirEntry));
 
     if (poTIFFDir == NULL) 
+    {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No space for TIFF directory");
+        return CE_Failure;
+    }
   
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
 /* -------------------------------------------------------------------- */
     n = VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp);
     if (n != nEntryCount*sizeof(TIFFDirEntry)) 
+    {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Could not read all directories");
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse all entry information in this directory                   */
@@ -423,6 +441,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /*      Find Tag name in table                                          */
 /* -------------------------------------------------------------------- */
         pszName[0] = '\0';
+        pszTemp[0] = '\0';
 
         for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
             if(poExifTags->tag == poTIFFDirEntry->tdir_tag) {
@@ -541,8 +560,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      The data is being read where tdir_offset point to in the file   */
 /* -------------------------------------------------------------------- */
-        else {
-
+        else if (space > 0 && space < MAXSTRINGLENGTH) 
+        {
             unsigned char *data = (unsigned char *)CPLMalloc(space);
 
             if (data) {
@@ -583,6 +602,12 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
                 if (data) CPLFree(data);
             }
         }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Invalid EXIF header size: %ld, ignoring tag.", space );
+        }
+
         papszMetadata = CSLSetNameValue(papszMetadata, pszName, pszTemp);
     }
     CPLFree(poTIFFDir);
