@@ -206,6 +206,8 @@ CPLErr      CPL_DLL CPL_STDCALL GDALRenameDataset( GDALDriverH,
 CPLErr      CPL_DLL CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH, 
                                                       const char * pszNewName,
                                                       const char * pszOldName);
+int         CPL_DLL CPL_STDCALL GDALValidateCreationOptions( GDALDriverH,
+                                                             char** papszCreationOptions);
 
 /* The following are deprecated */
 const char CPL_DLL * CPL_STDCALL GDALGetDriverShortName( GDALDriverH );
