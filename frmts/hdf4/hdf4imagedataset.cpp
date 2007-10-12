@@ -957,8 +957,8 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
 {
     char **papszStrList;
     papszStrList = CSLTokenizeString2( pszString, ", ", 0 );
-    *pdfX = atof(papszStrList[0]);
-    *pdfY = atof(papszStrList[1]);
+    *pdfX = CPLAtof( papszStrList[0] );
+    *pdfY = CPLAtof( papszStrList[1] );
     CSLDestroy( papszStrList );
 }
 
@@ -1041,8 +1041,8 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         if( CSLCount( papszTokens ) != 2 )
             return;
 
-        adfXY[iCorner*2+0] = atof(papszTokens[1]);
-        adfXY[iCorner*2+1] = atof(papszTokens[0]);
+        adfXY[iCorner*2+0] = CPLAtof( papszTokens[1] );
+        adfXY[iCorner*2+1] = CPLAtof( papszTokens[0] );
 
         CSLDestroy( papszTokens );
     }
@@ -1134,7 +1134,7 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
         return;
 
     for( iParm = 0; iParm < 15; iParm++ )
-        adfParms[iParm] = atof(papszTokens[iParm]);
+        adfParms[iParm] = CPLAtof( papszTokens[iParm] );
     CSLDestroy( papszTokens );
 
 /* -------------------------------------------------------------------- */
@@ -1159,16 +1159,16 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 
     // We don't seem to have proper ef_affine docs so I don't 
     // know which of these two coefficients goes where. 
-    if( atof(papszTokens[0]) != 0.0 || atof(papszTokens[3]) != 0.0 )
+    if( CPLAtof(papszTokens[0]) != 0.0 || CPLAtof(papszTokens[3]) != 0.0 )
         return;
         
     bHasGeoTransform = TRUE;
-    adfGeoTransform[0] = atof(papszTokens[4]);
-    adfGeoTransform[1] = atof(papszTokens[2]);
+    adfGeoTransform[0] = CPLAtof( papszTokens[4] );
+    adfGeoTransform[1] = CPLAtof( papszTokens[2] );
     adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = atof(papszTokens[5]);
+    adfGeoTransform[3] = CPLAtof( papszTokens[5] );
     adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = atof(papszTokens[1]);
+    adfGeoTransform[5] = CPLAtof( papszTokens[1] );
 
     // Middle of pixel adjustment. 
     adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
@@ -1779,7 +1779,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
             if (nParms >= 15)
                 nParms = 15;
             for (i = 0; i < nParms; i++)
-                adfProjParms[i] = atof(papszParms[i]);
+                adfProjParms[i] = CPLAtof( papszParms[i] );
             for (; i < 15; i++)
                 adfProjParms[i] = 0.0;
 
@@ -2546,7 +2546,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         &iAttrNumType, &nValues );
             poDS->papszLocalMetadata = 
                 poDS->TranslateHDF4Attributes( poDS->iGR, iAttribute,
-                                               szAttrName, iAttrNumType, nValues, poDS->papszLocalMetadata );
+                                               szAttrName, iAttrNumType,
+                                               nValues,
+                                               poDS->papszLocalMetadata );
         }
         poDS->SetMetadata( poDS->papszLocalMetadata, "" );
         // Read colour table
@@ -2664,7 +2666,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               if ( (pszValue =
                     CSLFetchNameValue(poDS->papszGlobalMetadata,
                                       CPLSPrintf("NoDataValue%d", i))) )
-                  poDS->GetRasterBand(i)->SetNoDataValue(atof(pszValue));
+                  poDS->GetRasterBand(i)->SetNoDataValue( CPLAtof(pszValue) );
           }
       }
       break;
@@ -2698,14 +2700,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->oSRS.exportToWkt( &poDS->pszProjection );
           }
 
-          dfULX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                          "Westernmost Longitude") );
-          dfULY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                          "Northernmost Latitude") );
-          dfLRX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                          "Easternmost Longitude") );
-          dfLRY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
-                                          "Southernmost Latitude") );
+          dfULX = CPLAtof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                             "Westernmost Longitude") );
+          dfULY = CPLAtof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                             "Northernmost Latitude") );
+          dfLRX = CPLAtof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                             "Easternmost Longitude") );
+          dfLRY = CPLAtof( CSLFetchNameValue(poDS->papszGlobalMetadata,
+                                             "Southernmost Latitude") );
           poDS->ToGeoref( &dfULX, &dfULY );
           poDS->ToGeoref( &dfLRX, &dfLRY );
           poDS->adfGeoTransform[0] = dfULX;
@@ -2734,8 +2736,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               for( i = 1; i <= poDS->nBands; i++ )
               {
                   poDS->GetRasterBand(i)->SetNoDataValue(
-                      atof( CSLFetchNameValue(poDS->papszLocalMetadata, 
-                                              "missing_value") ) );
+                      CPLAtof( CSLFetchNameValue(poDS->papszLocalMetadata, 
+                                                 "missing_value") ) );
               }
           }
 
@@ -2750,11 +2752,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                   poBand->bHaveScaleAndOffset = TRUE;
                   poBand->dfScale = 
-                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
-                                               "scale_factor" ) );
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                                  "scale_factor" ) );
                   poBand->dfOffset = -1 * poBand->dfScale * 
-                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
-                                               "add_offset" ) );
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                                  "add_offset" ) );
               }
           }
 
@@ -2783,11 +2785,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                   poBand->bHaveScaleAndOffset = TRUE;
                   poBand->dfScale = 
-                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
-                                               "scalingSlope" ) );
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                                  "scalingSlope" ) );
                   poBand->dfOffset = 
-                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
-                                               "scalingIntercept" ) );
+                      CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                                  "scalingIntercept" ) );
 
                   poBand->osUnitType = osUnits;
               }
