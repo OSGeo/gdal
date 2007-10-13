@@ -766,9 +766,11 @@ NOTE: Implemented as <tt>gdal/frmts/sgi/sgidataset.cpp</tt>.<p>
 
 <h2><a name="SRTMHGT">SRTMHGT - SRTM HGT Format</a></h2>
 
-The SRTM HGT driver currently supports the reading of SRTM HGT files.<p>
+The SRTM HGT driver currently supports the reading of SRTM-3 and SRTM-1 V2 (HGT) files.<p>
 
-The driver does not currently have any image creation capabilities.<p>
+The driver does support creating new files, but the input data
+must be exactly formatted as a SRTM-3 or SRTM-1 cell.  That is the size,
+and bounds must be appropriate for a cell.<p>
 
 See Also:<p>
 
