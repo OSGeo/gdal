@@ -119,6 +119,9 @@ typedef struct {
 DTEDInfo *DTEDOpen( const char * pszFilename, const char * pszAccess,
                     int bTestOpen );
 
+/**    Read one profile line.  These are organized in bottom to top
+       order starting from the leftmost column (0).
+*/
 int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                      GInt16 * panData );
 
@@ -127,6 +130,10 @@ int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
 int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
                        GInt16 * panData, int bVerifyChecksum );
 
+/**    Write one profile line.
+       @warning Contrary to DTEDReadProfile,
+                the profile should be organized from top to bottom
+*/
 int DTEDWriteProfile( DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData);
 
 void DTEDClose( DTEDInfo * );
