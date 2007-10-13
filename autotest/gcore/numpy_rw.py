@@ -44,6 +44,7 @@ def numpy_rw_1():
     gdaltest.numpy_drv = None
     try:
         import gdalnumeric
+        gdalnumeric.zeros
     except:
 	return 'skip'
 
