@@ -124,6 +124,40 @@ def jp2kak_5():
     return tst.testCreateCopy( check_srs = 1, check_gt = 1)
     
 ###############################################################################
+# Test reading GMLJP2 file with srsName only on the Envelope, and lots of other
+# metadata junk
+
+def jp2kak_6():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
+
+    ds = gdal.Open( 'data/ll.jp2' )
+    wkt = ds.GetProjection()
+
+    if wkt != exp_wkt:
+        gdaltest.post_reason( 'did not get expected WKT, should be WGS84' )
+        print 'got: ', wkt
+        print 'exp: ', exp_wkt
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    if abs(gt[0] - 8) > 0.0000001 or abs(gt[3] - 50) > 0.000001 \
+       or abs(gt[1] - 0.000761397164) > 0.000000000005 \
+       or abs(gt[2] - 0.0) > 0.000000000005 \
+       or abs(gt[4] - 0.0) > 0.000000000005 \
+       or abs(gt[5] - -0.000761397164) > 0.000000000005:
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        print 'got: ', gt
+        return 'fail'
+       
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -137,6 +171,7 @@ gdaltest_list = [
     jp2kak_3,
     jp2kak_4,
     jp2kak_5,
+    jp2kak_6,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
