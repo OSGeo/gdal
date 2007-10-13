@@ -92,6 +92,8 @@ int OGRDODSDriver::TestCapability( const char * pszCap )
 void RegisterOGRDODS()
 
 {
+    if (! GDAL_CHECK_VERSION("OGR/DODS driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRDODSDriver );
 }
 

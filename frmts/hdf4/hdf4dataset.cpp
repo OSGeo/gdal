@@ -1092,6 +1092,9 @@ void GDALRegister_HDF4()
 
 {
     GDALDriver	*poDriver;
+    
+    if (! GDAL_CHECK_VERSION("HDF4 driver"))
+        return;
 
     if( GDALGetDriverByName( "HDF4" ) == NULL )
     {

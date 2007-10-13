@@ -1614,6 +1614,38 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 }
 
 /************************************************************************/
+/*                         GDALCheckVersion()                           */
+/************************************************************************/
+
+/** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
+
+    The purpose of this method is to ensure that calling code will run with the GDAL
+    version it is compiled for. It is primarly intented for external plugins.
+
+    @param nVersionMajor Major version to be tested against
+    @param nVersionMinor Minor version to be tested against
+    @param pszCallingComponentName If not NULL, in case of version mismatch, the method
+                                   will issue a failure mentionning the name of
+                                   the calling component.
+  */
+int CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
+                                  const char* pszCallingComponentName)
+{
+    if (nVersionMajor == GDAL_VERSION_MAJOR &&
+        nVersionMinor == GDAL_VERSION_MINOR)
+        return TRUE;
+
+    if (pszCallingComponentName)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s was compiled against GDAL %d.%d but current library version is %d.%d\n",
+                  pszCallingComponentName, nVersionMajor, nVersionMinor,
+                  GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR);
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                            GDALDecToDMS()                            */
 /*                                                                      */
 /*      Translate a decimal degrees value to a DMS string with          */

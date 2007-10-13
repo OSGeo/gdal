@@ -122,6 +122,8 @@ int OGRIDBDriver::TestCapability( const char * pszCap )
 void RegisterOGRIDB()
 
 {
+    if (! GDAL_CHECK_VERSION("IDB driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRIDBDriver );
 }
 

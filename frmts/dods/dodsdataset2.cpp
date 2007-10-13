@@ -1672,6 +1672,9 @@ void
 GDALRegister_DODS()
 {
     GDALDriver *poDriver;
+    
+    if (! GDAL_CHECK_VERSION("GDAL/DODS driver"))
+        return;
 
     if( GDALGetDriverByName( "DODS" ) == NULL ) {
         poDriver = new GDALDriver();

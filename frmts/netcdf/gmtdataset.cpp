@@ -563,6 +563,9 @@ void GDALRegister_GMT()
 
 {
     GDALDriver	*poDriver;
+    
+    if (! GDAL_CHECK_VERSION("GMT driver"))
+        return;
 
     if( GDALGetDriverByName( "GMT" ) == NULL )
     {

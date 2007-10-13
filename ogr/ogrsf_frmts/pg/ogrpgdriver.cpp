@@ -117,6 +117,8 @@ int OGRPGDriver::TestCapability( const char * pszCap )
 void RegisterOGRPG()
 
 {
+    if (! GDAL_CHECK_VERSION("PG driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRPGDriver );
 }
 

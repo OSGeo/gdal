@@ -118,6 +118,9 @@ int OGRDWGDriver::TestCapability( const char * pszCap )
 void RegisterOGRDXFDWG()
 
 {
+    if (! GDAL_CHECK_VERSION("DWG/DXF driver"))
+        return;
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 
         new OGRDWGDriver( "DWG" ) );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 

@@ -3085,6 +3085,9 @@ void GDALRegister_MrSID()
 
 {
     GDALDriver  *poDriver;
+    
+    if (! GDAL_CHECK_VERSION("MrSID driver"))
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      MrSID driver.                                                   */

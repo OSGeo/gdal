@@ -1079,6 +1079,9 @@ void GDALRegister_JPEG2000()
 
 {
     GDALDriver  *poDriver;
+    
+    if (! GDAL_CHECK_VERSION("JPEG2000 driver"))
+        return;
 
     if( GDALGetDriverByName( "JPEG2000" ) == NULL )
     {
