@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import string
 
 sys.path.append( '../pymod' )
 
@@ -448,6 +449,31 @@ def hfa_clean_ige():
     return 'success'
  
 ###############################################################################
+# Verify that we can read this corrupt .aux file without hanging (#1907)
+
+def hfa_corrupt_aux():
+
+    # NOTE: we depend on being able to open .aux files as a weak sort of
+    # dataset.
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds = gdal.Open( 'data/F0116231.aux' )
+    gdal.PopErrorHandler()
+
+    if ds.RasterXSize != 1104:
+        gdaltest.post_reason( 'did not get expected dataset characteristics' )
+        return 'fail'
+    
+    if gdal.GetLastErrorType() != 2 \
+       or string.find(gdal.GetLastErrorMsg(),'Corrupt (looping)') == -1:
+        gdaltest.post_reason( 'Did not get expected warning.' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -464,7 +490,8 @@ gdaltest_list = [
     hfa_metadata_1,
     hfa_metadata_2,
     hfa_grow_rrdlist,
-    hfa_clean_ige ]
+    hfa_clean_ige,
+    hfa_corrupt_aux ]
 
 if __name__ == '__main__':
 
