@@ -69,8 +69,6 @@ def numpy_rw_2():
     if gdaltest.numpy_drv is None:
 	return 'skip'
 
-    import gdalnumeric
-
     array = gdalnumeric.LoadFile( 'data/utmsmall.tif' )
     if array is None:
 	gdaltest.post_reason( 'Failed to load utmsmall.tif into array')
@@ -133,8 +131,6 @@ def numpy_rw_5():
     if gdaltest.numpy_drv is None:
 	return 'skip'
 
-    import gdalnumeric
-    
     array = gdalnumeric.LoadFile('data/rgbsmall.tif',35,21,1,1)
 
     if array[0][0][0] != 78:
