@@ -227,6 +227,23 @@ HFAEntry *HFAEntry::GetNext()
 /* -------------------------------------------------------------------- */
     if( poNext == NULL && nNextPos != 0 )
     {
+        // Check if we have a loop on the next node in this sibling chain.
+        HFAEntry *poPast;
+
+        for( poPast = this; 
+             poPast != NULL && poPast->nFilePos != nNextPos; 
+             poPast = poPast->poPrev ) {}
+
+        if( poPast != NULL )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Corrupt (looping) entry in %s, ignoring some entries after %s.",
+                      psHFA->pszFilename, 
+                      szName );
+            nNextPos = 0;
+            return NULL;
+        }
+             
         poNext = new HFAEntry( psHFA, nNextPos, poParent, this );
     }
 
