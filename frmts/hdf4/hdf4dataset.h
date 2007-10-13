@@ -67,9 +67,9 @@ class HDF4Dataset : public GDALPamDataset
 
     int         bIsHDFEOS;
 
-    char        **HDF4EOSTokenizeAttrs( const char *pszString ) const;
-    char        **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
-                                    char **ppszAttrValue ) const;
+    static char **HDF4EOSTokenizeAttrs( const char *pszString );
+    static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
+                                    char **ppszAttrValue );
      
   protected:
 
@@ -83,15 +83,16 @@ class HDF4Dataset : public GDALPamDataset
     char	**papszGlobalMetadata;
     char	**papszSubDatasets;
 
-    GDALDataType GetDataType( int32 ) const;
-    const char  *GetDataTypeName( int32 ) const;
-    int         GetDataTypeSize( int32 ) const;
-    double      AnyTypeToDouble( int32, void * ) const;
-    char        **TranslateHDF4Attributes( int32, int32, char *,
-                                           int32, int32, char ** ) const;
-    char        ** TranslateHDF4EOSAttributes( int32, int32, int32,
-                                               char ** ) const;
     CPLErr      ReadGlobalAttributes( int32 );
+
+    static GDALDataType GetDataType( int32 ) ;
+    static const char *GetDataTypeName( int32 );
+    static int  GetDataTypeSize( int32 );
+    static double AnyTypeToDouble( int32, void * );
+    static char **TranslateHDF4Attributes( int32, int32, char *,
+                                           int32, int32, char ** );
+    static char ** TranslateHDF4EOSAttributes( int32, int32, int32,
+                                               char ** );
 
   public:
                 HDF4Dataset();
@@ -102,8 +103,8 @@ class HDF4Dataset : public GDALPamDataset
     static int          Identify( GDALOpenInfo * );
 };
 
-char *SPrintArray( GDALDataType eDataType, void *paDataArray,
-                          int nValues, char * pszDelimiter );
+char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
+                   int nValues, const char *pszDelimiter );
 
 
 #endif /* _HDF4DATASET_H_INCLUDED_ */

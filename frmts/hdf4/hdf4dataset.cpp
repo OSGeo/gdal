@@ -53,7 +53,7 @@ extern const char *pszGDALSignature;
 /************************************************************************/
 
 /************************************************************************/
-/*                           HDF4Dataset()                      	*/
+/*                           HDF4Dataset()                              */
 /************************************************************************/
 
 HDF4Dataset::HDF4Dataset()
@@ -111,8 +111,8 @@ char **HDF4Dataset::GetMetadata( const char *pszDomain )
 /*	Pointer to filled buffer will be returned.			*/
 /************************************************************************/
 
-char *SPrintArray( GDALDataType eDataType, void *paDataArray,
-                          int nValues, char * pszDelimiter )
+char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
+                          int nValues, const char *pszDelimiter )
 {
     char        *pszString, *pszField;
     int         i, iFieldSize, iStringSize;
@@ -166,7 +166,7 @@ char *SPrintArray( GDALDataType eDataType, void *paDataArray,
 /************************************************************************/
 /*              Translate HDF4 data type into GDAL data type            */
 /************************************************************************/
-GDALDataType HDF4Dataset::GetDataType( int32 iNumType ) const
+GDALDataType HDF4Dataset::GetDataType( int32 iNumType )
 {
     switch (iNumType)
     {
@@ -200,7 +200,7 @@ GDALDataType HDF4Dataset::GetDataType( int32 iNumType ) const
 /*		Return the human readable name of data type		*/
 /************************************************************************/
 
-const char *HDF4Dataset::GetDataTypeName( int32 iNumType ) const
+const char *HDF4Dataset::GetDataTypeName( int32 iNumType )
 {
     switch (iNumType)
     {
@@ -234,10 +234,10 @@ const char *HDF4Dataset::GetDataTypeName( int32 iNumType ) const
 }
 
 /************************************************************************/
-/*  Return the size of data type in bytes           	                */
+/*  Return the size of data type in bytes	                        */
 /************************************************************************/
 
-int HDF4Dataset::GetDataTypeSize( int32 iNumType ) const
+int HDF4Dataset::GetDataTypeSize( int32 iNumType )
 {
     switch (iNumType)
     {
@@ -266,7 +266,7 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType ) const
 /*  Convert value stored in the input buffer to double value.           */
 /************************************************************************/
 
-double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData ) const
+double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
 {
     switch ( iNumType )
     {
@@ -299,7 +299,7 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData ) const
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
 
-char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString ) const
+char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString ) 
 
 {
     const char  *pszDelimiters = " \t\n\r";
@@ -401,7 +401,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString ) const
 /************************************************************************/
 
 char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
-                                      char **ppszAttrValue ) const
+                                      char **ppszAttrValue )
 {
     int	    iCount, i, j;
     *ppszAttrName = NULL;
@@ -437,7 +437,7 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
 /************************************************************************/
 
 char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
-    int32 iAttribute, int32 nValues, char **papszMetadata ) const
+    int32 iAttribute, int32 nValues, char **papszMetadata )
 {
     char	*pszData;
     
@@ -529,7 +529,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 
 char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     int32 iAttribute, char *pszAttrName, int32 iNumType, int32 nValues,
-    char **papszMetadata ) const
+    char **papszMetadata )
 {
     void	*pData = NULL;
     char	*pszTemp = NULL;
@@ -666,7 +666,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    HDF4Dataset 	*poDS;
+    HDF4Dataset     *poDS;
 
     poDS = new HDF4Dataset();
 
@@ -710,7 +710,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     else if ( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata, "Title"))
- 	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
+	 && EQUAL( pszValue, "SeaWiFS Level-1A Data" ) )
     {
 	poDS->iSubdatasetType = SEAWIFS_L1A;
 	poDS->pszSubdatasetType = "SEAWIFS_L1A";
@@ -745,7 +745,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*  If we have HDF-EOS dataset, process it here.                  	*/
+/*  If we have HDF-EOS dataset, process it here.	                */
 /* -------------------------------------------------------------------- */
     char	szName[VSNAMELENMAX + 1], szTemp[8192];
     char	*pszString;
@@ -768,7 +768,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         Hclose( hHDF4 );
 
 /* -------------------------------------------------------------------- */
-/*  Process swath layers.                                           	*/
+/*  Process swath layers.                                               */
 /* -------------------------------------------------------------------- */
         hHDF4 = SWopen( poOpenInfo->pszFilename, DFACC_READ );
         nSubDatasets = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
@@ -876,7 +876,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         SWclose( hHDF4 );
 
 /* -------------------------------------------------------------------- */
-/*  Process grid layers.                                           	*/
+/*  Process grid layers.                                                */
 /* -------------------------------------------------------------------- */
         hHDF4 = GDopen( poOpenInfo->pszFilename, DFACC_READ );
         nSubDatasets = GDinqgrid( poOpenInfo->pszFilename, NULL, &nStrBufSize );
