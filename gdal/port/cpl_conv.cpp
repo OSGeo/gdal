@@ -750,6 +750,45 @@ long CPLScanLong( const char *pszString, int nMaxLength )
     return iValue;
 }
 
+
+/************************************************************************/
+/*                            CPLScanULong()                            */
+/************************************************************************/
+
+/**
+ * Scan up to a maximum number of characters from a string and convert
+ * the result to a unsigned long.
+ *
+ * @param pszString String containing characters to be scanned. It may be
+ * terminated with a null character.
+ *
+ * @param nMaxLength The maximum number of character to consider as part
+ * of the number. Less characters will be considered if a null character
+ * is encountered.
+ * 
+ * @return Unsigned long value, converted from its ASCII form.
+ */
+
+unsigned long CPLScanULong( const char *pszString, int nMaxLength )
+{
+    unsigned long    uValue;
+    char    *pszValue = (char *)CPLMalloc( nMaxLength + 1);
+
+/* -------------------------------------------------------------------- */
+/*      Compute string into local buffer, and terminate it.             */
+/* -------------------------------------------------------------------- */
+    strncpy( pszValue, pszString, nMaxLength );
+    pszValue[nMaxLength] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Use strtoul() to fetch out the result                           */
+/* -------------------------------------------------------------------- */
+    uValue = strtoul( pszValue, NULL, 10 );
+
+    CPLFree( pszValue );
+    return uValue;
+}
+
 /************************************************************************/
 /*                           CPLScanUIntBig()                           */
 /************************************************************************/
@@ -804,7 +843,7 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
  * Extract pointer from string.
  *
  * Scan up to a maximum number of characters from a string and convert
- * the result to a GUIntBig. 
+ * the result to a pointer. 
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -850,7 +889,7 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
 #if SIZEOF_VOIDP == 8
         pResult = (void *) CPLScanUIntBig( szTemp, nMaxLength );
 #else
-        pResult = (void *) CPLScanLong( szTemp, nMaxLength );
+        pResult = (void *) CPLScanULong( szTemp, nMaxLength );
 #endif
     }
 
