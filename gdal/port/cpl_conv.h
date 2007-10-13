@@ -96,6 +96,7 @@ double CPL_DLL CPLAtofM(const char *);
 char CPL_DLL *CPLScanString( const char *, int, int, int );
 double CPL_DLL CPLScanDouble( const char *, int, char * );
 long CPL_DLL CPLScanLong( const char *, int );
+unsigned long CPL_DLL CPLScanULong( const char *, int );
 GUIntBig CPL_DLL CPLScanUIntBig( const char *, int );
 void CPL_DLL *CPLScanPointer( const char *, int );
 
