@@ -1508,6 +1508,8 @@ void GDALRegister_JP2ECW()
 #ifdef FRMT_ecw 
     GDALDriver	*poDriver;
 
+    if (! GDAL_CHECK_VERSION("JP2ECW driver"))
+        return;
 
     if( GDALGetDriverByName( "JP2ECW" ) == NULL )
     {

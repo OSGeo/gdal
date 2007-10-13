@@ -2473,6 +2473,9 @@ void GDALRegister_netCDF()
 {
     GDALDriver	*poDriver;
 
+    if (! GDAL_CHECK_VERSION("netCDF driver"))
+        return;
+
     if( GDALGetDriverByName( "netCDF" ) == NULL )
     {
         poDriver = new GDALDriver( );

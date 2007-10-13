@@ -101,5 +101,7 @@ OGRDataSource *OGRFMEDriver::Open( const char * pszFilename, int bUpdate )
 void RegisterOGRFME()
 
 {
+    if (! GDAL_CHECK_VERSION("FME driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRFMEDriver );
 }

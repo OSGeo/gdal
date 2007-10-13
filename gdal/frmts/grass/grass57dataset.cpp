@@ -969,6 +969,9 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GRASS()
 {
     GDALDriver	*poDriver;
+    
+    if (! GDAL_CHECK_VERSION("GDAL/GRASS57 driver"))
+        return;
 
     if( GDALGetDriverByName( "GRASS" ) == NULL )
     {

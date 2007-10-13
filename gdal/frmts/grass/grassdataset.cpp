@@ -574,6 +574,9 @@ void GDALRegister_GRASS()
 
 {
     GDALDriver	*poDriver;
+    
+    if (! GDAL_CHECK_VERSION("GDAL/GRASS driver"))
+        return;
 
     if( GDALGetDriverByName( "GRASS" ) == NULL )
     {

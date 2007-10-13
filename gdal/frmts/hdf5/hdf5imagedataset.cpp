@@ -452,6 +452,9 @@ void GDALRegister_HDF5Image( )
 
 {
     GDALDriver  *poDriver;
+    
+    if (! GDAL_CHECK_VERSION("HDF5Image driver"))
+        return;
 
     if(  GDALGetDriverByName( "HDF5Image" ) == NULL )
 	{

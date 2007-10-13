@@ -124,6 +124,8 @@ int OGRMySQLDriver::TestCapability( const char * pszCap )
 void RegisterOGRMySQL()
 
 {
+    if (! GDAL_CHECK_VERSION("MySQL driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRMySQLDriver );
 }
 

@@ -477,6 +477,9 @@ void GDALRegister_SDE()
 
 {
     GDALDriver  *poDriver;
+    
+    if (! GDAL_CHECK_VERSION("SDE driver"))
+        return;
 
     if( GDALGetDriverByName( "SDE" ) == NULL )
     {
