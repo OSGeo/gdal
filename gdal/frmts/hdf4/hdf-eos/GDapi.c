@@ -1,3 +1,12 @@
+/*****************************************************************************
+ * $Id$
+ *
+ * This module has a number of additions and improvements over the original
+ * implementation to be suitable for usage in GDAL HDF driver.
+ *
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ ****************************************************************************/
+
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
@@ -7153,22 +7162,22 @@ GDij2ll(int32 projcode, int32 zonecode, float64 projparm[],
 	int32 npnts, int32 row[], int32 col[],
 	float64 longitude[], float64 latitude[], int32 pixcen, int32 pixcnr)
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    intn            i;		    /* Loop index */
+    intn            status = 0;	    /* routine return status variable */
 
-    int32           errorcode = 0;	/* GCTP error code */
-    int32(*inv_trans[100]) ();	/* GCTP function pointer */
-    int32(*for_trans[100]) ();	/* GCTP function pointer */
+    int32           errorcode = 0;  /* GCTP error code */
+    int32(*inv_trans[100]) ();	    /* GCTP function pointer */
+    int32(*for_trans[100]) ();	    /* GCTP function pointer */
 
-    float64         pixadjX;	/* Pixel adjustment (x) */
-    float64         pixadjY;	/* Pixel adjustment (y) */
-    float64         lonrad0;	/* Longitude in radians of upleft point */
-    float64         latrad0;	/* Latitude in radians of upleft point */
-    float64         scaleX;	/* X scale factor */
-    float64         scaleY;	/* Y scale factor */
-    float64         lonrad;	/* Longitude in radians of point */
-    float64         latrad;	/* Latitude in radians of point */
-    float64         EHconvAng();/* Angle conversion routine */
+    float64         pixadjX = 0.0;  /* Pixel adjustment (x) */
+    float64         pixadjY = 0.0;  /* Pixel adjustment (y) */
+    float64         lonrad0;	    /* Longitude in radians of upleft point */
+    float64         latrad0;	    /* Latitude in radians of upleft point */
+    float64         scaleX;	    /* X scale factor */
+    float64         scaleY;	    /* Y scale factor */
+    float64         lonrad;	    /* Longitude in radians of point */
+    float64         latrad;	    /* Latitude in radians of point */
+    float64         EHconvAng();    /* Angle conversion routine */
     float64	    xMtr0, yMtr0, xMtr1, yMtr1;
 
     /* Compute adjustment of position within pixel */
@@ -7489,19 +7498,19 @@ GDrs2ll(int32 projcode, float64 projparm[],
 	int32 npnts, float64 r[], float64 s[],
 	float64 longitude[], float64 latitude[], int32 pixcen, int32 pixcnr)
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    intn            i;		    /* Loop index */
+    intn            status = 0;	    /* routine return status variable */
 
-    int32           errorcode = 0;	/* GCTP error code */
-    int32(*inv_trans[100]) ();	/* GCTP function pointer */
+    int32           errorcode = 0;  /* GCTP error code */
+    int32(*inv_trans[100]) ();	    /* GCTP function pointer */
 
-    float64         pixadjX;	/* Pixel adjustment (x) */
-    float64         pixadjY;	/* Pixel adjustment (y) */
-    float64         lonrad;	/* Longitude in radians of point */
-    float64         latrad;	/* Latitude in radians of point */
-    float64         EHconvAng();/* Angle conversion routine */
-    float64         xMtr;	/* X value in meters from GCTP */
-    float64         yMtr;	/* Y value in meters from GCTP */
+    float64         pixadjX = 0.0;  /* Pixel adjustment (x) */
+    float64         pixadjY = 0.0;  /* Pixel adjustment (y) */
+    float64         lonrad;	    /* Longitude in radians of point */
+    float64         latrad;	    /* Latitude in radians of point */
+    float64         EHconvAng();    /* Angle conversion routine */
+    float64         xMtr;	    /* X value in meters from GCTP */
+    float64         yMtr;	    /* Y value in meters from GCTP */
     float64         epsilon;
     float64         beta;
     float64         qp_cea;
@@ -10947,8 +10956,8 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     float64         projparm[16];	/* Projection parameters */
     float64         xVal;	/* "Exact" x location of interpolated point */
     float64         yVal;	/* "Exact" y location of interpolated point */
-    float64         tNum;	/* Interpolation numerator value 1 */
-    float64         uNum;	/* Interpolation numerator value 2 */
+    float64         tNum = 0.0;	/* Interpolation numerator value 1 */
+    float64         uNum = 0.0;	/* Interpolation numerator value 2 */
 
     int16           i16[4];	/* Working buffer (int16) */
     int32           i32[4];	/* Working buffer (int132) */

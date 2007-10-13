@@ -1,3 +1,12 @@
+/*****************************************************************************
+ * $Id$
+ *
+ * This module has a number of additions and improvements over the original
+ * implementation to be suitable for usage in GDAL HDF driver.
+ *
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ ****************************************************************************/
+
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
@@ -16,8 +25,7 @@ this permission notice appear in supporting documentation.
 #include "HdfEosDef.h"
 
 /* Set maximun number of HDF-EOS files to HDF limit (MAX_FILE) */
-/* #define NEOSHDF MAX_FILE */
-#define NEOSHDF 200
+#define NEOSHDF MAX_FILE
 uint8 EHXtypeTable[NEOSHDF];
 uint8 EHXacsTable[NEOSHDF];
 int32 EHXfidTable[NEOSHDF];
@@ -283,7 +291,7 @@ EHopen(char *filename, intn access)
 		       /* --------------------------------------------- */
 		       if (attrIndex == -1)
 		       {
-		   	  metabuf = (char *) calloc(32000, 1);
+			  metabuf = (char *) calloc(32000, 1);
 			  if(metabuf == NULL)
 			  { 
 			      HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
@@ -739,15 +747,14 @@ EHgetversion(int32 fid, char *version)
 float64
 EHconvAng(float64 inAngle, intn code)
 {
+#define RADIANS_TO_DEGREES 180. / 3.14159265358979324
+#define DEGREES_TO_RADIANS 3.14159265358979324 / 180.
+
     int32           min;	/* Truncated Minutes */
     int32           deg;	/* Truncated Degrees */
 
     float64         sec;	/* Seconds */
     float64         outAngle = 0.0;	/* Angle in desired units */
-    float64         pi = 3.14159265358979324;	/* Pi */
-    float64         r2d = 180 / pi;	/* Radians to degrees conversion */
-    float64         d2r = 1 / r2d;	/* Degrees to radians conversion */
-
 
     switch (code)
     {
@@ -755,14 +762,14 @@ EHconvAng(float64 inAngle, intn code)
 	/* Convert radians to degrees */
 	/* -------------------------- */
     case HDFE_RAD_DEG:
-	outAngle = inAngle * r2d;
+	outAngle = inAngle * RADIANS_TO_DEGREES;
 	break;
 
 
 	/* Convert degrees to radians */
 	/* -------------------------- */
     case HDFE_DEG_RAD:
-	outAngle = inAngle * d2r;
+	outAngle = inAngle * DEGREES_TO_RADIANS;
 	break;
 
 
@@ -800,7 +807,7 @@ EHconvAng(float64 inAngle, intn code)
 	/* Convert radians to packed degrees */
 	/* --------------------------------- */
     case HDFE_RAD_DMS:
-	inAngle = inAngle * r2d;
+	inAngle = inAngle * RADIANS_TO_DEGREES;
 	deg = inAngle;
 	min = (inAngle - deg) * 60;
 	sec = (inAngle - deg - min / 60.0) * 3600;
@@ -826,14 +833,14 @@ EHconvAng(float64 inAngle, intn code)
 	min = (inAngle - deg * 1000000) / 1000;
 	sec = (inAngle - deg * 1000000 - min * 1000);
 	outAngle = deg + min / 60.0 + sec / 3600.0;
-	outAngle = outAngle * d2r;
+	outAngle = outAngle * DEGREES_TO_RADIANS;
 	break;
     }
     return (outAngle);
 }
 
-
-
+#undef TO_DEGREES
+#undef TO_RADIANS
 
 
 /*----------------------------------------------------------------------------|
@@ -849,8 +856,8 @@ EHconvAng(float64 inAngle, intn code)
 |  count          int32               Number of string entries                |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  instring       char                Input string                            |
-|  delim          char                string delimitor                        |
+|  instring       const char          Input string                            |
+|  delim          const char          string delimitor                        |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  pntr           char *              Pointer array to beginning of each      |
@@ -868,7 +875,7 @@ EHconvAng(float64 inAngle, intn code)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-EHparsestr(char *instring, char delim, char *pntr[], int32 len[])
+EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 {
     int32           i;		/* Loop index */
     int32           prevDelimPos = 0;	/* Previous delimitor position */
@@ -892,7 +899,7 @@ EHparsestr(char *instring, char delim, char *pntr[], int32 len[])
     /* --------------------------------------------------------------------- */
     if (&pntr[0] != NULL)
     {
-	pntr[0] = instring;
+	pntr[0] = (char *)instring;
     }
     /* If delimitor not found ... */
     /* -------------------------- */
@@ -929,7 +936,7 @@ EHparsestr(char *instring, char delim, char *pntr[], int32 len[])
 		    }
 		    /* Point to beginning of string entry */
 		    /* ---------------------------------- */
-		    pntr[count] = instring + i + 1;
+		    pntr[count] = (char *)instring + i + 1;
 		}
 		/* Reset previous delimitor position and increment counter */
 		/* ------------------------------------------------------- */
@@ -965,9 +972,9 @@ EHparsestr(char *instring, char delim, char *pntr[], int32 len[])
 |  indx           int32               Element index (0 - based)               |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  target         char                Target string                           |
-|  search         char                Search string                           |
-|  delim          char                Delimitor                               |
+|  target         const char          Target string                           |
+|  search         const char          Search string                           |
+|  delim          const char          Delimitor                               |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -983,7 +990,7 @@ EHparsestr(char *instring, char delim, char *pntr[], int32 len[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-EHstrwithin(char *target, char *search, char delim)
+EHstrwithin(const char *target, const char *search, const char delim)
 {
     intn            found = 0;	/* Target string found flag */
 
@@ -1147,9 +1154,9 @@ EHloadliststr(char *ptr[], int32 nentries, char *liststr, char delim)
 |  INPUTS:                                                                    |
 |  fid            int32               HDF-EOS file ID                         |
 |  vgid           int32               Vgroup ID                               |
-|  objectname     char                object name                             |
+|  objectname     const char          object name                             |
 |  code           intn                object code (0 - Vgroup, 1 - Vdata)     |
-|  access         char                access ("w/r")                          |
+|  access         const char          access ("w/r")                          |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -1165,7 +1172,8 @@ EHloadliststr(char *ptr[], int32 nentries, char *liststr, char delim)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-EHgetid(int32 fid, int32 vgid, char *objectname, intn code, char *access)
+EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
+        const char *access)
 {
     intn            i;		/* Loop index */
 
@@ -3235,21 +3243,21 @@ EHattrinfo(int32 fid, int32 attrVgrpID, char *attrname, int32 * numbertype,
 int32
 EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 {
-    intn            i;		/* Loop index */
+    intn            i;		        /* Loop index */
 
-    int32           nObjects;	/* # of objects in Vgroup */
-    int32          *tags;	/* Pnt to Vgroup object tags array */
-    int32          *refs;	/* Pnt to Vgroup object refs array */
-    int32           vdataID;	/* Attribute Vdata ID */
+    int32           nObjects;	        /* # of objects in Vgroup */
+    int32          *tags;	        /* Pnt to Vgroup object tags array */
+    int32          *refs;	        /* Pnt to Vgroup object refs array */
+    int32           vdataID;	        /* Attribute Vdata ID */
 
-    int32           nattr = 0;	/* Number of attributes */
-    int32           slen;	/* String length */
+    int32           nattr = 0;	        /* Number of attributes */
+    int32           slen;	        /* String length */
 
-    char            name[80];	/* Attribute name */
-    char           *indxstr = "INDXMAP:";	/* Index Mapping reserved
-						 * string */
-    char           *fvstr = "_FV_";	/* Flag Value reserved string */
-    char           *bsom = "_BLKSOM:";	/* Block SOM Offset reserved string */
+    char            name[80];	        /* Attribute name */
+    static const char indxstr[] = "INDXMAP:"; /* Index Mapping reserved
+                                                 string */
+    static const char fvstr[] = "_FV_";	/* Flag Value reserved string */
+    static const char bsom[] = "_BLKSOM:";/* Block SOM Offset reserved string */
 
 
     /* Set string buffer size to 0 */
