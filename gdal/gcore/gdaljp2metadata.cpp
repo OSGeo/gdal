@@ -628,33 +628,38 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         delete poOriginGeometry;
 
 /* -------------------------------------------------------------------- */
+/*      If we still don't have an srsName, check for it on the          */
+/*      boundedBy Envelope.  Some products                              */
+/*      (ie. EuropeRasterTile23.jpx) use this as the only srsName       */
+/*      delivery vehicle.                                               */
+/* -------------------------------------------------------------------- */
+    if( pszSRSName == NULL )
+    {
+        pszSRSName = 
+            CPLGetXMLValue( psXML,
+                            "=FeatureCollection.boundedBy.Envelope.srsName",
+                            NULL );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we have gotten a geotransform, then try to interprete the    */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
     if( bSuccess && pszSRSName != NULL 
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
+        OGRSpatialReference oSRS;
+
         if( EQUALN(pszSRSName,"epsg:",5) )
         {
-            OGRSpatialReference oSRS;
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG::",22) )
+        else if( EQUALN(pszSRSName,"urn:",4) 
+                 && strstr(pszSRSName,":def:") != NULL
+                 && oSRS.importFromURN(pszSRSName) == OGRERR_NONE )
         {
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszSRSName + 22) ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
-        }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG:",21) )
-        {
-            const char *pszCode = pszSRSName+21;
-            while( *pszCode != ':' && *pszCode != '\0' )
-                pszCode++;
-
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
+            oSRS.exportToWkt( &pszProjection );
         }
         else if( !GMLSRSLookup( pszSRSName ) )
         {
