@@ -194,7 +194,7 @@ double DTEDRasterBand::GetNoDataValue( int * pbSuccess )
 DTEDDataset::DTEDDataset()
 {
     pszFilename = CPLStrdup("unknown");
-    bVerifyChecksum = EQUAL(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"), "YES");
+    bVerifyChecksum = CSLTestBoolean(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"));
 }
 
 /************************************************************************/
