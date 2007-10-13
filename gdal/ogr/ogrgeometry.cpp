@@ -1136,6 +1136,157 @@ int OGR_G_IsEmpty( OGRGeometryH hGeom )
 {
    return ((OGRGeometry *) hGeom)->IsEmpty();
 }
+
+/************************************************************************/
+/*                              IsValid()                               */
+/************************************************************************/
+
+/**
+ * Test if the geometry is valid
+ *
+ * This method is the same as the C function OGR_G_IsValid().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * FALSE. 
+ *
+ *
+ * @return TRUE if the geometry has no points, otherwise FALSE.  
+ */
+
+OGRBoolean
+OGRGeometry::IsValid(  ) const
+
+{
+#ifndef HAVE_GEOS
+
+    return FALSE;
+
+#else
+
+    OGRBoolean bResult = FALSE;
+    GEOSGeom hThisGeosGeom = NULL;
+    
+    hThisGeosGeom = exportToGEOS();
+
+    if( hThisGeosGeom != NULL  )
+    {
+        bResult = GEOSisValid( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+    }
+
+    return bResult;
+
+#endif /* HAVE_GEOS */
+}
+
+int OGR_G_IsValid( OGRGeometryH hGeom )
+
+{
+   return ((OGRGeometry *) hGeom)->IsValid();
+}
+
+/************************************************************************/
+/*                              IsSimple()                               */
+/************************************************************************/
+
+/**
+ * Test if the geometry is simple
+ *
+ * This method is the same as the C function OGR_G_IsSimple().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * FALSE. 
+ *
+ *
+ * @return TRUE if the geometry has no points, otherwise FALSE.  
+ */
+
+OGRBoolean
+OGRGeometry::IsSimple(  ) const
+
+{
+#ifndef HAVE_GEOS
+
+    return FALSE;
+
+#else
+
+    OGRBoolean bResult = FALSE;
+    GEOSGeom hThisGeosGeom = NULL;
+    
+    hThisGeosGeom = exportToGEOS();
+
+    if( hThisGeosGeom != NULL  )
+    {
+        bResult = GEOSisSimple( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+    }
+
+    return bResult;
+
+#endif /* HAVE_GEOS */
+}
+
+int OGR_G_IsSimple( OGRGeometryH hGeom )
+
+{
+   return ((OGRGeometry *) hGeom)->IsSimple();
+}
+
+/************************************************************************/
+/*                              IsRing()                               */
+/************************************************************************/
+
+/**
+ * Test if the geometry is a ring
+ *
+ * This method is the same as the C function OGR_G_IsRing().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return 
+ * FALSE. 
+ *
+ *
+ * @return TRUE if the geometry has no points, otherwise FALSE.  
+ */
+
+OGRBoolean
+OGRGeometry::IsRing(  ) const
+
+{
+#ifndef HAVE_GEOS
+
+    return FALSE;
+
+#else
+
+    OGRBoolean bResult = FALSE;
+    GEOSGeom hThisGeosGeom = NULL;
+    
+    hThisGeosGeom = exportToGEOS();
+
+    if( hThisGeosGeom != NULL  )
+    {
+        bResult = GEOSisRing( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+    }
+
+    return bResult;
+
+#endif /* HAVE_GEOS */
+}
+
+int OGR_G_IsRing( OGRGeometryH hGeom )
+
+{
+   return ((OGRGeometry *) hGeom)->IsRing();
+}
+
 /************************************************************************/
 /*                       OGRGeometryTypeToName()                        */
 /************************************************************************/

@@ -121,6 +121,9 @@ int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
 
 void   CPL_DLL OGR_G_Empty( OGRGeometryH );
 int    CPL_DLL OGR_G_IsEmpty (OGRGeometryH );
+int    CPL_DLL OGR_G_IsValid (OGRGeometryH );
+int    CPL_DLL OGR_G_IsSimple (OGRGeometryH );
+int    CPL_DLL OGR_G_IsRing (OGRGeometryH );
 
 /* backward compatibility */
 int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
