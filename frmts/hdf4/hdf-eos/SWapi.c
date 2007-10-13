@@ -1,3 +1,12 @@
+/*****************************************************************************
+ * $Id$
+ *
+ * This module has a number of additions and improvements over the original
+ * implementation to be suitable for usage in GDAL HDF driver.
+ *
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ ****************************************************************************/
+
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
@@ -144,7 +153,8 @@ struct swathRegion *SWXRegion[NSWATHREGN];
 /* Swath Prototypes (internal routines) */
 intn SWchkswid(int32, char *, int32 *, int32 *, int32 *);
 int32 SWimapinfo(int32, char *, char *, int32 []);
-int32 SWfinfo(int32, char *, char *, int32 *, int32 [], int32 *, char *);
+int32 SWfinfo(int32, const char *, const char *, int32 *,
+              int32 [], int32 *, char *);
 intn SWfldinfo(int32, char *, int32 *, int32 [], int32 *, char *);
 intn SWdefimap(int32, char *, char *, int32 []);
 intn SWdefinefield(int32, char *, char *, char *, int32, int32);
@@ -153,10 +163,12 @@ intn SWdefdfld(int32, char *, char *, int32, int32);
 intn SWwrgmeta(int32, char *, char *, int32);
 intn SWwrdmeta(int32, char *, char *, int32);
 intn SWwrrdattr(int32, char *, int32, int32, char *, VOIDP);
-intn SW1dfldsrch(int32, int32, char *, char *, int32 *, int32 *, int32 *);
-intn SWSDfldsrch(int32, int32, char *, int32 *, int32 *, 
+intn SW1dfldsrch(int32, int32, const char *, const char *, int32 *,
+                 int32 *, int32 *);
+intn SWSDfldsrch(int32, int32, const char *, int32 *, int32 *, 
                  int32 *, int32 *, int32 [], int32 *);
-intn SWwrrdfield(int32, char *, char *, int32 [], int32 [], int32 [], VOIDP);
+intn SWwrrdfield(int32, const char *, const char *,
+                 int32 [], int32 [], int32 [], VOIDP);
 intn SWwrfld(int32, char *, int32 [], int32 [], int32 [], VOIDP);
 intn SWrdfld(int32, char *, int32 [], int32 [], int32 [], VOIDP);
 intn SWreginfo(int32, int32, char *, int32 *, int32 *, int32 [], int32 *);
@@ -1481,8 +1493,8 @@ SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure id                      |
-|  fieldtype      char                fieldtype (geo or data)                 |
-|  fieldname      char                name of field                           |
+|  fieldtype      const char          fieldtype (geo or data)                 |
+|  fieldname      const char          name of field                           |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -1503,8 +1515,8 @@ SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWfinfo(int32 swathID, char *fieldtype, char *fieldname, int32 *rank,
-	int32 dims[], int32 *numbertype, char *dimlist)
+SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
+        int32 *rank, int32 dims[], int32 *numbertype, char *dimlist)
 
 {
     intn            i;		/* Loop index */
@@ -1516,7 +1528,7 @@ SWfinfo(int32 swathID, char *fieldtype, char *fieldname, int32 *rank,
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           fsize;	/* field size in bytes */
-    int32           ndims;	/* Number of dimensions */
+    int32           ndims = 0;	/* Number of dimensions */
     int32           slen[8];	/* Length of each entry in parsed string */
     int32           dum;	/* Dummy variable */
     int32           vdataID;	/* 1d field vdata ID */
@@ -1689,7 +1701,7 @@ SWfinfo(int32 swathID, char *fieldtype, char *fieldname, int32 *rank,
 		if (dims[0] == 1)
 		{
 		    /* Get record size and read 1st record */
-		    fsize = VSsizeof(vdataID, fieldname);
+		    fsize = VSsizeof(vdataID, (char *)fieldname);
 		    buf = (uint8 *) calloc(fsize, 1);
 		    if(buf == NULL)
 		    { 
@@ -1759,7 +1771,7 @@ SWfinfo(int32 swathID, char *fieldtype, char *fieldname, int32 *rank,
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure id                      |
-|  fieldname      char                name of field                           |
+|  fieldname      const char          name of field                           |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -1778,7 +1790,7 @@ SWfinfo(int32 swathID, char *fieldtype, char *fieldname, int32 *rank,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWfieldinfo(int32 swathID, char *fieldname, int32 * rank, int32 dims[],
+SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
 	    int32 * numbertype, char *dimlist)
 
 {
@@ -4310,25 +4322,27 @@ SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
 			EHgetmetavalue(metaptrs, "DataType", utlstr);
 
 			if (strcmp(utlstr, "DFNT_UCHAR8") == 0)
-			    ntype = 3;
+			    ntype = DFNT_UCHAR8;
 			else if (strcmp(utlstr, "DFNT_CHAR8") == 0)
-			    ntype = 4;
+			    ntype = DFNT_CHAR8;
 			else if (strcmp(utlstr, "DFNT_FLOAT32") == 0)
-			    ntype = 5;
+			    ntype = DFNT_FLOAT32;
 			else if (strcmp(utlstr, "DFNT_FLOAT64") == 0)
-			    ntype = 6;
+			    ntype = DFNT_FLOAT64;
 			else if (strcmp(utlstr, "DFNT_INT8") == 0)
-			    ntype = 20;
+			    ntype = DFNT_INT8;
 			else if (strcmp(utlstr, "DFNT_UINT8") == 0)
-			    ntype = 21;
+			    ntype = DFNT_UINT8;
 			else if (strcmp(utlstr, "DFNT_INT16") == 0)
-			    ntype = 22;
+			    ntype = DFNT_INT16;
 			else if (strcmp(utlstr, "DFNT_UINT16") == 0)
-			    ntype = 23;
+			    ntype = DFNT_UINT16;
 			else if (strcmp(utlstr, "DFNT_INT32") == 0)
-			    ntype = 24;
+			    ntype = DFNT_INT32;
 			else if (strcmp(utlstr, "DFNT_UINT32") == 0)
-			    ntype = 25;
+			    ntype = DFNT_UINT32;
+                        else
+                            ntype = DFNT_NONE;
 
 			numbertype[nFld] = ntype;
 		    }
@@ -4512,22 +4526,22 @@ int32
 SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 
 {
-    intn            status;	/* routine return status variable */
-    intn            i;		/* Loop index */
+    intn            status;	    /* routine return status variable */
+    intn            i;		    /* Loop index */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath root Vgroup ID */
+    int32           fid;	    /* HDF-EOS file ID */
+    int32           sdInterfaceID;  /* HDF SDS interface ID */
+    int32           swVgrpID;	    /* Swath root Vgroup ID */
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           nEntries = 0;	/* Number of entries */
-    int32           metaflag;	/* Old (0), New (1) metadata flag) */
-    int32           nVal;	/* Number of strings to search for */
+    int32           nEntries = 0;   /* Number of entries */
+    int32           metaflag;	    /* Old (0), New (1) metadata flag) */
+    int32           nVal;	    /* Number of strings to search for */
 
-    char           *metabuf;	/* Pointer to structural metadata (SM) */
-    char           *metaptrs[2];/* Pointers to begin and end of SM section */
-    char            swathname[80];	/* Swath Name */
-    char           *utlstr;	/* Utility string */
-    char            valName[2][32];	/* Strings to search for */
+    char           *metabuf = NULL; /* Pointer to structural metadata (SM) */
+    char           *metaptrs[2];    /* Pointers to begin and end of SM section */
+    char            swathname[80];  /* Swath Name */
+    char           *utlstr;	    /* Utility string */
+    char            valName[2][32]; /* Strings to search for */
 
     /* Allocate space for utility string */
     /* --------------------------------- */
@@ -4639,47 +4653,50 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 	 * Check for presence of 'GROUP="' string If found then old metadata,
 	 * search on OBJECT string
 	 */
-	metaflag = (strstr(metabuf, "GROUP=\"") == NULL) ? 1 : 0;
-	if (metaflag == 0)
-	{
-	    nVal = 1;
-	    strcpy(&valName[0][0], "\t\tOBJECT");
-	}
+        if (metabuf)
+        {
+            metaflag = (strstr(metabuf, "GROUP=\"") == NULL) ? 1 : 0;
+            if (metaflag == 0)
+            {
+                nVal = 1;
+                strcpy(&valName[0][0], "\t\tOBJECT");
+            }
 
 
-	/* Begin loop through entries in metadata */
-	/* -------------------------------------- */
-	while (1)
-	{
-	    /* Search for first string */
-	    strcpy(utlstr, &valName[0][0]);
-	    strcat(utlstr, "=");
-	    metaptrs[0] = strstr(metaptrs[0], utlstr);
+            /* Begin loop through entries in metadata */
+            /* -------------------------------------- */
+            while (1)
+            {
+                /* Search for first string */
+                strcpy(utlstr, &valName[0][0]);
+                strcat(utlstr, "=");
+                metaptrs[0] = strstr(metaptrs[0], utlstr);
 
-	    /* If found within relevant metadata section ... */
-	    if (metaptrs[0] < metaptrs[1] && metaptrs[0] != NULL)
-	    {
-		for (i = 0; i < nVal; i++)
-		{
-		    /*
-		     * Get all string values Don't count quotes
-		     */
-		    EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
-		    *strbufsize += strlen(utlstr) - 2;
-		}
-		/* Increment number of entries */
-		nEntries++;
+                /* If found within relevant metadata section ... */
+                if (metaptrs[0] < metaptrs[1] && metaptrs[0] != NULL)
+                {
+                    for (i = 0; i < nVal; i++)
+                    {
+                        /*
+                         * Get all string values Don't count quotes
+                         */
+                        EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
+                        *strbufsize += strlen(utlstr) - 2;
+                    }
+                    /* Increment number of entries */
+                    nEntries++;
 
-		/* Go to end of OBJECT */
-		metaptrs[0] = strstr(metaptrs[0], "END_OBJECT");
-	    }
-	    else
-		/* No more entries found */
-	    {
-		break;
-	    }
-	}
-	free(metabuf);
+                    /* Go to end of OBJECT */
+                    metaptrs[0] = strstr(metaptrs[0], "END_OBJECT");
+                }
+                else
+                    /* No more entries found */
+                {
+                    break;
+                }
+            }
+            free(metabuf);
+        }
 
 
 	/* Count comma separators & slashes (if mappings) */
@@ -4695,9 +4712,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
     /* Set nEntries to -1 if error status exists */
     /* ----------------------------------------- */
     if (status == -1)
-    {
 	nEntries = -1;
-    }
 
     free(utlstr);
 
@@ -4765,8 +4780,8 @@ SWinqswath(char *filename, char *swathlist, int32 * strbufsize)
 |  INPUTS:                                                                    |
 |  fid            int32               HDF-EOS file ID                         |
 |  swathID        int32               swath structure ID                      |
-|  fieldname      char                field name                              |
-|  access         char                Access code (w/r)                       |
+|  fieldname      const char          field name                              |
+|  access         const char          Access code (w/r)                       |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -4784,7 +4799,7 @@ SWinqswath(char *filename, char *swathlist, int32 * strbufsize)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SW1dfldsrch(int32 fid, int32 swathID, char *fieldname, char *access,
+SW1dfldsrch(int32 fid, int32 swathID, const char *fieldname, const char *access,
 	    int32 * vgidout, int32 * vdataIDout, int32 * fldtype)
 
 {
@@ -4852,8 +4867,7 @@ SW1dfldsrch(int32 fid, int32 swathID, char *fieldname, char *access,
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure ID                      |
 |  sdInterfaceID  int32               SD interface ID                         |
-|  fieldname      char                field name                              |
-|  access         char                Access code (w/r)                       |
+|  fieldname      const char          field name                              |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -4875,9 +4889,9 @@ SW1dfldsrch(int32 fid, int32 swathID, char *fieldname, char *access,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWSDfldsrch(int32 swathID, int32 sdInterfaceID, char *fieldname, int32 * sdid,
-	    int32 * rankSDS, int32 * rankFld, int32 * offset, int32 dims[],
-	    int32 * solo)
+SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
+            int32 * sdid, int32 * rankSDS, int32 * rankFld, int32 * offset,
+            int32 dims[], int32 * solo)
 {
     intn            i;		/* Loop index */
     intn            status = -1;/* routine return status variable */
@@ -5076,8 +5090,8 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, char *fieldname, int32 * sdid,
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure ID                      |
-|  fieldname      char                fieldname                               |
-|  code           char                Write/Read code (w/r)                   |
+|  fieldname      const char          fieldname                               |
+|  code           const char          Write/Read code (w/r)                   |
 |  start          int32               start array                             |
 |  stride         int32               stride array                            |
 |  edge           int32               edge array                              |
@@ -5098,7 +5112,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, char *fieldname, int32 * sdid,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWwrrdfield(int32 swathID, char *fieldname, char *code,
+SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 	    int32 start[], int32 stride[], int32 edge[], VOIDP datbuf)
 
 {
@@ -5359,7 +5373,7 @@ SWwrrdfield(int32 swathID, char *fieldname, char *code,
 		{
 		    /* Get size of field and setup fill buffer */
 		    /* --------------------------------------- */
-		    fldsize = VSsizeof(vdataID, fieldname);
+		    fldsize = VSsizeof(vdataID, (char *)fieldname);
 		    fillbuf = (uint8 *) calloc(fldsize, 1);
 		    if(fillbuf == NULL)
 		    { 
@@ -5474,7 +5488,7 @@ SWwrrdfield(int32 swathID, char *fieldname, char *code,
 		    /* Read Section */
 		    /* ------------ */
 		    status = VSsetfields(vdataID, fieldname);
-		    fldsize = VSsizeof(vdataID, fieldname);
+		    fldsize = VSsizeof(vdataID, (char *)fieldname);
 		    buf = (uint8 *) calloc(fldsize, count[0] * incr[0]);
 		    if(buf == NULL)
 		    { 
@@ -5582,7 +5596,7 @@ SWwritefield(int32 swathID, char *fieldname,
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               swath structure ID                      |
-|  fieldname      char                fieldname                               |
+|  fieldname      const char          fieldname                               |
 |  start          int32               start array                             |
 |  stride         int32               stride array                            |
 |  edge           int32               edge array                              |
@@ -5602,7 +5616,7 @@ SWwritefield(int32 swathID, char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWreadfield(int32 swathID, char *fieldname,
+SWreadfield(int32 swathID, const char *fieldname,
 	    int32 start[], int32 stride[], int32 edge[], VOIDP buffer)
 
 {
@@ -7095,7 +7109,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  periodID       int32               Period ID                               |
+|  periodID       int32               (Period ID) or (-1) if failed           |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  swathID        int32               Swath structure ID                      |
@@ -7122,31 +7136,30 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 		int32 mode)
 {
 
-    intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
-    intn            k;		/* Loop index */
-    intn            status;	/* routine return status variable */
-    intn            statTime;	/* Status from SWfieldinfo for time */
+    intn            i;		    /* Loop index */
+    intn            j;		    /* Loop index */
+    intn            k;		    /* Loop index */
+    intn            status;	    /* routine return status variable */
+    intn            statTime;	    /* Status from SWfieldinfo for time */
 
-    uint8           found = 0;	/* Found flag */
+    uint8           found = 0;	    /* Found flag */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath Vgroup ID */
-    int32           rank;	/* Rank of geolocation fields */
-    int32           nt;		/* Number type of geolocation fields */
-    int32           dims[8];	/* Dimensions of geolocation fields */
-    int32           start[2];	/* Start array (read) */
+    int32           fid;	    /* HDF-EOS file ID */
+    int32           sdInterfaceID;  /* HDF SDS interface ID */
+    int32           swVgrpID;	    /* Swath Vgroup ID */
+    int32           rank;	    /* Rank of geolocation fields */
+    int32           nt;		    /* Number type of geolocation fields */
+    int32           dims[8];	    /* Dimensions of geolocation fields */
+    int32           start[2];	    /* Start array (read) */
     int32           stride[2] = {1, 1};	/* Stride array (read) */
-    int32           edge[2];	/* Edge array (read) */
-    int32           periodID = -1;	/* Period ID (return) */
-    int32           dum;	/* Dummy (loop) variable */
+    int32           edge[2];	    /* Edge array (read) */
+    int32           periodID = -1;  /* Period ID (return) */
+    int32           dum;	    /* Dummy (loop) variable */
 
-    float64         time64Test;	/* Time test value */
-    float64        *time64;	/* Time data array */
+    float64         time64Test;	    /* Time test value */
+    float64        *time64 = NULL;  /* Time data array */
 
-    char            dimlist[256];	/* Dimension list (geolocation
-					 * fields) */
+    char            dimlist[256];   /* Dimension list (geolocation fields) */
 
     /* Check for valid swath ID */
     /* ------------------------ */
@@ -7234,140 +7247,141 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 
 	    }
 
+            if (time64)
+            {
+                /* For each track (from top) ... */
+                /* ----------------------------- */
+                for (i = 0; i < edge[0]; i++)
+                {
+                    /* For each value from Cross Track ... */
+                    /* ----------------------------------- */
+                    for (j = 0; j < edge[1]; j++)
+                    {
+
+                        /* Get time test value */
+                        /* ------------------- */
+                        time64Test = time64[i * edge[1] + j];
 
 
-	    /* For each track (from top) ... */
-	    /* ----------------------------- */
-	    for (i = 0; i < edge[0]; i++)
-	    {
-		/* For each value from Cross Track ... */
-		/* ----------------------------------- */
-		for (j = 0; j < edge[1]; j++)
-		{
-
-		    /* Get time test value */
-		    /* ------------------- */
-		    time64Test = time64[i * edge[1] + j];
+                        /* If within time period ... */
+                        /* ------------------------- */
+                        if (time64Test >= starttime &&
+                            time64Test <= stoptime)
+                        {
+                            /* Set found flag */
+                            /* -------------- */
+                            found = 1;
 
 
-		    /* If within time period ... */
-		    /* ------------------------- */
-		    if (time64Test >= starttime &&
-			time64Test <= stoptime)
-		    {
-			/* Set found flag */
-			/* -------------- */
-			found = 1;
+                            /* For all entries in SWXRegion array ... */
+                            /* -------------------------------------- */
+                            for (k = 0; k < NSWATHREGN; k++)
+                            {
+                                /* If empty region ... */
+                                /* ------------------- */
+                                if (SWXRegion[k] == 0)
+                                {
+                                    /* Allocate space for region entry */
+                                    /* ------------------------------- */
+                                    SWXRegion[k] = (struct swathRegion *)
+                                        calloc(1, sizeof(struct swathRegion));
+                                    if(SWXRegion[k] == NULL)
+                                    { 
+                                        HEpush(DFE_NOSPACE,"SWdeftimeperiod", __FILE__, __LINE__);
+                                        return(-1);
+                                    }
+
+                                    /* Store file and swath ID */
+                                    /* ----------------------- */
+                                    SWXRegion[k]->fid = fid;
+                                    SWXRegion[k]->swathID = swathID;
 
 
-			/* For all entries in SWXRegion array ... */
-			/* -------------------------------------- */
-			for (k = 0; k < NSWATHREGN; k++)
-			{
-			    /* If empty region ... */
-			    /* ------------------- */
-			    if (SWXRegion[k] == 0)
-			    {
-				/* Allocate space for region entry */
-				/* ------------------------------- */
-				SWXRegion[k] = (struct swathRegion *)
-				    calloc(1, sizeof(struct swathRegion));
-				if(SWXRegion[k] == NULL)
-				{ 
-				    HEpush(DFE_NOSPACE,"SWdeftimeperiod", __FILE__, __LINE__);
-				    return(-1);
-				}
-
-				/* Store file and swath ID */
-				/* ----------------------- */
-				SWXRegion[k]->fid = fid;
-				SWXRegion[k]->swathID = swathID;
+                                    /* Set number of isolated regions to 1 */
+                                    /* ----------------------------------- */
+                                    SWXRegion[k]->nRegions = 1;
 
 
-				/* Set number of isolated regions to 1 */
-				/* ----------------------------------- */
-				SWXRegion[k]->nRegions = 1;
+                                    /* Set start of region to first track found */
+                                    /* ---------------------------------------- */
+                                    SWXRegion[k]->StartRegion[0] = i;
 
 
-				/* Set start of region to first track found */
-				/* ---------------------------------------- */
-				SWXRegion[k]->StartRegion[0] = i;
+                                    /* Set Start & Stop Vertical arrays to -1 */
+                                    /* -------------------------------------- */
+                                    for (dum = 0; dum < 8; dum++)
+                                    {
+                                        SWXRegion[k]->StartVertical[dum] = -1;
+                                        SWXRegion[k]->StopVertical[dum] = -1;
+                                        SWXRegion[k]->StartScan[dum] = -1;
+                                        SWXRegion[k]->StopScan[dum] = -1;
+                                    }
 
 
-				/* Set Start & Stop Vertical arrays to -1 */
-				/* -------------------------------------- */
-				for (dum = 0; dum < 8; dum++)
-				{
-				    SWXRegion[k]->StartVertical[dum] = -1;
-				    SWXRegion[k]->StopVertical[dum] = -1;
-				    SWXRegion[k]->StartScan[dum] = -1;
-				    SWXRegion[k]->StopScan[dum] = -1;
-				}
+                                    /* Set period ID */
+                                    /* ------------- */
+                                    periodID = k;
 
-
-				/* Set period ID */
-				/* ------------- */
-				periodID = k;
-
-				break;	/* Break from "k" loop */
-			    }
-			}
-		    }
-		    if (found == 1)
-		    {
-			break;	/* Break from "j" loop */
-		    }
-		}
-		if (found == 1)
-		{
-		    break;	/* Break from "i" loop */
-		}
-	    }
+                                    break;	/* Break from "k" loop */
+                                }
+                            }
+                        }
+                        if (found == 1)
+                        {
+                            break;	/* Break from "j" loop */
+                        }
+                    }
+                    if (found == 1)
+                    {
+                        break;	/* Break from "i" loop */
+                    }
+                }
 
 
 
-	    /* Clear found flag */
-	    /* ---------------- */
-	    found = 0;
+                /* Clear found flag */
+                /* ---------------- */
+                found = 0;
 
 
-	    /* For each track (from bottom) ... */
-	    /* -------------------------------- */
-	    for (i = edge[0] - 1; i >= 0; i--)
-	    {
-		/* For each value from Cross Track ... */
-		/* ----------------------------------- */
-		for (j = 0; j < edge[1]; j++)
-		{
+                /* For each track (from bottom) ... */
+                /* -------------------------------- */
+                for (i = edge[0] - 1; i >= 0; i--)
+                {
+                    /* For each value from Cross Track ... */
+                    /* ----------------------------------- */
+                    for (j = 0; j < edge[1]; j++)
+                    {
 
-		    /* Get time test value */
-		    /* ------------------- */
-		    time64Test = time64[i * edge[1] + j];
+                        /* Get time test value */
+                        /* ------------------- */
+                        time64Test = time64[i * edge[1] + j];
 
 
-		    /* If within time period ... */
-		    /* ------------------------- */
-		    if (time64Test >= starttime &&
-			time64Test <= stoptime)
-		    {
-			/* Set found flag */
-			/* -------------- */
-			found = 1;
+                        /* If within time period ... */
+                        /* ------------------------- */
+                        if (time64Test >= starttime &&
+                            time64Test <= stoptime)
+                        {
+                            /* Set found flag */
+                            /* -------------- */
+                            found = 1;
 
-			/* Set start of region to first track found */
-			/* ---------------------------------------- */
-			SWXRegion[k]->StopRegion[0] = i;
+                            /* Set start of region to first track found */
+                            /* ---------------------------------------- */
+                            SWXRegion[k]->StopRegion[0] = i;
 
-			break;	/* Break from "j" loop */
-		    }
-		}
-		if (found == 1)
-		{
-		    break;	/* Break from "i" loop */
-		}
-	    }
+                            break;	/* Break from "j" loop */
+                        }
+                    }
+                    if (found == 1)
+                    {
+                        break;	/* Break from "i" loop */
+                    }
+                }
 
-	    free(time64);
+                free(time64);
+            }
 	}
     }
 
@@ -8768,7 +8782,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
     char            dgeodim[256];/* Data Subsetting field dimension list */
     char            utlbuf[256];/* Utility buffer */
     char           *ptr[64];	/* String pointer array */
-    char           *errMesg = "Vertical Dimension Not Found: \"%s\".\n";
+    static const char errMesg[] = "Vertical Dimension Not Found: \"%s\".\n";
 
 
 
