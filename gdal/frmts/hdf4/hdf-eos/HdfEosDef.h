@@ -1,3 +1,12 @@
+/*****************************************************************************
+ * $Id$
+ *
+ * This module has a number of additions and improvements over the original
+ * implementation to be suitable for usage in GDAL HDF driver.
+ *
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ ****************************************************************************/
+
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
@@ -128,7 +137,7 @@ intn SWdefcomp(int32, int32, intn []);
 int32 SWdiminfo(int32, char *);
 intn SWmapinfo(int32, char *, char *, int32 *, int32 *);
 int32 SWidxmapinfo(int32, char *, char *, int32 []);
-intn SWfieldinfo(int32, char *, int32 *, int32 [], int32 *, char *);
+intn SWfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *);
 intn SWcompinfo(int32, char *, int32 *, intn []);
 intn SWdefdimmap(int32, char *, char *, int32, int32);
 intn SWdefidxmap(int32, char *, char *, int32 []);
@@ -148,7 +157,7 @@ int32 SWinqattrs(int32, char *, int32 *);
 int32 SWnentries(int32, int32, int32 *);
 int32 SWinqswath(char *, char *, int32 *);
 intn SWwritefield(int32, char *, int32 [], int32 [], int32 [], VOIDP);
-intn SWreadfield(int32, char *, int32 [], int32 [], int32 [], VOIDP);
+intn SWreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
 int32 SWdefboxregion(int32, float64 [], float64 [], int32);
 int32 SWdefscanregion(int32, char *, float64 [], int32);
 int32 SWregionindex(int32, float64 [], float64 [], int32, char *, int32 []);
@@ -263,15 +272,15 @@ intn PTclose(int32);
 
 /* EH Utility Prototypes */
 float64 EHconvAng(float64, intn);
-int32 EHparsestr(char *, char, char *[], int32 []);
-int32 EHstrwithin(char *, char *, char);
+int32 EHparsestr(const char *, const char, char *[], int32 []);
+int32 EHstrwithin(const char *, const char *, const char);
 intn EHchkODL(char *);
 intn EHloadliststr(char *[], int32, char *, char);
 intn EHgetversion(int32, char *);
 int32 EHopen(char *, intn);
 intn EHchkfid(int32, char *, int32 *, int32 *, uint8 *);
 intn EHidinfo(int32, int32 *, int32 *);
-int32 EHgetid(int32, int32, char *, intn, char *);
+int32 EHgetid(int32, int32, const char *, intn, const char *);
 intn EHrevflds(char *, char *);
 intn EHinsertmeta(int32, char *, char *, int32, char *, int32 []);
 intn EHgetmetavalue(char *[], char *, char *);
