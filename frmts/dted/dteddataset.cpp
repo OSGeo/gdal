@@ -429,6 +429,9 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     (void) papszOptions;
     (void) bStrict;
 
+    if( pfnProgress && !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Work out the level.                                             */
 /* -------------------------------------------------------------------- */
@@ -533,18 +536,30 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Read all the data in one dollup.                                */
+/*      Read all the data in a single buffer.                           */
 /* -------------------------------------------------------------------- */
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
     GInt16      *panData;
-    
+
     panData = (GInt16 *) 
         CPLMalloc(sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
-    
-    poSrcBand->RasterIO( GF_Read, 0, 0, psDTED->nXSize, psDTED->nYSize, 
-                         (void *) panData, psDTED->nXSize, psDTED->nYSize, 
-                         GDT_Int16, 0, 0 );
-    
+
+    for( int iY = 0; iY < psDTED->nYSize; iY++ )
+    {
+        poSrcBand->RasterIO( GF_Read, 0, iY, psDTED->nXSize, 1, 
+                            (void *) (panData + iY * psDTED->nXSize), psDTED->nXSize, 1, 
+                            GDT_Int16, 0, 0 );
+
+        if( pfnProgress && !pfnProgress(0.5 * (iY+1) / (double) psDTED->nYSize, NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, 
+                        "User terminated CreateCopy()" );
+            DTEDClose( psDTED );
+            CPLFree( panData );
+            return NULL;
+        }
+    }
+
     int bSrcBandHasNoData;
     double srcBandNoData = poSrcBand->GetNoDataValue(&bSrcBandHasNoData);
 
@@ -569,6 +584,17 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 dfNodataCount++;
         }
         DTEDWriteProfile( psDTED, iProfile, anProfData );
+
+        if( pfnProgress
+            && !pfnProgress( 0.5 + 0.5 * (iProfile+1) / (double) psDTED->nXSize,
+                             NULL, pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, 
+                      "User terminated CreateCopy()" );
+            DTEDClose( psDTED );
+            CPLFree( panData );
+            return NULL;
+        }
     }
     CPLFree( panData );
 
@@ -576,7 +602,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* Partial cell indicator: 0 for complete coverage; 1-99 for incomplete */
 /* -------------------------------------------------------------------- */
     char pszPartialCell[2];
-    
+
     if ( dfNodataCount == 0 )
         iPartialCell = 0;
     else
@@ -584,7 +610,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       iPartialCell = int(floor(100.0 - 
            (dfNodataCount*100.0/(psDTED->nXSize * psDTED->nYSize))));
         if (iPartialCell < 1)
-           iPartialCell=1;       
+           iPartialCell=1;
     }
     sprintf(pszPartialCell,"%02d",iPartialCell);
     strncpy((char *) (psDTED->pachDSIRecord+289), pszPartialCell, 2 );
