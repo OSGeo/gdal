@@ -119,7 +119,8 @@ def tiff_write_4():
 
     try:
         import gdalnumeric
-    except ImportError:
+        gdalnumeric.zeros
+    except:
         return 'skip'
 
     src_ds = gdal.Open( 'data/utmsmall.tif' )
