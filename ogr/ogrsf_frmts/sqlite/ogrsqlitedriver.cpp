@@ -153,6 +153,8 @@ int OGRSQLiteDriver::TestCapability( const char * pszCap )
 void RegisterOGRSQLite()
 
 {
+    if (! GDAL_CHECK_VERSION("SQLite driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSQLiteDriver );
 }
 

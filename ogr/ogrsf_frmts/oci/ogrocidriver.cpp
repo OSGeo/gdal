@@ -116,6 +116,8 @@ int OGROCIDriver::TestCapability( const char * pszCap )
 void RegisterOGROCI()
 
 {
+    if (! GDAL_CHECK_VERSION("OCI driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGROCIDriver );
 }
 

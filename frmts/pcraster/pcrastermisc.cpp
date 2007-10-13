@@ -29,7 +29,10 @@ CPL_C_END
 
 void GDALRegister_PCRaster()
 {
-  if(!GDALGetDriverByName("PCRaster")) {
+    if (! GDAL_CHECK_VERSION("PCRaster driver"))
+        return;
+
+if(!GDALGetDriverByName("PCRaster")) {
 
     GDALDriver* driver = new GDALDriver();
 
@@ -43,5 +46,5 @@ void GDALRegister_PCRaster()
     driver->pfnCreateCopy = PCRasterDataset::createCopy;
 
     GetGDALDriverManager()->RegisterDriver(driver);
-  }
+}
 }

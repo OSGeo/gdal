@@ -499,6 +499,28 @@ double CPL_DLL CPL_STDCALL GDALDecToPackedDMS( double );
 
 const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
 
+#ifndef GDAL_CHECK_VERSION
+
+/** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
+
+    The purpose of this method is to ensure that calling code will run with the GDAL
+    version it is compiled for. It is primarly intented for external plugins.
+
+    @param nVersionMajor Major version to be tested against
+    @param nVersionMinor Minor version to be tested against
+    @param pszCallingComponentName If not NULL, in case of version mismatch, the method
+                                   will issue a failure mentionning the name of
+                                   the calling component.
+  */
+int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
+                                          const char* pszCallingComponentName);
+
+/** Helper macro for GDALCheckVersion */
+#define GDAL_CHECK_VERSION(pszCallingComponentName) \
+ GDALCheckVersion(GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR, pszCallingComponentName)
+
+#endif
+
 typedef struct { 
     double      dfLINE_OFF;
     double      dfSAMP_OFF;

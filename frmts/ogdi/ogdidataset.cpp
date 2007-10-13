@@ -942,6 +942,9 @@ void GDALRegister_OGDI()
 {
     GDALDriver	*poDriver;
 
+    if (! GDAL_CHECK_VERSION("GDAL/OGDI driver"))
+        return;
+    
     if( GDALGetDriverByName( "OGDI" ) == NULL )
     {
         poDriver = new GDALDriver();

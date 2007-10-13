@@ -94,6 +94,8 @@ OGRDataSource *OGRSDTSDriver::Open( const char * pszFilename, int bUpdate )
 void RegisterOGRSDTS()
 
 {
+    if (! GDAL_CHECK_VERSION("SDTS driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSDTSDriver );
 }
 

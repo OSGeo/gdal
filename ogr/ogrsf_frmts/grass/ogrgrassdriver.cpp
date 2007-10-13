@@ -105,6 +105,8 @@ int OGRGRASSDriver::TestCapability( const char * pszCap )
 /************************************************************************/
 void RegisterOGRGRASS()
 {
+    if (! GDAL_CHECK_VERSION("OGR/GRASS driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGRASSDriver );
 }
 
