@@ -134,6 +134,16 @@ int main( int argc, char ** argv )
         }
     }
 
+    int iBand;
+    for( iBand = 0; iBand < nBands; iBand++ )
+    {
+        if (GDALGetRasterDataType(GDALGetRasterBand(hInDS, iBand+1)) != GDT_Byte)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Band %d is not of type GDT_Byte. It can lead to unexpected results.", iBand+1);
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate a line buffer.                                         */
 /* -------------------------------------------------------------------- */
