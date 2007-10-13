@@ -67,6 +67,8 @@ def numpy_rw_1():
 
 def numpy_rw_2():
 
+    import gdalnumeric
+
     if gdaltest.numpy_drv is None:
 	return 'skip'
 
@@ -93,6 +95,8 @@ def numpy_rw_2():
 
 def numpy_rw_3():
 
+    import gdalnumeric
+
     if gdaltest.numpy_drv is None:
 	return 'skip'
 
@@ -111,6 +115,8 @@ def numpy_rw_3():
 
 def numpy_rw_4():
 
+    import gdalnumeric
+
     if gdaltest.numpy_drv is None:
 	return 'skip'
 
@@ -128,6 +134,8 @@ def numpy_rw_4():
 # Test reading a multi-band file.
 
 def numpy_rw_5():
+
+    import gdalnumeric
 
     if gdaltest.numpy_drv is None:
 	return 'skip'
