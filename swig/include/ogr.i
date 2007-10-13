@@ -1260,6 +1260,19 @@ public:
   bool IsEmpty () {
     return OGR_G_IsEmpty(self);
   }  
+  
+  bool IsValid () {
+    return OGR_G_IsValid(self);
+  }  
+  
+  bool IsSimple () {
+    return OGR_G_IsSimple(self);
+  }  
+  
+  bool IsRing () {
+    return OGR_G_IsRing(self);
+  }  
+  
   bool Intersect (OGRGeometryShadow* other) {
     return OGR_G_Intersect(self, other);
   }
