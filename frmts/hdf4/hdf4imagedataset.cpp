@@ -48,6 +48,8 @@ CPL_C_START
 void    GDALRegister_HDF4(void);
 CPL_C_END
 
+#define HDF4_SDS_MAXNAMELEN 65
+
 // Signature to recognize files written by GDAL
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
@@ -91,7 +93,7 @@ class HDF4ImageDataset : public HDF4Dataset
     char        **papszLocalMetadata;
 #define    N_COLOR_ENTRIES    256
     uint8       aiPaletteData[N_COLOR_ENTRIES][3]; // XXX: Static array for now
-    char        szName[65];
+    char        szName[HDF4_SDS_MAXNAMELEN];
     char        *pszSubdatasetName;
     char        *pszFieldName;
 
@@ -163,7 +165,7 @@ class HDF4ImageRasterBand : public GDALPamRasterBand
     virtual GDALColorTable *GetColorTable();
     virtual double	    GetNoDataValue( int * );
     virtual CPLErr	    SetNoDataValue( double );
-    virtual double 	    GetOffset( int *pbSuccess );
+    virtual double	    GetOffset( int *pbSuccess );
     virtual double          GetScale( int *pbSuccess );
     virtual const char     *GetUnitType();
 };
@@ -1024,7 +1026,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
 
 {
     double adfXY[8];
-    static char *apszItems[] = {
+    static const char *apszItems[] = {
         "mapUpperLeft", "mapUpperRight", "mapLowerLeft", "mapLowerRight" };
     int iCorner;
 
@@ -1241,6 +1243,32 @@ char**  HDF4ImageDataset::GetSwatAttrs( int32 hSW, char **papszMetadata )
         CPLFree( pszAttrList );
     }
 
+#if 0
+    // TODO: there should be generic attribute read routine. Generic SDS
+    // attributes should be appended to the list of metadata. The problem
+    // is to determine active SDS Id, it is not trivial, because HDF-EOS swath
+    // can contain several SDSs, so we should probably read attributes for
+    // each SDS. The same applies for GetGridAttrs().
+        int32	    iRank, iNumType, iAttribute, nAttrs, iSDS, hSD, nValues;
+        char        szName[HDF4_SDS_MAXNAMELEN];
+        int32       aiDimSizes[MAX_VAR_DIMS];
+        
+	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
+                       &nAttrs) == 0 )
+        {
+            for ( iAttribute = 0; iAttribute < nAttrs; iAttribute++ )
+            {
+                char    szAttrName[MAX_NC_NAME];
+                SDattrinfo( iSDS, iAttribute, szAttrName,
+                            &iNumType, &nValues );
+                papszMetadata =
+                    TranslateHDF4Attributes( iSDS, iAttribute,
+                                             szAttrName, iNumType,
+                                             nValues, papszMetadata );
+            }
+        }
+#endif
+
     return papszMetadata;
 }
 
@@ -1340,8 +1368,8 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 /* -------------------------------------------------------------------- */
     for( iDSIndex = 0; iDSIndex < nDatasets; iDSIndex++ )
     {
-        int32 	    iRank, iNumType, nAttrs, iSDS;
-        char        szName[65];
+        int32	    iRank, iNumType, nAttrs, iSDS;
+        char        szName[HDF4_SDS_MAXNAMELEN];
         int32       aiDimSizes[MAX_VAR_DIMS];
         
 	iSDS = SDselect( hSD, iDSIndex );
@@ -2040,7 +2068,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
-    char        szAttrName[MAX_NC_NAME];
     double      dfNoData = 0.0;
     int         bNoDataSet = FALSE, nBands = 0;
     
@@ -2431,6 +2458,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
           {
+              char  szAttrName[MAX_NC_NAME];
               SDattrinfo( iSDS, iAttribute, szAttrName,
                           &iAttrNumType, &nValues );
               poDS->papszLocalMetadata =
@@ -2542,6 +2570,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for ( iAttribute = 0; iAttribute < poDS->nAttrs; iAttribute++ )
         {
+            char    szAttrName[MAX_NC_NAME];
             GRattrinfo( poDS->iGR, iAttribute, szAttrName,
                         &iAttrNumType, &nValues );
             poDS->papszLocalMetadata = 
