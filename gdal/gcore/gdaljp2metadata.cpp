@@ -628,33 +628,38 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         delete poOriginGeometry;
 
 /* -------------------------------------------------------------------- */
+/*      If we still don't have an srsName, check for it on the          */
+/*      boundedBy Envelope.  Some products                              */
+/*      (ie. EuropeRasterTile23.jpx) use this as the only srsName       */
+/*      delivery vehicle.                                               */
+/* -------------------------------------------------------------------- */
+    if( pszSRSName == NULL )
+    {
+        pszSRSName = 
+            CPLGetXMLValue( psXML,
+                            "=FeatureCollection.boundedBy.Envelope.srsName",
+                            NULL );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If we have gotten a geotransform, then try to interprete the    */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
     if( bSuccess && pszSRSName != NULL 
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
+        OGRSpatialReference oSRS;
+
         if( EQUALN(pszSRSName,"epsg:",5) )
         {
-            OGRSpatialReference oSRS;
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG::",22) )
+        else if( EQUALN(pszSRSName,"urn:",4) 
+                 && strstr(pszSRSName,":def:") != NULL
+                 && oSRS.importFromURN(pszSRSName) == OGRERR_NONE )
         {
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszSRSName + 22) ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
-        }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG:",21) )
-        {
-            const char *pszCode = pszSRSName+21;
-            while( *pszCode != ':' && *pszCode != '\0' )
-                pszCode++;
-
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
+            oSRS.exportToWkt( &pszProjection );
         }
         else if( !GMLSRSLookup( pszSRSName ) )
         {
@@ -751,6 +756,47 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 
 {
+/* -------------------------------------------------------------------- */
+/*      This is a backdoor to let us embed a literal gmljp2 chunk       */
+/*      supplied by the user as an external file.  This is mostly       */
+/*      for preparing test files with exotic contents.                  */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption( "GMLJP2OVERRIDE", NULL ) != NULL )
+    {
+        FILE *fp = VSIFOpenL( CPLGetConfigOption( "GMLJP2OVERRIDE",""), "r" );
+        char *pszGML = NULL;
+
+        if( fp == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to open GMLJP2OVERRIDE file." );
+            return NULL;
+        }
+        
+        VSIFSeekL( fp, 0, SEEK_END );
+        int nLength = (int) VSIFTellL( fp );
+        pszGML = (char *) CPLCalloc(1,nLength+1);
+        VSIFSeekL( fp, 0, SEEK_SET );
+        VSIFReadL( pszGML, 1, nLength, fp );
+        VSIFCloseL( fp );
+
+        GDALJP2Box *apoGMLBoxes[2];
+
+        apoGMLBoxes[0] = GDALJP2Box::CreateLblBox( "gml.data" );
+        apoGMLBoxes[1] = 
+            GDALJP2Box::CreateLabelledXMLAssoc( "gml.root-instance", 
+                                                pszGML );
+
+        GDALJP2Box *poGMLData = GDALJP2Box::CreateAsocBox( 2, apoGMLBoxes);
+        
+        delete apoGMLBoxes[0];
+        delete apoGMLBoxes[1];
+
+        CPLFree( pszGML );
+        
+        return poGMLData;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try do determine a PCS or GCS code we can use.                  */
 /* -------------------------------------------------------------------- */
