@@ -84,6 +84,8 @@ class DTEDRasterBand : public GDALPamRasterBand
                 DTEDRasterBand( DTEDDataset *, int );
     
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+
     virtual double  GetNoDataValue( int *pbSuccess = NULL );
 
     virtual const char* GetUnitType() { return "m"; }
@@ -144,6 +146,30 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         panData[i] = panData[nYSize - i - 1];
         panData[nYSize - i - 1] = nTemp;
     }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    DTEDDataset *poDTED_DS = (DTEDDataset *) poDS;
+    GInt16      *panData;
+
+    (void) nBlockXOff;
+    CPLAssert( nBlockYOff == 0 );
+
+    if (poDTED_DS->eAccess != GA_Update)
+        return CE_Failure;
+
+    panData = (GInt16 *) pImage;
+    if( !DTEDWriteProfile( poDTED_DS->psDTED, nBlockXOff, panData) )
+        return CE_Failure;
 
     return CE_None;
 }
@@ -225,8 +251,8 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    psDTED = DTEDOpen( poOpenInfo->pszFilename, "rb", TRUE );
-    
+    psDTED = DTEDOpen( poOpenInfo->pszFilename, (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", TRUE );
+
     if( psDTED == NULL )
         return( NULL );
 
@@ -238,8 +264,9 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new DTEDDataset();
     poDS->SetFileName(poOpenInfo->pszFilename);
 
+    poDS->eAccess = poOpenInfo->eAccess;
     poDS->psDTED = psDTED;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
