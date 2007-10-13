@@ -31,6 +31,7 @@
 #define OGR_CORE_H_INCLUDED
 
 #include "cpl_port.h"
+#include "gdal_version.h"
 
 /**
  * \file
@@ -310,6 +311,32 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
+
+/* ------------------------------------------------------------------- */
+/*                        Version checking                             */
+/* -------------------------------------------------------------------- */
+
+#ifndef GDAL_CHECK_VERSION
+
+/** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.
+
+    The purpose of this method is to ensure that calling code will run with the GDAL
+    version it is compiled for. It is primarly intented for external plugins.
+
+    @param nVersionMajor Major version to be tested against
+    @param nVersionMinor Minor version to be tested against
+    @param pszCallingComponentName If not NULL, in case of version mismatch, the method
+                                   will issue a failure mentionning the name of
+                                   the calling component.
+  */
+int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
+                                          const char* pszCallingComponentName);
+
+/** Helper macro for GDALCheckVersion */
+#define GDAL_CHECK_VERSION(pszCallingComponentName) \
+ GDALCheckVersion(GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR, pszCallingComponentName)
+
+#endif
 
 CPL_C_END
 

@@ -99,6 +99,8 @@ int OGROGDIDriver::TestCapability( const char * pszCap )
 void RegisterOGROGDI()
 
 {
+    if (! GDAL_CHECK_VERSION("OGR/OGDI driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGROGDIDriver );
 }
 

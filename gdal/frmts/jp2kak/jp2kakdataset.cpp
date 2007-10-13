@@ -2735,6 +2735,9 @@ void GDALRegister_JP2KAK()
 
 {
     GDALDriver	*poDriver;
+    
+    if (! GDAL_CHECK_VERSION("JP2KAK driver"))
+        return;
 
     if( GDALGetDriverByName( "JP2KAK" ) == NULL )
     {
