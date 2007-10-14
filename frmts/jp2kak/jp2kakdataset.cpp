@@ -41,9 +41,6 @@
 #include "kdu_sample_processing.h"
 #include "kdu_stripe_decompressor.h"
 
-#ifdef FILEIO_DEBUG
-#include "dbg_file_source.h"
-#endif
 #include "subfile_source.h"
 
 // Application level includes
@@ -1299,11 +1296,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( poRawInput == NULL )
         {
-#ifndef FILEIO_DEBUG
             poInput = new kdu_simple_file_source( poOpenInfo->pszFilename );
-#else
-            poInput = new dbg_simple_file_source( poOpenInfo->pszFilename );
-#endif								       
         }
         else
         {
