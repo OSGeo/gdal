@@ -5,12 +5,13 @@ XTRAOBJ =	$(SETARGV)
 
 LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
-XTRAFLAGS =	-I..\frmts -I..\alg
+XTRAFLAGS =	-I..\frmts -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts
 
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
-OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe
+OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe \
+		ogrinfo.exe ogr2ogr.exe ogrtindex.exe
 !ENDIF
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
@@ -77,6 +78,31 @@ gdal_rasterize.exe:	gdal_rasterize.cpp $(GDALLIB) $(XTRAOBJ)
 
 multireadtest.exe:	multireadtest.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) multireadtest.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+ogr2ogr.exe:	ogr2ogr.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogr2ogr.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+ogrinfo.exe:	ogrinfo.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrinfo.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+ogrtindex.exe:	ogrtindex.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrtindex.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+testepsg.exe:	testepsg.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) testepsg.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+test_ogrsf.exe:	test_ogrsf.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) test_ogrsf.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	

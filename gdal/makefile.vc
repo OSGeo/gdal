@@ -57,7 +57,7 @@ LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
 DISTDIR	=	gdal_$(VERSION)
 
 default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
-		apps_dir pymod_dir ogr_apps
+		apps_dir pymod_dir
 
 staticlib:
 	if exist gdal.lib del gdal.lib
@@ -77,7 +77,7 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd ogr
-	$(MAKE) allclean
+	$(MAKE) /f makefile.vc allclean
 	cd ..
 	cd apps
 	$(MAKE) /f makefile.vc clean
@@ -102,7 +102,7 @@ port_dir:
 
 ogr_min:
 	cd ogr
-	$(MAKE) ogr.lib
+	$(MAKE) /f makefile.vc ogr.lib
 	cd ..
 
 core_dir:
@@ -139,16 +139,9 @@ ogr_dir:      port_dir
 	$(MAKE) /f makefile.vc
 	cd ..\..\ogr
 !IFDEF INCLUDE_OGR_FRMTS
-	$(MAKE) ogr.lib frmts
+	$(MAKE) /f makefile.vc ogr.lib frmts
 !ELSE
-	$(MAKE) ogr.lib
-!ENDIF
-	cd ..
-
-ogr_apps:
-	cd ogr
-!IFDEF INCLUDE_OGR_FRMTS
-	$(MAKE) default
+	$(MAKE) /f makefile.vc ogr.lib
 !ENDIF
 	cd ..
 
@@ -183,11 +176,11 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 !ENDIF
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ogr
-	$(MAKE) install
+	$(MAKE) /f makefile.vc install
 	cd ..
 !IFDEF HTMLDIR
 	cd ogr\ogrsf_frmts
-	$(MAKE) /f Makefile html-install
+	$(MAKE) /f makefile.vc html-install
 	cd ..\..
 !ENDIF
 !ENDIF
