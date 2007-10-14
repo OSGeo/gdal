@@ -31,4 +31,4 @@ clean:
 install-obj:	$(O_OBJ)
 	cp $(APPOBJ) ../o
 
-$(OBJ) $(O_OBJ):	jp2kak_roi.h subfile_source.h dbg_file_source.h
+$(OBJ) $(O_OBJ):	jp2kak_roi.h subfile_source.h
