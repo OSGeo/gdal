@@ -82,7 +82,8 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
         || VSIFReadL( anEntryNums, sizeof(GInt32), 6, psHFA->fp ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "VSIFReadL() failed in HFAEntry()." );
+                  "VSIFReadL(%p,6*4) @ %d failed in HFAEntry().\n%s",
+                  psHFA->fp, nFilePos, VSIStrerror( errno ) );
         return;
     }
 
