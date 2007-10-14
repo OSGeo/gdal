@@ -50,7 +50,7 @@
 // ROI related.
 #include "kdu_roi_processing.h"
 #include "kdu_image.h"
-#include "jp2kak_roi.h"
+#include "roi_sources.h"
 
 #ifdef J2_INPUT_MAX_BUFFER_BYTES
 #  define KAKADU4
