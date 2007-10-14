@@ -11,9 +11,12 @@ BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalenhance$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
-BIN_LIST += gdal_contour$(EXE) \
-			gdaltindex$(EXE) \
-			gdal_rasterize$(EXE)
+BIN_LIST += 	gdal_contour$(EXE) \
+		gdaltindex$(EXE) \
+		gdal_rasterize$(EXE) \
+		ogrinfo$(EXE) \
+		ogr2ogr$(EXE) \
+		ogrtindex$(EXE)
 endif
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
@@ -57,7 +60,7 @@ gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
 gdalbuildvrt$(EXE):	gdalbuildvrt.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalbuildvrt.o $(XTRAOBJ) $(CONFIG_LIBS)  \
 		-o gdalbuildvrt$(EXE)
-		
+
 multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) multireadtest.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o multireadtest$(EXE)
@@ -70,13 +73,29 @@ gdalenhance$(EXE):	gdalenhance.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalenhance.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o gdalenhance$(EXE)
 
-test1$(EXE):	test1.o $(DEP_LIBS)
-	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
-		 -o test1$(EXE)
-
 gdalwarpsimple$(EXE): gdalwarpsimple.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalwarpsimple.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalwarpsimple$(EXE)
+
+ogrinfo$(EXE):	ogrinfo.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) ogrinfo.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o ogrinfo$(EXE)
+
+ogr2ogr$(EXE):	ogr2ogr.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) ogr2ogr.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o ogr2ogr$(EXE)
+
+testepsg$(EXE):	testepsg.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) testepsg.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o testepsg$(EXE)
+
+ogrtindex$(EXE):	ogrtindex.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) ogrtindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o ogrtindex$(EXE)
+
+test_ogrsf$(EXE):	test_ogrsf.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) test_ogrsf.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o test_ogrsf$(EXE)
 
 clean:
 	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst
