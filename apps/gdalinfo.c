@@ -432,6 +432,7 @@ int main( int argc, char ** argv )
                  iOverview++ )
             {
                 GDALRasterBandH	hOverview;
+                const char *pszResampling = NULL;
 
                 if( iOverview != 0 )
                     printf( ", " );
@@ -440,6 +441,13 @@ int main( int argc, char ** argv )
                 printf( "%dx%d", 
                         GDALGetRasterBandXSize( hOverview ),
                         GDALGetRasterBandYSize( hOverview ) );
+
+                pszResampling = 
+                    GDALGetMetadataItem( hOverview, "RESAMPLING", "" );
+
+                if( pszResampling != NULL 
+                    && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+                    printf( "*" );
             }
             printf( "\n" );
         }
