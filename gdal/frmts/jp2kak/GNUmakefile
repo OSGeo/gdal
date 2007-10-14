@@ -5,7 +5,7 @@ OBJ	=	jp2kakdataset.o
 
 KAKINC = -I$(KAKDIR)/coresys/common -I$(KAKDIR)/apps/compressed_io \
 	-I$(KAKDIR)/apps/jp2 -I$(KAKDIR)/apps/image -I$(KAKDIR)/apps/args \
-	 -I$(KAKDIR)/apps/support
+	 -I$(KAKDIR)/apps/support -I$(KAKDIR)/apps/kdu_compress
 
 APPOBJ  = $(KAKDIR)/apps/make/args.o $(KAKDIR)/apps/make/image_in.o \
 	$(KAKDIR)/apps/make/image_out.o $(KAKDIR)/apps/make/jp2.o \
@@ -31,4 +31,4 @@ clean:
 install-obj:	$(O_OBJ)
 	cp $(APPOBJ) ../o
 
-$(OBJ) $(O_OBJ):	jp2kak_roi.h subfile_source.h
+$(OBJ) $(O_OBJ):	subfile_source.h
