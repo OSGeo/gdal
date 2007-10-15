@@ -1906,6 +1906,31 @@ class Feature(_object):
     def geometry(self):
         return self.GetGeometryRef()
 
+    def ExportToJson(self, as_object = False):
+        """Exports a GeoJSON object which represents the Feature. The
+           as_object parameter determines whether the returned value 
+           should be a Python object instead of a string. Defaults to False."""
+        output = {'type':'Feature',
+                   'geometry': self.GetGeometryRef().ExportToJson(as_object=True),
+                   'properties': {}
+                  } 
+        
+        fid = self.GetFID()
+        if fid:
+            output['id'] = fid
+            
+        for key in self.keys():
+            output['properties'][key] = self.GetField(key)
+        
+        if not as_object:
+            try:
+                import simplejson
+            except ImportError, error:
+                raise ImportError("Unable to import simplejson, needed for ExportToJson. (%s)" % error)
+            output = simplejson.dumps(output)
+        
+        return output    
+
 Feature_swigregister = _ogr.Feature_swigregister
 Feature_swigregister(Feature)
 
@@ -3132,7 +3157,7 @@ class Geometry(_object):
             raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
         
         if not as_object:
-            output = simplejson.dumps(output)
+            return simplejson.dumps(output)
         else:
             return output
         
