@@ -1090,6 +1090,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
         /* allocate data space */
         if( poBlock->Internalize() != CE_None )
         {
+            poBlock->DropLock();
             delete poBlock;
             return( NULL );
         }
