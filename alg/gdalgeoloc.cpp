@@ -170,9 +170,9 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                               / dfTargetPixels);
     int nBMXSize, nBMYSize;
 
-    nBMXSize = psTransform->nBackMapHeight = 
+    nBMYSize = psTransform->nBackMapHeight = 
         (int) ((dfMaxY - dfMinY) / dfPixelSize + 1);
-    nBMYSize= psTransform->nBackMapWidth =  
+    nBMXSize= psTransform->nBackMapWidth =  
         (int) ((dfMaxX - dfMinX) / dfPixelSize + 1);
 
     dfMinX -= dfPixelSize/2.0;
@@ -251,54 +251,74 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      Now, loop over the backmap trying to fill in holes with         */
 /*      nearby values.                                                  */
 /* -------------------------------------------------------------------- */
-    
-    for( iBMY = 1; iBMY < nBMYSize-1; iBMY++ )
+    int iIter;
+
+    for( iIter = 0; iIter < 3; iIter++ )
     {
-        for( iBMX = 1; iBMX < nBMXSize-1; iBMX++ )
+        for( iBMY = 1; iBMY < nBMYSize-1; iBMY++ )
         {
-            // if this point is already set, ignore it. 
-            if( pabyValidFlag[iBMX + iBMY*nBMXSize] )
-                continue;
+            for( iBMX = 1; iBMX < nBMXSize-1; iBMX++ )
+            {
+                // if this point is already set, ignore it. 
+                if( pabyValidFlag[iBMX + iBMY*nBMXSize] )
+                    continue;
 
-            int nCount = 0;
-            double dfXSum = 0.0, dfYSum = 0.0;
+                int nCount = 0;
+                double dfXSum = 0.0, dfYSum = 0.0;
 
-            // left?
-            if( iBMX > 0 && pabyValidFlag[iBMX-1+iBMY*nBMXSize] )
-            {
-                dfXSum += psTransform->pafBackMapX[iBMX-1+iBMY*nBMXSize];
-                dfYSum += psTransform->pafBackMapY[iBMX-1+iBMY*nBMXSize];
-                nCount++;
-            }
-            // right?
-            if( iBMX < nBMXSize-1 && pabyValidFlag[iBMX+1+iBMY*nBMXSize] )
-            {
-                dfXSum += psTransform->pafBackMapX[iBMX+1+iBMY*nBMXSize];
-                dfYSum += psTransform->pafBackMapY[iBMX+1+iBMY*nBMXSize];
-                nCount++;
-            }
-            // top?
-            if( iBMY > 0 && pabyValidFlag[iBMX+(iBMY-1)*nBMXSize] )
-            {
-                dfXSum += psTransform->pafBackMapX[iBMX+(iBMY-1)*nBMXSize];
-                dfYSum += psTransform->pafBackMapY[iBMX+(iBMY-1)*nBMXSize];
-                nCount++;
-            }
-            // bottom?
-            if( iBMY < nBMYSize-1 && pabyValidFlag[iBMX+(iBMY+1)*nBMXSize] )
-            {
-                dfXSum += psTransform->pafBackMapX[iBMX+(iBMY+1)*nBMXSize];
-                dfYSum += psTransform->pafBackMapY[iBMX+(iBMY+1)*nBMXSize];
-                nCount++;
-            }
+                // left?
+                if( iBMX > 0 && pabyValidFlag[iBMX-1+iBMY*nBMXSize] )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX-1+iBMY*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX-1+iBMY*nBMXSize];
+                    nCount++;
+                }
+                // right?
+                if( iBMX < nBMXSize-1 && pabyValidFlag[iBMX+1+iBMY*nBMXSize] )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX+1+iBMY*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX+1+iBMY*nBMXSize];
+                    nCount++;
+                }
+                // top?
+                if( iBMY > 0 && pabyValidFlag[iBMX+(iBMY-1)*nBMXSize] )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX+(iBMY-1)*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX+(iBMY-1)*nBMXSize];
+                    nCount++;
+                }
+                // bottom?
+                if( iBMY < nBMYSize-1 && pabyValidFlag[iBMX+(iBMY+1)*nBMXSize] )
+                {
+                    dfXSum += psTransform->pafBackMapX[iBMX+(iBMY+1)*nBMXSize];
+                    dfYSum += psTransform->pafBackMapY[iBMX+(iBMY+1)*nBMXSize];
+                    nCount++;
+                }
 
-            if( nCount > 0 )
-            {
-                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = (float)(dfXSum/nCount);
-                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = (float)(dfYSum/nCount);
+                if( nCount > 0 )
+                {
+                    psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = (float)(dfXSum/nCount);
+                    psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = (float)(dfYSum/nCount);
+                }
             }
         }
     }
+
+#ifdef notdef
+    GDALDatasetH hBMDS = GDALCreate( GDALGetDriverByName( "GTiff" ),
+                                     "backmap.tif", nBMXSize, nBMYSize, 2, 
+                                     GDT_Float32, NULL );
+    GDALSetGeoTransform( hBMDS, psTransform->adfBackMapGeoTransform );
+    GDALRasterIO( GDALGetRasterBand(hBMDS,1), GF_Write, 
+                  0, 0, nBMXSize, nBMYSize, 
+                  psTransform->pafBackMapX, nBMXSize, nBMYSize, 
+                  GDT_Float32, 0, 0 );
+    GDALRasterIO( GDALGetRasterBand(hBMDS,2), GF_Write, 
+                  0, 0, nBMXSize, nBMYSize, 
+                  psTransform->pafBackMapY, nBMXSize, nBMYSize, 
+                  GDT_Float32, 0, 0 );
+    GDALClose( hBMDS );
+#endif
 
     CPLFree( pabyValidFlag );
 
