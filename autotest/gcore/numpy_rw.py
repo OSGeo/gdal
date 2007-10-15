@@ -67,10 +67,10 @@ def numpy_rw_1():
 
 def numpy_rw_2():
 
-    import gdalnumeric
-
     if gdaltest.numpy_drv is None:
 	return 'skip'
+
+    import gdalnumeric
 
     array = gdalnumeric.LoadFile( 'data/utmsmall.tif' )
     if array is None:
@@ -95,10 +95,10 @@ def numpy_rw_2():
 
 def numpy_rw_3():
 
-    import gdalnumeric
-
     if gdaltest.numpy_drv is None:
 	return 'skip'
+
+    import gdalnumeric
 
     ds = gdal.Open( 'data/cint_sar.tif' )
     array = ds.ReadAsArray()
@@ -114,8 +114,6 @@ def numpy_rw_3():
 # Test a band read with downsampling.
 
 def numpy_rw_4():
-
-    import gdalnumeric
 
     if gdaltest.numpy_drv is None:
 	return 'skip'
@@ -135,10 +133,10 @@ def numpy_rw_4():
 
 def numpy_rw_5():
 
-    import gdalnumeric
-
     if gdaltest.numpy_drv is None:
 	return 'skip'
+
+    import gdalnumeric
 
     array = gdalnumeric.LoadFile('data/rgbsmall.tif',35,21,1,1)
 
