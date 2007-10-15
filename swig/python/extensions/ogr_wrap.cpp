@@ -3506,6 +3506,15 @@ SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
 SWIGINTERN bool OGRGeometryShadow_IsEmpty(OGRGeometryShadow *self){
     return OGR_G_IsEmpty(self);
   }
+SWIGINTERN bool OGRGeometryShadow_IsValid(OGRGeometryShadow *self){
+    return OGR_G_IsValid(self);
+  }
+SWIGINTERN bool OGRGeometryShadow_IsSimple(OGRGeometryShadow *self){
+    return OGR_G_IsSimple(self);
+  }
+SWIGINTERN bool OGRGeometryShadow_IsRing(OGRGeometryShadow *self){
+    return OGR_G_IsRing(self);
+  }
 SWIGINTERN bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Intersect(self, other);
   }
@@ -10351,6 +10360,96 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_IsValid(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  bool result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_IsValid",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_IsValid" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (bool)OGRGeometryShadow_IsValid(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_IsSimple(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  bool result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_IsSimple",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_IsSimple" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (bool)OGRGeometryShadow_IsSimple(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_IsRing(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  bool result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_IsRing",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_IsRing" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (bool)OGRGeometryShadow_IsRing(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Intersect(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -11535,6 +11634,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_Distance", _wrap_Geometry_Distance, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Empty", _wrap_Geometry_Empty, METH_VARARGS, NULL},
 	 { (char *)"Geometry_IsEmpty", _wrap_Geometry_IsEmpty, METH_VARARGS, NULL},
+	 { (char *)"Geometry_IsValid", _wrap_Geometry_IsValid, METH_VARARGS, NULL},
+	 { (char *)"Geometry_IsSimple", _wrap_Geometry_IsSimple, METH_VARARGS, NULL},
+	 { (char *)"Geometry_IsRing", _wrap_Geometry_IsRing, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Intersect", _wrap_Geometry_Intersect, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Equal", _wrap_Geometry_Equal, METH_VARARGS, NULL},
 	 { (char *)"Geometry_Disjoint", _wrap_Geometry_Disjoint, METH_VARARGS, NULL},

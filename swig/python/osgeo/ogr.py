@@ -629,7 +629,7 @@ class DataSource(_object):
         import types
         if isinstance(value, types.SliceType):
             output = []
-            for i in xrange(value.start,value.stop,step=value.step):
+            for i in xrange(value.start,value.stop,value.step):
                 try:
                     output.append(self.GetLayer(i))
                 except OGRError: #we're done because we're off the end
@@ -647,8 +647,8 @@ class DataSource(_object):
     def GetLayer(self,iLayer=0):
         """Return the layer given an index or a name"""
         import types
-        if isinstance(iLayer, types.StringType):
-            return self.GetLayerByName(iLayer)
+        if isinstance(iLayer, types.StringTypes):
+            return self.GetLayerByName(str(iLayer))
         elif isinstance(iLayer, types.IntType):
             return self.GetLayerByIndex(iLayer)
         else:
@@ -1267,7 +1267,7 @@ class Layer(_object):
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start,stop,step=value.step):
+            for i in xrange(value.start,stop,value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)
@@ -2674,6 +2674,18 @@ class Geometry(_object):
 
         """
         return _ogr.Geometry_IsEmpty(*args)
+
+    def IsValid(*args):
+        """IsValid(self) -> bool"""
+        return _ogr.Geometry_IsValid(*args)
+
+    def IsSimple(*args):
+        """IsSimple(self) -> bool"""
+        return _ogr.Geometry_IsSimple(*args)
+
+    def IsRing(*args):
+        """IsRing(self) -> bool"""
+        return _ogr.Geometry_IsRing(*args)
 
     def Intersect(*args):
         """
