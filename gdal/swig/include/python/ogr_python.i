@@ -63,7 +63,7 @@ ds[0:4] would return a list of the first four layers."""
         import types
         if isinstance(value, types.SliceType):
             output = []
-            for i in xrange(value.start,value.stop,step=value.step):
+            for i in xrange(value.start,value.stop,value.step):
                 try:
                     output.append(self.GetLayer(i))
                 except OGRError: #we're done because we're off the end
@@ -81,8 +81,8 @@ ds[0:4] would return a list of the first four layers."""
     def GetLayer(self,iLayer=0):
         """Return the layer given an index or a name"""
         import types
-        if isinstance(iLayer, types.StringType):
-            return self.GetLayerByName(iLayer)
+        if isinstance(iLayer, types.StringTypes):
+            return self.GetLayerByName(str(iLayer))
         elif isinstance(iLayer, types.IntType):
             return self.GetLayerByIndex(iLayer)
         else:
@@ -117,7 +117,7 @@ layer[0:4] would return a list of the first four features."""
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start,stop,step=value.step):
+            for i in xrange(value.start,stop,value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)
