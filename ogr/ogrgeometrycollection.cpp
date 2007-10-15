@@ -800,3 +800,58 @@ void OGRGeometryCollection::setCoordinateDimension( int nNewDimension )
     OGRGeometry::setCoordinateDimension( nNewDimension );
 }
 
+
+/************************************************************************/
+/*                              get_Area()                              */
+/************************************************************************/
+
+/**
+ * Compute area of geometry collection.
+ *
+ * The area is computed as the sum of the areas of all members
+ * in this collection.
+ *
+ * @note No warning will be issued if a member of the collection does not
+ *       support the get_Area method.
+ *
+ * @return computed area.
+ */
+
+double OGRGeometryCollection::get_Area() const
+{
+    double dfArea = 0.0;
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        OGRGeometry* geom = papoGeoms[iGeom];
+        switch( wkbFlatten(geom->getGeometryType()) )
+        {
+            case wkbPolygon:
+                dfArea += ((OGRPolygon *) geom)->get_Area();
+                break;
+
+            case wkbMultiPolygon:
+                dfArea += ((OGRMultiPolygon *) geom)->get_Area();
+                break;
+
+            case wkbLinearRing:
+            case wkbLineString:
+                /* This test below is required to filter out wkbLineString geometries
+                * not being of type of wkbLinearRing.
+                */
+                if( EQUAL( ((OGRGeometry*) geom)->getGeometryName(), "LINEARRING" ) )
+                {
+                    dfArea += ((OGRLinearRing *) geom)->get_Area();
+                }
+                break;
+
+            case wkbGeometryCollection:
+                dfArea +=((OGRGeometryCollection *) geom)->get_Area();
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    return dfArea;
+}
