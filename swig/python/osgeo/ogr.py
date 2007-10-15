@@ -3044,7 +3044,9 @@ class Geometry(_object):
         result = CreateGeometryFromWkb(state)
         self.this = result.this
 
-    def ExportToJson(self):
+    def ExportToJson(self, as_object=False):
+        """Returns a GeoJSON representation of the geometry.  If as_object is True, 
+           the it is returned as an object (dictionary) that is manipulatable."""
         def get_coordinates(geometry):
             gtype = geometry.GetGeometryType()
             geom_count = geometry.GetGeometryCount()
@@ -3124,7 +3126,15 @@ class Geometry(_object):
             output = {'type': types[self.GetGeometryType()],
                       'coordinates': get_coordinates(self)}   
 
-        return output
+        try:
+            import simplejson
+        except ImportError:
+            raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
+        
+        if not as_object:
+            output = simplejson.dumps(output)
+        else:
+            return output
         
 
 
