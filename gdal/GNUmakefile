@@ -168,12 +168,6 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	ln -sfh Versions/Current/Programs $(DESTDIR)${OSX_FRAMEWORK_PREFIX}/Programs
 	ln -sfh Versions/Current/Resources $(DESTDIR)${OSX_FRAMEWORK_PREFIX}/Resources
 	ln -sfh Versions/Current/GDAL $(DESTDIR)${OSX_FRAMEWORK_PREFIX}/GDAL
-	mv -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).$(LIBGDAL_REVISION).dylib $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL
-	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).dylib
-	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib
-	rm -f $(DESTDIR)$(INST_LIB)/libgdal.dylib
-	rm -f $(DESTDIR)$(INST_LIB)/libgdal.la
-	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL
 endif
 	(cd port; $(MAKE) install)
 	(cd gcore; $(MAKE) install)
@@ -196,6 +190,18 @@ ifeq ($(HAVE_LIBTOOL),yes)
 install-lib:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 	for f in $(LIBGDAL-yes) ; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done
+ifeq ($(MACOSX_FRAMEWORK),yes)
+	if [ -f "$(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).$(LIBGDAL_REVISION).dylib" ] ; then mv -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).$(LIBGDAL_REVISION).dylib $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL ; fi
+	if [ -f "$(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).dylib" ] ; then mv -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).dylib $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL ; fi
+	if [ -f "$(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib" ] ; then mv -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL ; fi
+	if [ -f "$(DESTDIR)$(INST_LIB)/libgdal.dylib" ] ; then mv -f $(DESTDIR)$(INST_LIB)/libgdal.dylib $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL ; fi
+	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).$(LIBGDAL_REVISION).dylib
+	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).$(LIBGDAL_AGE).dylib
+	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib
+	rm -f $(DESTDIR)$(INST_LIB)/libgdal.dylib
+	rm -f $(DESTDIR)$(INST_LIB)/libgdal.la
+	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL
+endif
 
 else
 
@@ -207,7 +213,7 @@ install-lib:
 
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 ifeq ($(MACOSX_FRAMEWORK),yes)
-	$(INSTALL_LIB) $(GDAL_ROOT)/.libs/libgdal.1.$(LIBGDAL_AGE).$(LIBGDAL_REVISION).dylib $(DESTDIR)$(INST_LIB)/GDAL
+	$(INSTALL_LIB) $(GDAL_SLIB) $(DESTDIR)$(INST_LIB)/GDAL
 	install_name_tool -id ${OSX_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_LIB)/GDAL
 else
 	rm -f $(DESTDIR)$(INST_LIB)/$(GDAL_SLIB_B)
@@ -224,12 +230,7 @@ else
 
 install-lib:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
-ifeq ($(MACOSX_FRAMEWORK),yes)
-	$(INSTALL_LIB) $(GDAL_SLIB) $(DESTDIR)$(INST_LIB)/GDAL
-	install_name_tool -id ${OSX_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_LIB)/GDAL
-else
 	$(INSTALL_LIB) $(GDAL_LIB) $(DESTDIR)$(INST_LIB)
-endif
 
 endif # HAVE_LD_SHARED=no 
 
