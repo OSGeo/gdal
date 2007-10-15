@@ -1903,6 +1903,8 @@ class Feature(_object):
         for key in keys:
             output[key] = self.GetField(key)
         return output
+    def geometry(self):
+        return self.GetGeometryRef()
 
 Feature_swigregister = _ogr.Feature_swigregister
 Feature_swigregister(Feature)
