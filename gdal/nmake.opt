@@ -200,6 +200,8 @@ JPEG_SUPPORTED = 1
 #		-I$(MRSID_DIR)\include\mrsid_readers \
 #		-I$(MRSID_DIR)\include\j2k_readers
 #MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
+# Comment out the following to supress JP2MRSID driver. 
+MRSID_FLAGS =	-DMRSID_J2K
 # Enable these, if you have the MrSID Encoding SDK and want
 # to create MrSID files
 #MRSID_FLAGS =	-DMRSID_ESDK $(MRSID_FLAGS)
