@@ -214,6 +214,8 @@ layer[0:4] would return a list of the first four features."""
         for key in keys:
             output[key] = self.GetField(key)
         return output
+    def geometry(self):
+        return self.GetGeometryRef()
 }
 
 }
