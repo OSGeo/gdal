@@ -363,7 +363,8 @@ CPLErr GDALRasterBlock::Internalize()
     if( pNewData == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Internalize failed" );
+                  "Out of memory allocating %d byte raster cache block.",
+                  nSizeInBytes );
         return( CE_Failure );
     }
 
