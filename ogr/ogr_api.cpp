@@ -661,6 +661,10 @@ double OGR_G_GetArea( OGRGeometryH hGeom )
         }
         break;
 
+      case wkbGeometryCollection:
+        fArea = ((OGRGeometryCollection *) hGeom)->get_Area();
+        break;
+
       default:
         CPLError( CE_Warning, CPLE_AppDefined,
                   "OGR_G_GetArea() called against non-surface geometry type." );

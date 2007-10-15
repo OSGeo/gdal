@@ -475,6 +475,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** ppszDstText ) const;
 
+    virtual double get_Area() const;
+
     // IGeometry methods
     virtual int getDimension() const;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
@@ -521,7 +523,7 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
 
-    double  get_Area() const;
+    virtual double  get_Area() const;
 };
 
 /************************************************************************/
