@@ -325,7 +325,7 @@ layer[0:4] would return a list of the first four features."""
           raise ImportError, "You must have 'simplejson' installed to be able to use this functionality"
       
       if not as_object:
-          output = simplejson.dumps(output)
+          return simplejson.dumps(output)
       else:
           return output
       
