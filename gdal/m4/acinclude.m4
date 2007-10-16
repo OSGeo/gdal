@@ -421,13 +421,13 @@ AC_DEFUN([AM_PATH_PYTHON],
     dnl
     AC_CHECK_PROGS([PYTHON], [python python1.5 python1.4 python1.3], [no])
 
-    if test "$with_python" = no ; then
-        echo "Python support disabled"
+    if test "$with_ogpython" = no ; then
+        echo "Old-gen Python support disabled"
         PYTHON=no
     fi
 
-    if test "x$with_ngpython" != xno -a "x$with_ngpython" != "x" ; then
-        echo "Python support disabled since ngpython enabled."
+    if test "x$with_python" != xno -a "x$with_python" != "x" ; then
+        echo "Old-gen Python support disabled since python enabled."
         PYTHON=no
     fi
 
@@ -470,7 +470,7 @@ print sys.version[:3]'`"
         if test -f $py_mf ; then
             AC_MSG_RESULT(found)
         else
-            AC_MSG_RESULT([missing, Python disabled.])
+            AC_MSG_RESULT([missing, Old-gen Python disabled.])
             PYTHON=no
         fi
     else
@@ -480,7 +480,7 @@ print sys.version[:3]'`"
     fi
 
     dnl TODO: Add HELP_STRING
-    AC_ARG_WITH([pymoddir],[  --with-pymoddir=ARG   Override Python package install dir],,)
+    AC_ARG_WITH([pymoddir],[  --with-pymoddir=ARG   Override Old-gen Python package install dir],,)
 
     if test "$PYTHON" != "no" ; then
         AC_MSG_CHECKING([where to install Python modules])

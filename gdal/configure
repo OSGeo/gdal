@@ -458,7 +458,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP CXX_PIC C_PIC LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PAM_SETTING PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP CXX_PIC C_PIC LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PAM_SETTING PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG HAVE_OGPYTHON LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1082,9 +1082,9 @@ Optional Packages:
   --with-perl           Enable perl bindings
   --with-php            Enable php bindings
   --with-ruby           Enable Ruby bindings
-  --with-ngpython       Enable Next Generation python bindings
-  --with-python         Enable traditional Python bindings
-  --with-pymoddir=ARG   Override Python package install dir
+  --with-python       Enable python bindings
+  --with-ogpython         Enable Old-gen traditional (deprecated) Python bindings
+  --with-pymoddir=ARG   Override Old-gen Python package install dir
 
 Some influential environment variables:
   CC          C compiler command
@@ -25412,8 +25412,8 @@ if test "${with_perl+set}" = set; then
 
 fi;
 
-echo "$as_me:$LINENO: checking for SWIG perl bindings" >&5
-echo $ECHO_N "checking for SWIG perl bindings... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for perl bindings" >&5
+echo $ECHO_N "checking for perl bindings... $ECHO_C" >&6
 if test "$with_perl" = "yes" ; then
   BINDINGS="perl $BINDINGS"
   echo "$as_me:$LINENO: result: enabled" >&5
@@ -25431,8 +25431,8 @@ if test "${with_php+set}" = set; then
 
 fi;
 
-echo "$as_me:$LINENO: checking for SWIG php bindings" >&5
-echo $ECHO_N "checking for SWIG php bindings... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for php bindings" >&5
+echo $ECHO_N "checking for php bindings... $ECHO_C" >&6
 if test "$with_php" = "yes" ; then
   BINDINGS="php $BINDINGS"
   echo "$as_me:$LINENO: result: enabled" >&5
@@ -25450,8 +25450,8 @@ if test "${with_ruby+set}" = set; then
 
 fi;
 
-echo "$as_me:$LINENO: checking for SWIG ruby bindings" >&5
-echo $ECHO_N "checking for SWIG ruby bindings... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for ruby bindings" >&5
+echo $ECHO_N "checking for ruby bindings... $ECHO_C" >&6
 if test "$with_ruby" = "yes" ; then
   BINDINGS="ruby $BINDINGS"
   echo "$as_me:$LINENO: result: enabled" >&5
@@ -25463,21 +25463,21 @@ fi
 
 
 
-# Check whether --with-ngpython or --without-ngpython was given.
-if test "${with_ngpython+set}" = set; then
-  withval="$with_ngpython"
+# Check whether --with-python or --without-python was given.
+if test "${with_python+set}" = set; then
+  withval="$with_python"
 
 fi;
 
-echo "$as_me:$LINENO: checking for NG SWIG python bindings" >&5
-echo $ECHO_N "checking for NG SWIG python bindings... $ECHO_C" >&6
-if test "$with_ngpython" = "yes" ; then
+echo "$as_me:$LINENO: checking for python bindings" >&5
+echo $ECHO_N "checking for python bindings... $ECHO_C" >&6
+if test "$with_python" = "yes" ; then
   BINDINGS="python $BINDINGS"
   echo "$as_me:$LINENO: result: enabled" >&5
 echo "${ECHO_T}enabled" >&6
 
-  echo "$as_me:$LINENO: checking for Python setuptools" >&5
-echo $ECHO_N "checking for Python setuptools... $ECHO_C" >&6
+  echo "$as_me:$LINENO: checking for python setuptools" >&5
+echo $ECHO_N "checking for python setuptools... $ECHO_C" >&6
   SETUPTEST='try:
   import setuptools
   print 1
@@ -25501,12 +25501,16 @@ fi
 
 
 
-# Check whether --with-python or --without-python was given.
-if test "${with_python+set}" = set; then
-  withval="$with_python"
+# Check whether --with-ogpython or --without-ogpython was given.
+if test "${with_ogpython+set}" = set; then
+  withval="$with_ogpython"
 
 fi;
 
+echo "$as_me:$LINENO: checking for old-gen python bindings" >&5
+echo $ECHO_N "checking for old-gen python bindings... $ECHO_C" >&6
+HAVE_OGPYTHON=no
+if test "x$with_ogpython" != "x" ; then
 
                 for ac_prog in python python1.5 python1.4 python1.3
 do
@@ -25550,13 +25554,13 @@ done
 test -n "$PYTHON" || PYTHON="no"
 
 
-    if test "$with_python" = no ; then
-        echo "Python support disabled"
+    if test "$with_ogpython" = no ; then
+        echo "Old-gen Python support disabled"
         PYTHON=no
     fi
 
-    if test "x$with_ngpython" != xno -a "x$with_ngpython" != "x" ; then
-        echo "Python support disabled since ngpython enabled."
+    if test "x$with_python" != xno -a "x$with_python" != "x" ; then
+        echo "Old-gen Python support disabled since python enabled."
         PYTHON=no
     fi
 
@@ -25596,8 +25600,8 @@ echo $ECHO_N "checking for top-level Makefile for Python... $ECHO_C" >&6
             echo "$as_me:$LINENO: result: found" >&5
 echo "${ECHO_T}found" >&6
         else
-            echo "$as_me:$LINENO: result: missing, Python disabled." >&5
-echo "${ECHO_T}missing, Python disabled." >&6
+            echo "$as_me:$LINENO: result: missing, Old-gen Python disabled." >&5
+echo "${ECHO_T}missing, Old-gen Python disabled." >&6
             PYTHON=no
         fi
     else
@@ -25874,8 +25878,16 @@ echo "${ECHO_T}yes, stripping extras" >&6
   fi
   rm -f comp.out
 
-
+  HAVE_OGPYTHON=yes
+else
+  HAVE_OGPYTHON=no
+  echo "$as_me:$LINENO: result: disabled" >&5
+echo "${ECHO_T}disabled" >&6
+fi
 rm -f conftest*
+
+
+
 
           ac_config_files="$ac_config_files GDALmake.opt"
 
@@ -26936,6 +26948,7 @@ s,@PY_SO_EXT@,$PY_SO_EXT,;t t
 s,@PYTHON_DEV@,$PYTHON_DEV,;t t
 s,@HAVE_NUMPY@,$HAVE_NUMPY,;t t
 s,@NUMPY_FLAG@,$NUMPY_FLAG,;t t
+s,@HAVE_OGPYTHON@,$HAVE_OGPYTHON,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -28262,11 +28275,6 @@ fi
 
 
 
-if test "$PYTHON" != "no" -a "$PYTHON_DEV" != "no" ; then
-  HAVE_PYTHON=yes
-else
-  HAVE_PYTHON=no
-fi
 
 
 echo ""
@@ -28411,16 +28419,16 @@ fi
 
 echo ""
 
-
-echo "  Traditional Python:        ${HAVE_PYTHON}"
-
 if test -z "$BINDINGS"; then
     WHAT_BINDINGS="no"
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
 
-echo "  NG SWIG Bindings:          ${WHAT_BINDINGS}"
+echo "  Old-gen python          ${HAVE_OGPYTHON}"
+
+
+echo "  SWIG Bindings:          ${WHAT_BINDINGS}"
 
 
 echo ""
