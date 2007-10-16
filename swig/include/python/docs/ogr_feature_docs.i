@@ -1,7 +1,7 @@
 %extend OGRFeatureShadow {
 // File: ogrfeature_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeature.cpp
-11086 2007-03-27 03:54:22Z warmerdam $\") ";
+11888 2007-08-17 15:09:26Z mloskot $\") ";
 
 %feature("docstring")  Create "OGRFeatureH
 OGR_F_Create(OGRFeatureDefnH hDefn)

@@ -1,7 +1,7 @@
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrdatasource.cpp
-11378 2007-04-30 02:54:21Z mloskot $\") ";
+12064 2007-09-04 15:35:47Z warmerdam $\") ";
 
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
 hDS) ";
@@ -202,7 +202,7 @@ OGR_DS_GetName(OGRDataSourceH hDS)
 Returns the name of the data source. This string should be sufficient
 to open the data source if passed to the same OGRSFDriver that this
 data source was opened with, but it need not be exactly the same
-string that was used to open the data source. Normally this a
+string that was used to open the data source. Normally this is a
 filename.
 
 This function is the same as the C++ method OGRDataSource::GetName().
