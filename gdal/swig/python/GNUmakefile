@@ -2,7 +2,7 @@
 
 include ../../GDALmake.opt
 
-all:
+all: build
 
 BINDING = python
 include ../SWIGmake.base
@@ -46,7 +46,8 @@ build:
 
 install:
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
-	python setup.py install --root / --single-version-externally-managed
+#	python setup.py install --root / --single-version-externally-managed
+	python setup.py install 
 else
 	python setup.py install --prefix=$(DESTDIR)$(prefix)
 endif
