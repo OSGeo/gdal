@@ -189,7 +189,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( nBands == 3 )
         nPhotometric = PHOTOMETRIC_RGB;
-    else if( papoBandList[0]->GetColorTable() != NULL )
+    else if( papoBandList[0]->GetColorTable() != NULL 
+             && !EQUALN(pszResampling,"AVERAGE_BIT2",12) )
     {
         nPhotometric = PHOTOMETRIC_PALETTE;
         /* should set the colormap up at this point too! */
@@ -288,7 +289,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                                 128, 128, TRUE, nCompression,
                                 nPhotometric, nSampleFormat, 
                                 panRed, panGreen, panBlue, 
-                                FALSE );
+                                FALSE, pszResampling );
     }
 
     if (panRed)
