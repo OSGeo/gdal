@@ -1,7 +1,7 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrgeometry.cpp
-11460 2007-05-10 21:43:27Z hobu $\") ";
+12394 2007-10-13 04:12:13Z hobu $\") ";
 
 %feature("docstring")  DumpReadable "void
 OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
@@ -409,6 +409,15 @@ Parameters:
 hGeom:  handle on the geometry to empty. ";
 
 %feature("docstring")  IsEmpty "int OGR_G_IsEmpty(OGRGeometryH hGeom)
+";
+
+%feature("docstring")  IsValid "int OGR_G_IsValid(OGRGeometryH hGeom)
+";
+
+%feature("docstring")  IsSimple "int OGR_G_IsSimple(OGRGeometryH
+hGeom) ";
+
+%feature("docstring")  IsRing "int OGR_G_IsRing(OGRGeometryH hGeom)
 ";
 
 %feature("docstring")  OGRGeometryTypeToName "const char*
