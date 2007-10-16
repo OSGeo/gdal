@@ -20,6 +20,7 @@ all:	sublibs apps test_ogrsf$(EXE)
 clean:
 	rm -f html/*
 	(cd ogrsf_frmts; $(MAKE) clean)
+	$(RM) *.o
 
 very-clean: clean
 	rm -rf html rtf
