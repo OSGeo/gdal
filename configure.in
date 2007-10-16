@@ -2130,7 +2130,7 @@ BINDINGS=
 
 AC_ARG_WITH(perl,[  --with-perl           Enable perl bindings],,)
 
-AC_MSG_CHECKING([for SWIG perl bindings])
+AC_MSG_CHECKING([for perl bindings])
 if test "$with_perl" = "yes" ; then
   BINDINGS="perl $BINDINGS"
   AC_MSG_RESULT([enabled])
@@ -2144,7 +2144,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(php,[  --with-php            Enable php bindings],,)
 
-AC_MSG_CHECKING([for SWIG php bindings])
+AC_MSG_CHECKING([for php bindings])
 if test "$with_php" = "yes" ; then
   BINDINGS="php $BINDINGS"
   AC_MSG_RESULT([enabled])
@@ -2158,7 +2158,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(ruby,[  --with-ruby           Enable Ruby bindings],,)
 
-AC_MSG_CHECKING([for SWIG ruby bindings])
+AC_MSG_CHECKING([for ruby bindings])
 if test "$with_ruby" = "yes" ; then
   BINDINGS="ruby $BINDINGS"
   AC_MSG_RESULT([enabled])
@@ -2170,14 +2170,14 @@ dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(ngpython,[  --with-ngpython       Enable Next Generation python bindings],,)
+AC_ARG_WITH(python,[  --with-python       Enable python bindings],,)
 
-AC_MSG_CHECKING([for NG SWIG python bindings])
-if test "$with_ngpython" = "yes" ; then
+AC_MSG_CHECKING([for python bindings])
+if test "$with_python" = "yes" ; then
   BINDINGS="python $BINDINGS"
   AC_MSG_RESULT([enabled])
 
-  AC_MSG_CHECKING([for Python setuptools])
+  AC_MSG_CHECKING([for python setuptools])
   SETUPTEST='try:
   import setuptools
   print 1
@@ -2197,17 +2197,27 @@ AC_SUBST([PY_HAVE_SETUPTOOLS])
 AC_SUBST([BINDINGS])
 
 dnl ---------------------------------------------------------------------------
-dnl Python Checks
+dnl Old-gen Python Checks
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(python,[  --with-python         Enable traditional Python bindings],,)
+AC_ARG_WITH(ogpython,[  --with-ogpython         Enable Old-gen traditional (deprecated) Python bindings],,)
 
-AM_PATH_PYTHON
-AM_INIT_PYEXEC_MOD
-AM_CHECK_NUMPY
-AC_COMPILER_LOCALHACK
-
+AC_MSG_CHECKING([for old-gen python bindings])
+HAVE_OGPYTHON=no
+if test "x$with_ogpython" != "x" ; then
+  AM_PATH_PYTHON
+  AM_INIT_PYEXEC_MOD
+  AM_CHECK_NUMPY
+  AC_COMPILER_LOCALHACK
+  HAVE_OGPYTHON=yes
+else
+  HAVE_OGPYTHON=no
+  AC_MSG_RESULT([disabled])
+fi
 rm -f conftest*
+
+AC_SUBST([HAVE_OGPYTHON])
+
 
 AC_OUTPUT(GDALmake.opt)
 
@@ -2215,11 +2225,13 @@ dnl ---------------------------------------------------------------------------
 dnl Display configuration status
 dnl ---------------------------------------------------------------------------
 
-if test "$PYTHON" != "no" -a "$PYTHON_DEV" != "no" ; then
-  HAVE_PYTHON=yes
-else
-  HAVE_PYTHON=no
-fi
+dnl HAVE_OGPYTHON=no
+dnl if test "$PYTHON" != "no" -a "$PYTHON_DEV" != "no" ; then
+dnl   HAVE_OGPYTHON=yes
+dnl  else
+dnl   HAVE_OGPYTHON=no
+dnl fi
+dnl AC_SUBST([HAVE_OGPYTHON])
 
 LOC_MSG()
 LOC_MSG([GDAL is now configured for ${host}])
@@ -2272,13 +2284,13 @@ if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])
 fi
 LOC_MSG()
-LOC_MSG([  Traditional Python:        ${HAVE_PYTHON}])
 if test -z "$BINDINGS"; then
     WHAT_BINDINGS="no"
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
-LOC_MSG([  NG SWIG Bindings:          ${WHAT_BINDINGS}])
+LOC_MSG([  Old-gen python          ${HAVE_OGPYTHON}])
+LOC_MSG([  SWIG Bindings:          ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
