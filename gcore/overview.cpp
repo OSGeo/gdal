@@ -382,6 +382,10 @@ GDALRegenerateCascadingOverviews(
             return eErr;
 
         dfPixelsProcessed += dfPixels;
+
+        /* we only do the bit2grayscale promotion on the base band */
+        if( EQUALN(pszResampling,"AVERAGE_BIT2GRAYSCALE",13) )
+            pszResampling = "AVERAGE";
     }
 
     return CE_None;
@@ -465,6 +469,30 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
         poSrcBand->RasterIO( GF_Read, 0, nChunkYOff, nWidth, nFullResYChunk, 
                              pafChunk, nWidth, nFullResYChunk, eType,
                              0, 0 );
+
+        /* special case to promote 1bit data to 8bit 0/255 values */
+        if( EQUAL(pszResampling,"AVERAGE_BIT2GRAYSCALE") )
+        {
+            int i;
+
+            for( i = nFullResYChunk*nWidth - 1; i >= 0; i-- )
+            {
+                if( pafChunk[i] == 1.0 )
+                    pafChunk[i] = 255.0;
+            }
+        }
+        else if( EQUAL(pszResampling,"AVERAGE_BIT2GRAYSCALE_MINISWHITE") )
+        {
+            int i;
+
+            for( i = nFullResYChunk*nWidth - 1; i >= 0; i-- )
+            {
+                if( pafChunk[i] == 1.0 )
+                    pafChunk[i] = 0.0;
+                else if( pafChunk[i] == 0.0 )
+                    pafChunk[i] = 255.0;
+            }
+        }
         
         for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
         {

@@ -2073,6 +2073,15 @@ CPLErr GTiffDataset::IBuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we are averaging bit data to grayscale we need to create     */
+/*      8bit overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    int nOvBitsPerSample = nBitsPerSample;
+
+    if( EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+        nOvBitsPerSample = 8;
+
+/* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
     std::vector<unsigned short> anTRed, anTGreen, anTBlue;
@@ -2082,8 +2091,10 @@ CPLErr GTiffDataset::IBuildOverviews(
     {
         int nColors;
 
-        if( nBitsPerSample == 8 )
+        if( nOvBitsPerSample == 8 )
             nColors = 256;
+        else if( nOvBitsPerSample < 8 )
+            nColors = 1 << nOvBitsPerSample;
         else
             nColors = 65536;
         
@@ -2150,10 +2161,11 @@ CPLErr GTiffDataset::IBuildOverviews(
 
             nOverviewOffset = 
                 TIFF_WriteOverview( hTIFF, nOXSize, nOYSize, 
-                                    nBitsPerSample, nPlanarConfig,
+                                    nOvBitsPerSample, nPlanarConfig,
                                     nSamplesPerPixel, 128, 128, TRUE,
                                     nCompression, nPhotometric, nSampleFormat, 
-                                    panRed, panGreen, panBlue, FALSE );
+                                    panRed, panGreen, panBlue, FALSE, 
+                                    pszResampling );
 
             if( nOverviewOffset == 0 )
             {
@@ -3262,188 +3274,188 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
             CPLFree( pszTabWKT );
 
         bGeoTIFFInfoChanged = FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Capture some other potentially interesting information.         */
 /* -------------------------------------------------------------------- */
-        char	*pszText, szWorkMDI[200];
-        float   fResolution;
-        uint16  nShort;
+    char	*pszText, szWorkMDI[200];
+    float   fResolution;
+    uint16  nShort;
 
-        if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
-            SetMetadataItem( "TIFFTAG_DOCUMENTNAME",  pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_DOCUMENTNAME, &pszText ) )
+        SetMetadataItem( "TIFFTAG_DOCUMENTNAME",  pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, &pszText ) )
-            SetMetadataItem( "TIFFTAG_IMAGEDESCRIPTION", pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, &pszText ) )
+        SetMetadataItem( "TIFFTAG_IMAGEDESCRIPTION", pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_SOFTWARE, &pszText ) )
-            SetMetadataItem( "TIFFTAG_SOFTWARE", pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_SOFTWARE, &pszText ) )
+        SetMetadataItem( "TIFFTAG_SOFTWARE", pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
-            SetMetadataItem( "TIFFTAG_DATETIME", pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_DATETIME, &pszText ) )
+        SetMetadataItem( "TIFFTAG_DATETIME", pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_ARTIST, &pszText ) )
-            SetMetadataItem( "TIFFTAG_ARTIST", pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_ARTIST, &pszText ) )
+        SetMetadataItem( "TIFFTAG_ARTIST", pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_HOSTCOMPUTER, &pszText ) )
-            SetMetadataItem( "TIFFTAG_HOSTCOMPUTER", pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_HOSTCOMPUTER, &pszText ) )
+        SetMetadataItem( "TIFFTAG_HOSTCOMPUTER", pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_COPYRIGHT, &pszText ) )
-            SetMetadataItem( "TIFFTAG_COPYRIGHT", pszText );
+    if( TIFFGetField( hTIFF, TIFFTAG_COPYRIGHT, &pszText ) )
+        SetMetadataItem( "TIFFTAG_COPYRIGHT", pszText );
 
-        if( TIFFGetField( hTIFF, TIFFTAG_XRESOLUTION, &fResolution ) )
-        {
-            sprintf( szWorkMDI, "%.8g", fResolution );
-            SetMetadataItem( "TIFFTAG_XRESOLUTION", szWorkMDI );
-        }
-
-        if( TIFFGetField( hTIFF, TIFFTAG_YRESOLUTION, &fResolution ) )
-        {
-            sprintf( szWorkMDI, "%.8g", fResolution );
-            SetMetadataItem( "TIFFTAG_YRESOLUTION", szWorkMDI );
-        }
-
-        if( TIFFGetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, &nShort ) )
-        {
-            sprintf( szWorkMDI, "%d", nShort );
-            SetMetadataItem( "TIFFTAG_MINSAMPLEVALUE", szWorkMDI );
-        }
-
-        if( TIFFGetField( hTIFF, TIFFTAG_MAXSAMPLEVALUE, &nShort ) )
-        {
-            sprintf( szWorkMDI, "%d", nShort );
-            SetMetadataItem( "TIFFTAG_MAXSAMPLEVALUE", szWorkMDI );
-        }
-
-        if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nShort ) )
-        {
-            if( nShort == RESUNIT_NONE )
-                sprintf( szWorkMDI, "%d (unitless)", nShort );
-            else if( nShort == RESUNIT_INCH )
-                sprintf( szWorkMDI, "%d (pixels/inch)", nShort );
-            else if( nShort == RESUNIT_CENTIMETER )
-                sprintf( szWorkMDI, "%d (pixels/cm)", nShort );
-            else
-                sprintf( szWorkMDI, "%d", nShort );
-            SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
-        }
-
-        if( nCompression == COMPRESSION_NONE )
-            /* no compression tag */;
-        else if( nCompression == COMPRESSION_CCITTRLE )
-            SetMetadataItem( "COMPRESSION", "CCITTRLE", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_CCITTFAX3 )
-            SetMetadataItem( "COMPRESSION", "CCITTFAX3", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_CCITTFAX4 )
-            SetMetadataItem( "COMPRESSION", "CCITTFAX4", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_LZW )
-            SetMetadataItem( "COMPRESSION", "LZW", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_OJPEG )
-            SetMetadataItem( "COMPRESSION", "OJPEG", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_JPEG )
-            SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_NEXT )
-            SetMetadataItem( "COMPRESSION", "NEXT", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_CCITTRLEW )
-            SetMetadataItem( "COMPRESSION", "CCITTRLEW", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_PACKBITS )
-            SetMetadataItem( "COMPRESSION", "PACKBITS", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_THUNDERSCAN )
-            SetMetadataItem( "COMPRESSION", "THUNDERSCAN", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_PIXARFILM )
-            SetMetadataItem( "COMPRESSION", "PIXARFILM", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_PIXARLOG )
-            SetMetadataItem( "COMPRESSION", "PIXARLOG", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_DEFLATE )
-            SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_ADOBE_DEFLATE )
-            SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_DCS )
-            SetMetadataItem( "COMPRESSION", "DCS", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_JBIG )
-            SetMetadataItem( "COMPRESSION", "JBIG", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_SGILOG )
-            SetMetadataItem( "COMPRESSION", "SGILOG", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_SGILOG24 )
-            SetMetadataItem( "COMPRESSION", "SGILOG24", "IMAGE_STRUCTURE" );
-        else if( nCompression == COMPRESSION_JP2000 )
-            SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
-        else
-        {
-            CPLString oComp;
-            SetMetadataItem( "COMPRESSION", 
-                             (const char *) oComp.Printf( "%d", nCompression));
-        }
-
-        if( nBitsPerSample < 8 )
-        {
-            for (int i = 0; i < nBands; ++i)
-                GetRasterBand(i+1)->SetMetadataItem( "NBITS", 
-                    CPLString().Printf( "%ld", nBitsPerSample ) );
-        }
-        
-        if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
-        {
-            CPLXMLNode *psRoot = CPLParseXMLString( pszText );
-            CPLXMLNode *psItem = NULL;
-
-            if( psRoot != NULL && psRoot->eType == CXT_Element
-                && EQUAL(psRoot->pszValue,"GDALMetadata") )
-                psItem = psRoot->psChild;
-
-            for( ; psItem != NULL; psItem = psItem->psNext )
-            {
-                const char *pszKey, *pszValue, *pszRole, *pszDomain; 
-                char *pszUnescapedValue;
-                int nBand;
-
-                if( psItem->eType != CXT_Element
-                    || !EQUAL(psItem->pszValue,"Item") )
-                    continue;
-
-                pszKey = CPLGetXMLValue( psItem, "name", NULL );
-                pszValue = CPLGetXMLValue( psItem, NULL, NULL );
-                nBand = atoi(CPLGetXMLValue( psItem, "sample", "-1" )) + 1;
-                pszRole = CPLGetXMLValue( psItem, "role", "" );
-                pszDomain = CPLGetXMLValue( psItem, "domain", "" );
-                
-                if( pszKey == NULL || pszValue == NULL )
-                    continue;
-
-                pszUnescapedValue = CPLUnescapeString( pszValue, NULL, 
-                                                       CPLES_XML );
-                if( nBand == 0 )
-                    SetMetadataItem( pszKey, pszUnescapedValue, pszDomain );
-                else
-                {
-                    GDALRasterBand *poBand = GetRasterBand(nBand);
-                    if( poBand != NULL )
-                    {
-                        if( EQUAL(pszRole,"scale") )
-                            poBand->SetScale( atof(pszUnescapedValue) );
-                        else if( EQUAL(pszRole,"offset") )
-                            poBand->SetOffset( atof(pszUnescapedValue) );
-                        else
-                            poBand->SetMetadataItem(pszKey,pszUnescapedValue,
-                                                    pszDomain );
-                    }
-                }
-                CPLFree( pszUnescapedValue );
-            }
-
-            CPLDestroyXMLNode( psRoot );
-        }
-
-        bMetadataChanged = FALSE;
-	
-        if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
-        {
-	    bNoDataSet = TRUE;
-	    dfNoDataValue = atof( pszText );
-	}
-
-	bNoDataChanged = FALSE;
+    if( TIFFGetField( hTIFF, TIFFTAG_XRESOLUTION, &fResolution ) )
+    {
+        sprintf( szWorkMDI, "%.8g", fResolution );
+        SetMetadataItem( "TIFFTAG_XRESOLUTION", szWorkMDI );
     }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_YRESOLUTION, &fResolution ) )
+    {
+        sprintf( szWorkMDI, "%.8g", fResolution );
+        SetMetadataItem( "TIFFTAG_YRESOLUTION", szWorkMDI );
+    }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, &nShort ) )
+    {
+        sprintf( szWorkMDI, "%d", nShort );
+        SetMetadataItem( "TIFFTAG_MINSAMPLEVALUE", szWorkMDI );
+    }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_MAXSAMPLEVALUE, &nShort ) )
+    {
+        sprintf( szWorkMDI, "%d", nShort );
+        SetMetadataItem( "TIFFTAG_MAXSAMPLEVALUE", szWorkMDI );
+    }
+
+    if( TIFFGetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, &nShort ) )
+    {
+        if( nShort == RESUNIT_NONE )
+            sprintf( szWorkMDI, "%d (unitless)", nShort );
+        else if( nShort == RESUNIT_INCH )
+            sprintf( szWorkMDI, "%d (pixels/inch)", nShort );
+        else if( nShort == RESUNIT_CENTIMETER )
+            sprintf( szWorkMDI, "%d (pixels/cm)", nShort );
+        else
+            sprintf( szWorkMDI, "%d", nShort );
+        SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
+    }
+
+    if( nCompression == COMPRESSION_NONE )
+        /* no compression tag */;
+    else if( nCompression == COMPRESSION_CCITTRLE )
+        SetMetadataItem( "COMPRESSION", "CCITTRLE", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_CCITTFAX3 )
+        SetMetadataItem( "COMPRESSION", "CCITTFAX3", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_CCITTFAX4 )
+        SetMetadataItem( "COMPRESSION", "CCITTFAX4", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_LZW )
+        SetMetadataItem( "COMPRESSION", "LZW", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_OJPEG )
+        SetMetadataItem( "COMPRESSION", "OJPEG", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_JPEG )
+        SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_NEXT )
+        SetMetadataItem( "COMPRESSION", "NEXT", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_CCITTRLEW )
+        SetMetadataItem( "COMPRESSION", "CCITTRLEW", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_PACKBITS )
+        SetMetadataItem( "COMPRESSION", "PACKBITS", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_THUNDERSCAN )
+        SetMetadataItem( "COMPRESSION", "THUNDERSCAN", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_PIXARFILM )
+        SetMetadataItem( "COMPRESSION", "PIXARFILM", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_PIXARLOG )
+        SetMetadataItem( "COMPRESSION", "PIXARLOG", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_DEFLATE )
+        SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_ADOBE_DEFLATE )
+        SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_DCS )
+        SetMetadataItem( "COMPRESSION", "DCS", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_JBIG )
+        SetMetadataItem( "COMPRESSION", "JBIG", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_SGILOG )
+        SetMetadataItem( "COMPRESSION", "SGILOG", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_SGILOG24 )
+        SetMetadataItem( "COMPRESSION", "SGILOG24", "IMAGE_STRUCTURE" );
+    else if( nCompression == COMPRESSION_JP2000 )
+        SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
+    else
+    {
+        CPLString oComp;
+        SetMetadataItem( "COMPRESSION", 
+                         (const char *) oComp.Printf( "%d", nCompression));
+    }
+
+    if( nBitsPerSample < 8 )
+    {
+        for (int i = 0; i < nBands; ++i)
+            GetRasterBand(i+1)->SetMetadataItem( "NBITS", 
+                                                 CPLString().Printf( "%ld", nBitsPerSample ) );
+    }
+        
+    if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
+    {
+        CPLXMLNode *psRoot = CPLParseXMLString( pszText );
+        CPLXMLNode *psItem = NULL;
+
+        if( psRoot != NULL && psRoot->eType == CXT_Element
+            && EQUAL(psRoot->pszValue,"GDALMetadata") )
+            psItem = psRoot->psChild;
+
+        for( ; psItem != NULL; psItem = psItem->psNext )
+        {
+            const char *pszKey, *pszValue, *pszRole, *pszDomain; 
+            char *pszUnescapedValue;
+            int nBand;
+
+            if( psItem->eType != CXT_Element
+                || !EQUAL(psItem->pszValue,"Item") )
+                continue;
+
+            pszKey = CPLGetXMLValue( psItem, "name", NULL );
+            pszValue = CPLGetXMLValue( psItem, NULL, NULL );
+            nBand = atoi(CPLGetXMLValue( psItem, "sample", "-1" )) + 1;
+            pszRole = CPLGetXMLValue( psItem, "role", "" );
+            pszDomain = CPLGetXMLValue( psItem, "domain", "" );
+                
+            if( pszKey == NULL || pszValue == NULL )
+                continue;
+
+            pszUnescapedValue = CPLUnescapeString( pszValue, NULL, 
+                                                   CPLES_XML );
+            if( nBand == 0 )
+                SetMetadataItem( pszKey, pszUnescapedValue, pszDomain );
+            else
+            {
+                GDALRasterBand *poBand = GetRasterBand(nBand);
+                if( poBand != NULL )
+                {
+                    if( EQUAL(pszRole,"scale") )
+                        poBand->SetScale( atof(pszUnescapedValue) );
+                    else if( EQUAL(pszRole,"offset") )
+                        poBand->SetOffset( atof(pszUnescapedValue) );
+                    else
+                        poBand->SetMetadataItem(pszKey,pszUnescapedValue,
+                                                pszDomain );
+                }
+            }
+            CPLFree( pszUnescapedValue );
+        }
+
+        CPLDestroyXMLNode( psRoot );
+    }
+
+    bMetadataChanged = FALSE;
+	
+    if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
+    {
+        bNoDataSet = TRUE;
+        dfNoDataValue = atof( pszText );
+    }
+
+    bNoDataChanged = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If this is a "base" raster, we should scan for any              */

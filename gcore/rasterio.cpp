@@ -1340,6 +1340,7 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
         GDALRasterBand  *poOverview = GetOverview( iOverview );
         double          dfResolution;
 
+        // What resolution is this?
         if( (GetXSize() / (double) poOverview->GetXSize())
             < (GetYSize() / (double) poOverview->GetYSize()) )
             dfResolution = 
@@ -1348,12 +1349,22 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
             dfResolution = 
                 GetYSize() / (double) poOverview->GetYSize();
 
-        if( dfResolution < dfDesiredResolution * 1.2 
-            && dfResolution > dfBestResolution )
-        {
-            poBestOverview = poOverview;
-            dfBestResolution = dfResolution;
-        }
+        // Is it nearly the requested resolution and better (lower) than
+        // the current best resolution?
+        if( dfResolution >= dfDesiredResolution * 1.2 
+            || dfResolution <= dfBestResolution )
+            continue;
+
+        // Ignore AVERAGE_BIT2GRAYSCALE overviews for RasterIO purposes.
+        const char *pszResampling = 
+            poOverview->GetMetadataItem( "RESAMPLING" );
+
+        if( pszResampling != NULL && EQUALN(pszResampling,"AVERAGE_BIT2",12))
+            continue;
+
+        // OK, this is our new best overview.
+        poBestOverview = poOverview;
+        dfBestResolution = dfResolution;
     }
 
 /* -------------------------------------------------------------------- */
