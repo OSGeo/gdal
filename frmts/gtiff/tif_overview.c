@@ -67,6 +67,8 @@ CPL_CVSID("tif_overview.c,v 1.2 2001/07/18 04:51:56 warmerda Exp");
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
+#define TIFFTAG_GDAL_METADATA  42112
+
 void TIFFBuildOverviews( TIFF *, int, int *, int, const char *,
                          int (*)(double,void*), void * );
 
@@ -83,11 +85,12 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
                            int nBitsPerPixel, int nPlanarConfig, int nSamples, 
                            int nBlockXSize, int nBlockYSize,
                            int bTiled, int nCompressFlag, int nPhotometric,
-                           int nSampleFormat,
+                           int nSampleFormat, 
                            unsigned short *panRed,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
-                           int bUseSubIFDs )
+                           int bUseSubIFDs,
+                           const char *pszResampling )
 
 {
     toff_t	nBaseDirOffset;
@@ -130,6 +133,15 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
     if( panRed != NULL )
     {
         TIFFSetField( hTIFF, TIFFTAG_COLORMAP, panRed, panGreen, panBlue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write metadata if we have some.                                 */
+/* -------------------------------------------------------------------- */
+    if( pszResampling && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, 
+                      "<GDALMetadata><Item name=\"RESAMPLING\" sample=\"0\">AVERAGE_BIT2GRAYSCALE</Item></GDALMetadata>" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -586,7 +598,8 @@ void TIFFBuildOverviews( TIFF *hTIFF, int nOverviews, int * panOvList,
                                          bTiled, nCompressFlag, nPhotometric,
                                          nSampleFormat,
                                          panRedMap, panGreenMap, panBlueMap,
-                                         bUseSubIFDs );
+                                         bUseSubIFDs, 
+                                         pszResampleMethod );
         
         papoRawBIs[i] = TIFFCreateOvrCache( hTIFF, nDirOffset );
     }
