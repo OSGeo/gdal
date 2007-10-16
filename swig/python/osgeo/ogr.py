@@ -393,7 +393,7 @@ class DataSource(_object):
         Returns the name of the data source. This string should be sufficient
         to open the data source if passed to the same OGRSFDriver that this
         data source was opened with, but it need not be exactly the same
-        string that was used to open the data source. Normally this a
+        string that was used to open the data source. Normally this is a
         filename.
 
         This function is the same as the C++ method OGRDataSource::GetName().
@@ -2703,15 +2703,30 @@ class Geometry(_object):
         return _ogr.Geometry_IsEmpty(*args)
 
     def IsValid(*args):
-        """IsValid(self) -> bool"""
+        """
+        IsValid(self) -> bool
+
+        int OGR_G_IsValid(OGRGeometryH hGeom)
+
+        """
         return _ogr.Geometry_IsValid(*args)
 
     def IsSimple(*args):
-        """IsSimple(self) -> bool"""
+        """
+        IsSimple(self) -> bool
+
+        int OGR_G_IsSimple(OGRGeometryH
+        hGeom) 
+        """
         return _ogr.Geometry_IsSimple(*args)
 
     def IsRing(*args):
-        """IsRing(self) -> bool"""
+        """
+        IsRing(self) -> bool
+
+        int OGR_G_IsRing(OGRGeometryH hGeom)
+
+        """
         return _ogr.Geometry_IsRing(*args)
 
     def Intersect(*args):
