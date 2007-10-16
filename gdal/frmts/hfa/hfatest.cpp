@@ -135,7 +135,7 @@ int main( int argc, char ** argv )
             {
                 HFAGetOverviewInfo( hHFA, i, iOverview, 
                                     &nXSize, &nYSize, 
-                                    &nBlockXSize, &nBlockYSize );
+                                    &nBlockXSize, &nBlockYSize, NULL );
                 printf( "  Overview: %dx%d (blocksize %dx%d)\n", 
                         nXSize, nYSize, nBlockXSize, nBlockYSize );
             }
