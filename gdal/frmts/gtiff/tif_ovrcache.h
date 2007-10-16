@@ -83,7 +83,8 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
 
 toff_t TIFF_WriteOverview( TIFF *, int, int, int, int, int, int, int,
                            int, int, int, int, unsigned short *,
-                           unsigned short *, unsigned short *, int );
+                           unsigned short *, unsigned short *, int,
+                           const char *);
 
 #if defined(__cplusplus)
 }
