@@ -559,7 +559,8 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 {
   /* %typemap(out) OGRErr */
   if ( result != 0 ) {
-    if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
+    const char *err = CPLGetLastErrorMsg();
+    if (err and *err) croak(err); /* this is usually better */
     croak( OGRErrMessages(result) );
   }
 }
