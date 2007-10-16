@@ -591,7 +591,8 @@ int HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfNoData )
 
 CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
                            int * pnXSize, int * pnYSize,
-                           int * pnBlockXSize, int * pnBlockYSize )
+                           int * pnBlockXSize, int * pnBlockYSize,
+                           int * pnHFADataType )
 
 {
     HFABand	*poBand;
@@ -622,6 +623,9 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
 
     if( pnBlockYSize != NULL )
         *pnBlockYSize = poBand->nBlockYSize;
+
+    if( pnHFADataType != NULL )
+        *pnHFADataType = poBand->nDataType;
 
     return( CE_None );
 }

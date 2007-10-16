@@ -484,11 +484,26 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 /* -------------------------------------------------------------------- */
     if( iOverview > -1 )
     {
+        int nHFADataTypeO;
+
         nOverviews = 0;
         HFAGetOverviewInfo( hHFA, nBand, iOverview,
                             &nRasterXSize, &nRasterYSize,
-                            &nBlockXSize, &nBlockYSize );
+                            &nBlockXSize, &nBlockYSize, &nHFADataTypeO  );
+
+/* -------------------------------------------------------------------- */
+/*      If we are an 8bit overview of a 1bit layer, we need to mark     */
+/*      ourselves as being "resample: average_bit2grayscale".           */
+/* -------------------------------------------------------------------- */
+        if( nHFADataType == EPT_u1 && nHFADataTypeO == EPT_u8 )
+        {
+            GDALMajorObject::SetMetadataItem( "RESAMPLING", 
+                                              "AVERAGE_BIT2GRAYSCALE" );
+            GDALMajorObject::SetMetadataItem( "NBITS", "8" );
+        }
     }
+
+
 
 /* -------------------------------------------------------------------- */
 /*      Collect color table if present.                                 */
