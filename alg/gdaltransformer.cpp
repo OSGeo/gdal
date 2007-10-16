@@ -40,6 +40,8 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg );
 void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );
 CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg );
 void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree );
+CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg );
+void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree );
 CPL_C_END
 
 static CPLXMLNode *GDALSerializeReprojectionTransformer( void *pTransformArg );
@@ -966,6 +968,23 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handle TPS transformation.                                      */
+/* -------------------------------------------------------------------- */
+    else if( psInfo->pSrcGeoLocTransformArg != NULL )
+    {
+        CPLXMLNode *psTransformerContainer;
+        CPLXMLNode *psTransformer;
+
+        psTransformerContainer = 
+            CPLCreateXMLNode( psTree, CXT_Element, "SrcGeoLocTransformer" );
+
+        psTransformer = 
+            GDALSerializeTransformer( NULL, psInfo->pSrcGeoLocTransformArg);
+        if( psTransformer != NULL )
+            CPLAddXMLChild( psTransformerContainer, psTransformer );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle source geotransforms.                                    */
 /* -------------------------------------------------------------------- */
     else
@@ -1101,6 +1120,16 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
     {
         psInfo->pSrcTPSTransformArg = 
             GDALDeserializeTPSTransformer( psSubtree->psChild );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Src GeoLoc Transform                                            */
+/* -------------------------------------------------------------------- */
+    psSubtree = CPLGetXMLNode( psTree, "SrcGeoLocTransformer" );
+    if( psSubtree != NULL && psSubtree->psChild != NULL )
+    {
+        psInfo->pSrcGeoLocTransformArg = 
+            GDALDeserializeGeoLocTransformer( psSubtree->psChild );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1821,6 +1850,11 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
     {
         *ppfnFunc = GDALTPSTransform;
         *ppTransformArg = GDALDeserializeTPSTransformer( psTree );
+    }
+    else if( EQUAL(psTree->pszValue,"GeoLocTransformer") )
+    {
+        *ppfnFunc = GDALGeoLocTransform;
+        *ppTransformArg = GDALDeserializeGeoLocTransformer( psTree );
     }
     else if( EQUAL(psTree->pszValue,"ApproxTransformer") )
     {
