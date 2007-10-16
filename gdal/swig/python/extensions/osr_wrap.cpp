@@ -2770,25 +2770,28 @@ SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
 
 
 
+#include "ogr_core.h"
 static char const *
 OGRErrMessages( int rc ) {
   switch( rc ) {
-  case 0:
+  case OGRERR_NONE:
     return "OGR Error: None";
-  case 1:
-    return "OGR Error: Not enough data";
-  case 2:
+  case OGRERR_NOT_ENOUGH_DATA:
+    return "OGR Error: Not enough data to deserialize";
+  case OGRERR_NOT_ENOUGH_MEMORY:
     return "OGR Error: Not enough memory";
-  case 3:
+  case OGRERR_UNSUPPORTED_GEOMETRY_TYPE:
     return "OGR Error: Unsupported geometry type";
-  case 4:
+  case OGRERR_UNSUPPORTED_OPERATION:
     return "OGR Error: Unsupported operation";
-  case 5:
+  case OGRERR_CORRUPT_DATA:
     return "OGR Error: Corrupt data";
-  case 6:
+  case OGRERR_FAILURE:
     return "OGR Error: General Error";
-  case 7:
+  case OGRERR_UNSUPPORTED_SRS:
     return "OGR Error: Unsupported SRS";
+  case OGRERR_INVALID_HANDLE:
+    return "OGR Error: Invalid handle";
   default:
     return "OGR Error: Unknown";
   }
