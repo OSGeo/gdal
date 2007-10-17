@@ -1,5 +1,5 @@
 # import osgeo.osr as a convenience
-from osgeo.osr import *
-from osgeo import gdal
+from osgeo.gdal import deprecation_warn
+deprecation_warn('osr')
 
-gdal.Debug("Deprecation Warning", 'osr.py was placed in a namespace, it is now available as osgeo.osr')
+from osgeo.osr import *

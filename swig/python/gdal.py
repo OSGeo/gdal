@@ -1,4 +1,5 @@
 # import osgeo.gdal as a convenience
-from osgeo.gdal import *
+from osgeo.gdal import deprecation_warn
+deprecation_warn('gdal')
 
-Debug("Deprecation Warning", 'gdal.py was placed in a namespace, it is now available as osgeo.gdal')
+from osgeo.gdal import *
