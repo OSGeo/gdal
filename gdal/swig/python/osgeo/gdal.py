@@ -51,7 +51,9 @@ del types
 from gdalconst import *
 import gdalconst
 
+
 import sys
+have_warned = 0
 byteorders = {"little": "<",
               "big": ">"}
 array_modes = { gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
@@ -64,6 +66,20 @@ array_modes = { gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
                 gdalconst.GDT_CFloat64: ("%sf8" % byteorders[sys.byteorder]),
                 gdalconst.GDT_Byte:     ("%st8" % byteorders[sys.byteorder]),
 }
+
+
+def deprecation_warn( module ):
+  global have_warned
+
+  if have_warned == 1:
+      return
+
+  have_warned = 1
+
+  from warnings import warn
+  warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
+       DeprecationWarning)
+
 
 
 def UseExceptions(*args):
