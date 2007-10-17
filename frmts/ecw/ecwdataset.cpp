@@ -924,6 +924,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                             (void **) papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
         {
+            CPLFree( papabyBIL );
             CPLFree( pabyBILScanline );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "NCScbmReadViewLineBIL failed." );
@@ -940,6 +941,9 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                 nBufXSize );
         }
     }
+
+    CPLFree( pabyBILScanline );
+    CPLFree( papabyBIL );
 
     return CE_None;
 }
