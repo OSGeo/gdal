@@ -181,7 +181,7 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
     {
         if (!bTestOpenNoError)
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Open() failed for %s", m_pszFname);
+                     "Open() failed for %s (%s)", m_pszFname, pszAccess);
 
         CPLFree(m_pszFname);
         m_pszFname = NULL;
