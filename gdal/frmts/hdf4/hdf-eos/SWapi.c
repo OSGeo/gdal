@@ -1601,32 +1601,33 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	if (statmeta == 0)
 	{
 	    if (strcmp(utlstr, "DFNT_UCHAR8") == 0)
-		*numbertype = 3;
+		*numbertype = DFNT_UCHAR8;
 	    else if (strcmp(utlstr, "DFNT_CHAR8") == 0)
-		*numbertype = 4;
+		*numbertype = DFNT_CHAR8;
 	    else if (strcmp(utlstr, "DFNT_FLOAT32") == 0)
-		*numbertype = 5;
+		*numbertype = DFNT_FLOAT32;
 	    else if (strcmp(utlstr, "DFNT_FLOAT64") == 0)
-		*numbertype = 6;
+		*numbertype = DFNT_FLOAT64;
 	    else if (strcmp(utlstr, "DFNT_INT8") == 0)
-		*numbertype = 20;
+		*numbertype = DFNT_INT8;
 	    else if (strcmp(utlstr, "DFNT_UINT8") == 0)
-		*numbertype = 21;
+		*numbertype = DFNT_UINT8;
 	    else if (strcmp(utlstr, "DFNT_INT16") == 0)
-		*numbertype = 22;
+		*numbertype = DFNT_INT16;
 	    else if (strcmp(utlstr, "DFNT_UINT16") == 0)
-		*numbertype = 23;
+		*numbertype = DFNT_UINT16;
 	    else if (strcmp(utlstr, "DFNT_INT32") == 0)
-		*numbertype = 24;
+		*numbertype = DFNT_INT32;
 	    else if (strcmp(utlstr, "DFNT_UINT32") == 0)
-		*numbertype = 25;
+		*numbertype = DFNT_UINT32;
+            else
+                *numbertype = DFNT_NONE;
 	}
 	else
 	{
 	    status = -1;
 	    HEpush(DFE_GENAPP, "SWfieldinfo", __FILE__, __LINE__);
-	    HEreport(
-		     "\"DataType\" string not found in metadata.\n");
+	    HEreport("\"DataType\" string not found in metadata.\n");
 	}
 
 
@@ -1648,8 +1649,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	{
 	    status = -1;
 	    HEpush(DFE_GENAPP, "SWfieldinfo", __FILE__, __LINE__);
-	    HEreport(
-		     "\"DimList\" string not found in metadata.\n");
+	    HEreport("\"DimList\" string not found in metadata.\n");
 	}
 
 	/* If dimension list is desired by user then initialize length to 0 */
