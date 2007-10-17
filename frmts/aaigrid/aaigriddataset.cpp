@@ -717,7 +717,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  "dy           %.12f\n", 
                  nXSize, nYSize, 
                  adfGeoTransform[0], 
-                 adfGeoTransform[3]- nYSize * adfGeoTransform[1],
+                 adfGeoTransform[3]- nYSize * adfGeoTransform[5],
                  adfGeoTransform[1],
                  fabs(adfGeoTransform[5]) );
     }
