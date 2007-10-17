@@ -102,10 +102,33 @@ def netcdf_2():
     gdaltest.clean_tmp()
 
     return 'success'
+
+###############################################################################
+
+def netcdf_3():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/sombrero.grd' )
+    bnd = ds.GetRasterBand(1)
+    minmax = bnd.ComputeRasterMinMax()
+
+    if abs(minmax[0] - (-0.675758)) > 0.000001 or abs(minmax[1] - 1.0) > 0.000001:
+        gdaltest.post_reason( 'Wrong min or max.' )
+        return 'fail'
+
+    bnd = None
+    ds = None
+
+    return 'success'
     
+###############################################################################
+
 gdaltest_list = [
     netcdf_1,
-    netcdf_2 ]
+    netcdf_2,
+    netcdf_3 ]
 
 
 if __name__ == '__main__':
