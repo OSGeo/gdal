@@ -505,7 +505,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if netcdf library is available.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(netcdf,[  --with-netcdf[=ARG]     Include netCDF support (ARG=no or netCDF tree prefix)],,)
+AC_ARG_WITH([netcdf],[  --with-netcdf[=ARG]     Include netCDF support (ARG=no or netCDF tree prefix)],,)
 
 if test "$with_netcdf" = "no" ; then
 
@@ -515,7 +515,7 @@ if test "$with_netcdf" = "no" ; then
 
 elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 
-  AC_CHECK_LIB(netcdf,nc_open,NETCDF_SETTING=yes,NETCDF_SETTING=no,)
+  AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
 
   if test "$NETCDF_SETTING" = "yes" ; then   
     LIBS="-lnetcdf $LIBS"
@@ -533,7 +533,7 @@ else
   echo "using libnetcdf from $with_netcdf."
 fi
 
-AC_SUBST(NETCDF_SETTING,$NETCDF_SETTING)
+AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
 
 if test "$NETCDF_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
@@ -543,7 +543,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a PNG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(png,[  --with-png[=ARG]        Include PNG support (ARG=internal, no or path)],,)
+AC_ARG_WITH([png], [  --with-png[=ARG]        Include PNG support (ARG=internal, no or path)],,)
 
 if test "$with_png" = "no" ; then
 
@@ -553,8 +553,8 @@ if test "$with_png" = "no" ; then
 
 elif test "$with_png" = "yes" -o "$with_png" = "" ; then
 
-  AC_CHECK_LIB(png,png_set_IHDR,PNG_SETTING=external,PNG_SETTING=internal,$LIBS)
-  AC_CHECK_HEADERS(png.h)
+  AC_CHECK_LIB([png], [png_set_IHDR], [PNG_SETTING=external], [PNG_SETTING=internal], [$LIBS])
+  AC_CHECK_HEADERS([png.h])
 
   if test "$PNG_SETTING" = "external" -a "$ac_cv_header_png_h" = "no" ; then   
     PNG_SETTING=internal
@@ -582,7 +582,7 @@ else
 
 fi
 
-AC_SUBST(PNG_SETTING,$PNG_SETTING)
+AC_SUBST([PNG_SETTING], [$PNG_SETTING])
 
 if test "$PNG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="png $OPT_GDAL_FORMATS"
