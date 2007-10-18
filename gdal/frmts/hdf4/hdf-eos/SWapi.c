@@ -1626,7 +1626,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	else
 	{
 	    status = -1;
-	    HEpush(DFE_GENAPP, "SWfieldinfo", __FILE__, __LINE__);
+	    HEpush(DFE_GENAPP, "SWfinfo", __FILE__, __LINE__);
 	    HEreport("\"DataType\" string not found in metadata.\n");
 	}
 
@@ -1648,7 +1648,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	else
 	{
 	    status = -1;
-	    HEpush(DFE_GENAPP, "SWfieldinfo", __FILE__, __LINE__);
+	    HEpush(DFE_GENAPP, "SWfinfo", __FILE__, __LINE__);
 	    HEreport("\"DimList\" string not found in metadata.\n");
 	}
 
@@ -3637,7 +3637,6 @@ SWinqattrs(int32 swathID, char *attrnames, int32 * strbufsize)
     int32           dum;	/* dummy variable */
     int32           nattr = 0;	/* Number of attributes */
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-
 
     /* Check Swath id */
     status = SWchkswid(swathID, "SWinqattrs", &fid, &dum, &dum);
@@ -10385,7 +10384,7 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], int32 mode)
                 if (range[1] > idxmap[scene_cnt*2 - 1])
                 {
                    range[1] = idxmap[scene_cnt*2 - 1];
-                   fprintf(stderr,"Data length compared to geolocation length\n");
+                   HEreport("Data length compared to geolocation length\n");
                 }
              }
              if(band82flag == 1 || band83flag == 1)
@@ -10395,7 +10394,8 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], int32 mode)
              if(tmprange0 >= idxmap[scene_cnt * 2 - 1])
              {
                 HEpush(DFE_GENAPP, "SWdefscanregion", __FILE__, __LINE__);
-                HEreport("Range values not within bounds of Latitude/Longitude field(s)\n");
+                HEreport(
+            "Range values not within bounds of Latitude/Longitude field(s)\n");
                 if (dfieldlist != NULL)
                    free(dfieldlist);
                 free(tfieldname);
@@ -11940,7 +11940,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                               if(indexin[j] == 0 || indexin[j+1] == 0)
                                  i = scene_cnt;
                            }
-                        } 	
+                        }	
                      }
 
                      if(startReg > (indexin[j - 1] + indexoffset - detect_cnt ))
@@ -11977,7 +11977,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
                      }
                   }
                }
-            } 					/* end of if for floating scene update */
+            }		/* end of if for floating scene update */
             else
             {
 	       /* If start of region is odd then increment */
@@ -12071,7 +12071,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 indexin[], int32 indexout[],
 |   Date     Programmer   Description                                         |
 |  ======   ============  =================================================   |
 |  Aug 97   Abe Taaheri   Original Programmer                                 |
-|  Sept 97  DaW 	  Modified return value so errors can be trapped
+|  Sept 97  DaW           Modified return value so errors can be trapped      |
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
@@ -12168,6 +12168,56 @@ SWgeomapinfo(int32 swathID, char *geodim)
 
     free(utlstrr);
     free(utlstri);
+
+    return (status);
+}
+
+/*----------------------------------------------------------------------------|
+|  BEGIN_PROLOG                                                               |
+|                                                                             |
+|  FUNCTION: SWsdid                                                           |
+|                                                                             |
+|  DESCRIPTION: Returns SD element ID for swath field                         |
+|                                                                             |
+|                                                                             |
+|  Return Value    Type     Units     Description                             |
+|  ============   ======  =========   =====================================   |
+|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|                                                                             |
+|  INPUTS:                                                                    |
+|  swathID        int32               swath structure ID                      |
+|  fieldname      const char          field name                              |
+|                                                                             |
+|                                                                             |
+|  OUTPUTS:                                                                   |
+|  sdid           int32               SD element ID                           |
+|                                                                             |
+|  NONE                                                                       |
+|                                                                             |
+|  NOTES:                                                                     |
+|                                                                             |
+|                                                                             |
+|   Date     Programmer   Description                                         |
+|  ======   ============  =================================================   |
+|  Oct 07   Andrey Kiselev  Original Programmer                               |
+|                                                                             |
+|  END_PROLOG                                                                 |
+-----------------------------------------------------------------------------*/
+intn
+SWsdid(int32 swathID, const char *fieldname, int32 *sdid)
+{
+    intn            status;	        /* routine return status variable */
+    int32           fid;	        /* HDF-EOS file ID */
+    int32           sdInterfaceID;      /* HDF SDS interface ID */
+    int32           dum;	        /* Dummy variable */
+    int32           dims[MAX_VAR_DIMS]; /* Field/SDS dimensions */
+
+    status = SWchkswid(swathID, "SWsdid", &fid, &sdInterfaceID, &dum);
+    if (status != -1)
+    {
+        status = SWSDfldsrch(swathID, sdInterfaceID, fieldname,
+                             sdid, &dum, &dum, &dum, dims, &dum);
+    }
 
     return (status);
 }
