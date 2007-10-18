@@ -175,7 +175,7 @@ intn SWclose(int32);
 int32 SWupdateidxmap(int32, int32, int32 [], int32 [], int32 []);
 intn SWgeomapinfo(int32, char *);
 intn SWupdatescene(int32, int32);
-
+intn SWsdid(int32, const char *, int32 *);
 
 /* Grid Prototypes */
 int32 GDopen(char *, intn);
