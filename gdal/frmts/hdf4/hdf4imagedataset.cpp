@@ -107,16 +107,16 @@ class HDF4ImageDataset : public HDF4Dataset
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
 
-    static long         USGSMnemonicToCode( const char* );
-    void                ReadCoordinates( const char*, double*, double* );
     void                ToGeoref( double *, double * );
-    char**              GetSwatAttrs( int32 hSW, char **papszMetadata );
+    void                GetSwatAttrs( int32 );
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
     void                CaptureNRLGeoTransform(void);
     void                CaptureCoastwatchGCTPInfo(void);
     void                ProcessModisSDSGeolocation(void);
-    int                 ProcessSwathGeolocation( int32 hSW, 
-                                                 char **papszDimList );
+    int                 ProcessSwathGeolocation( int32, char ** );
+
+    static long         USGSMnemonicToCode( const char* );
+    static void         ReadCoordinates( const char*, double*, double* );
 
   public:
                 HDF4ImageDataset();
@@ -1181,10 +1181,13 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 /*                            GetSwatAttrs()                            */
 /************************************************************************/
 
-char**  HDF4ImageDataset::GetSwatAttrs( int32 hSW, char **papszMetadata )
+void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
 {
     int32       nStrBufSize = 0;
 
+/* -------------------------------------------------------------------- */
+/*      At the start we will fetch the esoteric HDF-EOS attributes.     */
+/* -------------------------------------------------------------------- */
     if ( SWinqattrs( hSW, NULL, &nStrBufSize ) > 0 && nStrBufSize > 0 )
     {
         char    *pszAttrList;
@@ -1220,16 +1223,17 @@ char**  HDF4ImageDataset::GetSwatAttrs( int32 hSW, char **papszMetadata )
             if ( iNumType == DFNT_CHAR8 || iNumType == DFNT_UCHAR8 )
             {
                 ((char *)pData)[nValues] = '\0';
-                papszMetadata = CSLAddNameValue( papszMetadata,
-                                                 papszAttributes[i], 
-                                                 (const char *) pData );
+                papszLocalMetadata = CSLAddNameValue( papszLocalMetadata,
+                                                      papszAttributes[i], 
+                                                      (const char *) pData );
             }
             else
             {
                 pszTemp = SPrintArray( GetDataType(iNumType), pData,
                                        nValues, ", " );
-                papszMetadata = CSLAddNameValue( papszMetadata,
-                                                 papszAttributes[i], pszTemp );
+                papszLocalMetadata = CSLAddNameValue( papszLocalMetadata,
+                                                      papszAttributes[i],
+                                                      pszTemp );
                 if ( pszTemp )
                     CPLFree( pszTemp );
             }
@@ -1243,13 +1247,14 @@ char**  HDF4ImageDataset::GetSwatAttrs( int32 hSW, char **papszMetadata )
         CPLFree( pszAttrList );
     }
 
-#if 0
-    // TODO: there should be generic attribute read routine. Generic SDS
-    // attributes should be appended to the list of metadata. The problem
-    // is to determine active SDS Id, it is not trivial, because HDF-EOS swath
-    // can contain several SDSs, so we should probably read attributes for
-    // each SDS. The same applies for GetGridAttrs().
-        int32	    iRank, iNumType, iAttribute, nAttrs, iSDS, hSD, nValues;
+/* -------------------------------------------------------------------- */
+/*      After fetching HDF-EOS specific stuff we will read the generic  */
+/*      HDF attributes and append them to the list of metadata.         */
+/* -------------------------------------------------------------------- */
+    int32   iSDS;
+    if ( SWsdid(hSW, pszFieldName, &iSDS) != -1 )
+    {
+        int32	    iRank, iNumType, iAttribute, nAttrs, nValues;
         char        szName[HDF4_SDS_MAXNAMELEN];
         int32       aiDimSizes[MAX_VAR_DIMS];
         
@@ -1261,15 +1266,13 @@ char**  HDF4ImageDataset::GetSwatAttrs( int32 hSW, char **papszMetadata )
                 char    szAttrName[MAX_NC_NAME];
                 SDattrinfo( iSDS, iAttribute, szAttrName,
                             &iNumType, &nValues );
-                papszMetadata =
+                papszLocalMetadata =
                     TranslateHDF4Attributes( iSDS, iAttribute,
                                              szAttrName, iNumType,
-                                             nValues, papszMetadata );
+                                             nValues, papszLocalMetadata );
             }
         }
-#endif
-
-    return papszMetadata;
+    }
 }
 
 /************************************************************************/
@@ -1737,8 +1740,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
         {
             // Constuct the metadata keys.
             // A band number is taken from the field name.
-            char *pszBand = strpbrk( pszFieldName,
-                                     "0123456789" );
+            const char *pszBand = strpbrk( pszFieldName, "0123456789" );
 
             if ( !pszBand )
                 pszBand = "";
@@ -2188,7 +2190,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 // If didn't get a band dimension yet, but have an extra
                 // dimension, use it as the band dimension. 
-
                 if( poDS->iRank > 2 && poDS->iBandDim == -1 )
                 {
                     if( poDS->iXDim != 0 && poDS->iYDim != 0 )
@@ -2200,9 +2201,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                     nBands = poDS->aiDimSizes[poDS->iBandDim];
                 }
-                poDS->iXDim = nDimCount - 1;
-                poDS->iYDim = nDimCount - 2;
-                nBands = poDS->aiDimSizes[poDS->iBandDim];
 
 #if DEBUG
                 CPLDebug( "HDF4Image",
@@ -2233,8 +2231,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->ReadGlobalAttributes( poDS->hSD );
                     poDS->papszLocalMetadata =
                         CSLDuplicate( poDS->papszGlobalMetadata );
-                    poDS->papszLocalMetadata = 
-                        poDS->GetSwatAttrs( hSW, poDS->papszLocalMetadata );
+                    poDS->GetSwatAttrs( hSW );
                     poDS->SetMetadata( poDS->papszLocalMetadata );
                 }
 
@@ -2457,9 +2454,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
       {
           int32   iSDS;
 
-/* -------------------------------------------------------------------- */
-/*  Part, common for all types of SDSs.                                 */
-/* -------------------------------------------------------------------- */
           if( poOpenInfo->eAccess == GA_ReadOnly )
               poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
           else
