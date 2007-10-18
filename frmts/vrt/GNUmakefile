@@ -18,4 +18,5 @@ install-obj:	$(O_OBJ)
 $(OBJ) $(O_OBJ):	vrtdataset.h
 
 install:
-	$(INSTALL_DATA) vrtdataset.h gdal_vrt.h $(DESTDIR)$(INST_INCLUDE)
+	$(INSTALL_DATA) vrtdataset.h $(DESTDIR)$(INST_INCLUDE)
+	$(INSTALL_DATA) gdal_vrt.h $(DESTDIR)$(INST_INCLUDE)
