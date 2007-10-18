@@ -477,6 +477,16 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDS,
     // ----------------------------------------------------------------
 
     pabyRLEBlock = (GByte*) CPLMalloc( nRLESize );
+
+    // ----------------------------------------------------------------
+    // Set a black and white Color Table
+    // ----------------------------------------------------------------
+
+	if( eFormat == RunLengthEncoded )
+	{
+        BlackWhiteCT();
+	}
+
 }
 
 //  ----------------------------------------------------------------------------
@@ -631,21 +641,7 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
 
 	if( eFormat == CCITTGroup4 )
 	{
-		GDALColorEntry oEntry;
-
-		oEntry.c1 = (short) 255;
-		oEntry.c2 = (short) 255;
-		oEntry.c3 = (short) 255;
-		oEntry.c4 = (short) 255;
-
-		poColorTable->SetColorEntry( 0, &oEntry );
-
-		oEntry.c1 = (short) 0;
-		oEntry.c2 = (short) 0;
-		oEntry.c3 = (short) 0;
-		oEntry.c4 = (short) 255;
-
-		poColorTable->SetColorEntry( 1, &oEntry );
+        BlackWhiteCT();
 	}
 
     // ----------------------------------------------------------------
@@ -915,6 +911,10 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
     return CE_None;
 }
 
+//  ----------------------------------------------------------------------------
+//                                       IntergraphRasterBand::FlushBandHeader()
+//  ----------------------------------------------------------------------------
+
 void IntergraphRasterBand::FlushBandHeader( void )
 {
     if( nRGBIndex > 1 )
@@ -955,4 +955,27 @@ void IntergraphRasterBand::FlushBandHeader( void )
     VSIFWriteL( &hHeaderTwo, 1, SIZEOF_HDR2_A, poGDS->fp );
 #endif
     VSIFWriteL( &hCTab,      1, SIZEOF_CTAB,   poGDS->fp );
+}
+
+//  ----------------------------------------------------------------------------
+//                                          IntergraphRasterBand::BlackWhiteCT()
+//  ----------------------------------------------------------------------------
+
+void IntergraphRasterBand::BlackWhiteCT( void )
+{
+	GDALColorEntry oEntry;
+
+	oEntry.c1 = (short) 255;
+	oEntry.c2 = (short) 255;
+	oEntry.c3 = (short) 255;
+	oEntry.c4 = (short) 255;
+
+	poColorTable->SetColorEntry( 0, &oEntry );
+
+	oEntry.c1 = (short) 0;
+	oEntry.c2 = (short) 0;
+	oEntry.c3 = (short) 0;
+	oEntry.c4 = (short) 255;
+
+	poColorTable->SetColorEntry( 1, &oEntry );
 }

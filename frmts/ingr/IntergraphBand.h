@@ -78,6 +78,7 @@ protected:
     int  LoadBlockBuf( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void ReshapeBlock( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void FlushBandHeader( void );
+    void BlackWhiteCT( void );
 };
 
 //  ----------------------------------------------------------------------------
