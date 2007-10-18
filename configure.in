@@ -606,6 +606,8 @@ if test "$with_libtiff" = "yes" -o "$with_libtiff" = "" ; then
     AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
     dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
     AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
+  else
+    HAVE_BIGTIFF=yes
   fi
 
   if test "$TIFF_SETTING" = "external" ; then   
