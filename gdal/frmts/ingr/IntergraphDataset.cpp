@@ -682,7 +682,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
 CPLErr  IntergraphDataset::GetGeoTransform( double *padfTransform )
 {
-    INGR_GetTransMatrix( hHeaderOne.TransformationMatrix, padfTransform );
+    INGR_GetTransMatrix( hHeaderOne.TransformationMatrix, adfGeoTransform );
 
     if( adfGeoTransform[0] == 0.0 &&
         adfGeoTransform[1] == 0.0 &&

@@ -221,6 +221,7 @@ void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransfo
         padfMatrix[i] = 0.0;
     }
 
+    padfMatrix[10] = 1.0;
     padfMatrix[15] = 1.0;
 
     padfMatrix[3] = padfGeoTransform[0] + padfGeoTransform[1] / 2;
@@ -923,7 +924,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne)
     // -------------------------------------------------------------------- 
 
     if( pHeaderOne->GridFileVersion == 1 ||
-      ( pHeaderOne->GridFileVersion == 2 &&
+      ( pHeaderOne->GridFileVersion == 2 && 
         ( pHeaderOne->TransformationMatrix[10] != 1.0 && 
           pHeaderOne->TransformationMatrix[15] != 1.0 ) ) )
     {
