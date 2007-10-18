@@ -293,10 +293,9 @@ typedef struct
      * be filled with NODATA marker.
      */
     GUInt32 nMaxPoints;
-    /*! Minimum number of data points to use.
+    /*! Maximum number of data points to use.
      *
-     * If less amount of points found the grid node considered empty and will
-     * be filled with NODATA marker.
+     * Do not search for more points than this number.
      */
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
