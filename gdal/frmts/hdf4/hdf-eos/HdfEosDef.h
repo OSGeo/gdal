@@ -4,7 +4,7 @@
  * This module has a number of additions and improvements over the original
  * implementation to be suitable for usage in GDAL HDF driver.
  *
- * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all the changes.
  ****************************************************************************/
 
 /*
@@ -231,6 +231,7 @@ intn GDrs2ll(int32, float64 [], int32, int32,
 	     float64 [], float64 [],
 	     int32, float64 [], float64 [],
 	     float64 [], float64 [], int32, int32);
+intn GDsdid(int32, const char *, int32 *);
 
 /* Point Prototypes */
 int32 PTopen(char *, intn);
