@@ -224,7 +224,12 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 /*      Open the index file.                                            */
 /* -------------------------------------------------------------------- */
     poINDFile = new TABINDFile();
-    if( poINDFile->Open( pszMetadataFilename, "r+" ) != 0 )
+
+    /* NOTE: Replaced r+ with r according to explanation in Ticket #1620.
+     * This change has to be observed if it doesn't cause any
+     * problems in future. (mloskot)
+     */
+    if( poINDFile->Open( pszMetadataFilename, "r" ) != 0 )
     {
         CPLDestroyXMLNode( psRoot );
         CPLError( CE_Failure, CPLE_OpenFailed,
