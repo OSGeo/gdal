@@ -1225,8 +1225,8 @@ IdrisiRasterBand::~IdrisiRasterBand()
 /************************************************************************/
 
 CPLErr IdrisiRasterBand::IReadBlock( int nBlockXOff, 
-                                    int nBlockYOff,
-                                    void *pImage )
+                                     int nBlockYOff,
+                                     void *pImage )
 {
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
@@ -1388,12 +1388,14 @@ double IdrisiRasterBand::GetNoDataValue( int *pbSuccess )
     if( ! EQUAL( pszFlagDefn, "none" ) )
     {
         dfNoData = atof_nz( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_VALUE ) );
-        *pbSuccess = TRUE;
+        if( pbSuccess )
+            *pbSuccess = TRUE;
     }
     else
     {
         dfNoData = -9999.0;    /* this value should be ignored */
-        *pbSuccess = FALSE;
+        if( pbSuccess )
+            *pbSuccess = FALSE;
     }
 
     return dfNoData;
