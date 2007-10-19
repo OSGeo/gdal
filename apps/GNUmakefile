@@ -77,6 +77,10 @@ gdalwarpsimple$(EXE): gdalwarpsimple.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalwarpsimple.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalwarpsimple$(EXE)
 
+gdaltransform$(EXE): gdaltransform.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdaltransform.o $(XTRAOBJ) \
+		$(CONFIG_LIBS) -o gdaltransform$(EXE)
+
 ogrinfo$(EXE):	ogrinfo.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) ogrinfo.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o ogrinfo$(EXE)
