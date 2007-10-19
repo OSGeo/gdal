@@ -109,7 +109,7 @@ class HDF4ImageDataset : public HDF4Dataset
 
     void                ToGeoref( double *, double * );
     void                GetSwatAttrs( int32 );
-    char**              GetGridAttrs( int32 hGD, char **papszMetadata );
+    void                GetGridAttrs( int32 hGD );
     void                CaptureNRLGeoTransform(void);
     void                CaptureCoastwatchGCTPInfo(void);
     void                ProcessModisSDSGeolocation(void);
@@ -1279,10 +1279,13 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
 /*                            GetGridAttrs()                            */
 /************************************************************************/
 
-char**  HDF4ImageDataset::GetGridAttrs( int32 hGD, char **papszMetadata )
+void HDF4ImageDataset::GetGridAttrs( int32 hGD )
 {
     int32       nStrBufSize = 0;
 
+/* -------------------------------------------------------------------- */
+/*      At the start we will fetch the esoteric HDF-EOS attributes.     */
+/* -------------------------------------------------------------------- */
     if ( GDinqattrs( hGD, NULL, &nStrBufSize ) > 0 && nStrBufSize > 0 )
     {
         char    *pszAttrList;
@@ -1316,16 +1319,17 @@ char**  HDF4ImageDataset::GetGridAttrs( int32 hGD, char **papszMetadata )
             if ( iNumType == DFNT_CHAR8 || iNumType == DFNT_UCHAR8 )
             {
                 ((char *)pData)[nValues] = '\0';
-                papszMetadata = CSLAddNameValue( papszMetadata,
-                                                 papszAttributes[i], 
-                                                 (const char *) pData );
+                papszLocalMetadata = CSLAddNameValue( papszLocalMetadata,
+                                                      papszAttributes[i],
+                                                      (const char *) pData );
             }
             else
             {
                 pszTemp = SPrintArray( GetDataType(iNumType), pData,
                                        nValues, ", " );
-                papszMetadata = CSLAddNameValue( papszMetadata,
-                                                 papszAttributes[i], pszTemp );
+                papszLocalMetadata = CSLAddNameValue( papszLocalMetadata,
+                                                      papszAttributes[i],
+                                                      pszTemp );
                 if ( pszTemp )
                     CPLFree( pszTemp );
             }
@@ -1339,7 +1343,32 @@ char**  HDF4ImageDataset::GetGridAttrs( int32 hGD, char **papszMetadata )
         CPLFree( pszAttrList );
     }
 
-    return papszMetadata;
+/* -------------------------------------------------------------------- */
+/*      After fetching HDF-EOS specific stuff we will read the generic  */
+/*      HDF attributes and append them to the list of metadata.         */
+/* -------------------------------------------------------------------- */
+    int32   iSDS;
+    if ( GDsdid(hGD, pszFieldName, &iSDS) != -1 )
+    {
+        int32	    iRank, iNumType, iAttribute, nAttrs, nValues;
+        char        szName[HDF4_SDS_MAXNAMELEN];
+        int32       aiDimSizes[MAX_VAR_DIMS];
+        
+	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
+                       &nAttrs) == 0 )
+        {
+            for ( iAttribute = 0; iAttribute < nAttrs; iAttribute++ )
+            {
+                char    szAttrName[MAX_NC_NAME];
+                SDattrinfo( iSDS, iAttribute, szAttrName,
+                            &iNumType, &nValues );
+                papszLocalMetadata =
+                    TranslateHDF4Attributes( iSDS, iAttribute,
+                                             szAttrName, iNumType,
+                                             nValues, papszLocalMetadata );
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -2432,8 +2461,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->ReadGlobalAttributes( poDS->hSD );
                 poDS->papszLocalMetadata =
                     CSLDuplicate( poDS->papszGlobalMetadata );
-                poDS->papszLocalMetadata = 
-                    poDS->GetGridAttrs( hGD, poDS->papszLocalMetadata );
+                poDS->GetGridAttrs( hGD );
                 poDS->SetMetadata( poDS->papszLocalMetadata );
 
                 CSLDestroy( papszDimList );
