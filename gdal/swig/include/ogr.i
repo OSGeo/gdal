@@ -410,11 +410,11 @@ public:
   %newobject ExecuteSQL;
   %feature( "kwargs" ) ExecuteSQL;
   OGRLayerShadow *ExecuteSQL(const char* statement,
-                        OGRGeometryShadow* geom=NULL,
+                        OGRGeometryShadow* spatialFilter=NULL,
                         const char* dialect="") {
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL((OGRDataSourceShadow*)self,
                                                       statement,
-                                                      geom,
+                                                      spatialFilter,
                                                       dialect);
     return layer;
   }
