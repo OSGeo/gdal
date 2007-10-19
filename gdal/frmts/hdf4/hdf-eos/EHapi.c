@@ -4,7 +4,7 @@
  * This module has a number of additions and improvements over the original
  * implementation to be suitable for usage in GDAL HDF driver.
  *
- * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all the changes.
  ****************************************************************************/
 
 /*
@@ -15,10 +15,6 @@ for any purpose without fee is hereby granted, provided that the above
 copyright notice appear in all copies and that both that copyright notice and 
 this permission notice appear in supporting documentation.
 */
-#ifdef WIN32
-#include <windows.h>	//bwf
-#include <winbase.h>	//bwf
-#endif
 
 #include <errno.h>
 #include "mfhdf.h"
@@ -26,10 +22,10 @@ this permission notice appear in supporting documentation.
 
 /* Set maximun number of HDF-EOS files to HDF limit (MAX_FILE) */
 #define NEOSHDF MAX_FILE
-uint8 EHXtypeTable[NEOSHDF];
-uint8 EHXacsTable[NEOSHDF];
-int32 EHXfidTable[NEOSHDF];
-int32 EHXsdTable[NEOSHDF];
+static uint8 EHXtypeTable[NEOSHDF];
+static uint8 EHXacsTable[NEOSHDF];
+static int32 EHXfidTable[NEOSHDF];
+static int32 EHXsdTable[NEOSHDF];
 
 /* define a macro for the string size of the utility strings and some dimension
    list strings. The value in previous versions of this code may not be 
@@ -47,12 +43,8 @@ int32 EHXsdTable[NEOSHDF];
 
 #define MAX_RETRIES 10
 
-#define INT32  INT
-#define INT32V INTV
-#define PINT32 PINT
-
 /* Function Prototypes */
-intn EHmetalist(char *, char *);
+static intn EHmetalist(char *, char *);
 
 
 /*----------------------------------------------------------------------------|
