@@ -4,7 +4,7 @@
  * This module has a number of additions and improvements over the original
  * implementation to be suitable for usage in GDAL HDF driver.
  *
- * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all changes.
+ * Andrey Kiselev <dron@ak4719.spb.edu> is responsible for all the changes.
  ****************************************************************************/
 
 /*
@@ -100,9 +100,9 @@ extern  void inv_init(int32, int32, float64 *, int32, char *, char *, int32 *,
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
 #define M_PI1		3.14159265358979323846
 
-int32 GDXSDcomb[512*5];
-char  GDXSDname[HDFE_NAMBUFSIZE];
-char  GDXSDdims[HDFE_DIMBUFSIZE];
+static int32 GDXSDcomb[512*5];
+static char  GDXSDname[HDFE_NAMBUFSIZE];
+static char  GDXSDdims[HDFE_DIMBUFSIZE];
 
 
 #define NGRID 200
@@ -121,7 +121,7 @@ struct gridStructure
     int32 tilerank;
     int32 tiledims[8];
 };
-struct gridStructure GDXGrid[NGRID];
+static struct gridStructure GDXGrid[NGRID];
 
 
 
@@ -142,7 +142,7 @@ struct gridRegion
     int32 StopVertical[8];
     char *DimNamePtr[8];
 };
-struct gridRegion *GDXRegion[NGRIDREGN];
+static struct gridRegion *GDXRegion[NGRIDREGN];
 
 /* define a macro for the string size of the utility strings and some dimension
    list strings. The value of 80 in the previous version of this code 
@@ -152,7 +152,7 @@ struct gridRegion *GDXRegion[NGRIDREGN];
 #define UTLSTR_MAX_SIZE 512
 
 /* Static projection table */
-static struct {
+static const struct {
     int32 projcode;
     char *projname;
 } Projections[] = {
@@ -194,51 +194,52 @@ static struct {
     {-1,	   NULL}
 };
 
+/* Compression Codes */
+static const char *HDFcomp[] = {
+    "HDFE_COMP_NONE",
+    "HDFE_COMP_RLE",
+    "HDFE_COMP_NBIT",
+    "HDFE_COMP_SKPHUFF",
+    "HDFE_COMP_DEFLATE"
+};
+
+/* Origin Codes */
+static const char *originNames[] = {
+    "HDFE_GD_UL",
+    "HDFE_GD_UR",
+    "HDFE_GD_LL",
+    "HDFE_GD_LR"
+};
+
+/* Pixel Registration Codes */
+static const char *pixregNames[] = {
+    "HDFE_CENTER",
+    "HDFE_CORNER"
+};
 
 /* Grid Function Prototypes (internal routines) */
-intn GDchkgdid(int32, char *, int32 *, int32 *, int32 *);
-intn GDfldinfo(int32, char *, int32 *, int32 [], int32 *, char *);
-intn GDdeffld(int32, char *, char *, int32, int32);
-intn GDwrmeta(int32, char *, char *, int32);
-intn GDSDfldsrch(int32, int32, char *, int32 *, int32 *, 
-                 int32 *, int32 *, int32 [], int32 *);
-intn GDwrrdfield(int32, char *, char *,
-	    int32 [], int32 [], int32 [], VOIDP datbuf);
-intn GDwrfld(int32, char *, int32 [], int32 [], int32 [], VOIDP);
-intn GDrdfld(int32, char *, int32 [], int32 [], int32 [], VOIDP);
-intn GDwrrdattr(int32, char *, int32, int32, char *, VOIDP);
-intn GDll2ij(int32, int32, float64 [], int32, int32, int32, float64 [], 
-             float64 [], int32, float64 [], float64 [],	int32 [], int32 [],
-	     float64 [], float64 []);
-intn GDij2ll(int32, int32, float64 [], int32, int32, int32, 
-	     float64 [], float64 [], int32, int32 [], int32 [],
-	     float64 [], float64 [], int32, int32);
-intn GDreginfo(int32, int32, char *, int32 *, int32 *, int32 [], int32 *,
-	       float64 [], float64 []);
-intn  GDgetdefaults(int32, int32, float64 [], int32, float64 [], float64 []);
-int32 GDdefvrtreg(int32, int32, char *, float64 []);
-intn GDgetpix(int32, int32, float64 [], float64 [], int32 [], int32 []);
-int32 GDgetpixval(int32, int32, int32 [], int32 [], char *, VOIDP);
-intn GDtangentpnts(int32, float64 [], float64 [], float64 [], float64 [], 
-		   float64 [], int32 *);
-intn GDwrrdtile(int32, char *, char *, int32 [], VOIDP);
-intn GDdeftle(int32, int32, int32, int32 []);
-intn GDtleinfo(int32, char *, int32 *, int32 *, int32 []);
-intn GDwrtle(int32, char *, int32 [], VOIDP);
-intn GDrdtle(int32, char *, int32 [],  VOIDP);
-intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
-		 float64 projparm[],
-		 int32 xdimsize, int32 ydimsize,
-		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
-		 float64 lon[],float64 lat[],
-		 float64 x[],float64 y[], float64 *scaleX,float64 *scaleY);
+static intn GDchkgdid(int32, char *, int32 *, int32 *, int32 *);
+static intn GDSDfldsrch(int32, int32, const char *, int32 *, int32 *, 
+                        int32 *, int32 *, int32 [], int32 *);
+static intn GDwrrdfield(int32, char *, char *,
+                        int32 [], int32 [], int32 [], VOIDP datbuf);
+static intn GDwrrdattr(int32, char *, int32, int32, char *, VOIDP);
+static intn GDll2ij(int32, int32, float64 [], int32, int32, int32, float64[],
+                    float64[], int32, float64[], float64[], int32[], int32[],
+                    float64[], float64[]);
+static intn  GDgetdefaults(int32, int32, float64[], int32,
+                           float64[], float64[]);
+static intn GDtangentpnts(int32, float64[], float64[], float64[], float64[],
+                          float64 [], int32 *);
+static intn GDwrrdtile(int32, char *, char *, int32 [], VOIDP);
+static intn GDll2mm_cea(int32,int32, int32, float64[], int32, int32,
+                        float64[], float64[], int32, float64[],float64[],
+                        float64[], float64[], float64 *, float64 *);
 
-intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
-		 float64 projparm[],
-		 int32 xdimsize, int32 ydimsize,
-		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
-		 float64 x[], float64 y[], 
-		 float64 lon[], float64 lat[]);
+static intn GDmm2ll_cea(int32, int32, int32, float64[],	int32, int32,
+                        float64[], float64[], int32, float64[], float64[],
+                        float64[], float64[]);
+
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -848,7 +849,7 @@ GDattach(int32 fid, char *gridname)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+static intn
 GDchkgdid(int32 gridID, char *routname,
 	  int32 * fid, int32 * sdInterfaceID, int32 * gdVgrpID)
 {
@@ -858,10 +859,10 @@ GDchkgdid(int32 gridID, char *routname,
 
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
 
-    char            message1[] =
-    "Invalid grid id: %d in routine \"%s\".  ID must be >= %d and < %d.\n";
-    char            message2[] =
-    "Grid id %d in routine \"%s\" not active.\n";
+    static const char message1[] =
+        "Invalid grid id: %d in routine \"%s\".  ID must be >= %d and < %d.\n";
+    static const char message2[] =
+        "Grid id %d in routine \"%s\" not active.\n";
 
 
 
@@ -902,24 +903,6 @@ GDchkgdid(int32 gridID, char *routname,
     return (status);
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*----------------------------------------------------------------------------|
@@ -1394,63 +1377,6 @@ GDdeftile(int32 gridID, int32 tilecode, int32 tilerank, int32 tiledims[])
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDdeftle                                                         |
-|                                                                             |
-|  DESCRIPTION: FORTRAN wrapper around GDdetfile                              |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  tilecode       int32               tile code                               |
-|  tilerank       int32               number of tiling dimensions             |
-|  forttiledims   int32               tiling dimensions (FORTRAN order)       |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Mar 97   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDdeftle(int32 gridID, int32 tilecode, int32 tilerank, int32 forttiledims[])
-{
-    intn            j, status;
-    int32           dims[8];
-
-
-    /* Reverse order of dimensions (FORTRAN -> C) */
-    /* ------------------------------------------ */
-    for (j = 0; j < tilerank; j++)
-    {
-	dims[j] = forttiledims[tilerank - 1 - j];;
-    }
-
-
-    /* Call GDdeftile routine to define tile */
-    /* ------------------------------------- */
-    status = GDdeftile(gridID, tilecode, tilerank, dims);
-
-    return (status);
-}
-
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDdeforigin                                                      |
 |                                                                             |
 |  DESCRIPTION: Defines the origin of the grid data.                          |
@@ -1484,14 +1410,6 @@ GDdeftle(int32 gridID, int32 tilecode, int32 tilerank, int32 forttiledims[])
 intn
 GDdeforigin(int32 gridID, int32 origincode)
 {
-    /*
-     * intn            status = 0;
-     * 
-     * int32           fid, gdkey; int32           sdInterfaceID, idOffset =
-     * GDIDOFFSET;
-     * 
-     * char            utlbuf[64]; char            gridname[80];
-     */
     intn            status = 0;	/* routine return status variable */
 
     int32           fid;	/* HDF-EOS file ID */
@@ -1502,10 +1420,6 @@ GDdeforigin(int32 gridID, int32 origincode)
     char            utlbuf[64];	/* Utility buffer */
     char            gridname[80];	/* Grid name */
 
-    char           *originNames[] = {"HDFE_GD_UL", "HDFE_GD_UR",
-    "HDFE_GD_LL", "HDFE_GD_LR"};
-    /* Origin Codes */
-
 
     /* Check for valid grid id */
     status = GDchkgdid(gridID, "GDdeforigin",
@@ -1515,7 +1429,7 @@ GDdeforigin(int32 gridID, int32 origincode)
     {
 	/* If proper origin code then write to structural metadata */
 	/* ------------------------------------------------------- */
-	if (origincode >= 0 && origincode <= 3)
+	if (origincode >= 0 && origincode < sizeof(originNames))
 	{
 	    sprintf(utlbuf, "%s%s%s",
 		    "\t\tGridOrigin=", originNames[origincode], "\n");
@@ -1579,9 +1493,6 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     char            utlbuf[64];	/* Utility buffer */
     char            gridname[80];	/* Grid name */
 
-    char           *pixregNames[] = {"HDFE_CENTER", "HDFE_CORNER"};
-    /* Pixel Registration Codes */
-
     /* Check for valid grid id */
     status = GDchkgdid(gridID, "GDdefpixreg",
 		       &fid, &sdInterfaceID, &gdVgrpID);
@@ -1590,7 +1501,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     {
 	/* If proper pix reg code then write to structural metadata */
 	/* -------------------------------------------------------- */
-	if (pixregcode >= 0 && pixregcode <= 1)
+	if (pixregcode >= 0 && pixregcode < sizeof(pixregNames))
 	{
 	    sprintf(utlbuf, "%s%s%s",
 		    "\t\tPixelRegistration=", pixregNames[pixregcode], "\n");
@@ -2210,9 +2121,6 @@ GDorigininfo(int32 gridID, int32 * origincode)
     char            gridname[80];	/* Grid Name */
     char           *utlstr;	/* Utility string */
 
-    char           *originNames[] = {"HDFE_GD_UL", "HDFE_GD_UR",
-    "HDFE_GD_LL", "HDFE_GD_LR"};/* Origin Codes */
-
     /* Allocate space for utility string */
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
@@ -2263,7 +2171,7 @@ GDorigininfo(int32 gridID, int32 * origincode)
 	     * If "GridOrigin" string found in metadata then convert to
 	     * numeric origin code (fixed added: Jan 97)
 	     */
-	    for (i = 0; i < 4; i++)
+	    for (i = 0; i < sizeof(originNames); i++)
 	    {
 		if (strcmp(utlstr, originNames[i]) == 0)
 		{
@@ -2335,9 +2243,6 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
     char            gridname[80];	/* Grid Name */
     char           *utlstr;	/* Utility string */
 
-    char           *pixregNames[] = {"HDFE_CENTER", "HDFE_CORNER"};
-    /* Pixel Registration Codes */
-
     /* Allocate space for utility string */
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
@@ -2381,7 +2286,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 	     * to numeric origin code (fixed added: Jan 97)
 	     */
 
-	    for (i = 0; i < 2; i++)
+	    for (i = 0; i < sizeof(pixregNames); i++)
 	    {
 		if (strcmp(utlstr, pixregNames[i]) == 0)
 		{
@@ -2395,9 +2300,6 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
     free(utlstr);
     return (status);
 }
-
-
-
 
 
 
@@ -2449,11 +2351,6 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
     char            gridname[80];	/* Grid Name */
     char           *utlstr;/* Utility string */
-
-
-    char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
-	"HDFE_COMP_NBIT", "HDFE_COMP_SKPHUFF",
-    "HDFE_COMP_DEFLATE"};	/* Compression Codes */
 
     /* Allocate space for utility string */
     /* --------------------------------- */
@@ -2508,7 +2405,7 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
 		if (statmeta == 0)
 		{
 		    /* Loop through compression types until match */
-		    for (i = 0; i < 5; i++)
+		    for (i = 0; i < sizeof(HDFcomp); i++)
 		    {
 			if (strcmp(utlstr, HDFcomp[i]) == 0)
 			{
@@ -2820,81 +2717,6 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDfldinfo                                                        |
-|                                                                             |
-|  DESCRIPTION: FORTRAN wrapper around GDfieldinfo                            |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               grid structure id                       |
-|  fieldname      char                name of field                           |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  rank           int32               rank of field (# of dims)               |
-|  dims           int32               field dimensions                        |
-|  numbertype     int32               field number type                       |
-|  fortdimlist    char                field dimension list (FORTRAN order)    |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|  Jul 96   Joel Gales    Perform swap only if GDfieldinfo succesful          |
-|  May 00   Abe Taaheri   modified dynamic memoery allocation for dimlist to  |
-|                         static Allocation(NCR ECSed26831)
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDfldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
-	  int32 * numbertype, char *fortdimlist)
-{
-
-    intn            j, status;
-    int32           swap;
-    char            dimlist[UTLSTR_MAX_SIZE];
-
-
-    /* Call GDfieldinfo to get C dimensions */
-    /* ------------------------------------ */
-    status = GDfieldinfo(gridID, fieldname, rank, dims,
-			 numbertype, dimlist);
-
-
-    /* Convert to FORTRAN dimension order */
-    /* ---------------------------------- */
-    if (status == 0)
-    {
-	for (j = 0; j < *rank / 2; j++)
-	{
-	    swap = dims[*rank - 1 - j];
-	    dims[*rank - 1 - j] = dims[j];
-	    dims[j] = swap;
-	}
-
-
-	/* Convert dimlist to FORTRAN order */
-	/* -------------------------------- */
-	EHrevflds(dimlist, fortdimlist);
-    }
-    return (status);
-
-}
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDdeffield                                                       |
 |                                                                             |
 |  DESCRIPTION: Defines a new data field within the grid.                     |
@@ -2974,19 +2796,16 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
     char            parmbuf[128];	/* Parameter string buffer */
     char            errbuf1[128];	/* Error buffer 1 */
     char            errbuf2[128];	/* Error buffer 2 */
-    char           *errmsg1 = "Dimension: %d (size: %d) not divisible by ";
+    static const char errmsg1[] = "Dimension: %d (size: %d) not divisible by ";
     /* Tiling  error message part 1 */
-    char           *errmsg2 = "tile dimension (size:  %d).\n";
+    static const char errmsg2[] = "tile dimension (size:  %d).\n";
     /* Tiling  error message part 2 */
     char            errmsg[128];/* Tiling error message */
 
-    char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
-	"HDFE_COMP_NBIT", "HDFE_COMP_SKPHUFF",
-    "HDFE_COMP_DEFLATE"};
-    /* Compression code names */
-
-    uint16          good_number[10] = {3, 4, 5, 6, 20, 21, 22, 23, 24, 25};
     /* Valid number types */
+    static const uint16 good_number[10] = {
+        3, 4, 5, 6, 20, 21, 22, 23, 24, 25
+    };
 
     comp_info       c_info;	/* Compression parameter structure */
 
@@ -3691,135 +3510,6 @@ GDwritefieldmeta(int32 gridID, char *fieldname, char *dimlist,
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDdeffld                                                         |
-|                                                                             |
-|  DESCRIPTION:                                                               |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  fieldname      char                fieldname                               |
-|  fortdimlist    char                Dimension list (comma-separated list)   |
-|                                         FORTRAN dimesion order              |
-|  numbertype     int32               field type                              |
-|  merge          int32               merge code                              |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDdeffld(int32 gridID, char *fieldname, char *fortdimlist,
-	 int32 numbertype, int32 merge)
-
-{
-    intn            status = 0;	/* routine return status variable */
-    char           *dimlist;	/* Dimension list (C order) */
-
-    /* Allocate space for C order dimension list */
-    /* ----------------------------------------- */
-    dimlist = (char *) calloc(strlen(fortdimlist) + 1, 1);
-    if(dimlist == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"GDdeffld", __FILE__, __LINE__);
-	return(-1);
-    }
-
-    /* Reverse entries in dimension list (FORTRAN -> C) */
-    /* ------------------------------------------------ */
-    status = EHrevflds(fortdimlist, dimlist);
-
-
-    /* Call Define Field routine */
-    /* ------------------------- */
-    status = GDdeffield(gridID, fieldname, dimlist, numbertype, merge);
-
-    free(dimlist);
-    return (status);
-}
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: GDwrmeta                                                         |
-|                                                                             |
-|  DESCRIPTION:                                                               |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  fieldname      char                fieldname                               |
-|  fortdimlist    char                Dimension list (comma-separated list)   |
-|                                         FORTRAN dimesion order              |
-|  numbertype     int32               field type                              |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDwrmeta(int32 gridID, char *fieldname, char *fortdimlist,
-	 int32 numbertype)
-{
-    intn            status = 0;	/* routine return status variable */
-    char           *dimlist;	/* Dimension list (C order) */
-
-    /* Allocate space for C order dimension list */
-    /* ----------------------------------------- */
-    dimlist = (char *) calloc(strlen(fortdimlist) + 1, 1);
-    if(dimlist == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"GDwrmeta", __FILE__, __LINE__);
-	return(-1);
-    }
-
-    /* Reverse entries in dimension list (FORTRAN -> C) */
-    /* ------------------------------------------------ */
-    status = EHrevflds(fortdimlist, dimlist);
-
-
-    /* Call Write Metadata routine */
-    /* --------------------------- */
-    status = GDwritefieldmeta(gridID, fieldname, dimlist, numbertype);
-
-
-    free(dimlist);
-    return (status);
-}
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDSDfldsrch                                                      |
 |                                                                             |
 |  DESCRIPTION: Retrieves information from SDS fields                         |
@@ -3853,10 +3543,10 @@ GDwrmeta(int32 gridID, char *fieldname, char *fortdimlist,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDSDfldsrch(int32 gridID, int32 sdInterfaceID, char *fieldname, int32 * sdid,
-	    int32 * rankSDS, int32 * rankFld, int32 * offset, int32 dims[],
-	    int32 * solo)
+static intn
+GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
+            int32 * sdid, int32 * rankSDS, int32 * rankFld, int32 * offset,
+            int32 dims[], int32 * solo)
 {
     intn            i;		/* Loop index */
     intn            status = -1;/* routine return status variable */
@@ -4086,7 +3776,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, char *fieldname, int32 * sdid,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+static intn
 GDwrrdfield(int32 gridID, char *fieldname, char *code,
 	    int32 start[], int32 stride[], int32 edge[], VOIDP datbuf)
 
@@ -4415,212 +4105,6 @@ GDreadfield(int32 gridID, char *fieldname,
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDwrfld                                                          |
-|                                                                             |
-|  DESCRIPTION: Writes data to field (FORTRAN wrapper around GDwritefield)    |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  fieldname      char                fieldname                               |
-|  fortstart      int32               start array                             |
-|  fortstride     int32               stride array                            |
-|  fortedge       int32               edge array                              |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  data           void                data buffer for write                   |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDwrfld(int32 gridID, char *fieldname,
-	int32 fortstart[], int32 fortstride[], int32 fortedge[], VOIDP data)
-
-{
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           rank;	/* Field rank */
-    int32           ntype;	/* Field numbertype */
-    int32           dims[8];	/* Field dimensions */
-    int32          *start;	/* Pointer to start array (C order) */
-    int32          *stride;	/* Pointer to stride array (C order) */
-    int32          *edge;	/* Pointer to edge array (C order) */
-
-
-    status = GDfieldinfo(gridID, fieldname, &rank, dims, &ntype, NULL);
-
-    if (status == 0)
-    {
-	start = (int32 *) malloc(4 * rank);
-	if(start == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"GDwrfld", __FILE__, __LINE__);
-	    return(-1);
-	}
-	stride = (int32 *) malloc(4 * rank);
-	if(stride == NULL)
-        { 
-            HEpush(DFE_NOSPACE,"GDwrfld", __FILE__, __LINE__);
-            free(start);
-            return(-1);
-        }
-        edge = (int32 *) malloc(4 * rank);
-        if(edge == NULL)
-        { 
-            HEpush(DFE_NOSPACE,"GDwrfld", __FILE__, __LINE__);
-            free(start);
-            free(stride);
-            return(-1);
-        }
-
-	/* Reverse order of dimensions (FORTRAN -> C) */
-	/* ------------------------------------------ */
-	for (i = 0; i < rank; i++)
-	{
-	    start[i] = fortstart[rank - 1 - i];
-	    stride[i] = fortstride[rank - 1 - i];
-	    edge[i] = fortedge[rank - 1 - i];
-	}
-
-	status = GDwrrdfield(gridID, fieldname, "w", start, stride, edge,
-			     data);
-
-	free(start);
-	free(stride);
-	free(edge);
-    }
-    else
-    {
-	HEpush(DFE_GENAPP, "GDwrfld", __FILE__, __LINE__);
-	HEreport("Fieldname \"%s\" does not exist.\n", fieldname);
-	status = -1;
-    }
-
-    return (status);
-}
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: GDrdfld                                                          |
-|                                                                             |
-|  DESCRIPTION: Reads data from field (FORTRAN wrapper around GDreadfield)    |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  fieldname      char                fieldname                               |
-|  fortstart      int32               start array                             |
-|  fortstride     int32               stride array                            |
-|  fortedge       int32               edge array                              |
-|  buffer         void                data buffer for read                    |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|     None                                                                    |
-|                                                                             |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDrdfld(int32 gridID, char *fieldname, int32 fortstart[],
-	int32 fortstride[], int32 fortedge[], VOIDP buffer)
-
-{
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           rank;	/* Field rank */
-    int32           ntype;	/* Field numbertype */
-    int32           dims[8];	/* Field dimensions */
-    int32          *start;	/* Pointer to start array (C order) */
-    int32          *stride;	/* Pointer to stride array (C order) */
-    int32          *edge;	/* Pointer to edge array (C order) */
-
-
-    status = GDfieldinfo(gridID, fieldname, &rank, dims, &ntype, NULL);
-
-    if (status == 0)
-    {
-	start = (int32 *) malloc(4 * rank);
-        if(start == NULL)
-        { 
-            HEpush(DFE_NOSPACE,"GDrdfld", __FILE__, __LINE__);
-            return(-1);
-        }
-        stride = (int32 *) malloc(4 * rank);
-        if(stride == NULL)
-        { 
-            HEpush(DFE_NOSPACE,"GDrdfld", __FILE__, __LINE__);
-            free(start);
-            return(-1);
-        }
-        edge = (int32 *) malloc(4 * rank);
-        if(edge == NULL)
-        { 
-            HEpush(DFE_NOSPACE,"GDrdfld", __FILE__, __LINE__);
-            free(start);
-            free(stride);
-            return(-1);
-        }
-
-	/* Reverse order of dimensions (FORTRAN -> C) */
-	/* ------------------------------------------ */
-	for (i = 0; i < rank; i++)
-	{
-	    start[i] = fortstart[rank - 1 - i];
-	    stride[i] = fortstride[rank - 1 - i];
-	    edge[i] = fortedge[rank - 1 - i];
-	}
-
-
-	status = GDwrrdfield(gridID, fieldname, "r", start, stride, edge,
-			     buffer);
-
-	free(start);
-	free(stride);
-	free(edge);
-    }
-    else
-    {
-	HEpush(DFE_GENAPP, "GDrdfld", __FILE__, __LINE__);
-	HEreport("Fieldname \"%s\" does not exist.\n", fieldname);
-	status = -1;
-    }
-    return (status);
-}
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDwrrdattr                                                       |
 |                                                                             |
 |  DESCRIPTION:                                                               |
@@ -4651,7 +4135,7 @@ GDrdfld(int32 gridID, char *fieldname, int32 fortstart[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+static intn
 GDwrrdattr(int32 gridID, char *attrname, int32 numbertype, int32 count,
 	   char *wrcode, VOIDP datbuf)
 
@@ -6331,7 +5815,7 @@ GDclose(int32 fid)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+static intn
 GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	      int32 spherecode, float64 upleftpt[], float64 lowrightpt[])
 {
@@ -6876,7 +6360,7 @@ sincos(double val, double *sin_val, double *cos_val)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+static intn
 GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 	int32 spherecode, int32 xdimsize, int32 ydimsize,
 	float64 upleftpt[], float64 lowrightpt[],
@@ -7108,346 +6592,6 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 }
 
 
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: GDij2ll                                                          |
-|                                                                             |
-|  DESCRIPTION:                                                               |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  projcode       int32               GCTP projection code                    |
-|  zonecode       int32               UTM zone code                           |
-|  projparm       float64             Projection parameters                   |
-|  spherecode     int32               GCTP spheriod code                      |
-|  xdimsize       int32               xdimsize from GDcreate                  |
-|  ydimsize       int32               ydimsize from GDcreate                  |
-|  upleftpt       float64             upper left corner coordinates           |
-|  lowrightpt     float64             lower right corner coordinates          |
-|  pixcen         int32               pixel center code                       |
-|  npnts          int32               number of lon-lat points                |
-|  row            int32               Row array                               |
-|  col            int32               Column array                            |
-|  pixcen         int32               Code from GDpixreginfo                  |
-|  pixcnr         int32               Code from GDorigininfo                  |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  longitude      float64             longitude array (decimal degrees)       |
-|  latitude       float64             latitude array  (decimal degrees)       |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|  Aug 96   Joel Gales    Add support for GEO (linear) projection             |
-|  Feb 97   Joel Gales    Add pixel adjustment support for UR, LL, LR         |
-|  Jun 00   Abe Taaheri   Added support for EASE grid                         |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDij2ll(int32 projcode, int32 zonecode, float64 projparm[],
-	int32 spherecode, int32 xdimsize, int32 ydimsize,
-	float64 upleftpt[], float64 lowrightpt[],
-	int32 npnts, int32 row[], int32 col[],
-	float64 longitude[], float64 latitude[], int32 pixcen, int32 pixcnr)
-{
-    intn            i;		    /* Loop index */
-    intn            status = 0;	    /* routine return status variable */
-
-    int32           errorcode = 0;  /* GCTP error code */
-    int32(*inv_trans[100]) ();	    /* GCTP function pointer */
-    int32(*for_trans[100]) ();	    /* GCTP function pointer */
-
-    float64         pixadjX = 0.0;  /* Pixel adjustment (x) */
-    float64         pixadjY = 0.0;  /* Pixel adjustment (y) */
-    float64         lonrad0;	    /* Longitude in radians of upleft point */
-    float64         latrad0;	    /* Latitude in radians of upleft point */
-    float64         scaleX;	    /* X scale factor */
-    float64         scaleY;	    /* Y scale factor */
-    float64         lonrad;	    /* Longitude in radians of point */
-    float64         latrad;	    /* Latitude in radians of point */
-    float64         EHconvAng();    /* Angle conversion routine */
-    float64	    xMtr0, yMtr0, xMtr1, yMtr1;
-
-    /* Compute adjustment of position within pixel */
-    /* ------------------------------------------- */
-    if (pixcen == HDFE_CENTER)
-    {
-	/* Pixel defined at center */
-	/* ----------------------- */
-	pixadjX = 0.5;
-	pixadjY = 0.5;
-    }
-    else
-    {
-	switch (pixcnr)
-	{
-	case HDFE_GD_UL:
-	    {
-		/* Pixel defined at upper left corner */
-		/* ---------------------------------- */
-		pixadjX = 0.0;
-		pixadjY = 0.0;
-		break;
-	    }
-
-	case HDFE_GD_UR:
-	    {
-		/* Pixel defined at upper right corner */
-		/* ----------------------------------- */
-		pixadjX = 1.0;
-		pixadjY = 0.0;
-		break;
-	    }
-
-	case HDFE_GD_LL:
-	    {
-		/* Pixel defined at lower left corner */
-		/* ---------------------------------- */
-		pixadjX = 0.0;
-		pixadjY = 1.0;
-		break;
-	    }
-
-	case HDFE_GD_LR:
-	    {
-		/* Pixel defined at lower right corner */
-		/* ----------------------------------- */
-		pixadjX = 1.0;
-		pixadjY = 1.0;
-		break;
-	    }
-
-	}
-    }
-
-    /* If projection not GEO or BCEA call GCTP initialization routine */
-    /* ------------------------------------------------------------- */
-    if (projcode != GCTP_GEO && projcode != GCTP_BCEA)
-      {
-	scaleX = (lowrightpt[0] - upleftpt[0]) / xdimsize;
-	scaleY = (lowrightpt[1] - upleftpt[1]) / ydimsize;
-
-	/* Initialize inverse transformation */
-	/* --------------------------------- */
-	inv_init(projcode, zonecode, projparm, spherecode, NULL, NULL,
-	    &errorcode, inv_trans);
-
-	/* Report error if any */
-	/* ------------------- */
-	if (errorcode != 0)
-	{
-	    status = -1;
-	    HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-	    HEreport("GCTP Error: %d\n", errorcode);
-	    return (-1);
-	}
-
-	/* For each point ... */
-	/* ------------------ */
-	for (i = 0; i < npnts; i++)
-	{
-	    /* Convert from meters (or any units that r_major and
-	        r_minor has) to lon/lat (radians) using GCTP */
-	    /* --------------------------------------------------- */
-	    errorcode = inv_trans[projcode] (
-		(col[i] + pixadjX) * scaleX + upleftpt[0],
-		(row[i] + pixadjY) * scaleY + upleftpt[1],
-		&lonrad, &latrad);
-		
-	    /* Report error if any */
-	    /* ------------------- */
-	    if (errorcode != 0)
-	    {
-		/* status = -1;
-		HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-		HEreport("GCTP Error: %d\n", errorcode);
-		return (status); */
-		longitude[i] = 1.0e51; /* PGSd_GCT_IN_ERROR */
-		latitude[i] = 1.0e51; /* PGSd_GCT_IN_ERROR */
-	     }
-	    else
-	     {	
-	       /* Convert from radians to decimal degrees */
-	       /* --------------------------------------- */
-	       longitude[i] = EHconvAng(lonrad, HDFE_RAD_DEG);
-	       latitude[i] = EHconvAng(latrad, HDFE_RAD_DEG);
-	     }
-	}
-      }
-    else if (projcode == GCTP_BCEA)
-      {
-	/* BCEA projection */
-	/* -------------- */
-
-	/* Note: upleftpt and lowrightpt are in packed degrees, so they
-	   must be converted to meters for this projection */
-
-	/* Initialize forward transformation */
-	/* --------------------------------- */
-	for_init(projcode, zonecode, projparm, spherecode, NULL, NULL,
-	    &errorcode, for_trans);
-
-	/* Report error if any */
-	/* ------------------- */
-	if (errorcode != 0)
-	{
-	    status = -1;
-	    HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-	    HEreport("GCTP Error: %d\n", errorcode);
-	    return (-1);
-	}
-
-	/* Convert upleft and lowright X coords from DMS to radians */
-	/* -------------------------------------------------------- */
-
-	lonrad0 = EHconvAng(upleftpt[0], HDFE_DMS_RAD);
-	lonrad = EHconvAng(lowrightpt[0], HDFE_DMS_RAD);
-
-	/* Convert upleft and lowright Y coords from DMS to radians */
-	/* -------------------------------------------------------- */
-	latrad0 = EHconvAng(upleftpt[1], HDFE_DMS_RAD);
-	latrad = EHconvAng(lowrightpt[1], HDFE_DMS_RAD);
-
-	/* Convert form lon/lat to meters(or whatever unit is, i.e unit
-	   of r_major and r_minor) using GCTP */
-        /* ----------------------------------------- */
-        errorcode = for_trans[projcode] (lonrad0, latrad0, &xMtr0, &yMtr0);
-
-        /* Report error if any */
- 	if (errorcode != 0)
-        {
-	    status = -1;
-	    HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-	    HEreport("GCTP Error: %d\n", errorcode);
-	    return (status);
-	}
-
-	/* Convert from lon/lat to meters or whatever unit is, i.e unit
-	   of r_major and r_minor) using GCTP */
-	/* ----------------------------------------- */
-	errorcode = for_trans[projcode] (lonrad, latrad, &xMtr1, &yMtr1);
-
-        /* Report error if any */
- 	if (errorcode != 0)
-        {
-	    status = -1;
-	    HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-	    HEreport("GCTP Error: %d\n", errorcode);
-	    return (status);
-	}
-
-	/* Compute x scale factor */
-	/* ---------------------- */
-	scaleX = (xMtr1 - xMtr0) / xdimsize;
-
-	/* Compute y scale factor */
-	/* ---------------------- */
-	scaleY = (yMtr1 - yMtr0) / ydimsize;
-
-	/* Initialize inverse transformation */
-	/* --------------------------------- */
-	inv_init(projcode, zonecode, projparm, spherecode, NULL, NULL,
-	    &errorcode, inv_trans);
-
-	/* Report error if any */
-	/* ------------------- */
-	if (errorcode != 0)
-	{
-	    status = -1;
-	    HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-	    HEreport("GCTP Error: %d\n", errorcode);
-	    return (-1);
-	}
-
-	/* For each point ... */
-	/* ------------------ */
-	for (i = 0; i < npnts; i++)
-	{
-	    /* Convert from meters (or any units that r_major and
-		r_minor has) to lon/lat (radians) using GCTP */
-	    /* --------------------------------------------------- */
-	    errorcode = inv_trans[projcode] (
-		(col[i] + pixadjX) * scaleX + xMtr0,
-		(row[i] + pixadjY) * scaleY + yMtr0,
-		&lonrad, &latrad);
-		
-	    /* Report error if any */
-	    /* ------------------- */
-	    if (errorcode != 0)
-	    {
-		/* status = -1;
-		HEpush(DFE_GENAPP, "GDij2ll", __FILE__, __LINE__);
-		HEreport("GCTP Error: %d\n", errorcode);
-		return (status); */
-		longitude[i] = 1.0e51; /* PGSd_GCT_IN_ERROR */
-		latitude[i] = 1.0e51; /* PGSd_GCT_IN_ERROR */
-	     }
-		
-	     /* Convert from radians to decimal degrees */
-	     /* --------------------------------------- */
-	     longitude[i] = EHconvAng(lonrad, HDFE_RAD_DEG);
-	     latitude[i] = EHconvAng(latrad, HDFE_RAD_DEG);
-	}
-    }
-
-    else if (projcode == GCTP_GEO)
-      {
-	/* GEO projection */
-	/* -------------- */
-
-	/*
-	 * Note: lonrad, lonrad0, latrad, latrad0 are actually in degrees for
-	 * the GEO projection case.
-	 */
-
-
-	/* Convert upleft and lowright X coords from DMS to degrees */
-	/* -------------------------------------------------------- */
-	lonrad0 = EHconvAng(upleftpt[0], HDFE_DMS_DEG);
-	lonrad = EHconvAng(lowrightpt[0], HDFE_DMS_DEG);
-
-
-	/* Compute x scale factor */
-	/* ---------------------- */
-	scaleX = (lonrad - lonrad0) / xdimsize;
-
-
-	/* Convert upleft and lowright Y coords from DMS to degrees */
-	/* -------------------------------------------------------- */
-	latrad0 = EHconvAng(upleftpt[1], HDFE_DMS_DEG);
-	latrad = EHconvAng(lowrightpt[1], HDFE_DMS_DEG);
-
-
-	/* Compute y scale factor */
-	/* ---------------------- */
-	scaleY = (latrad - latrad0) / ydimsize;
-
-
-	/* For each point ... */
-	/* ------------------ */
-	for (i = 0; i < npnts; i++)
-	{
-	    /* Convert to lon/lat (decimal degrees) */
-	    /* ------------------------------------ */
-	    longitude[i] = (col[i] + pixadjX) * scaleX + lonrad0;
-	    latitude[i] = (row[i] + pixadjY) * scaleY + latrad0;
-	}
-      }
-    
-    return (status);
-}
 
 
 /*----------------------------------------------------------------------------|
@@ -7937,7 +7081,7 @@ homDyDtheta(float64 parms[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+static intn
 GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
 	      float64 cornerlat[], float64 longitude[], float64 latitude[],
 	      int32 * npnts)
@@ -8520,42 +7664,46 @@ GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
 int32
 GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 {
-    intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
-    intn            k;		/* Loop index */
-    intn            n;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    intn            i;		    /* Loop index */
+    intn            j;		    /* Loop index */
+    intn            k;		    /* Loop index */
+    intn            n;		    /* Loop index */
+    intn            status = 0;	    /* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           regionID;	/* Region ID */
-    int32           xdimsize;	/* XDim size */
-    int32           ydimsize;	/* YDim size */
-    int32           projcode;	/* Projection code */
-    int32           zonecode;	/* Zone code */
-    int32           spherecode;	/* Sphere code */
-    int32           row[32];	/* Row array */
-    int32           col[32];	/* Column array */
-    int32           minCol;	/* Minimun column value */
-    int32           minRow;	/* Minimun row value */
-    int32           maxCol;	/* Maximun column value */
-    int32           maxRow;	/* Maximun row value */
-    int32           npnts;	/* Number of boundary (edge & tangent) pnts */
+    int32           fid;	    /* HDF-EOS file ID */
+    int32           sdInterfaceID;  /* HDF SDS interface ID */
+    int32           gdVgrpID;	    /* Grid root Vgroup ID */
+    int32           regionID = -1;  /* Region ID */
+    int32           xdimsize;	    /* XDim size */
+    int32           ydimsize;	    /* YDim size */
+    int32           projcode;	    /* Projection code */
+    int32           zonecode;	    /* Zone code */
+    int32           spherecode;	    /* Sphere code */
+    int32           row[32];	    /* Row array */
+    int32           col[32];	    /* Column array */
+    int32           minCol;	    /* Minimun column value */
+    int32           minRow;	    /* Minimun row value */
+    int32           maxCol;	    /* Maximun column value */
+    int32           maxRow;	    /* Maximun row value */
+    int32           npnts;	    /* Number of boundary
+                                       (edge & tangent) pnts */
 
-    float64         longitude[32];	/* Longitude array */
-    float64         latitude[32];	/* Latitude array */
-    float64         upleftpt[2];	/* Upper left pt coordinates */
-    float64         lowrightpt[2];	/* Lower right pt coordinates */
-    float64         somupleftpt[2];	/* temporary Upper left pt coordinates for SOM projection */
-    float64         somlowrightpt[2];	/* temporary Lower right pt coordinates for SOM projection */
-    float64         projparm[16];	/* Projection parameters */
-    float64         xscale;	/* X scale */
-    float64         yscale;	/* Y scale */
-    float64         lonrad0;	/* Longitude of upper left point (radians) */
-    float64         latrad0;	/* Latitude of upper left point (radians) */
-    float64         lonrad2;	/* Longitude of point (radians) */
-    float64         latrad2;	/* Latitude of point (radians) */
+    float64         longitude[32];  /* Longitude array */
+    float64         latitude[32];   /* Latitude array */
+    float64         upleftpt[2];    /* Upper left pt coordinates */
+    float64         lowrightpt[2];  /* Lower right pt coordinates */
+    float64         somupleftpt[2]; /* temporary Upper left pt coordinates
+                                       for SOM projection */
+    float64         somlowrightpt[2];   /* temporary Lower right pt
+                                           coordinates for SOM projection */
+    float64         projparm[16];   /* Projection parameters */
+    float64         xscale;	    /* X scale */
+    float64         yscale;	    /* Y scale */
+    float64         lonrad0;	    /* Longitude of upper left point
+                                       (radians) */
+    float64         latrad0;	    /* Latitude of upper left point (radians) */
+    float64         lonrad2;	    /* Longitude of point (radians) */
+    float64         latrad2;	    /* Latitude of point (radians) */
 
     /* Used for SOM projection  */
     char            *utlbuf;
@@ -9357,79 +8505,6 @@ GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDreginfo                                                        |
-|                                                                             |
-|  DESCRIPTION: FORTRAN wrapper around GDregioninfo                           |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               Grid structure ID                       |
-|  regionID       int32               Region ID                               |
-|  fieldname      char                Fieldname                               |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  ntype          int32               field number type                       |
-|  rank           int32               field rank                              |
-|  dims           int32               dimensions of field region              |
-|                                     (FORTRAN order)                         |
-|  size           int32               size in bytes of field region           |
-|  upleftpt       float64             Upper left corner coord for region      |
-|  lowrightpt     float64             Lower right corner coord for region     |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDreginfo(int32 gridID, int32 regionID, char *fieldname,
-	  int32 * ntype, int32 * rank, int32 dims[], int32 * size,
-	  float64 upleftpt[], float64 lowrightpt[])
-{
-
-    intn            j;		/* Loop index */
-    intn            status;	/* routine return status variable */
-
-    int32           swap;	/* Temporary swap variable */
-
-
-    /* Call GDregioninfo */
-    /* ----------------- */
-    status = GDregioninfo(gridID, regionID, fieldname,
-			  ntype, rank, dims, size, upleftpt, lowrightpt);
-
-
-    /* Change dimensions to FORTRAN order */
-    /* ---------------------------------- */
-    for (j = 0; j < *rank / 2; j++)
-    {
-	swap = dims[*rank - 1 - j];
-	dims[*rank - 1 - j] = dims[j];
-	dims[j] = swap;
-    }
-    return (status);
-}
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDextractregion                                                  |
 |                                                                             |
 |  DESCRIPTION: Retrieves data from specified region.                         |
@@ -10164,70 +9239,6 @@ GDdefvrtregion(int32 gridID, int32 regionID, char *vertObj, float64 range[])
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDdefvrtreg                                                      |
-|                                                                             |
-|  DESCRIPTION: FORTRAN wrapper arount GDdefvrtregion                         |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  regionID       int32               Region ID                               |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               Grid structure ID                       |
-|  regionID       int32               Region ID                               |
-|  vertObj        char                Vertical object to subset               |
-|  range          float64             Vertical subsetting range               |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|             None                                                            |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Oct 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-int32
-GDdefvrtreg(int32 gridID, int32 regionID, char *vertObj, float64 fortrange[])
-{
-    float64         range[2];
-    char            utlbuf[16];
-
-    memcpy(utlbuf, vertObj, 4);
-    utlbuf[4] = 0;
-
-    /* If subsetting on dimension elements convert FORTRAN indices to C */
-    /* ---------------------------------------------------------------- */
-    if (strcmp(utlbuf, "DIM:") == 0)
-    {
-	range[0] = fortrange[0] - 1;
-	range[1] = fortrange[1] - 1;
-    }
-    else
-    {
-	range[0] = fortrange[0];
-	range[1] = fortrange[1];
-    }
-
-
-    /* Call GDdefvrtregion routine */
-    /* --------------------------- */
-    regionID = GDdefvrtregion(gridID, regionID, vertObj, range);
-
-    return (regionID);
-}
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDdeftimeperiod                                                  |
 |                                                                             |
 |  DESCRIPTION: Finds elements of the "Time" field within a given time        |
@@ -10742,147 +9753,6 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
-|  FUNCTION: GDgetpix                                                         |
-|                                                                             |
-|  DESCRIPTION: FORTRAN wrapper around GDgetpixels                            |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               Grid structure ID                       |
-|  nLonLat        int32               Number of lonlat values                 |
-|  lonVal         float64  dec deg    Longitude values                        |
-|  latVal         float64  dec deg    Latitude values                         |
-|                                                                             |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  fortpixRow     int32               Pixel rows      (1 - based)             |
-|  fortpixCol     int32               Pixel columns   (1 - based)             |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Oct 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-GDgetpix(int32 gridID, int32 nLonLat, float64 lonVal[], float64 latVal[],
-	 int32 fortpixRow[], int32 fortpixCol[])
-{
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-
-    /* Call GDgetpixels routine */
-    /* ------------------------ */
-    status = GDgetpixels(gridID, nLonLat, lonVal, latVal,
-			 fortpixRow, fortpixCol);
-
-
-    /* Convert row & column to 1-based values */
-    /* -------------------------------------- */
-    for (i = 0; i < nLonLat; i++)
-    {
-	fortpixRow[i] = fortpixRow[i] + 1;
-	fortpixCol[i] = fortpixCol[i] + 1;
-    }
-
-    return (status);
-}
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: GDgetpixval                                                      |
-|                                                                             |
-|  DESCRIPTION: FORTRAN wrapper around GDgetpixvalues                         |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  gridID         int32               Grid structure ID                       |
-|  nPixels        int32               Number of pixels                        |
-|  fortpixRow     int32               Pixel row numbers                       |
-|  fortpixCol     int32               Pixel column numbers                    |
-|  fieldname      char                Fieldname                               |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  buffer         void                Data buffer                             |
-|                                                                             |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Oct 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-int32
-GDgetpixval(int32 gridID, int32 nPixels, int32 fortpixRow[],
-	    int32 fortpixCol[], char *fieldname, VOIDP buffer)
-{
-    intn            i;		/* Loop index */
-
-    int32          *pixRow;	/* Pointer to C row numbers */
-    int32          *pixCol;	/* Pointer to C column numbers */
-    int32           bufsiz;	/* Size for returned data buffer in bytes */
-
-
-    /* Allocate space for C (0-based) row & column numbers */
-    /* --------------------------------------------------- */
-    pixRow = (int32 *) calloc(nPixels, 4);
-    if(pixRow == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"GDgetpixval", __FILE__, __LINE__);
-	return(-1);
-    }
-    pixCol = (int32 *) calloc(nPixels, 4);
-    if(pixCol == NULL)
-    { 
-	HEpush(DFE_NOSPACE,"GDgetpixval", __FILE__, __LINE__);
-	free(pixRow);
-	return(-1);
-    }
-
-    /* Convert row & column to 0-based values */
-    /* -------------------------------------- */
-    for (i = 0; i < nPixels; i++)
-    {
-	pixRow[i] = fortpixRow[i] - 1;
-	pixCol[i] = fortpixCol[i] - 1;
-    }
-
-
-    /* Call GDgetpixvalues routine */
-    /* --------------------------- */
-    bufsiz = GDgetpixvalues(gridID, nPixels, pixRow, pixCol, fieldname, buffer);
-
-    free(pixRow);
-    free(pixCol);
-
-    return (bufsiz);
-}
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
 |  FUNCTION: GDinterpolate                                                    |
 |                                                                             |
 |  DESCRIPTION: Performs bilinear interpolate on a set of xy values           |
@@ -11318,7 +10188,7 @@ Alexis Zubrow
 
 ********************************************************/
 
-intn
+static intn
 GDwrrdtile(int32 gridID, char *fieldname, char *code, int32 start[],
 	   VOIDP datbuf)
 {
@@ -11522,66 +10392,6 @@ GDtileinfo(int32 gridID, char *fieldname, int32 * tilecode, int32 * tilerank,
     }
     return (status);
 }
-/*******************************************************
-GDtleinfo
-
-This function gets information on the tileing of a field (FORTRAN wrapper around
-GDtileinfo)
-
-
-Author--
-Alexis Zubrow
-
-Date--
-3/4/1997
-*******************************************************/
-
-intn
-GDtleinfo(int32 gridID, char *fieldname, int32 * tilecode, int32 * tilerank,
-	  int32 forttiledims[])
-{
-
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           rank;	/* Field rank */
-    int32           ntype;	/* Field numbertype */
-    int32           dims[8];	/* Field dimensions */
-    int32          *tiledims;	/* Pointer dimension size array (C order) */
-
-
-    status = GDfieldinfo(gridID, fieldname, &rank, dims, &ntype, NULL);
-
-    if (status == 0)
-    {
-	tiledims = malloc(rank * sizeof(int32));
-	if(tiledims == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"GDtleinfo", __FILE__, __LINE__);
-	    return(-1);
-	}
-
-	/* reverse order of dimensions, converting FORTRAN to C */
-	for (i = 0; i < rank; i++)
-	{
-	    tiledims[i] = forttiledims[rank - 1 - i];
-	}
-
-	/* call GDtileinfo with C ordered array */
-	status = GDtileinfo(gridID, fieldname, tilecode, tilerank, tiledims);
-
-	free(tiledims);
-    }
-    else
-    {
-	HEpush(DFE_GENAPP, "GDtleinfo", __FILE__, __LINE__);
-	HEreport("Fieldname \"%s\" does not exist.\n", fieldname);
-	status = -1;
-
-    }
-
-    return (status);
-}
 /***********************************************
 GDwritetile --
      This function writes one tile to a particular field.
@@ -11621,123 +10431,6 @@ GDreadtile(int32 gridID, char *fieldname, int32 tilecoords[],
     intn            status = 0;	/* routine return status variable */
 
     status = GDwrrdtile(gridID, fieldname, code, tilecoords, tileData);
-
-    return (status);
-}
-/*******************************************************
-GDwrtle
-
-This function writes a tile to a field (FORTRAN wrapper around GDwritetile)
-
-
-Author--
-Alexis Zubrow
-
-Date--
-3/4/1997
-*******************************************************/
-
-intn
-GDwrtle(int32 gridID, char *fieldname, int32 forttilecoords[], VOIDP data)
-{
-
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           rank;	/* Field rank */
-    int32           ntype;	/* Field numbertype */
-    int32           dims[8];	/* Field dimensions */
-    int32          *tilecoords;	/* Pointer origin array (C order) */
-
-
-    status = GDfieldinfo(gridID, fieldname, &rank, dims, &ntype, NULL);
-
-    if (status == 0)
-    {
-	tilecoords = malloc(rank * sizeof(int32));
-	if(tilecoords == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"GDwrtle", __FILE__, __LINE__);
-	    return(-1);
-	}
-
-	/* reverse order of dimensions, converting FORTRAN to C */
-	for (i = 0; i < rank; i++)
-	{
-	    tilecoords[i] = forttilecoords[rank - 1 - i];
-	}
-
-	/* call GDwritetile with C ordered array */
-	status = GDwritetile(gridID, fieldname, tilecoords, data);
-
-	free(tilecoords);
-    }
-    else
-    {
-	HEpush(DFE_GENAPP, "GDwrtle", __FILE__, __LINE__);
-	HEreport("Fieldname \"%s\" does not exist.\n", fieldname);
-	status = -1;
-
-    }
-
-    return (status);
-}
-/*******************************************************
-GDrdtle
-
-This function reads a tile from a field (FORTRAN wrapper around GDreadtile)
-
-
-Author--
-Alexis Zubrow
-
-Date--
-3/4/1997
-*******************************************************/
-
-intn
-GDrdtle(int32 gridID, char *fieldname, int32 forttilecoords[], VOIDP data)
-{
-
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-
-    int32           rank;	/* Field rank */
-    int32           ntype;	/* Field numbertype */
-    int32           dims[8];	/* Field dimensions */
-    int32          *tilecoords;	/* Pointer origin array (C order) */
-
-
-    status = GDfieldinfo(gridID, fieldname, &rank, dims, &ntype, NULL);
-
-    if (status == 0)
-    {
-	tilecoords = malloc(rank * sizeof(int32));
-	if(tilecoords == NULL)
-	{ 
-	    HEpush(DFE_NOSPACE,"GDrdtle", __FILE__, __LINE__);
-	    return(-1);
-	}
-
-
-	/* reverse order of dimensions, converting FORTRAN to C */
-	for (i = 0; i < rank; i++)
-	{
-	    tilecoords[i] = forttilecoords[rank - 1 - i];
-	}
-
-	/* call GDreadtile with C ordered array */
-	status = GDreadtile(gridID, fieldname, tilecoords, data);
-
-	free(tilecoords);
-    }
-    else
-    {
-	HEpush(DFE_GENAPP, "GDrdtle", __FILE__, __LINE__);
-	HEreport("Fieldname \"%s\" does not exist.\n", fieldname);
-	status = -1;
-
-    }
 
     return (status);
 }
@@ -12005,7 +10698,7 @@ GDsettilecomp(int32 gridID, char *fieldname, int32 tilerank, int32*
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
+static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
 		 int32 xdimsize, int32 ydimsize,
 		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
@@ -12135,7 +10828,7 @@ intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
+static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
 		 int32 xdimsize, int32 ydimsize,
 		 float64 upleftpt[], float64 lowrightpt[], int32 npnts,
@@ -12185,5 +10878,55 @@ intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 	/* Wrong projection code; this function is only for EASE grid */
       }
     return(status);
+}
+
+/*----------------------------------------------------------------------------|
+|  BEGIN_PROLOG                                                               |
+|                                                                             |
+|  FUNCTION: GDsdid                                                           |
+|                                                                             |
+|  DESCRIPTION: Returns SD element ID for grid field                          |
+|                                                                             |
+|                                                                             |
+|  Return Value    Type     Units     Description                             |
+|  ============   ======  =========   =====================================   |
+|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|                                                                             |
+|  INPUTS:                                                                    |
+|  gridID         int32               grid structure ID                       |
+|  fieldname      const char          field name                              |
+|                                                                             |
+|                                                                             |
+|  OUTPUTS:                                                                   |
+|  sdid           int32               SD element ID                           |
+|                                                                             |
+|  NONE                                                                       |
+|                                                                             |
+|  NOTES:                                                                     |
+|                                                                             |
+|                                                                             |
+|   Date     Programmer   Description                                         |
+|  ======   ============  =================================================   |
+|  Oct 07   Andrey Kiselev  Original Programmer                               |
+|                                                                             |
+|  END_PROLOG                                                                 |
+-----------------------------------------------------------------------------*/
+intn
+GDsdid(int32 gridID, const char *fieldname, int32 *sdid)
+{
+    intn            status;	        /* routine return status variable */
+    int32           fid;	        /* HDF-EOS file ID */
+    int32           sdInterfaceID;      /* HDF SDS interface ID */
+    int32           dum;	        /* Dummy variable */
+    int32           dims[MAX_VAR_DIMS]; /* Field/SDS dimensions */
+
+    status = GDchkgdid(gridID, "GDsdid", &fid, &sdInterfaceID, &dum);
+    if (status != -1)
+    {
+        status = GDSDfldsrch(gridID, sdInterfaceID, fieldname,
+                             sdid, &dum, &dum, &dum, dims, &dum);
+    }
+
+    return (status);
 }
 
