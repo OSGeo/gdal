@@ -42,7 +42,7 @@ static void Usage()
 {
     printf( 
         "Usage: gdaltransform [--help-general]\n"
-        "    [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-et err_threshold]\n"
+        "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps]\n"
         "    [-gcp pixel line easting northing [elevation]]*\n" 
         "    [srcfile [dstfile]]\n" 
         "\n" );
@@ -93,6 +93,7 @@ int main( int argc, char ** argv )
     GDALTransformerFunc pfnTransformer = NULL;
     int                 nGCPCount = 0;
     GDAL_GCP            *pasGCPs = NULL;
+    int                 bInverse = FALSE;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -121,6 +122,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-tps") )
         {
             nOrder = -1;
+        }
+        else if( EQUAL(argv[i],"-i") )
+        {
+            bInverse = TRUE;
         }
         else if( EQUAL(argv[i],"-gcp") && i < argc - 4 )
         {
@@ -239,7 +244,7 @@ int main( int argc, char ** argv )
         if( CSLCount(papszTokens) >= 3 )
             dfZ = atof(papszTokens[2]);
 
-        if( pfnTransformer( hTransformArg, FALSE, 1, 
+        if( pfnTransformer( hTransformArg, bInverse, 1, 
                             &dfX, &dfY, &dfZ, &bSuccess ) )
         {
             printf( "%.15g %.15g %.15g\n", dfX, dfY, dfZ );
