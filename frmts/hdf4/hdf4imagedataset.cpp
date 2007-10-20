@@ -1183,11 +1183,20 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 
 void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
 {
-    int32       nStrBufSize = 0;
+/* -------------------------------------------------------------------- */
+/*      At the start we will fetch the global HDF attributes.           */
+/* -------------------------------------------------------------------- */
+    int32   hDummy;
+
+    EHidinfo( hHDF4, &hDummy, &hSD );
+    ReadGlobalAttributes( hSD );
+    papszLocalMetadata = CSLDuplicate( papszGlobalMetadata );
 
 /* -------------------------------------------------------------------- */
-/*      At the start we will fetch the esoteric HDF-EOS attributes.     */
+/*      Fetch the esoteric HDF-EOS attributes then.                     */
 /* -------------------------------------------------------------------- */
+    int32   nStrBufSize = 0;
+
     if ( SWinqattrs( hSW, NULL, &nStrBufSize ) > 0 && nStrBufSize > 0 )
     {
         char    *pszAttrList;
@@ -1273,6 +1282,11 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
             }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Finally make the whole list visible.                            */
+/* -------------------------------------------------------------------- */
+    SetMetadata( papszLocalMetadata );
 }
 
 /************************************************************************/
@@ -1281,11 +1295,20 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
 
 void HDF4ImageDataset::GetGridAttrs( int32 hGD )
 {
-    int32       nStrBufSize = 0;
+/* -------------------------------------------------------------------- */
+/*      At the start we will fetch the global HDF attributes.           */
+/* -------------------------------------------------------------------- */
+    int32   hDummy;
+
+    EHidinfo( hHDF4, &hDummy, &hSD );
+    ReadGlobalAttributes( hSD );
+    papszLocalMetadata = CSLDuplicate( papszGlobalMetadata );
 
 /* -------------------------------------------------------------------- */
-/*      At the start we will fetch the esoteric HDF-EOS attributes.     */
+/*      Fetch the esoteric HDF-EOS attributes then.                     */
 /* -------------------------------------------------------------------- */
+    int32       nStrBufSize = 0;
+
     if ( GDinqattrs( hGD, NULL, &nStrBufSize ) > 0 && nStrBufSize > 0 )
     {
         char    *pszAttrList;
@@ -1369,6 +1392,11 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
             }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Finally make the whole list visible.                            */
+/* -------------------------------------------------------------------- */
+    SetMetadata( papszLocalMetadata );
 }
 
 /************************************************************************/
@@ -2100,7 +2128,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
     double      dfNoData = 0.0;
-    int         bNoDataSet = FALSE, nBands = 0;
+    int         bNoDataSet = FALSE;
+    int         nBands = 0;
     
 /* -------------------------------------------------------------------- */
 /*      Select SDS or GR to read from.                                  */
@@ -2129,7 +2158,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             case EOS_SWATH:
             case EOS_SWATH_GEOL:
             {
-                int32   hHDF4, hSW, nDimensions, nStrBufSize;
+                int32   hSW, nDimensions, nStrBufSize;
                 char    **papszDimList = NULL;
                 char    *pszDimList = NULL;
                 int     nDimCount;
@@ -2238,6 +2267,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
 /* -------------------------------------------------------------------- */
+/*  Fetch metadata.                                                     */
+/* -------------------------------------------------------------------- */
+                if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
+                    poDS->GetSwatAttrs( hSW );
+
+/* -------------------------------------------------------------------- */
 /*  Fetch NODATA value.                                                 */
 /* -------------------------------------------------------------------- */
                 pNoDataValue =
@@ -2249,20 +2284,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                                       pNoDataValue );
                     bNoDataSet = TRUE;
                 }
-                CPLFree( pNoDataValue );
-
-/* -------------------------------------------------------------------- */
-/*  Fetch metadata.                                                     */
-/* -------------------------------------------------------------------- */
-                if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
+                else
                 {
-                    EHidinfo( poDS->hHDF4, &hHDF4, &poDS->hSD );
-                    poDS->ReadGlobalAttributes( poDS->hSD );
-                    poDS->papszLocalMetadata =
-                        CSLDuplicate( poDS->papszGlobalMetadata );
-                    poDS->GetSwatAttrs( hSW );
-                    poDS->SetMetadata( poDS->papszLocalMetadata );
+                    const char *pszNoData =
+                        CSLFetchNameValue( poDS->papszLocalMetadata,
+                                           "_FillValue" );
+                    if ( pszNoData )
+                    {
+                        dfNoData = CPLAtof( pszNoData );
+                        bNoDataSet = TRUE;
+                    }
                 }
+                CPLFree( pNoDataValue );
 
 /* -------------------------------------------------------------------- */
 /*      Handle Geolocation processing.                                  */
@@ -2287,12 +2320,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             break;
 
 /* -------------------------------------------------------------------- */
-/*  HDF-EOS Grid.                                                       */
+/*      HDF-EOS Grid.                                                   */
 /* -------------------------------------------------------------------- */
             case EOS_GRID:
             {
-                int32   hHDF4, hGD,
-                    iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
+                int32   hGD, iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
                 int32   nXSize, nYSize;
                 char    szDimList[8192];
                 char    **papszDimList = NULL;
@@ -2441,7 +2473,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
 
 /* -------------------------------------------------------------------- */
-/*  Fetch NODATA value.                                                 */
+/*      Fetch metadata.                                                 */
+/* -------------------------------------------------------------------- */
+                poDS->GetGridAttrs( hGD );
+
+                CSLDestroy( papszDimList );
+                GDdetach( hGD );
+
+/* -------------------------------------------------------------------- */
+/*      Fetch NODATA value.                                             */
 /* -------------------------------------------------------------------- */
                 pNoDataValue =
                     CPLMalloc( poDS->GetDataTypeSize(poDS->iNumType) );
@@ -2452,20 +2492,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                                       pNoDataValue );
                     bNoDataSet = TRUE;
                 }
+                else
+                {
+                    const char *pszNoData =
+                        CSLFetchNameValue( poDS->papszLocalMetadata,
+                                           "_FillValue" );
+                    if ( pszNoData )
+                    {
+                        dfNoData = CPLAtof( pszNoData );
+                        bNoDataSet = TRUE;
+                    }
+                }
                 CPLFree( pNoDataValue );
-
-/* -------------------------------------------------------------------- */
-/*  Fetch metadata.                                                     */
-/* -------------------------------------------------------------------- */
-                EHidinfo( poDS->hHDF4, &hHDF4, &poDS->hSD );
-                poDS->ReadGlobalAttributes( poDS->hSD );
-                poDS->papszLocalMetadata =
-                    CSLDuplicate( poDS->papszGlobalMetadata );
-                poDS->GetGridAttrs( hGD );
-                poDS->SetMetadata( poDS->papszLocalMetadata );
-
-                CSLDestroy( papszDimList );
-                GDdetach( hGD );
             }
             break;
                 
