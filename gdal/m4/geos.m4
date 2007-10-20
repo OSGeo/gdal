@@ -38,6 +38,7 @@ dnl Call as GEOS_INIT or GEOS_INIT(minimum version) in configure.in. Test
 dnl HAVE_GEOS (yes|no) afterwards. If yes, all other vars above can be 
 dnl used in program.
 dnl
+
 AC_DEFUN([GEOS_INIT],[
   AC_SUBST(GEOS_LIBS)
   AC_SUBST(GEOS_CFLAGS)
@@ -48,6 +49,8 @@ AC_DEFUN([GEOS_INIT],[
     AS_HELP_STRING([--with-geos[=ARG]],
                    [Include GEOS support (ARG=yes, no or geos-config path)]),,)
 
+  ac_geos_config_auto=no
+
   if test x"$with_geos" = x"no" ; then
 
     AC_MSG_RESULT([GEOS support disabled])
@@ -56,18 +59,19 @@ AC_DEFUN([GEOS_INIT],[
   elif test x"$with_geos" = x"yes" -o x"$with_geos" = x"" ; then
 
     AC_PATH_PROG(GEOS_CONFIG, geos-config, no)
+    ac_geos_config_auto=yes
 
   else
 
-   ac_geos_config=`basename $with_geos`
+   ac_geos_config=`basename "$with_geos"`
    ac_geos_config_dir=`AS_DIRNAME(["$with_geos"])`
 
    AC_CHECK_PROG(
         GEOS_CONFIG,
-        $ac_geos_config,
+        "$ac_geos_config",
         $with_geos,
         [no],
-        [$ac_geos_config_dir],
+        ["$ac_geos_config_dir"],
         []
    )
 
@@ -103,9 +107,16 @@ AC_DEFUN([GEOS_INIT],[
     fi
 
     if test $version_ok = "no"; then
-       HAVE_GEOS="no"
-       AC_MSG_RESULT(no)
-       AC_MSG_ERROR([geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos])
+
+      HAVE_GEOS="no"
+      AC_MSG_RESULT(no)
+
+      if test $ac_geos_config_auto = "yes" ; then
+        AC_MSG_WARN([GEOS was found on your system, but geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version. GEOS support disabled.])
+      else
+        AC_MSG_ERROR([geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos])
+      fi
+
     else
       
       HAVE_GEOS="no"
@@ -113,12 +124,6 @@ AC_DEFUN([GEOS_INIT],[
       GEOS_LIBS="`${GEOS_CONFIG} --libs` -lgeos_c"
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
-
-      dnl XXX - mloskot - commented in rev 1.4
-      dnl AC_MSG_CHECKING(for geos::Coordinate::getNull() in -lgeos)
-      dnl AC_LANG_PUSH(C++)
-      dnl AC_TRY_COMPILE([#include "geos/geom.h"], [geos::Coordinate::getNull()], HAVE_GEOS=yes, HAVE_GEOS=no)
-      dnl AC_LANG_POP()
 
       ax_save_LIBS="${LIBS}"
       LIBS=${GEOS_LIBS}
