@@ -3566,7 +3566,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     if( pszProfile == NULL )
         pszProfile = "GDALGeoTIFF";
 
-    if( CSLFetchNameValue(papszParmList,"TILED") != NULL )
+    if( CSLFetchBoolean( papszParmList, "TILED", FALSE ) )
         bTiled = TRUE;
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
