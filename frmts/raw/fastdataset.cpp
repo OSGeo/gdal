@@ -674,9 +674,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             pszTemp = strpbrk( pszTemp, "-.0123456789" );
             if ( pszTemp )
-            {
-                adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE, "C" );
-            }
+                adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE );
             pszTemp = strpbrk( pszTemp, " \t" );
         }
     }
@@ -689,36 +687,36 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
-        dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
         pszTemp += CORNER_VALUE_SIZE + 1;
-        dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
     }
 
     pszTemp = strstr( pszGeomRecord, CORNER_UPPER_RIGHT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_UPPER_RIGHT ) + 28;
-        dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
         pszTemp += CORNER_VALUE_SIZE + 1;
-        dfURY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfURY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
     }
 
     pszTemp = strstr( pszGeomRecord, CORNER_LOWER_LEFT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_LOWER_LEFT ) + 28;
-        dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
         pszTemp += CORNER_VALUE_SIZE + 1;
-        dfLLY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfLLY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
     }
 
     pszTemp = strstr( pszGeomRecord, CORNER_LOWER_RIGHT );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
         pszTemp += strlen( CORNER_LOWER_RIGHT ) + 28;
-        dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
         pszTemp += CORNER_VALUE_SIZE + 1;
-        dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE, "C" );
+        dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
     }
 
     if ( dfULX != 0.0 && dfULY != 0.0
