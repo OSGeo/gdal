@@ -243,7 +243,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
             {
               record->tabCoords[(numField - nbExtraId - NB_MIN_BNA_IDS - 1) / 2]
                                [1 - ((numField - nbExtraId) % 2)] =
-                  CPLScanDouble(ptrBeginningOfNumber, 20, "C");
+                  CPLAtof(ptrBeginningOfNumber);
             }
             if (numField == NB_MIN_BNA_IDS + 1 + nbExtraId + 2 * record->nCoords - 1)
             {
@@ -376,7 +376,7 @@ BNARecord* BNA_GetNextRecord(FILE* f,
             {
               record->tabCoords[(numField - nbExtraId - NB_MIN_BNA_IDS - 1) / 2]
                                [1 - ((numField - nbExtraId) % 2)] =
-                  CPLScanDouble(ptrBeginningOfNumber, 20, "C");
+                  CPLAtof(ptrBeginningOfNumber);
             }
             if (numField == NB_MIN_BNA_IDS + 1 + nbExtraId + 2 * record->nCoords - 1)
             {
