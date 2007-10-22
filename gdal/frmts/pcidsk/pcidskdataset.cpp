@@ -3,10 +3,10 @@
  *
  * Project:  PCIDSK Database File
  * Purpose:  Read/write PCIDSK Database File used by the PCI software
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2003, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -829,14 +829,14 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     for ( j = 0; j < nXCoeffs; j++ )
                     {
                         poDS->adfGeoTransform[j] =
-                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
+                            CPLScanDouble( szTemp + 26 * j, 26 );
                     }
                     VSIFSeekL( poDS->fp, nGeoDataOffset + 1642, SEEK_SET );
                     VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
                     for ( j = 0; j < nYCoeffs; j++ )
                     {
                         poDS->adfGeoTransform[j + 3] =
-                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
+                            CPLScanDouble( szTemp + 26 * j, 26 );
                     }
 
                     oSRS.importFromPCI( szProj, NULL, NULL );
@@ -878,7 +878,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     for ( j = 0; j < 17; j++ )
                     {
                         adfProjParms[j] =
-                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
+                            CPLScanDouble( szTemp + 26 * j, 26 );
                     }
 
                     // Read geotransform coefficients
@@ -887,14 +887,14 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     for ( j = 0; j < nXCoeffs; j++ )
                     {
                         poDS->adfGeoTransform[j] =
-                            CPLScanDouble( szTemp + 26 * j, 26, "C" );;
+                            CPLScanDouble( szTemp + 26 * j, 26 );;
                     }
                     VSIFSeekL( poDS->fp, nGeoDataOffset + 2526, SEEK_SET );
                     VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
                     for ( j = 0; j < nYCoeffs; j++ )
                     {
                         poDS->adfGeoTransform[j + 3] =
-                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
+                            CPLScanDouble( szTemp + 26 * j, 26 );
                     }
 
                     oSRS.importFromPCI( szProj, szUnits, adfProjParms );
@@ -939,22 +939,22 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                             CPLCalloc( poDS->nGCPCount, sizeof(GDAL_GCP) );
                         GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
                         if ( EQUALN( szTemp + 64, "FEET     ", 9 ) )
-                            dfUnitConv = atof(SRS_UL_FOOT_CONV);
+                            dfUnitConv = CPLAtof(SRS_UL_FOOT_CONV);
                         for ( j = 0; j < poDS->nGCPCount; j++ )
                         {
                             VSIFSeekL( poDS->fp, nGcpDataOffset + j * 128 + 512,
                                        SEEK_SET );
                             VSIFReadL( szTemp, 1, 128, poDS->fp );
                             poDS->pasGCPList[j].dfGCPPixel =
-                                CPLScanDouble( szTemp + 6, 18, "C" );
+                                CPLScanDouble( szTemp + 6, 18 );
                             poDS->pasGCPList[j].dfGCPLine = 
-                                CPLScanDouble( szTemp + 24, 18, "C" );
+                                CPLScanDouble( szTemp + 24, 18 );
                             poDS->pasGCPList[j].dfGCPX = 
-                                CPLScanDouble( szTemp + 60, 18, "C" );
+                                CPLScanDouble( szTemp + 60, 18 );
                             poDS->pasGCPList[j].dfGCPY = 
-                                CPLScanDouble( szTemp + 78, 18, "C" );
+                                CPLScanDouble( szTemp + 78, 18 );
                             poDS->pasGCPList[j].dfGCPZ =
-                                CPLScanDouble(szTemp + 96, 18, "C")/dfUnitConv;
+                                CPLScanDouble( szTemp + 96, 18 ) / dfUnitConv;
                         }
                     }
                 }
