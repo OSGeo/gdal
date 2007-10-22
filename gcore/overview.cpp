@@ -405,6 +405,14 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
     int    nFRXBlockSize, nFRYBlockSize;
     GDALDataType eType;
 
+    if (EQUALN(pszResampling,"AVER",4) &&
+        poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Computing overviews on palette index raster bands "
+                 "will probably lead to unexpected results.");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we are operating on multiple overviews, and using            */
 /*      averaging, lets do them in cascading order to reduce the        */
