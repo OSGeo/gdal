@@ -372,7 +372,7 @@ Usage:
 
 \verbatim
 gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
-                filename levels
+         [--help-general] [-propagate_nodata] filename levels
 \endverbatim
 
 \if man
@@ -386,6 +386,7 @@ most supported file formats with one over several downsampling algorithms.
 <dt> <b>-r</b>
 <i>{nearest,average,average_mp,average_magphase,mode}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
+<dt> <b>-propage_nodata</b></dt><dd> If average resampling algorithm is selected, NODATA pixels, instead of being just ignored, will be propagated to the overview levels. </dd>
 <dt> <i>filename</i>:</dt><dd> The file to build overviews for. </dd>
 <dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build.  </dd>
 </dl>
