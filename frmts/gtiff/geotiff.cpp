@@ -2218,6 +2218,12 @@ CPLErr GTiffDataset::IBuildOverviews(
                 int    nOvFactor;
                 GDALRasterBand * poOverview = poBand->GetOverview( j );
 
+                int bHasNoData;
+                double noDataValue = poBand->GetNoDataValue(&bHasNoData);
+
+                if (bHasNoData)
+                  poOverview->SetNoDataValue(noDataValue);
+
                 nOvFactor = (int) 
                   (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
 
