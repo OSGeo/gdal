@@ -901,8 +901,11 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
 /************************************************************************/
 
 /**
- * Scan up to a maximum number of characters from a string and convert
- * the result to a double.
+ * Extract double from string.
+ *
+ * Scan up to a maximum number of characters from a string and convert the
+ * result to a double. This function uses CPLAtof() to convert string to
+ * double value, so it uses a comma as a decimal delimiter.
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -911,18 +914,10 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
  * of the number. Less characters will be considered if a null character
  * is encountered.
  * 
- * @param pszLocale Pointer to a character string containing locale name
- * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.). If NULL, we will not
- * manipulate with locale settings and current process locale will be used for
- * printing. Wee need this setting because in different locales decimal
- * delimiter represented with the different characters. With the pszLocale
- * option we can control what exact locale will be used for scanning a numeric
- * value from the string (in most cases it should be C/POSIX).
- *
  * @return Double value, converted from its ASCII form.
  */
 
-double CPLScanDouble( const char *pszString, int nMaxLength, char *pszLocale )
+double CPLScanDouble( const char *pszString, int nMaxLength )
 {
     int     i;
     double  dfValue;
@@ -942,27 +937,9 @@ double CPLScanDouble( const char *pszString, int nMaxLength, char *pszLocale )
             pszValue[i] = 'E';
 
 /* -------------------------------------------------------------------- */
-/*      Use atof() to fetch out the result                              */
+/*      The conversion itself.                                          */
 /* -------------------------------------------------------------------- */
-#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    char        *pszCurLocale = NULL;
-
-    if ( pszLocale || EQUAL( pszLocale, "" ) )
-    {
-        // Save the current locale
-        pszCurLocale = setlocale(LC_ALL, NULL );
-        // Set locale to the specified value
-        setlocale(LC_ALL, pszLocale );
-    }
-#endif
-
-    dfValue = atof( pszValue );
-
-#if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    // Restore stored locale back
-    if ( pszCurLocale )
-        setlocale(LC_ALL, pszCurLocale );
-#endif
+    dfValue = CPLAtof( pszValue );
 
     CPLFree( pszValue );
     return dfValue;
@@ -1207,7 +1184,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  */
 
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                    double dfValue, char *pszLocale )
+                    double dfValue, const char *pszLocale )
 {
 
 #define DOUBLE_BUFFER_SIZE 64
@@ -1295,7 +1272,7 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 #ifndef WIN32CE /* XXX - mloskot - strftime is not available yet. */
 
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
-                  const struct tm *poBrokenTime, char *pszLocale )
+                  const struct tm *poBrokenTime, const char *pszLocale )
 {
     char    *pszTemp = (char *)CPLMalloc( (nMaxLen + 1) * sizeof(char) );
     int     nChars;

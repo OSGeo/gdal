@@ -94,7 +94,7 @@ double CPL_DLL CPLAtofM(const char *);
 /*      Read a numeric value from an ASCII character string.            */
 /* -------------------------------------------------------------------- */
 char CPL_DLL *CPLScanString( const char *, int, int, int );
-double CPL_DLL CPLScanDouble( const char *, int, char * );
+double CPL_DLL CPLScanDouble( const char *, int );
 long CPL_DLL CPLScanLong( const char *, int );
 unsigned long CPL_DLL CPLScanULong( const char *, int );
 GUIntBig CPL_DLL CPLScanUIntBig( const char *, int );
@@ -107,9 +107,9 @@ int CPL_DLL CPLPrintString( char *, const char *, int );
 int CPL_DLL CPLPrintStringFill( char *, const char *, int );
 int CPL_DLL CPLPrintInt32( char *, GInt32 , int );
 int CPL_DLL CPLPrintUIntBig( char *, GUIntBig , int );
-int CPL_DLL CPLPrintDouble( char *, const char *, double, char * );
+int CPL_DLL CPLPrintDouble( char *, const char *, double, const char * );
 int CPL_DLL CPLPrintTime( char *, int , const char *, const struct tm *,
-                          char * );
+                          const char * );
 int CPL_DLL CPLPrintPointer( char *, void *, int );
 
 /* -------------------------------------------------------------------- */
