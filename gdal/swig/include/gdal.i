@@ -464,7 +464,7 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // TermProgress
 //
 
-const char *GDALVersionInfo( const char * = NULL );
+const char *GDALVersionInfo( const char * = "VERSION_NUM" );
 
 void GDALAllRegister();
 
