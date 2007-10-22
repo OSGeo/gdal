@@ -134,30 +134,55 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         OGRPGClearResult( hResult );
     }
 
-    /* TODO make changes corresponded to Frank issues
-       
-    sprintf ( szCommand,
-              "SELECT a.attname "
-              "FROM pg_attribute a, pg_constraint c, pg_class cl "
-              "WHERE c.contype='p' AND c.conrelid=cl.oid "
-              "AND a.attnum = c.conkey[1] AND a.attrelid=cl.oid "
-              "AND cl.relname = '%s'",
-              pszTableIn );
+    CPLString osSchemaClause;
+    if( pszSchemaNameIn )
+        osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
 
-    hResult = PQexec(hPGConn, szCommand );
+    osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
+              "t.typname = ANY(ARRAY['int2','int4','serial']) AS isfid "
+              "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
+              "WHERE a.attnum > 0 AND a.attrelid = c.oid "
+              "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
+              "AND c.oid = i.indrelid AND i.indisprimary = 't' "
+              "AND t.typname !~ '^geom' AND c.relname = '%s' "
+              "AND a.attnum = ANY (i.indkey) "
+              "%s"
+              "ORDER BY a.attnum",
+              pszTableIn, osSchemaClause.c_str() );
 
-    if ( hResult && PQntuples( hResult ) == 1 && PQgetisnull( hResult,0,0 ) == false )
+    hResult = PQexec(hPGConn, osCommand.c_str() );
+
+    if ( hResult && PGRES_TUPLES_OK == PQresultStatus( hResult) )
     {
-        sprintf( szPrimaryKey, "%s", PQgetvalue(hResult,0,0) );
-        CPLDebug( "OGR_PG", "Primary key name (FID): %s", szPrimaryKey );
+        if ( PQntuples( hResult ) == 1 && PQgetisnull( hResult,0,0 ) == false )
+        {
+            /* Check if single-field PK can be represented as 32-bit integer. */
+            CPLString osValue(PQgetvalue(hResult, 0, 3));
+            if( osValue == "t" )
+            {
+                osPrimaryKey.Printf( "%s", PQgetvalue(hResult,0,0) );
+                CPLDebug( "OGR_PG", "Primary key name (FID): %s", osPrimaryKey.c_str() );
+            }
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Multi-column primary key detected but not supported." );
+        }
     }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", PQerrorMessage(hPGConn) );
+    }
+
+    /* TODO - mloskot: Remove this warning after multi-column PK is supported. */
+    if( osPrimaryKey.empty() || osPrimaryKey == "ogc_fid" )
+    {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unable to detect table primary key. Use default 'ogc_fid'");
-    }*/
+                  "Unable to detect single-column primary key for '%s'. Use default 'ogc_fid'",
+                  pszTableIn);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the columns of the table.          */
@@ -169,8 +194,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         OGRPGClearResult( hResult );
 
         CPLString osSchemaClause;
-        if (pszSchemaNameIn)
-          osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
+        if( pszSchemaNameIn )
+            osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
 
         osCommand.Printf(
                  "DECLARE mycursor CURSOR for "
