@@ -1450,8 +1450,11 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
      }
      else 
      {
-         sWInfo.dfElevStepSize = CPLScanDouble(
-                 zResolution, strlen(zResolution), NULL);
+         // XXX: We are using atof() here instead of CPLAtof() because
+         // zResolution value comes from user's input and supposed to be
+         // written according to user's current locale. atof() honors locale
+         // setting, CPLAtof() is not.
+         sWInfo.dfElevStepSize = atof( zResolution );
          if ( sWInfo.dfElevStepSize <= 0 )
          {
              /* don't allow negative values */
