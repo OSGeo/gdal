@@ -1623,10 +1623,10 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
         // =>   X2 index calculated as nTokenCnt/2
         //      Y2 index caluclated as nTokenCnt/2+1
         
-        psExtent->MinX = CPLScanDouble(papszTokens[0],strlen(papszTokens[0]),"C");
-        psExtent->MinY = CPLScanDouble(papszTokens[1],strlen(papszTokens[1]),"C");
-        psExtent->MaxX = CPLScanDouble(papszTokens[nTokenCnt/2],strlen(papszTokens[nTokenCnt/2]),"C");
-        psExtent->MaxY = CPLScanDouble(papszTokens[nTokenCnt/2+1],strlen(papszTokens[nTokenCnt/2+1]),"C");
+        psExtent->MinX = CPLAtof( papszTokens[0] );
+        psExtent->MinY = CPLAtof( papszTokens[1] );
+        psExtent->MaxX = CPLAtof( papszTokens[nTokenCnt/2] );
+        psExtent->MaxY = CPLAtof( papszTokens[nTokenCnt/2+1] );
 
         CSLDestroy(papszTokens);
         OGRPGClearResult( hResult );
