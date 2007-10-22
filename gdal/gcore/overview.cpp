@@ -39,11 +39,13 @@ static CPLErr
 GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight, 
                         float * pafChunk, int nChunkYOff, int nChunkYSize,
                         GDALRasterBand * poOverview,
-                        const char * pszResampling )
+                        const char * pszResampling,
+                        int bHasNoData, float fNoDataValue)
 
 {
     int      nDstYOff, nDstYOff2, nOXSize, nOYSize;
     float    *pafDstScanline;
+    int      bPropagateNoData = CSLTestBoolean(CPLGetConfigOption("PROPAGATE_NODATA", "NO"));
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
@@ -108,6 +110,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
             }
             else if( EQUALN(pszResampling,"AVER",4) )
             {
+                double val;
                 double dfTotal = 0.0;
                 int    nCount = 0, iX, iY;
 
@@ -115,16 +118,34 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                  {
                     for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                     {
-                        dfTotal += pafSrcScanline[iX+(iY-nSrcYOff)*nSrcWidth];
-                        nCount++;
+                        val = pafSrcScanline[iX+(iY-nSrcYOff)*nSrcWidth];
+                        if (bHasNoData == FALSE || val != fNoDataValue)
+                        {
+                          dfTotal += val;
+                          nCount++;
+                        }
+                        else if (bPropagateNoData)
+                        {
+                          nCount = 0;
+                          goto after_subsampling_loop;
+                        }
                     }
                 }
-                
-                CPLAssert( nCount > 0 );
-                if( nCount == 0 )
-                    pafDstScanline[iDstPixel] = 0.0;
+
+after_subsampling_loop:
+                if (bHasNoData && nCount == 0)
+                {
+                  pafDstScanline[iDstPixel] = fNoDataValue;
+                }
                 else
-                    pafDstScanline[iDstPixel] = (float) (dfTotal / nCount);
+                {
+                  CPLAssert( nCount > 0 );
+                  if( nCount == 0 )
+                      pafDstScanline[iDstPixel] = 0.0;
+                  else
+                      pafDstScanline[iDstPixel] = (float) (dfTotal / nCount);
+                }
+
             }
         }
 
@@ -404,6 +425,8 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
     int    nFullResYChunk, nWidth;
     int    nFRXBlockSize, nFRYBlockSize;
     GDALDataType eType;
+    int    bHasNoData;
+    float  fNoDataValue;
 
     if (EQUALN(pszResampling,"AVER",4) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
@@ -453,7 +476,9 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
 
         return CE_Failure;
     }
-    
+
+    fNoDataValue = (float) poSrcBand->GetNoDataValue(&bHasNoData);
+
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
 /* -------------------------------------------------------------------- */
@@ -507,7 +532,8 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
             if( eType == GDT_Float32 )
                 GDALDownsampleChunk32R(nWidth, poSrcBand->GetYSize(), 
                                        pafChunk, nChunkYOff, nFullResYChunk,
-                                       papoOvrBands[iOverview], pszResampling);
+                                       papoOvrBands[iOverview], pszResampling,
+                                       bHasNoData, fNoDataValue);
             else
                 GDALDownsampleChunkC32R(nWidth, poSrcBand->GetYSize(), 
                                        pafChunk, nChunkYOff, nFullResYChunk,

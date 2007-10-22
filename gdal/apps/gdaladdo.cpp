@@ -40,7 +40,7 @@ static void Usage()
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]\n"
-            "                [--help-general] filename levels\n"
+            "                [--help-general] [-propagate_nodata] filename levels\n"
             "\n"
             "Example:\n"
             " %% gdaladdo -r average abc.tif 2 4 8 16\n" );
@@ -74,6 +74,10 @@ int main( int nArgc, char ** papszArgv )
     {
         if( EQUAL(papszArgv[iArg],"-r") && iArg < nArgc-1 )
             pszResampling = papszArgv[++iArg];
+        else if (EQUAL(papszArgv[iArg],"-propagate_nodata") )
+        {
+            CPLSetConfigOption("PROPAGATE_NODATA", "YES");
+        }
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )
