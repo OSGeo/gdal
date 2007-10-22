@@ -320,6 +320,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GS7BG();
 #endif
 
+#ifdef FRMT_cosar
+    GDALRegister_COSAR();
+#endif
+
+
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
