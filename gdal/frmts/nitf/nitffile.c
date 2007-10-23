@@ -243,18 +243,49 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "RE", 4, 7, &nNextData);
 
 /* -------------------------------------------------------------------- */
-/*      Is there a TRE to suck up?                                      */
+/*      Is there User Define Header Data? (TREs)                        */
 /* -------------------------------------------------------------------- */
     psFile->nTREBytes = 
         atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
     nOffset += 5;
 
-    nOffset += 3; /* UDHOFL */
+    if( psFile->nTREBytes > 0 )
+    {
+        nOffset += 3; /* UDHOFL */
+        psFile->nTREBytes -= 3;
+    }
 
     if( psFile->nTREBytes != 0 )
     {
-        psFile->pachTRE = pachHeader + nOffset;
-        psFile->nTREBytes -= 3;
+        psFile->pachTRE = (char *) CPLMalloc(psFile->nTREBytes);
+        memcpy( psFile->pachTRE, pachHeader + nOffset, 
+                psFile->nTREBytes );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is there Extended Header Data?  (More TREs)                     */
+/* -------------------------------------------------------------------- */
+    if( nHeaderLen > nOffset + 8 )
+    {
+        int nXHDL = 
+            atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
+
+        nOffset += 5; /* XHDL */
+
+        if( nXHDL != 0 )
+        {
+            nOffset += 3; /* XHDLOFL */
+            nXHDL -= 3;
+        }
+
+        if( nXHDL != 0 )
+        {
+            psFile->pachTRE = (char *) 
+                CPLRealloc( psFile->pachTRE, 
+                            psFile->nTREBytes + nXHDL );
+            memcpy( psFile->pachTRE, pachHeader + nOffset, nXHDL );
+            psFile->nTREBytes += nXHDL;
+        }
     }
 
     return psFile;
@@ -289,6 +320,7 @@ void NITFClose( NITFFile *psFile )
         VSIFCloseL( psFile->fp );
     CPLFree( psFile->pachHeader );
     CSLDestroy( psFile->papszMetadata );
+    CPLFree( psFile->pachTRE );
     CPLFree( psFile );
 }
 
