@@ -34,6 +34,7 @@
 #include "nitflib.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include "cpl_csv.h"
 
 CPL_CVSID("$Id$");
 
@@ -92,6 +93,7 @@ class NITFDataset : public GDALPamDataset
     int          ScanJPEGQLevel( GUInt32 *pnDataStart );
     CPLErr       ScanJPEGBlocks( void );
     CPLErr       ReadJPEGBlock( int, int );
+    void         CheckGeoSDEInfo();
 
     int          nIMIndex;
     CPLString    osNITFFilename;
@@ -1259,6 +1261,12 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have PRJPSB and MAPLOB TREs to get better                 */
+/*      georeferencing from?                                            */
+/* -------------------------------------------------------------------- */
+    poDS->CheckGeoSDEInfo();
+
+/* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
     char **papszMergedMD;
@@ -1593,6 +1601,240 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->TryLoadXML();
 
     return( poDS );
+}
+
+/************************************************************************/
+/*                            LoadDODDatum()                            */
+/*                                                                      */
+/*      Try to turn a US military datum name into a datum definition.   */
+/************************************************************************/
+
+static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
+                            const char *pszDatumName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      The most common case...                                         */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszDatumName,"WGE ",4) )
+    {
+        poSRS->SetWellKnownGeogCS( "WGS84" );
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      All the rest we will try and load from gt_datum.csv             */
+/*      (Geotrans datum file).                                          */
+/* -------------------------------------------------------------------- */
+    char szExpanded[5];
+    const char *pszGTDatum = CSVFilename( "gt_datum.csv" );
+
+    strncpy( szExpanded, pszDatumName, 3 );
+    szExpanded[3] = '\0';
+    if( pszDatumName[3] != ' ' )
+    {
+        strcat( szExpanded, "-" );
+        strncat( szExpanded, pszDatumName + 3, 1 );
+    }
+
+    CPLString osDName = CSVGetField( pszGTDatum, "CODE", szExpanded, 
+                                     CC_ApproxString, "NAME" );
+    if( strlen(osDName) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to find datum %s/%s in gt_datum.csv.",
+                  pszDatumName, szExpanded );
+        return OGRERR_FAILURE;
+    }
+        
+    CPLString osEllipseCode = CSVGetField( pszGTDatum, "CODE", szExpanded, 
+                                           CC_ApproxString, "ELLIPSOID" );
+    double dfDeltaX = CPLAtof(CSVGetField( pszGTDatum, "CODE", szExpanded, 
+                                           CC_ApproxString, "DELTAX" ) );
+    double dfDeltaY = CPLAtof(CSVGetField( pszGTDatum, "CODE", szExpanded, 
+                                           CC_ApproxString, "DELTAY" ) );
+    double dfDeltaZ = CPLAtof(CSVGetField( pszGTDatum, "CODE", szExpanded, 
+                                           CC_ApproxString, "DELTAZ" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Lookup the ellipse code.                                        */
+/* -------------------------------------------------------------------- */
+    const char *pszGTEllipse = CSVFilename( "gt_ellips.csv" );
+    
+    CPLString osEName = CSVGetField( pszGTEllipse, "CODE", osEllipseCode,
+                                     CC_ApproxString, "NAME" );
+    if( strlen(osEName) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to find datum %s in gt_ellips.csv.",
+                  osEllipseCode.c_str() );
+        return OGRERR_FAILURE;
+    }    
+    
+    double dfA = CPLAtof(CSVGetField( pszGTEllipse, "CODE", osEllipseCode,
+                                      CC_ApproxString, "A" ));
+    double dfInvF = CPLAtof(CSVGetField( pszGTEllipse, "CODE", osEllipseCode,
+                                         CC_ApproxString, "RF" ));
+
+/* -------------------------------------------------------------------- */
+/*      Create geographic coordinate system.                            */
+/* -------------------------------------------------------------------- */
+    poSRS->SetGeogCS( osDName, osDName, osEName, dfA, dfInvF );
+
+    poSRS->SetTOWGS84( dfDeltaX, dfDeltaY, dfDeltaZ );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          CheckGeoSDEInfo()                           */
+/*                                                                      */
+/*      Check for GeoSDE TREs (GEOPSB/PRJPSB and MAPLOB).  If we        */
+/*      have them, use them to override our coordinate system and       */
+/*      geotransform info.                                              */
+/************************************************************************/
+
+void NITFDataset::CheckGeoSDEInfo()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do we have the required TREs?                                   */
+/* -------------------------------------------------------------------- */
+    const char *pszGEOPSB , *pszPRJPSB, *pszMAPLOB;
+    OGRSpatialReference oSRS;
+    char szName[81];
+
+    pszGEOPSB = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,"GEOPSB",NULL);
+    pszPRJPSB = NITFFindTRE( psFile->pachTRE, psFile->nTREBytes,"PRJPSB",NULL);
+    pszMAPLOB = NITFFindTRE(psImage->pachTRE,psImage->nTREBytes,"MAPLOB",NULL);
+
+    if( pszGEOPSB == NULL || pszPRJPSB == NULL || pszMAPLOB == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Collect projection parameters.                                  */
+/* -------------------------------------------------------------------- */
+    char szParm[16];
+    int nParmCount = atoi(NITFGetField(szParm,pszPRJPSB,82,1));
+    int i;
+    double adfParm[8], dfFN, dfFE;
+
+    for( i = 0; i < nParmCount; i++ )
+        adfParm[i] = atof(NITFGetField(szParm,pszPRJPSB,83+15*i,15));
+
+    dfFE = atof(NITFGetField(szParm,pszPRJPSB,83+15*nParmCount,15));
+    dfFN = atof(NITFGetField(szParm,pszPRJPSB,83+15*nParmCount+15,15));
+
+/* -------------------------------------------------------------------- */
+/*      Try to handle the projection.                                   */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszPRJPSB+80,"AC",2) )
+        oSRS.SetACEA( adfParm[1], adfParm[2], adfParm[3], adfParm[0], 
+                      dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"AK",2) )
+        oSRS.SetLAEA( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"AL",2) )
+        oSRS.SetAE( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"BF",2) )
+        oSRS.SetBonne( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"CP",2) )
+        oSRS.SetEquirectangular( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"CS",2) )
+        oSRS.SetCS( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"EF",2) )
+        oSRS.SetEckertIV( adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"ED",2) )
+        oSRS.SetEckertVI( adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"GN",2) )
+        oSRS.SetGnomonic( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"HX",2) )
+        oSRS.SetHOM2PNO( adfParm[1], 
+                         adfParm[3], adfParm[2],
+                         adfParm[5], adfParm[4],
+                         adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"KA",2) )
+        oSRS.SetEC( adfParm[1], adfParm[2], adfParm[3], adfParm[0], 
+                    dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"LE",2) )
+        oSRS.SetLCC( adfParm[1], adfParm[2], adfParm[3], adfParm[0], 
+                     dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"LI",2) )
+        oSRS.SetCEA( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"MC",2) )
+        oSRS.SetMercator( adfParm[2], adfParm[1], 1.0, dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"MH",2) )
+        oSRS.SetMC( 0.0, adfParm[1], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"MP",2) )
+        oSRS.SetMollweide( adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"NT",2) )
+        oSRS.SetNZMG( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"OD",2) )
+        oSRS.SetOrthographic( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"PC",2) )
+        oSRS.SetPolyconic( adfParm[1], adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"PG",2) )
+        oSRS.SetPS( adfParm[1], adfParm[0], 1.0, adfParm[2], adfParm[3] );
+
+    else if( EQUALN(pszPRJPSB+80,"RX",2) )
+        oSRS.SetRobinson( adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"SA",2) )
+        oSRS.SetSinusoidal( adfParm[0], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"TC",2) )
+        oSRS.SetTM( adfParm[1], adfParm[0], adfParm[1], dfFE, dfFN );
+
+    else if( EQUALN(pszPRJPSB+80,"VA",2) )
+        oSRS.SetVDG( adfParm[0], dfFE, dfFN );
+
+    else
+        oSRS.SetLocalCS( NITFGetField(szName,pszPRJPSB,0,80) );
+
+/* -------------------------------------------------------------------- */
+/*      Try to apply the datum.                                         */
+/* -------------------------------------------------------------------- */
+    LoadDODDatum( &oSRS, NITFGetField(szParm,pszGEOPSB,86,4) );
+
+/* -------------------------------------------------------------------- */
+/*      Get the geotransform                                            */
+/* -------------------------------------------------------------------- */
+    double adfGT[6];
+
+    adfGT[0] = atof(NITFGetField(szParm,pszMAPLOB,13,15));
+    adfGT[1] = atof(NITFGetField(szParm,pszMAPLOB,3,5));
+    adfGT[2] = 0.0;
+    adfGT[3] = atof(NITFGetField(szParm,pszMAPLOB,28,15));
+    adfGT[4] = 0.0;
+    adfGT[5] = -atof(NITFGetField(szParm,pszMAPLOB,8,5));
+
+/* -------------------------------------------------------------------- */
+/*      Apply back to dataset.                                          */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszProjection );
+    pszProjection = NULL;
+
+    oSRS.exportToWkt( &pszProjection );
+
+    memcpy( adfGeoTransform, adfGT, sizeof(double)*6 );
 }
 
 /************************************************************************/
