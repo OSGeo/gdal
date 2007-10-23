@@ -106,7 +106,7 @@ int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers,
                          GIntBig *pnValidFlagsOffset, 
                          GIntBig *pnDataOffset );
 
-char ** GetHFAAuxMetaDataList();
+const char ** GetHFAAuxMetaDataList();
 
 #define HFA_PRIVATE
 
