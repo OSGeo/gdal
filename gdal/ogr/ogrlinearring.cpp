@@ -357,6 +357,25 @@ int OGRLinearRing::isClockwise() const
     return dfSum < 0.0;
 }
 
+/************************************************************************/ 
+/*                             reverseWindingOrder()                    */ 
+/************************************************************************/ 
+
+void OGRLinearRing::reverseWindingOrder() 
+
+{ 
+    int pos = 0; 
+    OGRPoint tempPoint; 
+
+    for( int i = 0; i < nPointCount / 2; i++ ) 
+    { 
+        getPoint( i, &tempPoint ); 
+        pos = nPointCount - i - 1; 
+        setPoint( i, getX(pos), getY(pos), getZ(pos) ); 
+        setPoint( pos, tempPoint.getX(), tempPoint.getY(), tempPoint.getZ() ); 
+    } 
+} 
+
 /************************************************************************/
 /*                             closeRing()                              */
 /************************************************************************/
