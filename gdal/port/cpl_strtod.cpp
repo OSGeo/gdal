@@ -303,10 +303,7 @@ static int
 _Stold (const char *s, char **endptr, double *pld, char **pnan,
         const char point)
 {
-  static const char hexits[] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
-    'f'
-  };
+  static const char hexits[] = "0123456789abcdef";
   char *sc;
   char buf[SIG_MAX];
   char sign;
@@ -408,11 +405,11 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
             nzero = 0;
           }
 	  else
-	    {
+	  {
 	      /* deliver zeros */
 	      for (; 0 < nzero && nsig < SIG_MAX; --nzero)
 		buf[nsig++] = 0;
-	    }
+	  }
 	  ++ndigit;
 	  if (nsig < SIG_MAX)
 	    {
@@ -421,7 +418,7 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
 		buf[nsig++] = *sc - '0';
 	      else
 		{
-		  p = (char *) strchr (hexits, tolower (*sc));
+		  p = strchr (hexits, tolower (*sc));
 		  buf[nsig++] = p - hexits;
 		}
 	    }
@@ -476,7 +473,7 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
   if (endptr)
     *endptr = (char *) sc;
   if (opoint < 0)
-    lexp += ndigit - nsig;
+    lexp += ndigit - olead - nsig;
   else
     lexp += opoint - olead - nsig;
   sexp =
@@ -486,9 +483,9 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
     *pld = _Ldtento (x, sexp);
   else
 #ifdef HAVE_FREXPL
-    *pld = ldexpl (x, (int) (sexp) << 2);
+    *pld = ldexpl (x, (int) sexp);
 #else
-    *pld = ldexp (x, (int) (sexp) << 2);
+    *pld = ldexp (x, (int) sexp);
 #endif
   if (sign == '-')
     *pld = -*pld;
