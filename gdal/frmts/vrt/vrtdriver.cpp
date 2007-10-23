@@ -151,7 +151,7 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( EQUAL(poSrcDS->GetDriver()->GetDescription(),"VRT") )
     {
         FILE *fpVRT;
-
+        
         fpVRT = VSIFOpen( pszFilename, "w" );
 
     /* -------------------------------------------------------------------- */
@@ -159,9 +159,8 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
         CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML( pszVRTPath );
-        char *pszXML;
-        
-        pszXML = CPLSerializeXMLTree( psDSTree );
+
+        char *pszXML = CPLSerializeXMLTree( psDSTree );
         
         CPLDestroyXMLNode( psDSTree );
 
@@ -170,12 +169,30 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
     /* -------------------------------------------------------------------- */
-        VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
-        VSIFClose( fpVRT );
+        GDALDataset* pCopyDS = NULL;
+
+        if( 0 != strlen( pszFilename ) )
+        {
+            FILE *fpVRT = NULL;
+
+            fpVRT = VSIFOpen( pszFilename, "w" );
+            CPLAssert( NULL != fpVRT );
+
+            VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
+            VSIFClose( fpVRT );
+
+            pCopyDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        }
+        else
+        {
+            /* No destination file is given, so pass serialized XML directly. */
+
+            pCopyDS = (GDALDataset *) GDALOpen( pszXML, GA_Update );
+        }
 
         CPLFree( pszXML );
-        
-        return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+
+        return pCopyDS;
     }
 
 /* -------------------------------------------------------------------- */
