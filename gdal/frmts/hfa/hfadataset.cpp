@@ -101,7 +101,7 @@ static const char *apszUnitMap[] = {
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
 /* ==================================================================== */
-int anUsgsEsriZones[] =
+static const int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,
@@ -587,7 +587,7 @@ void HFARasterBand::ReadAuxMetadata()
     if( nThisOverview != -1 )
         return;
 
-    char ** pszAuxMetaData = GetHFAAuxMetaDataList();
+    const char ** pszAuxMetaData = GetHFAAuxMetaDataList();
     for( i = 0; pszAuxMetaData[i] != NULL; i += 4 )
     {
         HFAEntry *poEntry;

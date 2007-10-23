@@ -38,13 +38,12 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
-//#include "gdal_alg.h"
 #include <limits.h>
 
 CPL_CVSID("$Id$");
 
 
-static char *apszAuxMetadataItems[] = {
+static const char *apszAuxMetadataItems[] = {
 
 // node/entry            field_name                  metadata_key       type
 
@@ -62,7 +61,7 @@ static char *apszAuxMetadataItems[] = {
 };
 
 
-char ** GetHFAAuxMetaDataList()
+const char ** GetHFAAuxMetaDataList()
 {
     return apszAuxMetadataItems;
 }
@@ -2518,7 +2517,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     char * pszBinValues = NULL;
     int bCreatedHistogramParameters = FALSE;
     int bCreatedStatistics = FALSE;
-    char ** pszAuxMetaData = GetHFAAuxMetaDataList();
+    const char ** pszAuxMetaData = GetHFAAuxMetaDataList();
     // check each metadata item
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
     {
