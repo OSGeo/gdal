@@ -158,7 +158,8 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
         return FALSE;
     }
 
-    if( atoi(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", "0")) )
+    if( CSLTestBoolean(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT", 
+                                       "0")) )
     {
         pszSrcDSName = CPLStrdup(
             CPLProjectRelativeFilename( pszVRTDirectory, pszSrcDSName ) );
