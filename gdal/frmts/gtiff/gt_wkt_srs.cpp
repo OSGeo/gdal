@@ -69,7 +69,7 @@ CPL_C_END
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
-static char *papszDatumEquiv[] =
+static const char *papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",
