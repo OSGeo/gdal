@@ -133,7 +133,7 @@ typedef enum {
 
 struct INGR_FormatDescription {
 	uint16           eFormatCode;
-	char            *pszName;
+	const char       *pszName;
     GDALDataType     eDataType;
 };
 
