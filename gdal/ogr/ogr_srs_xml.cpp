@@ -41,10 +41,10 @@
 /************************************************************************/
 
 static int parseURN( char *pszURN, 
-                     char **ppszObjectType, 
-                     char **ppszAuthority, 
-                     char **ppszCode,
-                     char **ppszVersion = NULL )
+                     const char **ppszObjectType, 
+                     const char **ppszAuthority, 
+                     const char **ppszCode,
+                     const char **ppszVersion = NULL )
 
 {
     int  i;
@@ -68,7 +68,7 @@ static int parseURN( char *pszURN,
 /*      Extract object type                                             */
 /* -------------------------------------------------------------------- */
     if( ppszObjectType != NULL )
-        *ppszObjectType = (char *) pszURN + 12;
+        *ppszObjectType = (const char *) pszURN + 12;
 
     i = 12;
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
@@ -815,7 +815,8 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
     CPLXMLNode *psIDNode = CPLGetXMLNode( psSrcXML, pszSourceKey );
     CPLXMLNode *psNameNode = CPLGetXMLNode( psIDNode, "name" );
     CPLXMLNode *psCodeSpace = CPLGetXMLNode( psNameNode, "codeSpace" );
-    char *pszAuthority, *pszCode, *pszURN;
+    const char *pszAuthority, *pszCode;
+    char *pszURN;
     int nCode = 0;
 
     if( psIDNode == NULL || psNameNode == NULL || psCodeSpace == NULL )
