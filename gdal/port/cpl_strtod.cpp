@@ -418,7 +418,7 @@ _Stold (const char *s, char **endptr, double *pld, char **pnan,
 		buf[nsig++] = *sc - '0';
 	      else
 		{
-		  p = strchr (hexits, tolower (*sc));
+		  p = strchr (const_cast<char*>(hexits), tolower (*sc));
 		  buf[nsig++] = p - hexits;
 		}
 	    }
