@@ -1792,7 +1792,7 @@ void NITFDataset::CheckGeoSDEInfo()
         oSRS.SetPolyconic( adfParm[1], adfParm[0], dfFE, dfFN );
 
     else if( EQUALN(pszPRJPSB+80,"PG",2) )
-        oSRS.SetPS( adfParm[1], adfParm[0], 1.0, adfParm[2], adfParm[3] );
+        oSRS.SetPS( adfParm[1], adfParm[0], 1.0, dfFE, dfFN );
 
     else if( EQUALN(pszPRJPSB+80,"RX",2) )
         oSRS.SetRobinson( adfParm[0], dfFE, dfFN );
