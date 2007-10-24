@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 /* why would fipszone and zone be paramers when they relate to a composite
    projection which renders done into a non-zoned projection? */
 
-static char *papszParameters[] =
+static const char *papszParameters[] =
 {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_SCALE_FACTOR,
@@ -75,7 +75,7 @@ static char *papszParameters[] =
 // underscores instead of spaces.  Should we use the EPSG names were available?
 // Plate-Caree has an accent in the spec!
 
-static char *papszProjectionSupported[] =
+static const char *papszProjectionSupported[] =
 {
     SRS_PT_CASSINI_SOLDNER,
     SRS_PT_BONNE,
@@ -112,7 +112,7 @@ static char *papszProjectionSupported[] =
     NULL
 };
 
-static char *papszProjectionUnsupported[] =
+static const char *papszProjectionUnsupported[] =
 {
     SRS_PT_NEW_ZEALAND_MAP_GRID,
     SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED,
@@ -123,7 +123,7 @@ static char *papszProjectionUnsupported[] =
 /*
 ** List of supported projections with the PARAMETERS[] acceptable for each.
 */
-static char *papszProjWithParms[] = {
+static const char *papszProjWithParms[] = {
 
     SRS_PT_TRANSVERSE_MERCATOR,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -399,7 +399,7 @@ static char *papszProjWithParms[] = {
     NULL
 };
 
-static char *papszAliasGroupList[] = {
+static const char *papszAliasGroupList[] = {
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_LATITUDE_OF_CENTER,
     NULL,
@@ -499,7 +499,7 @@ OGRErr OGRSpatialReference::Validate()
                     
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( CSLFindString( papszParameters,
+                else if( CSLFindString( (char **)papszParameters,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -520,9 +520,9 @@ OGRErr OGRSpatialReference::Validate()
                     
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( CSLFindString( papszProjectionSupported,
+                else if( CSLFindString( (char **)papszProjectionSupported,
                                         poNode->GetChild(0)->GetValue()) == -1
-                      && CSLFindString( papszProjectionUnsupported,
+                      && CSLFindString( (char **)papszProjectionUnsupported,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -531,7 +531,7 @@ OGRErr OGRSpatialReference::Validate()
                     
                     return OGRERR_UNSUPPORTED_SRS;
                 }
-                else if( CSLFindString( papszProjectionSupported,
+                else if( CSLFindString( (char **)papszProjectionSupported,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
