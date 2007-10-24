@@ -209,9 +209,18 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
         aPointY[i] -= nYOff;
 
 /* -------------------------------------------------------------------- */
-/*      Perform the rasterization.  We assume that the vector<> will    */
-/*      be contiguous.  I'm not convinced that is guaranteed.           */
+/*      Perform the rasterization.                                      */
+/*      According to the C++ Standard/23.2.4, elements of a vector are  */
+/*      stored in continuous memory block.                              */
 /* -------------------------------------------------------------------- */
+
+    // TODO - mloskot: Check if vectors are empty, otherwise it may
+    // lead to undefined behavior by returning non-referencable pointer.
+    // if (!aPointX.empty())
+    //    /* fill polygon */
+    // else
+    //    /* How to report this problem? */    
+
     GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
                                aPartSize.size(), &(aPartSize[0]), 
                                &(aPointX[0]), &(aPointY[0]),
