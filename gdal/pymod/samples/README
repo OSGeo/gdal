@@ -27,6 +27,8 @@ gdalfilter.py		Example script for applying kernel based filters to
 			an image using GDAL.  Demonstrates use of virtual
 			files as an intermediate representation.
 
+gdal_retile.py          Script for restructuring data in a tree of regular tiles.
+
 get_soundg.py		Script to copy the SOUNDG layer from an S-57 file to
 			a Shapefile, splitting up features with MULTIPOINT
 			geometries into many POINT feature, and appending
