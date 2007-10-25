@@ -728,7 +728,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // assume big result: should check for state=SQLSATE 01004.
         else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
         {
-            if( cbDataLen > (_SQLLEN)(sizeof(szWrkData)-1) )
+            if( cbDataLen >= (_SQLLEN)(sizeof(szWrkData)-1) )
             {
                 cbDataLen = (_SQLLEN)(sizeof(szWrkData)-1);
                 if (nFetchType == SQL_C_CHAR) 
