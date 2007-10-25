@@ -581,6 +581,33 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 // CreateAndReprojectImage
 // GCPsToGeoTransform
 
+%newobject ReprojectImage;
+
+%inline %{
+CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
+                         GDALDatasetShadow *dst_ds,
+                         const char *src_wkt=NULL,
+                         const char *dst_wkt=NULL,
+                         GDALResampleAlg eResampleAlg=GRA_NearestNeighbour,
+                         double WarpMemoryLimit=0.0,
+                         double maxerror = 0.0) {
+
+    CPLErrorReset();
+
+    CPLErr err = GDALReprojectImage( src_ds,
+                                     src_wkt,
+                                     dst_ds,
+                                     dst_wkt,
+                                     eResampleAlg,
+                                     WarpMemoryLimit,
+                                     maxerror,
+                                     NULL,
+                                     NULL,
+                                     NULL);
+    
+    return err;
+}
+%} 
 %newobject AutoCreateWarpedVRT;
 %inline %{
 GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
