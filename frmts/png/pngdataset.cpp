@@ -103,6 +103,7 @@ class PNGDataset : public GDALPamDataset
 
     void        CollectMetadata();
     CPLErr      LoadScanline( int );
+    CPLErr      LoadInterlacedChunk( int );
     void        Restart();
 
   public:
@@ -467,6 +468,102 @@ void PNGDataset::Restart()
     nLastLineRead = -1;
 }
 
+/************************************************************************/
+/*                        LoadInterlacedChunk()                         */
+/************************************************************************/
+
+CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
+
+{
+    int nPixelOffset;
+
+    if( nBitDepth == 16 )
+        nPixelOffset = 2 * GetRasterCount();
+    else
+        nPixelOffset = 1 * GetRasterCount();
+
+/* -------------------------------------------------------------------- */
+/*      Was is the biggest chunk we can safely operate on?              */
+/* -------------------------------------------------------------------- */
+#define MAX_PNG_CHUNK_BYTES 100000000
+
+    int         nMaxChunkLines = 
+        MAX(1,MAX_PNG_CHUNK_BYTES / (nPixelOffset * GetRasterXSize()));
+    png_bytep  *png_rows;
+
+    if( nMaxChunkLines > GetRasterYSize() )
+        nMaxChunkLines = GetRasterYSize();
+
+/* -------------------------------------------------------------------- */
+/*      Allocate chunk buffer, if we don't already have it from a       */
+/*      previous request.                                               */
+/* -------------------------------------------------------------------- */
+    nBufferLines = nMaxChunkLines;
+    if( nMaxChunkLines + iLine > GetRasterYSize() )
+        nBufferStartLine = GetRasterYSize() - nMaxChunkLines;
+    else
+        nBufferStartLine = iLine;
+
+    if( pabyBuffer == NULL )
+    {
+        pabyBuffer = (GByte *) 
+            VSIMalloc(nPixelOffset*GetRasterXSize()*nMaxChunkLines);
+        
+        if( pabyBuffer == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Unable to allocate buffer for whole interlaced PNG"
+                      "image of size %dx%d.\n", 
+                      GetRasterXSize(), GetRasterYSize() );
+            return CE_Failure;
+        }
+#ifdef notdef
+        if( nMaxChunkLines < GetRasterYSize() )
+            CPLDebug( "PNG", 
+                      "Interlaced file being handled in %d line chunks.\n"
+                      "Performance is likely to be quite poor.",
+                      nMaxChunkLines );
+#endif
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to restart reading?  We do this if we aren't on      */
+/*      the first attempt to read the image.                            */
+/* -------------------------------------------------------------------- */
+    if( nLastLineRead != -1 )
+    {
+        Restart();
+        if( setjmp( sSetJmpContext ) != 0 )
+            return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate and populate rows array.  We create a row for each     */
+/*      row in the image, but use our dummy line for rows not in the    */
+/*      target window.                                                  */
+/* -------------------------------------------------------------------- */
+    int        i;
+    png_bytep  dummy_row = (png_bytep)CPLMalloc(nPixelOffset*GetRasterXSize());
+    png_rows = (png_bytep*)CPLMalloc(sizeof(png_bytep) * GetRasterYSize());
+
+    for( i = 0; i < GetRasterYSize(); i++ )
+    {
+        if( i >= nBufferStartLine && i < nBufferStartLine + nBufferLines )
+            png_rows[i] = pabyBuffer 
+                + (i-nBufferStartLine) * nPixelOffset * GetRasterXSize();
+        else
+            png_rows[i] = dummy_row;
+    }
+
+    png_read_image( hPNG, png_rows );
+
+    CPLFree( png_rows );
+    CPLFree( dummy_row );
+
+    nLastLineRead = nBufferStartLine + nBufferLines - 1;
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                            LoadScanline()                            */
@@ -475,7 +572,6 @@ void PNGDataset::Restart()
 CPLErr PNGDataset::LoadScanline( int nLine )
 
 {
-    int   i;
     int   nPixelOffset;
 
     CPLAssert( nLine >= 0 && nLine < GetRasterYSize() );
@@ -496,44 +592,7 @@ CPLErr PNGDataset::LoadScanline( int nLine )
 /*      into memory using the high level API.                           */
 /* -------------------------------------------------------------------- */
     if( bInterlaced )
-    {
-        png_bytep	*png_rows;
-        
-        CPLAssert( pabyBuffer == NULL );
-
-        if( nLastLineRead != -1 )
-        {
-            Restart();
-            if( setjmp( sSetJmpContext ) != 0 )
-                return CE_Failure;
-        }
-
-        nBufferStartLine = 0;
-        nBufferLines = GetRasterYSize();
-        pabyBuffer = (GByte *) 
-            VSIMalloc(nPixelOffset*GetRasterXSize()*GetRasterYSize());
-        
-        if( pabyBuffer == NULL )
-        {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
-                      "Unable to allocate buffer for whole interlaced PNG"
-                      "image of size %dx%d.\n", 
-                      GetRasterXSize(), GetRasterYSize() );
-            return CE_Failure;
-        }
-
-        png_rows = (png_bytep*)CPLMalloc(sizeof(png_bytep) * GetRasterYSize());
-        for( i = 0; i < GetRasterYSize(); i++ )
-            png_rows[i] = pabyBuffer + i * nPixelOffset * GetRasterXSize();
-
-        png_read_image( hPNG, png_rows );
-
-        CPLFree( png_rows );
-
-        nLastLineRead = GetRasterYSize() - 1;
-
-        return CE_None;
-    }
+        return LoadInterlacedChunk( nLine );
 
 /* -------------------------------------------------------------------- */
 /*      Ensure we have space allocated for one scanline                 */
