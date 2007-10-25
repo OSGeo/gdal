@@ -2389,17 +2389,16 @@ static const char *GDALToNITFDataType( GDALDataType eType )
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2Options( char **papszOptions )
+static const char **NITFJP2Options( char **papszOptions )
 
 {
     int i;
-    static char *apszOptions[] = { 
+    static const char *apszOptions[] = { 
         "PROFILE=NPJE", 
         "CODESTREAM_ONLY=TRUE", 
         NULL,
         NULL };
     
-    apszOptions[2] = NULL;
     for( i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
     {
         if( EQUALN(papszOptions[i],"PROFILE=",8) )
@@ -2482,7 +2481,7 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 
         poWritableJ2KDataset = 
             poJ2KDriver->Create( pszDSName, nXSize, nYSize, nBands, eType, 
-                                 NITFJP2Options( papszOptions ) );
+                                 (char **)NITFJP2Options( papszOptions ) );
         CPLFree( pszDSName );
 
         if( poWritableJ2KDataset == NULL )
@@ -2687,7 +2686,7 @@ NITFDataset::NITFCreateCopy(
 
         poJ2KDataset = 
             poJ2KDriver->CreateCopy( pszDSName, poSrcDS, FALSE,
-                                     NITFJP2Options(papszOptions),
+                                     (char **)NITFJP2Options(papszOptions),
                                      pfnProgress, pProgressData );
         CPLFree( pszDSName );
         if( poJ2KDataset == NULL )
