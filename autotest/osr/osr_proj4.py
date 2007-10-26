@@ -114,11 +114,41 @@ def osr_proj4_4():
     gdaltest.post_reason( 'unknown srs not handled properly' )
     return 'fail'
 
+###############################################################################
+# Verify that prime meridians are preserved when round tripping. (#1940)
+#
+
+def osr_proj4_5():
+    
+    srs = osr.SpatialReference()
+
+    srs.ImportFromProj4( '+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356515 +towgs84=-168,-60,320,0,0,0,0 +pm=paris +units=m +no_defs' )
+
+    if abs(float(srs.GetAttrValue('PRIMEM',1)) - 2.3372291667) > 0.00000001:
+        gdaltest.post_reason('prime meridian lost?')
+        return 'fail'
+
+    if abs(srs.GetProjParm('central_meridian')) != 0.0:
+        gdaltest.post_reason( 'central meridian altered?' )
+        return 'fail'
+
+    p4 = srs.ExportToProj4()
+    srs2 = osr.SpatialReference()
+    srs2.ImportFromProj4( p4 )
+
+    if not srs.IsSame(srs2):
+        gdaltest.post_reason( 'round trip via PROJ.4 damaged srs?' )
+        print srs.ExportToPrettyWkt()
+        print srs2.ExportToPrettyWkt()
+    
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
     osr_proj4_3,
     osr_proj4_4,
+    osr_proj4_5,
     None ]
 
 if __name__ == '__main__':
