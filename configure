@@ -24349,6 +24349,8 @@ if test "${with_geos+set}" = set; then
 
 fi;
 
+  ac_geos_config_auto=no
+
   if test x"$with_geos" = x"no" ; then
 
     echo "$as_me:$LINENO: result: GEOS support disabled" >&5
@@ -24397,10 +24399,11 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+    ac_geos_config_auto=yes
 
   else
 
-   ac_geos_config=`basename $with_geos`
+   ac_geos_config=`basename "$with_geos"`
    ac_geos_config_dir=`(dirname "$with_geos") 2>/dev/null ||
 $as_expr X"$with_geos" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
 	 X"$with_geos" : 'X\(//\)[^/]' \| \
@@ -24414,8 +24417,8 @@ echo X"$with_geos" |
   	  /^X\(\/\).*/{ s//\1/; q; }
   	  s/.*/./; q'`
 
-   # Extract the first word of "$ac_geos_config", so it can be a program name with args.
-set dummy $ac_geos_config; ac_word=$2
+   # Extract the first word of ""$ac_geos_config"", so it can be a program name with args.
+set dummy "$ac_geos_config"; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_prog_GEOS_CONFIG+set}" = set; then
@@ -24426,7 +24429,7 @@ else
 else
   ac_prog_rejected=no
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $ac_geos_config_dir
+for as_dir in "$ac_geos_config_dir"
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
@@ -24503,12 +24506,20 @@ echo "${ECHO_T}yes" >&6
     fi
 
     if test $version_ok = "no"; then
-       HAVE_GEOS="no"
-       echo "$as_me:$LINENO: result: no" >&5
+
+      HAVE_GEOS="no"
+      echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-       { { echo "$as_me:$LINENO: error: geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos" >&5
+
+      if test $ac_geos_config_auto = "yes" ; then
+        { echo "$as_me:$LINENO: WARNING: GEOS was found on your system, but geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version. GEOS support disabled." >&5
+echo "$as_me: WARNING: GEOS was found on your system, but geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version. GEOS support disabled." >&2;}
+      else
+        { { echo "$as_me:$LINENO: error: geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos" >&5
 echo "$as_me: error: geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos" >&2;}
    { (exit 1); exit 1; }; }
+      fi
+
     else
 
       HAVE_GEOS="no"
@@ -24516,7 +24527,6 @@ echo "$as_me: error: geos-config reports version ${geos_major_version}.${geos_mi
       GEOS_LIBS="`${GEOS_CONFIG} --libs` -lgeos_c"
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
-
 
       ax_save_LIBS="${LIBS}"
       LIBS=${GEOS_LIBS}
@@ -25356,7 +25366,7 @@ fi;
 echo "$as_me:$LINENO: checking for old-gen python bindings" >&5
 echo $ECHO_N "checking for old-gen python bindings... $ECHO_C" >&6
 HAVE_OGPYTHON=no
-if test "x$with_ogpython" != "x" ; then
+if test "$with_ogpython" = yes -o x"$with_ogpython" = x ; then
 
                 for ac_prog in python python1.5 python1.4 python1.3
 do
