@@ -919,10 +919,13 @@ static void SHPWriteTreeNode( FILE *fp, SHPTreeNode *node)
     pabyRec = (unsigned char *) 
         malloc(sizeof(double) * 4
                + (3 * sizeof(int)) + (node->nShapeCount * sizeof(int)) );
+	if( NULL == pabyRec )
+	{
 #ifdef USE_CPL
 		CPLError( CE_Fatal, CPLE_OutOfMemory, "Memory allocation failure");
 #endif
-
+		assert( 0 );
+	}
 	assert( NULL != pabyRec );
 
     memcpy( pabyRec, &offset, 4);
