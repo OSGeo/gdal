@@ -376,7 +376,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"bonne") )
     {
         SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                  OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+                  OSR_GDV( papszNV, "lon_0", 0.0 ), 
                   OSR_GDV( papszNV, "x_0", 0.0 ), 
                   OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -384,7 +384,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"cass") )
     {
         SetCS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -392,7 +392,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"nzmg") )
     {
         SetNZMG( OSR_GDV( papszNV, "lat_0", -41.0 ), 
-                 OSR_GDV( papszNV, "lon_0", 173.0 ) + dfFromGreenwich, 
+                 OSR_GDV( papszNV, "lon_0", 173.0 ), 
                  OSR_GDV( papszNV, "x_0", 2510000.0 ), 
                  OSR_GDV( papszNV, "y_0", 6023150.0 ) );
     }
@@ -400,7 +400,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"cea") )
     {
         SetCEA( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
-                OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+                OSR_GDV( papszNV, "lon_0", 0.0 ), 
                 OSR_GDV( papszNV, "x_0", 0.0 ), 
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -408,7 +408,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"tmerc") )
     {
         SetTM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "k", 1.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -425,7 +425,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         SetMercator2SP( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
                         0.0,
-                        OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+                        OSR_GDV( papszNV, "lon_0", 0.0 ), 
                         OSR_GDV( papszNV, "x_0", 0.0 ), 
                         OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -433,7 +433,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"merc") ) /* 1SP form */
     {
         SetMercator( 0.0,
-                     OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
                      OSR_GDV( papszNV, "k", 1.0 ), 
                      OSR_GDV( papszNV, "x_0", 0.0 ), 
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -443,7 +443,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
              && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) - 90) < 0.001 )
     {
         SetPS( OSR_GDV( papszNV, "lat_ts", 90.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "k", 1.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -453,7 +453,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
              && ABS(OSR_GDV( papszNV, "lat_0", 0.0 ) + 90) < 0.001 )
     {
         SetPS( OSR_GDV( papszNV, "lat_ts", -90.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "k", 1.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -463,7 +463,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
              && CSLFetchNameValue(papszNV,"k") != NULL )
     {
         SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "k", 1.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -472,7 +472,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"stere") )
     {
         SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                          OSR_GDV( papszNV, "lon_0", 0.0 ) + dfFromGreenwich, 
+                          OSR_GDV( papszNV, "lon_0", 0.0 ), 
                           1.0, 
                           OSR_GDV( papszNV, "x_0", 0.0 ), 
                           OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -481,7 +481,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"eqc") )
     {
         SetEquirectangular( OSR_GDV( papszNV, "lat_ts", 0.0 ), 
-                            OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                            OSR_GDV( papszNV, "lon_0", 0.0 ), 
                             OSR_GDV( papszNV, "x_0", 0.0 ), 
                             OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -489,7 +489,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"gnom") )
     {
         SetGnomonic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                     OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                     OSR_GDV( papszNV, "lon_0", 0.0 ), 
                      OSR_GDV( papszNV, "x_0", 0.0 ), 
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -497,7 +497,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"ortho") )
     {
         SetOrthographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                         OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
                          OSR_GDV( papszNV, "x_0", 0.0 ), 
                          OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -505,7 +505,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"laea") )
     {
         SetLAEA( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
                  OSR_GDV( papszNV, "x_0", 0.0 ), 
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -513,7 +513,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"aeqd") )
     {
         SetAE( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -523,7 +523,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetEC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
                OSR_GDV( papszNV, "lat_2", 0.0 ), 
                OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -531,28 +531,28 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"mill") )
     {
         SetMC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"moll") )
     {
-        SetMollweide( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetMollweide( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                       OSR_GDV( papszNV, "x_0", 0.0 ), 
                       OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"eck4") )
     {
-        SetEckertIV( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetEckertIV( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                      OSR_GDV( papszNV, "x_0", 0.0 ), 
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"eck6") )
     {
-        SetEckertVI( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetEckertVI( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                      OSR_GDV( papszNV, "x_0", 0.0 ), 
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -560,7 +560,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"poly") )
     {
         SetPolyconic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                      OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                      OSR_GDV( papszNV, "lon_0", 0.0 ), 
                       OSR_GDV( papszNV, "x_0", 0.0 ), 
                       OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
@@ -570,49 +570,49 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         SetACEA( OSR_GDV( papszNV, "lat_1", 0.0 ), 
                  OSR_GDV( papszNV, "lat_2", 0.0 ), 
                  OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                 OSR_GDV( papszNV, "lon_0", 0.0 ), 
                  OSR_GDV( papszNV, "x_0", 0.0 ), 
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"robin") )
     {
-        SetRobinson( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetRobinson( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                      OSR_GDV( papszNV, "x_0", 0.0 ), 
                      OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"vandg") )
     {
-        SetVDG( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetVDG( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                 OSR_GDV( papszNV, "x_0", 0.0 ), 
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"sinu") )
     {
-        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetSinusoidal( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                        OSR_GDV( papszNV, "x_0", 0.0 ), 
                        OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"gall") )
     {
-        SetGS( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetGS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"goode") )
     {
-        SetGH( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetGH( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"geos") )
     {
-        SetGEOS( OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+        SetGEOS( OSR_GDV( papszNV, "lon_0", 0.0 ), 
                  OSR_GDV( papszNV, "h", 35785831.0 ), 
                  OSR_GDV( papszNV, "x_0", 0.0 ), 
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -625,7 +625,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         {
             /* 1SP form */
             SetLCC1SP( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                       OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                       OSR_GDV( papszNV, "lon_0", 0.0 ), 
                        OSR_GDV( papszNV, "k_0", 1.0 ), 
                        OSR_GDV( papszNV, "x_0", 0.0 ), 
                        OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -636,7 +636,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             SetLCC( OSR_GDV( papszNV, "lat_1", 0.0 ), 
                     OSR_GDV( papszNV, "lat_2", 0.0 ), 
                     OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                    OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                    OSR_GDV( papszNV, "lon_0", 0.0 ), 
                     OSR_GDV( papszNV, "x_0", 0.0 ), 
                     OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
@@ -645,7 +645,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"omerc") )
     {
         SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                OSR_GDV( papszNV, "lonc", 0.0 )+dfFromGreenwich, 
+                OSR_GDV( papszNV, "lonc", 0.0 ), 
                 OSR_GDV( papszNV, "alpha", 0.0 ), 
                 0.0, /* ??? */
                 OSR_GDV( papszNV, "k", 1.0 ), 
@@ -656,7 +656,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"somerc") )
     {
         SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                OSR_GDV( papszNV, "lon_0", 0.0 ), 
                 90.0,  90.0, 
                 OSR_GDV( papszNV, "k", 1.0 ), 
                 OSR_GDV( papszNV, "x_0", 0.0 ), 
@@ -666,7 +666,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"krovak") )
     {
         SetKrovak( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                   OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                   OSR_GDV( papszNV, "lon_0", 0.0 ), 
                    OSR_GDV( papszNV, "alpha", 0.0 ), 
                    0.0, // pseudo_standard_parallel_1
                    OSR_GDV( papszNV, "k", 1.0 ), 
@@ -677,9 +677,9 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"tpeqd") )
     {
         SetTPED( OSR_GDV( papszNV, "lat_1", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_1", 0.0 )+dfFromGreenwich, 
+                 OSR_GDV( papszNV, "lon_1", 0.0 ), 
                  OSR_GDV( papszNV, "lat_2", 0.0 ), 
-                 OSR_GDV( papszNV, "lon_2", 0.0 )+dfFromGreenwich, 
+                 OSR_GDV( papszNV, "lon_2", 0.0 ), 
                  OSR_GDV( papszNV, "x_0", 0.0 ), 
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
