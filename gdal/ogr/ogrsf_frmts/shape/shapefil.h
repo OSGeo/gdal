@@ -311,6 +311,9 @@ const char SHPAPI_CALL1(*)
 /* this can be two or four for binary or quad tree */
 #define MAX_SUBNODE	4
 
+/* upper limit of tree levels for automatic estimation */
+#define MAX_DEFAULT_TREE_DEPTH 12
+
 typedef struct shape_tree_node
 {
     /* region covered by this node */

@@ -195,6 +195,21 @@ SHPCreateTree( SHPHandle hSHP, int nDimension, int nMaxDepth,
             psTree->nMaxDepth += 1;
             nMaxNodeCount = nMaxNodeCount * 2;
         }
+
+        /* NOTE: Due to problems with memory allocation for deep trees,
+         * automatically estimated depth is limited up to 12 levels.
+         * See Ticket #1594 for detailed discussion.
+         */
+        if( psTree->nMaxDepth > MAX_DEFAULT_TREE_DEPTH )
+        {
+            psTree->nMaxDepth = MAX_DEFAULT_TREE_DEPTH;
+
+#ifdef USE_CPL
+        CPLDebug( "Shape",
+                  "Falling back to max number of allowed index tree levels (%d).",
+                  MAX_DEFAULT_TREE_DEPTH );
+#endif
+        }
     }
 
 /* -------------------------------------------------------------------- */
