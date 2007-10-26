@@ -877,6 +877,16 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
     SyncToDisk();
     psTree = SHPCreateTree( hSHP, 2, nMaxDepth, NULL, NULL );
 
+    if( NULL == psTree )
+    {
+        // TODO - mloskot: Is it better to return OGRERR_NOT_ENOUGH_MEMORY?
+
+        CPLDebug( "SHAPE",
+                  "Index creation failure. Likely, memory allocation error." );
+
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Trim unused nodes from the tree.                                */
 /* -------------------------------------------------------------------- */
