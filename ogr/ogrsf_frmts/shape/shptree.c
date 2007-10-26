@@ -72,6 +72,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef USE_CPL
+#include <cpl_error.h>
+#endif
 
 SHP_CVSID("$Id: shptree.c,v 1.10 2005/01/03 22:30:13 fwarmerdam Exp $")
 
@@ -122,6 +125,13 @@ static SHPTreeNode *SHPTreeNodeCreate( double * padfBoundsMin,
     SHPTreeNode	*psTreeNode;
 
     psTreeNode = (SHPTreeNode *) malloc(sizeof(SHPTreeNode));
+	if( NULL == psTreeNode )
+	{
+#ifdef USE_CPL
+		CPLError( CE_Fatal, CPLE_OutOfMemory, "Memory allocation failure");
+#endif
+		return NULL;
+	}
 
     psTreeNode->nShapeCount = 0;
     psTreeNode->panShapeIds = NULL;
@@ -157,6 +167,13 @@ SHPCreateTree( SHPHandle hSHP, int nDimension, int nMaxDepth,
 /*      Allocate the tree object                                        */
 /* -------------------------------------------------------------------- */
     psTree = (SHPTree *) malloc(sizeof(SHPTree));
+	if( NULL == psTree )
+	{
+#ifdef USE_CPL
+		CPLError( CE_Fatal, CPLE_OutOfMemory, "Memory allocation failure");
+#endif
+		return NULL;
+	}
 
     psTree->hSHP = hSHP;
     psTree->nMaxDepth = nMaxDepth;
@@ -184,13 +201,20 @@ SHPCreateTree( SHPHandle hSHP, int nDimension, int nMaxDepth,
 /*      Allocate the root node.                                         */
 /* -------------------------------------------------------------------- */
     psTree->psRoot = SHPTreeNodeCreate( padfBoundsMin, padfBoundsMax );
+	if( NULL == psTree->psRoot )
+	{
+		return NULL;
+	}
 
 /* -------------------------------------------------------------------- */
 /*      Assign the bounds to the root node.  If none are passed in,     */
 /*      use the bounds of the provided file otherwise the create        */
 /*      function will have already set the bounds.                      */
 /* -------------------------------------------------------------------- */
-    if( padfBoundsMin == NULL )
+	assert( NULL != psTree );
+	assert( NULL != psTree->psRoot );
+	
+	if( padfBoundsMin == NULL )
     {
         SHPGetInfo( hSHP, NULL, NULL,
                     psTree->psRoot->adfBoundsMin, 
@@ -228,6 +252,8 @@ static void SHPDestroyTreeNode( SHPTreeNode * psTreeNode )
 {
     int		i;
     
+	assert( NULL != psTreeNode );
+
     for( i = 0; i < psTreeNode->nSubNodes; i++ )
     {
         if( psTreeNode->apsSubNode[i] != NULL )
@@ -886,12 +912,18 @@ static void SHPWriteTreeNode( FILE *fp, SHPTreeNode *node)
     int i,j;
     int offset;
     unsigned char *pabyRec = NULL;
+	assert( NULL != node );
 
     offset = SHPGetSubNodeOffset(node);
   
     pabyRec = (unsigned char *) 
         malloc(sizeof(double) * 4
                + (3 * sizeof(int)) + (node->nShapeCount * sizeof(int)) );
+#ifdef USE_CPL
+		CPLError( CE_Fatal, CPLE_OutOfMemory, "Memory allocation failure");
+#endif
+
+	assert( NULL != pabyRec );
 
     memcpy( pabyRec, &offset, 4);
 
