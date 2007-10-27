@@ -603,6 +603,8 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                                 CPLHTTPResult **ppsResult )
 
 {
+    CPLLocaleC oLocaleEnforcer;
+
 /* -------------------------------------------------------------------- */
 /*      Figure out the georeferenced extents.                           */
 /* -------------------------------------------------------------------- */
@@ -698,6 +700,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 
         if( nBufXSize != nXSize || nBufYSize != nYSize )
         {
+//            printf( "In scary code...\n" );
             dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
             dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
             
