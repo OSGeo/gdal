@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shptree.c,v 1.10 2005/01/03 22:30:13 fwarmerdam Exp $
+ * $Id: shptree.c,v 1.11 2007/10/27 03:31:14 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shptree.c,v $
+ * Revision 1.11  2007/10/27 03:31:14  fwarmerdam
+ * limit default depth of tree to 12 levels (gdal ticket #1594)
+ *
  * Revision 1.10  2005/01/03 22:30:13  fwarmerdam
  * added support for saved quadtrees
  *
@@ -76,7 +79,7 @@
 #include <cpl_error.h>
 #endif
 
-SHP_CVSID("$Id: shptree.c,v 1.10 2005/01/03 22:30:13 fwarmerdam Exp $")
+SHP_CVSID("$Id: shptree.c,v 1.11 2007/10/27 03:31:14 fwarmerdam Exp $")
 
 #ifndef TRUE
 #  define TRUE 1
