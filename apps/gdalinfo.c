@@ -430,7 +430,7 @@ int main( int argc, char ** argv )
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
         if( bGotNodata )
         {
-            printf( "  NoData Value=%.15g\n", dfNoData );
+            printf( "  NoData Value=%.18g\n", dfNoData );
         }
 
         if( GDALGetOverviewCount(hBand) > 0 )
