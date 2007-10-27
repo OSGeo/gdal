@@ -69,11 +69,11 @@ JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 !IF $(MSVC_VER) == 1400
 # Uncomment the first for an optimized build or the second for a debug build.
 #OPTFLAGS=	/nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
-OPTFLAGS=	/nologo /MD /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal.pdb
+OPTFLAGS=	/nologo /MDd /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG /D_DEBUG /Fd$(GDAL_ROOT)\gdal.pdb
 !ELSE
 # Uncomment the first for an optimized build or the second for a debug build.
 #OPTFLAGS=	/nologo /MD /EHsc /Ox /DNDEBUG
-OPTFLAGS=	/nologo /MD /EHsc /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+OPTFLAGS=	/nologo /MDd /EHsc /Zi /DDEBUG /D_DEBUG /Fd$(GDAL_ROOT)\gdal.pdb
 !ENDIF
 
 # Uncomment the following if you are building for 64-bit windows
