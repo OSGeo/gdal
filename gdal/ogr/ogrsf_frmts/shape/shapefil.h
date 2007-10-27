@@ -37,6 +37,13 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.37  2007/10/27 03:31:14  fwarmerdam
+ * limit default depth of tree to 12 levels (gdal ticket #1594)
+ *
+ * Revision 1.36  2007/09/10 23:33:15  fwarmerdam
+ * Upstreamed support for visibility flag in SHPAPI_CALL for the needs
+ * of GDAL (gdal ticket #1810).
+ *
  * Revision 1.35  2007/09/03 19:48:10  fwarmerdam
  * move DBFReadAttribute() static dDoubleField into dbfinfo
  *
