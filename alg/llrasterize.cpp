@@ -200,7 +200,7 @@ No known bug
 		    horizontal_x1 = (int) floor(padfX[ind2]+0.5);
 		    horizontal_x2 = (int) floor(padfX[ind1]+0.5);
 		
-                    if  ( (horizontal_x1 >  maxx) ||  (horizontal_x2 < minx) )
+                    if  ( (horizontal_x1 >  maxx) ||  (horizontal_x2 <= minx) )
                         continue;
 
 		    /*fill the horizontal segment (separately from the rest)*/
@@ -230,7 +230,7 @@ No known bug
 
         for (i=0; (i < (ints)); i+=2) {
 
-            if( polyInts[i] <= maxx && polyInts[i+1] >= minx )
+            if( polyInts[i] <= maxx && polyInts[i+1] > minx )
             {
                 pfnScanlineFunc( pCBData, y, polyInts[i], polyInts[i+1] - 1 );
                 
