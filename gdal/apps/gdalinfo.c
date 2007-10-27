@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "gdal.h"
+#include "gdal_alg.h"
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
@@ -49,7 +50,7 @@ void Usage()
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]\n"
-            "                [-noct] [-mdd domain]* datasetname\n" );
+            "                [-noct] [-checksum] [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
 
@@ -69,7 +70,7 @@ int main( int argc, char ** argv )
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
-    int                 bShowColorTable = TRUE;
+    int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL, **papszFileList;
     const char  *pszProjection = NULL;
@@ -100,6 +101,8 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i], "-sample") )
             bSample = TRUE;
+        else if( EQUAL(argv[i], "-checksum") )
+            bComputeChecksum = TRUE;
         else if( EQUAL(argv[i], "-nogcp") )
             bShowGCPs = FALSE;
         else if( EQUAL(argv[i], "-nomd") )
@@ -414,6 +417,14 @@ int main( int argc, char ** argv )
         {
             printf( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
                     dfMin, dfMax, dfMean, dfStdDev );
+        }
+
+        if ( bComputeChecksum)
+        {
+            printf( "  Checksum=%d\n",
+                    GDALChecksumImage(hBand, 0, 0,
+                                      GDALGetRasterXSize(hDataset),
+                                      GDALGetRasterYSize(hDataset)));
         }
 
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
