@@ -665,9 +665,13 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 /* -------------------------------------------------------------------- */
 /*      If the source density is less than 100% we need to fetch the    */
 /*      existing destination value, and mix it with the source to       */
-/*      get the new "to apply" value.  Also compute composite density.  */
+/*      get the new "to apply" value.  Also compute composite           */
+/*      density.                                                        */
+/*                                                                      */
+/*      We avoid mixing if density is very near one or risk mixing      */
+/*      in very extreme nodata values and causing odd results (#1610)   */
 /* -------------------------------------------------------------------- */
-    if( dfDensity < 1.0 )
+    if( dfDensity < 0.9999 )
     {
         double dfDstReal, dfDstImag, dfDstDensity = 1.0;
 
@@ -676,6 +680,10 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 
         if( poWK->pafDstDensity != NULL )
             dfDstDensity = poWK->pafDstDensity[iDstOffset];
+        else if( poWK->panDstValid != NULL 
+                 && !((poWK->panDstValid[iDstOffset>>5]
+                       & (0x01 << (iDstOffset & 0x1f))) ) )
+            dfDstDensity = 0.0;
 
         switch( poWK->eWorkingDataType )
         {
