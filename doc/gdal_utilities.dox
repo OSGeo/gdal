@@ -164,7 +164,7 @@ Usage:
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]
-         [-noct] [-mdd domain]* datasetname
+         [-noct] [-checksum] [-mdd domain]* datasetname
 \endverbatim
 
 \if man
@@ -183,6 +183,7 @@ which contain thousands of the ones.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
+<dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
 </dl>
 
@@ -203,6 +204,7 @@ the full geotransform (but not GCPs).
 <li> Band block size.
 <li> Band descriptions. 
 <li> Band min/max values (internally known and possibly computed).
+<li> Band checksum (if computation asked).
 <li> Band NODATA value.
 <li> Band overview resolutions available. 
 <li> Band unit type (i.e.. "meters" or "feet" for elevation bands). 
