@@ -716,6 +716,10 @@ static int GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 
         if( poWK->pafDstDensity != NULL )
             dfDstDensity = poWK->pafDstDensity[iDstOffset];
+        else if( poWK->panDstValid != NULL 
+                 && !((poWK->panDstValid[iDstOffset>>5]
+                       & (0x01 << (iDstOffset & 0x1f))) ) )
+            dfDstDensity = 0.0;
 
         // It seems like we also ought to be testing panDstValid[] here!
 

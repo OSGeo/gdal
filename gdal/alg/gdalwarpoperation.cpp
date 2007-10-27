@@ -1435,6 +1435,30 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we have destination nodata values create, or update the      */
+/*      validity mask.                                                  */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->padfDstNoDataReal != NULL )
+    {
+        eErr = CreateKernelMask( &oWK, 0, "DstValid" );
+        if( eErr == CE_None )
+        {
+            double adfNoData[2];
+            
+            adfNoData[0] = psOptions->padfDstNoDataReal[0];
+            adfNoData[1] = psOptions->padfDstNoDataImag[0];
+            
+            eErr = 
+                GDALWarpNoDataMasker( adfNoData, psOptions->nBandCount, 
+                                      psOptions->eWorkingDataType,
+                                      oWK.nDstXOff, oWK.nDstYOff, 
+                                      oWK.nDstXSize, oWK.nDstYSize,
+                                      oWK.papabyDstImage + 0,
+                                      FALSE, oWK.panDstValid );
+        }
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Release IO Mutex, and acquire warper mutex.                     */
 /* -------------------------------------------------------------------- */
     if( hIOMutex != NULL )
