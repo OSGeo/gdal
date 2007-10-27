@@ -206,6 +206,12 @@ int main( int argc, char ** argv )
         {
             dfXRes = atof(argv[++i]);
             dfYRes = fabs(atof(argv[++i]));
+            if( dfXRes == 0 || dfYRes == 0 )
+            {
+                printf( "Wrong value for -tr parameters\n");
+                Usage();
+                exit( 2 );
+            }
             bCreateOutput = TRUE;
         }
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )
