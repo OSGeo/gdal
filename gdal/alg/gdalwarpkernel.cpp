@@ -1387,7 +1387,7 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     double  dfReal0, dfReal1, dfReal2, dfReal3;
     double  dfImag0, dfImag1, dfImag2, dfImag3;
     double  adfValueDens[4], adfValueReal[4], adfValueImag[4];
-    int     i;
+    int     i, bMissingData = FALSE;
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
@@ -1401,19 +1401,31 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
 
         if ( !GWKGetPixelValue( poWK, iBand, iOffset - 1,
                                 &dfDensity0, &dfReal0, &dfImag0 ) )
-            return FALSE;
+        {
+            bMissingData = TRUE;
+            break;
+        }
 
         if ( !GWKGetPixelValue( poWK, iBand, iOffset,
                                 &dfDensity1, &dfReal1, &dfImag1 ) )
-            return FALSE;
+        {
+            bMissingData = TRUE;
+            break;
+        }
 
         if ( !GWKGetPixelValue( poWK, iBand, iOffset + 1,
                                 &dfDensity2, &dfReal2, &dfImag2 ) )
-            return FALSE;
+        {
+            bMissingData = TRUE;
+            break;
+        }
 
         if ( !GWKGetPixelValue( poWK, iBand, iOffset + 2,
                                 &dfDensity3, &dfReal3, &dfImag3 ) )
-            return FALSE;
+        {
+            bMissingData = TRUE;
+            break;
+        }
 
         adfValueDens[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
                             dfDensity0, dfDensity1, dfDensity2, dfDensity3);
@@ -1421,6 +1433,18 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
                             dfReal0, dfReal1, dfReal2, dfReal3);
         adfValueImag[i + 1] = CubicConvolution(dfDeltaX, dfDeltaX2, dfDeltaX3,
                         dfImag0, dfImag1, dfImag2, dfImag3);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For now, if we have any pixels missing in the kernel area,      */
+/*      we fallback on using bilinear interpolation.  Ideally we        */
+/*      should do "weight adjustment" of our results similarly to       */
+/*      what is done for the cubic spline and lanc. interpolators.      */
+/* -------------------------------------------------------------------- */
+    if( bMissingData )
+    {
+        return GWKBilinearResample( poWK, iBand, dfSrcX, dfSrcY,
+                                    pdfDensity, pdfReal, pdfImag );
     }
 
     *pdfDensity = CubicConvolution(dfDeltaY, dfDeltaY2, dfDeltaY3,
@@ -1543,6 +1567,7 @@ static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand,
 {
     double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
     double  dfAccumulatorDensity = 0.0;
+    double  dfAccumulatorWeight = 0.0;
     int     iSrcX = (int) floor( dfSrcX - 0.5 );
     int     iSrcY = (int) floor( dfSrcY - 0.5 );
     int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
@@ -1571,14 +1596,30 @@ static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand,
                 dfAccumulatorReal += *pdfReal * dfWeight2;
                 dfAccumulatorImag += *pdfImag * dfWeight2;
                 dfAccumulatorDensity += *pdfDensity * dfWeight2;
+                dfAccumulatorWeight += dfWeight2;
             }
         }
     }
     
-    *pdfReal = dfAccumulatorReal;
-    *pdfImag = dfAccumulatorImag;
-    *pdfDensity = dfAccumulatorDensity;
-    
+    if( dfAccumulatorWeight < 0.001 || dfAccumulatorDensity < 0.001 )
+    {
+        *pdfDensity = 0.0;
+        return FALSE;
+    }
+
+    if( dfAccumulatorWeight < 0.999 )
+    {
+        *pdfReal = dfAccumulatorReal / dfAccumulatorWeight;
+        *pdfImag = dfAccumulatorImag / dfAccumulatorWeight;
+        *pdfDensity = dfAccumulatorDensity / dfAccumulatorWeight;
+    }
+    else
+    {
+        *pdfReal = dfAccumulatorReal;
+        *pdfImag = dfAccumulatorImag;
+        *pdfDensity = dfAccumulatorDensity;
+    }
+
     return TRUE;
 }
 
