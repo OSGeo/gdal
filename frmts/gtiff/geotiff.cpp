@@ -3543,7 +3543,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
-    int                 nPredictor = 1, nJpegQuality = -1;
+    int                 nPredictor = 1, nJpegQuality = -1, nZLevel = 6;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -3634,6 +3634,19 @@ TIFF *GTiffCreate( const char * pszFilename,
     pszValue = CSLFetchNameValue( papszParmList, "PREDICTOR" );
     if( pszValue  != NULL )
         nPredictor =  atoi( pszValue );
+
+    pszValue = CSLFetchNameValue( papszParmList, "ZLEVEL" );
+    if( pszValue  != NULL )
+    {
+        nZLevel =  atoi( pszValue );
+        if (!(nZLevel >= 1 && nZLevel <= 9))
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                      "ZLEVEL=%s value not recognised, ignoring.",
+                      pszValue );
+            nZLevel = 6;
+        }
+    }
 
     pszValue = CSLFetchNameValue( papszParmList, "JPEG_QUALITY" );
     if( pszValue  != NULL )
@@ -3882,6 +3895,8 @@ TIFF *GTiffCreate( const char * pszFilename,
     if ( nCompression == COMPRESSION_LZW ||
          nCompression == COMPRESSION_ADOBE_DEFLATE )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
+    if (nCompression == COMPRESSION_ADOBE_DEFLATE)
+        TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
     if( nCompression == COMPRESSION_JPEG 
         && nJpegQuality != -1 )
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
@@ -5080,6 +5095,7 @@ void GDALRegister_GTiff()
 "   </Option>"
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100, default 75.'/>"
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9, default 6.'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
 "       <Value>BAND</Value>"
