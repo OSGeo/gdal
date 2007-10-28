@@ -541,7 +541,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Setup NODATA options.                                           */
 /* -------------------------------------------------------------------- */
-        if( pszSrcNodata != NULL )
+        if( pszSrcNodata != NULL && !EQUALN(pszSrcNodata,"n",1) )
         {
             char **papszTokens = CSLTokenizeString( pszSrcNodata );
             int  nTokenCount = CSLCount(papszTokens);
@@ -570,6 +570,51 @@ int main( int argc, char ** argv )
 
             psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
                                                "UNIFIED_SRC_NODATA", "YES" );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      If -srcnodata was not specified, but the data has nodata        */
+/*      values, use them.                                               */
+/* -------------------------------------------------------------------- */
+        if( pszSrcNodata == NULL )
+        {
+            int bHaveNodata = FALSE;
+            double dfReal = 0.0;
+
+            for( i = 0; !bHaveNodata && i < psWO->nBandCount; i++ )
+            {
+                GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, i+1 );
+                dfReal = GDALGetRasterNoDataValue( hBand, &bHaveNodata );
+            }
+
+            if( bHaveNodata )
+            {
+                if( !bQuiet )
+                    printf( "Using internal nodata values (eg. %g) for image %s.\n",
+                            dfReal, papszSrcFiles[iSrc] );
+                psWO->padfSrcNoDataReal = (double *) 
+                    CPLMalloc(psWO->nBandCount*sizeof(double));
+                psWO->padfSrcNoDataImag = (double *) 
+                    CPLMalloc(psWO->nBandCount*sizeof(double));
+                
+                for( i = 0; i < psWO->nBandCount; i++ )
+                {
+                    GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, i+1 );
+
+                    dfReal = GDALGetRasterNoDataValue( hBand, &bHaveNodata );
+
+                    if( bHaveNodata )
+                    {
+                        psWO->padfSrcNoDataReal[i] = dfReal;
+                        psWO->padfSrcNoDataImag[i] = 0.0;
+                    }
+                    else
+                    {
+                        psWO->padfSrcNoDataReal[i] = -123456.789;
+                        psWO->padfSrcNoDataImag[i] = 0.0;
+                    }
+                }
+            }
         }
 
 /* -------------------------------------------------------------------- */
