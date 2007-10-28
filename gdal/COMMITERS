@@ -94,6 +94,8 @@ retsios       Bas Retsios                  ILWIS, GRIB
 condit        Chris Condit                 Python, KML
               condit at sdsc.edu              
 
+klokan        Petr Pridal                  gdal2tiles
+              klokan at klokan.cz
 
 Folks who have not yet agreed to RFC 3:
 
