@@ -529,7 +529,7 @@ algorithm, worst interpolation quality).</dd>
 values for input bands (different values can be supplied for each band).  If 
 more than one value is supplied all values should be quoted to keep them 
 together as a single operating system argument.  Masked values will not be 
-used in interpolation.</dd>
+used in interpolation.  Use a value of <tt>None</tt> to ignore intrinsic nodata settings on the source dataset.</dd>
 <dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values
 for output bands (different values can be supplied for each band).  If more
 than one value is supplied all values should be quoted to keep them together
