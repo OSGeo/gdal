@@ -23,7 +23,7 @@ GeoTIFF Driver:
  * Fix memory failures with allocating 64K entry color tables on stack. #1736
  * Fix zero value issue in building pixel interleaved GeoTIFF files. #1738
  * Fix memory issue with big color table arrays on stack. #1759
- * Upgraded internal libtiff to libtiff 4.x with a few patches from HEAD. #1920
+ * Prevent GDAL 1.4.3 from building with libtiff 4.x. #1920
 
 GIF Driver:
  * Fix compilation issues on  Red Hat EL 5 (64-bit). #1700
