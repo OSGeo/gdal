@@ -444,8 +444,10 @@ const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex );
 //    Transformation Matrix conversion
 //  ------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
-void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransform );
+void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne, 
+                                      double *padfGeoTransform );
+void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, 
+                                      double *padfGeoTransform );
 
 //  ------------------------------------------------------------------
 //    Color Table conversion

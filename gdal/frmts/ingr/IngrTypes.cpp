@@ -112,6 +112,78 @@ static const GByte BitReverseTable[256] =
 };
 
 // -----------------------------------------------------------------------------
+//                                              Scanline Orientation Flip Matrix
+// -----------------------------------------------------------------------------
+
+static const double INGR_URV_Flip[16] =
+    {
+        1.0,  0.0,  0.0,  0.0,
+        0.0, -1.0,  0.0,  0.0,
+        0.0,  0.0,  1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+static const double INGR_LLV_Flip[16] =
+    {
+       -1.0,  0.0,  0.0,  0.0,
+        0.0,  1.0,  0.0,  0.0,
+        0.0,  0.0,  1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+static const double INGR_LRV_Flip[16] =
+    {
+       -1.0,  0.0,  0.0,  0.0,
+        0.0, -1.0,  0.0,  0.0,
+        0.0,  0.0,  1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+static const double INGR_ULH_Flip[16] =
+    {
+        1.0,  0.0,  0.0,  0.0,
+        0.0,  1.0,  0.0,  0.0,
+        0.0,  0.0, -1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+static const double INGR_URH_Flip[16] =
+    {
+        1.0,  0.0,  0.0,  0.0,
+        0.0, -1.0,  0.0,  0.0,
+        0.0,  0.0, -1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+static const double INGR_LLH_Flip[16] =
+    {
+       -1.0,  0.0,  0.0,  0.0,
+        0.0,  1.0,  0.0,  0.0,
+        0.0,  0.0, -1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+static const double INGR_LRH_Flip[16] =
+    {
+       -1.0,  0.0,  0.0,  0.0,
+        0.0, -1.0,  0.0,  0.0,
+        0.0,  0.0, -1.0,  0.0,
+        0.0,  0.0,  0.0,  1.0
+    };
+
+void INGR_MultiplyMatrix( double *padfA, double *padfB, const double *padfC )
+{
+    int i;
+    int j;
+
+    for( i = 0; i < 4; i++ )
+    {
+        for( j = 0; j < 4; j++ )
+        {
+            padfA[(i * 4) + j] = 
+                padfB[(i * 4) + 0] * padfC[(0 * 4) + j] +
+                padfB[(i * 4) + 1] * padfC[(1 * 4) + j] +
+                padfB[(i * 4) + 2] * padfC[(2 * 4) + j] +
+                padfB[(i * 4) + 3] * padfC[(3 * 4) + j];
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
 //                                                            INGR_GetDataType()
 // -----------------------------------------------------------------------------
 
@@ -198,14 +270,73 @@ const INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
 //                                                         INGR_GetTransMatrix()
 // -----------------------------------------------------------------------------
 
-void CPL_STDCALL INGR_GetTransMatrix( real64 *padfMatrix, double *padfGeoTransform )
+void CPL_STDCALL INGR_GetTransMatrix( INGR_HeaderOne *pHeaderOne, 
+                                      double *padfGeoTransform )
 {
-    padfGeoTransform[0] = padfMatrix[3] - padfMatrix[0] / 2;
-    padfGeoTransform[1] = padfMatrix[0];
-    padfGeoTransform[2] = padfMatrix[1];
-    padfGeoTransform[3] = padfMatrix[7] + padfMatrix[5] / 2;
-    padfGeoTransform[4] = padfMatrix[4];
-    padfGeoTransform[5] = - padfMatrix[5];
+    // -------------------------------------------------------------
+    // Check for empty transformation matrix
+    // -------------------------------------------------------------
+
+    if( pHeaderOne->TransformationMatrix[0]  == 0.0 &&
+        pHeaderOne->TransformationMatrix[2]  == 0.0 &&
+        pHeaderOne->TransformationMatrix[3]  == 0.0 &&
+        pHeaderOne->TransformationMatrix[4]  == 0.0 &&
+        pHeaderOne->TransformationMatrix[5]  == 0.0 &&
+        pHeaderOne->TransformationMatrix[7]  == 0.0 )
+    {
+        padfGeoTransform[0] = 0.0;
+        padfGeoTransform[1] = 1.0;
+        padfGeoTransform[2] = 0.0; 
+        padfGeoTransform[3] = pHeaderOne->PixelsPerLine;
+        padfGeoTransform[4] = 0.0;
+        padfGeoTransform[5] = -1.0;
+        return;
+    }
+
+    // -------------------------------------------------------------
+    // Calculate Concatened Tranformation Matrix based on Orientation
+    // -------------------------------------------------------------
+
+    double adfConcat[16];
+   
+    switch( (INGR_Orientation ) pHeaderOne->ScanlineOrientation )
+    {
+        case UpperLeftVertical:
+            memcpy( adfConcat, pHeaderOne->TransformationMatrix, 16 );
+            break;
+        case UpperRightVertical:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URV_Flip ); 
+            break;
+        case LowerLeftVertical:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LLV_Flip ); 
+            break;
+        case LowerRightVertical:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRV_Flip ); 
+            break;
+        case UpperLeftHorizontal:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_ULH_Flip ); 
+            break;
+        case UpperRightHorizontal:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_URH_Flip ); 
+            break;
+        case LowerLeftHorizontal:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LLH_Flip ); 
+            break;
+        case LowerRightHorizontal:
+            INGR_MultiplyMatrix( adfConcat, pHeaderOne->TransformationMatrix, INGR_LRH_Flip ); 
+            break;
+    }
+
+    // -------------------------------------------------------------
+    // Convert to GDAL GeoTransformation Matrix
+    // -------------------------------------------------------------
+
+    padfGeoTransform[0] = adfConcat[3] - adfConcat[0] / 2;
+    padfGeoTransform[1] = adfConcat[0];
+    padfGeoTransform[2] = adfConcat[1];
+    padfGeoTransform[3] = adfConcat[7] + adfConcat[5] / 2;
+    padfGeoTransform[4] = adfConcat[4];
+    padfGeoTransform[5] = - adfConcat[5];
 }
 
 // -----------------------------------------------------------------------------

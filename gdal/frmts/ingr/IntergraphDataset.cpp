@@ -285,8 +285,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // Get Geo Transformation from Homogeneous Transformation Matrix (TRN)
     // -------------------------------------------------------------------- 
 
-    INGR_GetTransMatrix( pHeaderOne->TransformationMatrix, 
-        poDS->adfGeoTransform );
+    INGR_GetTransMatrix( pHeaderOne, poDS->adfGeoTransform );
 
     // -------------------------------------------------------------------- 
     // Set Metadata Information
@@ -682,22 +681,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
 CPLErr  IntergraphDataset::GetGeoTransform( double *padfTransform )
 {
-    INGR_GetTransMatrix( hHeaderOne.TransformationMatrix, adfGeoTransform );
-
-    if( adfGeoTransform[0] == 0.0 &&
-        adfGeoTransform[1] == 0.0 &&
-        adfGeoTransform[2] == 0.0 &&
-        adfGeoTransform[3] == 0.0 &&
-        adfGeoTransform[4] == 0.0 &&
-        adfGeoTransform[5] == 0.0 )
-    {
-        adfGeoTransform[0] = 0.0;
-        adfGeoTransform[1] = 1.0;
-        adfGeoTransform[2] = 0.0; 
-        adfGeoTransform[3] = nRasterYSize;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -1.0;
-    }
+    INGR_GetTransMatrix( &hHeaderOne, adfGeoTransform );
 
     if( GDALPamDataset::GetGeoTransform( padfTransform ) != CE_None )
     {
