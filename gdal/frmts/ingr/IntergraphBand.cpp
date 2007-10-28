@@ -171,6 +171,10 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     {
         SetMetadataItem( "TILED", "NO", "IMAGE_STRUCTURE" ); 
     }
+
+    SetMetadataItem( "ORIENTATION", 
+        INGR_GetOrientation( hHeaderOne.ScanlineOrientation ),
+        "IMAGE_STRUCTURE" );
 }
 
 //  ----------------------------------------------------------------------------
@@ -641,7 +645,7 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
 
 	if( eFormat == CCITTGroup4 )
 	{
-        BlackWhiteCT();
+        BlackWhiteCT( true );
 	}
 
     // ----------------------------------------------------------------
@@ -961,21 +965,29 @@ void IntergraphRasterBand::FlushBandHeader( void )
 //                                          IntergraphRasterBand::BlackWhiteCT()
 //  ----------------------------------------------------------------------------
 
-void IntergraphRasterBand::BlackWhiteCT( void )
+void IntergraphRasterBand::BlackWhiteCT( bool bReverse )
 {
-	GDALColorEntry oEntry;
+	GDALColorEntry oBlack;
+	GDALColorEntry oWhite;
 
-	oEntry.c1 = (short) 255;
-	oEntry.c2 = (short) 255;
-	oEntry.c3 = (short) 255;
-	oEntry.c4 = (short) 255;
+    oWhite.c1 = (short) 255;
+	oWhite.c2 = (short) 255;
+	oWhite.c3 = (short) 255;
+	oWhite.c4 = (short) 255;
 
-	poColorTable->SetColorEntry( 0, &oEntry );
+	oBlack.c1 = (short) 0;
+	oBlack.c2 = (short) 0;
+	oBlack.c3 = (short) 0;
+	oBlack.c4 = (short) 255;
 
-	oEntry.c1 = (short) 0;
-	oEntry.c2 = (short) 0;
-	oEntry.c3 = (short) 0;
-	oEntry.c4 = (short) 255;
-
-	poColorTable->SetColorEntry( 1, &oEntry );
+    if( bReverse )
+    {
+        poColorTable->SetColorEntry( 0, &oWhite );
+	    poColorTable->SetColorEntry( 1, &oBlack );
+    }
+    else
+    {
+        poColorTable->SetColorEntry( 0, &oBlack );
+	    poColorTable->SetColorEntry( 1, &oWhite );
+    }    
 }
