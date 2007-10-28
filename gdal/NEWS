@@ -1,3 +1,128 @@
+= GDAL/OGR 1.4.3 - Overview of Changes =
+
+The GDAL 1.4.3 release is a stable release, and contains the following bug fixes. There should be no noteworthy changes in interfaces or APIs.
+
+== GDAL == 
+
+ * Fix handling of gmljp2 files with srsName only on Envelope. #1906
+ * Fix handling of urn:x-ogc (use importFromURN() method). #1906
+ * Add GMLJP2OVERRIDE configuration option mechanism to set custom GMLJP2 from a file. #1906
+ * Improved internalize memory allocation failure report, release lock on failure. #1914
+
+AAIGRID Driver:
+ * Fix in calculation of yllcorner value. #1794
+
+ECW Driver:
+ * Fix memory leak in ECWDataset::IRasterIO() function. #1922
+
+GeoTIFF Driver:
+ * Fix issue with mixed Lambert_Conformal_Conic_1SP and Lambert_Conformal_Conic_2SP. #1315
+ * Fix handling of partial bottom tiles/strips. #1179
+ * Fix issue with mixed names of WGS72 and WGS84 in libgeotiff code. #1715
+ * Improved detection of already computed overview levels. #1722
+ * Fix memory failures with allocating 64K entry color tables on stack. #1736
+ * Fix zero value issue in building pixel interleaved GeoTIFF files. #1738
+ * Fix memory issue with big color table arrays on stack. #1759
+ * Upgraded internal libtiff to libtiff 4.x with a few patches from HEAD. #1920
+
+GIF Driver:
+ * Fix compilation issues on  Red Hat EL 5 (64-bit). #1700
+
+HDF Driver:
+ * Fixed heap corruption while reading some files. #1701
+
+HFA Driver:
+ * Fix building overviews on an Imagine-created HFA file. #1109
+ * Made reading variations aux.xml files more bulletproof. #1691
+ * Fix calculation of min/max statistics for Erdas Imagine datasets. #1702
+ * Fix band value rounding issue in palletized Imagine rasters. #1732
+ * Ensure .ige and .rrd get cleaned up when creating new files. #1784
+ * Added missing bytes swapping when opening spill files. #1841
+ * Fix issue with looping HFAEntries. #1907
+
+JPEG Driver:
+ * Fix in byte swapping logic for small EXIF values. #1786
+ * Fix issue with creating temporary files. #1795
+ * Bulletproof handling of corrupted EXIF data. #1904
+
+NITF Driver:
+ * Fix handling corrupted location table for some uncertain images. #1313
+ * Fix handling corrupted RPF header. #1714
+ * Fix bounding box for CADRG files crossing meridian 180°. #1750
+
+PCRaster Driver:
+ * Replaced assert() macro with CPLAssert(). #1830
+
+RAW Driver:
+ * Fix in keyword=value processing logic. #1792
+
+Warper:
+ * Fixed Cubic Spline and Lanczos interpolators. #1610
+ * Fix in geolocation support. #1919
+
+Utilities:
+
+ * Fix in segmentation fault issue in scanline burning algorithm. #1936
+
+== OGR == 
+
+ * Fix handling wkbLinearRing geometry in OGR_G_GetArea. #1755
+
+CSV Driver:
+ * Added support of new data types: date, time, datetime. #1761
+
+ISO8211 Driver:
+ * Improved handling multi-byte character strings. #1526 
+
+ESRI Shapefile Driver:
+ * Fix memory allocation during building of spatial index tree of high depth. #1594, #1790
+ * Updated documentation. #1942
+
+Generic Driver:
+ * Fix opening of .ind file in read-only mode. #1620
+
+GML Driver:
+ * Fix truncation of attribute values. #1844
+
+KML Driver:
+ * Fix anti-clockwise order of polygon coordinates. #1704
+
+MapInfo Driver:
+ * Improved multi-thread safety. #1883
+
+MySQL Driver:
+ * Fix creation issue of features with 3D geometry. #1848
+
+ODBC Driver:
+ * Fix error message when corrupted WKT data detected. #1901
+
+PostgreSQL Driver:
+ * Fix Primary Key detection logic. #1889
+ * Fix data truncation issue for character type fields. #1902
+
+VRT Driver:
+ * Fix copying of virtual dataset with empty filename. #1749
+
+== Other == 
+
+ * Added CPLScanULong function to port library. #1706
+
+Building:
+ * Fix Windows CE port compilation issues. #1634
+ * Fix expanding of version number in Mac OS X Framework builds. #1879
+
+OGRSpatialReference:
+ * Fix wrong method call in OSRSetBonne() function. #1695
+ * Fix handling EPSG authority code in ESRI format. #1697
+ * Fix segmentation fault when exporting empty SRS to PROJ.4 definition. #1718
+ * Added direct translation for GDA94 and ED50 when importing ESRI SRS. #1729
+ * Avoid applying the prime meridian offset in PROJ.4 import. #1940
+
+SWIG
+ * Fix Python typemap for getting length from string. #1712
+
+-----------------------------------------------------------------------------
+
 = GDAL/OGR 1.4.2 - Overview of Changes = 
 
 The GDAL 1.4.1 release is a stable release, and contains the following
