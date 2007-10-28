@@ -56,6 +56,10 @@ CPL_C_END
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
+#if defined(TIFF_VERSION_BIG)
+#error "It looks like you are building with libtiff 4.0 or newer, but GDAL 1.4.x requires libtiff 3.9 or older" 
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*				GTiffDataset				*/
