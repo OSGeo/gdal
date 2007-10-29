@@ -1,5 +1,7 @@
 #!/bin/sh
-
+# 
+# $Id$
+#
 if [ $# -lt 1 ] ; then
   echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-install]"
   echo " <version> - version number used in name of generated archive."
@@ -42,8 +44,10 @@ SVNURL="http://svn.osgeo.org/gdal"
 SVNBRANCH=${forcebranch}
 SVNMODULE="gdal"
 
-svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
+echo "Generating package '${GDAL_VERSION}' from '${SVNBRANCH}' branch"
+echo
 
+svn export ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE}
 
 if [ \! -d gdal ] ; then
     echo "svn checkout reported an error ... abandoning mkgdaldist"
