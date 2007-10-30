@@ -1160,6 +1160,26 @@
 					</Filter>
 				</Filter>
 			</Filter>
+			<Filter
+				Name="swig"
+				>
+				<Filter
+					Name="extensions"
+					>
+					<File
+						RelativePath=".\swig\python\extensions\gdal_array.h"
+						>
+					</File>
+				</Filter>
+			</Filter>
+			<Filter
+				Name="pymod"
+				>
+				<File
+					RelativePath=".\pymod\gdal_py.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -3693,6 +3713,62 @@
 						</File>
 					</Filter>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="swig"
+				>
+				<File
+					RelativePath=".\swig\makefile.vc"
+					>
+				</File>
+				<File
+					RelativePath=".\swig\SWIGmake.base"
+					>
+				</File>
+				<Filter
+					Name="python"
+					>
+					<Filter
+						Name="extensions"
+						>
+						<File
+							RelativePath=".\swig\python\extensions\_gdal_array.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\swig\python\extensions\gdal_wrap.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\swig\python\extensions\gdalconst_wrap.c"
+							>
+						</File>
+						<File
+							RelativePath=".\swig\python\extensions\numpydataset.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\swig\python\extensions\ogr_wrap.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\swig\python\extensions\osr_wrap.cpp"
+							>
+						</File>
+					</Filter>
+				</Filter>
+			</Filter>
+			<Filter
+				Name="pymod"
+				>
+				<File
+					RelativePath=".\pymod\gdalnumeric.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\pymod\numpydataset.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 	</Files>
