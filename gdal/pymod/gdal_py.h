@@ -32,7 +32,13 @@
 #ifndef _GDAL_PY_INCLUDED
 #define _GDAL_PY_INCLUDED
 
+#ifdef _DEBUG
+#undef _DEBUG
 #include "Python.h"
+#define _DEBUG
+#else
+#include "Python.h"
+#endif
 
 CPL_C_START
 
