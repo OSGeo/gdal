@@ -5,12 +5,12 @@
 \section gdal_tutorial_open Abrindo um Arquivo
 
 Antes de abrir um dataset raster suportado por GDAL &eacute; necess&aacute;rio 
-registar os drivers. Existe um driver para cada formato suportado. O registro
-dos driver &eacute; realizado normalmente com a fun&ccedil;&atilde;o de GDALAllRegister() que 
-registar todos os drivers conhecidos, including os plug-in auto-carregados 
-de arquivos de bilioteca din&acirc;micas, usando GDALDriverManager::AutoLoadDrivers(). 
-Se alguma aplica&ccedil;&otilde;es necessetitar de limitar o conjunto de drivers seria 
-&uacute;til rever o c&oacute;digo de <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
+registar os drivers, existe um driver para cada formato suportado e o registro
+dos driver &eacute; realizado normalmente com a fun&ccedil;&atilde;o GDALAllRegister().  GDALAllRegister() 
+registar todos os drivers conhecidos including os "plug-in", que s&atilde;o bilioteca din&acirc;micas,  
+carregadas pelo m&eacute;todo GDALDriverManager::AutoLoadDrivers(). 
+Se por algum motivo uma aplica&ccedil;&otilde;es necessetita limitar o conjunto de drivers seria 
+&uacute;til verificar o c&oacute;digo de <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
 
 Uma vez que os drivers s&atilde;o registados, a aplica&ccedil;&atilde;o deve chamar a 
 fun&ccedil;&atilde;o GDALOpen() para abrir dataset, passando o nome do dataset e a forma de 
@@ -260,7 +260,7 @@ flutuando como parte da opera&ccedil;&atilde;o:
 
 Em C++:
 \code
-	float *pafScanline;
+        float *pafScanline;
         int   nXSize = poBand->GetXSize();
 
         pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
@@ -271,7 +271,7 @@ Em C++:
 
 Em C:
 \code
-	float *pafScanline;
+        float *pafScanline;
         int   nXSize = GDALGetRasterBandXSize( hBand );
 
         pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
@@ -308,9 +308,9 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
                                  int nLineSpace )
 \endcode
 
-Note que a mesma chamada de RasterIO() poder&aacute; ler, ou escrevê-lo baseado no 
-ajuste do eRWFlag (GF_Read ou GF_Write). Os argumentos nXOff, nYOff, nXSize, nYSize 
-descreve a janela de dados da raster para ler (ou para escrever). 
+Note que a mesma chamada de RasterIO() poder&aacute; ler, ou gravar dependendo do valor
+de eRWFlag (GF_Read ou GF_Write). Os argumentos nXOff, nYOff, nXSize, nYSize 
+descreve a janela de dados da raster para ler (ou para gravar). 
 N&atilde;o necessita ser coincidente com os limites da image embora o acesso pode ser mais eficiente se for.
 
 O pData &eacute; o buffer de mem&oacute;ria para os dados que ser&atilde;o lidos ou gravados. 
@@ -347,7 +347,7 @@ As arquivos em formatos suportados GDAL podem ser criadas se o driver do formato
 suportar a cria&ccedil;&atilde;o. H&aacute; duas t&eacute;cnicas gerais para criar arquivos, usando CreateCopy() e Create(). 
 O m&eacute;todo de CreateCopy chama o m&eacute;todo CreateCopy() do driver do formato, e 
 passar como par&acirc;metro dataset que ser&aacute; copiado. O m&eacute;todo criar chama o 
-m&eacute;todo Create() do driver, e ent&atilde;o explicitamente escrever todos os metadata, e dados 
+m&eacute;todo Create() do driver, e ent&atilde;o explicitamente grava todos os metadata, e dados 
 da raster com as chamadas separadas. Todos os drivers que suportam criar arquivos 
 novos suportam o m&eacute;todo de CreateCopy(), mas somente algum sustenta&ccedil;&atilde;o o m&eacute;todo Create().
 
