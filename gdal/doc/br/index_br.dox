@@ -18,18 +18,18 @@ Translator Ivan Lucena <ivan.lucena@pmldnet.com>
 <a href="http://www.osgeo.org/">Open Source Geospatial Foundation</a> sob a licen&ccedil;a 
 <a href="faq.html#license">X/MIT</a> estilo 
 <a href="http://www.opensource.org/"> Open Source</a>. 
-Aplica&ccedil;&otilde;es que &agrave; utilizam acessam todos os formats 
+As aplica&ccedil;&otilde;es que &agrave; utilizam acessam todos os formats 
 supportados pela biblioteca atrav&eacute;s de 
-\link gdal_datamodel_br.html um &uacute;nico modelo abstrato de dados\endlink.
-GDAL tamb&eacute;m conta com uma variadade de programas 
+\link gdal_datamodel_br.html um &uacute;nico modelo de dados abstrato\endlink.
+A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas 
 \link gdal_utilities.html utilit&aacute;rios de linha de comando \endlink 
-para a tradu&ccedil;&atilde;o de formatos e outras fun&ccedil;&otilde;es. 
+para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute; de outras fun&ccedil;&otilde;es. 
 A p&aacute;gina 
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.4.2-News">novidades</a> descreve o 
 lan&ccedil;amento em Junho de 2007 da release 1.4.2 da biblioteca GDAL/OGR.
 
-A bilioteca <a href="ogr">OGR</a> (cujo c&oacute;digo fonte pertence a &aacute;rvore de c&oacute;digo da GDAL) possue
-funcionalidades semelhantes &agrave; GDAL para datos vetorias (Simple Features).
+A bilioteca <a href="ogr">OGR</a> (cujo c&oacute;digo fonte esta inclu&iacute;do na GDAL) possue
+funcionalidades semelhantes &agrave;s da GDAL para datos vetorias (Simple Features).
 
 P&aacute;gina Principal: http://www.gdal.org<br>
 Download: 
