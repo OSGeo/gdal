@@ -344,6 +344,15 @@ def tiff_write_9():
 
     return 'success'
 
+###############################################################################
+# 1bit file but with band interleaving, and odd size (not multiple of 8) #1957
+
+def tiff_write_10():
+
+    ut = gdaltest.GDALTest( 'GTiff', 'oddsize_1bit2b.tif', 2, 5918,
+                            options = [ 'NBITS=1', 'INTERLEAVE=BAND' ] )
+    return ut.testCreate( out_bands = 2 )
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -359,6 +368,7 @@ gdaltest_list = [
     tiff_write_7,
     tiff_write_8,
     tiff_write_9,
+    tiff_write_10,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
