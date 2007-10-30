@@ -29,12 +29,15 @@
  ******************************************************************************
  */
 
-#include "Python.h"
-
 #include "gdal_priv.h"
 #include "gdal_array.h"
-
-
+#ifdef _DEBUG
+#undef _DEBUG
+#include "Python.h"
+#define _DEBUG
+#else
+#include "Python.h"
+#endif
 
 static PyObject *GDALArrayError;
 
@@ -422,5 +425,4 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     return poDS;
 }
-
 

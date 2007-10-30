@@ -28,8 +28,14 @@
  ****************************************************************************/
 
 #include "gdal.h"
-#include "Python.h"
 #include "gdal_py.h"
+#ifdef _DEBUG
+#undef _DEBUG
+#include "Python.h"
+#define _DEBUG
+#else
+#include "Python.h"
+#endif
 
 CPL_CVSID("$Id$");
 
