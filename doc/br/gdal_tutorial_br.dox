@@ -454,7 +454,7 @@ Em Python:
 Note que o m&eacute;todo de CreateCopy() retorna um dataset writeable, 
 e que deve ser fechado corretamente &agrave; escrita completa e a nivelar a s&eacute;rie 
 de dados ao disco. No Python encaixotar isto ocorre automaticamente quando 
-os “dst_ds” saem do espa&ccedil;o. O valor FALSO (ou 0) usado para a op&ccedil;&atilde;o do 
+os "dst_ds" saem do espa&ccedil;o. O valor FALSO (ou 0) usado para a op&ccedil;&atilde;o do 
 bStrict imediatamente depois que o nome de arquivo do destino na chamada 
 de CreateCopy() indica que a chamada de CreateCopy() deve proseguir sem
 um erro fatal mesmo se a s&eacute;rie de dados do destino n&atilde;o puder ser criada 
@@ -506,7 +506,12 @@ Em Python:
 
 \section gdal_tutorial_create Usando Create()
 
-Que as situa&ccedil;&otilde;es em que você n&atilde;o &eacute; justo exportando uma arquivo existente para uma arquivo nova, &eacute; geralmente necess&aacute;rio use o GDALDriver:: Criar () o m&eacute;todo (embora algumas op&ccedil;&otilde;es interessantes s&atilde;o poss&iacute;veis com o uso de arquivos virtuais ou de arquivos da em-mem&oacute;ria). O m&eacute;todo criar () faz exame de uma lista de op&ccedil;&otilde;es bem como CreateCopy (), mas o tamanho da imagem, número das bandas e o tipo da banda deve ser fornecido explicitamente.
+Em situa&ccedil;&otilde;es em que n&atilde;o se quer somente exportar um arquivo existente 
+para uma arquivo novo, geralmente usa-se o m&eacute;todo GDALDriver::Criar() (embora algumas 
+op&ccedil;&otilde;es interessantes s&atilde;o poss&iacute;veis 
+com o uso de arquivos virtuais ou de arquivos da em-mem&oacute;ria). 
+O m&eacute;todo Create() examina uma lista de op&ccedil;&otilde;es bem como o CreateCopy(), mas 
+o tamanho da imagem, número das bandas e o tipo da banda deve ser fornecido explicitamente.
 <p>
 
 Em C++:
