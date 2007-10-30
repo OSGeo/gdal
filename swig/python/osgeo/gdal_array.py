@@ -131,7 +131,7 @@ def BandReadAsArray( band, xoff, yoff, win_xsize, win_ysize,
     else:
         datatype = NumericTypeCodeToGDALTypeCode( typecode )
 
-    if not buf_obj:
+    if buf_obj is not None:
         buf_obj = numpy.zeros( shape, typecode )
 
     band_str = band.ReadRaster( xoff, yoff, win_xsize, win_ysize,
