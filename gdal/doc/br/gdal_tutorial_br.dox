@@ -10,7 +10,7 @@ dos driver &eacute; realizado normalmente com a fun&ccedil;&atilde;o de GDALAllR
 registar todos os drivers conhecidos, including os plug-in auto-carregados 
 de arquivos de bilioteca din&acirc;micas, usando GDALDriverManager::AutoLoadDrivers(). 
 Se alguma aplica&ccedil;&otilde;es necessetitar de limitar o conjunto de drivers seria 
-útil rever o c&oacute;digo de <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
+&uacute;til rever o c&oacute;digo de <a href="gdalallregister.cpp.html">gdalallregister.cpp</a>.
 
 Uma vez que os drivers s&atilde;o registados, a aplica&ccedil;&atilde;o deve chamar a 
 fun&ccedil;&atilde;o GDALOpen() para abrir dataset, passando o nome do dataset e a forma de 
@@ -314,8 +314,8 @@ descreve a janela de dados da raster para ler (ou para escrever).
 N&atilde;o necessita ser coincidente com os limites da image embora o acesso pode ser mais eficiente se for.
 
 O pData &eacute; o buffer de mem&oacute;ria para os dados que ser&atilde;o lidos ou gravados. 
-É verdadeiro tipo de dado deve aquele passado por eBufType, tal como GDT_Float32, 
-ou GDT_Byte. A chamada de RasterIO() cuidar&aacute; de converter-se entre o tipo 
+O verdadeiro tipo de dado &eacute aquele passado por eBufType, tal como GDT_Float32, 
+ou GDT_Byte. A chamada de RasterIO() cuidar&aacute; de converter entre o tipo 
 de dados do buffer e o tipo de dados da banda. Anotar que ao converter dados do 
 ponto flutuando para o inteiro RasterIO arredonda para baixo, e ao converter de 
 para fora dos limites de valores v&aacute;lidos para o tipo de sa&iacute;da, ser&aacute; escolhido o mais
@@ -407,7 +407,7 @@ Em Python:
         print 'Driver %s supports CreateCopy() method.' % format
 \endcode
 
-Note que um número de drivers s&atilde;o de leitura apenas e n&atilde;o suportar&atilde;o 
+Note que um n&uacute;mero de drivers s&atilde;o de leitura apenas e n&atilde;o suportar&atilde;o 
 Create() ou CreateCopy ().
 
 \section gdal_tutorial_createcopy Usando CreateCopy()
@@ -511,7 +511,7 @@ para uma arquivo novo, geralmente usa-se o m&eacute;todo GDALDriver::Criar() (em
 op&ccedil;&otilde;es interessantes s&atilde;o poss&iacute;veis 
 com o uso de arquivos virtuais ou de arquivos da em-mem&oacute;ria). 
 O m&eacute;todo Create() examina uma lista de op&ccedil;&otilde;es bem como o CreateCopy(), mas 
-o tamanho da imagem, número das bandas e o tipo da banda deve ser fornecido explicitamente.
+o tamanho da imagem, n&uacute;mero das bandas e o tipo da banda deve ser fornecido explicitamente.
 <p>
 
 Em C++:
