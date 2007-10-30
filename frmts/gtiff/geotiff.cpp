@@ -1350,11 +1350,19 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         // First downsample to the particular number of bits in
         // a temporary buffer.
+        int nLineOffset, iLine;
         GByte *pabyOddImg = (GByte *) CPLCalloc(nBlockXSize,nBlockYSize);
 
-        GDALCopyBits( (GByte *) pImage, 8 - poGDS->nBitsPerSample, 8, 
-                      pabyOddImg, 0, poGDS->nBitsPerSample,
-                      poGDS->nBitsPerSample, nBlockXSize * nBlockYSize );
+        nLineOffset = (nBlockXSize * poGDS->nBitsPerSample + 7) / 8;
+
+        for( iLine = 0; iLine < nBlockYSize; iLine++ )
+        {
+            GDALCopyBits( (GByte *) pImage, 
+                          iLine*nBlockXSize*8 + 8 - poGDS->nBitsPerSample, 8, 
+                          pabyOddImg, 
+                          iLine * nLineOffset * 8, poGDS->nBitsPerSample,
+                          poGDS->nBitsPerSample, nBlockXSize );
+        }
 
         // Then write as appropriate.
         nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
@@ -1401,6 +1409,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         const GByte *pabyThisImage = NULL;
         GDALRasterBlock *poBlock = NULL;
+        int nLineOffset, iLine;
 
         if( iBand+1 == nBand )
             pabyThisImage = (GByte *) pImage;
@@ -1421,10 +1430,18 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             pabyThisImage = (GByte *) poBlock->GetDataRef();
         }
 
-        GDALCopyBits( pabyThisImage, 8 - poGDS->nBitsPerSample, 8, 
-                      poGDS->pabyBlockBuf, iBand * poGDS->nBitsPerSample, 
-                      poGDS->nBitsPerSample * poGDS->nBands,
-                      poGDS->nBitsPerSample, nBlockXSize * nBlockYSize );
+        // lines always end on byte boundaries.
+        nLineOffset = (poGDS->nBands*poGDS->nBitsPerSample*nBlockXSize+7) / 8;
+
+        for( iLine = 0; iLine < nBlockYSize; iLine++ )
+        {
+            GDALCopyBits( pabyThisImage, 
+                          iLine*nBlockXSize*8 + 8 - poGDS->nBitsPerSample, 8, 
+                          poGDS->pabyBlockBuf, 
+                          iLine*nLineOffset*8 + iBand * poGDS->nBitsPerSample, 
+                          poGDS->nBitsPerSample * poGDS->nBands,
+                          poGDS->nBitsPerSample, nBlockXSize );
+        }
         
         if( poBlock != NULL )
         {
