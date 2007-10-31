@@ -284,6 +284,12 @@ int main( int nArgc, char ** papszArgv )
                     pszDestDataSource );
             exit( 1 );
         }
+
+        if( CSLCount(papszDSCO) > 0 )
+        {
+            printf( "WARNING: Datasource creation options ignored since an existing datasource\n"
+                    "         being updated.\n" );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -665,6 +671,14 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 "        Consider using -append, or -overwrite.\n",
                 pszNewLayerName );
         return FALSE;
+    }
+    else
+    {
+        if( CSLCount(papszLCO) > 0 )
+        {
+            printf( "WARNING: Layer creation options ignored since an existing layer is\n"
+                    "         being appended to.\n" );
+        }
     }
 
 /* -------------------------------------------------------------------- */
