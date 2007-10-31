@@ -51,6 +51,7 @@ CPL_CVSID("$Id$");
 
 #define PAN_PROJ_NONE   -1L
 #define PAN_PROJ_TM     1L      // Gauss-Kruger (Transverse Mercator)
+#define PAN_PROJ_LCC    2L      // Lambert Conformal Conic 2SP
 #define PAN_PROJ_LAEA   4L      // Lambert Azimuthal Equal Area
 #define PAN_PROJ_STEREO 5L      // Stereographic
 #define PAN_PROJ_AE     6L      // Azimuthal Equidistant (Postel)
@@ -410,6 +411,14 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                    padfPrjParams[5], padfPrjParams[6] );
             break;
 
+        case PAN_PROJ_LCC:
+            SetLCC( TO_DEGREES * padfPrjParams[0],
+                    TO_DEGREES * padfPrjParams[1],
+                    TO_DEGREES * padfPrjParams[2],
+                    TO_DEGREES * padfPrjParams[3],
+                    padfPrjParams[5], padfPrjParams[6] );
+            break;
+
         case PAN_PROJ_TM:
             {
                 // XXX: we need zone number to compute false easting
@@ -649,6 +658,21 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     else if( EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC) )
     {
         *piProjSys = PAN_PROJ_EC;
+        padfPrjParams[0] =
+            TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
+        padfPrjParams[1] = 
+            TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 );
+        padfPrjParams[3] =
+            TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
+        padfPrjParams[2] = 
+            TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+        padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+        *piProjSys = PAN_PROJ_LCC;
         padfPrjParams[0] =
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
         padfPrjParams[1] = 
