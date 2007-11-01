@@ -109,13 +109,7 @@
 
 
 /* Python.h has to appear first */
-#ifdef _DEBUG
-#undef _DEBUG
-#include "Python.h"
-#define _DEBUG
-#else
-#include "Python.h"
-#endif
+#include <Python.h>
 
 /* -----------------------------------------------------------------------------
  * swigrun.swg

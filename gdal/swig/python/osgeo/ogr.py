@@ -532,7 +532,7 @@ class DataSource(_object):
 
     def ExecuteSQL(*args, **kwargs):
         """
-        ExecuteSQL(self, char statement, Geometry geom=None, char dialect="") -> Layer
+        ExecuteSQL(self, char statement, Geometry spatialFilter=None, char dialect="") -> Layer
 
         OGRLayerH
         OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,
