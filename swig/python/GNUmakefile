@@ -10,6 +10,7 @@ include ../SWIGmake.base
 PACKAGE_DIR=osgeo
 SWIGOUTPUTDIR=extensions/
 
+SCRIPTS			= `ls ./scripts`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
@@ -52,6 +53,10 @@ else
 	python setup.py install --prefix=$(DESTDIR)$(prefix)
 endif
 
+itest:
+	echo $(SCRIPTS)
+	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
+	
 docs:
 	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrlayer_8cpp.xml ../include/python/docs/ogr_layer_docs.i OGRLayerShadow OGR_L_
 
