@@ -25361,12 +25361,15 @@ fi
 if test "${with_ogpython+set}" = set; then
   withval="$with_ogpython"
 
+else
+  with_ogpython=no
 fi;
 
 echo "$as_me:$LINENO: checking for old-gen python bindings" >&5
 echo $ECHO_N "checking for old-gen python bindings... $ECHO_C" >&6
 HAVE_OGPYTHON=no
-if test "$with_ogpython" = yes -o x"$with_ogpython" = x ; then
+
+if test "x$with_ogpython" = "xyes" -o "x$with_ogpython" = "x"; then
 
                 for ac_prog in python python1.5 python1.4 python1.3
 do
