@@ -2202,11 +2202,12 @@ dnl ---------------------------------------------------------------------------
 dnl Old-gen Python Checks
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(ogpython,[  --with-ogpython         Enable Old-gen traditional (deprecated) Python bindings],,)
+AC_ARG_WITH(ogpython,[  --with-ogpython         Enable Old-gen traditional (deprecated) Python bindings],,[with_ogpython=no])
 
 AC_MSG_CHECKING([for old-gen python bindings])
 HAVE_OGPYTHON=no
-if test "$with_ogpython" = yes -o x"$with_ogpython" = x ; then
+
+if test "x$with_ogpython" = "xyes" -o "x$with_ogpython" = "x"; then
   AM_PATH_PYTHON
   AM_INIT_PYEXEC_MOD
   AM_CHECK_NUMPY
