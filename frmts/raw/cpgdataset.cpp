@@ -76,8 +76,8 @@ class CPGDataset : public RawDataset
   CPLErr LoadStokesLine( int iLine, int bNativeOrder );
 
   public:
-    		CPGDataset();
-    	        ~CPGDataset();
+		CPGDataset();
+	        ~CPGDataset();
     
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -594,7 +594,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
 /* -------------------------------------------------------------------- */
 /*      Open the four bands.                                            */
 /* -------------------------------------------------------------------- */
-    char *apszPolarizations[4] = { "hh", "hv", "vv", "vh" };
+    static const char *apszPolarizations[4] = { "hh", "hv", "vv", "vh" };
 
     nNameLen = strlen(pszWorkname);
 
@@ -752,10 +752,10 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
             poDS->pasGCPList[ngcp].dfGCPLine = dfgcpLine;
 
             poDS->pasGCPList[ngcp].pszId = CPLStrdup( szID );
-            poDS->pasGCPList[ngcp].pszInfo = "";
+            poDS->pasGCPList[ngcp].pszInfo = (char *)"";
 
         }
-        poDS->pszGCPProjection = (char *) CPLStrdup("LOCAL_CS[\"Ground range view / unreferenced meters\",UNIT[\"Meter\",1.0]]"); 
+        poDS->pszGCPProjection = CPLStrdup("LOCAL_CS[\"Ground range view / unreferenced meters\",UNIT[\"Meter\",1.0]]"); 
 
     }
 
@@ -1314,25 +1314,25 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDS, int nBand, 
                                             GDALDataType eType,
-                                             int bNativeOrder  )
+                                            int bNativeOrder  )
 
 {
-    char *apszPolarizations[16] = { "Covariance_11",
-                                    "Covariance_12",
-                                    "Covariance_13",
-                                    "Covariance_14",
-                                    "Covariance_21",
-                                    "Covariance_22",
-                                    "Covariance_23",
-                                    "Covariance_24",
-                                    "Covariance_31",
-                                    "Covariance_32",
-                                    "Covariance_33",
-                                    "Covariance_34",
-                                    "Covariance_41",
-                                    "Covariance_42",
-                                    "Covariance_43",
-                                    "Covariance_44" };
+    static const char *apszPolarizations[16] = { "Covariance_11",
+                                                 "Covariance_12",
+                                                 "Covariance_13",
+                                                 "Covariance_14",
+                                                 "Covariance_21",
+                                                 "Covariance_22",
+                                                 "Covariance_23",
+                                                 "Covariance_24",
+                                                 "Covariance_31",
+                                                 "Covariance_32",
+                                                 "Covariance_33",
+                                                 "Covariance_34",
+                                                 "Covariance_41",
+                                                 "Covariance_42",
+                                                 "Covariance_43",
+                                                 "Covariance_44" };
 
     this->poDS = poDS;
     this->nBand = nBand;
