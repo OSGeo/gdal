@@ -140,7 +140,8 @@ void PutCeosRecordStruct(CeosRecord_t *record,const void *struct_ptr)
     }
 }
 
-void GetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *value)
+void GetCeosField(CeosRecord_t *record, int32 start_byte,
+                  const char *format, void *value)
 {
     int field_size;
     char *d_ptr;

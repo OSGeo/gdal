@@ -274,7 +274,7 @@ void GetCeosRecordStruct(const CeosRecord_t *record, void *struct_ptr);
 
 void PutCeosRecordStruct(CeosRecord_t *record, const void *struct_ptr);
 
-void GetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *value);
+void GetCeosField(CeosRecord_t *, int32, const char *, void *);
 
 void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *value);
 
