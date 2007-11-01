@@ -887,7 +887,7 @@ RasterAttributeTable_swigregister(RasterAttributeTable)
 
 
 def VersionInfo(*args):
-  """VersionInfo(char ?=None) -> char"""
+  """VersionInfo(char ?="VERSION_NUM") -> char"""
   return _gdal.VersionInfo(*args)
 
 def AllRegister(*args):
@@ -973,6 +973,15 @@ def OpenShared(*args):
 def IdentifyDriver(*args):
   """IdentifyDriver(char pszDatasource, char papszSiblings=None) -> Driver"""
   return _gdal.IdentifyDriver(*args)
+
+def ReprojectImage(*args):
+  """
+    ReprojectImage(Dataset src_ds, Dataset dst_ds, char src_wkt=None, 
+        char dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, 
+        double WarpMemoryLimit=0.0, 
+        double maxerror=0.0) -> CPLErr
+    """
+  return _gdal.ReprojectImage(*args)
 
 def AutoCreateWarpedVRT(*args):
   """
