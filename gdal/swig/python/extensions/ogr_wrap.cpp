@@ -126,13 +126,7 @@ private:
 
 
 /* Python.h has to appear first */
-#ifdef _DEBUG
-#undef _DEBUG
-#include "Python.h"
-#define _DEBUG
-#else
-#include "Python.h"
-#endif
+#include <Python.h>
 
 /* -----------------------------------------------------------------------------
  * swigrun.swg
@@ -2974,10 +2968,10 @@ SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_GetLayerByName(OGRDataSourceShado
 SWIGINTERN bool OGRDataSourceShadow_TestCapability(OGRDataSourceShadow *self,char const *cap){
     return OGR_DS_TestCapability(self, cap);
   }
-SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *self,char const *statement,OGRGeometryShadow *geom=NULL,char const *dialect=""){
+SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *self,char const *statement,OGRGeometryShadow *spatialFilter=NULL,char const *dialect=""){
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL((OGRDataSourceShadow*)self,
                                                       statement,
-                                                      geom,
+                                                      spatialFilter,
                                                       dialect);
     return layer;
   }
@@ -4636,7 +4630,7 @@ SWIGINTERN PyObject *_wrap_DataSource_ExecuteSQL(PyObject *SWIGUNUSEDPARM(self),
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "statement",(char *) "geom",(char *) "dialect", NULL 
+    (char *) "self",(char *) "statement",(char *) "spatialFilter",(char *) "dialect", NULL 
   };
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OO:DataSource_ExecuteSQL",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
