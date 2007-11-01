@@ -336,7 +336,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
                 CSLCount( papszTokens ) );
 
 
-    if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 6 )
+    if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 7 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "SDE connect string had wrong number of arguments.\n"
@@ -401,7 +401,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     
     CPLDebug ("SDERASTER", "SDE Column name is '%s'", poDS->pszColumnName);
 
-    if (CSLCount( papszTokens ) == 6 ) {
+    if (CSLCount( papszTokens ) >= 6 ) {
 
         poDS->pszLayerName = CPLStrdup( papszTokens[5] );
 
