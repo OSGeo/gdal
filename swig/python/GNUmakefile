@@ -46,15 +46,13 @@ build:
 	python setup.py build
 
 install:
+
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
-#	python setup.py install --root / --single-version-externally-managed
 	python setup.py install 
 else
 	python setup.py install --prefix=$(DESTDIR)$(prefix)
 endif
 
-itest:
-	echo $(SCRIPTS)
 	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
 	
 docs:
