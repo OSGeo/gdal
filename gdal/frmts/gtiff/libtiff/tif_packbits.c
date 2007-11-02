@@ -1,4 +1,4 @@
-/* $Id: tif_packbits.c,v 1.18 2007/06/26 12:31:26 joris Exp $ */
+/* $Id: tif_packbits.c,v 1.19 2007/10/01 12:43:49 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -236,7 +236,7 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			if( occ < (tmsize_t)n )
 			{
 				TIFFWarningExt(tif->tif_clientdata, module,
-				    "Discarding %lud bytes to avoid buffer overrun",
+				    "Discarding %lu bytes to avoid buffer overrun",
 				    (unsigned long) ((tmsize_t)n - occ));
 				n = (long)occ;
 			}
@@ -248,7 +248,7 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			if (occ < (tmsize_t)(n + 1))
 			{
 				TIFFWarningExt(tif->tif_clientdata, module,
-				    "Discarding %lud bytes to avoid buffer overrun",
+				    "Discarding %lu bytes to avoid buffer overrun",
 				    (unsigned long) ((tmsize_t)n - occ + 1));
 				n = (long)occ - 1;
 			}
@@ -261,7 +261,7 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	tif->tif_rawcc = cc;
 	if (occ > 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data for scanline %lud",
+		    "Not enough data for scanline %lu",
 		    (unsigned long) tif->tif_row);
 		return (0);
 	}

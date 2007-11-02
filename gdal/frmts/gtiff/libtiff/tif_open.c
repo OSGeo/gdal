@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.42 2007/07/11 15:52:48 joris Exp $ */
+/* $Id: tif_open.c,v 1.43 2007/09/27 17:38:57 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -427,18 +427,6 @@ TIFFClientOpen(
 	tif->tif_rawcp = tif->tif_rawdata = 0;
 	tif->tif_rawdatasize = 0;
 
-	/*
-	 * Sometimes we do not want to read the first directory (for example,
-	 * it may be broken) and want to proceed to other directories. I this
-	 * case we use the TIFF_HEADERONLY flag to open file and return
-	 * immediately after reading TIFF header.
-	 */
-	if (tif->tif_flags & TIFF_HEADERONLY)
-		return (tif);
-
-	/*
-	 * Setup initial directory.
-	 */
 	switch (mode[0]) {
 		case 'r':
 			if (!(tif->tif_flags&TIFF_BIGTIFF))
@@ -461,6 +449,18 @@ TIFFClientOpen(
 				else
 					tif->tif_flags &= ~TIFF_MAPPED;
 			}
+			/*
+			 * Sometimes we do not want to read the first directory (for example,
+			 * it may be broken) and want to proceed to other directories. I this
+			 * case we use the TIFF_HEADERONLY flag to open file and return
+			 * immediately after reading TIFF header.
+			 */
+			if (tif->tif_flags & TIFF_HEADERONLY)
+				return (tif);
+
+			/*
+			 * Setup initial directory.
+			 */
 			if (TIFFReadDirectory(tif)) {
 				tif->tif_rawcc = (tmsize_t)-1;
 				tif->tif_flags |= TIFF_BUFFERSETUP;

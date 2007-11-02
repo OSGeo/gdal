@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.95 2007/08/24 20:47:49 fwarmerdam Exp $ */
+/* $Id: tif_dirinfo.c,v 1.97 2007/09/24 06:40:15 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -42,10 +42,10 @@
  *       values accordingly.
  */
 
-static const TIFFFieldArray tiffFieldArray;
-static const TIFFFieldArray exifFieldArray;
+static TIFFFieldArray tiffFieldArray;
+static TIFFFieldArray exifFieldArray;
 
-static const TIFFField
+static TIFFField
 tiffFields[] = {
 	{ TIFFTAG_SUBFILETYPE, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_SUBFILETYPE, 1, 0, "SubfileType", NULL },
 	{ TIFFTAG_OSUBFILETYPE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_SUBFILETYPE, 1, 0, "OldSubfileType", NULL },
@@ -193,7 +193,7 @@ tiffFields[] = {
 	/* end DNG tags */
 };
 
-static const TIFFField
+static TIFFField
 exifFields[] = {
 	{ EXIFTAG_EXPOSURETIME, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "ExposureTime", NULL },
 	{ EXIFTAG_FNUMBER, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "FNumber", NULL },
@@ -253,9 +253,9 @@ exifFields[] = {
 	{ EXIFTAG_IMAGEUNIQUEID, 33, 33, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "ImageUniqueID", NULL }
 };
 
-static const TIFFFieldArray
+static TIFFFieldArray
 tiffFieldArray = { tfiatImage, 0, TIFFArrayCount(tiffFields), tiffFields };
-static const TIFFFieldArray
+static TIFFFieldArray
 exifFieldArray = { tfiatExif, 0, TIFFArrayCount(exifFields), exifFields };
 
 const TIFFFieldArray*
@@ -325,8 +325,8 @@ tagNameCompare(const void* a, const void* b)
 int
 _TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32 n)
 {
-	const char module[] = "_TIFFMergeFields";
-	const char reason[] = "for fields array";
+	static const char module[] = "_TIFFMergeFields";
+	static const char reason[] = "for fields array";
 	TIFFField** tp;
 	uint32 i;
 
@@ -811,8 +811,8 @@ _TIFFSetGetType(TIFFDataType type, short count, unsigned char passcount)
 int
 TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32 n)
 {
-	const char module[] = "TIFFMergeFieldInfo";
-	const char reason[] = "for fields array";
+	static const char module[] = "TIFFMergeFieldInfo";
+	static const char reason[] = "for fields array";
 	TIFFField *tp;
 	uint32 i, nfields;
 
@@ -854,12 +854,12 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32 n)
 		tp->reserved = 0;
 		tp->set_field_type =
 		     _TIFFSetGetType(info[i].field_type,
-		     		info[i].field_readcount,
-		     		info[i].field_passcount);
+				info[i].field_readcount,
+				info[i].field_passcount);
 		tp->get_field_type =
 		     _TIFFSetGetType(info[i].field_type,
-		     		info[i].field_readcount,
-		     		info[i].field_passcount);
+				info[i].field_readcount,
+				info[i].field_passcount);
 		tp->field_bit = info[i].field_bit;
 		tp->field_oktochange = info[i].field_oktochange;
 		tp->field_passcount = info[i].field_passcount;
