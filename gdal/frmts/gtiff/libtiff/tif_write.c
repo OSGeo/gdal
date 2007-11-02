@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.28 2007/07/11 13:41:44 joris Exp $ */
+/* $Id: tif_write.c,v 1.30 2007/11/02 19:57:28 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -82,7 +82,7 @@ TIFFWriteScanline(TIFF* tif, void* buf, uint32 row, uint16 sample)
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
 		if (sample >= td->td_samplesperpixel) {
 			TIFFErrorExt(tif->tif_clientdata, module,
-			    "%lud: Sample out of range, max %lud",
+			    "%lu: Sample out of range, max %lu",
 			    (unsigned long) sample, (unsigned long) td->td_samplesperpixel);
 			return (-1);
 		}
@@ -227,10 +227,8 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
 
 	if( td->td_stripbytecount[strip] > 0 )
         {
-            /* if we are writing over existing tiles, zero length. */
-	    td->td_stripbytecount[strip] = 0;
-
-	    /* this forces TIFFAppendToStrip() to do a seek */
+	    /* Force TIFFAppendToStrip() to consider placing data at end
+               of file. */
             tif->tif_curoff = 0;
         }
         
@@ -362,10 +360,8 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 
 	if( td->td_stripbytecount[tile] > 0 )
         {
-            /* if we are writing over existing tiles, zero length. */
-	    td->td_stripbytecount[tile] = 0;
-
-            /* this forces TIFFAppendToStrip() to do a seek */
+	    /* Force TIFFAppendToStrip() to consider placing data at end
+               of file. */
             tif->tif_curoff = 0;
         }
         
@@ -634,48 +630,41 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
 	uint64 m;
 
 	if (td->td_stripoffset[strip] == 0 || tif->tif_curoff == 0) {
-		/*
-		 * No current offset, set the current strip.
-		 */
-		assert(td->td_nstrips > 0);
-		if (td->td_stripoffset[strip] != 0) {
-			/*
-			 * Prevent overlapping of the data chunks. We need
-			 * this to enable in place updating of the compressed
-			 * images. Larger blocks will be moved at the end of
-			 * the file without any optimization of the spare
-			 * space, so such scheme is not too much effective.
-			 */
-			if (td->td_stripbytecountsorted) {
-				if (strip == td->td_nstrips - 1
-				    || td->td_stripoffset[strip + 1] <
-				    td->td_stripoffset[strip] + cc) {
-					td->td_stripoffset[strip] =
-					    TIFFSeekFile(tif,0, SEEK_END);
-					td->td_stripbytecountsorted = 0;
-				}
-			} else {
-				uint32 i;
-				for (i = 0; i < td->td_nstrips; i++) {
-					if (td->td_stripoffset[i] >
-					    td->td_stripoffset[strip]
-					    && td->td_stripoffset[i] <
-					    td->td_stripoffset[strip] + cc) {
-						td->td_stripoffset[strip] =
-						    TIFFSeekFile(tif, 0, SEEK_END);
-					}
-				}
-			}
+            assert(td->td_nstrips > 0);
 
-			if (!SeekOK(tif, td->td_stripoffset[strip])) {
-				TIFFErrorExt(tif->tif_clientdata, module,
-				    "Seek error at scanline %lu",
-				    (unsigned long)tif->tif_row);
-				return (0);
-			}
-		} else
-			td->td_stripoffset[strip] = TIFFSeekFile(tif, 0, SEEK_END);
-		tif->tif_curoff = td->td_stripoffset[strip];
+            if( td->td_stripbytecount[strip] != 0 
+                && td->td_stripoffset[strip] != 0 
+                && td->td_stripbytecount[strip] >= (uint64) cc )
+            {
+                /* 
+                 * There is already tile data on disk, and the new tile
+                 * data we have to will fit in the same space.  The only 
+                 * aspect of this that is risky is that there could be
+                 * more data to append to this strip before we are done
+                 * depending on how we are getting called.
+                 */
+                if (!SeekOK(tif, td->td_stripoffset[strip])) {
+                    TIFFErrorExt(tif->tif_clientdata, module,
+                                 "Seek error at scanline %lu",
+                                 (unsigned long)tif->tif_row);
+                    return (0);
+                }
+            }
+            else
+            {
+                /* 
+                 * Seek to end of file, and set that as our location to 
+                 * write this strip.
+                 */
+                td->td_stripoffset[strip] = TIFFSeekFile(tif, 0, SEEK_END);
+            }
+
+            tif->tif_curoff = td->td_stripoffset[strip];
+
+            /*
+             * We are starting a fresh strip/tile, so set the size to zero.
+             */
+            td->td_stripbytecount[strip] = 0;
 	}
 
 	m = tif->tif_curoff+cc;
