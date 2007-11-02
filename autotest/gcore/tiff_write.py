@@ -260,7 +260,7 @@ def tiff_write_6():
 
 def tiff_write_7():
 
-    options= [ 'TILED=YES', 'BLOCKSIZE=32', 'COMPRESS=LZW' ]
+    options= [ 'TILED=YES', 'BLOCKSIZE=32', 'COMPRESS=LZW', 'PREDICTOR=2' ]
     ds = gdaltest.tiff_drv.Create( 'tmp/test_6.tif', 200, 200, 1,
                                    gdal.GDT_Byte, options )
 
