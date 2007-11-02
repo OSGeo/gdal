@@ -230,7 +230,8 @@ def tiff_write_5():
 
 def tiff_write_6():
 
-    options= [ 'TILED=YES', 'BLOCKSIZE=32', 'COMPRESS=DEFLATE' ]
+    options= [ 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32',
+               'COMPRESS=DEFLATE', 'PREDICTOR=2' ]
     ds = gdaltest.tiff_drv.Create( 'tmp/test_6.tif', 200, 200, 1,
                                    gdal.GDT_Byte, options )
 
@@ -260,8 +261,8 @@ def tiff_write_6():
 
 def tiff_write_7():
 
-    options= [ 'TILED=YES', 'BLOCKSIZE=32', 'COMPRESS=LZW', 'PREDICTOR=2' ]
-    ds = gdaltest.tiff_drv.Create( 'tmp/test_6.tif', 200, 200, 1,
+    options= [ 'TILED=YES', 'COMPRESS=LZW', 'PREDICTOR=2' ]
+    ds = gdaltest.tiff_drv.Create( 'tmp/test_7.tif', 200, 200, 1,
                                    gdal.GDT_Byte, options )
 
     # make a 32x32 byte buffer 
@@ -281,7 +282,7 @@ def tiff_write_7():
 
     ds = None
 
-    gdaltest.tiff_drv.Delete( 'tmp/test_6.tif' )
+#    gdaltest.tiff_drv.Delete( 'tmp/test_7.tif' )
 
     return 'success'
 
@@ -291,7 +292,7 @@ def tiff_write_7():
 def tiff_write_8():
 
     options= [ 'TILED=YES', 'BLOCKSIZE=32', 'COMPRESS=PACKBITS' ]
-    ds = gdaltest.tiff_drv.Create( 'tmp/test_6.tif', 200, 200, 1,
+    ds = gdaltest.tiff_drv.Create( 'tmp/test_8.tif', 200, 200, 1,
                                    gdal.GDT_Byte, options )
 
     # make a 32x32 byte buffer 
@@ -312,7 +313,7 @@ def tiff_write_8():
 
     ds = None
 
-    gdaltest.tiff_drv.Delete( 'tmp/test_6.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_8.tif' )
 
     return 'success'
 
