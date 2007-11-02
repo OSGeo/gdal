@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.26 2007/07/09 09:26:57 dron Exp $ */
+/* $Id: tif_predict.c,v 1.27 2007/11/02 00:25:24 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -114,12 +114,16 @@ PredictorSetupDecode(TIFF* tif)
 		 * Override default decoding method with one that does the
 		 * predictor stuff.
 		 */
-		sp->coderow = tif->tif_decoderow;
-		tif->tif_decoderow = PredictorDecodeRow;
-		sp->codestrip = tif->tif_decodestrip;
-		tif->tif_decodestrip = PredictorDecodeTile;
-		sp->codetile = tif->tif_decodetile;
-		tif->tif_decodetile = PredictorDecodeTile;
+                if( tif->tif_decoderow != PredictorDecodeRow )
+                {
+                    sp->decoderow = tif->tif_decoderow;
+                    tif->tif_decoderow = PredictorDecodeRow;
+                    sp->decodestrip = tif->tif_decodestrip;
+                    tif->tif_decodestrip = PredictorDecodeTile;
+                    sp->decodetile = tif->tif_decodetile;
+                    tif->tif_decodetile = PredictorDecodeTile;
+                }
+
 		/*
 		 * If the data is horizontally differenced 16-bit data that
 		 * requires byte-swapping, then it must be byte swapped before
@@ -141,12 +145,15 @@ PredictorSetupDecode(TIFF* tif)
 		 * Override default decoding method with one that does the
 		 * predictor stuff.
 		 */
-		sp->coderow = tif->tif_decoderow;
-		tif->tif_decoderow = PredictorDecodeRow;
-		sp->codestrip = tif->tif_decodestrip;
-		tif->tif_decodestrip = PredictorDecodeTile;
-		sp->codetile = tif->tif_decodetile;
-		tif->tif_decodetile = PredictorDecodeTile;
+                if( tif->tif_decoderow != PredictorDecodeRow )
+                {
+                    sp->decoderow = tif->tif_decoderow;
+                    tif->tif_decoderow = PredictorDecodeRow;
+                    sp->decodestrip = tif->tif_decodestrip;
+                    tif->tif_decodestrip = PredictorDecodeTile;
+                    sp->decodetile = tif->tif_decodetile;
+                    tif->tif_decodetile = PredictorDecodeTile;
+                }
 		/*
 		 * The data should not be swapped outside of the floating
 		 * point predictor, the accumulation routine should return
@@ -182,12 +189,15 @@ PredictorSetupEncode(TIFF* tif)
 		 * Override default encoding method with one that does the
 		 * predictor stuff.
 		 */
-		sp->coderow = tif->tif_encoderow;
-		tif->tif_encoderow = PredictorEncodeRow;
-		sp->codestrip = tif->tif_encodestrip;
-		tif->tif_encodestrip = PredictorEncodeTile;
-		sp->codetile = tif->tif_encodetile;
-		tif->tif_encodetile = PredictorEncodeTile;
+                if( tif->tif_encoderow != PredictorEncodeRow )
+                {
+                    sp->encoderow = tif->tif_encoderow;
+                    tif->tif_encoderow = PredictorEncodeRow;
+                    sp->encodestrip = tif->tif_encodestrip;
+                    tif->tif_encodestrip = PredictorEncodeTile;
+                    sp->encodetile = tif->tif_encodetile;
+                    tif->tif_encodetile = PredictorEncodeTile;
+                }
 	}
 
 	else if (sp->predictor == 3) {
@@ -196,12 +206,15 @@ PredictorSetupEncode(TIFF* tif)
 		 * Override default encoding method with one that does the
 		 * predictor stuff.
 		 */
-		sp->coderow = tif->tif_encoderow;
-		tif->tif_encoderow = PredictorEncodeRow;
-		sp->codestrip = tif->tif_encodestrip;
-		tif->tif_encodestrip = PredictorEncodeTile;
-		sp->codetile = tif->tif_encodetile;
-		tif->tif_encodetile = PredictorEncodeTile;
+                if( tif->tif_encoderow != PredictorEncodeRow )
+                {
+                    sp->encoderow = tif->tif_encoderow;
+                    tif->tif_encoderow = PredictorEncodeRow;
+                    sp->encodestrip = tif->tif_encodestrip;
+                    tif->tif_encodestrip = PredictorEncodeTile;
+                    sp->encodetile = tif->tif_encodetile;
+                    tif->tif_encodetile = PredictorEncodeTile;
+                }
 	}
 
 	return 1;
@@ -352,10 +365,10 @@ PredictorDecodeRow(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	TIFFPredictorState *sp = PredictorState(tif);
 
 	assert(sp != NULL);
-	assert(sp->coderow != NULL);
+	assert(sp->decoderow != NULL);
 	assert(sp->pfunc != NULL);  
 
-	if ((*sp->coderow)(tif, op0, occ0, s)) {
+	if ((*sp->decoderow)(tif, op0, occ0, s)) {
 		(*sp->pfunc)(tif, op0, occ0);
 		return 1;
 	} else
@@ -375,9 +388,9 @@ PredictorDecodeTile(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	TIFFPredictorState *sp = PredictorState(tif);
 
 	assert(sp != NULL);
-	assert(sp->codetile != NULL);
+	assert(sp->decodetile != NULL);
 
-	if ((*sp->codetile)(tif, op0, occ0, s)) {
+	if ((*sp->decodetile)(tif, op0, occ0, s)) {
 		tmsize_t rowsize = sp->rowsize;
 		assert(rowsize > 0);
 		assert((occ0%rowsize)==0);
@@ -504,11 +517,11 @@ PredictorEncodeRow(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 
 	assert(sp != NULL);
 	assert(sp->pfunc != NULL);
-	assert(sp->coderow != NULL);
+	assert(sp->encoderow != NULL);
 
 	/* XXX horizontal differencing alters user's data XXX */
 	(*sp->pfunc)(tif, bp, cc);
-	return (*sp->coderow)(tif, bp, cc, s);
+	return (*sp->encoderow)(tif, bp, cc, s);
 }
 
 static int
@@ -519,7 +532,7 @@ PredictorEncodeTile(TIFF* tif, uint8* bp0, tmsize_t cc0, uint16 s)
 	unsigned char* bp = bp0;
 	assert(sp != NULL);
 	assert(sp->pfunc != NULL);
-	assert(sp->codetile != NULL);
+	assert(sp->encodetile != NULL);
 	rowsize = sp->rowsize;
 	assert(rowsize > 0);
 	assert((cc0%rowsize)==0);
@@ -528,7 +541,7 @@ PredictorEncodeTile(TIFF* tif, uint8* bp0, tmsize_t cc0, uint16 s)
 		cc -= rowsize;
 		bp += rowsize;
 	}
-	return (*sp->codetile)(tif, bp0, cc0, s);
+	return (*sp->encodetile)(tif, bp0, cc0, s);
 }
 
 #define	FIELD_PREDICTOR	(FIELD_CODEC+0)		/* XXX */
