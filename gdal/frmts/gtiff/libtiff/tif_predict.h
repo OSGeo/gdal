@@ -1,4 +1,4 @@
-/* $Id: tif_predict.h,v 1.5 2007/06/26 10:30:13 joris Exp $ */
+/* $Id: tif_predict.h,v 1.6 2007/11/02 00:25:24 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -41,9 +41,12 @@ typedef struct {
 	tmsize_t        rowsize;	/* tile/strip row size */
 
 	TIFFPostMethod  pfunc;		/* horizontal differencer/accumulator */
-	TIFFCodeMethod  coderow;	/* parent codec encode/decode row */
-	TIFFCodeMethod  codestrip;	/* parent codec encode/decode strip */
-	TIFFCodeMethod  codetile;	/* parent codec encode/decode tile */ 
+	TIFFCodeMethod  encoderow;	/* parent codec encode/decode row */
+	TIFFCodeMethod  encodestrip;	/* parent codec encode/decode strip */
+	TIFFCodeMethod  encodetile;	/* parent codec encode/decode tile */ 
+	TIFFCodeMethod  decoderow;	/* parent codec encode/decode row */
+	TIFFCodeMethod  decodestrip;	/* parent codec encode/decode strip */
+	TIFFCodeMethod  decodetile;	/* parent codec encode/decode tile */ 
 	TIFFVGetMethod  vgetparent;	/* super-class method */
 	TIFFVSetMethod  vsetparent;	/* super-class method */
 	TIFFPrintMethod printdir;	/* super-class method */

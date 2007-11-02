@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.25 2007/07/09 09:26:57 dron Exp $ */
+/* $Id: tif_zip.c,v 1.28 2007/11/02 00:25:25 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -67,7 +67,7 @@
  */
 typedef struct {
 	TIFFPredictorState predict;
-	z_stream        stream;
+        z_stream        stream;
 	int             zipquality;            /* compression level */
 	int             state;                 /* state flags */
 #define ZSTATE_INIT_DECODE 0x01
@@ -127,7 +127,7 @@ ZIPPreDecode(TIFF* tif, uint16 s)
 	assert(sp != NULL);
 
 	if( (sp->state & ZSTATE_INIT_DECODE) == 0 )
-		ZIPSetupDecode(tif);
+            tif->tif_setupdecode( tif );
 
 	sp->stream.next_in = tif->tif_rawdata;
 	assert(sizeof(sp->stream.avail_in)==4);  /* if this assert gets raised,
@@ -170,7 +170,7 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			break;
 		if (state == Z_DATA_ERROR) {
 			TIFFErrorExt(tif->tif_clientdata, module,
-			    "Decoding error at scanline %lud, %s",
+			    "Decoding error at scanline %lu, %s",
 			    (unsigned long) tif->tif_row, sp->stream.msg);
 			if (inflateSync(&sp->stream) != Z_OK)
 				return (0);
@@ -184,7 +184,7 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	} while (sp->stream.avail_out > 0);
 	if (sp->stream.avail_out != 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data at scanline %lud (short %llud bytes)",
+		    "Not enough data at scanline %lu (short %llu bytes)",
 		    (unsigned long) tif->tif_row, (unsigned long long) sp->stream.avail_out);
 		return (0);
 	}
@@ -224,7 +224,7 @@ ZIPPreEncode(TIFF* tif, uint16 s)
 	(void) s;
 	assert(sp != NULL);
 	if( sp->state != ZSTATE_INIT_ENCODE )
-	    ZIPSetupEncode(tif);
+            tif->tif_setupencode( tif );
 
 	sp->stream.next_out = tif->tif_rawdata;
 	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
@@ -385,7 +385,7 @@ static const TIFFField zipFields[] = {
 int
 TIFFInitZIP(TIFF* tif, int scheme)
 {
-	const char module[] = "TIFFInitZIP";
+	static const char module[] = "TIFFInitZIP";
 	ZIPState* sp;
 
 	assert( (scheme == COMPRESSION_DEFLATE)
