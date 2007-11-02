@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.132 2007/09/20 19:20:54 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.135 2007/10/24 10:20:23 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3831,7 +3831,12 @@ TIFFReadDirectory(TIFF* tif)
 		dir=NULL;
 	}
 	if (!TIFFFieldSet(tif, FIELD_MAXSAMPLEVALUE))
-		tif->tif_dir.td_maxsamplevalue = (uint16)((1L<<tif->tif_dir.td_bitspersample)-1);
+	{
+		if (tif->tif_dir.td_bitspersample>=16)
+			tif->tif_dir.td_maxsamplevalue=0xFFFF;
+		else
+			tif->tif_dir.td_maxsamplevalue = (uint16)((1L<<tif->tif_dir.td_bitspersample)-1);
+	}
 	/*
 	 * XXX: We can optimize checking for the strip bounds using the sorted
 	 * bytecounts array. See also comments for TIFFAppendToStrip()
@@ -3863,8 +3868,10 @@ TIFFReadDirectory(TIFF* tif)
 	 * side effect, however, is that the RowsPerStrip tag
 	 * value may be changed.
 	 */
-	if (tif->tif_dir.td_nstrips == 1 && tif->tif_dir.td_compression == COMPRESSION_NONE &&  
-	    (tif->tif_flags & (TIFF_STRIPCHOP|TIFF_ISTILED)) == TIFF_STRIPCHOP)
+	if ((tif->tif_dir.td_planarconfig==PLANARCONFIG_CONTIG)&&
+	    (tif->tif_dir.td_nstrips==1)&&
+	    (tif->tif_dir.td_compression==COMPRESSION_NONE)&&  
+	    ((tif->tif_flags&(TIFF_STRIPCHOP|TIFF_ISTILED))==TIFF_STRIPCHOP))
 		ChopUpSingleUncompressedStrip(tif);
 
 	/*
@@ -5250,9 +5257,11 @@ static void
 ChopUpSingleUncompressedStrip(TIFF* tif)
 {
 	register TIFFDirectory *td = &tif->tif_dir;
-	uint64 bytecount = td->td_stripbytecount[0];
-	uint64 offset = td->td_stripoffset[0];
-	uint64 rowbytes = TIFFVTileSize64(tif, 1), stripbytes;
+	uint64 bytecount;
+	uint64 offset;
+	uint32 rowblock;
+	uint64 rowblockbytes;
+	uint64 stripbytes;
 	uint32 strip;
 	uint64 nstrips64;
 	uint32 nstrips32;
@@ -5260,16 +5269,27 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	uint64* newcounts;
 	uint64* newoffsets;
 
+	bytecount = td->td_stripbytecount[0];
+	offset = td->td_stripoffset[0];
+	assert(td->td_planarconfig == PLANARCONFIG_CONTIG);
+	if ((td->td_photometric == PHOTOMETRIC_YCBCR)&&
+	    (!isUpSampled(tif)))
+		rowblock = td->td_ycbcrsubsampling[1];
+	else
+		rowblock = 1;
+	rowblockbytes = TIFFVTileSize64(tif, rowblock);
 	/*
 	 * Make the rows hold at least one scanline, but fill specified amount
 	 * of data if possible.
 	 */
-	if (rowbytes > STRIP_SIZE_DEFAULT) {
-		stripbytes = rowbytes;
-		rowsperstrip = 1;
-	} else if (rowbytes > 0 ) {
-		rowsperstrip = (uint32) (STRIP_SIZE_DEFAULT / rowbytes);
-		stripbytes = rowbytes * rowsperstrip;
+	if (rowblockbytes > STRIP_SIZE_DEFAULT) {
+		stripbytes = rowblockbytes;
+		rowsperstrip = rowblock;
+	} else if (rowblockbytes > 0 ) {
+		uint32 rowblocksperstrip;
+		rowblocksperstrip = (uint32) (STRIP_SIZE_DEFAULT / rowblockbytes);
+		rowsperstrip = rowblocksperstrip * rowblock;
+		stripbytes = rowblocksperstrip * rowblockbytes;
 	}
 	else
 	    return;
