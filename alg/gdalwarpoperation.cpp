@@ -1440,21 +1440,37 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None && psOptions->padfDstNoDataReal != NULL )
     {
+        GUInt32 *panBandMask = NULL;
+        int     nMaskWords = (oWK.nDstXSize * oWK.nDstYSize + 31)/32;
+
         eErr = CreateKernelMask( &oWK, 0, "DstValid" );
         if( eErr == CE_None )
+            panBandMask = (GUInt32 *) CPLMalloc(nMaskWords*4);
+
+        if( eErr == CE_None && panBandMask != NULL )
         {
-            double adfNoData[2];
+            int iBand, iWord;
+
+            memset( oWK.panDstValid, 0, nMaskWords * 4 );
+            for( iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+            {
+                double adfNoData[2];
             
-            adfNoData[0] = psOptions->padfDstNoDataReal[0];
-            adfNoData[1] = psOptions->padfDstNoDataImag[0];
+                adfNoData[0] = psOptions->padfDstNoDataReal[iBand];
+                adfNoData[1] = psOptions->padfDstNoDataImag[iBand];
             
-            eErr = 
-                GDALWarpNoDataMasker( adfNoData, psOptions->nBandCount, 
-                                      psOptions->eWorkingDataType,
-                                      oWK.nDstXOff, oWK.nDstYOff, 
-                                      oWK.nDstXSize, oWK.nDstYSize,
-                                      oWK.papabyDstImage + 0,
-                                      FALSE, oWK.panDstValid );
+                eErr = 
+                    GDALWarpNoDataMasker( adfNoData, 1, 
+                                          psOptions->eWorkingDataType,
+                                          oWK.nDstXOff, oWK.nDstYOff, 
+                                          oWK.nDstXSize, oWK.nDstYSize,
+                                          oWK.papabyDstImage + iBand,
+                                          FALSE, panBandMask );
+
+                for( iWord = nMaskWords - 1; iWord >= 0; iWord-- )
+                    oWK.panDstValid[iWord] |= panBandMask[iWord];
+            }
+            CPLFree( panBandMask );
         }
     }
         
