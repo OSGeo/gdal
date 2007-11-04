@@ -17,22 +17,22 @@ PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
 PY_MODULES      =       ${PACKAGE_DIR}/gdal.py ${PACKAGE_DIR}/ogr.py ${PACKAGE_DIR}/osr.py ${PACKAGE_DIR}/gdalconst.py
 
 clean:
+	-rm -f ${PACKAGE_DIR}/*.pyc
 	-rm -rf build
+	-rm -f *.pyc
+	-rm -rf *.egg-info
+	-rm -f *.so ./osgeo/*.so
+	-rm -rf dist
 
 SWIGARGS += -outdir "${PACKAGE_DIR}" 
 
 
 veryclean: clean
 	-rm -f ${WRAPPERS} ${PY_MODULES}
-	-rm -f ${PACKAGE_DIR}/*.pyc
-	-rm -f *.pyc
 	-rm -f ${SWIGOUTPUTDIR}/gdal_wrap.cpp 
 	-rm -f ${SWIGOUTPUTDIR}/gdalconst_wrap.c
 	-rm -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp
 	-rm -f ${SWIGOUTPUTDIR}/osr_wrap.cpp
-	-rm -rf dist
-	-rm -f *.so
-	-rm -rf *.egg-info
 
 gdal_wrap.cpp: ../include/python/gdal_python.i
 
