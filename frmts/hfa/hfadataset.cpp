@@ -2030,24 +2030,40 @@ CPLErr HFADataset::ReadProjection()
 /*      units from meters.  Erdas linear projection values are          */
 /*      always in meters.                                               */
 /* -------------------------------------------------------------------- */
+    HFAEntry *poMapInformation = NULL;
     int iUnitIndex = 0;
+
+    // If we don't have "Map_Info" entry, look for "MapInformation" node
+    // which has at least the units. 
+    if( psMapInfo == NULL ) 
+    {
+        HFABand *poBand = hHFA->papoBand[0];
+        poMapInformation = poBand->poNode->GetNamedChild("MapInformation");
+    }
 
     if( oSRS.IsProjected() || oSRS.IsLocal() )
     {
+        const char  *pszUnits = NULL;
+
         if( psMapInfo )
+            pszUnits = psMapInfo->units; 
+        else if( poMapInformation != NULL )
+            pszUnits = poMapInformation->GetStringField( "units.string" );
+        
+        if( pszUnits != NULL )
         {
             for( iUnitIndex = 0; 
                  apszUnitMap[iUnitIndex] != NULL; 
                  iUnitIndex += 2 )
             {
-                if( EQUAL(apszUnitMap[iUnitIndex], psMapInfo->units ) )
+                if( EQUAL(apszUnitMap[iUnitIndex], pszUnits ) )
                     break;
             }
             
             if( apszUnitMap[iUnitIndex] == NULL )
                 iUnitIndex = 0;
             
-            oSRS.SetLinearUnits( psMapInfo->units, 
+            oSRS.SetLinearUnits( pszUnits, 
                                  atof(apszUnitMap[iUnitIndex+1]) );
         }
         else
