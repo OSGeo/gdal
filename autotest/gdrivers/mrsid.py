@@ -45,7 +45,7 @@ def mrsid_1():
     if gdaltest.mrsid_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'MrSID', 'mercator.sid', 1, 54132 )
+    tst = gdaltest.GDALTest( 'MrSID', 'mercator.sid', 1, None )
 
     gt = (-15436.385771224039, 60.0, 0.0, 3321987.8617962394, 0.0, -60.0)
     #
@@ -141,11 +141,19 @@ def mrsid_3():
         gdaltest.post_reason( 'did not get expected overview count' )
         return 'fail'
 
-    cs = band.GetOverview(3).Checksum()
-    if cs != 12816:
-        gdaltest.post_reason( 'wrong overview checksum (%d)' % cs )
-        return 'fail'
-
+    new_stat = band.GetOverview(3).GetStatistics( approx_ok = 0, force = 1)
+    
+    check_stat = (11.0, 230.0, 103.42607897153351, 39.952592422557757)
+    
+    stat_epsilon = 0.0001
+    for i in range(4):
+        if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
+            print
+            print 'old = ', check_stat
+            print 'new = ', new_stat
+            post_reason( 'Statistics differ.' )
+            return 'fail'
+    
     return 'success'
 
 ###############################################################################
@@ -156,7 +164,7 @@ def mrsid_4():
     if gdaltest.mrsid_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'MrSID', 'mercator_new.sid', 1, 26456 )
+    tst = gdaltest.GDALTest( 'MrSID', 'mercator_new.sid', 1, None )
 
     gt = (-15436.385771224039, 60.0, 0.0, 3321987.8617962394, 0.0, -60.0)
     prj = """PROJCS["MER         E000",
@@ -187,6 +195,12 @@ def mrsid_4():
 def mrsid_cleanup():
     gdaltest.mrsid_drv = None
 
+    try:
+        os.remove( 'data/mercator.sid.aux.xml' )
+        os.remove( 'data/mercator_new.sid.aux.xml' )
+    except:
+        pass
+    
     return 'success'
 
 gdaltest_list = [
