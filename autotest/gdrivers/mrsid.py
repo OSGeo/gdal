@@ -141,7 +141,7 @@ def mrsid_3():
         gdaltest.post_reason( 'did not get expected overview count' )
         return 'fail'
 
-    new_stat = band.GetOverview(3).GetStatistics( approx_ok = 0, force = 1)
+    new_stat = band.GetOverview(3).GetStatistics(0,1)
     
     check_stat = (11.0, 230.0, 103.42607897153351, 39.952592422557757)
     
