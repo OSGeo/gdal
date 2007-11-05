@@ -315,7 +315,7 @@ class GDALTest:
                     post_reason( 'Statistics differs.' )
                     return 'fail'
 
-        if chksum == self.chksum:
+        if self.chksum is None or chksum == self.chksum:
             return 'success'
         else:
             post_reason( 'Checksum for %s is %d, but expected %d.' \
@@ -353,7 +353,7 @@ class GDALTest:
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
-            if bnd.Checksum() != self.chksum:
+            if self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason( 
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' % (bnd.Checksum(),self.chksum))
@@ -378,7 +378,7 @@ class GDALTest:
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
-            if bnd.Checksum() != self.chksum:
+            if self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason( 'Did not get expected checksum on reopened file.' )
                 return 'fail'
             got_minmax = bnd.ComputeRasterMinMax()
@@ -457,7 +457,8 @@ class GDALTest:
 	    return 'fail'
 
         for band in range(1,out_bands+1):
-            if new_ds.GetRasterBand(band).Checksum() != self.chksum:
+            if self.chksum is not None \
+               and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason( 
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' \
@@ -477,7 +478,8 @@ class GDALTest:
 	    return 'fail'
 
         for band in range(1,out_bands+1):
-            if new_ds.GetRasterBand(band).Checksum() != self.chksum:
+            if self.chksum is not None \
+               and new_ds.GetRasterBand(band).Checksum() != self.chksum:
                 post_reason( 'Did not get expected checksum on reopened file.' )
                 return 'fail'
             
