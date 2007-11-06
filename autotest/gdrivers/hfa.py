@@ -474,6 +474,44 @@ def hfa_corrupt_aux():
     return 'success'
  
 ###############################################################################
+# support MapInformation for units (#1967)
+
+def hfa_mapinformation_units():
+
+    # NOTE: we depend on being able to open .aux files as a weak sort of
+    # dataset.
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds = gdal.Open( 'data/fg118-91.aux' )
+    gdal.PopErrorHandler()
+
+    wkt = ds.GetProjectionRef()
+    expected_wkt = """PROJCS["NAD83 / Virginia North",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.01745329251994328,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",39.2],
+    PARAMETER["standard_parallel_2",38.03333333333333],
+    PARAMETER["latitude_of_origin",37.66666666666666],
+    PARAMETER["central_meridian",-78.5],
+    PARAMETER["false_easting",11482916.66666667],
+    PARAMETER["false_northing",6561666.666666667],
+    UNIT["us_survey_feet",0.3048006096012192]]"""
+
+    if gdaltest.equal_srs_from_wkt( expected_wkt, wkt ):
+        return 'success'
+    else:
+        return 'fail'
+ 
+###############################################################################
 #
 
 gdaltest_list = [
@@ -491,7 +529,8 @@ gdaltest_list = [
     hfa_metadata_2,
     hfa_grow_rrdlist,
     hfa_clean_ige,
-    hfa_corrupt_aux ]
+    hfa_corrupt_aux,
+    hfa_mapinformation_units ]
 
 if __name__ == '__main__':
 
