@@ -151,7 +151,13 @@ transform_list = [ \
     # Test Two Point Equidistant
     ('+proj=tpeqd +a=3396000  +b=3396000  +lat_1=36.3201218 +lon_1=-179.1566925 +lat_2=45.8120651 +lon_2=179.3727570 +no_defs', (4983568.76, 2092902.61, 0.0), 0.1,
      '+proj=latlong +a=3396000 +b=3396000', (-140.0, 40.0, 0.0), 0.000001,
-     'TPED_Mars', None)
+     'TPED_Mars', None),
+
+    # test scale factor precision (per #1970)
+    ('data/wkt_rt90.def', (1572570.342,6728429.67,0.0), 0.001,
+     ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',(616531.1155,6727527.5682,0.0), 0.001,
+     'ScalePrecision(#1970)', None)
+
     ]
     
 ###############################################################################
