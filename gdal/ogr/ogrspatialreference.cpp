@@ -1639,8 +1639,10 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
     if( pszBufPtr[0] == '<' )
         err = importFromXML( pszBufPtr );
-    else if( strstr(pszBuffer,"+proj") != NULL 
-             || strstr(pszBuffer,"+init") != NULL )
+    else if( (strstr(pszBuffer,"+proj") != NULL  
+              || strstr(pszBuffer,"+init") != NULL)
+             && (strstr(pszBuffer,"EXTENSION") == NULL
+                 && strstr(pszBuffer,"extension") == NULL) )
         err = importFromProj4( pszBufPtr );
     else
     {
