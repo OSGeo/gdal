@@ -1056,7 +1056,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         }            
         else
             sprintf( szProj4+strlen(szProj4),
-             "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
+             "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
@@ -1067,7 +1067,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=merc +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
+           "+proj=merc +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1087,8 +1087,8 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
         sprintf( szProj4+strlen(szProj4),
-         "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
-//         "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
+         "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
+//         "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
@@ -1099,7 +1099,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_STEREOGRAPHIC) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
+           "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
@@ -1612,7 +1612,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         double padfTransform[7];
         if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
         {
-            sprintf( szTOWGS84, "+towgs84=%f,%f,%f,%f,%f,%f,%f",
+            sprintf( szTOWGS84, "+towgs84=%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g",
                      padfTransform[0],
                      padfTransform[1],
                      padfTransform[2],
