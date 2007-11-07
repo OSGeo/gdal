@@ -447,7 +447,7 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
 /*                           ReadRawPoint()                             */
 /************************************************************************/
 
-bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRRawPoint& point )
+bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
 {
     if( json_type_array == json_object_get_type( poObj ) ) 
     {
@@ -465,24 +465,41 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRRawPoint& point )
 
         // Read X coordinate
         poObjCoord = json_object_array_get_idx( poObj, 0 );
-        CPLAssert( json_type_double == json_object_get_type(poObjCoord) );
-        point.x = json_object_get_double( poObjCoord );
+        
+        if (json_type_double != json_object_get_type(poObjCoord) ) {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid Point object. Type is not double for \'%s\'.",json_object_to_json_string(poObj) );
+            return false;
+        }
+        point.setX(json_object_get_double( poObjCoord ));
 
         // Read Y coordiante
         poObjCoord = json_object_array_get_idx( poObj, 1 );
-        CPLAssert( json_type_double == json_object_get_type(poObjCoord) );
-        point.y = json_object_get_double( poObjCoord );
+        
+        if (json_type_double != json_object_get_type(poObjCoord) ) {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid Point object. Type is not double for \'%s\'.",json_object_to_json_string(poObj) );
+            return false;
+        }
+        point.setY(json_object_get_double( poObjCoord ));
 
         // Read Z coordinate
         if( nSize == GeoJSONObject::eMaxCoordinateDimension )
         {
+            // Don't *expect* mixed-dimension geometries, although the 
+            // spec doesn't explicitly forbid this.
             poObjCoord = json_object_array_get_idx( poObj, 2 );
-            CPLAssert( json_type_double == json_object_get_type(poObjCoord) );
+            if (json_type_double != json_object_get_type(poObjCoord) ) {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid Point object. Type is not double for \'%s\'.",json_object_to_json_string(poObj) );
+                return false;
+            }
+            point.setZ(json_object_get_double( poObjCoord ));
 
-            // TODO: Think what to do with 3D coordinate?
-            // Also, how we should handle mixed-dimension geometries in single input?
+        } else {
+            point.flattenTo2D();
         }
-
+        
         return true;
     }
     
@@ -506,14 +523,18 @@ OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
         return NULL;
     }
 
-    OGRRawPoint pt;
+    OGRPoint pt;
     if( !ReadRawPoint( poObjCoords, pt ) )
     {
         CPLDebug( "GeoJSON", "Point: raw point parsing failure." );
         return NULL;
     }
 
-    poPoint = new OGRPoint( pt.x, pt.y );
+    if (pt.getCoordinateDimension() == 2) {
+        poPoint = new OGRPoint( pt.getX(), pt.getY());
+    } else {
+        poPoint = new OGRPoint( pt.getX(), pt.getY(), pt.getZ() );
+    }
     return poPoint;
 }
 
@@ -547,7 +568,7 @@ OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj )
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObjPoints, i );
             
-            OGRRawPoint pt;
+            OGRPoint pt;
             if( !ReadRawPoint( poObjCoords, pt ) )
             {
                 delete poLine;
@@ -555,8 +576,12 @@ OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj )
                           "LineString: raw point parsing failure." );
                 return NULL;
             }
-
-            poLine->setPoint( i, pt.x, pt.y, 0 );
+            if (pt.getCoordinateDimension() == 2) {
+                poLine->setPoint( i, pt.getX(), pt.getY());
+            } else {
+                poLine->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
+            }
+            
         }
     }
 
@@ -583,7 +608,7 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObj, i );
             
-            OGRRawPoint pt;
+            OGRPoint pt;
             if( !ReadRawPoint( poObjCoords, pt ) )
             {
                 delete poRing;
@@ -591,8 +616,14 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
                           "LinearRing: raw point parsing failure." );
                 return NULL;
             }
-
-            poRing->setPoint( i, pt.x, pt.y, 0 );
+            
+            if (pt.getCoordinateDimension() == 2) {
+                poRing->setPoint( i, pt.getX(), pt.getY());
+            } else {
+                poRing->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
+            }
+            
+            
         }
     }
 

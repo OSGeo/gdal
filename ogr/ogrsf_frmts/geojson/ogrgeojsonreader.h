@@ -116,7 +116,7 @@ private:
     bool GenerateFeatureDefn( json_object* poObj );
     bool AddFeature( OGRGeometry* poGeometry );
     bool AddFeature( OGRFeature* poFeature );
-    bool ReadRawPoint( json_object* poObj, OGRRawPoint& point );
+    bool ReadRawPoint( json_object* poObj, OGRPoint& point );
     OGRRawPoint* ReadRawPoint( json_object* poObj );
     OGRPoint* ReadPoint( json_object* poObj );
     OGRLineString* ReadLineString( json_object* poObj );
