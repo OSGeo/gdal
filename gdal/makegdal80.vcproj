@@ -26,7 +26,7 @@
 				BuildCommandLine="cd $(ProjectDir) &#x0D;&#x0A;nmake -f makefile.vc"
 				ReBuildCommandLine="cd $(ProjectDir) &#x0D;&#x0A;nmake -f makefile.vc clean &#x0D;&#x0A;nmake -f makefile.vc &#x0D;&#x0A;nmake -f makefile.vc install"
 				CleanCommandLine="cd $(ProjectDir) &#x0D;&#x0A;nmake -f makefile.vc clean"
-				Output="gdal14.dll"
+				Output="gdal15.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
