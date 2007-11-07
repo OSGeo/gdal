@@ -29,22 +29,22 @@ Makefile_Geo__GDAL:
 	PREFIX=${INST_PREFIX} perl Makefile.PL
 
 build: Makefile_Geo__GDAL
-	make -f Makefile_Geo__GDAL
-	make -f Makefile_Geo__GDAL__Const
-	make -f Makefile_Geo__OGR
-	make -f Makefile_Geo__OSR
+	$(MAKE) -f Makefile_Geo__GDAL
+	$(MAKE) -f Makefile_Geo__GDAL__Const
+	$(MAKE) -f Makefile_Geo__OGR
+	$(MAKE) -f Makefile_Geo__OSR
 
 install: build
-	make -f Makefile_Geo__GDAL install
-	make -f Makefile_Geo__GDAL__Const install
-	make -f Makefile_Geo__OGR install
-	make -f Makefile_Geo__OSR install
+	$(MAKE) -f Makefile_Geo__GDAL install
+	$(MAKE) -f Makefile_Geo__GDAL__Const install
+	$(MAKE) -f Makefile_Geo__OGR install
+	$(MAKE) -f Makefile_Geo__OSR install
 
 test: build
-	make -f Makefile_Geo__GDAL test
+	$(MAKE) -f Makefile_Geo__GDAL test
 
 dist: build
-	make -f Makefile_Geo__GDAL dist
+	$(MAKE) -f Makefile_Geo__GDAL dist
 
 Geo-GDAL.html: lib/Geo/GDAL.pod
 	pod2html lib/Geo/GDAL.pod > Geo-GDAL.html
