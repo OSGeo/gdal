@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	pdsdataset.o isis2dataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-I../raw $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
 
