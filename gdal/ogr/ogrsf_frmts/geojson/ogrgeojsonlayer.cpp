@@ -256,29 +256,39 @@ int OGRGeoJSONLayer::TestCapability( const char* pszCap )
 
 void OGRGeoJSONLayer::DetectGeometryType()
 {
-    OGRwkbGeometryType lyrType, featType;
+    OGRwkbGeometryType lyrType = wkbUnknown;
+    OGRwkbGeometryType featType = wkbUnknown;
+    OGRGeometry* poGeometry = NULL;
     FeaturesSeq::const_iterator it = seqFeatures_.begin();
     FeaturesSeq::const_iterator end = seqFeatures_.end();
-
+    
     if( it != end )
     {
-        featType = (*it)->GetGeometryRef()->getGeometryType();
-        if( featType != poFeatureDefn_->GetGeomType() )
+        poGeometry = (*it)->GetGeometryRef();
+        if( NULL != poGeometry )
         {
-            poFeatureDefn_->SetGeomType( featType );
+            featType = poGeometry->getGeometryType();
+            if( featType != poFeatureDefn_->GetGeomType() )
+            {
+                poFeatureDefn_->SetGeomType( featType );
+            }
         }
         ++it;
     }
 
     while( it != end )
     {
-        featType = (*it)->GetGeometryRef()->getGeometryType();
-        if( featType != poFeatureDefn_->GetGeomType() )
+        poGeometry = (*it)->GetGeometryRef();
+        if( NULL != poGeometry )
         {
-            CPLDebug( "GeoJSON",
-                      "Detected layer of mixed-geometry type features." );
-            poFeatureDefn_->SetGeomType( DefaultGeometryType );
-            break;
+            featType = poGeometry->getGeometryType();
+            if( featType != poFeatureDefn_->GetGeomType() )
+            {
+                CPLDebug( "GeoJSON",
+                    "Detected layer of mixed-geometry type features." );
+                poFeatureDefn_->SetGeomType( DefaultGeometryType );
+                break;
+            }
         }
         ++it;
     }
