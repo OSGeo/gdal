@@ -1,0 +1,34 @@
+# $Id$
+#
+# Makefile to build OGR GeoJSON driver
+#
+GDAL_ROOT	=	..\..\..
+
+GEOJSON_OBJ = \
+	ogrgeojsondriver.obj \
+	ogrgeojsondatasource.obj \
+	ogrgeojsonlayer.obj \
+	ogrgeojsonutils.obj \
+	ogrgeojsonreader.obj
+	
+
+EXTRAFLAGS = -Ijsonc -I.. -I..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+# TODO: Do we want to include GeoJSON driver by default
+#       or if user asks for it? Now it's on by default.
+
+OBJ	=	$(GEOJSON_OBJ)
+
+default:	$(OBJ)
+	cd jsonc
+	nmake /f makefile.vc
+	cd ..
+	
+clean:
+	cd jsonc
+	nmake /f makefile.vc clean
+	cd ..
+	-del *.lib
+	-del *.obj *.pdb

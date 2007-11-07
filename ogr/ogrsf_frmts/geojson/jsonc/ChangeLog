@@ -1,0 +1,61 @@
+0.7
+  * Add escaping of backslash to json output
+  * Add escaping of foward slash on tokenizing and output
+  * Changes to internal tokenizer from using recursion to
+    using a depth state structure to allow incremental parsing
+
+0.6
+  * Fix bug in escaping of control characters
+    Johan Björklund, johbjo09 at kth dot se
+  * Remove include "config.h" from headers (should only
+    be included from .c files)
+    Michael Clark <michael@metaparadigm.com>
+
+0.5
+  * Make headers C++ compatible by change *this to *obj
+  * Add ifdef C++ extern "C" to headers
+  * Use simpler definition of min and max in bits.h
+    Larry Lansing, llansing at fuzzynerd dot com
+
+  * Remove automake 1.6 requirement
+  * Move autogen commands into autogen.sh. Update README
+  * Remove error pointer special case for Windows
+  * Change license from LGPL to MIT
+    Michael Clark <michael@metaparadigm.com>
+
+0.4
+  * Fix additional error case in object parsing
+  * Add back sign reversal in nested object parse as error pointer
+    value is negative, while error value is positive.
+    Michael Clark <michael@metaparadigm.com>
+
+0.3
+  * fix pointer arithmetic bug for error pointer check in is_error() macro
+  * fix type passed to printbuf_memappend in json_tokener
+  * update autotools bootstrap instructions in README
+    Michael Clark <michael@metaparadigm.com>
+
+0.2
+  * printbuf.c - C. Watford (christopher.watford@gmail.com)
+    Added a Win32/Win64 compliant implementation of vasprintf
+  * debug.c - C. Watford (christopher.watford@gmail.com)
+    Removed usage of vsyslog on Win32/Win64 systems, needs to be handled
+    by a configure script
+  * json_object.c - C. Watford (christopher.watford@gmail.com)
+    Added scope operator to wrap usage of json_object_object_foreach, this
+    needs to be rethought to be more ANSI C friendly
+  * json_object.h - C. Watford (christopher.watford@gmail.com)
+    Added Microsoft C friendly version of json_object_object_foreach
+  * json_tokener.c - C. Watford (christopher.watford@gmail.com)
+    Added a Win32/Win64 compliant implementation of strndup
+  * json_util.c - C. Watford (christopher.watford@gmail.com)
+    Added cast and mask to suffice size_t v. unsigned int conversion
+    correctness 
+  * json_tokener.c - sign reversal issue on error info for nested object parse
+    spotted by Johan Björklund (johbjo09 at kth.se)
+  * json_object.c - escape " in json_escape_str
+  * Change to automake and libtool to build shared and static library
+    Michael Clark <michael@metaparadigm.com>
+	
+0.1
+  * initial release
