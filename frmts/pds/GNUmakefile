@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	pdsdataset.o isis2dataset.o
+OBJ	=	pdsdataset.o isis2dataset.o isis3dataset.o
 
 CPPFLAGS	:=	-I../raw $(GDAL_INCLUDE) $(CPPFLAGS)
 
