@@ -466,9 +466,11 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
         // Read X coordinate
         poObjCoord = json_object_array_get_idx( poObj, 0 );
         
-        if (json_type_double != json_object_get_type(poObjCoord) ) {
+        if (json_type_double != json_object_get_type(poObjCoord) )
+        {
             CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Point object. Type is not double for \'%s\'.",json_object_to_json_string(poObj) );
+                      "Invalid Point object. Type is not double for \'%s\'.",
+                      json_object_to_json_string(poObj) );
             return false;
         }
         point.setX(json_object_get_double( poObjCoord ));
@@ -476,9 +478,11 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
         // Read Y coordiante
         poObjCoord = json_object_array_get_idx( poObj, 1 );
         
-        if (json_type_double != json_object_get_type(poObjCoord) ) {
+        if (json_type_double != json_object_get_type(poObjCoord) )
+        {
             CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Point object. Type is not double for \'%s\'.",json_object_to_json_string(poObj) );
+                      "Invalid Point object. Type is not double for \'%s\'.",
+                      json_object_to_json_string(poObj) );
             return false;
         }
         point.setY(json_object_get_double( poObjCoord ));
@@ -489,14 +493,18 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
             // Don't *expect* mixed-dimension geometries, although the 
             // spec doesn't explicitly forbid this.
             poObjCoord = json_object_array_get_idx( poObj, 2 );
-            if (json_type_double != json_object_get_type(poObjCoord) ) {
+            if (json_type_double != json_object_get_type(poObjCoord) )
+            {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid Point object. Type is not double for \'%s\'.",json_object_to_json_string(poObj) );
+                          "Invalid Point object. Type is not double for \'%s\'.",
+                          json_object_to_json_string(poObj) );
                 return false;
             }
             point.setZ(json_object_get_double( poObjCoord ));
 
-        } else {
+        }
+        else
+        {
             point.flattenTo2D();
         }
         
@@ -530,11 +538,15 @@ OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
         return NULL;
     }
 
-    if (pt.getCoordinateDimension() == 2) {
+    if (pt.getCoordinateDimension() == 2)
+    {
         poPoint = new OGRPoint( pt.getX(), pt.getY());
-    } else {
+    }
+    else
+    {
         poPoint = new OGRPoint( pt.getX(), pt.getY(), pt.getZ() );
     }
+    
     return poPoint;
 }
 
