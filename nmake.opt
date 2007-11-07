@@ -280,7 +280,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # The cURL library is used for WCS, WMS, GeoJSON, SRS call importFromUrl(), etc.
 #CURL_DIR=C:\curl-7.15.0
 #CURL_INC = -I$(CURL_DIR)/include
+# Uncoment following line to use libcurl as dynamic library
 #CURL_LIB = $(CURL_DIR)/libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib
+# Uncoment following two lines to use libcurl as static library
+#CURL_LIB = $(CURL_DIR)/libcurl.lib wsock32.lib wldap32.lib winmm.lib
 #CURL_CFLAGS = -DCURL_STATICLIB
 
 # Uncomment for GEOS support
