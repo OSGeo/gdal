@@ -3190,126 +3190,18 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->SetProjection( pszProj );
 
 /* -------------------------------------------------------------------- */
-/*      Copy the image data.                                            */
+/*      Copy the imagery.                                               */
 /* -------------------------------------------------------------------- */
-    int         nXSize = poDS->GetRasterXSize();
-    int         nYSize = poDS->GetRasterYSize();
-    int  	nBlockXSize, nBlockYSize, nBlockTotal, nBlocksDone;
-
-    poDS->GetRasterBand(1)->GetBlockSize( &nBlockXSize, &nBlockYSize );
-
-    nBlockTotal = ((nXSize + nBlockXSize - 1) / nBlockXSize)
-        * ((nYSize + nBlockYSize - 1) / nBlockYSize)
-        * nBandCount;
-
-    nBlocksDone = 0;
-    for( iBand = 0; iBand < nBandCount && !bCreateAux; iBand++ )
+    if( !bCreateAux )
     {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
-        GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
-        int	       iYOffset;
-        void           *pData;
-        CPLErr  eErr;
-        int            nMoveLines = nBlockYSize;
+        CPLErr eErr;
 
-#define TRANSFER_BY_BLOCK
-#ifdef TRANSFER_BY_BLOCK
-        pData = CPLMalloc(nBlockXSize * nMoveLines
-                          * GDALGetDataTypeSize(eType) / 8);
-#else
-xx
-        pData = CPLMalloc(nXSize * nMoveLines
-                          * GDALGetDataTypeSize(eType) / 8);
-#endif
-
-        for( iYOffset = 0; iYOffset < nYSize; iYOffset += nMoveLines )
-        {
-#ifdef TRANSFER_BY_BLOCK
-            int iXOffset;
-
-            for( iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
-            {
-                int	nTBXSize, nTBYSize;
-
-                if( !pfnProgress( (nBlocksDone++) / (float) nBlockTotal,
-                                  NULL, pProgressData ) )
-                {
-                    CPLError( CE_Failure, CPLE_UserInterrupt,
-                              "User terminated" );
-                    delete poDS;
-
-                    GDALDriver *poHFADriver =
-                        (GDALDriver *) GDALGetDriverByName( "HFA" );
-                    poHFADriver->Delete( pszFilename );
-                    return NULL;
-                }
-
-                nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
-                nTBYSize = MIN(nMoveLines,nYSize-iYOffset);
-
-                eErr = poSrcBand->RasterIO( GF_Read,
-                                            iXOffset, iYOffset,
-                                            nTBXSize, nTBYSize,
-                                            pData, nTBXSize, nTBYSize,
-                                            eType, 0, 0 );
-                if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-
-                eErr = poDstBand->RasterIO( GF_Write,
-                                            iXOffset, iYOffset,
-                                            nTBXSize, nTBYSize,
-                                            pData, nTBXSize, nTBYSize,
-                                            eType, 0, 0 );
-
-                if( eErr != CE_None )
-                {
-                    return NULL;
-                }
-            }
-#else
-            if( !pfnProgress( (iYOffset + iBand*nYSize)  
-                              / (float) (nYSize * nBandCount), 
-                              NULL, pProgressData ))
-            {
-                CPLError( CE_Failure, CPLE_UserInterrupt,
-                          "User terminated" );
-                delete poDS;
-
-                GDALDriver *poHFADriver =
-                    (GDALDriver *) GDALGetDriverByName( "HFA" );
-                poHFADriver->Delete( pszFilename );
-                return NULL;
-            }
-
-            int	nTBYSize;
-
-            nTBYSize = MIN(nMoveLines,nYSize-iYOffset);
-            eErr = poSrcBand->RasterIO( GF_Read,
-                                        0, iYOffset, nXSize, nTBYSize,
-                                        pData, nXSize, nTBYSize,
-                                        eType, 0, 0 );
-            if( eErr != CE_None )
-            {
-                return NULL;
-            }
-            
-            eErr = poDstBand->RasterIO( GF_Write,
-                                        0, iYOffset, nXSize, nTBYSize,
-                                        pData, nXSize, nTBYSize,
-                                        eType, 0, 0 );
-
-            if( eErr != CE_None )
-            {
-                return NULL;
-            }
-
-            poDstBand->FlushCache();
-#endif
-        }
-
-        CPLFree( pData );
+        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                           (GDALDatasetH) poDS,
+                                           NULL, pfnProgress, pProgressData );
+        
+        if( eErr != CE_None )
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
