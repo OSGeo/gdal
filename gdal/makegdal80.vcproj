@@ -1510,6 +1510,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\port\makefile.vc"
+					>
+				</File>
+				<File
 					RelativePath="./port\xmlreformat.cpp"
 					>
 				</File>
@@ -3123,6 +3127,10 @@
 					<Filter
 						Name="generic"
 						>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\generic\makefile.vc"
+							>
+						</File>
 						<File
 							RelativePath="./ogr/ogrsf_frmts/generic\ogr_attrind.cpp"
 							>
