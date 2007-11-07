@@ -1,0 +1,25 @@
+# $Id$
+#
+# Makefile building jcon-c library (http://oss.metaparadigm.com/json-c/)
+# 
+
+OBJ = \
+	arraylist.obj \
+	debug.obj \
+	json_object.obj \
+	json_tokener.obj \
+	json_util.obj \
+	linkhash.obj \
+	printbuf.obj
+
+GDAL_ROOT	=	..\..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	-I.. -I..\.. -I..\..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
