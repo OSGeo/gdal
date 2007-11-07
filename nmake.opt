@@ -279,7 +279,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment to use libcurl (for WCS)
 #CURL_DIR=C:\curl-7.15.0
 #CURL_INC = -I$(CURL_DIR)/include
-#CURL_LIB = $(CURL_DIR)/libcurl.lib
+#CURL_LIB = $(CURL_DIR)/libcurl.lib wsock32.lib wldap32.lib winmm.lib
 
 # Uncomment for GEOS support
 #GEOS_CFLAGS = -Ic:/warmerda/geos/capi -DHAVE_GEOS
