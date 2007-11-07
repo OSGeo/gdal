@@ -1158,6 +1158,70 @@
 							>
 						</File>
 					</Filter>
+					<Filter
+						Name="geojson"
+						>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogr_geojson.h"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonreader.h"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonutils.h"
+							>
+						</File>
+						<Filter
+							Name="jsonc"
+							>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\arraylist.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\bits.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\config.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\debug.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_object.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_object_private.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_tokener.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_util.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\linkhash.h"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\printbuf.h"
+								>
+							</File>
+						</Filter>
+					</Filter>
 				</Filter>
 			</Filter>
 			<Filter
@@ -1494,6 +1558,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\apps\gdaltransform.cpp"
+					>
+				</File>
+				<File
 					RelativePath="./apps\gdalwarp.cpp"
 					>
 				</File>
@@ -1507,6 +1575,26 @@
 				</File>
 				<File
 					RelativePath="./apps\nearblack.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\apps\ogr2ogr.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\apps\ogrinfo.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\apps\ogrtindex.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\apps\test_ogrsf.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\apps\testepsg.cpp"
 					>
 				</File>
 			</Filter>
@@ -2633,9 +2721,169 @@
 			<Filter
 				Name="ogr"
 				>
+				<File
+					RelativePath=".\ogr\gml2ogrgeometry.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr2gmlgeometry.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_api.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_fromepsg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_geos_convert.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_opt.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_dict.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_erm.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_esri.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_panorama.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_pci.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_proj4.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_usgs.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_validate.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srs_xml.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogr_srsnode.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ograssemblepolygon.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrct.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrcurve.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrfeature.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrfeaturedefn.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrfeaturequery.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrfeaturestyle.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrfielddefn.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrgeometry.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrgeometrycollection.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrgeometryfactory.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrlinearring.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrlinestring.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrmultilinestring.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrmultipoint.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrmultipolygon.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrpoint.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrpolygon.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrspatialreference.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrsurface.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ogr\ogrutils.cpp"
+					>
+				</File>
 				<Filter
 					Name="ogrsf_frmts"
 					>
+					<File
+						RelativePath=".\ogr\ogrsf_frmts\makefile.vc"
+						>
+					</File>
+					<File
+						RelativePath=".\ogr\ogrsf_frmts\ogr_formats.html"
+						>
+					</File>
+					<File
+						RelativePath=".\ogr\ogrsf_frmts\ogrsf_frmts.dox"
+						>
+					</File>
 					<Filter
 						Name="avc"
 						>
@@ -3711,6 +3959,90 @@
 							RelativePath="./ogr/ogrsf_frmts/vrt\ogrvrtlayer.cpp"
 							>
 						</File>
+					</Filter>
+					<Filter
+						Name="geojson"
+						>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\drv_geojson.html"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\makefile.vc"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsondatasource.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsondriver.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonlayer.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonreader.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonutils.cpp"
+							>
+						</File>
+						<Filter
+							Name="jsonc"
+							>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\arraylist.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\AUTHORS"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\ChangeLog"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\COPYING"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\debug.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_object.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_tokener.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\json_util.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\linkhash.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\makefile.vc"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\printbuf.c"
+								>
+							</File>
+							<File
+								RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\README.html"
+								>
+							</File>
+						</Filter>
 					</Filter>
 				</Filter>
 			</Filter>
