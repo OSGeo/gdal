@@ -409,16 +409,15 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         }
         else 
             eErr = CPLGetLastErrorType();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy image data.                                                */
 /* -------------------------------------------------------------------- */
-        eErr = CopyBandImageData( poSrcBand, poDstBand, 
-                                  pfnProgress, pProgressData,
-                                  iBand / (double) poSrcDS->GetRasterCount(),
-                                  1.0 / (double) poSrcDS->GetRasterCount() );
-
-    }
+    if( eErr == CE_None )
+        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                           (GDALDatasetH) poDstDS, 
+                                           NULL, pfnProgress, pProgressData );
 
 /* -------------------------------------------------------------------- */
 /*      Should we copy some masks over?                                 */
