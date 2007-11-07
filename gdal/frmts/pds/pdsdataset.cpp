@@ -858,7 +858,9 @@ int NASAKeywordHandler::Ingest( FILE *fp, int nOffset )
             pszCheck = szChunk;
 
         if( strstr(pszCheck,"\r\nEND\r\n") != NULL 
-            || strstr(pszCheck,"\nEND\n") != NULL )
+            || strstr(pszCheck,"\nEND\n") != NULL 
+            || strstr(pszCheck,"\r\nEnd\r\n") != NULL 
+            || strstr(pszCheck,"\nEnd\n") != NULL )
             break;
     }
 
@@ -884,12 +886,12 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix )
         if( !ReadPair( osName, osValue ) )
             return FALSE;
 
-        if( osName == "OBJECT" || osName == "GROUP" )
+        if( EQUAL(osName,"OBJECT") || EQUAL(osName,"GROUP") )
         {
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
                 return FALSE;
         }
-        else if( EQUALN(osName.c_str(),"END",3) )
+        else if( EQUALN(osName,"END",3) )
         {
             return TRUE;
         }
@@ -924,7 +926,13 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
         return TRUE;
 
     if( *pszHeaderNext != '=' )
-        return FALSE;
+    {
+        // ISIS3 does not have anything after the end group/object keyword. 
+        if( EQUAL(osName,"End_Group") || EQUAL(osName,"End_Object") )
+            return TRUE;
+        else
+            return FALSE;
+    }
     
     pszHeaderNext++;
     

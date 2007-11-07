@@ -49,12 +49,12 @@
 CPL_CVSID("$Id: isis3dataset.cpp 10646 2007-09-18 02:38:10Z xxxx $");
 
 CPL_C_START
-void	GDALRegister_ISIS3(void);
+void GDALRegister_ISIS3(void);
 CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*			ISISDataset	version3	                                    */
+/*			       ISISDataset		                */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -256,18 +256,15 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     float second_std_parallel = 0.0;
     double radLat, localRadius;
     FILE	*fp;
-    
-
 
     /*************   Skipbytes     *****************************/
     nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte",""));
-
 
     /*******   Grab format type (BandSequential, Tiled)  *******/
     const char *value;
 
     value = poDS->GetKeyword( "IsisCube.Core.Format", "" );
-    if (EQUAL(value,"Tiled") )  { //Todo
+    if (EQUAL(value,"Tile") )  { //Todo
         strcpy(szLayout,"Tiled");
        /******* Get Tile Sizes *********/
        tileSizeX = atoi(poDS->GetKeyword("IsisCube.Core.TileSamples",""));
@@ -282,15 +279,14 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /***********   Grab samples lines band ************/
-    nCols = atoi(poDS->GetKeyword("IsisCube.Dimensions.Samples",""));
-    nRows = atoi(poDS->GetKeyword("IsisCube.Dimensions.Lines",""));
-    nBands = atoi(poDS->GetKeyword("IsisCube.Dimensions.Bands",""));
-    
+    nCols = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Samples",""));
+    nRows = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Lines",""));
+    nBands = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Bands",""));
      
     /****** Grab format type - ISIS3 only supports 8,U16,S16,32 *****/
     const char *itype;
 
-    itype = poDS->GetKeyword( "IsisCube.Pixels.Type" );
+    itype = poDS->GetKeyword( "IsisCube.Core.Pixels.Type" );
     if (EQUAL(itype,"UnsignedByte") ) {
         eDataType = GDT_Byte;
         dfNoData = NULL1;
@@ -318,7 +314,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /***********   Grab samples lines band ************/
-    value = poDS->GetKeyword( "IsisCube.Pixels.ByteOrder");
+    value = poDS->GetKeyword( "IsisCube.Core.Pixels.ByteOrder");
     if (EQUAL(value,"Lsb"))
         chByteOrder = 'I';
     
@@ -378,8 +374,10 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         atof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor"));
      
     /*** grab      LatitudeType = Planetographic ****/
-    // Need to further study how ocentric/ographic will effect the gdal library.
-    // So far we will use this fact to define a sphere or ellipse for some projections
+    // Need to further study how ocentric/ographic will effect the gdal library
+    // So far we will use this fact to define a sphere or ellipse for some 
+    // projections
+
     // Frank - may need to talk this over
     value = poDS->GetKeyword("IsisCube.Mapping.LatitudeType");
     if (EQUAL( value, "\"Planetocentric\"" ))
@@ -402,20 +400,20 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         printf("using projection %s\n\n", map_proj_name);
 #endif
 
-    if ((EQUAL( map_proj_name, "\"Equirectangular\"" )) ||
-        (EQUAL( map_proj_name, "\"SimpleCylindrical\"" )) )  {
+    if ((EQUAL( map_proj_name, "Equirectangular" )) ||
+        (EQUAL( map_proj_name, "SimpleCylindrical" )) )  {
         oSRS.OGRSpatialReference::SetEquirectangular ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"Orthographic\"" )) {
+    } else if (EQUAL( map_proj_name, "Orthographic" )) {
         oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"Sinusoidal\"" )) {
+    } else if (EQUAL( map_proj_name, "Sinusoidal" )) {
         oSRS.OGRSpatialReference::SetSinusoidal ( center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"Mercator\"" )) {
+    } else if (EQUAL( map_proj_name, "Mercator" )) {
         oSRS.OGRSpatialReference::SetMercator ( center_lat, center_lon, scaleFactor, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"PolarStereographic\"" )) {
+    } else if (EQUAL( map_proj_name, "PolarStereographic" )) {
         oSRS.OGRSpatialReference::SetPS ( center_lat, center_lon, scaleFactor, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"TransverseMercator\"" )) {
+    } else if (EQUAL( map_proj_name, "TransverseMercator" )) {
         oSRS.OGRSpatialReference::SetTM ( center_lat, center_lon, scaleFactor, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"LambertConformal\"" )) {
+    } else if (EQUAL( map_proj_name, "LambertConformal" )) {
         oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
     } else {
         printf("*** no projection define or supported! Are you sure this is a map projected cube?\n\n" );
@@ -542,11 +540,10 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open target binary file.                                        */
 /* -------------------------------------------------------------------- */
-    
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+" );
 
     if( poDS->fpImage == NULL )
     {
