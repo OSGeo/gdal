@@ -3411,6 +3411,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                          (const char *) oComp.Printf( "%d", nCompression));
     }
 
+    if( nPlanarConfig == PLANARCONFIG_CONTIG && nBands != 1 )
+        SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+    else
+        SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
+
     if( nBitsPerSample < 8 )
     {
         for (int i = 0; i < nBands; ++i)
@@ -4394,315 +4399,11 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Copy image data ... tiled.                                      */
-/* -------------------------------------------------------------------- */
-    if( TIFFIsTiled( hTIFF ) && nPlanarConfig == PLANARCONFIG_SEPARATE )
-    {
-        uint32  nBlockXSize;
-        uint32	nBlockYSize;
-        int     nTileSize=0, nTilesAcross=0, nTilesDown=0, iTileX, iTileY;
-        GByte   *pabyTile = NULL;
-        int     nTilesDone = 0, nPixelSize=0;
-
-        if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
-             || !TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize )
-             || nBlockXSize == 0
-             || nBlockYSize == 0 )
-        {
-            eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt,
-                      "Bad tile width/length parameters; copying failed" );
-        }
-        else
-        {
-            nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
-            nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
-
-            nPixelSize = GDALGetDataTypeSize(eType) / 8;
-            nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
-            pabyTile = (GByte *) CPLMalloc(nTileSize);
-        }
-
-        for(iBand = 0; eErr == CE_None && iBand < nBands; iBand++ )
-        {
-            GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
-
-            for( iTileY = 0; 
-                 eErr == CE_None && iTileY < nTilesDown; 
-                 iTileY++ )
-            {
-                for( iTileX = 0; 
-                     eErr == CE_None && iTileX < nTilesAcross; 
-                     iTileX++ )
-                {
-                    int   nThisBlockXSize = nBlockXSize;
-                    int   nThisBlockYSize = nBlockYSize;
-
-                    if( (int) ((iTileX+1) * nBlockXSize) > nXSize )
-                    {
-                        nThisBlockXSize = nXSize - iTileX*nBlockXSize;
-                        memset( pabyTile, 0, nTileSize );
-                    }
-
-                    if( (int) ((iTileY+1) * nBlockYSize) > nYSize )
-                    {
-                        nThisBlockYSize = nYSize - iTileY*nBlockYSize;
-                        memset( pabyTile, 0, nTileSize );
-                    }
-
-                    eErr = poBand->RasterIO( GF_Read, 
-                                             iTileX * nBlockXSize, 
-                                             iTileY * nBlockYSize, 
-                                             nThisBlockXSize, 
-                                             nThisBlockYSize,
-                                             pabyTile,
-                                             nThisBlockXSize, 
-                                             nThisBlockYSize, eType,
-                                             nPixelSize, 
-                                             nBlockXSize * nPixelSize );
-                    
-                    // Do we need to downsample?
-                    if( nBitsPerSample < 8 )
-                    {
-                        GDALCopyBits( pabyTile, 8-nBitsPerSample, 8, 
-                                      pabyTile, 0, nBitsPerSample,
-                                      nBitsPerSample, 
-                                      nBlockXSize * nBlockYSize );
-                    }
-
-                    if( eErr == CE_None )
-                        TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
-                                              nTileSize );
-
-                    nTilesDone++;
-
-                    if( eErr == CE_None 
-                        && !pfnProgress( nTilesDone / 
-                                         ((double) nTilesAcross * nTilesDown * nBands),
-                                         NULL, pProgressData ) )
-                    {
-                        eErr = CE_Failure;
-                        CPLError( CE_Failure, CPLE_UserInterrupt, 
-                                  "User terminated CreateCopy()" );
-                    }
-                }
-                
-            }
-        }
-
-        CPLFree( pabyTile );
-    }
-/* -------------------------------------------------------------------- */
-/*      Copy image data, one scanline at a time.                        */
-/* -------------------------------------------------------------------- */
-    else if( !TIFFIsTiled(hTIFF) && nPlanarConfig == PLANARCONFIG_SEPARATE )
-    {
-        int     nLinesDone = 0, nPixelSize, nLineSize;
-        GByte   *pabyLine;
-
-        nPixelSize = GDALGetDataTypeSize(eType) / 8;
-        nLineSize =  nPixelSize * nXSize;
-        pabyLine = (GByte *) CPLMalloc(nLineSize);
-
-        for( int iBand = 0; 
-             eErr == CE_None && iBand < nBands; 
-             iBand++ )
-        {
-            GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
-
-            for( int iLine = 0; 
-                 eErr == CE_None && iLine < nYSize; 
-                 iLine++ )
-            {
-                eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                         pabyLine, nXSize, 1, eType, 
-                                         0, 0 );
-
-                // Do we need to downsample?
-                if( nBitsPerSample < 8 )
-                {
-                    GDALCopyBits( pabyLine, 8-nBitsPerSample, 8, 
-                                  pabyLine, 0, nBitsPerSample,
-                                  nBitsPerSample, nXSize );
-                }
-
-                if( eErr == CE_None 
-                    && TIFFWriteScanline( hTIFF, pabyLine, iLine, 
-                                          (tsample_t) iBand ) == -1 )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "TIFFWriteScanline failed." );
-                    eErr = CE_Failure;
-                }
-
-                nLinesDone++;
-                if( eErr == CE_None 
-                    && !pfnProgress( nLinesDone / 
-                                     ((double) nYSize * nBands), 
-                                     NULL, pProgressData ) )
-                {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
-                              "User terminated CreateCopy()" );
-                }
-            }
-        }
-
-        CPLFree( pabyLine );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Copy image data ... tiled.                                      */
-/* -------------------------------------------------------------------- */
-    else if( TIFFIsTiled( hTIFF ) && nPlanarConfig == PLANARCONFIG_CONTIG )
-    {
-        uint32  nBlockXSize;
-        uint32	nBlockYSize;
-        int     nTileSize=0, nTilesAcross=0, nTilesDown=0, iTileX, iTileY;
-        GByte   *pabyTile = NULL;
-        int     nTilesDone = 0, nPixelSize = 0, nElemSize = 0;
-
-        if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
-             || !TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize )
-             || nBlockXSize == 0
-             || nBlockYSize == 0 )
-        {
-            eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt,
-                      "Bad tile width/length parameters; copying failed" );
-        }
-        else
-        {
-            nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
-            nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
-
-            nElemSize = GDALGetDataTypeSize(eType) / 8;
-            nPixelSize = nElemSize * nBands;
-            nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
-            pabyTile = (GByte *) CPLMalloc(nTileSize);
-        }
-
-        for( iTileY = 0; 
-             eErr == CE_None && iTileY < nTilesDown; 
-             iTileY++ )
-        {
-            for( iTileX = 0; 
-                 eErr == CE_None && iTileX < nTilesAcross; 
-                 iTileX++ )
-            {
-                int   nThisBlockXSize = nBlockXSize;
-                int   nThisBlockYSize = nBlockYSize;
-                
-                if( (int) ((iTileX+1) * nBlockXSize) > nXSize )
-                {
-                    nThisBlockXSize = nXSize - iTileX*nBlockXSize;
-                    memset( pabyTile, 0, nTileSize );
-                }
-
-                if( (int) ((iTileY+1) * nBlockYSize) > nYSize )
-                {
-                    nThisBlockYSize = nYSize - iTileY*nBlockYSize;
-                    memset( pabyTile, 0, nTileSize );
-                }
-
-                eErr = 
-                    poSrcDS->RasterIO( GF_Read, 
-                                       iTileX * nBlockXSize, 
-                                       iTileY * nBlockYSize, 
-                                       nThisBlockXSize, 
-                                       nThisBlockYSize,
-                                       pabyTile, 
-                                       nThisBlockXSize, 
-                                       nThisBlockYSize, 
-                                       eType, nBands, NULL, 
-                                       nPixelSize, 
-                                       nBlockXSize * nPixelSize,
-                                       nElemSize );
-
-                // Do we need to downsample?
-                if( nBitsPerSample < 8 )
-                {
-                    GDALCopyBits( pabyTile, 8-nBitsPerSample, 8, 
-                                  pabyTile, 0, nBitsPerSample,
-                                  nBitsPerSample, 
-                                  nBlockXSize * nBlockYSize * nBands );
-                }
-
-                if( eErr == CE_None )
-                    TIFFWriteEncodedTile( hTIFF, nTilesDone, pabyTile, 
-                                          nTileSize );
-
-                nTilesDone++;
-
-                if( eErr == CE_None 
-                    && !pfnProgress( nTilesDone / 
-                                     ((double) nTilesAcross * nTilesDown),
-                                     NULL, pProgressData ) )
-                {
-                    eErr = CE_Failure;
-                    CPLError( CE_Failure, CPLE_UserInterrupt, 
-                              "User terminated CreateCopy()" );
-                }
-            }
-        }
-
-        CPLFree( pabyTile );
-    }
-/* -------------------------------------------------------------------- */
-/*      Copy image data, one scanline at a time.                        */
-/* -------------------------------------------------------------------- */
-    else if( !TIFFIsTiled(hTIFF) && nPlanarConfig == PLANARCONFIG_CONTIG )
-    {
-        int     nLinesDone = 0, nPixelSize, nLineSize, nElemSize;
-        GByte   *pabyLine;
-
-        nElemSize = GDALGetDataTypeSize(eType) / 8;
-        nPixelSize = nElemSize * nBands;
-        nLineSize =  nPixelSize * nXSize;
-        pabyLine = (GByte *) CPLMalloc(nLineSize);
-
-        for( int iLine = 0; 
-             eErr == CE_None && iLine < nYSize; 
-             iLine++ )
-        {
-            eErr = 
-                poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                   pabyLine, nXSize, 1, eType, nBands, NULL, 
-                                   nPixelSize, nLineSize, nElemSize );
-
-            // Do we need to downsample?
-            if( nBitsPerSample < 8 )
-            {
-                GDALCopyBits( pabyLine, 8-nBitsPerSample, 8, 
-                              pabyLine, 0, nBitsPerSample,
-                              nBitsPerSample, nXSize * nBands );
-            }
-
-            if( eErr == CE_None 
-                && TIFFWriteScanline( hTIFF, pabyLine, iLine, 0 ) == -1 )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFWriteScanline failed." );
-                eErr = CE_Failure;
-            }
-
-            nLinesDone++;
-            if( eErr == CE_None 
-                && !pfnProgress( nLinesDone / ((double) nYSize), 
-                                 NULL, pProgressData ) )
-            {
-                eErr = CE_Failure;
-                CPLError( CE_Failure, CPLE_UserInterrupt, 
-                          "User terminated CreateCopy()" );
-            }
-        }
-
-        CPLFree( pabyLine );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
+    
+    TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffCreateCopy()");
+    TIFFWriteDirectory( hTIFF );
     TIFFFlush( hTIFF );
     XTIFFClose( hTIFF );
 
@@ -4725,6 +4426,24 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poDS != NULL && EQUAL(pszProfile,"GDALGeoTIFF") )
     {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy actual imagery.                                            */
+/* -------------------------------------------------------------------- */
+    if( poDS != NULL )
+    {
+        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                           (GDALDatasetH) poDS,
+                                           NULL, pfnProgress, pProgressData );
+
+        if( eErr == CE_Failure )
+        {
+            delete poDS;
+            poDS = NULL;
+            
+            VSIUnlink( pszFilename ); // should really delete more carefully.
+        }
     }
     
     return poDS;
