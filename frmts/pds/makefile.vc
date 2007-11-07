@@ -1,5 +1,5 @@
 
-OBJ	=	pdsdataset.obj isis2dataset.obj
+OBJ	=	pdsdataset.obj isis2dataset.obj isis3dataset.obj
 
 GDAL_ROOT	=	..\..
 
