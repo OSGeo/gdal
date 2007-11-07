@@ -316,6 +316,7 @@ void CPL_DLL RegisterOGROCI();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRKML();
+void CPL_DLL RegisterOGRGeoJSON();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRREC();

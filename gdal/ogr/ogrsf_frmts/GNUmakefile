@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 SUBDIRS-yes	:= \
-	generic avc bna csv dgn gml gmt mem kml \
+	generic avc bna csv dgn geojson gml gmt mem kml \
 	mitab ntf rec s57 sdts shape tiger vrt
 
 SUBDIRS-$(HAVE_DODS)	+= dods
