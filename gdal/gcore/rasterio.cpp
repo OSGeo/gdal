@@ -1694,3 +1694,232 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     return( CE_None );
 }
 
+/************************************************************************/
+/*                     GDALDatasetCopyWholeRaster()                     */
+/************************************************************************/
+
+/**
+ * Copy all dataset raster data.
+ *
+ * This function copies the complete raster contents of one dataset to 
+ * another similarly configured dataset.  The source and destination 
+ * dataset must have the same number of bands, and the same width
+ * and height.  The bands do not have to have the same data type. 
+ *
+ * This function is primarily intended to support implementation of 
+ * driver specific CreateCopy() functions.  It implements efficient copying,
+ * in particular "chunking" the copy in substantial blocks and, if appropriate,
+ * performing the transfer in a pixel interleaved fashion.
+ *
+ * Currently the only papszOptions value supported is "INTERLEAVE=PIXEL"
+ * to force pixel interleaved operation.  More options may be supported in
+ * the future.  
+ *
+ * @param hSrcDS the source dataset
+ * @param hDstDS the destination dataset
+ * @param papszOptions transfer hints in "StringList" Name=Value format.
+ * @param pfnProgress progress reporting function.
+ * @param pProgressData callback data for progress function.
+ *
+ * @return CE_None on success, or CE_Failure on failure. 
+ */
+
+CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
+    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions, 
+    GDALProgressFunc pfnProgress, void *pProgressData )
+
+{
+    VALIDATE_POINTER1( hSrcDS, "GDALDatasetCopyWholeRaster", CE_Failure );
+    VALIDATE_POINTER1( hDstDS, "GDALDatasetCopyWholeRaster", CE_Failure );
+
+    GDALDataset *poSrcDS = (GDALDataset *) hSrcDS;
+    GDALDataset *poDstDS = (GDALDataset *) hDstDS;
+    CPLErr eErr = CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Confirm the datasets match in size and band counts.             */
+/* -------------------------------------------------------------------- */
+    int nXSize = poDstDS->GetRasterXSize(), 
+        nYSize = poDstDS->GetRasterYSize(),
+        nBandCount = poDstDS->GetRasterCount();
+
+    if( poSrcDS->GetRasterXSize() != nXSize 
+        || poSrcDS->GetRasterYSize() != nYSize
+        || poSrcDS->GetRasterCount() != nBandCount )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Input and output dataset sizes or band counts do not\n"
+                  "match in GDALDatasetCopyWholeRaster()" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report preliminary (0) progress.                                */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, 
+                  "User terminated CreateCopy()" );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get our prototype band, and assume the others are similarly     */
+/*      configured.                                                     */
+/* -------------------------------------------------------------------- */
+    if( nBandCount == 0 )
+        return CE_None;
+    
+    GDALRasterBand *poPrototypeBand = poDstDS->GetRasterBand(1);
+    GDALDataType eDT = poPrototypeBand->GetRasterDataType();
+    int nBlockXSize, nBlockYSize;
+
+    poPrototypeBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to try and do the operation in a pixel               */
+/*      interleaved fashion?                                            */
+/* -------------------------------------------------------------------- */
+    int bInterleave = FALSE;
+    const char *pszInterleave = NULL;
+    
+    pszInterleave = poSrcDS->GetMetadataItem( "INTERLEAVE", "IMAGE_STRUCTURE");
+    if( pszInterleave != NULL 
+        && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
+        bInterleave = TRUE;
+
+    pszInterleave = poDstDS->GetMetadataItem( "INTERLEAVE", "IMAGE_STRUCTURE");
+    if( pszInterleave != NULL 
+        && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
+        bInterleave = TRUE;
+
+    pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
+    if( pszInterleave != NULL 
+        && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
+        bInterleave = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      What will our swath size be?                                    */
+/* -------------------------------------------------------------------- */
+    int nTargetSwathSize = 10000000; // ~ 10MB
+    void *pSwathBuf;
+    int nMemoryPerLine = nXSize * (GDALGetDataTypeSize(eDT) / 8);
+
+    if( bInterleave)
+        nMemoryPerLine *= nBandCount;
+
+    // aim for one row of blocks.  Do not settle for less.
+    int nSwathLines = nBlockYSize;
+
+    // If we are processing single scans, try to handle several at once.
+    // If we are handling swaths already, only grow the swath if a row
+    // of blocks is substantially less than our target buffer size.
+    if( nSwathLines == 1 
+        || nMemoryPerLine * nSwathLines < nTargetSwathSize / 10 )
+        nSwathLines = MIN(nYSize,MAX(1,nTargetSwathSize/nMemoryPerLine));
+    
+    pSwathBuf = VSIMalloc(nMemoryPerLine * nSwathLines);
+    if( pSwathBuf == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Failed to allocate %d byte swath buffer in\n"
+                  "GDALDatasetCopyWholeRaster()",
+                  nMemoryPerLine * nSwathLines );
+        return CE_Failure;
+    }
+
+    CPLDebug( "GDAL", 
+              "GDALDatasetCopyWholeRaster(): %d line swath, bInterleave=%d", 
+              nSwathLines, bInterleave );
+              
+
+/* ==================================================================== */
+/*      Band oriented (uninterleaved) case.                             */
+/* ==================================================================== */
+    if( !bInterleave )
+    {
+        int iBand, iY;
+
+        for( iBand = 0; iBand < nBandCount && eErr == CE_None; iBand++ )
+        {
+            int nBand = iBand+1;
+
+            for( iY = 0; iY < nYSize && eErr == CE_None; iY += nSwathLines )
+            {
+                int nThisLines = nSwathLines;
+
+                if( iY + nThisLines > nYSize )
+                    nThisLines = nYSize - iY;
+
+                eErr = poSrcDS->RasterIO( GF_Read, 
+                                          0, iY, nXSize, nThisLines,
+                                          pSwathBuf, nXSize, nThisLines, 
+                                          eDT, 1, &nBand, 
+                                          0, 0, 0 );
+                
+                if( eErr == CE_None )
+                    eErr = poDstDS->RasterIO( GF_Write, 
+                                              0, iY, nXSize, nThisLines,
+                                              pSwathBuf, nXSize, nThisLines, 
+                                              eDT, 1, &nBand,
+                                              0, 0, 0 );
+
+                if( eErr == CE_None 
+                    && !pfnProgress( 
+                        iBand / (float)nBandCount
+                        + (iY+nThisLines) / (float) (nYSize*nBandCount),
+                        NULL, pProgressData ) )
+                {
+                    eErr = CE_Failure;
+                    CPLError( CE_Failure, CPLE_UserInterrupt, 
+                              "User terminated CreateCopy()" );
+                }
+            }
+        }
+    }
+
+/* ==================================================================== */
+/*      Pixel interleaved case.                                         */
+/* ==================================================================== */
+    else if( bInterleave )
+    {
+        int iY;
+        
+        for( iY = 0; iY < nYSize && eErr == CE_None; iY += nSwathLines )
+        {
+            int nThisLines = nSwathLines;
+            
+            if( iY + nThisLines > nYSize )
+                nThisLines = nYSize - iY;
+            
+            eErr = poSrcDS->RasterIO( GF_Read, 
+                                      0, iY, nXSize, nThisLines,
+                                      pSwathBuf, nXSize, nThisLines, 
+                                      eDT, nBandCount, NULL, 
+                                      0, 0, 0 );
+                
+            if( eErr == CE_None )
+                eErr = poDstDS->RasterIO( GF_Write, 
+                                          0, iY, nXSize, nThisLines,
+                                          pSwathBuf, nXSize, nThisLines, 
+                                          eDT, nBandCount, NULL, 
+                                          0, 0, 0 );
+
+            if( eErr == CE_None 
+                && !pfnProgress( (iY+nThisLines) / (float) nYSize,
+                                 NULL, pProgressData ) )
+            {
+                eErr = CE_Failure;
+                CPLError( CE_Failure, CPLE_UserInterrupt, 
+                          "User terminated CreateCopy()" );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( pSwathBuf );
+
+    return eErr;
+}
