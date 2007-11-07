@@ -3762,7 +3762,15 @@
 				Name="pymod"
 				>
 				<File
+					RelativePath=".\pymod\gdal_wrap.c"
+					>
+				</File>
+				<File
 					RelativePath=".\pymod\gdalnumeric.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\pymod\makefile.vc"
 					>
 				</File>
 				<File
