@@ -302,7 +302,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
     CPLErrorReset();
 
     CPLHTTPResult* pResult = NULL;
-    char* papsOptions[] = { "HEADERS=Accept: text/plain", NULL };
+    char* papsOptions[] = { "HEADERS=Accept: text/plain Accept: application/json", NULL };
 
     pResult = CPLHTTPFetch( pszSource, papsOptions );
 
