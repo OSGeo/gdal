@@ -47,7 +47,7 @@ def jpeg_1():
     return tst.testOpen()
 
 ###############################################################################
-# Verify EXIF metadata, and color interpretation
+# Verify EXIF metadata, color interpretation and image_structure
 
 def jpeg_2():
 
@@ -72,6 +72,19 @@ def jpeg_2():
 
     if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
         gdaltest.post_reason( 'Did not get expected color interpretation.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if not md.has_key('INTERLEAVE') or md['INTERLEAVE'] != 'PIXEL':
+        gdaltest.post_reason( 'missing INTERLEAVE metadata' )
+        return 'fail'
+    if not md.has_key('COMPRESSION') or md['COMPRESSION'] != 'JPEG':
+        gdaltest.post_reason( 'missing INTERLEAVE metadata' )
+        return 'fail'
+
+    md = ds.GetRasterBand(3).GetMetadata('IMAGE_STRUCTURE')
+    if not md.has_key('COMPRESSION') or md['COMPRESSION'] != 'JPEG':
+        gdaltest.post_reason( 'missing INTERLEAVE metadata' )
         return 'fail'
 
     return 'success'
