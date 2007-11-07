@@ -176,14 +176,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
                   "%s", PQerrorMessage(hPGConn) );
     }
 
-    /* TODO - mloskot: Remove this warning after multi-column PK is supported. */
-    if( osPrimaryKey.empty() || osPrimaryKey == "ogc_fid" )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unable to detect single-column primary key for '%s'. Use default 'ogc_fid'",
-                  pszTableIn);
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the columns of the table.          */
 /* -------------------------------------------------------------------- */
