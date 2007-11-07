@@ -418,6 +418,11 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
         poGeometry = ReadPolygon( poObj );
     else if( GeoJSONObject::eGeometryCollection == objType )
         poGeometry = ReadGeometryCollection( poObj );
+    {
+        CPLDebug( "GeoJSON",
+                  "Unsupported geometry type detected (i.e Multi*)."
+                  "Feature gets NULL geometry assigned." );
+    }
 
     // TODO: Add translation for Multi* geometry types
 
@@ -789,6 +794,9 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
     poObjGeom = FindMemberByName( poObj, "geometry" );
     if( NULL != poObjGeom )
     {
+        // NOTE: If geometry can not be parsed or read correctly
+        //       then NULL geometry is assigned to a feature and
+        //       geometry type for layer is classified as wkbUnknown.
         OGRGeometry* poGeometry = ReadGeometry( poObjGeom );
         if( NULL != poGeometry )
         {
