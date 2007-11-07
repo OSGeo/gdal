@@ -684,6 +684,8 @@ JPGRasterBand::JPGRasterBand( JPGDataset *poDS, int nBand )
 
     nBlockXSize = poDS->nRasterXSize;;
     nBlockYSize = 1;
+
+    GDALMajorObject::SetMetadataItem("COMPRESSION","JPEG","IMAGE_STRUCTURE");
 }
 
 /************************************************************************/
@@ -1457,6 +1459,15 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
         poDS->SetBand( iBand+1, new JPGRasterBand( poDS, iBand+1 ) );
+
+/* -------------------------------------------------------------------- */
+/*      More metadata.                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDS->nBands > 1 )
+    {
+        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        poDS->SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
