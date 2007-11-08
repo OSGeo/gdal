@@ -105,6 +105,8 @@ GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
 {
+    if (poObject == NULL) { return OFTString; }
+
     json_type type = json_object_get_type( poObject );
 
     if( json_type_boolean == type )
