@@ -284,7 +284,7 @@ bool OGRGeoJSONReader::GenerateLayerDefn()
     CPLAssert( 0 == poLayer_->GetLayerDefn()->GetFieldCount() );
 
     bool bSuccess = true;
-    OGRFeatureDefn* poDefn = NULL;
+//    OGRFeatureDefn* poDefn = NULL;
 
     if( bAttributesSkip_ )
         return true;
@@ -525,7 +525,7 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
 
 OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
 {
-    OGRPoint* poPoint = NULL;
+    OGRPoint* poPoint = new OGRPoint();
 
     json_object* poObjCoords = NULL;
     poObjCoords = FindMemberByName( poObj, "coordinates" );
@@ -536,21 +536,22 @@ OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
         return NULL;
     }
 
-    OGRPoint pt;
-    if( !ReadRawPoint( poObjCoords, pt ) )
+    // OGRPoint pt;
+    if( !ReadRawPoint( poObjCoords, *poPoint ) )
     {
         CPLDebug( "GeoJSON", "Point: raw point parsing failure." );
+        delete poPoint;
         return NULL;
     }
 
-    if (pt.getCoordinateDimension() == 2)
-    {
-        poPoint = new OGRPoint( pt.getX(), pt.getY());
-    }
-    else
-    {
-        poPoint = new OGRPoint( pt.getX(), pt.getY(), pt.getZ() );
-    }
+    // if (pt.getCoordinateDimension() == 2)
+    // {
+    //     poPoint = new OGRPoint( pt.getX(), pt.getY());
+    // }
+    // else
+    // {
+    //     poPoint = new OGRPoint( pt.getX(), pt.getY(), pt.getZ() );
+    // }
     
     return poPoint;
 }
@@ -585,18 +586,18 @@ OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj )
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObjPoints, i );
             
-            OGRPoint pt;
-            if( !ReadRawPoint( poObjCoords, pt ) )
+            OGRPoint* pt = new OGRPoint();
+            if( !ReadRawPoint( poObjCoords, *pt ) )
             {
                 delete poLine;
                 CPLDebug( "GeoJSON",
                           "LineString: raw point parsing failure." );
                 return NULL;
             }
-            if (pt.getCoordinateDimension() == 2) {
-                poLine->setPoint( i, pt.getX(), pt.getY());
+            if (pt->getCoordinateDimension() == 2) {
+                poLine->setPoint( i, pt->getX(), pt->getY());
             } else {
-                poLine->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
+                poLine->setPoint( i, pt->getX(), pt->getY(), pt->getZ() );
             }
             
         }
@@ -625,8 +626,8 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObj, i );
             
-            OGRPoint pt;
-            if( !ReadRawPoint( poObjCoords, pt ) )
+            OGRPoint* pt = new OGRPoint();
+            if( !ReadRawPoint( poObjCoords, *pt ) )
             {
                 delete poRing;
                 CPLDebug( "GeoJSON",
@@ -634,10 +635,10 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
                 return NULL;
             }
             
-            if (pt.getCoordinateDimension() == 2) {
-                poRing->setPoint( i, pt.getX(), pt.getY());
+            if (pt->getCoordinateDimension() == 2) {
+                poRing->setPoint( i, pt->getX(), pt->getY());
             } else {
-                poRing->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
+                poRing->setPoint( i, pt->getX(), pt->getY(), pt->getZ() );
             }
             
             
