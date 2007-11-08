@@ -4,11 +4,12 @@
  * Project:  ISIS Version 3 Driver
  * Purpose:  Implementation of ISIS3Dataset
  * Author:   Trent Hare (thare@usgs.gov)
+ *           Frank Warmerdam (warmerdam@pobox.com)
  *
- * NOTE: Original code authored by Trent and placed in the public 
- * domain as per US government policy.  I have (within my rights) appropriated 
- * it and placed it under the following license.  This is not intended to 
- * diminish Trents contribution. 
+ * NOTE: Original code authored by Trent and placed in the public domain as 
+ * per US government policy.  I have (within my rights) appropriated it and 
+ * placed it under the following license.  This is not intended to diminish 
+ * Trents contribution. 
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * 
@@ -52,6 +53,107 @@ CPL_C_START
 void GDALRegister_ISIS3(void);
 CPL_C_END
 
+class ISIS3Dataset;
+
+/************************************************************************/
+/* ==================================================================== */
+/*			       ISISTiledBand		                */
+/* ==================================================================== */
+/************************************************************************/
+
+class ISISTiledBand : public GDALPamRasterBand
+{
+    FILE      *fpVSIL;
+    GIntBig   nFirstTileOffset;
+    GIntBig   nXTileOffset;
+    GIntBig   nYTileOffset;
+    int       bNativeOrder;
+
+  public:
+
+                ISISTiledBand( GDALDataset *poDS, FILE *fpVSIL, 
+                               int nBand, GDALDataType eDT,
+                               int nTileXSize, int nTileYSize, 
+                               GIntBig nFirstTileOffset, 
+                               GIntBig nXTileOffset,
+                               GIntBig nYTileOffset,
+                               int bNativeOrder );
+    virtual     ~ISISTiledBand() {}
+
+    virtual CPLErr          IReadBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                           ISISTiledBand()                            */
+/************************************************************************/
+
+ISISTiledBand::ISISTiledBand( GDALDataset *poDS, FILE *fpVSIL, 
+                              int nBand, GDALDataType eDT,
+                              int nTileXSize, int nTileYSize, 
+                              GIntBig nFirstTileOffset, 
+                              GIntBig nXTileOffset,
+                              GIntBig nYTileOffset,
+                              int bNativeOrder )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    this->fpVSIL = fpVSIL;
+    this->bNativeOrder = bNativeOrder;
+    eDataType = eDT;
+    nBlockXSize = nTileXSize;
+    nBlockYSize = nTileYSize;
+
+    if( nXTileOffset == 0 && nYTileOffset == 0 )
+    {
+        int nBlocksPerRow = 
+            (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
+
+        nXTileOffset = (GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
+        nYTileOffset = nXTileOffset * nBlocksPerRow;
+    }
+
+    this->nFirstTileOffset = nFirstTileOffset;
+    this->nXTileOffset = nXTileOffset;
+    this->nYTileOffset = nYTileOffset;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
+
+{
+    GIntBig  nOffset = nFirstTileOffset + 
+        nXBlock * nXTileOffset + nYBlock * nYTileOffset;
+    size_t nBlockSize = 
+        (GDALGetDataTypeSize(eDataType)/8) * nBlockXSize * nBlockYSize;
+
+    if( VSIFSeekL( fpVSIL, nOffset, SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to seek to offset %d to read tile %d,%d.",
+                  (int) nOffset, nXBlock, nYBlock );
+        return CE_Failure;
+    }
+
+    if( VSIFReadL( pImage, 1, nBlockSize, fpVSIL ) != nBlockSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Failed to read %d bytes for tile %d,%d.",
+                  nBlockSize, nXBlock, nYBlock );
+        return CE_Failure;
+    }
+
+    if( !bNativeOrder )
+        GDALSwapWords( pImage, GDALGetDataTypeSize(eDataType)/8, 
+                       nBlockXSize*nBlockYSize, 
+                       GDALGetDataTypeSize(eDataType)/8 );
+
+    return CE_None;
+}
+
 /************************************************************************/
 /* ==================================================================== */
 /*			       ISISDataset		                */
@@ -92,6 +194,8 @@ public:
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
+
+
 
 /************************************************************************/
 /*                            ISIS3Dataset()                            */
@@ -208,12 +312,19 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     //      Format      = Tile
     //      TileSamples = 128
     //      TileLines   = 128
-
     
-    const char *pszQube = poDS->GetKeyword( "IsisCube.^CORE" );
-    if( pszQube[0] == '"' )
+/* -------------------------------------------------------------------- */
+/*      What file contains the actual data?                             */
+/* -------------------------------------------------------------------- */
+    const char *pszCore = poDS->GetKeyword( "IsisCube.Core.^Core" );
+    CPLString osQubeFile;
+
+    if( EQUAL(pszCore,"") )
+        osQubeFile = poOpenInfo->pszFilename;
+    else
     {
-        CPLAssert( FALSE ); // TODO
+        CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+        osQubeFile = CPLFormFilename( osPath, pszCore, NULL );
     }
 
 /* -------------------------------------------------------------------- */
@@ -258,7 +369,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     FILE	*fp;
 
     /*************   Skipbytes     *****************************/
-    nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte",""));
+    nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte","")) - 1;
 
     /*******   Grab format type (BandSequential, Tiled)  *******/
     const char *value;
@@ -541,14 +652,15 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open target binary file.                                        */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+        poDS->fpImage = VSIFOpenL( osQubeFile, "r" );
     else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+" );
+        poDS->fpImage = VSIFOpenL( osQubeFile, "r+" );
 
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %s with write permission.\n%s", 
+                  osQubeFile.c_str(),
                   VSIStrerror( errno ) );
         delete poDS;
         return NULL;
@@ -570,10 +682,6 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else /* Tiled */
     {
-        //to do
-        //nPixelOffset = nItemSize;
-        //nLineOffset = nItemSize * nBands * nCols;
-        //nBandOffset = nItemSize * nCols;
     }
     
 /* -------------------------------------------------------------------- */
@@ -581,26 +689,42 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int i;
 
-    poDS->nBands = nBands;;
-    for( i = 0; i < poDS->nBands; i++ )
-    {
-        RawRasterBand	*poBand;
-
-        poBand = 
-            new RawRasterBand( poDS, i+1, poDS->fpImage,
-                               nSkipBytes + nBandOffset * i, 
-                               nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB                               
-                               chByteOrder == 'I' || chByteOrder == 'L',
+    int bNativeOrder = !(chByteOrder == 'M');
 #else
-                               chByteOrder == 'M',
+    int bNativeOrder = (chByteOrder == 'M');
 #endif        
-                               TRUE );
 
-        if( bNoDataSet )
-            poBand->StoreNoDataValue( dfNoData );
+
+    for( i = 0; i < nBands; i++ )
+    {
+        GDALRasterBand	*poBand;
+
+        if( EQUAL(szLayout,"Tiled") )
+        {
+            poBand = new ISISTiledBand( poDS, poDS->fpImage, i+1, eDataType,
+                                        tileSizeX, tileSizeY, 
+                                        nSkipBytes, 0, 0, 
+                                        bNativeOrder );
+        }
+        else
+        {
+            poBand = 
+                new RawRasterBand( poDS, i+1, poDS->fpImage,
+                                   nSkipBytes + nBandOffset * i, 
+                                   nPixelOffset, nLineOffset, eDataType,
+#ifdef CPL_LSB                               
+                                   chByteOrder == 'I' || chByteOrder == 'L',
+#else
+                                   chByteOrder == 'M',
+#endif        
+                                   TRUE );
+        }
 
         poDS->SetBand( i+1, poBand );
+
+        if( bNoDataSet )
+            ((GDALPamRasterBand *) poBand)->SetNoDataValue( dfNoData );
     }
 
 /* -------------------------------------------------------------------- */
@@ -659,6 +783,12 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
