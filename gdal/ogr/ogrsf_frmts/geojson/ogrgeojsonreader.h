@@ -39,9 +39,12 @@
 class OGRGeometry;
 class OGRRawPoint;
 class OGRPoint;
+class OGRMultiPoint;
 class OGRLineString;
+class OGRMultiLineString;
 class OGRLinearRing;
 class OGRPolygon;
+class OGRMultiPolygon;
 class OGRGeometryCollection;
 class OGRFeature;
 class OGRGeoJSONLayer;
@@ -119,6 +122,7 @@ private:
     bool ReadRawPoint( json_object* poObj, OGRPoint& point );
     OGRRawPoint* ReadRawPoint( json_object* poObj );
     OGRPoint* ReadPoint( json_object* poObj );
+    OGRMultiPoint* ReadMultiPoint( json_object* poObj );
     OGRLineString* ReadLineString( json_object* poObj );
     OGRLinearRing* ReadLinearRing( json_object* poObj );
     OGRPolygon* ReadPolygon( json_object* poObj );
