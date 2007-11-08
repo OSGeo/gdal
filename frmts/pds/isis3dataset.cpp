@@ -164,6 +164,8 @@ class ISIS3Dataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
 
+    CPLString   osExternalCube;
+    
     NASAKeywordHandler  oKeywords;
   
     int         bGotTransform;
@@ -189,6 +191,9 @@ public:
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
   
+    virtual char **GetFileList();
+
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -226,6 +231,23 @@ ISIS3Dataset::~ISIS3Dataset()
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **ISIS3Dataset::GetFileList()
+
+{
+    char **papszFileList = NULL;
+
+    papszFileList = GDALPamDataset::GetFileList();
+
+    if( strlen(osExternalCube) > 0 )
+        papszFileList = CSLAddString( papszFileList, osExternalCube );
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
@@ -257,6 +279,19 @@ CPLErr ISIS3Dataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+int ISIS3Dataset::Identify( GDALOpenInfo * poOpenInfo )
+    
+{
+    if( poOpenInfo->pabyHeader != NULL
+        && strstr((const char *)poOpenInfo->pabyHeader,"IsisCube") != NULL )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -265,8 +300,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like a CUBE dataset?                             */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->pabyHeader == NULL
-        || strstr((const char *)poOpenInfo->pabyHeader,"IsisCube") == NULL )
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -325,6 +359,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
         osQubeFile = CPLFormFilename( osPath, pszCore, NULL );
+        poDS->osExternalCube = osQubeFile;
     }
 
 /* -------------------------------------------------------------------- */
@@ -508,7 +543,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     //  TransverseMercator
     
 #ifdef DEBUG
-        printf("using projection %s\n\n", map_proj_name);
+    CPLDebug( "ISIS3", "using projection %s", map_proj_name);
 #endif
 
     if ((EQUAL( map_proj_name, "Equirectangular" )) ||
@@ -858,6 +893,7 @@ void GDALRegister_ISIS3()
                                    "frmt_various.html#ISIS3" );
 
         poDriver->pfnOpen = ISIS3Dataset::Open;
+        poDriver->pfnIdentify = ISIS3Dataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
