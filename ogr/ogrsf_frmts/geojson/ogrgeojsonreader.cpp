@@ -412,13 +412,15 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
     GeoJSONObject::Type objType = GetType( poObj );
     if( GeoJSONObject::ePoint == objType )
         poGeometry = ReadPoint( poObj );
+    else if( GeoJSONObject::eMultiPoint == objType )
+        poGeometry = ReadMultiPoint( poObj );
     else if( GeoJSONObject::eLineString == objType )
         poGeometry = ReadLineString( poObj );
     else if( GeoJSONObject::ePolygon == objType )
         poGeometry = ReadPolygon( poObj );
     else if( GeoJSONObject::eGeometryCollection == objType )
         poGeometry = ReadGeometryCollection( poObj );
-    {
+    else {
         CPLDebug( "GeoJSON",
                   "Unsupported geometry type detected (i.e Multi*)."
                   "Feature gets NULL geometry assigned." );
@@ -554,6 +556,51 @@ OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
     // }
     
     return poPoint;
+}
+
+/************************************************************************/
+/*                           ReadMultiPoint()                           */
+/************************************************************************/
+
+OGRMultiPoint* OGRGeoJSONReader::ReadMultiPoint( json_object* poObj )
+{
+    OGRMultiPoint* poMultiPoint = NULL;
+
+    json_object* poObjPoints = NULL;
+    poObjPoints = FindMemberByName( poObj, "coordinates" );
+    if( NULL == poObjPoints )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid MultiPoint object. "
+                  "Missing \'coordinates\' member." );
+        return NULL;
+    }
+
+    if( json_type_array == json_object_get_type( poObjPoints ) )
+    {
+        const int nPoints = json_object_array_length( poObjPoints );
+
+        poMultiPoint = new OGRMultiPoint();
+
+        for( int i = 0; i < nPoints; ++i)
+        {
+            json_object* poObjCoords = NULL;
+            poObjCoords = json_object_array_get_idx( poObjPoints, i );
+            
+            OGRPoint* pt = new OGRPoint();
+            if( !ReadRawPoint( poObjCoords, *pt ) )
+            {
+                delete poMultiPoint;
+                CPLDebug( "GeoJSON",
+                          "LineString: raw point parsing failure." );
+                return NULL;
+            }
+            poMultiPoint->addGeometry(pt);
+            
+        }
+    }
+
+    return poMultiPoint;
 }
 
 /************************************************************************/
