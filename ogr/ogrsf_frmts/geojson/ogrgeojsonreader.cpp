@@ -416,6 +416,8 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
         poGeometry = ReadMultiPoint( poObj );
     else if( GeoJSONObject::eLineString == objType )
         poGeometry = ReadLineString( poObj );
+    else if( GeoJSONObject::eMultiLineString == objType )
+        poGeometry = ReadMultiLineString( poObj );
     else if( GeoJSONObject::ePolygon == objType )
         poGeometry = ReadPolygon( poObj );
     else if( GeoJSONObject::eGeometryCollection == objType )
@@ -538,7 +540,6 @@ OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
         return NULL;
     }
 
-    // OGRPoint pt;
     if( !ReadRawPoint( poObjCoords, *poPoint ) )
     {
         CPLDebug( "GeoJSON", "Point: raw point parsing failure." );
@@ -546,15 +547,6 @@ OGRPoint* OGRGeoJSONReader::ReadPoint( json_object* poObj )
         return NULL;
     }
 
-    // if (pt.getCoordinateDimension() == 2)
-    // {
-    //     poPoint = new OGRPoint( pt.getX(), pt.getY());
-    // }
-    // else
-    // {
-    //     poPoint = new OGRPoint( pt.getX(), pt.getY(), pt.getZ() );
-    // }
-    
     return poPoint;
 }
 
@@ -651,6 +643,89 @@ OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj )
     }
 
     return poLine;
+}
+
+/************************************************************************/
+/*                           ReadRawLineRing()                          */
+/************************************************************************/
+
+OGRLineString* OGRGeoJSONReader::ReadRawLineString( json_object* poObj )
+{
+    OGRLineString* poLine = NULL;
+
+    if( json_type_array == json_object_get_type( poObj ) )
+    {
+        const int nPoints = json_object_array_length( poObj );
+
+        poLine= new OGRLineString();
+        poLine->setNumPoints( nPoints );
+
+        for( int i = 0; i < nPoints; ++i)
+        {
+            json_object* poObjCoords = NULL;
+            poObjCoords = json_object_array_get_idx( poObj, i );
+            
+            OGRPoint* pt = new OGRPoint();
+            if( !ReadRawPoint( poObjCoords, *pt ) )
+            {
+                delete poLine;
+                CPLDebug( "GeoJSON",
+                          "ReadRawLineRing: raw point parsing failure." );
+                return NULL;
+            }
+            
+            if (pt->getCoordinateDimension() == 2) {
+                poLine->setPoint( i, pt->getX(), pt->getY());
+            } else {
+                poLine->setPoint( i, pt->getX(), pt->getY(), pt->getZ() );
+            }
+            
+            
+        }
+    }
+
+    return poLine;
+}
+/************************************************************************/
+/*                           ReadMultiLineString()                      */
+/************************************************************************/
+
+OGRMultiLineString* OGRGeoJSONReader::ReadMultiLineString( json_object* poObj )
+{
+    OGRMultiLineString* poMultiLine = NULL;
+
+    json_object* poObjLines = NULL;
+    poObjLines = FindMemberByName( poObj, "coordinates" );
+    if( NULL == poObjLines )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid MultiLineString object. "
+                  "Missing \'coordinates\' member." );
+        return NULL;
+    }
+
+    if( json_type_array == json_object_get_type( poObjLines ) )
+    {
+        const int nLines = json_object_array_length( poObjLines );
+
+        poMultiLine = new OGRMultiLineString();
+
+        for( int i = 0; i < nLines; ++i)
+        {
+
+            json_object* poObjLine = NULL;
+            poObjLine = json_object_array_get_idx( poObjLines, i );
+
+            OGRLineString* poLine = ReadRawLineString( poObjLine );
+            if( NULL != poLine )
+            {
+                poMultiLine->addGeometryDirectly( poLine );
+            }            
+            
+        }
+    }
+
+    return poMultiLine;
 }
 
 /************************************************************************/
