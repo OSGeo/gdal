@@ -1754,9 +1754,12 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
         CPLHTTPDestroyResult( psResult );
         return OGRERR_FAILURE;
     }
-    SetFromUserInput( (const char *) psResult->pabyData );
-    
-    CPLHTTPDestroyResult( psResult );
+    if( OGRERR_NONE != SetFromUserInput( (const char *) psResult->pabyData )) {
+        CPLHTTPDestroyResult( psResult );        
+        return OGRERR_FAILURE;
+    }
+
+
     return OGRERR_NONE;
 }
 
