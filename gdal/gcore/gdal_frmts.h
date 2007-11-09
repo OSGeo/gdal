@@ -104,6 +104,7 @@ void CPL_DLL GDALRegister_Leveller(void);
 void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_SRTMHGT(void);
 void CPL_DLL GDALRegister_DIPEx(void);
+void CPL_DLL GDALRegister_ISIS3(void);
 void CPL_DLL GDALRegister_ISIS2(void);
 void CPL_DLL GDALRegister_PDS(void);
 void CPL_DLL GDALRegister_IDRISI(void);
