@@ -100,12 +100,13 @@ void OGRGeoJSONLayer::SetSpatialRef( OGRSpatialReference* poSRSIn )
 {
     if( NULL == poSRSIn )
     {
-        poSRS_ = new OGRSpatialReference();
-        if( OGRERR_NONE != poSRS_->importFromEPSG( 4326 ) )
-        {
-            delete poSRS_;
-            poSRS_ = NULL;
-        }
+        poSRS_ = NULL;
+        // poSRS_ = new OGRSpatialReference();
+        // if( OGRERR_NONE != poSRS_->importFromEPSG( 4326 ) )
+        // {
+        //     delete poSRS_;
+        //     poSRS_ = NULL;
+        // }
     }
     else
     {

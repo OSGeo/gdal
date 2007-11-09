@@ -190,7 +190,7 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
     }
 
     // If NULL, WGS84 is set.
-    poLayer_->SetSpatialRef( poSRS );
+    poLayer_->SetSpatialRef( NULL );
     delete poSRS;
 
 
