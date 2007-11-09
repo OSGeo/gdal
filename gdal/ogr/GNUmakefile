@@ -13,7 +13,7 @@ endif
 
 CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS)
 
-default:	lib apps
+default:	lib
 
 all:	sublibs apps test_ogrsf$(EXE) 
 
