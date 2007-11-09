@@ -207,6 +207,15 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
                 poSRS = NULL;
             }
         }
+        else {
+            // If there is none defined, we use 4326
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->importFromEPSG( 4326 ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
+        }
     }
 
     // If NULL, WGS84 is set.
