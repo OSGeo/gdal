@@ -189,6 +189,7 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
                 delete poSRS;
                 poSRS = NULL;
                 poLayer_->SetSpatialRef( NULL );
+                return poLayer_;
             }
         }
         if( EQUALN( pszSrsType, "URL", 3 ) )
@@ -207,11 +208,12 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
                 delete poSRS;
                 poSRS = NULL;
                 poLayer_->SetSpatialRef( NULL );
+                return poLayer_;
             }
         }
     }
 
-    if (poSRS == NULL && poLayer_->GetSpatialRef() != NULL) {
+    if (poSRS == NULL ) {
         // If there is none defined, we use 4326
         poSRS = new OGRSpatialReference();
         if( OGRERR_NONE != poSRS->importFromEPSG( 4326 ) )
