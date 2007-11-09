@@ -420,11 +420,13 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
         poGeometry = ReadMultiLineString( poObj );
     else if( GeoJSONObject::ePolygon == objType )
         poGeometry = ReadPolygon( poObj );
+    else if( GeoJSONObject::eMultiPolygon == objType )
+        poGeometry = ReadMultiPolygon( poObj );
     else if( GeoJSONObject::eGeometryCollection == objType )
         poGeometry = ReadGeometryCollection( poObj );
     else {
         CPLDebug( "GeoJSON",
-                  "Unsupported geometry type detected (i.e Multi*)."
+                  "Unsupported geometry type detected."
                   "Feature gets NULL geometry assigned." );
     }
 
@@ -599,18 +601,23 @@ OGRMultiPoint* OGRGeoJSONReader::ReadMultiPoint( json_object* poObj )
 /*                           ReadLineString()                           */
 /************************************************************************/
 
-OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj )
+OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj , bool bRaw)
 {
     OGRLineString* poLine = NULL;
-
     json_object* poObjPoints = NULL;
-    poObjPoints = FindMemberByName( poObj, "coordinates" );
-    if( NULL == poObjPoints )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid LineString object. "
-                  "Missing \'coordinates\' member." );
-        return NULL;
+    
+    if (bRaw == false) {
+        poObjPoints = FindMemberByName( poObj, "coordinates" );
+        if( NULL == poObjPoints )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Invalid LineString object. "
+                    "Missing \'coordinates\' member." );
+                return NULL;
+        }
+    }
+    else {
+        poObjPoints = poObj;
     }
 
     if( json_type_array == json_object_get_type( poObjPoints ) )
@@ -646,47 +653,6 @@ OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj )
 }
 
 /************************************************************************/
-/*                           ReadRawLineRing()                          */
-/************************************************************************/
-
-OGRLineString* OGRGeoJSONReader::ReadRawLineString( json_object* poObj )
-{
-    OGRLineString* poLine = NULL;
-
-    if( json_type_array == json_object_get_type( poObj ) )
-    {
-        const int nPoints = json_object_array_length( poObj );
-
-        poLine= new OGRLineString();
-        poLine->setNumPoints( nPoints );
-
-        for( int i = 0; i < nPoints; ++i)
-        {
-            json_object* poObjCoords = NULL;
-            poObjCoords = json_object_array_get_idx( poObj, i );
-            
-            OGRPoint* pt = new OGRPoint();
-            if( !ReadRawPoint( poObjCoords, *pt ) )
-            {
-                delete poLine;
-                CPLDebug( "GeoJSON",
-                          "ReadRawLineRing: raw point parsing failure." );
-                return NULL;
-            }
-            
-            if (pt->getCoordinateDimension() == 2) {
-                poLine->setPoint( i, pt->getX(), pt->getY());
-            } else {
-                poLine->setPoint( i, pt->getX(), pt->getY(), pt->getZ() );
-            }
-            
-            
-        }
-    }
-
-    return poLine;
-}
-/************************************************************************/
 /*                           ReadMultiLineString()                      */
 /************************************************************************/
 
@@ -716,7 +682,7 @@ OGRMultiLineString* OGRGeoJSONReader::ReadMultiLineString( json_object* poObj )
             json_object* poObjLine = NULL;
             poObjLine = json_object_array_get_idx( poObjLines, i );
 
-            OGRLineString* poLine = ReadRawLineString( poObjLine );
+            OGRLineString* poLine = ReadLineString( poObjLine , true );
             if( NULL != poLine )
             {
                 poMultiLine->addGeometryDirectly( poLine );
@@ -729,7 +695,7 @@ OGRMultiLineString* OGRGeoJSONReader::ReadMultiLineString( json_object* poObj )
 }
 
 /************************************************************************/
-/*                           ReadLineRing()                             */
+/*                           ReadLinearRing()                           */
 /************************************************************************/
 
 OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
@@ -774,20 +740,27 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
 /*                           ReadPolygon()                              */
 /************************************************************************/
 
-OGRPolygon* OGRGeoJSONReader::ReadPolygon( json_object* poObj )
+OGRPolygon* OGRGeoJSONReader::ReadPolygon( json_object* poObj , bool bRaw )
 {
     OGRPolygon* poPolygon = NULL;
 
     json_object* poObjRings = NULL;
-    poObjRings = FindMemberByName( poObj, "coordinates" );
-    if( NULL == poObjRings )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Polygon object. "
-                  "Missing \'geometries\' member." );
-        return NULL;
+    
+    if (bRaw == false) {
+        poObjRings = FindMemberByName( poObj, "coordinates" );
+        if( NULL == poObjRings )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid Polygon object. "
+                      "Missing \'geometries\' member." );
+            return NULL;
+        }
     }
-
+    else
+    {
+        poObjRings = poObj;
+    }
+    
     if( json_type_array == json_object_get_type( poObjRings ) )
     {
         const int nRings = json_object_array_length( poObjRings );
@@ -818,6 +791,47 @@ OGRPolygon* OGRGeoJSONReader::ReadPolygon( json_object* poObj )
     return poPolygon;
 }
 
+/************************************************************************/
+/*                           ReadMultiPolygon()                         */
+/************************************************************************/
+
+OGRMultiPolygon* OGRGeoJSONReader::ReadMultiPolygon( json_object* poObj )
+{
+    OGRMultiPolygon* poMultiPoly = NULL;
+
+    json_object* poObjPolys = NULL;
+    poObjPolys = FindMemberByName( poObj, "coordinates" );
+    if( NULL == poObjPolys )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid MultiPolygon object. "
+                  "Missing \'coordinates\' member." );
+        return NULL;
+    }
+
+    if( json_type_array == json_object_get_type( poObjPolys ) )
+    {
+        const int nPolys = json_object_array_length( poObjPolys );
+
+        poMultiPoly = new OGRMultiPolygon();
+
+        for( int i = 0; i < nPolys; ++i)
+        {
+
+            json_object* poObjPoly = NULL;
+            poObjPoly = json_object_array_get_idx( poObjPolys, i );
+
+            OGRPolygon* poPoly = ReadPolygon( poObjPoly , true );
+            if( NULL != poPoly )
+            {
+                poMultiPoly->addGeometryDirectly( poPoly );
+            }            
+            
+        }
+    }
+
+    return poMultiPoly;
+}
 /************************************************************************/
 /*                           ReadGeometryCollection()                   */
 /************************************************************************/
@@ -854,11 +868,17 @@ OGRGeoJSONReader::ReadGeometryCollection( json_object* poObj )
 
             objType = GetType( poObjGeom );
             if( GeoJSONObject::ePoint == objType )
-                poGeometry = ReadPoint( poObjGeom );
+                poGeometry = ReadPoint( poObj );
+            else if( GeoJSONObject::eMultiPoint == objType )
+                poGeometry = ReadMultiPoint( poObj );
             else if( GeoJSONObject::eLineString == objType )
-                poGeometry = ReadLineString( poObjGeom );
+                poGeometry = ReadLineString( poObj );
+            else if( GeoJSONObject::eMultiLineString == objType )
+                poGeometry = ReadMultiLineString( poObj );
             else if( GeoJSONObject::ePolygon == objType )
-                poGeometry = ReadPolygon( poObjGeom );
+                poGeometry = ReadPolygon( poObj );
+            else if( GeoJSONObject::eMultiPolygon == objType )
+                poGeometry = ReadMultiPolygon( poObj );
 
             if( NULL != poGeometry )
             {
@@ -870,6 +890,9 @@ OGRGeoJSONReader::ReadGeometryCollection( json_object* poObj )
     return poCollection;
 }
 
+
+
+        
 /************************************************************************/
 /*                           ReadFeature()                              */
 /************************************************************************/
