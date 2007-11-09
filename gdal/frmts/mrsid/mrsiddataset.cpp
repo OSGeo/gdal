@@ -925,50 +925,51 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
     const GUInt32  *paiDims = NULL;
     const void     *pData = poMetadataRec->getArrayData( iNumDims, paiDims );
     GUInt32        i, j, k = 0, iLength;
-    const char     *pszTemp = NULL;
     char           *pszMetadata = CPLStrdup( "" );
 
     for ( i = 0; i < iNumDims; i++ )
         for ( j = 0; j < paiDims[i]; j++ )
         {
+            CPLString osTemp;
+
             switch( poMetadataRec->getDataType() )
             {
                 case LTI_METADATA_DATATYPE_UINT8:
                 case LTI_METADATA_DATATYPE_SINT8:
-                    pszTemp = CPLSPrintf( "%d", ((GByte *)pData)[k++] );
+                    osTemp.Printf( "%d", ((GByte *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_UINT16:
-                    pszTemp = CPLSPrintf( "%u", ((GUInt16 *)pData)[k++] );
+                    osTemp.Printf( "%u", ((GUInt16 *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_SINT16:
-                    pszTemp = CPLSPrintf( "%d", ((GInt16 *)pData)[k++] );
+                    osTemp.Printf( "%d", ((GInt16 *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_UINT32:
-                    pszTemp = CPLSPrintf( "%lu", ((unsigned long *)pData)[k++] );
+                    osTemp.Printf( "%lu", ((unsigned long *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_SINT32:
-                    pszTemp = CPLSPrintf( "%ld", ((long *)pData)[k++] );
+                    osTemp.Printf( "%ld", ((long *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_FLOAT32:
-                    pszTemp = CPLSPrintf( "%f", ((float *)pData)[k++] );
+                    osTemp.Printf( "%f", ((float *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_FLOAT64:
-                    pszTemp = CPLSPrintf( "%lf", ((double *)pData)[k++] );
+                    osTemp.Printf( "%lf", ((double *)pData)[k++] );
                     break;
                 case LTI_METADATA_DATATYPE_ASCII:
-                    pszTemp = ((const char **)pData)[k++];
+                    osTemp = ((const char **)pData)[k++];
                     break;
                 default:
-                    pszTemp = "";
+                    osTemp = "";
                     break;
             }
 
-            iLength = strlen(pszMetadata) + strlen(pszTemp) + 2;
+            iLength = strlen(pszMetadata) + strlen(osTemp) + 2;
 
             pszMetadata = (char *)CPLRealloc( pszMetadata, iLength );
             if ( !EQUAL( pszMetadata, "" ) )
                 strncat( pszMetadata, ",", 1 );
-            strncat( pszMetadata, pszTemp, iLength );
+            strncat( pszMetadata, osTemp, iLength );
         }
 
     return pszMetadata;

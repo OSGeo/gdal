@@ -2635,10 +2635,8 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 
 {
-    const char *pszText;
-    
-    pszText = CPLSPrintf( "%.18g", dfNoData );
-    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszText );
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, 
+                  CPLString().Printf( "%.18g", dfNoData ).c_str() );
 }
 
 /************************************************************************/

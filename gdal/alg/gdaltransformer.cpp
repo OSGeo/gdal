@@ -1447,7 +1447,7 @@ GDALSerializeApproxTransformer( void *pTransformArg )
 /*      Attach max error.                                               */
 /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue( psTree, "MaxError", 
-                                 CPLSPrintf( "%g", psInfo->dfMaxError ) );
+                                 CPLString().Printf("%g",psInfo->dfMaxError) );
 
 /* -------------------------------------------------------------------- */
 /*      Capture underlying transformer.                                 */

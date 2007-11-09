@@ -748,7 +748,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 
         default:
             CPLDebug( "OSR_USGS", "Unsupported projection: %d", iProjSys );
-            SetLocalCS( CPLSPrintf("GCTP projection number %d", iProjSys) );
+            SetLocalCS( CPLString().Printf("GCTP projection number %d", iProjSys) );
             break;
             
     }
@@ -793,11 +793,12 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             {
                 USGSGetEllipsoidInfo( 7008, &pszName, &dfSemiMajor,
                                       &dfInvFlattening );
-                SetGeogCS( CPLSPrintf(
+                SetGeogCS( CPLString().Printf(
                                "Unknown datum based upon the %s ellipsoid",
                                pszName ),
-                           CPLSPrintf( "Not specified (based on %s spheroid)",
-                                       pszName ),
+                           CPLString().Printf( 
+                               "Not specified (based on %s spheroid)",
+                               pszName ),
                            pszName, dfSemiMajor, dfInvFlattening,
                            NULL, 0.0, NULL, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", 7008 );
@@ -806,10 +807,10 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             {
                 USGSGetEllipsoidInfo( 7047, &pszName, &dfSemiMajor,
                                       &dfInvFlattening );
-                SetGeogCS( CPLSPrintf(
+                SetGeogCS( CPLString().Printf(
                                "Unknown datum based upon the %s ellipsoid",
                                pszName ),
-                           CPLSPrintf( "Not specified (based on %s spheroid)",
+                           CPLString().Printf( "Not specified (based on %s spheroid)",
                                        pszName ),
                            pszName, dfSemiMajor, dfInvFlattening,
                            NULL, 0.0, NULL, 0.0 );
@@ -822,9 +823,9 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             if( USGSGetEllipsoidInfo( aoEllips[iDatum], &pszName,
                                        &dfSemiMajor, &dfInvFlattening ) )
             {
-                SetGeogCS( CPLSPrintf("Unknown datum based upon the %s ellipsoid",
+                SetGeogCS( CPLString().Printf("Unknown datum based upon the %s ellipsoid",
                                       pszName ),
-                           CPLSPrintf( "Not specified (based on %s spheroid)",
+                           CPLString().Printf( "Not specified (based on %s spheroid)",
                                        pszName ),
                            pszName, dfSemiMajor, dfInvFlattening,
                            NULL, 0.0, NULL, 0.0 );
