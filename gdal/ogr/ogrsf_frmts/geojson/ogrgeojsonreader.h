@@ -123,11 +123,11 @@ private:
     OGRRawPoint* ReadRawPoint( json_object* poObj );
     OGRPoint* ReadPoint( json_object* poObj );
     OGRMultiPoint* ReadMultiPoint( json_object* poObj );
-    OGRLineString* ReadLineString( json_object* poObj );
-    OGRLineString* ReadRawLineString( json_object* poObj );
+    OGRLineString* ReadLineString( json_object* poObj, bool bRaw=false );
     OGRLinearRing* ReadLinearRing( json_object* poObj );
     OGRMultiLineString* ReadMultiLineString( json_object* poObj );
-    OGRPolygon* ReadPolygon( json_object* poObj );
+    OGRPolygon* ReadPolygon( json_object* poObj , bool bRaw=false);
+    OGRMultiPolygon* ReadMultiPolygon( json_object* poObj );
     OGRGeometry* ReadGeometry( json_object* poObj );
     OGRGeometryCollection* ReadGeometryCollection( json_object* poObj );
     OGRFeature* ReadFeature( json_object* poObj );
