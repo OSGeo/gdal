@@ -187,10 +187,27 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
                 poSRS = NULL;
             }
         }
+        if( EQUALN( pszSrsType, "URL", 3 ) )
+        {
+            json_object* poObjSrsProps = FindMemberByName( poObjSrs, "properties" );
+            CPLAssert( NULL != poObjSrsProps );
+
+            json_object* poObjURL = FindMemberByName( poObjSrsProps, "url" );
+            CPLAssert( NULL != poObjURL );
+
+            const char* pszURL = json_object_get_string( poObjURL );
+
+            poSRS = new OGRSpatialReference();
+            if( OGRERR_NONE != poSRS->importFromUrl( pszURL ) )
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
+        }
     }
 
     // If NULL, WGS84 is set.
-    poLayer_->SetSpatialRef( NULL );
+    poLayer_->SetSpatialRef( poSRS );
     delete poSRS;
 
 
