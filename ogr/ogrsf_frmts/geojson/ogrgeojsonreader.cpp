@@ -460,9 +460,11 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
 
 bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
 {
+
     if( json_type_array == json_object_get_type( poObj ) ) 
     {
         const int nSize = json_object_array_length( poObj );
+        int iType = 0;
 
         if( nSize != GeoJSONObject::eMinCoordinateDimension
             && nSize != GeoJSONObject::eMaxCoordinateDimension )
@@ -477,42 +479,60 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
         // Read X coordinate
         poObjCoord = json_object_array_get_idx( poObj, 0 );
         
-        if (json_type_double != json_object_get_type(poObjCoord) )
+        iType = json_object_get_type(poObjCoord);
+        if ( (json_type_double != iType) && (json_type_int != iType) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid Point object. Type is not double for \'%s\'.",
+                      "Invalid X coordinate. Type is not double or integer for \'%s\'.",
                       json_object_to_json_string(poObj) );
             return false;
         }
-        point.setX(json_object_get_double( poObjCoord ));
-
+        
+        if (iType == json_type_double) {
+            point.setX(json_object_get_double( poObjCoord ));
+        }
+        else {
+            point.setX(json_object_get_int( poObjCoord ));
+        }
+        
         // Read Y coordiante
         poObjCoord = json_object_array_get_idx( poObj, 1 );
         
-        if (json_type_double != json_object_get_type(poObjCoord) )
+        iType = json_object_get_type(poObjCoord);
+        if ( (json_type_double != iType) && (json_type_int != iType) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid Point object. Type is not double for \'%s\'.",
+                      "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
                       json_object_to_json_string(poObj) );
             return false;
         }
-        point.setY(json_object_get_double( poObjCoord ));
-
+        if (iType == json_type_double) {
+            point.setY(json_object_get_double( poObjCoord ));
+        }
+        else {
+            point.setY(json_object_get_int( poObjCoord ));
+        }
         // Read Z coordinate
         if( nSize == GeoJSONObject::eMaxCoordinateDimension )
         {
             // Don't *expect* mixed-dimension geometries, although the 
             // spec doesn't explicitly forbid this.
             poObjCoord = json_object_array_get_idx( poObj, 2 );
-            if (json_type_double != json_object_get_type(poObjCoord) )
+            
+            iType = json_object_get_type(poObjCoord);
+            if ( (json_type_double != iType) && (json_type_int != iType) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "Invalid Point object. Type is not double for \'%s\'.",
+                          "Invalid Z coordinate. Type is not double or integer for \'%s\'.",
                           json_object_to_json_string(poObj) );
                 return false;
             }
-            point.setZ(json_object_get_double( poObjCoord ));
-
+            if (iType == json_type_double) {
+                point.setZ(json_object_get_double( poObjCoord ));
+            }
+            else {
+                point.setZ(json_object_get_int( poObjCoord ));
+            }
         }
         else
         {
