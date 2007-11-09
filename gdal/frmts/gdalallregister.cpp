@@ -244,6 +244,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IDA();
     GDALRegister_NDF();
     GDALRegister_DIPEx();
+#endif
+
+#ifdef FRMT_pds
+    GDALRegister_ISIS3();
     GDALRegister_ISIS2();
     GDALRegister_PDS();
 #endif
