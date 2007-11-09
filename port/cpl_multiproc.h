@@ -102,6 +102,7 @@ class CPL_DLL CPLMutexHolder
 #define CTLS_PATHBUF                    7         /* cpl_path.cpp */
 #define CTLS_SPRINTFBUF                 8         /* cpl_string.cpp */
 #define CTLS_SWQ_ERRBUF                 9         /* swq.c */
+#define CTLS_CPLSPRINTF                10         /* cpl_string.h */
 
 #define CTLS_MAX                       32         
 
