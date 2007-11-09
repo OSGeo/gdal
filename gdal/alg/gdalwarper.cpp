@@ -763,7 +763,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue( 
         psTree, "WarpMemoryLimit", 
-        CPLSPrintf("%g", psWO->dfWarpMemoryLimit ) );
+        CPLString().Printf("%g", psWO->dfWarpMemoryLimit ) );
 
 /* -------------------------------------------------------------------- */
 /*      ResampleAlg                                                     */
@@ -868,31 +868,31 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         if( psWO->panSrcBands != NULL )
             CPLCreateXMLNode( 
                 CPLCreateXMLNode( psBand, CXT_Attribute, "src" ),
-                CXT_Text, CPLSPrintf( "%d", psWO->panSrcBands[i] ) );
+                CXT_Text, CPLString().Printf( "%d", psWO->panSrcBands[i] ) );
         if( psWO->panDstBands != NULL )
             CPLCreateXMLNode( 
                 CPLCreateXMLNode( psBand, CXT_Attribute, "dst" ),
-                CXT_Text, CPLSPrintf( "%d", psWO->panDstBands[i] ) );
+                CXT_Text, CPLString().Printf( "%d", psWO->panDstBands[i] ) );
         
         if( psWO->padfSrcNoDataReal != NULL )
             CPLCreateXMLElementAndValue( 
                 psBand, "SrcNoDataReal", 
-                CPLSPrintf( "%.16g", psWO->padfSrcNoDataReal[i] ) );
+                CPLString().Printf( "%.16g", psWO->padfSrcNoDataReal[i] ) );
 
         if( psWO->padfSrcNoDataImag != NULL )
             CPLCreateXMLElementAndValue( 
                 psBand, "SrcNoDataImag", 
-                CPLSPrintf( "%.16g", psWO->padfSrcNoDataImag[i] ) );
+                CPLString().Printf( "%.16g", psWO->padfSrcNoDataImag[i] ) );
 
         if( psWO->padfDstNoDataReal != NULL )
             CPLCreateXMLElementAndValue( 
                 psBand, "DstNoDataReal", 
-                CPLSPrintf( "%.16g", psWO->padfDstNoDataReal[i] ) );
+                CPLString().Printf( "%.16g", psWO->padfDstNoDataReal[i] ) );
 
         if( psWO->padfDstNoDataImag != NULL )
             CPLCreateXMLElementAndValue( 
                 psBand, "DstNoDataImag", 
-                CPLSPrintf( "%.16g", psWO->padfDstNoDataImag[i] ) );
+                CPLString().Printf( "%.16g", psWO->padfDstNoDataImag[i] ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -901,12 +901,12 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
     if( psWO->nSrcAlphaBand > 0 )
         CPLCreateXMLElementAndValue( 
             psTree, "SrcAlphaBand", 
-            CPLSPrintf( "%d", psWO->nSrcAlphaBand ) );
+            CPLString().Printf( "%d", psWO->nSrcAlphaBand ) );
 
     if( psWO->nDstAlphaBand > 0 )
         CPLCreateXMLElementAndValue( 
             psTree, "DstAlphaBand", 
-            CPLSPrintf( "%d", psWO->nDstAlphaBand ) );
+            CPLString().Printf( "%d", psWO->nDstAlphaBand ) );
 
     return psTree;
 }

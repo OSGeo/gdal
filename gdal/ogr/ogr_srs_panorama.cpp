@@ -467,7 +467,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         default:
             CPLDebug( "OSR_Panorama", "Unsupported projection: %d", iProjSys );
-            SetLocalCS( CPLSPrintf("\"Panorama\" projection number %d",
+            SetLocalCS( CPLString().Printf("\"Panorama\" projection number %d",
                                    iProjSys) );
             break;
             
@@ -497,9 +497,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                                           &pszName,
                                           &dfSemiMajor, &dfInvFlattening ) )
             {
-                SetGeogCS( CPLSPrintf("Unknown datum based upon the %s ellipsoid",
+                SetGeogCS( CPLString().Printf("Unknown datum based upon the %s ellipsoid",
                                       pszName ),
-                           CPLSPrintf( "Not specified (based on %s spheroid)",
+                           CPLString().Printf( "Not specified (based on %s spheroid)",
                                        pszName ),
                            pszName, dfSemiMajor, dfInvFlattening,
                            NULL, 0.0, NULL, 0.0 );
