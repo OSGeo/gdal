@@ -893,7 +893,7 @@ CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue( 
         psTree, "Reversed", 
-        CPLSPrintf( "%d", psInfo->bReversed ) );
+        CPLString().Printf( "%d", psInfo->bReversed ) );
                                  
 /* -------------------------------------------------------------------- */
 /*      geoloc metadata.                                                */

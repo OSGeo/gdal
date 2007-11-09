@@ -287,14 +287,14 @@ GBool OGRStyleMgr::AddPart(const char *pszPart)
     {
         if (m_pszStyleString)
         {
-            pszTmp = CPLStrdup(CPLSPrintf("%s;%s",m_pszStyleString,
+            pszTmp = CPLStrdup(CPLString().Printf("%s;%s",m_pszStyleString,
                                           pszPart));
             CPLFree(m_pszStyleString);
             m_pszStyleString = pszTmp;
         }
         else
         {
-              pszTmp= CPLStrdup(CPLSPrintf("%s",pszPart));
+              pszTmp= CPLStrdup(CPLString().Printf("%s",pszPart));
               CPLFree(m_pszStyleString);
               m_pszStyleString = pszTmp;
         }
@@ -315,14 +315,14 @@ GBool OGRStyleMgr::AddPart(OGRStyleTool *poStyleTool)
     {
         if (m_pszStyleString)
         {
-            pszTmp = CPLStrdup(CPLSPrintf("%s;%s",m_pszStyleString,
+            pszTmp = CPLStrdup(CPLString().Printf("%s;%s",m_pszStyleString,
                                         poStyleTool->GetStyleString()));
             CPLFree(m_pszStyleString);
             m_pszStyleString = pszTmp;
         }
         else
         {
-              pszTmp= CPLStrdup(CPLSPrintf("%s",
+              pszTmp= CPLStrdup(CPLString().Printf("%s",
                                         poStyleTool->GetStyleString()));
               CPLFree(m_pszStyleString);
               m_pszStyleString = pszTmp;
@@ -526,7 +526,7 @@ GBool OGRStyleTable::AddStyle(const char *pszName, const char *pszStyleString)
         if ((nPos = IsExist(pszName)) != -1)
           return FALSE;
         
-        pszNewString = CPLSPrintf("%s:%s",pszName,pszStyleString);
+        pszNewString = CPLString().Printf("%s:%s",pszName,pszStyleString);
         
         m_papszStyleTable = CSLAddString(m_papszStyleTable,pszNewString);
         return TRUE;
@@ -660,7 +660,7 @@ int OGRStyleTable::IsExist(const char *pszName)
     if (pszName == NULL)
       return -1;
 
-    pszNewString = CPLSPrintf("%s:",pszName);
+    pszNewString = CPLString().Printf("%s:",pszName);
 
     for (i=0;i<CSLCount(m_papszStyleTable);i++)
     {
@@ -792,10 +792,10 @@ const char *OGRStyleTool::GetStyleString(const OGRStyleParamId *pasStyleParam,
                 strcat(szCurrent,pasStyleValue[i].pszValue);
                 break;
               case OGRSTypeDouble:
-                strcat(szCurrent,CPLSPrintf(":%f",pasStyleValue[i].dfValue));
+                strcat(szCurrent,CPLString().Printf(":%f",pasStyleValue[i].dfValue));
                 break;
               case OGRSTypeInteger:
-                strcat(szCurrent,CPLSPrintf(":%d",pasStyleValue[i].nValue));
+                strcat(szCurrent,CPLString().Printf(":%d",pasStyleValue[i].nValue));
                 break;
               default:
                 break;
@@ -1244,19 +1244,19 @@ const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam ,
         return sStyleValue.pszValue;
       case OGRSTypeDouble:
         if (sStyleParam.bGeoref)
-          return CPLSPrintf("%f",ComputeWithUnit(sStyleValue.dfValue,
+          return CPLString().Printf("%f",ComputeWithUnit(sStyleValue.dfValue,
                                                  sStyleValue.eUnit));
         else
-          return CPLSPrintf("%f",sStyleValue.dfValue);
+          return CPLString().Printf("%f",sStyleValue.dfValue);
                             
       case OGRSTypeInteger:
         if (sStyleParam.bGeoref)
-          return CPLSPrintf("%d",ComputeWithUnit(sStyleValue.nValue,
+          return CPLString().Printf("%d",ComputeWithUnit(sStyleValue.nValue,
                                                  sStyleValue.eUnit));
         else
-          return CPLSPrintf("%d",sStyleValue.nValue);
+          return CPLString().Printf("%d",sStyleValue.nValue);
       case OGRSTypeBoolean:
-        return CPLSPrintf("%d",sStyleValue.nValue);
+        return CPLString().Printf("%d",sStyleValue.nValue);
       default:
         bValueIsNull = TRUE;
         return NULL;
@@ -1380,7 +1380,7 @@ void OGRStyleTool::SetParamNum(const OGRStyleParamId &sStyleParam ,
         
         // if sStyleParam.bGeoref == TRUE , need to convert to output value;
       case OGRSTypeString:
-        sStyleValue.pszValue = CPLStrdup(CPLSPrintf("%d",nParam));
+        sStyleValue.pszValue = CPLStrdup(CPLString().Printf("%d",nParam));
         break;
       case OGRSTypeDouble:
         sStyleValue.dfValue = (double)nParam;
@@ -1414,7 +1414,7 @@ void OGRStyleTool::SetParamDbl(const OGRStyleParamId &sStyleParam ,
         
         // if sStyleParam.bGeoref == TRUE , need to convert to output value;
       case OGRSTypeString:
-        sStyleValue.pszValue = CPLStrdup(CPLSPrintf("%f",dfParam));
+        sStyleValue.pszValue = CPLStrdup(CPLString().Printf("%f",dfParam));
         break;
       case OGRSTypeDouble:
         sStyleValue.dfValue = dfParam;

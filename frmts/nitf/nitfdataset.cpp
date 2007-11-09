@@ -857,12 +857,13 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( psImage != NULL && EQUAL(psImage->szIC,"C8") )
     {
-        char *pszDSName = CPLStrdup( 
-            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", 
-                        psFile->pasSegmentInfo[iSegment].nSegmentStart,
-                        psFile->pasSegmentInfo[iSegment].nSegmentSize,
-                        pszFilename ) );
+        CPLString osDSName;
 
+        osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", 
+                         psFile->pasSegmentInfo[iSegment].nSegmentStart,
+                         psFile->pasSegmentInfo[iSegment].nSegmentSize,
+                         pszFilename );
+    
         if( poWritableJ2KDataset != NULL )
         {
             poDS->poJ2KDataset = poWritableJ2KDataset; 
@@ -872,8 +873,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             poDS->poJ2KDataset = (GDALDataset *) 
-                GDALOpen( pszDSName, GA_ReadOnly );
-            CPLFree( pszDSName );
+                GDALOpen( osDSName, GA_ReadOnly );
         }
 
         if( poDS->poJ2KDataset == NULL )
@@ -933,20 +933,18 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->nQLevel = poDS->ScanJPEGQLevel( &nJPEGStart );
 
-        char *pszDSName = CPLStrdup( 
-            CPLSPrintf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
-                        poDS->nQLevel,
-                        nJPEGStart,
-                        psFile->pasSegmentInfo[iSegment].nSegmentSize
-                        - (nJPEGStart - psFile->pasSegmentInfo[iSegment].nSegmentStart),
-                        pszFilename ) );
+        CPLString osDSName;
+
+        osDSName.Printf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
+                         poDS->nQLevel, nJPEGStart,
+                         psFile->pasSegmentInfo[iSegment].nSegmentSize
+                         - (nJPEGStart - psFile->pasSegmentInfo[iSegment].nSegmentStart),
+                         pszFilename );
 
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() as IC=C3 (JPEG compressed)\n");
 
-        poDS->poJPEGDataset = (GDALDataset *) GDALOpen( pszDSName, GA_ReadOnly );
-        CPLFree( pszDSName );
-
+        poDS->poJPEGDataset = (GDALDataset *) GDALOpen( osDSName, GA_ReadOnly);
         if( poDS->poJPEGDataset == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -2473,16 +2471,15 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
         int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
 
-        char *pszDSName = CPLStrdup( 
-            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
-                        pszFilename ) );
+        CPLString osDSName;
+
+        osDSName.Printf("J2K_SUBFILE:%d,%d,%s", nImageOffset, -1, pszFilename);
 
         NITFClose( psFile );
 
         poWritableJ2KDataset = 
-            poJ2KDriver->Create( pszDSName, nXSize, nYSize, nBands, eType, 
+            poJ2KDriver->Create( osDSName, nXSize, nYSize, nBands, eType, 
                                  (char **)NITFJP2Options( papszOptions ) );
-        CPLFree( pszDSName );
 
         if( poWritableJ2KDataset == NULL )
             return NULL;
@@ -2604,8 +2601,8 @@ NITFDataset::NITFCreateCopy(
                 CSLSetNameValue( papszFullOptions, "IREP", "RGB/LUT" );
             papszFullOptions = 
                 CSLSetNameValue( papszFullOptions, "LUT_SIZE", 
-                                 CPLSPrintf("%d", 
-                                            poBand1->GetColorTable()->GetColorEntryCount()) );
+                                 CPLString().Printf(
+                                     "%d", poBand1->GetColorTable()->GetColorEntryCount()) );
         }
         else if( GDALDataTypeIsComplex(eType) )
             papszFullOptions = 
@@ -2677,18 +2674,17 @@ NITFDataset::NITFCreateCopy(
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
         GDALDataset *poJ2KDataset = NULL;
         int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
+        CPLString osDSName;
 
-        char *pszDSName = CPLStrdup( 
-            CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
-                        pszFilename ) );
+        osDSName.Printf( "J2K_SUBFILE:%d,%d,%s", nImageOffset, -1,
+                         pszFilename );
 
         NITFClose( psFile );
 
         poJ2KDataset = 
-            poJ2KDriver->CreateCopy( pszDSName, poSrcDS, FALSE,
+            poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
                                      (char **)NITFJP2Options(papszOptions),
                                      pfnProgress, pProgressData );
-        CPLFree( pszDSName );
         if( poJ2KDataset == NULL )
             return NULL;
 
@@ -2846,14 +2842,15 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    VSIFWriteL( (void *) CPLSPrintf("%012d",nFileLen), 
+    VSIFWriteL( (void *) CPLString().Printf("%012d",nFileLen).c_str(),
                 1, 12, fpVSIL );
     
 /* -------------------------------------------------------------------- */
 /*      Update the image data length.                                   */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 369, SEEK_SET );
-    VSIFWriteL( (void *) CPLSPrintf("%010d",nFileLen-nImageOffset), 
+    VSIFWriteL( (void *) 
+                CPLString().Printf("%010d",nFileLen-nImageOffset).c_str(), 
                 1, 10, fpVSIL );
 
 /* -------------------------------------------------------------------- */

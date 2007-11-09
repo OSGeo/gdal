@@ -615,10 +615,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                     
                     PCIGetEllipsoidInfo( paoDatum->nEPSGCode, &pszName,
                                          &dfSemiMajor, &dfInvFlattening );
-                    SetGeogCS( CPLSPrintf(
+                    SetGeogCS( CPLString().Printf(
                                    "Unknown datum based upon the %s ellipsoid",
                                    pszName ),
-                               CPLSPrintf(
+                               CPLString().Printf(
                                    "Not specified (based on %s spheroid)",
                                    pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
