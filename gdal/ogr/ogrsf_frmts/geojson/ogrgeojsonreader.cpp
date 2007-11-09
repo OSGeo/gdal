@@ -123,8 +123,11 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
     GeoJSONObject::Type objType = GetType( poGJObject_ );
 
     if( GeoJSONObject::ePoint == objType
+        || GeoJSONObject::eMultiPoint == objType
         || GeoJSONObject::eLineString == objType
+        || GeoJSONObject::eMultiLineString == objType
         || GeoJSONObject::ePolygon == objType
+        || GeoJSONObject::eMultiPolygon == objType
         || GeoJSONObject::eGeometryCollection == objType )
     {
         OGRGeometry* poGeometry = NULL;
