@@ -248,7 +248,7 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue( 
         psTree, "Reversed", 
-        CPLSPrintf( "%d", psInfo->bReversed ) );
+        CPLString().Printf( "%d", psInfo->bReversed ) );
                                  
 /* -------------------------------------------------------------------- */
 /*	Attach GCP List. 						*/
@@ -272,20 +272,20 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
                 CPLSetXMLValue( psXMLGCP, "Info", psGCP->pszInfo );
 
             CPLSetXMLValue( psXMLGCP, "#Pixel", 
-                            CPLSPrintf( "%.4f", psGCP->dfGCPPixel ) );
+                            CPLString().Printf( "%.4f", psGCP->dfGCPPixel ) );
 
             CPLSetXMLValue( psXMLGCP, "#Line", 
-                            CPLSPrintf( "%.4f", psGCP->dfGCPLine ) );
+                            CPLString().Printf( "%.4f", psGCP->dfGCPLine ) );
 
             CPLSetXMLValue( psXMLGCP, "#X", 
-                            CPLSPrintf( "%.12E", psGCP->dfGCPX ) );
+                            CPLString().Printf( "%.12E", psGCP->dfGCPX ) );
 
             CPLSetXMLValue( psXMLGCP, "#Y", 
-                            CPLSPrintf( "%.12E", psGCP->dfGCPY ) );
+                            CPLString().Printf( "%.12E", psGCP->dfGCPY ) );
 
             if( psGCP->dfGCPZ != 0.0 )
                 CPLSetXMLValue( psXMLGCP, "#GCPZ", 
-                                CPLSPrintf( "%.12E", psGCP->dfGCPZ ) );
+                                CPLString().Printf( "%.12E", psGCP->dfGCPZ ) );
         }
     }
 

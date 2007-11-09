@@ -330,7 +330,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
         = poSRS->GetNormProjParm( pszWKTName, dfDefault, NULL );
         
     CPLCreateXMLNode( psValue, CXT_Text, 
-                      CPLSPrintf( "%.16g", dfParmValue ) );
+                      CPLString().Printf( "%.16g", dfParmValue ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add the valueOfParameter.                                       */
@@ -521,8 +521,9 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
     CPLCreateXMLNode( CPLCreateXMLNode( psAngle, CXT_Attribute, "gml:uom" ),
                       CXT_Text, "urn:ogc:def:uom:EPSG::9102" );
 
-    CPLCreateXMLNode( psAngle, CXT_Text, CPLSPrintf( "%.16g", dfPMOffset ) );
-
+    CPLCreateXMLNode( psAngle, CXT_Text, 
+                      CPLString().Printf( "%.16g", dfPMOffset ) );
+    
 /* -------------------------------------------------------------------- */
 /*      Translate the ellipsoid.                                        */
 /* -------------------------------------------------------------------- */

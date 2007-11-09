@@ -2422,7 +2422,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Set some particular parameters.                                 */
 /* -------------------------------------------------------------------- */
     oCodeStream.access_siz()->parse_string(
-        CPLSPrintf("Clayers=%d",layer_count));
+        CPLString().Printf("Clayers=%d",layer_count).c_str());
     oCodeStream.access_siz()->parse_string("Cycc=no");
     if( eType == GDT_Int16 || eType == GDT_UInt16 )
         oCodeStream.access_siz()->parse_string("Qstep=0.0000152588");
@@ -2460,11 +2460,12 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( pszValue != NULL )
         {
-            const char *pszOpt = 
-                CPLSPrintf( "%s=%s", apszParms[iParm], pszValue );
-            oCodeStream.access_siz()->parse_string( pszOpt );
+            CPLString osOpt;
 
-            CPLDebug( "JP2KAK", "parse_string(%s)", pszOpt );
+            osOpt.Printf( "%s=%s", apszParms[iParm], pszValue );
+            oCodeStream.access_siz()->parse_string( osOpt );
+
+            CPLDebug( "JP2KAK", "parse_string(%s)", osOpt.c_str() );
         }
     }
 
