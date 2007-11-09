@@ -869,8 +869,6 @@ char ** CSLTokenizeString2( const char * pszString,
  */
 #define CPLSPrintf_BUF_SIZE 8000
 #define CPLSPrintf_BUF_Count 10
-static CPL_THREADLOCAL char gszCPLSPrintfBuffer[CPLSPrintf_BUF_Count][CPLSPrintf_BUF_SIZE];
-static CPL_THREADLOCAL int gnCPLSPrintfBuffer = 0;
 
 const char *CPLSPrintf(const char *fmt, ...)
 {
@@ -922,23 +920,12 @@ const char *CPLSPrintf(const char *fmt, ...)
  **********************************************************************/
 char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
 {
+    CPLString osWork;
     va_list args;
+    osWork.vPrintf( fmt, args );
+    va_end( args );
 
-    va_start(args, fmt);
-#if defined(HAVE_VSNPRINTF)
-    vsnprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], CPLSPrintf_BUF_SIZE-1,
-              fmt, args);
-#else
-    vsprintf(gszCPLSPrintfBuffer[gnCPLSPrintfBuffer], fmt, args);
-#endif
-    va_end(args);
-
-    int nCurrent = gnCPLSPrintfBuffer;
-
-    if (++gnCPLSPrintfBuffer == CPLSPrintf_BUF_Count)
-      gnCPLSPrintfBuffer = 0;
-
-    return CSLAddString(papszStrList, gszCPLSPrintfBuffer[nCurrent]);
+    return CSLAddString(papszStrList, osWork);
 }
 
 /************************************************************************/
