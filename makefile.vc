@@ -192,6 +192,8 @@ devinstall: install
 	copy gcore\*.h $(INCDIR)
 	copy alg\*.h $(INCDIR)
 	copy ogr\*.h $(INCDIR)
+	copy frmts\mem\memdataset.h $(INCDIR)
+	copy frmts\raw\rawdataset.h $(INCDIR)
 !IFDEF INCLUDE_OGR_FRMTS
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)
 !ENDIF
