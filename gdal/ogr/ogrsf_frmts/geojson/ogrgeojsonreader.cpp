@@ -529,6 +529,7 @@ bool OGRGeoJSONReader::ReadRawPoint( json_object* poObj, OGRPoint& point )
         else {
             point.setY(json_object_get_int( poObjCoord ));
         }
+        
         // Read Z coordinate
         if( nSize == GeoJSONObject::eMaxCoordinateDimension )
         {
@@ -905,17 +906,17 @@ OGRGeoJSONReader::ReadGeometryCollection( json_object* poObj )
 
             objType = GetType( poObjGeom );
             if( GeoJSONObject::ePoint == objType )
-                poGeometry = ReadPoint( poObj );
+                poGeometry = ReadPoint( poObjGeom );
             else if( GeoJSONObject::eMultiPoint == objType )
-                poGeometry = ReadMultiPoint( poObj );
+                poGeometry = ReadMultiPoint( poObjGeom );
             else if( GeoJSONObject::eLineString == objType )
-                poGeometry = ReadLineString( poObj );
+                poGeometry = ReadLineString( poObjGeom );
             else if( GeoJSONObject::eMultiLineString == objType )
-                poGeometry = ReadMultiLineString( poObj );
+                poGeometry = ReadMultiLineString( poObjGeom );
             else if( GeoJSONObject::ePolygon == objType )
-                poGeometry = ReadPolygon( poObj );
+                poGeometry = ReadPolygon( poObjGeom );
             else if( GeoJSONObject::eMultiPolygon == objType )
-                poGeometry = ReadMultiPolygon( poObj );
+                poGeometry = ReadMultiPolygon( poObjGeom );
 
             if( NULL != poGeometry )
             {
