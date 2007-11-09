@@ -991,7 +991,22 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
 /*      Translate geometry sub-object of GeoJSON Feature.               */
 /* -------------------------------------------------------------------- */
     json_object* poObjGeom = NULL;
-    poObjGeom = FindMemberByName( poObj, "geometry" );
+
+
+    json_object* poTmp = poObj;
+
+    json_object_iter it;
+    json_object_object_foreachC(poTmp, it)
+    {
+        if( EQUAL( it.key, "geometry" ) ) {
+            if (it.val != NULL)
+                poObjGeom = it.val;
+            // we're done.  They had 'geometry':null
+            else
+                return poFeature;
+        }
+    }
+    
     if( NULL != poObjGeom )
     {
         // NOTE: If geometry can not be parsed or read correctly
