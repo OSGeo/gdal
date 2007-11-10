@@ -433,6 +433,10 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
     }
 
+    FILE *fpL = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    if( fpL == NULL )
+        return FALSE;
+
     /* Check that this is a volume directory file */
     int nRecordSeq = 0;
     int nRecordSubtype = 0;
@@ -441,14 +445,16 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
     int nThirdSubtype = 0;
     int nLengthRecord = 0;
 
-    VSIFSeekL(poOpenInfo->fp, 0, SEEK_SET);
+    VSIFSeekL(fpL, 0, SEEK_SET);
 
-    READ_WORD(poOpenInfo->fp, nRecordSeq);
-    READ_BYTE(poOpenInfo->fp, nRecordSubtype);
-    READ_BYTE(poOpenInfo->fp, nRecordType);
-    READ_BYTE(poOpenInfo->fp, nSecondSubtype);
-    READ_BYTE(poOpenInfo->fp, nThirdSubtype);
-    READ_WORD(poOpenInfo->fp, nLengthRecord);
+    READ_WORD(fpL, nRecordSeq);
+    READ_BYTE(fpL, nRecordSubtype);
+    READ_BYTE(fpL, nRecordType);
+    READ_BYTE(fpL, nSecondSubtype);
+    READ_BYTE(fpL, nThirdSubtype);
+    READ_WORD(fpL, nLengthRecord);
+
+    VSIFCloseL( fpL );
 
     /* Check that we have the right record */
     if ( nRecordSeq == 1 && nRecordSubtype == 192 && nRecordType == 192 &&
@@ -470,7 +476,13 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     PALSARJaxaDataset *poDS = new PALSARJaxaDataset();
     /* steal the file pointer */
-    poDS->fp = poOpenInfo->fp;
+
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    if( poDS->fp == NULL )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     /* Get the suffix of the filename, we'll need this */
     char *pszSuffix = VSIStrdup( (char *)
@@ -550,9 +562,6 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     VSIFree(pszLeaderFilename);
 
-    /* all clear, let's roll */
-    poOpenInfo->fp = NULL;
-
     VSIFree( pszSuffix );
 
     return (GDALDataset *)poDS;
@@ -572,7 +581,6 @@ void GDALRegister_PALSARJaxa() {
                                    "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_palsar.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "1__A" );
         poDriver->pfnOpen = PALSARJaxaDataset::Open;
         poDriver->pfnIdentify = PALSARJaxaDataset::Identify;
         GetGDALDriverManager()->RegisterDriver( poDriver );
