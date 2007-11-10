@@ -1,13 +1,9 @@
-
-
 include ../../GDALmake.opt
 
-OBJ	=	palsardataset.o
-
+OBJ	=	jaxapalsardataset.o
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ)
-
 clean:
 	rm -f *.o $(O_OBJ)
 
