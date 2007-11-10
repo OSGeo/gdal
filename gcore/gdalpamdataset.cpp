@@ -204,7 +204,12 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
 
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
-        CPLAddXMLChild( psDSTree, psMD );
+    {
+        if( psMD->psChild == NULL )
+            CPLDestroyXMLNode( psMD );
+        else
+            CPLAddXMLChild( psDSTree, psMD );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      GCPs                                                            */
