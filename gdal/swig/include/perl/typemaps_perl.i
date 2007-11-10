@@ -10,6 +10,7 @@
  */
 %include "typemaps.i"
 
+%apply (long *OUTPUT) { long *argout };
 %apply (double *OUTPUT) { double *argout };
 %apply (double *OUTPUT) { double *defaultval };
 
@@ -730,6 +731,15 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 %typemap(check) OGRGeometryShadow* other
 {
   /* %typemap(check) OGRGeometryShadow* other */
+  if (!$1) {
+    croak("The other geometry must not be undefined");
+    SWIG_fail;  
+  }
+}
+
+%typemap(check) OGRGeometryShadow* other_disown
+{
+  /* %typemap(check) OGRGeometryShadow* other_disown */
   if (!$1) {
     croak("The other geometry must not be undefined");
     SWIG_fail;  
