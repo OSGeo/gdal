@@ -1,5 +1,4 @@
-
-OBJ	=	palsardataset.obj
+OBJ	=	jaxapalsardataset.obj
 
 GDAL_ROOT	=	..\..
 
