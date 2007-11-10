@@ -565,7 +565,18 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     VSIFree( pszSuffix );
 
-    return (GDALDataset *)poDS;
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
+    return poDS;
 }
 
 /************************************************************************/
