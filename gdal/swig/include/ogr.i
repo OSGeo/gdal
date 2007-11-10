@@ -618,16 +618,12 @@ public:
   }
 
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldDefnRef");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
-    }
-    return NULL;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+      return NULL;
   }
   /* ------------------------------------------- */
 
@@ -638,16 +634,12 @@ public:
   }
 
   const char* GetFieldAsString(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsString");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return (const char *) OGR_F_GetFieldAsString(self, i);
-    }
-    return NULL;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return (const char *) OGR_F_GetFieldAsString(self, i);
+      return NULL;
   }
   /* ------------------------------------------- */
 
@@ -658,16 +650,12 @@ public:
   }
 
   int GetFieldAsInteger(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsInteger");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return OGR_F_GetFieldAsInteger(self, i);
-    }
-    return 0;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return OGR_F_GetFieldAsInteger(self, i);
+      return 0;
   }
   /* ------------------------------------------- */  
 
@@ -678,16 +666,12 @@ public:
   }
 
   double GetFieldAsDouble(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsDouble");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return OGR_F_GetFieldAsDouble(self, i);
-    }
-    return 0;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return OGR_F_GetFieldAsDouble(self, i);
+      return 0;
   }
   /* ------------------------------------------- */  
 
@@ -699,25 +683,17 @@ public:
   }
 
   bool IsFieldSet(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in IsFieldSet");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return OGR_F_IsFieldSet(self, i);
-    }
-    return (bool)0;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return OGR_F_IsFieldSet(self, i);
+      return (bool)0;
   }
   /* ------------------------------------------- */  
       
   int GetFieldIndex(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldIndex");
-    else
-        return OGR_F_GetFieldIndex(self, name);
-    return 0;
+      return OGR_F_GetFieldIndex(self, name);
   }
 
   int GetFID() {
@@ -738,15 +714,11 @@ public:
 
 
   void UnsetField(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in UnsetField");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_UnsetField(self, i);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_UnsetField(self, i);
   }
 
   /* ---- SetField ----------------------------- */
@@ -757,15 +729,11 @@ public:
   }
 
   void SetField(const char* name, const char* value) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetField");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldString(self, i, value);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldString(self, i, value);
   }
   %clear (const char* value );
   
@@ -774,15 +742,11 @@ public:
   }
   
   void SetField(const char* name, int value) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetFieldInteger");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldInteger(self, i, value);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldInteger(self, i, value);
   }
   
   void SetField(int id, double value) {
@@ -790,15 +754,11 @@ public:
   }
   
   void SetField(const char* name, double value) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetFieldDouble");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldDouble(self, i, value);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldDouble(self, i, value);
   }
   
   void SetField( int id, int year, int month, int day,
@@ -812,17 +772,13 @@ public:
   void SetField(const char* name, int year, int month, int day,
                              int hour, int minute, int second, 
                              int tzflag ) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetFieldDateTime");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldDateTime(self, i, year, month, day,
-                             hour, minute, second, 
-                             tzflag);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldDateTime(self, i, year, month, day,
+				 hour, minute, second, 
+				 tzflag);
   }
 
   /* ------------------------------------------- */  
@@ -846,19 +802,14 @@ public:
   }
   
   OGRFieldType GetFieldType(const char* name) {
-    if (name == NULL) {
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldType");
-	return (OGRFieldType)0;
-    } else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1) {
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-            return (OGRFieldType)0;
-        } else
-            return (OGRFieldType) OGR_Fld_GetType( 
-                            OGR_F_GetFieldDefnRef( self,  i )
-                                          );
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1) {
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  return (OGRFieldType)0;
+      } else
+	  return (OGRFieldType) OGR_Fld_GetType( 
+	      OGR_F_GetFieldDefnRef( self,  i )
+	      );
   }
   /* ------------------------------------------- */  
   
@@ -882,8 +833,8 @@ public:
   }
 
   %feature("kwargs") OGRFeatureDefnShadow;
-  OGRFeatureDefnShadow(const char* name=NULL) {
-    return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
+  OGRFeatureDefnShadow(const char* name_null_ok=NULL) {
+    return (OGRFeatureDefnShadow* )OGR_FD_Create(name_null_ok);
   }
   
   const char* GetName(){
@@ -900,11 +851,7 @@ public:
   }
 
   int GetFieldIndex(const char* name) {
-    if (name == NULL) {
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldIndex");
-	return 0;
-    } else
-	return OGR_FD_GetFieldIndex(self, name);
+      return OGR_FD_GetFieldIndex(self, name);
   }
   
   void AddFieldDefn(OGRFieldDefnShadow* defn) {
@@ -944,9 +891,9 @@ public:
   }
 
   %feature("kwargs") OGRFieldDefnShadow;
-  OGRFieldDefnShadow( const char* name="unnamed", 
+  OGRFieldDefnShadow( const char* name_null_ok="unnamed", 
                       OGRFieldType field_type=OFTString) {
-    return (OGRFieldDefnShadow*) OGR_Fld_Create(name, field_type);
+    return (OGRFieldDefnShadow*) OGR_Fld_Create(name_null_ok, field_type);
   }
 
   const char * GetName() {
@@ -1153,11 +1100,11 @@ public:
   }
 
 /* The geometry now owns an inner geometry */
-%apply SWIGTYPE *DISOWN {OGRGeometryShadow* other};
-  OGRErr AddGeometryDirectly( OGRGeometryShadow* other ) {
-    return OGR_G_AddGeometryDirectly( self, other );
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow* other_disown};
+  OGRErr AddGeometryDirectly( OGRGeometryShadow* other_disown ) {
+    return OGR_G_AddGeometryDirectly( self, other_disown );
   }
-%clear OGRGeometryShadow* other;
+%clear OGRGeometryShadow* other_disown;
 
   OGRErr AddGeometry( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometry( self, other );
