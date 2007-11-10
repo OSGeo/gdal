@@ -89,8 +89,9 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 {
     CPLLocaleC  oLocaleForcer;
 
-    /* notdef: should add a bunch of error checking here */
-
+/* -------------------------------------------------------------------- */
+/*      Does this format support creation.                              */
+/* -------------------------------------------------------------------- */
     if( pfnCreate == NULL )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -99,30 +100,50 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
         return NULL;
     }
-    else
+/* -------------------------------------------------------------------- */
+/*      Do some rudimentary argument checking.                          */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 )
     {
-        GDALDataset *poDS;
-
-        CPLDebug( "GDAL", "GDALDriver::Create(%s,%s,%d,%d,%d,%s,%p)",
-                  GetDescription(), pszFilename, nXSize, nYSize, nBands, 
-                  GDALGetDataTypeName( eType ), 
-                  papszParmList );
-              
-        poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
-                          papszParmList );
-
-        if( poDS != NULL )
-        {
-            if( poDS->GetDescription() == NULL
-                || strlen(poDS->GetDescription()) == 0 )
-                poDS->SetDescription( pszFilename );
-
-            if( poDS->poDriver == NULL )
-                poDS->poDriver = this;
-        }
-
-        return poDS;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create %dx%d dataset is illegal,"
+                  "sizes must be larger than zero.",
+                  nXSize, nYSize );
+        return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Make sure we cleanup if there is an existing dataset of this    */
+/*      name.                                                           */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = QuietDelete( pszFilename );
+    if( eErr != CE_None )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Proceed with creation.                                          */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDS;
+
+    CPLDebug( "GDAL", "GDALDriver::Create(%s,%s,%d,%d,%d,%s,%p)",
+              GetDescription(), pszFilename, nXSize, nYSize, nBands, 
+              GDALGetDataTypeName( eType ), 
+              papszParmList );
+    
+    poDS = pfnCreate( pszFilename, nXSize, nYSize, nBands, eType,
+                      papszParmList );
+
+    if( poDS != NULL )
+    {
+        if( poDS->GetDescription() == NULL
+            || strlen(poDS->GetDescription()) == 0 )
+            poDS->SetDescription( pszFilename );
+        
+        if( poDS->poDriver == NULL )
+            poDS->poDriver = this;
+    }
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -490,6 +511,14 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
+/*      Make sure we cleanup if there is an existing dataset of this    */
+/*      name.                                                           */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr = QuietDelete( pszFilename );
+    if( eErr != CE_None )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*      If the format provides a CreateCopy() method use that,          */
 /*      otherwise fallback to the internal implementation using the     */
 /*      Create() method.                                                */
@@ -539,6 +568,40 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
     return (GDALDatasetH) ((GDALDriver *) hDriver)->
         CreateCopy( pszFilename, (GDALDataset *) hSrcDS, bStrict, papszOptions,
                     pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                            QuietDelete()                             */
+/************************************************************************/
+
+/**
+ * Delete dataset if found.
+ *
+ * This is a helper method primarily used by Create() and
+ * CreateCopy() to predelete any dataset of the name soon to be
+ * created.  It will attempt to delete the named dataset if
+ * one is found, otherwise it does nothing.  An error is only
+ * returned if the dataset is found but the delete fails.
+ *
+ * This is a static method and it doesn't matter what driver instance
+ * it is invoked on.  It will attempt to discover the correct driver
+ * using Identify().
+ *
+ * @param pszName the dataset name to try and delete.
+ * @return CE_None if the dataset does not exist, or is deleted without issues.
+ */
+
+CPLErr GDALDriver::QuietDelete( const char *pszName )
+
+{
+    GDALDriver *poDriver = (GDALDriver*) GDALIdentifyDriver( pszName, NULL );
+
+    if( poDriver == NULL )
+        return CE_None;
+
+    CPLDebug( "GDAL", "QuietDelete(%s) invoking Delete()", pszName );
+
+    return poDriver->Delete( pszName );
 }
 
 /************************************************************************/
