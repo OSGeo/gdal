@@ -58,10 +58,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     our $VERSION = '0.21';
     sub PackCharacter {
 	$_ = shift;
+	$is_big_endian = unpack("h*", pack("s", 1)) =~ /01/; # from Programming Perl
 	if ($_ == $Geo::GDAL::Const::GDT_Byte) { return 'C'; }
-	if ($_ == $Geo::GDAL::Const::GDT_UInt16) { return 'n'; }
+	if ($_ == $Geo::GDAL::Const::GDT_UInt16) { return $is_big_endian ? 'n': 'v'; }
 	if ($_ == $Geo::GDAL::Const::GDT_Int16) { return 's'; }
-	if ($_ == $Geo::GDAL::Const::GDT_UInt32) { return 'N'; }
+	if ($_ == $Geo::GDAL::Const::GDT_UInt32) { return $is_big_endian ? 'N' : 'V'; }
 	if ($_ == $Geo::GDAL::Const::GDT_Int32) { return 'l'; }
 	if ($_ == $Geo::GDAL::Const::GDT_Float32) { return 'f'; }
 	if ($_ == $Geo::GDAL::Const::GDT_Float64) { return 'd'; }
