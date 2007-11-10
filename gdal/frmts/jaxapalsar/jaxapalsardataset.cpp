@@ -427,8 +427,9 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
-    if ( EQUALN((char *)(poOpenInfo->pabyHeader + 60),"AL", 2) &&
-         EQUALN((char *)(poOpenInfo->pszFilename + 4), "ALPSR", 5) )
+    if ( !EQUALN((char *)(poOpenInfo->pabyHeader + 60),"AL", 2) 
+         || !EQUALN(CPLGetBasename((char *)(poOpenInfo->pszFilename)) + 4, 
+                    "ALPSR", 5) )
     {
         return 0;
     }
