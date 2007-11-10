@@ -115,6 +115,8 @@ core_dir:
 frmts_dir:
 	cd frmts/iso8211
 	$(MAKE) /f makefile.vc
+	cd ..\sdts
+	$(MAKE) /f makefile.vc
 	cd ..
 	$(MAKE) /f makefile.vc
 	cd ..
@@ -135,9 +137,7 @@ vb6_dir:
 	cd ..
 	
 ogr_dir:      port_dir
-	cd ..\sdts
-	$(MAKE) /f makefile.vc
-	cd ..\..\ogr
+	cd ogr
 !IFDEF INCLUDE_OGR_FRMTS
 	$(MAKE) /f makefile.vc ogr.lib frmts
 !ELSE
