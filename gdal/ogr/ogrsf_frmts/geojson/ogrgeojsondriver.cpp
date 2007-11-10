@@ -70,13 +70,6 @@ OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate )
 OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
                                        char** papszOptions )
 {
-    if( bUpdate )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "[GeoJSON] Update access not supported." );
-        return NULL;
-    }
-
     OGRGeoJSONDataSource* poDS = NULL;
     poDS = new OGRGeoJSONDataSource();
 
@@ -111,6 +104,14 @@ OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
     {
         delete poDS;
         poDS= NULL;
+    }
+
+    if( NULL != poDS && bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "GeoJSON Driver doesn't support update." );
+        delete poDS;
+        return NULL;
     }
 
     return poDS;
