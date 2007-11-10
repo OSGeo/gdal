@@ -363,6 +363,9 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HDF5Image();
 #endif
 
+#ifdef FRMT_adrg
+    GDALRegister_ADRG();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
