@@ -183,7 +183,12 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
 
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
-        CPLAddXMLChild( psTree, psMD );
+    {
+        if( psMD->psChild == NULL )
+            CPLDestroyXMLNode( psMD );
+        else
+            CPLAddXMLChild( psTree, psMD );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      We don't want to return anything if we had no metadata to       */
