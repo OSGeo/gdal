@@ -103,8 +103,8 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_CEOS();
 #endif
     
-#ifdef FRMT_palsar
-    GDALRegister_PALSAR();
+#ifdef FRMT_jaxapalsar
+    GDALRegister_PALSARJaxa();
 #endif
     
 #ifdef FRMT_gff
@@ -232,6 +232,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_DOQ2();
     GDALRegister_ENVI();
     GDALRegister_EHdr();
+    GDALRegister_GenBin();
     GDALRegister_PAux();
     GDALRegister_MFF();
     GDALRegister_HKV();
