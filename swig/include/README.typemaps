@@ -82,7 +82,21 @@ out OGRErr -
 out (char **CSL) - Required - The return value is a list that is copied
 into a list in the target language and then CSLDestroyed
 
+-------------------
 
+Optional checks against nullness. Some language bindings (e.g. Perl's)
+map undefined variables into NULLs, which cause core dumps if allowed to
+go the C API.
 
-
-
+%typemap(check) (const char *pszNewDesc)
+%typemap(check) (const char *cap)
+%typemap(check) (const char* statement)
+%typemap(check) (OGRFeatureShadow *feature)
+%typemap(check) (OGRFieldDefnShadow* field_def)
+%typemap(check) (OGRFieldDefnShadow* defn)
+%typemap(check) OGRGeometryShadow* geom
+%typemap(check) OGRGeometryShadow* other
+%typemap(check) OGRGeometryShadow* other_disown
+%typemap(check) OSRCoordinateTransformationShadow*
+%typemap(check) (const char *name)
+%typemap(check) (char *method)
