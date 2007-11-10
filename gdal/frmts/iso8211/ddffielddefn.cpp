@@ -263,6 +263,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 /* -------------------------------------------------------------------- */
     switch( pachFieldArea[0] )
     {
+      case ' ': /* for ADRG, DIGEST USRP, DIGEST ASRP files */
       case '0':
         _data_struct_code = dsc_elementary;
         break;
@@ -289,6 +290,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 
     switch( pachFieldArea[1] )
     {
+      case ' ': /* for ADRG, DIGEST USRP, DIGEST ASRP files */
       case '0':
         _data_type_code = dtc_char_string;
         break;

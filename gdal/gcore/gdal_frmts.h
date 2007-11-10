@@ -124,6 +124,7 @@ void CPL_DLL GDALRegister_PALSARJaxa(void);
 void CPL_DLL GDALRegister_DIMAP();
 void CPL_DLL GDALRegister_GFF(void);
 void CPL_DLL GDALRegister_COSAR(void);
+void CPL_DLL GDALRegister_ADRG(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
