@@ -94,8 +94,7 @@ int OGRGeoJSONDataSource::Open( const char* pszName )
     }
     else
     {
-        CPLDebug( "GeoJSON",
-                  "Unknown datasource type. Use .geojson file, text input or URL" );
+        Clear();
         return FALSE;
     }
 
