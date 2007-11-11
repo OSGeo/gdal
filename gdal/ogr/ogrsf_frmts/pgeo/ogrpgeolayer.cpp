@@ -423,6 +423,10 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
 
     int nSHPType = pabyShape[0];
 
+    CPLDebug( "PGeo",
+              "Shape type read from PGeo data is nSHPType = %d",
+              nSHPType );
+
 /* ==================================================================== */
 /*  Extract vertices for a Polygon or Arc.				*/
 /* ==================================================================== */
