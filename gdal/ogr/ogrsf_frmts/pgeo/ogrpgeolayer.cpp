@@ -210,6 +210,8 @@ OGRFeature *OGRPGeoLayer::GetNextFeature()
 OGRFeature *OGRPGeoLayer::GetNextRawFeature()
 
 {
+    OGRErr err = OGRERR_NONE;
+
     if( GetStatement() == NULL )
         return NULL;
 
@@ -267,9 +269,17 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
         OGRGeometry *poGeom = NULL;
 
         if( pabyShape != NULL )
-            createFromShapeBin( pabyShape, &poGeom, nBytes );
+        {
+            err = createFromShapeBin( pabyShape, &poGeom, nBytes );
+            if( OGRERR_NONE != err )
+            {
+                CPLDebug( "PGeo",
+                          "Translation shape binary to OGR geometry failed (FID=%d)",
+                          poFeature->GetFID() );
+            }
+        }
 
-        if( poGeom != NULL )
+        if( poGeom != NULL && OGRERR_NONE == err )
         {
             poGeom->assignSpatialReference( poSRS );
             poFeature->SetGeometryDirectly( poGeom );
