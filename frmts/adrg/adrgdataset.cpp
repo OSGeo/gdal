@@ -929,7 +929,7 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
     
     BAD = subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 12, NULL);
     {
-        char* c = (char*) strchr(BAD, ' ');
+        char* c = strchr((const char*) BAD, ' ');
         if (c)
             *c = 0;
     }
@@ -1159,7 +1159,7 @@ CPLString ADRGDataset::GetGENFromTHF(const char* fileName)
                 }
                 
                 CPLString subFileName(subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 300, NULL));
-                char* c = (char*) strchr(subFileName, ' ');
+                char* c = strchr((const char*) subFileName, ' ');
                 if (c)
                     *c = 0;
                 if (EQUAL(CPLGetExtension((const char*)subFileName), "GEN"))
