@@ -293,26 +293,29 @@ CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
 static unsigned int WriteSubFieldStr(FILE* fd, const char* pszStr, unsigned int size)
 {
-    char str[size+1];
+    char* str = (char*)CPLMalloc(size+1);
     memset(str, ' ', size);
     if (strlen(pszStr) > size)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "strlen(pszStr) > size");
+        CPLFree(str);
         return size;
     }
     strcpy(str, pszStr);
     str[strlen(pszStr)] = ' ';
     VSIFWriteL(str, 1, size, fd);
+    CPLFree(str);
     return size;
 }
 
 static unsigned int WriteSubFieldInt(FILE* fd, int val, unsigned int size)
 {
-    char str[size+1];
+    char* str = (char*)CPLMalloc(size+1);
     char formatStr[32];
     sprintf( formatStr, "%%0%dd", size);
     sprintf( str, formatStr, val);
     VSIFWriteL(str, 1, size, fd);
+    CPLFree(str);
     return size;
 }
 
@@ -371,7 +374,7 @@ static void FinishWriteLeader(FILE* fd, int beginPos, int sizeFieldLength, int s
     VSIFSeekL(fd, beginPos, SEEK_SET);
     
     int nLeaderSize = 24;
-    char szLeader[nLeaderSize+1];
+    char szLeader[24+1];
     memset(szLeader, ' ', nLeaderSize);
     
     int i;
@@ -425,7 +428,7 @@ static void FinishWriteHeader(FILE* fd, int beginPos, int sizeFieldLength, int s
     VSIFSeekL(fd, beginPos, SEEK_SET);
     
     int nLeaderSize = 24;
-    char szLeader[nLeaderSize+1];
+    char szLeader[24+1];
     memset(szLeader, ' ', nLeaderSize);
     
     int i;
@@ -926,7 +929,7 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
     
     BAD = subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 12, NULL);
     {
-        char* c = strchr(BAD, ' ');
+        char* c = (char*) strchr(BAD, ' ');
         if (c)
             *c = 0;
     }
@@ -1156,7 +1159,7 @@ CPLString ADRGDataset::GetGENFromTHF(const char* fileName)
                 }
                 
                 CPLString subFileName(subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 300, NULL));
-                char* c = strchr(subFileName, ' ');
+                char* c = (char*) strchr(subFileName, ' ');
                 if (c)
                     *c = 0;
                 if (EQUAL(CPLGetExtension((const char*)subFileName), "GEN"))
