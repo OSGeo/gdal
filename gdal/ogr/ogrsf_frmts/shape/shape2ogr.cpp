@@ -870,6 +870,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
+        CPLFree( panRingStart );
         CPLFree( padfX );
         CPLFree( padfY );
         CPLFree( padfZ );
