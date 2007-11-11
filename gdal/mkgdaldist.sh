@@ -104,6 +104,16 @@ cd gdal/swig/csharp
 cd ${CWD}
 
 #
+# Generate SWIG interface for Perl
+#
+echo "* Generating SWIG Perl interfaces..."
+CWD=${PWD}
+cd gdal/swig/perl
+rm *wrap*
+make generate
+cd ${CWD}
+
+#
 # Make distribution packages
 #
 echo "* Making distribution packages..."
