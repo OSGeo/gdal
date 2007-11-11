@@ -1,7 +1,7 @@
 BINDING = perl
 SWIGDEFINES = -DPERL_CPAN_NAMESPACE
 
-include ../../GDALmake.opt 
+#include ../../GDALmake.opt 
 include ../SWIGmake.base
 
 all:
@@ -26,7 +26,8 @@ generate: ${WRAPPERS}
 	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
 
 Makefile_Geo__GDAL:
-	PREFIX=${INST_PREFIX} perl Makefile.PL
+#	PREFIX=${INST_PREFIX} perl Makefile.PL
+	perl Makefile.PL
 
 build: Makefile_Geo__GDAL
 	$(MAKE) -f Makefile_Geo__GDAL
