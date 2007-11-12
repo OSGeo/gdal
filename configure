@@ -18838,7 +18838,7 @@ echo "$as_me: error: --with-pg argument is a not an executable file.  It should 
 echo "${ECHO_T}yes" >&6
 
   ax_save_LIBS="${LIBS}"
-  LIBS="-L`$PG_CONFIG --libdir` -lpq"
+  LIBS=-L`$PG_CONFIG --libdir`" -lpq"
   echo "$as_me:$LINENO: checking for PQconnectdb in -lpq" >&5
 echo $ECHO_N "checking for PQconnectdb in -lpq... $ECHO_C" >&6
 if test "${ac_cv_lib_pq_PQconnectdb+set}" = set; then
@@ -18911,8 +18911,8 @@ fi
   LIBS="${ax_save_LIBS}"
 
   if test "${HAVE_PG}" = "yes" ; then
-    LIBS="-L`$PG_CONFIG --libdir` -lpq $LIBS"
-    PG_INC="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
+    LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
+    PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
 
     PG_EXTRA_DEC=""
 
