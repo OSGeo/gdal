@@ -51,7 +51,14 @@ def osr_url_1():
         if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported.":
             return 'skip'
         else:
+            gdaltest.post_reason( 'exception: ' + str(msg) )
             return 'fail'
+
+    expected_wkt = ''
+
+    if not gdaltest.equal_srs_from_wkt( expected_wkt,
+                                        srs.ExportToWkt() ):
+        return 'fail'
 
     return 'success'
 
