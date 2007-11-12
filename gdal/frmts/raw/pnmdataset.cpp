@@ -273,6 +273,13 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for world file.                                           */
+/* -------------------------------------------------------------------- */
+    poDS->bGeoTransformValid = 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                           poDS->adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
@@ -283,9 +290,6 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
-    poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                           poDS->adfGeoTransform );
     return( poDS );
 }
 
