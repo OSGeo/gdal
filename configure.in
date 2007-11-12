@@ -1397,7 +1397,7 @@ AC_ARG_WITH(xerces_lib,
 [  --with-xerces-lib=opts Xerces C++ link option(s)
                              ie. -L/usr/local/lib -lxerces-c1_6_0 -lpthread],,)
 
-if test "$with_xerces" = "" -o "$with_xerces" = "no" ; then
+if test "$with_xerces" = "no" ; then
 
   AC_MSG_RESULT([disabled])
 
