@@ -36,9 +36,11 @@ sys.path.append( '../pymod' )
 import gdaltest
 import osr
 
+expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
+
 
 def osr_url_1():
-    
+    """Depend on the Accepts headers that ImportFromUrl sets to request SRS from sr.org"""
     srs = osr.SpatialReference()
     import gdal
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' ) 
@@ -54,7 +56,6 @@ def osr_url_1():
             gdaltest.post_reason( 'exception: ' + str(msg) )
             return 'fail'
 
-    expected_wkt = ''
 
     if not gdaltest.equal_srs_from_wkt( expected_wkt,
                                         srs.ExportToWkt() ):
@@ -62,8 +63,33 @@ def osr_url_1():
 
     return 'success'
 
+def osr_url_2():
+    """Blissfully set request a URL that has OGC WKT"""
+    srs = osr.SpatialReference()
+    import gdal
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' ) 
+    try:
+        srs.ImportFromUrl( 'http://spatialreference.org/ref/epsg/4326/ogcwkt/' )
+    except AttributeError: # old-gen bindings don't have this method yet
+        return 'skip'
+    except Exception, msg:
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg() == "GDAL/OGR not compiled with libcurl support, remote requests not supported.":
+            return 'skip'
+        else:
+            gdaltest.post_reason( 'exception: ' + str(msg) )
+            return 'fail'
+
+
+    if not gdaltest.equal_srs_from_wkt( expected_wkt,
+                                        srs.ExportToWkt() ):
+        return 'fail'
+
+    return 'success'
+    
 gdaltest_list = [ 
     osr_url_1,
+    osr_url_2,
     None ]
 
 if __name__ == '__main__':
