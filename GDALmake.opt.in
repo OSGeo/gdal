@@ -38,7 +38,7 @@ C_PROFFLAGS =	-g3 -pg -DDEBUG
 
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
-LIBS	=	$(SDE_LIB) @LIBS@ $(DWG_LIBS) $(CURL_LIB)
+LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -176,6 +176,13 @@ HAVE_SQLITE = @HAVE_SQLITE@
 # JPEG2000 via Kakadu Support.
 #
 KAKDIR = @KAKDIR@
+
+ifneq (($KAKDIR),)
+ifeq ($(HAVE_LIBTOOL),yes)
+include $(GDAL_ROOT)/frmts/jp2kak/jp2kak.lst
+KAK_LIBS = $(KAK_OBJ)
+endif
+endif
 
 #
 # JPEG-2000 Support via JasPer library.
