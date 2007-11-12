@@ -1489,13 +1489,13 @@ HAVE_EXPAT=no
 AC_MSG_CHECKING([for Expat C++])
 
 AC_ARG_WITH(expat,
-    AS_HELP_STRING([--with-expat[=ARG]], [Include Expat support (for KML driver)]),,)
+    AS_HELP_STRING([--with-expat[=ARG]], [Include Expat support (for KML, GPX drivers)]),,)
 AC_ARG_WITH(expat_inc,
     AS_HELP_STRING([--with-expat-inc[=ARG]], [Expat include directory]),,)
 AC_ARG_WITH(expat_lib,
     AS_HELP_STRING([--with-expat-lib[=ARG]], [Expat link option(s)]),,)
 
-if test "$with_expat" = "" -o "$with_expat" = "no" ; then
+if test "$with_expat" = "no" ; then
 
   AC_MSG_RESULT([disabled])
 
