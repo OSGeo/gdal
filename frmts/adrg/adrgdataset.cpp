@@ -692,8 +692,8 @@ double ADRGDataset::GetLatitudeFromString(const char* str)
 
 ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record, int isGIN)
 {
-    int SCA;
-    int ZNA;
+    int SCA = 0;
+    int ZNA = 0;
     double PSP;
     int ARV;
     int BRV;
