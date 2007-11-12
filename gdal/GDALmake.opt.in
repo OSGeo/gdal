@@ -35,7 +35,7 @@ C_DBGFLAGS =	-g -DDEBUG
 CXX_PROFFLAGS =	-g3 -pg -DDEBUG 
 C_PROFFLAGS =	-g3 -pg -DDEBUG 
 
-LIBS	=	@LIBS@ $(DWG_LIBS) $(SDE_LIB) $(CURL_LIB) $(IDB_LIB)
+LIBS	=	@LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(SDE_LIB) $(CURL_LIB) $(IDB_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -171,6 +171,13 @@ HAVE_SQLITE = @HAVE_SQLITE@
 # JPEG2000 via Kakadu Support.
 #
 KAKDIR = @KAKDIR@
+
+ifneq (($KAKDIR),)
+ifeq ($(HAVE_LIBTOOL),yes)
+include $(GDAL_ROOT)/frmts/jp2kak/jp2kak.lst
+KAK_LIBS = $(KAK_OBJ)
+endif
+endif
 
 #
 # JPEG-2000 Support via JasPer library.
