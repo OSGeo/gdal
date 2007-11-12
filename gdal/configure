@@ -1054,7 +1054,7 @@ Optional Packages:
   --with-xerces-inc=dir Xerces C++ include directory
   --with-xerces-lib=opts Xerces C++ link option(s)
                              ie. -L/usr/local/lib -lxerces-c1_6_0 -lpthread
-  --with-expat=ARG      Include Expat support (for KML driver)
+  --with-expat=ARG      Include Expat support (for KML, GPX drivers)
   --with-expat-inc=ARG  Expat include directory
   --with-expat-lib=ARG  Expat link option(s)
   --with-odbc=ARG       Include ODBC support (ARG=no or path)
@@ -22725,7 +22725,7 @@ if test "${with_xerces_lib+set}" = set; then
 
 fi;
 
-if test "$with_xerces" = "" -o "$with_xerces" = "no" ; then
+if test "$with_xerces" = "no" ; then
 
   echo "$as_me:$LINENO: result: disabled" >&5
 echo "${ECHO_T}disabled" >&6
@@ -22842,7 +22842,7 @@ if test "${with_expat_lib+set}" = set; then
 
 fi;
 
-if test "$with_expat" = "" -o "$with_expat" = "no" ; then
+if test "$with_expat" = "no" ; then
 
   echo "$as_me:$LINENO: result: disabled" >&5
 echo "${ECHO_T}disabled" >&6
