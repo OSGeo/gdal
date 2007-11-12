@@ -37,6 +37,153 @@ CPL_C_START
 void	GDALRegister_GenBin(void);
 CPL_C_END
 
+/* ==================================================================== */
+/*      Table relating USGS and ESRI state plane zones.                 */
+/* ==================================================================== */
+static const int anUsgsEsriZones[] =
+{
+  101, 3101,
+  102, 3126,
+  201, 3151,
+  202, 3176,
+  203, 3201,
+  301, 3226,
+  302, 3251,
+  401, 3276,
+  402, 3301,
+  403, 3326,
+  404, 3351,
+  405, 3376,
+  406, 3401,
+  407, 3426,
+  501, 3451,
+  502, 3476,
+  503, 3501,
+  600, 3526,
+  700, 3551,
+  901, 3601,
+  902, 3626,
+  903, 3576,
+ 1001, 3651,
+ 1002, 3676,
+ 1101, 3701,
+ 1102, 3726,
+ 1103, 3751,
+ 1201, 3776,
+ 1202, 3801,
+ 1301, 3826,
+ 1302, 3851,
+ 1401, 3876,
+ 1402, 3901,
+ 1501, 3926,
+ 1502, 3951,
+ 1601, 3976,
+ 1602, 4001,
+ 1701, 4026,
+ 1702, 4051,
+ 1703, 6426,
+ 1801, 4076,
+ 1802, 4101,
+ 1900, 4126,
+ 2001, 4151,
+ 2002, 4176,
+ 2101, 4201,
+ 2102, 4226,
+ 2103, 4251,
+ 2111, 6351,
+ 2112, 6376,
+ 2113, 6401,
+ 2201, 4276,
+ 2202, 4301,
+ 2203, 4326,
+ 2301, 4351,
+ 2302, 4376,
+ 2401, 4401,
+ 2402, 4426,
+ 2403, 4451,
+ 2500,    0,
+ 2501, 4476,
+ 2502, 4501,
+ 2503, 4526,
+ 2600,    0,
+ 2601, 4551,
+ 2602, 4576,
+ 2701, 4601,
+ 2702, 4626,
+ 2703, 4651,
+ 2800, 4676,
+ 2900, 4701,
+ 3001, 4726,
+ 3002, 4751,
+ 3003, 4776,
+ 3101, 4801,
+ 3102, 4826,
+ 3103, 4851,
+ 3104, 4876,
+ 3200, 4901,
+ 3301, 4926,
+ 3302, 4951,
+ 3401, 4976,
+ 3402, 5001,
+ 3501, 5026,
+ 3502, 5051,
+ 3601, 5076,
+ 3602, 5101,
+ 3701, 5126,
+ 3702, 5151,
+ 3800, 5176,
+ 3900,    0,
+ 3901, 5201,
+ 3902, 5226,
+ 4001, 5251,
+ 4002, 5276,
+ 4100, 5301,
+ 4201, 5326,
+ 4202, 5351,
+ 4203, 5376,
+ 4204, 5401,
+ 4205, 5426,
+ 4301, 5451,
+ 4302, 5476,
+ 4303, 5501,
+ 4400, 5526,
+ 4501, 5551,
+ 4502, 5576,
+ 4601, 5601,
+ 4602, 5626,
+ 4701, 5651,
+ 4702, 5676,
+ 4801, 5701,
+ 4802, 5726,
+ 4803, 5751,
+ 4901, 5776,
+ 4902, 5801,
+ 4903, 5826,
+ 4904, 5851,
+ 5001, 6101,
+ 5002, 6126,
+ 5003, 6151,
+ 5004, 6176,
+ 5005, 6201,
+ 5006, 6226,
+ 5007, 6251,
+ 5008, 6276,
+ 5009, 6301,
+ 5010, 6326,
+ 5101, 5876,
+ 5102, 5901,
+ 5103, 5926,
+ 5104, 5951,
+ 5105, 5976,
+ 5201, 6001,
+ 5200, 6026,
+ 5200, 6076,
+ 5201, 6051,
+ 5202, 6051,
+ 5300,    0,
+ 5400,    0
+};
+
 /************************************************************************/
 /* ==================================================================== */
 /*				EHdrDataset				*/
@@ -54,13 +201,14 @@ class GenBinDataset : public RawDataset
     int         bHDRDirty;
     char      **papszHDR;
 
+    void        ParseCoordinateSystem( char ** );
+
   public:
     GenBinDataset();
     ~GenBinDataset();
     
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
     
     virtual char **GetFileList();
 
@@ -121,50 +269,6 @@ const char *GenBinDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
-/************************************************************************/
-
-CPLErr GenBinDataset::SetProjection( const char *pszSRS )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Reset coordinate system on the dataset.                         */
-/* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszSRS );
-
-    if( strlen(pszSRS) == 0 )
-        return CE_None;
-
-/* -------------------------------------------------------------------- */
-/*      Convert to ESRI WKT.                                            */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS( pszSRS );
-    char *pszESRI_SRS = NULL;
-
-    oSRS.morphToESRI();
-    oSRS.exportToWkt( &pszESRI_SRS );
-
-/* -------------------------------------------------------------------- */
-/*      Write to .prj file.                                             */
-/* -------------------------------------------------------------------- */
-    CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
-    FILE *fp;
-
-    fp = VSIFOpen( osPrjFilename.c_str(), "wt" );
-    if( fp != NULL )
-    {
-        VSIFWrite( pszESRI_SRS, 1, strlen(pszESRI_SRS), fp );
-        VSIFWrite( (void *) "\n", 1, 1, fp );
-        VSIFClose( fp );
-    }
-
-    CPLFree( pszESRI_SRS );
-
-    return CE_None;
-}
-
-/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -201,6 +305,117 @@ char **GenBinDataset::GetFileList()
     papszFileList = CSLAddString( papszFileList, osFilename );
 
     return papszFileList;
+}
+
+/************************************************************************/
+/*                       ParseCoordinateSystem()                        */
+/************************************************************************/
+
+void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
+
+{
+    const char *pszProjName = CSLFetchNameValue( papszHdr, "PROJECTION_NAME" );
+    OGRSpatialReference oSRS;
+
+    if( pszProjName == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Translate zone and parameters into numeric form.                */
+/* -------------------------------------------------------------------- */
+    int nZone = 0;
+    double adfProjParms[15];
+    const char *pszUnits = CSLFetchNameValue( papszHdr, "MAP_UNITS" );
+    const char *pszDatumName = CSLFetchNameValue( papszHdr, "DATUM_NAME" );
+
+    if( CSLFetchNameValue( papszHdr, "PROJECTION_ZONE" ) )
+        nZone = atoi(CSLFetchNameValue( papszHdr, "PROJECTION_ZONE" ));
+
+    memset( adfProjParms, 0, sizeof(adfProjParms) );
+    if( CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) )
+    {
+        int i;
+        char **papszTokens = CSLTokenizeString( 
+            CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) );
+
+        for( i = 0; i < 15 && papszTokens[i] != NULL; i++ )
+            adfProjParms[i] = CPLAtofM( papszTokens[i] );
+
+        CSLDestroy( papszTokens );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle projections.                                             */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszProjName,"UTM") && nZone != 0 )
+    {
+        // honestly, I'm just getting that the negative zone for 
+        // southern hemisphere is used.
+        oSRS.SetUTM( ABS(nZone), nZone > 0 );
+    }
+
+    else if( EQUAL(pszProjName,"State Plane") && nZone != 0 )
+    {
+        int		nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
+        int		i;
+        double          dfUnits = 0.0;
+        
+        for( i = 0; i < nPairs; i++ )
+        {
+            if( anUsgsEsriZones[i*2+1] == nZone )
+            {
+                nZone = anUsgsEsriZones[i*2];
+                break;
+            }
+            
+        }
+
+        if( EQUAL(pszUnits,"feet") )
+            dfUnits = CPLAtofM(SRS_UL_US_FOOT_CONV);
+        else if( EQUALN(pszUnits,"MET",3) )
+            dfUnits = 1.0;
+        else
+            pszUnits = NULL;
+
+        oSRS.SetStatePlane( nZone, 
+                            pszDatumName==NULL || !EQUAL(pszDatumName,"NAD27"),
+                            pszUnits, dfUnits );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup the geographic coordinate system.                         */
+/* -------------------------------------------------------------------- */
+    if( oSRS.GetAttrNode( "GEOGCS" ) == NULL )
+    {
+        if( pszDatumName != NULL 
+            && oSRS.SetWellKnownGeogCS( pszDatumName ) == OGRERR_NONE )
+        {
+            // good
+        }
+        else if( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ) 
+                 && CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS" )
+                 && CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS" ) )
+        {
+            double dfSemiMajor = CPLAtofM(CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS"));
+            double dfSemiMinor = CPLAtofM(CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS"));
+            
+            oSRS.SetGeogCS( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
+                            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
+                            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
+                            dfSemiMajor, 
+                            1.0 / (1.0 - dfSemiMajor/dfSemiMinor) );
+        }
+        else // fallback default.
+            oSRS.SetWellKnownGeogCS( "WGS84" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Convert to WKT.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszProjection );
+    pszProjection = NULL;
+    
+    oSRS.exportToWkt( &pszProjection );
 }
 
 /************************************************************************/
@@ -254,6 +469,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     
     VSIFReadL( achHeader, 1, sizeof(achHeader), fp );
     achHeader[999] = '\0';
+    VSIFSeekL( fp, 0, SEEK_SET );
 
     if( strstr( achHeader, "BANDS:" ) == NULL 
         || strstr( achHeader, "ROWS:" ) == NULL 
@@ -294,12 +510,21 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                    && (*pszLine == '\t' || *pszLine == ' ') )
             {
                 osPP += pszLine;
-                pszLine = CPLReadLine(fp);
+                pszLine = CPLReadLineL(fp);
             }
+            papszHdr = CSLAddString( papszHdr, osPP );
         }
         else
         {
-            papszHdr = CSLAddString( papszHdr, pszLine );
+            char *pszName;
+            CPLString osValue;
+            
+            osValue = CPLParseNameValue( pszLine, &pszName );
+            osValue.Trim();
+            
+            papszHdr = CSLSetNameValue( papszHdr, pszName, osValue );
+            CPLFree( pszName );
+            
             pszLine = CPLReadLineL( fp );
         }
     }
@@ -443,78 +668,31 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get geotransform.                                               */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+    if( CSLFetchNameValue(papszHdr,"UL_X_COORDINATE") != NULL
+        && CSLFetchNameValue(papszHdr,"UL_Y_COORDINATE") != NULL
+        && CSLFetchNameValue(papszHdr,"LR_X_COORDINATE") != NULL
+        && CSLFetchNameValue(papszHdr,"LR_Y_COORDINATE") != NULL )
     {
+        double dfULX = CPLAtofM(CSLFetchNameValue(papszHdr,"UL_X_COORDINATE"));
+        double dfULY = CPLAtofM(CSLFetchNameValue(papszHdr,"UL_Y_COORDINATE"));
+        double dfLRX = CPLAtofM(CSLFetchNameValue(papszHdr,"LR_X_COORDINATE"));
+        double dfLRY = CPLAtofM(CSLFetchNameValue(papszHdr,"LR_Y_COORDINATE"));
+
+        poDS->adfGeoTransform[1] = (dfLRX - dfULX) / (poDS->nRasterXSize-1);
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = (dfLRY - dfULY) / (poDS->nRasterYSize-1);
+
+        poDS->adfGeoTransform[0] = dfULX - poDS->adfGeoTransform[1] * 0.5;
+        poDS->adfGeoTransform[3] = dfULY - poDS->adfGeoTransform[5] * 0.5;
+
         poDS->bGotTransform = TRUE;
-
-        if( bCenter )
-        {
-            poDS->adfGeoTransform[0] = dfULXMap - dfXDim * 0.5;
-            poDS->adfGeoTransform[1] = dfXDim;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[3] = dfULYMap + dfYDim * 0.5;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->adfGeoTransform[5] = - dfYDim;
-        }
-        else
-        {
-            poDS->adfGeoTransform[0] = dfULXMap;
-            poDS->adfGeoTransform[1] = dfXDim;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[3] = dfULYMap;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->adfGeoTransform[5] = - dfYDim;
-        }
     }
-    
-    if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, 0, 
-                               poDS->adfGeoTransform );
-
-    if( !poDS->bGotTransform )
-        poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "wld", 
-                               poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
-/*      Check for a .prj file.                                          */
+/*      Try and parse the coordinate system.                            */
 /* -------------------------------------------------------------------- */
-    const char  *pszPrjFilename = CPLFormCIFilename( osPath, osName, "prj" );
-
-    fp = VSIFOpen( pszPrjFilename, "r" );
-    if( fp != NULL )
-    {
-        char	**papszLines;
-        OGRSpatialReference oSRS;
-
-        VSIFClose( fp );
-        
-        papszLines = CSLLoad( pszPrjFilename );
-
-        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
-        {
-            // If geographic values are in seconds, we must transform. 
-            // Is there a code for minutes too? 
-            if( oSRS.IsGeographic() 
-                && EQUAL(OSR_GDS( papszLines, "Units", ""), "DS") )
-            {
-                poDS->adfGeoTransform[0] /= 3600.0;
-                poDS->adfGeoTransform[1] /= 3600.0;
-                poDS->adfGeoTransform[2] /= 3600.0;
-                poDS->adfGeoTransform[3] /= 3600.0;
-                poDS->adfGeoTransform[4] /= 3600.0;
-                poDS->adfGeoTransform[5] /= 3600.0;
-            }
-
-            CPLFree( poDS->pszProjection );
-            oSRS.exportToWkt( &(poDS->pszProjection) );
-        }
-
-        CSLDestroy( papszLines );
-    }
-#endif
+    poDS->ParseCoordinateSystem( papszHdr );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -544,17 +722,9 @@ void GDALRegister_GenBin()
         
         poDriver->SetDescription( "GenBin" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ESRI .hdr Labelled" );
+                                   "Generic Binary (.hdr Labelled)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#GenBin" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32 Float32" );
-
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
-"<CreationOptionList>"
-"   <Option name='NBITS' type='int' description='Special pixel bits (1-7)'/>"
-"</CreationOptionList>" );
-
         poDriver->pfnOpen = GenBinDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
