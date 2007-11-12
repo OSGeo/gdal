@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 SUBDIRS-yes	:= \
 	generic avc bna csv dgn geojson gml gmt mem kml \
-	mitab ntf rec s57 sdts shape tiger vrt
+	mitab ntf gpx rec s57 sdts shape tiger vrt
 
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
