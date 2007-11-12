@@ -334,6 +334,7 @@ void CPL_DLL RegisterOGRSDE();
 void CPL_DLL RegisterOGRIDB();
 void CPL_DLL RegisterOGRGMT();
 void CPL_DLL RegisterOGRBNA();
+void CPL_DLL RegisterOGRGPX();
 
 CPL_C_END
 

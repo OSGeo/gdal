@@ -1,0 +1,91 @@
+<html>
+<head>
+<title>GPX - GPS Exchange Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GPX - GPS Exchange Format</h1>
+
+GPX (the GPS Exchange Format) is a light-weight XML data format for the interchange of GPS data (waypoints, routes, and tracks) between applications and Web services on the Internet.<p>
+
+OGR has support for GPX reading (if GDAL is build with <i>expat</i> library support) and writing.<p>
+
+The OGR driver supports reading and writing of all the GPX feature types :
+<ul>
+<li>waypoints (layer of features of OGR type wkbPoint)</li>
+<li>routes (layer of features of OGR type wkbLineString)</li>
+<li>tracks (layer of features of OGR type wkbMultiLineString)</li>
+</ul>
+
+All coordinates are relative to the WGS84 datum (EPSG:4326).<p>
+
+If the environment variable GPX_ELE_AS_25D is set to YES, the elevation element will
+be used to set the Z coordinates of waypoints, route points and track points.<p>
+
+The OGR/GPX reads and writes the GPX attributes for the waypoints, routes and tracks,
+but not the attributes of route points and track points, as they cannot be
+fit into the OGR Simple Feature model.<p>
+
+<p> 
+
+<h2>Creation Issues</h2>
+
+On export all layers are written to a single GPX file. Update of existing
+files is not currently supported.<p>
+If the output file already exits, the writing will not occur. You have to delete the existing file first.<p>
+
+Supported geometries :
+<ul>
+<li>Features of type wkbPoint/wkbPoint25D are written in the waypoint element.</li>
+<li>Features of type wkbLineString/wkbLineString25D are written in the route element.</li>
+<li>Features of type wkbMultiLineString/wkbMultiLineString25D are written in the track element.</li>
+<li>Other type of geometries are not supported.</li>
+</ul>
+<p>
+
+For route points and tracks points, if there is a Z coordinate, it is used to fill the elevation element
+of the corresponding points.<p>
+
+The GPX writer supports the following creation options (layer options):
+<ul>
+<li> <b>FORCE_GPX_TRACK</b>:
+By default when writting a layer whose features are of type wkbLineString, the GPX driver
+chooses to write them as routes. If FORCE_GPX_TRACK=YES is specified, they will be written
+as tracks.<p>
+<li> <b>FORCE_GPX_ROUTE</b>:
+By default when writting a layer whose features are of type wkbMultiLineString, the GPX driver
+chooses to write them as tracks. If FORCE_GPX_ROUTE=YES is specified, they will be written
+as routes, provided that the multilines are composed of only one single line.<p>
+</ul>
+<p>
+
+Waypoints, routes and tracks must be written into that order to be valid against the XML Schema.
+
+
+<h2>Example</h2>
+
+The ogrinfo utility can be used to dump the content of a GPX datafile :
+
+<pre>
+ogrinfo -ro -al input.gpx
+</pre>
+
+<P>
+The ogr2ogr utility can be used to do GPX to GPX translation :
+
+<pre>
+ogr2ogr -f GPX output.gpx input.gpx
+
+</pre>
+
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="http://www.topografix.com/gpx.asp">Home page for GPX format</a><p>
+<li> <a href="http://www.topografix.com/GPX/1/1/">GPX 1.1 format documentation</a><p>
+</ul>
+
+</body>
+</html>
