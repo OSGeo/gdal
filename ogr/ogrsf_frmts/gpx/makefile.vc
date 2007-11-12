@@ -6,10 +6,8 @@ GDAL_ROOT	=	..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IFDEF EXPAT_DIR
-OBJ	=	$(EXPAT_OBJ) $(OGR_OBJ)
 EXTRAFLAGS =	-I.. -I..\.. $(EXPAT_INCLUDE) -DHAVE_EXPAT=1 
 !ELSE
-OBJ	=	$(OGR_OBJ)
 EXTRAFLAGS =	-I.. -I..\..
 !ENDIF
 
@@ -17,6 +15,4 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj *.pdb
-
-
 
