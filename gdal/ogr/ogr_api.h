@@ -92,6 +92,8 @@ CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH );
 CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH );
 #endif
 
+char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH );
+
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
                                              OGRSpatialReferenceH );
 OGRSpatialReferenceH CPL_DLL OGR_G_GetSpatialReference( OGRGeometryH );
