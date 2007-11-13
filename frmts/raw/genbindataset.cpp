@@ -662,7 +662,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( 
             i+1, new RawRasterBand( poDS, i+1, poDS->fpImage,
                                     nBandOffset * i, nPixelOffset, nLineOffset,
-                                    eDataType, bNative ) );
+                                    eDataType, bNative, TRUE ) );
     }
 
 /* -------------------------------------------------------------------- */
