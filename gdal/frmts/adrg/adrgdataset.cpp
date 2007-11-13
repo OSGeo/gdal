@@ -1930,7 +1930,7 @@ void GDALRegister_ADRG()
         
         poDriver->SetDescription( "ADRG" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "ARC Digitilized Raster Graphics" );
+                                   "ARC Digitized Raster Graphics" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#ADRG" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
