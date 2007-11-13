@@ -1089,6 +1089,10 @@ public:
   const char * ExportToGML() {
     return (const char *) OGR_G_ExportToGML(self);
   }
+  
+  const char * ExportToKML() {
+    return (const char *) OGR_G_ExportToKML(self);
+  }
 
   %feature("kwargs") AddPoint;
   void AddPoint(double x, double y, double z = 0) {

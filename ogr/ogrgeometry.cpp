@@ -1419,6 +1419,27 @@ char *OGRGeometry::exportToGML() const
 }
 
 /************************************************************************/
+/*                            exportToKML()                             */
+/************************************************************************/
+
+/**
+ * \fn char *OGRGeometry::exportToKML() const;
+ *
+ * Convert a geometry into KML format.
+ *
+ * The returned string should be freed with CPLFree() when no longer required.
+ *
+ * This method is the same as the C function OGR_G_ExportToKML().
+ *
+ * @return A KML fragment or NULL in case of error.
+ */
+
+char *OGRGeometry::exportToKML() const
+{
+    return OGR_G_ExportToKML( (OGRGeometryH) this );
+}
+
+/************************************************************************/
 /*                 OGRSetGenerate_DB2_V72_BYTE_ORDER()                  */
 /*                                                                      */
 /*      This is a special entry point to enable the hack for            */
