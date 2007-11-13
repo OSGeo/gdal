@@ -47,7 +47,7 @@ TigerPoint::~TigerPoint()
 /************************************************************************/
 /*                             SetModule()                              */
 /************************************************************************/
-int TigerPoint::SetModule( const char * pszModule, char *pszFileCode )
+int TigerPoint::SetModule( const char * pszModule, const char *pszFileCode )
 {
     if( !OpenFile( pszModule, pszFileCode ) )
         return FALSE;
@@ -123,7 +123,7 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
 OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature, 
                                   TigerRecordInfo *psRTInfo,
                                   int pointIndex,
-                                  char *pszFileCode)
+                                  const char *pszFileCode)
 
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];

@@ -90,7 +90,7 @@ char * TigerVersionString( TigerVersion );
 /*****************************************************************************/
 
 typedef struct TigerFieldInfo {
-  char         *pszFieldName;   // name of the field
+  const char    *pszFieldName;  // name of the field
   char          cFmt;           // format of the field ('L' or 'R')
   char          cType;          // type of the field ('A' or 'N')
   OGRFieldType  OGRtype;        // OFTType of the field (OFTInteger, OFTString, ...?)
@@ -325,7 +325,7 @@ class TigerPoint : public TigerFileBase
 
  public:
   virtual int         SetModule( const char *,
-                                 char *pszFileCode );
+                                 const char *pszFileCode );
 
   virtual OGRFeature *GetFeature( int              nRecordId,
                                   TigerRecordInfo *psRTInfo,
@@ -336,7 +336,7 @@ class TigerPoint : public TigerFileBase
   virtual OGRErr CreateFeature( OGRFeature      *poFeature,
                                 TigerRecordInfo *psRTInfo,
                                 int nIndex,
-                                char *pszFileCode );
+                                const char *pszFileCode );
 
 };
 
