@@ -105,6 +105,7 @@ class CPL_DLL OGRGeometry
     virtual void   dumpReadable( FILE *, const char * = NULL ) const;
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML() const;
+	virtual char * exportToKML() const;
     virtual GEOSGeom exportToGEOS() const;
     virtual void closeRings();
 
