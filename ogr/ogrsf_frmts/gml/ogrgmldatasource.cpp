@@ -129,7 +129,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        int nRead = VSIFRead( szHeader, 1, sizeof(szHeader), fp );
+        size_t nRead = VSIFRead( szHeader, 1, sizeof(szHeader), fp );
         if (nRead <= 0)
         {
             VSIFClose( fp );
