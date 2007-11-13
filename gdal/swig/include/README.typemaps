@@ -99,4 +99,5 @@ go the C API.
 %typemap(check) OGRGeometryShadow* other_disown
 %typemap(check) OSRCoordinateTransformationShadow*
 %typemap(check) (const char *name)
+%typemap(check) (const char *request)
 %typemap(check) (char *method)
