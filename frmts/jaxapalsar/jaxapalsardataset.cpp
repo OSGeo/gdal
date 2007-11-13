@@ -552,7 +552,6 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
         strlen(pszSuffix) + 5 );
     sprintf( pszLeaderFilename, "%s%sLED%s", 
              CPLGetDirname( poOpenInfo->pszFilename ) , SEP_STRING, pszSuffix );
-    printf("opening leader: %s\n", pszLeaderFilename);
 
     FILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );
     /* check if the leader is actually present */
