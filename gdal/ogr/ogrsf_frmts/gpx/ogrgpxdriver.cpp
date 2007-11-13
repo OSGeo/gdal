@@ -127,6 +127,8 @@ int OGRGPXDriver::TestCapability( const char * pszCap )
 void RegisterOGRGPX()
 
 {
+    if (! GDAL_CHECK_VERSION("OGR/GPX driver"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGPXDriver );
 }
 
