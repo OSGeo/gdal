@@ -915,8 +915,7 @@ dnl We assume the user will have libjpeg and libz from other sources when
 dnl linking against static HDF4 libraries. 
 dnl ---------------------------------------------------------------------------
 
-HDF4_INCLUDE=
-export HDF4_INCLUDE
+HDF4_INCLUDE=""
 
 AC_ARG_WITH(hdf4,[  --with-hdf4[=ARG]       Include HDF4 support (ARG=path)],,)
 
@@ -999,8 +998,7 @@ dnl Select an HDF5 Library to use, or disable driver.
 dnl
 dnl ---------------------------------------------------------------------------
 
-HDF5_INCLUDE=
-export HDF5_INCLUDE
+HDF5_INCLUDE=""
 
 AC_ARG_WITH(hdf5,[  --with-hdf5[=ARG]       Include HDF5 support (ARG=path)],,)
 
@@ -1388,6 +1386,7 @@ dnl Check for xerces configuration.
 dnl ---------------------------------------------------------------------------
 
 HAVE_XERCES=no
+XERCES_INCLUDE=""
 
 AC_MSG_CHECKING([for Xerces C++])
 
@@ -1397,13 +1396,13 @@ AC_ARG_WITH(xerces_lib,
 [  --with-xerces-lib=opts Xerces C++ link option(s)
                              ie. -L/usr/local/lib -lxerces-c1_6_0 -lpthread],,)
 
-if test "$with_xerces" = "no" ; then
+if test x"$with_xerces" = x"no" ; then
 
   AC_MSG_RESULT([disabled])
 
 else
 
-  if test "$with_xerces" = "yes" ; then
+  if test x"$with_xerces" = x"" -o x"$with_xerces" = x"yes" ; then
     if test -d /usr/local/include/xercesc ; then 
       with_xerces=/usr/local
     else 
@@ -1411,19 +1410,19 @@ else
     fi
   fi
 
-  if test "$with_xerces_lib" != "" ; then
+  if test x"$with_xerces_lib" != x"" ; then
     LIBS="$with_xerces_lib $LIBS"
   else
-    if test -f $with_xerces/lib/libxerces-c.so ; then
+    if test -f "$with_xerces/lib/libxerces-c.so" ; then
       LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
-    elif test -f $with_xerces/lib/libxerces-c1_6_0.so ; then
+    elif test -f "$with_xerces/lib/libxerces-c1_6_0.so" ; then
       LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
       LIBS="-L$with_xerces/lib $LIBS"
     else
       LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
     fi
   fi
-  if test "$with_xerces_inc" != "" ; then
+  if test x"$with_xerces_inc" != x"" ; then
     XERCES_INCLUDE="-I$with_xerces_inc -I$with_xerces_inc/xercesc"
   else
     XERCES_INCLUDE="-I$with_xerces/include -I$with_xerces/include/xercesc"
