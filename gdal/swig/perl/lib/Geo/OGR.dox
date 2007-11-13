@@ -189,6 +189,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @attr name
 # scalar (access as $datasource->{name})
@@ -260,6 +261,9 @@
 ## @method GetNextFeature()
 # @return Geo::OGR::Feature object
 
+## @method GetFeaturesRead()
+# @return integer
+
 ## @method GetName()
 # @return scalar (string)
 
@@ -311,14 +315,12 @@
 ## @method GetSpatialRef()
 # @return Geo::OSR::SpatialReference
 
-## @method GetFeatureRead()
-# @return scalar (int)
-
 
 ## @class Geo::OGR::Feature
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @cmethod new($feature_def = undef)
 # @param $feature_def Geo::OGR::FeatureDefn object
@@ -408,6 +410,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @cmethod new($name = undef)
 # @return Geo::OGR::FeatureDefn object
@@ -441,6 +444,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
 # @return Geo::OGR::FieldDefn object
@@ -483,6 +487,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @cmethod new($type = $Geo::OGR::wkbUnknown, $wkt = undef, $wkb = undef, $gml = undef)
 # @param $type one of Geo::OGR::wkb*
@@ -498,6 +503,24 @@
 # @return scalar (GML string)
 
 ## @method AddPoint($x, $y, $z = 0)
+# Calls internally the 2D or 3D version depending on the number of parameters.
+
+## @ignore AddPoint_2D
+## @ignore AddPoint_3D
+
+## @method IsEmpty()
+# @return boolean
+
+## @method IsRing()
+# @return boolean
+
+## @method IsSimple()
+# @return boolean
+
+## @method IsValid()
+# @return boolean
+
+## @method Move($dx, $dy, $dz = 0)
 
 ## @method AddGeometryDirectly($other)
 # @param $other Geo::OGR::Geometry object

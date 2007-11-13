@@ -197,6 +197,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 ## @ignore __str__
 
 ## @cmethod new($wkt = undef)
@@ -381,6 +382,38 @@
 ## @method MorphFromESRI()
 # @return scalar (OGRErr)
 
+## @method ImportFromUrl()
+## @method SetAuthority()
+## @method SetCEA()
+## @method SetGEOS()
+## @method SetGH()
+## @method SetGnomonic()
+## @method SetHOM()
+## @method SetHOM2PNO()
+## @method SetKrovak()
+## @method SetLAEA()
+## @method SetLCC()
+## @method SetLCC1SP()
+## @method SetLCCB()
+## @method SetLocalCS()
+## @method SetMC()
+## @method SetMercator()
+## @method SetMollweide()
+## @method SetNZMG()
+## @method SetOS()
+## @method SetOrthographic()
+## @method SetPS()
+## @method SetPolyconic()
+## @method SetRobinson()
+## @method SetSOC()
+## @method SetSinusoidal()
+## @method SetStereographic()
+## @method SetTM()
+## @method SetTMG()
+## @method SetTMSO()
+## @method SetTMVariant()
+## @method SetVDG()
+
 ## @class Geo::OSR::CoordinateTransformation
 
 ## @ignore DISOWN
@@ -394,3 +427,5 @@
 
 ## @method TransformPoint($x, $y, $z = 0.0)
 # @return arrayref = [$x, $y, $z]
+
+## @method TransformPoints()

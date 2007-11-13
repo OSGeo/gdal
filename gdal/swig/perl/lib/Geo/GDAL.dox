@@ -37,6 +37,7 @@
 ## @ignore GDAL_GCP_set_Info
 ## @ignore GDAL_GCP_get_Id
 ## @ignore GDAL_GCP_set_Id
+## @ignore ReadDir
 
 ## @fn UseExceptions()
 ## @fn DontUseExceptions()
@@ -56,6 +57,11 @@
 ## @fn GetConfigOption()
 ## @fn CPLBinaryToHex()
 ## @fn CPLHexToBinary()
+
+## @fn VersionInfo($request = 'VERSION_NUM')
+# @return Descriptive string or version number
+
+## @fn ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $eResampleAlg=$Geo::GDAL::Const::GRA_NearestNeighbour, $WarpMemoryLimit=0.0, $maxerror = 0.0)
 
 ## @fn GCPsToGeoTransform(\@GCPs, $ApproxOK = 1)
 # @return arrayref = [$a, $b, $c, $d, $e, $f]
@@ -116,6 +122,9 @@
 ## @fn GetDriver($int)
 # @return Geo::GDAL::Driver object
 
+## @fn IdentifyDriver($datasource_name, $siblings = undef)
+# @return Geo::GDAL::Driver object
+
 ## @fn Open($name, $Access = \$Geo::GDAL::Const::GA_ReadOnly)
 # @return Geo::GDAL::Dataset object
 
@@ -154,6 +163,10 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
+## @ignore Register
+## @ignore Deregister
+## @ignore Rename
+
 ## @attr ShortName
 # scalar (access as $driver->{ShortName})
 
@@ -175,6 +188,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @cmethod new($x = 0.0, $y = 0.0, $z = 0.0, $pixel = 0.0, $line = 0.0, $info = "", $id = "")
 
@@ -187,12 +201,12 @@
 ## @attr GCPZ
 # scalar (access as $gcp->{GCPZ})
 
-## @attr Pixel
-# scalar (access as $gcp->{Pixel})
+## @attr GCPPixel
+# scalar (access as $gcp->{GCPPixel})
 # the j pixel coordinate
 
-## @attr Line
-# scalar (access as $gcp->{Line})
+## @attr GCPLine
+# scalar (access as $gcp->{GCPLine})
 # the i pixel coordinate
 
 ## @attr Info
@@ -205,6 +219,7 @@
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @attr RasterXSize
 # scalar (access as $dataset->{RasterXSize})
@@ -212,8 +227,8 @@
 ## @attr RasterYSize
 # scalar (access as $dataset->{RasterYSize})
 
-## @attr Count
-# scalar (access as $dataset->{Count})
+## @attr RasterCount
+# scalar (access as $dataset->{RasterCount})
 
 ## @method GetDriver()
 # @return Geo::GDAL::Driver object
@@ -258,6 +273,8 @@
 
 ## @method ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
 # @return $buf
+
+## @method CreateMaskBand
 
 ## @class Geo::GDAL::Band
 
@@ -337,10 +354,20 @@
 ## @method SetRasterColorTable($ColorTable)
 # @param $ColorTable Geo::GDAL::ColorTable object
 
+## @method CreateMaskBand()
+## @method GetMaskBand()
+## @method GetMaskFlags()
+## @method GetRasterCategoryNames()
+## @method SetRasterCategoryNames()
+## @method GetDefaultRAT()
+## @method SetDefaultRAT()
+
+
 ## @class Geo::GDAL::ColorTable
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
+## @ignore DESTROY
 
 ## @cmethod new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
 
@@ -360,3 +387,30 @@
 # @return array ColorEntry = ($r, $g, $b, $alpha)
 
 ## @method SetColorEntry($i, \@ColorEntry)
+
+## @method CreateColorRamp()
+
+## @class Geo::GDAL::RasterAttributeTable
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+## @ignore DESTROY
+
+## @cmethod new()
+
+## @method Clone()
+## @method GetColumnCount()
+## @method GetNameOfCol()
+## @method GetUsageOfCol()
+## @method GetTypeOfCol()
+## @method GetColOfUsage()
+## @method GetRowCount()
+## @method GetValueAsString()
+## @method GetValueAsInt()
+## @method GetValueAsDouble()
+## @method SetValueAsString()
+## @method SetValueAsInt()
+## @method SetValueAsDouble()
+## @method SetRowCount()
+## @method CreateColumn()
+## @method GetRowOfValue()
