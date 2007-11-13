@@ -22729,15 +22729,19 @@ if test x"$with_xerces" = x"no" ; then
   echo "$as_me:$LINENO: result: disabled" >&5
 echo "${ECHO_T}disabled" >&6
 
-else
+elif test x"$with_xerces" = x"" -o x"$with_xerces" = x"yes" ; then
 
-  if test x"$with_xerces" = x"" -o x"$with_xerces" = x"yes" ; then
-    if test -d /usr/local/include/xercesc ; then
-      with_xerces=/usr/local
-    else
-      with_xerces=/usr
-    fi
+  if test -d /usr/local/include/xercesc ; then
+    with_xerces=/usr/local
+  elif test -d /usr/include/xercesc ; then
+    with_xerces=/usr
+  else
+    with_xerces=no
   fi
+
+fi
+
+if test x"$with_xerces" != x"no" ; then
 
   if test x"$with_xerces_lib" != x"" ; then
     LIBS="$with_xerces_lib $LIBS"
