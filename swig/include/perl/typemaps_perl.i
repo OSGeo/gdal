@@ -764,6 +764,15 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
   }
 }
 
+%typemap(check) (const char *request)
+{
+  /* %typemap(check) (const char *request) */
+  if (!$1) {
+    croak("The request must not be undefined");
+    SWIG_fail;  
+  }
+}
+
 %typemap(check) (char *method)
 {
   /* %typemap(check) (char *method) */
