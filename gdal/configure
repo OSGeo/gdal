@@ -21221,8 +21221,7 @@ X_FME_HOME=$X_FME_HOME
 
 
 
-HDF4_INCLUDE=
-export HDF4_INCLUDE
+HDF4_INCLUDE=""
 
 
 # Check whether --with-hdf4 or --without-hdf4 was given.
@@ -21647,8 +21646,7 @@ fi
 
 
 
-HDF5_INCLUDE=
-export HDF5_INCLUDE
+HDF5_INCLUDE=""
 
 
 # Check whether --with-hdf5 or --without-hdf5 was given.
@@ -22702,6 +22700,7 @@ MYSQL_LIB=$MYSQL_LIB
 
 
 HAVE_XERCES=no
+XERCES_INCLUDE=""
 
 echo "$as_me:$LINENO: checking for Xerces C++" >&5
 echo $ECHO_N "checking for Xerces C++... $ECHO_C" >&6
@@ -22725,14 +22724,14 @@ if test "${with_xerces_lib+set}" = set; then
 
 fi;
 
-if test "$with_xerces" = "no" ; then
+if test x"$with_xerces" = x"no" ; then
 
   echo "$as_me:$LINENO: result: disabled" >&5
 echo "${ECHO_T}disabled" >&6
 
 else
 
-  if test "$with_xerces" = "yes" ; then
+  if test x"$with_xerces" = x"" -o x"$with_xerces" = x"yes" ; then
     if test -d /usr/local/include/xercesc ; then
       with_xerces=/usr/local
     else
@@ -22740,19 +22739,19 @@ else
     fi
   fi
 
-  if test "$with_xerces_lib" != "" ; then
+  if test x"$with_xerces_lib" != x"" ; then
     LIBS="$with_xerces_lib $LIBS"
   else
-    if test -f $with_xerces/lib/libxerces-c.so ; then
+    if test -f "$with_xerces/lib/libxerces-c.so" ; then
       LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
-    elif test -f $with_xerces/lib/libxerces-c1_6_0.so ; then
+    elif test -f "$with_xerces/lib/libxerces-c1_6_0.so" ; then
       LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
       LIBS="-L$with_xerces/lib $LIBS"
     else
       LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
     fi
   fi
-  if test "$with_xerces_inc" != "" ; then
+  if test x"$with_xerces_inc" != x"" ; then
     XERCES_INCLUDE="-I$with_xerces_inc -I$with_xerces_inc/xercesc"
   else
     XERCES_INCLUDE="-I$with_xerces/include -I$with_xerces/include/xercesc"
