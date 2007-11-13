@@ -154,3 +154,54 @@
 # scalar
 ## @attr CPLES_CSV
 # scalar
+## @attr GFT_Integer
+# scalar
+## @attr GFT_Real
+# scalar
+## @attr GFT_String
+# scalar
+## @attr GFU_Alpha
+# scalar
+## @attr GFU_AlphaMax
+# scalar
+## @attr GFU_AlphaMin
+# scalar
+## @attr GFU_Blue
+# scalar
+## @attr GFU_BlueMax
+# scalar
+## @attr GFU_BlueMin
+# scalar
+## @attr GFU_Generic
+# scalar
+## @attr GFU_Green
+# scalar
+## @attr GFU_GreenMax
+# scalar
+## @attr GFU_GreenMin
+# scalar
+## @attr GFU_Max
+# scalar
+## @attr GFU_MaxCount
+# scalar
+## @attr GFU_Min
+# scalar
+## @attr GFU_MinMax
+# scalar
+## @attr GFU_Name
+# scalar
+## @attr GFU_PixelCount
+# scalar
+## @attr GFU_Red
+# scalar
+## @attr GFU_RedMax
+# scalar
+## @attr GFU_RedMin
+# scalar
+## @attr GMF_ALL_VALID
+# scalar
+## @attr GMF_ALPHA
+# scalar
+## @attr GMF_NODATA
+# scalar
+## @attr GMF_PER_DATASET
