@@ -72,8 +72,6 @@ int main( int argc, char ** argv )
     OGRRegisterAll();
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
