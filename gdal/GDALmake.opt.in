@@ -177,7 +177,7 @@ HAVE_SQLITE = @HAVE_SQLITE@
 #
 KAKDIR = @KAKDIR@
 
-ifneq (($KAKDIR),)
+ifneq ($(KAKDIR),)
 ifeq ($(HAVE_LIBTOOL),yes)
 include $(GDAL_ROOT)/frmts/jp2kak/jp2kak.lst
 KAK_LIBS = $(KAK_OBJ)
