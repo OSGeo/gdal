@@ -302,6 +302,7 @@ public:
         GDALProgressFunc pfnProgress, 
         void * pProgressData );
 
+    virtual char **GetFileList(void);
     virtual CPLErr GetGeoTransform( double *padfTransform );
     virtual CPLErr SetGeoTransform( double *padfTransform );
     virtual const char *GetProjectionRef( void );
@@ -808,24 +809,6 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
     }
     VSIFCloseL( fp );
 
-    // --------------------------------------------------------------------
-    // Delete pre-existent .smp and .ref file with the same base name
-    // --------------------------------------------------------------------
-
-    const char *pszPalletFName = CPLResetExtension( pszFilename, extSMP );
-
-    if( FileExists( pszPalletFName ) )
-    {
-        VSIUnlink( pszPalletFName );
-    }
-
-    const char *pszRefereceFName = CPLResetExtension( pszFilename, extREF );
-
-    if( FileExists( pszRefereceFName ) )
-    {
-        VSIUnlink( pszRefereceFName );
-    }
-
     return (IdrisiDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
@@ -1078,6 +1061,39 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
 	poDS->bDirty = ( ! ( bSuccessMin && bSuccessMax ) );
 
     return poDS;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **IdrisiDataset::GetFileList()
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+    const char *pszAssociated;
+        
+    pszAssociated = CPLResetExtension( pszFilename, extSMP );
+
+    if( FileExists( pszAssociated ) )
+    {
+        papszFileList = CSLAddString( papszFileList, pszAssociated );
+    }
+
+    pszAssociated = CPLResetExtension( pszFilename, extRDC );
+
+    if( FileExists( pszAssociated ) )
+    {
+        papszFileList = CSLAddString( papszFileList, pszAssociated );
+    }
+
+    pszAssociated = CPLResetExtension( pszFilename, extREF );
+
+    if( FileExists( pszAssociated ) )
+    {
+        papszFileList = CSLAddString( papszFileList, pszAssociated );
+    }
+
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -2406,6 +2422,11 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
     const char *pszProjName = oSRS.GetAttrValue( "PROJECTION" );
 
+    if( pszProjName == NULL )
+    {
+        pszProjName = "";
+    }
+
     // -----------------------------------------------------
     //  Check for UTM zones
     // -----------------------------------------------------
@@ -2414,7 +2435,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     {
         int nZone = oSRS.GetUTMZone();
 
-        if( ( nZone != 0 ) &&( EQUAL( oSRS.GetAttrValue( "DATUM" ), SRS_DN_WGS84 ) ) )
+        if( ( nZone != 0 ) && ( EQUAL( oSRS.GetAttrValue( "DATUM" ), SRS_DN_WGS84 ) ) )
         {
             double dfNorth = oSRS.GetProjParm( SRS_PP_FALSE_NORTHING );
             *pszRefSystem  = CPLStrdup( CPLSPrintf( rstUTM, nZone,( dfNorth == 0.0 ? 'n' : 's' ) ) );
