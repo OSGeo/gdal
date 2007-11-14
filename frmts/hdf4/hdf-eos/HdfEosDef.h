@@ -272,6 +272,7 @@ intn PTclose(int32);
 
 
 /* EH Utility Prototypes */
+int32 EHnumstr(const char *);
 float64 EHconvAng(float64, intn);
 int32 EHparsestr(const char *, const char, char *[], int32 []);
 int32 EHstrwithin(const char *, const char *, const char);

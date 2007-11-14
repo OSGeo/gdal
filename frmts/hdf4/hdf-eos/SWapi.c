@@ -1587,30 +1587,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 
 	/* Convert to numbertype code */
 	if (statmeta == 0)
-	{
-	    if (strcmp(utlstr, "DFNT_UCHAR8") == 0)
-		*numbertype = DFNT_UCHAR8;
-	    else if (strcmp(utlstr, "DFNT_CHAR8") == 0)
-		*numbertype = DFNT_CHAR8;
-	    else if (strcmp(utlstr, "DFNT_FLOAT32") == 0)
-		*numbertype = DFNT_FLOAT32;
-	    else if (strcmp(utlstr, "DFNT_FLOAT64") == 0)
-		*numbertype = DFNT_FLOAT64;
-	    else if (strcmp(utlstr, "DFNT_INT8") == 0)
-		*numbertype = DFNT_INT8;
-	    else if (strcmp(utlstr, "DFNT_UINT8") == 0)
-		*numbertype = DFNT_UINT8;
-	    else if (strcmp(utlstr, "DFNT_INT16") == 0)
-		*numbertype = DFNT_INT16;
-	    else if (strcmp(utlstr, "DFNT_UINT16") == 0)
-		*numbertype = DFNT_UINT16;
-	    else if (strcmp(utlstr, "DFNT_INT32") == 0)
-		*numbertype = DFNT_INT32;
-	    else if (strcmp(utlstr, "DFNT_UINT32") == 0)
-		*numbertype = DFNT_UINT32;
-            else
-                *numbertype = DFNT_NONE;
-	}
+	    *numbertype = EHnumstr(utlstr);
 	else
 	{
 	    status = -1;
@@ -3850,7 +3827,6 @@ SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           nFld = 0;	/* Number of mappings */
     int32           slen[8];	/* String length array */
-    int32           ntype;	/* Data Type */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -3975,31 +3951,7 @@ SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
 		    if (numbertype != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "DataType", utlstr);
-
-			if (strcmp(utlstr, "DFNT_UCHAR8") == 0)
-			    ntype = DFNT_UCHAR8;
-			else if (strcmp(utlstr, "DFNT_CHAR8") == 0)
-			    ntype = DFNT_CHAR8;
-			else if (strcmp(utlstr, "DFNT_FLOAT32") == 0)
-			    ntype = DFNT_FLOAT32;
-			else if (strcmp(utlstr, "DFNT_FLOAT64") == 0)
-			    ntype = DFNT_FLOAT64;
-			else if (strcmp(utlstr, "DFNT_INT8") == 0)
-			    ntype = DFNT_INT8;
-			else if (strcmp(utlstr, "DFNT_UINT8") == 0)
-			    ntype = DFNT_UINT8;
-			else if (strcmp(utlstr, "DFNT_INT16") == 0)
-			    ntype = DFNT_INT16;
-			else if (strcmp(utlstr, "DFNT_UINT16") == 0)
-			    ntype = DFNT_UINT16;
-			else if (strcmp(utlstr, "DFNT_INT32") == 0)
-			    ntype = DFNT_INT32;
-			else if (strcmp(utlstr, "DFNT_UINT32") == 0)
-			    ntype = DFNT_UINT32;
-                        else
-                            ntype = DFNT_NONE;
-
-			numbertype[nFld] = ntype;
+			numbertype[nFld] = EHnumstr(utlstr);
 		    }
 		    /*
 		     * Get Rank (if desired) by counting # of dimensions in
@@ -4035,11 +3987,6 @@ SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
 
     return (nFld);
 }
-
-
-
-
-
 
 
 
@@ -11448,8 +11395,6 @@ SWgeomapinfo(int32 swathID, char *geodim)
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  sdid           int32               SD element ID                           |
-|                                                                             |
-|  NONE                                                                       |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |

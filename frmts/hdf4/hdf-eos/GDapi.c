@@ -2528,26 +2528,26 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
 	    int32 * numbertype, char *dimlist)
 
 {
-    intn            i;		/* Loop index */
-    intn            status;	/* routine return status variable */
-    intn            statmeta = 0;	/* EHgetmetavalue return status */
+    intn            i;		    /* Loop index */
+    intn            status;	    /* routine return status variable */
+    intn            statmeta = 0;   /* EHgetmetavalue return status */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
-    int32           ndims;	/* Number of dimensions */
-    int32           slen[8];	/* Length of each entry in parsed string */
-    int32           dum;	/* Dummy variable */
-    int32           xdim;	/* X dim size */
-    int32           ydim;	/* Y dim size */
-    int32           sdid;	/* SDS id */
+    int32           fid;	    /* HDF-EOS file ID */
+    int32           sdInterfaceID;  /* HDF SDS interface ID */
+    int32           idOffset = GDIDOFFSET;  /* Grid ID offset */
+    int32           ndims;	    /* Number of dimensions */
+    int32           slen[8];	    /* Length of each entry in parsed string */
+    int32           dum;	    /* Dummy variable */
+    int32           xdim;	    /* X dim size */
+    int32           ydim;	    /* Y dim size */
+    int32           sdid;	    /* SDS id */
 
-    char           *metabuf;	/* Pointer to structural metadata (SM) */
-    char           *metaptrs[2];/* Pointers to begin and end of SM section */
-    char            gridname[80];	/* Grid Name */
-    char           *utlstr;	/* Utility string */
-    char           *ptr[8];	/* String pointers for parsed string */
-    char            dimstr[64];	/* Individual dimension entry string */
+    char           *metabuf;	    /* Pointer to structural metadata (SM) */
+    char           *metaptrs[2];    /* Pointers to begin and end of SM section */
+    char            gridname[80];   /* Grid Name */
+    char           *utlstr;	    /* Utility string */
+    char           *ptr[8];	    /* String pointers for parsed string */
+    char            dimstr[64];	    /* Individual dimension entry string */
 
 
     /* Allocate space for utility string */
@@ -2593,34 +2593,12 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
 
 	    /* Convert to numbertype code */
 	    if (statmeta == 0)
-	    {
-		if (strcmp(utlstr, "DFNT_UCHAR8") == 0)
-		    *numbertype = 3;
-		else if (strcmp(utlstr, "DFNT_CHAR8") == 0)
-		    *numbertype = 4;
-		else if (strcmp(utlstr, "DFNT_FLOAT32") == 0)
-		    *numbertype = 5;
-		else if (strcmp(utlstr, "DFNT_FLOAT64") == 0)
-		    *numbertype = 6;
-		else if (strcmp(utlstr, "DFNT_INT8") == 0)
-		    *numbertype = 20;
-		else if (strcmp(utlstr, "DFNT_UINT8") == 0)
-		    *numbertype = 21;
-		else if (strcmp(utlstr, "DFNT_INT16") == 0)
-		    *numbertype = 22;
-		else if (strcmp(utlstr, "DFNT_UINT16") == 0)
-		    *numbertype = 23;
-		else if (strcmp(utlstr, "DFNT_INT32") == 0)
-		    *numbertype = 24;
-		else if (strcmp(utlstr, "DFNT_UINT32") == 0)
-		    *numbertype = 25;
-	    }
+		*numbertype = EHnumstr(utlstr);
 	    else
 	    {
 		status = -1;
 		HEpush(DFE_GENAPP, "GDfieldinfo", __FILE__, __LINE__);
-		HEreport(
-			 "\"DataType\" string not found in metadata.\n");
+		HEreport("\"DataType\" string not found in metadata.\n");
 	    }
 
 	    /*
@@ -2642,8 +2620,7 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
 	    {
 		status = -1;
 		HEpush(DFE_GENAPP, "GDfieldinfo", __FILE__, __LINE__);
-		HEreport(
-			 "\"DimList\" string not found in metadata.\n");
+		HEreport("\"DimList\" string not found in metadata.\n");
 	    }
 
 
@@ -4583,7 +4560,6 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           nFld = 0;	/* Number of mappings */
     int32           slen[8];	/* String length array */
-    int32           ntype = 0;	/* Data Type */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -4687,29 +4663,7 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
 		    if (numbertype != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "DataType", utlstr);
-
-			if (strcmp(utlstr, "DFNT_UCHAR8") == 0)
-			    ntype = 3;
-			else if (strcmp(utlstr, "DFNT_CHAR8") == 0)
-			    ntype = 4;
-			else if (strcmp(utlstr, "DFNT_FLOAT32") == 0)
-			    ntype = 5;
-			else if (strcmp(utlstr, "DFNT_FLOAT64") == 0)
-			    ntype = 6;
-			else if (strcmp(utlstr, "DFNT_INT8") == 0)
-			    ntype = 20;
-			else if (strcmp(utlstr, "DFNT_UINT8") == 0)
-			    ntype = 21;
-			else if (strcmp(utlstr, "DFNT_INT16") == 0)
-			    ntype = 22;
-			else if (strcmp(utlstr, "DFNT_UINT16") == 0)
-			    ntype = 23;
-			else if (strcmp(utlstr, "DFNT_INT32") == 0)
-			    ntype = 24;
-			else if (strcmp(utlstr, "DFNT_UINT32") == 0)
-			    ntype = 25;
-
-			numbertype[nFld] = ntype;
+			numbertype[nFld] = EHnumstr(utlstr);
 		    }
 		    /*
 		     * Get Rank (if desired) by counting # of dimensions in
@@ -10899,8 +10853,6 @@ static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  sdid           int32               SD element ID                           |
-|                                                                             |
-|  NONE                                                                       |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
