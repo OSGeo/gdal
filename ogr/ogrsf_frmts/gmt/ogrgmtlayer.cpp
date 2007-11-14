@@ -192,6 +192,8 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
         }
 
         bRegionComplete = TRUE;
+
+        CSLDestroy( papszTokens );
     }
 
 /* -------------------------------------------------------------------- */
@@ -226,7 +228,10 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
             }
 
             poFeatureDefn->AddFieldDefn( &oField );
-        }        
+        }
+
+        CSLDestroy( papszFN );
+        CSLDestroy( papszFT );
     }
 
     bValidFile = TRUE;
