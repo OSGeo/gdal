@@ -179,6 +179,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     else
         fpGPX = NULL;
 
+    poFeature = NULL;
 
 #ifdef HAVE_EXPAT
     oParser = NULL;
@@ -206,6 +207,9 @@ OGRGPXLayer::~OGRGPXLayer()
     for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
+    
+    if (poFeature)
+        delete poFeature;
 
     if (fpGPX)
         VSIFCloseL( fpGPX );
@@ -276,6 +280,8 @@ void OGRGPXLayer::ResetReading()
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
     ppoFeatureTab = NULL;
+    if (poFeature)
+        delete poFeature;
     poFeature = NULL;
     multiLineString = NULL;
     lineString = NULL;
@@ -295,8 +301,9 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     if (gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0)
     {
         interestingDepthLevel = depthLevel;
-        
-        if (poFeature) delete poFeature;
+
+        if (poFeature)
+            delete poFeature;
 
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
@@ -326,7 +333,8 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     {
         interestingDepthLevel = depthLevel;
         
-        if (poFeature) delete poFeature;
+        if (poFeature)
+            delete poFeature;
 
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
@@ -340,7 +348,8 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
     {
         interestingDepthLevel = depthLevel;
         
-        if (poFeature) delete poFeature;
+        if (poFeature)
+            delete poFeature;
 
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
