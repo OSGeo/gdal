@@ -3536,3 +3536,60 @@ EHclose(int32 fid)
 
     return (status);
 }
+
+/*----------------------------------------------------------------------------|
+|  BEGIN_PROLOG                                                               |
+|                                                                             |
+|  FUNCTION: EHnumstr                                                         |
+|                                                                             |
+|  DESCRIPTION: Returns numerical type code of the given string               |
+|               representation.                                               |
+|                                                                             |
+|                                                                             |
+|  Return Value    Type     Units     Description                             |
+|  ============   ======  =========   =====================================   |
+|  numbertype     int32               numerical type code                     |
+|                                                                             |
+|  INPUTS:                                                                    |
+|  strcode        const char          string representation of the type code  |
+|                                                                             |
+|                                                                             |
+|  OUTPUTS:                                                                   |
+|             None                                                            |
+|                                                                             |
+|  NOTES:                                                                     |
+|                                                                             |
+|                                                                             |
+|   Date     Programmer   Description                                         |
+|  ======   ============  =================================================   |
+|  Nov 07   Andrey Kiselev  Original Programmer                               |
+|                                                                             |
+|  END_PROLOG                                                                 |
+-----------------------------------------------------------------------------*/
+int32
+EHnumstr(const char *strcode)
+{
+    if (strcmp(strcode, "DFNT_UCHAR8") == 0)
+        return DFNT_UCHAR8;
+    else if (strcmp(strcode, "DFNT_CHAR8") == 0)
+        return DFNT_CHAR8;
+    else if (strcmp(strcode, "DFNT_FLOAT32") == 0)
+        return DFNT_FLOAT32;
+    else if (strcmp(strcode, "DFNT_FLOAT64") == 0)
+        return DFNT_FLOAT64;
+    else if (strcmp(strcode, "DFNT_INT8") == 0)
+        return DFNT_INT8;
+    else if (strcmp(strcode, "DFNT_UINT8") == 0)
+        return DFNT_UINT8;
+    else if (strcmp(strcode, "DFNT_INT16") == 0)
+        return DFNT_INT16;
+    else if (strcmp(strcode, "DFNT_UINT16") == 0)
+        return DFNT_UINT16;
+    else if (strcmp(strcode, "DFNT_INT32") == 0)
+        return DFNT_INT32;
+    else if (strcmp(strcode, "DFNT_UINT32") == 0)
+        return DFNT_UINT32;
+    else
+        return DFNT_NONE;
+}
+
