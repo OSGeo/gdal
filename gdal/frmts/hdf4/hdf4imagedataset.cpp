@@ -108,6 +108,7 @@ class HDF4ImageDataset : public HDF4Dataset
     int         nGCPCount;
 
     void                ToGeoref( double *, double * );
+    void                GetImageDimensions( char * );
     void                GetSwatAttrs( int32 );
     void                GetGridAttrs( int32 hGD );
     void                CaptureNRLGeoTransform(void);
@@ -1178,6 +1179,73 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 }
 
 /************************************************************************/
+/*                          GetImageDimensions()                        */
+/************************************************************************/
+
+void HDF4ImageDataset::GetImageDimensions( char *pszDimList )
+{
+    char    **papszDimList = CSLTokenizeString2( pszDimList, ",",
+                                                 CSLT_HONOURSTRINGS );
+    int     i, nDimCount = CSLCount( papszDimList );
+
+    // TODO: check whether nDimCount is > 1 and do something if it isn't.
+
+    // Search for the "Band" word in the name of dimension
+    // or take the first one as a number of bands
+    if ( iRank == 2 )
+        nBands = 1;
+    else
+    {
+        for ( i = 0; i < nDimCount; i++ )
+        {
+            if ( strstr( papszDimList[i], "band" ) )
+            {
+                iBandDim = i;
+                nBands = aiDimSizes[i];
+                // Handle 4D datasets
+                if ( iRank > 3 && i < nDimCount - 1 )
+                {
+                    // FIXME: is there a better way to search for
+                    // the 4th dimension?
+                    i4Dim = i + 1;
+                    nBands *= aiDimSizes[i4Dim];
+                }
+                break;
+            }
+        }
+    }
+
+    // Search for the starting "X" and "Y" in the names or take
+    // the last two dimensions as X and Y sizes
+    iXDim = nDimCount - 1;
+    iYDim = nDimCount - 2;
+
+    for ( i = 0; i < nDimCount; i++ )
+    {
+        if ( EQUALN( papszDimList[i], "X", 1 ) && iBandDim != i )
+            iXDim = i;
+        else if ( EQUALN( papszDimList[i], "Y", 1 ) && iBandDim != i )
+            iYDim = i;
+    }
+
+    // If didn't get a band dimension yet, but have an extra
+    // dimension, use it as the band dimension. 
+    if ( iRank > 2 && iBandDim == -1 )
+    {
+        if( iXDim != 0 && iYDim != 0 )
+            iBandDim = 0;
+        else if( iXDim != 1 && iYDim != 1 )
+            iBandDim = 1;
+        else if( iXDim != 2 && iYDim != 2 )
+            iBandDim = 2;
+
+        nBands = aiDimSizes[iBandDim];
+    }
+
+    CSLDestroy( papszDimList );
+}
+
+/************************************************************************/
 /*                            GetSwatAttrs()                            */
 /************************************************************************/
 
@@ -1483,9 +1551,7 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 /*      for EOS_SWATH, not EOS_SWATH_GEOL datasets.                     */
 /************************************************************************/
 
-int HDF4ImageDataset::ProcessSwathGeolocation( 
-    int32 hSW, char **papszDimList )
-
+int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 {
     char    szXGeo[8192] = "";
     char    szYGeo[8192] = "";
@@ -2158,10 +2224,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             case EOS_SWATH:
             case EOS_SWATH_GEOL:
             {
-                int32   hSW, nDimensions, nStrBufSize;
-                char    **papszDimList = NULL;
+                int32   hSW, nStrBufSize;
                 char    *pszDimList = NULL;
-                int     nDimCount;
                     
                 if( poOpenInfo->eAccess == GA_ReadOnly )
                     poDS->hHDF4 = SWopen( poDS->pszFilename, DFACC_READ );
@@ -2192,7 +2256,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Decode the dimension map.                                       */
 /* -------------------------------------------------------------------- */
-                nDimensions = SWnentries( hSW, HDFE_NENTDIM, &nStrBufSize );
+                SWnentries( hSW, HDFE_NENTDIM, &nStrBufSize );
                 pszDimList = (char *)CPLMalloc( nStrBufSize + 1 );
                 SWfieldinfo( hSW, poDS->pszFieldName, &poDS->iRank,
                              poDS->aiDimSizes, &poDS->iNumType, pszDimList );
@@ -2201,64 +2265,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                           "List of dimensions in swath %s: %s",
                           poDS->pszFieldName, pszDimList );
 #endif
-
-                papszDimList = CSLTokenizeString2( pszDimList, ",",
-                                                   CSLT_HONOURSTRINGS );
-                nDimCount = CSLCount( papszDimList );
-
-                // Search for the "Band" word in the name of dimension
-                // or take the first one as a number of bands
-                if ( poDS->iRank == 2 )
-                    nBands = 1;
-                else
-                {
-                    for ( i = 0; i < nDimCount; i++ )
-                    {
-                        if ( strstr( papszDimList[i], "band" ) )
-                        {
-                            poDS->iBandDim = i;
-                            nBands = poDS->aiDimSizes[i];
-                            // Handle 4D datasets
-                            if ( poDS->iRank > 3 && i < nDimCount - 1 )
-                            {
-                                // FIXME: is there a better way to search for
-                                // the 4th dimension?
-                                poDS->i4Dim = i + 1;
-                                nBands *= poDS->aiDimSizes[poDS->i4Dim];
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                // Search for the starting "X" and "Y" in the names or take
-                // the last two dimensions as X and Y sizes
-                poDS->iXDim = nDimCount - 1;
-                poDS->iYDim = nDimCount - 2;
-
-                for ( i = 0; i < nDimCount; i++ )
-                {
-                    if ( EQUALN( papszDimList[i], "X", 1 )
-                         && poDS->iBandDim != i )
-                        poDS->iXDim = i;
-                    else if ( EQUALN( papszDimList[i], "Y", 1 ) 
-                              && poDS->iBandDim != i )
-                        poDS->iYDim = i;
-                }
-
-                // If didn't get a band dimension yet, but have an extra
-                // dimension, use it as the band dimension. 
-                if( poDS->iRank > 2 && poDS->iBandDim == -1 )
-                {
-                    if( poDS->iXDim != 0 && poDS->iYDim != 0 )
-                        poDS->iBandDim = 0;
-                    else if( poDS->iXDim != 1 && poDS->iYDim != 1 )
-                        poDS->iBandDim = 1;
-                    else if( poDS->iXDim != 2 && poDS->iYDim != 2 )
-                        poDS->iBandDim = 2;
-
-                    nBands = poDS->aiDimSizes[poDS->iBandDim];
-                }
+                poDS->GetImageDimensions( pszDimList );
 
 #if DEBUG
                 CPLDebug( "HDF4Image",
@@ -2302,19 +2309,21 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
                 {
+                    char **papszDimList =
+                        CSLTokenizeString2( pszDimList, ",",
+                                            CSLT_HONOURSTRINGS );
                     if( !poDS->ProcessSwathGeolocation( hSW, papszDimList ) )
                     {
                         CPLDebug( "HDF4Image", 
                                   "No geolocation available for this swath." );
                     }
+                    CSLDestroy( papszDimList );
                 }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
                 CPLFree( pszDimList );
-
-                CSLDestroy( papszDimList );
                 SWdetach( hSW );
             }
             break;
@@ -2327,8 +2336,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 int32   hGD, iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
                 int32   nXSize, nYSize;
                 char    szDimList[8192];
-                char    **papszDimList = NULL;
-                int     nDimCount;
                 double  adfUpLeft[2], adfLowRight[2], adfProjParms[15];
                     
                 if( poOpenInfo->eAccess == GA_ReadOnly )
@@ -2351,66 +2358,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                           "List of dimensions in grid %s: %s",
                           poDS->pszFieldName, szDimList);
 #endif
-                papszDimList = CSLTokenizeString2( szDimList, ",",
-                                                   CSLT_HONOURSTRINGS );
-                nDimCount = CSLCount( papszDimList );
+                poDS->GetImageDimensions( szDimList );
 
-                // Search for the "Band" word in the name of dimension
-                // or take the first one as a number of bands
-                if ( poDS->iRank == 2 )
-                    nBands = 1;
-                else
-                {
-                    for ( i = 0; i < nDimCount; i++ )
-                    {
-                        if ( strstr( papszDimList[i], "band" ) )
-                        {
-                            poDS->iBandDim = i;
-                            nBands = poDS->aiDimSizes[i];
-                            // Handle 4D datasets
-                            if ( poDS->iRank > 3 && i < nDimCount - 1 )
-                            {
-                                // FIXME: is there a better way to search for
-                                // the 4th dimension?
-                                poDS->i4Dim = i + 1;
-                                nBands *= poDS->aiDimSizes[poDS->i4Dim];
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                // Search for the starting "X" and "Y" in the names or take
-                // the last two dimensions as X and Y sizes
-                poDS->iXDim = nDimCount - 1;
-                poDS->iYDim = nDimCount - 2;
-
-                for ( i = 0; i < nDimCount; i++ )
-                {
-                    if ( EQUALN( papszDimList[i], "X", 1 )
-                         && poDS->iBandDim != i )
-                        poDS->iXDim = i;
-                    else if ( EQUALN( papszDimList[i], "Y", 1 ) 
-                              && poDS->iBandDim != i )
-                        poDS->iYDim = i;
-                }
-
-                // If didn't get a band dimension yet, but have an extra
-                // dimension, use it as the band dimension. 
-
-                if( poDS->iRank > 2 && poDS->iBandDim == -1 )
-                {
-                    if( poDS->iXDim != 0 && poDS->iYDim != 0 )
-                        poDS->iBandDim = 0;
-                    else if( poDS->iXDim != 1 && poDS->iYDim != 1 )
-                        poDS->iBandDim = 1;
-                    else if( poDS->iXDim != 2 && poDS->iYDim != 2 )
-                        poDS->iBandDim = 2;
-
-                    nBands = poDS->aiDimSizes[poDS->iBandDim];
-                }
-
-                // Fetch projection information
+/* -------------------------------------------------------------------- */
+/*      Fetch projection information                                    */
+/* -------------------------------------------------------------------- */
                 if ( GDprojinfo( hGD, &iProjCode, &iZoneCode,
                                  &iSphereCode, adfProjParms) >= 0 )
                 {
@@ -2429,7 +2381,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->oSRS.exportToWkt( &poDS->pszProjection );
                 }
 
-                // Fetch geotransformation matrix
+/* -------------------------------------------------------------------- */
+/*      Fetch geotransformation matrix                                  */
+/* -------------------------------------------------------------------- */
                 if ( GDgridinfo( hGD, &nXSize, &nYSize,
                                  adfUpLeft, adfLowRight ) >= 0 )
                 {
@@ -2477,7 +2431,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 poDS->GetGridAttrs( hGD );
 
-                CSLDestroy( papszDimList );
                 GDdetach( hGD );
 
 /* -------------------------------------------------------------------- */
