@@ -111,8 +111,11 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        VSIFRead( szHeader, 1, sizeof(szHeader), fp );
-        szHeader[sizeof(szHeader)-1] = '\0';
+        int nLen = (int)VSIFRead( szHeader, 1, sizeof(szHeader), fp );
+        if (nLen == sizeof(szHeader))
+            szHeader[sizeof(szHeader)-1] = '\0';
+        else
+            szHeader[nLen] = '\0';
 
         if( strstr(szHeader,"SCNT") == NULL )
         {
