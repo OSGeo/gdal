@@ -139,7 +139,7 @@ class JPGRasterBand : public GDALPamRasterBand
        In other words, this->poDS doesn't necessary point to a JPGDataset
        See ticket #1807.
     */
-    JPGDataset 	   *poGDS;
+    JPGDataset	   *poGDS;
 
   public:
 
@@ -164,7 +164,7 @@ class JPGMaskBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
   public:
-    		JPGMaskBand( JPGDataset *poDS );
+		JPGMaskBand( JPGDataset *poDS );
 };
 
 /************************************************************************/
@@ -173,7 +173,7 @@ class JPGMaskBand : public GDALRasterBand
 void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type, 
 			    GUInt32 count, unsigned char* data)
 {
-  char* sep = "";
+  const char* sep = "";
   char  pszTemp[MAXSTRINGLENGTH];
 
   pszData[0]='\0';
