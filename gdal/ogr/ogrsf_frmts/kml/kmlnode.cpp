@@ -304,7 +304,7 @@ void KMLnode::appendContent(std::string sCon)
 std::string KMLnode::getContent(unsigned short nNum)
 {
     if(nNum >= this->pvsContent->size())
-        return NULL;
+        return "";
     return this->pvsContent->at(nNum);
 }
 
