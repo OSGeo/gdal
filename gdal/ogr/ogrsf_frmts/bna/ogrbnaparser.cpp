@@ -129,6 +129,7 @@ and http://64.145.236.125/forum/topic.asp?topic_id=1930&forum_id=1&Topic_Title=h
 #define INVALID_GEOMETRY_TYPE      "invalid geometry type"
 #define TOO_LONG_ID                "too long id (> 256 characters)"
 #define MAX_BNA_IDS_REACHED        "maximum number of IDs reached"
+#define NOT_ENOUGH_MEMORY          "not enough memory for request number of coordinates"
 
 #define TMP_BUFFER_SIZE             256
 
@@ -361,7 +362,12 @@ BNARecord* BNA_GetNextRecord(FILE* f,
               }
 
               record->tabCoords =
-                  (double(*)[2])CPLMalloc(record->nCoords * 2 * sizeof(double));
+                  (double(*)[2])VSIMalloc(record->nCoords * 2 * sizeof(double));
+              if (record->tabCoords == NULL)
+              {
+                  detailedErrorMsg = NOT_ENOUGH_MEMORY;
+                  goto error;
+              }
             }
           }
           else if (numField > NB_MIN_BNA_IDS + nbExtraId)
