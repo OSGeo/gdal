@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-static char *papszParameterDefinitions[] = {
+static const char *papszParameterDefinitions[] = {
     SRS_PP_CENTRAL_MERIDIAN,    "Central Meridian",     "Long",  "0.0",
     SRS_PP_SCALE_FACTOR,        "Scale Factor",         "Ratio", "1.0",
     SRS_PP_STANDARD_PARALLEL_1, "Standard Parallel 1",  "Lat",   "0.0",
@@ -55,7 +55,7 @@ static char *papszParameterDefinitions[] = {
     NULL
 };
 
-static char *papszProjectionDefinitions[] = {
+static const char *papszProjectionDefinitions[] = {
 
     "*", 
     SRS_PT_TRANSVERSE_MERCATOR,
@@ -402,7 +402,7 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
             i++;
 
             if( ppszUserName != NULL )
-                *ppszUserName = papszProjectionDefinitions[i];
+                *ppszUserName = (char *)papszProjectionDefinitions[i];
 
             i++;
             while( papszProjectionDefinitions[i] != NULL 
@@ -464,9 +464,9 @@ int OPTGetParameterInfo( const char * pszProjectionMethod,
         if( EQUAL(papszParameterDefinitions[i],pszParameterName) )
         {
             if( ppszUserName != NULL )
-                *ppszUserName = papszParameterDefinitions[i+1];
+                *ppszUserName = (char *)papszParameterDefinitions[i+1];
             if( ppszType != NULL )
-                *ppszType = papszParameterDefinitions[i+2];
+                *ppszType = (char *)papszParameterDefinitions[i+2];
             if( pdfDefaultValue != NULL )
                 *pdfDefaultValue = atof(papszParameterDefinitions[i+3]);
 
