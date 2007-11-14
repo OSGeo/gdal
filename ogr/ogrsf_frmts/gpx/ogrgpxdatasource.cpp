@@ -194,16 +194,17 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     
     char aBuf[BUFSIZ];
     int nDone;
+    unsigned int nLen;
     
     do
     {
-        unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
+        nLen = (unsigned int) VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             break;
         }
-    } while (!nDone && validity < 0);
+    } while (!nDone && validity < 0 && nLen > 0 );
     
     XML_ParserFree(oParser);
     
