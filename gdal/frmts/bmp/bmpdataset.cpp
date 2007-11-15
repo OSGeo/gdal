@@ -295,7 +295,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
               nBand, nBlockXSize, nBlockYSize, nScanSize );
 #endif
 
-    pabyScan = (GByte *) CPLMalloc( nScanSize );
+    pabyScan = (GByte *) VSIMalloc( nScanSize );
 }
 
 /************************************************************************/
@@ -686,8 +686,17 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
 
     iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
     iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
-    pabyComprBuf = (GByte *) CPLMalloc( iComprSize );
-    pabyUncomprBuf = (GByte *) CPLMalloc( iUncomprSize );
+    pabyComprBuf = (GByte *) VSIMalloc( iComprSize );
+    pabyUncomprBuf = (GByte *) VSIMalloc( iUncomprSize );
+    if (pabyComprBuf == NULL ||
+        pabyUncomprBuf == NULL)
+    {
+        CPLFree(pabyComprBuf);
+        pabyComprBuf = NULL;
+        CPLFree(pabyUncomprBuf);
+        pabyUncomprBuf = NULL;
+        return;
+    }
 
 #ifdef DEBUG
     CPLDebug( "BMP", "RLE compression detected." );
@@ -1164,13 +1173,33 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     ||   poDS->sInfoHeader.iCompression == BMPC_BITFIELDS )
     {
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-            poDS->SetBand( iBand, new BMPRasterBand( poDS, iBand ) );
+        {
+            BMPRasterBand* band = new BMPRasterBand( poDS, iBand );
+            poDS->SetBand( iBand, band );
+            if (band->pabyScan == NULL)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "The BMP file is probably corrupted or too large. Image width = %d", poDS->nRasterXSize);
+                delete poDS;
+                return NULL;
+            }
+        }
     }
     else if ( poDS->sInfoHeader.iCompression == BMPC_RLE8
               || poDS->sInfoHeader.iCompression == BMPC_RLE4 )
     {
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-            poDS->SetBand( iBand, new BMPComprRasterBand( poDS, iBand ) );
+        {
+            BMPComprRasterBand* band = new BMPComprRasterBand( poDS, iBand );
+            poDS->SetBand( iBand, band);
+            if (band->pabyUncomprBuf == NULL)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "The BMP file is probably corrupted or too large. Image width = %d", poDS->nRasterXSize);
+                delete poDS;
+                return NULL;
+            }
+        }
     }
     else
     {
