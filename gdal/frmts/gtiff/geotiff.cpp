@@ -3455,7 +3455,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
         for (int i = 0; i < nBands; ++i)
             GetRasterBand(i+1)->SetMetadataItem( "NBITS", 
-                                                 CPLString().Printf( "%ld", nBitsPerSample ) );
+                                                 CPLString().Printf( "%ld", nBitsPerSample ),
+                                                 "IMAGE_STRUCTURE" );
     }
         
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
@@ -4132,13 +4133,14 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     char     **papszCreateOptions = CSLDuplicate( papszOptions );
 
-    if( poPBand->GetMetadataItem( "NBITS" ) != NULL 
-        && atoi(poPBand->GetMetadataItem( "NBITS" )) < 8 
+    if( poPBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) != NULL 
+        && atoi(poPBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )) < 8 
         && CSLFetchNameValue( papszCreateOptions, "NBITS") == NULL )
     {
         papszCreateOptions = 
             CSLSetNameValue( papszCreateOptions, "NBITS",
-                             poPBand->GetMetadataItem( "NBITS" ) );
+                             poPBand->GetMetadataItem( "NBITS", 
+                                                       "IMAGE_STRUCTURE" ) );
     }
 
     if( CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == NULL
