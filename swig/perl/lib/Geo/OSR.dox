@@ -27,168 +27,250 @@
 
 ## @attr SRS_PT_ALBERS_CONIC_EQUAL_AREA
 # scalar
+
 ## @attr SRS_PT_AZIMUTHAL_EQUIDISTANT
 # scalar
+
 ## @attr SRS_PT_CASSINI_SOLDNER
 # scalar
+
 ## @attr SRS_PT_CYLINDRICAL_EQUAL_AREA
 # scalar
+
 ## @attr SRS_PT_ECKERT_IV
 # scalar
+
 ## @attr SRS_PT_ECKERT_VI
 # scalar
+
 ## @attr SRS_PT_EQUIDISTANT_CONIC
 # scalar
+
 ## @attr SRS_PT_EQUIRECTANGULAR
 # scalar
+
 ## @attr SRS_PT_GALL_STEREOGRAPHIC
 # scalar
+
 ## @attr SRS_PT_GNOMONIC
 # scalar
+
 ## @attr SRS_PT_GOODE_HOMOLOSINE
 # scalar
+
 ## @attr SRS_PT_HOTINE_OBLIQUE_MERCATOR
 # scalar
+
 ## @attr SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN
 # scalar
+
 ## @attr SRS_PT_LABORDE_OBLIQUE_MERCATOR
 # scalar
+
 ## @attr SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP
 # scalar
+
 ## @attr SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP
 # scalar
+
 ## @attr SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM
 # scalar
+
 ## @attr SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA
 # scalar
+
 ## @attr SRS_PT_MERCATOR_1SP
 # scalar
+
 ## @attr SRS_PT_MERCATOR_2SP
 # scalar
+
 ## @attr SRS_PT_MILLER_CYLINDRICAL
 # scalar
+
 ## @attr SRS_PT_MOLLWEIDE
 # scalar
+
 ## @attr SRS_PT_NEW_ZEALAND_MAP_GRID
 # scalar
+
 ## @attr SRS_PT_OBLIQUE_STEREOGRAPHIC
 # scalar
+
 ## @attr SRS_PT_ORTHOGRAPHIC
 # scalar
+
 ## @attr SRS_PT_POLAR_STEREOGRAPHIC
 # scalar
+
 ## @attr SRS_PT_POLYCONIC
 # scalar
+
 ## @attr SRS_PT_ROBINSON
 # scalar
+
 ## @attr SRS_PT_SINUSOIDAL
 # scalar
+
 ## @attr SRS_PT_STEREOGRAPHIC
 # scalar
+
 ## @attr SRS_PT_SWISS_OBLIQUE_CYLINDRICAL
 # scalar
+
 ## @attr SRS_PT_TRANSVERSE_MERCATOR
 # scalar
+
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED
 # scalar
+
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_22
 # scalar
+
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_23
 # scalar
+
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_24
 # scalar
+
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_25
 # scalar
+
 ## @attr SRS_PT_TUNISIA_MINING_GRID
 # scalar
+
 ## @attr SRS_PT_VANDERGRINTEN
 # scalar
+
 ## @attr SRS_PT_KROVAK
 # scalar
+
 ## @attr SRS_PP_CENTRAL_MERIDIAN
 # scalar
+
 ## @attr SRS_PP_SCALE_FACTOR
 # scalar
+
 ## @attr SRS_PP_STANDARD_PARALLEL_1
 # scalar
+
 ## @attr SRS_PP_STANDARD_PARALLEL_2
 # scalar
+
 ## @attr SRS_PP_PSEUDO_STD_PARALLEL_1
 # scalar
+
 ## @attr SRS_PP_LONGITUDE_OF_CENTER
 # scalar
+
 ## @attr SRS_PP_LATITUDE_OF_CENTER
 # scalar
+
 ## @attr SRS_PP_LONGITUDE_OF_ORIGIN
 # scalar
+
 ## @attr SRS_PP_LATITUDE_OF_ORIGIN
 # scalar
+
 ## @attr SRS_PP_FALSE_EASTING
 # scalar
+
 ## @attr SRS_PP_FALSE_NORTHING
 # scalar
+
 ## @attr SRS_PP_AZIMUTH
 # scalar
+
 ## @attr SRS_PP_LONGITUDE_OF_POINT_1
 # scalar
+
 ## @attr SRS_PP_LATITUDE_OF_POINT_1
 # scalar
+
 ## @attr SRS_PP_LONGITUDE_OF_POINT_2
 # scalar
+
 ## @attr SRS_PP_LATITUDE_OF_POINT_2
 # scalar
+
 ## @attr SRS_PP_LONGITUDE_OF_POINT_3
 # scalar
+
 ## @attr SRS_PP_LATITUDE_OF_POINT_3
 # scalar
+
 ## @attr SRS_PP_RECTIFIED_GRID_ANGLE
 # scalar
+
 ## @attr SRS_PP_LANDSAT_NUMBER
 # scalar
+
 ## @attr SRS_PP_PATH_NUMBER
 # scalar
+
 ## @attr SRS_PP_PERSPECTIVE_POINT_HEIGHT
 # scalar
+
 ## @attr SRS_PP_FIPSZONE
 # scalar
+
 ## @attr SRS_PP_ZONE
 # scalar
+
 ## @attr SRS_UL_METER
 # scalar
+
 ## @attr SRS_UL_FOOT
 # scalar
+
 ## @attr SRS_UL_FOOT_CONV
 # scalar
+
 ## @attr SRS_UL_US_FOOT
 # scalar
+
 ## @attr SRS_UL_US_FOOT_CONV
 # scalar
+
 ## @attr SRS_UL_NAUTICAL_MILE
 # scalar
+
 ## @attr SRS_UL_NAUTICAL_MILE_CONV
 # scalar
+
 ## @attr SRS_UL_LINK
 # scalar
+
 ## @attr SRS_UL_LINK_CONV
 # scalar
+
 ## @attr SRS_UL_CHAIN
 # scalar
+
 ## @attr SRS_UL_CHAIN_CONV
 # scalar
+
 ## @attr SRS_UL_ROD
 # scalar
+
 ## @attr SRS_UL_ROD_CONV
 # scalar
+
 ## @attr SRS_DN_NAD27
 # scalar
+
 ## @attr SRS_DN_NAD83
 # scalar
+
 ## @attr SRS_DN_WGS72
 # scalar
+
 ## @attr SRS_DN_WGS84
 # scalar
+
 ## @attr SRS_WGS84_SEMIMAJOR
 # scalar
+
 ## @attr SRS_WGS84_INVFLATTENING
 # scalar
 
@@ -337,6 +419,7 @@
 # @return scalar (OGRErr)
 
 ## @method ImportFromUSGS($proj_code, $zone = 0, \@argin[15] = undef,  $datum_code = 0)
+# @param proj_code
 # @param $argin = array of 15 numbers
 # @return scalar (OGRErr)
 
@@ -383,35 +466,65 @@
 # @return scalar (OGRErr)
 
 ## @method ImportFromUrl()
+
 ## @method SetAuthority()
+
 ## @method SetCEA()
+
 ## @method SetGEOS()
+
 ## @method SetGH()
+
 ## @method SetGnomonic()
+
 ## @method SetHOM()
+
 ## @method SetHOM2PNO()
+
 ## @method SetKrovak()
+
 ## @method SetLAEA()
+
 ## @method SetLCC()
+
 ## @method SetLCC1SP()
+
 ## @method SetLCCB()
+
 ## @method SetLocalCS()
+
 ## @method SetMC()
+
 ## @method SetMercator()
+
 ## @method SetMollweide()
+
 ## @method SetNZMG()
+
 ## @method SetOS()
+
 ## @method SetOrthographic()
+
 ## @method SetPS()
+
 ## @method SetPolyconic()
+
 ## @method SetRobinson()
+
 ## @method SetSOC()
+
 ## @method SetSinusoidal()
+
 ## @method SetStereographic()
+
 ## @method SetTM()
+
 ## @method SetTMG()
+
 ## @method SetTMSO()
+
 ## @method SetTMVariant()
+
 ## @method SetVDG()
 
 ## @class Geo::OSR::CoordinateTransformation
