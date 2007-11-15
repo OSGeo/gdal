@@ -86,7 +86,8 @@ INPUT                  = .
 FILE_PATTERNS          = *.pm \
 			*.dox
 RECURSIVE              = YES
-EXCLUDE                = blib
+EXCLUDE                = C:/dev/gdal/swig/perl/blib \
+			blib
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = 

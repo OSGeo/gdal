@@ -40,22 +40,39 @@
 ## @ignore ReadDir
 
 ## @fn UseExceptions()
+
 ## @fn DontUseExceptions()
+
 ## @fn Debug()
+
 ## @fn Error()
+
 ## @fn PushErrorHandler()
+
 ## @fn PopErrorHandler()
+
 ## @fn ErrorReset()
+
 ## @fn GetLastErrorNo()
+
 ## @fn GetLastErrorType()
+
 ## @fn GetLastErrorMsg()
+
 ## @fn PushFinderLocation()
+
 ## @fn PopFinderLocation()
+
 ## @fn FinderClean()
+
 ## @fn FindFile()
+
 ## @fn SetConfigOption()
+
 ## @fn GetConfigOption()
+
 ## @fn CPLBinaryToHex()
+
 ## @fn CPLHexToBinary()
 
 ## @fn VersionInfo($request = 'VERSION_NUM')
@@ -355,11 +372,17 @@
 # @param $ColorTable Geo::GDAL::ColorTable object
 
 ## @method CreateMaskBand()
+
 ## @method GetMaskBand()
+
 ## @method GetMaskFlags()
+
 ## @method GetRasterCategoryNames()
+
 ## @method SetRasterCategoryNames()
+
 ## @method GetDefaultRAT()
+
 ## @method SetDefaultRAT()
 
 
@@ -399,18 +422,33 @@
 ## @cmethod new()
 
 ## @method Clone()
+
 ## @method GetColumnCount()
+
 ## @method GetNameOfCol()
+
 ## @method GetUsageOfCol()
+
 ## @method GetTypeOfCol()
+
 ## @method GetColOfUsage()
+
 ## @method GetRowCount()
+
 ## @method GetValueAsString()
+
 ## @method GetValueAsInt()
+
 ## @method GetValueAsDouble()
+
 ## @method SetValueAsString()
+
 ## @method SetValueAsInt()
+
 ## @method SetValueAsDouble()
+
 ## @method SetRowCount()
+
 ## @method CreateColumn()
+
 ## @method GetRowOfValue()
