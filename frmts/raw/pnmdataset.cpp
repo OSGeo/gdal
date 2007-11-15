@@ -234,6 +234,8 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    poDS->eAccess = poOpenInfo->eAccess;
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
