@@ -58,100 +58,148 @@
 
 ## @attr wkb25Bit
 # scalar
+
 ## @attr wkbUnknown
 # scalar
+
 ## @attr wkbPoint
 # scalar
+
 ## @attr wkbLineString
 # scalar
+
 ## @attr wkbPolygon
 # scalar
+
 ## @attr wkbMultiPoint
 # scalar
+
 ## @attr wkbMultiLineString
 # scalar
+
 ## @attr wkbMultiPolygon
 # scalar
+
 ## @attr wkbGeometryCollection
 # scalar
+
 ## @attr wkbNone
 # scalar
+
 ## @attr wkbLinearRing
 # scalar
+
 ## @attr wkbPoint25D
 # scalar
+
 ## @attr wkbLineString25D
 # scalar
+
 ## @attr wkbPolygon25D
 # scalar
+
 ## @attr wkbMultiPoint25D
 # scalar
+
 ## @attr wkbMultiLineString25D
 # scalar
+
 ## @attr wkbMultiPolygon25D
 # scalar
+
 ## @attr wkbGeometryCollection25D
 # scalar
+
 ## @attr OFTInteger
 # scalar
+
 ## @attr OFTIntegerList
 # scalar
+
 ## @attr OFTReal
 # scalar
+
 ## @attr OFTRealList
 # scalar
+
 ## @attr OFTString
 # scalar
+
 ## @attr OFTStringList
 # scalar
+
 ## @attr OFTWideString
 # scalar
+
 ## @attr OFTWideStringList
 # scalar
+
 ## @attr OFTBinary
 # scalar
+
 ## @attr OFTDate
 # scalar
+
 ## @attr OFTTime
 # scalar
+
 ## @attr OFTDateTime
 # scalar
+
 ## @attr OJUndefined
 # scalar
+
 ## @attr OJLeft
 # scalar
+
 ## @attr OJRight
 # scalar
+
 ## @attr wkbXDR
 # scalar
+
 ## @attr wkbNDR
 # scalar
+
 ## @attr OLCRandomRead
 # scalar
+
 ## @attr OLCSequentialWrite
 # scalar
+
 ## @attr OLCRandomWrite
 # scalar
+
 ## @attr OLCFastSpatialFilter
 # scalar
+
 ## @attr OLCFastFeatureCount
 # scalar
+
 ## @attr OLCFastGetExtent
 # scalar
+
 ## @attr OLCCreateField
 # scalar
+
 ## @attr OLCTransactions
 # scalar
+
 ## @attr OLCDeleteFeature
 # scalar
+
 ## @attr OLCFastSetNextByIndex
 # scalar
+
 ## @attr ODsCCreateLayer
 # scalar
+
 ## @attr ODsCDeleteLayer
 # scalar
+
 ## @attr ODrCCreateDataSource
 # scalar
+
 ## @attr ODrCDeleteDataSource
 # scalar
 
@@ -493,6 +541,13 @@
 # @param $type one of Geo::OGR::wkb*
 # @return Geo::OGR::Geometry object
 
+## @cmethod create($type | %params)
+# An alternative constructor, which supports named parameters and type
+# as string.
+# @param $type One of geometry types ('Point', 'LineString', etc.).
+# @param %params Named parameter, possible are: WKT, WKB, and GML.
+# @return Geo::OGR::Geometry object
+
 ## @method ExportToWkt()
 # @return scalar (WKT string)
 
@@ -535,6 +590,9 @@
 
 ## @method GetGeometryType()
 # @return one of Geo::OGR::wkb*
+
+## @method GeometryType()
+# @return the geometry type as a string
 
 ## @method GetGeometryName()
 # @return scalar (string)
