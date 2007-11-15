@@ -385,6 +385,8 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( DGifSlurp( hGifFile ) != GIF_OK )
     {
+        VSIFCloseL( fp );
+        DGifCloseFile(hGifFile);
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "DGifSlurp() failed for %s.\n"
                   "Perhaps the gif file is corrupt?\n",
