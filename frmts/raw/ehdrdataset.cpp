@@ -175,7 +175,8 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDS,
         nBlockYSize = 1;
 
         SetMetadataItem( "NBITS", 
-                         CPLString().Printf( "%ld", nBits ) );
+                         CPLString().Printf( "%ld", nBits ),
+                         "IMAGE_STRUCTURE" );
     }
 }
 
@@ -1629,13 +1630,14 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
     char **papszAdjustedOptions = CSLDuplicate( papszOptions );
     GDALDataset *poOutDS;
 
-    if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS" ) != NULL 
+    if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", 
+                                                    "IMAGE_STRUCTURE" ) !=NULL
         && CSLFetchNameValue( papszOptions, "NBITS" ) == NULL )
     {
         papszAdjustedOptions = 
             CSLSetNameValue( papszAdjustedOptions, 
                              "NBITS", 
-                             poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS") );
+                             poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS","IMAGE_STRUCTURE") );
     }
     
     GDALDriver	*poDriver = (GDALDriver *) GDALGetDriverByName( "EHdr" );
