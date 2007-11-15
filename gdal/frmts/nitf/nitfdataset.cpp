@@ -268,7 +268,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
         sEntry.c4 = 255;
         poColorTable->SetColorEntry( 1, &sEntry );
 
-        SetMetadataItem( "NBITS", "1" );
+        SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
     }
 }
 

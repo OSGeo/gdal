@@ -659,8 +659,9 @@ void PNGDataset::CollectMetadata()
     {
         for( int iBand = 0; iBand < nBands; iBand++ )
         {
-            GetRasterBand(iBand+1)->SetMetadataItem( "NBITS", 
-                         CPLString().Printf( "%ld", nBitDepth ) );
+            GetRasterBand(iBand+1)->SetMetadataItem( 
+                "NBITS", CPLString().Printf( "%ld", nBitDepth ),
+                "IMAGE_STRUCTURE" );
         }
     }
 
