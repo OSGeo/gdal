@@ -277,49 +277,19 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
         int             iMember;
-        const char *pszElem, *pszMemberElem;
 
-        if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon )
-        {
-            pszElem = "MultiPolygon>";
-            pszMemberElem = "polygonMember>";
-        }
-        else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString )
-        {
-            pszElem = "MultiLineString>";
-            pszMemberElem = "lineStringMember>";
-        }
-        else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint )
-        {
-            pszElem = "MultiPoint>";
-            pszMemberElem = "pointMember>";
-        }
-        else
-        {
-            pszElem = "GeometryCollection>";
-            pszMemberElem = "geometryMember>";
-        }
-
-        AppendString( ppszText, pnLength, pnMaxLength, "<" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElem );
+        AppendString( ppszText, pnLength, pnMaxLength, "<MultiGeometry>" );
 
         for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
-
-            AppendString( ppszText, pnLength, pnMaxLength, "<" );
-            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
             
             if( !OGR2KMLGeometryAppend( poMember, 
                                         ppszText, pnLength, pnMaxLength ) )
                 return FALSE;
-            
-            AppendString( ppszText, pnLength, pnMaxLength, "</" );
-            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength, "</" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElem );
+		AppendString( ppszText, pnLength, pnMaxLength, "</MultiGeometry>" );
     }
 
     else
