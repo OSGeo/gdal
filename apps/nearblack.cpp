@@ -187,9 +187,12 @@ int main( int argc, char ** argv )
         GDALTermProgress( (iLine+1) / (double) nYSize, NULL, NULL );
     }
 
+    CPLFree(pabyLine);
     GDALClose( hOutDS );
     if( hInDS != hOutDS )
         GDALClose( hInDS );
+    GDALDumpOpenDatasets( stderr );
+    GDALDestroyDriverManager();
 }
 
 /************************************************************************/
