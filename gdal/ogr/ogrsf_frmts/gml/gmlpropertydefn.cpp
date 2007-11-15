@@ -94,6 +94,8 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
 /* -------------------------------------------------------------------- */
     int bIsReal = FALSE;
     
+    /* Saved to calculate length of string property value. */
+    const char* pszTmp = pszValue;
 
     for(; *pszValue != '\0'; pszValue++ )
     {
@@ -116,7 +118,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
     {
         /* grow the Width to the length of the string passed in */
         int nWidth;
-        nWidth = strlen(pszValue);
+        nWidth = strlen(pszTmp);
         if ( m_nWidth < nWidth ) 
             SetWidth( nWidth );
     }
