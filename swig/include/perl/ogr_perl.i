@@ -1,31 +1,30 @@
-/*
- * $Id$
+/******************************************************************************
  *
- * perl specific code for ogr bindings.
- */
-
-/*
- * $Log$
- * Revision 1.6  2006/11/19 20:07:35  ajolma
- * instead of renaming, create GetField as a copy of GetFieldAsString
+ * Project:  OGR SWIG Interface declarations for Perl.
+ * Purpose:  OGR declarations.
+ * Author:   Ari Jolma and Kevin Ruland
  *
- * Revision 1.5  2006/11/19 17:42:24  ajolma
- * There is no sense in having typed versions of GetField in Perl, renamed GetFieldAsString to GetField
+ ******************************************************************************
+ * Copyright (c) 2007, Ari Jolma and Kevin Ruland
  *
- * Revision 1.4  2005/09/21 19:04:12  kruland
- * Need to %include cpl_exceptions.i
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * Revision 1.3  2005/09/21 18:00:05  kruland
- * Turn on UseExceptions in ogr init code.
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- * Revision 1.2  2005/09/13 17:36:28  kruland
- * Whoops!  import typemaps_perl.i.
- *
- * Revision 1.1  2005/09/13 16:08:45  kruland
- * Added perl specific modifications for gdal and ogr.
- *
- *
- */
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 %init %{
 
@@ -81,7 +80,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 }
 
 %extend OGRGeometryShadow {
-    
+
     void Move(double dx, double dy, double dz = 0) {
 	int n = OGR_G_GetGeometryCount(self);
 	if (n > 0) {
@@ -107,32 +106,52 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     use Carp;
     {
 	package Geo::OGR::Geometry;
+	use Carp;
+	use vars qw /%TYPE_STRING2INT %TYPE_INT2STRING/;
+	for my $string ('Unknown', 'Point', 'LineString', 'Polygon',
+			'MultiPoint', 'MultiLineString', 'MultiPolygon',
+			'GeometryCollection', 'None', 'LinearRing',
+			'Point25D', 'LineString25D', 'Polygon25D',
+			'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
+			'GeometryCollection25D') {
+	    my $int = eval "\$Geo::OGR::wkb$string";
+	    $TYPE_STRING2INT{$string} = $int;
+	    $TYPE_INT2STRING{$int} = $string;
+	}
+	sub create { # alternative constructor since swig created new can't be overridden(?)
+	    my $pkg = shift;
+	    my($type, $wkt, $wkb, $gml);
+	    if (@_ == 1) {
+		$type = shift;
+	    } else {
+		my %param = @_;
+		$wkt = $param{type};
+		$wkt = ($param{wkt} or $param{WKT});
+		$wkb = ($param{wkb} or $param{WKB});
+		$gml = ($param{gml} or $param{GML});
+	    }
+	    $type = $TYPE_STRING2INT{$type} if exists $TYPE_STRING2INT{$type};
+	    my $self = Geo::OGRc::new_Geometry($type, $wkt, $wkb, $gml);
+	    bless $self, $pkg if defined $self;
+	}
+	sub GeometryType {
+	    my $self = shift;
+	    return $TYPE_INT2STRING{$self->GetGeometryType};
+	}
 	sub AddPoint {
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
 	}
     }
     sub GeometryType {
 	my($type_or_name) = @_;
-	my @types = ('Unknown', 'Point', 'LineString', 'Polygon',
-		     'MultiPoint', 'MultiLineString', 'MultiPolygon',
-		     'GeometryCollection', 'None', 'LinearRing',
-		     'Point25D', 'LineString25D', 'Polygon25D',
-		     'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
-		     'GeometryCollection25D');
 	if (defined $type_or_name) {
-	    if ($type_or_name =~ /^[+-]?\d/) {
-		for (@types) {
-		    if (eval "\$type_or_name == \$Geo::OGR::wkb$_") {return $_}
-		}
-		croak "unknown geometry type value: $type_or_name";
-	    } else {
-		for (@types) {
-		    if ($type_or_name eq $_) {return eval "\$Geo::OGR::wkb$_"}
-		}
-		croak "unknown geometry type name: $type_or_name";
-	    }
+	    return $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name} 
+	    if exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name};
+	    return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} 
+	    if exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name};
+	    croak "unknown geometry type or name: $type_or_name";
 	} else {
-	    return @types;
+	    return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
 	}
     }
 %}
