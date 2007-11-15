@@ -17,16 +17,16 @@ default: generate
 dist: generate
 
 clean:
-	for dir in ${BINDINGS}; do (cd $$dir; $(MAKE) clean ); done
+	for dir in ${BINDINGS}; do (cd $$dir; $(MAKE) clean) || exit; done
 
 veryclean:
-	for dir in ${ALL_BINDINGS}; do (cd $$dir; $(MAKE) veryclean ); done
+	for dir in ${ALL_BINDINGS}; do (cd $$dir; $(MAKE) veryclean) || exit; done
 
 generate:
-	for dir in ${ALL_BINDINGS}; do (cd $$dir; $(MAKE) generate ); done
+	for dir in ${ALL_BINDINGS}; do (cd $$dir; $(MAKE) generate) || exit; done
 
 build:
-	for dir in ${BINDINGS}; do (cd $$dir; $(MAKE) build ); done
+	for dir in ${BINDINGS}; do (cd $$dir; $(MAKE) build) || exit; done
 
 install:
-	for dir in ${BINDINGS}; do (cd $$dir; $(MAKE) install ); done
+	for dir in ${BINDINGS}; do (cd $$dir; $(MAKE) install) || exit; done
