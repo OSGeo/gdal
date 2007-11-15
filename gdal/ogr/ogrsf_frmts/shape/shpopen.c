@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.51 2006/09/04 15:24:01 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.54 2007/11/15 00:12:47 mloskot Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,16 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.54  2007/11/15 00:12:47  mloskot
+ * Backported recent changes from GDAL (Ticket #1415) to Shapelib.
+ *
+ * Revision 1.53  2007/11/14 22:31:08  fwarmerdam
+ * checks after mallocs to detect for corrupted/voluntary broken shapefiles.
+ * http://trac.osgeo.org/gdal/ticket/1991
+ *
+ * Revision 1.52  2007/06/21 15:58:33  fwarmerdam
+ * fix for SHPRewindObject when rings touch at one vertex (gdal #976)
+ *
  * Revision 1.51  2006/09/04 15:24:01  fwarmerdam
  * Fixed up log message for 1.49.
  *
@@ -209,7 +219,7 @@
 #include <cpl_vsi.h>
 #endif
 
-SHP_CVSID("$Id: shpopen.c,v 1.51 2006/09/04 15:24:01 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.54 2007/11/15 00:12:47 mloskot Exp $")
 
 typedef unsigned char uchar;
 
@@ -557,6 +567,7 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
 	fclose( psSHP->fpSHP );
 	fclose( psSHP->fpSHX );
 	free( psSHP );
+        free(pabyBuf);
 
 	return( NULL );
     }
@@ -608,8 +619,26 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
         (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
     psSHP->panRecSize =
         (int *) malloc(sizeof(int) * MAX(1,psSHP->nMaxRecords) );
-
     pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
+
+    if (psSHP->panRecOffset == NULL ||
+        psSHP->panRecSize == NULL ||
+        pabyBuf == NULL)
+    {
+#ifdef USE_CPL
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Not enough memory to allocate requested memory (nRecords=%d, nParts=%d). "
+                  "Probably broken SHP file", psSHP->nRecords );
+#endif
+        fclose( psSHP->fpSHP );
+        fclose( psSHP->fpSHX );
+        if (psSHP->panRecOffset) free( psSHP->panRecOffset );
+        if (psSHP->panRecSize) free( psSHP->panRecSize );
+        if (pabyBuf) free( pabyBuf );
+        free( psSHP );
+        return( NULL );
+    }
+
     if( (int) fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX ) 
 			!= psSHP->nRecords )
     {
@@ -623,6 +652,7 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
 	fclose( psSHP->fpSHX );
         free( psSHP->panRecOffset );
         free( psSHP->panRecSize );
+        free( pabyBuf );
 	free( psSHP );
 
 	return( NULL );
@@ -1457,6 +1487,15 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     {
 	psSHP->nBufSize = psSHP->panRecSize[hEntity]+8;
 	psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,psSHP->nBufSize);
+        if (psSHP->pabyRec == NULL)
+        {
+#ifdef USE_CPL
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Not enough memory to allocate requested memory (nBufSize=%d). "
+                     "Probably broken SHP file", psSHP->nBufSize );
+#endif
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1523,6 +1562,16 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	if( bBigEndian ) SwapWord( 4, &nPoints );
 	if( bBigEndian ) SwapWord( 4, &nParts );
 
+        if (nPoints < 0 || nParts < 0)
+        {
+#ifdef USE_CPL
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "nPoints=%d, nParts=%d : bad value(s). Probably broken SHP file", nPoints, nParts );
+#endif
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
+
 	psShape->nVertices = nPoints;
         psShape->padfX = (double *) calloc(nPoints,sizeof(double));
         psShape->padfY = (double *) calloc(nPoints,sizeof(double));
@@ -1532,6 +1581,22 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	psShape->nParts = nParts;
         psShape->panPartStart = (int *) calloc(nParts,sizeof(int));
         psShape->panPartType = (int *) calloc(nParts,sizeof(int));
+        
+        if (psShape->padfX == NULL ||
+            psShape->padfY == NULL ||
+            psShape->padfZ == NULL ||
+            psShape->padfM == NULL ||
+            psShape->panPartStart == NULL ||
+            psShape->panPartType == NULL)
+        {
+#ifdef USE_CPL
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d). "
+                     "Probably broken SHP file", nPoints, nParts );
+#endif
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
 
         for( i = 0; i < nParts; i++ )
             psShape->panPartType[i] = SHPP_RING;
@@ -1640,11 +1705,35 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
 	if( bBigEndian ) SwapWord( 4, &nPoints );
 
+        if (nPoints < 0)
+        {
+#ifdef USE_CPL
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "nPoints=%d : bad value. Probably broken SHP file", nPoints );
+#endif
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
+        
 	psShape->nVertices = nPoints;
         psShape->padfX = (double *) calloc(nPoints,sizeof(double));
         psShape->padfY = (double *) calloc(nPoints,sizeof(double));
         psShape->padfZ = (double *) calloc(nPoints,sizeof(double));
         psShape->padfM = (double *) calloc(nPoints,sizeof(double));
+
+        if (psShape->padfX == NULL ||
+            psShape->padfY == NULL ||
+            psShape->padfZ == NULL ||
+            psShape->padfM == NULL)
+        {
+#ifdef USE_CPL
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Not enough memory to allocate requested memory (nPoints=%d). "
+                     "Probably broken SHP file", nPoints );
+#endif
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
 
 	for( i = 0; i < nPoints; i++ )
 	{
