@@ -738,7 +738,7 @@ char **GTiffRasterBand::GetMetadata( const char * pszDomain )
 CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
-    if( pszDomain == NULL || EQUAL(pszDomain,"_temporary_") )
+    if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         poGDS->bMetadataChanged = TRUE;
 
     return oGTiffMDMD.SetMetadata( papszMD, pszDomain );
@@ -1975,6 +1975,9 @@ void GTiffDataset::Crystalize()
 {
     if( !bCrystalized )
     {
+        if( bNewDataset || bMetadataChanged )
+            WriteMetadata( this, hTIFF, TRUE );
+
         bCrystalized = TRUE;
 
         TIFFWriteCheck( hTIFF, TIFFIsTiled(hTIFF), "GTiffDataset::Crystalize");
@@ -4672,7 +4675,7 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
                                       const char *pszDomain )
 
 {
-    if( pszDomain == NULL || EQUAL(pszDomain,"_temporary_") )
+    if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
         bMetadataChanged = TRUE;
 
     return oGTiffMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
