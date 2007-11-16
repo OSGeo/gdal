@@ -1551,7 +1551,7 @@ void JPGDataset::CheckForMask()
 void JPGDataset::DecompressMask()
 
 {
-    if( pabyCMask == NULL )
+    if( pabyCMask == NULL || pabyBitMask != NULL )
         return;
 
 /* -------------------------------------------------------------------- */
