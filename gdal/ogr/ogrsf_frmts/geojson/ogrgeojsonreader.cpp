@@ -637,16 +637,15 @@ OGRMultiPoint* OGRGeoJSONReader::ReadMultiPoint( json_object* poObj )
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObjPoints, i );
             
-            OGRPoint* pt = new OGRPoint();
-            if( !ReadRawPoint( poObjCoords, *pt ) )
+            OGRPoint pt;
+            if( !ReadRawPoint( poObjCoords, pt ) )
             {
                 delete poMultiPoint;
                 CPLDebug( "GeoJSON",
                           "LineString: raw point parsing failure." );
                 return NULL;
             }
-            poMultiPoint->addGeometry(pt);
-            
+            poMultiPoint->addGeometry( &pt );
         }
     }
 
@@ -688,18 +687,18 @@ OGRLineString* OGRGeoJSONReader::ReadLineString( json_object* poObj , bool bRaw)
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObjPoints, i );
             
-            OGRPoint* pt = new OGRPoint();
-            if( !ReadRawPoint( poObjCoords, *pt ) )
+            OGRPoint pt;
+            if( !ReadRawPoint( poObjCoords, pt ) )
             {
                 delete poLine;
                 CPLDebug( "GeoJSON",
                           "LineString: raw point parsing failure." );
                 return NULL;
             }
-            if (pt->getCoordinateDimension() == 2) {
-                poLine->setPoint( i, pt->getX(), pt->getY());
+            if (pt.getCoordinateDimension() == 2) {
+                poLine->setPoint( i, pt.getX(), pt.getY());
             } else {
-                poLine->setPoint( i, pt->getX(), pt->getY(), pt->getZ() );
+                poLine->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
             }
             
         }
@@ -770,8 +769,8 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
             json_object* poObjCoords = NULL;
             poObjCoords = json_object_array_get_idx( poObj, i );
             
-            OGRPoint* pt = new OGRPoint();
-            if( !ReadRawPoint( poObjCoords, *pt ) )
+            OGRPoint pt;
+            if( !ReadRawPoint( poObjCoords, pt ) )
             {
                 delete poRing;
                 CPLDebug( "GeoJSON",
@@ -779,13 +778,11 @@ OGRLinearRing* OGRGeoJSONReader::ReadLinearRing( json_object* poObj )
                 return NULL;
             }
             
-            if (pt->getCoordinateDimension() == 2) {
-                poRing->setPoint( i, pt->getX(), pt->getY());
+            if (pt.getCoordinateDimension() == 2) {
+                poRing->setPoint( i, pt.getX(), pt.getY());
             } else {
-                poRing->setPoint( i, pt->getX(), pt->getY(), pt->getZ() );
+                poRing->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
             }
-            
-            
         }
     }
 
