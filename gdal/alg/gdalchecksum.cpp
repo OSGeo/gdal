@@ -67,7 +67,15 @@ GDALChecksumImage( GDALRasterBandH hBand,
     int  *panLineData;
     int  bComplex = GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) );
 
-    panLineData = (GInt32 *) CPLMalloc(nXSize * sizeof(GInt32) * 2);
+    panLineData = (GInt32 *) VSIMalloc(nXSize * sizeof(GInt32) * 2);
+    if (panLineData == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc(): Out of memory in GDALChecksumImage. "
+                  "Checksum value couldn't be computed\n",
+                  nXSize * sizeof(GInt32) * 2 );
+        return 0;
+    }
 
     for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
     {
