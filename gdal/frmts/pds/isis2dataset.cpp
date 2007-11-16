@@ -34,9 +34,13 @@
 
 #define NULL1 0
 #define NULL2 -32768
-//#define NULL3 -0.3402822655089E+39 /*0xFF7FFFFB*/
+//#define NULL3 0xFF7FFFFB //in hex
+//Same as ESRI_GRID_FLOAT_NO_DATA
+#define NULL3 -340282346638528859811704183484516925440.0
 
-#define NULL3 0xFF7FFFFB //in hex
+#ifndef PI
+#  define PI 3.1415926535897932384626433832795
+#endif
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
@@ -71,12 +75,14 @@ class ISIS2Dataset : public RawDataset
 
     CPLString   oTempResult;
 
+    void        CleanString( CPLString &osInput );
+
     const char *GetKeyword( const char *pszPath, 
                             const char *pszDefault = "");
     const char *GetKeywordSub( const char *pszPath, 
                                int iSubscript, 
                                const char *pszDefault = "");
-    
+
 public:
     ISIS2Dataset();
     ~ISIS2Dataset();
@@ -186,7 +192,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the label (ie. .lab) file.  	*/
 /* -------------------------------------------------------------------- */
-    //  QUBE can be inline or detached and point to an image name
+    // QUBE can be inline or detached and point to an image name
     // ^QUBE = 76
     // ^QUBE = ("ui31s015.img",6441<BYTES>) - has another label on the image
     // ^QUBE = "ui31s015.img" - which implies no label or skip value
@@ -210,31 +216,26 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDataType = GDT_Byte;
     OGRSpatialReference oSRS;
 
-    int	nRows = -1;
-    int nCols = -1;
-    int nBands = 1;
+    //image parameters
+    int	nRows, nCols, nBands = 1;
     int nSkipBytes = 0;
     int itype;
     int  s_ix, s_iy, s_iz; // check SUFFIX_ITEMS params.
     int record_bytes;
+    int	bNoDataSet = FALSE;
+    char chByteOrder = 'M';  //default to MSB
+ 
+    //Georef parameters
     double dfULXMap=0.5;
     double dfULYMap = 0.5;
     double dfXDim = 1.0;
     double dfYDim = 1.0;
     double dfNoData = 0.0;
-    int	bNoDataSet = FALSE;
-    char chByteOrder = 'M';  //default to MSB
-    char szLayout[10] = "BSQ"; //default to band seq.
-    const char *target_name; //planet name
+    double xulcenter = 0.0;
+    double yulcenter = 0.0;
+
     //projection parameters
-    float xulcenter = 0.0;
-    float yulcenter = 0.0;
-    const char *map_proj_name;
     int	bProjectionSet = TRUE;
-    char proj_target_name[200]; 
-    char datum_name[60];  
-    char sphere_name[60];
-    char bIsGeographic = TRUE;
     double semi_major = 0.0;
     double semi_minor = 0.0;
     double iflattening = 0.0;
@@ -269,6 +270,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********************************************************/
     const char *value;
 
+    char szLayout[10] = "BSQ"; //default to band seq.
     value = poDS->GetKeyword( "QUBE.AXIS_NAME", "" );
     if (EQUAL(value,"(SAMPLE,LINE,BAND)") )
         strcpy(szLayout,"BSQ");
@@ -314,8 +316,11 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         bNoDataSet = TRUE;
         break;
       default :
-        printf("\nItype of %d is not supported in ISIS 2. Exiting\n\n",itype); 
-        exit(1);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Itype of %d is not supported in ISIS 2.",
+                  itype); 
+        delete poDS;
+        return NULL;
     }
 
     /***********   Grab samples lines band ************/
@@ -351,19 +356,20 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
      
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    target_name = poDS->GetKeyword("QUBE.TARGET_NAME");
+    CPLString target_name = poDS->GetKeyword("QUBE.TARGET_NAME");
      
     /***********   Grab MAP_PROJECTION_TYPE ************/
-    map_proj_name = 
+    CPLString map_proj_name = 
         poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
-     
+    poDS->CleanString( map_proj_name );
+
     /***********   Grab SEMI-MAJOR ************/
     semi_major = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.A_AXIS_RADIUS"));
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab semi-minor ************/
     semi_minor = 
-        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.C_AXIS_RADIUS"));
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
@@ -385,93 +391,122 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     // Need to further study how ocentric/ographic will effect the gdal library.
     // So far we will use this fact to define a sphere or ellipse for some projections
     // Frank - may need to talk this over
+    char bIsGeographic = TRUE;
     value = poDS->GetKeyword("CUBE.IMAGE_MAP_PROJECTION.PROJECTION_LATITUDE_TYPE");
     if (EQUAL( value, "\"PLANETOCENTRIC\"" ))
         bIsGeographic = FALSE; 
      
+    CPLDebug("ISIS2","using projection %s", map_proj_name.c_str() );
+
     //Set oSRS projection and parameters
-    if ((EQUAL( map_proj_name, "\"EQUIRECTANGULAR_CYLINDRICAL\"" )) ||
-        (EQUAL( map_proj_name, "\"SIMPLE_CYLINDRICAL\"" )) )  {
-#ifdef DEBUG
-        printf("using projection %s\n\n", map_proj_name);
-#endif
+    if ((EQUAL( map_proj_name, "EQUIRECTANGULAR_CYLINDRICAL" )) ||
+        (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
+        (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ) {
         oSRS.OGRSpatialReference::SetEquirectangular ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"ORTHOGRAPHIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    } else if (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) { 
         oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"SINUSOIDAL\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    } else if ((EQUAL( map_proj_name, "SINUSOIDAL" )) ||
+               (EQUAL( map_proj_name, "SINUSOIDAL_EQUAL-AREA" ))) {
         oSRS.OGRSpatialReference::SetSinusoidal ( center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"MERCATOR\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.OGRSpatialReference::SetMercator ( center_lat, center_lon, 1, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"POLAR_STEREOGRAPHIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC" )) {
         oSRS.OGRSpatialReference::SetPS ( center_lat, center_lon, 1, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"TRANSVERSE_MERCATOR\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    } else if (EQUAL( map_proj_name, "TRANSVERSE_MERCATOR" )) {
         oSRS.OGRSpatialReference::SetTM ( center_lat, center_lon, 1, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"LAMBERT_CONFORMAL_CONIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    } else if (EQUAL( map_proj_name, "LAMBERT_CONFORMAL_CONIC" )) {
         oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
     } else {
-        printf("*** no projection define or supported! Are you sure this is a map projected cube?\n\n" );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Dataset projection %s is not supported.\n"
+                  "Are you sure this is a map projected cube?",
+                  map_proj_name.c_str() );
         bProjectionSet = FALSE;
     }
 
     if (bProjectionSet) {
-        //Create projection name, i.e. MARS_MERCATOR
-        strcpy(proj_target_name, map_proj_name);
-        strcat(proj_target_name, "_");
-        strcat(proj_target_name, target_name);
+        //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
+        CPLString proj_target_name = map_proj_name + " " + target_name;
+        oSRS.SetProjCS(proj_target_name); //set ProjCS keyword
      
-        //The datum name will be the same basic name aas the planet
-        strcpy(datum_name, "D_");
-        strcat(datum_name, target_name);
-     
-        strcpy(sphere_name, target_name);
-        //strcat(sphere_name, "_IAU_IAG");  //Might not be IAU defined so don't add
+        //The geographic/geocentric name will be the same basic name as the body name
+        //'GCS' = Geographic/Geocentric Coordinate System
+        CPLString geog_name = "GCS_" + target_name;
+        
+        //The datum and sphere names will be the same basic name aas the planet
+        CPLString datum_name = "D_" + target_name;
+        CPLString sphere_name = target_name; // + "_IAU_IAG");  //Might not be IAU defined so don't add
           
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
-        iflattening = semi_major / (semi_major - semi_minor);
+        if ((semi_major - semi_minor) < 0.0000001) 
+            iflattening = 0;
+        else
+            iflattening = semi_major / (semi_major - semi_minor);
      
-        //The use of a Sphere, polar radius or ellipse here is based on how ISIS 2 does it internally
-        //Notice that most ISIS 2 projections are spherical
-        if ( (EQUAL( map_proj_name, "\"EQUIRECTANGULAR_CYLINDRICAL\"" )) ||
-	     (EQUAL( map_proj_name, "\"SIMPLE_CYLINDRICAL\"" )) || 
-	     (EQUAL( map_proj_name, "\"ORTHOGRAPHIC\"" )) || 
-	     (EQUAL( map_proj_name, "\"SINUSOIDAL\"" )) ) { //flattening = 1.0 for sphere
-            oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                            semi_major*1000, 0.0, 
-                            "Reference_Meridian", 0.0 );
-            //Here isis2 uses the polar radius to define m/p, so we should use the polar radius for body
-        } else if  (EQUAL( map_proj_name, "\"POLAR_STEREOGRAPHIC\"" )) { 
-            oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                            semi_minor*1000.0, 1.0, 
-                            "Reference_Meridian", 0.0 );
-        } else { //ellipse => Mercator, Transverse Mercator, Lambert Conformal
-            if (bIsGeographic) {
-                oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                                semi_major*1000, iflattening, 
+        //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
+        //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
+        if ( ( (EQUAL( map_proj_name, "STEREOGRAPHIC" ) && (fabs(center_lat) == 90)) ) || 
+             (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC" )))  
+        {
+            if (bIsGeographic) { 
+                //Geograpraphic, so set an ellipse
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, iflattening, 
                                 "Reference_Meridian", 0.0 );
-            } else { //we have Ocentric so use a sphere! I hope... 
-                oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                                semi_major*1000, 0.0, 
+            } else {
+                //Geocentric, so force a sphere using the semi-minor axis. I hope... 
+                sphere_name += "_polarRadius";
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_minor, 0.0, 
                                 "Reference_Meridian", 0.0 );
             }
         }
+        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) || 
+                  (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) ||
+                  (EQUAL( map_proj_name, "STEREOGRAPHIC" )) ||
+                  (EQUAL( map_proj_name, "SINUSOIDAL_EQUAL-AREA" )) ||
+                  (EQUAL( map_proj_name, "SINUSOIDAL" ))  ) {
+            //isis uses the sphereical equation for these projections so force a sphere
+            oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                            semi_major, 0.0, 
+                            "Reference_Meridian", 0.0 );
+        } 
+        else if  ((EQUAL( map_proj_name, "EQUIRECTANGULAR_CYLINDRICAL" )) || 
+                  (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ) {
+            //Calculate localRadius using ISIS3 simple elliptical method 
+            //  not the more standard Radius of Curvature method
+            //PI = 4 * atan(1);
+            double radLat, localRadius;
+            if (center_lon == 0) { //No need to calculate local radius
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, 0.0, 
+                                "Reference_Meridian", 0.0 );
+            } else {  
+                radLat = center_lat * PI / 180;  // in radians
+                localRadius = semi_major * semi_minor / sqrt(pow(semi_minor*cos(radLat),2)
+                                                             + pow(semi_major*sin(radLat),2) );
+                sphere_name += "_localRadius";
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                localRadius, 0.0, 
+                                "Reference_Meridian", 0.0 );
+                CPLDebug( "ISIS2", "local radius: %f", localRadius);
+            }
+        } 
+        else { 
+            //All other projections: Mercator, Transverse Mercator, Lambert Conformal, etc.
+            //Geographic, so set an ellipse
+            if (bIsGeographic) {
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, iflattening, 
+                                "Reference_Meridian", 0.0 );
+            } else { 
+                //Geocentric, so force a sphere. I hope... 
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, 0.0, 
+                                "Reference_Meridian", 0.0 );
+            }
+        }
+        
 
         // translate back into a projection string.
         char *pszResult = NULL;
@@ -640,12 +675,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
-
     return( poDS );
 }
 
@@ -693,6 +722,35 @@ const char *ISIS2Dataset::GetKeywordSub( const char *pszPath,
     }
 }
 
+/************************************************************************/
+/*                            CleanString()                             */
+/*                                                                      */
+/* Removes single or double quotes, and converts spaces to underscores. */
+/* The change is made in-place to CPLString.                            */
+/************************************************************************/
+
+void ISIS2Dataset::CleanString( CPLString &osInput )
+
+{
+   if(  ( osInput.size() < 2 ) ||
+        (osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'') )
+        return;
+
+    char *pszWrk = CPLStrdup(osInput.c_str() + 1);
+    int i;
+
+    pszWrk[strlen(pszWrk)-1] = '\0';
+    
+    for( i = 0; pszWrk[i] != '\0'; i++ )
+    {
+        if( pszWrk[i] == ' ' )
+            pszWrk[i] = '_';
+    }
+
+    osInput = pszWrk;
+    CPLFree( pszWrk );
+}
 
 /************************************************************************/
 /*                         GDALRegister_ISIS2()                         */
@@ -718,4 +776,3 @@ void GDALRegister_ISIS2()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
