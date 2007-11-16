@@ -144,7 +144,12 @@ class CPL_DLL GDALDefaultOverviews
     int         bOvrIsAux;
 
     int         bCheckedForMask;
+    int         bOwnMaskDS;
     GDALDataset *poMaskDS;
+
+    // for "overview datasets" we record base level info so we can 
+    // find our way back to get overview masks.
+    GDALDataset *poBaseDS;
 
   public:
                GDALDefaultOverviews();
@@ -154,7 +159,7 @@ class CPL_DLL GDALDefaultOverviews
                            char **papszSiblingFiles = NULL,
                            int bNameIsOVR = FALSE );
 
-    int        IsInitialized() { return poDS != NULL; }
+    int        IsInitialized() { return poDS != NULL && strlen(osOvrFilename) > 0; }
 
     // Overview Related
 
@@ -190,6 +195,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend GDALDatasetH CPL_STDCALL GDALOpen( const char *, GDALAccess);
     friend GDALDatasetH CPL_STDCALL GDALOpenShared( const char *, GDALAccess);
     friend class GDALDriver;
+    friend class GDALDefaultOverviews;
 
   protected:
     GDALDriver  *poDriver;

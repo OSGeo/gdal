@@ -46,6 +46,9 @@ GDALDefaultOverviews::GDALDefaultOverviews()
 
     bCheckedForMask = FALSE;
     poMaskDS = NULL;
+
+    bOwnMaskDS = FALSE;
+    poBaseDS = NULL;
 }
 
 /************************************************************************/
@@ -64,8 +67,11 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
 
     if( poMaskDS != NULL )
     {
-        poMaskDS->FlushCache();
-        GDALClose( poMaskDS );
+        if( bOwnMaskDS )
+        {
+            poMaskDS->FlushCache();
+            GDALClose( poMaskDS );
+        }
         poMaskDS = NULL;
     }
 }
@@ -139,6 +145,29 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
         {
             bOvrIsAux = TRUE;
             osOvrFilename = poODS->GetDescription();
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have an overview dataset, then mark all the overviews     */
+/*      with the base dataset  Used later for finding overviews         */
+/*      masks.  Uggg.                                                   */
+/* -------------------------------------------------------------------- */
+    if( poODS )
+    {
+        int nOverviewCount = GetOverviewCount(1);
+        int iOver;
+
+        for( iOver = 0; iOver < nOverviewCount; iOver++ )
+        {
+            GDALRasterBand *poBand = GetOverview( 1, iOver );
+            GDALDataset    *poOverDS = NULL;
+
+            if( poBand != NULL )
+                poOverDS = poBand->GetDataset();
+            
+            poOverDS->oOvManager.poBaseDS = poDSIn;
+            poOverDS->oOvManager.poDS = poOverDS;
         }
     }
 
@@ -449,6 +478,46 @@ GDALDefaultOverviews::BuildOverviews(
     CPLFree( panNewOverviewList );
     CPLFree( pahBands );
 
+/* -------------------------------------------------------------------- */
+/*      If we have a mask file, we need to build it's overviews         */
+/*      too.                                                            */
+/* -------------------------------------------------------------------- */
+    if( HaveMaskFile() && poMaskDS )
+    {
+        poMaskDS->BuildOverviews( pszResampling, nOverviews, panOverviewList,
+                                  0, NULL, pfnProgress, pProgressData );
+        if( bOwnMaskDS )
+            GDALClose( poMaskDS );
+
+        // force next request to reread mask file.
+        poMaskDS = NULL;
+        bOwnMaskDS = FALSE;
+        bCheckedForMask = FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have an overview dataset, then mark all the overviews     */
+/*      with the base dataset  Used later for finding overviews         */
+/*      masks.  Uggg.                                                   */
+/* -------------------------------------------------------------------- */
+    if( poODS )
+    {
+        int nOverviewCount = GetOverviewCount(1);
+        int iOver;
+
+        for( iOver = 0; iOver < nOverviewCount; iOver++ )
+        {
+            GDALRasterBand *poBand = GetOverview( 1, iOver );
+            GDALDataset    *poOverDS = NULL;
+
+            if( poBand != NULL )
+                poOverDS = poBand->GetDataset();
+            
+            poOverDS->oOvManager.poBaseDS = poDS;
+            poOverDS->oOvManager.poDS = poOverDS;
+        }
+    }
+
     return eErr;
 }
 
@@ -515,6 +584,8 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
 
         if( poMaskDS == NULL ) // presumably error already issued.
             return CE_Failure;
+
+        bOwnMaskDS = TRUE;
     }
         
 /* -------------------------------------------------------------------- */
@@ -602,11 +673,53 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
                                         const char *pszBasename )
 
 {
-    if( !IsInitialized() )
-        return FALSE;
-
+/* -------------------------------------------------------------------- */
+/*      Have we already checked for masks?                              */
+/* -------------------------------------------------------------------- */
     if( bCheckedForMask )
         return poMaskDS != NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Are we an overview?  If so we need to find the corresponding    */
+/*      overview in the base files mask file (if there is one).         */
+/* -------------------------------------------------------------------- */
+    if( poBaseDS != NULL && poBaseDS->oOvManager.HaveMaskFile() )
+    {
+        int iOver, nOverviewCount = 0;
+        GDALRasterBand *poBaseBand = poBaseDS->GetRasterBand(1);
+        GDALRasterBand *poBaseMask = NULL;
+
+        if( poBaseBand != NULL )
+            poBaseMask = poBaseBand->GetMaskBand();
+        if( poBaseMask )
+            nOverviewCount = poBaseMask->GetOverviewCount();
+
+        for( iOver = 0; iOver < nOverviewCount; iOver++ )
+        {
+            GDALRasterBand *poOverBand = poBaseMask->GetOverview( iOver );
+            
+            if( poOverBand->GetXSize() == poDS->GetRasterXSize() 
+                && poOverBand->GetYSize() == poDS->GetRasterYSize() )
+            {
+                poMaskDS = poOverBand->GetDataset();
+                break;
+            }
+        }
+
+        bCheckedForMask = TRUE;
+        bOwnMaskDS = FALSE;
+        
+        CPLAssert( poMaskDS != poDS );
+
+        return poMaskDS != NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Are we even initialized?  If not, we apparently don't want      */
+/*      to support overviews and masks.                                 */
+/* -------------------------------------------------------------------- */
+    if( !IsInitialized() )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Check for .msk file.                                            */
@@ -642,9 +755,12 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     poMaskDS = (GDALDataset *) GDALOpen( osMskFilename, poDS->GetAccess() );
+    CPLAssert( poMaskDS != poDS );
 
     if( poMaskDS == NULL )
         return FALSE;
+
+    bOwnMaskDS = TRUE;
     
     return TRUE;
 }
