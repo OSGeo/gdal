@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%available_driver %test_driver $loaded $verbose @types %pack_types %types @fails @tested_drivers/;
+use vars qw/%available_driver %test_driver $loaded $verbose @types %pack_types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -29,8 +29,6 @@ $verbose = $ENV{VERBOSE};
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
-
-
 %test_driver = ('ESRI Shapefile' => 1,
 		'MapInfo File' => 1,
 		'Memory' => 1,
@@ -39,26 +37,25 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
 
-%types = ();
-
 @types = Geo::OGR::GeometryType();
 
 ok(@types == 17, "number of geometry types is 17");
 
-for (@types) {
+my @tmp = @types;
+@types = ();
+for (@tmp) {
     my $a = Geo::OGR::GeometryType($_);
     my $b = Geo::OGR::GeometryType($a);
     ok($_ eq $b, "geometry type back and forth");
     next if /25/;
     next if /Ring/;
     next if /None/;
-    $types{"wkb$_"} = $a;
+    push @types, $_;
 }
-@types = keys %types;
 
 ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
-my @tmp = sort keys %available_driver;
+@tmp = sort keys %available_driver;
 
 if (@fails) {
     print STDERR "\nUnexpected failures:\n",@fails;
@@ -96,7 +93,15 @@ sub ogr_tests {
 	    next;
 	}
 	
-	if ($name eq 'KML' or $name eq 'S57' or $name eq 'CSV' or $name eq 'GML' or $name eq 'PostgreSQL' or $name =~ /^Interlis/ or $name eq 'SQLite' or $name eq 'MySQL') {
+	if ($name eq 'KML' or 
+	    $name eq 'S57' or 
+	    $name eq 'CSV' or 
+	    $name eq 'GML' or 
+	    $name eq 'PostgreSQL' or 
+	    $name =~ /^Interlis/ or 
+	    $name eq 'SQLite' or 
+	    $name eq 'MySQL') 
+	{
 	    mytest('skipped: apparently no capability',undef,$name,'datasource create');
 	    next;
 	}
@@ -108,17 +113,14 @@ sub ogr_tests {
 
 	push @tested_drivers,$name;
 
-	my @field_types = ('OFTInteger','OFTIntegerList','OFTReal','OFTRealList','OFTString',
-			   'OFTStringList','OFTWideString','OFTWideStringList','OFTBinary');
+	my @field_types = (qw/Integer IntegerList Real RealList String 
+			   StringList WideString WideStringList Binary/);
 	
 	if ($name eq 'ESRI Shapefile') {
-	    @field_types = ('OFTInteger','OFTReal','OFTString','OFTInteger');
+	    @field_types = (qw/Integer Real String Integer/);
 	} elsif ($name eq 'MapInfo File') {
-	    @field_types = ('OFTInteger','OFTReal','OFTString');
+	    @field_types = (qw/Integer Real String/);
 	}
-	
-	my %field_types;
-	for (@field_types) {$field_types{$_} = eval "\$Geo::OGR::$_"};
 	
 	my $dir0 = $name;
 	$dir0 =~ s/ //g;
@@ -135,24 +137,24 @@ sub ogr_tests {
 	
 	for my $type (@types) {
 	    
-	    if ($name eq 'ESRI Shapefile' and $type eq 'wkbGeometryCollection') {
+	    if ($name eq 'ESRI Shapefile' and $type eq 'GeometryCollection') {
 		mytest("skipped, will fail",undef,$name,$type,'layer create');
 		next;
 	    }
 	    
-	    if ($type eq 'wkbMultiPolygon') {
+	    if ($type eq 'MultiPolygon') {
 		mytest("skipped, no test yet",undef,$name,$type,'layer create');
 		next;
 	    }
 
-	    if ($name eq 'MapInfo File' and $type eq 'wkbMultiLineString') {
+	    if ($name eq 'MapInfo File' and $type eq 'MultiLineString') {
 		mytest("skipped, no test",undef,$name,$type,'layer create');
 		next;
 	    }
 	    
 	    my $layer;
 	    eval {
-		$layer = $datasource->CreateLayer($type, $osr, $types{$type});
+		$layer = $datasource->CreateLayer($type, $osr, $type);
 	    };
 	    mytest($layer,'no message',$name,$type,'layer create');
 	    
@@ -162,9 +164,8 @@ sub ogr_tests {
 	    
 	    for my $ft (@field_types) {
 		
-		my $column = new Geo::OGR::FieldDefn($ft, $field_types{$ft});
-		$column->SetWidth(5) if $field_types{$ft} == $Geo::OGR::OFTInteger;
-		
+		my $column = Geo::OGR::FieldDefn->create($ft, $ft);
+		$column->SetWidth(5) if $ft eq 'Integer';
 		$layer->CreateField($column);
 		
 	    }
@@ -183,23 +184,23 @@ sub ogr_tests {
 		
 		my $feature = new Geo::OGR::Feature($schema);
 		
-		my $t = $type eq 'wkbUnknown' ? $Geo::OGR::wkbPolygon : $types{$type};
+		my $t = $type eq 'Unknown' ? 'Polygon' : $type;
 
-		my $geom = new Geo::OGR::Geometry($t);
-
-		if ($type eq 'wkbMultiPoint') {
+		my $geom = Geo::OGR::Geometry->create($t);
+		
+		if ($type eq 'MultiPoint') {
 
 		    for (0..1) {
-			my $g = new Geo::OGR::Geometry($Geo::OGR::wkbPoint);
-			test_geom($g,$name,'wkbPoint','create');
+			my $g = Geo::OGR::Geometry->create('Point');
+			test_geom($g,$name,'Point','create');
 			$geom->AddGeometry($g);
 		    }
 
-		} elsif ($type eq 'wkbMultiLineString') {
+		} elsif ($type eq 'MultiLineString') {
 
 		    for (0..1) {
-			$g = new Geo::OGR::Geometry($Geo::OGR::wkbLineString);
-			test_geom($g,$name,'wkbLineString','create');
+			$g = Geo::OGR::Geometry->create('LineString');
+			test_geom($g,$name,'LineString','create');
 			$geom->AddGeometry($g);
 		    }
 
@@ -214,7 +215,7 @@ sub ogr_tests {
 		$i = 0;
 		for $ft (@field_types) {
 		    my $v = 2;
-		    $v = 'kaksi' if $ft eq 'OFTString';
+		    $v = 'kaksi' if $ft eq 'String';
 		    $feature->SetField($i++,$v);
 		}
 		
@@ -257,12 +258,11 @@ sub ogr_tests {
 		    $column = $schema->GetFieldDefn($i++);
 		    $n = $column->GetName;
 		    mytest($n eq $ft,"$n ne $ft",$name,$type,$ft,'GetName');
-		    $t = $column->GetType;
-		    my $t2 = $field_types{$ft};
-		    mytest($t == $t2,"$t != $t2",$name,$type,$ft,'GetType');
+		    my $t2 = $column->Type;
+		    mytest($ft eq $t2,"$ft ne $t2",$name,$type,$ft,'Type');
 		}
 		
-		if ($type eq 'wkbPoint' or $type eq 'wkbLineString' or $type eq 'wkbPolygon') {
+		if ($type eq 'Point' or $type eq 'LineString' or $type eq 'Polygon') {
 		    
 		    $layer->ResetReading;
 		    $feature = $layer->GetNextFeature;
@@ -273,31 +273,31 @@ sub ogr_tests {
 			
 			$geom = $feature->GetGeometryRef();
 			
-			if ($type eq 'wkbPointlll') {
+			if ($type eq 'Pointxx') {
 			    mytest('skipped',undef,$name,$type,'geom open');
 			} else {
-			    $t = $type eq 'wkbUnknown' ? $Geo::OGR::wkbPolygon : $types{$type};
-			    $t2 = $geom->GetGeometryType;
-			    mytest($t == $t2,"$t != $t2",$name,$type,'geom open');
+			    $t = $type eq 'Unknown' ? 'Polygon' : $type;
+			    $t2 = $geom->GeometryType;
+			    mytest($t eq $t2,"$t ne $t2",$name,$type,'geom open');
 
-			    if ($type eq 'wkbMultiPoint') {
+			    if ($type eq 'MultiPoint') {
 
 				my $gn = $geom->GetGeometryCount;
 				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
 
 				for my $i (0..1) {
 				    $g = $geom->GetGeometryRef($i);
-				    test_geom($g,$name,'wkbPoint','open');
+				    test_geom($g,$name,'Point','open');
 				}
 
-			    } elsif ($type eq 'wkbMultiLineString') {
+			    } elsif ($type eq 'MultiLineString') {
 
 				$gn = $geom->GetGeometryCount;
 				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
 
 				for $i (0..1) {
 				    $g = $geom->GetGeometryRef($i);
-				    test_geom($g,$name,'wkbLineString','open');
+				    test_geom($g,$name,'LineString','open');
 				}
 				
 			    } else {
@@ -309,7 +309,7 @@ sub ogr_tests {
 			for $ft (@field_types) {
 			    #$feature->SetField($i++,2);
 			    my $f;
-			    if ($ft eq 'OFTString') {
+			    if ($ft eq 'String') {
 				$f = $feature->GetField($i);
 				mytest($f eq 'kaksi',"$f ne 'kaksi'",$name,$type,'GetField');
 			    } else {
@@ -335,11 +335,11 @@ sub ogr_tests {
 
     # specific tests:
 
-    my $geom = Geo::OGR::Geometry->new(Geo::OGR::GeometryType('Point'));
+    my $geom = Geo::OGR::Geometry->create('Point');
     $geom->AddPoint(1,1);
-    ok($geom->GetGeometryType == Geo::OGR::GeometryType('Point'), "Add 2D Point");
+    ok($geom->GeometryType eq 'Point', "Add 2D Point");
     $geom->AddPoint(1,1,1);
-    ok($geom->GetGeometryType == Geo::OGR::GeometryType('Point25D'), "Add 3D Point upgrades geom type");
+    ok($geom->GeometryType eq 'Point25D', "Add 3D Point upgrades geom type");
     
 }
 
@@ -350,7 +350,7 @@ sub test_geom {
     my $gn = $geom->GetGeometryCount;
     my $i = 0;
 
-    if ($type eq 'wkbPoint') {
+    if ($type eq 'Point') {
 
 	if ($mode eq 'create') {
 	    $geom->AddPoint(1,1);
@@ -360,9 +360,9 @@ sub test_geom {
 	    my @xy = ($geom->GetX($i),$geom->GetY($i));
 	    mytest(cmp_ar(2,\@xy,[1,1]),"(@xy) != (1,1)",$name,$type,"get point");
 	}
-
-    } elsif ($type eq 'wkbLineString') {
-
+	
+    } elsif ($type eq 'LineString') {
+	
 	if ($mode eq 'create') {
 	    $geom->AddPoint(1,1);
 	    $geom->AddPoint(2,2);
@@ -375,12 +375,12 @@ sub test_geom {
 	    mytest(cmp_ar(2,\@xy,[2,2]),"(@xy) != (2,2)",$name,$type,"get point");
 	}
 
-    } elsif ($type eq 'wkbUnknown' or $type eq 'wkbPolygon') {
+    } elsif ($type eq 'Unknown' or $type eq 'Polygon') {
 
 	my @pts = ([1.1,1],[1.11,0],[0,0.2],[0,2.1],[1,1.23],[1.1,1]);
 
 	if ($mode eq 'create') {
-	    my $r = new Geo::OGR::Geometry($Geo::OGR::wkbLinearRing);
+	    my $r = Geo::OGR::Geometry->create('LinearRing');
 	    pop @pts;
 	    for my $pt (@pts) {
 		$r->AddPoint(@$pt);

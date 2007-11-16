@@ -13,11 +13,8 @@
 ## @cmethod UseExceptions()
 ## @cmethod DontUseExceptions()
 
-## @fn GeometryType($type)
-# @brief Conversion between numeric and human readable geometry type values. 
-# @param $type (optional) numeric or human readable type value
-# @return numeric or human readable type value; 
-# if no parameter is given, returns all (human readable) geometry types in a list
+## @fn GeometryTypes()
+# @return a list of all geometry types
 
 ## @fn CreateGeometryFromWkb($bin_string, $reference = undef)
 # @param $reference Geo::OSR::SpatialReference object
@@ -57,152 +54,151 @@
 # @return Geo::OGR::Driver object
 
 ## @attr wkb25Bit
-# scalar
+# @deprecated
 
 ## @attr wkbUnknown
-# scalar
+# @deprecated
 
 ## @attr wkbPoint
-# scalar
+# @deprecated
 
 ## @attr wkbLineString
-# scalar
+# @deprecated
 
 ## @attr wkbPolygon
-# scalar
+# @deprecated
 
 ## @attr wkbMultiPoint
-# scalar
+# @deprecated
 
 ## @attr wkbMultiLineString
-# scalar
+# @deprecated
 
 ## @attr wkbMultiPolygon
-# scalar
+# @deprecated
 
 ## @attr wkbGeometryCollection
-# scalar
+# @deprecated
 
 ## @attr wkbNone
-# scalar
+# @deprecated
 
 ## @attr wkbLinearRing
-# scalar
+# @deprecated
 
 ## @attr wkbPoint25D
-# scalar
+# @deprecated
 
 ## @attr wkbLineString25D
-# scalar
+# @deprecated
 
 ## @attr wkbPolygon25D
-# scalar
+# @deprecated
 
 ## @attr wkbMultiPoint25D
-# scalar
+# @deprecated
 
 ## @attr wkbMultiLineString25D
-# scalar
+# @deprecated
 
 ## @attr wkbMultiPolygon25D
-# scalar
+# @deprecated
 
 ## @attr wkbGeometryCollection25D
-# scalar
+# @deprecated
 
 ## @attr OFTInteger
-# scalar
+# @deprecated
 
 ## @attr OFTIntegerList
-# scalar
+# @deprecated
 
 ## @attr OFTReal
-# scalar
+# @deprecated
 
 ## @attr OFTRealList
-# scalar
+# @deprecated
 
 ## @attr OFTString
-# scalar
+# @deprecated
 
 ## @attr OFTStringList
-# scalar
+# @deprecated
 
 ## @attr OFTWideString
-# scalar
+# @deprecated
 
 ## @attr OFTWideStringList
-# scalar
+# @deprecated
 
 ## @attr OFTBinary
-# scalar
+# @deprecated
 
 ## @attr OFTDate
-# scalar
+# @deprecated
 
 ## @attr OFTTime
-# scalar
+# @deprecated
 
 ## @attr OFTDateTime
-# scalar
+# @deprecated
 
 ## @attr OJUndefined
-# scalar
+# @deprecated
 
 ## @attr OJLeft
-# scalar
+# @deprecated
 
 ## @attr OJRight
-# scalar
+# @deprecated
 
 ## @attr wkbXDR
-# scalar
+# @deprecated
 
 ## @attr wkbNDR
-# scalar
+# @deprecated
 
 ## @attr OLCRandomRead
-# scalar
+# @deprecated
 
 ## @attr OLCSequentialWrite
-# scalar
+# @deprecated
 
 ## @attr OLCRandomWrite
-# scalar
+# @deprecated
 
 ## @attr OLCFastSpatialFilter
-# scalar
+# @deprecated
 
 ## @attr OLCFastFeatureCount
-# scalar
+# @deprecated
 
 ## @attr OLCFastGetExtent
-# scalar
+# @deprecated
 
 ## @attr OLCCreateField
-# scalar
+# @deprecated
 
 ## @attr OLCTransactions
-# scalar
+# @deprecated
 
 ## @attr OLCDeleteFeature
-# scalar
+# @deprecated
 
 ## @attr OLCFastSetNextByIndex
-# scalar
+# @deprecated
 
 ## @attr ODsCCreateLayer
-# scalar
+# @deprecated
 
 ## @attr ODsCDeleteLayer
-# scalar
+# @deprecated
 
 ## @attr ODrCCreateDataSource
-# scalar
+# @deprecated
 
 ## @attr ODrCDeleteDataSource
-# scalar
-
+# @deprecated
 
 ## @class Geo::OGR::Driver
 
@@ -260,9 +256,9 @@
 ## @method DeleteLayer($index)
 # @return scalar (OGRErr)
 
-## @method CreateLayer($name, $reference = undef, $geom_type = $Geo::OGR::wkbUnknown, \@options = undef)
+## @method CreateLayer($name, $reference = undef, $geom_type = 'Unknown', \@options = undef)
 # @param $reference Geo::OSR::SpatialReference object
-# @param $geom_type one of $Geo::OGR::wkb*
+# @param $geom_type one of geometry types (Point, LineString, etc)
 # @return Geo::OGR::Layer object
 
 ## @method CopyLayer($src_layer, $new_name, \@options = undef)
@@ -402,17 +398,14 @@
 # @param $param scalar (index or name of a field)
 # @return Geo::OGR::FieldDefn object
 
-## @method GetFieldAsString($param)
-# @param $param scalar (index or name of a field)
-# @return scalar (string)
+## @method GetFieldAsString($field)
+# @deprecated
 
-## @method GetFieldAsInteger($param)
-# @param $param scalar (index or name of a field)
-# @return scalar (int)
+## @method GetFieldAsInteger($field)
+# @deprecated
 
-## @method GetFieldAsDouble($param)
-# @param $param scalar (index or name of a field)
-# @return scalar (double)
+## @method GetFieldAsDouble($field)
+# @deprecated
 
 ## @method GetField($param)
 # @param $param scalar (index or name of a field)
@@ -451,7 +444,7 @@
 
 ## @method GetFieldType($param)
 # @param $param scalar (index or name of a field)
-# @return one of Geo::OGR::OFT*
+# @return one of field types
 
 
 ## @class Geo::OGR::FeatureDefn
@@ -478,15 +471,18 @@
 ## @method AddFieldDefn($defn)
 # @param $defn Geo::OGR::FieldDefn object
 
-## @method GetGeomType()
-# @return one of $Geo::OGR::wkb*
-
-## @method SetGeomType($geom_type)
-# @param $geom_type one of $Geo::OGR::wkb*
+## @method GeomType($geom_type)
+# @param $geom_type one of geometry types
+# @return one of geometry types unless geom_type is given
 
 ## @method GetReferenceCount()
 # @return scalar (int)
 
+## @method GetGeomType()
+# @deprecated
+
+## @method SetGeomType()
+# @deprecated
 
 ## @class Geo::OGR::FieldDefn
 
@@ -495,41 +491,68 @@
 ## @ignore DESTROY
 
 ## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
+# @deprecated[use create]
+# @param field_type one of $Geo::OGR::OFT*
 # @return Geo::OGR::FieldDefn object
 
-## @method GetName()
-# @return scalar (string)
+## @cmethod create($name = "unnamed", $field_type = 'String')
+# @param field_type one of field types
+# @return Geo::OGR::FieldDefn object
 
-## @method GetNameRef()
-# @return scalar (string)
+## @method Name($name)
+# Get or set the name
 
-## @method SetName($name)
+## @method Type($type)
+# @param type on of field types
+# @return one of field types unles type is given
 
-## @method GetType()
-# @return one of $Geo::OGR::OFT*
+## @method Justify($justify)
+# Get or set the justification
+# @return one of Undefined Left Right
 
-## @method SetType($type)
-# @param $type one of $Geo::OGR::OFT*
-
-## @method GetJustify()
-# @return one of $Geo::OGR::OJ*
-
-## @method SetJustify($justification)
-# @param $justification one of $Geo::OGR::OJ*
-
-## @method GetWidth()
+## @method Width($width)
+# Get or set the field width
 # @return scalar (int)
 
-## @method SetWidth($width)
-
-## @method GetPrecision()
+## @method Precision($precision)
+# Get or set the precision
 # @return scalar (int)
 
-## @method SetPrecision($precision)
-# @param $precision scalar (int)
+## @method Geo::OGR::FieldDefn::GetFieldTypeName()
+# @deprecated
 
-## @cmethod GetFieldTypeName($type)
-# @return scalar (string)
+## @method Geo::OGR::FieldDefn::GetJustify()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::GetName()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::GetNameRef()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::GetPrecision()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::GetType()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::GetWidth()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::SetJustify()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::SetName()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::SetPrecision()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::SetType()
+# @deprecated
+
+## @method Geo::OGR::FieldDefn::SetWidth()
+# @deprecated
 
 ## @class Geo::OGR::Geometry
 
@@ -551,17 +574,23 @@
 ## @method ExportToWkt()
 # @return scalar (WKT string)
 
-## @method ExportToWkb($byte_order = $Geo::OGR::wkbXDR)
+## @method ExportToWkb($byte_order = 'XDR')
+# @param $byte_order XDR or NDR
 # @return scalar (WKB binary string)
 
 ## @method ExportToGML()
 # @return scalar (GML string)
 
+## @method ExportToKML()
+
 ## @method AddPoint($x, $y, $z = 0)
 # Calls internally the 2D or 3D version depending on the number of parameters.
 
-## @ignore AddPoint_2D
-## @ignore AddPoint_3D
+## @method AddPoint_2D()
+# @deprecated 
+
+## @method AddPoint_3D()
+# @deprecated 
 
 ## @method IsEmpty()
 # @return boolean
@@ -589,10 +618,10 @@
 # @return Geo::OGR::Geometry object
 
 ## @method GetGeometryType()
-# @return one of Geo::OGR::wkb*
+# @deprecated 
 
 ## @method GeometryType()
-# @return the geometry type as a string
+# @return the geometry type
 
 ## @method GetGeometryName()
 # @return scalar (string)
