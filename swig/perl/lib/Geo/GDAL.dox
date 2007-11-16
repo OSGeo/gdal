@@ -37,7 +37,8 @@
 ## @ignore GDAL_GCP_set_Info
 ## @ignore GDAL_GCP_get_Id
 ## @ignore GDAL_GCP_set_Id
-## @ignore ReadDir
+
+## @fn ReadDir
 
 ## @fn UseExceptions()
 
@@ -78,14 +79,12 @@
 ## @fn VersionInfo($request = 'VERSION_NUM')
 # @return Descriptive string or version number
 
-## @fn ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $eResampleAlg=$Geo::GDAL::Const::GRA_NearestNeighbour, $WarpMemoryLimit=0.0, $maxerror = 0.0)
-
 ## @fn GCPsToGeoTransform(\@GCPs, $ApproxOK = 1)
+# x = $a + j * $b + i * $c;<br/>
+# y = $d + j * $e + i * $f;<br/>
+# (i,j) is the location in pixel coordinates<br/>
+# (x,y) is the location in projection coordinates<br/>
 # @return arrayref = [$a, $b, $c, $d, $e, $f]
-# x = $a + j * $b + i * $c;
-# y = $d + j * $e + i * $f;
-# (i,j) is the location in pixel coordinates
-# (x,y) is the location in projection coordinates
 
 ## @fn AllRegister()
 
@@ -103,17 +102,17 @@
 ## @fn DataTypeIsComplex($GDALDataType)
 # @return scalar (int)
 
-## @fn GetDataTypeName($GDALDataType)
-# @return scalar (string)
+## @method GetDataTypeName()
+# @deprecated
 
-## @fn GetDataTypeByName($name)
-# @return scalar (int)
+## @method GetDataTypeByName()
+# @deprecated
 
-## @fn GetColorInterpretationName($GDALColorInterp)
-# @return scalar (string)
+## @method GetColorInterpretationName
+# @deprecated
 
-## @fn GetPaletteInterpretationName($GDALPaletteInterp)
-# @return scalar (string)
+## @method GetPaletteInterpretationName
+# @deprecated
 
 ## @fn DecToDMS($double, $string, $int)
 # @return scalar (string)
@@ -142,15 +141,19 @@
 ## @fn IdentifyDriver($datasource_name, $siblings = undef)
 # @return Geo::GDAL::Driver object
 
-## @fn Open($name, $Access = \$Geo::GDAL::Const::GA_ReadOnly)
+## @fn Open($name, $Access='ReadOnly')
 # @return Geo::GDAL::Dataset object
 
-## @fn OpenShared($name, $Access = \$Geo::GDAL::Const::GA_ReadOnly)
+## @fn OpenShared($name, $Access='ReadOnly')
+# @param Access either ReadOnly or Update
 # @return Geo::GDAL::Dataset object
 
-## @fn AutoCreateWarpedVRT($src_ds, $src_wkt = undef, $dst_wkt = undef, $ResampleAlg = \$Geo::GDAL::Const::GRA_NearestNeighbour, $maxerror = 0.0)
+## @fn ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0.0, $maxerror=0.0)
+# @param ResampleAlg one of NearestNeighbour Bilinear Cubic CubicSpline
+
+## @fn AutoCreateWarpedVRT($src_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
 # @param $src_ds a Geo::GDAL::Dataset object
-# @param $ResampleAlg GDALResampleAlg
+# @param $ResampleAlg one of NearestNeighbour Bilinear Cubic CubicSpline
 # @return Geo::GDAL::Dataset object
 
 ## @fn GeneralCmdLineProcessor(\@Argv, $nOptions = 0)
@@ -161,6 +164,7 @@
 # @return character which can be used in Perl's pack and unpack
 
 ## @class Geo::GDAL::MajorObject
+# @isa (Geo::GDAL)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
@@ -176,13 +180,16 @@
 ## @method SetMetadata(\%Metadata, $Domain = "")
 
 ## @class Geo::GDAL::Driver
+# @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @ignore Register
-## @ignore Deregister
-## @ignore Rename
+## @method Register
+
+## @method Deregister
+
+## @method Rename
 
 ## @attr ShortName
 # scalar (access as $driver->{ShortName})
@@ -193,7 +200,7 @@
 ## @attr HelpTopic
 # scalar (access as $driver->{HelpTopic})
 
-## @method Create($name, $xsize, $ysize, $bands =1, $Type = \$Geo::GDAL::Const::GDT_Byte, \@options = undef)
+## @method Create($name, $xsize, $ysize, $bands =1, $Type = 'Byte', \@options = undef)
 # @return Geo::GDAL::Dataset object
 
 ## @method CreateCopy($name, $src, $strict = 1, \@options = undef)
@@ -201,7 +208,11 @@
 
 ## @method Delete($name)
 
+## @method AddBand()
+# @deprecated
+
 ## @class Geo::GDAL::GCP
+# @isa (Geo::GDAL)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
@@ -233,6 +244,7 @@
 # scalar (access as $gcp->{Id})
 
 ## @class Geo::GDAL::Dataset
+# @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
@@ -283,17 +295,21 @@
 
 ## @method FlushCache()
 
-## @method AddBand($datatype = $Geo::GDAL::Const::GDT_Byte, \@options = 0)
+## @method AddBand($datatype = 'Byte', \@options = 0)
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
-# <a href="http://www.gdal.org/classGDALDataset.html#e077c53268d2272eebed10b891a05743">Entry in GDAL docs</a>
+# Write a buffer into the raster.
+# <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs</a>
+# @param xoff
 
 ## @method ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
+# Read a buffer from the raster.
 # @return $buf
 
-## @method CreateMaskBand
+## @method CreateMaskBand()
 
 ## @class Geo::GDAL::Band
+# @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
@@ -310,11 +326,9 @@
 ## @method GetBlockSize()
 # @return array BlockSize = ($BlockXSize, $BlockYSize)
 
-## @method GetRasterColorInterpretation()
-# @return scalar (int)
-
-## @method SetRasterColorInterpretation($val)
-# @param $val one of $Geo::GDAL::Const::GPI_*
+## @method ColorInterpretation($color_interpretation)
+# @param color_interpretation [optional] new color interpretation
+# @return color interpretation
 
 ## @method GetNoDataValue()
 # @return scalar (double or undef)
@@ -365,11 +379,9 @@
 
 ## @method FlushCache()
 
-## @method GetRasterColorTable()
-# @return Geo::GDAL::ColorTable object
-
-## @method SetRasterColorTable($ColorTable)
-# @param $ColorTable Geo::GDAL::ColorTable object
+## @method ColorTable($ColorTable)
+# @param $ColorTable [optional] Geo::GDAL::ColorTable object
+# @return Geo::GDAL::ColorTable object unless color table was given
 
 ## @method CreateMaskBand()
 
@@ -385,14 +397,30 @@
 
 ## @method SetDefaultRAT()
 
+## @method GetRasterColorInterpretation()
+# @deprecated
+
+## @method GetRasterColorTable()
+# @deprecated
+
+## @method SetRasterColorInterpretation()
+# @deprecated
+
+## @method SetRasterColorTable()
+# @deprecated
 
 ## @class Geo::GDAL::ColorTable
+# @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
 ## @cmethod new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
+# @return Geo::GDAL::ColorTable object
+
+## @cmethod create($GDALPaletteInterp = 'RGB')
+# @return Geo::GDAL::ColorTable object
 
 ## @method Clone()
 # @return Geo::GDAL::ColorTable object
@@ -414,6 +442,7 @@
 ## @method CreateColorRamp()
 
 ## @class Geo::GDAL::RasterAttributeTable
+# @isa = ( Geo::GDAL::MajorObject Geo::GDAL )
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
