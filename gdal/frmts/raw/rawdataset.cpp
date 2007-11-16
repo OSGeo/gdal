@@ -149,6 +149,9 @@ void RawRasterBand::Initialize()
 RawRasterBand::~RawRasterBand()
 
 {
+    if( poCT )
+        delete poCT;
+
     CSLDestroy( papszCategoryNames );
 
     FlushCache();
