@@ -130,6 +130,7 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     VALIDATE_POINTER1( hBlue, "GDALComputeMedianCutPCT", CE_Failure );
 
     int		nXSize, nYSize;
+    CPLErr err = CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
@@ -161,6 +162,14 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "GDALComputeMedianCutPCT() : nColors must be strictly greater than 1." );
+
+        return CE_Failure;
+    }
+
+    if ( nColors > 256 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "GDALComputeMedianCutPCT() : nColors must be lesser than or equal to 256." );
 
         return CE_Failure;
     }
@@ -216,21 +225,28 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
 /* -------------------------------------------------------------------- */
-    pabyRedLine = (GByte *) CPLMalloc(nXSize);
-    pabyGreenLine = (GByte *) CPLMalloc(nXSize);
-    pabyBlueLine = (GByte *) CPLMalloc(nXSize);
+    pabyRedLine = (GByte *) VSIMalloc(nXSize);
+    pabyGreenLine = (GByte *) VSIMalloc(nXSize);
+    pabyBlueLine = (GByte *) VSIMalloc(nXSize);
+    
+    if (pabyRedLine == NULL ||
+        pabyGreenLine == NULL ||
+        pabyBlueLine == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc(): Out of memory in GDALComputeMedianCutPCT" );
+        err = CE_Failure;
+        goto end_and_cleanup;
+    }
 
     for( iLine = 0; iLine < nYSize; iLine++ )
     {
         if( !pfnProgress( iLine / (double) nYSize, 
                           "Generating Histogram", pProgressArg ) )
         {
-            CPLFree( pabyRedLine );
-            CPLFree( pabyGreenLine );
-            CPLFree( pabyBlueLine );
-
             CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
-            return CE_Failure;
+            err = CE_Failure;
+            goto end_and_cleanup;
         }
 
         GDALRasterIO( hRed, GF_Read, 0, iLine, nXSize, 1, 
@@ -259,14 +275,11 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
         }
     }
 
-    CPLFree( pabyRedLine );
-    CPLFree( pabyGreenLine );
-    CPLFree( pabyBlueLine );
-
     if( !pfnProgress( 1.0, "Generating Histogram", pProgressArg ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
-        return CE_Failure;
+        err = CE_Failure;
+        goto end_and_cleanup;
     }
 
 /* ==================================================================== */
@@ -294,14 +307,19 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
         sEntry.c4 = 255;
         GDALSetColorEntry( hColorTable, i, &sEntry );
     }
-    
+
+end_and_cleanup:
+    CPLFree( pabyRedLine );
+    CPLFree( pabyGreenLine );
+    CPLFree( pabyBlueLine );
+
     /* We're done with the boxes now */
     CPLFree(box_list);
     freeboxes = usedboxes = NULL;
 
     CPLFree( histogram );
     
-    return CE_None;
+    return err;
 }
 
 /************************************************************************/
