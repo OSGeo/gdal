@@ -51,6 +51,10 @@ GUInt32 TripleToFloat( GUInt32 );
 void    GTiffOneTimeInit();
 CPL_C_END
 
+void GTIFFBuildOverviewMetadata( const char *pszResampling,
+                                 GDALDataset *poBaseDS, 
+                                 CPLString &osMetadata );
+
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
 
@@ -2179,6 +2183,13 @@ CPLErr GTiffDataset::IBuildOverviews(
     }
         
 /* -------------------------------------------------------------------- */
+/*      Do we need some metadata for the overviews?                     */
+/* -------------------------------------------------------------------- */
+    CPLString osMetadata;
+
+    GTIFFBuildOverviewMetadata( pszResampling, this, osMetadata );
+
+/* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
 /*      which are new.  We assume that band 1 of the file is            */
 /*      representative.                                                 */
@@ -2218,7 +2229,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                     nSamplesPerPixel, 128, 128, TRUE,
                                     nCompression, nPhotometric, nSampleFormat, 
                                     panRed, panGreen, panBlue, FALSE, 
-                                    pszResampling );
+                                    osMetadata );
 
             if( nOverviewOffset == 0 )
             {

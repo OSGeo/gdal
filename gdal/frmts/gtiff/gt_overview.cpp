@@ -39,6 +39,46 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                     GTIFFBuildOverviewMetadata()                     */
+/************************************************************************/
+
+void GTIFFBuildOverviewMetadata( const char *pszResampling,
+                                 GDALDataset *poBaseDS, 
+                                 CPLString &osMetadata )
+
+{
+    osMetadata = "<GDALMetadata>";
+
+    if( pszResampling && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
+        osMetadata += "<GDALMetadata><Item name=\"RESAMPLING\" sample=\"0\">AVERAGE_BIT2GRAYSCALE</Item>";
+
+    if( poBaseDS->GetMetadataItem( "INTERNAL_MASK_FLAGS_1" ) )
+    {
+        int iBand;
+
+        for( iBand = 0; iBand < 200; iBand++ )
+        {
+            CPLString osItem;
+            CPLString osName;
+
+            osName.Printf( "INTERNAL_MASK_FLAGS_%d", iBand+1 );
+            if( poBaseDS->GetMetadataItem( osName ) )
+            {
+                osItem.Printf( "<Item name=\"%s\">%s</Item>", 
+                               osName.c_str(), 
+                               poBaseDS->GetMetadataItem( osName ) );
+                osMetadata += osItem;
+            }
+        }
+    }
+
+    if( !EQUAL(osMetadata,"<GDALMetadata>") )
+        osMetadata += "</GDALMetadata>";
+    else
+        osMetadata = "";
+}
+
+/************************************************************************/
 /*                        GTIFFBuildOverviews()                         */
 /************************************************************************/
 
@@ -269,7 +309,15 @@ GTIFFBuildOverviews( const char * pszFilename,
             }
         }
     }
-        
+
+/* -------------------------------------------------------------------- */
+/*      Do we need some metadata for the overviews?                     */
+/* -------------------------------------------------------------------- */
+    CPLString osMetadata;
+    GDALDataset *poBaseDS = papoBandList[0]->GetDataset();
+
+    GTIFFBuildOverviewMetadata( pszResampling, poBaseDS, osMetadata );
+
 /* -------------------------------------------------------------------- */
 /*      Loop, creating overviews.                                       */
 /* -------------------------------------------------------------------- */
@@ -289,7 +337,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                                 128, 128, TRUE, nCompression,
                                 nPhotometric, nSampleFormat, 
                                 panRed, panGreen, panBlue, 
-                                FALSE, pszResampling );
+                                FALSE, osMetadata );
     }
 
     if (panRed)
