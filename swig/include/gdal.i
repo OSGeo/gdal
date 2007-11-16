@@ -77,6 +77,7 @@ typedef int FALSE_IS_ERR;
 //************************************************************************
 
 #ifndef SWIGCSHARP
+typedef int GDALPaletteInterp;
 typedef int GDALColorInterp;
 typedef int GDALAccess;
 typedef int GDALDataType;
@@ -576,13 +577,10 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 // ComputeMedianCutPCT
 // DitherRGB2PCT
 // RGBFile2PCTFile
-// AutoCreateWarpedVRT
-// ReprojectImage
 // CreateAndReprojectImage
 // GCPsToGeoTransform
 
 %newobject ReprojectImage;
-
 %inline %{
 CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          GDALDatasetShadow *dst_ds,
