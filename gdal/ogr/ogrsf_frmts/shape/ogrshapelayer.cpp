@@ -196,7 +196,6 @@ int OGRShapeLayer::ScanIndices()
             for( i = 0; i < nSpatialFIDCount; i++ )
                 panMatchingFIDs[i] = (long) panSpatialFIDs[i];
             panMatchingFIDs[nSpatialFIDCount] = OGRNullFID;
-            free( panSpatialFIDs );
         }
 
         // Cull attribute index matches based on those in the spatial index
@@ -220,6 +219,9 @@ int OGRShapeLayer::ScanIndices()
             }
             panMatchingFIDs[iWrite] = OGRNullFID;
         }
+
+        if ( panSpatialFIDs )
+            free( panSpatialFIDs );
     }
 
     return TRUE;
