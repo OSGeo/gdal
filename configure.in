@@ -1382,107 +1382,19 @@ AC_SUBST(MYSQL_INC,$MYSQL_INC)
 AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for xerces configuration.
+dnl Check for Xerces C++ Parser support.
 dnl ---------------------------------------------------------------------------
 
-HAVE_XERCES=no
-XERCES_INCLUDE=""
+XERCES_REQ_VERSION="2.7.0"
+AX_LIB_XERCES($XERCES_REQ_VERSION)
 
-AC_MSG_CHECKING([for Xerces C++])
-
-AC_ARG_WITH(xerces,[  --with-xerces         Include Xerces C++ XML Parser support (for GML)],,)
-AC_ARG_WITH(xerces_inc,[  --with-xerces-inc=dir Xerces C++ include directory],,)
-AC_ARG_WITH(xerces_lib,
-[  --with-xerces-lib=opts Xerces C++ link option(s)
-                             ie. -L/usr/local/lib -lxerces-c1_6_0 -lpthread],,)
-
-if test x"$with_xerces" = x"no" ; then
-
-  AC_MSG_RESULT([disabled])
-
-elif test x"$with_xerces" = x"" -o x"$with_xerces" = x"yes" ; then
-
-  if test -d /usr/local/include/xercesc ; then 
-    with_xerces=/usr/local
-  elif test -d /usr/include/xercesc ; then
-    with_xerces=/usr
-  else
-    with_xerces=no
-  fi
-
+if test "$HAVE_XERCES" = "yes"; then
+    LIBS="$XERCES_LDFLAGS $LIBS"
 fi
 
-if test x"$with_xerces" != x"no" ; then
-
-  if test x"$with_xerces_lib" != x"" ; then
-    LIBS="$with_xerces_lib $LIBS"
-  else
-    if test -f "$with_xerces/lib/libxerces-c.so" ; then
-      LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
-    elif test -f "$with_xerces/lib/libxerces-c1_6_0.so" ; then
-      LIBS="-lxerces-c1_6_0 -lpthread $LIBS"
-      LIBS="-L$with_xerces/lib $LIBS"
-    else
-      LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
-    fi
-  fi
-  if test x"$with_xerces_inc" != x"" ; then
-    XERCES_INCLUDE="-I$with_xerces_inc -I$with_xerces_inc/xercesc"
-  else
-    XERCES_INCLUDE="-I$with_xerces/include -I$with_xerces/include/xercesc"
-  fi
-
-  echo '#include <xercesc/util/XercesDefs.hpp>' >> conftest.cpp
-  echo '#include <xercesc/util/PlatformUtils.hpp>' >> conftest.cpp
-  echo '#if (_XERCES_VERSION >= 20200)' >> conftest.cpp
-  echo '    XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
-  echo '#endif' >> conftest.cpp
-  echo 'int main() {  XMLPlatformUtils::Initialize(); }' >> conftest.cpp
-  CMD="${CXX} ${XERCES_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
-
-  if test -z "`$CMD 2>&1 | grep -v warning | grep -v skipping`" ; then
-    HAVE_XERCES=yes
-    AC_MSG_RESULT([yes])
-
-    # Detecting Xerces version
-    if test -f "$with_xerces_inc/xercesc/util/XercesVersion.hpp"; then
-        xerces_major=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
-                        grep '^#define.*XERCES_VERSION_MAJOR.*[0-9]$' | \
-                        sed -e 's/#define XERCES_VERSION_MAJOR.//'`
-
-        xerces_minor=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
-                        grep '^#define.*XERCES_VERSION_MINOR.*[0-9]$' | \
-                        sed -e 's/#define XERCES_VERSION_MINOR.//'`
-
-        xerces_revision=`cat $with_xerces_inc/xercesc/util/XercesVersion.hpp | \
-                        grep '^#define.*XERCES_VERSION_REVISION.*[0-9]$' | \
-                        sed -e 's/#define XERCES_VERSION_REVISION.//'`
-        XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
-     
-        AC_MSG_NOTICE([Xerces $XERCES_VERSION has been found])
-    else
-        AC_MSG_NOTICE([XercesVersion.hpp is missing. Unable to determine Xerces version.])
-    fi
-  else
-    AC_MSG_RESULT([requested, but compile or link fails!])
-
-    echo
-    echo $CMD
-    echo
-    $CMD
-    echo
-    echo cat conftest.cpp
-    cat conftest.cpp
-    
-    AC_MSG_ERROR([Please correct Xerces options, or don't enable Xerces.])
-  fi
-  rm -f conftest*
-
-fi
-
-AC_SUBST(HAVE_XERCES,$HAVE_XERCES)
-AC_SUBST(XERCES_INCLUDE,$XERCES_INCLUDE)
-
+AC_SUBST([HAVE_XERCES], $HAVE_XERCES)
+AC_SUBST([XERCES_INCLUDE], $XERCES_CFLAGS)
+  
 dnl ---------------------------------------------------------------------------
 dnl Check for Expat configuration.
 dnl ---------------------------------------------------------------------------
