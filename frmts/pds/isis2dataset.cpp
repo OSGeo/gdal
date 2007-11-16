@@ -675,6 +675,12 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+/* -------------------------------------------------------------------- */ 
+/*      Initialize any PAM information.                                 */ 
+/* -------------------------------------------------------------------- */ 
+    poDS->SetDescription( poOpenInfo->pszFilename ); 
+    poDS->TryLoadXML(); 
+
     return( poDS );
 }
 
