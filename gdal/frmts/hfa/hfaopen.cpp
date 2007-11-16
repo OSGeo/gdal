@@ -389,6 +389,7 @@ void HFAClose( HFAHandle hHFA )
 
     CPLFree( hHFA->pszDictionary );
     CPLFree( hHFA->pszFilename );
+    CPLFree( hHFA->pszIGEFilename );
     CPLFree( hHFA->pszPath );
 
     for( i = 0; i < hHFA->nBands; i++ )
@@ -1885,6 +1886,12 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         pszLayerType = "Eimg_Layer_SubSample";
     else
         pszLayerType = "Eimg_Layer";
+    
+    if (nBlockSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "HFACreateLayer : nBlockXSize < 0");
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */
@@ -2708,6 +2715,12 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /*      Form .ige filename.                                             */
 /* -------------------------------------------------------------------- */
     char *pszFullFilename;
+    
+    if (nBlockSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "HFACreateSpillStack : nBlockXSize < 0");
+        return FALSE;
+    }
 
     if( psInfo->pszIGEFilename == NULL )
         psInfo->pszIGEFilename = 
@@ -2792,7 +2805,14 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
     *pnValidFlagsOffset = VSIFTellL( fpVSIL );
 
-    pabyBlockMap = (unsigned char *) CPLMalloc( nBlockMapSize );
+    pabyBlockMap = (unsigned char *) VSIMalloc( nBlockMapSize );
+    if (pabyBlockMap == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "HFACreateSpillStack : Out of memory");
+        VSIFCloseL( fpVSIL );
+        return FALSE;
+    }
+    
     memset( pabyBlockMap, 0xff, nBlockMapSize );
     for ( iBand = 0; iBand < nLayers; iBand++ )
     {
@@ -2825,6 +2845,8 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
         VSIFWriteL( pabyBlockMap, 1, nBlockMapSize, fpVSIL );
     }
+    CPLFree(pabyBlockMap);
+    pabyBlockMap = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Extend the file to account for all the imagery space.           */
