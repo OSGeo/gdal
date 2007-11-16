@@ -102,21 +102,109 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     
 }
 
+%rename (_CreateLayer) CreateLayer;
+%rename (_GetFieldType) GetFieldType;
+%rename (_ExportToWkb) ExportToWkb;
+
 %perlcode %{
     use Carp;
     {
+	package Geo::OGR::DataSource;
+	sub CreateLayer {
+	    my @p = @_;
+	    $p[3] = $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]} if 
+		$p[3] and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]};
+	    return _CreateLayer(@p);
+	}
+	package Geo::OGR::Feature;
+	sub GetFieldType {
+	    my($self, $field) = @_;
+	    return $Geo::OGR::Geometry::TYPE_INT2STRING{_GetFieldType($self, $field)};
+	}
+	package Geo::OGR::FeatureDefn;
+	sub GeomType {
+	    my($self, $type) = @_;
+	    if (defined $type) {
+		$type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type} if 
+		    $type and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+		SetGeomType($self, $type);
+	    } else {
+		return GetGeomType($self);
+	    }
+	}
+	package Geo::OGR::FieldDefn;
+	use vars qw /
+	    %TYPE_STRING2INT %TYPE_INT2STRING
+	    %JUSTIFY_STRING2INT %JUSTIFY_INT2STRING
+	    /;
+	for my $string (qw/Integer IntegerList Real RealList String StringList 
+			WideString WideStringList Binary Date Time DateTime/) {
+	    my $int = eval "\$Geo::OGR::OFT$string";
+	    $TYPE_STRING2INT{$string} = $int;
+	    $TYPE_INT2STRING{$int} = $string;
+	}
+	for my $string (qw/Undefined Left Right/) {
+	    my $int = eval "\$Geo::OGR::OJ$string";
+	    $JUSTIFY_STRING2INT{$string} = $int;
+	    $JUSTIFY_INT2STRING{$int} = $string;
+	}
+	sub create {
+	    my $pkg = shift;
+	    my @p = @_;
+	    $p[1] = $TYPE_STRING2INT{$p[1]} if $p[1] and exists $TYPE_STRING2INT{$p[1]};
+	    my $self = Geo::OGRc::new_FieldDefn(@p);
+	    bless $self, $pkg if defined($self);
+	}
+	sub Name {
+	    my($self, $name) = @_;
+	    defined $name ? SetName($self, $name) : GetName($self);
+	}
+	sub Type {
+	    my($self, $type) = @_;
+	    if (defined $type) {
+		$type = $TYPE_STRING2INT{$type} if $type and exists $TYPE_STRING2INT{$type};
+		SetType($self, $type);
+	    } else {
+		return $TYPE_INT2STRING{GetType($self)};
+	    }
+	}
+	sub Justify {
+	    my($self, $justify) = @_;
+	    if (defined $justify) {
+		$justify = $JUSTIFY_STRING2INT{$justify} if $justify and exists $JUSTIFY_STRING2INT{$justify};
+		SetJustify($self, $justify);
+	    } else {
+		return $JUSTIFY_INT2STRING{GetJustify($self)};
+	    }
+	}
+	sub Width {
+	    my($self, $w) = @_;
+	    defined $w ? SetWidth($self, $w) : GetWidth($self);
+	}
+	sub Precision {
+	    my($self, $p) = @_;
+	    defined $p ? SetPrecision($self, $p) : GetPrecision($self);
+	}
 	package Geo::OGR::Geometry;
 	use Carp;
-	use vars qw /%TYPE_STRING2INT %TYPE_INT2STRING/;
-	for my $string ('Unknown', 'Point', 'LineString', 'Polygon',
-			'MultiPoint', 'MultiLineString', 'MultiPolygon',
-			'GeometryCollection', 'None', 'LinearRing',
-			'Point25D', 'LineString25D', 'Polygon25D',
-			'MultiPoint25D', 'MultiLineString25D', 'MultiPolygon25D',
-			'GeometryCollection25D') {
+	use vars qw /
+	    %TYPE_STRING2INT %TYPE_INT2STRING
+	    %BYTE_ORDER_STRING2INT %BYTE_ORDER_INT2STRING
+	    /;
+	for my $string (qw/Unknown 
+			Point LineString Polygon 
+			MultiPoint MultiLineString MultiPolygon GeometryCollection 
+			None LinearRing
+			Point25D LineString25D Polygon25D 
+			MultiPoint25D MultiLineString25D MultiPolygon25D GeometryCollection25D/) {
 	    my $int = eval "\$Geo::OGR::wkb$string";
 	    $TYPE_STRING2INT{$string} = $int;
 	    $TYPE_INT2STRING{$int} = $string;
+	}
+	for my $string (qw/XDR NDR/) {
+	    my $int = eval "\$Geo::OGR::wkb$string";
+	    $BYTE_ORDER_STRING2INT{$string} = $int;
+	    $BYTE_ORDER_INT2STRING{$int} = $string;
 	}
 	sub create { # alternative constructor since swig created new can't be overridden(?)
 	    my $pkg = shift;
@@ -125,13 +213,22 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$type = shift;
 	    } else {
 		my %param = @_;
-		$wkt = $param{type};
+		$type = $param{type};
 		$wkt = ($param{wkt} or $param{WKT});
 		$wkb = ($param{wkb} or $param{WKB});
 		$gml = ($param{gml} or $param{GML});
 	    }
-	    $type = $TYPE_STRING2INT{$type} if exists $TYPE_STRING2INT{$type};
-	    my $self = Geo::OGRc::new_Geometry($type, $wkt, $wkb, $gml);
+	    $type = $TYPE_STRING2INT{$type} if defined $type and exists $TYPE_STRING2INT{$type};
+	    my $self;
+	    if (defined $type) {
+		$self = Geo::OGRc::new_Geometry($type);
+	    } elsif (defined $wkt) {
+		$self = Geo::OGRc::new_Geometry(undef, $wkt, undef, undef);
+	    } elsif (defined $wkb) {
+		$self = Geo::OGRc::new_Geometry(undef, undef, $wkb, undef);
+	    } elsif (defined $gml) {
+		$self = Geo::OGRc::new_Geometry(undef, undef, undef, $gml);
+	    }
 	    bless $self, $pkg if defined $self;
 	}
 	sub GeometryType {
@@ -141,17 +238,25 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub AddPoint {
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
 	}
+	sub ExportToWkb {
+	    my($self, $bo) = @_;
+	    $bo = $BYTE_ORDER_STRING2INT{$bo} if defined $bo and exists $BYTE_ORDER_STRING2INT{$bo};
+	    return _ExportToWkb($self, $bo);
+	}
     }
     sub GeometryType {
 	my($type_or_name) = @_;
 	if (defined $type_or_name) {
-	    return $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name} 
-	    if exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name};
-	    return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} 
-	    if exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name};
+	    return $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name} if 
+		exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name};
+	    return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} if 
+		exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name};
 	    croak "unknown geometry type or name: $type_or_name";
 	} else {
 	    return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
 	}
+    }
+    sub GeometryTypes {
+	return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
     }
 %}
