@@ -8,30 +8,102 @@
 <h1>GeoJSON</h1>
 
 <p>This driver implements support for access to features encoded in GeoJSON 
-<a href="http://geojson.org/">GeoJSON</a> format.</p>
+<a href="http://geojson.org/">GeoJSON</a> format. The GeoJSON is a dialect based on the 
+<a href="http://json.org/">JavaScript Object Notation (JSON)</a>. The JSON is a lightweight 
+plain text format for data interchange and GeoJSON is nothing other than its specialization for geographic content.</p>
+
+<p>At the moment of writing this, GeoJSON is supported as output format of services implemented by 
+<a href="http://featureserver.org/">FeatureServer</a>, <a href="http://docs.codehaus.org/display/GEOSDOC/GeoJSON+Output+Format">GeoServer</a> 
+and <a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>.</p>
+
+<p>OGR GeoJSON driver supports reading of GeoJSON data. Writing is not supported at the moment.</p> 
+
+<p>The OGR GeoJSON driver translates a GeoJSON encoded data to objects of <a href="/ogr/ogr_arch.html">OGR Simple Features model</a>: 
+Datasource, Layer, Feature, Geometry. 
+The implementation is based on <a href="http://wiki.geojson.org/GeoJSON_draft_version_5">GeoJSON Specification draft, v5.0</a>.</p>
+
+<h2>Datasource</h2>
+
+<p>The OGR GeoJSON driver accepts three types of sources of data:
+<ul>
+    <li>Uniform Resource Locator (<a href="http://en.wikipedia.org/wiki/URL">URL</a>) - a Web address to 
+    perform <a href="http://en.wikipedia.org/wiki/HTTP">HTTP</a> request</li>
+<li>Plain text file with GeoJSON data</li>
+<li>Text passed directly and encoded in GeoJSON</li>
+</ul>
+</p>
+
+<h2>Layer</h2>
+
+<p>A GeoJSON datasource is translated to single OGRLayer object with pre-defined name <em>OGRGeoJSON</em>:
+<pre>
+ogrinfo -ro http://featureserver/data/.geojson OGRGeoJSON
+</pre>
+It's also valid to assume that OGRDataSource::GetLayerCount() for GeoJSON datasource always returns 1.
+</p>
+
+<p>Accessing Web Service as a datasource (ie. FeatureServer), each request will produce new layer.
+This behavior conforms to stateless nature of HTTP transaction and is similar to how Web browsers operate:
+single request == single page.</p>
+
+<p>If a top-level member of GeoJSON data is of any other type than <em>FeatureCollection</em>, the driver will
+produce a layer with only one feature. Otherwise, a layer will consists of a set of features.</p>
 
 <h2>Feature</h2>
 
-<p><em>tbd</em></p>
+<p>The OGR GeoJSON driver maps each object of following types to new <em>OGRFeature</em> object:
+Point, LineString, Polygon, GeometryCollection, Feature.</p>
 
-<h3>Geometry</h3>
+<p>According to the <em>GeoJSON Specification</em>, only the <em>Feature</em> object must have a member with 
+name <em>properties</em>. Each and every member of <em>properties</em> is translated to OGR object of type of 
+OGRField and added to corresponding OGRFeature object.</p>
 
-<p><em>tbd</em></p>
+<p>The <em>GeoJSON Specification</em> does not require all <em>Feature</em> objects in a collection must 
+have the same schema of properties. If <em>Feature</em> objects in a set defined by <em>FeatureCollection</em> 
+object have different schema of properties, then resulting schema of fields in OGRFeatureDefn is generated as 
+<a href="http://en.wikipedia.org/wiki/Union_(set_theory)">union</a> of all <em>Feature</em> properties.</p>
 
-<h3>Attributes</h3>
+<p>It is possible to tell the driver to not to process attributes by setting environment variable 
+<strong>ATTRIBUTES_SKIP=YES</strong>. Default behavior is to preserve all attributes (as an union, see previous paragraph), 
+what is equal to setting <strong>ATTRIBUTES_SKIP=NO</strong>.</p>
 
-<p><em>tbd</em></p>
+<h2>Geometry</h2>
+
+<p>Similarly to the issue with mixed-properties features, the <em>GeoJSON Specification</em> draft does not require 
+all <em>Feature</em> objects in a collection must have geometry of the same type. Fortunately, OGR objects model does 
+allow to have geometries of different types in single layer - a heterogeneous layer. By default, the GeoJSON driver 
+preserves type of geometries.</p>
+
+<p>However, sometimes there is a need to generate homogeneous layer from a set of heterogeneous features. 
+For this purpose, it's possible to tell the driver to wrap all geometries with OGRGeometryCollection type as a common denominator.
+This behavior may be controlled by setting environment variable <strong>GEOMETRY_AS_COLLECTION=YES</strong> (default is <strong>NO</strong>).</p>
 
 <h2>Environment variables</h2>
 
 <ul>
-<li><b>GEOMETRY_AS_COLLECTION</b></li>
-<li><b>ATTRIBUTES_SKIP</b></li>
+<li><b>GEOMETRY_AS_COLLECTION</b> - used to control translation of geometries: YES - wrap geometries with OGRGeometryCollection type</li>
+<li><b>ATTRIBUTES_SKIP</b> - controls translation of attributes: YES - skip all attributes</li>
 </ul>
 
 <h2>Example</h2>
 
-<p><em>tbd</em></p>
+<p>How to dump content of .geojson file:
+<pre>
+ogrinfo -ro point.geojson
+</pre>
+</p>
+
+<p>How to query features from remote service with filtering by attribute:
+<pre>
+ogrinfo -ro http://featureserver/cities/.geojson OGRGeoJSON -where "name=Warsaw"
+</pre>
+</p>
+
+<p>How to translate number of features queried from FeatureServer to ESRI Shapefile:
+<pre>
+ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRGeoJSON
+</pre>
+</p>
 
 <h2>See Also</h2>
 
@@ -40,12 +112,10 @@
 <li><a href="http://geojson.org/">GeoJSON</a> - encoding geographic content in JSON</li>
 <li><a href="http://json.org/">JSON</a> - JavaScript Object Notation</li>
 <li><a href="http://oss.metaparadigm.com/json-c/">JSON-C</a> - A JSON implementation in C</li>
+<li><a href="http://lists.maptools.org/pipermail/gdal-dev/2007-November/014746.html">[Gdal-dev] OGR GeoJSON Driver</a> - driver announcement</li>
 </ul>
 </p>
 
-<h2>Author</h2>
-
-<p><a href="http://mateusz.loskot.net/">Mateusz Loskot</a> &lt;mateusz at loskot dot net&gt;</p>
-
 </body>
 </html>
+
