@@ -1471,7 +1471,13 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     double *padfScanline;
     CPLErr eErr = CE_None;
 
-    padfScanline = (double *) CPLMalloc(sizeof(double) * nXSize);
+    padfScanline = (double *) VSIMalloc(sizeof(double) * nXSize);
+    if (padfScanline == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc(): Out of memory in GDALContourGenerate" );
+        return CE_Failure;
+    }
 
     for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
