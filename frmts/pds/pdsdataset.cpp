@@ -11,7 +11,7 @@
  * it and placed it under the following license.  This is not intended to 
  * diminish Trent and Roberts contribution. 
  ******************************************************************************
- * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,8 @@
 #define NULL1 0
 #define NULL2 -32768
 //#define NULL3 -0.3402822655089E+39
-#define NULL3 0xFF7FFFFB //in hex
+//Same as ESRI_GRID_FLOAT_NO_DATA
+#define NULL3 -340282346638528859811704183484516925440.0
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
@@ -79,7 +80,10 @@ class PDSDataset : public RawDataset
     const char *GetKeywordSub( const char *pszPath, 
                                int iSubscript, 
                                const char *pszDefault = "");
-    
+    const char *GetKeywordUnit( const char *pszPath, 
+                               int iSubscript, 
+                               const char *pszDefault = "");
+
 public:
     PDSDataset();
     ~PDSDataset();
@@ -161,11 +165,20 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like a PDS Img dataset?                          */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->pabyHeader == NULL
-        || (strstr((const char *)poOpenInfo->pabyHeader,"PDS_VERSION_ID") == NULL ))
-    
+    if( poOpenInfo->pabyHeader == NULL )
         return NULL;
 
+    if ((strstr((const char *)poOpenInfo->pabyHeader,"^IMAGE") != NULL ) &&
+        (strstr((const char *)poOpenInfo->pabyHeader,"PDS3") == NULL ))
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "It appears this is an older PDS image type.  Only PDS_VERSION_ID = PDS3 are currently supported by this gdal PDS reader.");
+        return NULL;
+    }
+
+    if( strstr((const char *)poOpenInfo->pabyHeader,"^IMAGE") == NULL )
+        return NULL;
+  
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file API.                         */
 /* -------------------------------------------------------------------- */
@@ -185,9 +198,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     VSIFCloseL( fpQube );
 
-/* -------------------------------------------------------------------- */
-/*	We assume the user is pointing to the label (ie. .lbl) file.  	*/
-/* -------------------------------------------------------------------- */
+/* ------------------------------------------------------------------- */
+/*	We assume the user is pointing to the label (ie. .lbl) file.  	   */
+/* ------------------------------------------------------------------- */
     // IMAGE can be inline or detached and point to an image name
     // ^IMAGE = 3
     // ^IMAGE                         = "GLOBAL_ALBEDO_8PPD.IMG"
@@ -213,38 +226,30 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLAssert( FALSE ); // TODO
     }
-/* -------------------------------------------------------------------- */
-/*      Check if file an PDS header file?  Read a few lines of text   */
-/*      searching for something starting with nrows or ncols.           */
-/* -------------------------------------------------------------------- */
+
     GDALDataType eDataType = GDT_Byte;
     OGRSpatialReference oSRS;
 
-    int	nRows = -1;
-    int nCols = -1;
-    int nBands = 1;
+    
+    //image parameters
+    int	nRows, nCols, nBands = 1;
     int nSkipBytes = 0;
     int itype;
     int record_bytes;
+    int	bNoDataSet = FALSE;
+    char chByteOrder = 'M';  //default to MSB
+ 
+    //Georef parameters
     double dfULXMap=0.5;
     double dfULYMap = 0.5;
     double dfXDim = 1.0;
     double dfYDim = 1.0;
     double dfNoData = 0.0;
-    int	bNoDataSet = FALSE;
-    char chByteOrder = 'M';  //default to MSB
-    char szLayout[10] = "BSQ"; //default to band seq.
-    const char *target_name; //planet name
-    const char *value;
+    double xulcenter = 0.0;
+    double yulcenter = 0.0;
+
     //projection parameters
-    float xulcenter = 0.0;
-    float yulcenter = 0.0;
-    CPLString map_proj_name;
     int	bProjectionSet = TRUE;
-    char proj_target_name[200]; 
-    char datum_name[60];  
-    char sphere_name[60];
-    char bIsGeographic = TRUE;
     double semi_major = 0.0;
     double semi_minor = 0.0;
     double iflattening = 0.0;
@@ -253,17 +258,19 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     float first_std_parallel = 0.0;
     float second_std_parallel = 0.0;
     FILE	*fp;
-
+    
     /* -------------------------------------------------------------------- */
     /*      Checks to see if this is raw PDS image not compressed image     */
     /*      so ENCODING_TYPE either does not exist or it equals "N/A".      */
     /*      Compressed types will not be supported in this routine          */
     /* -------------------------------------------------------------------- */
+    const char *value;
+
     value = poDS->GetKeyword( "IMAGE.ENCODING_TYPE", "N/A" );
     if ( !(EQUAL(value,"N/A") ) )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "*** PDS image file has an invalid ENCODING_TYPE parameter:\n"
+                  "*** PDS image file has an ENCODING_TYPE parameter:\n"
                   "*** gdal pds driver does not support compressed image types\n"
                   "found: (%s)\n\n", value );
         delete poDS;
@@ -279,6 +286,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     /** are there own keywords  "LINES" and "LINE_SAMPLES"    **/
     /** if not NULL then CORE_ITEMS keyword i.e. (234,322,2)  **/
     /***********************************************************/
+    char szLayout[10] = "BSQ"; //default to band seq.
     value = poDS->GetKeyword( "IMAGE.AXIS_NAME", "" );
     if (EQUAL(value,"(SAMPLE,LINE,BAND)") ) {
         strcpy(szLayout,"BSQ");
@@ -318,9 +326,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         nSkipBytes = (nQube - 1) * record_bytes;     
     else
         nSkipBytes = 0;     
-     
+    
     /**** Grab format type - pds supports 1,2,4,8,16,32,64 (in theory) **/
-    /**** I have only seen 8, 16, 32 in released datasets              **/
+    /**** I have only seen 8, 16, 32 (float) in released datasets      **/
     itype = atoi(poDS->GetKeyword("IMAGE.SAMPLE_BITS",""));
     switch(itype) {
       case 8 :
@@ -352,60 +360,78 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /***********   Grab SAMPLE_TYPE *****************/
-    /** if keyword not found leave and "M" or MSB **/
+    /** if keyword not found leave as "M" or "MSB" **/
     value = poDS->GetKeyword( "IMAGE.SAMPLE_TYPE" );
     if( (EQUAL(value,"LSB_INTEGER")) || 
+        (EQUAL(value,"LSB")) || // just incase
         (EQUAL(value,"LSB_UNSIGNED_INTEGER")) || 
         (EQUAL(value,"UNSIGNED_INTEGER")) || 
         (EQUAL(value,"VAX_REAL")) || 
+        (EQUAL(value,"VAX_INTEGER")) || 
+        (EQUAL(value,"PC_INTEGER")) ||  //just incase 
         (EQUAL(value,"PC_REAL")) ) {
         chByteOrder = 'I';
     }
     
     /***********   Grab Cellsize ************/
+    //example:
+    //MAP_SCALE   = 14.818 <KM/PIXEL>
+    //added search for unit (only checks for CM, KM - defaults to Meters)
     value = poDS->GetKeyword("IMAGE_MAP_PROJECTION.MAP_SCALE");
     if (strlen(value) > 0 ) {
-        dfXDim = (float) atof(value) * 1000.0; /* convert from km to m */
-        dfYDim = (float) atof(value) * 1000.0 * -1;
+        dfXDim = (float) atof(value);
+        dfYDim = (float) atof(value) * -1;
+        
+        CPLString unit = poDS->GetKeywordUnit("IMAGE_MAP_PROJECTION.MAP_SCALE",2); //KM
+        //value = poDS->GetKeywordUnit("IMAGE_MAP_PROJECTION.MAP_SCALE",3); //PIXEL
+        if((EQUAL(unit,"M"))  || (EQUAL(unit,"METER")) || (EQUAL(unit,"METERS"))) {
+            // do nothing
+        }
+        else if (EQUAL(unit,"CM")) {
+            // convert from cm to m
+            dfXDim = dfXDim / 100.0;
+            dfYDim = dfYDim / 100.0;
+        } else {
+            //defaults to convert km to m
+            dfXDim = dfXDim * 1000.0;
+            dfYDim = dfYDim * 1000.0;
+        }            
     }
     
-    //  Calculate upper left center of pixel in meters **/
-    // This should be correct for what is documented in the PDS manual **/
-    // It doesn't mean it will work for ever PDS image, as they are released all different ways. **/
-    // For some reason PDS is negated where ISIS is not??
-
+    // Calculate upper left corner of pixel in meters from the upper left center pixel which
+    // should be correct for what is documented in the PDS manual
+    // It doesn't mean it will work perfectly for every PDS image, as they tend to be released in different ways.
+    // both dfULYMap, dfULXMap were update October 11, 2007 to correct 0.5 cellsize offset
     /***********   Grab LINE_PROJECTION_OFFSET ************/
     value = poDS->GetKeyword("IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
         yulcenter = (float) atof(value);
-        yulcenter = ((yulcenter) * dfYDim);
-        dfULYMap = (yulcenter - (dfYDim/2)) * -1;
+        dfULYMap = ((yulcenter - 0.5) * dfYDim * -1); 
+        //notice dfYDim is negative here which is why it is negated again
     }
-     
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
     value = poDS->GetKeyword("IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
         xulcenter = (float) atof(value);
-        xulcenter = ((xulcenter) * dfXDim);
-        dfULXMap = (xulcenter - (dfXDim/2)) * -1;
+        dfULXMap = ((xulcenter - 0.5) * dfXDim * -1);
     }
      
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    target_name = poDS->GetKeyword("TARGET_NAME");
+    CPLString target_name = poDS->GetKeyword("TARGET_NAME");
      
-    /***********   Grab MAP_PROJECTION_TYPE ************/
-    map_proj_name = 
+    /**********   Grab MAP_PROJECTION_TYPE *****/
+    CPLString map_proj_name = 
         poDS->GetKeyword( "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
     poDS->CleanString( map_proj_name );
      
-    /***********   Grab SEMI-MAJOR ************/
+    /******  Grab semi_major & convert to KM ******/
     semi_major = 
-        atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.A_AXIS_RADIUS"));
-
-    /***********   Grab semi-minor ************/
+        atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
+    
+    /******  Grab semi-minor & convert to KM ******/
     semi_minor = 
-        atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.C_AXIS_RADIUS"));
+        atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
@@ -415,11 +441,11 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     center_lon = 
         atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
 
-    /***********   Grab 1st std parallel ************/
+    /**********   Grab 1st std parallel *******/
     first_std_parallel = 
         atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
 
-    /***********   Grab 2nd std parallel ************/
+    /**********   Grab 2nd std parallel *******/
     second_std_parallel = 
         atof(poDS->GetKeyword( "IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
      
@@ -427,80 +453,72 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     // Need to further study how ocentric/ographic will effect the gdal library.
     // So far we will use this fact to define a sphere or ellipse for some projections
     // Frank - may need to talk this over
+    char bIsGeographic = TRUE;
     value = poDS->GetKeyword("IMAGE_MAP_PROJECTION.COORDINATE_SYSTEM_NAME");
-    
-    if (EQUAL( value, "\"PLANETOCENTRIC\"" )
-        || EQUAL( value, "PLANETOCENTRIC") )
+    if (EQUAL( value, "PLANETOCENTRIC" ))
         bIsGeographic = FALSE; 
 
-    //Set oSRS projection and parameters --- all PDS supported types added if apparently supported in oSRS
-/**  "AITOFF",  ** Not supported in GDAL??
-     "ALBERS", 
-     "BONNE",
-     "BRIESEMEISTER",   ** Not supported in GDAL??
-     "CYLINDRICAL EQUAL AREA",
-     "EQUIDISTANT",
-     "EQUIRECTANGULAR",
-     "GNOMONIC",
-     "HAMMER",    ** Not supported in GDAL??
-     "HENDU",     ** Not supported in GDAL??
-     "LAMBERT AZIMUTHAL EQUAL AREA",
-     "LAMBERT CONFORMAL",
-     "MERCATOR",
-     "MOLLWEIDE",
-     "OBLIQUE CYLINDRICAL",
-     "ORTHOGRAPHIC",
-     "SIMPLE CYLINDRICAL",
-     "SINUSOIDAL",
-     "STEREOGRAPHIC",
-     "TRANSVERSE MERCATOR",
-     "VAN DER GRINTEN",     ** Not supported in GDAL??
-     "WERNER"     ** Not supported in GDAL?? 
+/**   Set oSRS projection and parameters --- all PDS supported types added if apparently supported in oSRS
+      "AITOFF",  ** Not supported in GDAL??
+      "ALBERS", 
+      "BONNE",
+      "BRIESEMEISTER",   ** Not supported in GDAL??
+      "CYLINDRICAL EQUAL AREA",
+      "EQUIDISTANT",
+      "EQUIRECTANGULAR",
+      "GNOMONIC",
+      "HAMMER",    ** Not supported in GDAL??
+      "HENDU",     ** Not supported in GDAL??
+      "LAMBERT AZIMUTHAL EQUAL AREA",
+      "LAMBERT CONFORMAL",
+      "MERCATOR",
+      "MOLLWEIDE",
+      "OBLIQUE CYLINDRICAL",
+      "ORTHOGRAPHIC",
+      "SIMPLE CYLINDRICAL",
+      "SINUSOIDAL",
+      "STEREOGRAPHIC",
+      "TRANSVERSE MERCATOR",
+      "VAN DER GRINTEN",     ** Not supported in GDAL??
+      "WERNER"     ** Not supported in GDAL?? 
 **/ 
+    CPLDebug( "PDS","using projection %s\n\n", map_proj_name.c_str());
+
     if ((EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
         (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
         (EQUAL( map_proj_name, "EQUIDISTANT" )) )  {
         oSRS.SetEquirectangular ( center_lat, center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) {
         oSRS.SetOrthographic ( center_lat, center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "SINUSOIDAL" )) {
         oSRS.SetSinusoidal ( center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
+        oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
+    } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC")) {
         oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "TRANSVERSE_MERCATOR" )) {
         oSRS.SetTM ( center_lat, center_lon, 1, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "LAMBERT_CONFORMAL_CONIC" )) {
         oSRS.SetLCC ( first_std_parallel, second_std_parallel, 
                       center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "LAMBERT_AZIMUTHAL_EQUAL_AREA" )) {
         oSRS.SetLAEA( center_lat, center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "CYLINDRICAL_EQUAL_AREA" )) {
         oSRS.SetCEA  ( first_std_parallel, center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "MOLLWEIDE" )) {
         oSRS.SetMollweide ( center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "ALBERS" )) {
         oSRS.SetACEA ( first_std_parallel, second_std_parallel, 
                        center_lat, center_lon, 0, 0 );
-
     } else if (EQUAL( map_proj_name, "BONNE" )) {
         oSRS.SetBonne ( first_std_parallel, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "GNOMONIC" )) {
         oSRS.SetGnomonic ( center_lat, center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) { 
-        /* hope Swiss Oblique Cylindrical is the same */
+        // hope Swiss Oblique Cylindrical is the same
         oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
-
     } else {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "No projection define or supported! Are you sure this is a map projected image?" );
@@ -508,44 +526,72 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if (bProjectionSet) {
-        //Create projection name, i.e. MARS_MERCATOR
-        strcpy(proj_target_name, map_proj_name);
-        strcat(proj_target_name, " ");
-        strcat(proj_target_name, target_name);
+        //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
+        CPLString proj_target_name = map_proj_name + " " + target_name;
+        oSRS.SetProjCS(proj_target_name); //set ProjCS keyword
      
-        //The datum name will be the same basic name aas the planet
-        strcpy(datum_name, "D_");
-        strcat(datum_name, target_name);
-     
-        strcpy(sphere_name, target_name);
-        //strcat(sphere_name, "_IAU_IAG");  //Might not be IAU defined so don't add
+        //The geographic/geocentric name will be the same basic name as the body name
+        //'GCS' = Geographic/Geocentric Coordinate System
+        CPLString geog_name = "GCS_" + target_name;
+        
+        //The datum and sphere names will be the same basic name aas the planet
+        CPLString datum_name = "D_" + target_name;
+        CPLString sphere_name = target_name; // + "_IAU_IAG");  //Might not be IAU defined so don't add
           
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
-        iflattening = semi_major / (semi_major - semi_minor);
+        if ((semi_major - semi_minor) < 0.0000001) 
+            iflattening = 0;
+        else
+            iflattening = semi_major / (semi_major - semi_minor);
      
-        //The use of a Sphere, polar radius or ellipse here is based on how PDS 2 does it internally
-        //Notice that most PDS 2 projections are spherical 
-        if ( (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
-	     (EQUAL( map_proj_name, "SIMPLE CYLINDRICAL" )) || 
-	     (EQUAL( map_proj_name, "EQUIDISTANT" )) || 
-	     (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) || 
-	     (EQUAL( map_proj_name, "SINUSOIDAL" )) ) { //flattening = 1.0 for sphere
-            oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                            semi_major*1000, 0.0, 
-                            "Reference_Meridian", 0.0 );
-            //Here isis2 uses the polar radius to define m/p, so we should use the polar radius for body
-        } else if  (EQUAL( map_proj_name, "STEREOGRAPHIC" )  && fabs(center_lat) > 70) { 
-            oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                            semi_minor*1000.0, 1.0, 
-                            "Reference_Meridian", 0.0 );
-        } else { //ellipse => Mercator, Transverse Mercator, Lambert Conformal
-            if (bIsGeographic) {
-                oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                                semi_major*1000, iflattening, 
+        //Set the body size but take into consideration which proj is being used to help w/ compatibility
+        //Notice that most PDS projections are spherical based on the fact that ISIS/PICS are spherical 
+        //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
+        //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
+        if ( ( (EQUAL( map_proj_name, "STEREOGRAPHIC" ) && (fabs(center_lat) == 90)) ) || 
+             (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC" )))  
+        {
+            if (bIsGeographic) { 
+                //Geograpraphic, so set an ellipse
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, iflattening, 
                                 "Reference_Meridian", 0.0 );
-            } else { //we have Ocentric so use a sphere! I hope... 
-                oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                                semi_major*1000, 0.0, 
+            } else {
+                //Geocentric, so force a sphere using the semi-minor axis. I hope... 
+                sphere_name += "_polarRadius";
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_minor, 0.0, 
+                                "Reference_Meridian", 0.0 );
+            }
+        }
+        else if ( (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) || 
+                  (EQUAL( map_proj_name, "EQUIDISTANT" )) || 
+                  (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) || 
+                  (EQUAL( map_proj_name, "STEREOGRAPHIC" )) || 
+                  (EQUAL( map_proj_name, "SINUSOIDAL" )) ) {
+            //isis uses the spherical equation for these projections so force a sphere
+            oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                            semi_major, 0.0, 
+                            "Reference_Meridian", 0.0 );
+        } 
+        else if (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) { 
+            //isis uses local radius as a sphere, which is pre-calculated in the PDS label as the semi-major
+            sphere_name =+ "_localRadius";
+            oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                            semi_major, 0.0, 
+                            "Reference_Meridian", 0.0 );
+        } 
+        else { 
+            //All other projections: Mercator, Transverse Mercator, Lambert Conformal, etc.
+            //Geographic, so set an ellipse
+            if (bIsGeographic) {
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, iflattening, 
+                                "Reference_Meridian", 0.0 );
+            } else { 
+                //Geocentric, so force a sphere. I hope... 
+                oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
+                                semi_major, 0.0, 
                                 "Reference_Meridian", 0.0 );
             }
         }
@@ -665,9 +711,9 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1, poBand );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check for a .prj file. For pds I would like to keep this in   */
-/* -------------------------------------------------------------------- */
+/* --------------------------------------------------------------------*/
+/*      Check for a .prj file. For pds I would like to keep this in    */
+/* --------------------------------------------------------------------*/
     {
         CPLString osPath, osName;
 
@@ -710,7 +756,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( !poDS->bGotTransform )
         poDS->bGotTransform = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, "cbw", 
+            GDALReadWorldFile( poOpenInfo->pszFilename, "psw", 
                                poDS->adfGeoTransform );
 
     if( !poDS->bGotTransform )
@@ -757,7 +803,7 @@ const char *PDSDataset::GetKeywordSub( const char *pszPath,
     if( pszResult == NULL )
         return pszDefault;
 
-    if( pszResult[0] != '(' )
+    if( pszResult[0] != '(' ) 
         return pszDefault;
 
     char **papszTokens = CSLTokenizeString2( pszResult, "(,)", 
@@ -777,17 +823,48 @@ const char *PDSDataset::GetKeywordSub( const char *pszPath,
 }
 
 /************************************************************************/
+/*                            GetKeywordUnit()                          */
+/************************************************************************/
+
+const char *PDSDataset::GetKeywordUnit( const char *pszPath, 
+                                         int iSubscript,
+                                         const char *pszDefault )
+
+{
+    const char *pszResult = oKeywords.GetKeyword( pszPath, NULL );
+    
+    if( pszResult == NULL )
+        return pszDefault;
+ 
+    char **papszTokens = CSLTokenizeString2( pszResult, "</>", 
+                                             CSLT_HONOURSTRINGS );
+
+    if( iSubscript <= CSLCount(papszTokens) )
+    {
+        osTempResult = papszTokens[iSubscript-1];
+        CSLDestroy( papszTokens );
+        return osTempResult.c_str();
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        return pszDefault;
+    }
+}
+
+/************************************************************************/
 /*                            CleanString()                             */
 /*                                                                      */
-/*      Removes double quotes, and converts spaces to underscores.      */
-/*      The change is made in-place to CPLString.                       */
+/* Removes single or double quotes, and converts spaces to underscores. */
+/* The change is made in-place to CPLString.                            */
 /************************************************************************/
 
 void PDSDataset::CleanString( CPLString &osInput )
 
 {
-    if( osInput.size() < 2 || osInput.at(0) != '"' 
-        || osInput.at(osInput.size()-1) != '"' )
+   if(  ( osInput.size() < 2 ) ||
+        (osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'') )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);
