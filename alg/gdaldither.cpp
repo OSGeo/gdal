@@ -105,6 +105,7 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
     VALIDATE_POINTER1( hColorTable, "GDALDitherRGB2PCT", CE_Failure );
 
     int		nXSize, nYSize;
+    CPLErr err = CE_None;
     
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
@@ -187,13 +188,25 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
     GByte	*pabyRed, *pabyGreen, *pabyBlue, *pabyIndex;
     int		*panError;
 
-    pabyRed = (GByte *) CPLMalloc(nXSize);
-    pabyGreen = (GByte *) CPLMalloc(nXSize);
-    pabyBlue = (GByte *) CPLMalloc(nXSize);
+    pabyRed = (GByte *) VSIMalloc(nXSize);
+    pabyGreen = (GByte *) VSIMalloc(nXSize);
+    pabyBlue = (GByte *) VSIMalloc(nXSize);
 
-    pabyIndex = (GByte *) CPLMalloc(nXSize);
+    pabyIndex = (GByte *) VSIMalloc(nXSize);
 
-    panError = (int *) CPLCalloc(sizeof(int),(nXSize+2) * 3);
+    panError = (int *) VSICalloc(sizeof(int),(nXSize+2) * 3);
+    
+    if (pabyRed == NULL ||
+        pabyGreen == NULL ||
+        pabyBlue == NULL ||
+        pabyIndex == NULL ||
+        panError == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc(): Out of memory in GDALDitherRGB2PCT" );
+        err = CE_Failure;
+        goto end_and_cleanup;
+    }
 
 /* ==================================================================== */
 /*      Loop over all scanlines of data to process.                     */
@@ -209,15 +222,9 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
 /* -------------------------------------------------------------------- */
         if( !pfnProgress( iScanline / (double) nYSize, NULL, pProgressArg ) )
         {
-            CPLFree( pabyRed );
-            CPLFree( pabyGreen );
-            CPLFree( pabyBlue );
-            CPLFree( panError );
-            CPLFree( pabyIndex );
-            CPLFree( pabyColorMap );
-
             CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
-            return CE_Failure;
+            err = CE_Failure;
+            goto end_and_cleanup;
         }
 
 /* -------------------------------------------------------------------- */
@@ -314,20 +321,20 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
                       pabyIndex, nXSize, 1, GDT_Byte, 0, 0 );
     }
 
+    pfnProgress( 1.0, NULL, pProgressArg );
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
+end_and_cleanup:
     CPLFree( pabyRed );
     CPLFree( pabyGreen );
     CPLFree( pabyBlue );
     CPLFree( pabyIndex );
     CPLFree( panError );
-
     CPLFree( pabyColorMap );
 
-    pfnProgress( 1.0, NULL, pProgressArg );
-
-    return CE_None;
+    return err;
 }
 
 /************************************************************************/
