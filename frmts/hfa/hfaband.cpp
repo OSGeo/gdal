@@ -51,10 +51,6 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     nWidth = poNodeIn->GetIntField( "width" );
     nHeight = poNodeIn->GetIntField( "height" );
 
-    nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
-    nBlocksPerColumn = (nHeight + nBlockYSize - 1) / nBlockYSize;
-
-    nBlocks = nBlocksPerRow * nBlocksPerColumn;
     panBlockStart = NULL;
     panBlockSize = NULL;
     panBlockFlag = NULL;
@@ -67,6 +63,20 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
 
     fpExternal = NULL;
 
+    bNoDataSet = FALSE;
+    dfNoData = 0.0;
+
+    if (nBlockXSize <= 0 || nBlockYSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HFABand::HFABand : (nBlockXSize <= 0 || nBlockYSize <= 0)");
+        return;
+    }
+
+    nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
+    nBlocksPerColumn = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    nBlocks = nBlocksPerRow * nBlocksPerColumn;
+
 /* -------------------------------------------------------------------- */
 /*      Check for nodata.  This is really an RDO (ESRI Raster Data      */
 /*      Objects?), not used by Imagine itself.                          */
@@ -77,11 +87,6 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     {
         bNoDataSet = TRUE;
         dfNoData = poNDNode->GetDoubleField( "valueBD" );
-    }
-    else
-    {
-        bNoDataSet = FALSE;
-        dfNoData = 0.0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -249,9 +254,23 @@ CPLErr	HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
-    panBlockStart = (vsi_l_offset *) CPLMalloc(sizeof(vsi_l_offset) * nBlocks);
-    panBlockSize = (int *) CPLMalloc(sizeof(int) * nBlocks);
-    panBlockFlag = (int *) CPLMalloc(sizeof(int) * nBlocks);
+    panBlockStart = (vsi_l_offset *)VSIMalloc(sizeof(vsi_l_offset) * nBlocks);
+    panBlockSize = (int *) VSIMalloc(sizeof(int) * nBlocks);
+    panBlockFlag = (int *) VSIMalloc(sizeof(int) * nBlocks);
+
+    if (panBlockStart == NULL || panBlockSize == NULL || panBlockFlag == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                 "HFABand::LoadBlockInfo : Out of memory\n");
+
+        CPLFree(panBlockStart);
+        CPLFree(panBlockSize);
+        CPLFree(panBlockFlag);
+        panBlockStart = NULL;
+        panBlockSize = NULL;
+        panBlockFlag = NULL;
+        return CE_Failure;
+    }
 
     for( iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
@@ -341,7 +360,13 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate blockmap.                                              */
 /* -------------------------------------------------------------------- */
-    panBlockFlag = (int *) CPLMalloc(sizeof(int) * nBlocks);
+    panBlockFlag = (int *) VSIMalloc(sizeof(int) * nBlocks);
+    if (panBlockFlag == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                 "HFABand::LoadExternalBlockInfo : Out of memory\n");
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Load the validity bitmap.                                       */
@@ -351,7 +376,13 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 
     nBytesPerRow = (nBlocksPerRow + 7) / 8;
     pabyBlockMap = (unsigned char *) 
-        CPLMalloc(nBytesPerRow*nBlocksPerColumn+20);
+        VSIMalloc(nBytesPerRow*nBlocksPerColumn+20);
+    if (pabyBlockMap == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                 "HFABand::LoadExternalBlockInfo : Out of memory\n");
+        return CE_Failure;
+    }
 
     VSIFSeekL( fpExternal, 
                poDMS->GetBigIntField( "layerStackValidFlagsOffset" ),  
@@ -856,7 +887,13 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         GByte 	*pabyCData;
         CPLErr  eErr;
 
-        pabyCData = (GByte *) CPLMalloc( (size_t) nBlockSize );
+        pabyCData = (GByte *) VSIMalloc( (size_t) nBlockSize );
+        if (pabyCData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "HFABand::LoadBlockInfo : Out of memory\n");
+            return CE_Failure;
+        }
 
         if( VSIFReadL( pabyCData, (size_t) nBlockSize, 1, fpData ) != 1 )
         {

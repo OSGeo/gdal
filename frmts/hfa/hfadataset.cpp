@@ -1282,7 +1282,13 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             
         if( EQUAL(pszType,"real") )
         {
-            double *padfColData = (double*)CPLMalloc(nRowCount*sizeof(double));
+            double *padfColData = (double*)VSIMalloc(nRowCount*sizeof(double));
+            if (padfColData == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory,
+                 "HFARasterBand::ReadNamedRAT : Out of memory\n");
+                return NULL;
+            }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
             VSIFReadL( padfColData, nRowCount, sizeof(double), hHFA->fp );
@@ -1298,7 +1304,13 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
         else if( EQUAL(pszType,"string") )
         {
             int nMaxNumChars = poDTChild->GetIntField( "maxNumChars" );
-            char *pachColData = (char*)CPLCalloc(nRowCount+1,nMaxNumChars);
+            char *pachColData = (char*)VSICalloc(nRowCount+1,nMaxNumChars);
+            if (pachColData == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory,
+                 "HFARasterBand::ReadNamedRAT : Out of memory\n");
+                return NULL;
+            }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
             VSIFReadL( pachColData, nRowCount, nMaxNumChars, hHFA->fp );
@@ -1317,7 +1329,13 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
         }
         else if( EQUALN(pszType,"int",3) )
         {
-            GInt32 *panColData = (GInt32*)CPLMalloc(nRowCount*sizeof(GInt32));
+            GInt32 *panColData = (GInt32*)VSIMalloc(nRowCount*sizeof(GInt32));
+            if (panColData == NULL)
+            {
+                CPLError( CE_Failure, CPLE_OutOfMemory,
+                 "HFARasterBand::ReadNamedRAT : Out of memory\n");
+                return NULL;
+            }
 
             VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
             VSIFReadL( panColData, nRowCount, sizeof(GInt32), hHFA->fp );
