@@ -138,13 +138,111 @@ def mask_3():
     return 'success' 
 
 ###############################################################################
+# Copy a *real* masked dataset, and confirm masks copied properly.
+
+def mask_4():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    src_ds = gdal.Open('../gdrivers/data/masked.jpg')
+
+    # NOTE: for now we copy to PNM since it does everything (overviews too)
+    # externally. Should eventually test with gtiff, hfa.
+    drv = gdal.GetDriverByName('PNM')
+    ds = drv.CreateCopy( 'tmp/mask_4.pnm', src_ds )
+    src_ds = None
+
+    # confirm we got the custom mask on the copied dataset.
+    if ds.GetRasterBand(1).GetMaskFlags() != 2:
+        gdaltest.post_reason( 'did not get expected mask flags' )
+        print ds.GetRasterBand(1).GetMaskFlags()
+        return 'fail'
+
+    msk = ds.GetRasterBand(1).GetMaskBand()
+    cs = msk.Checksum()
+    expected_cs = 770
+    
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected checksum' )
+        print cs
+        return 'fail'
+
+    msk = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Create overviews for masked file, and verify the overviews have proper
+# masks built for them.
+
+def mask_5():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    ds = gdal.Open('tmp/mask_4.pnm',gdal.GA_Update)
+    ds.BuildOverviews( overviewlist = [2,4] )
+
+    # confirm mask flags on overview.
+    ovr = ds.GetRasterBand(1).GetOverview(1)
+    
+    if ovr.GetMaskFlags() != 2:
+        gdaltest.post_reason( 'did not get expected mask flags' )
+        print ovr.GetMaskFlags()
+        return 'fail'
+
+    msk = ovr.GetMaskBand()
+    cs = msk.Checksum()
+    expected_cs = 20505
+    
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected checksum' )
+        print cs
+        return 'fail'
+    ovr = None
+    msk = None
+    ds = None
+
+    # Reopen and confirm we still get same results.
+    ds = gdal.Open('tmp/mask_4.pnm')
+    
+    # confirm mask flags on overview.
+    ovr = ds.GetRasterBand(1).GetOverview(1)
+    
+    if ovr.GetMaskFlags() != 2:
+        gdaltest.post_reason( 'did not get expected mask flags' )
+        print ovr.GetMaskFlags()
+        return 'fail'
+
+    msk = ovr.GetMaskBand()
+    cs = msk.Checksum()
+    expected_cs = 20505
+    
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected checksum' )
+        print cs
+        return 'fail'
+
+    ovr = None
+    msk = None
+    ds = None
+
+    gdal.GetDriverByName('PNM').Delete( 'tmp/mask_4.pnm' )
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 
 gdaltest_list = [
     mask_1,
     mask_2,
-    mask_3 ]
+    mask_3,
+    mask_4,
+    mask_5 ]
 
 if __name__ == '__main__':
 
