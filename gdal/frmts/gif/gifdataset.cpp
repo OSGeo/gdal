@@ -573,11 +573,15 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	EGifPutImageDesc(hGifFile,
 			 0, 0, nXSize, nYSize, bInterlace, NULL) == GIF_ERROR )
     {
+        FreeMapObject(psGifCT);
         PrintGifError();
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Error writing gif file." );
         return NULL;
     }
+    
+    FreeMapObject(psGifCT);
+    psGifCT = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
