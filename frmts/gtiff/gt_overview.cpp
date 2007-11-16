@@ -50,7 +50,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
     osMetadata = "<GDALMetadata>";
 
     if( pszResampling && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
-        osMetadata += "<GDALMetadata><Item name=\"RESAMPLING\" sample=\"0\">AVERAGE_BIT2GRAYSCALE</Item>";
+        osMetadata += "<Item name=\"RESAMPLING\" sample=\"0\">AVERAGE_BIT2GRAYSCALE</Item>";
 
     if( poBaseDS->GetMetadataItem( "INTERNAL_MASK_FLAGS_1" ) )
     {
