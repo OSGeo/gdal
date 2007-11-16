@@ -607,18 +607,6 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     
 /* -------------------------------------------------------------------- */
-/*     Is the Image detached - if so, reset name to binary file?        */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    // Frank - is this correct? --To Do
-    //The extension already added on so don't add another. But is this needed?
-    char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    char *pszName = CPLStrdup( CPLGetBasename( poOpenInfo->pszFilename ) );
-    if (bIsDetached)
-        pszFilename = CPLFormCIFilename( pszPath, detachedCub, "" );
-#endif
-
-/* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
 /*      this never having been considered to be a match. This isn't     */
 /*      an error!                                                       */
