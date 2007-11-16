@@ -299,11 +299,13 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
         }
         else
         {
+            CSLDestroy(papszTuple);
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "ORIGIN is not a valid 2d or 3d tuple.\n"
                       "Separate tuple values with comma." );
             return FALSE;
         }
+        CSLDestroy(papszTuple);
     }
 
 /* -------------------------------------------------------------------- */
