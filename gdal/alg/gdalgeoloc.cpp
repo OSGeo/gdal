@@ -105,12 +105,16 @@ static int GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
     psTransform->nGeoLocYSize = nYSize;
     
     psTransform->padfGeoLocY = (double *) 
-        CPLMalloc(sizeof(double) * nXSize * nYSize);
+        VSIMalloc(sizeof(double) * nXSize * nYSize);
     psTransform->padfGeoLocX = (double *) 
-        CPLMalloc(sizeof(double) * nXSize * nYSize);
+        VSIMalloc(sizeof(double) * nXSize * nYSize);
     
     if( psTransform->padfGeoLocX == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GeoLocLoadFullData : Out of memory");
         return FALSE;
+    }
 
     if( GDALRasterIO( psTransform->hBand_X, GF_Read, 
                       0, 0, nXSize, nYSize,
@@ -690,6 +694,9 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 
     CPLFree( psTransform->pafBackMapX );
     CPLFree( psTransform->pafBackMapY );
+    CSLDestroy( psTransform->papszGeolocationInfo );
+    CPLFree( psTransform->padfGeoLocX );
+    CPLFree( psTransform->padfGeoLocY );
              
     if( psTransform->hDS_X != NULL 
         && GDALDereferenceDataset( psTransform->hDS_X ) == 0 )
