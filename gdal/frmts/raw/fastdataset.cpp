@@ -813,6 +813,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLFree( poDS->pszProjection );
             poDS->pszProjection = CPLStrdup("");
         }
+
+        CPLFree(pasGCPList);
     }
 
 /* -------------------------------------------------------------------- */
