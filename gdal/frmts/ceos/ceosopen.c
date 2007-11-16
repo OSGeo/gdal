@@ -278,6 +278,8 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
             psRecord->nLength + i * psImage->nImageRecLength
 	            + 12 + psImage->nPrefixBytes;
     }
+    
+    CEOSDestroyRecord( psRecord );
 
     return psImage;
 }
@@ -348,6 +350,7 @@ CPLErr CEOSReadScanline( CEOSImage * psCEOS, int nBand, int nScanline,
 void CEOSClose( CEOSImage * psCEOS )
 
 {
+    CPLFree( psCEOS->panDataStart );
     VSIFClose( psCEOS->fpImage );
     CPLFree( psCEOS );
 }
