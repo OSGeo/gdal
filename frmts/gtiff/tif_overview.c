@@ -54,6 +54,7 @@
 #include "tif_ovrcache.h"
 
 #include "cpl_port.h"
+#include "cpl_string.h"
 
 CPL_CVSID("tif_overview.c,v 1.2 2001/07/18 04:51:56 warmerda Exp");
 
@@ -90,7 +91,7 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
                            int bUseSubIFDs,
-                           const char *pszResampling )
+                           const char *pszMetadata )
 
 {
     toff_t	nBaseDirOffset;
@@ -138,11 +139,8 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Write metadata if we have some.                                 */
 /* -------------------------------------------------------------------- */
-    if( pszResampling && EQUALN(pszResampling,"AVERAGE_BIT2",12) )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, 
-                      "<GDALMetadata><Item name=\"RESAMPLING\" sample=\"0\">AVERAGE_BIT2GRAYSCALE</Item></GDALMetadata>" );
-    }
+    if( pszMetadata && strlen(pszMetadata) > 0 )
+        TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, pszMetadata );
 
 /* -------------------------------------------------------------------- */
 /*      Write directory, and return byte offset.                        */
@@ -598,8 +596,7 @@ void TIFFBuildOverviews( TIFF *hTIFF, int nOverviews, int * panOvList,
                                          bTiled, nCompressFlag, nPhotometric,
                                          nSampleFormat,
                                          panRedMap, panGreenMap, panBlueMap,
-                                         bUseSubIFDs, 
-                                         pszResampleMethod );
+                                         bUseSubIFDs, NULL );
         
         papoRawBIs[i] = TIFFCreateOvrCache( hTIFF, nDirOffset );
     }
