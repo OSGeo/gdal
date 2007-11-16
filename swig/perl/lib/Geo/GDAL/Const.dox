@@ -11,295 +11,295 @@
 ## @ignore this
 
 ## @attr GDT_Unknown
-# scalar
+# @deprecated
 
 ## @attr GDT_Byte
-# scalar
+# @deprecated
 
 ## @attr GDT_UInt16
-# scalar
+# @deprecated
 
 ## @attr GDT_Int16
-# scalar
+# @deprecated
 
 ## @attr GDT_UInt32
-# scalar
+# @deprecated
 
 ## @attr GDT_Int32
-# scalar
+# @deprecated
 
 ## @attr GDT_Float32
-# scalar
+# @deprecated
 
 ## @attr GDT_Float64
-# scalar
+# @deprecated
 
 ## @attr GDT_CInt16
-# scalar
+# @deprecated
 
 ## @attr GDT_CInt32
-# scalar
+# @deprecated
 
 ## @attr GDT_CFloat32
-# scalar
+# @deprecated
 
 ## @attr GDT_CFloat64
-# scalar
+# @deprecated
 
 ## @attr GDT_TypeCount
-# scalar
+# @deprecated
 
 ## @attr GA_ReadOnly
-# scalar
+# @deprecated
 
 ## @attr GA_Update
-# scalar
+# @deprecated
 
 ## @attr GF_Read
-# scalar
+# @deprecated
 
 ## @attr GF_Write
-# scalar
+# @deprecated
 
 ## @attr GCI_Undefined
-# scalar
+# @deprecated
 
 ## @attr GCI_GrayIndex
-# scalar
+# @deprecated
 
 ## @attr GCI_PaletteIndex
-# scalar
+# @deprecated
 
 ## @attr GCI_RedBand
-# scalar
+# @deprecated
 
 ## @attr GCI_GreenBand
-# scalar
+# @deprecated
 
 ## @attr GCI_BlueBand
-# scalar
+# @deprecated
 
 ## @attr GCI_AlphaBand
-# scalar
+# @deprecated
 
 ## @attr GCI_HueBand
-# scalar
+# @deprecated
 
 ## @attr GCI_SaturationBand
-# scalar
+# @deprecated
 
 ## @attr GCI_LightnessBand
-# scalar
+# @deprecated
 
 ## @attr GCI_CyanBand
-# scalar
+# @deprecated
 
 ## @attr GCI_MagentaBand
-# scalar
+# @deprecated
 
 ## @attr GCI_YellowBand
-# scalar
+# @deprecated
 
 ## @attr GCI_BlackBand
-# scalar
+# @deprecated
 
 ## @attr GRA_NearestNeighbour
-# scalar
+# @deprecated
 
 ## @attr GRA_Bilinear
-# scalar
+# @deprecated
 
 ## @attr GRA_Cubic
-# scalar
+# @deprecated
 
 ## @attr GRA_CubicSpline
-# scalar
+# @deprecated
 
 ## @attr GPI_Gray
-# scalar
+# @deprecated
 
 ## @attr GPI_RGB
-# scalar
+# @deprecated
 
 ## @attr GPI_CMYK
-# scalar
+# @deprecated
 
 ## @attr GPI_HLS
-# scalar
+# @deprecated
 
 ## @attr CXT_Element
-# scalar
+# @deprecated
 
 ## @attr CXT_Text
-# scalar
+# @deprecated
 
 ## @attr CXT_Attribute
-# scalar
+# @deprecated
 
 ## @attr CXT_Comment
-# scalar
+# @deprecated
 
 ## @attr CXT_Literal
-# scalar
+# @deprecated
 
 ## @attr CE_None
-# scalar
+# @deprecated
 
 ## @attr CE_Debug
-# scalar
+# @deprecated
 
 ## @attr CE_Warning
-# scalar
+# @deprecated
 
 ## @attr CE_Failure
-# scalar
+# @deprecated
 
 ## @attr CE_Fatal
-# scalar
+# @deprecated
 
 ## @attr CPLE_None
-# scalar
+# @deprecated
 
 ## @attr CPLE_AppDefined
-# scalar
+# @deprecated
 
 ## @attr CPLE_OutOfMemory
-# scalar
+# @deprecated
 
 ## @attr CPLE_FileIO
-# scalar
+# @deprecated
 
 ## @attr CPLE_OpenFailed
-# scalar
+# @deprecated
 
 ## @attr CPLE_IllegalArg
-# scalar
+# @deprecated
 
 ## @attr CPLE_NotSupported
-# scalar
+# @deprecated
 
 ## @attr CPLE_AssertionFailed
-# scalar
+# @deprecated
 
 ## @attr CPLE_NoWriteAccess
-# scalar
+# @deprecated
 
 ## @attr CPLE_UserInterrupt
-# scalar
+# @deprecated
 
 ## @attr DMD_LONGNAME
-# scalar
+# @deprecated
 
 ## @attr DMD_HELPTOPIC
-# scalar
+# @deprecated
 
 ## @attr DMD_MIMETYPE
-# scalar
+# @deprecated
 
 ## @attr DMD_EXTENSION
-# scalar
+# @deprecated
 
 ## @attr DMD_CREATIONOPTIONLIST
-# scalar
+# @deprecated
 
 ## @attr DMD_CREATIONDATATYPES
-# scalar
+# @deprecated
 
 ## @attr DCAP_CREATE
-# scalar
+# @deprecated
 
 ## @attr DCAP_CREATECOPY
-# scalar
+# @deprecated
 
 ## @attr CPLES_BackslashQuotable
-# scalar
+# @deprecated
 
 ## @attr CPLES_XML
-# scalar
+# @deprecated
 
 ## @attr CPLES_URL
-# scalar
+# @deprecated
 
 ## @attr CPLES_SQL
-# scalar
+# @deprecated
 
 ## @attr CPLES_CSV
-# scalar
+# @deprecated
 
 ## @attr GFT_Integer
-# scalar
+# @deprecated
 
 ## @attr GFT_Real
-# scalar
+# @deprecated
 
 ## @attr GFT_String
-# scalar
+# @deprecated
 
 ## @attr GFU_Alpha
-# scalar
+# @deprecated
 
 ## @attr GFU_AlphaMax
-# scalar
+# @deprecated
 
 ## @attr GFU_AlphaMin
-# scalar
+# @deprecated
 
 ## @attr GFU_Blue
-# scalar
+# @deprecated
 
 ## @attr GFU_BlueMax
-# scalar
+# @deprecated
 
 ## @attr GFU_BlueMin
-# scalar
+# @deprecated
 
 ## @attr GFU_Generic
-# scalar
+# @deprecated
 
 ## @attr GFU_Green
-# scalar
+# @deprecated
 
 ## @attr GFU_GreenMax
-# scalar
+# @deprecated
 
 ## @attr GFU_GreenMin
-# scalar
+# @deprecated
 
 ## @attr GFU_Max
-# scalar
+# @deprecated
 
 ## @attr GFU_MaxCount
-# scalar
+# @deprecated
 
 ## @attr GFU_Min
-# scalar
+# @deprecated
 
 ## @attr GFU_MinMax
-# scalar
+# @deprecated
 
 ## @attr GFU_Name
-# scalar
+# @deprecated
 
 ## @attr GFU_PixelCount
-# scalar
+# @deprecated
 
 ## @attr GFU_Red
-# scalar
+# @deprecated
 
 ## @attr GFU_RedMax
-# scalar
+# @deprecated
 
 ## @attr GFU_RedMin
-# scalar
+# @deprecated
 
 ## @attr GMF_ALL_VALID
-# scalar
+# @deprecated
 
 ## @attr GMF_ALPHA
-# scalar
+# @deprecated
 
 ## @attr GMF_NODATA
-# scalar
+# @deprecated
 
 ## @attr GMF_PER_DATASET
-# scalar
+# @deprecated

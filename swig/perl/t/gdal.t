@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%available_driver %test_driver $loaded $verbose @types %types @fails @tested_drivers/;
+use vars qw/%available_driver %test_driver $loaded $verbose @types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -31,10 +31,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 		'EHdr' => 1,
 		);
 
-@types = ('GDT_Byte','GDT_UInt16','GDT_Int16','GDT_UInt32','GDT_Int32',
-	  'GDT_Float32','GDT_Float64','GDT_CInt16','GDT_CInt32','GDT_CFloat32','GDT_CFloat64');
-
-for (@types) {$types{$_} = eval "\$Geo::GDAL::Const::$_"};
+@types = (qw/Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64/);
 
 my %no_colortable = map {$_=>1} ('NITF','ELAS','BMP','ILWIS','BT','RMF','RST');
 
@@ -94,7 +91,7 @@ sub gdal_tests {
 	
 	my @create = split /\s+/,$metadata->{DMD_CREATIONDATATYPES};
 	
-	@create = ('Byte','Float32','UInt16','Int16','CInt16','CInt32','CFloat32') 
+	@create = (qw/Byte Float32 UInt16 Int16 CInt16 CInt32 CFloat32/)
 	    if $driver->{ShortName} eq 'MFF2';
 	
 	unless (@create) {
@@ -118,21 +115,22 @@ sub gdal_tests {
 		mytest('skipped: does not work?',undef,$name,$type,'dataset create');
 		next;
 	    }
-	    
-	    my $typenr = $types{'GDT_'.$type};
+
 	    my $filename = "tmp_ds_".$driver->{ShortName}."_$type$ext";
 	    my $width = 100;
 	    my $height = 50;
 	    my $bands = 1;
 	    my $options = undef;
-	    
+
 	    my $dataset;
+
 	    eval {
-		$dataset = $driver->Create($filename, $width, $height, $bands , $typenr, []);
+		$dataset = $driver->Create($filename, $width, $height, $bands , $type, []);
 	    };
+
 	    mytest($dataset,'no error message',$name,$type,'dataset create');
 	    next unless $dataset;
-	    
+
 	    mytest($dataset->{RasterXSize} == $width,'RasterXSize',$name,$type,'RasterXSize');
 	    mytest($dataset->{RasterYSize} == $height,'RasterYSize',$name,$type,'RasterYSize');
 	    
@@ -151,13 +149,19 @@ sub gdal_tests {
 		mytest($transform->[5] == $transform2->[5],
 		       "$transform->[5] != $transform2->[5]",$name,$type,'Get/SetGeoTransform');
 	    }
-	    
+
 	    if ($no_nodatavalue{$driver->{ShortName}}) 
 	    {
 		mytest('skipped',undef,$name,$type,'Get/SetNoDataValue');
 		
 	    } else
 	    {
+		if ($name ne 'GTiff') {
+		    $band->ColorInterpretation('GreenBand');
+		    my $value = $band->ColorInterpretation;
+		    mytest($value eq 'GreenBand',"$value ne GreenBand",$name,$type,'ColorInterpretation');
+		}
+
 		$band->SetNoDataValue(5);
 		my $value = $band->GetNoDataValue;
 		mytest($value == 5,"$value != 5",$name,$type,'Get/SetNoDataValue');
@@ -171,11 +175,12 @@ sub gdal_tests {
 		
 	    } else 
 	    {
-		my $colortable = new Geo::GDAL::ColorTable();
+		#my $colortable = Geo::GDAL::ColorTable->create('RGB');
+		my $colortable = Geo::GDAL::ColorTable->new($Geo::GDAL::Constc::GPI_Gray);
 		my @rgba = (255,0,0,255);
 		$colortable->SetColorEntry(0, \@rgba);
-		$band->SetRasterColorTable($colortable);
-		$colortable = $band->GetRasterColorTable;
+		$band->ColorTable($colortable);
+		$colortable = $band->ColorTable;
 		my @rgba2 = $colortable->GetColorEntry(0);
 		
 		mytest($rgba[0] == $rgba2[0] and
@@ -206,6 +211,7 @@ sub gdal_tests {
 		    $band->WriteRaster( 0, $yoff, $width, 1, $scanline );
 		}
 	    }
+
 	    
 	    if ($no_setgcp{$driver->{ShortName}})
 	    {
