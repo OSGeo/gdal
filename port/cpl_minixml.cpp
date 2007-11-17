@@ -1784,6 +1784,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %.500s to write.", pszFilename );
+        CPLFree( pszDoc );
         return FALSE;
     }
 
