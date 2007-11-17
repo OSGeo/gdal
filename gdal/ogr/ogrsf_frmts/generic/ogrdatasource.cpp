@@ -791,6 +791,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 
     if( pszError != NULL )
     {
+        swq_select_free( psSelectInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SQL: %s", pszError );
         return NULL;
@@ -818,6 +819,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 
     if( pszError != NULL )
     {
+        swq_select_free( psSelectInfo );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "SQL: %s", pszError );
         return NULL;
