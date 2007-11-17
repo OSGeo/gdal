@@ -62,14 +62,10 @@ typedef	struct colorbox {
 	int	total;
 } Colorbox;
 
-static int	num_colors;
-static int	(*histogram)[GMC_B_LEN][GMC_B_LEN];
-static Colorbox *freeboxes;
-static Colorbox *usedboxes;
-
-static	void splitbox(Colorbox*);
-static	void shrinkbox(Colorbox*);
-static	Colorbox* largest_box(void);
+static	void splitbox(Colorbox* ptr, int	(*histogram)[GMC_B_LEN][GMC_B_LEN],
+                      Colorbox **pfreeboxes, Colorbox **pusedboxes);
+static	void shrinkbox(Colorbox* box, int	(*histogram)[GMC_B_LEN][GMC_B_LEN]);
+static	Colorbox* largest_box(Colorbox *usedboxes);
 
 /************************************************************************/
 /*                      GDALComputeMedianCutPCT()                       */
@@ -95,9 +91,6 @@ static	Colorbox* largest_box(void);
  * from the same file, but they must be the same width and height.  They will
  * be clipped to 8bit during reading, so non-eight bit bands are generally
  * inappropriate. 
- *
- * Please note that the current implementation of this function is not 
- * thread-safe.
  *
  * @param hRed Red input band. 
  * @param hGreen Green input band. 
@@ -177,26 +170,27 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    histogram = (int (*)[GMC_B_LEN][GMC_B_LEN]) 
-        CPLCalloc(GMC_B_LEN * GMC_B_LEN * GMC_B_LEN,sizeof(int));
-
 /* ==================================================================== */
 /*      STEP 1: crate empty boxes.                                      */
 /* ==================================================================== */
     int	     i;
     Colorbox *box_list, *ptr;
+    int	(*histogram)[GMC_B_LEN][GMC_B_LEN];
+    Colorbox *freeboxes;
+    Colorbox *usedboxes;
 
-    num_colors = nColors;
+    histogram = (int (*)[GMC_B_LEN][GMC_B_LEN]) 
+        CPLCalloc(GMC_B_LEN * GMC_B_LEN * GMC_B_LEN,sizeof(int));
     usedboxes = NULL;
-    box_list = freeboxes = (Colorbox *)CPLMalloc(num_colors*sizeof (Colorbox));
+    box_list = freeboxes = (Colorbox *)CPLMalloc(nColors*sizeof (Colorbox));
     freeboxes[0].next = &freeboxes[1];
     freeboxes[0].prev = NULL;
-    for (i = 1; i < num_colors-1; ++i) {
+    for (i = 1; i < nColors-1; ++i) {
         freeboxes[i].next = &freeboxes[i+1];
         freeboxes[i].prev = &freeboxes[i-1];
     }
-    freeboxes[num_colors-1].next = NULL;
-    freeboxes[num_colors-1].prev = &freeboxes[num_colors-2];
+    freeboxes[nColors-1].next = NULL;
+    freeboxes[nColors-1].prev = &freeboxes[nColors-2];
 
 /* ==================================================================== */
 /*      Build histogram.                                                */
@@ -219,8 +213,6 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     ptr->rmin = ptr->gmin = ptr->bmin = 999;
     ptr->rmax = ptr->gmax = ptr->bmax = -1;
     ptr->total = nXSize * nYSize;
-
-    memset( histogram, 0, sizeof(int) * GMC_B_LEN * GMC_B_LEN * GMC_B_LEN );
 
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
@@ -287,9 +279,9 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
 /*      boxes remain or until all colors assigned.                      */
 /* ==================================================================== */
     while (freeboxes != NULL) {
-        ptr = largest_box();
+        ptr = largest_box(usedboxes);
         if (ptr != NULL)
-            splitbox(ptr);
+            splitbox(ptr, histogram, &freeboxes, &usedboxes);
         else
             freeboxes = NULL;
     }
@@ -327,10 +319,10 @@ end_and_cleanup:
 /************************************************************************/
 
 static Colorbox *
-largest_box(void)
+largest_box(Colorbox *usedboxes)
 {
-    register Colorbox *p, *b;
-    register int size;
+    Colorbox *p, *b;
+    int size;
 
     b = NULL;
     size = -1;
@@ -345,15 +337,16 @@ largest_box(void)
 /*                              splitbox()                              */
 /************************************************************************/
 static void
-splitbox(Colorbox* ptr)
+splitbox(Colorbox* ptr, int	(*histogram)[GMC_B_LEN][GMC_B_LEN],
+         Colorbox **pfreeboxes, Colorbox **pusedboxes)
 {
     int		hist2[GMC_B_LEN];
     int		first=0, last=0;
-    register Colorbox	*new_cb;
-    register int	*iptr, *histp;
-    register int	i, j;
-    register int	ir,ig,ib;
-    register int sum, sum1, sum2;
+    Colorbox	*new_cb;
+    int	*iptr, *histp;
+    int	i, j;
+    int	ir,ig,ib;
+    int sum, sum1, sum2;
     enum { RED, GREEN, BLUE } axis;
 
     /*
@@ -425,14 +418,14 @@ splitbox(Colorbox* ptr)
         i++;
 
     /* Create new box, re-allocate points */
-    new_cb = freeboxes;
-    freeboxes = new_cb->next;
-    if (freeboxes)
-        freeboxes->prev = NULL;
-    if (usedboxes)
-        usedboxes->prev = new_cb;
-    new_cb->next = usedboxes;
-    usedboxes = new_cb;
+    new_cb = *pfreeboxes;
+    *pfreeboxes = new_cb->next;
+    if (*pfreeboxes)
+        (*pfreeboxes)->prev = NULL;
+    if (*pusedboxes)
+        (*pusedboxes)->prev = new_cb;
+    new_cb->next = *pusedboxes;
+    *pusedboxes = new_cb;
 
     histp = &hist2[first];
     for (sum1 = 0, j = first; j < i; j++)
@@ -462,17 +455,17 @@ splitbox(Colorbox* ptr)
         ptr->bmin = i;
         break;
     }
-    shrinkbox(new_cb);
-    shrinkbox(ptr);
+    shrinkbox(new_cb, histogram);
+    shrinkbox(ptr, histogram);
 }
 
 /************************************************************************/
 /*                             shrinkbox()                              */
 /************************************************************************/
 static void
-shrinkbox(Colorbox* box)
+shrinkbox(Colorbox* box, int	(*histogram)[GMC_B_LEN][GMC_B_LEN])
 {
-    register int *histp, ir, ig, ib;
+    int *histp, ir, ig, ib;
 
     if (box->rmax > box->rmin) {
         for (ir = box->rmin; ir <= box->rmax; ++ir)
