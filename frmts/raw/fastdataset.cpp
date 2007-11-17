@@ -771,26 +771,30 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         // Generate GCPs
         pasGCPList = (GDAL_GCP *) CPLCalloc( sizeof( GDAL_GCP ), 4 );
         GDALInitGCPs( 4, pasGCPList );
+        CPLFree(pasGCPList[0].pszId);
+        CPLFree(pasGCPList[1].pszId);
+        CPLFree(pasGCPList[2].pszId);
+        CPLFree(pasGCPList[3].pszId);
 
-        pasGCPList[0].pszId = (char *)"UPPER_LEFT";
+        pasGCPList[0].pszId = CPLStrdup("UPPER_LEFT");
         pasGCPList[0].dfGCPX = dfULX;
         pasGCPList[0].dfGCPY = dfULY;
         pasGCPList[0].dfGCPZ = 0.0;
         pasGCPList[0].dfGCPPixel = 0.5;
         pasGCPList[0].dfGCPLine = 0.5;
-        pasGCPList[1].pszId = (char *)"UPPER_RIGHT";
+        pasGCPList[1].pszId = CPLStrdup("UPPER_RIGHT");
         pasGCPList[1].dfGCPX = dfURX;
         pasGCPList[1].dfGCPY = dfURY;
         pasGCPList[1].dfGCPZ = 0.0;
         pasGCPList[1].dfGCPPixel = poDS->nRasterXSize-0.5;
         pasGCPList[1].dfGCPLine = 0.5;
-        pasGCPList[2].pszId = (char *)"LOWER_LEFT";
+        pasGCPList[2].pszId = CPLStrdup("LOWER_LEFT");
         pasGCPList[2].dfGCPX = dfLLX;
         pasGCPList[2].dfGCPY = dfLLY;
         pasGCPList[2].dfGCPZ = 0.0;
         pasGCPList[2].dfGCPPixel = 0.5;
         pasGCPList[2].dfGCPLine = poDS->nRasterYSize-0.5;
-        pasGCPList[3].pszId = (char *)"LOWER_RIGHT";
+        pasGCPList[3].pszId = CPLStrdup("LOWER_RIGHT");
         pasGCPList[3].dfGCPX = dfLRX;
         pasGCPList[3].dfGCPY = dfLRY;
         pasGCPList[3].dfGCPZ = 0.0;
@@ -814,6 +818,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->pszProjection = CPLStrdup("");
         }
 
+        GDALDeinitGCPs(4, pasGCPList);
         CPLFree(pasGCPList);
     }
 
