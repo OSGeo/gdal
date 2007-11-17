@@ -704,6 +704,7 @@ swq_subexpr_compile( char **tokens, swq_field_list *field_list,
     else if( tokens[*tokens_consumed] == NULL )
     {
         sprintf( swq_get_errbuf(), "Not enough tokens to complete expression." );
+        swq_expr_free( op );
         return swq_get_errbuf();
     }
     
@@ -2054,6 +2055,8 @@ swq_select_summarize( swq_select *select_info,
                     sizeof(char *) * summary->count );
             summary->distinct_list[(summary->count)++] = 
                 swq_strdup( value );
+
+            SWQ_FREE(old_list);
         }
     }
 
@@ -2206,6 +2209,9 @@ void swq_select_free( swq_select *select_info )
 
     if( select_info == NULL )
         return;
+
+    if( select_info->where_expr != NULL )
+        swq_expr_free(select_info->where_expr);
 
     if( select_info->raw_select != NULL )
         SWQ_FREE( select_info->raw_select );
