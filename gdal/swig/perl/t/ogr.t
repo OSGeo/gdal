@@ -55,6 +55,32 @@ for (@tmp) {
 
 ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
+$src = Geo::OSR::SpatialReference->new();
+$src->ImportFromEPSG(2392);
+$dst = Geo::OSR::SpatialReference->new();
+$dst->ImportFromEPSG(2392);
+
+$t = Geo::OSR::CoordinateTransformation->new($src, $dst);
+
+@points = ([2492055.205, 6830493.772],
+	   [2492065.205, 6830483.772]);
+
+$t->TransformPoints(\@points);
+
+$methods = Geo::OSR::GetProjectionMethods;
+
+for $method (@$methods) {
+    ($params, $name) = Geo::OSR::GetProjectionMethodParameterList($method);
+    ok(ref($params) eq 'ARRAY', "GetProjectionMethodParameterList params");
+    ok($name ne '', "GetProjectionMethodParameterList name");
+    for $parameter (@$params) {
+	($usrname, $type, $defaultval) = Geo::OSR::GetProjectionMethodParamInfo($method, $parameter);
+	ok($usrname ne '', "GetProjectionMethodParamInfo username");
+	ok($type ne '', "GetProjectionMethodParamInfo type");
+	ok($defaultval ne '', "GetProjectionMethodParamInfo defval");
+    }
+}
+
 @tmp = sort keys %available_driver;
 
 if (@fails) {
