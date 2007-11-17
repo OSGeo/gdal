@@ -169,22 +169,15 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
 }
 %typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
-  /* %typemap(in) (double argin[ANY]) */
-  if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
-    croak("argument is not an array ref");
-    SWIG_fail;
-  }
-  $1 = argin;
-  AV *av = (AV*)(SvRV($input));
-  int seq_size = av_len(av)+1;
-  if ( seq_size != $dim0 ) {
-    croak("argument array must have length %d",$dim0);
-    SWIG_fail;
-  }
-  for (unsigned int i=0; i<$dim0; i++) {
-    SV **sv = av_fetch(av, i, 0);
-    $1[i] =  SvNV(*sv);
-  }
+    /* %typemap(in) (double argin[ANY]) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    $1 = argin;
+    AV *av = (AV*)(SvRV($input));
+    for (unsigned int i=0; i<$dim0; i++) {
+	SV **sv = av_fetch(av, i, 0);
+	$1[i] =  SvNV(*sv);
+    }
 }
 
 /*
@@ -192,35 +185,31 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
  */
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
-  /* %typemap(in,numinputs=1) (int nList, int* pList) */
-  if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
-    croak("argument is not an array ref");
-    SWIG_fail;
-  }
-  AV *av = (AV*)(SvRV($input));
-  $1 = av_len(av)-1;
-  $2 = (int*) malloc($1*sizeof(int));
-  for( int i = 0; i<$1; i++ ) {
-    SV **sv = av_fetch(av, i, 0);
-    $2[i] =  SvIV(*sv);
-  }
+    /* %typemap(in,numinputs=1) (int nList, int* pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)-1;
+    $2 = (int*) malloc($1*sizeof(int));
+    for( int i = 0; i<$1; i++ ) {
+	SV **sv = av_fetch(av, i, 0);
+	$2[i] =  SvIV(*sv);
+    }
 }
 %typemap(freearg) (int nList, int* pList)
 {
-  /* %typemap(freearg) (int nList, int* pList) */
-  if ($2) {
-    free((void*) $2);
-  }
+    /* %typemap(freearg) (int nList, int* pList) */
+    if ($2)
+	free((void*) $2);
 }
 %fragment("CreateArrayFromIntegerArray","header") %{
-static SV *
-CreateArrayFromIntegerArray( double *first, unsigned int size ) {
-  AV *av = (AV*)sv_2mortal((SV*)newAV());
-  for( unsigned int i=0; i<size; i++ ) {
-    av_store(av,i,newSViv(*first));
-    ++first;
-  }
-  return newRV_noinc((SV*)av);
+static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
+    AV *av = (AV*)sv_2mortal((SV*)newAV());
+    for( unsigned int i=0; i<size; i++ ) {
+	av_store(av,i,newSViv(*first));
+	++first;
+    }
+    return newRV_noinc((SV*)av);
 }
 %}
 
@@ -252,14 +241,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
-  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-  if (!SvPOK($input)) {
-    croak("buf argument has to be binary data");
-    SWIG_fail;
-  }
-  STRLEN len = SvCUR($input);
-  $2 = SvPV_nolen($input);
-  $1 = len;
+    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    if (!SvPOK($input))
+	SWIG_croak("expected binary data as input");
+    STRLEN len = SvCUR($input);
+    $2 = SvPV_nolen($input);
+    $1 = len;
 }
 
 /*
@@ -292,32 +279,28 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
 {
-  /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
-  if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
-    croak("argument is not an array ref");
-    SWIG_fail;
-  }
-  AV *av = (AV*)(SvRV($input));
-  $1 = av_len(av)+1;
-  tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
-  $2 = tmpGCPList;
-  for( int i = 0; i<$1; i++ ) {
-    SV **sv = av_fetch(av, i, 0);
-    GDAL_GCP *item = 0;
-    SWIG_ConvertPtr( *sv, (void**)&item, SWIGTYPE_p_GDAL_GCP, 0 );
-    if ( ! item ) {
-      SWIG_fail;
+    /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
+    $2 = tmpGCPList;
+    for( int i = 0; i<$1; i++ ) {
+	SV **sv = av_fetch(av, i, 0);
+	GDAL_GCP *item = 0;
+	SWIG_ConvertPtr( *sv, (void**)&item, SWIGTYPE_p_GDAL_GCP, 0 );
+	if (!item )
+	    SWIG_fail;
+	memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
+	++tmpGCPList;
     }
-    memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
-    ++tmpGCPList;
-  }
 }
 %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
-  /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
-  if ($2) {
-    free( (void*) $2 );
-  }
+    /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+    if ($2)
+	free($2);
 }
 
 /*
@@ -326,17 +309,17 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  */
 %typemap(out) GDALColorEntry*
 {
-  /* %typemap(out) GDALColorEntry* */
-  if (result == NULL)
-    croak("GetColorEntry failed at index %i",result);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) result->c1);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) result->c2);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) result->c3);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) result->c4);
+    /* %typemap(out) GDALColorEntry* */
+    if (!result)
+	SWIG_croak("GetColorEntry failed");
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) result->c1);
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) result->c2);
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) result->c3);
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) result->c4);
 }
 %typemap(in,numinputs=0) GDALColorEntry*(GDALColorEntry e)
 {
@@ -345,18 +328,18 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(argout) GDALColorEntry*
 {
-  /* %typemap(argout) GDALColorEntry* */
-  if (result == FALSE)
-    croak("GetColorEntryAsRGB failed at index %i",result);
-  argvi--;
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) e3.c1);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) e3.c2);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) e3.c3);
-  $result = sv_newmortal();
-  sv_setiv(ST(argvi++), (IV) e3.c4);
+    /* %typemap(argout) GDALColorEntry* */
+    if (!result)
+	SWIG_croak("GetColorEntryAsRGB failed");
+    argvi--;
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) e3.c1);
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) e3.c2);
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) e3.c3);
+    $result = sv_newmortal();
+    sv_setiv(ST(argvi++), (IV) e3.c4);
 }
 %typemap(argout) const GDALColorEntry*
 {
@@ -364,26 +347,19 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e)
 {
-  /* %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e) */
-  $1 = &e3;
-  if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
-    croak("argument is not an array ref");
-    SWIG_fail;
-  }
-  AV *av = (AV*)(SvRV($input));
-  int seq_size = av_len(av);
-  if ( seq_size != 3 ) {
-    croak("color entry argument array must have length 4 (it is %i)",seq_size+1);
-    SWIG_fail;
-  }
-  SV **sv = av_fetch(av, 0, 0);
-  $1->c1 =  SvIV(*sv);
-  sv = av_fetch(av, 1, 0);
-  $1->c2 =  SvIV(*sv);
-  sv = av_fetch(av, 2, 0);
-  $1->c3 =  SvIV(*sv);
-  sv = av_fetch(av, 3, 0);
-  $1->c4 =  SvIV(*sv);
+    /* %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e) */
+    $1 = &e3;
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    SV **sv = av_fetch(av, 0, 0);
+    $1->c1 =  SvIV(*sv);
+    sv = av_fetch(av, 1, 0);
+    $1->c2 =  SvIV(*sv);
+    sv = av_fetch(av, 2, 0);
+    $1->c3 =  SvIV(*sv);
+    sv = av_fetch(av, 3, 0);
+    $1->c4 =  SvIV(*sv);
 }
 
 /*
@@ -438,16 +414,14 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  */
 %typemap(in) char **options
 {
-  /* %typemap(in) char **options */
-  if ( ! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)) ) {
-    croak("argument is not an array ref");
-    SWIG_fail;
-  }
-  AV *av = (AV*)(SvRV($input));
-  for (int i = 0; i < av_len(av)-1; i++) {
-    char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
-    $1 = CSLAddString( $1, pszItem );
-  }
+    /* %typemap(in) char **options */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    for (int i = 0; i < av_len(av)-1; i++) {
+	char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+	$1 = CSLAddString( $1, pszItem );
+    }
 }
 %typemap(freearg) char **options
 {
@@ -456,16 +430,18 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(out) char **options
 {
-  /* %typemap(out) char ** -> ( string ) */
-  AV* av = (AV*)sv_2mortal((SV*)newAV());
-  char **stringarray = $1;
-  if ( stringarray != NULL ) {
-    for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
-      av_store(av, i, newSVpv(*stringarray, strlen(*stringarray)));
+    /* %typemap(out) char ** -> ( string ) */
+    AV* av = (AV*)sv_2mortal((SV*)newAV());
+    char **stringarray = $1;
+    if ( stringarray != NULL ) {
+	for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
+	    SV *s = newSVpv(*stringarray, strlen(*stringarray));
+	    if (!av_store(av, i, s))
+		SvREFCNT_dec(s);
+	}
     }
-  }
-  $result = newRV_noinc((SV*)av);
-  argvi++;
+    $result = newRV_noinc((SV*)av);
+    argvi++;
 }
 
 /*
@@ -558,12 +534,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 %import "ogr_error_map.i"
 %typemap(out,fragment="OGRErrMessages") OGRErr
 {
-  /* %typemap(out) OGRErr */
-  if ( result != 0 ) {
-    const char *err = CPLGetLastErrorMsg();
-    if (err and *err) croak(err); /* this is usually better */
-    croak( OGRErrMessages(result) );
-  }
+    /* %typemap(out) OGRErr */
+    if ( result != 0 ) {
+	const char *err = CPLGetLastErrorMsg();
+	if (err and *err) SWIG_croak(err); /* this is usually better */
+	SWIG_croak( OGRErrMessages(result) );
+    }
 }
 
 /*
@@ -581,12 +557,11 @@ static CPLXMLNode *AVToXMLTree( AV *av )
     CPLXMLNode *psThisNode;
     CPLXMLNode *psChild;
     char       *pszText = NULL;
-
+    
     nChildCount = av_len(av) - 1;
     if( nChildCount < 0 )
     {
-        croak("Error in input XMLTree.");
-	return NULL;
+        croak("the input XML is empty");
     }
 
     nType = SvIV(*(av_fetch(av,0,0)));
@@ -605,19 +580,17 @@ static CPLXMLNode *AVToXMLTree( AV *av )
 
 %typemap(in,fragment="AVToXMLTree") (CPLXMLNode* xmlnode )
 {
-  /* %typemap(in) (CPLXMLNode* xmlnode ) */
-  if ( ! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)) ) {
-    croak("argument is not an array ref");
-    SWIG_fail;
-  }
-  AV *av = (AV*)(SvRV($input));
-  $1 = AVToXMLTree( av );
-  if ( !$1 ) SWIG_fail;
+    /* %typemap(in) (CPLXMLNode* xmlnode ) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    $1 = AVToXMLTree( av );
+    if ( !$1 ) SWIG_croak("AVToXMLTree failed");
 }
 %typemap(freearg) (CPLXMLNode *xmlnode)
 {
-  /* %typemap(freearg) (CPLXMLNode *xmlnode) */
-  if ( $1 ) CPLDestroyXMLNode( $1 );
+    /* %typemap(freearg) (CPLXMLNode *xmlnode) */
+    if ( $1 ) CPLDestroyXMLNode( $1 );
 }
 
 %fragment("XMLTreeToAV","header") %{
@@ -665,119 +638,85 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 
 /* non NULL input pointer checks */
 
-%typemap(check) (const char *pszNewDesc)
+%define CHECK_NOT_UNDEF(type, param, msg)
+%typemap(check) (type *param)
 {
-  /* %typemap(check) (const char *pszNewDesc) */
-  if (!$1) {
-    croak("Description must not be undefined");
-    SWIG_fail;  
-  }
+    /* %typemap(check) (type *param) */
+    if (!$1)
+	SWIG_croak("The msg must not be undefined");
+}
+%enddef
+
+CHECK_NOT_UNDEF(char, method, method)
+CHECK_NOT_UNDEF(const char, name, name)
+CHECK_NOT_UNDEF(const char, request, request)
+CHECK_NOT_UNDEF(const char, cap, capability)
+CHECK_NOT_UNDEF(const char, statement, statement)
+CHECK_NOT_UNDEF(const char, pszNewDesc, description)
+CHECK_NOT_UNDEF(OSRCoordinateTransformationShadow, , coordinate transformation)
+CHECK_NOT_UNDEF(OGRGeometryShadow, other, other geometry)
+CHECK_NOT_UNDEF(OGRGeometryShadow, other_disown, other geometry)
+CHECK_NOT_UNDEF(OGRGeometryShadow, geom, geometry)
+CHECK_NOT_UNDEF(OGRFieldDefnShadow, defn, field definition)
+CHECK_NOT_UNDEF(OGRFieldDefnShadow, field_defn, field definition)
+CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
+
+%typemap(in, numinputs=1) (int nCount, double *x, double *y, double *z)
+{
+    /* %typemap(in) (int nCount, double *x, double *y, double *z) */
+    /* $input is a ref to a list of refs to point lists */
+    if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    $2 = (double*) malloc($1*sizeof(double));
+    $3 = (double*) malloc($1*sizeof(double));
+    $4 = (double*) malloc($1*sizeof(double));
+    if (!$2 or !$3 or !$4)
+	SWIG_croak("out of memory");
+    for (int i = 0; i < $1; i++) {
+	SV **sv = av_fetch(av, i, 0); /* ref to one point list */
+	if (!(SvROK(*sv) && (SvTYPE(SvRV(*sv))==SVt_PVAV)))
+	    SWIG_croak("expected a reference to a list of coordinates");
+	AV *ac = (AV*)(SvRV(*sv));
+	int n = av_len(ac)+1;
+	SV **c = av_fetch(ac, 0, 0);
+	$2[i] = SvNV(*c);
+	c = av_fetch(ac, 1, 0);
+	$3[i] = SvNV(*c);
+	if (n < 3) {
+	    $4[i] = 0;
+	} else {
+	    c = av_fetch(ac, 2, 0);
+	    $4[i] = SvNV(*c);
+	}
+    }
 }
 
-%typemap(check) (const char *cap)
+%typemap(argout) (int nCount, double *x, double *y, double *z)
 {
-  /* %typemap(check) (const char *cap) */
-  if (!$1) {
-    croak("Capability must not be undefined");
-    SWIG_fail;  
-  }
+    /* %typemap(argout) (int nCount, double *x, double *y, double *z) */
+    AV *av = (AV*)(SvRV($input));
+    for (int i = 0; i < $1; i++) {
+	SV **sv = av_fetch(av, i, 0);
+	AV *ac = (AV*)(SvRV(*sv));
+	int n = av_len(ac)+1;
+	SV *c = newSVnv($2[i]);
+	if (!av_store(ac, 0, c))
+	    SvREFCNT_dec(c);
+	c = newSVnv($3[i]);
+	if (!av_store(ac, 1, c))
+	    SvREFCNT_dec(c);
+	c = newSVnv($4[i]);
+	if (!av_store(ac, 2, c))
+	    SvREFCNT_dec(c);
+    }
 }
 
-%typemap(check) (const char* statement)
+%typemap(freearg) (int nCount, double *x, double *y, double *z)
 {
-  /* %typemap(check) (const char* statement) */
-  if (!$1) {
-    croak("Statement must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) (OGRFeatureShadow *feature)
-{
-  /* %typemap(check) (OGRFeatureShadow *feature) */
-  if (!$1) {
-    croak("Feature must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) (OGRFieldDefnShadow* field_def)
-{
-  /* %typemap(check) (OGRFieldDefnShadow* field_def) */
-  if (!$1) {
-    croak("FieldDefinition must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) (OGRFieldDefnShadow* defn)
-{
-  /* %typemap(check) (OGRFieldDefnShadow* defn) */
-  if (!$1) {
-    croak("FieldDefinition must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) OGRGeometryShadow* geom
-{
-  /* %typemap(check) OGRGeometryShadow* geom */
-  if (!$1) {
-    croak("The geometry must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) OGRGeometryShadow* other
-{
-  /* %typemap(check) OGRGeometryShadow* other */
-  if (!$1) {
-    croak("The other geometry must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) OGRGeometryShadow* other_disown
-{
-  /* %typemap(check) OGRGeometryShadow* other_disown */
-  if (!$1) {
-    croak("The other geometry must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) OSRCoordinateTransformationShadow*
-{
-  /* %typemap(check) OSRCoordinateTransformationShadow* */
-  if (!$1) {
-    croak("The coordinate transformation must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) (const char *name)
-{
-  /* %typemap(check) (const char *name) */
-  if (!$1) {
-    croak("The name must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) (const char *request)
-{
-  /* %typemap(check) (const char *request) */
-  if (!$1) {
-    croak("The request must not be undefined");
-    SWIG_fail;  
-  }
-}
-
-%typemap(check) (char *method)
-{
-  /* %typemap(check) (char *method) */
-  if (!$1) {
-    croak("The method must not be undefined");
-    SWIG_fail;  
-  }
+    /* %typemap(freearg) (int nCount, double *x, double *y, double *z) */
+    if ($2) free($2);
+    if ($3) free($3);
+    if ($4) free($4);
 }
