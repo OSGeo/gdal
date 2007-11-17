@@ -42,17 +42,19 @@
 }
 %typemap(out) (char **CSL)
 {
-  /* %typemap(out) char **CSL */
-  AV *av = (AV*)sv_2mortal((SV*)newAV());
-  if ($1) {
-    int i;
-    for (i = 0; $1[i]; i++) {
-      av_store(av, i, newSVpv($1[0], 0));
+    /* %typemap(out) char **CSL */
+    AV *av = (AV*)sv_2mortal((SV*)newAV());
+    if ($1) {
+	int i;
+	for (i = 0; $1[i]; i++) {
+	    SV *s = newSVpv($1[i], 0);
+	    if (!av_store(av, i, s))
+		SvREFCNT_dec(s);
+	}
+	CSLDestroy($1);
     }
-    CSLDestroy($1);
-  }
-  $result = newRV_noinc((SV*)av);
-  argvi++;
+    $result = newRV_noinc((SV*)av);
+    argvi++;
 }
 %typemap(out) (char **free)
 {
@@ -458,7 +460,7 @@ static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 /*
  * Typemap for char **argout.
  */
-%typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
+%typemap(in,numinputs=0) (char **argout) (char *argout=0), (char **username) (char *argout=0), (char **usrname) (char *argout=0), (char **type) (char *argout=0)
 {
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
