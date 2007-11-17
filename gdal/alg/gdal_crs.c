@@ -209,6 +209,11 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
         CPLError( CE_Failure, CPLE_AppDefined, CRS_error_message[-nCRSresult]);
         goto CleanupAfterError;
     }
+    CPLFree( padfGeoX );
+    CPLFree( padfGeoY );
+    CPLFree( padfRasterX );
+    CPLFree( padfRasterY );
+    CPLFree( panStatus );
     
     return psInfo;
 
