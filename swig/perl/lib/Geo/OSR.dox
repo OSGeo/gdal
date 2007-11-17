@@ -11,268 +11,271 @@
 ## @ignore this
 
 ## @fn GetWellKnownGeogCSAsWKT($name)
-# @return scalar (WKT string)
+# @param $name a well known name
+# @return a WKT string
 
 ## @fn GetUserInputAsWKT($name)
-# @return scalar (WKT string)
+# @param $name the user input
+# @return a WKT string
 
 ## @fn GetProjectionMethods()
-# @return arrayref
+# @return reference to an array of possible projection methods
 
 ## @fn GetProjectionMethodParameterList($method)
+# @param $method and projection method
 # @return array = (arrayref parameters, $projection_name)
 
 ## @fn GetProjectionMethodParamInfo($method, $parameter)
 # @return array = ($usrname, $type, $defaultval)
 
 ## @attr SRS_PT_ALBERS_CONIC_EQUAL_AREA
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_AZIMUTHAL_EQUIDISTANT
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_CASSINI_SOLDNER
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_CYLINDRICAL_EQUAL_AREA
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_ECKERT_IV
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_ECKERT_VI
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_EQUIDISTANT_CONIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_EQUIRECTANGULAR
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_GALL_STEREOGRAPHIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_GNOMONIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_GOODE_HOMOLOSINE
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_HOTINE_OBLIQUE_MERCATOR
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_LABORDE_OBLIQUE_MERCATOR
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_MERCATOR_1SP
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_MERCATOR_2SP
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_MILLER_CYLINDRICAL
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_MOLLWEIDE
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_NEW_ZEALAND_MAP_GRID
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_OBLIQUE_STEREOGRAPHIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_ORTHOGRAPHIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_POLAR_STEREOGRAPHIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_POLYCONIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_ROBINSON
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_SINUSOIDAL
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_STEREOGRAPHIC
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_SWISS_OBLIQUE_CYLINDRICAL
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TRANSVERSE_MERCATOR
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_22
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_23
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_24
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TRANSVERSE_MERCATOR_MI_25
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_TUNISIA_MINING_GRID
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_VANDERGRINTEN
-# scalar
+# @deprecated
 
 ## @attr SRS_PT_KROVAK
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_CENTRAL_MERIDIAN
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_SCALE_FACTOR
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_STANDARD_PARALLEL_1
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_STANDARD_PARALLEL_2
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_PSEUDO_STD_PARALLEL_1
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LONGITUDE_OF_CENTER
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LATITUDE_OF_CENTER
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LONGITUDE_OF_ORIGIN
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LATITUDE_OF_ORIGIN
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_FALSE_EASTING
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_FALSE_NORTHING
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_AZIMUTH
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LONGITUDE_OF_POINT_1
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LATITUDE_OF_POINT_1
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LONGITUDE_OF_POINT_2
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LATITUDE_OF_POINT_2
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LONGITUDE_OF_POINT_3
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LATITUDE_OF_POINT_3
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_RECTIFIED_GRID_ANGLE
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_LANDSAT_NUMBER
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_PATH_NUMBER
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_PERSPECTIVE_POINT_HEIGHT
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_FIPSZONE
-# scalar
+# @deprecated
 
 ## @attr SRS_PP_ZONE
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_METER
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_FOOT
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_FOOT_CONV
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_US_FOOT
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_US_FOOT_CONV
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_NAUTICAL_MILE
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_NAUTICAL_MILE_CONV
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_LINK
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_LINK_CONV
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_CHAIN
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_CHAIN_CONV
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_ROD
-# scalar
+# @deprecated
 
 ## @attr SRS_UL_ROD_CONV
-# scalar
+# @deprecated
 
 ## @attr SRS_DN_NAD27
-# scalar
+# @deprecated
 
 ## @attr SRS_DN_NAD83
-# scalar
+# @deprecated
 
 ## @attr SRS_DN_WGS72
-# scalar
+# @deprecated
 
 ## @attr SRS_DN_WGS84
-# scalar
+# @deprecated
 
 ## @attr SRS_WGS84_SEMIMAJOR
-# scalar
+# @deprecated
 
 ## @attr SRS_WGS84_INVFLATTENING
-# scalar
+# @deprecated
 
 
 ## @class Geo::OSR::SpatialReference
@@ -283,38 +286,47 @@
 ## @ignore __str__
 
 ## @cmethod new($wkt = undef)
+# @param $wkt well known text
 # @return Geo::OSR::SpatialReference object
 
 ## @method IsSame($rhs)
 # @param $rhs Geo::OSR::SpatialReference object
-# @return scalar (int)
+# @return boolean
 
 ## @method IsSameGeogCS($rhs)
 # @param $rhs Geo::OSR::SpatialReference object
-# @return scalar (int)
+# @return boolean
 
 ## @method IsGeographic()
-# @return scalar (int)
+# @return boolean
 
 ## @method IsProjected()
-# @return scalar (int)
+# @return boolean
 
 ## @method IsLocal()
-# @return scalar (int)
+# @return boolean
 
 ## @method GetAttrValue($name, $child = 0)
+# @param $name
+# @param $child
 # @return string
 
 ## @method SetAttrValue($name, $value)
+# @param $name
+# @param $value
 # @return scalar (OGRErr)
 
 ## @method SetAngularUnits($name, $to_radians)
+# @param $name
+# @param $to_radians
 # @return scalar (OGRErr)
 
 ## @method GetAngularUnits()
 # @return scalar (double)
 
 ## @method SetLinearUnits($name, $to_meters)
+# @param $name
+# @param $to_meters
 # @return scalar (OGRErr)
 
 ## @method GetLinearUnits()
@@ -324,33 +336,50 @@
 # @return string
 
 ## @method GetAuthorityCode($target_key)
+# @param $target_key
 # @return string
 
 ## @method GetAuthorityName($target_key)
+# @param $target_key
 # @return string
 
 ## @method SetUTM($zone, $north = 1)
+# @param $zone
+# @param $north
 # @return scalar (OGRErr)
 
 ## @method SetStatePlane($zone, $is_nad83 = 1, $unitsname = "", $units = 0.0)
+# @param $zone
+# @param $is_nad83
+# @param $unitsname
+# @param $units
 # @return scalar (OGRErr)
 
 ## @method AutoIdentifyEPSG()
 # @return scalar (OGRErr)
 
 ## @method SetProjection($arg)
+# @param $arg
 # @return scalar (OGRErr)
 
 ## @method SetProjParm($name, $val)
+# @param $name
+# @param $val
 # @return scalar (OGRErr)
 
 ## @method GetProjParm($name, $default_val = 0.0)
+# @param $name
+# @param $default_val
 # @return scalar (double)
 
 ## @method SetNormProjParm($name, $val)
+# @param $name
+# @param $val
 # @return scalar (OGRErr)
 
 ## @method GetNormProjParm($name, $default_val = 0.0)
+# @param $name
+# @param $default_val
 # @return scalar (double)
 
 ## @method SetACEA($stdp1, $stdp2, $clat, $clong, $fe, $fn)
@@ -415,12 +444,16 @@
 # @return scalar (OGRErr)
 
 ## @method ImportFromPCI($proj, $units = "METRE", \@argin = undef)
+# @param $proj
+# @param $units
 # @param $argin = array of 17 numbers
 # @return scalar (OGRErr)
 
 ## @method ImportFromUSGS($proj_code, $zone = 0, \@argin[15] = undef,  $datum_code = 0)
 # @param proj_code
+# @param $zone
 # @param $argin = array of 15 numbers
+# @param $datum_code
 # @return scalar (OGRErr)
 
 ## @method ImportFromXML($xml_string)
@@ -534,11 +567,17 @@
 ## @ignore DESTROY
 
 ## @cmethod new($src, $dst)
-# @param $src Geo::OSR::SpatialReference object
-# @param $dst Geo::OSR::SpatialReference object
+# @param src Geo::OSR::SpatialReference object
+# @param dst Geo::OSR::SpatialReference object
 # @return Geo::OSR::CoordinateTransformation object
 
 ## @method TransformPoint($x, $y, $z = 0.0)
+# @param x
+# @param y
+# @param z
 # @return arrayref = [$x, $y, $z]
 
-## @method TransformPoints()
+## @method TransformPoints(\@points)
+# @param points [in/out] a reference to a list of points that is
+# modified in-place. A list of points is: ([x, y, z], [x, y, z], ...),
+# where z is optional.
