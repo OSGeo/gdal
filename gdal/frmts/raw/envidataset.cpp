@@ -213,7 +213,7 @@ class ENVIDataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
     FILE	*fp;		// header file
-    const char	*pszHDRFilename;
+    char	*pszHDRFilename;
 
     int		bFoundMapinfo;
 
@@ -291,6 +291,7 @@ ENVIDataset::~ENVIDataset()
         VSIFCloseL( fpImage );
     if( fp )
         VSIFClose( fp );
+    CPLFree(pszHDRFilename);
     if ( pszProjection )
 	CPLFree( pszProjection );
     if ( papszHeader )
