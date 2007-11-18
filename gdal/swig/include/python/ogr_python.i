@@ -248,6 +248,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRGeometryShadow {
 %pythoncode {
   def Destroy(self):
+    self.__swig_destroy__(self) 
     self.__del__()
     self.thisown = 0
 
