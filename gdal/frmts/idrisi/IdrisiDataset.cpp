@@ -514,22 +514,40 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
         poDS->nBands = 1;
         poDS->SetBand( 1, new IdrisiRasterBand( poDS, 1, GDT_Byte ) );
     }
-    if( EQUAL( pszDataType, rstINTEGER ) )
+    else if( EQUAL( pszDataType, rstINTEGER ) )
     {
         poDS->nBands = 1;
         poDS->SetBand( 1, new IdrisiRasterBand( poDS, 1, GDT_Int16 ) );
     }
-    if( EQUAL( pszDataType, rstREAL ) )
+    else if( EQUAL( pszDataType, rstREAL ) )
     {
         poDS->nBands = 1;
         poDS->SetBand( 1, new IdrisiRasterBand( poDS, 1, GDT_Float32 ) );
     }
-    if( EQUAL( pszDataType, rstRGB24 ) )
+    else if( EQUAL( pszDataType, rstRGB24 ) )
     {
         poDS->nBands = 3;
         poDS->SetBand( 1, new IdrisiRasterBand( poDS, 1, GDT_Byte ) );
         poDS->SetBand( 2, new IdrisiRasterBand( poDS, 2, GDT_Byte ) );
         poDS->SetBand( 3, new IdrisiRasterBand( poDS, 3, GDT_Byte ) );
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unknown data type : %s", pszDataType);
+        delete poDS;
+        return NULL;
+    }
+
+    int i;
+    for(i=0;i<poDS->nBands;i++)
+    {
+        IdrisiRasterBand* band = (IdrisiRasterBand*) poDS->GetRasterBand(i+1);
+        if (band->pabyScanLine == NULL)
+        {
+            delete poDS;
+            return NULL;
+        }
     }
 
     // -------------------------------------------------------------------- 
@@ -1219,7 +1237,13 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
     // -------------------------------------------------------------------- 
 
     nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8 * poDS->nBands;
-    pabyScanLine = ( GByte * ) CPLMalloc( nRecordSize );
+    pabyScanLine = ( GByte * ) VSIMalloc( nRecordSize );
+    if (pabyScanLine == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d)",
+                  poDS->GetRasterXSize());
+    }
 }
 
 /************************************************************************/
@@ -2237,7 +2261,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     //      Transverse Mercator
     //      Gauss-Kruger
     //      Lambert Conformal Conic
-    //      Plate Carrée
+    //      Plate Carrï¿½e
     //      Hammer Aitoff
     //      Lambert North Polar Azimuthal Equal Area
     //      Lambert South Polar Azimuthal Equal Area
@@ -2267,7 +2291,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     {
         oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUALN( pszProjName, "Plate Carrée", 10 ) )
+    else if( EQUALN( pszProjName, "Plate Carrï¿½e", 10 ) )
     {
         oSRS.SetEquirectangular( dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
@@ -2511,7 +2535,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         }
         else if EQUAL( pszProjName, SRS_PT_EQUIRECTANGULAR )
         {
-            pszProjectionOut = CPLStrdup( "Plate Carrée" );
+            pszProjectionOut = CPLStrdup( "Plate Carrï¿½e" );
         }
         else if EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA )
         {   
