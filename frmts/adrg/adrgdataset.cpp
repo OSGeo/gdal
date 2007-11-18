@@ -47,6 +47,8 @@ class ADRGDataset : public GDALPamDataset
     int          ARV;
     int          BRV;
 
+    char**       papszSubDatasets;
+    
     ADRGDataset* poOverviewDS;
     
     /* For creation */
@@ -66,7 +68,11 @@ class ADRGDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * padfGeoTransform );
     virtual CPLErr SetGeoTransform( double * padfGeoTransform );
 
-    static CPLString GetGENFromTHF(const char* fileName);
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+
+    void                AddSubDataset(const char* pszFilename);
+
+    static char** GetGENListFromTHF(const char* fileName);
     static ADRGDataset* GetFromRecord(const char* fileName, DDFRecord * record, int isGIN);
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create(const char* pszFilename, int nXSize, int nYSize,
@@ -511,6 +517,7 @@ ADRGDataset::ADRGDataset()
     fdGEN = NULL;
     fdTHF = NULL;
     TILEINDEX = NULL;
+    papszSubDatasets = NULL;
 }
 
 /************************************************************************/
@@ -523,6 +530,8 @@ ADRGDataset::~ADRGDataset()
     {
         delete poOverviewDS;
     }
+    
+    CSLDestroy(papszSubDatasets);
     
     if (bCreation)
     {
@@ -611,6 +620,37 @@ ADRGDataset::~ADRGDataset()
 }
 
 /************************************************************************/
+/*                           AddSubDataset()                            */
+/************************************************************************/
+
+void ADRGDataset::AddSubDataset( const char* pszFilename)
+{
+    char	szName[80];
+    int		nCount = CSLCount(papszSubDatasets ) / 2;
+
+    sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
+    papszSubDatasets = 
+        CSLSetNameValue( papszSubDatasets, szName, pszFilename);
+
+    sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
+    papszSubDatasets = 
+        CSLSetNameValue( papszSubDatasets, szName, pszFilename);
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **ADRGDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
+        return papszSubDatasets;
+
+    return GDALPamDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
@@ -625,6 +665,9 @@ const char* ADRGDataset::GetProjectionRef()
 
 CPLErr ADRGDataset::GetGeoTransform( double * padfGeoTransform)
 {
+    if (papszSubDatasets != NULL)
+        return CE_Failure;
+
     padfGeoTransform[0] = LSO;
     padfGeoTransform[1] = 360. / ARV;
     padfGeoTransform[2] = 0.0;
@@ -1100,10 +1143,10 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
 }
 
 /************************************************************************/
-/*                          GetGENFromTHF()                             */
+/*                          GetGENListFromTHF()                             */
 /************************************************************************/
 
-CPLString ADRGDataset::GetGENFromTHF(const char* fileName)
+char** ADRGDataset::GetGENListFromTHF(const char* fileName)
 {
     DDFModule module;
     DDFRecord * record;
@@ -1111,10 +1154,12 @@ CPLString ADRGDataset::GetGENFromTHF(const char* fileName)
     DDFFieldDefn *fieldDefn;
     DDFSubfieldDefn* subfieldDefn;
     int i;
+    int nFilenames = 0;
+    char** fileNames = NULL;
 
     if (!module.Open((const char*)fileName, TRUE))
-        return "";
-    
+        return fileNames;
+
     while ((record = module.ReadRecord()) != NULL)
     {
         if (record->GetFieldCount() >= 2)
@@ -1195,12 +1240,17 @@ CPLString ADRGDataset::GetGENFromTHF(const char* fileName)
                     int isNameValid = *ptr == NULL;
                     CSLDestroy(tokens);
                     if (isNameValid)
-                        return GENFileName;
+                    {
+                        fileNames = (char**)CPLRealloc(fileNames, sizeof(char*) * (nFilenames + 2));
+                        fileNames[nFilenames] = CPLStrdup(GENFileName);
+                        fileNames[nFilenames + 1] = NULL;
+                        nFilenames ++;
+                    }
                 }
             }
         }
     }
-    return "";
+    return fileNames;
 }
 
 /************************************************************************/
@@ -1220,7 +1270,26 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if (EQUAL(CPLGetExtension((const char*)fileName), "thf"))
     {
-        fileName = GetGENFromTHF((const char*)fileName);
+        char** fileNames = GetGENListFromTHF((const char*)fileName);
+        if (fileNames == NULL)
+            return NULL;
+        if (fileNames[1] == NULL)
+        {
+            fileName = fileNames[0];
+            CSLDestroy(fileNames);
+        }
+        else
+        {
+            char** ptr = fileNames;
+            ADRGDataset* poDS = new ADRGDataset();
+            while(*ptr)
+            {
+                poDS->AddSubDataset(*ptr);
+                ptr ++;
+            }
+            CSLDestroy(fileNames);
+            return poDS;
+        }
     }
     
     if (!EQUAL(CPLGetExtension((const char*)fileName), "gen"))
@@ -1879,9 +1948,13 @@ void ADRGDataset::WriteTHFFile()
         char tmp[12+1];
 
         int nFields = 0;
-        int sizeOfFields[] = {0, 0, 0, 0, 0};
-        const char* nameOfFields[] = { "001", "VFF", "VFF", "VFF", "VFF" };
-        int pos = BeginLeader(fd, 9, 9, 3, N_ELEMENTS(sizeOfFields));
+        int sizeOfFields[] = {0, 0, 0, 0, 0, 0, 0};
+        
+        /* Debug option to simulate ADRG datasets made of several images */
+        int nTotalFields = (CPLGetConfigOption("ADRG_SIMULATE_MULTI_GEN", NULL) != NULL) ? 7 : 5;
+        
+        const char* nameOfFields[] = { "001", "VFF", "VFF", "VFF", "VFF", "VFF", "VFF" };
+        int pos = BeginLeader(fd, 9, 9, 3, nTotalFields);
 
         /* Field 001 */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "TFN", 3); /* RTY */
@@ -1910,8 +1983,23 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
         nFields++;
-
-        FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields), sizeOfFields, nameOfFields);
+        
+        if (nTotalFields == 7)
+        {
+            /* Field VFF */
+            sprintf(tmp, "%s.GEN", (const char*)baseFileName);
+            sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
+            sizeOfFields[nFields] += WriteFieldTerminator(fd);
+            nFields++;
+    
+            /* Field VFF */
+            sprintf(tmp, "%s.IMG", (const char*)baseFileName);
+            sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
+            sizeOfFields[nFields] += WriteFieldTerminator(fd);
+            nFields++;
+        }
+        
+        FinishWriteLeader(fd, pos, 9, 9, 3, nTotalFields, sizeOfFields, nameOfFields);
     }
 }
 

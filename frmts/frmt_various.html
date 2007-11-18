@@ -41,7 +41,9 @@ considered as experimental and a means of testing read access (although files cr
 by the driver can be read successfully on another GIS software)</p>
 <p>An ADRG dataset is made of several files. The file recognised by GDAL is the
 General Information File (.GEN). GDAL will also need the image file (.IMG),
-where the actual data is. The Transmission Header File (.THF) can also be used as an input to GDAL.</p>
+where the actual data is. </p>
+<p>The Transmission Header File (.THF) can also be used as an input to GDAL. If the THF references more than one image,
+GDAL will report the images it is composed of as subdatasets. If the THF references just one image, GDAL will open it directly.</p>
 <p>Overviews, legends and insets are not used. Polar zones (ARC zone 9 and 18) are not supported (due to the lack of test data).</p>
 <p>This is an alternative to using the <a href="frmt_ogdi.html">OGDI Bridge</a> for ADRG datasets.</p>
 
