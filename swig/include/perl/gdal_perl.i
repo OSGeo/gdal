@@ -235,6 +235,40 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $self = shift;
 	delete $Geo::GDAL::Dataset::BANDS{$self};
     }
+    sub ReadTile {
+	my($self, $xoff, $yoff, $xsize, $ysize) = @_;
+	$xoff = 0 unless defined $xoff;
+	$yoff = 0 unless defined $yoff;
+	$xsize = $self->{XSize} - $xoff unless defined $xsize;
+	$ysize = $self->{YSize} - $yoff unless defined $ysize;
+	my $buf = $self->ReadRaster($xoff, $yoff, $xsize, $ysize);
+	my $pc = Geo::GDAL::PackCharacter($self->{DataType});
+	my $w = $xsize * Geo::GDAL::GetDataTypeSize($self->{DataType})/8;
+	my $offset = 0;
+	my @data;
+	for (0..$ysize-1) {
+	    my $sub = substr($buf, $offset, $w);
+	    my @d = unpack($pc."[$xsize]", $sub);
+	    push @data, \@d;
+	    $offset += $w;
+	}
+	return \@data;
+    }
+    sub WriteTile {
+	my($self, $data, $xoff, $yoff) = @_;
+	$xoff = 0 unless defined $xoff;
+	$yoff = 0 unless defined $yoff;
+	my $xsize = @{$data->[0]};
+	$xsize = $self->{XSize} - $xoff if $xsize > $self->{XSize} - $xoff;
+	my $ysize = @{$data};
+	$ysize = $self->{YSize} - $yoff if $ysize > $self->{YSize} - $yoff;
+	my $pc = Geo::GDAL::PackCharacter($self->{DataType});
+	my $w = $xsize * Geo::GDAL::GetDataTypeSize($self->{DataType})/8;
+	for my $i (0..$ysize-1) {
+	    my $scanline = pack($pc."[$xsize]", @{$data->[$i]});
+	    $self->WriteRaster( $xoff, $yoff+$i, $xsize, 1, $scanline );
+	}
+    }
     sub ColorInterpretation {
 	my($self, $ci) = @_;
 	if ($ci) {
