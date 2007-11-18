@@ -829,12 +829,15 @@ public:
 %extend {
   
   ~OGRFeatureDefnShadow() {
-    OGR_FD_Destroy(self);
+    /*OGR_FD_Destroy(self);*/
+    OGR_FD_Release( OGRFeatureDefnH(self) );
   }
 
   %feature("kwargs") OGRFeatureDefnShadow;
   OGRFeatureDefnShadow(const char* name_null_ok=NULL) {
-    return (OGRFeatureDefnShadow* )OGR_FD_Create(name_null_ok);
+    OGRFeatureDefnH h = OGR_FD_Create(name_null_ok);
+    OGR_FD_Reference(h);
+    return (OGRFeatureDefnShadow* )h;
   }
   
   const char* GetName(){
