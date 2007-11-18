@@ -26,7 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
+#ifdef MSVC_USE_VLD
+#include <vld.h>
+#endif
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"

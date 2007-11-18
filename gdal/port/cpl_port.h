@@ -80,6 +80,9 @@
 #  ifndef _CRT_NONSTDC_NO_DEPRECATE
 #    define _CRT_NONSTDC_NO_DEPRECATE
 #  endif
+#  ifdef MSVC_USE_VLD
+#    include <vld.h>
+#  endif
 #endif
 
 
