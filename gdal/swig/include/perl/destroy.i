@@ -15,6 +15,7 @@ sub DESTROY {
         Geo::modulec::delete_class($self);
         delete $OWNER{$self};
     }
+    $self->RELEASE_PARENTS();
 }
 %}
 %enddef
