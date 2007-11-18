@@ -10,23 +10,23 @@
 ## @ignore STORE
 ## @ignore this
 
-## @fn GetWellKnownGeogCSAsWKT($name)
-# @param $name a well known name
+## @fn $GetWellKnownGeogCSAsWKT($name)
+# @param name a well known name
 # @return a WKT string
 
-## @fn GetUserInputAsWKT($name)
-# @param $name the user input
+## @fn $GetUserInputAsWKT($name)
+# @param name the user input
 # @return a WKT string
 
-## @fn GetProjectionMethods()
+## @fn \@GetProjectionMethods()
 # @return reference to an array of possible projection methods
 
-## @fn GetProjectionMethodParameterList($method)
-# @param $method and projection method
-# @return array = (arrayref parameters, $projection_name)
+## @fn @GetProjectionMethodParameterList($method)
+# @param method and projection method
+# @return (arrayref parameters, $projection_name)
 
-## @fn GetProjectionMethodParamInfo($method, $parameter)
-# @return array = ($usrname, $type, $defaultval)
+## @fn @GetProjectionMethodParamInfo($method, $parameter)
+# @return ($user_friendly_name, $type, $defaultval)
 
 ## @attr SRS_PT_ALBERS_CONIC_EQUAL_AREA
 # @deprecated
@@ -285,218 +285,181 @@
 ## @ignore DESTROY
 ## @ignore __str__
 
-## @cmethod new($wkt = undef)
-# @param $wkt well known text
-# @return Geo::OSR::SpatialReference object
+## @cmethod $new($wkt = undef)
+# @param wkt well known text
+# @return a new Geo::OSR::SpatialReference object
 
-## @method IsSame($rhs)
-# @param $rhs Geo::OSR::SpatialReference object
+## @method $IsSame($rhs)
+# @param rhs a Geo::OSR::SpatialReference object
 # @return boolean
 
-## @method IsSameGeogCS($rhs)
-# @param $rhs Geo::OSR::SpatialReference object
+## @method $IsSameGeogCS($rhs)
+# @param rhs a Geo::OSR::SpatialReference object
 # @return boolean
 
-## @method IsGeographic()
+## @method $IsGeographic()
 # @return boolean
 
-## @method IsProjected()
+## @method $IsProjected()
 # @return boolean
 
-## @method IsLocal()
+## @method $IsLocal()
 # @return boolean
 
-## @method GetAttrValue($name, $child = 0)
-# @param $name
-# @param $child
+## @method $GetAttrValue($name, $child = 0)
+# @param name
+# @param child
 # @return string
 
 ## @method SetAttrValue($name, $value)
-# @param $name
-# @param $value
-# @return scalar (OGRErr)
+# @param name
+# @param value
 
 ## @method SetAngularUnits($name, $to_radians)
-# @param $name
-# @param $to_radians
-# @return scalar (OGRErr)
+# @param name
+# @param to_radians
 
-## @method GetAngularUnits()
-# @return scalar (double)
+## @method $GetAngularUnits()
+# @return a number
 
 ## @method SetLinearUnits($name, $to_meters)
-# @param $name
-# @param $to_meters
-# @return scalar (OGRErr)
+# @param name
+# @param to_meters
 
-## @method GetLinearUnits()
-# @return scalar (double)
+## @method $GetLinearUnits()
+# @return a number
 
-## @method GetLinearUnitsName()
+## @method $GetLinearUnitsName()
 # @return string
 
-## @method GetAuthorityCode($target_key)
-# @param $target_key
+## @method $GetAuthorityCode($target_key)
+# @param target_key
 # @return string
 
-## @method GetAuthorityName($target_key)
-# @param $target_key
+## @method $GetAuthorityName($target_key)
+# @param target_key
 # @return string
 
 ## @method SetUTM($zone, $north = 1)
-# @param $zone
-# @param $north
-# @return scalar (OGRErr)
+# @param zone
+# @param north
 
 ## @method SetStatePlane($zone, $is_nad83 = 1, $unitsname = "", $units = 0.0)
-# @param $zone
-# @param $is_nad83
-# @param $unitsname
-# @param $units
-# @return scalar (OGRErr)
+# @param zone
+# @param is_nad83
+# @param unitsname
+# @param units
 
 ## @method AutoIdentifyEPSG()
-# @return scalar (OGRErr)
 
 ## @method SetProjection($arg)
-# @param $arg
-# @return scalar (OGRErr)
+# @param arg
 
 ## @method SetProjParm($name, $val)
-# @param $name
-# @param $val
-# @return scalar (OGRErr)
+# @param name
+# @param val
 
-## @method GetProjParm($name, $default_val = 0.0)
-# @param $name
-# @param $default_val
-# @return scalar (double)
+## @method $GetProjParm($name, $default_val = 0.0)
+# @param name
+# @param default_val
+# @return a number
 
 ## @method SetNormProjParm($name, $val)
-# @param $name
-# @param $val
-# @return scalar (OGRErr)
+# @param name
+# @param val
 
-## @method GetNormProjParm($name, $default_val = 0.0)
-# @param $name
-# @param $default_val
-# @return scalar (double)
+## @method $GetNormProjParm($name, $default_val = 0.0)
+# @param name
+# @param default_val
+# @return a number
 
 ## @method SetACEA($stdp1, $stdp2, $clat, $clong, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetAE($clat, $clon, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetCS($clat, $clon, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetBonne($clat, $clon, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetEC($stdp1, $stdp2, $clat, $clong, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetEckertIV($cm, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetEckertVI($cm, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetEquirectangular($clat, $clong, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetGS($cm, $fe, $fn)
-# @return scalar (OGRErr)
 
 ## @method SetWellKnownGeogCS($name)
-# @return scalar (OGRErr)
 
 ## @method SetFromUserInput($name)
-# @return scalar (OGRErr)
 
 ## @method CopyGeogCSFrom($rhs)
-# @param $rhs Geo::OSR::SpatialReference
-# @return scalar (OGRErr)
+# @param rhs Geo::OSR::SpatialReference
 
 ## @method SetTOWGS84($p1, $p2, $p3, $p4 = 0.0, $p5 = 0.0, $p6 = 0.0, $p7 = 0.0)
-# @return scalar (OGRErr)
 
 ## @method GetTOWGS84()
 # @return array = ($p1, $p2, $p3, $p4, $p5, $p6, $p7)
 
 ## @method SetGeogCS($GeogName, $DatumName, $EllipsoidName, $SemiMajor, $InvFlattening, $PMName = "Greenwich", $PMOffset = 0.0, $Units = "degree", $ConvertToRadians =  0.0174532925199433)
-# @return scalar (OGRErr)
 
 ## @method SetProjCS($name = "unnamed")
-# @return scalar (OGRErr)
 
 ## @method ImportFromWkt($wkt)
-# @return scalar (OGRErr)
 
 ## @method ImportFromProj4($proj4)
-# @return scalar (OGRErr)
 
 ## @method ImportFromESRI($esri)
-# @return scalar (OGRErr)
 
 ## @method ImportFromEPSG($epsg_number)
-# @return scalar (OGRErr)
 
 ## @method ImportFromPCI($proj, $units = "METRE", \@argin = undef)
-# @param $proj
-# @param $units
-# @param $argin = array of 17 numbers
-# @return scalar (OGRErr)
+# @param proj
+# @param units
+# @param argin = array of 17 numbers
 
 ## @method ImportFromUSGS($proj_code, $zone = 0, \@argin[15] = undef,  $datum_code = 0)
 # @param proj_code
-# @param $zone
-# @param $argin = array of 15 numbers
-# @param $datum_code
-# @return scalar (OGRErr)
+# @param zone
+# @param argin = array of 15 numbers
+# @param datum_code
 
 ## @method ImportFromXML($xml_string)
-# @return scalar (OGRErr)
 
-## @method ExportToWkt()
-# @return $wkt_string
+## @method $ExportToWkt()
+# @return WKT string
 
-## @method ExportToPrettyWkt($simplify = 0)
-# @return $wkt_string
+## @method $ExportToPrettyWkt($simplify = 0)
+# @return WKT string
 
-## @method ExportToProj4()
-# @return $proj4_string
+## @method $ExportToProj4()
+# @return proj4 string
 
-## @method ExportToPCI()
-# @return array = ($proj_string, $units, [$parms1, ...])
+## @method @ExportToPCI()
+# @return ($proj_string, $units, [$parms1, ...])
 
-## @method ExportToUSGS()
-# @return array = ($code, $zone, [$parms1, ...], $datum)
+## @method @ExportToUSGS()
+# @return ($code, $zone, [$parms1, ...], $datum)
 
-## @method ExportToXML($dialect = "")
-# @return $xml
+## @method $ExportToXML($dialect = "")
+# @return XML string
 
 ## @method CloneGeogCS()
-# @return Geo::OSR::SpatialReference object
+# @return a new Geo::OSR::SpatialReference object
 
 ## @method Validate()
-# @return scalar (OGRErr)
 
 ## @method StripCTParms()
-# @return scalar (OGRErr)
 
 ## @method FixupOrdering()
-# @return scalar (OGRErr)
 
 ## @method Fixup()
-# @return scalar (OGRErr)
 
 ## @method MorphToESRI()
-# @return scalar (OGRErr)
 
 ## @method MorphFromESRI()
-# @return scalar (OGRErr)
 
 ## @method ImportFromUrl()
 
@@ -566,12 +529,12 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($src, $dst)
-# @param src Geo::OSR::SpatialReference object
-# @param dst Geo::OSR::SpatialReference object
-# @return Geo::OSR::CoordinateTransformation object
+## @cmethod $new($src, $dst)
+# @param src a Geo::OSR::SpatialReference object
+# @param dst a Geo::OSR::SpatialReference object
+# @return a new Geo::OSR::CoordinateTransformation object
 
-## @method TransformPoint($x, $y, $z = 0.0)
+## @method \@TransformPoint($x, $y, $z = 0.0)
 # @param x
 # @param y
 # @param z
