@@ -318,9 +318,20 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /* -------------------------------------------------------------------- */
     if( pabyCompressedLine == NULL )
     {
-        pabyCompressedLine = (GByte *) CPLMalloc(nRasterXSize * 10);
+        pabyCompressedLine = (GByte *) VSIMalloc(nRasterXSize * 10);
 
-        padfMatrix = (double *) CPLMalloc(sizeof(double) * nRasterXSize*10);
+        padfMatrix = (double *) VSIMalloc(sizeof(double) * nRasterXSize*10);
+        if (pabyCompressedLine == NULL ||
+            padfMatrix == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "AirSARDataset::LoadLine : Out of memory. "
+                     "Probably due to corrupted dataset (nRasterXSize = %d)",
+                     nRasterXSize);
+            CPLFree (pabyCompressedLine);
+            CPLFree (padfMatrix);
+            return CE_Failure;
+        }
     }
 
     CPLAssert( nRecordLength == nRasterXSize * 10 );
