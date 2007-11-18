@@ -466,10 +466,10 @@ Usage:
 
 \verbatim
 gdalwarp 
-    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
+    [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
     [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
+    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile* dstfile
 \endverbatim
@@ -536,6 +536,8 @@ than one value is supplied all values should be quoted to keep them together
 as a single operating system argument.  New files will be initialized to this
 value and if possible the nodata value will be recorded in the output
 file.</dd>
+<dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify 
+nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
 megabytes) that the warp API is allowed to use for caching.</dd>
 <dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
