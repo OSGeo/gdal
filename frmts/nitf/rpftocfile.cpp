@@ -317,7 +317,14 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         CPL_MSBPTR32( &toc->entries[i].nHorizFrames );
         
         toc->entries[i].frameEntries = (RPFTocFrameEntry*)
-                CPLMalloc(toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
+                VSIMalloc(toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
+        if (toc->entries[i].frameEntries == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "RPFTOCReadFromBuffer : Out of memory. Probably due to corrupted TOC file.");
+            RPFTOCFree(toc);
+            return NULL;
+        }
         memset(toc->entries[i].frameEntries, 0,
                toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
         
@@ -485,6 +492,16 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
 
         VSIFReadL( &pathLength, 1, sizeof(pathLength), fp);
         CPL_MSBPTR16( &pathLength );
+        
+        /* if nFrameFileIndexRecords == 65535 and pathLength == 65535 for each record,
+           this leads to 4 GB allocation... Protect against this case */
+        if (pathLength > 256)
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "Path length is big : %d. Probably corrupted TOC file.", (int)pathLength);
+            RPFTOCFree(toc);
+            return NULL;
+        }
         
         frameEntry->directory = (char *)CPLMalloc(pathLength+1);
         VSIFReadL( frameEntry->directory, 1, pathLength, fp);
