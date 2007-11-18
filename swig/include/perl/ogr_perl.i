@@ -102,24 +102,108 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     
 }
 
+%rename (_GetLayerByIndex) GetLayerByIndex;
+%rename (_GetLayerByName) GetLayerByName;
 %rename (_CreateLayer) CreateLayer;
 %rename (_GetFieldType) GetFieldType;
 %rename (_ExportToWkb) ExportToWkb;
+%rename (_GetDriver) GetDriver;
 
 %perlcode %{
     use Carp;
     {
+	package Geo::OGR::Driver;
+	use vars qw /@CAPABILITIES/;
+	for my $s (qw/CreateDataSource DeleteDataSource/) {
+	    my $cap = eval "\$Geo::OGR::ODrC$s";
+	    push @CAPABILITIES, $cap;
+	}
+	sub Capabilities {
+	    return @CAPABILITIES if @_ == 0;
+	    my $self = shift;
+	    my @cap;
+	    for my $cap (@CAPABILITIES) {
+		push @cap, $cap if TestCapability($self, $cap);
+	    }
+	    return @cap;
+	}
 	package Geo::OGR::DataSource;
+	use vars qw /@CAPABILITIES %LAYERS/;
+	for my $s (qw/CreateLayer DeleteLayer/) {
+	    my $cap = eval "\$Geo::OGR::ODsC$s";
+	    push @CAPABILITIES, $cap;
+	}
+	sub Capabilities {
+	    return @CAPABILITIES if @_ == 0;
+	    my $self = shift;
+	    my @cap;
+	    for my $cap (@CAPABILITIES) {
+		push @cap, $cap if TestCapability($self, $cap);
+	    }
+	    return @cap;
+	}
+	sub Open {
+	    return Geo::OGR::Open(@_);
+	}
+	sub OpenShared {
+	    return Geo::OGR::OpenShared(@_);
+	}
+	sub GetLayerByIndex {
+	    my($self, $index) = @_;
+	    $index = 0 unless defined $index;
+	    my $layer = _GetLayerByIndex($self, $index);
+	    $LAYERS{tied(%$layer)} = $self;
+	    return $layer;
+	}
+	sub GetLayerByName {
+	    my($self, $name) = @_;
+	    my $layer = _GetLayerByName($self, $name);
+	    $LAYERS{tied(%$layer)} = $self;
+	    return $layer;
+	}
 	sub CreateLayer {
 	    my @p = @_;
 	    $p[3] = $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]} if 
 		$p[3] and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]};
-	    return _CreateLayer(@p);
+	    my $layer = _CreateLayer(@p);
+	    $LAYERS{tied(%$layer)} = $p[0];
+	    return $layer;
 	}
-	package Geo::OGR::Feature;
-	sub GetFieldType {
-	    my($self, $field) = @_;
-	    return $Geo::OGR::Geometry::TYPE_INT2STRING{_GetFieldType($self, $field)};
+	package Geo::OGR::Layer;
+	use vars qw /@CAPABILITIES/;
+	for my $s (qw/RandomRead SequentialWrite RandomWrite 
+		   FastSpatialFilter FastFeatureCount FastGetExtent 
+		   CreateField Transactions DeleteFeature FastSetNextByIndex/) {
+	    my $cap = eval "\$Geo::OGR::OLC$s";
+	    push @CAPABILITIES, $cap;
+	}
+	sub DESTROY {
+	    my $self;
+	    if ($_[0]->isa('SCALAR')) {
+		$self = $_[0];
+	    } else {
+		return unless $_[0]->isa('HASH');
+		$self = tied(%{$_[0]});
+		return unless defined $self;
+	    }
+	    delete $ITERATORS{$self};
+	    if (exists $OWNER{$self}) {
+		delete $OWNER{$self};
+	    }
+	    $self->RELEASE_PARENTS();
+	}
+	sub RELEASE_PARENTS {
+	    my $self = shift;
+	    delete $Geo::OGR::DataSource::LAYERS{$self};
+	}
+	sub Capabilities {
+	    return @CAPABILITIES if @_ == 0;
+	    my $self = shift;
+	    my @cap;
+	    for my $cap (@CAPABILITIES) {
+		push @cap, $cap if TestCapability($self, $cap);
+	    }
+	    return @cap;
 	}
 	package Geo::OGR::FeatureDefn;
 	sub GeomType {
@@ -131,6 +215,18 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    } else {
 		return GetGeomType($self);
 	    }
+	}
+	package Geo::OGR::Feature;
+	use vars qw /%GEOMETRIES/;
+	sub GetFieldType {
+	    my($self, $field) = @_;
+	    return $Geo::OGR::Geometry::TYPE_INT2STRING{_GetFieldType($self, $field)};
+	}
+	sub GetGeometry {
+	    my $self = shift;
+	    my $geom =GetGeometryRef($self);
+	    $GEOMETRIES{tied(%$geom)} = $self;
+	    return $geom;
 	}
 	package Geo::OGR::FieldDefn;
 	use vars qw /
@@ -206,6 +302,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $BYTE_ORDER_STRING2INT{$string} = $int;
 	    $BYTE_ORDER_INT2STRING{$int} = $string;
 	}
+	sub RELEASE_PARENTS {
+	    my $self = shift;
+	    delete $Geo::OGR::Feature::GEOMETRIES{$self};
+	}
 	sub create { # alternative constructor since swig created new can't be overridden(?)
 	    my $pkg = shift;
 	    my($type, $wkt, $wkb, $gml);
@@ -256,7 +356,14 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
 	}
     }
+    sub RELEASE_PARENTS {
+    }
     sub GeometryTypes {
 	return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
+    }
+    sub GetDriver {
+	my($name_or_number) = @_;
+	return _GetDriver($name_or_number) if $name_or_number =~ /^\d/;
+	return GetDriverByName($name_or_number);
     }
 %}
