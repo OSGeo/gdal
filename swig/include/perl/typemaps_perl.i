@@ -191,7 +191,7 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
 	SWIG_croak("expected a reference to an array");
     AV *av = (AV*)(SvRV($input));
-    $1 = av_len(av)-1;
+    $1 = av_len(av)+1;
     $2 = (int*) malloc($1*sizeof(int));
     for( int i = 0; i<$1; i++ ) {
 	SV **sv = av_fetch(av, i, 0);
@@ -420,7 +420,7 @@ static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
 	SWIG_croak("expected a reference to an array");
     AV *av = (AV*)(SvRV($input));
-    for (int i = 0; i < av_len(av)-1; i++) {
+    for (int i = 0; i < av_len(av)+1; i++) {
 	char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
 	$1 = CSLAddString( $1, pszItem );
     }
@@ -432,7 +432,7 @@ static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(out) char **options
 {
-    /* %typemap(out) char ** -> ( string ) */
+    /* %typemap(out) char **options -> ( string ) */
     AV* av = (AV*)sv_2mortal((SV*)newAV());
     char **stringarray = $1;
     if ( stringarray != NULL ) {
@@ -553,26 +553,25 @@ static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 /*                          AVToXMLTree()                               */
 /************************************************************************/
 static CPLXMLNode *AVToXMLTree( AV *av )
-
 {
     int      nChildCount = 0, iChild, nType;
     CPLXMLNode *psThisNode;
-    CPLXMLNode *psChild;
     char       *pszText = NULL;
     
-    nChildCount = av_len(av) - 1;
-    if( nChildCount < 0 )
-    {
+    nChildCount = av_len(av) - 1; /* there are two non-childs in the array */
+    if (nChildCount < 0)
         croak("the input XML is empty");
-    }
 
     nType = SvIV(*(av_fetch(av,0,0)));
     pszText = SvPV_nolen(*(av_fetch(av,1,0)));
     psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
-
+    
     for( iChild = 0; iChild < nChildCount; iChild++ )
     {
-        psChild = AVToXMLTree( (AV *)(*(av_fetch(av,iChild+2,0))) );
+	SV **s = av_fetch(av, iChild+2, 0);
+	if (!(SvROK(*s) && (SvTYPE(SvRV(*s))==SVt_PVAV)))
+	    croak("expected a reference to an array");
+        CPLXMLNode *psChild = AVToXMLTree((AV*)SvRV(*s));
         CPLAddXMLChild( psThisNode, psChild );
     }
 
@@ -619,7 +618,9 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
          psChild != NULL; 
          psChild = psChild->psNext, iChild++ )
     {
-        av_store(av, iChild, newRV_noinc((SV*)(XMLTreeToAV( psChild ))) );
+	SV *s = newRV_inc((SV*)XMLTreeToAV(psChild));
+	if (!av_store(av, iChild, s))
+	    SvREFCNT_dec(s);
     }
 
     return av;
