@@ -44,7 +44,50 @@ my %no_setgcp = map {$_=>1} ('HFA','ELAS','MEM','BMP','PCIDSK','ILWIS','PNM','EN
 
 my %no_open = map {$_=>1} ('VRT','MEM','ILWIS','MFF2');
 
+if (0) {
+    {
+	my $ds = Geo::GDAL::Dataset::Open('/data/Corine/lceugr100_00/lceugr100_00_pct.tif');
+	$b = $ds->GetRasterBand(1);
+    }
+    $b->GetDefaultRAT();
+    exit;
+}
+
+{
+    my $driver = Geo::GDAL::GetDriverByName('MEM');
+    my $dataset = $driver->Create('tmp', 10, 10, 1 , 'Int32', []);
+    my $band = $dataset->GetRasterBand(1);
+    my @data;
+    for my $yoff (0..9) {
+	push @data, [$yoff..9+$yoff];
+    }
+    $band->WriteTile(\@data);
+    for my $yoff (4..6) {
+	for my $xoff (3..4) {
+	    $data[$yoff][$xoff] = 0;
+	}
+    }
+    my $data = $band->ReadTile(3,4,2,3);
+    for my $y (@$data) {
+	for (@$y) {
+	    $_ = 0;
+	}
+    }
+    $band->WriteTile($data,3,4);
+    $data = $band->ReadTile();
+    ok(is_deeply(\@data,$data), "write/read tile");
+}
+
 gdal_tests(Geo::GDAL::GetDriverCount());
+
+$src = Geo::OSR::SpatialReference->new();
+$src->ImportFromEPSG(2392);
+
+$xml = $src->ExportToXML();
+$a = Geo::GDAL::ParseXMLString($xml);
+$xml = Geo::GDAL::SerializeXMLTree($a);
+$b = Geo::GDAL::ParseXMLString($xml);
+ok(is_deeply($a, $b), "xml parsing");
 
 my @tmp = sort keys %available_driver;
 
