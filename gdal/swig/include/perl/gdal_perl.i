@@ -43,7 +43,7 @@
 
 %import destroy.i
 
-ALTERED_DESTROY(GDALBandShadow, GDALc, delete_Band)
+/*ALTERED_DESTROY(GDALRasterBandShadow, GDALc, delete_Band) !does not work! */
 ALTERED_DESTROY(GDALColorTableShadow, GDALc, delete_ColorTable)
 ALTERED_DESTROY(GDALConstShadow, GDALc, delete_Const)
 ALTERED_DESTROY(GDALDatasetShadow, GDALc, delete_Dataset)
@@ -54,6 +54,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
 %rename (_GetDataTypeSize) GetDataTypeSize;
 %rename (_DataTypeIsComplex) DataTypeIsComplex;
+
+%rename (_GetDriver) GetDriver;
 
 %rename (_Open) Open;
 %newobject _Open;
@@ -70,7 +72,12 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_Create) Create;
 %newobject _Create;
 
+%rename (_GetRasterBand) GetRasterBand;
 %rename (_AddBand) AddBand;
+
+%rename (_GetPaletteInterpretation) GetPaletteInterpretation;
+
+%rename (_SetColorEntry) SetColorEntry;
 
 %perlcode %{
     use Carp;
@@ -82,6 +89,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	%TYPE_STRING2INT %TYPE_INT2STRING
 	%ACCESS_STRING2INT %ACCESS_INT2STRING
 	%RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
+	%NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
 	/;
     for my $string (qw/Unknown Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64/) {
 	my $int = eval "\$Geo::GDAL::Constc::GDT_$string";
@@ -97,6 +105,21 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $int = eval "\$Geo::GDAL::Constc::GRA_$string";
 	$RESAMPLING_STRING2INT{$string} = $int;
 	$RESAMPLING_INT2STRING{$int} = $string;
+    }
+    {
+	my $int = 0;
+	for my $string (qw/Element Text Attribute Comment Literal/) {
+	    $NODE_TYPE_STRING2INT{$string} = $int;
+	    $NODE_TYPE_INT2STRING{$int} = $string;
+	    $int++;
+	}
+    }
+    sub RELEASE_PARENTS {
+    }
+    sub NodeType {
+	my $type = shift;
+	return $NODE_TYPE_INT2STRING{$type} if $type =~ /^\d/;
+	return $NODE_TYPE_STRING2INT{$type};
     }
     sub GetDataTypeSize {
 	my $t = shift;
@@ -121,6 +144,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return 'd' if $t =~ /^Float64$/;
 	croak "unsupported data type: $t";
     }
+    sub GetDriver {
+	my $driver = shift;
+	return _GetDriver($driver) if $driver =~ /^\d/;
+	return GetDriverByName($driver);
+    }
     sub Open {
 	my @p = @_;
 	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
@@ -141,11 +169,37 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$p[3] = $RESAMPLING_STRING2INT{$p[3]} if $p[3] and exists $RESAMPLING_STRING2INT{$p[3]};
 	return _AutoCreateWarpedVRT(@p);
     }
+    package Geo::GDAL::MajorObject;
+    sub Description {
+	my($self, $desc) = @_;
+	defined $desc ? SetDescription($self, $desc) : GetDescription($self);
+    }
+    sub Metadata {
+	my $self = shift;
+	my $metadata = shift if ref $_[0];
+	my $domain = shift;
+	$domain = '' unless defined $domain;
+	defined $metadata ? SetMetadata($self, $metadata, $domain) : GetMetadata($self, $domain);
+    }
     package Geo::GDAL::Driver;
     sub Create {
 	my @p = @_;
 	$p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]} if $p[5] and exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
 	return _Create(@p);
+    }
+    package Geo::GDAL::Dataset;
+    use vars qw/%BANDS/;
+    sub Open {
+	return Geo::GDAL::Open(@_);
+    }
+    sub OpenShared {
+	return Geo::GDAL::OpenShared(@_);
+    }
+    sub GetRasterBand {
+	my($self, $index) = @_;
+	my $band = _GetRasterBand($self, $index);
+	$BANDS{tied(%{$band})} = $self;
+	return $band;
     }
     sub AddBand {
 	my @p = @_;
@@ -161,6 +215,25 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
 	$COLOR_INTERPRETATION_STRING2INT{$string} = $int;
 	$COLOR_INTERPRETATION_INT2STRING{$int} = $string;
+    }
+    sub DESTROY {
+	my $self;
+	if ($_[0]->isa('SCALAR')) {
+	    $self = $_[0];
+	} else {
+	    return unless $_[0]->isa('HASH');
+	    $self = tied(%{$_[0]});
+	    return unless defined $self;
+	}
+	delete $ITERATORS{$self};
+	if (exists $OWNER{$self}) {
+	    delete $OWNER{$self};
+	}
+	$self->RELEASE_PARENTS();
+    }
+    sub RELEASE_PARENTS {
+	my $self = shift;
+	delete $Geo::GDAL::Dataset::BANDS{$self};
     }
     sub ColorInterpretation {
 	my($self, $ci) = @_;
@@ -190,5 +263,12 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$pi = $PALETTE_INTERPRETATION_STRING2INT{$pi} if defined $pi and exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
 	my $self = Geo::GDALc::new_ColorTable($pi);
 	bless $self, $pkg if defined($self);
+    }
+    sub GetPaletteInterpretation {
+	my($self) = @_;
+	return $PALETTE_INTERPRETATION_INT2STRING{GetPaletteInterpretation($self)};
+    }
+    sub SetColorEntry {
+	@_ == 3 ? _SetColorEntry(@_) : _SetColorEntry(@_[0..1], @{$_[2]});
     }
  %}
