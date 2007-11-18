@@ -296,7 +296,16 @@ BSBInfo *BSBOpen( const char *pszFilename )
             if( iPCT > psInfo->nPCTSize-1 )
             {
                 psInfo->pabyPCT = (unsigned char *) 
-                    CPLRealloc(psInfo->pabyPCT,(iPCT+1) * 3);
+                    VSIRealloc(psInfo->pabyPCT,(iPCT+1) * 3);
+                if (psInfo->pabyPCT == NULL)
+                {
+                    CSLDestroy( papszTokens );
+                    CPLError( CE_Failure, CPLE_OutOfMemory, 
+                              "BSBOpen : Out of memory. Probably due to corrupted BSB file (iPCT = %d).",
+                              iPCT);
+                    BSBClose( psInfo );
+                    return NULL;
+                }
                 memset( psInfo->pabyPCT + psInfo->nPCTSize*3, 0, 
                         (iPCT+1-psInfo->nPCTSize) * 3);
                 psInfo->nPCTSize = iPCT+1;
@@ -392,7 +401,15 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      Initialize line offset list.                                    */
 /* -------------------------------------------------------------------- */
     psInfo->panLineOffset = (int *) 
-        CPLMalloc(sizeof(int) * psInfo->nYSize);
+        VSIMalloc(sizeof(int) * psInfo->nYSize);
+    if (psInfo->panLineOffset == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+                  "BSBOpen : Out of memory. Probably due to corrupted BSB file (nYSize = %d).",
+                  psInfo->nYSize );
+        BSBClose( psInfo );
+        return NULL;
+    }
     for( i = 0; i < psInfo->nYSize; i++ )
         psInfo->panLineOffset[i] = -1;
 
