@@ -1944,7 +1944,7 @@ class FeatureDefn(_object):
     __swig_destroy__ = _ogr.delete_FeatureDefn
     __del__ = lambda self : None;
     def __init__(self, *args, **kwargs): 
-        """__init__(self, char name=None) -> FeatureDefn"""
+        """__init__(self, char name_null_ok=None) -> FeatureDefn"""
         this = _ogr.new_FeatureDefn(*args, **kwargs)
         try: self.this.append(this)
         except: self.this = this
@@ -2157,7 +2157,7 @@ class FieldDefn(_object):
     __swig_destroy__ = _ogr.delete_FieldDefn
     __del__ = lambda self : None;
     def __init__(self, *args, **kwargs): 
-        """__init__(self, char name="unnamed", OGRFieldType field_type=OFTString) -> FieldDefn"""
+        """__init__(self, char name_null_ok="unnamed", OGRFieldType field_type=OFTString) -> FieldDefn"""
         this = _ogr.new_FieldDefn(*args, **kwargs)
         try: self.this.append(this)
         except: self.this = this
@@ -2482,6 +2482,10 @@ class Geometry(_object):
         """ExportToGML(self) -> char"""
         return _ogr.Geometry_ExportToGML(*args)
 
+    def ExportToKML(*args):
+        """ExportToKML(self) -> char"""
+        return _ogr.Geometry_ExportToKML(*args)
+
     def AddPoint(*args, **kwargs):
         """AddPoint(self, double x, double y, double z=0)"""
         return _ogr.Geometry_AddPoint(*args, **kwargs)
@@ -2491,7 +2495,7 @@ class Geometry(_object):
         return _ogr.Geometry_AddPoint_2D(*args)
 
     def AddGeometryDirectly(*args):
-        """AddGeometryDirectly(self, Geometry other) -> OGRErr"""
+        """AddGeometryDirectly(self, Geometry other_disown) -> OGRErr"""
         return _ogr.Geometry_AddGeometryDirectly(*args)
 
     def AddGeometry(*args):
@@ -3070,6 +3074,7 @@ class Geometry(_object):
         return _ogr.Geometry_GetDimension(*args)
 
     def Destroy(self):
+      self.__swig_destroy__(self) 
       self.__del__()
       self.thisown = 0
 
