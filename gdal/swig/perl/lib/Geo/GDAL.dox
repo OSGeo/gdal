@@ -76,91 +76,137 @@
 
 ## @fn CPLHexToBinary()
 
-## @fn VersionInfo($request = 'VERSION_NUM')
+## @fn $VersionInfo($request = 'VERSION_NUM')
 # @return Descriptive string or version number
 
-## @fn GCPsToGeoTransform(\@GCPs, $ApproxOK = 1)
+## @fn \@GCPsToGeoTransform(\@GCPs, $ApproxOK = 1)
 # x = $a + j * $b + i * $c;<br/>
 # y = $d + j * $e + i * $f;<br/>
 # (i,j) is the location in pixel coordinates<br/>
 # (x,y) is the location in projection coordinates<br/>
-# @return arrayref = [$a, $b, $c, $d, $e, $f]
+# @return [$a, $b, $c, $d, $e, $f]
 
 ## @fn AllRegister()
 
-## @fn GetCacheMax()
-# @return scalar (int)
+## @fn $GetCacheMax()
+# @return
 
 ## @fn SetCacheMax($nBytes)
 
-## @fn GetCacheUsed()
-# @return scalar (int)
+## @fn $GetCacheUsed()
+# @return
 
-## @fn GetDataTypeSize($GDALDataType)
-# @return scalar (int)
+## @fn $GetDataTypeSize($GDALDataType)
+# @param GDALDataType
+# @return
 
-## @fn DataTypeIsComplex($GDALDataType)
-# @return scalar (int)
+## @fn $DataTypeIsComplex($GDALDataType)
+# @param GDALDataType
+# @return
 
-## @method GetDataTypeName()
+## @fn $GetDataTypeName($GDALDataType)
+# @param GDALDataType
 # @deprecated
+# @return
 
-## @method GetDataTypeByName()
+## @fn $GetDataTypeByName($GDALDataType)
+# @param GDALDataType
 # @deprecated
+# @return
 
-## @method GetColorInterpretationName
+## @fn $GetColorInterpretationName($ColorInterpretation)
+# @param ColorInterpretation
 # @deprecated
+# @return
 
-## @method GetPaletteInterpretationName
+## @fn $GetPaletteInterpretationName($PaletteInterpretation)
+# @param PaletteInterpretation
 # @deprecated
+# @return
 
-## @fn DecToDMS($double, $string, $int)
-# @return scalar (string)
+## @fn $DecToDMS($angle, $axis, $precision=2)
+# @param angle
+# @param axis
+# @param precision
+# @return
 
-## @fn PackedDMSToDec($double)
+## @fn $PackedDMSToDec($packed)
+# @param packed
+# @return
+
+## @fn $DecToPackedDMS($dec)
+# @param dec
 # @return scalar (double)
 
-## @fn DecToPackedDMS($double)
-# @return scalar (double)
+## @fn $NodeType($type)
+# Convert between integer and string expressions of CPLXMLNodeTypes
+# @param type
+# @return type
 
-## @fn ParseXMLString($string)
-# @return ref to array of CPLXMLNodes
+## @fn \@ParseXMLString($XML)
+# Parses a given XML into an array of arrays and returns a reference
+# to that. An array in the structure is: (CPLXMLNodeType, value,
+# child, child, ...). CPLXMLNodeType is an integer.
+# @param XML
+# @return an XMLTree
 
-## @fn SerializeXMLTree(\@CPLXMLNodes)
-# @return scalar (string)
+## @fn $SerializeXMLTree(\@XMLTree)
+# @param XMLTree
+# @return XML
 
-## @fn GetDriverCount()
-# @return scalar (int)
+## @fn $GetDriverCount()
+# @return
 
-## @fn GetDriverByName($ShortName)
-# @return Geo::GDAL::Driver object
+## @fn $GetDriverByName($ShortName)
+# @deprecated
+# @param ShortName
+# @return a new Geo::GDAL::Driver object
 
-## @fn GetDriver($int)
-# @return Geo::GDAL::Driver object
+## @fn $GetDriver($driver)
+# @param driver The name or number of the driver.
+# @return a new Geo::GDAL::Driver object
 
-## @fn IdentifyDriver($datasource_name, $siblings = undef)
-# @return Geo::GDAL::Driver object
+## @fn $IdentifyDriver($datasource_name, $siblings = undef)
+# @param datasource_name
+# @param siblings
+# @return a new Geo::GDAL::Driver object
 
-## @fn Open($name, $Access='ReadOnly')
-# @return Geo::GDAL::Dataset object
+## @fn $Open($datasource_name, $access='ReadOnly')
+# @deprecated [use Geo::GDAL::Dataset::Open]
+# @param datasource_name 
+# @param access
+# @return a new Geo::GDAL::Dataset object
 
-## @fn OpenShared($name, $Access='ReadOnly')
-# @param Access either ReadOnly or Update
-# @return Geo::GDAL::Dataset object
+## @fn $OpenShared($name, $access='ReadOnly')
+# @deprecated [use Geo::GDAL::Dataset::OpenShared]
+# @param name
+# @param access either ReadOnly or Update
+# @return a new Geo::GDAL::Dataset object
 
 ## @fn ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0.0, $maxerror=0.0)
+# @param src_ds
+# @param dst_ds
+# @param src_wkt
+# @param dst_wkt
 # @param ResampleAlg one of NearestNeighbour Bilinear Cubic CubicSpline
+# @param WarpMemoryLimit
+# @param maxerror
 
 ## @fn AutoCreateWarpedVRT($src_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
-# @param $src_ds a Geo::GDAL::Dataset object
-# @param $ResampleAlg one of NearestNeighbour Bilinear Cubic CubicSpline
-# @return Geo::GDAL::Dataset object
+# @param src_ds a Geo::GDAL::Dataset object
+# @param src_wkt
+# @param dst_wkt
+# @param ResampleAlg one of NearestNeighbour Bilinear Cubic CubicSpline
+# @param maxerror
+# @return a new Geo::GDAL::Dataset object
 
-## @fn GeneralCmdLineProcessor(\@Argv, $nOptions = 0)
+## @fn \@GeneralCmdLineProcessor(\@argv, $options = 0)
+# @param argv
+# @param options integer
 # @return arrayref
 
-## @fn PackCharacter($DataType)
-# @param $DataType GDAL data type value, typically from $band->{DataType}
+## @fn $PackCharacter($DataType)
+# @param DataType GDAL data type value, typically from $band->{DataType}
 # @return character which can be used in Perl's pack and unpack
 
 ## @class Geo::GDAL::MajorObject
@@ -169,15 +215,29 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @method $description = GetDescription()
-# @return scalar (string)
+## @method $Description($description)
+# @param description
+# @return a description unless one was given
+
+## @method \%Metadata(\%metadata, $domain = '')
+# @param metadata
+# @param domain
+# @return metadata unless it was given
+
+## @method $GetDescription()
+# @deprecated
+# @return
 
 ## @method SetDescription($NewDesc)
+# @deprecated
+# @param NewDesc
 
-## @method GetMetadata($Domain = "")
-# @return hashref
+## @method \%GetMetadata($Domain = "")
+# @deprecated
+# @return
 
 ## @method SetMetadata(\%Metadata, $Domain = "")
+# @deprecated
 
 ## @class Geo::GDAL::Driver
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
@@ -185,31 +245,39 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @method Register
+## @method Register()
 
-## @method Deregister
+## @method Deregister()
 
-## @method Rename
+## @method Rename()
 
 ## @attr ShortName
-# scalar (access as $driver->{ShortName})
+# $driver->{ShortName}
 
 ## @attr LongName
-# scalar (access as $driver->{LongName})
+# $driver->{LongName}
 
 ## @attr HelpTopic
-# scalar (access as $driver->{HelpTopic})
+# $driver->{HelpTopic}
 
-## @method Create($name, $xsize, $ysize, $bands =1, $Type = 'Byte', \@options = undef)
-# @return Geo::GDAL::Dataset object
+## @method $Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
+# @param name
+# @param xsize
+# @param ysize
+# @param bands
+# @param type
+# @param options
+# @return a new Geo::GDAL::Dataset object
 
-## @method CreateCopy($name, $src, $strict = 1, \@options = undef)
-# @param $src Geo::GDAL::Dataset object
+## @method $CreateCopy($name, $src, $strict = 1, \@options = undef)
+# @param name
+# @param src a Geo::GDAL::Dataset object
+# @param strict
+# @param options
+# @return a new Geo::GDAL::Dataset object 
 
 ## @method Delete($name)
-
-## @method AddBand()
-# @deprecated
+# @param name
 
 ## @class Geo::GDAL::GCP
 # @isa (Geo::GDAL)
@@ -218,7 +286,15 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($x = 0.0, $y = 0.0, $z = 0.0, $pixel = 0.0, $line = 0.0, $info = "", $id = "")
+## @cmethod $new($x = 0.0, $y = 0.0, $z = 0.0, $pixel = 0.0, $line = 0.0, $info = "", $id = "")
+# @param x
+# @param y
+# @param z
+# @param pixel
+# @param line
+# @param info
+# @param id
+# @return a new Geo::GDAL::GCP object
 
 ## @attr GCPX
 # scalar (access as $gcp->{GCPX})
@@ -231,11 +307,11 @@
 
 ## @attr GCPPixel
 # scalar (access as $gcp->{GCPPixel})
-# the j pixel coordinate
+# the pixel's j coordinate
 
 ## @attr GCPLine
 # scalar (access as $gcp->{GCPLine})
-# the i pixel coordinate
+# the pixel's i coordinate
 
 ## @attr Info
 # scalar (access as $gcp->{Info})
@@ -250,6 +326,16 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
+## @cmethod $Open($datasource_name, $access='ReadOnly')
+# @param datasource_name 
+# @param access
+# @return a new Geo::GDAL::Dataset object
+
+## @cmethod $OpenShared($name, $access='ReadOnly')
+# @param name
+# @param access either ReadOnly or Update
+# @return a new Geo::GDAL::Dataset object
+
 ## @attr RasterXSize
 # scalar (access as $dataset->{RasterXSize})
 
@@ -259,52 +345,76 @@
 ## @attr RasterCount
 # scalar (access as $dataset->{RasterCount})
 
-## @method GetDriver()
-# @return Geo::GDAL::Driver object
+## @method $GetDriver()
+# @return a new Geo::GDAL::Driver object
 
-## @method GetRasterBand($nBand)
-# @param $nBand 1...RasterCount
-# @return Geo::GDAL::RasterBand object
+## @method $GetRasterBand($index)
+# @param index 1...RasterCount
+# @return a new Geo::GDAL::Band object
 
-## @method GetProjection()
-# @return scalar (string)
+## @method $GetProjection()
+# @return the projection
 
-## @method GetProjectionRef()
-# @return scalar (string)
+## @method $GetProjectionRef()
+# @deprecated
+# @return a string
 
-## @method SetProjection($proj)
-# @param $proj scalar (string)
+## @method $SetProjection($proj)
+# @param proj a string
 
-## @method GetGeoTransform()
-# @return arrayref
+## @method \@GetGeoTransform()
+# @return a reference to an array of six parameters 
 
 ## @method SetGeoTransform(\@GeoTransform)
+# @param GeoTransform
 
-## @method BuildOverviews($resampling = "NEAREST", \@Overviews = undef)
+## @method BuildOverviews($resampling = "NEAREST", \@overviews = undef)
+# @param resampling
+# @param overviews
 
-## @method GetGCPCount()
-# @return scalar (int)
+## @method $GetGCPCount()
+# @return the number of GCPs
 
-## @method GetGCPProjection()
-# @return scalar (string)
+## @method $GetGCPProjection()
+# @return
 
-## @method GetGCPs()
-# @return arrayref
+## @method \@GetGCPs()
+# @return
 
 ## @method SetGCPs(\@GCPs, $GCPProjection)
+# @param GCPs
+# @param GCPProjection
 
 ## @method FlushCache()
 
 ## @method AddBand($datatype = 'Byte', \@options = 0)
+# @param datatype
+# @param options
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
-# Write a buffer into the raster.
+# Write a buffer into the raster. Create the buffer with pack.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs</a>
 # @param xoff
+# @param yoff
+# @param xsize
+# @param ysize
+# @param buf
+# @param buf_xsize
+# @param buf_ysize
+# @param buf_type
+# @param band_list
 
-## @method ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
+## @method $ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, \@band_list = undef)
 # Read a buffer from the raster.
-# @return $buf
+# @param xoff
+# @param yoff
+# @param xsize
+# @param ysize
+# @param buf_xsize
+# @param buf_ysize
+# @param buf_type
+# @param band_list
+# @return a buffer, open the buffer with unpack.
 
 ## @method CreateMaskBand()
 
@@ -330,38 +440,48 @@
 # @param color_interpretation [optional] new color interpretation
 # @return color interpretation
 
-## @method GetNoDataValue()
-# @return scalar (double or undef)
+## @method $GetNoDataValue()
+# @return number or undef
 
 ## @method SetNoDataValue($NoDataValue)
-# @param $NoDataValue (undef is zero)
+# @param NoDataValue (undef is zero, i.e., once set NoDataValue cann't be removed)
 
-## @method GetMinimum()
-# @return scalar (double or undef)
+## @method $GetMinimum()
+# @return number or undef
 
-## @method GetMaximum()
-# @return scalar (double or undef)
+## @method $GetMaximum()
+# @return number or undef
 
-## @method GetOffset()
-# @return scalar (double or undef)
+## @method $GetOffset()
+# @return number or undef
 
-## @method GetScale()
-# @return scalar (double or undef)
+## @method $GetScale()
+# @return number or undef
 
-## @method GetStatistics($approx_ok, $force)
+## @method @GetStatistics($approx_ok, $force)
+# @param approx_ok
+# @param force
 # @return array Statistics = ($min, $max, $mean, $stddev)
 
 ## @method SetStatistics($min, $max, $mean, $stddev)
+# @param min
+# @param max
+# @param mean
+# @param stddev
 
-## @method GetOverviewCount()
-# @return scalar (int)
+## @method $GetOverviewCount()
+# @return integer
 
-## @method GetOverview($i)
-# @param $i 0..GetOverviewCount-1
-# @return Geo::GDAL::RasterBand object
+## @method $GetOverview($i)
+# @param i 0..GetOverviewCount-1
+# @return a new Geo::GDAL::RasterBand object
 
-## @method Checksum($xoff = 0, $yoff = 0, $xsize = undef, $ysize = undef)
-# @return scalar (int)
+## @method $Checksum($xoff = 0, $yoff = 0, $xsize = undef, $ysize = undef)
+# @param xoff
+# @param yoff
+# @param xsize
+# @param ysize
+# @return integer
 
 ## @method ComputeRasterMinMax($approx_ok = 0)
 # @return arrayref MinMax = [$min, $max]
@@ -372,6 +492,18 @@
 ## @method Fill($real_fill, $imag_fill = 0.0)
 # @return CPLErr
 
+## @method WriteTile($data, $xoff, $yoff)
+# @param data 
+# @param xoff [optional]
+# @param yoff [optional]
+
+## @method \@ReadTile($xoff, $yoff, $xsize, $ysize)
+# @param xoff [optional]
+# @param yoff [optional]
+# @param xsize [optional]
+# @param ysize [optional]
+# @return
+
 ## @method ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
 # @return $buf
 
@@ -379,15 +511,15 @@
 
 ## @method FlushCache()
 
-## @method ColorTable($ColorTable)
-# @param $ColorTable [optional] Geo::GDAL::ColorTable object
-# @return Geo::GDAL::ColorTable object unless color table was given
+## @method $ColorTable($ColorTable)
+# @param ColorTable [optional] a Geo::GDAL::ColorTable object
+# @return a new Geo::GDAL::ColorTable object unless color table was given
 
 ## @method CreateMaskBand()
 
-## @method GetMaskBand()
+## @method $GetMaskBand()
 
-## @method GetMaskFlags()
+## @method $GetMaskFlags()
 
 ## @method GetRasterCategoryNames()
 
@@ -397,16 +529,16 @@
 
 ## @method SetDefaultRAT()
 
-## @method GetRasterColorInterpretation()
+## @method $GetRasterColorInterpretation()
 # @deprecated
 
-## @method GetRasterColorTable()
+## @method $GetRasterColorTable()
 # @deprecated
 
 ## @method SetRasterColorInterpretation()
 # @deprecated
 
-## @method SetRasterColorTable()
+## @method $SetRasterColorTable()
 # @deprecated
 
 ## @class Geo::GDAL::ColorTable
@@ -416,30 +548,36 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
-# @return Geo::GDAL::ColorTable object
+## @cmethod $new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
+# @return a new Geo::GDAL::ColorTable object
 
-## @cmethod create($GDALPaletteInterp = 'RGB')
-# @return Geo::GDAL::ColorTable object
+## @cmethod $create($GDALPaletteInterp = 'RGB')
+# @return a new Geo::GDAL::ColorTable object
 
-## @method Clone()
-# @return Geo::GDAL::ColorTable object
+## @method $Clone()
+# @return a new Geo::GDAL::ColorTable object
 
-## @method GetPaletteInterpretation()
-# @return one of $Geo::GDAL::Const::GPI_*
+## @method $GetPaletteInterpretation()
+# @return paletter interpretation (string)
 
-## @method GetCount()
+## @method $GetCount()
 # @return scalar (count of color entries as int)
 
-## @method GetColorEntry($i)
+## @method @GetColorEntry($i)
 # @return array ColorEntry = ($c1, $c2, $c3, $c4)
 
-## @method GetColorEntryAsRGB($i)
+## @method @GetColorEntryAsRGB($i)
 # @return array ColorEntry = ($r, $g, $b, $alpha)
 
-## @method SetColorEntry($i, \@ColorEntry)
+## @method SetColorEntry($index, @ColorEntry)
+# @param index
+# @param ColorEntry a list or a reference to an array
 
-## @method CreateColorRamp()
+## @method CreateColorRamp($start_index, \@start_color, $end_index, \@end_color)
+# @param start_index
+# @param start_color
+# @param end_index
+# @param end_color
 
 ## @class Geo::GDAL::RasterAttributeTable
 # @isa = ( Geo::GDAL::MajorObject Geo::GDAL )

@@ -10,48 +10,61 @@
 ## @ignore STORE
 ## @ignore this
 
-## @cmethod UseExceptions()
-## @cmethod DontUseExceptions()
+## @fn UseExceptions()
 
-## @fn GeometryTypes()
+## @fn DontUseExceptions()
+
+## @fn @GeometryTypes()
 # @return a list of all geometry types
 
-## @fn CreateGeometryFromWkb($bin_string, $reference = undef)
-# @param $reference Geo::OSR::SpatialReference object
-# @return Geo::OGR::Geometry object
+## @fn $CreateGeometryFromWkb($WKB, $srs = undef)
+# @param WKB buffer containing well known binary
+# @param srs a Geo::OSR::SpatialReference object
+# @return a new Geo::OGR::Geometry object
 
-## @fn CreateGeometryFromWkt($string, $reference = undef)
-# @param $reference Geo::OSR::SpatialReference object
-# @return Geo::OGR::Geometry object
+## @fn $CreateGeometryFromWkt($WKT, $srs = undef)
+# @param WKT string containing well known text
+# @param srs a Geo::OSR::SpatialReference object
+# @return a new Geo::OGR::Geometry object
 
-## @fn CreateGeometryFromGML($string)
-# @return Geo::OGR::Geometry object
+## @fn $CreateGeometryFromGML($GML)
+# @param GML string containing GML
+# @return a new Geo::OGR::Geometry object
 
-## @cmethod GetDriverCount()
-# @return scalar (int)
+## @fn $GetDriverCount()
+# @return count
 
-## @cmethod GetOpenDSCount()
-# @return scalar (int)
+## @fn $GetOpenDSCount()
+# @return count
 
-## @cmethod SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
-# @return scalar (OGRErr)
+## @fn SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
+# Needed only on IBM DB2.
 
-## @cmethod RegisterAll()
+## @fn RegisterAll()
+# Called in initialization.
 
-## @cmethod GetOpenDS($ds_number)
-# @return Geo::OGR::DataSource object
+## @fn $GetOpenDS($number)
+# @param number the data source number
+# @return a new Geo::OGR::DataSource object
 
-## @fn Open($filename, $update = 0)
-# @return Geo::OGR::DataSource object
+## @fn $Open($name, $update = 0)
+# @deprecated [use Geo::OGR::DataSource::Open]
+# @param name the data source name (directory, filename, etc.)
+# @param update if set to true, the data source can be updated
+# @return a new Geo::OGR::DataSource object
 
-## @fn OpenShared($filename, $update = 0)
-# @return Geo::OGR::DataSource object
+## @fn $OpenShared($name, $update = 0)
+# @deprecated [use Geo::OGR::DataSource::OpenShared]
+# @param name the data source name (directory, filename, etc.)
+# @param update if set to true, the data source can be updated
+# @return a new Geo::OGR::DataSource object
 
-## @cmethod GetDriverByName($name)
-# @return Geo::OGR::Driver object
+## @fn $GetDriverByName($name)
+# @deprecated
 
-## @cmethod GetDriver($driver_number)
-# @return Geo::OGR::Driver object
+## @fn $GetDriver($driver)
+# @param driver the index or the name of the driver
+# @return a new Geo::OGR::Driver object
 
 ## @attr wkb25Bit
 # @deprecated
@@ -201,549 +214,645 @@
 # @deprecated
 
 ## @class Geo::OGR::Driver
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
+## @cmethod @Capabilities()
+# @return the class method returns a list of all potential
+# capabilities a driver may have; the object method returns a list of
+# all capabilities the driver has
+
 ## @attr name
 # scalar (access as $driver->{name})
 
-## @method CreateDataSource($name, \@options = undef )
-# @return Geo::OGR::Datasource object
+## @method $CreateDataSource($name, \@options = undef )
+# @param name the data source name
+# @param options a list of driver specific options
+# @return a new Geo::OGR::Datasource object
 
-## @method CopyDataSource($copy_ds, $name, \@options = undef)
-# @param $copy_ds Geo::OGR::Datasource object
-# @return Geo::OGR::Datasource object
+## @method $CopyDataSource($ds, $name, \@options = undef)
+# @param ds the Geo::OGR::Datasource object to be copied
+# @param name
+# @param options
+# @return a new Geo::OGR::Datasource object
 
-## @method Open($name, $update = 0)
-# @return Geo::OGR::Datasource object
+## @method $Open($name, $update = 0)
+# @param name
+# @param update
+# @return a new Geo::OGR::Datasource object
 
 ## @method DeleteDataSource($name)
-# @return scalar (int)
+# @param name
+# @return integer
 
-## @method TestCapability($cap)
-# @param $cap string
-# @return scalar (int)
+## @method $TestCapability($cap)
+# @param cap a capability string
+# @return boolean
 
-## @method GetName()
-# @return scalar (string)
+## @method $GetName()
+# @return the name
 
 
 ## @class Geo::OGR::DataSource
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
+## @cmethod @Capabilities()
+# @return the class method returns a list of all potential
+# capabilities a data source may have; the object method returns a
+# list of all capabilities the data source has
+
+## @cmethod $Open($name, $update = 0)
+# @param name the data source name (directory, filename, etc.)
+# @param update if set to true, the data source can be updated
+# @return a new Geo::OGR::DataSource object
+
+## @cmethod $OpenShared($name, $update = 0)
+# @param name the data source name (directory, filename, etc.)
+# @param update if set to true, the data source can be updated
+# @return a new Geo::OGR::DataSource object
+
 ## @attr name
-# scalar (access as $datasource->{name})
+# string (access as $datasource->{name})
 
-## @method GetRefCount()
-# @return scalar (int)
+## @method $GetRefCount()
+# @return integer
 
-## @method GetSummaryRefCount()
-# @return scalar (int)
+## @method $GetSummaryRefCount()
+# @return integer
 
-## @method GetLayerCount()
-# @return scalar (int)
+## @method $GetLayerCount()
+# @return integer
 
-## @method GetDriver()
-# @return Geo::OGR::Driver object
+## @method $GetDriver()
+# @return a Geo::OGR::Driver object for this data source
 
-## @method GetName()
-# @return scalar (string)
+## @method $GetName()
+# @return string
 
 ## @method DeleteLayer($index)
-# @return scalar (OGRErr)
+# @param index
 
-## @method CreateLayer($name, $reference = undef, $geom_type = 'Unknown', \@options = undef)
-# @param $reference Geo::OSR::SpatialReference object
-# @param $geom_type one of geometry types (Point, LineString, etc)
-# @return Geo::OGR::Layer object
+## @method $CreateLayer($name, $srs = undef, $geom_type = 'Unknown', \@options = undef)
+# @param name
+# @param srs a Geo::OSR::SpatialReference object
+# @param geom_type one of geometry types (a string: Point, LineString, etc)
+# @param options
+# @return a new Geo::OGR::Layer object
 
-## @method CopyLayer($src_layer, $new_name, \@options = undef)
-# @param $src_layer Geo::OGR::Layer object
-# @return Geo::OGR::Layer object
+## @method $CopyLayer($layer, $name, \@options = undef)
+# @param layer a Geo::OGR::Layer object to be copied
+# @param name a name for the new layer
+# @param options
+# @return a new Geo::OGR::Layer object
 
-## @method GetLayerByIndex($index = 0)
-# @return Geo::OGR::Layer object
+## @method $GetLayerByIndex($index = 0)
+# @param index
+# @return a new Geo::OGR::Layer object
 
-## @method GetLayerByName($name)
-# @return Geo::OGR::Layer object
+## @method $GetLayerByName($name)
+# @param name
+# @return a new Geo::OGR::Layer object
 
-## @method TestCapability($cap)
-# @return scalar (int)
+## @method $TestCapability($cap)
+# @param cap
+# @return integer
 
-## @method ExecuteSQL($statement, $geom = undef, $dialect = "")
-# @param $geom Geo::OGR::Geometry object
-# @return Geo::OGR::Layer object
+## @method $ExecuteSQL($statement, $geom = undef, $dialect = "")
+# @param statement
+# @param geom a Geo::OGR::Geometry object
+# @param dialect
+# @return a new Geo::OGR::Layer object
 
-## @method ReleaseResultSet()
-
+## @method ReleaseResultSet($layer)
+# @param layer a layer the has been created with ExecuteSQL
 
 ## @class Geo::OGR::Layer
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @method GetRefCount()
-# @return scalar (int)
+## @cmethod @Capabilities()
+# @return the class method returns a list of all potential
+# capabilities a layer may have; the object method returns a list of
+# all capabilities the layer has
+
+## @method $GetRefCount()
+# @return integer
 
 ## @method SetSpatialFilter($filter)
-# @param $filter Geo::OGR::Geometry object
+# @param filter a Geo::OGR::Geometry object
 
 ## @method SetSpatialFilterRect($minx, $miny, $maxx, $maxy)
+# @param minx
+# @param miny
+# @param maxx
+# @param maxy
 
-## @method GetSpatialFilter()
-# @return Geo::OGR::Geometry object
+## @method $GetSpatialFilter()
+# @return a new Geo::OGR::Geometry object
 
 ## @method SetAttributeFilter($filter_string)
 # @return scalar (OGRErr)
 
 ## @method ResetReading()
 
-## @method GetNextFeature()
-# @return Geo::OGR::Feature object
+## @method $GetNextFeature()
+# @return a new Geo::OGR::Feature object
 
-## @method GetFeaturesRead()
+## @method $GetFeaturesRead()
 # @return integer
 
-## @method GetName()
+## @method $GetName()
 # @return scalar (string)
 
-## @method GetFeature($fid)
-# @return Geo::OGR::Feature object
+## @method $GetFeature($fid)
+# @param fid feature id
+# @return a new Geo::OGR::Feature object
 
 ## @method SetNextByIndex($new_index)
-# @return scalar (OGRErr)
+# @param new_index the index to which set the read cursor
 
 ## @method SetFeature($feature)
-# @param $feature Geo::OGR::Feature object
-# @return scalar (OGRErr)
+# @param feature a Geo::OGR::Feature object
 
 ## @method CreateFeature($feature)
-# @param $feature Geo::OGR::Feature object
-# @return scalar (OGRErr)
+# @param feature a Geo::OGR::Feature object
 
 ## @method DeleteFeature($fid)
-# @return scalar (OGRErr)
+# @param fid feature id
 
 ## @method SyncToDisk()
-# @return scalar (OGRErr)
 
-## @method GetLayerDefn()
-# @return Geo::OGR::FeatureDefn object
+## @method $GetLayerDefn()
+# @return a new Geo::OGR::FeatureDefn object
 
-## @method GetFeatureCount($force = 1)
-# @return scalar (int)
+## @method $GetFeatureCount($force = 1)
+# @param force
+# @return integer
 
-## @method GetExtent($force = 1)
+## @method \@GetExtent($force = 1)
+# @param force
 # @return arrayref Extent = ($minx, $miny, $maxx, $maxy)
 
-## @method TestCapability($cap)
-# @return scalar (int)
+## @method $TestCapability($cap)
+# @param cap
+# @return boolean
 
 ## @method CreateField($field_def, $approx_ok = 1)
-# @param $field_def Geo::OGR::FieldDefn
-# @return scalar (OGRErr)
+# @param field_def a Geo::OGR::FieldDefn object
+# @param approx_ok
 
 ## @method StartTransaction()
-# @return scalar (OGRErr)
 
 ## @method CommitTransaction()
-# @return scalar (OGRErr)
 
 ## @method RollbackTransaction()
-# @return scalar (OGRErr)
 
-## @method GetSpatialRef()
-# @return Geo::OSR::SpatialReference
+## @method $GetSpatialRef()
+# @return a new Geo::OSR::SpatialReference object
 
 
 ## @class Geo::OGR::Feature
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($feature_def = undef)
-# @param $feature_def Geo::OGR::FeatureDefn object
-# @return Geo::OGR::Feature object
+## @cmethod $new($feature_def)
+# @param feature_def a Geo::OGR::FeatureDefn object
+# @return a new Geo::OGR::Feature object
 
-## @method GetDefnRef()
-# @return Geo::OGR::FeatureDefn object
+## @method $GetDefnRef()
+# @return a new Geo::OGR::FeatureDefn object
 
 ## @method SetGeometry($geom)
-# @param $geom Geo::OGR::Geometry object
-# @return scalar (OGRErr)
+# @param geom a Geo::OGR::Geometry object
 
 ## @method SetGeometryDirectly($geom)
-# @param $geom Geo::OGR::Geometry object
-# @return scalar (OGRErr)
+# @param geom a Geo::OGR::Geometry object
 
-## @method GetGeometryRef()
-# @return Geo::OGR::Geometry object
+## @method $GetGeometryRef()
+# @deprecated [use GetGeometry]
+# @return a new Geo::OGR::Geometry object
 
-## @method Clone()
-# @return Geo::OGR::Feature object
+## @method $GetGeometry()
+# This is better than GetGeometryRef since this feature is not
+# destroyed while the geometry exists.
+# @return a new Geo::OGR::Geometry object
 
-## @method Equal($feature)
-# @param $feature Geo::OGR::Feature object
-# @return scalar (int)
+## @method $Clone()
+# @return a new Geo::OGR::Feature object
 
-## @method GetFieldCount()
-# @return scalar (int)
+## @method $Equal($feature)
+# @param feature a Geo::OGR::Feature object for comparison
+# @return boolean
 
-## @method GetFieldDefnRef($param)
-# @param $param scalar (index or name of a field)
-# @return Geo::OGR::FieldDefn object
+## @method $GetFieldCount()
+# @return integer
+
+## @method $GetFieldDefnRef($param)
+# @param param scalar (index or name of a field)
+# @return a new Geo::OGR::FieldDefn object
 
 ## @method GetFieldAsString($field)
 # @deprecated
 
-## @method GetFieldAsInteger($field)
+## @method $GetFieldAsInteger($field)
 # @deprecated
 
-## @method GetFieldAsDouble($field)
+## @method $GetFieldAsDouble($field)
 # @deprecated
 
-## @method GetField($param)
-# @param $param scalar (index or name of a field)
-# @return scalar
+## @method $GetField($field)
+# @param field an index or a name of a field
+# @return the value of the field
 
-## @method IsFieldSet($param)
-# @param $param scalar (index or name of a field)
-# @return scalar (int)
+## @method $IsFieldSet($field)
+# @param field an index or a name of a field
+# @return boolean
 
-## @method GetFieldIndex($name)
-# @param $name field name
-# @return scalar (int)
+## @method $GetFieldIndex($name)
+# @param name field name
+# @return integer the index of the field
 
-## @method GetFID()
-# @return scalar (int)
+## @method $GetFID()
+# @return integer the feature id
 
 ## @method SetFID($fid)
-# @return scalar (OGRErr)
+# @param fid the feature id
 
 ## @method DumpReadable()
 
-## @method UnsetField($param)
-# @param $param scalar (index or name of a field)
+## @method UnsetField($field)
+# @param field an index or a name of a field
 
-## @method SetField($param, $value)
-# @param $param scalar (index or name of a field)
+## @method SetField($field, $value)
+# @param field an index or a name of a field
+# @param value
 
 ## @method SetFrom($other, $forgiving = 1)
-# @param $other Geo::OGR::Feature object
-# @return scalar (OGRErr)
+# @param other a Geo::OGR::Feature object
+# @param forgiving
 
-## @method GetStyleString()
-# @return scalar (string)
+## @method $GetStyleString()
+# @return a string
 
-## @method SetStyleString($style_string)
+## @method SetStyleString($string)
+# @param string
 
-## @method GetFieldType($param)
-# @param $param scalar (index or name of a field)
+## @method $GetFieldType($field)
+# @param field an index or a name of a field
 # @return one of field types
 
 
 ## @class Geo::OGR::FeatureDefn
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
 ## @cmethod new($name = undef)
-# @return Geo::OGR::FeatureDefn object
+# @param name
+# @return a Geo::OGR::FeatureDefn object
 
-## @method GetName()
-# @return scalar (string)
+## @method $GetName()
+# @return a string
 
-## @method GetFieldCount()
-# @return scalar (int)
+## @method $GetFieldCount()
+# @return an integer
 
-## @method GetFieldDefn($index)
-# @return Geo::OGR::FieldDefn
+## @method $GetFieldDefn($index)
+# @param index
+# @return a new Geo::OGR::FieldDefn object
 
-## @method GetFieldIndex($name)
-# @return scalar (int) (-1 if no such field)
+## @method $GetFieldIndex($name)
+# @param name
+# @return integer (-1 if no such field)
 
 ## @method AddFieldDefn($defn)
-# @param $defn Geo::OGR::FieldDefn object
+# @param defn a Geo::OGR::FieldDefn object
 
-## @method GeomType($geom_type)
-# @param $geom_type one of geometry types
+## @method $GeomType($geom_type)
+# @param geom_type one of geometry types
 # @return one of geometry types unless geom_type is given
 
-## @method GetReferenceCount()
-# @return scalar (int)
+## @method $GetReferenceCount()
+# @return integer
 
-## @method GetGeomType()
+## @method $GetGeomType()
 # @deprecated
 
 ## @method SetGeomType()
 # @deprecated
 
 ## @class Geo::OGR::FieldDefn
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
 ## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
-# @deprecated[use create]
+# @deprecated [use create]
+# @param name
 # @param field_type one of $Geo::OGR::OFT*
-# @return Geo::OGR::FieldDefn object
+# @return a new Geo::OGR::FieldDefn object
 
-## @cmethod create($name = "unnamed", $field_type = 'String')
+## @cmethod $create($name = "unnamed", $field_type = 'String')
+# @param name
 # @param field_type one of field types
-# @return Geo::OGR::FieldDefn object
+# @return a new Geo::OGR::FieldDefn object
 
-## @method Name($name)
+## @method $Name($name)
 # Get or set the name
+# @param name
 
-## @method Type($type)
+## @method $Type($type)
 # @param type on of field types
 # @return one of field types unles type is given
 
-## @method Justify($justify)
+## @method $Justify($justify)
 # Get or set the justification
+# @param justify
 # @return one of Undefined Left Right
 
-## @method Width($width)
+## @method $Width($width)
 # Get or set the field width
-# @return scalar (int)
+# @param width
+# @return integer
 
-## @method Precision($precision)
+## @method $Precision($precision)
 # Get or set the precision
-# @return scalar (int)
+# @param precision
+# @return integer
 
-## @method Geo::OGR::FieldDefn::GetFieldTypeName()
+## @method $Geo::OGR::FieldDefn::GetFieldTypeName()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::GetJustify()
+## @method $Geo::OGR::FieldDefn::GetJustify()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::GetName()
+## @method $Geo::OGR::FieldDefn::GetName()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::GetNameRef()
+## @method $Geo::OGR::FieldDefn::GetNameRef()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::GetPrecision()
+## @method $Geo::OGR::FieldDefn::GetPrecision()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::GetType()
+## @method $Geo::OGR::FieldDefn::GetType()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::GetWidth()
+## @method $Geo::OGR::FieldDefn::GetWidth()
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::SetJustify()
+## @method Geo::OGR::FieldDefn::SetJustify($justify)
+# @param justify
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::SetName()
+## @method Geo::OGR::FieldDefn::SetName($name)
+# @param name
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::SetPrecision()
+## @method Geo::OGR::FieldDefn::SetPrecision($precision)
+# @param precision
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::SetType()
+## @method Geo::OGR::FieldDefn::SetType($type)
+# @param type
 # @deprecated
 
-## @method Geo::OGR::FieldDefn::SetWidth()
+## @method Geo::OGR::FieldDefn::SetWidth($width)
+# @param width
 # @deprecated
 
 ## @class Geo::OGR::Geometry
+# @isa (Geo::OGR)
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($type = $Geo::OGR::wkbUnknown, $wkt = undef, $wkb = undef, $gml = undef)
-# @param $type one of Geo::OGR::wkb*
-# @return Geo::OGR::Geometry object
+## @cmethod $new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
+# @deprecated
+# @param type one of Geo::OGR::wkb*
+# @param WKT
+# @param WKB
+# @param GML
+# @return a new Geo::OGR::Geometry object
 
-## @cmethod create($type | %params)
-# An alternative constructor, which supports named parameters and type
-# as string.
-# @param $type One of geometry types ('Point', 'LineString', etc.).
-# @param %params Named parameter, possible are: WKT, WKB, and GML.
-# @return Geo::OGR::Geometry object
+## @cmethod $create($type)
+# @param type One of geometry types ('Point', 'LineString', etc.).
+# @return a new Geo::OGR::Geometry object
 
-## @method ExportToWkt()
-# @return scalar (WKT string)
+## @cmethod $create(%params)
+# @param %params Named parameter, possible are: type, WKT, WKB, and GML.
+# @return a new Geo::OGR::Geometry object
 
-## @method ExportToWkb($byte_order = 'XDR')
-# @param $byte_order XDR or NDR
-# @return scalar (WKB binary string)
+## @method $ExportToWkt()
+# @return a WKT string
 
-## @method ExportToGML()
-# @return scalar (GML string)
+## @method $ExportToWkb($byte_order = 'XDR')
+# @param byte_order XDR or NDR
+# @return a WKB binary string
 
-## @method ExportToKML()
+## @method $ExportToGML()
+# @return a GML string
+
+## @method $ExportToKML()
+# @return KML string
 
 ## @method AddPoint($x, $y, $z = 0)
+# @param x
+# @param y
+# @param z
 # Calls internally the 2D or 3D version depending on the number of parameters.
 
-## @method AddPoint_2D()
+## @method AddPoint_2D($x, $y)
+# @param x
+# @param y
 # @deprecated 
 
-## @method AddPoint_3D()
+## @method AddPoint_3D($x, $y, $z)
+# @param x
+# @param y
+# @param z
 # @deprecated 
 
-## @method IsEmpty()
+## @method $IsEmpty()
 # @return boolean
 
-## @method IsRing()
+## @method $IsRing()
 # @return boolean
 
-## @method IsSimple()
+## @method $IsSimple()
 # @return boolean
 
-## @method IsValid()
+## @method $IsValid()
 # @return boolean
 
 ## @method Move($dx, $dy, $dz = 0)
+# @param dx
+# @param dy
+# @param dz
 
 ## @method AddGeometryDirectly($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (OGRErr)
+# @param other a Geo::OGR::Geometry object
 
 ## @method AddGeometry($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (OGRErr)
+# @param other a Geo::OGR::Geometry object
 
-## @method Clone()
-# @return Geo::OGR::Geometry object
+## @method $Clone()
+# @return a new Geo::OGR::Geometry object
 
-## @method GetGeometryType()
+## @method $GetGeometryType()
 # @deprecated 
 
-## @method GeometryType()
+## @method $GeometryType()
 # @return the geometry type
 
-## @method GetGeometryName()
-# @return scalar (string)
+## @method $GetGeometryName()
+# @deprecated
+# @return a string
 
-## @method GetArea()
-# @return scalar (double)
+## @method $GetArea()
+# @return a number
 
-## @method GetPointCount()
-# @return scalar (int)
+## @method $GetPointCount()
+# @return an integer
 
-## @method GetX($point = 0)
-# @return scalar (double)
+## @method $GetX($index = 0)
+# @param index
+# @return a number
 
-## @method GetY($point = 0)
-# @return scalar (double)
+## @method $GetY($index = 0)
+# @param index
+# @return a number
 
-## @method GetZ($point = 0)
-# @return scalar (double)
+## @method $GetZ($index = 0)
+# @param index
+# @return a number
 
-## @method GetGeometryCount()
-# @return scalar (int)
+## @method $GetGeometryCount()
+# @return an integer
 
-## @method SetPoint($point, $x, $y, $z = 0)
+## @method SetPoint($index, $x, $y, $z = 0)
+# @param index
+# @param x
+# @param y
+# @param z
 
-## @method GetGeometryRef($geom)
-# @param $geom scalar (int)
-# @return Geo::OGR::Geometry object
+## @method $GetGeometryRef($index)
+# @param index
+# @return a new Geo::OGR::Geometry object whose data is a part of the
+# parent geometry
 
-## @method GetBoundary()
-# @return Geo::OGR::Geometry object
+## @method $GetBoundary()
+# @return a new Geo::OGR::Geometry object
 
-## @method ConvexHull()
-# @return Geo::OGR::Geometry object
+## @method $ConvexHull()
+# @return a new Geo::OGR::Geometry object
 
-## @method Buffer($distance, $quadsecs = 30)
-# @return Geo::OGR::Geometry object
+## @method $Buffer($distance, $quadsecs = 30)
+# @param distance
+# @param quadsecs
+# @return a new Geo::OGR::Geometry object
 
-## @method Intersection($other)
-# @param $other Geo::OGR::Geometry object
-# @return Geo::OGR::Geometry object
+## @method $Intersection($other)
+# @param other a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object
 
-## @method Union($other)
-# @param $other Geo::OGR::Geometry object
-# @return Geo::OGR::Geometry object
+## @method $Union($other)
+# @param other a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object
 
-## @method Difference($other)
-# @param $other Geo::OGR::Geometry object
-# @return Geo::OGR::Geometry object
+## @method $Difference($other)
+# @param other a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object
 
-## @method SymmetricDifference($other)
-# @param $other Geo::OGR::Geometry object
-# @return Geo::OGR::Geometry object
+## @method $SymmetricDifference($other)
+# @param other a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object
 
-## @method Distance($other)
-# @param $other Geo::OGR::Geometry object
-# @return Geo::OGR::Geometry object
+## @method $Distance($other)
+# @param other a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object
 
 ## @method Empty()
+# Clear geometry data.
 
-## @method Intersect($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Intersect($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Equal($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Equal($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Disjoint($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Disjoint($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Touches($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Touches($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Crosses($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Crosses($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Within($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Within($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Contains($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Contains($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method Overlaps($other)
-# @param $other Geo::OGR::Geometry object
-# @return scalar (int)
+## @method $Overlaps($other)
+# @param other a Geo::OGR::Geometry object
+# @return boolean
 
-## @method TransformTo($reference)
-# @param $reference Geo::OSR::SpatialReference object
-# @return scalar (OGRErr)
+## @method TransformTo($srs)
+# @param srs a Geo::OSR::SpatialReference object
 
 ## @method Transform($trans)
-# @param $trans Geo::OSR::CoordinateTransformation object
-# @return scalar (OGRErr)
+# @param trans a Geo::OSR::CoordinateTransformation object
 
-## @method GetSpatialReference()
-# @return Geo::OSR::SpatialReference object
+## @method $GetSpatialReference()
+# @return a new Geo::OSR::SpatialReference object
 
-## @method AssignSpatialReference($reference)
-# @param $reference Geo::OSR::SpatialReference object
+## @method AssignSpatialReference($srs)
+# @param srs a Geo::OSR::SpatialReference object
 
 ## @method CloseRings()
 
 ## @method FlattenTo2D()
 
-## @method GetEnvelope()
+## @method \@GetEnvelope()
 # @return arrayref = [$minx, $maxx, $miny, $maxy]
 
-## @method Centroid()
-# @return Geo::OGR::Geometry object
+## @method $Centroid()
+# @return a new Geo::OGR::Geometry object
 
-## @method WkbSize()
-# @return scalar (int)
+## @method $WkbSize()
+# @return an integer
 
-## @method GetCoordinateDimension()
-# @return scalar (int)
+## @method $GetCoordinateDimension()
+# @return an integer
 
 ## @method SetCoordinateDimension($dimension)
+# @param dimension
 
-## @method GetDimension()
-# @return scalar (int)
+## @method $GetDimension()
+# @return an integer
