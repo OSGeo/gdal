@@ -711,6 +711,7 @@ OGRErr OGRSpatialReference::exportToXML( char **ppszRawXML,
         return OGRERR_UNSUPPORTED_SRS;
 
     *ppszRawXML = CPLSerializeXMLTree( psXMLTree );
+    CPLDestroyXMLNode( psXMLTree );
 
     return OGRERR_NONE;
 }
