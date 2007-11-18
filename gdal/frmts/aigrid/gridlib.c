@@ -837,7 +837,14 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /*      into the buffer.                                                */
 /* -------------------------------------------------------------------- */
     psTInfo->nBlocks = (nLength-100) / 8;
-    panIndex = (GUInt32 *) CPLMalloc(psTInfo->nBlocks * 8);
+    panIndex = (GUInt32 *) VSIMalloc(psTInfo->nBlocks * 8);
+    if (panIndex == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "AIGReadBlockIndex: Out of memory. Probably due to corrupted w001001x.adf file");
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
     VSIFSeekL( fp, 100, SEEK_SET );
     VSIFReadL( panIndex, 8, psTInfo->nBlocks, fp );
 
@@ -846,8 +853,18 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
 /*	Allocate AIGInfo block info arrays.				*/
 /* -------------------------------------------------------------------- */
-    psTInfo->panBlockOffset = (GUInt32 *) CPLMalloc(4 * psTInfo->nBlocks);
-    psTInfo->panBlockSize = (int *) CPLMalloc(4 * psTInfo->nBlocks);
+    psTInfo->panBlockOffset = (GUInt32 *) VSIMalloc(4 * psTInfo->nBlocks);
+    psTInfo->panBlockSize = (int *) VSIMalloc(4 * psTInfo->nBlocks);
+    if (psTInfo->panBlockOffset == NULL || 
+        psTInfo->panBlockSize == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "AIGReadBlockIndex: Out of memory. Probably due to corrupted w001001x.adf file");
+        CPLFree( psTInfo->panBlockOffset );
+        CPLFree( psTInfo->panBlockSize );
+        CPLFree( panIndex );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Populate the block information.                                 */
