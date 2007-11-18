@@ -887,7 +887,7 @@ RasterAttributeTable_swigregister(RasterAttributeTable)
 
 
 def VersionInfo(*args):
-  """VersionInfo(char ?="VERSION_NUM") -> char"""
+  """VersionInfo(char request="VERSION_NUM") -> char"""
   return _gdal.VersionInfo(*args)
 
 def AllRegister(*args):

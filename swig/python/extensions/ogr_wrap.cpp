@@ -3099,46 +3099,34 @@ SWIGINTERN OGRFieldDefnShadow *OGRFeatureShadow_GetFieldDefnRef__SWIG_0(OGRFeatu
     return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, id);
   }
 SWIGINTERN OGRFieldDefnShadow *OGRFeatureShadow_GetFieldDefnRef__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldDefnRef");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
-    }
-    return NULL;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+      return NULL;
   }
 SWIGINTERN char const *OGRFeatureShadow_GetFieldAsString__SWIG_0(OGRFeatureShadow *self,int id){
     return (const char *) OGR_F_GetFieldAsString(self, id);
   }
 SWIGINTERN char const *OGRFeatureShadow_GetFieldAsString__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsString");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return (const char *) OGR_F_GetFieldAsString(self, i);
-    }
-    return NULL;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return (const char *) OGR_F_GetFieldAsString(self, i);
+      return NULL;
   }
 SWIGINTERN int OGRFeatureShadow_GetFieldAsInteger__SWIG_0(OGRFeatureShadow *self,int id){
     return OGR_F_GetFieldAsInteger(self, id);
   }
 SWIGINTERN int OGRFeatureShadow_GetFieldAsInteger__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsInteger");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return OGR_F_GetFieldAsInteger(self, i);
-    }
-    return 0;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return OGR_F_GetFieldAsInteger(self, i);
+      return 0;
   }
 SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *self,int id){
     return OGR_F_GetFieldAsDouble(self, id);
@@ -3147,38 +3135,26 @@ SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *se
   #define SWIG_From_double   PyFloat_FromDouble 
 
 SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsDouble");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return OGR_F_GetFieldAsDouble(self, i);
-    }
-    return 0;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return OGR_F_GetFieldAsDouble(self, i);
+      return 0;
   }
 SWIGINTERN bool OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
     return OGR_F_IsFieldSet(self, id);
   }
 SWIGINTERN bool OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in IsFieldSet");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            return OGR_F_IsFieldSet(self, i);
-    }
-    return (bool)0;
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  return OGR_F_IsFieldSet(self, i);
+      return (bool)0;
   }
 SWIGINTERN int OGRFeatureShadow_GetFieldIndex(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldIndex");
-    else
-        return OGR_F_GetFieldIndex(self, name);
-    return 0;
+      return OGR_F_GetFieldIndex(self, name);
   }
 SWIGINTERN int OGRFeatureShadow_GetFID(OGRFeatureShadow *self){
     return OGR_F_GetFID(self);
@@ -3193,57 +3169,41 @@ SWIGINTERN void OGRFeatureShadow_UnsetField__SWIG_0(OGRFeatureShadow *self,int i
     OGR_F_UnsetField(self, id);
   }
 SWIGINTERN void OGRFeatureShadow_UnsetField__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in UnsetField");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_UnsetField(self, i);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_UnsetField(self, i);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_0(OGRFeatureShadow *self,int id,char const *value){
     OGR_F_SetFieldString(self, id, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_1(OGRFeatureShadow *self,char const *name,char const *value){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetField");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldString(self, i, value);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldString(self, i, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_2(OGRFeatureShadow *self,int id,int value){
     OGR_F_SetFieldInteger(self, id, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_3(OGRFeatureShadow *self,char const *name,int value){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetFieldInteger");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldInteger(self, i, value);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldInteger(self, i, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_4(OGRFeatureShadow *self,int id,double value){
     OGR_F_SetFieldDouble(self, id, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_5(OGRFeatureShadow *self,char const *name,double value){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetFieldDouble");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldDouble(self, i, value);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldDouble(self, i, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_6(OGRFeatureShadow *self,int id,int year,int month,int day,int hour,int minute,int second,int tzflag){
     OGR_F_SetFieldDateTime(self, id, year, month, day,
@@ -3251,17 +3211,13 @@ SWIGINTERN void OGRFeatureShadow_SetField__SWIG_6(OGRFeatureShadow *self,int id,
                              tzflag);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_7(OGRFeatureShadow *self,char const *name,int year,int month,int day,int hour,int minute,int second,int tzflag){
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in SetFieldDateTime");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else
-            OGR_F_SetFieldDateTime(self, i, year, month, day,
-                             hour, minute, second, 
-                             tzflag);
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+	  OGR_F_SetFieldDateTime(self, i, year, month, day,
+				 hour, minute, second, 
+				 tzflag);
   }
 SWIGINTERN OGRErr OGRFeatureShadow_SetFrom(OGRFeatureShadow *self,OGRFeatureShadow *other,int forgiving=1){
     return OGR_F_SetFrom(self, other, forgiving);
@@ -3276,25 +3232,20 @@ SWIGINTERN OGRFieldType OGRFeatureShadow_GetFieldType__SWIG_0(OGRFeatureShadow *
     return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, id));
   }
 SWIGINTERN OGRFieldType OGRFeatureShadow_GetFieldType__SWIG_1(OGRFeatureShadow *self,char const *name){
-    if (name == NULL) {
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldType");
-	return (OGRFieldType)0;
-    } else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1) {
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-            return (OGRFieldType)0;
-        } else
-            return (OGRFieldType) OGR_Fld_GetType( 
-                            OGR_F_GetFieldDefnRef( self,  i )
-                                          );
-    }
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1) {
+	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
+	  return (OGRFieldType)0;
+      } else
+	  return (OGRFieldType) OGR_Fld_GetType( 
+	      OGR_F_GetFieldDefnRef( self,  i )
+	      );
   }
 SWIGINTERN void delete_OGRFeatureDefnShadow(OGRFeatureDefnShadow *self){
     OGR_FD_Destroy(self);
   }
-SWIGINTERN OGRFeatureDefnShadow *new_OGRFeatureDefnShadow(char const *name=NULL){
-    return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
+SWIGINTERN OGRFeatureDefnShadow *new_OGRFeatureDefnShadow(char const *name_null_ok=NULL){
+    return (OGRFeatureDefnShadow* )OGR_FD_Create(name_null_ok);
   }
 SWIGINTERN char const *OGRFeatureDefnShadow_GetName(OGRFeatureDefnShadow *self){
     return OGR_FD_GetName(self);
@@ -3306,11 +3257,7 @@ SWIGINTERN OGRFieldDefnShadow *OGRFeatureDefnShadow_GetFieldDefn(OGRFeatureDefnS
     return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
   }
 SWIGINTERN int OGRFeatureDefnShadow_GetFieldIndex(OGRFeatureDefnShadow *self,char const *name){
-    if (name == NULL) {
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldIndex");
-	return 0;
-    } else
-	return OGR_FD_GetFieldIndex(self, name);
+      return OGR_FD_GetFieldIndex(self, name);
   }
 SWIGINTERN void OGRFeatureDefnShadow_AddFieldDefn(OGRFeatureDefnShadow *self,OGRFieldDefnShadow *defn){
     OGR_FD_AddFieldDefn(self, defn);
@@ -3327,8 +3274,8 @@ SWIGINTERN int OGRFeatureDefnShadow_GetReferenceCount(OGRFeatureDefnShadow *self
 SWIGINTERN void delete_OGRFieldDefnShadow(OGRFieldDefnShadow *self){
     OGR_Fld_Destroy(self);
   }
-SWIGINTERN OGRFieldDefnShadow *new_OGRFieldDefnShadow(char const *name="unnamed",OGRFieldType field_type=OFTString){
-    return (OGRFieldDefnShadow*) OGR_Fld_Create(name, field_type);
+SWIGINTERN OGRFieldDefnShadow *new_OGRFieldDefnShadow(char const *name_null_ok="unnamed",OGRFieldType field_type=OFTString){
+    return (OGRFieldDefnShadow*) OGR_Fld_Create(name_null_ok, field_type);
   }
 SWIGINTERN char const *OGRFieldDefnShadow_GetName(OGRFieldDefnShadow *self){
     return (const char *) OGR_Fld_GetNameRef(self);
@@ -3434,14 +3381,17 @@ SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,int *nLe
 SWIGINTERN char const *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self){
     return (const char *) OGR_G_ExportToGML(self);
   }
+SWIGINTERN char const *OGRGeometryShadow_ExportToKML(OGRGeometryShadow *self){
+    return (const char *) OGR_G_ExportToKML(self);
+  }
 SWIGINTERN void OGRGeometryShadow_AddPoint(OGRGeometryShadow *self,double x,double y,double z=0){
     OGR_G_AddPoint( self, x, y, z );
   }
 SWIGINTERN void OGRGeometryShadow_AddPoint_2D(OGRGeometryShadow *self,double x,double y){
     OGR_G_AddPoint_2D( self, x, y );
   }
-SWIGINTERN OGRErr OGRGeometryShadow_AddGeometryDirectly(OGRGeometryShadow *self,OGRGeometryShadow *other){
-    return OGR_G_AddGeometryDirectly( self, other );
+SWIGINTERN OGRErr OGRGeometryShadow_AddGeometryDirectly(OGRGeometryShadow *self,OGRGeometryShadow *other_disown){
+    return OGR_G_AddGeometryDirectly( self, other_disown );
   }
 SWIGINTERN OGRErr OGRGeometryShadow_AddGeometry(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_AddGeometry( self, other );
@@ -8120,7 +8070,7 @@ SWIGINTERN PyObject *_wrap_new_FeatureDefn(PyObject *SWIGUNUSEDPARM(self), PyObj
   int alloc1 = 0 ;
   PyObject * obj0 = 0 ;
   char *  kwnames[] = {
-    (char *) "name", NULL 
+    (char *) "name_null_ok", NULL 
   };
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"|O:new_FeatureDefn",kwnames,&obj0)) SWIG_fail;
@@ -8476,7 +8426,7 @@ SWIGINTERN PyObject *_wrap_new_FieldDefn(PyObject *SWIGUNUSEDPARM(self), PyObjec
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   char *  kwnames[] = {
-    (char *) "name",(char *) "field_type", NULL 
+    (char *) "name_null_ok",(char *) "field_type", NULL 
   };
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"|OO:new_FieldDefn",kwnames,&obj0,&obj1)) SWIG_fail;
@@ -9345,6 +9295,36 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToGML(PyObject *SWIGUNUSEDPARM(self), 
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
   {
     result = (char *)OGRGeometryShadow_ExportToGML(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_ExportToKML(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  char *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_ExportToKML",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ExportToKML" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (char *)OGRGeometryShadow_ExportToKML(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -11612,6 +11592,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt, METH_VARARGS, NULL},
 	 { (char *)"Geometry_ExportToWkb", (PyCFunction) _wrap_Geometry_ExportToWkb, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_ExportToGML", _wrap_Geometry_ExportToGML, METH_VARARGS, NULL},
+	 { (char *)"Geometry_ExportToKML", _wrap_Geometry_ExportToKML, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddPoint", (PyCFunction) _wrap_Geometry_AddPoint, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_AddPoint_2D", _wrap_Geometry_AddPoint_2D, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly, METH_VARARGS, NULL},
