@@ -124,7 +124,14 @@ AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDS, int nDataStart,
     nBlockYSize = 1;
 
     panLineOffset = 
-        (GUIntBig *) CPLCalloc( poDS->nRasterYSize, sizeof(GUIntBig) );
+        (GUIntBig *) VSICalloc( poDS->nRasterYSize, sizeof(GUIntBig) );
+    if (panLineOffset == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "AAIGRasterBand::AAIGRasterBand : Out of memory (nRasterYSize = %d)",
+                 poDS->nRasterYSize);
+        return;
+    }
     panLineOffset[0] = nDataStart;
 }
 
@@ -150,7 +157,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int         iPixel;
 
     if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1 
-        || nBlockXOff != 0 )
+        || nBlockXOff != 0 || panLineOffset == NULL)
         return CE_Failure;
 
     if( panLineOffset[nBlockYOff] == 0 )
@@ -549,7 +556,13 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, new AAIGRasterBand( poDS, nStartOfData, eDataType ) );
+    AAIGRasterBand* band = new AAIGRasterBand( poDS, nStartOfData, eDataType );
+    poDS->SetBand( 1, band );
+    if (band->panLineOffset == NULL)
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to read projection file.                                    */
