@@ -34,6 +34,24 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 		'Memory' => 1,
 		);
 
+if (0) {
+    {
+	my $ds = Geo::OGR::DataSource::Open('/data');
+	$l = $ds->GetLayerByIndex();
+    }
+    $l->GetSpatialFilter();
+    exit;
+}
+
+{
+    my $d = Geo::OGR::FeatureDefn->new;
+    my $f = Geo::OGR::Feature->new($d);
+    my $g = Geo::OGR::Geometry->create('Point');
+    $f->SetGeometry($g);
+    $g2 = $f->GetGeometry;
+}
+$g2->GetDimension; # does not cause a kaboom
+
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
 
@@ -114,7 +132,7 @@ sub ogr_tests {
 	$available_driver{$name} = 1;
 	mytest('skipped: not tested',undef,$name,'test'),next unless $test_driver{$name};
 	
-	if (!$driver->TestCapability($Geo::OGR::ODrCCreateDataSource)) {
+	if (!$driver->TestCapability('CreateDataSource')) {
 	    mytest('skipped: no capability',undef,$name,'datasource create');
 	    next;
 	}
