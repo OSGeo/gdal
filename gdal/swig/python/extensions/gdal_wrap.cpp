@@ -4178,6 +4178,10 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(newfree) char **options */
+    CSLDestroy( result );
+  }
   return resultobj;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
