@@ -41,6 +41,7 @@ class OGRGeoJSONLayer : public OGRLayer
 public:
 
     static const char* const DefaultName;
+    static const char* const DefaultFIDColumn;
     static const OGRwkbGeometryType DefaultGeometryType;
  
     OGRGeoJSONLayer( const char* pszName,
@@ -58,12 +59,16 @@ public:
     int GetFeatureCount( int bForce = TRUE );
     void ResetReading();
     OGRFeature* GetNextFeature();
+    OGRFeature* GetFeature( long nFID );
     OGRErr CreateFeature( OGRFeature* poFeature );
     int TestCapability( const char* pszCap );
+    const char* GetFIDColumn();
+    void SetFIDColumn( const char* pszFIDColumn );
     
     //
     // OGRGeoJSONLayer Interface
     //
+    void AddFeature( OGRFeature* poFeature );
     void DetectGeometryType();
     bool EvaluateSpatialFilter( OGRGeometry* poGeometry );
 
@@ -74,6 +79,7 @@ private:
     FeaturesSeq::iterator iterCurrent_;
     OGRFeatureDefn* poFeatureDefn_;
     OGRSpatialReference* poSRS_;
+    CPLString sFIDColumn_;
 };
 
 /************************************************************************/

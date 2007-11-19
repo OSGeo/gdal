@@ -34,6 +34,7 @@
 /************************************************************************/
 
 const char* const OGRGeoJSONLayer::DefaultName = "OGRGeoJSON";
+const char* const OGRGeoJSONLayer::DefaultFIDColumn = "id";
 const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 
 /************************************************************************/
@@ -215,6 +216,18 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*                           GetFeature                             */
+/************************************************************************/
+
+OGRFeature* OGRGeoJSONLayer::GetFeature( long nFID )
+{
+	OGRFeature* poFeature = NULL;
+	poFeature = OGRLayer::GetFeature( nFID );
+
+	return poFeature;
+}
+
+/************************************************************************/
 /*                           CreateFeature                              */
 /************************************************************************/
 
@@ -226,19 +239,6 @@ OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
         return OGRERR_INVALID_HANDLE;
     }
 
-    // TODO: Should we check if feature already exists?
-    // TODO: Think about sync operation, upload, etc.
-
-    OGRFeature* poNewFeature = NULL;
-    poNewFeature = poFeature->Clone();
-    
-    const int nID = static_cast<int>( seqFeatures_.size() );
-    poNewFeature->SetFID( nID );
-    seqFeatures_.push_back( poNewFeature );
-
-    // TOOD: Should we sort sequence (according FID) after
-    //       new feature is added?
-
     return OGRERR_NONE;
 }
 
@@ -249,6 +249,55 @@ OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
 int OGRGeoJSONLayer::TestCapability( const char* pszCap )
 {
     return FALSE;
+}
+
+/************************************************************************/
+/*                           GetFIDColumn                               */
+/************************************************************************/
+	
+const char* OGRGeoJSONLayer::GetFIDColumn()
+{
+	return sFIDColumn_.c_str();
+}
+
+/************************************************************************/
+/*                           SetFIDColumn                               */
+/************************************************************************/
+
+void OGRGeoJSONLayer::SetFIDColumn( const char* pszFIDColumn )
+{
+	sFIDColumn_ = pszFIDColumn;
+}
+
+/************************************************************************/
+/*                           AddFeature                                 */
+/************************************************************************/
+
+void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
+{
+    CPLAssert( NULL != poFeature );
+
+    // NOTE - mloskot:
+    // Features may not be sorted according to FID values.
+
+    // TODO: Should we check if feature already exists?
+    // TODO: Think about sync operation, upload, etc.
+
+    OGRFeature* poNewFeature = NULL;
+    poNewFeature = poFeature->Clone();
+
+
+    if( -1 == poNewFeature->GetFID() )
+    {
+        int nFID = static_cast<int>(seqFeatures_.size());
+        poNewFeature->SetFID( nFID );
+
+        int nField = poNewFeature->GetFieldIndex( DefaultFIDColumn );
+        CPLAssert( -1 != nField );
+        poNewFeature->SetField( nField, nFID );
+    }
+
+    seqFeatures_.push_back( poNewFeature );
 }
 
 /************************************************************************/
