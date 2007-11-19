@@ -48,15 +48,23 @@ struct Coordinate
     double dfLongitude;
     double dfLatitude;
     double dfAltitude;
+
+    Coordinate()
+        : dfLongitude(0), dfLatitude(0), dfAltitude(0)
+    {}
 };
 
 struct Feature
 {
-    std::string sName;
     Nodetype eType;
+    std::string sName;
     std::string sDescription;
-    std::vector<Coordinate*> *pvpsCoordinates;
-    std::vector< std::vector<Coordinate*>* > *pvpsCoordinatesExtra;
+    std::vector<Coordinate*>* pvpsCoordinates;
+    std::vector< std::vector<Coordinate*>* >* pvpsCoordinatesExtra;
+
+    Feature()
+        : eType(Unknown), pvpsCoordinates(NULL), pvpsCoordinatesExtra(NULL)
+    {}
 };
 
 struct Extent
@@ -65,6 +73,10 @@ struct Extent
     double dfX2;
     double dfY1;
     double dfY2;
+
+    Extent()
+        : dfX1(0), dfX2(0), dfY1(0), dfY2(0)
+    {}
 };
 
 #endif /* OGR_KMLUTILITY_H_INCLUDED */
