@@ -11,49 +11,49 @@
 ## @ignore this
 
 ## @attr GDT_Unknown
-# @deprecated
+# @deprecated use string 'Unknown' instead
 
 ## @attr GDT_Byte
-# @deprecated
+# @deprecated use string 'Byte' instead
 
 ## @attr GDT_UInt16
-# @deprecated
+# @deprecated use string 'UInt16' instead
 
 ## @attr GDT_Int16
-# @deprecated
+# @deprecated use string 'Int16' instead
 
 ## @attr GDT_UInt32
-# @deprecated
+# @deprecated use string 'UInt32' instead
 
 ## @attr GDT_Int32
-# @deprecated
+# @deprecated use string 'Int32' instead
 
 ## @attr GDT_Float32
-# @deprecated
+# @deprecated use string 'Float32' instead
 
 ## @attr GDT_Float64
-# @deprecated
+# @deprecated use string 'Float64' instead
 
 ## @attr GDT_CInt16
-# @deprecated
+# @deprecated use string 'CInt16' instead
 
 ## @attr GDT_CInt32
-# @deprecated
+# @deprecated use string 'CInt32' instead
 
 ## @attr GDT_CFloat32
-# @deprecated
+# @deprecated use string 'CFloat32' instead
 
 ## @attr GDT_CFloat64
-# @deprecated
+# @deprecated use string 'CFloat64' instead
 
 ## @attr GDT_TypeCount
 # @deprecated
 
 ## @attr GA_ReadOnly
-# @deprecated
+# @deprecated use string 'ReadOnly' instead
 
 ## @attr GA_Update
-# @deprecated
+# @deprecated use string 'Update' instead
 
 ## @attr GF_Read
 # @deprecated
