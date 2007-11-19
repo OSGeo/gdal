@@ -57,6 +57,16 @@ if (0) {
     my $driver = Geo::GDAL::GetDriverByName('MEM');
     my $dataset = $driver->Create('tmp', 10, 10, 1 , 'Int32', []);
     my $band = $dataset->GetRasterBand(1);
+
+    $colors = $band->ColorTable(Geo::GDAL::ColorTable->new);
+    @table = $colors->ColorTable([10,20,30,40],[20,20,30,40]);
+    for (@table) {
+	@$_ = (1,2,3,4) if $_->[0] == 10;
+    }
+    @table2 = $colors->ColorTable(@table);
+    ok($table[1]->[1] == 20, "colortable 1");
+    ok($table2[0]->[2] == 3, "colortable 2");
+
     my @data;
     for my $yoff (0..9) {
 	push @data, [$yoff..9+$yoff];

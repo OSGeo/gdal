@@ -1,5 +1,11 @@
 /*! \mainpage Geo::GDAL
 
+\section index_version Version
+
+These pages document the forthcoming version 1.5 API, which is still
+under construction. The documentation for the version 1.4 is available
+<a href="http://map.hut.fi/doc/Geo-GDAL-1.4/html/index.html">here</a>.
+
 \section index_intro Introduction
 
 The Geo::GDAL modules are the Perl bindings to the GDAL/OGR
