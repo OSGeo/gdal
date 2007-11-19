@@ -1042,7 +1042,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
             poFeature->SetFID( json_object_get_int( poObjId ) );
             int nField = poFeature->GetFieldIndex( poLayer_->GetFIDColumn() );
             if( -1 != nField )
-                poFeature->SetField( nField, poFeature->GetFID() );
+                poFeature->SetField( nField, (int) poFeature->GetFID() );
         }
     }
 
