@@ -35,6 +35,7 @@
 /************************************************************************/
 /*                          ~OGRKMLDriver()                           */
 /************************************************************************/
+
 OGRKMLDriver::~OGRKMLDriver()
 {
 }
@@ -42,6 +43,7 @@ OGRKMLDriver::~OGRKMLDriver()
 /************************************************************************/
 /*                              GetName()                               */
 /************************************************************************/
+
 const char *OGRKMLDriver::GetName()
 {
     return "KML";
@@ -50,42 +52,46 @@ const char *OGRKMLDriver::GetName()
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
-OGRDataSource *OGRKMLDriver::Open( const char * pszFilename,
-                                   int bUpdate )
-{
-#ifdef HAVE_EXPAT
-    CPLAssert( NULL != pszFilename );
 
+OGRDataSource *OGRKMLDriver::Open( const char * pszName, int bUpdate )
+{
+    CPLAssert( NULL != pszName );
+
+    OGRKMLDataSource* poDS = NULL;
+
+#ifdef HAVE_EXPAT
     if( bUpdate )
         return NULL;
 
-    OGRKMLDataSource* poDS = new OGRKMLDataSource();
+    poDS = new OGRKMLDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE ) )
+    if( poDS->Open( pszName, TRUE ) )
+    {
+        if( poDS->GetLayerCount() == 0 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                "No layers in KML file: %s.", pszName );
+
+            delete poDS;
+            poDS = NULL;
+        }
+    }
+    else
     {
         delete poDS;
-        return NULL;
+        poDS = NULL;
     }
-
-    if( poDS->GetLayerCount() == 0 )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "No layers in KML file: %s.", pszFilename );
-        delete poDS;
-        return NULL;
-    }
+#endif
 
     return poDS;
-#else
-    return NULL;
-#endif
 }
 
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/
-OGRDataSource *OGRKMLDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
+
+OGRDataSource *OGRKMLDriver::CreateDataSource( const char* pszName,
+                                               char** papszOptions )
 {
     CPLAssert( NULL != pszName );
     CPLDebug( "KML", "Attempt to create: %s", pszName );
@@ -104,7 +110,8 @@ OGRDataSource *OGRKMLDriver::CreateDataSource( const char * pszName,
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
-int OGRKMLDriver::TestCapability( const char * pszCap )
+
+int OGRKMLDriver::TestCapability( const char* pszCap )
 {
     if( EQUAL(pszCap, ODrCCreateDataSource) )
         return TRUE;
@@ -115,9 +122,9 @@ int OGRKMLDriver::TestCapability( const char * pszCap )
 /************************************************************************/
 /*                           RegisterOGRKML()                           */
 /************************************************************************/
+
 void RegisterOGRKML()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRKMLDriver );
 }
-
 
