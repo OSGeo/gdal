@@ -224,6 +224,9 @@ No known bug
         /* 
          * It would be more efficient to do this inline, to avoid 
          * a function call for each comparison.
+	 * NOTE - mloskot: make llCompareInt a functor and use std
+	 * algorithm and it will be optimized and expanded
+	 * automatically in compile-time, with modularity preserved.
          */
         qsort(polyInts, ints, sizeof(int), llCompareInt);
 
