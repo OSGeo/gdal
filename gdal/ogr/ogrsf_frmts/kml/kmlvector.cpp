@@ -32,7 +32,11 @@
 // std
 #include <string>
 
-bool KMLvector::isLeaf(std::string const& sIn) const {
+KMLVector::~KMLVector()
+{
+}
+
+bool KMLVector::isLeaf(std::string const& sIn) const {
     if( sIn.compare("name") == 0 ||
         sIn.compare("coordinates") == 0 ||
         sIn.compare("altitudeMode") == 0 ||
@@ -43,7 +47,7 @@ bool KMLvector::isLeaf(std::string const& sIn) const {
 
 // Container - FeatureContainer - Feature
 
-bool KMLvector::isContainer(std::string const& sIn) const {
+bool KMLVector::isContainer(std::string const& sIn) const {
     if(sIn.compare("Folder") == 0 ||
         sIn.compare("Document") == 0 ||
         sIn.compare("kml") == 0)
@@ -51,14 +55,14 @@ bool KMLvector::isContainer(std::string const& sIn) const {
     return false;
 }
 
-bool KMLvector::isFeatureContainer(std::string const& sIn) const {
+bool KMLVector::isFeatureContainer(std::string const& sIn) const {
     if(sIn.compare("MultiGeometry") == 0 ||
         sIn.compare("Placemark") == 0)
         return true;
     return false;
 }
 
-bool KMLvector::isFeature(std::string const& sIn) const {
+bool KMLVector::isFeature(std::string const& sIn) const {
     if(sIn.compare("Polygon") == 0 ||
         sIn.compare("LineString") == 0 ||
         sIn.compare("Point") == 0)
@@ -66,7 +70,7 @@ bool KMLvector::isFeature(std::string const& sIn) const {
     return false;
 }
 
-bool KMLvector::isRest(std::string const& sIn) const {
+bool KMLVector::isRest(std::string const& sIn) const {
     if(sIn.compare("outerBoundaryIs") == 0 ||
         sIn.compare("innerBoundaryIs") == 0 ||
         sIn.compare("LinearRing") == 0)
@@ -74,14 +78,16 @@ bool KMLvector::isRest(std::string const& sIn) const {
     return false;
 }
 
-void KMLvector::findLayers(KMLnode *poWork) {
+void KMLVector::findLayers(KMLNode *poWork)
+{
     unsigned short z;
     bool bEmpty = true;
 
     // Start with the trunk
-    if(poWork == NULL) {
-        this->nNumLayers = 0;
-        poWork = this->poTrunk;
+    if(poWork == NULL)
+    {
+        nNumLayers_ = 0;
+        poWork = poTrunk_;
     }
 
     if(this->isFeature(poWork->getName()) || 
@@ -102,7 +108,7 @@ void KMLvector::findLayers(KMLnode *poWork) {
         if(poWork->getType() == Mixed) {
             CPLDebug("KML", "We have a mixed container here!");
         } else if(this->isFeature(Nodetype2String(poWork->getType()))) {
-            poWork->setLayerNumber(this->nNumLayers++);
+            poWork->setLayerNumber(this->nNumLayers_++);
         } else {
             CPLDebug("KML", "We have a strange type here: %s", Nodetype2String(poWork->getType()).c_str());
         }
@@ -111,8 +117,4 @@ void KMLvector::findLayers(KMLnode *poWork) {
         this->print();
     }
 }
-
-KMLvector::~KMLvector() {
-}
-
 
