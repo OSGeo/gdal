@@ -36,85 +36,119 @@ KMLVector::~KMLVector()
 {
 }
 
-bool KMLVector::isLeaf(std::string const& sIn) const {
-    if( sIn.compare("name") == 0 ||
-        sIn.compare("coordinates") == 0 ||
-        sIn.compare("altitudeMode") == 0 ||
-        sIn.compare("description") == 0)
+bool KMLVector::isLeaf(std::string const& sIn) const
+{
+    if( sIn.compare("name") == 0
+        || sIn.compare("coordinates") == 0
+        || sIn.compare("altitudeMode") == 0
+        || sIn.compare("description") == 0 )
+    {
         return true;
+    }
     return false;
 }
 
 // Container - FeatureContainer - Feature
 
-bool KMLVector::isContainer(std::string const& sIn) const {
-    if(sIn.compare("Folder") == 0 ||
-        sIn.compare("Document") == 0 ||
-        sIn.compare("kml") == 0)
-        return true;
-    return false;
-}
-
-bool KMLVector::isFeatureContainer(std::string const& sIn) const {
-    if(sIn.compare("MultiGeometry") == 0 ||
-        sIn.compare("Placemark") == 0)
-        return true;
-    return false;
-}
-
-bool KMLVector::isFeature(std::string const& sIn) const {
-    if(sIn.compare("Polygon") == 0 ||
-        sIn.compare("LineString") == 0 ||
-        sIn.compare("Point") == 0)
-        return true;
-    return false;
-}
-
-bool KMLVector::isRest(std::string const& sIn) const {
-    if(sIn.compare("outerBoundaryIs") == 0 ||
-        sIn.compare("innerBoundaryIs") == 0 ||
-        sIn.compare("LinearRing") == 0)
-        return true;
-    return false;
-}
-
-void KMLVector::findLayers(KMLNode *poWork)
+bool KMLVector::isContainer(std::string const& sIn) const
 {
-    unsigned short z;
+    if( sIn.compare("Folder") == 0
+        || sIn.compare("Document") == 0
+        || sIn.compare("kml") == 0 )
+    {
+        return true;
+    }
+    return false;
+}
+
+bool KMLVector::isFeatureContainer(std::string const& sIn) const
+{
+    if( sIn.compare("MultiGeometry") == 0
+        || sIn.compare("Placemark") == 0 )
+    {
+        return true;
+    }
+    return false;
+}
+
+bool KMLVector::isFeature(std::string const& sIn) const
+{
+    if( sIn.compare("Polygon") == 0
+        || sIn.compare("LineString") == 0
+        || sIn.compare("Point") == 0 )
+    {
+        return true;
+    }
+    return false;
+}
+
+bool KMLVector::isRest(std::string const& sIn) const
+{
+    if( sIn.compare("outerBoundaryIs") == 0
+        || sIn.compare("innerBoundaryIs") == 0
+        || sIn.compare("LinearRing") == 0 )
+    {
+        return true;
+    }
+    return false;
+}
+
+void KMLVector::findLayers(KMLNode* poNode)
+{
     bool bEmpty = true;
 
     // Start with the trunk
-    if(poWork == NULL)
+    if( NULL == poNode )
     {
         nNumLayers_ = 0;
-        poWork = poTrunk_;
+        poNode = poTrunk_;
     }
 
-    if(this->isFeature(poWork->getName()) || 
-        this->isFeatureContainer(poWork->getName()) ||
-        (this->isRest(poWork->getName()) && poWork->getName().compare("kml") != 0))
+    if( isFeature(poNode->getName())
+        || isFeatureContainer(poNode->getName())
+        || ( isRest(poNode->getName())
+             && poNode->getName().compare("kml") != 0 ) )
+    {
         return;
-    else if(this->isContainer(poWork->getName())) {
-        for(z = 0; z < poWork->countChildren(); z++) {
-            if(this->isContainer(poWork->getChild(z)->getName())) {
-                this->findLayers(poWork->getChild(z));
-            } else if(this->isFeatureContainer(poWork->getChild(z)->getName())) {
+    }
+    else if( isContainer(poNode->getName()) )
+    {
+        for( int z = 0; z < poNode->countChildren(); z++ )
+        {
+            if( isContainer(poNode->getChild(z)->getName()) )
+            {
+                findLayers(poNode->getChild(z));
+            }
+            else if( isFeatureContainer(poNode->getChild(z)->getName()) )
+            {
                 bEmpty = false;
             }
         }
+
         if(bEmpty)
+        {
             return;
-        CPLDebug("KML", "findLayers: %s", Nodetype2String(poWork->getType()).c_str());
-        if(poWork->getType() == Mixed) {
-            CPLDebug("KML", "We have a mixed container here!");
-        } else if(this->isFeature(Nodetype2String(poWork->getType()))) {
-            poWork->setLayerNumber(this->nNumLayers_++);
-        } else {
-            CPLDebug("KML", "We have a strange type here: %s", Nodetype2String(poWork->getType()).c_str());
         }
-    } else {
+
+        CPLDebug("KML", "findLayers: %s", Nodetype2String(poNode->getType()).c_str());
+        
+        if( poNode->getType() == Mixed )
+        {
+            CPLDebug("KML", "We have a mixed container here!");
+        }
+        else if( isFeature(Nodetype2String(poNode->getType())) )
+        {
+            poNode->setLayerNumber(nNumLayers_++);
+        }
+        else
+        {
+            CPLDebug("KML", "We have a strange type here: %s", Nodetype2String(poNode->getType()).c_str());
+        }
+    }
+    else
+    {
         CPLDebug("KML", "There is something wrong!!!");
-        this->print();
+        print();
     }
 }
 
