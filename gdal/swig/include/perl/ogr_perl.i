@@ -106,6 +106,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_GetLayerByName) GetLayerByName;
 %rename (_CreateLayer) CreateLayer;
 %rename (_GetFieldType) GetFieldType;
+%rename (_SetGeometryDirectly) SetGeometryDirectly;
 %rename (_ExportToWkb) ExportToWkb;
 %rename (_GetDriver) GetDriver;
 
@@ -141,6 +142,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		push @cap, $cap if TestCapability($self, $cap);
 	    }
 	    return @cap;
+	}
+	sub new {
+	    my $pkg = shift;
+	    return Geo::OGR::Open(@_);
 	}
 	sub Open {
 	    return Geo::OGR::Open(@_);
@@ -206,15 +211,34 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return @cap;
 	}
 	package Geo::OGR::FeatureDefn;
+	sub Schema {
+	    my $self = shift;
+	    my %schema;
+	    if (@_) {
+		%schema = @_;
+		# the Name cannot be set
+		$self->GeomType($schema{GeometryType}) if exists $schema{GeometryType};
+		for my $fd (@{$schema{Fields}}) {
+		    AddFieldDefn($self, $fd);
+		}
+	    }
+	    return unless defined wantarray;
+	    $schema{Name} = $self->GetName();
+	    $schema{GeometryType} = $self->GeomType();
+	    $schema{Fields} = [];
+	    for my $i (0..$self->GetFieldCount-1) {
+		push @{$schema{Fields}}, $self->GetFieldDefn($i);
+	    }
+	    return \%schema;
+	}
 	sub GeomType {
 	    my($self, $type) = @_;
-	    if (defined $type) {
+	    if ($type) {
 		$type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type} if 
 		    $type and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
 		SetGeomType($self, $type);
-	    } else {
-		return GetGeomType($self);
 	    }
+	    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
 	}
 	package Geo::OGR::Feature;
 	use vars qw /%GEOMETRIES/;
@@ -222,9 +246,18 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my($self, $field) = @_;
 	    return $Geo::OGR::Geometry::TYPE_INT2STRING{_GetFieldType($self, $field)};
 	}
+	sub Geometry {
+	    my $self = shift;
+	    SetGeometry($self, $_[0]) if @_;
+	    GetGeometryRef($self)->Clone() if defined wantarray;
+	}
+	sub SetGeometryDirectly {
+	    _SetGeometryDirectly(@_);
+	    $GEOMETRIES{tied(%{$_[1]})} = $_[0];
+	}
 	sub GetGeometry {
 	    my $self = shift;
-	    my $geom =GetGeometryRef($self);
+	    my $geom = GetGeometryRef($self);
 	    $GEOMETRIES{tied(%$geom)} = $self;
 	    return $geom;
 	}
@@ -246,40 +279,79 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub create {
 	    my $pkg = shift;
-	    my @p = @_;
-	    $p[1] = $TYPE_STRING2INT{$p[1]} if $p[1] and exists $TYPE_STRING2INT{$p[1]};
-	    my $self = Geo::OGRc::new_FieldDefn(@p);
-	    bless $self, $pkg if defined($self);
+	    my %param = ( Name => 'unnamed', Type => 'String' );
+	    if (@_ == 0) {
+	    } elsif (@_ == 1) {
+		$param{Name} = shift;
+	    } else {
+		my %known = map {$_ => 1} qw/Name Type Justify Width Precision/;
+		unless ($known{$_[0]}) {
+		    $param{Name} = shift;
+		    $param{Type} = shift;
+		} else {
+		    my %p = @_;
+		    for my $k (keys %known) {
+			$param{$k} = $p{$k} if exists $p{$k};
+		    }
+		}
+	    }
+	    $param{Type} = $TYPE_STRING2INT{$param{Type}} if defined $param{Type} and exists $TYPE_STRING2INT{$param{Type}};
+	    my $self = Geo::OGRc::new_FieldDefn($param{Name}, $param{Type});
+	    if (defined($self)) {
+		bless $self, $pkg;
+		$self->Justify($param{Justify}) if exists $param{Justify};
+		$self->Width($param{Width}) if exists $param{Width};
+		$self->Precision($param{Precision}) if exists $param{Precision};
+	    }
+	    return $self;
 	}
 	sub Name {
-	    my($self, $name) = @_;
-	    defined $name ? SetName($self, $name) : GetName($self);
+	    my $self = shift;
+	    SetName($self, $_[0]) if @_;
+	    GetName($self) if defined wantarray;
 	}
 	sub Type {
 	    my($self, $type) = @_;
 	    if (defined $type) {
 		$type = $TYPE_STRING2INT{$type} if $type and exists $TYPE_STRING2INT{$type};
 		SetType($self, $type);
-	    } else {
-		return $TYPE_INT2STRING{GetType($self)};
 	    }
+	    return $TYPE_INT2STRING{GetType($self)} if defined wantarray;
 	}
 	sub Justify {
 	    my($self, $justify) = @_;
 	    if (defined $justify) {
 		$justify = $JUSTIFY_STRING2INT{$justify} if $justify and exists $JUSTIFY_STRING2INT{$justify};
 		SetJustify($self, $justify);
-	    } else {
-		return $JUSTIFY_INT2STRING{GetJustify($self)};
 	    }
+	    return $JUSTIFY_INT2STRING{GetJustify($self)} if defined wantarray;
 	}
 	sub Width {
-	    my($self, $w) = @_;
-	    defined $w ? SetWidth($self, $w) : GetWidth($self);
+	    my $self = shift;
+	    SetWidth($self, $_[0]) if @_;
+	    GetWidth($self) if defined wantarray;
 	}
 	sub Precision {
-	    my($self, $p) = @_;
-	    defined $p ? SetPrecision($self, $p) : GetPrecision($self);
+	    my $self = shift;
+	    SetPrecision($self, $_[0]) if @_;
+	    GetPrecision($self) if defined wantarray;
+	}
+	sub Schema {
+	    my $self = shift;
+	    if (@_) {
+		my %param = @_;
+ 		$self->Name($param{Name}) if exists $param{Name};
+		$self->Type($param{Type}) if exists $param{Type};
+		$self->Justify($param{Justify}) if exists $param{Justify};
+		$self->Width($param{Width}) if exists $param{Width};
+		$self->Precision($param{Precision}) if exists $param{Precision};
+	    }
+	    return unless defined wantarray;
+	    return { Name => $self->Name, 
+		     Type  => $self->Type,
+		     Justify  => $self->Justify,
+		     Width  => $self->Width,
+		     Precision => $self->Precision };
 	}
 	package Geo::OGR::Geometry;
 	use Carp;
@@ -337,6 +409,78 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub AddPoint {
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
+	}
+	sub Points {
+	    my $self = shift;
+	    my $t = $self->GetGeometryType;
+	    my $flat = $t & 0x80000000 == 0;
+	    $t = $TYPE_INT2STRING{$t & ~0x80000000};
+	    my $points = shift;
+	    if ($points) {
+		Empty();
+		if ($t eq 'Unknown' or $t eq 'None' or $t eq 'GeometryCollection') {
+		    croak("Can't set points of a geometry of type: $t");
+		} elsif ($t eq 'Point') {
+		    $flat ? AddPoint_2D(@$points) : AddPoint_3D(@$points);
+		} elsif ($t eq 'LineString' or $t eq 'LinearRing') {
+		    for my $p (@$points) {
+			$flat ? AddPoint_2D(@$p) : AddPoint_3D(@$p);
+		    }
+		} elsif ($t eq 'Polygon') {
+		    for my $r (@$points) {
+			my $ring = Geo::OGR::Geometry->new($flat ? 'LinearRing' : 'LinearRing25D');
+			$ring->Points($r);
+			$self->AddGeometryDirectly($ring);
+		    }
+		} elsif ($t eq 'MultiPoint') {
+		    for my $p (@$points) {
+			my $point = Geo::OGR::Geometry->new($flat ? 'Point' : 'Point25D');
+			$point->Points($p);
+			$self->AddGeometryDirectly($point);
+		    }
+		} elsif ($t eq 'MultiLineString') {
+		    for my $l (@$points) {
+			my $linestring = Geo::OGR::Geometry->new($flat ? 'LineString' : 'LineString25D');
+			$linestring->Points($l);
+			$self->AddGeometryDirectly($linestring);
+		    }
+		} elsif ($t eq 'MultiPolygon') {
+		    for my $p (@$points) {
+			my $polygon = Geo::OGR::Geometry->new($flat ? 'Polygon' : 'Polygon25D');
+			$polygon->Points($p);
+			$self->AddGeometryDirectly($polygon);
+		    }
+		}
+	    }
+	    return unless defined wantarray;
+	    $self->_GetPoints($flat);
+	}
+	sub _GetPoints {
+	    my($self, $flat) = @_;
+	    my @points;
+	    my $n = $self->GetGeometryCount;
+	    if ($n) {
+		for my $i (0..$n-1) {
+		    push @points, $self->GetGeometryRef($i)->_GetPoints($flat);
+		}
+	    } else {
+		$n = $self->GetPointCount;
+		if ($n == 1) {
+		    push @points, $flat ? [$self->GetX, $self->GetY] : [$self->GetX, $self->GetY, $self->GetZ];
+		} else {
+		    my $i;
+		    if ($flat) {
+			for my $i (0..$n-1) {
+			    push @points, [$self->GetX($i), $self->GetY($i)];
+			}
+		    } else {
+			for my $i (0..$n-1) {
+			    push @points, [$self->GetX($i), $self->GetY($i), $self->GetZ($i)];
+			}
+		    }
+		}
+	    }
+	    return \@points;
 	}
 	sub ExportToWkb {
 	    my($self, $bo) = @_;

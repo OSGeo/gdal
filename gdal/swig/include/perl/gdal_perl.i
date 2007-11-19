@@ -172,14 +172,16 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::MajorObject;
     sub Description {
 	my($self, $desc) = @_;
-	defined $desc ? SetDescription($self, $desc) : GetDescription($self);
+	SetDescription($self, $desc) if defined $desc;
+	GetDescription($self) if defined wantarray;
     }
     sub Metadata {
 	my $self = shift;
 	my $metadata = shift if ref $_[0];
 	my $domain = shift;
 	$domain = '' unless defined $domain;
-	defined $metadata ? SetMetadata($self, $metadata, $domain) : GetMetadata($self, $domain);
+	SetMetadata($self, $metadata, $domain) if defined $metadata;
+	GetMetadata($self, $domain) if defined wantarray;
     }
     package Geo::GDAL::Driver;
     sub Create {
@@ -205,6 +207,29 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my @p = @_;
 	$p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]} if $p[1] and exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
 	return _AddBand(@p);
+    }
+    sub Projection {
+	my($self, $proj) = @_;
+	SetProjection($self, $proj) if defined $proj;
+	GetProjection($self) if defined wantarray;
+    }
+    sub GeoTransform {
+	my $self = shift;
+	SetGeoTransform($self, \@_) if @_ > 0;
+	return unless defined wantarray;
+	my $t = GetGeoTransform($self);
+	return @$t;
+    }
+    sub GCPs {
+	my $self = shift;
+	if (@_ > 0) {
+	    my $proj = pop @_;
+	    SetGCPs($self, \@_, $proj);
+	}
+	return unless defined wantarray;
+	my $proj = GetGCPProjection($self);
+	my $GCPs = GetGCPs($self);
+	return (@$GCPs, $proj);
     }
     package Geo::GDAL::Band;
     use vars qw/
@@ -234,6 +259,19 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     sub RELEASE_PARENTS {
 	my $self = shift;
 	delete $Geo::GDAL::Dataset::BANDS{$self};
+    }
+    sub Size {
+	my $self = shift;
+	return ($self->{XSize}, $self->{YSize});
+    }
+    sub DataType {
+	my $self = shift;
+	return $Geo::GDAL::TYPE_INT2STRING{$self->{DataType}};
+    }
+    sub NoDataValue {
+	my $self = shift;
+	SetNoDataValue($self, $_[0]) if @_ > 0;
+	GetNoDataValue($self);
     }
     sub ReadTile {
 	my($self, $xoff, $yoff, $xsize, $ysize) = @_;
@@ -280,8 +318,9 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	}
     }
     sub ColorTable {
-	my($self, $ct) = @_;
-	$ct ? SetRasterColorTable($self, $ct) : GetRasterColorTable($self);
+	my $self = shift;
+	SetRasterColorTable($self, $_[0]) if @_ > 0;
+	GetRasterColorTable($self);
     }
     package Geo::GDAL::ColorTable;
     use vars qw/
@@ -299,10 +338,32 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	bless $self, $pkg if defined($self);
     }
     sub GetPaletteInterpretation {
-	my($self) = @_;
+	my $self = shift;
 	return $PALETTE_INTERPRETATION_INT2STRING{GetPaletteInterpretation($self)};
     }
     sub SetColorEntry {
-	@_ == 3 ? _SetColorEntry(@_) : _SetColorEntry(@_[0..1], @{$_[2]});
+	@_ == 3 ? _SetColorEntry(@_) : _SetColorEntry(@_[0..1], [@_[2..5]]);
+    }
+    sub ColorEntry {
+	my $self = shift;
+	my $index = shift;
+	SetColorEntry($self, $index, @_) if @_ > 0;
+	GetColorEntry($self, $index) if defined wantarray;
+    }
+    sub ColorTable {
+	my $self = shift;
+	my @table;
+	if (@_) {
+	    my $index = 0;
+	    for my $color (@_) {
+		push @table, [ColorEntry($self, $index, @$color)];
+		$index++;
+	    }
+	} else {
+	    for (my $index = 0; $index < GetCount($self); $index++) {
+		push @table, [ColorEntry($self, $index)];
+	    }
+	}
+	return @table;
     }
  %}
