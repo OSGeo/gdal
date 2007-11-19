@@ -161,7 +161,7 @@ void KML::checkValidity()
     poCurrent_ = NULL;
 }
 
-void XMLCALL KML::startElement(void *pUserData, const char *pszName, const char **ppszAttr)
+void XMLCALL KML::startElement(void *pUserData, const char *pszName_, const char **ppszAttr)
 {
 	int i;
 	KMLNode *poMynew;
@@ -169,7 +169,7 @@ void XMLCALL KML::startElement(void *pUserData, const char *pszName, const char 
 	
 	if(((KML *)pUserData)->poTrunk_ == NULL || (((KML *)pUserData)->poCurrent_->getName()).compare("description") != 0) {
     	poMynew = new KMLNode();
-	    poMynew->setName(pszName);
+	    poMynew->setName(pszName_);
     	poMynew->setLevel(((KML *)pUserData)->nDepth_);
 	
     	for (i = 0; ppszAttr[i]; i += 2)
@@ -191,7 +191,7 @@ void XMLCALL KML::startElement(void *pUserData, const char *pszName, const char 
     else
     {
         std::string sNewContent = "<";
-        sNewContent += pszName;
+        sNewContent += pszName_;
     	for (i = 0; ppszAttr[i]; i += 2)
         {
             sNewContent += " ";
@@ -204,10 +204,10 @@ void XMLCALL KML::startElement(void *pUserData, const char *pszName, const char 
     }
 }
 
-void XMLCALL KML::startElementValidate(void *pUserData, const char *pszNamein, const char **ppszAttr)
+void XMLCALL KML::startElementValidate(void *pUserData, const char *pszName_in, const char **ppszAttr)
 {
 	int i;
-	std::string *sName = new std::string(pszNamein);
+	std::string *sName = new std::string(pszName_in);
 	std::string *sAttribute;
 	
 	if(sName->compare("kml") == 0) {
@@ -237,14 +237,14 @@ void XMLCALL KML::startElementValidate(void *pUserData, const char *pszNamein, c
 	delete sName;
 }
 
-void XMLCALL KML::endElement(void *pUserData, const char *pszName)
+void XMLCALL KML::endElement(void *pUserData, const char *pszName_)
 {
     KMLNode *poTmp;
     std::string sData, sTmp;
     unsigned short nPos = 0;
 
 	if(((KML *)pUserData)->poCurrent_ != NULL && 
-	    ((KML *)pUserData)->poCurrent_->getName().compare(pszName) == 0) {
+	    ((KML *)pUserData)->poCurrent_->getName().compare(pszName_) == 0) {
     	((KML *)pUserData)->nDepth_--;
         poTmp = ((KML *)pUserData)->poCurrent_;
         // Split the coordinates
@@ -282,8 +282,8 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
         else
             ((KML *)pUserData)->poCurrent_ = NULL;
 
-    	if(!((KML *)pUserData)->isHandled(pszName)) {
-    	    CPLDebug("KML", "Not handled: %s", pszName);
+    	if(!((KML *)pUserData)->isHandled(pszName_)) {
+    	    CPLDebug("KML", "Not handled: %s", pszName_);
     	    delete poTmp;
 	    } else {
 	        if(((KML *)pUserData)->poCurrent_ != NULL)
@@ -291,7 +291,7 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
 	    }
     } else if(((KML *)pUserData)->poCurrent_ != NULL) {
         std::string sNewContent = "</";
-        sNewContent += pszName;
+        sNewContent += pszName_;
         sNewContent += ">";
         ((KML *)pUserData)->poCurrent_->addContent(sNewContent);
     }

@@ -44,27 +44,27 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRwkbGeometryType eReqType,
                           OGRKMLDataSource *poDSIn )
 {
-    poSRS = NULL;
+    poSRS_ = NULL;
     if( poSRSIn != NULL )
-        poSRS = poSRSIn->Clone();        
+        poSRS_ = poSRSIn->Clone();        
     
-    iNextKMLId = 0;
-    nTotalKMLCount = -1;
-    nNextFID = 0;
+    iNextKMLId_ = 0;
+    nTotalKMLCount_ = -1;
+    nNextFID_ = 0;
     
-    poDS = poDSIn;
+    poDS_ = poDSIn;
     
-    poFeatureDefn = new OGRFeatureDefn( pszName );
-    poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( eReqType );
+    poFeatureDefn_ = new OGRFeatureDefn( pszName );
+    poFeatureDefn_->Reference();
+    poFeatureDefn_->SetGeomType( eReqType );
 
     OGRFieldDefn oFieldName( "Name", OFTString );
-    poFeatureDefn->AddFieldDefn( &oFieldName );
+    poFeatureDefn_->AddFieldDefn( &oFieldName );
     
     OGRFieldDefn oFieldDesc( "Description", OFTString );
-    poFeatureDefn->AddFieldDefn( &oFieldDesc );
+    poFeatureDefn_->AddFieldDefn( &oFieldDesc );
 
-    bWriter = bWriterIn;
+    bWriter_ = bWriterIn;
 }
 
 /************************************************************************/
@@ -72,11 +72,20 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 /************************************************************************/
 OGRKMLLayer::~OGRKMLLayer()
 {
-    if( NULL != poFeatureDefn )
-        poFeatureDefn->Release();
+    if( NULL != poFeatureDefn_ )
+        poFeatureDefn_->Release();
 
-    if( NULL != poSRS )
-        poSRS->Release();
+    if( NULL != poSRS_ )
+        poSRS_->Release();
+}
+
+/************************************************************************/
+/*                            GetLayerDefn()                            */
+/************************************************************************/
+
+OGRFeatureDefn* OGRKMLLayer::GetLayerDefn()
+{
+    return poFeatureDefn_;
 }
 
 /************************************************************************/
@@ -84,7 +93,7 @@ OGRKMLLayer::~OGRKMLLayer()
 /************************************************************************/
 void OGRKMLLayer::ResetReading()
 {
-    iNextKMLId = 0;    
+    iNextKMLId_ = 0;    
 }
 
 /************************************************************************/
@@ -95,23 +104,23 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 #ifndef HAVE_EXPAT
     return NULL;
 #else
-    CPLDebug("KML", "GetNextFeature(#%d)", this->iNextKMLId);
+    CPLDebug("KML", "GetNextFeature(#%d)", iNextKMLId_);
 
     unsigned short nCount = 0;
     unsigned short nCount2 = 0;
-    KML *poKMLFile = poDS->GetKMLFile();
-    poKMLFile->selectLayer(this->nLayerNumber);
+    KML *poKMLFile = poDS_->GetKMLFile();
+    poKMLFile->selectLayer(nLayerNumber_);
 
     Feature *poFeatureKML = NULL;
-    poFeatureKML = poKMLFile->getFeature(this->iNextKMLId++);
+    poFeatureKML = poKMLFile->getFeature(iNextKMLId_++);
 
     if(poFeatureKML == NULL)
         return NULL;
 
-    if(this->poFeatureDefn == NULL)
+    if(poFeatureDefn_ == NULL)
         CPLDebug("KML", "Ohoh");
 
-    OGRFeature *poFeature = new OGRFeature( this->poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
     
     // Handle a Point
     if(poFeatureKML->eType == Point)
@@ -155,9 +164,9 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
     }
 
     // Add fields
-    poFeature->SetField( poFeatureDefn->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
-    poFeature->SetField( poFeatureDefn->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
-    poFeature->SetFID( this->nNextFID++ );
+    poFeature->SetField( poFeatureDefn_->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
+    poFeature->SetField( poFeatureDefn_->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
+    poFeature->SetFID( nNextFID_++ );
 
     // Clean up
     for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
@@ -193,10 +202,10 @@ int OGRKMLLayer::GetFeatureCount( int bForce )
     int nCount = 0;
 
 #ifdef HAVE_EXPAT
-    KML *poKMLFile = poDS->GetKMLFile();
+    KML *poKMLFile = poDS_->GetKMLFile();
     if( NULL != poKMLFile )
     {
-        poKMLFile->selectLayer(this->nLayerNumber);
+        poKMLFile->selectLayer(nLayerNumber_);
         nCount = poKMLFile->getNumFeatures();
     }
 #endif
@@ -215,10 +224,10 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
     double dfXMin, dfXMax, dfYMin, dfYMax;
 
-    KML *poKMLFile = poDS->GetKMLFile();
+    KML *poKMLFile = poDS_->GetKMLFile();
     if( NULL != poKMLFile )
     {
-        poKMLFile->selectLayer(this->nLayerNumber);
+        poKMLFile->selectLayer(nLayerNumber_);
         if( poKMLFile->getExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
         {
             psExtent->MinX = dfXMin;
@@ -239,26 +248,26 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
 {
-    FILE *fp = poDS->GetOutputFP();
+    FILE *fp = poDS_->GetOutputFP();
 
-    if( !bWriter )
+    if( !bWriter_ )
         return OGRERR_FAILURE;
 
     VSIFPrintf( fp, "  <Placemark>\n" );
 
     if( poFeature->GetFID() == OGRNullFID )
-        poFeature->SetFID( iNextKMLId++ );
+        poFeature->SetFID( iNextKMLId_++ );
             
         
     // First find and write the name element
-    if (NULL != poDS->GetNameField())
+    if (NULL != poDS_->GetNameField())
     {
-        for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
         {        
-            OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+            OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
             if( poFeature->IsFieldSet( iField )
-                && EQUAL(poField->GetNameRef(), poDS->GetNameField()) )
+                && EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
             {           
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
@@ -274,14 +283,14 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
         
     VSIFPrintf( fp, "      <description>");
 
-    if (NULL != poDS->GetDescriptionField())
+    if (NULL != poDS_->GetDescriptionField())
     {
-        for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
         {        
-            OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+            OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
             if( poFeature->IsFieldSet( iField )
-                && EQUAL(poField->GetNameRef(), poDS->GetDescriptionField()) )
+                && EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField()) )
             {           
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
                 while( *pszRaw == ' ' )
@@ -298,13 +307,13 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
     int bHasFoundOtherField = FALSE;
 
     // Write all "set" fields that aren't being used for the name element
-    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
     {        
-        OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+        OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
         if( poFeature->IsFieldSet( iField ) && 
-            (NULL == poDS->GetNameField() || !EQUAL(poField->GetNameRef(), poDS->GetNameField())) &&
-            (NULL == poDS->GetDescriptionField() || !EQUAL(poField->GetNameRef(), poDS->GetDescriptionField())))
+            (NULL == poDS_->GetNameField() || !EQUAL(poField->GetNameRef(), poDS_->GetNameField())) &&
+            (NULL == poDS_->GetDescriptionField() || !EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField())))
         {
             if (!bHasFoundOtherField)
             {
@@ -345,13 +354,13 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
         CPLFree( pszGeometry );
 
         poFeature->GetGeometryRef()->getEnvelope( &sGeomBounds );
-        poDS->GrowExtents( &sGeomBounds );
+        poDS_->GrowExtents( &sGeomBounds );
     }
     
-    if ( wkbPolygon == poFeatureDefn->GetGeomType()
-         || wkbMultiPolygon == poFeatureDefn->GetGeomType()
-         || wkbLineString == poFeatureDefn->GetGeomType()
-         || wkbMultiLineString == poFeatureDefn->GetGeomType() )
+    if ( wkbPolygon == poFeatureDefn_->GetGeomType()
+         || wkbMultiPolygon == poFeatureDefn_->GetGeomType()
+         || wkbLineString == poFeatureDefn_->GetGeomType()
+         || wkbMultiLineString == poFeatureDefn_->GetGeomType() )
     {
         //If we're dealing with a polygon, add a line style that will stand out a bit
         VSIFPrintf( fp, "  <Style><LineStyle><color>ff0000ff</color></LineStyle>");
@@ -370,11 +379,11 @@ int OGRKMLLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap, OLCSequentialWrite) )
     {
-        return bWriter;
+        return bWriter_;
     }
     else if( EQUAL(pszCap, OLCCreateField) )
     {
-        return bWriter && iNextKMLId == 0;
+        return bWriter_ && iNextKMLId_ == 0;
     }
     else if( EQUAL(pszCap, OLCFastGetExtent) )
     {
@@ -400,13 +409,14 @@ int OGRKMLLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
+
 OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 {
-    if( !bWriter || iNextKMLId != 0 )
+    if( !bWriter_ || iNextKMLId_ != 0 )
         return OGRERR_FAILURE;
 		  
 	OGRFieldDefn oCleanCopy( poField );
-    poFeatureDefn->AddFieldDefn( &oCleanCopy );
+    poFeatureDefn_->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
 }
@@ -414,16 +424,18 @@ OGRErr OGRKMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
+
 OGRSpatialReference *OGRKMLLayer::GetSpatialRef()
 {
-    return poSRS;
+    return poSRS_;
 }
 
 /************************************************************************/
 /*                           SetLayerNumber()                           */
 /************************************************************************/
-void OGRKMLLayer::SetLayerNumber(unsigned short nNum)
+
+void OGRKMLLayer::SetLayerNumber( int nLayer )
 {
-    this->nLayerNumber = nNum;
+    nLayerNumber_ = nLayer;
 }
 
