@@ -34,17 +34,18 @@
 // std
 #include <string>
 
-class KMLvector : public KML
+class KMLVector : public KML
 {
 public:
+    ~KMLVector();
+
     // Container - FeatureContainer - Feature
     bool isFeature(std::string const&) const;
     bool isFeatureContainer(std::string const&) const;
     bool isContainer(std::string const&) const;
     bool isLeaf(std::string const&) const;
     bool isRest(std::string const&) const;
-    void findLayers(KMLnode*);
-    ~KMLvector();
+    void findLayers(KMLNode*);
 };
 
 #endif /* OGR_KMLVECTOR_H_INCLUDED */

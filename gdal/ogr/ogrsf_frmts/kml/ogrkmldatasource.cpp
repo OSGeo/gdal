@@ -100,7 +100,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create a KML object and open the source file.                   */
 /* -------------------------------------------------------------------- */
-    poKMLFile = new KMLvector();
+    poKMLFile = new KMLVector();
 
     if( !poKMLFile->open( pszNewName ) )
     {
