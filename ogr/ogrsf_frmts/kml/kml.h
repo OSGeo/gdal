@@ -41,23 +41,35 @@
 #error "Old version of expat, please upgrade to expat 2.x"
 #endif
 
-class KMLnode;
+class KMLNode;
 
 class KML
 {
-private:
-	// depth of the DOM
-	unsigned int nDepth;
-	// KML version number
-	std::string sVersion;
-	// set when the file was validated and is kml
-	bool bValid;
-	// file descriptor
-	FILE *pKMLFile;
-	// error text ("" when everything is OK")
-	std::string sError;
-	// current KMLnode
-	KMLnode *poCurrent;
+public:
+	KML();
+	virtual ~KML();
+	bool open(const char * pszFilename);
+	bool isValid();
+	bool isHandled(std::string const&) const;
+	virtual bool isLeaf(std::string const&) const {return false;};
+	virtual bool isFeature(std::string const&) const {return false;};
+	virtual bool isFeatureContainer(std::string const&) const {return false;};
+	virtual bool isContainer(std::string const&) const {return false;};
+	virtual bool isRest(std::string const&) const {return false;};
+    virtual void findLayers(KMLNode* poNode) {};
+
+	void parse();
+	void print(unsigned short what = 3);
+    std::string getError();
+	void classifyNodes();
+	void eliminateEmpty();
+	short numLayers();
+    bool selectLayer(unsigned short);
+    std::string getCurrentName();
+    Nodetype getCurrentType();
+    short getNumFeatures();
+    Feature* getFeature(unsigned short);
+    bool getExtents(double *pdfXMin, double *pdfXMax, double *pdfYMin, double *pdfYMax);
 
 protected:
 	void checkValidity();
@@ -68,35 +80,23 @@ protected:
 	static void XMLCALL endElement(void *, const char *);
 
 	// trunk of KMLnodes
-	KMLnode *poTrunk;
+	KMLNode* poTrunk_;
 	// number of layers;
-	short nNumLayers;
+	short nNumLayers_;
 
-public:
-	KML();
-	bool open(const char *);
-	bool isValid();
-	bool isHandled(std::string const&) const;
-	virtual bool isLeaf(std::string const&) const {return false;};
-	virtual bool isFeature(std::string const&) const {return false;};
-	virtual bool isFeatureContainer(std::string const&) const {return false;};
-	virtual bool isContainer(std::string const&) const {return false;};
-	virtual bool isRest(std::string const&) const {return false;};
-	virtual void findLayers(KMLnode*) {};
-	void parse();
-	void print(unsigned short what = 3);
-	std::string getError();
-	void classifyNodes();
-
-	void eliminateEmpty();
-	short numLayers();
-    bool selectLayer(unsigned short);
-    std::string getCurrentName();
-    Nodetype getCurrentType();
-    short getNumFeatures();
-    Feature* getFeature(unsigned short);
-    bool getExtents(double *pdfXMin, double *pdfXMax, double *pdfYMin, double *pdfYMax);
-	virtual ~KML();
+private:
+	// depth of the DOM
+	unsigned int nDepth_;
+	// KML version number
+	std::string sVersion_;
+	// set when the file was validated and is kml
+	bool bValid_;
+	// file descriptor
+	FILE *pKMLFile_;
+	// error text ("" when everything is OK")
+	std::string sError_;
+	// current KMLNode
+	KMLNode *poCurrent_;
 };
 
 #endif /* OGR_KML_KML_H_INCLUDED */

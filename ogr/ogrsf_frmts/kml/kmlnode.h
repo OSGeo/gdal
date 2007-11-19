@@ -36,64 +36,79 @@
 #include <string>
 #include <vector>
 
-std::string Nodetype2String(Nodetype);
+std::string Nodetype2String(Nodetype const& type);
 bool isNumberDigit(const char cIn);
 
-class KMLnode
+class KMLNode
 {
-private:
-
-    typedef std::vector<KMLnode*> kml_nodes_t;
-    kml_nodes_t* pvpoChildren;
-
-    typedef std::vector<std::string> kml_content_t;
-    kml_content_t* pvsContent;
-
-    typedef std::vector<Attribute*> kml_attributes_t;
-    kml_attributes_t* pvoAttributes;
-
-    KMLnode *poParent;
-    unsigned int nLevel;
-    std::string sName;
-
-    Nodetype eType;
-	// Layer number
-	short nLayerNumber;
-	// Extent
-	Extent *psExtent;
-	void calcExtent(KML*);
-    
 public:
-    KMLnode();
-    ~KMLnode();
+
+    KMLNode();
+    ~KMLNode();
+
     void print(unsigned int what = 3);
-    void classify(KML*);
-    void eliminateEmpty(KML*);
+    void classify(KML* poKML);
+    void eliminateEmpty(KML* poKML);
+    
     void setType(Nodetype);
     Nodetype getType();
+    
     void setName(std::string const&);
     std::string getName();
+    
     void setLevel(unsigned int);
     unsigned int getLevel();
+    
     void addAttribute(Attribute*);
-    void setParent(KMLnode*);
-    KMLnode* getParent();
-    void addChildren(KMLnode*);
+    
+    void setParent(KMLNode* poNode);
+    KMLNode* getParent();
+    
+    void addChildren(KMLNode* poNode);
     unsigned short countChildren();
-    KMLnode* getChild(unsigned short);
+    
+    KMLNode* getChild(unsigned short);
+
     void addContent(std::string const&);
     void appendContent(std::string);
     std::string getContent(unsigned short);
     void deleteContent(unsigned short);
     unsigned short numContent();
+
     void setLayerNumber(short);
     short getLayerNumber();
-    KMLnode* getLayer(unsigned short);
+
+    KMLNode* getLayer(unsigned short);
+
     std::string getNameElement();
     std::string getDescriptionElement();
+
     short getNumFeatures();
     Feature* getFeature(unsigned short);
+
     Extent* getExtents();
+
+private:
+
+    typedef std::vector<KMLNode*> kml_nodes_t;
+    kml_nodes_t* pvpoChildren_;
+
+    typedef std::vector<std::string> kml_content_t;
+    kml_content_t* pvsContent_;
+
+    typedef std::vector<Attribute*> kml_attributes_t;
+    kml_attributes_t* pvoAttributes_;
+
+    KMLNode *poParent_;
+    unsigned int nLevel_;
+    std::string sName_;
+
+    Nodetype eType_;
+
+    short nLayerNumber_;
+    Extent *psExtent_;
+    
+    void calcExtent(KML* poKML);
 };
 
 #endif /* KMLNODE_H_INCLUDED */
