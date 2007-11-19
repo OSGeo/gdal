@@ -55,13 +55,11 @@ OGRDataSource *OGRKMLDriver::Open( const char * pszFilename,
 {
 #ifdef HAVE_EXPAT
     CPLAssert( NULL != pszFilename );
-    
-    OGRKMLDataSource    *poDS = NULL;
 
     if( bUpdate )
         return NULL;
 
-    poDS = new OGRKMLDataSource();
+    OGRKMLDataSource* poDS = new OGRKMLDataSource();
 
     if( !poDS->Open( pszFilename, TRUE ) )
     {
@@ -72,13 +70,11 @@ OGRDataSource *OGRKMLDriver::Open( const char * pszFilename,
     if( poDS->GetLayerCount() == 0 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "No layers in KML file: `%s'.", 
-                  pszFilename );
-
+                  "No layers in KML file: %s.", pszFilename );
         delete poDS;
         return NULL;
     }
-    
+
     return poDS;
 #else
     return NULL;
@@ -99,10 +95,10 @@ OGRDataSource *OGRKMLDriver::CreateDataSource( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        poDS = NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -110,7 +106,7 @@ OGRDataSource *OGRKMLDriver::CreateDataSource( const char * pszName,
 /************************************************************************/
 int OGRKMLDriver::TestCapability( const char * pszCap )
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
+    if( EQUAL(pszCap, ODrCCreateDataSource) )
         return TRUE;
     else
         return FALSE;
