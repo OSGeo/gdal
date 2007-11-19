@@ -45,12 +45,25 @@ if (0) {
 
 {
     my $d = Geo::OGR::FeatureDefn->new;
+    $d->Schema(Fields=>[Geo::OGR::FieldDefn->create(Name=>'Foo')]);
     my $f = Geo::OGR::Feature->new($d);
     my $g = Geo::OGR::Geometry->create('Point');
     $f->SetGeometry($g);
+    my $fd = $f->GetDefnRef;
+    my $s = $fd->Schema;
+    my $s2 = $s->{Fields}[0]->Schema;
+    ok($s->{GeometryType} eq 'Unknown', 'Feature defn schema 0');
+    ok($s2->{Name} eq 'Foo', 'Feature defn schema 1');
+    ok($s2->{Type} eq 'String', 'Feature defn schema 2');
     $g2 = $f->GetGeometry;
 }
 $g2->GetDimension; # does not cause a kaboom
+{
+    $f = Geo::OGR::FieldDefn->create();
+    $s = $f->Schema(Width => 10);
+    ok($s->{Width} == 10, 'fieldefn schema 1');
+    ok($s->{Type} eq 'String', 'fieldefn schema 2');
+}
 
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');

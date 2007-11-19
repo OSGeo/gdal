@@ -48,19 +48,19 @@
 # @return a new Geo::OGR::DataSource object
 
 ## @fn $Open($name, $update = 0)
-# @deprecated [use Geo::OGR::DataSource::Open]
+# @deprecated use Geo::OGR::DataSource::Open
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
 ## @fn $OpenShared($name, $update = 0)
-# @deprecated [use Geo::OGR::DataSource::OpenShared]
+# @deprecated use Geo::OGR::DataSource::OpenShared
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
 ## @fn $GetDriverByName($name)
-# @deprecated
+# @deprecated use Geo::OGR::GetDriver
 
 ## @fn $GetDriver($driver)
 # @param driver the index or the name of the driver
@@ -73,88 +73,88 @@
 # @deprecated
 
 ## @attr wkbPoint
-# @deprecated
+# @deprecated use string 'Point' instead
 
 ## @attr wkbLineString
-# @deprecated
+# @deprecated use string 'LineString' instead
 
 ## @attr wkbPolygon
-# @deprecated
+# @deprecated use string 'Polygon' instead
 
 ## @attr wkbMultiPoint
-# @deprecated
+# @deprecated use string 'MultiPoint' instead
 
 ## @attr wkbMultiLineString
-# @deprecated
+# @deprecated use string 'MultiLineString' instead
 
 ## @attr wkbMultiPolygon
-# @deprecated
+# @deprecated use string 'MultiPolygon' instead
 
 ## @attr wkbGeometryCollection
-# @deprecated
+# @deprecated use string 'GeometryCollection' instead
 
 ## @attr wkbNone
 # @deprecated
 
 ## @attr wkbLinearRing
-# @deprecated
+# @deprecated use string 'LinearRing' instead
 
 ## @attr wkbPoint25D
-# @deprecated
+# @deprecated use string 'Point25D' instead
 
 ## @attr wkbLineString25D
-# @deprecated
+# @deprecated use string 'LineString25D' instead
 
 ## @attr wkbPolygon25D
-# @deprecated
+# @deprecated use string 'Polygon25D' instead
 
 ## @attr wkbMultiPoint25D
-# @deprecated
+# @deprecated use string 'MultiPoint25D' instead
 
 ## @attr wkbMultiLineString25D
-# @deprecated
+# @deprecated use string 'MultiLineString25D' instead
 
 ## @attr wkbMultiPolygon25D
-# @deprecated
+# @deprecated use string 'MultiPolygon25D' instead
 
 ## @attr wkbGeometryCollection25D
-# @deprecated
+# @deprecated use string 'GeometryCollection25D' instead
 
 ## @attr OFTInteger
-# @deprecated
+# @deprecated use string 'Integer' instead
 
 ## @attr OFTIntegerList
-# @deprecated
+# @deprecated use string 'IntegerList' instead
 
 ## @attr OFTReal
-# @deprecated
+# @deprecated use string 'Real' instead
 
 ## @attr OFTRealList
-# @deprecated
+# @deprecated use string 'RealList' instead
 
 ## @attr OFTString
-# @deprecated
+# @deprecated use string 'String' instead
 
 ## @attr OFTStringList
-# @deprecated
+# @deprecated use string 'StringList' instead
 
 ## @attr OFTWideString
-# @deprecated
+# @deprecated use string 'WideString' instead
 
 ## @attr OFTWideStringList
-# @deprecated
+# @deprecated use string 'WideStringList' instead
 
 ## @attr OFTBinary
-# @deprecated
+# @deprecated use string 'Binary' instead
 
 ## @attr OFTDate
-# @deprecated
+# @deprecated use string 'Date' instead
 
 ## @attr OFTTime
-# @deprecated
+# @deprecated use string 'Time' instead
 
 ## @attr OFTDateTime
-# @deprecated
+# @deprecated use string 'DateTime' instead
 
 ## @attr OJUndefined
 # @deprecated
@@ -433,14 +433,19 @@
 ## @method $GetDefnRef()
 # @return a new Geo::OGR::FeatureDefn object
 
-## @method SetGeometry($geom)
-# @param geom a Geo::OGR::Geometry object
+## @method $Geometry($geometry)
+# Get a copy of the geometry or copy the geometry into the feature.
 
-## @method SetGeometryDirectly($geom)
-# @param geom a Geo::OGR::Geometry object
+## @method SetGeometry($geometry)
+# The geometry is copied into the feature.
+# @param geometry a Geo::OGR::Geometry object
+
+## @method SetGeometryDirectly($geometry)
+# This feature is not destroyed while the geometry exists.
+# @param geometry a Geo::OGR::Geometry object
 
 ## @method $GetGeometryRef()
-# @deprecated [use GetGeometry]
+# @deprecated use Geo::OGR::Feature::GetGeometry
 # @return a new Geo::OGR::Geometry object
 
 ## @method $GetGeometry()
@@ -463,13 +468,13 @@
 # @return a new Geo::OGR::FieldDefn object
 
 ## @method GetFieldAsString($field)
-# @deprecated
+# @deprecated use Geo::OGR::Feature::GetField
 
 ## @method $GetFieldAsInteger($field)
-# @deprecated
+# @deprecated use Geo::OGR::Feature::GetField
 
 ## @method $GetFieldAsDouble($field)
-# @deprecated
+# @deprecated use Geo::OGR::Feature::GetField
 
 ## @method $GetField($field)
 # @param field an index or a name of a field
@@ -524,6 +529,12 @@
 # @param name
 # @return a Geo::OGR::FeatureDefn object
 
+## @method \%Schema(%schema)
+# Get or set the schema. The schema is a hash (Name => name,
+# GeometryType => geometry_type, Fields => [list of
+# Geo::OGR::FieldDefn objects]. The Name cannot be set and the Fields
+# are added to the schema.
+
 ## @method $GetName()
 # @return a string
 
@@ -541,18 +552,19 @@
 ## @method AddFieldDefn($defn)
 # @param defn a Geo::OGR::FieldDefn object
 
-## @method $GeomType($geom_type)
-# @param geom_type one of geometry types
-# @return one of geometry types unless geom_type is given
+## @method $GeomType($geometry_type)
+# Get or set the geometry type
+# @param geometry_type one of geometry types
+# @return the geometry types
 
 ## @method $GetReferenceCount()
 # @return integer
 
 ## @method $GetGeomType()
-# @deprecated
+# @deprecated use Geo::OGR::FeatureDefn::GeomType
 
 ## @method SetGeomType()
-# @deprecated
+# @deprecated use Geo::OGR::FeatureDefn::GeomType
 
 ## @class Geo::OGR::FieldDefn
 # @isa (Geo::OGR)
@@ -562,7 +574,7 @@
 ## @ignore DESTROY
 
 ## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
-# @deprecated [use create]
+# @deprecated use Geo::OGR::FieldDefn::create
 # @param name
 # @param field_type one of $Geo::OGR::OFT*
 # @return a new Geo::OGR::FieldDefn object
@@ -571,6 +583,19 @@
 # @param name
 # @param field_type one of field types
 # @return a new Geo::OGR::FieldDefn object
+
+## @cmethod $create(%parameters)
+# @param parameters named parameters: Name, Type, Justify, Width,
+# Precision
+# @param field_type one of field types
+# @return a new Geo::OGR::FieldDefn object
+
+## @method \%Schema(%parameters)
+# Get the schema or set parts of the schema
+# @param parameters named parameters: Name, Type, Justify, Width,
+# Precision
+# @return a reference to a hash whose keys are Name, Type, Justify,
+# Width, and Precision
 
 ## @method $Name($name)
 # Get or set the name
@@ -595,46 +620,47 @@
 # @param precision
 # @return integer
 
-## @method $Geo::OGR::FieldDefn::GetFieldTypeName()
-# @deprecated
+## @method $GetFieldTypeName()
+# @deprecated use string type names
 
-## @method $Geo::OGR::FieldDefn::GetJustify()
-# @deprecated
+## @method $GetJustify()
+# @deprecated use Geo::OGR::FieldDefn::Justify
 
-## @method $Geo::OGR::FieldDefn::GetName()
-# @deprecated
+## @method $GetName()
+# @deprecated use Geo::OGR::FieldDefn::Name
 
-## @method $Geo::OGR::FieldDefn::GetNameRef()
-# @deprecated
+## @method $GetNameRef()
+# @deprecated use Geo::OGR::FieldDefn::Name
 
-## @method $Geo::OGR::FieldDefn::GetPrecision()
-# @deprecated
+## @method $GetPrecision()
+# @deprecated use Geo::OGR::FieldDefn::Precision
 
-## @method $Geo::OGR::FieldDefn::GetType()
-# @deprecated
+## @method $GetType()
+# @deprecated use Geo::OGR::FieldDefn::Type
 
-## @method $Geo::OGR::FieldDefn::GetWidth()
-# @deprecated
+## @method $GetWidth()
+# @deprecated use Geo::OGR::FieldDefn::Width
 
-## @method Geo::OGR::FieldDefn::SetJustify($justify)
+## @method SetJustify($justify)
+# @deprecated use Geo::OGR::FieldDefn::Justify
 # @param justify
-# @deprecated
 
-## @method Geo::OGR::FieldDefn::SetName($name)
+## @method SetName($name)
+# @deprecated use Geo::OGR::FieldDefn::Name
 # @param name
-# @deprecated
 
-## @method Geo::OGR::FieldDefn::SetPrecision($precision)
+## @method SetPrecision($precision)
+# @deprecated use Geo::OGR::FieldDefn::Precision
 # @param precision
-# @deprecated
 
-## @method Geo::OGR::FieldDefn::SetType($type)
+## @method SetType($type)
+# @deprecated use Geo::OGR::FieldDefn::Type
 # @param type
-# @deprecated
 
-## @method Geo::OGR::FieldDefn::SetWidth($width)
+## @method SetWidth($width)
+# @deprecated use Geo::OGR::FieldDefn::Width
 # @param width
-# @deprecated
+
 
 ## @class Geo::OGR::Geometry
 # @isa (Geo::OGR)
@@ -678,16 +704,24 @@
 # @param z
 # Calls internally the 2D or 3D version depending on the number of parameters.
 
+## @method \@Points($points)
+# Get or set the points of the geometry. The points (vertices) are
+# stored in obvious lists of lists. Note that unique points structures
+# may be different geometries depending on the actual geometry
+# type. When setting, the geometry is first emptied.
+# @param points
+# @return
+
 ## @method AddPoint_2D($x, $y)
+# @deprecated use Geo::OGR::Geometry::AddPoint
 # @param x
 # @param y
-# @deprecated 
 
 ## @method AddPoint_3D($x, $y, $z)
+# @deprecated use Geo::OGR::Geometry::AddPoint
 # @param x
 # @param y
 # @param z
-# @deprecated 
 
 ## @method $IsEmpty()
 # @return boolean
@@ -710,19 +744,20 @@
 # @param other a Geo::OGR::Geometry object
 
 ## @method AddGeometry($other)
+# Add a copy of another geometry to a geometry collection
 # @param other a Geo::OGR::Geometry object
 
 ## @method $Clone()
 # @return a new Geo::OGR::Geometry object
 
 ## @method $GetGeometryType()
-# @deprecated 
+# @deprecated use Geo::OGR::Geometry::GeometryType
 
 ## @method $GeometryType()
 # @return the geometry type
 
 ## @method $GetGeometryName()
-# @deprecated
+# @deprecated use string names
 # @return a string
 
 ## @method $GetArea()
