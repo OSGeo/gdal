@@ -193,16 +193,14 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
         CPLString sName( poKMLFile->getCurrentName() );
 
-        if( sName.compare("") == 0)
+        if( sName.empty() )
         {
-            char pszName[10] = { 0 };
-            snprintf(pszName, 10, "Layer #%d", nCount);
-            sName = pszName;
+            sName.Printf( "Layer #%d", nCount );
         }
 
         poLayer = new OGRKMLLayer( sName.c_str(), poSRS, FALSE, poGeotype, this );
 
-        poLayer->SetLayerNumber(nCount);
+        poLayer->SetLayerNumber( nCount );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
