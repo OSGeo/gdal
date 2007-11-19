@@ -40,12 +40,12 @@ public:
     ~KMLVector();
 
     // Container - FeatureContainer - Feature
-    bool isFeature(std::string const&) const;
-    bool isFeatureContainer(std::string const&) const;
-    bool isContainer(std::string const&) const;
-    bool isLeaf(std::string const&) const;
-    bool isRest(std::string const&) const;
-    void findLayers(KMLNode*);
+    bool isFeature(std::string const& sIn) const;
+    bool isFeatureContainer(std::string const& sIn) const;
+    bool isContainer(std::string const& sIn) const;
+    bool isLeaf(std::string const& sIn) const;
+    bool isRest(std::string const& sIn) const;
+    void findLayers(KMLNode* poNode);
 };
 
 #endif /* OGR_KMLVECTOR_H_INCLUDED */
