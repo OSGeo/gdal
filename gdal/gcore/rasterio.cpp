@@ -1811,10 +1811,23 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     // aim for one row of blocks.  Do not settle for less.
     int nSwathLines = nBlockYSize;
 
+    /* Do the computation on a big int since for example when translating */
+    /* the JPL WMS layer, we overflow 32 bits*/
+    GIntBig nSwathBufSize = (GIntBig)nMemoryPerLine * nSwathLines;
+    if (nSwathBufSize > (GIntBig)nTargetSwathSize)
+    {
+        nSwathLines = nTargetSwathSize / nMemoryPerLine;
+        if (nSwathLines == 0)
+            nSwathLines = 1;
+        CPLDebug( "GDAL", 
+              "GDALDatasetCopyWholeRaster(): adjusting to %d line swath "
+              "since requirement (%d * %d bytes) exceed target swath size (%d bytes) ",
+              nSwathLines, nBlockYSize, nMemoryPerLine, nTargetSwathSize);
+    }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
     // of blocks is substantially less than our target buffer size.
-    if( nSwathLines == 1 
+    else if( nSwathLines == 1 
         || nMemoryPerLine * nSwathLines < nTargetSwathSize / 10 )
         nSwathLines = MIN(nYSize,MAX(1,nTargetSwathSize/nMemoryPerLine));
     
