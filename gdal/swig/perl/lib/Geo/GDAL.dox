@@ -38,13 +38,17 @@
 ## @ignore GDAL_GCP_get_Id
 ## @ignore GDAL_GCP_set_Id
 
-## @fn ReadDir
+## @fn \@ReadDir($path)
+# @param path
+# @return the files in the directory that path defines
 
 ## @fn UseExceptions()
 
 ## @fn DontUseExceptions()
 
-## @fn Debug()
+## @fn Debug($msg_class, $msg)
+# @param msg_class
+# @param msg
 
 ## @fn Error()
 
@@ -105,23 +109,23 @@
 # @return
 
 ## @fn $GetDataTypeName($GDALDataType)
+# @deprecated use string names
 # @param GDALDataType
-# @deprecated
 # @return
 
 ## @fn $GetDataTypeByName($GDALDataType)
+# @deprecated use string names
 # @param GDALDataType
-# @deprecated
 # @return
 
 ## @fn $GetColorInterpretationName($ColorInterpretation)
+# @deprecated use string names
 # @param ColorInterpretation
-# @deprecated
 # @return
 
 ## @fn $GetPaletteInterpretationName($PaletteInterpretation)
+# @deprecated use string names
 # @param PaletteInterpretation
-# @deprecated
 # @return
 
 ## @fn $DecToDMS($angle, $axis, $precision=2)
@@ -158,7 +162,7 @@
 # @return
 
 ## @fn $GetDriverByName($ShortName)
-# @deprecated
+# @deprecated use # @deprecated use Geo::GDAL::GetDriver
 # @param ShortName
 # @return a new Geo::GDAL::Driver object
 
@@ -172,13 +176,13 @@
 # @return a new Geo::GDAL::Driver object
 
 ## @fn $Open($datasource_name, $access='ReadOnly')
-# @deprecated [use Geo::GDAL::Dataset::Open]
+# @deprecated use Geo::GDAL::Dataset::Open
 # @param datasource_name 
 # @param access
 # @return a new Geo::GDAL::Dataset object
 
 ## @fn $OpenShared($name, $access='ReadOnly')
-# @deprecated [use Geo::GDAL::Dataset::OpenShared]
+# @deprecated use Geo::GDAL::Dataset::OpenShared
 # @param name
 # @param access either ReadOnly or Update
 # @return a new Geo::GDAL::Dataset object
@@ -225,19 +229,19 @@
 # @return metadata unless it was given
 
 ## @method $GetDescription()
-# @deprecated
+# @deprecated use Geo::GDAL::MajorObject::Description
 # @return
 
 ## @method SetDescription($NewDesc)
-# @deprecated
+# @deprecated use Geo::GDAL::MajorObject::Description
 # @param NewDesc
 
 ## @method \%GetMetadata($Domain = "")
-# @deprecated
+# @deprecated use Geo::GDAL::MajorObject::Metadata
 # @return
 
 ## @method SetMetadata(\%Metadata, $Domain = "")
-# @deprecated
+# @deprecated use Geo::GDAL::MajorObject::Metadata
 
 ## @class Geo::GDAL::Driver
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
@@ -352,36 +356,58 @@
 # @param index 1...RasterCount
 # @return a new Geo::GDAL::Band object
 
+## @method $Projection($projection)
+# Get or set the projection.
+# @param projection
+# @return the projection
+
 ## @method $GetProjection()
+# @deprecated Geo::GDAL::Dataset::Projection
 # @return the projection
 
 ## @method $GetProjectionRef()
-# @deprecated
+# @deprecated Geo::GDAL::Dataset::Projection
 # @return a string
 
 ## @method $SetProjection($proj)
+# @deprecated Geo::GDAL::Dataset::Projection
 # @param proj a string
 
+## @method @GeoTransform(@geo_transform)
+# @param geo_transform
+
 ## @method \@GetGeoTransform()
+# @deprecated Geo::GDAL::Dataset::GeoTransform
 # @return a reference to an array of six parameters 
 
 ## @method SetGeoTransform(\@GeoTransform)
+# @deprecated Geo::GDAL::Dataset::GeoTransform
 # @param GeoTransform
 
 ## @method BuildOverviews($resampling = "NEAREST", \@overviews = undef)
 # @param resampling
 # @param overviews
 
+## @method @GCPs(@GCPs, $GCPProjection)
+# Get or set the GCPs and their projection.
+# @param GCPs a list of Geo::GDAL::GCP objects
+# @param GCPProjection
+# @return a list of Geo::GDAL::GCP objects followed by a GCPProjection
+
 ## @method $GetGCPCount()
+# @deprecated use Geo::GDAL::Dataset::GCPs
 # @return the number of GCPs
 
 ## @method $GetGCPProjection()
+# @deprecated use Geo::GDAL::Dataset::GCPs
 # @return
 
 ## @method \@GetGCPs()
+# @deprecated use Geo::GDAL::Dataset::GCPs
 # @return
 
 ## @method SetGCPs(\@GCPs, $GCPProjection)
+# @deprecated use Geo::GDAL::Dataset::GCPs
 # @param GCPs
 # @param GCPProjection
 
@@ -424,27 +450,33 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @attr XSize
+## @attr $XSize
 # scalar (access as $band->{XSize})
 
-## @attr YSize
+## @attr $YSize
 # scalar (access as $band->{YSize})
 
-## @attr DataType
-# scalar (access as $band->{DataType})
+## @attr $DataType
+# @deprecated use the Geo::GDAL::Band::DataType method
 
-## @method GetBlockSize()
+## @method @Size()
+# @return (width, height)
+
+## @method @GetBlockSize()
 # @return array BlockSize = ($BlockXSize, $BlockYSize)
 
 ## @method ColorInterpretation($color_interpretation)
 # @param color_interpretation [optional] new color interpretation
 # @return color interpretation
 
+## @method $NoDataValue(NoDataValue)
+# Get or set the no data value.
+
 ## @method $GetNoDataValue()
 # @return number or undef
 
 ## @method SetNoDataValue($NoDataValue)
-# @param NoDataValue (undef is zero, i.e., once set NoDataValue cann't be removed)
+# @param NoDataValue (undef is zero, i.e., once set NoDataValue can't be removed)
 
 ## @method $GetMinimum()
 # @return number or undef
@@ -512,6 +544,7 @@
 ## @method FlushCache()
 
 ## @method $ColorTable($ColorTable)
+# Get or set the color table of this band.
 # @param ColorTable [optional] a Geo::GDAL::ColorTable object
 # @return a new Geo::GDAL::ColorTable object unless color table was given
 
@@ -549,6 +582,7 @@
 ## @ignore DESTROY
 
 ## @cmethod $new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
+# @deprecated use Geo::GDAL::ColorTable::create
 # @return a new Geo::GDAL::ColorTable object
 
 ## @cmethod $create($GDALPaletteInterp = 'RGB')
@@ -562,6 +596,12 @@
 
 ## @method $GetCount()
 # @return scalar (count of color entries as int)
+
+## @method @ColorEntries(@color_entries)
+# Get or set the color entries.
+
+## @method @ColorEntry($i, @color)
+# Get or set a color entry.
 
 ## @method @GetColorEntry($i)
 # @return array ColorEntry = ($c1, $c2, $c3, $c4)
