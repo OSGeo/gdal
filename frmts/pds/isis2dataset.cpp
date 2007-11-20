@@ -617,6 +617,12 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             poBand->StoreNoDataValue( dfNoData );
 
         poDS->SetBand( i+1, poBand );
+
+        // Set offset/scale values at the PAM level.
+        poBand->SetOffset( 
+            CPLAtofM(poDS->GetKeyword("QUBE.CORE_BASE","0.0")));
+        poBand->SetScale( 
+            CPLAtofM(poDS->GetKeyword("QUBE.CORE_MULTIPLIER","1.0")));
     }
 
 /* -------------------------------------------------------------------- */

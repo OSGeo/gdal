@@ -761,6 +761,12 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( bNoDataSet )
             ((GDALPamRasterBand *) poBand)->SetNoDataValue( dfNoData );
+
+        // Set offset/scale values at the PAM level.
+        poBand->SetOffset( 
+            CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Base","0.0")));
+        poBand->SetScale( 
+          CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Multiplier","1.0")));
     }
 
 /* -------------------------------------------------------------------- */

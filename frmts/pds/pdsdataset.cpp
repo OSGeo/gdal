@@ -698,6 +698,12 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand->StoreNoDataValue( dfNoData );
 
         poDS->SetBand( i+1, poBand );
+
+        // Set offset/scale values at the PAM level.
+        poBand->SetOffset( 
+            CPLAtofM(poDS->GetKeyword("IMAGE.OFFSET","0.0")));
+        poBand->SetScale( 
+            CPLAtofM(poDS->GetKeyword("IMAGE.SCALING_FACTOR","1.0")));
     }
 
 /* --------------------------------------------------------------------*/
