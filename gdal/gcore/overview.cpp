@@ -45,7 +45,6 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
 {
     int      nDstYOff, nDstYOff2, nOXSize, nOYSize;
     float    *pafDstScanline;
-    int      bPropagateNoData = CSLTestBoolean(CPLGetConfigOption("PROPAGATE_NODATA", "NO"));
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
@@ -123,11 +122,6 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                         {
                           dfTotal += val;
                           nCount++;
-                        }
-                        else if (bPropagateNoData)
-                        {
-                          nCount = 0;
-                          goto after_subsampling_loop;
                         }
                     }
                 }
