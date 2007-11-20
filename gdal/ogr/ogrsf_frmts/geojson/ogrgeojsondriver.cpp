@@ -124,8 +124,15 @@ OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
 OGRDataSource* OGRGeoJSONDriver::CreateDataSource( const char* pszName,
                                                    char** papszOptions )
 {
-    // TODO: To be implemented
-    return NULL;
+    OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
+
+    if( !poDS->Create( pszName, papszOptions ) )
+    {
+        delete poDS;
+        poDS = NULL;
+    }
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -135,6 +142,8 @@ OGRDataSource* OGRGeoJSONDriver::CreateDataSource( const char* pszName,
 OGRErr OGRGeoJSONDriver::DeleteDataSource( const char* pszName )
 {
     // TODO: To be implemented
+    // 1. Test if a regular file or text content
+    // 2. Unlink file or clear text buffer
     return OGRERR_UNSUPPORTED_OPERATION;
 }
 
@@ -145,7 +154,7 @@ OGRErr OGRGeoJSONDriver::DeleteDataSource( const char* pszName )
 int OGRGeoJSONDriver::TestCapability( const char* pszCap )
 {
     if( EQUAL( pszCap, ODrCCreateDataSource ) )
-        return FALSE;
+        return TRUE;
     else if( EQUAL(pszCap, ODrCDeleteDataSource) )
         return FALSE;
     else
@@ -158,6 +167,10 @@ int OGRGeoJSONDriver::TestCapability( const char* pszCap )
 
 void RegisterOGRGeoJSON()
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoJSONDriver );
+    if( GDAL_CHECK_VERSION("OGR/GeoJSON driver") )
+    {
+        OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( 
+            new OGRGeoJSONDriver );
+    }
 }
 
