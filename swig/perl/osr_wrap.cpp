@@ -1580,25 +1580,28 @@ SWIG_AsCharPtrAndSize(SV *obj, char** cptr, size_t* psize, int *alloc)
 
 
 
+#include "ogr_core.h"
 static char const *
 OGRErrMessages( int rc ) {
   switch( rc ) {
-  case 0:
+  case OGRERR_NONE:
     return "OGR Error: None";
-  case 1:
-    return "OGR Error: Not enough data";
-  case 2:
+  case OGRERR_NOT_ENOUGH_DATA:
+    return "OGR Error: Not enough data to deserialize";
+  case OGRERR_NOT_ENOUGH_MEMORY:
     return "OGR Error: Not enough memory";
-  case 3:
+  case OGRERR_UNSUPPORTED_GEOMETRY_TYPE:
     return "OGR Error: Unsupported geometry type";
-  case 4:
+  case OGRERR_UNSUPPORTED_OPERATION:
     return "OGR Error: Unsupported operation";
-  case 5:
+  case OGRERR_CORRUPT_DATA:
     return "OGR Error: Corrupt data";
-  case 6:
+  case OGRERR_FAILURE:
     return "OGR Error: General Error";
-  case 7:
+  case OGRERR_UNSUPPORTED_SRS:
     return "OGR Error: Unsupported SRS";
+  case OGRERR_INVALID_HANDLE:
+    return "OGR Error: Invalid handle";
   default:
     return "OGR Error: Unknown";
   }
@@ -2039,6 +2042,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromWkt(OSRSpatialReferenceSha
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromProj4(OSRSpatialReferenceShadow *self,char *ppszInput){
     return OSRImportFromProj4( self, ppszInput );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromUrl(OSRSpatialReferenceShadow *self,char *url){
+    return OSRImportFromUrl( self, url );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromESRI(OSRSpatialReferenceShadow *self,char **ppszInput){
     return OSRImportFromESRI( self, ppszInput );
   }
@@ -2161,12 +2167,18 @@ XS(_wrap_GetWellKnownGeogCSAsWKT) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetWellKnownGeogCSAsWKT" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = reinterpret_cast< char * >(buf1);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg1)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)GetWellKnownGeogCSAsWKT((char const *)arg1,arg2);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -2219,12 +2231,18 @@ XS(_wrap_GetUserInputAsWKT) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetUserInputAsWKT" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = reinterpret_cast< char * >(buf1);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg1)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)GetUserInputAsWKT((char const *)arg1,arg2);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -2269,7 +2287,9 @@ XS(_wrap_GetProjectionMethods) {
       if (result) {
         int i;
         for (i = 0; result[i]; i++) {
-          av_store(av, i, newSVpv(result[0], 0));
+          SV *s = newSVpv(result[i], 0);
+          if (!av_store(av, i, s))
+          SvREFCNT_dec(s);
         }
         CSLDestroy(result);
       }
@@ -2307,16 +2327,23 @@ XS(_wrap_GetProjectionMethodParameterList) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetProjectionMethodParameterList" "', argument " "1"" of type '" "char *""'");
     }
     arg1 = reinterpret_cast< char * >(buf1);
+    {
+      /* %typemap(check) (char *method) */
+      if (!arg1)
+      SWIG_croak("The method must not be undefined");
+    }
     result = (char **)OPTGetParameterList(arg1,arg2);
     {
-      /* %typemap(out) char **free */
+      /* %typemap(out) char **CSL */
       AV *av = (AV*)sv_2mortal((SV*)newAV());
       if (result) {
         int i;
         for (i = 0; result[i]; i++) {
-          av_store(av, i, newSVpv(result[0], 0));
+          SV *s = newSVpv(result[i], 0);
+          if (!av_store(av, i, s))
+          SvREFCNT_dec(s);
         }
-        CPLFree(result);
+        CSLDestroy(result);
       }
       ST(argvi) = newRV_noinc((SV*)av);
       argvi++;
@@ -2329,19 +2356,11 @@ XS(_wrap_GetProjectionMethodParameterList) {
       argvi++;
     }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    {
-      /* %typemap(freearg) (char **argout) */
-      if ( *arg2 )
-      CPLFree( *arg2 );
-    }
+    
     XSRETURN(argvi);
   fail:
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    {
-      /* %typemap(freearg) (char **argout) */
-      if ( *arg2 )
-      CPLFree( *arg2 );
-    }
+    
     SWIG_croak_null();
   }
 }
@@ -2389,6 +2408,11 @@ XS(_wrap_GetProjectionMethodParamInfo) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GetProjectionMethodParamInfo" "', argument " "2"" of type '" "char *""'");
     }
     arg2 = reinterpret_cast< char * >(buf2);
+    {
+      /* %typemap(check) (char *method) */
+      if (!arg1)
+      SWIG_croak("The method must not be undefined");
+    }
     OPTGetParameterInfo(arg1,arg2,arg3,arg4,arg5);
     
     {
@@ -2413,31 +2437,15 @@ XS(_wrap_GetProjectionMethodParamInfo) {
     }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-    {
-      /* %typemap(freearg) (char **argout) */
-      if ( *arg3 )
-      CPLFree( *arg3 );
-    }
-    {
-      /* %typemap(freearg) (char **argout) */
-      if ( *arg4 )
-      CPLFree( *arg4 );
-    }
+    
+    
     
     XSRETURN(argvi);
   fail:
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-    {
-      /* %typemap(freearg) (char **argout) */
-      if ( *arg3 )
-      CPLFree( *arg3 );
-    }
-    {
-      /* %typemap(freearg) (char **argout) */
-      if ( *arg4 )
-      CPLFree( *arg4 );
-    }
+    
+    
     
     SWIG_croak_null();
   }
@@ -2739,8 +2747,9 @@ XS(_wrap_SpatialReference_SetAuthority) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -2794,6 +2803,11 @@ XS(_wrap_SpatialReference_GetAttrValue) {
       } 
       arg3 = static_cast< int >(val3);
     }
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (char *)OSRSpatialReferenceShadow_GetAttrValue(arg1,(char const *)arg2,arg3);
     ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
     
@@ -2844,12 +2858,18 @@ XS(_wrap_SpatialReference_SetAttrValue) {
       SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SpatialReference_SetAttrValue" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = reinterpret_cast< char * >(buf3);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetAttrValue(arg1,(char const *)arg2,(char const *)arg3);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -2899,12 +2919,18 @@ XS(_wrap_SpatialReference_SetAngularUnits) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetAngularUnits" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetAngularUnits(arg1,(char const *)arg2,arg3);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -2982,12 +3008,18 @@ XS(_wrap_SpatialReference_SetLinearUnits) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetLinearUnits" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetLinearUnits(arg1,(char const *)arg2,arg3);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3176,8 +3208,9 @@ XS(_wrap_SpatialReference_SetUTM) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3253,8 +3286,9 @@ XS(_wrap_SpatialReference_SetStatePlane) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3295,8 +3329,9 @@ XS(_wrap_SpatialReference_AutoIdentifyEPSG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3338,8 +3373,9 @@ XS(_wrap_SpatialReference_SetProjection) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3387,12 +3423,18 @@ XS(_wrap_SpatialReference_SetProjParm) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetProjParm" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetProjParm(arg1,(char const *)arg2,arg3);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3444,6 +3486,11 @@ XS(_wrap_SpatialReference_GetProjParm) {
       } 
       arg3 = static_cast< double >(val3);
     }
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (double)OSRSpatialReferenceShadow_GetProjParm(arg1,(char const *)arg2,arg3);
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
     
@@ -3493,12 +3540,18 @@ XS(_wrap_SpatialReference_SetNormProjParm) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetNormProjParm" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetNormProjParm(arg1,(char const *)arg2,arg3);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3549,6 +3602,11 @@ XS(_wrap_SpatialReference_GetNormProjParm) {
         SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_GetNormProjParm" "', argument " "3"" of type '" "double""'");
       } 
       arg3 = static_cast< double >(val3);
+    }
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
     }
     result = (double)OSRSpatialReferenceShadow_GetNormProjParm(arg1,(char const *)arg2,arg3);
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -3634,8 +3692,9 @@ XS(_wrap_SpatialReference_SetACEA) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3712,8 +3771,9 @@ XS(_wrap_SpatialReference_SetAE) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3786,8 +3846,9 @@ XS(_wrap_SpatialReference_SetBonne) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3860,8 +3921,9 @@ XS(_wrap_SpatialReference_SetCEA) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -3934,8 +3996,9 @@ XS(_wrap_SpatialReference_SetCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4024,8 +4087,9 @@ XS(_wrap_SpatialReference_SetEC) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4094,8 +4158,9 @@ XS(_wrap_SpatialReference_SetEckertIV) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4158,8 +4223,9 @@ XS(_wrap_SpatialReference_SetEckertVI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4230,8 +4296,9 @@ XS(_wrap_SpatialReference_SetEquirectangular) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4296,8 +4363,9 @@ XS(_wrap_SpatialReference_SetGS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4360,8 +4428,9 @@ XS(_wrap_SpatialReference_SetGH) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4432,8 +4501,9 @@ XS(_wrap_SpatialReference_SetGEOS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4506,8 +4576,9 @@ XS(_wrap_SpatialReference_SetGnomonic) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4604,8 +4675,9 @@ XS(_wrap_SpatialReference_SetHOM) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4716,8 +4788,9 @@ XS(_wrap_SpatialReference_SetHOM2PNO) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4822,8 +4895,9 @@ XS(_wrap_SpatialReference_SetKrovak) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4902,8 +4976,9 @@ XS(_wrap_SpatialReference_SetLAEA) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -4992,8 +5067,9 @@ XS(_wrap_SpatialReference_SetLCC) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5078,8 +5154,9 @@ XS(_wrap_SpatialReference_SetLCC1SP) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5170,8 +5247,9 @@ XS(_wrap_SpatialReference_SetLCCB) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5248,8 +5326,9 @@ XS(_wrap_SpatialReference_SetMC) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5330,8 +5409,9 @@ XS(_wrap_SpatialReference_SetMercator) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5398,8 +5478,9 @@ XS(_wrap_SpatialReference_SetMollweide) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5470,8 +5551,9 @@ XS(_wrap_SpatialReference_SetNZMG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5552,8 +5634,9 @@ XS(_wrap_SpatialReference_SetOS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5628,8 +5711,9 @@ XS(_wrap_SpatialReference_SetOrthographic) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5702,8 +5786,9 @@ XS(_wrap_SpatialReference_SetPolyconic) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5784,8 +5869,9 @@ XS(_wrap_SpatialReference_SetPS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5852,8 +5938,9 @@ XS(_wrap_SpatialReference_SetRobinson) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5916,8 +6003,9 @@ XS(_wrap_SpatialReference_SetSinusoidal) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -5996,8 +6084,9 @@ XS(_wrap_SpatialReference_SetStereographic) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6072,8 +6161,9 @@ XS(_wrap_SpatialReference_SetSOC) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6154,8 +6244,9 @@ XS(_wrap_SpatialReference_SetTM) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6247,8 +6338,9 @@ XS(_wrap_SpatialReference_SetTMVariant) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6325,8 +6417,9 @@ XS(_wrap_SpatialReference_SetTMG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6407,8 +6500,9 @@ XS(_wrap_SpatialReference_SetTMSO) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6475,8 +6569,9 @@ XS(_wrap_SpatialReference_SetVDG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6520,12 +6615,18 @@ XS(_wrap_SpatialReference_SetWellKnownGeogCS) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_SetWellKnownGeogCS" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = reinterpret_cast< char * >(buf2);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetWellKnownGeogCS(arg1,(char const *)arg2);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6565,12 +6666,18 @@ XS(_wrap_SpatialReference_SetFromUserInput) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_SetFromUserInput" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = reinterpret_cast< char * >(buf2);
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetFromUserInput(arg1,(char const *)arg2);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6613,8 +6720,9 @@ XS(_wrap_SpatialReference_CopyGeogCSFrom) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6713,8 +6821,9 @@ XS(_wrap_SpatialReference_SetTOWGS84) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6767,8 +6876,9 @@ XS(_wrap_SpatialReference_GetTOWGS84) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -6817,8 +6927,9 @@ XS(_wrap_SpatialReference_SetLocalCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6938,8 +7049,9 @@ XS(_wrap_SpatialReference_SetGeogCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -6997,12 +7109,18 @@ XS(_wrap_SpatialReference_SetProjCS) {
       }
       arg2 = reinterpret_cast< char * >(buf2);
     }
+    {
+      /* %typemap(check) (const char *name) */
+      if (!arg2)
+      SWIG_croak("The name must not be undefined");
+    }
     result = (OGRErr)OSRSpatialReferenceShadow_SetProjCS(arg1,(char const *)arg2);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7044,8 +7162,9 @@ XS(_wrap_SpatialReference_ImportFromWkt) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7089,8 +7208,55 @@ XS(_wrap_SpatialReference_ImportFromProj4) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
+      }
+    }
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_SpatialReference_ImportFromUrl) {
+  {
+    OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+    char *arg2 = (char *) 0 ;
+    OGRErr result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: SpatialReference_ImportFromUrl(self,url);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ImportFromUrl" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_ImportFromUrl" "', argument " "2"" of type '" "char *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+    result = (OGRErr)OSRSpatialReferenceShadow_ImportFromUrl(arg1,arg2);
+    {
+      /* %typemap(out) OGRErr */
+      if ( result != 0 ) {
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7124,12 +7290,10 @@ XS(_wrap_SpatialReference_ImportFromESRI) {
     arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
     {
       /* %typemap(in) char **options */
-      if ( ! (SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV)) ) {
-        croak("argument is not an array ref");
-        SWIG_fail;
-      }
+      if (!(SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV)))
+      SWIG_croak("expected a reference to an array");
       AV *av = (AV*)(SvRV(ST(1)));
-      for (int i = 0; i < av_len(av)-1; i++) {
+      for (int i = 0; i < av_len(av)+1; i++) {
         char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
         arg2 = CSLAddString( arg2, pszItem );
       }
@@ -7138,8 +7302,9 @@ XS(_wrap_SpatialReference_ImportFromESRI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7188,8 +7353,9 @@ XS(_wrap_SpatialReference_ImportFromEPSG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7245,17 +7411,10 @@ XS(_wrap_SpatialReference_ImportFromPCI) {
     if (items > 3) {
       {
         /* %typemap(in) (double argin4[ANY]) */
-        if (! (SvROK(ST(3)) && (SvTYPE(SvRV(ST(3)))==SVt_PVAV))) {
-          croak("argument is not an array ref");
-          SWIG_fail;
-        }
+        if (!(SvROK(ST(3)) && (SvTYPE(SvRV(ST(3)))==SVt_PVAV)))
+        SWIG_croak("expected a reference to an array");
         arg4 = argin4;
         AV *av = (AV*)(SvRV(ST(3)));
-        int seq_size = av_len(av)+1;
-        if ( seq_size != 17 ) {
-          croak("argument array must have length %d",17);
-          SWIG_fail;
-        }
         for (unsigned int i=0; i<17; i++) {
           SV **sv = av_fetch(av, i, 0);
           arg4[i] =  SvNV(*sv);
@@ -7266,8 +7425,9 @@ XS(_wrap_SpatialReference_ImportFromPCI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7328,17 +7488,10 @@ XS(_wrap_SpatialReference_ImportFromUSGS) {
     if (items > 3) {
       {
         /* %typemap(in) (double argin4[ANY]) */
-        if (! (SvROK(ST(3)) && (SvTYPE(SvRV(ST(3)))==SVt_PVAV))) {
-          croak("argument is not an array ref");
-          SWIG_fail;
-        }
+        if (!(SvROK(ST(3)) && (SvTYPE(SvRV(ST(3)))==SVt_PVAV)))
+        SWIG_croak("expected a reference to an array");
         arg4 = argin4;
         AV *av = (AV*)(SvRV(ST(3)));
-        int seq_size = av_len(av)+1;
-        if ( seq_size != 15 ) {
-          croak("argument array must have length %d",15);
-          SWIG_fail;
-        }
         for (unsigned int i=0; i<15; i++) {
           SV **sv = av_fetch(av, i, 0);
           arg4[i] =  SvNV(*sv);
@@ -7356,8 +7509,9 @@ XS(_wrap_SpatialReference_ImportFromUSGS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7407,8 +7561,9 @@ XS(_wrap_SpatialReference_ImportFromXML) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7449,8 +7604,9 @@ XS(_wrap_SpatialReference_ExportToWkt) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -7516,8 +7672,9 @@ XS(_wrap_SpatialReference_ExportToPrettyWkt) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -7575,8 +7732,9 @@ XS(_wrap_SpatialReference_ExportToProj4) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -7644,8 +7802,9 @@ XS(_wrap_SpatialReference_ExportToPCI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -7743,8 +7902,9 @@ XS(_wrap_SpatialReference_ExportToUSGS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     if (SWIG_IsTmpObj(res2)) {
@@ -7831,8 +7991,9 @@ XS(_wrap_SpatialReference_ExportToXML) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     {
@@ -7912,8 +8073,9 @@ XS(_wrap_SpatialReference_Validate) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7946,8 +8108,9 @@ XS(_wrap_SpatialReference_StripCTParms) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -7980,8 +8143,9 @@ XS(_wrap_SpatialReference_FixupOrdering) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -8014,8 +8178,9 @@ XS(_wrap_SpatialReference_Fixup) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -8048,8 +8213,9 @@ XS(_wrap_SpatialReference_MorphToESRI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -8082,8 +8248,9 @@ XS(_wrap_SpatialReference_MorphFromESRI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
-        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
-        croak( OGRErrMessages(result) );
+        const char *err = CPLGetLastErrorMsg();
+        if (err and *err) SWIG_croak(err); /* this is usually better */
+        SWIG_croak( OGRErrMessages(result) );
       }
     }
     
@@ -8149,6 +8316,11 @@ XS(_wrap_delete_CoordinateTransformation) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_CoordinateTransformation" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
     }
     arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
+    {
+      /* %typemap(check) (OSRCoordinateTransformationShadow *) */
+      if (!arg1)
+      SWIG_croak("The coordinate transformation must not be undefined");
+    }
     delete_OSRCoordinateTransformationShadow(arg1);
     
     
@@ -8182,21 +8354,19 @@ XS(_wrap_CoordinateTransformation_TransformPoint__SWIG_0) {
     arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
     {
       /* %typemap(in) (double argin2[ANY]) */
-      if (! (SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV))) {
-        croak("argument is not an array ref");
-        SWIG_fail;
-      }
+      if (!(SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV)))
+      SWIG_croak("expected a reference to an array");
       arg2 = argin2;
       AV *av = (AV*)(SvRV(ST(1)));
-      int seq_size = av_len(av)+1;
-      if ( seq_size != 3 ) {
-        croak("argument array must have length %d",3);
-        SWIG_fail;
-      }
       for (unsigned int i=0; i<3; i++) {
         SV **sv = av_fetch(av, i, 0);
         arg2[i] =  SvNV(*sv);
       }
+    }
+    {
+      /* %typemap(check) (OSRCoordinateTransformationShadow *) */
+      if (!arg1)
+      SWIG_croak("The coordinate transformation must not be undefined");
     }
     _saved[0] = ST(1);
     OSRCoordinateTransformationShadow_TransformPoint__SWIG_0(arg1,arg2);
@@ -8264,6 +8434,11 @@ XS(_wrap_CoordinateTransformation_TransformPoint__SWIG_1) {
         SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "CoordinateTransformation_TransformPoint" "', argument " "5"" of type '" "double""'");
       } 
       arg5 = static_cast< double >(val5);
+    }
+    {
+      /* %typemap(check) (OSRCoordinateTransformationShadow *) */
+      if (!arg1)
+      SWIG_croak("The coordinate transformation must not be undefined");
     }
     OSRCoordinateTransformationShadow_TransformPoint__SWIG_1(arg1,arg2,arg3,arg4,arg5);
     
@@ -8401,18 +8576,11 @@ XS(_wrap_CoordinateTransformation_TransformPoints) {
     double *arg5 = (double *) 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
-    int val2 ;
-    int ecode2 = 0 ;
-    void *argp3 = 0 ;
-    int res3 = 0 ;
-    void *argp4 = 0 ;
-    int res4 = 0 ;
-    void *argp5 = 0 ;
-    int res5 = 0 ;
     int argvi = 0;
+    SV * _saved[1] ;
     dXSARGS;
     
-    if ((items < 5) || (items > 5)) {
+    if ((items < 2) || (items > 2)) {
       SWIG_croak("Usage: CoordinateTransformation_TransformPoints(self,nCount,x,y,z);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
@@ -8420,40 +8588,78 @@ XS(_wrap_CoordinateTransformation_TransformPoints) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
     }
     arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
-    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
-    if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "2"" of type '" "int""'");
-    } 
-    arg2 = static_cast< int >(val2);
-    res3 = SWIG_ConvertPtr(ST(2), &argp3,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "3"" of type '" "double *""'"); 
+    {
+      /* %typemap(in) (int nCount, double *x, double *y, double *z) */
+      /* ST(1) is a ref to a list of refs to point lists */
+      if (! (SvROK(ST(1)) && (SvTYPE(SvRV(ST(1)))==SVt_PVAV)))
+      SWIG_croak("expected a reference to an array");
+      AV *av = (AV*)(SvRV(ST(1)));
+      arg2 = av_len(av)+1;
+      arg3 = (double*) malloc(arg2*sizeof(double));
+      arg4 = (double*) malloc(arg2*sizeof(double));
+      arg5 = (double*) malloc(arg2*sizeof(double));
+      if (!arg3 or !arg4 or !arg5)
+      SWIG_croak("out of memory");
+      for (int i = 0; i < arg2; i++) {
+        SV **sv = av_fetch(av, i, 0); /* ref to one point list */
+        if (!(SvROK(*sv) && (SvTYPE(SvRV(*sv))==SVt_PVAV)))
+        SWIG_croak("expected a reference to a list of coordinates");
+        AV *ac = (AV*)(SvRV(*sv));
+        int n = av_len(ac)+1;
+        SV **c = av_fetch(ac, 0, 0);
+        arg3[i] = SvNV(*c);
+        c = av_fetch(ac, 1, 0);
+        arg4[i] = SvNV(*c);
+        if (n < 3) {
+          arg5[i] = 0;
+        } else {
+          c = av_fetch(ac, 2, 0);
+          arg5[i] = SvNV(*c);
+        }
+      }
     }
-    arg3 = reinterpret_cast< double * >(argp3);
-    res4 = SWIG_ConvertPtr(ST(3), &argp4,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "4"" of type '" "double *""'"); 
+    {
+      /* %typemap(check) (OSRCoordinateTransformationShadow *) */
+      if (!arg1)
+      SWIG_croak("The coordinate transformation must not be undefined");
     }
-    arg4 = reinterpret_cast< double * >(argp4);
-    res5 = SWIG_ConvertPtr(ST(4), &argp5,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res5)) {
-      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "5"" of type '" "double *""'"); 
-    }
-    arg5 = reinterpret_cast< double * >(argp5);
+    _saved[0] = ST(1);
     OSRCoordinateTransformationShadow_TransformPoints(arg1,arg2,arg3,arg4,arg5);
     
+    {
+      /* %typemap(argout) (int nCount, double *x, double *y, double *z) */
+      AV *av = (AV*)(SvRV(_saved[0]));
+      for (int i = 0; i < arg2; i++) {
+        SV **sv = av_fetch(av, i, 0);
+        AV *ac = (AV*)(SvRV(*sv));
+        int n = av_len(ac)+1;
+        SV *c = newSVnv(arg3[i]);
+        if (!av_store(ac, 0, c))
+        SvREFCNT_dec(c);
+        c = newSVnv(arg4[i]);
+        if (!av_store(ac, 1, c))
+        SvREFCNT_dec(c);
+        c = newSVnv(arg5[i]);
+        if (!av_store(ac, 2, c))
+        SvREFCNT_dec(c);
+      }
+    }
     
-    
-    
-    
-    
+    {
+      /* %typemap(freearg) (int nCount, double *x, double *y, double *z) */
+      if (arg3) free(arg3);
+      if (arg4) free(arg4);
+      if (arg5) free(arg5);
+    }
     XSRETURN(argvi);
   fail:
     
-    
-    
-    
-    
+    {
+      /* %typemap(freearg) (int nCount, double *x, double *y, double *z) */
+      if (arg3) free(arg3);
+      if (arg4) free(arg4);
+      if (arg5) free(arg5);
+    }
     SWIG_croak_null();
   }
 }
@@ -8593,6 +8799,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::OSRc::SpatialReference_SetProjCS", _wrap_SpatialReference_SetProjCS},
 {"Geo::OSRc::SpatialReference_ImportFromWkt", _wrap_SpatialReference_ImportFromWkt},
 {"Geo::OSRc::SpatialReference_ImportFromProj4", _wrap_SpatialReference_ImportFromProj4},
+{"Geo::OSRc::SpatialReference_ImportFromUrl", _wrap_SpatialReference_ImportFromUrl},
 {"Geo::OSRc::SpatialReference_ImportFromESRI", _wrap_SpatialReference_ImportFromESRI},
 {"Geo::OSRc::SpatialReference_ImportFromEPSG", _wrap_SpatialReference_ImportFromEPSG},
 {"Geo::OSRc::SpatialReference_ImportFromPCI", _wrap_SpatialReference_ImportFromPCI},
