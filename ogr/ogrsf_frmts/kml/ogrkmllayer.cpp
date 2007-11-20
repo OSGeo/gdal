@@ -39,6 +39,7 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry );
 /************************************************************************/
 /*                           OGRKMLLayer()                              */
 /************************************************************************/
+
 OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRSpatialReference *poSRSIn, int bWriterIn,
                           OGRwkbGeometryType eReqType,
@@ -70,6 +71,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 /************************************************************************/
 /*                           ~OGRKMLLayer()                             */
 /************************************************************************/
+
 OGRKMLLayer::~OGRKMLLayer()
 {
     if( NULL != poFeatureDefn_ )
@@ -91,6 +93,7 @@ OGRFeatureDefn* OGRKMLLayer::GetLayerDefn()
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
+
 void OGRKMLLayer::ResetReading()
 {
     iNextKMLId_ = 0;    
@@ -99,6 +102,7 @@ void OGRKMLLayer::ResetReading()
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
+
 OGRFeature *OGRKMLLayer::GetNextFeature()
 {
 #ifndef HAVE_EXPAT
@@ -195,6 +199,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
+
 int OGRKMLLayer::GetFeatureCount( int bForce )
 {
     int nCount = 0;
@@ -220,19 +225,13 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 #ifdef HAVE_EXPAT
     CPLAssert( NULL != psExtent );
 
-    double dfXMin, dfXMax, dfYMin, dfYMax;
-
     KML *poKMLFile = poDS_->GetKMLFile();
     if( NULL != poKMLFile )
     {
         poKMLFile->selectLayer(nLayerNumber_);
-        if( poKMLFile->getExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
+        if( poKMLFile->getExtents( psExtent->MinX, psExtent->MaxX,
+                                   psExtent->MinY, psExtent->MaxY ) )
         {
-            psExtent->MinX = dfXMin;
-            psExtent->MaxX = dfXMax;
-            psExtent->MinY = dfYMin;
-            psExtent->MaxY = dfYMax;
-
             return OGRERR_NONE;
         }
     }
@@ -244,19 +243,23 @@ OGRErr OGRKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
-OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
+
+OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 {
-    FILE *fp = poDS_->GetOutputFP();
+    CPLAssert( NULL != poFeature );
+    CPLAssert( NULL != poDS_ );
 
     if( !bWriter_ )
         return OGRERR_FAILURE;
+
+    FILE *fp = poDS_->GetOutputFP();
+    CPLAssert( NULL != fp );
 
     VSIFPrintf( fp, "  <Placemark>\n" );
 
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextKMLId_++ );
-            
-        
+
     // First find and write the name element
     if (NULL != poDS_->GetNameField())
     {
@@ -373,6 +376,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
+
 int OGRKMLLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap, OLCSequentialWrite) )

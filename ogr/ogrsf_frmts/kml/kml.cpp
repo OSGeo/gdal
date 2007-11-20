@@ -325,14 +325,15 @@ void XMLCALL KML::dataHandler(void *pUserData, const char *pszData, int nLen)
 
 bool KML::isValid()
 {
-	this->checkValidity();
-	CPLDebug("KML", "Valid: %d Version: %s", this->bValid_, this->sVersion_.c_str());
-	return this->bValid_;
+	checkValidity();
+	
+    CPLDebug("KML", "Valid: %d Version: %s", bValid_, sVersion_.c_str());
+	return bValid_;
 }
 
-std::string KML::getError()
+std::string KML::getError() const
 {
-	return this->sError_;
+	return sError_;
 }
 
 void KML::classifyNodes() {
@@ -348,14 +349,49 @@ void KML::print(unsigned short nNum) {
         poTrunk_->print(nNum);
 }
 
-bool KML::isHandled(std::string const& sIn) const {
-    if(this->isLeaf(sIn) || this->isFeature(sIn) || this->isFeatureContainer(sIn) || this->isContainer(sIn) || this->isRest(sIn))
+bool KML::isHandled(std::string const& elem) const
+{
+    if( isLeaf(elem) || isFeature(elem) || isFeatureContainer(elem)
+        || isContainer(elem) || isRest(elem) )
+    {
         return true;
+    }
     return false;
 }
 
-short KML::numLayers() {
-    return this->nNumLayers_;
+bool KML::isLeaf(std::string const& elem) const
+{
+    return false;
+};
+
+bool KML::isFeature(std::string const& elem) const
+{
+    return false;
+};
+
+bool KML::isFeatureContainer(std::string const& elem) const
+{
+    return false;
+};
+
+bool KML::isContainer(std::string const& elem) const
+{
+    return false;
+};
+
+bool KML::isRest(std::string const& elem) const
+{
+    return false;
+};
+
+void KML::findLayers(KMLNode* poNode)
+{
+    // idle
+};
+
+int KML::getNumLayers() const
+{
+    return nNumLayers_;
 }
 
 bool KML::selectLayer(unsigned short nNum) {
@@ -368,47 +404,52 @@ bool KML::selectLayer(unsigned short nNum) {
         return TRUE;
 }
 
-std::string KML::getCurrentName() {
-    if(poCurrent_ != NULL)
-        return poCurrent_->getNameElement();
-    else
-        return "";
+std::string KML::getCurrentName() const
+{
+    std::string tmp;
+    if( poCurrent_ != NULL )
+    {
+        tmp = poCurrent_->getNameElement();
+    }
+    return tmp;
 }
 
-Nodetype KML::getCurrentType() {
+Nodetype KML::getCurrentType() const
+{
     if(poCurrent_ != NULL)
-        return (Nodetype)poCurrent_->getType();
+        return poCurrent_->getType();
     else
         return Unknown;
 }
 
-short KML::getNumFeatures() {
+int KML::getNumFeatures() const
+{
     if(poCurrent_ != NULL)
-        return poCurrent_->getNumFeatures();
+        return static_cast<int>(poCurrent_->getNumFeatures());
     else
         return -1;
 }
 
-Feature* KML::getFeature(unsigned short nNum) {
+Feature* KML::getFeature(std::size_t nNum) const
+{
     if(poCurrent_ != NULL)
         return poCurrent_->getFeature(nNum);
     else
         return NULL;
 }
 
-bool KML::getExtents(double *pdfXMin, double *pdfXMax, double *pdfYMin, double *pdfYMax)
+bool KML::getExtents(double& pdfXMin, double& pdfXMax, double& pdfYMin, double& pdfYMax) const
 {
     if( poCurrent_ != NULL )
     {
         Extent const* poXT = poCurrent_->getExtents();
-        *pdfXMin = poXT->dfX1;
-        *pdfXMax = poXT->dfX2;
-        *pdfYMin = poXT->dfY1;
-        *pdfYMax = poXT->dfY2;
+        pdfXMin = poXT->dfX1;
+        pdfXMax = poXT->dfX2;
+        pdfYMin = poXT->dfY1;
+        pdfYMax = poXT->dfY2;
 
-        return TRUE;
+        return true;
     }
-
-    return FALSE;
+    return false;
 }
 
