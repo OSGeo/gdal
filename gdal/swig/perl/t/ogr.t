@@ -64,6 +64,40 @@ $g2->GetDimension; # does not cause a kaboom
     ok($s->{Width} == 10, 'fieldefn schema 1');
     ok($s->{Type} eq 'String', 'fieldefn schema 2');
 }
+{
+    my $driver = Geo::OGR::GetDriver('Memory');
+    my $datasource = $driver->CreateDataSource('test');
+    my $layer = $datasource->CreateLayer('test', undef, 'Point');
+    $layer->Schema(Fields => 
+		   [{Name => 'test1', Type => 'Integer'},
+		    {Name => 'test2', Type => 'String'},
+		    {Name => 'test3', Type => 'Real'}
+		    ], ApproxOK => 1);
+    $layer->InsertFeature({ test1 => 13, 
+			    Geometry => { Points => [1,2,3] } });
+    $layer->InsertFeature({ test2 => '31a', 
+			    Geometry => { Points => [3,2] } });
+    $layer->ResetReading;
+    my $i = 0;
+    while (my $f = $layer->GetNextFeature) {
+	my @a = $f->Tuple;
+	$a[1] = $a[1]->ExportToWkt;
+	my $h = $f->Row;
+	$h->{Geometry} = $h->{Geometry}->ExportToWkt;
+	if ($i == 0) {
+	    my @t = (0,'POINT (1 2)',13,undef,undef);
+	    ok(is_deeply(\@a, \@t), "layer create test 1");
+	} else {
+	    my %t = (FID => 1, Geometry => 'POINT (3 2)', test1 => undef, test2 => '31a', test3 => undef);
+	    ok(is_deeply($h, \%t), "layer create test 2");
+	}
+	$i++;
+    }
+    $layer->Row(FID=>0, Geometry=>{ Points => [5,6] }, test3 => 6.5);
+    my @t = $layer->Tuple(0);
+    ok($t[4] == 6.5, "layer row and tuple");
+    ok($t[1]->ExportToWkt eq 'POINT (5 6)', "layer row and tuple");
+}
 
 my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');

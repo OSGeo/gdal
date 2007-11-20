@@ -231,18 +231,18 @@
 ## @method $CreateDataSource($name, \@options = undef )
 # @param name the data source name
 # @param options a list of driver specific options
-# @return a new Geo::OGR::Datasource object
+# @return a new Geo::OGR::DataSource object
 
 ## @method $CopyDataSource($ds, $name, \@options = undef)
-# @param ds the Geo::OGR::Datasource object to be copied
+# @param ds the Geo::OGR::DataSource object to be copied
 # @param name
 # @param options
-# @return a new Geo::OGR::Datasource object
+# @return a new Geo::OGR::DataSource object
 
 ## @method $Open($name, $update = 0)
 # @param name
 # @param update
-# @return a new Geo::OGR::Datasource object
+# @return a new Geo::OGR::DataSource object
 
 ## @method DeleteDataSource($name)
 # @param name
@@ -345,18 +345,31 @@
 # capabilities a layer may have; the object method returns a list of
 # all capabilities the layer has
 
-## @method \%row(%row)
-# Get and/or set the data of a feature based on a supplied feature
-# id. The keys of the row are the field names. Special names FID and
-# Geometry are used for feature id and Geometry respectively. The
-# geometry is a Geo::OGR::Geometry object whose data is owned by the
-# feature. It is ok to set only a subset of the fields, those fields
-# whose keys do not exist are left unchanged. [not yet implemented]
+## @method \%Schema(%schema)
+# Get and/or set the schema of the layer. The named input parameters
+# are: Fields and ApproxOK. Fields is a reference to a list of field
+# definitions (either Geo::OGR::FieldDefn objects or hashrefs from
+# which they can be created). ApproxOK is a flag telling OGR whether
+# it is ok to change the requested field definition to accommodate
+# limitations of the layer. The output contains keys Name,
+# GeometryType, and Fields.
+# @param schema
+# @return
+
+## @method \%Row(%row)
+# Get and/or set the data of a feature that has the supplied feature
+# id (gets next if feature id is not given). The keys of the row are
+# the field names. Special names FID and Geometry are used for feature
+# id and Geometry respectively. The geometry is a Geo::OGR::Geometry
+# object whose data is owned by the feature. It is ok to set only a
+# subset of the fields, those fields whose keys do not exist are left
+# unchanged.
 # @param row
 # @return
 
-## @method @tuple(@tuple)
-# Get and/set the data of the feature. The order of the data in the
+## @method @Tuple(@tuple)
+# Get and/set the data of a feature that has the supplied feature id
+# (gets next if feature id is not given). The order of the data in the
 # tuple is: feature id, Geometry, fields in their order. The geometry
 # is a Geo::OGR::Geometry object whose data is owned by the
 # feature. It is ok to leave Geometry undefined, it is set only if it
@@ -406,6 +419,13 @@
 # Inserts a feature into the layer. The given feature's id may change.
 # @param feature a Geo::OGR::Feature object
 
+## @method InsertFeature($feature)
+# Same as CreateFeature except that the parameter feature may be a
+# hashref (\%row) or a listref (\@tuple) that is fed to a
+# Geo::OGR::Feature object's Row or Tuple method that is created in
+# inserted into the layer.
+# @param feature a Geo::OGR::Feature object, or \%row or \@tuple
+
 ## @method DeleteFeature($fid)
 # @param fid feature id
 
@@ -454,22 +474,26 @@
 # @param feature_def a Geo::OGR::FeatureDefn object
 # @return a new Geo::OGR::Feature object
 
-## @method \%row(%row)
+## @method \%Row(%row)
 # Get and/or set the data of the feature. The key of the key value,
 # pairs of the row is the field name. Special names FID and Geometry
 # are used for feature id and Geometry respectively. The geometry is a
 # Geo::OGR::Geometry object whose data is or will become owned by the
-# feature. It is ok to set only a subset of the fields, those fields
-# whose keys do not exist are left unchanged. [not yet implemented]
+# feature; or data from which a geometry object can be created (a
+# hashref that is fed to Geo::OGR::Geometry::create). It is ok to set
+# only a subset of the fields, those fields whose keys do not exist
+# are left unchanged.
 # @param row
 # @return
 
-## @method @tuple(@tuple)
+## @method @Tuple(@tuple)
 # Get and/set the data of the feature. The order of the data in the
 # tuple is: FID, Geometry, fields in their order. The geometry is a
 # Geo::OGR::Geometry object whose data is or will become owned by the
-# feature. It is ok to leave FID and Geometry undefined, they are set
-# only if they are defined. [not yet implemented]
+# feature; or data from which a geometry object can be created (a
+# hashref that is fed to Geo::OGR::Geometry::create). It is ok to
+# leave FID and Geometry undefined, they are set only if they are
+# defined. [not yet implemented]
 # @param tuple
 # @return
 
@@ -649,26 +673,27 @@
 
 ## @method $Name($name)
 # Get and/or set the name
-# @param name
+# @param name {optional]
+# @return the name in non-void context
 
 ## @method $Type($type)
-# @param type on of field types
-# @return one of field types unles type is given
+# @param type [optional] one of field types
+# @return one of field types in non-void context
 
 ## @method $Justify($justify)
 # Get and/or set the justification
-# @param justify as string
-# @return one of Undefined Left Right
+# @param justify [optional] as string
+# @return one of Undefined Left Right in non-void context
 
 ## @method $Width($width)
 # Get and/or set the field width
-# @param width
-# @return integer
+# @param width [optional]
+# @return integer in non-void context
 
 ## @method $Precision($precision)
 # Get and/or set the precision
-# @param precision
-# @return integer
+# @param precision [optional]
+# @return integer in non-void context
 
 ## @method $GetName()
 # @return
@@ -732,7 +757,8 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @cmethod $create(%params)
-# @param %params A named parameter, possible are: type, WKT, WKB, and GML.
+# @param %params A named parameter, possible are: GeometryType, WKT,
+# WKB, GML, and Points.
 # @return a new Geo::OGR::Geometry object
 
 ## @method $ExportToWkt()
