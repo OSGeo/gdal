@@ -61,30 +61,37 @@ bool isNumberDigit(const char cIn)
              cIn == '.' || cIn == 'e' || cIn == 'E' );
 }
 
-Coordinate* ParseCoordinate(std::string sIn)
+Coordinate* ParseCoordinate(std::string const& text)
 {
-    unsigned short nPos = 0;
-    Coordinate *psTmp = new Coordinate;
-    while(isNumberDigit(sIn[nPos++]));
-    psTmp->dfLongitude = atof(sIn.substr(0, (nPos - 1)).c_str());
-    if(sIn[nPos - 1] != ',')
+    std::string::size_type pos = 0;
+    Coordinate *psTmp = new Coordinate();
+
+    // X coordinate
+    while(isNumberDigit(text[pos++]));
+    psTmp->dfLongitude = atof(text.substr(0, (pos - 1)).c_str());
+
+    // Y coordinate
+    if(text[pos - 1] != ',')
     {
         delete psTmp;
         return NULL;
     }
-    sIn = sIn.substr(nPos, sIn.length() - nPos);
-    nPos = 0;
-    while(isNumberDigit(sIn[nPos++]));
-    psTmp->dfLatitude = atof(sIn.substr(0, (nPos - 1)).c_str());
-    if(sIn[nPos - 1] != ',')
+    std::string tmp(text.substr(pos, text.length() - pos));
+    pos = 0;
+    while(isNumberDigit(tmp[pos++]));
+    psTmp->dfLatitude = atof(tmp.substr(0, (pos - 1)).c_str());
+    
+    // Z coordinate
+    if(tmp[pos - 1] != ',')
     {
         psTmp->dfAltitude = 0;
         return psTmp;
     }
-    sIn = sIn.substr(nPos, sIn.length() - nPos);
-    nPos = 0;
-    while(isNumberDigit(sIn[nPos++]));
-    psTmp->dfAltitude = atof(sIn.substr(0, (nPos - 1)).c_str());
+    tmp = tmp.substr(pos, tmp.length() - pos);
+    pos = 0;
+    while(isNumberDigit(tmp[pos++]));
+    psTmp->dfAltitude = atof(tmp.substr(0, (pos - 1)).c_str());
+
     return psTmp;
 }
 
@@ -439,7 +446,6 @@ Feature* KMLNode::getFeature(std::size_t nNum)
     {
         if(pvpoChildren_->at(nCount)->sName_.compare("Placemark") == 0)
         {
-            CPLDebug("KML", "GetFeature(#%d) - %s", nNum, pvpoChildren_->at(nCount)->sName_.c_str());
             if(nCountP == nNum)
             {
                 poFeat = pvpoChildren_->at(nCount);
@@ -460,7 +466,6 @@ Feature* KMLNode::getFeature(std::size_t nNum)
     psReturn->sDescription = poFeat->getDescriptionElement();
     // the type
     psReturn->eType = poFeat->eType_;
-    CPLDebug("KML", "GetFeature(#%d) --> %s", nNum, Nodetype2String(poFeat->eType_).c_str());
     // the coordinates (for a Point)
     if(poFeat->eType_ == Point)
     {
@@ -485,14 +490,11 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search coordinate Element
         for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
         {
-            CPLDebug("KML", "GetFeature(#%d) ---> %s", nNum, poTemp->pvpoChildren_->at(nCount)->sName_.c_str());
             if(poTemp->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
             {
                 poCoor = poTemp->pvpoChildren_->at(nCount);
-                CPLDebug("KML", "GetFeature(#%d) ---> #%d", nNum, poCoor->pvsContent_->size());
                 for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
                 {
-                    CPLDebug("KML", "GetFeature(#%d) ----> %s", nNum, poCoor->pvsContent_->at(nCountP).c_str());
                     psCoord = ParseCoordinate(poCoor->pvsContent_->at(nCountP));
                     if(psCoord != NULL)
                         psReturn->pvpsCoordinates->push_back(psCoord);
@@ -534,14 +536,11 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search coordinate Element
         for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
         {
-            CPLDebug("KML", "GetFeature(#%d) ---> %s", nNum, poTemp->pvpoChildren_->at(nCount)->sName_.c_str());
             if(poTemp->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
             {
                 poCoor = poTemp->pvpoChildren_->at(nCount);
-                CPLDebug("KML", "GetFeature(#%d) ---> #%d", nNum, poCoor->pvsContent_->size());
                 for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
                 {
-                    CPLDebug("KML", "GetFeature(#%d) ----> %s", nNum, poCoor->pvsContent_->at(nCountP).c_str());
                     psCoord = ParseCoordinate(poCoor->pvsContent_->at(nCountP));
                     if(psCoord != NULL)
                         psReturn->pvpsCoordinates->push_back(psCoord);
@@ -583,7 +582,6 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         //*********************************
         for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
         {
-            CPLDebug("KML", "GetFeature(#%d) ---> %s", nNum, poTemp->pvpoChildren_->at(nCount)->sName_.c_str());
             if(poTemp->pvpoChildren_->at(nCount)->sName_.compare("outerBoundaryIs") == 0)
             {
                 poCoor = poTemp->pvpoChildren_->at(nCount)->pvpoChildren_->at(0);
@@ -597,14 +595,12 @@ Feature* KMLNode::getFeature(std::size_t nNum)
             return NULL;
         }
         // Search coordinate Element
-        CPLDebug("KML", "GetFeature(#%d) ---> #%d", nNum, poCoor->pvsContent_->size());
         for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
         {
             if(poCoor->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
             {
                 for(nCountP = 0; nCountP < poCoor->pvpoChildren_->at(nCount)->pvsContent_->size(); nCountP++)
                 {
-                    CPLDebug("KML", "GetFeature(#%d) ----> %s", nNum, poCoor->pvpoChildren_->at(nCount)->pvsContent_->at(nCountP).c_str());
                     psCoord = ParseCoordinate(poCoor->pvpoChildren_->at(nCount)->pvsContent_->at(nCountP));
                     if(psCoord != NULL)
                         psReturn->pvpsCoordinates->push_back(psCoord);
@@ -625,20 +621,17 @@ Feature* KMLNode::getFeature(std::size_t nNum)
 
         for(nCount2 = 0; nCount2 < poTemp->pvpoChildren_->size(); nCount2++)
         {
-            CPLDebug("KML", "GetFeature(#%d) ---> %s", nNum, poTemp->pvpoChildren_->at(nCount2)->sName_.c_str());
             if(poTemp->pvpoChildren_->at(nCount2)->sName_.compare("innerBoundaryIs") == 0)
             {
                 pvpsTmp = new std::vector<Coordinate*>; 
                 poCoor = poTemp->pvpoChildren_->at(nCount2)->pvpoChildren_->at(0);
                 // Search coordinate Element
-                CPLDebug("KML", "GetFeature(#%d) ----> #%d", nNum, poCoor->pvsContent_->size());
                 for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
                 {
                     if(poCoor->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
                     {
                         for(nCountP = 0; nCountP < poCoor->pvpoChildren_->at(nCount)->pvsContent_->size(); nCountP++)
                         {
-                            CPLDebug("KML", "GetFeature(#%d) -----> %s", nNum, poCoor->pvpoChildren_->at(nCount)->pvsContent_->at(nCountP).c_str());
                             psCoord = ParseCoordinate(poCoor->pvpoChildren_->at(nCount)->pvsContent_->at(nCountP));
                             if(psCoord != NULL)
                                 pvpsTmp->push_back(psCoord);

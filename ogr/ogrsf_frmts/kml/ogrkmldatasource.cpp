@@ -148,7 +148,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     poKMLFile_->print(3);
 
-    nLayers_ = poKMLFile_->numLayers();
+    nLayers_ = poKMLFile_->getNumLayers();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate memory for the Layers                                  */
