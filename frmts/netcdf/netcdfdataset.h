@@ -113,15 +113,16 @@ oNetcdfSRS poNetcdfSRS[] = {
     {"swiss_oblique_cylindrical", SRS_PT_SWISS_OBLIQUE_CYLINDRICAL},
     {"transverse_mercator", SRS_PT_TRANSVERSE_MERCATOR },
     {"TM_south_oriented", SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED },
-    {"central_meridian", SRS_PP_CENTRAL_MERIDIAN },
-    {"scale_factor_at_projection_origin", SRS_PP_SCALE_FACTOR },   
-    {"standard_parallel_1", SRS_PP_STANDARD_PARALLEL_1 },
-    {"standard_parallel_2", SRS_PP_STANDARD_PARALLEL_2 },
+
+    {LONG_CENTRAL_MERIDIAN, SRS_PP_CENTRAL_MERIDIAN },
+    {SCALE_FACTOR, SRS_PP_SCALE_FACTOR },   
+    {STD_PARALLEL_1, SRS_PP_STANDARD_PARALLEL_1 },
+    {STD_PARALLEL_2, SRS_PP_STANDARD_PARALLEL_2 },
     {"longitude_of_central_meridian", SRS_PP_LONGITUDE_OF_CENTER },
     {"longitude_of_projection_origin", SRS_PP_LONGITUDE_OF_ORIGIN }, 
     {"latitude_of_projection_origin", SRS_PP_LATITUDE_OF_ORIGIN }, 
-    {"false_easting", SRS_PP_FALSE_EASTING },  
-    {"false_northing", SRS_PP_FALSE_NORTHING },       
+    {FALSE_EASTING, SRS_PP_FALSE_EASTING },  
+    {FALSE_NORTHING, SRS_PP_FALSE_NORTHING },       
     {NULL, NULL },
  };
 
@@ -139,6 +140,9 @@ class netCDFDataset : public GDALPamDataset
     char         *pszProjection;
     int          bGotGeoTransform;
     double       rint( double );
+
+    double       FetchCopyParm( const char *pszGridMappingValue, 
+                                const char *pszParm, double dfDefault );
 
   public:
     int           cdfid;

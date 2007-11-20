@@ -587,7 +587,6 @@ netCDFDataset::netCDFDataset()
 
 {
     papszMetadata    = NULL;	
-    papszGeolocation = NULL;
     papszSubDatasets = NULL;
     bGotGeoTransform = FALSE;
     pszProjection    = NULL;
@@ -607,30 +606,41 @@ netCDFDataset::~netCDFDataset()
 
     FlushCache();
 
-    if( papszMetadata != NULL )
-	CSLDestroy( papszMetadata );
+    CSLDestroy( papszMetadata );
+    CSLDestroy( papszName );
+    CSLDestroy( papszSubDatasets );
 
-    if( pszProjection != NULL ) 
-	CPLFree( pszProjection );
-
-    if( papszName != NULL ) 
-	CSLDestroy( papszName );
-
-    if( pszFilename != NULL )
-	CPLFree( pszFilename );
-
-    if( papszSubDatasets )
-	CSLDestroy( papszSubDatasets );
-
-    if( papszGeolocation )
-	CSLDestroy( papszGeolocation );
+    CPLFree( pszProjection );
+    CPLFree( pszFilename );
 
     if( cdfid ) 
 	nc_close( cdfid );
-
-
 }
 
+/************************************************************************/
+/*                           FetchCopyParm()                            */
+/************************************************************************/
+
+double netCDFDataset::FetchCopyParm( const char *pszGridMappingValue, 
+                                     const char *pszParm, double dfDefault )
+
+{
+    char         szTemp[ MAX_NC_NAME ];
+    const char  *pszValue;
+
+    strcpy(szTemp,pszGridMappingValue);
+    strcat( szTemp, "#" );
+    strcat( szTemp, pszParm );
+    pszValue = CSLFetchNameValue(papszMetadata, szTemp);
+
+    if( pszValue )
+    {
+        return CPLAtofM(pszValue);
+    }
+    else
+        return dfDefault;
+}
+    
 
 /************************************************************************/
 /*                           SetProjection()                            */
@@ -728,66 +738,34 @@ void netCDFDataset::SetProjection( int var )
 	strcat( szTemp, "#" );
 	strcat( szTemp, GRD_MAPPING_NAME );
 	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-	papszGeolocation = CSLSetNameValue( papszGeolocation,
-					    "grid_mapping", 
-					    pszValue);
+
 	if( pszValue != NULL ) {
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
 
 	    if( EQUAL( pszValue, TM ) ) {
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, SCALE_FACTOR );
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    SCALE_FACTOR,
-						    pszValue);
-		if( pszValue )
-		    dfScale = atof( pszValue );
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, LONG_CENTRAL_MERIDIAN );
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    LONG_CENTRAL_MERIDIAN,
-						    pszValue);
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		if( pszValue )
-		    dfCenterLon = atof( pszValue );
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, LAT_PROJ_ORIGIN );
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    LAT_PROJ_ORIGIN,
-						    pszValue);
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		if( pszValue )
-		    dfCenterLat = atof( pszValue );
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, FALSE_EASTING );
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    FALSE_EASTING,
-						    pszValue);
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		if( pszValue )
-		    dfFalseEasting = atof( pszValue );
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, FALSE_NORTHING );
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    FALSE_NORTHING,
-						    pszValue);
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		if( pszValue )
-		    dfFalseNorthing = atof (pszValue);
-		
+
+		dfScale = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         SCALE_FACTOR, 1.0 );
+
+		dfCenterLon = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+
+		dfCenterLat = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
+
 		oSRS.SetTM( dfCenterLat, 
 			    dfCenterLon,
 			    dfScale,
@@ -800,75 +778,29 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 	    else if( EQUAL( pszValue, L_C_CONIC ) ) {
 		
-		strcpy( szTemp,szGridMappingValue );
-		strcat( szTemp, "#" );
-		strcat( szTemp, STD_PARALLEL_1 );
-		pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    STD_PARALLEL_1,
-						    pszValue);
-		
-		
-		if( pszValue ) {
-		    dfStdP1 = atof( pszValue );
-		}
-		
-		strcpy( szTemp,szGridMappingValue );
-		strcat( szTemp, "#" );
-		strcat( szTemp, STD_PARALLEL_1 );
-		pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    STD_PARALLEL_2,
-						    pszValue);
-		
-		if( pszValue ) {
-		    dfStdP2 = atof( pszValue );
-		}
-		
-		strcpy( szTemp,szGridMappingValue );
-		strcat( szTemp, "#" );
-		strcat( szTemp, LONG_CENTRAL_MERIDIAN );
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    LONG_CENTRAL_MERIDIAN,
-						    pszValue);
-		
-		if( pszValue )
-		    dfCenterLon = atof(pszValue);
-		
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, LAT_PROJ_ORIGIN );
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    LAT_PROJ_ORIGIN,
-						    pszValue);
-		
-		if( pszValue )
-		    dfCenterLat = atof(pszValue);
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, FALSE_EASTING );
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    FALSE_EASTING,
-						    pszValue);
-		
-		if( pszValue )
-		    dfFalseEasting = atof(pszValue);
-		
-		strcpy(szTemp,szGridMappingValue);
-		strcat( szTemp, "#" );
-		strcat( szTemp, FALSE_NORTHING );
-		pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-		papszGeolocation = CSLSetNameValue( papszGeolocation,
-						    FALSE_NORTHING,
-						    pszValue);
-		
-		if( pszValue )
-		dfFalseNorthing = atof(pszValue);
+		dfStdP1 = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_1, 0.0 );
+
+		dfStdP2 = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         STD_PARALLEL_2, 0.0 );
+
+		dfCenterLon = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+
+		dfCenterLat = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         LAT_PROJ_ORIGIN, 0.0 );
+
+		dfFalseEasting = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_EASTING, 0.0 );
+
+		dfFalseNorthing = 
+                    poDS->FetchCopyParm( szGridMappingValue, 
+                                         FALSE_NORTHING, 0.0 );
 		
 		oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
 			     dfFalseEasting, dfFalseNorthing );
@@ -880,117 +812,8 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 	    
 	} else if( EQUAL( szDimNameX,"lon" ) ) {
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						"grid_mapping", 
-						"Latitude Longitude" );
-	    
-	    strcpy( szTemp, poDS->papszDimName[nDimXid] );
-	    strcat( szTemp, "#" );
-	    strcat( szTemp, UNITS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lon_");
-	    strcat( szTemp, UNITS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue);
-	    
-	    strcpy(szTemp, poDS->papszDimName[nDimXid]);
-	    strcat(szTemp, "#" );
-	    strcat(szTemp, AXIS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lon_");
-	    strcat( szTemp, AXIS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue);
-	    
-	    strcpy(szTemp, poDS->papszDimName[nDimXid]);
-	    strcat(szTemp, "#" );
-	    strcat(szTemp, BOUNDS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lon_");
-	    strcat( szTemp, BOUNDS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue);
-	    strcpy(szTemp, poDS->papszDimName[nDimXid]);
-	    strcat(szTemp, "#" );
-	    strcat(szTemp, ORIG_AXIS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lon_");
-	    strcat( szTemp, ORIG_AXIS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue);
-	    
-	    
-	    strcpy( szTemp, poDS->papszDimName[nDimYid] );
-	    strcat( szTemp, "#" );
-	    strcat( szTemp, UNITS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lat_");
-	    strcat( szTemp, UNITS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-					    szTemp,
-						pszValue);
-	    
-	    strcpy(szTemp, poDS->papszDimName[nDimYid]);
-	    strcat(szTemp, "#" );
-	    strcat(szTemp, AXIS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lat_");
-	    strcat( szTemp, AXIS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue);
-	    
-	    strcpy(szTemp, poDS->papszDimName[nDimYid]);
-	    strcat(szTemp, "#" );
-	    strcat(szTemp, BOUNDS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lat_");
-	    strcat( szTemp, BOUNDS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue)
-;
-	    strcpy(szTemp, poDS->papszDimName[nDimYid]);
-	    strcat(szTemp, "#" );
-	    strcat(szTemp, ORIG_AXIS );
-	    
-	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
-	    
-	    strcpy( szTemp, "Lat_");
-	    strcat( szTemp, ORIG_AXIS );
-	    
-	    papszGeolocation = CSLSetNameValue( papszGeolocation,
-						szTemp,
-						pszValue);
-
-	    
-	    
 	    oSRS.SetWellKnownGeogCS( "WGS84" );
+
 	} else {
 	    // This would be too indiscrimant.  But we should set
 	    // it if we know the data is geographic.
@@ -1027,10 +850,10 @@ void netCDFDataset::SetProjection( int var )
 	nSpacingBegin   = (int) poDS->rint((pdfXCoord[1]-pdfXCoord[0]) * 1000);
 	
 	nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
-				      pdfXCoord[(xdim / 2) + 1]) * 1000);
+                                            pdfXCoord[(xdim / 2) + 1]) * 1000);
 	
 	nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
-				      pdfXCoord[xdim-1]) * 1000);
+                                            pdfXCoord[xdim-1]) * 1000);
 	
 	if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )     )  &&
 	    ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle )   ) &&
@@ -1074,35 +897,34 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 /*      Enable GeoTransform                                             */
 /* -------------------------------------------------------------------- */
-		    poDS->bGotGeoTransform = TRUE;
+                poDS->bGotGeoTransform = TRUE;
 		    
-		    poDS->adfGeoTransform[0] = pdfXCoord[0];
-		    poDS->adfGeoTransform[3] = pdfYCoord[0];
-		    poDS->adfGeoTransform[2] = 0;
-		    poDS->adfGeoTransform[4] = 0;
-		    poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - 
-						  pdfXCoord[0] ) / 
-						( poDS->nRasterXSize - 1 ));
+                poDS->adfGeoTransform[0] = pdfXCoord[0];
+                poDS->adfGeoTransform[3] = pdfYCoord[0];
+                poDS->adfGeoTransform[2] = 0;
+                poDS->adfGeoTransform[4] = 0;
+                poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - 
+                                              pdfXCoord[0] ) / 
+                                            ( poDS->nRasterXSize - 1 ));
 
-		    poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - 
-						  pdfYCoord[0] ) / 
-						( poDS->nRasterYSize - 1 ));
+                poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - 
+                                              pdfYCoord[0] ) / 
+                                            ( poDS->nRasterYSize - 1 ));
 /* -------------------------------------------------------------------- */
 /*     Compute the center of the pixel                                  */
 /* -------------------------------------------------------------------- */
-                  poDS->adfGeoTransform[0] = pdfXCoord[0]
-                      - (poDS->adfGeoTransform[1] / 2);
+                poDS->adfGeoTransform[0] = pdfXCoord[0]
+                    - (poDS->adfGeoTransform[1] / 2);
 
-                  poDS->adfGeoTransform[3] = pdfYCoord[0]
-                      - (poDS->adfGeoTransform[5] / 2);
+                poDS->adfGeoTransform[3] = pdfYCoord[0]
+                    - (poDS->adfGeoTransform[5] / 2);
 
-		    oSRS.exportToWkt( &(poDS->pszProjection) );
-		    
+                oSRS.exportToWkt( &(poDS->pszProjection) );
 	    } 
 	}
+
 	CPLFree( pdfXCoord );
 	CPLFree( pdfYCoord );
-
     }
 
 
@@ -1192,17 +1014,16 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 /*     Compute the center of the pixel                                  */
 /* -------------------------------------------------------------------- */
-              adfGeoTransform[0] = dfWE
-                      - (adfGeoTransform[1] / 2);
+                adfGeoTransform[0] = dfWE
+                    - (adfGeoTransform[1] / 2);
 
-              adfGeoTransform[3] = dfNN
-                      - (adfGeoTransform[5] / 2);
+                adfGeoTransform[3] = dfNN
+                    - (adfGeoTransform[5] / 2);
 
 
 		bGotGeoTransform = TRUE;
 	    }
 	    CSLDestroy( papszGeoTransform );
-	    
 	}
     }
 
@@ -1731,29 +1552,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     i=0;
 
     for ( unsigned int lev = 0; lev < nTotLevCount ; lev++ ) {
-	char szBandItemName[ MAX_STR_LEN ];
 	char ** papszToken;
-	const char * pszGeo;
 	papszToken=NULL;
 
-	netCDFRasterBand *poBand=new netCDFRasterBand(poDS, 
-						      var, 
-						      nDim,
-						      lev,
-						      poDS->panBandZLev,
-						      poDS->panBandDimPos,
-						      i+1 );
-
-	for( j = 0; j < CSLCount( poDS->papszGeolocation ); j++ ) {
-	    pszGeo = CSLGetField( poDS->papszGeolocation, j );
-	    papszToken = CSLTokenizeString2(  pszGeo,
-					      "=", CSLT_HONOURSTRINGS );
-
-	    strcpy( szBandItemName, "NETCDF_GEOLOCATION_" );
-	    strcat( szBandItemName, papszToken[0] );
-	    poBand->SetMetadataItem( szBandItemName, papszToken[1] );
-	    CSLDestroy( papszToken );
-	}
+	netCDFRasterBand *poBand =
+            new netCDFRasterBand(poDS, var, nDim, lev,
+                                 poDS->panBandZLev, poDS->panBandDimPos, i+1 );
 
 	poDS->SetBand( i+1, poBand );
 	i++;
