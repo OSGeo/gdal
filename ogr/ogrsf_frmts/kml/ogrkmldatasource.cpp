@@ -146,7 +146,11 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Print the structure                                             */
 /* -------------------------------------------------------------------- */
-    poKMLFile_->print(3);
+    const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",NULL);
+    if( EQUAL(pszDebug, "ON") )
+    {
+        poKMLFile_->print(3);
+    }
 
     nLayers_ = poKMLFile_->getNumLayers();
 
