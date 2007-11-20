@@ -53,7 +53,7 @@ def isis_1():
     PARAMETER["false_northing",0]]
 """  
     gt = (-4766.96484375, 10.102499961853027, 0.0,
-          -872623.625, 0.0, 10.102499961853027)
+          -872623.625, 0.0, -10.102499961853027)
     
     tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
