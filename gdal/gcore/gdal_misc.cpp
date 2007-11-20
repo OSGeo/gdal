@@ -809,40 +809,33 @@ int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage,
                       void * pProgressArg )
 
 {
-    static double dfLastComplete = -1.0;
+    static int nLastTick = -1;
+    int nThisTick = (int) (dfComplete * 40.0);
 
     (void) pProgressArg;
 
-    if( dfLastComplete > dfComplete )
+    nThisTick = MIN(40,MAX(0,nThisTick));
+
+    // Have we started a new progress run?  
+    if( nThisTick < nLastTick and nLastTick >= 39 )
+        nLastTick = -1;
+
+    if( nThisTick <= nLastTick )
+        return TRUE;
+
+    while( nThisTick > nLastTick )
     {
-        if( dfLastComplete >= 1.0 )
-            dfLastComplete = -1.0;
+        nLastTick++;
+        if( nLastTick % 4 == 0 )
+            fprintf( stdout, "%d", (nLastTick / 4) * 10 );
         else
-            dfLastComplete = dfComplete;
+            fprintf( stdout, "." );
     }
 
-    if( floor(dfLastComplete*10) != floor(dfComplete*10) )
-    {
-        int    nPercent = (int) floor(dfComplete*100);
-
-        if( nPercent == 0 && pszMessage != NULL )
-            fprintf( stdout, "%s:", pszMessage );
-
-        if( nPercent == 100 )
-            fprintf( stdout, "%d - done.\n", (int) floor(dfComplete*100) );
-        else
-        {
-            fprintf( stdout, "%d", (int) floor(dfComplete*100) );
-            fflush( stdout );
-        }
-    }
-    else if( floor(dfLastComplete*40) != floor(dfComplete*40) )
-    {
-        fprintf( stdout, "." );
+    if( nThisTick == 40 )
+        fprintf( stdout, " - done.\n" );
+    else
         fflush( stdout );
-    }
-
-    dfLastComplete = dfComplete;
 
     return TRUE;
 }
