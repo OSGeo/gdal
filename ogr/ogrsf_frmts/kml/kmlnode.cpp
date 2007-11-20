@@ -112,36 +112,37 @@ KMLNode::KMLNode()
 
 KMLNode::~KMLNode()
 {
-    kml_nodes_t::size_type nCount = 0;
+    CPLAssert( NULL != pvpoChildren_ );
+    CPLAssert( NULL != pvoAttributes_ );
 
-    for( nCount = 0; nCount < pvpoChildren_->size(); ++nCount )
+    for( kml_nodes_t::iterator it = pvpoChildren_->begin();
+         it != pvpoChildren_->end(); ++it)
     {
-        delete (pvpoChildren_->at( nCount ));
+        delete (*it);
     }
+    delete pvpoChildren_;
 
-    delete(pvpoChildren_);
-    delete(pvsContent_);
-
-    for( nCount = 0; nCount < pvoAttributes_->size(); ++nCount)
+    for( kml_attributes_t::iterator it = pvoAttributes_->begin();
+         it != pvoAttributes_->end(); ++it)
     {
-        delete pvoAttributes_->at(nCount);
+        delete (*it);
     }
-    
-    delete(pvoAttributes_);
+    delete pvoAttributes_;
 
+    delete pvsContent_;
     delete psExtent_;
 }
 
 void KMLNode::print(unsigned int what)
 {
-    std::string indent("");
-
-    for(unsigned int z = 0; z < nLevel_; z++)
+    std::string indent;
+    for(std::size_t z = 0; z < nLevel_; z++)
         indent += " ";
 
     if(nLevel_ > 0)
     {
         if(nLayerNumber_ > -1)
+        {
             if(psExtent_ != NULL)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) (%f|%f|%f|%f) <--- Layer #%d", 
                     indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
@@ -151,7 +152,9 @@ void KMLNode::print(unsigned int what)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) <--- Layer #%d", 
                     indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
                     pvpoChildren_->size(), pvsContent_->size(), pvoAttributes_->size(), nLayerNumber_);
+        }
         else
+        {
             if(psExtent_ != NULL)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) (%f|%f|%f|%f)", 
                     indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
@@ -161,17 +164,28 @@ void KMLNode::print(unsigned int what)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
                     indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
                     pvpoChildren_->size(), pvsContent_->size(), pvoAttributes_->size());
-    } else
+        }
+    }
+    else
+    {
         CPLDebug("KML", "%s%s (nLevel: %d Type: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
             indent.c_str(), sName_.c_str(), Nodetype2String(eType_).c_str(), nLevel_, pvpoChildren_->size(), 
             pvsContent_->size(), pvoAttributes_->size());
+    }
+
     if(what == 1 || what == 3)
-        for(unsigned int z = 0; z < pvsContent_->size(); z++)
+    {
+        for(kml_content_t::size_type z = 0; z < pvsContent_->size(); z++)
             CPLDebug("KML", "%s|->pvsContent_: '%s'", indent.c_str(), pvsContent_->at(z).c_str());
+    }
+
     if(what == 2 || what == 3)
-        for(unsigned int z = 0; z < pvoAttributes_->size(); z++)
+    {
+        for(kml_attributes_t::size_type z = 0; z < pvoAttributes_->size(); z++)
             CPLDebug("KML", "%s|->pvoAttributes_: %s = '%s'", indent.c_str(), pvoAttributes_->at(z)->sName.c_str(), pvoAttributes_->at(z)->sValue.c_str());
-    for(unsigned int z = 0; z < pvpoChildren_->size(); z++)
+    }
+
+    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
         pvpoChildren_->at(z)->print(what);
 }
 
@@ -180,57 +194,74 @@ void KMLNode::classify(KML* poKML)
     Nodetype curr = Unknown;
     Nodetype all = Empty;
     
-    CPLDebug("KML", "Start -- sName: %s\tnLevel: %d\t", sName_.c_str(), nLevel_);
-
-    for(unsigned int z = 0; z < pvpoChildren_->size(); z++) {
+    const kml_nodes_t::size_type size = pvpoChildren_->size();
+    for(kml_nodes_t::size_type z = 0; z < size; z++)
+    {
         // Leafs are ignored
         if(poKML->isLeaf(pvpoChildren_->at(z)->sName_))
             continue;
+
         // Classify pvpoChildren_
         pvpoChildren_->at(z)->classify(poKML);
 
         if(poKML->isContainer(sName_))
+        {
             curr = pvpoChildren_->at(z)->eType_;
-        else if(poKML->isFeatureContainer(sName_)) {
-            if(poKML->isFeature(pvpoChildren_->at(z)->sName_)) {
+        }
+        else if(poKML->isFeatureContainer(sName_))
+        {
+            if(poKML->isFeature(pvpoChildren_->at(z)->sName_))
+            {
                 if(pvpoChildren_->at(z)->sName_.compare("Point") == 0)
                     curr = Point;
                 else if(pvpoChildren_->at(z)->sName_.compare("LineString") == 0)
                     curr = LineString;
                 else if(pvpoChildren_->at(z)->sName_.compare("Polygon") == 0)
                     curr = Polygon;
-            } else if(poKML->isContainer(sName_))
+            }
+            else if(poKML->isContainer(sName_))
+            {
                 curr = pvpoChildren_->at(z)->eType_;
-        } else if(poKML->isFeature(sName_) || poKML->isRest(sName_))
+            }
+        }
+        else if(poKML->isFeature(sName_) || poKML->isRest(sName_))
+        {
             curr = Empty;
-            
+        }
+
         // Compare and return if it is mixed
-        if(curr != all && all != Empty && curr != Empty) {
+        if(curr != all && all != Empty && curr != Empty)
+        {
             eType_ = Mixed;
-            CPLDebug("KML", "Mixed --> sName: %s\tClassify sName: %s\tnLevel: %d\tpoParent: %s (%s/%s)", sName_.c_str(), Nodetype2String(curr).c_str(), nLevel_, poParent_->sName_.c_str(), Nodetype2String(curr).c_str(), Nodetype2String(all).c_str());
-            if((poKML->isFeature(Nodetype2String(curr)) && poKML->isFeatureContainer(Nodetype2String(all))) || 
-            (poKML->isFeature(Nodetype2String(all)) && poKML->isFeatureContainer(Nodetype2String(curr))))
+            
+            if((poKML->isFeature(Nodetype2String(curr))
+                && poKML->isFeatureContainer(Nodetype2String(all)))
+                || (poKML->isFeature(Nodetype2String(all))
+                    && poKML->isFeatureContainer(Nodetype2String(curr))))
+            {
                 CPLDebug("KML", "FeatureContainer and Feature");
-            continue;
-        } else if(curr != Empty)
+                continue;
+            }
+        }
+        else if(curr != Empty)
+        {
             all = curr;
-        if(poParent_ != NULL)
-            CPLDebug("KML", "sName: %s\tClassify sName: %s\tnLevel: %d\tpoParent: %s (%s/%s)", sName_.c_str(), Nodetype2String(curr).c_str(), nLevel_, poParent_->sName_.c_str(), Nodetype2String(curr).c_str(), Nodetype2String(all).c_str());
+        }
     }
+
     if(eType_ == Unknown)
         eType_ = all;
 }
 
 void KMLNode::eliminateEmpty(KML* poKML)
 {
-    for(unsigned int z = 0; z < pvpoChildren_->size(); z++)
+    const kml_nodes_t::size_type size = pvpoChildren_->size();
+    for(kml_nodes_t::size_type z = 0; z < size; z++)
     {
-        if(pvpoChildren_->at(z)->eType_ == Empty && 
-            (poKML->isContainer(pvpoChildren_->at(z)->sName_) || 
-            poKML->isFeatureContainer(pvpoChildren_->at(z)->sName_)))
+        if(pvpoChildren_->at(z)->eType_ == Empty
+           && (poKML->isContainer(pvpoChildren_->at(z)->sName_)
+               || poKML->isFeatureContainer(pvpoChildren_->at(z)->sName_)))
         {
-            CPLDebug("KML", "Deleting sName: %s\tClassify sName: %s\tnLevel: %d\tpoParent: %s", pvpoChildren_->at(z)->sName_.c_str(),
-                     Nodetype2String(pvpoChildren_->at(z)->eType_).c_str(), pvpoChildren_->at(z)->nLevel_, sName_.c_str());
             delete pvpoChildren_->at(z);
             pvpoChildren_->erase(pvpoChildren_->begin() + z);
             z--;
