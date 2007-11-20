@@ -396,17 +396,19 @@ Feature* KML::getFeature(unsigned short nNum) {
         return NULL;
 }
 
-bool KML::getExtents(double *pdfXMin, double *pdfXMax, double *pdfYMin, double *pdfYMax) {
-    if(poCurrent_ != NULL)
+bool KML::getExtents(double *pdfXMin, double *pdfXMax, double *pdfYMin, double *pdfYMax)
+{
+    if( poCurrent_ != NULL )
     {
-        Extent *poXT = poCurrent_->getExtents();
+        Extent const* poXT = poCurrent_->getExtents();
         *pdfXMin = poXT->dfX1;
         *pdfXMax = poXT->dfX2;
         *pdfYMin = poXT->dfY1;
         *pdfYMax = poXT->dfY2;
+
         return TRUE;
     }
-    else
-        return FALSE;
+
+    return FALSE;
 }
 

@@ -50,43 +50,43 @@ public:
     void classify(KML* poKML);
     void eliminateEmpty(KML* poKML);
     
-    void setType(Nodetype);
-    Nodetype getType();
+    void setType(Nodetype type);
+    Nodetype getType() const;
     
-    void setName(std::string const&);
-    std::string getName();
+    void setName(std::string const& name);
+    std::string getName() const;
     
-    void setLevel(unsigned int);
-    unsigned int getLevel();
+    void setLevel(std::size_t level);
+    std::size_t getLevel() const;
     
-    void addAttribute(Attribute*);
+    void addAttribute(Attribute* poAttr);
     
     void setParent(KMLNode* poNode);
-    KMLNode* getParent();
+    KMLNode* getParent() const;
     
     void addChildren(KMLNode* poNode);
-    unsigned short countChildren();
+    std::size_t countChildren();
     
-    KMLNode* getChild(unsigned short);
+    KMLNode* getChild(std::size_t index) const;
 
-    void addContent(std::string const&);
-    void appendContent(std::string);
-    std::string getContent(unsigned short);
-    void deleteContent(unsigned short);
-    unsigned short numContent();
+    void addContent(std::string const& text);
+    void appendContent(std::string const& text);
+    std::string getContent(std::size_t index) const;
+    void deleteContent(std::size_t index);
+    std::size_t numContent();
 
-    void setLayerNumber(short);
-    short getLayerNumber();
+    void setLayerNumber(int nNum);
+    int getLayerNumber() const;
 
-    KMLNode* getLayer(unsigned short);
+    KMLNode* getLayer(int);
 
-    std::string getNameElement();
-    std::string getDescriptionElement();
+    std::string getNameElement() const;
+    std::string getDescriptionElement() const;
 
-    std::size_t getNumFeatures();
+    std::size_t getNumFeatures() const;
     Feature* getFeature(std::size_t nNum);
 
-    Extent* getExtents();
+    Extent const* getExtents() const;
 
 private:
 
@@ -100,12 +100,12 @@ private:
     kml_attributes_t* pvoAttributes_;
 
     KMLNode *poParent_;
-    unsigned int nLevel_;
+    std::size_t nLevel_;
     std::string sName_;
 
     Nodetype eType_;
 
-    short nLayerNumber_;
+    int nLayerNumber_;
     Extent *psExtent_;
     
     void calcExtent(KML* poKML);
