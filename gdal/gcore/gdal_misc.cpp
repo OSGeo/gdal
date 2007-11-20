@@ -817,7 +817,7 @@ int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage,
     nThisTick = MIN(40,MAX(0,nThisTick));
 
     // Have we started a new progress run?  
-    if( nThisTick < nLastTick and nLastTick >= 39 )
+    if( nThisTick < nLastTick && nLastTick >= 39 )
         nLastTick = -1;
 
     if( nThisTick <= nLastTick )
