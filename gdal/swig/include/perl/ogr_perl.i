@@ -241,7 +241,18 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $self = shift;
 	    my %row = @_;
 	    my $f = defined $row{FID} ? $self->GetFeature($row{FID}) : $self->GetNextFeature;
-	    $f->SetGeometryDirectly($row{Geometry}) if defined $row{Geometry};
+	    my $d = $f->GetDefnRef;
+	    my $changed = 0;
+	    if (defined $row{Geometry}) {
+		if (ref($row{Geometry}) eq 'HASH') {
+		    my %geom = %{$row{Geometry}};
+		    $geom{GeometryType} = $d->GeometryType unless $geom{GeometryType};
+		    $f->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
+		} else {
+		    $f->SetGeometryDirectly($row{Geometry});
+		}
+		$changed = 1;
+	    }
 	    for my $fn (keys %row) {
 		next if $fn eq 'FID';
 		next if $fn eq 'Geometry';
@@ -250,10 +261,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		} else {
 		    $f->UnsetField($fn);
 		}
+		$changed = 1;
 	    }
+	    $self->SetFeature($f) if $changed;
 	    return unless defined wantarray;
 	    %row = ();
-	    my $s = $f->GetLayerDefn->Schema;
+	    my $s = $d->Schema;
 	    for my $field (@{$s->{Fields}}) {
 		my $n = $field->Name;
 		$row{$n} = $f->GetField($n);
@@ -267,15 +280,28 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $FID = shift;
 	    my $Geometry = shift;
 	    my $f = defined $FID ? $self->GetFeature($FID) : $self->GetNextFeature;
-	    $f->SetGeometryDirectly($Geometry) if defined $Geometry;
-	    my $s = $f->GetDefnRef->Schema;
+	    my $d = $f->GetDefnRef;
+	    my $changed = 0;
+	    if (defined $Geometry) {
+		if (ref($Geometry) eq 'HASH') {
+		    my %geom = %$Geometry;
+		    $geom{GeometryType} = $d->GeometryType unless $geom{GeometryType};
+		    $f->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
+		} else {
+		    $f->SetGeometryDirectly($Geometry);
+		}
+		$changed = 1;
+	    }
+	    my $s = $d->Schema;
 	    if (@_) {
 		for my $field (@{$s->{Fields}}) {
 		    my $v = shift;
 		    my $n = $field->Name;
 		    defined $v ? $f->SetField($n, $v) : $f->UnsetField($n);
 		}
+		$changed = 1;
 	    }
+	    $self->SetFeature($f) if $changed;
 	    return unless defined wantarray;
 	    my @ret = ($f->GetFID, $f->GetGeometry);
 	    my $i = 0;
@@ -328,6 +354,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
 	}
+	*GeometryType = *GeomType;
 	package Geo::OGR::Feature;
 	use strict;
 	use vars qw /%GEOMETRIES/;
@@ -335,7 +362,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $self = shift;
 	    my %row = @_;
 	    $self->SetFID($row{FID}) if defined $row{FID};
-	    $self->SetGeometryDirectly($row{Geometry}) if defined $row{Geometry};
+	    if (defined $row{Geometry}) {
+		if (ref($row{Geometry}) eq 'HASH') {
+		    my %geom = %{$row{Geometry}};
+		    $geom{GeometryType} = $self->GetDefnRef->GeometryType unless $geom{GeometryType};
+		    $self->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
+		} else {
+		    $self->SetGeometryDirectly($row{Geometry});
+		}
+	    }
 	    for my $fn (keys %row) {
 		next if $fn eq 'FID';
 		next if $fn eq 'Geometry';
@@ -361,7 +396,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $FID = shift;
 	    my $Geometry = shift;
 	    $self->SetFID($FID) if defined $FID;
-	    $self->SetGeometryDirectly($Geometry) if defined $Geometry;
+	    if (defined $Geometry) {
+		if (ref($Geometry) eq 'HASH') {
+		    my %geom = %$Geometry;
+		    $geom{GeometryType} = $self->GetDefnRef->GeometryType unless $geom{GeometryType};
+		    $self->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
+		} else {
+		    $self->SetGeometryDirectly($Geometry);
+		}
+	    }
 	    my $s = $self->GetDefnRef->Schema;
 	    if (@_) {
 		for my $field (@{$s->{Fields}}) {
@@ -522,7 +565,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$type = shift;
 	    } else {
 		my %param = @_;
-		$type = ($param{type} or $param{GeometryType});
+		$type = ($param{type} or $param{Type} or $param{GeometryType});
 		$wkt = ($param{wkt} or $param{WKT});
 		$wkb = ($param{wkb} or $param{WKB});
 		$gml = ($param{gml} or $param{GML});
@@ -531,6 +574,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $type = $TYPE_STRING2INT{$type} if defined $type and exists $TYPE_STRING2INT{$type};
 	    my $self;
 	    if (defined $type) {
+		croak "unknown GeometryType: $type" unless 
+		    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
 		$self = Geo::OGRc::new_Geometry($type);
 	    } elsif (defined $wkt) {
 		$self = Geo::OGRc::new_Geometry(undef, $wkt, undef, undef);
@@ -553,7 +598,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub Points {
 	    my $self = shift;
 	    my $t = $self->GetGeometryType;
-	    my $flat = $t & 0x80000000 == 0;
+	    my $flat = ($t & 0x80000000) == 0;
 	    $t = $TYPE_INT2STRING{$t & ~0x80000000};
 	    my $points = shift;
 	    if ($points) {
@@ -561,38 +606,39 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		if ($t eq 'Unknown' or $t eq 'None' or $t eq 'GeometryCollection') {
 		    croak("Can't set points of a geometry of type: $t");
 		} elsif ($t eq 'Point') {
-		    $flat ? AddPoint_2D($self, @$points) : AddPoint_3D($self, @$points);
+		    $flat ? AddPoint_2D($self, @$points[0..1]) : AddPoint_3D($self, @$points[0..2]);
 		} elsif ($t eq 'LineString' or $t eq 'LinearRing') {
 		    if ($flat) {
 			for my $p (@$points) {
-			    AddPoint_2D($self, @$p);
+			    AddPoint_2D($self, @$p[0..1]);
 			}
 		    } else{
 			for my $p (@$points) {
-			    AddPoint_3D($self, @$p);
+			    AddPoint_3D($self, @$p[0..2]);
 			}
 		    }
 		} elsif ($t eq 'Polygon') {
 		    for my $r (@$points) {
-			my $ring = Geo::OGR::Geometry->new($flat ? 'LinearRing' : 'LinearRing25D');
+			my $ring = Geo::OGR::Geometry->create('LinearRing');
+			$ring->SetCoordinateDimension(3) unless $flat;
 			$ring->Points($r);
 			$self->AddGeometryDirectly($ring);
 		    }
 		} elsif ($t eq 'MultiPoint') {
 		    for my $p (@$points) {
-			my $point = Geo::OGR::Geometry->new($flat ? 'Point' : 'Point25D');
+			my $point = Geo::OGR::Geometry->create($flat ? 'Point' : 'Point25D');
 			$point->Points($p);
 			$self->AddGeometryDirectly($point);
 		    }
 		} elsif ($t eq 'MultiLineString') {
 		    for my $l (@$points) {
-			my $linestring = Geo::OGR::Geometry->new($flat ? 'LineString' : 'LineString25D');
+			my $linestring = Geo::OGR::Geometry->create($flat ? 'LineString' : 'LineString25D');
 			$linestring->Points($l);
 			$self->AddGeometryDirectly($linestring);
 		    }
 		} elsif ($t eq 'MultiPolygon') {
 		    for my $p (@$points) {
-			my $polygon = Geo::OGR::Geometry->new($flat ? 'Polygon' : 'Polygon25D');
+			my $polygon = Geo::OGR::Geometry->create($flat ? 'Polygon' : 'Polygon25D');
 			$polygon->Points($p);
 			$self->AddGeometryDirectly($polygon);
 		    }
