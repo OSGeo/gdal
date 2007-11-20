@@ -115,11 +115,12 @@ package Geo::GDAL;
 *SerializeXMLTree = *Geo::GDALc::SerializeXMLTree;
 *GetDriverCount = *Geo::GDALc::GetDriverCount;
 *GetDriverByName = *Geo::GDALc::GetDriverByName;
-*GetDriver = *Geo::GDALc::GetDriver;
-*Open = *Geo::GDALc::Open;
-*OpenShared = *Geo::GDALc::OpenShared;
+*_GetDriver = *Geo::GDALc::_GetDriver;
+*_Open = *Geo::GDALc::_Open;
+*_OpenShared = *Geo::GDALc::_OpenShared;
 *IdentifyDriver = *Geo::GDALc::IdentifyDriver;
-*AutoCreateWarpedVRT = *Geo::GDALc::AutoCreateWarpedVRT;
+*_ReprojectImage = *Geo::GDALc::_ReprojectImage;
+*_AutoCreateWarpedVRT = *Geo::GDALc::_AutoCreateWarpedVRT;
 *GeneralCmdLineProcessor = *Geo::GDALc::GeneralCmdLineProcessor;
 
 ############# Class : Geo::GDAL::MajorObject ##############
@@ -158,7 +159,7 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *swig_LongName_set = *Geo::GDALc::Driver_LongName_set;
 *swig_HelpTopic_get = *Geo::GDALc::Driver_HelpTopic_get;
 *swig_HelpTopic_set = *Geo::GDALc::Driver_HelpTopic_set;
-*Create = *Geo::GDALc::Driver_Create;
+*_Create = *Geo::GDALc::Driver__Create;
 *CreateCopy = *Geo::GDALc::Driver_CreateCopy;
 *Delete = *Geo::GDALc::Driver_Delete;
 *Rename = *Geo::GDALc::Driver_Rename;
@@ -205,14 +206,20 @@ sub new {
 }
 
 sub DESTROY {
-    return unless $_[0]->isa('HASH');
-    my $self = tied(%{$_[0]});
-    return unless defined $self;
+    my $self;
+    if ($_[0]->isa('SCALAR')) {
+        $self = $_[0];
+    } else {
+        return unless $_[0]->isa('HASH');
+        $self = tied(%{$_[0]});
+        return unless 0;
+    }
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         Geo::GDALc::delete_GCP($self);
         delete $OWNER{$self};
     }
+    $self->RELEASE_PARENTS();
 }
 
 sub DISOWN {
@@ -242,18 +249,24 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *swig_RasterCount_get = *Geo::GDALc::Dataset_RasterCount_get;
 *swig_RasterCount_set = *Geo::GDALc::Dataset_RasterCount_set;
 sub DESTROY {
-    return unless $_[0]->isa('HASH');
-    my $self = tied(%{$_[0]});
-    return unless defined $self;
+    my $self;
+    if ($_[0]->isa('SCALAR')) {
+        $self = $_[0];
+    } else {
+        return unless $_[0]->isa('HASH');
+        $self = tied(%{$_[0]});
+        return unless 0;
+    }
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         Geo::GDALc::delete_Dataset($self);
         delete $OWNER{$self};
     }
+    $self->RELEASE_PARENTS();
 }
 
-*GetDriver = *Geo::GDALc::Dataset_GetDriver;
-*GetRasterBand = *Geo::GDALc::Dataset_GetRasterBand;
+*_GetDriver = *Geo::GDALc::Dataset__GetDriver;
+*_GetRasterBand = *Geo::GDALc::Dataset__GetRasterBand;
 *GetProjection = *Geo::GDALc::Dataset_GetProjection;
 *GetProjectionRef = *Geo::GDALc::Dataset_GetProjectionRef;
 *SetProjection = *Geo::GDALc::Dataset_SetProjection;
@@ -265,7 +278,8 @@ sub DESTROY {
 *GetGCPs = *Geo::GDALc::Dataset_GetGCPs;
 *SetGCPs = *Geo::GDALc::Dataset_SetGCPs;
 *FlushCache = *Geo::GDALc::Dataset_FlushCache;
-*AddBand = *Geo::GDALc::Dataset_AddBand;
+*_AddBand = *Geo::GDALc::Dataset__AddBand;
+*CreateMaskBand = *Geo::GDALc::Dataset_CreateMaskBand;
 *WriteRaster = *Geo::GDALc::Dataset_WriteRaster;
 *ReadRaster = *Geo::GDALc::Dataset_ReadRaster;
 sub DISOWN {
@@ -320,6 +334,9 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *SetRasterColorTable = *Geo::GDALc::Band_SetRasterColorTable;
 *GetDefaultRAT = *Geo::GDALc::Band_GetDefaultRAT;
 *SetDefaultRAT = *Geo::GDALc::Band_SetDefaultRAT;
+*GetMaskBand = *Geo::GDALc::Band_GetMaskBand;
+*GetMaskFlags = *Geo::GDALc::Band_GetMaskFlags;
+*CreateMaskBand = *Geo::GDALc::Band_CreateMaskBand;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
@@ -339,7 +356,6 @@ package Geo::GDAL::ColorTable;
 use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 @ISA = qw( Geo::GDAL::MajorObject Geo::GDAL );
 %OWNER = ();
-%ITERATORS = ();
 sub new {
     my $pkg = shift;
     my $self = Geo::GDALc::new_ColorTable(@_);
@@ -347,22 +363,28 @@ sub new {
 }
 
 sub DESTROY {
-    return unless $_[0]->isa('HASH');
-    my $self = tied(%{$_[0]});
-    return unless defined $self;
+    my $self;
+    if ($_[0]->isa('SCALAR')) {
+        $self = $_[0];
+    } else {
+        return unless $_[0]->isa('HASH');
+        $self = tied(%{$_[0]});
+        return unless 0;
+    }
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         Geo::GDALc::delete_ColorTable($self);
         delete $OWNER{$self};
     }
+    $self->RELEASE_PARENTS();
 }
 
 *Clone = *Geo::GDALc::ColorTable_Clone;
-*GetPaletteInterpretation = *Geo::GDALc::ColorTable_GetPaletteInterpretation;
+*_GetPaletteInterpretation = *Geo::GDALc::ColorTable__GetPaletteInterpretation;
 *GetCount = *Geo::GDALc::ColorTable_GetCount;
 *GetColorEntry = *Geo::GDALc::ColorTable_GetColorEntry;
 *GetColorEntryAsRGB = *Geo::GDALc::ColorTable_GetColorEntryAsRGB;
-*SetColorEntry = *Geo::GDALc::ColorTable_SetColorEntry;
+*_SetColorEntry = *Geo::GDALc::ColorTable__SetColorEntry;
 *CreateColorRamp = *Geo::GDALc::ColorTable_CreateColorRamp;
 sub DISOWN {
     my $self = shift;
@@ -383,7 +405,6 @@ package Geo::GDAL::RasterAttributeTable;
 use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 @ISA = qw( Geo::GDAL::MajorObject Geo::GDAL );
 %OWNER = ();
-%ITERATORS = ();
 sub new {
     my $pkg = shift;
     my $self = Geo::GDALc::new_RasterAttributeTable(@_);
@@ -391,14 +412,20 @@ sub new {
 }
 
 sub DESTROY {
-    return unless $_[0]->isa('HASH');
-    my $self = tied(%{$_[0]});
-    return unless defined $self;
+    my $self;
+    if ($_[0]->isa('SCALAR')) {
+        $self = $_[0];
+    } else {
+        return unless $_[0]->isa('HASH');
+        $self = tied(%{$_[0]});
+        return unless 0;
+    }
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         Geo::GDALc::delete_RasterAttributeTable($self);
         delete $OWNER{$self};
     }
+    $self->RELEASE_PARENTS();
 }
 
 *Clone = *Geo::GDALc::RasterAttributeTable_Clone;
@@ -440,15 +467,294 @@ package Geo::GDAL;
     use Geo::OGR;
     use Geo::OSR;
     our $VERSION = '0.21';
-    sub PackCharacter {
-	$_ = shift;
-	if ($_ == $Geo::GDAL::Const::GDT_Byte) { return 'C'; }
-	if ($_ == $Geo::GDAL::Const::GDT_UInt16) { return 'n'; }
-	if ($_ == $Geo::GDAL::Const::GDT_Int16) { return 's'; }
-	if ($_ == $Geo::GDAL::Const::GDT_UInt32) { return 'N'; }
-	if ($_ == $Geo::GDAL::Const::GDT_Int32) { return 'l'; }
-	if ($_ == $Geo::GDAL::Const::GDT_Float32) { return 'f'; }
-	if ($_ == $Geo::GDAL::Const::GDT_Float64) { return 'd'; }
-	croak "unsupported data type: $_";
+    use vars qw/
+	%TYPE_STRING2INT %TYPE_INT2STRING
+	%ACCESS_STRING2INT %ACCESS_INT2STRING
+	%RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
+	%NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
+	/;
+    for my $string (qw/Unknown Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64/) {
+	my $int = eval "\$Geo::GDAL::Constc::GDT_$string";
+	$TYPE_STRING2INT{$string} = $int;
+	$TYPE_INT2STRING{$int} = $string;
     }
-1;
+    for my $string (qw/ReadOnly Update/) {
+	my $int = eval "\$Geo::GDAL::Constc::GA_$string";
+	$ACCESS_STRING2INT{$string} = $int;
+	$ACCESS_INT2STRING{$int} = $string;
+    }
+    for my $string (qw/NearestNeighbour Bilinear Cubic CubicSpline/) {
+	my $int = eval "\$Geo::GDAL::Constc::GRA_$string";
+	$RESAMPLING_STRING2INT{$string} = $int;
+	$RESAMPLING_INT2STRING{$int} = $string;
+    }
+    {
+	my $int = 0;
+	for my $string (qw/Element Text Attribute Comment Literal/) {
+	    $NODE_TYPE_STRING2INT{$string} = $int;
+	    $NODE_TYPE_INT2STRING{$int} = $string;
+	    $int++;
+	}
+    }
+    sub RELEASE_PARENTS {
+    }
+    sub NodeType {
+	my $type = shift;
+	return $NODE_TYPE_INT2STRING{$type} if $type =~ /^\d/;
+	return $NODE_TYPE_STRING2INT{$type};
+    }
+    sub GetDataTypeSize {
+	my $t = shift;
+	$t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
+	return _GetDataTypeSize($t);
+    }
+    sub DataTypeIsComplex {
+	my $t = shift;
+	$t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
+	return _DataTypeIsComplex($t);
+    }
+    sub PackCharacter {
+	my $t = shift;
+	$t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
+	my $is_big_endian = unpack("h*", pack("s", 1)) =~ /01/; # from Programming Perl
+	return 'C' if $t =~ /^Byte$/;
+	return ($is_big_endian ? 'n': 'v') if $t =~ /^UInt16$/;
+	return 's' if $t =~ /^Int16$/;
+	return ($is_big_endian ? 'N' : 'V') if $t =~ /^UInt32$/;
+	return 'l' if $t =~ /^Int32$/;
+	return 'f' if $t =~ /^Float32$/;
+	return 'd' if $t =~ /^Float64$/;
+	croak "unsupported data type: $t";
+    }
+    sub GetDriver {
+	my $driver = shift;
+	return _GetDriver($driver) if $driver =~ /^\d/;
+	return GetDriverByName($driver);
+    }
+    sub Open {
+	my @p = @_;
+	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
+	return _Open(@p);
+    }
+    sub OpenShared {
+	my @p = @_;
+	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
+	return _OpenShared(@p);
+    }
+    sub ReprojectImage {
+	my @p = @_;
+	$p[4] = $RESAMPLING_STRING2INT{$p[4]} if $p[4] and exists $RESAMPLING_STRING2INT{$p[4]};
+	return _ReprojectImage(@p);
+    }
+    sub AutoCreateWarpedVRT {
+	my @p = @_;
+	$p[3] = $RESAMPLING_STRING2INT{$p[3]} if $p[3] and exists $RESAMPLING_STRING2INT{$p[3]};
+	return _AutoCreateWarpedVRT(@p);
+    }
+    package Geo::GDAL::MajorObject;
+    use strict;
+    sub Description {
+	my($self, $desc) = @_;
+	SetDescription($self, $desc) if defined $desc;
+	GetDescription($self) if defined wantarray;
+    }
+    sub Metadata {
+	my $self = shift;
+	my $metadata = shift if ref $_[0];
+	my $domain = shift;
+	$domain = '' unless defined $domain;
+	SetMetadata($self, $metadata, $domain) if defined $metadata;
+	GetMetadata($self, $domain) if defined wantarray;
+    }
+    package Geo::GDAL::Driver;
+    use strict;
+    sub Create {
+	my @p = @_;
+	$p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]} if $p[5] and exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
+	return _Create(@p);
+    }
+    package Geo::GDAL::Dataset;
+    use strict;
+    use vars qw/%BANDS/;
+    sub Open {
+	return Geo::GDAL::Open(@_);
+    }
+    sub OpenShared {
+	return Geo::GDAL::OpenShared(@_);
+    }
+    sub Size {
+	my $self = shift;
+	return ($self->{RasterXSize}, $self->{RasterYSize});
+    }
+    sub GetRasterBand {
+	my($self, $index) = @_;
+	my $band = _GetRasterBand($self, $index);
+	$BANDS{tied(%{$band})} = $self;
+	return $band;
+    }
+    sub AddBand {
+	my @p = @_;
+	$p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]} if $p[1] and exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
+	return _AddBand(@p);
+    }
+    sub Projection {
+	my($self, $proj) = @_;
+	SetProjection($self, $proj) if defined $proj;
+	GetProjection($self) if defined wantarray;
+    }
+    sub GeoTransform {
+	my $self = shift;
+	SetGeoTransform($self, \@_) if @_ > 0;
+	return unless defined wantarray;
+	my $t = GetGeoTransform($self);
+	return @$t;
+    }
+    sub GCPs {
+	my $self = shift;
+	if (@_ > 0) {
+	    my $proj = pop @_;
+	    SetGCPs($self, \@_, $proj);
+	}
+	return unless defined wantarray;
+	my $proj = GetGCPProjection($self);
+	my $GCPs = GetGCPs($self);
+	return (@$GCPs, $proj);
+    }
+    package Geo::GDAL::Band;
+    use strict;
+    use vars qw/
+	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING
+	/;
+    for my $string (qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
+		    HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand/) {
+	my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
+	$COLOR_INTERPRETATION_STRING2INT{$string} = $int;
+	$COLOR_INTERPRETATION_INT2STRING{$int} = $string;
+    }
+    sub DESTROY {
+	my $self;
+	if ($_[0]->isa('SCALAR')) {
+	    $self = $_[0];
+	} else {
+	    return unless $_[0]->isa('HASH');
+	    $self = tied(%{$_[0]});
+	    return unless defined $self;
+	}
+	delete $ITERATORS{$self};
+	if (exists $OWNER{$self}) {
+	    delete $OWNER{$self};
+	}
+	$self->RELEASE_PARENTS();
+    }
+    sub RELEASE_PARENTS {
+	my $self = shift;
+	delete $Geo::GDAL::Dataset::BANDS{$self};
+    }
+    sub Size {
+	my $self = shift;
+	return ($self->{XSize}, $self->{YSize});
+    }
+    sub DataType {
+	my $self = shift;
+	return $Geo::GDAL::TYPE_INT2STRING{$self->{DataType}};
+    }
+    sub NoDataValue {
+	my $self = shift;
+	SetNoDataValue($self, $_[0]) if @_ > 0;
+	GetNoDataValue($self);
+    }
+    sub ReadTile {
+	my($self, $xoff, $yoff, $xsize, $ysize) = @_;
+	$xoff = 0 unless defined $xoff;
+	$yoff = 0 unless defined $yoff;
+	$xsize = $self->{XSize} - $xoff unless defined $xsize;
+	$ysize = $self->{YSize} - $yoff unless defined $ysize;
+	my $buf = $self->ReadRaster($xoff, $yoff, $xsize, $ysize);
+	my $pc = Geo::GDAL::PackCharacter($self->{DataType});
+	my $w = $xsize * Geo::GDAL::GetDataTypeSize($self->{DataType})/8;
+	my $offset = 0;
+	my @data;
+	for (0..$ysize-1) {
+	    my $sub = substr($buf, $offset, $w);
+	    my @d = unpack($pc."[$xsize]", $sub);
+	    push @data, \@d;
+	    $offset += $w;
+	}
+	return \@data;
+    }
+    sub WriteTile {
+	my($self, $data, $xoff, $yoff) = @_;
+	$xoff = 0 unless defined $xoff;
+	$yoff = 0 unless defined $yoff;
+	my $xsize = @{$data->[0]};
+	$xsize = $self->{XSize} - $xoff if $xsize > $self->{XSize} - $xoff;
+	my $ysize = @{$data};
+	$ysize = $self->{YSize} - $yoff if $ysize > $self->{YSize} - $yoff;
+	my $pc = Geo::GDAL::PackCharacter($self->{DataType});
+	my $w = $xsize * Geo::GDAL::GetDataTypeSize($self->{DataType})/8;
+	for my $i (0..$ysize-1) {
+	    my $scanline = pack($pc."[$xsize]", @{$data->[$i]});
+	    $self->WriteRaster( $xoff, $yoff+$i, $xsize, 1, $scanline );
+	}
+    }
+    sub ColorInterpretation {
+	my($self, $ci) = @_;
+	if ($ci) {
+	    $ci = $COLOR_INTERPRETATION_STRING2INT{$ci} if exists $COLOR_INTERPRETATION_STRING2INT{$ci};
+	    SetRasterColorInterpretation($self, $ci);
+	    return $ci;
+	} else {
+	    return $COLOR_INTERPRETATION_INT2STRING{GetRasterColorInterpretation($self)};
+	}
+    }
+    sub ColorTable {
+	my $self = shift;
+	SetRasterColorTable($self, $_[0]) if @_ > 0;
+	GetRasterColorTable($self);
+    }
+    package Geo::GDAL::ColorTable;
+    use strict;
+    use vars qw/
+	%PALETTE_INTERPRETATION_STRING2INT %PALETTE_INTERPRETATION_INT2STRING
+	/;
+    for my $string (qw/Gray RGB CMYK HLS/) {
+	my $int = eval "\$Geo::GDAL::Constc::GPI_$string";
+	$PALETTE_INTERPRETATION_STRING2INT{$string} = $int;
+	$PALETTE_INTERPRETATION_INT2STRING{$int} = $string;
+    }
+    sub create {
+	my($pkg, $pi) = @_;
+	$pi = $PALETTE_INTERPRETATION_STRING2INT{$pi} if defined $pi and exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
+	my $self = Geo::GDALc::new_ColorTable($pi);
+	bless $self, $pkg if defined($self);
+    }
+    sub GetPaletteInterpretation {
+	my $self = shift;
+	return $PALETTE_INTERPRETATION_INT2STRING{GetPaletteInterpretation($self)};
+    }
+    sub SetColorEntry {
+	@_ == 3 ? _SetColorEntry(@_) : _SetColorEntry(@_[0..1], [@_[2..5]]);
+    }
+    sub ColorEntry {
+	my $self = shift;
+	my $index = shift;
+	SetColorEntry($self, $index, @_) if @_ > 0;
+	GetColorEntry($self, $index) if defined wantarray;
+    }
+    sub ColorTable {
+	my $self = shift;
+	my @table;
+	if (@_) {
+	    my $index = 0;
+	    for my $color (@_) {
+		push @table, [ColorEntry($self, $index, @$color)];
+		$index++;
+	    }
+	} else {
+	    for (my $index = 0; $index < GetCount($self); $index++) {
+		push @table, [ColorEntry($self, $index)];
+	    }
+	}
+	return @table;
+    }
+ 1;
