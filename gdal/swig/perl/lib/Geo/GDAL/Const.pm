@@ -148,4 +148,8 @@ package Geo::GDAL::Const;
 *GFU_BlueMax = *Geo::GDAL::Constc::GFU_BlueMax;
 *GFU_AlphaMax = *Geo::GDAL::Constc::GFU_AlphaMax;
 *GFU_MaxCount = *Geo::GDAL::Constc::GFU_MaxCount;
+*GMF_ALL_VALID = *Geo::GDAL::Constc::GMF_ALL_VALID;
+*GMF_PER_DATASET = *Geo::GDAL::Constc::GMF_PER_DATASET;
+*GMF_ALPHA = *Geo::GDAL::Constc::GMF_ALPHA;
+*GMF_NODATA = *Geo::GDAL::Constc::GMF_NODATA;
 1;

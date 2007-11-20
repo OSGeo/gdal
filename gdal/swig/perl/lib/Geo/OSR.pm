@@ -153,6 +153,7 @@ sub DESTROY {
 *SetProjCS = *Geo::OSRc::SpatialReference_SetProjCS;
 *ImportFromWkt = *Geo::OSRc::SpatialReference_ImportFromWkt;
 *ImportFromProj4 = *Geo::OSRc::SpatialReference_ImportFromProj4;
+*ImportFromUrl = *Geo::OSRc::SpatialReference_ImportFromUrl;
 *ImportFromESRI = *Geo::OSRc::SpatialReference_ImportFromESRI;
 *ImportFromEPSG = *Geo::OSRc::SpatialReference_ImportFromEPSG;
 *ImportFromPCI = *Geo::OSRc::SpatialReference_ImportFromPCI;
@@ -310,4 +311,7 @@ package Geo::OSR;
 *SRS_DN_WGS84 = *Geo::OSRc::SRS_DN_WGS84;
 *SRS_WGS84_SEMIMAJOR = *Geo::OSRc::SRS_WGS84_SEMIMAJOR;
 *SRS_WGS84_INVFLATTENING = *Geo::OSRc::SRS_WGS84_INVFLATTENING;
+
+    sub RELEASE_PARENTS {
+    }	
 1;
