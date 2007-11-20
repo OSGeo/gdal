@@ -98,7 +98,7 @@ static void AppendString( char **ppszText, int *pnLength, int *pnMaxLength,
                           const char *pszTextToAppend )
 
 {
-    _GrowBuffer( *pnLength + strlen(pszTextToAppend) + 1, 
+    _GrowBuffer( *pnLength + strlen(pszTextToAppend) + 1,
                  ppszText, pnMaxLength );
 
     strcat( *ppszText + *pnLength, pszTextToAppend );
@@ -115,8 +115,8 @@ static void AppendCoordinateList( OGRLineString *poLine,
                                   int *pnMaxLength )
 
 {
-    char        szCoordinate[256];
-    int         b3D = (poLine->getGeometryType() & wkb25DBit);
+    char szCoordinate[256]= { 0 };
+    int b3D = (poLine->getGeometryType() & wkb25DBit);
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
@@ -124,7 +124,6 @@ static void AppendCoordinateList( OGRLineString *poLine,
     strcat( *ppszText + *pnLength, "<coordinates>" );
     *pnLength += strlen(*ppszText + *pnLength);
 
-    
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
         MakeKMLCoordinate( szCoordinate, 
@@ -133,15 +132,15 @@ static void AppendCoordinateList( OGRLineString *poLine,
                            poLine->getZ(iPoint),
                            b3D );
         _GrowBuffer( *pnLength + strlen(szCoordinate)+1, 
-                     ppszText, pnMaxLength );
+            ppszText, pnMaxLength );
 
         if( iPoint != 0 )
             strcat( *ppszText + *pnLength, " " );
-            
+
         strcat( *ppszText + *pnLength, szCoordinate );
         *pnLength += strlen(*ppszText + *pnLength);
     }
-    
+
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
     strcat( *ppszText + *pnLength, "</coordinates>" );
     *pnLength += strlen(*ppszText + *pnLength);
@@ -161,8 +160,8 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     if( poGeometry->getGeometryType() == wkbPoint )
     {
-        char    szCoordinate[256];
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
+        char szCoordinate[256] = { 0 };
+        OGRPoint* poPoint = static_cast<OGRPoint*>(poGeometry);
 
         MakeKMLCoordinate( szCoordinate, 
                            poPoint->getX(), poPoint->getY(), 0.0, FALSE );
@@ -181,8 +180,8 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( poGeometry->getGeometryType() == wkbPoint25D )
     {
-        char    szCoordinate[256];
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
+        char szCoordinate[256] = { 0 };
+        OGRPoint *poPoint = static_cast<OGRPoint*>(poGeometry);
 
         MakeKMLCoordinate( szCoordinate, 
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
@@ -197,7 +196,6 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
         *pnLength += strlen( *ppszText + *pnLength );
     }
-
 /* -------------------------------------------------------------------- */
 /*      LineString and LinearRing                                       */
 /* -------------------------------------------------------------------- */
@@ -230,10 +228,9 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
     else if( poGeometry->getGeometryType() == wkbPolygon 
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
-        OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
+        OGRPolygon* poPolygon = static_cast<OGRPolygon*>(poGeometry);
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "<Polygon>" );
+        AppendString( ppszText, pnLength, pnMaxLength, "<Polygon>" );
 
         if( poPolygon->getExteriorRing() != NULL )
         {
@@ -242,8 +239,9 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
             if( !OGR2KMLGeometryAppend( poPolygon->getExteriorRing(), 
                                         ppszText, pnLength, pnMaxLength ) )
+            {
                 return FALSE;
-            
+            }
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</outerBoundaryIs>" );
         }
@@ -257,8 +255,9 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
             
             if( !OGR2KMLGeometryAppend( poRing, ppszText, pnLength, 
                                         pnMaxLength ) )
+            {
                 return FALSE;
-            
+            }
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</innerBoundaryIs>" );
         }
@@ -275,25 +274,27 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint
              || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
+        OGRGeometryCollection* poGC = NULL;
+        poGC = static_cast<OGRGeometryCollection*>(poGeometry);
 
         AppendString( ppszText, pnLength, pnMaxLength, "<MultiGeometry>" );
 
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
-            
-            if( !OGR2KMLGeometryAppend( poMember, 
-                                        ppszText, pnLength, pnMaxLength ) )
+
+            if( !OGR2KMLGeometryAppend( poMember, ppszText, pnLength, pnMaxLength ) )
+            {
                 return FALSE;
+            }
         }
 
 		AppendString( ppszText, pnLength, pnMaxLength, "</MultiGeometry>" );
     }
-
     else
+    {
         return FALSE;
+    }
 
     return TRUE;
 }
@@ -304,15 +305,18 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 /*      Export the envelope of a geometry as a KML:Box.                 */
 /************************************************************************/
 
-CPLXMLNode *OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
+CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 {
-    CPLXMLNode *psBox, *psCoord;
+    VALIDATE_POINTER1( hGeometry, "OGR_G_ExportEnvelopeToKMLTree", NULL );
+
+    CPLXMLNode* psBox = NULL;
+    CPLXMLNode* psCoord = NULL;
     OGREnvelope sEnvelope;
-    char        szCoordinate[256];
-    char       *pszY;
+    char szCoordinate[256] = { 0 };
+    char* pszY = NULL;
 
     memset( &sEnvelope, 0, sizeof(sEnvelope) );
-    ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
+    (static_cast<OGRGeometry*>(hGeometry))->getEnvelope( &sEnvelope );
 
     if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 
         && sEnvelope.MaxX == 0 && sEnvelope.MaxY == 0 )
@@ -357,11 +361,14 @@ CPLXMLNode *OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 /************************************************************************/
 /*                         OGR_G_ExportToKML()                          */
 /************************************************************************/
+
 char *OGR_G_ExportToKML( OGRGeometryH hGeometry )
 {
-    char        *pszText;
-    int         nLength = 0, nMaxLength = 1;
+    char* pszText = NULL;
+    int nLength = 0;
+    int nMaxLength = 1;
 
+    // TODO - mloskot: Shouldn't we use VALIDATE_POINTER1 here?
     if( hGeometry == NULL )
         return CPLStrdup( "" );
 
@@ -374,8 +381,8 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry )
         CPLFree( pszText );
         return NULL;
     }
-    else
-        return pszText;
+    
+    return pszText;
 }
 
 /************************************************************************/
@@ -384,9 +391,11 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry )
 
 CPLXMLNode *OGR_G_ExportToKMLTree( OGRGeometryH hGeometry )
 {
-    char        *pszText;
-    CPLXMLNode  *psTree;
+    char        *pszText = NULL;
+    CPLXMLNode  *psTree = NULL;
 
+    // TODO - mloskot: If passed geometry is null the pszText is non-null,
+    // so the condition below is false.
     pszText = OGR_G_ExportToKML( hGeometry );
     if( pszText == NULL )
         return NULL;

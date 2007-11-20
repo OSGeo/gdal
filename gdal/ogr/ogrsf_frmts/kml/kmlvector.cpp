@@ -129,20 +129,19 @@ void KMLVector::findLayers(KMLNode* poNode)
         {
             return;
         }
-
-        CPLDebug("KML", "findLayers: %s", Nodetype2String(poNode->getType()).c_str());
         
-        if( poNode->getType() == Mixed )
-        {
-            CPLDebug("KML", "We have a mixed container here!");
-        }
-        else if( isFeature(Nodetype2String(poNode->getType())) )
+        if( isFeature(Nodetype2String(poNode->getType())) )
         {
             poNode->setLayerNumber(nNumLayers_++);
         }
+        else if( poNode->getType() == Mixed )
+        {
+            CPLDebug( "KML", "We have a mixed container here" );
+        }
         else
         {
-            CPLDebug("KML", "We have a strange type here: %s", Nodetype2String(poNode->getType()).c_str());
+            CPLDebug( "KML", "We have a strange type here: %s",
+                      Nodetype2String(poNode->getType()).c_str() );
         }
     }
     else
