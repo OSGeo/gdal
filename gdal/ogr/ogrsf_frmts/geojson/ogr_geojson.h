@@ -30,6 +30,7 @@
 #define OGR_GEOJSON_H_INCLUDED
 
 #include <ogrsf_frmts.h>
+#include <cstdio>
 #include <vector> // used by OGRGeoJSONLayer
 
 /************************************************************************/
@@ -55,7 +56,7 @@ public:
     //
     OGRFeatureDefn* GetLayerDefn();
     OGRSpatialReference* GetSpatialRef();
-    void SetSpatialRef( OGRSpatialReference* poSRS );
+    
     int GetFeatureCount( int bForce = TRUE );
     void ResetReading();
     OGRFeature* GetNextFeature();
@@ -69,6 +70,7 @@ public:
     // OGRGeoJSONLayer Interface
     //
     void AddFeature( OGRFeature* poFeature );
+    void SetSpatialRef( OGRSpatialReference* poSRS );
     void DetectGeometryType();
     bool EvaluateSpatialFilter( OGRGeometry* poGeometry );
 
@@ -99,7 +101,7 @@ public:
     int Open( const char* pszSource );
     const char* GetName();
     int GetLayerCount();
-    OGRLayer* GetLayer( int );
+    OGRLayer* GetLayer( int nLayer );
     OGRLayer* CreateLayer( const char* pszName,
                            OGRSpatialReference* poSRS = NULL,
                            OGRwkbGeometryType eGType = wkbUnknown,
@@ -109,6 +111,8 @@ public:
     //
     // OGRGeoJSONDataSource Interface
     //
+    int Create( const char* pszName, char** papszOptions );
+
     enum GeometryTranslation
     {
         eGeometryPreserve,
@@ -134,6 +138,7 @@ private:
     char* pszGeoData_;
     OGRGeoJSONLayer** papoLayers_;
     int nLayers_;
+    FILE* fpOut_;
     
     //
     // Translation/Creation control flags

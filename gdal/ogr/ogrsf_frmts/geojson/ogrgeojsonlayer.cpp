@@ -239,6 +239,10 @@ OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
         return OGRERR_INVALID_HANDLE;
     }
 
+    OGRFeature* poNewFeature = NULL;
+    poNewFeature = poFeature->Clone();
+    seqFeatures_.push_back( poNewFeature );
+
     return OGRERR_NONE;
 }
 
