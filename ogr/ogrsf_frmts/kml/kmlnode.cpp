@@ -398,18 +398,20 @@ std::string KMLNode::getDescriptionElement()
     return "";
 }
 
-short KMLNode::getNumFeatures()
+std::size_t KMLNode::getNumFeatures()
 {
-    short nNum = 0;
-    for(unsigned short z = 0; z < pvpoChildren_->size();z++)
+    std::size_t nNum = 0;
+    kml_nodes_t::size_type size = pvpoChildren_->size();
+    
+    for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if(pvpoChildren_->at(z)->sName_.compare("Placemark") == 0)
+        if(pvpoChildren_->at(i)->sName_ == "Placemark" )
             nNum++;
     }
     return nNum;
 }
 
-Feature* KMLNode::getFeature(unsigned short nNum)
+Feature* KMLNode::getFeature(std::size_t nNum)
 {
     CPLDebug("KML", "GetFeature(#%d)", nNum);
 
