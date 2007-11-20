@@ -459,7 +459,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     double default_scale = 1.0;
     double default_offset = 0.0;
-    int default_node_offset = 0;
+    int default_node_offset = 1; // pixel is area
 
     nc_put_att_text (cdfid, x_range_id, "units", 7, "meters");
     nc_put_att_text (cdfid, y_range_id, "units", 7, "meters");
