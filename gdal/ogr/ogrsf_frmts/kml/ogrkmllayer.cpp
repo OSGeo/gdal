@@ -104,8 +104,6 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 #ifndef HAVE_EXPAT
     return NULL;
 #else
-    CPLDebug("KML", "GetNextFeature(#%d)", iNextKMLId_);
-
     unsigned short nCount = 0;
     unsigned short nCount2 = 0;
     KML *poKMLFile = poDS_->GetKMLFile();
