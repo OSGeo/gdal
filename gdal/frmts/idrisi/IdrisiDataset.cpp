@@ -238,7 +238,7 @@ static ConvertionTab aoLinearUnitsConv[] = {
 int GetUnitIndex( const char *pszUnitName );
 
 //----- Get the defaut name
-const char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter = NULL );
+char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter = NULL );
 
 //----- Get the "to meter"
 int GetToMeterIndex( const char *pszToMeter );
@@ -276,8 +276,8 @@ private:
         char **pszProjString );
 
     CPLErr Wkt2GeoReference( const char *pszProjString,
-        const char **pszRefSystem, 
-        const char **pszRefUnit );
+        char **pszRefSystem, 
+        char **pszRefUnit );
 
 	void CalculateMinMax();
 
@@ -1201,13 +1201,16 @@ CPLErr IdrisiDataset::SetProjection( const char *pszProjString )
     pszProjection = CPLStrdup( pszProjString );
     CPLErr eResult = CE_None;
 
-    const char *pszRefSystem;
-    const char *pszRefUnit;
+    char *pszRefSystem = NULL;
+    char *pszRefUnit = NULL;
 
     eResult = Wkt2GeoReference( pszProjString, &pszRefSystem, &pszRefUnit );
 
     CSLSetNameValue( papszRDC, rdcREF_SYSTEM, pszRefSystem );
     CSLSetNameValue( papszRDC, rdcREF_UNITS,  pszRefUnit );
+
+    CPLFree( pszRefSystem );
+    CPLFree( pszRefUnit );
 
     return eResult;
 }
@@ -1243,6 +1246,12 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d)",
                   poDS->GetRasterXSize());
+    }
+    if( pabyScanLine == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+            "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d )",
+            poDS->GetRasterXSize() );
     }
 }
 
@@ -2151,12 +2160,19 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     char **papszRef = CSLLoad( pszFName );
     CSLSetNameValueSeparator( papszRef, ":" );
 
-    const char *pszGeorefName   = CPLStrdup( CSLFetchNameValue( papszRef, refREF_SYSTEM ) );
-    if EQUAL( pszGeorefName, "" ) 
-        pszGeorefName   = CPLStrdup( CSLFetchNameValue( papszRef, refREF_SYSTEM2 ) );
-    const char *pszProjName     = CPLStrdup( CSLFetchNameValue( papszRef, refPROJECTION ) );
-    const char *pszDatum        = CPLStrdup( CSLFetchNameValue( papszRef, refDATUM ) );
-    const char *pszEllipsoid    = CPLStrdup( CSLFetchNameValue( papszRef, refELLIPSOID ) );
+    char *pszGeorefName;
+    
+    if( EQUAL( CSLFetchNameValue( papszRef, refREF_SYSTEM ), "" ) == FALSE )
+    {
+        pszGeorefName           = CPLStrdup( CSLFetchNameValue( papszRef, refREF_SYSTEM ) );
+    }
+    else
+    {
+        pszGeorefName           = CPLStrdup( CSLFetchNameValue( papszRef, refREF_SYSTEM2 ) );
+    }
+    char *pszProjName           = CPLStrdup( CSLFetchNameValue( papszRef, refPROJECTION ) );
+    char *pszDatum              = CPLStrdup( CSLFetchNameValue( papszRef, refDATUM ) );
+    char *pszEllipsoid          = CPLStrdup( CSLFetchNameValue( papszRef, refELLIPSOID ) );
     double dfCenterLat          = atof_nz( CSLFetchNameValue( papszRef, refORIGIN_LAT ) );
     double dfCenterLong         = atof_nz( CSLFetchNameValue( papszRef, refORIGIN_LONG ) );
     double dfSemiMajor          = atof_nz( CSLFetchNameValue( papszRef, refMAJOR_SAX ) );
@@ -2248,6 +2264,12 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     if( EQUAL( pszProjName, "none" ) )
     {
         oSRS.exportToWkt( pszProjString );
+        
+        CPLFree( pszGeorefName );
+        CPLFree( pszProjName );
+        CPLFree( pszDatum );
+        CPLFree( pszEllipsoid );
+        
         return CE_None;
     }
 
@@ -2340,6 +2362,12 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
             pszProjName, pszFName );
         oSRS.Clear();
         oSRS.exportToWkt( pszProjString );
+        
+        CPLFree( pszGeorefName );
+        CPLFree( pszProjName );
+        CPLFree( pszDatum );
+        CPLFree( pszEllipsoid );
+        
         return CE_Warning;
     }
 
@@ -2366,6 +2394,12 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     oSRS.SetProjCS( pszGeorefName );
 
     oSRS.exportToWkt( pszProjString );
+        
+    CPLFree( pszGeorefName );
+    CPLFree( pszProjName );
+    CPLFree( pszDatum );
+    CPLFree( pszEllipsoid );
+        
     return CE_None;
 }
 
@@ -2387,8 +2421,8 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
 ***/
 
 CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
-                                        const char **pszRefSystem, 
-                                        const char **pszRefUnit )
+                                        char **pszRefSystem, 
+                                        char **pszRefUnit )
 {
     // -----------------------------------------------------
     //  Plane with default "Meters"
@@ -2422,9 +2456,9 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
     if( oSRS.IsGeographic() )
     {
-        const char *pszSpheroid = CPLStrdup( oSRS.GetAttrValue( "SPHEROID" ) );
-        const char *pszAuthName = CPLStrdup( oSRS.GetAuthorityName( "GEOGCS" ) );
-        const char *pszDatum    = CPLStrdup( oSRS.GetAttrValue( "DATUM" ) );
+        char *pszSpheroid = CPLStrdup( oSRS.GetAttrValue( "SPHEROID" ) );
+        char *pszAuthName = CPLStrdup( oSRS.GetAuthorityName( "GEOGCS" ) );
+        char *pszDatum    = CPLStrdup( oSRS.GetAttrValue( "DATUM" ) );
         int nGCSCode = -1;
         if EQUAL( pszAuthName, "EPSG" )
         {
@@ -2436,8 +2470,17 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         {
             *pszRefSystem = CPLStrdup( rstLATLONG );
             *pszRefUnit   = CPLStrdup( rstDEGREE );
+
+            CPLFree( pszSpheroid );
+            CPLFree( pszAuthName );
+            CPLFree( pszDatum );
+
             return CE_None;
         }
+
+        CPLFree( pszSpheroid );
+        CPLFree( pszAuthName );
+        CPLFree( pszDatum );
     }
 
     // -----------------------------------------------------
@@ -2502,7 +2545,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                 char *pszState  = CPLStrdup( GetStateName( nSPCode ) );
                 if( ! EQUAL( pszState, "" ) )
                 {
-                    *pszRefSystem   = CPLSPrintf( rstSPC, nNADYear, pszState, nZone );
+                    *pszRefSystem   = CPLStrdup( CPLSPrintf( rstSPC, nNADYear, pszState, nZone ) );
                     *pszRefUnit     = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ),
                                       CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
                     return CE_None;
@@ -2597,9 +2640,9 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Prepare to write ref file
     // ---------------------------------------------------------
 
-    const char *pszGeorefName   = CPLStrdup( "Unknown" );
-    const char *pszDatum        = CPLStrdup( oSRS.GetAttrValue( "DATUM" ) );
-    const char *pszEllipsoid    = CPLStrdup( oSRS.GetAttrValue( "SPHEROID" ) );
+    char *pszGeorefName         = CPLStrdup( "Unknown" );
+    char *pszDatum              = CPLStrdup( oSRS.GetAttrValue( "DATUM" ) );
+    char *pszEllipsoid          = CPLStrdup( oSRS.GetAttrValue( "SPHEROID" ) );
     double dfSemiMajor          = oSRS.GetSemiMajor();        
     double dfSemiMinor          = oSRS.GetSemiMinor();        
     double adfToWGS84[3];
@@ -2613,11 +2656,12 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     int nParameters             = 0;         
     double dfStdP1              = 0.0;            
     double dfStdP2              = 0.0;            
-    const char *pszAngularUnit  = CPLStrdup( oSRS.GetAttrValue( "GEOGCS|UNIT" ) );
-    const char *pszLinearUnit;
+    char *pszAngularUnit        = CPLStrdup( oSRS.GetAttrValue( "GEOGCS|UNIT" ) );
+    char *pszLinearUnit;
 
     if( oSRS.IsProjected() )
     {
+        CPLFree( pszGeorefName );
         pszGeorefName   = CPLStrdup( oSRS.GetAttrValue( "PROJCS" ) );
         dfCenterLat     = oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL );
         dfCenterLong    = oSRS.GetProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0, NULL );
@@ -2632,12 +2676,12 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             if( dfStdP2 != -0.1 )
                 nParameters = 2;
         }
-        pszLinearUnit   = GetUnitDefault( oSRS.GetAttrValue( "PROJCS|UNIT" ),
-                          CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
+        pszLinearUnit   = CPLStrdup( GetUnitDefault( oSRS.GetAttrValue( "PROJCS|UNIT" ),
+                          CPLSPrintf( "%f", oSRS.GetLinearUnits() ) ) );
     }
     else
     {
-        pszLinearUnit   = GetUnitDefault( pszAngularUnit );
+        pszLinearUnit   = CPLStrdup( GetUnitDefault( pszAngularUnit ) );
     }
 
     // ---------------------------------------------------------
@@ -2673,6 +2717,12 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
 
     *pszRefSystem = CPLStrdup( CPLGetBasename( pszFilename ) );
     *pszRefUnit   = CPLStrdup( pszLinearUnit );
+
+    CPLFree( pszGeorefName );
+    CPLFree( pszDatum );
+    CPLFree( pszEllipsoid );
+    CPLFree( pszLinearUnit );
+    CPLFree( pszAngularUnit );
 
     return CE_None;
 }
@@ -2770,7 +2820,7 @@ int GetToMeterIndex( const char *pszToMeter )
 /*                            GetUnitDefault()                          */
 /************************************************************************/
 
-const char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter )
+char *GetUnitDefault( const char *pszUnitName, const char *pszToMeter )
 {
     int nIndex = GetUnitIndex( pszUnitName );
 
@@ -2798,7 +2848,9 @@ void FormatCRLF( const char *pszFilename )
     FILE *fpOut;
     char ch;
 
-    pszTempfile = CPLResetExtension( pszFilename, "$$$" );
+    char* pszFilenameDup = CPLStrdup( pszFilename );
+    pszTempfile = CPLResetExtension( pszFilenameDup, "$$$" );
+    CPLFree( pszFilenameDup );
 
     fpIn  = VSIFOpen( pszFilename, "r" );
     fpOut = VSIFOpen( pszTempfile, "w" );
