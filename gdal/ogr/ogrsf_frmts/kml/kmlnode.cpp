@@ -241,7 +241,7 @@ void KMLNode::setType(Nodetype oNotet)
     eType_ = oNotet;
 }
 
-Nodetype KMLNode::getType()
+Nodetype KMLNode::getType() const
 {
     return eType_;
 }
@@ -251,17 +251,17 @@ void KMLNode::setName(std::string const& sIn)
     sName_ = sIn;
 }
 
-std::string KMLNode::getName()
+std::string KMLNode::getName() const
 {
     return sName_;
 }
 
-void KMLNode::setLevel(unsigned int nLev)
+void KMLNode::setLevel(std::size_t nLev)
 {
     nLevel_ = nLev;
 }
 
-unsigned int KMLNode::getLevel()
+std::size_t KMLNode::getLevel() const
 {
     return nLevel_;
 }
@@ -276,7 +276,7 @@ void KMLNode::setParent(KMLNode* poPar)
     poParent_ = poPar;
 }
 
-KMLNode* KMLNode::getParent()
+KMLNode* KMLNode::getParent() const
 {
     return poParent_;
 }
@@ -286,111 +286,95 @@ void KMLNode::addChildren(KMLNode *poChil)
     pvpoChildren_->push_back(poChil);
 }
 
-unsigned short KMLNode::countChildren()
+std::size_t KMLNode::countChildren()
 {
     return pvpoChildren_->size();
 }
 
-KMLNode* KMLNode::getChild(unsigned short nNum)
+KMLNode* KMLNode::getChild(std::size_t index) const
 {
-    return pvpoChildren_->at(nNum);
+    return pvpoChildren_->at(index);
 }
 
-void KMLNode::addContent(std::string const& sCon)
+void KMLNode::addContent(std::string const& text)
 {
-    pvsContent_->push_back(sCon);
+    pvsContent_->push_back(text);
 }
 
-void KMLNode::appendContent(std::string sCon)
+void KMLNode::appendContent(std::string const& text)
 {
-    pvsContent_->at(pvsContent_->size()-1) += sCon;
+    std::string& tmp = pvsContent_->at(pvsContent_->size() - 1);
+    tmp += text;
 }
 
-std::string KMLNode::getContent(unsigned short nNum)
+std::string KMLNode::getContent(std::size_t index) const
 {
-    if(nNum >= pvsContent_->size())
-        return "";
-    return pvsContent_->at(nNum);
+    std::string tmp;
+    if( index < pvsContent_->size() )
+    {
+        tmp = pvsContent_->at(index);
+    }
+    return tmp;
 }
 
-void KMLNode::deleteContent(unsigned short nNum)
+void KMLNode::deleteContent(std::size_t index)
 {
-    if(nNum >= pvsContent_->size())
-        return;
-    pvsContent_->erase(pvsContent_->begin() + nNum);
+    if( index < pvsContent_->size() )
+    {
+        pvsContent_->erase(pvsContent_->begin() + index);
+    }
 }
 
-unsigned short KMLNode::numContent()
+std::size_t KMLNode::numContent()
 {
     return pvsContent_->size();
 }
 
-void KMLNode::setLayerNumber(short nNum)
+void KMLNode::setLayerNumber(int nNum)
 {
     nLayerNumber_ = nNum;
 }
 
-short KMLNode::getLayerNumber()
+int KMLNode::getLayerNumber() const
 {
     return nLayerNumber_;
 }
 
-KMLNode* KMLNode::getLayer(unsigned short nNum)
+KMLNode* KMLNode::getLayer(int nNum)
 {
-    KMLNode *poTmp;
+    KMLNode* poTmp = NULL;
     if(nLayerNumber_ == nNum)
         return this;
 
-    for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+    kml_nodes_t::size_type size = pvpoChildren_->size();
+    for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if((poTmp = pvpoChildren_->at(nCount)->getLayer(nNum)) != NULL)
+        if((poTmp = pvpoChildren_->at(i)->getLayer(nNum)) != NULL)
             return poTmp;
     }
 
     return NULL;
 }
 
-std::string KMLNode::getNameElement()
+std::string KMLNode::getNameElement() const
 {
-    std::string sContent;
+    std::string sElem;
+    kml_nodes_t::size_type subsize = 0;
+    kml_nodes_t::size_type size = pvpoChildren_->size();
 
-    for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
+    for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if(pvpoChildren_->at(nCount)->sName_.compare("name") == 0)
+        if( pvpoChildren_->at(i)->sName_.compare("name") == 0 )
         {
-            unsigned int nSize = pvpoChildren_->at(nCount)->pvsContent_->size();
-            if (nSize > 0)
+            subsize = pvpoChildren_->at(i)->pvsContent_->size();
+            if( subsize > 0 )
             {
-                sContent = pvpoChildren_->at(nCount)->pvsContent_->at(0);
-                for(unsigned int nCount2 = 1; nCount2 < nSize; nCount2++)
+                sElem = pvpoChildren_->at(i)->pvsContent_->at(0);
+                for( kml_nodes_t::size_type j = 1; j < subsize; ++i )
                 {
-                    sContent += " " + pvpoChildren_->at(nCount)->pvsContent_->at(nCount2);
+                    sElem += " " + pvpoChildren_->at(j)->pvsContent_->at(j);
                 }
-                return sContent;
-            }
-            break;
-        }
-    }
-
-    return "";
-}
-
-std::string KMLNode::getDescriptionElement()
-{
-    std::string sContent;
-    for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
-    {
-        if(pvpoChildren_->at(nCount)->sName_.compare("description") == 0)
-        {
-            unsigned int nSize = pvpoChildren_->at(nCount)->pvsContent_->size();
-            if (nSize > 0)
-            {
-                sContent = pvpoChildren_->at(nCount)->pvsContent_->at(0);
-                for(unsigned int nCount2 = 1; nCount2 < nSize; nCount2++)
-                {
-                    sContent += " " + pvpoChildren_->at(nCount)->pvsContent_->at(nCount2);
-                }
-                return sContent;
+                return sElem;
             }
             break;
         }
@@ -398,7 +382,32 @@ std::string KMLNode::getDescriptionElement()
     return "";
 }
 
-std::size_t KMLNode::getNumFeatures()
+std::string KMLNode::getDescriptionElement() const
+{
+    std::string sElem;
+    kml_nodes_t::size_type subsize = 0;
+    kml_nodes_t::size_type size = pvpoChildren_->size();
+    for( kml_nodes_t::size_type i = 0; i < size; ++i )
+    {
+        if( pvpoChildren_->at(i)->sName_.compare("description") == 0 )
+        {
+            subsize = pvpoChildren_->at(i)->pvsContent_->size();
+            if ( subsize > 0 )
+            {
+                sElem = pvpoChildren_->at(i)->pvsContent_->at(0);
+                for( kml_nodes_t::size_type j = 1; j < subsize; ++j )
+                {
+                    sElem += " " + pvpoChildren_->at(i)->pvsContent_->at(j);
+                }
+                return sElem;
+            }
+            break;
+        }
+    }
+    return "";
+}
+
+std::size_t KMLNode::getNumFeatures() const
 {
     std::size_t nNum = 0;
     kml_nodes_t::size_type size = pvpoChildren_->size();
@@ -655,18 +664,21 @@ Feature* KMLNode::getFeature(std::size_t nNum)
     return NULL;
 }
 
-void KMLNode::calcExtent(KML *poKMLClass)
+void KMLNode::calcExtent(KML *poKML)
 {
-    KMLNode *poTmp;
-    Coordinate *psCoors;
+    CPLAssert( NULL != poKML );
+
+    KMLNode* poTmp = NULL;
+    Coordinate* psCoors = NULL;
     
-    if(psExtent_ != NULL)
+    if( psExtent_ != NULL )
         return;
+
     // Handle Features
-    if(poKMLClass->isFeature(sName_))
+    if(poKML->isFeature(sName_))
     {
-        psExtent_ = new Extent;
-        psExtent_->dfX1 = psExtent_->dfX2 = psExtent_->dfY1 = psExtent_->dfY2 = 0.0;
+        psExtent_ = new Extent();
+
         // Special for Polygons
         if(sName_.compare("Polygon") == 0)
         {
@@ -734,14 +746,14 @@ void KMLNode::calcExtent(KML *poKMLClass)
         }
     // Summarize Containers
     }
-    else if( poKMLClass->isFeatureContainer(sName_)
-             || poKMLClass->isContainer(sName_))
+    else if( poKML->isFeatureContainer(sName_)
+             || poKML->isContainer(sName_))
     {
         psExtent_ = new Extent;
         psExtent_->dfX1 = psExtent_->dfX2 = psExtent_->dfY1 = psExtent_->dfY2 = 0.0;
         for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
         {
-            pvpoChildren_->at(nCount)->calcExtent(poKMLClass);
+            pvpoChildren_->at(nCount)->calcExtent(poKML);
             if(pvpoChildren_->at(nCount)->psExtent_ != NULL)
             {
                 if(pvpoChildren_->at(nCount)->psExtent_->dfX1 < psExtent_->dfX1 || 
@@ -761,7 +773,7 @@ void KMLNode::calcExtent(KML *poKMLClass)
     }
 }
 
-Extent* KMLNode::getExtents()
+Extent const* KMLNode::getExtents() const
 {
     return psExtent_;
 }
