@@ -1247,12 +1247,6 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
                  "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d)",
                   poDS->GetRasterXSize());
     }
-    if( pabyScanLine == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-            "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d )",
-            poDS->GetRasterXSize() );
-    }
 }
 
 /************************************************************************/
