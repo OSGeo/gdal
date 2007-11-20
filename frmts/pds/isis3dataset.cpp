@@ -467,20 +467,20 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab Cellsize ************/
     value = poDS->GetKeyword("IsisCube.Mapping.PixelResolution");
     if (strlen(value) > 0 ) {
-        dfXDim = (float) atof(value); /* values are in meters */
-        dfYDim = (float) atof(value);
+        dfXDim = atof(value); /* values are in meters */
+        dfYDim = -atof(value);
     }
     
     /***********   Grab UpperLeftCornerY ************/
     value = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerY");
     if (strlen(value) > 0) {
-        dfULYMap = (float) atof(value);
+        dfULYMap = atof(value);
     }
      
     /***********   Grab UpperLeftCornerX ************/
     value = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerX");
     if( strlen(value) > 0 ) {
-        dfULXMap = (float) atof(value);
+        dfULXMap = atof(value);
     }
      
     /***********  Grab TARGET_NAME  ************/
