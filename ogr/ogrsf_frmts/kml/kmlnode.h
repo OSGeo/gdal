@@ -83,8 +83,8 @@ public:
     std::string getNameElement();
     std::string getDescriptionElement();
 
-    short getNumFeatures();
-    Feature* getFeature(unsigned short);
+    std::size_t getNumFeatures();
+    Feature* getFeature(std::size_t nNum);
 
     Extent* getExtents();
 

@@ -37,6 +37,7 @@
 /************************************************************************/
 /*                         OGRKMLDataSource()                           */
 /************************************************************************/
+
 OGRKMLDataSource::OGRKMLDataSource()
 {
     pszName_ = NULL;
@@ -57,6 +58,7 @@ OGRKMLDataSource::OGRKMLDataSource()
 /************************************************************************/
 /*                        ~OGRKMLDataSource()                           */
 /************************************************************************/
+
 OGRKMLDataSource::~OGRKMLDataSource()
 {
     if( fpOutput_ != NULL )
@@ -170,8 +172,6 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     for( nCount = 0; nCount < nLayers_; nCount++ )
     {
-        CPLDebug("KML", "Loading Layer #%d", nCount);
-
         if( !poKMLFile_->selectLayer(nCount) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -336,6 +336,7 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
+
 int OGRKMLDataSource::TestCapability( const char * pszCap )
 
 {
@@ -348,10 +349,9 @@ int OGRKMLDataSource::TestCapability( const char * pszCap )
 /************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
+
 OGRLayer *OGRKMLDataSource::GetLayer( int iLayer )
 {
-    CPLDebug("KML", "Get Layer #%d", iLayer);
-
     if( iLayer < 0 || iLayer >= nLayers_ )
         return NULL;
     else
@@ -361,21 +361,10 @@ OGRLayer *OGRKMLDataSource::GetLayer( int iLayer )
 /************************************************************************/
 /*                            GrowExtents()                             */
 /************************************************************************/
+
 void OGRKMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
 {
     CPLAssert( NULL != psGeomBounds );
 
     oEnvelope_.Merge( *psGeomBounds );
-}
-
-/************************************************************************/
-/*                            InsertHeader()                            */
-/*                                                                      */
-/*      This method is used to update boundedby info for a              */
-/*      dataset, and insert schema descriptions depending on            */
-/*      selection options in effect.                                    */
-/************************************************************************/
-void OGRKMLDataSource::InsertHeader()
-{    
-        return;
 }

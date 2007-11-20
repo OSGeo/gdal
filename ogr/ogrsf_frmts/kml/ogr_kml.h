@@ -142,11 +142,7 @@ private:
     FILE* fpOutput_;
 
     OGREnvelope oEnvelope_;
-
-    int nBoundedByLocation_;
     int nSchemaInsertLocation_;
-
-    void InsertHeader();
 };
 
 /************************************************************************/
