@@ -48,28 +48,28 @@ class KML
 public:
 	KML();
 	virtual ~KML();
-	bool open(const char * pszFilename);
+	bool open(const char* pszFilename);
 	bool isValid();
-	bool isHandled(std::string const&) const;
-	virtual bool isLeaf(std::string const&) const {return false;};
-	virtual bool isFeature(std::string const&) const {return false;};
-	virtual bool isFeatureContainer(std::string const&) const {return false;};
-	virtual bool isContainer(std::string const&) const {return false;};
-	virtual bool isRest(std::string const&) const {return false;};
-    virtual void findLayers(KMLNode* poNode) {};
+	bool isHandled(std::string const& elem) const;
+	virtual bool isLeaf(std::string const& elem) const;
+	virtual bool isFeature(std::string const& elem) const;
+	virtual bool isFeatureContainer(std::string const& elem) const;
+	virtual bool isContainer(std::string const& elem) const;
+	virtual bool isRest(std::string const& elem) const;
+    virtual void findLayers(KMLNode* poNode);
 
 	void parse();
 	void print(unsigned short what = 3);
-    std::string getError();
+    std::string getError() const;
 	void classifyNodes();
 	void eliminateEmpty();
-	short numLayers();
+	int getNumLayers() const;
     bool selectLayer(unsigned short);
-    std::string getCurrentName();
-    Nodetype getCurrentType();
-    short getNumFeatures();
-    Feature* getFeature(unsigned short);
-    bool getExtents(double *pdfXMin, double *pdfXMax, double *pdfYMin, double *pdfYMax);
+    std::string getCurrentName() const;
+    Nodetype getCurrentType() const;
+    int getNumFeatures() const;
+    Feature* getFeature(std::size_t nNum) const;
+    bool getExtents(double& pdfXMin, double& pdfXMax, double& pdfYMin, double& pdfYMax) const;
 
 protected:
 	void checkValidity();
