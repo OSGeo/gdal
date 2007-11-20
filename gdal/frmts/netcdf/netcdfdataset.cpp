@@ -1574,9 +1574,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
+    poDS->SetMetadata( poDS->papszMetadata );
+
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML( );
-    poDS->SetMetadata( poDS->papszMetadata );
+
     return( poDS );
 }
 
