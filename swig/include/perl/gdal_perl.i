@@ -200,6 +200,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     sub OpenShared {
 	return Geo::GDAL::OpenShared(@_);
     }
+    sub Size {
+	my $self = shift;
+	return ($self->{RasterXSize}, $self->{RasterYSize});
+    }
     sub GetRasterBand {
 	my($self, $index) = @_;
 	my $band = _GetRasterBand($self, $index);
