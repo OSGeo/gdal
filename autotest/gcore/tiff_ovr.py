@@ -201,11 +201,33 @@ def tiff_ovr_4():
     
 
 ###############################################################################
+# Test average overview generation with nodata.
+
+def tiff_ovr_5():
+
+    shutil.copyfile( 'data/nodata_byte.tif', 'tmp/ovr5.tif' )
+
+    wrk_ds = gdal.Open('tmp/ovr5.tif',gdal.GA_ReadOnly)
+    wrk_ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+
+    cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 1130
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+    
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/mfloat32.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr4.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr5.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -215,6 +237,7 @@ gdaltest_list = [
     tiff_ovr_2,
     tiff_ovr_3,
     tiff_ovr_4,
+    tiff_ovr_5,
     tiff_ovr_cleanup ]
 
 if __name__ == '__main__':
