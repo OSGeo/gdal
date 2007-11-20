@@ -172,6 +172,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
     
     osValue = "";
 
+    // Handle value lists like:     Name   = (Red, Red)
     if( *pszHeaderNext == '(' )
     {
         CPLString osWord;
@@ -184,38 +185,38 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
             if( osWord[strlen(osWord)-1] == ')' )
                 break;
         }
-
-        return TRUE;
     }
-    else
+
+    else // Handle more normal "single word" values. 
     {
         if( !ReadWord( osValue ) )
             return FALSE;
 
+    }
+        
+    SkipWhite();
+
+    // No units keyword?   
+    if( *pszHeaderNext != '<' )
+        return TRUE;
+
+    // Append units keyword.  For lines that like like this:
+    //  MAP_RESOLUTION               = 4.0 <PIXEL/DEGREE>
+    
+    CPLString osWord;
+    
+    osValue += " ";
+    
+    while( ReadWord( osWord ) )
+    {
         SkipWhite();
         
-        // No units keyword?   
-        if( *pszHeaderNext != '<' )
-            return TRUE;
-
-        // Append units keyword.  For lines that like like this:
-        //  MAP_RESOLUTION               = 4.0 <PIXEL/DEGREE>
-
-        CPLString osWord;
-        
-        osValue += " ";
-        
-        while( ReadWord( osWord ) )
-        {
-            SkipWhite();
-            
-            osValue += osWord;
-            if( osWord[strlen(osWord)-1] == '>' )
-                break;
-        }
-
-        return TRUE;
+        osValue += osWord;
+        if( osWord[strlen(osWord)-1] == '>' )
+            break;
     }
+    
+    return TRUE;
 }
 
 /************************************************************************/
