@@ -344,8 +344,9 @@ void KML::eliminateEmpty() {
     poTrunk_->eliminateEmpty(this);
 }
 
-void KML::print(unsigned short nNum) {
-    if(poTrunk_ != NULL)
+void KML::print(unsigned short nNum)
+{
+    if( poTrunk_ != NULL )
         poTrunk_->print(nNum);
 }
 
