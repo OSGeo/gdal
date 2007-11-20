@@ -38,7 +38,8 @@
 /************************************************************************/
 
 OGRGeoJSONDataSource::OGRGeoJSONDataSource()
-    : pszName_(NULL), pszGeoData_(NULL), papoLayers_(NULL), nLayers_(0),
+    : pszName_(NULL), pszGeoData_(NULL),
+        papoLayers_(NULL), nLayers_(0), fpOut_(NULL),
         flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
         flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve )
 {
@@ -176,10 +177,20 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
                                              OGRwkbGeometryType eGType,
                                              char** papszOptions )
 {
-    CPLAssert( OGRGeoJSONLayer::DefaultGeometryType == eGType );
-
     OGRGeoJSONLayer* poLayer = NULL;
     poLayer = new OGRGeoJSONLayer( pszName_, poSRS, eGType, papszOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+    
+    // TOOD: Waiting for multi-layer support
+    CPLAssert( 0 == nLayers_ );
+
+    papoLayers_ = (OGRGeoJSONLayer **)
+        CPLRealloc( papoLayers_,  sizeof(OGRGeoJSONLayer*) * (nLayers_ + 1) );
+    
+    papoLayers_[nLayers_++] = poLayer;
 
     return poLayer;
 }
@@ -190,11 +201,52 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
 
 int OGRGeoJSONDataSource::TestCapability( const char* pszCap )
 {
-    return FALSE;
+    if( EQUAL( pszCap, ODsCCreateLayer ) )
+        return TRUE;
+    else if( EQUAL( pszCap, ODsCDeleteLayer ) )
+        return FALSE;
+    else
+        return FALSE;
+}
+
+int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
+{
+    CPLAssert( NULL == fpOut_ );
+
+/* -------------------------------------------------------------------- */
+/*     File overwrite not supported.                                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+    if( VSIStatL( pszName, &sStatBuf ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "The GeoJSON driver does not overwrite existing files." );
+        return FALSE;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Create the output file.                                         */
+/* -------------------------------------------------------------------- */
+    if( EQUAL( pszName, "stdout" ) )
+        fpOut_ = stdout;
+    else
+        fpOut_ = VSIFOpen( pszName, "w" );
+
+    if( NULL == fpOut_)
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create GeoJSON datasource: %s.", 
+                  pszName );
+        return FALSE;
+    }
+
+    pszName_ = CPLStrdup( pszName );
+
+    return TRUE;
 }
 
 /************************************************************************/
-/*                           SetGeometryTranslation()               */
+/*                           SetGeometryTranslation()                   */
 /************************************************************************/
 
 void
@@ -204,7 +256,7 @@ OGRGeoJSONDataSource::SetGeometryTranslation( GeometryTranslation type )
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
+/*                           SetAttributesTranslation()                 */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::SetAttributesTranslation( AttributesTranslation type )
@@ -233,6 +285,9 @@ void OGRGeoJSONDataSource::Clear()
 
     CPLFree( pszGeoData_ );
     pszGeoData_ = NULL;
+
+    if( NULL != fpOut_ && stdout != fpOut_ )
+        VSIFClose( fpOut_ );
 }
 
 /************************************************************************/
