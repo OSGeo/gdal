@@ -170,6 +170,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return _AutoCreateWarpedVRT(@p);
     }
     package Geo::GDAL::MajorObject;
+    use strict;
     sub Description {
 	my($self, $desc) = @_;
 	SetDescription($self, $desc) if defined $desc;
@@ -184,12 +185,14 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	GetMetadata($self, $domain) if defined wantarray;
     }
     package Geo::GDAL::Driver;
+    use strict;
     sub Create {
 	my @p = @_;
 	$p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]} if $p[5] and exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
 	return _Create(@p);
     }
     package Geo::GDAL::Dataset;
+    use strict;
     use vars qw/%BANDS/;
     sub Open {
 	return Geo::GDAL::Open(@_);
@@ -232,6 +235,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return (@$GCPs, $proj);
     }
     package Geo::GDAL::Band;
+    use strict;
     use vars qw/
 	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING
 	/;
@@ -323,6 +327,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	GetRasterColorTable($self);
     }
     package Geo::GDAL::ColorTable;
+    use strict;
     use vars qw/
 	%PALETTE_INTERPRETATION_STRING2INT %PALETTE_INTERPRETATION_INT2STRING
 	/;
