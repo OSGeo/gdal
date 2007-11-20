@@ -26,6 +26,12 @@ MSVC_VER=1310
 !ENDIF
 
 ###############################################################################
+# Optional use of Visual Leak Detector (VLD) by Dan Moulding, available at
+# http://dmoulding.googlepages.com/vld
+# Uncomment this line to use VLD in debug configuration only:
+#MSVC_VLD_DIR="C:\Program Files\Visual Leak Detector"
+
+###############################################################################
 # Location to install .exe, .dll and python stuff
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
@@ -313,12 +319,15 @@ GDAL_DLL =	gdal$(VERSION).dll
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore \
 		-I$(GDAL_ROOT)\alg
 
-#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
-#LINKER_FLAGS = /debug
-
 !IFDEF MSVC_VLD_DIR
 MSVC_VLD_FLAGS=-DMSVC_USE_VLD -I$(MSVC_VLD_DIR)\include
+MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib
 !ENDIF
+
+#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
+#LINKER_FLAGS = /debug
+LINKER_FLAGS = $(MSVC_VLD_LIB)
+
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS) $(MSVC_VLD_FLAGS)
 MAKE	=	nmake /nologo
