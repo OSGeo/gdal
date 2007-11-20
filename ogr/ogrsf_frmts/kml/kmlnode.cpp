@@ -255,8 +255,7 @@ void KMLNode::classify(KML* poKML)
 
 void KMLNode::eliminateEmpty(KML* poKML)
 {
-    const kml_nodes_t::size_type size = pvpoChildren_->size();
-    for(kml_nodes_t::size_type z = 0; z < size; z++)
+    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
     {
         if(pvpoChildren_->at(z)->eType_ == Empty
            && (poKML->isContainer(pvpoChildren_->at(z)->sName_)
@@ -693,7 +692,7 @@ void KMLNode::calcExtent(KML *poKML)
     CPLAssert( NULL != poKML );
 
     KMLNode* poTmp = NULL;
-    Coordinate* psCoors = NULL;
+    Coordinate* psCoords = NULL;
     
     if( psExtent_ != NULL )
         return;
@@ -721,18 +720,18 @@ void KMLNode::calcExtent(KML *poKML)
                                 for(unsigned short nCount2 = 0;
                                     nCount2 < poTmp->pvpoChildren_->at(nCount3)->pvsContent_->size(); nCount2++)
                                 {
-                                    psCoors = ParseCoordinate(poTmp->pvpoChildren_->at(nCount3)->pvsContent_->at(nCount2));
-                                    if(psCoors != NULL)
+                                    psCoords = ParseCoordinate(poTmp->pvpoChildren_->at(nCount3)->pvsContent_->at(nCount2));
+                                    if(psCoords != NULL)
                                     {
-                                        if(psCoors->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0)
-                                            psExtent_->dfX1 = psCoors->dfLongitude;
-                                        if(psCoors->dfLongitude > psExtent_->dfX2 || psExtent_->dfX2 == 0)
-                                            psExtent_->dfX2 = psCoors->dfLongitude;
-                                        if(psCoors->dfLatitude < psExtent_->dfY1 || psExtent_->dfY1 == 0)
-                                            psExtent_->dfY1 = psCoors->dfLatitude;
-                                        if(psCoors->dfLatitude > psExtent_->dfY2 || psExtent_->dfY2 == 0)
-                                            psExtent_->dfY2 = psCoors->dfLatitude;
-                                        delete psCoors;
+                                        if(psCoords->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0)
+                                            psExtent_->dfX1 = psCoords->dfLongitude;
+                                        if(psCoords->dfLongitude > psExtent_->dfX2 || psExtent_->dfX2 == 0)
+                                            psExtent_->dfX2 = psCoords->dfLongitude;
+                                        if(psCoords->dfLatitude < psExtent_->dfY1 || psExtent_->dfY1 == 0)
+                                            psExtent_->dfY1 = psCoords->dfLatitude;
+                                        if(psCoords->dfLatitude > psExtent_->dfY2 || psExtent_->dfY2 == 0)
+                                            psExtent_->dfY2 = psCoords->dfLatitude;
+                                        delete psCoords;
                                     }
                                 }
                             }
@@ -751,18 +750,18 @@ void KMLNode::calcExtent(KML *poKML)
                     poTmp = pvpoChildren_->at(nCount);
                     for(unsigned short nCount2 = 0; nCount2 < poTmp->pvsContent_->size(); nCount2++)
                     {
-                        psCoors = ParseCoordinate(poTmp->pvsContent_->at(nCount2));
-                        if(psCoors != NULL)
+                        psCoords = ParseCoordinate(poTmp->pvsContent_->at(nCount2));
+                        if(psCoords != NULL)
                         {
-                            if(psCoors->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0.0)
-                                psExtent_->dfX1 = psCoors->dfLongitude;
-                            if(psCoors->dfLongitude > psExtent_->dfX2 || psExtent_->dfX2 == 0.0)
-                                psExtent_->dfX2 = psCoors->dfLongitude;
-                            if(psCoors->dfLatitude < psExtent_->dfY1 || psExtent_->dfY1 == 0.0)
-                                psExtent_->dfY1 = psCoors->dfLatitude;
-                            if(psCoors->dfLatitude > psExtent_->dfY2 || psExtent_->dfY2 == 0.0)
-                                psExtent_->dfY2 = psCoors->dfLatitude;
-                            delete psCoors;
+                            if(psCoords->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0.0)
+                                psExtent_->dfX1 = psCoords->dfLongitude;
+                            if(psCoords->dfLongitude > psExtent_->dfX2 || psExtent_->dfX2 == 0.0)
+                                psExtent_->dfX2 = psCoords->dfLongitude;
+                            if(psCoords->dfLatitude < psExtent_->dfY1 || psExtent_->dfY1 == 0.0)
+                                psExtent_->dfY1 = psCoords->dfLatitude;
+                            if(psCoords->dfLatitude > psExtent_->dfY2 || psExtent_->dfY2 == 0.0)
+                                psExtent_->dfY2 = psCoords->dfLatitude;
+                            delete psCoords;
                         }
                     }
                 }
@@ -780,17 +779,17 @@ void KMLNode::calcExtent(KML *poKML)
             pvpoChildren_->at(nCount)->calcExtent(poKML);
             if(pvpoChildren_->at(nCount)->psExtent_ != NULL)
             {
-                if(pvpoChildren_->at(nCount)->psExtent_->dfX1 < psExtent_->dfX1 || 
-                        psExtent_->dfX1 == 0)
+                if(pvpoChildren_->at(nCount)->psExtent_->dfX1 < psExtent_->dfX1
+                   || psExtent_->dfX1 == 0)
                     psExtent_->dfX1 = pvpoChildren_->at(nCount)->psExtent_->dfX1;
-                if(pvpoChildren_->at(nCount)->psExtent_->dfX2 > psExtent_->dfX2 || 
-                        psExtent_->dfX2 == 0)
+                if(pvpoChildren_->at(nCount)->psExtent_->dfX2 > psExtent_->dfX2
+                   || psExtent_->dfX2 == 0)
                     psExtent_->dfX2 = pvpoChildren_->at(nCount)->psExtent_->dfX2;
-                if(pvpoChildren_->at(nCount)->psExtent_->dfY1 < psExtent_->dfY1 || 
-                        psExtent_->dfY1 == 0)
+                if(pvpoChildren_->at(nCount)->psExtent_->dfY1 < psExtent_->dfY1
+                   || psExtent_->dfY1 == 0)
                     psExtent_->dfY1 = pvpoChildren_->at(nCount)->psExtent_->dfY1;
-                if(pvpoChildren_->at(nCount)->psExtent_->dfY2 > psExtent_->dfY2 || 
-                        psExtent_->dfY2 == 0)
+                if(pvpoChildren_->at(nCount)->psExtent_->dfY2 > psExtent_->dfY2
+                   || psExtent_->dfY2 == 0)
                     psExtent_->dfY2 = pvpoChildren_->at(nCount)->psExtent_->dfY2;
             }
         }

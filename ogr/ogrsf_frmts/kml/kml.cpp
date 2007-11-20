@@ -71,7 +71,8 @@ bool KML::open(const char * pszFilename)
 
 void KML::parse()
 {
-	unsigned int nDone, nLen;
+    std::size_t nDone = 0;
+    std::size_t nLen = 0;
     char aBuf[BUFSIZ] = { 0 };
 	
 	if( NULL == pKMLFile_ )
@@ -79,15 +80,14 @@ void KML::parse()
 		sError_ = "No file given";
 		return;
 	}
-	
-    CPLDebug("KML", "Test");
-	nDepth_ = 0;
+
     if(poTrunk_ != NULL) {
         delete poTrunk_;
         poTrunk_ = NULL;
     }
 
-    if(poCurrent_ != NULL) {
+    if(poCurrent_ != NULL)
+    {
         delete poCurrent_;
         poCurrent_ = NULL;
     }
@@ -97,20 +97,21 @@ void KML::parse()
 	XML_SetElementHandler(oParser, startElement, endElement);
 	XML_SetCharacterDataHandler(oParser, dataHandler);
 
-	do {
-		nLen = (int)VSIFRead( aBuf, 1, sizeof(aBuf), pKMLFile_ );
-		nDone = nLen < sizeof(aBuf);
-		if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+    do
+    {
+        nLen = (int)VSIFRead( aBuf, 1, sizeof(aBuf), pKMLFile_ );
+        nDone = nLen < sizeof(aBuf);
+        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-			fprintf(stderr,
-				"%s at line %u\n",
-				XML_ErrorString(XML_GetErrorCode(oParser)),
-				XML_GetCurrentLineNumber(oParser));
-			XML_ParserFree(oParser);
-			VSIRewind(pKMLFile_);
-			return;
-		}
-	} while (!nDone);
+            fprintf(stderr,
+                "%s at line %u\n",
+                XML_ErrorString(XML_GetErrorCode(oParser)),
+                XML_GetCurrentLineNumber(oParser));
+            XML_ParserFree(oParser);
+            VSIRewind(pKMLFile_);
+            return;
+        }
+    } while (!nDone);
 
 	XML_ParserFree(oParser);
     VSIRewind(pKMLFile_);
@@ -119,15 +120,18 @@ void KML::parse()
 
 void KML::checkValidity()
 {
-	unsigned int nDone, nLen;
-	char aBuf[BUFSIZ];
+    std::size_t nDone = 0;
+    std::size_t nLen = 0;
+    char aBuf[BUFSIZ] = { 0 };
 
-	nDepth_ = 0;
-    if(poTrunk_ != NULL) {
+    if(poTrunk_ != NULL)
+    {
         delete poTrunk_;
         poTrunk_ = NULL;
     }
-    if(poCurrent_ != NULL) {
+    
+    if(poCurrent_ != NULL)
+    {
         delete poCurrent_;
         poCurrent_ = NULL;
     }
@@ -137,39 +141,39 @@ void KML::checkValidity()
 		this->sError_ = "No file given";
 		return;
 	}
-
-    CPLDebug("KML", "Check");
 	
-	XML_Parser oParser = XML_ParserCreate(NULL);
-	XML_SetUserData(oParser, this);
-	XML_SetElementHandler(oParser, startElementValidate, NULL);
+    XML_Parser oParser = XML_ParserCreate(NULL);
+    XML_SetUserData(oParser, this);
+    XML_SetElementHandler(oParser, startElementValidate, NULL);
 
-	do
+    do
     {
-		nLen = (int)VSIFRead( aBuf, 1, sizeof(aBuf), pKMLFile_ );
-		nDone = nLen < sizeof(aBuf);
-		if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        nLen = (int)VSIFRead( aBuf, 1, sizeof(aBuf), pKMLFile_ );
+        nDone = nLen < sizeof(aBuf);
+        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             XML_ParserFree(oParser);
             VSIRewind(pKMLFile_);
-			return;
-		}
-	} while (!nDone || this->bValid_);
+            return;
+        }
+    } while (!nDone || bValid_);
 	
     XML_ParserFree(oParser);
     VSIRewind(pKMLFile_);
     poCurrent_ = NULL;
 }
 
-void XMLCALL KML::startElement(void *pUserData, const char *pszName_, const char **ppszAttr)
+void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char** ppszAttr)
 {
-	int i;
-	KMLNode *poMynew;
-	Attribute *poAtt;
+	int i = 0;
+    KMLNode* poMynew = NULL;
+	Attribute* poAtt = NULL;
 	
-	if(((KML *)pUserData)->poTrunk_ == NULL || (((KML *)pUserData)->poCurrent_->getName()).compare("description") != 0) {
+	if(((KML *)pUserData)->poTrunk_ == NULL 
+        || (((KML *)pUserData)->poCurrent_->getName()).compare("description") != 0)
+    {
     	poMynew = new KMLNode();
-	    poMynew->setName(pszName_);
+	    poMynew->setName(pszName);
     	poMynew->setLevel(((KML *)pUserData)->nDepth_);
 	
     	for (i = 0; ppszAttr[i]; i += 2)
@@ -191,7 +195,7 @@ void XMLCALL KML::startElement(void *pUserData, const char *pszName_, const char
     else
     {
         std::string sNewContent = "<";
-        sNewContent += pszName_;
+        sNewContent += pszName;
     	for (i = 0; ppszAttr[i]; i += 2)
         {
             sNewContent += " ";
@@ -204,29 +208,37 @@ void XMLCALL KML::startElement(void *pUserData, const char *pszName_, const char
     }
 }
 
-void XMLCALL KML::startElementValidate(void *pUserData, const char *pszName_in, const char **ppszAttr)
+void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, const char** ppszAttr)
 {
-	int i;
-	std::string *sName = new std::string(pszName_in);
-	std::string *sAttribute;
+	int i = 0;
+	std::string* sName = new std::string(pszName);
+	std::string* sAttribute = NULL;
 	
-	if(sName->compare("kml") == 0) {
+	if(sName->compare("kml") == 0)
+    {
 		// Check all Attributes
-		for (i = 0; ppszAttr[i]; i += 2) {
+		for (i = 0; ppszAttr[i]; i += 2)
+        {
 			sAttribute = new std::string(ppszAttr[i]);
 			// Find the namespace
 
-			if(sAttribute->compare("xmlns") == 0) {
+			if(sAttribute->compare("xmlns") == 0)
+            {
 			    delete sAttribute;
 				sAttribute = new std::string(ppszAttr[i + 1]);
 				// Is it KML 2.1?
-				if(sAttribute->compare("http://earth.google.com/kml/2.2") == 0) {
+				if(sAttribute->compare("http://earth.google.com/kml/2.2") == 0)
+                {
 					((KML *)pUserData)->bValid_ = true;
 					((KML *)pUserData)->sVersion_ = "2.2 (beta)";
-				} else if(sAttribute->compare("http://earth.google.com/kml/2.1") == 0) {
+				}
+                else if(sAttribute->compare("http://earth.google.com/kml/2.1") == 0)
+                {
 					((KML *)pUserData)->bValid_ = true;
 					((KML *)pUserData)->sVersion_ = "2.1";
-				} else if(sAttribute->compare("http://earth.google.com/kml/2.0") == 0) {
+				}
+                else if(sAttribute->compare("http://earth.google.com/kml/2.0") == 0)
+                {
 					((KML *)pUserData)->bValid_ = true;
 					((KML *)pUserData)->sVersion_ = "2.0";
 				}
@@ -237,32 +249,37 @@ void XMLCALL KML::startElementValidate(void *pUserData, const char *pszName_in, 
 	delete sName;
 }
 
-void XMLCALL KML::endElement(void *pUserData, const char *pszName_)
+void XMLCALL KML::endElement(void* pUserData, const char* pszName)
 {
-    KMLNode *poTmp;
-    std::string sData, sTmp;
+    KMLNode* poTmp = NULL;
+    std::string sData;
+    std::string sTmp;
     unsigned short nPos = 0;
 
-	if(((KML *)pUserData)->poCurrent_ != NULL && 
-	    ((KML *)pUserData)->poCurrent_->getName().compare(pszName_) == 0) {
+	if(((KML *)pUserData)->poCurrent_ != NULL
+        && 
+	    ((KML *)pUserData)->poCurrent_->getName().compare(pszName) == 0)
+    {
     	((KML *)pUserData)->nDepth_--;
         poTmp = ((KML *)pUserData)->poCurrent_;
         // Split the coordinates
-        if(((KML *)pUserData)->poCurrent_->getName().compare("coordinates") == 0) {
+        if(((KML *)pUserData)->poCurrent_->getName().compare("coordinates") == 0)
+        {
             sData = ((KML *)pUserData)->poCurrent_->getContent(0);
-            CPLDebug("KML", "Parsing: '%s'", sData.c_str());
-            while(sData.length() > 0) {
+            while(sData.length() > 0)
+            {
                 // Cut off whitespaces
-           	    while((sData[nPos] == ' ' || sData[nPos] == '\n' || sData[nPos] == '\r' || 
+           	    while((sData[nPos] == ' ' || sData[nPos] == '\n'
+                    || sData[nPos] == '\r' || 
         	        sData[nPos] == '\t' ) && sData.length() > 0)
                         sData = sData.substr(1, sData.length()-1);
-                CPLDebug("KML", "Parsing first cut: '%s'", sData.c_str(), nPos);
+                
                 // Get content
                 while(sData[nPos] != ' ' && sData[nPos] != '\n' && sData[nPos] != '\r' && 
                     sData[nPos] != '\t' && nPos < sData.length()) 
                         nPos++;
                 sTmp = sData.substr(0, nPos);
-                CPLDebug("KML", "Parsing found: '%s' - %d", sTmp.c_str(), nPos);
+
             	if(sTmp.length() > 0)
         	        ((KML *)pUserData)->poCurrent_->addContent(sTmp);
                 // Cut the content from the rest
@@ -271,7 +288,6 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName_)
                 else
                     break;
                 nPos = 0;
-                CPLDebug("KML", "Parsing next: '%s'", sData.c_str());
             }
             if(((KML *)pUserData)->poCurrent_->numContent() > 1)
                 ((KML *)pUserData)->poCurrent_->deleteContent(0);
@@ -282,27 +298,32 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName_)
         else
             ((KML *)pUserData)->poCurrent_ = NULL;
 
-    	if(!((KML *)pUserData)->isHandled(pszName_)) {
-    	    CPLDebug("KML", "Not handled: %s", pszName_);
+    	if(!((KML *)pUserData)->isHandled(pszName))
+        {
+    	    CPLDebug("KML", "Not handled: %s", pszName);
     	    delete poTmp;
-	    } else {
+	    }
+        else
+        {
 	        if(((KML *)pUserData)->poCurrent_ != NULL)
                	((KML *)pUserData)->poCurrent_->addChildren(poTmp);
 	    }
-    } else if(((KML *)pUserData)->poCurrent_ != NULL) {
+    }
+    else if(((KML *)pUserData)->poCurrent_ != NULL)
+    {
         std::string sNewContent = "</";
-        sNewContent += pszName_;
+        sNewContent += pszName;
         sNewContent += ">";
         ((KML *)pUserData)->poCurrent_->addContent(sNewContent);
     }
 }
 
-
-void XMLCALL KML::dataHandler(void *pUserData, const char *pszData, int nLen)
+void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
 {
     if(nLen < 1 || ((KML *)pUserData)->poCurrent_ == NULL)
         return;
-    std::string sData(pszData, nLen), sTmp;
+    std::string sData(pszData, nLen);
+    std::string sTmp;
     
 	if(((KML *)pUserData)->poCurrent_->getName().compare("coordinates") == 0)
 	{
@@ -317,7 +338,6 @@ void XMLCALL KML::dataHandler(void *pUserData, const char *pszData, int nLen)
         {
     		sData = sData.substr(1, sData.length()-1);
     	}
-
        	if(sData.length() > 0)
 	        ((KML *)pUserData)->poCurrent_->addContent(sData);
 	}
