@@ -221,11 +221,13 @@ def ogr_gpx_4():
 
     dst_feat.Destroy()
     
-
+    gpx_lyr = None
     gpx2_lyr = None
-    gpx2_ds = None
-    
-    
+
+    # Explicit destroy is required for old-gen python bindings
+    gpx2_ds.Destroy()
+    gdaltest.gpx_ds.Destroy()
+
     gdaltest.gpx_ds = ogr.Open( 'tmp/gpx.gpx' )
 
     return 'success'
