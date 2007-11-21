@@ -445,6 +445,9 @@ sub test_geom {
 
 	if ($mode eq 'create') {
 	    $geom->AddPoint(1,1);
+	    $geom->SetPoint_2D(0,1,1);
+	    @p = $geom->GetPoint;
+	    ok(is_deeply(\@p, [1,1]), "GetPoint");
 	} else {
 	    mytest($pc == 1,"$pc != 1",$name,$type,'point count');
 	    mytest($gn == 0,"$gn != 0",$name,$type,'geom count');

@@ -2507,7 +2507,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 
 
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
-    GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
+    GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
     return papszArgv;
   }
 

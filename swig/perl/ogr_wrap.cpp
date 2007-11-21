@@ -2330,6 +2330,9 @@ SWIGINTERN int OGRGeometryShadow_GetGeometryCount(OGRGeometryShadow *self){
 SWIGINTERN void OGRGeometryShadow_SetPoint(OGRGeometryShadow *self,int point,double x,double y,double z=0){
     OGR_G_SetPoint(self, point, x, y, z);
   }
+SWIGINTERN void OGRGeometryShadow_SetPoint_2D(OGRGeometryShadow *self,int point,double x,double y){
+    OGR_G_SetPoint_2D(self, point, x, y);
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetGeometryRef(OGRGeometryShadow *self,int geom){
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
   }
@@ -11804,7 +11807,7 @@ XS(_wrap_Geometry_GetGeometryCount) {
 }
 
 
-XS(_wrap_Geometry_SetPoint) {
+XS(_wrap_Geometry_SetPoint_3D) {
   {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     int arg2 ;
@@ -11825,32 +11828,32 @@ XS(_wrap_Geometry_SetPoint) {
     dXSARGS;
     
     if ((items < 4) || (items > 5)) {
-      SWIG_croak("Usage: Geometry_SetPoint(self,point,x,y,z);");
+      SWIG_croak("Usage: Geometry_SetPoint_3D(self,point,x,y,z);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SetPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SetPoint_3D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
     }
     arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SetPoint" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SetPoint_3D" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast< int >(val2);
     ecode3 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_SetPoint" "', argument " "3"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_SetPoint_3D" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast< double >(val3);
     ecode4 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
     if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Geometry_SetPoint" "', argument " "4"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Geometry_SetPoint_3D" "', argument " "4"" of type '" "double""'");
     } 
     arg4 = static_cast< double >(val4);
     if (items > 4) {
       ecode5 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(4), &val5);
       if (!SWIG_IsOK(ecode5)) {
-        SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Geometry_SetPoint" "', argument " "5"" of type '" "double""'");
+        SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Geometry_SetPoint_3D" "', argument " "5"" of type '" "double""'");
       } 
       arg5 = static_cast< double >(val5);
     }
@@ -11885,6 +11888,84 @@ XS(_wrap_Geometry_SetPoint) {
     XSRETURN(argvi);
   fail:
     
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Geometry_SetPoint_2D) {
+  {
+    OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+    int arg2 ;
+    double arg3 ;
+    double arg4 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    double val3 ;
+    int ecode3 = 0 ;
+    double val4 ;
+    int ecode4 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 4) || (items > 4)) {
+      SWIG_croak("Usage: Geometry_SetPoint_2D(self,point,x,y);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SetPoint_2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SetPoint_2D" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_SetPoint_2D" "', argument " "3"" of type '" "double""'");
+    } 
+    arg3 = static_cast< double >(val3);
+    ecode4 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Geometry_SetPoint_2D" "', argument " "4"" of type '" "double""'");
+    } 
+    arg4 = static_cast< double >(val4);
+    {
+      CPLErrorReset();
+      OGRGeometryShadow_SetPoint_2D(arg1,arg2,arg3,arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+      
+      
+      /* 
+          Make warnings regular Perl warnings. This duplicates the warning
+          message if DontUseExceptions() is in effect (it is not by default).
+          */
+      if ( eclass == CE_Warning ) {
+        warn( CPLGetLastErrorMsg() );
+      }
+      
+      
+    }
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
     
     
     
@@ -14577,7 +14658,8 @@ static swig_command_info swig_commands[] = {
 {"Geo::OGRc::Geometry_GetY", _wrap_Geometry_GetY},
 {"Geo::OGRc::Geometry_GetZ", _wrap_Geometry_GetZ},
 {"Geo::OGRc::Geometry_GetGeometryCount", _wrap_Geometry_GetGeometryCount},
-{"Geo::OGRc::Geometry_SetPoint", _wrap_Geometry_SetPoint},
+{"Geo::OGRc::Geometry_SetPoint_3D", _wrap_Geometry_SetPoint_3D},
+{"Geo::OGRc::Geometry_SetPoint_2D", _wrap_Geometry_SetPoint_2D},
 {"Geo::OGRc::Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef},
 {"Geo::OGRc::Geometry_GetBoundary", _wrap_Geometry_GetBoundary},
 {"Geo::OGRc::Geometry_ConvexHull", _wrap_Geometry_ConvexHull},

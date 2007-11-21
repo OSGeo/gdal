@@ -215,7 +215,6 @@
 # @return
 
 ## @fn $GetDriverByName($ShortName)
-# @deprecated use # @deprecated use Geo::GDAL::GetDriver
 # @param ShortName
 # @return a new Geo::GDAL::Driver object
 
@@ -230,25 +229,24 @@
 # @param description [optional]
 # @return a description in non-void context
 
+## @method $GetDescription()
+# @return
+
+## @method SetDescription($NewDesc)
+# @param NewDesc
+
 ## @method \%Metadata(\%metadata, $domain = '')
 # @param metadata [optional]
 # @param domain
 # @return metadata in non-void context
 
-## @method $GetDescription()
-# @deprecated use Geo::GDAL::MajorObject::Description
-# @return
-
-## @method SetDescription($NewDesc)
-# @deprecated use Geo::GDAL::MajorObject::Description
-# @param NewDesc
-
-## @method \%GetMetadata($Domain = "")
-# @deprecated use Geo::GDAL::MajorObject::Metadata
+## @method \%GetMetadata($domain = "")
+# @param domain
 # @return
 
 ## @method SetMetadata(\%Metadata, $Domain = "")
-# @deprecated use Geo::GDAL::MajorObject::Metadata
+# @param metadata
+# @param domain
 
 
 ## @class Geo::GDAL::Driver
@@ -457,13 +455,13 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
-## @attr $XSize
+## @attr XSize
 # scalar (access as $band->{XSize})
 
-## @attr $YSize
+## @attr YSize
 # scalar (access as $band->{YSize})
 
-## @attr $DataType
+## @attr DataType
 # @deprecated use the Geo::GDAL::Band::DataType method, which returns
 # a string.
 
