@@ -56,6 +56,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
     %rename (AddPoint_3D) AddPoint;
     %rename (SetPoint_3D) SetPoint;
+    %rename (GetPoint_3D) GetPoint;
 
 }
 
@@ -599,13 +600,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub SetPoint {
 	    @_ == 4 ? SetPoint_3D(@_) : SetPoint_2D(@_);
 	}
-	sub GetPoint { # todo: implement with a typemap
+	sub GetPoint {
 	    my($self, $i) = @_;
 	    $i = 0 unless defined $i;
-	    return ($self->GetGeometryType & 0x80000000) == 0 ?
-		($self->GetX($i), $self->GetY($i)) :
-		($self->GetX($i), $self->GetY($i), $self->GetZ($i));
-	}	
+	    my $point = ($self->GetGeometryType & 0x80000000) == 0 ? GetPoint_2D($self, $i) : GetPoint_3D($self, $i);
+	    return @$point;
+	}
 	sub Points {
 	    my $self = shift;
 	    my $t = $self->GetGeometryType;
@@ -669,16 +669,16 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    } else {
 		$n = $self->GetPointCount;
 		if ($n == 1) {
-		    push @points, $flat ? [$self->GetX, $self->GetY] : [$self->GetX, $self->GetY, $self->GetZ];
+		    push @points, $flat ? GetPoint_2D($self) : GetPoint_3D($self);
 		} else {
 		    my $i;
 		    if ($flat) {
 			for my $i (0..$n-1) {
-			    push @points, [$self->GetX($i), $self->GetY($i)];
+			    push @points, GetPoint_2D($self, $i);
 			}
 		    } else {
 			for my $i (0..$n-1) {
-			    push @points, [$self->GetX($i), $self->GetY($i), $self->GetZ($i)];
+			    push @points, GetPoint_3D($self, $i);
 			}
 		    }
 		}
