@@ -37,6 +37,9 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.38  2007/11/21 22:39:56  fwarmerdam
+ * close shx file in readonly mode (GDAL #1956)
+ *
  * Revision 1.37  2007/10/27 03:31:14  fwarmerdam
  * limit default depth of tree to 12 levels (gdal ticket #1594)
  *
@@ -271,6 +274,9 @@ typedef struct
 /* -------------------------------------------------------------------- */
 /*      SHP API Prototypes                                              */
 /* -------------------------------------------------------------------- */
+
+/* If pszAccess is read-only, the fpSHX field of the returned structure */
+/* will be NULL as it is not necessary to keep the SHX file open */
 SHPHandle SHPAPI_CALL
       SHPOpen( const char * pszShapeFile, const char * pszAccess );
 SHPHandle SHPAPI_CALL

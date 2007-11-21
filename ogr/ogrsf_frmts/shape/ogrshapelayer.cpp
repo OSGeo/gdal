@@ -747,6 +747,13 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
     if( nTotalShapeCount > 0 )
         return FALSE;
 
+    if( hSHP->fpSHX == NULL)
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  " OGRShapeLayer::ResetGeomType failed : SHX file is closed");
+        return FALSE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Update .shp header.                                             */
 /* -------------------------------------------------------------------- */
