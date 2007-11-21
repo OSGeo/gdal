@@ -46,7 +46,10 @@ def numpy_rw_1():
         import gdalnumeric
         gdalnumeric.zeros
     except:
-	return 'skip'
+        try:
+            import osgeo.gdal_array as gdalnumeric
+        except ImportError:
+            return 'skip'
 
     try:
         import _gdal
