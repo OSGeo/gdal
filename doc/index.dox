@@ -17,7 +17,9 @@ to the calling application for all supported formats.  It also comes with a vari
 of useful \link gdal_utilities.html commandline utilities\endlink
 for data translation and processing.  The 
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.4.2-News">NEWS</a> 
-page describes the spring 2007 GDAL/OGR 1.4.2 release.
+page describes the spring 2007 GDAL/OGR 1.4.2 release.  The recent <a
+href="http://trac.osgeo.org/gdal/wiki/Release/1.4.3-News">1.4.3</a> release
+has been retracted to an ABI incompatability and will be replaced soon by a 1.4.4 release.
 
 The related <a href="ogr">OGR</a> library (which lives within the GDAL source tree) 
 provides a similar capability for simple features vector data.
