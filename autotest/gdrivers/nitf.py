@@ -230,6 +230,14 @@ def nitf_10():
     return tst.testCreateCopy()
 
 ###############################################################################
+# Test 1bit file ... conveniently very small and easy to include! (#1854)
+
+def nitf_11():
+
+    tst = gdaltest.GDALTest( 'NITF', 'i_3034c.ntf', 1, 170 )
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -256,6 +264,7 @@ gdaltest_list = [
     nitf_8,
     nitf_9,
     nitf_10,
+    nitf_11,
     nitf_cleanup ]
 
 if __name__ == '__main__':
