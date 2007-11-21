@@ -459,8 +459,6 @@ std::size_t KMLNode::getNumFeatures() const
 
 Feature* KMLNode::getFeature(std::size_t nNum)
 {
-    CPLDebug("KML", "GetFeature(#%d)", nNum);
-
     unsigned short nCount, nCount2, nCountP = 0;
     KMLNode* poFeat = NULL;
     KMLNode* poTemp = NULL;
