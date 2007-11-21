@@ -476,8 +476,8 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /**
  * \fn void OGRPoint::setZ( double zIn );
  *
- * Assign point Z coordinate.  Setting a zero zIn value will make the point
- * 2D, and setting a non-zero value will make the point 3D (wkbPoint|wkbZ).
+ * Assign point Z coordinate.  Calling this method will force the geometry
+ * coordinate dimension to 3D (wkbPoint|wkbZ).
  *
  * There is no corresponding SFCOM method.  
  */ 
