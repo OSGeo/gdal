@@ -242,12 +242,12 @@ def nitf_11():
 
 def nitf_cleanup():
     try:
-        os.remove( 'tmp/test_4.ntf' )
+        gdal.GetDriverByName('NITF').Delete( 'tmp/test_4.ntf' )
     except:
         pass
 
     try:
-        os.remove( 'tmp/nitf9.ntf' )
+        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf9.ntf' )
     except:
         pass
 
