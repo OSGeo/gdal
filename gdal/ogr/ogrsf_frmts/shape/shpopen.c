@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.54 2007/11/15 00:12:47 mloskot Exp $
+ * $Id: shpopen.c,v 1.55 2007/11/21 22:39:56 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.55  2007/11/21 22:39:56  fwarmerdam
+ * close shx file in readonly mode (GDAL #1956)
+ *
  * Revision 1.54  2007/11/15 00:12:47  mloskot
  * Backported recent changes from GDAL (Ticket #1415) to Shapelib.
  *
@@ -215,11 +218,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef USE_CPL
-#include <cpl_vsi.h>
-#endif
 
-SHP_CVSID("$Id: shpopen.c,v 1.54 2007/11/15 00:12:47 mloskot Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.55 2007/11/21 22:39:56 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -294,6 +294,15 @@ void SHPWriteHeader( SHPHandle psSHP )
     int32	i32;
     double	dValue;
     int32	*panSHX;
+    
+    if (psSHP->fpSHX == NULL)
+    {
+#ifdef USE_CPL
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "SHPWriteHeader failed : SHX file is closed");
+#endif
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
@@ -657,6 +666,13 @@ SHPOpen( const char * pszLayer, const char * pszAccess )
 
 	return( NULL );
     }
+    
+    /* In read-only mode, we can close the SHX now */
+    if (strcmp(pszAccess, "rb") == 0)
+    {
+        fclose( psSHP->fpSHX );
+        psSHP->fpSHX = NULL;
+    }
 
     for( i = 0; i < psSHP->nRecords; i++ )
     {
@@ -701,7 +717,8 @@ SHPClose(SHPHandle psSHP )
     free( psSHP->panRecOffset );
     free( psSHP->panRecSize );
 
-    fclose( psSHP->fpSHX );
+    if ( psSHP->fpSHX != NULL)
+        fclose( psSHP->fpSHX );
     fclose( psSHP->fpSHP );
 
     if( psSHP->pabyRec != NULL )
