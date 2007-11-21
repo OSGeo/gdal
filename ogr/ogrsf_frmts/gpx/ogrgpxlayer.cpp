@@ -151,6 +151,9 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldType("type", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldType );
     }
+    
+    /* Number of 'standard' GPX attributes */
+    nGPXFields = poFeatureDefn->GetFieldCount();
    
     ppoFeatureTab = NULL;
     nFeatureTabIndex = 0;
@@ -677,21 +680,67 @@ OGRSpatialReference *OGRGPXLayer::GetSpatialRef()
 /*                      WriteFeatureAttributes()                        */
 /************************************************************************/
 
+
+static char* OGRGPX_GetXMLCompatibleTagName(const char* pszName)
+{
+    char* pszModName = CPLStrdup(pszName);
+    int i;
+    for(i=0;pszModName[i] != 0;i++)
+    {
+        if (pszModName[i] == ' ')
+            pszModName[i] = '_';
+    }
+    return pszModName;
+}
+
+
 void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 {
     FILE* fp = poDS->GetOutputFP();
+    int i;
     
-    int n= poFeatureDefn->GetFieldCount();
-    for(int i=0;i<n;i++)
+    /* Begin with standard GPX fields */
+    for(i=0;i<nGPXFields;i++)
     { 
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeature->IsFieldSet( i ) )
         {
+            char* pszValue =
+                    CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
             VSIFPrintf(fp, "  <%s>%s</%s>\n",
                        poFieldDefn->GetNameRef(),
-                       poFeature->GetFieldAsString( i ),
+                       pszValue,
                        poFieldDefn->GetNameRef());
+            CPLFree(pszValue);
         }
+    }
+
+    /* Write "extra" fields within the <extensions> tag */
+    int n = poFeatureDefn->GetFieldCount();
+    if (i < n)
+    {
+        const char* pszExtensionsNS = poDS->GetExtensionsNS();
+        VSIFPrintf(fp, "  <extensions>\n");
+        for(;i<n;i++)
+        {
+            OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
+            if( poFeature->IsFieldSet( i ) )
+            {
+                char* compatibleName =
+                        OGRGPX_GetXMLCompatibleTagName(poFieldDefn->GetNameRef());
+                 char* pszValue =
+                    CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+                VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
+                        pszExtensionsNS,
+                        compatibleName,
+                        pszValue,
+                        pszExtensionsNS,
+                        compatibleName);
+                CPLFree(compatibleName);
+                CPLFree(pszValue);
+            }
+        }
+        VSIFPrintf(fp, "  </extensions>\n");
     }
 }
 
@@ -887,6 +936,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
 /*                            CreateField()                             */
 /************************************************************************/
 
+
 OGRErr OGRGPXLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
@@ -898,10 +948,19 @@ OGRErr OGRGPXLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
             return OGRERR_NONE;
         }
     }
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "Field of name '%s' is not supported in GPX schema",
-                poField->GetNameRef());
-    return OGRERR_FAILURE;
+    if (poDS->GetUseExtensions() == FALSE)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "Field of name '%s' is not supported in GPX schema. "
+                 "Use GPX_USE_EXTENSIONS creation option to allow use of the <extensions> element.",
+                 poField->GetNameRef());
+        return OGRERR_FAILURE;
+    }
+    else
+    {
+        poFeatureDefn->AddFieldDefn( poField );
+        return OGRERR_NONE;
+    }
 }
 
 /************************************************************************/

@@ -77,7 +77,7 @@ OGRDataSource *OGRGPXDriver::Open( const char * pszFilename, int bUpdate )
 /************************************************************************/
 
 OGRDataSource *OGRGPXDriver::CreateDataSource( const char * pszName,
-                                                 char **papszOptions )
+                                               char **papszOptions )
 
 {
     OGRGPXDataSource   *poDS = new OGRGPXDataSource();
