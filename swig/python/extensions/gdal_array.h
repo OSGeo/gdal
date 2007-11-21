@@ -6,7 +6,15 @@
 
 
 #include "gdal_priv.h"
-#include "../../../frmts/mem/memdataset.h"
+
+
+CPL_C_START
+
+GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
+                                             GDALDataType, int, int, int );
+CPL_C_END
+
+
 #ifdef _DEBUG
 #undef _DEBUG
 #include "Python.h"
