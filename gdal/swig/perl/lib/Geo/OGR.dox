@@ -48,19 +48,18 @@
 # @return a new Geo::OGR::DataSource object
 
 ## @fn $Open($name, $update = 0)
-# @deprecated use Geo::OGR::DataSource::Open
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
 ## @fn $OpenShared($name, $update = 0)
-# @deprecated use Geo::OGR::DataSource::OpenShared
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
 ## @fn $GetDriverByName($name)
-# @deprecated use Geo::OGR::GetDriver
+# @param name
+# @return a new Geo::OGR::Driver object
 
 ## @fn $GetDriver($driver)
 # @param driver the index or the name of the driver
@@ -157,61 +156,61 @@
 # @deprecated use string 'DateTime' instead
 
 ## @attr OJUndefined
-# @deprecated
+# @deprecated use string 'Undefined' instead
 
 ## @attr OJLeft
-# @deprecated
+# @deprecated use string 'Left' instead
 
 ## @attr OJRight
-# @deprecated
+# @deprecated use string 'Right' instead
 
 ## @attr wkbXDR
-# @deprecated
+# @deprecated use string 'XDR' instead
 
 ## @attr wkbNDR
-# @deprecated
+# @deprecated use string 'NDR' instead
 
 ## @attr OLCRandomRead
-# @deprecated
+# @deprecated use string 'RandomRead' instead
 
 ## @attr OLCSequentialWrite
-# @deprecated
+# @deprecated use string 'SequentialWrite' instead
 
 ## @attr OLCRandomWrite
-# @deprecated
+# @deprecated use string 'RandomWrite' instead
 
 ## @attr OLCFastSpatialFilter
-# @deprecated
+# @deprecated use string 'FastSpatialFilter' instead
 
 ## @attr OLCFastFeatureCount
-# @deprecated
+# @deprecated use string 'FastFeatureCount' instead
 
 ## @attr OLCFastGetExtent
-# @deprecated
+# @deprecated use string 'FastGetExtent' instead
 
 ## @attr OLCCreateField
-# @deprecated
+# @deprecated use string 'CreateField' instead
 
 ## @attr OLCTransactions
-# @deprecated
+# @deprecated use string 'Transactions' instead
 
 ## @attr OLCDeleteFeature
-# @deprecated
+# @deprecated use string 'DeleteFeature' instead
 
 ## @attr OLCFastSetNextByIndex
-# @deprecated
+# @deprecated use string 'FastSetNextByIndex' instead
 
 ## @attr ODsCCreateLayer
-# @deprecated
+# @deprecated use string 'CreateLayer' instead
 
 ## @attr ODsCDeleteLayer
-# @deprecated
+# @deprecated use string 'DeleteLayer' instead
 
 ## @attr ODrCCreateDataSource
-# @deprecated
+# @deprecated use string 'CreateDataSource' instead
 
 ## @attr ODrCDeleteDataSource
-# @deprecated
+# @deprecated use string 'DeleteDataSource' instead
 
 
 ## @class Geo::OGR::Driver
@@ -224,6 +223,10 @@
 # @return the class method returns a list of all potential
 # capabilities a driver may have; the object method returns a list of
 # all capabilities the driver has
+
+## @method $TestCapability($cap)
+# @param cap a capability string
+# @return boolean
 
 ## @attr name
 # scalar (access as $driver->{name})
@@ -248,10 +251,6 @@
 # @param name
 # @return integer
 
-## @method $TestCapability($cap)
-# @param cap a capability string
-# @return boolean
-
 ## @method $GetName()
 # @return the name
 
@@ -267,6 +266,10 @@
 # @return the class method returns a list of all potential
 # capabilities a data source may have; the object method returns a
 # list of all capabilities the data source has
+
+## @method $TestCapability($cap)
+# @param cap
+# @return integer
 
 ## @cmethod $Open($name, $update = 0)
 # @param name the data source name (directory, filename, etc.)
@@ -320,10 +323,6 @@
 # @param name
 # @return a new Geo::OGR::Layer object
 
-## @method $TestCapability($cap)
-# @param cap
-# @return integer
-
 ## @method $ExecuteSQL($statement, $geom = undef, $dialect = "")
 # @param statement
 # @param geom a Geo::OGR::Geometry object
@@ -344,6 +343,10 @@
 # @return the class method returns a list of all potential
 # capabilities a layer may have; the object method returns a list of
 # all capabilities the layer has
+
+## @method $TestCapability($cap)
+# @param cap
+# @return boolean
 
 ## @method \%Schema(%schema)
 # Get and/or set the schema of the layer. The named input parameters
@@ -441,10 +444,6 @@
 ## @method \@GetExtent($force = 1)
 # @param force
 # @return arrayref Extent = ($minx, $miny, $maxx, $maxy)
-
-## @method $TestCapability($cap)
-# @param cap
-# @return boolean
 
 ## @method CreateField($field_def, $approx_ok = 1)
 # @param field_def a Geo::OGR::FieldDefn object
@@ -629,11 +628,11 @@
 # @return the geometry types
 
 ## @method $GetGeomType()
-# @deprecated use Geo::OGR::FeatureDefn::GeomType
+# @deprecated use Geo::OGR::FeatureDefn::GeomType, which returns a string
 # @return geometry type as integer
 
 ## @method SetGeomType($type)
-# @deprecated use Geo::OGR::FeatureDefn::GeomType
+# @deprecated use Geo::OGR::FeatureDefn::GeomType, which accepts a string
 # @param type as integer
 
 ## @method $GetReferenceCount()
@@ -648,7 +647,7 @@
 ## @ignore DESTROY
 
 ## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
-# @deprecated use Geo::OGR::FieldDefn::create
+# @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
 # @param name
 # @param field_type as integer
 # @return a new Geo::OGR::FieldDefn object
@@ -721,19 +720,19 @@
 # @deprecated use string type names
 
 ## @method $GetType()
-# @deprecated use Geo::OGR::FieldDefn::Type
+# @deprecated use Geo::OGR::FieldDefn::Type, which returns a string
 # @return type as integer
 
 ## @method SetType($type)
-# @deprecated use Geo::OGR::FieldDefn::Type
+# @deprecated use Geo::OGR::FieldDefn::Type, which accepts a string
 # @param type
 
 ## @method $GetJustify()
-# @deprecated use Geo::OGR::FieldDefn::Justify
+# @deprecated use Geo::OGR::FieldDefn::Justify, which returns a string
 # @return justify as an integer
 
 ## @method SetJustify($justify)
-# @deprecated use Geo::OGR::FieldDefn::Justify
+# @deprecated use Geo::OGR::FieldDefn::Justify, which accepts a string
 # @param justify as an integer
 
 
@@ -745,7 +744,7 @@
 ## @ignore DESTROY
 
 ## @cmethod $new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
-# @deprecated use Geo::OGR::Geometry::create
+# @deprecated use Geo::OGR::Geometry::create, which accepts type as a string
 # @param type one of Geo::OGR::wkb*
 # @param WKT
 # @param WKB
@@ -758,7 +757,7 @@
 
 ## @cmethod $create(%params)
 # @param %params A named parameter, possible are: GeometryType, WKT,
-# WKB, GML, and Points.
+# WKB, GML, and Points (as in method Geo::OGR::Geometry::Points).
 # @return a new Geo::OGR::Geometry object
 
 ## @method $ExportToWkt()
@@ -774,19 +773,80 @@
 ## @method $ExportToKML()
 # @return KML string
 
-## @method AddPoint($x, $y, $z = 0)
+## @method AddPoint($x, $y, $z)
+# Set the data of a point or add a point to a line string. Consider
+# using Geo::OGR::Geometry::Points.  Note that the coordinate
+# dimension is automatically upgraded to 25D (3) if z is given.
+# @param x
+# @param y
+# @param z [optional]
+# Calls internally the 2D or 3D version depending on the number of parameters.
+
+## @method AddPoint_2D($x, $y)
+# Set the data of a point or add a point to a line string. Consider
+# using Geo::OGR::Geometry::Points.
+# @param x
+# @param y
+
+## @method AddPoint_3D($x, $y, $z)
+# Set the data of a point or add a point to a line string. Note that
+# the coordinate dimension is automatically upgraded to 25D (3). Consider
+# using Geo::OGR::Geometry::Points.
 # @param x
 # @param y
 # @param z
-# Calls internally the 2D or 3D version depending on the number of parameters.
+
+## @method SetPoint($index, $x, $y, $z)
+# Set the data of a point or a line string. Note that the coordinate
+# dimension is automatically upgraded to 25D (3) if z is given.
+# @param index
+# @param x
+# @param y
+# @param z [optional]
+
+## @method SetPoint_2D($index, $x, $y)
+# @param index
+# @param x
+# @param y
+
+## @method SetPoint_3D($index, $x, $y, $z)
+# Set the data of a point or a line string. Note that the coordinate
+# dimension is automatically upgraded to 25D (3).
+# @param index
+# @param x
+# @param y
+# @param z
+
+## @method $GetPointCount()
+# @return an integer
+
+## @method @GetPoint($index = 0)
+# @return (x,y) or a list with more coordinates
+
+## @method $GetX($index = 0)
+# @param index
+# @return a number
+
+## @method $GetY($index = 0)
+# @param index
+# @return a number
+
+## @method $GetZ($index = 0)
+# @param index
+# @return a number
 
 ## @method \@Points($points)
 # Get or set the points of the geometry. The points (vertices) are
 # stored in obvious lists of lists. Note that unique points structures
 # may be different geometries depending on the actual geometry
-# type. When setting, the geometry is first emptied.
+# type. When setting, the geometry is first emptied. The method uses
+# internally either AddPoint_2D or AddPoint_3D depending on the
+# GeometryType.
 # @param points
 # @return
+
+## @method Empty()
+# Clear geometry data.
 
 ## @method $IsEmpty()
 # @return boolean
@@ -821,29 +881,8 @@
 ## @method $GetArea()
 # @return a number
 
-## @method $GetPointCount()
-# @return an integer
-
-## @method $GetX($index = 0)
-# @param index
-# @return a number
-
-## @method $GetY($index = 0)
-# @param index
-# @return a number
-
-## @method $GetZ($index = 0)
-# @param index
-# @return a number
-
 ## @method $GetGeometryCount()
 # @return an integer
-
-## @method SetPoint($index, $x, $y, $z = 0)
-# @param index
-# @param x
-# @param y
-# @param z
 
 ## @method $GetGeometryRef($index)
 # @param index
@@ -880,9 +919,6 @@
 ## @method $Distance($other)
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
-
-## @method Empty()
-# Clear geometry data.
 
 ## @method $Intersect($other)
 # @param other a Geo::OGR::Geometry object
@@ -951,21 +987,9 @@
 # @return an integer
 
 ## @method $GetGeometryType()
-# @deprecated use Geo::OGR::Geometry::GeometryType
+# @deprecated use Geo::OGR::Geometry::GeometryType, which returns the type as a string
 # @return type as an integer
 
 ## @method $GetGeometryName()
 # @deprecated use string names
 # @return a string
-
-## @method AddPoint_2D($x, $y)
-# @deprecated use Geo::OGR::Geometry::AddPoint
-# @param x
-# @param y
-
-## @method AddPoint_3D($x, $y, $z)
-# @deprecated use Geo::OGR::Geometry::AddPoint
-# @param x
-# @param y
-# @param z
-
