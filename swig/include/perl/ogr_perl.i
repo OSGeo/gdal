@@ -55,6 +55,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %extend OGRGeometryShadow {
 
     %rename (AddPoint_3D) AddPoint;
+    %rename (SetPoint_3D) SetPoint;
 
 }
 
@@ -594,6 +595,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub AddPoint {
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
+	}
+	sub SetPoint {
+	    @_ == 4 ? SetPoint_3D(@_) : SetPoint_2D(@_);
 	}
 	sub Points {
 	    my $self = shift;
