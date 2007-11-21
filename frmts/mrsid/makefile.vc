@@ -20,5 +20,8 @@ plugin:	gdal_MrSID.dll
 gdal_MrSID.dll:	$(OBJ)
 	link /dll /out:gdal_MrSID.dll $(OBJ) \
 		$(GDAL_ROOT)/gdal_i.lib $(MRSID_LIB) $(GEOTIFF_LIB)
+	if exist gdal_MrSID.manifest mt -manifest gdal_MrSID.manifest -outputresource:gdal_MrSID.dll
+
+
 
 
