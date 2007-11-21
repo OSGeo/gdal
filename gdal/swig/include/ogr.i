@@ -1152,7 +1152,15 @@ public:
   double GetZ(int point=0) {
     return OGR_G_GetZ(self, point);
   } 
-  
+
+  void GetPoint(int iPoint = 0, double argout[3] = NULL) {
+    OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
+  }
+
+  void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
+    OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
+  }
+
   int GetGeometryCount() {
     return OGR_G_GetGeometryCount(self);
   }
