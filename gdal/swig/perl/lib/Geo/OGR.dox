@@ -821,6 +821,15 @@
 # @return an integer
 
 ## @method @GetPoint($index = 0)
+# @param index
+# @return (x,y) or a list with more coordinates
+
+## @method $GetPoint_2D($index = 0)
+# @param index
+# @return (x,y) or a list with more coordinates
+
+## @method $GetPoint_3D($index = 0)
+# @param index
 # @return (x,y) or a list with more coordinates
 
 ## @method $GetX($index = 0)
