@@ -762,15 +762,42 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         }
         else
         {
-            for( i=0; i < nBlockCount; i++ )
+            if( EQUAL(psImage->szIC,"M4") )
             {
-                if( EQUAL(psImage->szIC,"M4") )
-                    psImage->panBlockStart[i] = 6144 * i
-                        + psSegInfo->nSegmentStart + nIMDATOFF;
-                else if( EQUAL(psImage->szIC,"NM") )
-                    psImage->panBlockStart[i] = 
-                        psImage->nBlockOffset * i
-                        + psSegInfo->nSegmentStart + nIMDATOFF;
+                for( i=0; i < nBlockCount; i++ )
+                        psImage->panBlockStart[i] = 6144 * i
+                            + psSegInfo->nSegmentStart + nIMDATOFF;
+            }
+            else if( EQUAL(psImage->szIC,"NM") )
+            {
+                int iBlockX, iBlockY, iBand;
+
+                for( iBlockY = 0; iBlockY < psImage->nBlocksPerColumn; iBlockY++ )
+                {
+                    for( iBlockX = 0; iBlockX < psImage->nBlocksPerRow; iBlockX++ )
+                    {
+                        for( iBand = 0; iBand < psImage->nBands; iBand++ )
+                        {
+                            int iBlock;
+
+                            iBlock = iBlockX + iBlockY * psImage->nBlocksPerRow
+                                + iBand * psImage->nBlocksPerRow 
+                                * psImage->nBlocksPerColumn;
+
+                            psImage->panBlockStart[iBlock] = 
+                                psSegInfo->nSegmentStart + nIMDATOFF
+                                + ((iBlockX + iBlockY * psImage->nBlocksPerRow) 
+                                * psImage->nBlockOffset)
+                                + (iBand * psImage->nBandOffset );
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Unsupported IC value '%s', image access will likely fail.",
+                          psImage->szIC );
             }
         }
     }
