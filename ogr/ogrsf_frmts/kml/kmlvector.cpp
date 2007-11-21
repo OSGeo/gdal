@@ -113,7 +113,7 @@ void KMLVector::findLayers(KMLNode* poNode)
     }
     else if( isContainer(poNode->getName()) )
     {
-        for( int z = 0; z < poNode->countChildren(); z++ )
+        for( int z = 0; z < (int) poNode->countChildren(); z++ )
         {
             if( isContainer(poNode->getChild(z)->getName()) )
             {
@@ -146,8 +146,9 @@ void KMLVector::findLayers(KMLNode* poNode)
     }
     else
     {
-        CPLDebug("KML", "There is something wrong!!!");
-        print();
+        CPLDebug("KML", "There is something wrong!  Define KML_DEBUG to see details");
+        if( CPLGetConfigOption("KML_DEBUG",NULL) != NULL )
+            print();
     }
 }
 
