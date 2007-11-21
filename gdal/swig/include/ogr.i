@@ -1161,6 +1161,11 @@ public:
   void SetPoint(int point, double x, double y, double z=0) {
     OGR_G_SetPoint(self, point, x, y, z);
   }
+
+  %feature("kwargs") SetPoint_2D;
+  void SetPoint_2D(int point, double x, double y) {
+    OGR_G_SetPoint_2D(self, point, x, y);
+  }
   
   /* Geometries own their internal geometries */
   OGRGeometryShadow* GetGeometryRef(int geom) {
