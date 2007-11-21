@@ -1013,15 +1013,41 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     int   iFullBlock = iBaseBlock 
         + (nBand-1) * psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
 
+/* -------------------------------------------------------------------- */
+/*      Special exit conditions.                                        */
+/* -------------------------------------------------------------------- */
     if( nBand == 0 )
         return BLKREAD_FAIL;
 
+    if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
+        return BLKREAD_NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Special case for 1 bit data.  NITFRasterBand::IReadBlock()      */
+/*      already knows how to promote to byte.                           */
+/* -------------------------------------------------------------------- */
+    if (EQUAL(psImage->szIC, "NC") && psImage->nBitsPerSample == 1)
+    {
+        if (nBlockX != 0 || nBlockY != 0)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "assert nBlockX == 0 && nBlockY == 0 failed\n");
+            return BLKREAD_FAIL;
+        }
+        VSIFSeekL( psImage->psFile->fp,
+                   psImage->panBlockStart[0] + 
+                    (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8 * (nBand-1),
+                   SEEK_SET );
+        VSIFReadL( pData, 1, (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8, psImage->psFile->fp );
+        return BLKREAD_OK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Figure out how big the working buffer will need to be.          */
+/* -------------------------------------------------------------------- */
     nWrkBufSize = psImage->nLineOffset * (psImage->nBlockHeight-1)
         + psImage->nPixelOffset * (psImage->nBlockWidth-1)
         + psImage->nWordSize;
-
-    if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
-        return BLKREAD_NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
