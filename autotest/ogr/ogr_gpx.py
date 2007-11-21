@@ -231,6 +231,58 @@ def ogr_gpx_4():
     gdaltest.gpx_ds = ogr.Open( 'tmp/gpx.gpx' )
 
     return 'success'
+
+###############################################################################
+# Output extra fields as <extensions>. 
+
+def ogr_gpx_5():
+    if gdaltest.gpx_ds is not None:
+        gdaltest.gpx_ds.Destroy()
+    gdaltest.gpx_ds = None
+    
+    bna_ds = ogr.Open( 'data/bna_for_gpx.bna' )
+    
+    try:
+        os.remove ('tmp/gpx.gpx')
+    except:
+        pass
+
+    co_opts = [ 'GPX_USE_EXTENSIONS=yes' ]
+
+    # Duplicate waypoints
+    bna_lyr = bna_ds.GetLayerByName( 'bna_for_gpx_points' )
+
+    gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
+                                                          options = co_opts )
+
+    gpx_lyr = gdaltest.gpx_ds.CreateLayer( 'waypoints', geom_type = ogr.wkbPoint )
+
+    bna_lyr.ResetReading()
+
+    for i in range(bna_lyr.GetLayerDefn().GetFieldCount()):
+        field_defn = bna_lyr.GetLayerDefn().GetFieldDefn(i)
+        gpx_lyr.CreateField( field_defn )
+
+    dst_feat = ogr.Feature( feature_def = gpx_lyr.GetLayerDefn() )
+
+    feat = bna_lyr.GetNextFeature()
+    while feat is not None:
+        dst_feat.SetFrom( feat )
+        if gpx_lyr.CreateFeature( dst_feat ) != 0:
+            gdaltest.post_reason('CreateFeature failed.')
+            return 'fail'
+
+        feat = bna_lyr.GetNextFeature()
+
+    dst_feat.Destroy()
+
+# Would need extensions read support to check that write is OK...
+
+    bna_ds.Destroy()
+    gdaltest.gpx_ds.Destroy()
+    gdaltest.gpx_ds = None
+
+    return 'success'
     
 ###############################################################################
 # 
@@ -256,6 +308,7 @@ gdaltest_list = [
     ogr_gpx_1,
     ogr_gpx_2,
     ogr_gpx_3,
+    ogr_gpx_5,
     ogr_gpx_cleanup ]
 
 if __name__ == '__main__':
