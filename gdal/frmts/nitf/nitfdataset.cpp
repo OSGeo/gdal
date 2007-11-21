@@ -211,7 +211,8 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
 /*      handle via the scanline access API.                             */
 /* -------------------------------------------------------------------- */
     if( psImage->nBlocksPerRow == 1 
-        && psImage->nBlocksPerColumn == 1 
+        && psImage->nBlocksPerColumn == 1
+        && psImage->nBitsPerSample != 1  
         && EQUAL(psImage->szIC,"NC") )
     {
         nBlockXSize = psImage->nBlockWidth;
@@ -267,9 +268,10 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
         sEntry.c3 = 255;
         sEntry.c4 = 255;
         poColorTable->SetColorEntry( 1, &sEntry );
-
-        SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
     }
+
+    if( psImage->nBitsPerSample == 1 )
+        SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
 }
 
 /************************************************************************/
