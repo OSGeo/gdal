@@ -119,8 +119,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
     if(poFeatureKML == NULL)
         return NULL;
 
-    if(poFeatureDefn_ == NULL)
-        CPLDebug("KML", "Ohoh");
+    CPLAssert( poFeatureKML != NULL );
 
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
     
@@ -168,7 +167,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
     // Add fields
     poFeature->SetField( poFeatureDefn_->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
     poFeature->SetField( poFeatureDefn_->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
-    poFeature->SetFID( nNextFID_++ );
+     poFeature->SetFID( nNextFID_++ );
 
     // Clean up
     for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
