@@ -469,7 +469,15 @@ public:
   const char * GetName() {
     return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
   }
+ 
+  const char * GetGeometryColumn() {
+    return OGR_L_GetGeometryColumn(self);
+  }
   
+  const char * GetFIDColumn() {
+    return OGR_L_GetFIDColumn(self);
+  }
+
 %newobject GetFeature;
   OGRFeatureShadow *GetFeature(long fid) {
     return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
