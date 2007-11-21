@@ -599,6 +599,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub SetPoint {
 	    @_ == 4 ? SetPoint_3D(@_) : SetPoint_2D(@_);
 	}
+	sub GetPoint { # todo: implement with a typemap
+	    my($self, $i) = @_;
+	    $i = 0 unless defined $i;
+	    return ($self->GetGeometryType & 0x80000000) == 0 ?
+		($self->GetX($i), $self->GetY($i)) :
+		($self->GetX($i), $self->GetY($i), $self->GetZ($i));
+	}	
 	sub Points {
 	    my $self = shift;
 	    my $t = $self->GetGeometryType;
