@@ -40,7 +40,9 @@ OGRGPXDataSource::OGRGPXDataSource()
 
 {
     lastGPXGeomTypeWritten = GPX_NONE;
-    
+    bUseExtensions = FALSE;
+    pszExtensionsNS = NULL;
+
     papoLayers = NULL;
     nLayers = 0;
     
@@ -66,7 +68,7 @@ OGRGPXDataSource::~OGRGPXDataSource()
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
-    
+    CPLFree( pszExtensionsNS );
     CPLFree( pszName );
 }
 
@@ -286,9 +288,38 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         return FALSE;
     }
     
+/* -------------------------------------------------------------------- */
+/*      Look at use extensions options.                                 */
+/* -------------------------------------------------------------------- */
+    const char* pszUseExtensions = CSLFetchNameValue( papszOptions, "GPX_USE_EXTENSIONS");
+    const char* pszExtensionsNSURL = NULL;
+    if (pszUseExtensions && CSLTestBoolean(pszUseExtensions))
+    {
+        bUseExtensions = TRUE;
+
+        const char* pszExtensionsNSOption = CSLFetchNameValue( papszOptions, "GPX_EXTENSIONS_NS");
+        const char* pszExtensionsNSURLOption = CSLFetchNameValue( papszOptions, "GPX_EXTENSIONS_NS_URL");
+        if (pszExtensionsNSOption && pszExtensionsNSURLOption)
+        {
+            pszExtensionsNS = CPLStrdup(pszExtensionsNSOption);
+            pszExtensionsNSURL = pszExtensionsNSURLOption;
+        }
+        else
+        {
+            pszExtensionsNS = CPLStrdup("ogr");
+            pszExtensionsNSURL = "http://osgeo.org/gdal";
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*     Output header of GPX file.                                       */
+/* -------------------------------------------------------------------- */
     VSIFPrintf(fpOutput, "<?xml version=\"1.0\"?>\n");
     VSIFPrintf(fpOutput, "<gpx version=\"1.1\" creator=\"GDAL " GDAL_RELEASE_NAME "\" ");
     VSIFPrintf(fpOutput, "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+    if (bUseExtensions)
+        VSIFPrintf(fpOutput, "xmlns:%s=\"%s\" ", pszExtensionsNS, pszExtensionsNSURL);
+    VSIFPrintf(fpOutput, "xmlns=\"http://www.topografix.com/GPX/1/1\" ");
     VSIFPrintf(fpOutput, "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">\n");
 
     return TRUE;

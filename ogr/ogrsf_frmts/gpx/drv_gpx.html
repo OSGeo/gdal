@@ -51,12 +51,23 @@ The GPX writer supports the following creation options (layer options):
 <ul>
 <li> <b>FORCE_GPX_TRACK</b>:
 By default when writting a layer whose features are of type wkbLineString, the GPX driver
-chooses to write them as routes. If FORCE_GPX_TRACK=YES is specified, they will be written
-as tracks.<p>
+chooses to write them as routes.
+<br>If FORCE_GPX_TRACK=YES is specified, they will be written
+as tracks.</li><p>
 <li> <b>FORCE_GPX_ROUTE</b>:
 By default when writting a layer whose features are of type wkbMultiLineString, the GPX driver
-chooses to write them as tracks. If FORCE_GPX_ROUTE=YES is specified, they will be written
-as routes, provided that the multilines are composed of only one single line.<p>
+chooses to write them as tracks.
+<br>If FORCE_GPX_ROUTE=YES is specified, they will be written
+as routes, provided that the multilines are composed of only one single line.</li><p>
+<li> <b>GPX_USE_EXTENSIONS</b>:
+By default, the GPX driver will discard attribute fields that do not match the GPX XML definition (name, cmt, etc...).<br>
+If GPX_USE_EXTENSIONS=YES is specified, extra fields will be written inside the &lt;extensions&gt; tag.</li><p>
+<li> <b>GPX_EXTENSIONS_NS</b>:
+Only used if GPX_USE_EXTENSIONS=YES and GPX_EXTENSIONS_NS_URL is set.<br>
+he namespace value used for extension tags. By default, "ogr".</li><p>
+<li> <b>GPX_EXTENSIONS_NS_URL</b>:
+Only used if GPX_USE_EXTENSIONS=YES and GPX_EXTENSIONS_NS is set.<br>
+The namespace URI. By default, "http://osgeo.org/gdal".</li><p>
 </ul>
 <p>
 
@@ -71,11 +82,39 @@ The ogrinfo utility can be used to dump the content of a GPX datafile :
 ogrinfo -ro -al input.gpx
 </pre>
 
-<P>
+<p><br>
 The ogr2ogr utility can be used to do GPX to GPX translation :
 
 <pre>
 ogr2ogr -f GPX output.gpx input.gpx
+</pre>
+
+<p><br>
+Use of the &lt;extensions&gt; tag :
+<pre>
+ogr2ogr -f GPX  -dsco GPX_USE_EXTENSIONS=YES output.gpx input
+</pre>
+which will give an output like the following one :
+<pre>
+&lt;?xml version="1.0"?&gt;
+&lt;gpx version="1.1" creator="GDAL 1.5dev"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:ogr="http://osgeo.org/gdal"
+   xmlns="http://www.topografix.com/GPX/1/1"
+   xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"&gt;
+&lt;wpt lat="1" lon="2"&gt;
+  &lt;extensions&gt;
+    &lt;ogr:Primary_ID&gt;PID5&lt;/ogr:Primary_ID&gt;
+    &lt;ogr:Secondary_ID&gt;SID5&lt;/ogr:Secondary_ID&gt;
+  &lt;/extensions&gt;
+&lt;/wpt&gt;
+&lt;wpt lat="3" lon="4"&gt;
+  &lt;extensions&gt;
+    &lt;ogr:Primary_ID&gt;PID4&lt;/ogr:Primary_ID&gt;
+    &lt;ogr:Secondary_ID&gt;SID4&lt;/ogr:Secondary_ID&gt;
+  &lt;/extensions&gt;
+&lt;/wpt&gt;
+&lt;/gpx&gt;
 
 </pre>
 

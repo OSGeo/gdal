@@ -59,6 +59,8 @@ class OGRGPXLayer : public OGRLayer
     
     GPXGeometryType    gpxGeomType;
 
+    int                nGPXFields;
+
     int                bWriteMode;
     int                nFeatures;
     int                eof;
@@ -134,6 +136,9 @@ class OGRGPXDataSource : public OGRDataSource
     
     GPXGeometryType     lastGPXGeomTypeWritten;
     
+    int                 bUseExtensions;
+    char*               pszExtensionsNS;
+    
   public:
                         OGRGPXDataSource();
                         ~OGRGPXDataSource();
@@ -160,6 +165,9 @@ class OGRGPXDataSource : public OGRDataSource
     void                SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)
                             { lastGPXGeomTypeWritten = gpxGeomType; }
     GPXGeometryType     GetLastGPXGeomTypeWritten() { return lastGPXGeomTypeWritten; }
+    
+    int                 GetUseExtensions() { return bUseExtensions; }
+    const char*         GetExtensionsNS() { return pszExtensionsNS; }
 };
 
 /************************************************************************/
