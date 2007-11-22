@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.17 2006/03/16 12:38:24 dron Exp $ */
+/* $Id: tif_luv.c,v 1.17.2.1 2007/04/07 14:58:30 dron Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -1561,6 +1561,16 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	assert(scheme == COMPRESSION_SGILOG24 || scheme == COMPRESSION_SGILOG);
 
 	/*
+	 * Merge codec-specific tag information.
+	 */
+	if (!_TIFFMergeFieldInfo(tif, LogLuvFieldInfo,
+				 TIFFArrayCount(LogLuvFieldInfo))) {
+		TIFFErrorExt(tif->tif_clientdata, module,
+			     "Merging SGILog codec-specific tags failed");
+		return 0;
+	}
+
+	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
 	tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (LogLuvState));
@@ -1587,9 +1597,9 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	tif->tif_close = LogLuvClose;
 	tif->tif_cleanup = LogLuvCleanup;
 
-	/* override SetField so we can handle our private pseudo-tag */
-	_TIFFMergeFieldInfo(tif, LogLuvFieldInfo,
-			    TIFFArrayCount(LogLuvFieldInfo));
+	/* 
+	 * Override parent get/set field methods.
+	 */
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield = LogLuvVGetField;   /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;

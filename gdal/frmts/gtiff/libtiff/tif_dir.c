@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.74 2006/10/12 16:50:55 dron Exp $ */
+/* $Id: tif_dir.c,v 1.75.2.1 2007/04/07 14:23:38 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -74,21 +74,37 @@ void _TIFFsetDoubleArray(double** dpp, double* dp, uint32 n)
 static int
 setExtraSamples(TIFFDirectory* td, va_list ap, uint32* v)
 {
+/* XXX: Unassociated alpha data == 999 is a known Corel Draw bug, see below */
+#define EXTRASAMPLE_COREL_UNASSALPHA 999 
+
 	uint16* va;
 	uint32 i;
 
 	*v = va_arg(ap, uint32);
 	if ((uint16) *v > td->td_samplesperpixel)
-		return (0);
+		return 0;
 	va = va_arg(ap, uint16*);
 	if (*v > 0 && va == NULL)		/* typically missing param */
-		return (0);
-	for (i = 0; i < *v; i++)
-		if (va[i] > EXTRASAMPLE_UNASSALPHA)
-			return (0);
+		return 0;
+	for (i = 0; i < *v; i++) {
+		if (va[i] > EXTRASAMPLE_UNASSALPHA) {
+			/*
+			 * XXX: Corel Draw is known to produce incorrect
+			 * ExtraSamples tags which must be patched here if we
+			 * want to be able to open some of the damaged TIFF
+			 * files: 
+			 */
+			if (va[i] == EXTRASAMPLE_COREL_UNASSALPHA)
+				va[i] = EXTRASAMPLE_UNASSALPHA;
+			else
+				return 0;
+		}
+	}
 	td->td_extrasamples = (uint16) *v;
 	_TIFFsetShortArray(&td->td_sampleinfo, va, td->td_extrasamples);
-	return (1);
+	return 1;
+
+#undef EXTRASAMPLE_COREL_UNASSALPHA
 }
 
 static uint32
@@ -122,7 +138,6 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	static const char module[] = "_TIFFVSetField";
 
-	const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
 	TIFFDirectory* td = &tif->tif_dir;
 	int status = 1;
 	uint32 v32, i, v;
@@ -343,8 +358,9 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			_TIFFsetLongArray(&td->td_subifd, va_arg(ap, uint32*),
 			    (long) td->td_nsubifd);
 		} else {
-			TIFFErrorExt(tif->tif_clientdata, module, "%s: Sorry, cannot nest SubIFDs",
-				  tif->tif_name);
+			TIFFErrorExt(tif->tif_clientdata, module,
+				     "%s: Sorry, cannot nest SubIFDs",
+				     tif->tif_name);
 			status = 0;
 		}
 		break;
@@ -374,6 +390,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
         default: {
             TIFFTagValue *tv;
             int tv_size, iCustom;
+	    const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
 
             /*
 	     * This can happen if multiple images are open with different
@@ -397,16 +414,15 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
              * Find the existing entry for this custom value.
              */
             tv = NULL;
-            for(iCustom = 0; iCustom < td->td_customValueCount; iCustom++) {
-                if(td->td_customValues[iCustom].info == fip) {
-                    tv = td->td_customValues + iCustom;
-                    if(tv->value != NULL)
-                    {
-                        _TIFFfree(tv->value);
-                        tv->value = NULL;
-                    }
-                    break;
-                }
+            for (iCustom = 0; iCustom < td->td_customValueCount; iCustom++) {
+		    if (td->td_customValues[iCustom].info->field_tag == tag) {
+			    tv = td->td_customValues + iCustom;
+			    if (tv->value != NULL) {
+				    _TIFFfree(tv->value);
+				    tv->value = NULL;
+			    }
+			    break;
+		    }
             }
 
             /*
@@ -429,7 +445,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 
 		td->td_customValues = new_customValues;
 
-                tv = td->td_customValues + (td->td_customValueCount-1);
+                tv = td->td_customValues + (td->td_customValueCount - 1);
                 tv->info = fip;
                 tv->value = NULL;
                 tv->count = 0;
@@ -561,7 +577,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
           }
 	}
 	if (status) {
-		TIFFSetFieldBit(tif, fip->field_bit);
+		TIFFSetFieldBit(tif, _TIFFFieldWithTag(tif, tag)->field_bit);
 		tif->tif_flags |= TIFF_DIRTYDIRECT;
 	}
 
@@ -571,13 +587,15 @@ end:
 badvalue:
 	TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %d for \"%s\" tag",
-		     tif->tif_name, v, fip ? fip->field_name : "Unknown");
+		     tif->tif_name, v,
+		     _TIFFFieldWithTag(tif, tag)->field_name);
 	va_end(ap);
 	return (0);
 badvalue32:
 	TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %ld for \"%s\" tag",
-		     tif->tif_name, v32, fip ? fip->field_name : "Unknown");
+		     tif->tif_name, v32,
+		     _TIFFFieldWithTag(tif, tag)->field_name);
 	va_end(ap);
 	return (0);
 }

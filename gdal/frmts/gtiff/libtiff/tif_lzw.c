@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.29 2006/09/27 22:39:00 fwarmerdam Exp $ */
+/* $Id: tif_lzw.c,v 1.29.2.1 2007/11/22 21:24:51 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -252,7 +252,9 @@ LZWPreDecode(TIFF* tif, tsample_t s)
 	(void) s;
 	assert(sp != NULL);
         if( sp->dec_codetab == NULL )
-            LZWSetupDecode( tif );
+        {
+            tif->tif_setupdecode( tif );
+        }
 
 	/*
 	 * Check for old bit-reversed codes.
@@ -740,7 +742,9 @@ LZWPreEncode(TIFF* tif, tsample_t s)
 	assert(sp != NULL);
         
         if( sp->enc_hashtab == NULL )
-            LZWSetupEncode( tif );
+        {
+            tif->tif_setupencode( tif );
+        }
 
 	sp->lzw_nbits = BITS_MIN;
 	sp->lzw_maxcode = MAXCODE(BITS_MIN);
