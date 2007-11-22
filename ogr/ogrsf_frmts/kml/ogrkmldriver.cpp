@@ -128,3 +128,4 @@ void RegisterOGRKML()
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRKMLDriver );
 }
 
+
