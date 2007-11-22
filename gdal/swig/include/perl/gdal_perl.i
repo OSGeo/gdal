@@ -80,6 +80,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_SetColorEntry) SetColorEntry;
 
 %perlcode %{
+    use strict;
     use Carp;
     use Geo::GDAL::Const;
     use Geo::OGR;
@@ -120,6 +121,18 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $type = shift;
 	return $NODE_TYPE_INT2STRING{$type} if $type =~ /^\d/;
 	return $NODE_TYPE_STRING2INT{$type};
+    }
+    sub NodeData {
+	my $node = shift;
+	return (Geo::GDAL::NodeType($node->[0]), $node->[1]);
+    }
+    sub Children {
+	my $node = shift;
+	return @$node[2..$#$node];
+    }
+    sub Child {
+	my($node, $child) = @_;
+	return $node->[2+$child];
     }
     sub GetDataTypeSize {
 	my $t = shift;
@@ -185,12 +198,75 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	GetMetadata($self, $domain) if defined wantarray;
     }
     package Geo::GDAL::Driver;
+    use vars qw/@CAPABILITIES/;
     use strict;
-    sub Create {
+    @CAPABILITIES = ('Create', 'CreateCopy');
+    sub Name {
+	my $self = shift;
+	return $self->{ShortName};
+    }
+    sub Capabilities {
+	my $self = shift;
+	return @CAPABILITIES unless shift;
+	my $h = $self->GetMetadata;
+	my @cap;
+	for my $cap (@CAPABILITIES) {
+	    push @cap, $cap if $h->{'DCAP_'.uc($cap)} eq 'YES';
+	}
+	return @cap;
+    }
+    sub TestCapability {
+	my($self, $cap) = @_;
+	my $h = $self->GetMetadata;
+	return $h->{'DCAP_'.uc($cap)} eq 'YES' ? 1 : undef;
+    }
+    sub Extension {
+	my $self = shift;
+	my $h = $self->GetMetadata;
+	return $h->{DMD_EXTENSION};
+    }
+    sub MIMEType {
+	my $self = shift;
+	my $h = $self->GetMetadata;
+	return $h->{DMD_MIMETYPE};
+    }
+    sub CreationOptionList {
+	my $self = shift;
+	my @options;
+	my $h = $self->GetMetadata->{DMD_CREATIONOPTIONLIST};
+	if ($h) {
+	    $h = Geo::GDAL::ParseXMLString($h);
+	    my($type, $value) = Geo::GDAL::NodeData($h);
+	    if ($value eq 'CreationOptionList') {
+		for my $o (Geo::GDAL::Children($h)) {
+		    my %option;
+		    for my $a (Geo::GDAL::Children($o)) {
+			my(undef, $key) = Geo::GDAL::NodeData($a);
+			my(undef, $value) = Geo::GDAL::NodeData(Geo::GDAL::Child($a, 0));
+			if ($key eq 'Value') {
+			    push @{$option{$key}}, $value;
+			} else {
+			    $option{$key} = $value;
+			}
+		    }
+		    push @options, \%option;
+		}
+	    }
+	}
+	return @options;
+    }
+    sub CreationDataTypes {
+	my $self = shift;
+	my $h = $self->GetMetadata;
+	return split /\s+/, $h->{DMD_CREATIONDATATYPES};
+    }
+    sub CreateDataset {
 	my @p = @_;
 	$p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]} if $p[5] and exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
 	return _Create(@p);
     }
+    *Create = *CreateDataset;
+    *CopyDataset = *CreateCopy;
     package Geo::GDAL::Dataset;
     use strict;
     use vars qw/%BANDS/;
