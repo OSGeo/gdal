@@ -138,6 +138,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     if( pszSchemaNameIn )
         osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
 
+    /* XXX - mloskot: This version works well but it uses features available in PostgresQL 8.1+
+     *                like ANY() for type of int2vector. Ticket #1889
+     */
+    /*
     osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
               "t.typname = ANY(ARRAY['int2','int4','serial']) AS isfid "
               "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
@@ -149,7 +153,21 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
               "%s"
               "ORDER BY a.attnum",
               pszTableIn, osSchemaClause.c_str() );
+    */
 
+    osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
+              "t.typname = ANY(ARRAY['int2','int4','serial']) AS isfid "
+              "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
+              "WHERE a.attnum > 0 AND a.attrelid = c.oid "
+              "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
+              "AND c.oid = i.indrelid AND i.indisprimary = 't' "
+              "AND t.typname !~ '^geom' AND c.relname = '%s' "
+              "AND (i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR i.indkey[2]=a.attnum "
+              "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
+              "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
+              "OR i.indkey[9]=a.attnum) %s ORDER BY a.attnum",
+              pszTableIn, osSchemaClause.c_str() );
+     
     hResult = PQexec(hPGConn, osCommand.c_str() );
 
     if ( hResult && PGRES_TUPLES_OK == PQresultStatus( hResult) )
@@ -167,7 +185,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Multi-column primary key detected but not supported." );
+                      "Multi-column primary key in \'%s\' detected but not supported.",
+                      pszTableIn );
         }
     }
     else
