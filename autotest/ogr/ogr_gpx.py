@@ -236,6 +236,9 @@ def ogr_gpx_4():
 # Output extra fields as <extensions>. 
 
 def ogr_gpx_5():
+    if not gdaltest.have_gpx:
+        return 'skip'
+
     if gdaltest.gpx_ds is not None:
         gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
@@ -276,11 +279,30 @@ def ogr_gpx_5():
 
     dst_feat.Destroy()
 
-# Would need extensions read support to check that write is OK...
-
     bna_ds.Destroy()
     gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
+    
+#Now check that the extensions fields have been well written
+    gdaltest.gpx_ds = ogr.Open('tmp/gpx.gpx')
+    gpx_lyr = gdaltest.gpx_ds.GetLayerByName( 'waypoints' )
+    
+    expect = ['PID1', 'PID2']
+
+    tr = ogrtest.check_features_against_list( gpx_lyr, 'ogr_Primary_ID', expect )
+    
+    gpx_lyr.ResetReading()
+    
+    expect = ['SID1', 'SID2']
+
+    tr = ogrtest.check_features_against_list( gpx_lyr, 'ogr_Secondary_ID', expect )
+    
+    gpx_lyr.ResetReading()
+    
+    expect = ['TID1', None]
+
+    tr = ogrtest.check_features_against_list( gpx_lyr, 'ogr_Third_ID', expect )
+    
 
     return 'success'
     
