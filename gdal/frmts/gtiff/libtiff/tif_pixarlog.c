@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.15 2006/09/28 16:26:03 dron Exp $ */
+/* $Id: tif_pixarlog.c,v 1.15.2.2 2007/09/22 14:51:30 dron Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -593,7 +593,6 @@ PixarLogMakeTables(PixarLogState *sp)
 static	int PixarLogEncode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int PixarLogDecode(TIFF*, tidata_t, tsize_t, tsample_t);
 
-#define N(a)   (sizeof(a)/sizeof(a[0]))
 #define PIXARLOGDATAFMT_UNKNOWN	-1
 
 static int
@@ -1290,9 +1289,21 @@ static const TIFFFieldInfo pixarlogFieldInfo[] = {
 int
 TIFFInitPixarLog(TIFF* tif, int scheme)
 {
+	static const char module[] = "TIFFInitPixarLog";
+
 	PixarLogState* sp;
 
 	assert(scheme == COMPRESSION_PIXARLOG);
+
+	/*
+	 * Merge codec-specific tag information.
+	 */
+	if (!_TIFFMergeFieldInfo(tif, pixarlogFieldInfo,
+				 TIFFArrayCount(pixarlogFieldInfo))) {
+		TIFFErrorExt(tif->tif_clientdata, module,
+			     "Merging PixarLog codec-specific tags failed");
+		return 0;
+	}
 
 	/*
 	 * Allocate state block so tag methods have storage to record values.
@@ -1323,7 +1334,6 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 	tif->tif_cleanup = PixarLogCleanup;
 
 	/* Override SetField so we can handle our private pseudo-tag */
-	_TIFFMergeFieldInfo(tif, pixarlogFieldInfo, N(pixarlogFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield = PixarLogVGetField;   /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
@@ -1345,7 +1355,7 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, "TIFFInitPixarLog",
+	TIFFErrorExt(tif->tif_clientdata, module,
 		     "No space for PixarLog state block");
 	return (0);
 }

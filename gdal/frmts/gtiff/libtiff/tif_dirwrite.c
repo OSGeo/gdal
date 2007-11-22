@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.37 2006/07/20 03:27:01 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.37.2.3 2007/11/22 21:53:42 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -100,6 +100,8 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 	 */
 	if (done)
 	{
+                tsize_t orig_rawcc = tif->tif_rawcc;
+
 		if (tif->tif_flags & TIFF_POSTENCODE) {
 			tif->tif_flags &= ~TIFF_POSTENCODE;
 			if (!(*tif->tif_postencode)(tif)) {
@@ -112,9 +114,12 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 		(*tif->tif_close)(tif);		/* shutdown encoder */
 		/*
 		 * Flush any data that might have been written
-		 * by the compression close+cleanup routines.
+ 		 * by the compression close+cleanup routines.  But
+                 * be careful not to write stuff if we didn't add data
+                 * in the previous steps as the "rawcc" data may well be
+                 * a previously read tile/strip in mixed read/write mode.
 		 */
-		if (tif->tif_rawcc > 0 
+		if (tif->tif_rawcc > 0 && tif->tif_rawcc != orig_rawcc
                     && (tif->tif_flags & TIFF_BEENWRITING) != 0
                     && !TIFFFlushData1(tif)) {
 			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
@@ -922,12 +927,27 @@ TIFFWriteShortTable(TIFF* tif,
 static int
 TIFFWriteByteArray(TIFF* tif, TIFFDirEntry* dir, char* cp)
 {
-	if (dir->tdir_count > 4) {
-		if (!TIFFWriteData(tif, dir, cp))
-			return (0);
+	if (dir->tdir_count <= 4) {
+		if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN) {
+			dir->tdir_offset = (uint32)cp[0] << 24;
+			if (dir->tdir_count >= 2)
+				dir->tdir_offset |= (uint32)cp[1] << 16;
+			if (dir->tdir_count >= 3)
+				dir->tdir_offset |= (uint32)cp[2] << 8;
+			if (dir->tdir_count == 4)
+				dir->tdir_offset |= cp[3];
+		} else {
+			dir->tdir_offset = cp[0];
+			if (dir->tdir_count >= 2)
+				dir->tdir_offset |= (uint32) cp[1] << 8;
+			if (dir->tdir_count >= 3)
+				dir->tdir_offset |= (uint32) cp[2] << 16;
+			if (dir->tdir_count == 4)
+				dir->tdir_offset |= (uint32) cp[3] << 24;
+		}
+		return 1;
 	} else
-		_TIFFmemcpy(&dir->tdir_offset, cp, dir->tdir_count);
-	return (1);
+		return TIFFWriteData(tif, dir, cp);
 }
 
 /*
@@ -939,13 +959,13 @@ TIFFWriteShortArray(TIFF* tif, TIFFDirEntry* dir, uint16* v)
 {
 	if (dir->tdir_count <= 2) {
 		if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN) {
-			dir->tdir_offset = (uint32) ((long) v[0] << 16);
+			dir->tdir_offset = (uint32) v[0] << 16;
 			if (dir->tdir_count == 2)
 				dir->tdir_offset |= v[1] & 0xffff;
 		} else {
 			dir->tdir_offset = v[0] & 0xffff;
 			if (dir->tdir_count == 2)
-				dir->tdir_offset |= (long) v[1] << 16;
+				dir->tdir_offset |= (uint32) v[1] << 16;
 		}
 		return (1);
 	} else

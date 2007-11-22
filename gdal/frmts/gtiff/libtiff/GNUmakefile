@@ -57,14 +57,14 @@ clean:
 	rm -f $(O_OBJ) *.o *.a
 
 import:
-	@if test ! -d ~/libtiff ; then \
+	@if test ! -d ~/libtiff3 ; then \
 	  echo reimport requires libtiff checked out ~/libtiff ; \
 	  exit 1; \
 	fi
 
 	mv tif_config.h tif_config_safe.h
 	mv tiffconf.h tiffconf_safe.h
-	copymatch.sh ~/libtiff/libtiff *.c *.h
+	copymatch.sh ~/libtiff3/libtiff *.c *.h
 	mv tif_config_safe.h tif_config.h
 	mv tiffconf_safe.h tiffconf.h
 

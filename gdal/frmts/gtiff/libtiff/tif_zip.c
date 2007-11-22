@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.11 2006/09/27 22:39:00 fwarmerdam Exp $ */
+/* $Id: tif_zip.c,v 1.11.2.3 2007/11/22 21:24:51 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -119,7 +119,7 @@ ZIPPreDecode(TIFF* tif, tsample_t s)
 	assert(sp != NULL);
 
         if( (sp->state & ZSTATE_INIT_DECODE) == 0 )
-            ZIPSetupDecode(tif);
+            tif->tif_setupdecode( tif );
 
 	sp->stream.next_in = tif->tif_rawdata;
 	sp->stream.avail_in = tif->tif_rawcc;
@@ -197,7 +197,7 @@ ZIPPreEncode(TIFF* tif, tsample_t s)
 	(void) s;
 	assert(sp != NULL);
         if( sp->state != ZSTATE_INIT_ENCODE )
-            ZIPSetupEncode(tif);
+            tif->tif_setupencode( tif );
 
 	sp->stream.next_out = tif->tif_rawdata;
 	sp->stream.avail_out = tif->tif_rawdatasize;
@@ -342,10 +342,21 @@ static const TIFFFieldInfo zipFieldInfo[] = {
 int
 TIFFInitZIP(TIFF* tif, int scheme)
 {
+	static const char module[] = "TIFFInitZIP";
 	ZIPState* sp;
 
 	assert( (scheme == COMPRESSION_DEFLATE)
 		|| (scheme == COMPRESSION_ADOBE_DEFLATE));
+
+	/*
+	 * Merge codec-specific tag information.
+	 */
+	if (!_TIFFMergeFieldInfo(tif, zipFieldInfo,
+				 TIFFArrayCount(zipFieldInfo))) {
+		TIFFErrorExt(tif->tif_clientdata, module,
+			     "Merging Deflate codec-specific tags failed");
+		return 0;
+	}
 
 	/*
 	 * Allocate state block so tag methods have storage to record values.
@@ -360,10 +371,8 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	sp->stream.data_type = Z_BINARY;
 
 	/*
-	 * Merge codec-specific tag information and
-	 * override parent get/set field methods.
+	 * Override parent get/set field methods.
 	 */
-	_TIFFMergeFieldInfo(tif, zipFieldInfo, TIFFArrayCount(zipFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield = ZIPVGetField; /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
@@ -394,7 +403,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	(void) TIFFPredictorInit(tif);
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, "TIFFInitZIP",
+	TIFFErrorExt(tif->tif_clientdata, module,
 		     "No space for ZIP state block");
 	return (0);
 }
