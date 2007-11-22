@@ -178,6 +178,12 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         fpGPX = VSIFOpenL( pszFilename, "r" );
         if( fpGPX == NULL )
             return;
+
+        if (poDS->GetUseExtensions() ||
+            CSLTestBoolean(CPLGetConfigOption("GPX_USE_EXTENSIONS", "FALSE")))
+        {
+            LoadExtensionsSchema();
+        }
     }
     else
         fpGPX = NULL;
@@ -217,7 +223,6 @@ OGRGPXLayer::~OGRGPXLayer()
     if (fpGPX)
         VSIFCloseL( fpGPX );
 }
-
 
 #ifdef HAVE_EXPAT
 
@@ -298,6 +303,27 @@ void OGRGPXLayer::ResetReading()
 /*                        startElementCbk()                            */
 /************************************************************************/
 
+/** Replace ':' from XML NS element name by '_' more OGR friendly */
+static char* OGRGPX_GetOGRCompatibleTagName(const char* pszName)
+{
+    char* pszModName = CPLStrdup(pszName);
+    int i;
+    for(i=0;pszModName[i] != 0;i++)
+    {
+        if (pszModName[i] == ':')
+            pszModName[i] = '_';
+    }
+    return pszModName;
+}
+
+void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
+{
+    int len = strlen(pszStr);
+    pszSubElementValue = (char*) CPLRealloc(pszSubElementValue, nSubElementValueLen + len + 1);
+    memcpy(pszSubElementValue + nSubElementValueLen, pszStr, len);
+    nSubElementValueLen += len;
+}
+
 void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 {
     int i;
@@ -312,6 +338,8 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         inInterestingElement = TRUE;
         hasFoundLat = FALSE;
         hasFoundLon = FALSE;
+        inExtensions = FALSE;
+
         for (i = 0; ppszAttr[i]; i += 2)
         {
             if (strcmp(ppszAttr[i], "lat") == 0)
@@ -338,12 +366,14 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         
         if (poFeature)
             delete poFeature;
-
+        inExtensions = FALSE;
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
 
         multiLineString = new OGRMultiLineString ();
         lineString = NULL;
+        inExtensions = FALSE;
+
         poFeature->SetFID( nNextFID++ );
         poFeature->SetGeometryDirectly( multiLineString );
     }
@@ -356,6 +386,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
+        inExtensions = FALSE;
 
         lineString = new OGRLineString ();
         poFeature->SetFID( nNextFID++ );
@@ -435,17 +466,56 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             CPLFree(pszSubElementName);
             pszSubElementName = CPLStrdup(pszName);
         }
-        else if (depthLevel == interestingDepthLevel + 1)
+        else if (depthLevel == interestingDepthLevel + 1 &&
+                 strcmp(pszName, "extensions") == 0)
+        {
+            if (poDS->GetUseExtensions())
+            {
+                inExtensions = TRUE;
+            }
+        }
+        else if (depthLevel == interestingDepthLevel + 1 ||
+                 (inExtensions && depthLevel == interestingDepthLevel + 2) )
         {
             CPLFree(pszSubElementName);
             pszSubElementName = NULL;
+            iCurrentField = -1;
             for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
             {
-                if (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszName ) == 0)
+                int bMatch;
+                if (iField >= nGPXFields)
                 {
+                    char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
+                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                                     pszCompatibleName ) == 0);
+                    CPLFree(pszCompatibleName);
+                }
+                else
+                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                                     pszName ) == 0);
+
+                if (bMatch)
+                {
+                    iCurrentField = iField;
                     pszSubElementName = CPLStrdup(pszName);
                     break;
                 }
+            }
+        }
+        else if (inExtensions && depthLevel > interestingDepthLevel + 2)
+        {
+            AddStrToSubElementValue(
+               (ppszAttr[0] == NULL) ? CPLSPrintf("<%s>", pszName) :
+                                    CPLSPrintf("<%s ", pszName));
+            int i;
+            for (i = 0; ppszAttr[i]; i += 2)
+            {
+                AddStrToSubElementValue(
+                    CPLSPrintf("%s=\"%s\" ", ppszAttr[i], ppszAttr[i + 1]));
+            }
+            if (ppszAttr[0] != NULL)
+            {
+                AddStrToSubElementValue(">");
             }
         }
     }
@@ -477,7 +547,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                 if( poFeature->GetGeometryRef() != NULL )
                 {
                     poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
-                    
+
                     if (bEleAs25D)
                     {
                         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
@@ -510,6 +580,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
         }
         else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
         {
+            inInterestingElement = FALSE;
             if( (m_poFilterGeom == NULL
                     || FilterGeometry( poFeature->GetGeometryRef() ) )
                 && (m_poAttrQuery == NULL
@@ -541,6 +612,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
         }
         else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
         {
+            inInterestingElement = FALSE;
             if( (m_poFilterGeom == NULL
                     || FilterGeometry( poFeature->GetGeometryRef() ) )
                 && (m_poAttrQuery == NULL
@@ -589,19 +661,18 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             nSubElementValueLen = 0;
         }
         else if (depthLevel == interestingDepthLevel + 1 &&
+                 strcmp(pszName, "extensions") == 0)
+        {
+            inExtensions = FALSE;
+        }
+        else if ((depthLevel == interestingDepthLevel + 1 ||
+                 (inExtensions && depthLevel == interestingDepthLevel + 2) ) &&
                  pszSubElementName && strcmp(pszName, pszSubElementName) == 0)
         {
             if (poFeature && pszSubElementValue && nSubElementValueLen)
             {
                 pszSubElementValue[nSubElementValueLen] = 0;
-                for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
-                {
-                    if (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszName ) == 0)
-                    {
-                        poFeature->SetField( iField, pszSubElementValue);
-                        break;
-                    }
-                }
+                poFeature->SetField( iCurrentField, pszSubElementValue);
             }
 
             CPLFree(pszSubElementName);
@@ -609,6 +680,10 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             CPLFree(pszSubElementValue);
             pszSubElementValue = NULL;
             nSubElementValueLen = 0;
+        }
+        else if (inExtensions && depthLevel > interestingDepthLevel + 2)
+        {
+            AddStrToSubElementValue(CPLSPrintf("</%s>", pszName));
         }
     }
 }
@@ -621,6 +696,11 @@ void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
 {
     if (pszSubElementName)
     {
+        if (inExtensions && depthLevel > interestingDepthLevel + 2)
+        {
+            if (data[0] == '\n')
+                return;
+        }
         pszSubElementValue = (char*) CPLRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
         memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
         nSubElementValueLen += nLen;
@@ -681,8 +761,16 @@ OGRSpatialReference *OGRGPXLayer::GetSpatialRef()
 /************************************************************************/
 
 
-static char* OGRGPX_GetXMLCompatibleTagName(const char* pszName)
+static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
+                                            const char* pszName)
 {
+    /* Skip "ogr_" for example if NS is "ogr". Usefull for GPX -> GPX roundtrip */
+    if (strncmp(pszName, pszExtensionsNS, strlen(pszExtensionsNS)) == 0 &&
+        pszName[strlen(pszExtensionsNS)] == '_')
+    {
+        pszName += strlen(pszExtensionsNS) + 1;
+    }
+
     char* pszModName = CPLStrdup(pszName);
     int i;
     for(i=0;pszModName[i] != 0;i++)
@@ -727,7 +815,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             if( poFeature->IsFieldSet( i ) )
             {
                 char* compatibleName =
-                        OGRGPX_GetXMLCompatibleTagName(poFieldDefn->GetNameRef());
+                        OGRGPX_GetXMLCompatibleTagName(pszExtensionsNS, poFieldDefn->GetNameRef());
                  char* pszValue =
                     CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
                 VSIFPrintf(fp, "    <%s:%s>%s</%s:%s>\n",
@@ -976,3 +1064,250 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
+
+/************************************************************************/
+/*                       LoadExtensionsSchema()                         */
+/************************************************************************/
+
+#ifdef HAVE_EXPAT
+
+extern "C"
+{
+static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr);
+static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName);
+static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, int nLen);
+}
+
+static void XMLCALL startElementLoadSchemaCbk(void *pUserData, const char *pszName, const char **ppszAttr)
+{
+    ((OGRGPXLayer*)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
+}
+
+static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName)
+{
+    ((OGRGPXLayer*)pUserData)->endElementLoadSchemaCbk(pszName);
+}
+
+static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, int nLen)
+{
+    ((OGRGPXLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
+}
+
+#endif
+
+/** This function parses the whole file to detect the extensions fields */
+void OGRGPXLayer::LoadExtensionsSchema()
+{
+#ifdef HAVE_EXPAT
+    XML_Parser extensionSchemaParser = XML_ParserCreate(NULL);
+    XML_SetElementHandler(extensionSchemaParser, ::startElementLoadSchemaCbk, ::endElementLoadSchemaCbk);
+    XML_SetCharacterDataHandler(extensionSchemaParser, ::dataHandlerLoadSchemaCbk);
+    XML_SetUserData(extensionSchemaParser, this);
+
+    VSIFSeekL( fpGPX, 0, SEEK_SET );
+
+    inInterestingElement = FALSE;
+    inExtensions = FALSE;
+    depthLevel = 0;
+    currentFieldDefn = NULL;
+    pszSubElementName = NULL;
+    pszSubElementValue = NULL;
+    nSubElementValueLen = 0;
+    
+    char aBuf[BUFSIZ];
+    int nDone;
+    do
+    {
+        unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpGPX );
+        nDone = VSIFEofL(fpGPX);
+        if (XML_Parse(extensionSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        {
+            break;
+        }
+    } while (!nDone);
+
+    XML_ParserFree(extensionSchemaParser);
+
+    VSIFSeekL( fpGPX, 0, SEEK_SET );
+#endif
+}
+
+
+
+/************************************************************************/
+/*                  startElementLoadSchemaCbk()                         */
+/************************************************************************/
+
+
+void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr)
+{
+    if (gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0)
+    {
+        inInterestingElement = TRUE;
+        inExtensions = FALSE;
+        interestingDepthLevel = depthLevel;
+    }
+    else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
+    {
+        inInterestingElement = TRUE;
+        inExtensions = FALSE;
+        interestingDepthLevel = depthLevel;
+    }
+    else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
+    {
+        inInterestingElement = TRUE;
+        inExtensions = FALSE;
+        interestingDepthLevel = depthLevel;
+    }
+    else if (inInterestingElement)
+    {
+        if (depthLevel == interestingDepthLevel + 1 &&
+            strcmp(pszName, "extensions") == 0)
+        {
+            inExtensions = TRUE;
+            extensionsDepthLevel = depthLevel;
+        }
+        else if (inExtensions && depthLevel == extensionsDepthLevel + 1)
+        {
+            CPLFree(pszSubElementName);
+            pszSubElementName = CPLStrdup(pszName);
+
+            int iField;
+            for(iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+            {
+                int bMatch;
+                if (iField >= nGPXFields)
+                {
+                    char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
+                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszCompatibleName ) == 0);
+                    CPLFree(pszCompatibleName);
+                }
+                else
+                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszName ) == 0);
+                
+                if (bMatch)
+                {
+                    currentFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+                    break;
+                }
+            }
+            if (iField == poFeatureDefn->GetFieldCount())
+            {
+                char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
+                OGRFieldDefn newFieldDefn(pszCompatibleName, OFTInteger);
+                CPLFree(pszCompatibleName);
+                
+                poFeatureDefn->AddFieldDefn(&newFieldDefn);
+                currentFieldDefn = poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount() - 1);
+            }
+        }
+    }
+
+    depthLevel++;
+}
+
+
+/************************************************************************/
+/*                   endElementLoadSchemaCbk()                           */
+/************************************************************************/
+
+static int OGRGPXIsInt(const char* pszStr)
+{
+    int i;
+
+    while(*pszStr == ' ')
+        pszStr++;
+
+    for(i=0;pszStr[i];i++)
+    {
+        if (pszStr[i] == '+' || pszStr[i] == '-')
+        {
+            if (i != 0)
+                return FALSE;
+        }
+        else if (!(pszStr[i] >= '0' && pszStr[i] <= '9'))
+            return FALSE;
+    }
+    return TRUE;
+}
+
+
+void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
+{
+    depthLevel--;
+
+    if (inInterestingElement)
+    {
+        if (gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0)
+        {
+            inInterestingElement = FALSE;
+            inExtensions = FALSE;
+        }
+        else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
+        {
+            inInterestingElement = FALSE;
+            inExtensions = FALSE;
+        }
+        else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
+        {
+            inInterestingElement = FALSE;
+            inExtensions = FALSE;
+        }
+        else if (depthLevel == interestingDepthLevel + 1 &&
+                 strcmp(pszName, "extensions") == 0)
+        {
+            inExtensions = FALSE;
+        }
+        else if (inExtensions && depthLevel == extensionsDepthLevel + 1 &&
+                 pszSubElementName && strcmp(pszName, pszSubElementName) == 0)
+        {
+            if (pszSubElementValue && nSubElementValueLen && currentFieldDefn)
+            {
+                pszSubElementValue[nSubElementValueLen] = 0;
+                if (currentFieldDefn->GetType() == OFTInteger ||
+                    currentFieldDefn->GetType() == OFTReal)
+                {
+                    char* pszRemainingStr = NULL;
+                    CPLStrtod(pszSubElementValue, &pszRemainingStr);
+                    if (pszRemainingStr == NULL ||
+                        *pszRemainingStr == 0 ||
+                        *pszRemainingStr == ' ')
+                    {
+                        if (currentFieldDefn->GetType() == OFTInteger)
+                        {
+                            if (OGRGPXIsInt(pszSubElementValue) == FALSE)
+                            {
+                                currentFieldDefn->SetType(OFTReal);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        currentFieldDefn->SetType(OFTString);
+                    }
+                }
+            }
+
+            CPLFree(pszSubElementName);
+            pszSubElementName = NULL;
+            CPLFree(pszSubElementValue);
+            pszSubElementValue = NULL;
+            nSubElementValueLen = 0;
+            currentFieldDefn = NULL;
+        }
+    }
+}
+
+/************************************************************************/
+/*                   dataHandlerLoadSchemaCbk()                         */
+/************************************************************************/
+
+void OGRGPXLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
+{
+    if (pszSubElementName)
+    {
+        pszSubElementValue = (char*) CPLRealloc(pszSubElementValue, nSubElementValueLen + nLen + 1);
+        memcpy(pszSubElementValue + nSubElementValueLen, data, nLen);
+        nSubElementValueLen += nLen;
+    }
+}
