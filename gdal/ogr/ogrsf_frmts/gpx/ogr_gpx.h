@@ -79,6 +79,7 @@ class OGRGPXLayer : public OGRLayer
     char*              pszSubElementName;
     char*              pszSubElementValue;
     int                nSubElementValueLen;
+    int                iCurrentField;
 
     OGRFeature*        poFeature;
     OGRFeature **      ppoFeatureTab;
@@ -91,9 +92,16 @@ class OGRGPXLayer : public OGRLayer
     int                depthLevel;
     int                interestingDepthLevel;
     
+    OGRFieldDefn*      currentFieldDefn;
+    int                inExtensions;
+    int                extensionsDepthLevel;
+    
     int                bEleAs25D;
     
+  private:
     void               WriteFeatureAttributes( OGRFeature *poFeature );
+    void               LoadExtensionsSchema();
+    void               AddStrToSubElementValue(const char* pszStr);
     
   public:
                         OGRGPXLayer(const char *pszFilename,
@@ -118,11 +126,22 @@ class OGRGPXLayer : public OGRLayer
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);
     void                dataHandlerCbk(const char *data, int nLen);
+    
+    void                startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
+    void                endElementLoadSchemaCbk(const char *pszName);
+    void                dataHandlerLoadSchemaCbk(const char *data, int nLen);
 };
 
 /************************************************************************/
 /*                           OGRGPXDataSource                           */
 /************************************************************************/
+
+typedef enum
+{
+    GPX_VALIDITY_UNKNOWN,
+    GPX_VALIDITY_INVALID,
+    GPX_VALIDITY_VALID
+} OGRGPXValidity;
 
 class OGRGPXDataSource : public OGRDataSource
 {
@@ -138,6 +157,9 @@ class OGRGPXDataSource : public OGRDataSource
     
     int                 bUseExtensions;
     char*               pszExtensionsNS;
+    
+    OGRGPXValidity      validity;
+    int                 nElementsRead;
     
   public:
                         OGRGPXDataSource();
@@ -168,6 +190,8 @@ class OGRGPXDataSource : public OGRDataSource
     
     int                 GetUseExtensions() { return bUseExtensions; }
     const char*         GetExtensionsNS() { return pszExtensionsNS; }
+    
+    void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
 };
 
 /************************************************************************/

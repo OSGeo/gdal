@@ -151,14 +151,38 @@ OGRLayer * OGRGPXDataSource::CreateLayer( const char * pszLayerName,
     return papoLayers[nLayers-1];
 }
 
+/************************************************************************/
+/*                startElementValidateCbk()                             */
+/************************************************************************/
+
+void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char **ppszAttr)
+{
+    if (validity == GPX_VALIDITY_UNKNOWN)
+    {
+        if (strcmp(pszName, "gpx") == 0)
+        {
+            validity = GPX_VALIDITY_VALID;
+        }
+        else
+        {
+            validity = GPX_VALIDITY_INVALID;
+        }
+    }
+    else if (validity == GPX_VALIDITY_VALID)
+    {
+        if (strcmp(pszName, "extensions") == 0)
+        {
+            bUseExtensions = TRUE;
+        }
+        nElementsRead++;
+    }
+}
+
 #ifdef HAVE_EXPAT
 static void XMLCALL startElementValidateCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
-    int* pValidity = (int*)pUserData;
-    if (*pValidity < 0)
-    {
-        *pValidity = (strcmp(pszName, "gpx") == 0);
-    }
+    OGRGPXDataSource* poDS = (OGRGPXDataSource*) pUserData;
+    poDS->startElementValidateCbk(pszName, ppszAttr);
 }
 #endif
 
@@ -188,16 +212,22 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     FILE* fp = VSIFOpenL(pszFilename, "r");
     
-    int validity = -1;
+    validity = GPX_VALIDITY_UNKNOWN;
+    bUseExtensions = FALSE;
+    nElementsRead = 0;
     
     XML_Parser oParser = XML_ParserCreate(NULL);
-    XML_SetUserData(oParser, &validity);
-    XML_SetElementHandler(oParser, startElementValidateCbk, NULL);
+    XML_SetUserData(oParser, this);
+    XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
     
     char aBuf[BUFSIZ];
     int nDone;
     unsigned int nLen;
     
+    /* Begin to parse the file and look for the <gpx> element */
+    /* It *MUST* be the first element of an XML file */
+    /* So once we have read the first element, we know if we can */
+    /* handle the file or not with that driver */
     do
     {
         nLen = (unsigned int) VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
@@ -206,14 +236,31 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             break;
         }
-    } while (!nDone && validity < 0 && nLen > 0 );
+        if (validity == GPX_VALIDITY_INVALID)
+        {
+            break;
+        }
+        else if (validity == GPX_VALIDITY_VALID)
+        {
+            /* If we have recognized the <gpx> element, now we try */
+            /* to recognize if they are <extensions> tags */
+            /* But we stop to look for after an arbitrary number of tags */
+            if (bUseExtensions)
+                break;
+            else if (nElementsRead > 200)
+                break;
+        }
+    } while (!nDone && nLen > 0 );
     
     XML_ParserFree(oParser);
     
     VSIFCloseL(fp);
     
-    if (validity == 1)
+    if (validity == GPX_VALIDITY_VALID)
     {
+        CPLDebug("GPX", "%s seems to be a GPX file.", pszFilename);
+        if (bUseExtensions)
+            CPLDebug("GPX", "It uses <extensions>");
         nLayers = 3;
         papoLayers = (OGRGPXLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGPXLayer*));
         papoLayers[0] = new OGRGPXLayer( pszName, "waypoints", GPX_WPT, this, FALSE );
@@ -221,7 +268,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         papoLayers[2] = new OGRGPXLayer( pszName, "tracks", GPX_TRACK, this, FALSE );
     }
 
-    return validity == 1;
+    return (validity == GPX_VALIDITY_VALID);
 #else
     char aBuf[256];
     FILE* fp = VSIFOpenL(pszFilename, "r");
