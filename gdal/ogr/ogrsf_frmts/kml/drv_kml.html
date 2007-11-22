@@ -12,13 +12,16 @@ for reading KML. OGR generates KML 2.0.
 The KML driver has no coordinate system support at this time.<p>
 
 <h2>Creation Issues</h2>
+
 <p>KML is mix of formatting and feature data. When writing KML, attributes are added to
 the output with the following HTML structure:
 <pre><b>Attribute name</b>: Attribute content</pre>
 </p>
 <p>The OGR KML driver supports multiple layers of data.  
 Each input layer is translated into a separate KML "Folder" element.</p>
+
 <h2>Creation Options</h2>
+
 <p>The following creation options are supported:
 <ul>
 <li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Name'</li>
