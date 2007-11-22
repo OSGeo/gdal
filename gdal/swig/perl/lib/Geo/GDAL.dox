@@ -38,9 +38,9 @@
 ## @ignore GDAL_GCP_get_Id
 ## @ignore GDAL_GCP_set_Id
 
-## @fn \@ReadDir($path)
-# @param path
-# @return the files in the directory that path defines
+## @fn $VersionInfo($request = 'VERSION_NUM')
+# @param request
+# @return Descriptive string or version number
 
 ## @fn UseExceptions()
 
@@ -72,6 +72,10 @@
 
 ## @fn FindFile()
 
+## @fn \@ReadDir($path)
+# @param path
+# @return the files in the directory that path defines
+
 ## @fn SetConfigOption()
 
 ## @fn GetConfigOption()
@@ -79,10 +83,6 @@
 ## @fn CPLBinaryToHex()
 
 ## @fn CPLHexToBinary()
-
-## @fn $VersionInfo($request = 'VERSION_NUM')
-# @param request
-# @return Descriptive string or version number
 
 ## @fn \@GCPsToGeoTransform(\@GCPs, $ApproxOK = 1)
 # x = $a + j * $b + i * $c;<br/>
@@ -137,6 +137,19 @@
 # @param XML
 # @return an XMLTree
 
+## @fn @NodeData($node)
+# @param node
+# @return ($NodeType, $value)
+
+## @fn @Children($node)
+# @param node
+# @return
+
+## @fn @Child($node, $i)
+# @param node
+# @param i 0 .. number of children - 1
+# @return
+
 ## @fn $SerializeXMLTree(\@XMLTree)
 # @param XMLTree
 # @return XML
@@ -146,6 +159,10 @@
 
 ## @fn $GetDriver($driver)
 # @param driver The name or number of the driver.
+# @return a new Geo::GDAL::Driver object
+
+## @fn $GetDriverByName($ShortName)
+# @param ShortName
 # @return a new Geo::GDAL::Driver object
 
 ## @fn $IdentifyDriver($datasource_name, $siblings = undef)
@@ -214,10 +231,6 @@
 # @param PaletteInterpretation
 # @return
 
-## @fn $GetDriverByName($ShortName)
-# @param ShortName
-# @return a new Geo::GDAL::Driver object
-
 
 ## @class Geo::GDAL::MajorObject
 # @isa (Geo::GDAL)
@@ -256,6 +269,7 @@
 ## @ignore ACQUIRE
 
 ## @method Register()
+# All drivers are registered in the initialization.
 
 ## @method Deregister()
 
@@ -270,7 +284,31 @@
 ## @attr HelpTopic
 # $driver->{HelpTopic}
 
-## @method $Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
+# @method $Name
+
+## @cmethod @Capabilities()
+# @return the class method returns a list of all potential
+# capabilities a driver may have; the object method returns a list of
+# all capabilities the driver has
+
+## @method $TestCapability($cap)
+# @param cap a capability string
+# @return boolean
+
+## @method $Extension
+# @return
+
+## @method $MIMEType
+# @return
+
+## @method @CreationOptionList
+# @return a list of options, each option is a hashref, the keys are
+# name, type and description or Value. Value is a listref.
+
+## @method $CreationDataTypes
+# @return
+
+## @method $CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
 # @brief Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
@@ -280,13 +318,19 @@
 # @param options
 # @return a new Geo::GDAL::Dataset object
 
-## @method $CreateCopy($name, $src, $strict = 1, \@options = undef)
-# @brief Create a new Geo::GDAL::Dataset
+## @method Create
+# Same as CreateDataset
+
+## @method $CopyDataset($name, $src, $strict = 1, \@options = undef)
+# @brief Create a new Geo::GDAL::Dataset as a copy
 # @param name
 # @param src a Geo::GDAL::Dataset object
 # @param strict
 # @param options
 # @return a new Geo::GDAL::Dataset object 
+
+## @method CreateCopy
+# Same as CopyDataset
 
 ## @method Delete($name)
 # @param name
