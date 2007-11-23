@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.61 2007/11/02 19:53:04 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.62 2007/11/23 20:49:43 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -323,8 +323,6 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 	 */
 	if (imagedone)
 	{
-                tmsize_t orig_rawcc = tif->tif_rawcc;
-
 		if (tif->tif_flags & TIFF_POSTENCODE)
 		{
 			tif->tif_flags &= ~TIFF_POSTENCODE;
@@ -343,13 +341,15 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
                  * in the previous steps as the "rawcc" data may well be
                  * a previously read tile/strip in mixed read/write mode.
 		 */
-		if (tif->tif_rawcc > 0 && tif->tif_rawcc != orig_rawcc
-		    && (tif->tif_flags & TIFF_BEENWRITING) != 0
-		    && !TIFFFlushData1(tif))
+		if (tif->tif_rawcc > 0 
+		    && (tif->tif_flags & TIFF_BEENWRITING) != 0 )
 		{
+		    if( !TIFFFlushData1(tif) )
+                    {
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "Error flushing data before directory write");
 			return (0);
+                    }
 		}
 		if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata)
 		{
