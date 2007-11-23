@@ -14,7 +14,7 @@
   <name>route name</name>
   <rtept lat="5" lon="6">
       <ele>7</ele> 
-      <name>route point name. Will be lost</name>
+      <name>route point name</name>
   </rtept>
   <rtept lat="8" lon="9">
       <ele>10</ele> 
@@ -28,6 +28,7 @@
     <trkseg>
         <trkpt lat="14" lon="15">
             <ele>16</ele> 
+            <name>track point name</name>
         </trkpt>
         <trkpt lat="17" lon="18">
             <ele>19</ele> 

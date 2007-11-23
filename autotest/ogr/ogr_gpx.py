@@ -56,7 +56,7 @@ def ogr_gpx_init():
     if not gdaltest.have_gpx:
         return 'skip'
 
-    if gdaltest.gpx_ds.GetLayerCount() != 3:
+    if gdaltest.gpx_ds.GetLayerCount() != 5:
         gdaltest.post_reason( 'wrong number of layers' )
         return 'fail'
 
@@ -119,10 +119,35 @@ def ogr_gpx_2():
     
     return 'success'
 
+
+###############################################################################
+# Test route_points gpx layer.
+
+def ogr_gpx_3():
+    if not gdaltest.have_gpx:
+        return 'skip'
+    
+    if gdaltest.gpx_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.gpx_ds.GetLayerByName( 'route_points' )
+
+    expect = ['route point name', None, None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'name', expect )
+    
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POINT (6 5)', max_error = 0.0001 ) != 0:
+        return 'fail'
+    feat.Destroy()
+    
+    return 'success'
+
 ###############################################################################
 # Test tracks gpx layer.
 
-def ogr_gpx_3():
+def ogr_gpx_4():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -140,9 +165,33 @@ def ogr_gpx_3():
     return 'success'
 
 ###############################################################################
+# Test route_points gpx layer.
+
+def ogr_gpx_5():
+    if not gdaltest.have_gpx:
+        return 'skip'
+    
+    if gdaltest.gpx_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.gpx_ds.GetLayerByName( 'track_points' )
+
+    expect = ['track point name', None, None, None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'name', expect )
+    
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'POINT (15 14)', max_error = 0.0001 ) != 0:
+        return 'fail'
+    feat.Destroy()
+    
+    return 'success'
+
+###############################################################################
 # Copy our small gpx file to a new gpx file. 
 
-def ogr_gpx_4():
+def ogr_gpx_6():
     if not gdaltest.have_gpx:
         return 'skip'
     
@@ -235,7 +284,7 @@ def ogr_gpx_4():
 ###############################################################################
 # Output extra fields as <extensions>. 
 
-def ogr_gpx_5():
+def ogr_gpx_7():
     if not gdaltest.have_gpx:
         return 'skip'
 
@@ -326,11 +375,13 @@ gdaltest_list = [
     ogr_gpx_2,
     ogr_gpx_3,
     ogr_gpx_4,
-# Rerun test 1, 2 and 3 with generated tmp/tmp.gpx
+    ogr_gpx_5,
+    ogr_gpx_6,
+# Rerun test 1, 2 and 4 with generated tmp/tmp.gpx
     ogr_gpx_1,
     ogr_gpx_2,
-    ogr_gpx_3,
-    ogr_gpx_5,
+    ogr_gpx_4,
+    ogr_gpx_7,
     ogr_gpx_cleanup ]
 
 if __name__ == '__main__':
