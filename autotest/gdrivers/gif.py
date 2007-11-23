@@ -37,9 +37,26 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-# Read test of simple byte reference data.
+# Get the GIF driver, and verify a few things about it. 
 
 def gif_1():
+
+    gdaltest.gif_drv = gdal.GetDriverByName( 'GIF' )
+    if gdaltest.gif_drv is None:
+        gdaltest.post_reason( 'GIF driver not found!' )
+        return 'false'
+    
+    drv_md = gdaltest.gif_drv.GetMetadata()
+    if drv_md['DMD_MIMETYPE'] != 'image/gif':
+        gdaltest.post_reason( 'mime type is wrong' )
+        return 'false'
+
+    return 'success'
+
+###############################################################################
+# Read test of simple byte reference data.
+
+def gif_2():
 
     tst = gdaltest.GDALTest( 'GIF', 'bug407.gif', 1, 57921 )
     return tst.testOpen()
@@ -47,7 +64,7 @@ def gif_1():
 ###############################################################################
 # Test lossless copying.
 
-def gif_2():
+def gif_3():
 
     tst = gdaltest.GDALTest( 'GIF', 'bug407.gif', 1, 57921,
                              options = [ 'INTERLACING=NO' ] )
@@ -57,7 +74,7 @@ def gif_2():
 ###############################################################################
 # Verify the colormap, and nodata setting for test file. 
 
-def gif_3():
+def gif_4():
 
     ds = gdal.Open( 'data/bug407.gif' )
     cm = ds.GetRasterBand(1).GetRasterColorTable()
@@ -84,11 +101,53 @@ def gif_3():
 ###############################################################################
 # Test creating an in memory copy.
 
-def gif_4():
+def gif_5():
 
     tst = gdaltest.GDALTest( 'GIF', 'byte.tif', 1, 4672 )
 
     return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
+# Verify nodata support
+
+def gif_6():
+
+    src_ds = gdal.Open( '../gcore/data/nodata_byte.tif' )
+
+    new_ds = gdaltest.gif_drv.CreateCopy( 'tmp/nodata_byte.gif', src_ds )
+    if new_ds is None:
+        gdaltest.post_reason( 'Create copy operation failure' )
+        return 'false'
+
+    bnd = new_ds.GetRasterBand(1)
+    if bnd.Checksum() != 4440:
+        gdaltest.post_reason( 'Wrong checksum' )
+        return 'false'
+
+    bnd = None
+    new_ds = None
+    src_ds = None
+
+    new_ds = gdal.Open( 'tmp/nodata_byte.gif' )
+    
+    bnd = new_ds.GetRasterBand(1)
+    if bnd.Checksum() != 4440:
+        gdaltest.post_reason( 'Wrong checksum' )
+        return 'false'
+
+    # NOTE - mloskot: condition may fauil as nodata is a float-point number
+    nodata = bnd.GetNoDataValue()
+    if nodata != 0:
+        gdaltest.post_reason( 'Got unexpected nodata value.' )
+        return 'false'
+
+    gdaltest.gif_drv.Delete( 'tmp/nodata_byte.gif' )
+    
+    bnd = None
+    new_ds = None
+
+    return 'success'
+
 
 ###############################################################################
 # Cleanup.
@@ -102,6 +161,8 @@ gdaltest_list = [
     gif_2,
     gif_3,
     gif_4,
+    gif_5,
+    gif_6,
     gif_cleanup ]
 
 if __name__ == '__main__':
