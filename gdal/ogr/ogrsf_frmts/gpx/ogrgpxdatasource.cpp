@@ -261,11 +261,13 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         CPLDebug("GPX", "%s seems to be a GPX file.", pszFilename);
         if (bUseExtensions)
             CPLDebug("GPX", "It uses <extensions>");
-        nLayers = 3;
+        nLayers = 5;
         papoLayers = (OGRGPXLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGPXLayer*));
         papoLayers[0] = new OGRGPXLayer( pszName, "waypoints", GPX_WPT, this, FALSE );
         papoLayers[1] = new OGRGPXLayer( pszName, "routes", GPX_ROUTE, this, FALSE );
         papoLayers[2] = new OGRGPXLayer( pszName, "tracks", GPX_TRACK, this, FALSE );
+        papoLayers[3] = new OGRGPXLayer( pszName, "route_points", GPX_ROUTE_POINT, this, FALSE );
+        papoLayers[4] = new OGRGPXLayer( pszName, "track_points", GPX_TRACK_POINT, this, FALSE );
     }
 
     return (validity == GPX_VALIDITY_VALID);
