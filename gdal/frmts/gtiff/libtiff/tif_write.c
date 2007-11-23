@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.30 2007/11/02 19:57:28 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.31 2007/11/23 20:49:43 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -62,6 +62,8 @@ TIFFWriteScanline(TIFF* tif, void* buf, uint32 row, uint16 sample)
 	 */
 	if (!BUFFERCHECK(tif))
 		return (-1);
+        tif->tif_flags |= TIFF_BUF4WRITE; /* not strictly sure this is right*/
+
 	td = &tif->tif_dir;
 	/*
 	 * Extend image length if needed
@@ -214,7 +216,10 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
 	 */
 	if (!BUFFERCHECK(tif))
 		return ((tmsize_t) -1);
+
+        tif->tif_flags |= TIFF_BUF4WRITE;
 	tif->tif_curstrip = strip;
+
 	tif->tif_row = (strip % td->td_stripsperimage) * td->td_rowsperstrip;
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupencode)(tif))
@@ -353,6 +358,8 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 	 */
 	if (!BUFFERCHECK(tif))
 		return ((tmsize_t)(-1));
+
+        tif->tif_flags |= TIFF_BUF4WRITE;
 	tif->tif_curtile = tile;
 
 	tif->tif_rawcc = 0;
@@ -693,7 +700,7 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
 int
 TIFFFlushData1(TIFF* tif)
 {
-	if (tif->tif_rawcc > 0) {
+	if (tif->tif_rawcc > 0 && tif->tif_flags & TIFF_BUF4WRITE ) {
 		if (!isFillOrder(tif, tif->tif_dir.td_fillorder) &&
 		    (tif->tif_flags & TIFF_NOBITREV) == 0)
 			TIFFReverseBits((uint8*)tif->tif_rawdata,

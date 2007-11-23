@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.135 2007/10/24 10:20:23 joris Exp $ */
+/* $Id: tif_dirread.c,v 1.136 2007/11/23 20:49:43 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3354,7 +3354,8 @@ TIFFReadDirectory(TIFF* tif)
 		return 0;
 	}
 	TIFFReadDirectoryCheckOrder(tif,dir,dircount);
-	tif->tif_flags&=~TIFF_BEENWRITING;    /* reset before new dir */
+	tif->tif_flags &= ~TIFF_BEENWRITING;    /* reset before new dir */
+	tif->tif_flags &= ~TIFF_BUF4WRITE;      /* reset before new dir */
 	/* free any old stuff and reinit */
 	TIFFFreeDirectory(tif);
 	TIFFDefaultDirectory(tif);

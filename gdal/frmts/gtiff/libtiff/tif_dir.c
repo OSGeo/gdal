@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.95 2007/07/12 13:59:34 dron Exp $ */
+/* $Id: tif_dir.c,v 1.96 2007/11/23 20:49:43 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1456,7 +1456,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16 dirn)
 		tif->tif_rawdata = NULL;
 		tif->tif_rawcc = 0;
 	}
-	tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP|TIFF_POSTENCODE);
+	tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP|TIFF_POSTENCODE|TIFF_BUF2WRITE);
 	TIFFFreeDirectory(tif);
 	TIFFDefaultDirectory(tif);
 	tif->tif_diroff = 0;			/* force link on next write */
