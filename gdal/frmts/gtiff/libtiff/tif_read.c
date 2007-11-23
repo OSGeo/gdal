@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.28 2007/10/01 12:43:50 joris Exp $ */
+/* $Id: tif_read.c,v 1.29 2007/11/23 20:49:43 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -714,6 +714,8 @@ TIFFStartStrip(TIFF* tif, uint32 strip)
 	}
 	tif->tif_curstrip = strip;
 	tif->tif_row = (strip % td->td_stripsperimage) * td->td_rowsperstrip;
+        tif->tif_flags &= ~TIFF_BUF4WRITE;
+
 	if (tif->tif_flags&TIFF_NOREADRAW)
 	{
 		tif->tif_rawcp = NULL;
@@ -749,6 +751,7 @@ TIFFStartTile(TIFF* tif, uint32 tile)
 	tif->tif_col =
 	    (tile % TIFFhowmany_32(td->td_imagelength, td->td_tilelength)) *
 		td->td_tilewidth;
+        tif->tif_flags &= ~TIFF_BUF4WRITE;
 	if (tif->tif_flags&TIFF_NOREADRAW)
 	{
 		tif->tif_rawcp = NULL;

@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.68 2007/07/19 13:11:59 dron Exp $ */
+/* $Id: tiffiop.h,v 1.69 2007/11/23 20:49:43 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -135,6 +135,7 @@ struct tiff {
 	#define TIFF_NOREADRAW   0x20000 /* skip reading of raw uncompressed image data */
 	#define TIFF_INCUSTOMIFD 0x40000 /* currently writing a custom IFD */
 	#define TIFF_BIGTIFF     0x80000 /* read/write bigtiff */
+        #define TIFF_BUF4WRITE  0x100000 /* rawcc bytes are for writing */
 	uint64               tif_diroff;       /* file offset of current directory */
 	uint64               tif_nextdiroff;   /* file offset of following directory */
 	uint64*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */
