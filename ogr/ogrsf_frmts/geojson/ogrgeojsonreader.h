@@ -107,32 +107,38 @@ private:
     OGRGeoJSONReader& operator=( OGRGeoJSONReader const& );
 
     //
-    // GeoJSON tree parsing utilities.
-    //
-    json_object* FindMemberByName(json_object* poObj,  const char* pszName );
-    GeoJSONObject::Type GetType( json_object* poObj );
-
-    //
     // Translation utilities.
     //
     bool GenerateLayerDefn();
     bool GenerateFeatureDefn( json_object* poObj );
     bool AddFeature( OGRGeometry* poGeometry );
     bool AddFeature( OGRFeature* poFeature );
-    bool ReadRawPoint( json_object* poObj, OGRPoint& point );
-    OGRRawPoint* ReadRawPoint( json_object* poObj );
-    OGRPoint* ReadPoint( json_object* poObj );
-    OGRMultiPoint* ReadMultiPoint( json_object* poObj );
-    OGRLineString* ReadLineString( json_object* poObj, bool bRaw=false );
-    OGRLinearRing* ReadLinearRing( json_object* poObj );
-    OGRMultiLineString* ReadMultiLineString( json_object* poObj );
-    OGRPolygon* ReadPolygon( json_object* poObj , bool bRaw=false);
-    OGRMultiPolygon* ReadMultiPolygon( json_object* poObj );
+
     OGRGeometry* ReadGeometry( json_object* poObj );
-    OGRGeometryCollection* ReadGeometryCollection( json_object* poObj );
     OGRFeature* ReadFeature( json_object* poObj );
     OGRGeoJSONLayer* ReadFeatureCollection( json_object* poObj );
-
 };
+
+/************************************************************************/
+/*                 GeoJSON Parsing Utilities                            */
+/************************************************************************/
+
+json_object* OGRGeoJSONFindMemberByName(json_object* poObj,  const char* pszName );
+GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj );
+
+/************************************************************************/
+/*                 GeoJSON Geometry Translators                         */
+/************************************************************************/
+
+bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point );
+OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj );
+OGRPoint* OGRGeoJSONReadPoint( json_object* poObj );
+OGRMultiPoint* OGRGeoJSONReadMultiPoint( json_object* poObj );
+OGRLineString* OGRGeoJSONReadLineString( json_object* poObj, bool bRaw=false );
+OGRMultiLineString* OGRGeoJSONReadMultiLineString( json_object* poObj );
+OGRLinearRing* OGRGeoJSONReadLinearRing( json_object* poObj );
+OGRPolygon* OGRGeoJSONReadPolygon( json_object* poObj , bool bRaw=false);
+OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj );
+OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj );
 
 #endif /* OGR_GEOJSONUTILS_H_INCLUDED */
