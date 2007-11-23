@@ -568,10 +568,7 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Setup parameters.                                               */
 /* -------------------------------------------------------------------- */
     if (EGifPutScreenDesc(hGifFile, nXSize, nYSize, 
-                          psGifCT->ColorCount, 0,
-			  psGifCT) == GIF_ERROR ||
-	EGifPutImageDesc(hGifFile,
-			 0, 0, nXSize, nYSize, bInterlace, NULL) == GIF_ERROR )
+                          psGifCT->ColorCount, 255, psGifCT) == GIF_ERROR)
     {
         FreeMapObject(psGifCT);
         PrintGifError();
@@ -582,6 +579,27 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     FreeMapObject(psGifCT);
     psGifCT = NULL;
+
+    /* Support for transparency */
+    int bNoDataValue;
+    double noDataValue = poBand->GetNoDataValue(&bNoDataValue);
+    if (bNoDataValue && noDataValue >= 0 && noDataValue <= 255)
+    {
+        unsigned char extensionData[4];
+        extensionData[0] = 1; /*  Transparent Color Flag */
+        extensionData[1] = 0;
+        extensionData[2] = 0;
+        extensionData[3] = (unsigned char)noDataValue;
+        EGifPutExtension(hGifFile, 0xf9, 4, extensionData);
+    }
+
+    if (EGifPutImageDesc(hGifFile, 0, 0, nXSize, nYSize, bInterlace, NULL) == GIF_ERROR )
+    {
+        PrintGifError();
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Error writing gif file." );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -635,6 +653,23 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "EGifCloseFile() failed.\n" );
+        return NULL;
+    }
+    
+    /* This is a hack to write a GIF89a instead of GIF87a */
+    /* (we have to, since we are using graphical extension block) */
+    /* EGifSpew would write GIF89a when it detects an extension block if we were using it */
+    /* As we don't, we could have used EGifSetGifVersion instead, but the version of libungif */
+    /* in GDAL has a bug : it writes on read-only memory ! */
+    /* (this is a well-known problem. Just google for "EGifSetGifVersion segfault") */
+    /* Most readers don't even care if it is GIF87a or GIF89a, but it is */
+    /* better to write the right version */
+
+    VSIFSeekL(fp, 0, SEEK_SET);
+    if (VSIFWriteL("GIF89a", 1, 6, fp) != 6)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Error writing gif file." );
         return NULL;
     }
     
