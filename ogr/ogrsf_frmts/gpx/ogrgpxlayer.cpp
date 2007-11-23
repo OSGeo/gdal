@@ -62,7 +62,32 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     poFeatureDefn->Reference();
     
-    if (gpxGeomType == GPX_WPT)
+    if (gpxGeomType == GPX_TRACK_POINT)
+    {
+        /* Don't move this code. This fields must be number 0, 1 and 2 */
+        /* in order to make OGRGPXLayer::startElementCbk work */
+        OGRFieldDefn oFieldTrackFID("track_fid", OFTInteger );
+        poFeatureDefn->AddFieldDefn( &oFieldTrackFID );
+        
+        OGRFieldDefn oFieldTrackSegID("track_seg_id", OFTInteger );
+        poFeatureDefn->AddFieldDefn( &oFieldTrackSegID );
+        
+        OGRFieldDefn oFieldTrackSegPointID("track_seg_point_id", OFTInteger );
+        poFeatureDefn->AddFieldDefn( &oFieldTrackSegPointID );
+    }
+    else if (gpxGeomType == GPX_ROUTE_POINT)
+    {
+        /* Don't move this code. See above */
+        OGRFieldDefn oFieldRouteFID("route_fid", OFTInteger );
+        poFeatureDefn->AddFieldDefn( &oFieldRouteFID );
+        
+        OGRFieldDefn oFieldRoutePointID("route_point_id", OFTInteger );
+        poFeatureDefn->AddFieldDefn( &oFieldRoutePointID );
+    }
+
+    if (gpxGeomType == GPX_WPT ||
+        gpxGeomType == GPX_TRACK_POINT ||
+        gpxGeomType == GPX_ROUTE_POINT)
     {
         poFeatureDefn->SetGeomType((bEleAs25D) ? wkbPoint25D : wkbPoint);
         /* Position info */
@@ -296,6 +321,9 @@ void OGRGPXLayer::ResetReading()
 
     depthLevel = 0;
     interestingDepthLevel = 0;
+    
+    trkFID = trkSegId = trkSegPtId = 0;
+    rteFID = rtePtId = 0;
 }
 
 
@@ -327,7 +355,9 @@ void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
 void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 {
     int i;
-    if (gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0)
+    if ((gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0) ||
+        (gpxGeomType == GPX_ROUTE_POINT && strcmp(pszName, "rtept") == 0) ||
+        (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trkpt") == 0))
     {
         interestingDepthLevel = depthLevel;
 
@@ -358,12 +388,27 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         {
             poFeature->SetFID( nNextFID++ );
             poFeature->SetGeometryDirectly( new OGRPoint( lonVal, latVal ) );
+
+            if (gpxGeomType == GPX_ROUTE_POINT)
+            {
+                rtePtId++;
+                poFeature->SetField( 0, rteFID-1);
+                poFeature->SetField( 1, rtePtId-1);
+            }
+            else if (gpxGeomType == GPX_TRACK_POINT)
+            {
+                trkSegPtId++;
+
+                poFeature->SetField( 0, trkFID-1);
+                poFeature->SetField( 1, trkSegId-1);
+                poFeature->SetField( 2, trkSegPtId-1);
+            }
         }
     }
     else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
     {
         interestingDepthLevel = depthLevel;
-        
+
         if (poFeature)
             delete poFeature;
         inExtensions = FALSE;
@@ -376,6 +421,16 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
         poFeature->SetFID( nNextFID++ );
         poFeature->SetGeometryDirectly( multiLineString );
+    }
+    else if (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trk") == 0)
+    {
+        trkFID++;
+        trkSegId = 0;
+    }
+    else if (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trkseg") == 0)
+    {
+        trkSegId++;
+        trkSegPtId = 0;
     }
     else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
     {
@@ -391,6 +446,11 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         lineString = new OGRLineString ();
         poFeature->SetFID( nNextFID++ );
         poFeature->SetGeometryDirectly( lineString );
+    }
+    else if (gpxGeomType == GPX_ROUTE_POINT && strcmp(pszName, "rte") == 0)
+    {
+        rteFID++;
+        rtePtId = 0;
     }
     else if (inInterestingElement)
     {
@@ -533,7 +593,9 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
 
     if (inInterestingElement)
     {
-        if (gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0)
+        if ((gpxGeomType == GPX_WPT && strcmp(pszName, "wpt") == 0) ||
+            (gpxGeomType == GPX_ROUTE_POINT && strcmp(pszName, "rtept") == 0) ||
+            (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trkpt") == 0))
         {
             int bIsValid = (hasFoundLat && hasFoundLon);
             inInterestingElement = FALSE;
