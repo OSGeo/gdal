@@ -13,19 +13,26 @@ OGR has support for GPX reading (if GDAL is build with <i>expat</i> library supp
 
 The OGR driver supports reading and writing of all the GPX feature types :
 <ul>
-<li>waypoints (layer of features of OGR type wkbPoint)</li>
-<li>routes (layer of features of OGR type wkbLineString)</li>
-<li>tracks (layer of features of OGR type wkbMultiLineString)</li>
+<li><i>waypoints</i> : layer of features of OGR type wkbPoint</li>
+<li><i>routes</i> : layer of features of OGR type wkbLineString</li>
+<li><i>tracks</i> : layer of features of OGR type wkbMultiLineString</li>
 </ul>
+
+It also supports reading of route points and track points in standalone layers (<i>route_points</i> and <i>track_points</i>), so
+that their own attributes can be used by OGR.<p>
+
+In addition to its GPX attributes, each route point of a route has a <i>route_fid</i>
+(foreign key to the FID of its belonging route)
+and a <i>route_point_id</i> which is its sequence number in the route.<br>
+The same applies for track points with <i>track_fid</i>, <i>track_seg_id</i> and <i>track_seg_point_id</i>.
 
 All coordinates are relative to the WGS84 datum (EPSG:4326).<p>
 
 If the environment variable GPX_ELE_AS_25D is set to YES, the elevation element will
 be used to set the Z coordinates of waypoints, route points and track points.<p>
 
-The OGR/GPX reads and writes the GPX attributes for the waypoints, routes and tracks,
-but not the attributes of route points and track points, as they cannot be
-fit into the OGR Simple Feature model.<p>
+The OGR/GPX reads and writes the GPX attributes for the waypoints, routes and tracks.
+<p>
 
 <h2>Extensions element reading</h2>
 
@@ -72,9 +79,9 @@ If the output file already exits, the writing will not occur. You have to delete
 
 Supported geometries :
 <ul>
-<li>Features of type wkbPoint/wkbPoint25D are written in the waypoint element.</li>
-<li>Features of type wkbLineString/wkbLineString25D are written in the route element.</li>
-<li>Features of type wkbMultiLineString/wkbMultiLineString25D are written in the track element.</li>
+<li>Features of type wkbPoint/wkbPoint25D are written in the <i>wpt</i> element.</li>
+<li>Features of type wkbLineString/wkbLineString25D are written in the <i>rte</i> element.</li>
+<li>Features of type wkbMultiLineString/wkbMultiLineString25D are written in the <i>trk</i> element.</li>
 <li>Other type of geometries are not supported.</li>
 </ul>
 <p>
@@ -122,8 +129,11 @@ ogrinfo -ro -al input.gpx
 <li>The ogr2ogr utility can be used to do GPX to GPX translation :
 
 <pre>
-ogr2ogr -f GPX output.gpx input.gpx
+ogr2ogr -f GPX output.gpx input.gpx waypoints routes tracks
 </pre>
+<br>
+Note : in the case of GPX to GPX translation, you need to specify the layer names,
+in order to discard the route_points and track_points layers.
 </li>
 <p><br>
 

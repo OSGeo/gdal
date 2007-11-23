@@ -44,7 +44,9 @@ typedef enum
     GPX_NONE,
     GPX_WPT,
     GPX_TRACK,
-    GPX_ROUTE
+    GPX_ROUTE,
+    GPX_ROUTE_POINT,
+    GPX_TRACK_POINT,
 } GPXGeometryType;
 
 /************************************************************************/
@@ -97,6 +99,13 @@ class OGRGPXLayer : public OGRLayer
     int                extensionsDepthLevel;
     
     int                bEleAs25D;
+    
+    int                trkFID;
+    int                trkSegId;
+    int                trkSegPtId;
+    
+    int                rteFID;
+    int                rtePtId;
     
   private:
     void               WriteFeatureAttributes( OGRFeature *poFeature );
