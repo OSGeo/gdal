@@ -13,7 +13,7 @@ from glob import glob
 HAVE_NUMPY=False
 HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
-DEFAULT_GDAL_CONFIG = 'gdal-config'
+
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -91,9 +91,10 @@ class gdal_build_ext(build_ext):
         "The name of the gdal-config binary and/or a full path to it"),
     ])
     
+    self.DEFAULT_GDAL_CONFIG = 'gdal-config'
     def initialize_options(self):
         build_ext.initialize_options(self)
-        self.gdal_config = DEFAULT_GDAL_CONFIG
+        self.gdal_config = self.DEFAULT_GDAL_CONFIG
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = get_gdal_config('prefix', gdal_config = self.gdal_config)
 
@@ -137,6 +138,8 @@ class gdal_build_ext(build_ext):
                     extras.append(x)
             
             # don't forget to add gdal to the list :)
+            self.library_dirs.append(library_dirs)
+            
             libraries.append('gdal_i')
             extra_link_args = []#['/NODEFAULTLIB:MSVCRT']
             self.libraries.remove('gdal')
