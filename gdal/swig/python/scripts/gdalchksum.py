@@ -27,20 +27,12 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
-# 
-# $Log$
-# Revision 1.3  2005/02/23 14:37:03  fwarmerdam
-# fixed band selection logic
-#
-# Revision 1.2  2004/04/02 17:40:44  warmerda
-# added GDALGeneralCmdLineProcessor() support
-#
-# Revision 1.1  2003/03/02 17:11:33  warmerda
-# New
-#
-#
 
-import gdal
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+
 import sys
 
 def Usage():
