@@ -10,8 +10,8 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(PYTHON_INCLUDES) $(CPPFLAGS)
 CFLAGS		:=	$(PYTHON_CFLAGS) $(CFLAGS)
 CXXFLAGS	:=	$(PYTHON_CFLAGS) $(CXXFLAGS)
 
-PY_COMMANDS	=	epsg_tr.py gdalchksum.py ../swig/python/scripts/gdal2xyz.py gcps2wld.py \
-			gdalimport.py ../swig/python/scripts/gdal_merge.py pct2rgb.py rgb2pct.py \
+PY_COMMANDS	=	epsg_tr.py ../swig/python/scripts/gdalchksum.py ../swig/python/scripts/gdal2xyz.py gcps2wld.py \
+			gdalimport.py ../swig/python/scripts/gdal_merge.py pct2rgb.py ./swig/python/scripts/rgb2pct.py \
 			gcps2vec.py mkgraticule.py
 PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
 
