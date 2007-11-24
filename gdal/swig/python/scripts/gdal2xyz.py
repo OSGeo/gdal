@@ -29,7 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdal
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+
 import sys
 
 try:
