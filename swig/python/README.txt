@@ -10,8 +10,8 @@ as the GDAL library for the purposes of this document.
 Dependencies
 ------------
  
- * libgdal (1.5.0 or greater)
- * numpy (1.0.1 or greater)
+ * libgdal (1.5.0 or greater) and header files (gdal-devel)
+ * numpy (1.0.0 or greater) and header files (numpy-devel)
 
 Installation
 ------------
@@ -35,9 +35,24 @@ for your specified platform and Python version.
 
 setup.py
 ~~~~~~~~~
-With the setup script::
+
+Most of setup.py's important variables are controlled with the setup.cfg 
+file.  In setup.cfg, you can modify pointers to include files and libraries.  
+The most important option that will likely need to be modified is the 
+gdal_config parameter.  If you installed GDAL from a package, the location 
+of this program is likely /usr/bin/gdal-config, but it may be in another place 
+depending on how your packager arranged things.  
+
+After modifying the location of gdal-config, you can build and install 
+with the setup script::
   
-  $ sudo python setup.py install
+  $ python setup.py build
+  $ python setup.py install
+
+If you have setuptools installed, you can also generate an egg::
+  
+  $ python setup.py bdist_egg
+
 
 SWIG
 ----
@@ -45,7 +60,18 @@ SWIG
 The GDAL Python package is built using SWIG_. The earliest version of SWIG_ 
 that is supported to generate the wrapper code is 1.3.31.  It is possible 
 that usable bindings will build with a version earlier than 1.3.31, but no 
-development efforts are targeted at versions below it.  
+development efforts are targeted at versions below it.  You should not have 
+to run SWIG in your development tree to generate the binding code, as it 
+is usually included with the source.  However, if you do need to regenerate, 
+you can do so with the following make command from within the ./swig/python
+directory::
+
+  $ make generate
+
+To ensure that all of the bindings are regenerated, you can clean the 
+bindings code out by issuing::
+
+  $ make veryclean
 
 .. _GDAL: http://www.gdal.org
 .. _SWIG: http://www.swig.org
