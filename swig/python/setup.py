@@ -77,7 +77,8 @@ import popen2
 
 def get_gdal_config(kind, gdal_config='gdal-config'):
     import popen2
-    p = popen2.popen3(gdal_config + " --%s" % kind)
+    command = gdal_config + " --%s" % kind
+    p = popen2.popen3(command)
     r = p[0].readline().strip()
     if not r:
         raise Warning(p[2].readline())
@@ -85,18 +86,20 @@ def get_gdal_config(kind, gdal_config='gdal-config'):
     
 class gdal_build_ext(build_ext):
 
+    DEFAULT_GDAL_CONFIG = 'gdal-config'
     user_options = build_ext.user_options[:]
     user_options.extend([
-        ('gdal-config', None,
+        ('gdal-config=', None,
         "The name of the gdal-config binary and/or a full path to it"),
     ])
-    
-    DEFAULT_GDAL_CONFIG = 'gdal-config'
+
     def initialize_options(self):
         build_ext.initialize_options(self)
-        self.gdal_config = self.DEFAULT_GDAL_CONFIG
+
+
         self.numpy_include_dir = get_numpy_include()
-        self.gdaldir = get_gdal_config('prefix', gdal_config = self.gdal_config)
+        self.gdaldir = None
+        self.gdal_config = self.DEFAULT_GDAL_CONFIG
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
@@ -150,7 +153,7 @@ class gdal_build_ext(build_ext):
         build_ext.finalize_options(self)
         self.include_dirs.append('.')
         self.include_dirs.append(self.numpy_include_dir)
-
+        self.gdaldir = self.get_gdal_config('prefix')
         try:
             self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
             self.include_dirs.append(os.path.join(self.gdaldir,'include'))
