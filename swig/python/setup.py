@@ -30,14 +30,6 @@ def get_numpy_include():
     else:
         return '.'
 
-# Function needed to make unique lists.
-def unique(list):
-    """Stolen from MapScript setup script"""
-    dict = {}
-    for item in list:
-        dict[item] = ''
-    return dict.keys()
-
 
 # ---------------------------------------------------------------------------
 # Imports
