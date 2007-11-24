@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: gdal_merge.py 10048 2006-09-28 03:41:30Z fwarmerdam $
+# $Id$
 #
 # Project:  InSAR Peppers
 # Purpose:  Module to extract data from many rasters into one output.
@@ -24,7 +24,6 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 ###############################################################################
-# 
 
 
 import gdal
@@ -64,8 +63,10 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                              t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                              nodata ):
-
-    import numpy
+    try:
+        import numpy as Numeric
+    except ImportError:
+        import Numeric
     
     if verbose != 0:
         print 'Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
@@ -79,8 +80,8 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                                    t_xsize, t_ysize )
     data_dst = t_band.ReadAsArray( t_xoff, t_yoff, t_xsize, t_ysize )
 
-    nodata_test = numpy.equal(data_src,nodata)
-    to_write = numpy.choose( nodata_test, (data_src, data_dst) )
+    nodata_test = Numeric.equal(data_src,nodata)
+    to_write = Numeric.choose( nodata_test, (data_src, data_dst) )
                                
     t_band.WriteArray( to_write, t_xoff, t_yoff )
 
