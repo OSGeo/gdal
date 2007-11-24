@@ -128,76 +128,10 @@ class gdal_build_ext(build_ext):
         except:
             print 'Could not run gdal-config!!!!'
 
-# ---------------------------------------------------------------------------
-# Platform specifics
-# ---------------------------------------------------------------------------
-
-
-
-#if sys.platform == 'cygwin':
-#    TOP_DIR = "../.."
-#     
-#    DICT = parse_makefile(os.path.join(TOP_DIR,"GDALMake.opt"))
-#     
-#    library_dirs = [TOP_DIR+"/","./"]
-#    prefix = string.split(DICT[expand_makefile_vars("prefix",DICT)])[0]
-#    prefix_lib = prefix + "/lib"
-#    library_dirs.append(prefix_lib)
-     
-#    extra_link_args = []
-     
-#    print "\nLIBRARY_DIRS:\n\t",library_dirs
-     
-#    libraries = ["gdal"]
-#    gdal_libs = ["LIBS","PG_LIB","MYSQL_LIB"]
-#    for gdal_lib in gdal_libs:
-#        for lib in string.split(DICT[expand_makefile_vars(gdal_lib,DICT)]):
-#            if lib[0:2] == "-l":
-#                libraries.append(lib[2:])
-#    libraries.append("stdc++")
-#     
-#    print "\nLIBRARIES:\n\t",libraries
-     
-#    include_dirs=[os.path.join(TOP_DIR,"gcore"), os.path.join(TOP_DIR,"port"),
-#        os.path.join(TOP_DIR,"ogr"), os.path.join(TOP_DIR,"pymod"), ] # only necessary
-     
-#    include_files = [
-#      glob(os.path.join(TOP_DIR,"gcore", "*.h")),
-#      glob(os.path.join(TOP_DIR,"port", "*.h")),
-#      glob(os.path.join(TOP_DIR,"alg", "*.h")),
-#      glob(os.path.join(TOP_DIR,"ogr", "*.h")), 
-#      glob(os.path.join(TOP_DIR,"ogr", "ogrsf_frmts", "*.h"))
-#            ]
-     
-#    IF=[]
-#    for i in include_files:
-#      IF.extend(i)
-#    include_files=IF
-#    del IF
-     
-#    print "\nINCLUDE_FILES:",include_files
-# else:
-#     libraries = ['gdal']
-#     library_dirs = ['../../.libs','../..','/usr/lib','/usr/local/lib']
-
-extra_link_args = []
-
-
-# ---------------------------------------------------------------------------
-# Platform specifics
-# ---------------------------------------------------------------------------
-
-
 gdal_version = '1.5.0.a.dev'
 
-# include_dirs = ['../../port',
-#                 '../../gcore',
-#                 '../../alg',
-#                 '../../ogr',
-#                 get_numpy_include(),
-#                 '/usr/include',
-#                 '/usr/local/include']
-                
+
+extra_link_args = []        
 extra_compile_args = []
 
 # might need to tweak for Python 2.4 on OSX to be these
@@ -205,42 +139,27 @@ extra_compile_args = []
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
-                        # include_dirs = include_dirs,
-                        # libraries = libraries,
-                        # library_dirs = library_dirs,
                         extra_compile_args = extra_compile_args,
                         extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
                     sources=['extensions/gdalconst_wrap.c'],
-                    # include_dirs = include_dirs,
-                    # libraries = libraries,
-                    # library_dirs = library_dirs,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 osr_module = Extension('osgeo._osr',
                     sources=['extensions/osr_wrap.cpp'],
-                    # include_dirs = include_dirs,
-                    # libraries = libraries,
-                    # library_dirs = library_dirs,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
                     sources=['extensions/ogr_wrap.cpp'],
-                    # include_dirs = include_dirs,
-                    # libraries = libraries,
-                    # library_dirs = library_dirs,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
 
 array_module = Extension('osgeo._gdal_array',
                     sources=['extensions/_gdal_array.cpp'],
-                    # include_dirs = include_dirs,
-                    # libraries = libraries,
-                    # library_dirs = library_dirs,
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
