@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id$
+# $Id: gdal_merge.py 10048 2006-09-28 03:41:30Z fwarmerdam $
 #
 # Project:  InSAR Peppers
 # Purpose:  Module to extract data from many rasters into one output.
@@ -25,8 +25,11 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
-import gdal
 import sys
 
 verbose = 0
