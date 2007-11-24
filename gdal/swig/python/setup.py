@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# Setup script for GDAL Python bindings.
+# Inspired by psycopg2 setup.py file
+# http://www.initd.org/tracker/psycopg/browser/psycopg2/trunk/setup.py
+# Howard Butler hobu.inc@gmail.com
+
 import sys
 import os
 import string
@@ -13,7 +18,6 @@ from glob import glob
 HAVE_NUMPY=False
 HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
-
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -64,19 +68,17 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-from distutils.sysconfig import parse_makefile
-from distutils.sysconfig import expand_makefile_vars
 
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
 from distutils.sysconfig import get_python_inc
-from distutils.errors import DistutilsFileError
+
 
 import popen2
 
 
 def get_gdal_config(kind, gdal_config='gdal-config'):
-    import popen2
+
     command = gdal_config + " --%s" % kind
     p = popen2.popen3(command)
     r = p[0].readline().strip()
@@ -95,7 +97,6 @@ class gdal_build_ext(build_ext):
 
     def initialize_options(self):
         build_ext.initialize_options(self)
-
 
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = None
@@ -151,20 +152,16 @@ class gdal_build_ext(build_ext):
     
     def finalize_options(self):
         build_ext.finalize_options(self)
-        self.include_dirs.append('.')
+        
         self.include_dirs.append(self.numpy_include_dir)
-        self.gdaldir = self.get_gdal_config('prefix')
+        
         try:
+            self.gdaldir = self.get_gdal_config('prefix')
             self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
             self.include_dirs.append(os.path.join(self.gdaldir,'include'))
-            version = self.get_gdal_config('version')
-            gdalmajor, gdalminor, gdalpatch = version.split('.')
-        except Warning, w:
-            if self.gdal_config == self.DEFAULT_GDAL_CONFIG:
-                sys.stderr.write("Warning: %s" % str(w))
-            else:
-                sys.stderr.write("Error: %s" % str(w))
-                sys.exit(1)
+        except:
+            print 'Could not run gdal-config!!!!'
+
 # ---------------------------------------------------------------------------
 # Platform specifics
 # ---------------------------------------------------------------------------
