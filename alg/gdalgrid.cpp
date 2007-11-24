@@ -149,7 +149,7 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
                 dfNominator += pdfZ[i] / dfW;
                 dfDenominator += 1.0 / dfW;
                 n++;
-                if (nMaxPoints > 0 && n < nMaxPoints)
+                if (nMaxPoints > 0 && n > nMaxPoints)
                     break;
             }
         }
