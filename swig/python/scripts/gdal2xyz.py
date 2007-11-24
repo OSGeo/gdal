@@ -133,7 +133,7 @@ if __name__ == '__main__':
     for y in range(srcwin[1],srcwin[1]+srcwin[3],skip):
 
         data = band.ReadAsArray( srcwin[0], y, srcwin[2], 1 )    
-	data = Numeric.reshape( data, (srcwin[2],) )
+        data = Numeric.reshape( data, (srcwin[2],) )
 
         for x_i in range(0,srcwin[2],skip):
 
