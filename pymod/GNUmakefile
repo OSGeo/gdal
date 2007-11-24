@@ -13,7 +13,7 @@ CXXFLAGS	:=	$(PYTHON_CFLAGS) $(CXXFLAGS)
 SCRIPTSDIR	:=	../swig/python/scripts
 PY_COMMANDS	=	$(SCRIPTSDIR)/epsg_tr.py $(SCRIPTSDIR)/gdalchksum.py $(SCRIPTSDIR)/gdal2xyz.py gcps2wld.py \
 			gdalimport.py $(SCRIPTSDIR)/gdal_merge.py pct2rgb.py $(SCRIPTSDIR)/rgb2pct.py \
-			gcps2vec.py mkgraticule.py
+			$(SCRIPTSDIR)/gcps2vec.py mkgraticule.py
 PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
 
 # this is needed during install due to the _gdalmodule.so library
