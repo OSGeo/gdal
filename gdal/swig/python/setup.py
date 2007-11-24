@@ -91,7 +91,7 @@ class gdal_build_ext(build_ext):
         "The name of the gdal-config binary and/or a full path to it"),
     ])
     
-    self.DEFAULT_GDAL_CONFIG = 'gdal-config'
+    DEFAULT_GDAL_CONFIG = 'gdal-config'
     def initialize_options(self):
         build_ext.initialize_options(self)
         self.gdal_config = self.DEFAULT_GDAL_CONFIG
