@@ -69,18 +69,18 @@ from distutils.sysconfig import get_python_inc
 import popen2
 
 
-def get_gdal_config(kind, gdal_config='gdal-config'):
+def get_gdal_config(option, gdal_config='gdal-config'):
 
-    command = gdal_config + " --%s" % kind
+    command = gdal_config + " --%s" % option
     p = popen2.popen3(command)
     r = p[0].readline().strip()
     if not r:
         raise Warning(p[2].readline())
     return r  
     
-class gdal_build_ext(build_ext):
+class gdal_ext(build_ext):
 
-    DEFAULT_GDAL_CONFIG = 'gdal-config'
+    GDAL_CONFIG = 'gdal-config'
     user_options = build_ext.user_options[:]
     user_options.extend([
         ('gdal-config=', None,
@@ -92,13 +92,13 @@ class gdal_build_ext(build_ext):
 
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = None
-        self.gdal_config = self.DEFAULT_GDAL_CONFIG
+        self.gdal_config = self.GDAL_CONFIG
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
     
-    def get_gdal_config(self, kind):
-        return get_gdal_config(kind, gdal_config =self.gdal_config)
+    def get_gdal_config(self, option):
+        return get_gdal_config(option, gdal_config =self.gdal_config)
     
     def finalize_win32(self):
         if self.get_compiler() == 'msvc':
@@ -224,7 +224,7 @@ if HAVE_SETUPTOOLS:
            zip_safe = False,
            exclude_package_data = exclude_package_data,
            install_requires =['numpy>=1.0.0'],
-           cmdclass={'build_ext':gdal_build_ext},
+           cmdclass={'build_ext':gdal_ext},
            ext_modules = ext_modules )
 else:
     setup( name = name,
@@ -241,5 +241,5 @@ else:
            packages = packages,
            data_files = data_files,
            url=url,
-           cmdclass={'build_ext':gdal_build_ext},
+           cmdclass={'build_ext':gdal_ext},
            ext_modules = ext_modules )
