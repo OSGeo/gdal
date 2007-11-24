@@ -26,11 +26,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from osgeo import gdal
+    from osgeo import ogr
+    from osgeo import osr
+    from osgeo.gdalconst import *
+except:
+    import gdal
+    import ogr
+    import osr
+    from gdalconst import *
 
-import gdal
-import ogr
-import osr
-from gdalconst import *
 import sys
 import os
 import math
