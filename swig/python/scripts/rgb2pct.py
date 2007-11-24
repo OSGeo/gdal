@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #******************************************************************************
-#  $Id: rgb2pct.py 6219 2004-06-01 13:24:09Z warmerda $
+#  $Id$
 # 
 #  Name:     rgb2pct
 #  Project:  GDAL Python Interface
@@ -28,7 +28,6 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
-# 
 
 
 import gdal
