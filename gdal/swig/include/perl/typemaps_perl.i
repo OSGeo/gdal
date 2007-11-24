@@ -436,8 +436,9 @@ static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     AV* av = (AV*)sv_2mortal((SV*)newAV());
     char **stringarray = $1;
     if ( stringarray != NULL ) {
-	for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
-	    SV *s = newSVpv(*stringarray, strlen(*stringarray));
+	int n = CSLCount( stringarray );
+	for ( int i = 0; i < n; i++ ) {
+	    SV *s = newSVpv(stringarray[i], strlen(*stringarray));
 	    if (!av_store(av, i, s))
 		SvREFCNT_dec(s);
 	}
