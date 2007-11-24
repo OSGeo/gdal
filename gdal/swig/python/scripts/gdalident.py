@@ -28,8 +28,11 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 #
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
-import gdal
 import sys
 import stat
 import os
