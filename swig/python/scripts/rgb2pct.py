@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #******************************************************************************
-#  $Id$
+#  $Id: rgb2pct.py 6219 2004-06-01 13:24:09Z warmerda $
 # 
 #  Name:     rgb2pct
 #  Project:  GDAL Python Interface
@@ -29,8 +29,11 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
-import gdal
 import sys
 import os.path
 
