@@ -110,42 +110,6 @@ class gdal_build_ext(build_ext):
     
     def finalize_win32(self):
         if self.get_compiler() == 'msvc':
-            # Created by the GDAL build process.
-            # This was swiped from MapServer
-            setupvars = "../setup.ini"
-
-            # Open and read lines from setup.ini.
-            try:
-              fp = open(setupvars, "r")
-            except IOError, e:
-              raise IOError, '%s. %s' % (e, "Has GDAL been made?")
-            gdal_basedir = fp.readline()
-            old_version = fp.readline()
-            gdal_libs = fp.readline()
-            gdal_includes = fp.readline()
-            lib_opts = gdal_libs.split()
-            library_dirs = [x[2:] for x in lib_opts if x[:2] == "-L"]
-            library_dirs = unique(library_dirs)
-            library_dirs = library_dirs + gdal_basedir.split()
-            libraries = []
-            extras = []
-
-            for x in lib_opts:
-                if x[:2] == '-l':
-                    libraries.append( x[2:] )
-                if x[-4:] == '.lib' or x[-4:] == '.LIB':
-                  dir, lib = os.path.split(x)
-                  libraries.append( lib[:-4] )
-                  if len(dir) > 0:
-                      library_dirs.append( dir )
-                if x[-2:] == '.a':
-                    extras.append(x)
-            
-            # don't forget to add gdal to the list :)
-            self.library_dirs.append(library_dirs)
-            
-            libraries.append('gdal_i')
-            extra_link_args = []#['/NODEFAULTLIB:MSVCRT']
             self.libraries.remove('gdal')
             self.libraries.append('gdal_i')
         build_ext.finalize_win32()
@@ -155,6 +119,8 @@ class gdal_build_ext(build_ext):
         
         self.include_dirs.append(self.numpy_include_dir)
         
+        if self.get_compiler() == 'msvc':
+            return True
         try:
             self.gdaldir = self.get_gdal_config('prefix')
             self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
@@ -168,48 +134,48 @@ class gdal_build_ext(build_ext):
 
 
 
-if sys.platform == 'cygwin':
-    TOP_DIR = "../.."
+#if sys.platform == 'cygwin':
+#    TOP_DIR = "../.."
+#     
+#    DICT = parse_makefile(os.path.join(TOP_DIR,"GDALMake.opt"))
+#     
+#    library_dirs = [TOP_DIR+"/","./"]
+#    prefix = string.split(DICT[expand_makefile_vars("prefix",DICT)])[0]
+#    prefix_lib = prefix + "/lib"
+#    library_dirs.append(prefix_lib)
      
-    DICT = parse_makefile(os.path.join(TOP_DIR,"GDALMake.opt"))
+#    extra_link_args = []
      
-    library_dirs = [TOP_DIR+"/","./"]
-    prefix = string.split(DICT[expand_makefile_vars("prefix",DICT)])[0]
-    prefix_lib = prefix + "/lib"
-    library_dirs.append(prefix_lib)
+#    print "\nLIBRARY_DIRS:\n\t",library_dirs
      
-    extra_link_args = []
+#    libraries = ["gdal"]
+#    gdal_libs = ["LIBS","PG_LIB","MYSQL_LIB"]
+#    for gdal_lib in gdal_libs:
+#        for lib in string.split(DICT[expand_makefile_vars(gdal_lib,DICT)]):
+#            if lib[0:2] == "-l":
+#                libraries.append(lib[2:])
+#    libraries.append("stdc++")
+#     
+#    print "\nLIBRARIES:\n\t",libraries
      
-    print "\nLIBRARY_DIRS:\n\t",library_dirs
+#    include_dirs=[os.path.join(TOP_DIR,"gcore"), os.path.join(TOP_DIR,"port"),
+#        os.path.join(TOP_DIR,"ogr"), os.path.join(TOP_DIR,"pymod"), ] # only necessary
      
-    libraries = ["gdal"]
-    gdal_libs = ["LIBS","PG_LIB","MYSQL_LIB"]
-    for gdal_lib in gdal_libs:
-        for lib in string.split(DICT[expand_makefile_vars(gdal_lib,DICT)]):
-            if lib[0:2] == "-l":
-                libraries.append(lib[2:])
-    libraries.append("stdc++")
+#    include_files = [
+#      glob(os.path.join(TOP_DIR,"gcore", "*.h")),
+#      glob(os.path.join(TOP_DIR,"port", "*.h")),
+#      glob(os.path.join(TOP_DIR,"alg", "*.h")),
+#      glob(os.path.join(TOP_DIR,"ogr", "*.h")), 
+#      glob(os.path.join(TOP_DIR,"ogr", "ogrsf_frmts", "*.h"))
+#            ]
      
-    print "\nLIBRARIES:\n\t",libraries
+#    IF=[]
+#    for i in include_files:
+#      IF.extend(i)
+#    include_files=IF
+#    del IF
      
-    include_dirs=[os.path.join(TOP_DIR,"gcore"), os.path.join(TOP_DIR,"port"),
-        os.path.join(TOP_DIR,"ogr"), os.path.join(TOP_DIR,"pymod"), ] # only necessary
-     
-    include_files = [
-      glob(os.path.join(TOP_DIR,"gcore", "*.h")),
-      glob(os.path.join(TOP_DIR,"port", "*.h")),
-      glob(os.path.join(TOP_DIR,"alg", "*.h")),
-      glob(os.path.join(TOP_DIR,"ogr", "*.h")), 
-      glob(os.path.join(TOP_DIR,"ogr", "ogrsf_frmts", "*.h"))
-            ]
-     
-    IF=[]
-    for i in include_files:
-      IF.extend(i)
-    include_files=IF
-    del IF
-     
-    print "\nINCLUDE_FILES:",include_files
+#    print "\nINCLUDE_FILES:",include_files
 # else:
 #     libraries = ['gdal']
 #     library_dirs = ['../../.libs','../..','/usr/lib','/usr/local/lib']
@@ -364,4 +330,5 @@ else:
            packages = packages,
            data_files = data_files,
            url=url,
+           cmdclass={'build_ext':gdal_build_ext},
            ext_modules = ext_modules )
