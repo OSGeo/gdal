@@ -242,7 +242,7 @@
 # @param options
 # @return a new Geo::OGR::DataSource object
 
-## @method $Open($name, $update = 0)
+## @method $OpenDataSource($name, $update = 0)
 # @param name
 # @param update
 # @return a new Geo::OGR::DataSource object
@@ -253,6 +253,12 @@
 
 ## @method $GetName()
 # @return the name
+
+## @method $Open($name, $update = 0)
+# An alias for OpenDataSource
+# @param name
+# @param update
+# @return a new Geo::OGR::DataSource object
 
 
 ## @class Geo::OGR::DataSource
@@ -284,11 +290,13 @@
 ## @attr name
 # string (access as $datasource->{name})
 
-## @method $GetRefCount()
-# @return integer
+## @method $Layer($layer)
+# @param layer a name (primary) or index (secondary) of the requested
+# layer. If undefined returns the first layer.
+# @return a new Geo::OGR::Layer object
 
-## @method $GetSummaryRefCount()
-# @return integer
+## @method @Layers()
+# @return a list of layer names
 
 ## @method $GetLayerCount()
 # @return integer
@@ -298,9 +306,6 @@
 
 ## @method $GetName()
 # @return string
-
-## @method DeleteLayer($index)
-# @param index
 
 ## @method $CreateLayer($name, $srs = undef, $geom_type = 'Unknown', \@options = undef)
 # @param name
@@ -315,13 +320,13 @@
 # @param options
 # @return a new Geo::OGR::Layer object
 
-## @method $GetLayerByIndex($index = 0)
-# @param index
-# @return a new Geo::OGR::Layer object
-
-## @method $GetLayerByName($name)
-# @param name
-# @return a new Geo::OGR::Layer object
+## @method DeleteLayer($layer)
+# Deletes a layer from the data source. Note that if there are layers
+# objects for the deleted layer, they become unusable.
+# @param layer name (primary) or index (secondary), if ambiguous use
+# named parameter syntax (name or index)
+# @param layer layer a name (primary) or index (secondary) of the
+# layer to be deleted
 
 ## @method $ExecuteSQL($statement, $geom = undef, $dialect = "")
 # @param statement
@@ -331,6 +336,20 @@
 
 ## @method ReleaseResultSet($layer)
 # @param layer a layer the has been created with ExecuteSQL
+
+## @method $GetLayerByIndex($index = 0)
+# @param index
+# @return a new Geo::OGR::Layer object
+
+## @method $GetLayerByName($name)
+# @param name
+# @return a new Geo::OGR::Layer object
+
+## @method $GetRefCount()
+# @return integer
+
+## @method $GetSummaryRefCount()
+# @return integer
 
 
 ## @class Geo::OGR::Layer
@@ -602,8 +621,10 @@
 ## @method \%Schema(%schema)
 # Get or set the schema. The schema is a hash (Name => name,
 # GeometryType => geometry_type, Fields => [list of
-# Geo::OGR::FieldDefn objects]. The Name cannot be set and the Fields
-# are added to the schema.
+# Geo::OGR::FieldDefn objects or hashrefs from which such can be
+# created]. The Name cannot be set and the Fields are added to the
+# schema.
+# @return
 
 ## @method $GetName()
 # @return a string
@@ -660,7 +681,6 @@
 ## @cmethod $create(%parameters)
 # @param parameters named parameters: Name, Type, Justify, Width,
 # Precision
-# @param field_type one of field types
 # @return a new Geo::OGR::FieldDefn object
 
 ## @method \%Schema(%parameters)
