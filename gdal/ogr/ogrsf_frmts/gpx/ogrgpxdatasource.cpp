@@ -209,6 +209,9 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     if( VSIStatL( pszFilename, &sStatBuf ) != 0 )
         return FALSE;
+    
+    if( VSI_ISDIR(sStatBuf.st_mode) )
+        return FALSE;
 
     FILE* fp = VSIFOpenL(pszFilename, "r");
     
