@@ -8,7 +8,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
-			gdalenhance$(EXE)
+			gdalenhance$(EXE) gdaltransform$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
