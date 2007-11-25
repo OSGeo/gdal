@@ -91,6 +91,28 @@ OGRMemDataSource::CreateLayer( const char * pszLayerName,
 }
 
 /************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRMemDataSource::DeleteLayer( int iLayer )
+
+{
+    if( iLayer >= 0 && iLayer < nLayers )
+    {
+        delete papoLayers[iLayer];
+
+        for( int i = iLayer+1; i < nLayers; i++ )
+            papoLayers[i-1] = papoLayers[i];
+        
+        nLayers--;
+        
+        return OGRERR_NONE;
+    }
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -98,6 +120,8 @@ int OGRMemDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
     else
         return FALSE;
