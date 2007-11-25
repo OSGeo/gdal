@@ -2476,17 +2476,16 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 #define SWIGTYPE_p_GDALDatasetShadow swig_types[5]
 #define SWIGTYPE_p_GDALDriverShadow swig_types[6]
 #define SWIGTYPE_p_GDALMajorObjectShadow swig_types[7]
-#define SWIGTYPE_p_GDALPaletteInterp swig_types[8]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[9]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[10]
-#define SWIGTYPE_p_GDAL_GCP swig_types[11]
-#define SWIGTYPE_p_char swig_types[12]
-#define SWIGTYPE_p_double swig_types[13]
-#define SWIGTYPE_p_int swig_types[14]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[15]
-#define SWIGTYPE_p_p_char swig_types[16]
-static swig_type_info *swig_types[18];
-static swig_module_info swig_module = {swig_types, 17, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[8]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[9]
+#define SWIGTYPE_p_GDAL_GCP swig_types[10]
+#define SWIGTYPE_p_char swig_types[11]
+#define SWIGTYPE_p_double swig_types[12]
+#define SWIGTYPE_p_int swig_types[13]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[14]
+#define SWIGTYPE_p_p_char swig_types[15]
+static swig_type_info *swig_types[17];
+static swig_module_info swig_module = {swig_types, 16, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4178,10 +4177,6 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-  {
-    /* %typemap(newfree) char **options */
-    CSLDestroy( result );
-  }
   return resultobj;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
@@ -10177,8 +10172,8 @@ SWIGINTERN PyObject *_wrap_new_ColorTable(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   GDALPaletteInterp arg1 = (GDALPaletteInterp) GPI_RGB ;
   GDALColorTableShadow *result = 0 ;
-  void *argp1 ;
-  int res1 = 0 ;
+  int val1 ;
+  int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   char *  kwnames[] = {
     (char *) "palette", NULL 
@@ -10186,19 +10181,11 @@ SWIGINTERN PyObject *_wrap_new_ColorTable(PyObject *SWIGUNUSEDPARM(self), PyObje
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"|O:new_ColorTable",kwnames,&obj0)) SWIG_fail;
   if (obj0) {
-    {
-      res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_GDALPaletteInterp,  0  | 0);
-      if (!SWIG_IsOK(res1)) {
-        SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_ColorTable" "', argument " "1"" of type '" "GDALPaletteInterp""'"); 
-      }  
-      if (!argp1) {
-        SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_ColorTable" "', argument " "1"" of type '" "GDALPaletteInterp""'");
-      } else {
-        GDALPaletteInterp * temp = reinterpret_cast< GDALPaletteInterp * >(argp1);
-        arg1 = *temp;
-        if (SWIG_IsNewObj(res1)) delete temp;
-      }
-    }
+    ecode1 = SWIG_AsVal_int(obj0, &val1);
+    if (!SWIG_IsOK(ecode1)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "new_ColorTable" "', argument " "1"" of type '" "GDALPaletteInterp""'");
+    } 
+    arg1 = static_cast< GDALPaletteInterp >(val1);
   }
   {
     result = (GDALColorTableShadow *)new_GDALColorTableShadow(arg1);
@@ -10291,7 +10278,7 @@ SWIGINTERN PyObject *_wrap_ColorTable_GetPaletteInterpretation(PyObject *SWIGUNU
   }
   arg1 = reinterpret_cast< GDALColorTableShadow * >(argp1);
   {
-    result = GDALColorTableShadow_GetPaletteInterpretation(arg1);
+    result = (GDALPaletteInterp)GDALColorTableShadow_GetPaletteInterpretation(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -10299,7 +10286,7 @@ SWIGINTERN PyObject *_wrap_ColorTable_GetPaletteInterpretation(PyObject *SWIGUNU
       }
     }
   }
-  resultobj = SWIG_NewPointerObj((new GDALPaletteInterp(static_cast< const GDALPaletteInterp& >(result))), SWIGTYPE_p_GDALPaletteInterp, SWIG_POINTER_OWN |  0 );
+  resultobj = SWIG_From_int(static_cast< int >(result));
   return resultobj;
 fail:
   return NULL;
@@ -11620,24 +11607,16 @@ SWIGINTERN PyObject *_wrap_GetPaletteInterpretationName(PyObject *SWIGUNUSEDPARM
   PyObject *resultobj = 0;
   GDALPaletteInterp arg1 ;
   char *result = 0 ;
-  void *argp1 ;
-  int res1 = 0 ;
+  int val1 ;
+  int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:GetPaletteInterpretationName",&obj0)) SWIG_fail;
-  {
-    res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_GDALPaletteInterp,  0  | 0);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetPaletteInterpretationName" "', argument " "1"" of type '" "GDALPaletteInterp""'"); 
-    }  
-    if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "GetPaletteInterpretationName" "', argument " "1"" of type '" "GDALPaletteInterp""'");
-    } else {
-      GDALPaletteInterp * temp = reinterpret_cast< GDALPaletteInterp * >(argp1);
-      arg1 = *temp;
-      if (SWIG_IsNewObj(res1)) delete temp;
-    }
-  }
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetPaletteInterpretationName" "', argument " "1"" of type '" "GDALPaletteInterp""'");
+  } 
+  arg1 = static_cast< GDALPaletteInterp >(val1);
   {
     result = (char *)GDALGetPaletteInterpretationName(arg1);
     if ( bUseExceptions ) {
@@ -12584,7 +12563,6 @@ static swig_type_info _swigt__p_GDALColorTableShadow = {"_p_GDALColorTableShadow
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_GDALPaletteInterp = {"_p_GDALPaletteInterp", "GDALPaletteInterp *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)0, 0};
@@ -12603,7 +12581,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALDatasetShadow,
   &_swigt__p_GDALDriverShadow,
   &_swigt__p_GDALMajorObjectShadow,
-  &_swigt__p_GDALPaletteInterp,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_GDAL_GCP,
@@ -12622,7 +12599,6 @@ static swig_cast_info _swigc__p_GDALColorTableShadow[] = {  {&_swigt__p_GDALColo
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDriverShadow[] = {  {&_swigt__p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALColorTableShadow, _p_GDALColorTableShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterAttributeTableShadow, _p_GDALRasterAttributeTableShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_GDALPaletteInterp[] = {  {&_swigt__p_GDALPaletteInterp, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
@@ -12641,7 +12617,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALDatasetShadow,
   _swigc__p_GDALDriverShadow,
   _swigc__p_GDALMajorObjectShadow,
-  _swigc__p_GDALPaletteInterp,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_GDAL_GCP,

@@ -2999,6 +2999,12 @@ SWIGINTERN void OGRLayerShadow_ResetReading(OGRLayerShadow *self){
 SWIGINTERN char const *OGRLayerShadow_GetName(OGRLayerShadow *self){
     return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
   }
+SWIGINTERN char const *OGRLayerShadow_GetGeometryColumn(OGRLayerShadow *self){
+    return OGR_L_GetGeometryColumn(self);
+  }
+SWIGINTERN char const *OGRLayerShadow_GetFIDColumn(OGRLayerShadow *self){
+    return OGR_L_GetFIDColumn(self);
+  }
 SWIGINTERN OGRFeatureShadow *OGRLayerShadow_GetFeature(OGRLayerShadow *self,long fid){
     return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
   }
@@ -3242,10 +3248,13 @@ SWIGINTERN OGRFieldType OGRFeatureShadow_GetFieldType__SWIG_1(OGRFeatureShadow *
 	      );
   }
 SWIGINTERN void delete_OGRFeatureDefnShadow(OGRFeatureDefnShadow *self){
-    OGR_FD_Destroy(self);
+    /*OGR_FD_Destroy(self);*/
+    OGR_FD_Release( OGRFeatureDefnH(self) );
   }
 SWIGINTERN OGRFeatureDefnShadow *new_OGRFeatureDefnShadow(char const *name_null_ok=NULL){
-    return (OGRFeatureDefnShadow* )OGR_FD_Create(name_null_ok);
+    OGRFeatureDefnH h = OGR_FD_Create(name_null_ok);
+    OGR_FD_Reference(h);
+    return (OGRFeatureDefnShadow* )h;
   }
 SWIGINTERN char const *OGRFeatureDefnShadow_GetName(OGRFeatureDefnShadow *self){
     return OGR_FD_GetName(self);
@@ -3420,11 +3429,20 @@ SWIGINTERN double OGRGeometryShadow_GetY(OGRGeometryShadow *self,int point=0){
 SWIGINTERN double OGRGeometryShadow_GetZ(OGRGeometryShadow *self,int point=0){
     return OGR_G_GetZ(self, point);
   }
+SWIGINTERN void OGRGeometryShadow_GetPoint(OGRGeometryShadow *self,int iPoint=0,double argout[3]=NULL){
+    OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
+  }
+SWIGINTERN void OGRGeometryShadow_GetPoint_2D(OGRGeometryShadow *self,int iPoint=0,double argout[2]=NULL){
+    OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
+  }
 SWIGINTERN int OGRGeometryShadow_GetGeometryCount(OGRGeometryShadow *self){
     return OGR_G_GetGeometryCount(self);
   }
 SWIGINTERN void OGRGeometryShadow_SetPoint(OGRGeometryShadow *self,int point,double x,double y,double z=0){
     OGR_G_SetPoint(self, point, x, y, z);
+  }
+SWIGINTERN void OGRGeometryShadow_SetPoint_2D(OGRGeometryShadow *self,int point,double x,double y){
+    OGR_G_SetPoint_2D(self, point, x, y);
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetGeometryRef(OGRGeometryShadow *self,int geom){
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
@@ -4937,6 +4955,66 @@ SWIGINTERN PyObject *_wrap_Layer_GetName(PyObject *SWIGUNUSEDPARM(self), PyObjec
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   {
     result = (char *)OGRLayerShadow_GetName(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetGeometryColumn(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  char *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Layer_GetGeometryColumn",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetGeometryColumn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  {
+    result = (char *)OGRLayerShadow_GetGeometryColumn(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetFIDColumn(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  char *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Layer_GetFIDColumn",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetFIDColumn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  {
+    result = (char *)OGRLayerShadow_GetFIDColumn(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9837,6 +9915,108 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_GetPoint(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int arg2 = (int) 0 ;
+  double *arg3 = (double *) (double *)NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  double argout3[3] ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (double argout3[ANY]) */
+    arg3 = argout3;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O|O:Geometry_GetPoint",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_GetPoint" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+  }
+  {
+    OGRGeometryShadow_GetPoint(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (double argout[ANY]) */
+    PyObject *out = CreateTupleFromDoubleArray( arg3, 3 );
+    resultobj = t_output_helper(resultobj,out);
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_GetPoint_2D(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int arg2 = (int) 0 ;
+  double *arg3 = (double *) (double *)NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  double argout3[2] ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  {
+    /* %typemap(in,numinputs=0) (double argout3[ANY]) */
+    arg3 = argout3;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O|O:Geometry_GetPoint_2D",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_GetPoint_2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_GetPoint_2D" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+  }
+  {
+    OGRGeometryShadow_GetPoint_2D(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (double argout[ANY]) */
+    PyObject *out = CreateTupleFromDoubleArray( arg3, 2 );
+    resultobj = t_output_helper(resultobj,out);
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_GetGeometryCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -9923,6 +10103,65 @@ SWIGINTERN PyObject *_wrap_Geometry_SetPoint(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_SetPoint_2D(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int arg2 ;
+  double arg3 ;
+  double arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "point",(char *) "x",(char *) "y", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO:Geometry_SetPoint_2D",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SetPoint_2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SetPoint_2D" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_SetPoint_2D" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Geometry_SetPoint_2D" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  {
+    OGRGeometryShadow_SetPoint_2D(arg1,arg2,arg3,arg4);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -11515,6 +11754,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Layer_SetAttributeFilter", _wrap_Layer_SetAttributeFilter, METH_VARARGS, NULL},
 	 { (char *)"Layer_ResetReading", _wrap_Layer_ResetReading, METH_VARARGS, NULL},
 	 { (char *)"Layer_GetName", _wrap_Layer_GetName, METH_VARARGS, NULL},
+	 { (char *)"Layer_GetGeometryColumn", _wrap_Layer_GetGeometryColumn, METH_VARARGS, NULL},
+	 { (char *)"Layer_GetFIDColumn", _wrap_Layer_GetFIDColumn, METH_VARARGS, NULL},
 	 { (char *)"Layer_GetFeature", _wrap_Layer_GetFeature, METH_VARARGS, NULL},
 	 { (char *)"Layer_GetNextFeature", _wrap_Layer_GetNextFeature, METH_VARARGS, NULL},
 	 { (char *)"Layer_SetNextByIndex", _wrap_Layer_SetNextByIndex, METH_VARARGS, NULL},
@@ -11605,8 +11846,11 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_GetX", (PyCFunction) _wrap_Geometry_GetX, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_GetY", (PyCFunction) _wrap_Geometry_GetY, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_GetZ", (PyCFunction) _wrap_Geometry_GetZ, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"Geometry_GetPoint", _wrap_Geometry_GetPoint, METH_VARARGS, NULL},
+	 { (char *)"Geometry_GetPoint_2D", _wrap_Geometry_GetPoint_2D, METH_VARARGS, NULL},
 	 { (char *)"Geometry_GetGeometryCount", _wrap_Geometry_GetGeometryCount, METH_VARARGS, NULL},
 	 { (char *)"Geometry_SetPoint", (PyCFunction) _wrap_Geometry_SetPoint, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"Geometry_SetPoint_2D", (PyCFunction) _wrap_Geometry_SetPoint_2D, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef, METH_VARARGS, NULL},
 	 { (char *)"Geometry_GetBoundary", _wrap_Geometry_GetBoundary, METH_VARARGS, NULL},
 	 { (char *)"Geometry_ConvexHull", _wrap_Geometry_ConvexHull, METH_VARARGS, NULL},
