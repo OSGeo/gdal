@@ -88,6 +88,37 @@ if (0) {
     ok(is_deeply(\@data,$data), "write/read tile");
 }
 
+{
+    my $r = Geo::GDAL::RasterAttributeTable->new;
+    my @t = $r->FieldTypes;
+    my @u = $r->FieldUsages;
+    for my $u (@u) {
+	for my $t (@t) {
+	    $r->CreateColumn("$t $u", $t, $u);
+	}
+    }
+    my $n = $r->GetColumnCount;
+    my $n2 = @t * @u;
+    ok($n == $n2, "create rat column");
+    $r->SetRowCount(scalar(@t));
+    my $i = 0;
+    my $c = 0;
+    for (@t) {
+	if (/Integer/) {
+	    my $v = $r->Value($i, $c, 12);
+	    ok($v == 12, "rat int");
+	} elsif (/Real/) {
+	    my $v = $r->Value($i, $c, 1.23);
+	    ok($v == 1.23, "rat int");
+	} elsif (/String/) {
+	    my $v = $r->Value($i, $c, "abc");
+	    ok($v eq 'abc', "rat str");
+	}
+	$i++;
+	$c++;
+    }
+}
+
 gdal_tests(Geo::GDAL::GetDriverCount());
 
 $src = Geo::OSR::SpatialReference->new();
@@ -312,6 +343,12 @@ sub gdal_tests {
 		    mytest($dataset->{RasterYSize} == $height,'RasterYSize',$name,$type,'RasterYSize');
 		    
 		    my $band = $dataset->GetRasterBand(1);
+
+		    {
+			my @a = ('abc','def');
+			my @b = $band->CategoryNames(@a);
+			ok(is_deeply(\@a, \@b,"$name,$type,CategoryNames"));
+		    }
 		    
 		    if ($pc) {
 			
