@@ -257,7 +257,7 @@
 # @param domain
 # @return
 
-## @method SetMetadata(\%Metadata, $Domain = "")
+## @method SetMetadata(\%metadata, $domain = "")
 # @param metadata
 # @param domain
 
@@ -523,7 +523,7 @@
 # Get or set the no data value.
 
 ## @method $GetNoDataValue()
-# @return number or undef
+# @return number (the "no data" value) or undef (there is no "no data" value).
 
 ## @method SetNoDataValue($NoDataValue)
 # @param NoDataValue (undef is zero, i.e., once set NoDataValue can't be removed)
@@ -609,13 +609,27 @@
 
 ## @method $GetMaskFlags()
 
-## @method GetRasterCategoryNames()
+## @method @CategoryNames(@names)
+# @param names
+# @return
 
-## @method SetRasterCategoryNames()
+## @method $GetRasterCategoryNames()
+# @return
 
-## @method GetDefaultRAT()
+## @method SetRasterCategoryNames($names)
+# @param names
 
-## @method SetDefaultRAT()
+## @method $AttributeTable($AttributeTable)
+# @param AttributeTable a Geo::GDAL::RasterAttributeTable object
+# @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
+
+## @method $GetDefaultRAT()
+# @deprecated use Geo::GDAL::Band::AttributeTable, which makes sure
+# the band is not destroyed before the attribute table
+# @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
+
+## @method SetDefaultRAT($AttributeTable)
+# @param AttributeTable a Geo::GDAL::RasterAttributeTable object
 
 ## @method $GetRasterColorInterpretation()
 # @deprecated use Geo::GDAL::Band::ColorInterpretation, which understands strings
@@ -655,7 +669,7 @@
 ## @method @ColorEntry($i, @color)
 # Get or set a color entry.
 # @param i
-# @color
+# @param color
 # @return a color entry
 
 ## @method @GetColorEntry($i)
@@ -684,36 +698,83 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new()
+## @cmethod $new()
+# @return a new Geo::GDAL::RasterAttributeTable object
 
-## @method Clone()
+## @cmethod @FieldTypes()
+# @return
 
-## @method GetColumnCount()
+## @cmethod @FieldUsages()
+# @return
 
-## @method GetNameOfCol()
+## @method $Clone()
+# @return a new Geo::GDAL::RasterAttributeTable object
 
-## @method GetUsageOfCol()
+## @method SetRowCount($count)
+# @param count
 
-## @method GetTypeOfCol()
+## @method $GetRowCount()
 
-## @method GetColOfUsage()
+## @method CreateColumn($name, $type, $usage)
+# @param name
+# @param type one of FieldTypes
+# @param usage one of FieldUsages
 
-## @method GetRowCount()
+## @method $GetColumnCount()
+# @return
 
-## @method GetValueAsString()
+## @method $GetNameOfCol($column)
+# @param column
+# @return
 
-## @method GetValueAsInt()
+## @method $GetUsageOfCol($column)
+# @param column
+# @return
 
-## @method GetValueAsDouble()
+## @method $GetTypeOfCol($column)
+# @param column
+# @return
 
-## @method SetValueAsString()
+## @method $GetColOfUsage($usage)
+# @param usage
+# @return
 
-## @method SetValueAsInt()
+## @method $GetRowOfValue($value)
+# @param value a pixel value
+# @return row index or -1
 
-## @method SetValueAsDouble()
+## @method $Value($row, $column, $value)
+# @param row
+# @param column
+# @param value
+# @return
 
-## @method SetRowCount()
+## @method $GetValueAsString($row, $column)
+# @param row
+# @param column
+# @return
 
-## @method CreateColumn()
+## @method $GetValueAsInt($row, $column)
+# @param row
+# @param column
+# @return
 
-## @method GetRowOfValue()
+## @method $GetValueAsDouble($row, $column)
+# @param row
+# @param column
+# @return
+
+## @method SetValueAsString($row, $column, $value)
+# @param row
+# @param column
+# @param value
+
+## @method SetValueAsInt($row, $column, $value)
+# @param row
+# @param column
+# @param value
+
+## @method SetValueAsDouble($row, $column, $value)
+# @param row
+# @param column
+# @param value
