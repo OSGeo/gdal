@@ -44,10 +44,10 @@ def ogr_mem_1():
     mem_drv = ogr.GetDriverByName('Memory')
     gdaltest.mem_ds = mem_drv.CreateDataSource( 'wrk_in_memory' )
 
-    if gdaltest.mem_ds is not None:
-        return 'success'
-    else:
+    if gdaltest.mem_ds is None:
         return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -333,6 +333,28 @@ def ogr_mem_10():
     return 'success'
     
 ###############################################################################
+# Verify that we can delete layers properly
+
+def ogr_mem_11():
+    
+    if gdaltest.mem_ds.TestCapability( 'DeleteLayer' ) == 0:
+        gdaltest.post_reason ('Deletelayer TestCapability failed.' )
+        return 'fail'
+
+    gdaltest.mem_ds.CreateLayer( 'extra' )
+
+    gdaltest.mem_lyr = None
+    gdaltest.mem_ds.DeleteLayer(0) # Delete tpoly layer
+
+    lyr = gdaltest.mem_ds.GetLayer(0)
+
+    if lyr.GetName() != 'extra':
+        gdaltest.post_reason( 'delete layer seems iffy' )
+        return 'failure'
+
+    return 'success'
+    
+###############################################################################
 # 
 
 def ogr_mem_cleanup():
@@ -356,6 +378,7 @@ gdaltest_list = [
     ogr_mem_8,
     ogr_mem_9,
     ogr_mem_10,
+    ogr_mem_11,
     ogr_mem_cleanup ]
 
 if __name__ == '__main__':
