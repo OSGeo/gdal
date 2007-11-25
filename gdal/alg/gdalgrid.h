@@ -40,24 +40,27 @@
 
 CPL_C_START
 
-typedef CPLErr (*GDALGridFunction)(void *, GUInt32,
-                                   double *, double *, double *,
-                                   double, double, double *);
+typedef CPLErr (*GDALGridFunction)( const void *, GUInt32,
+                                    const double *, const double *,
+                                    const double *,
+                                    double, double, double *);
 CPLErr
-GDALGridInverseDistanceToAPower( void *, GUInt32,
-                                 double *, double *, double *,
+GDALGridInverseDistanceToAPower( const void *, GUInt32,
+                                 const double *, const double *,
+                                 const double *,
                                  double, double, double * );
 CPLErr
-GDALGridInverseDistanceToAPowerNoSearch( void *, GUInt32,
-                                         double *, double *, double *,
+GDALGridInverseDistanceToAPowerNoSearch( const void *, GUInt32,
+                                         const double *, const double *,
+                                         const double *,
                                          double, double, double * );
 CPLErr
-GDALGridMovingAverage( void *, GUInt32,
-                       double *, double *, double *,
+GDALGridMovingAverage( const void *, GUInt32,
+                       const double *, const double *, const double *,
                        double, double, double * );
 CPLErr
-GDALGridNearestNeighbor( void *, GUInt32,
-                         double *, double *, double *,
+GDALGridNearestNeighbor( const void *, GUInt32,
+                         const double *, const double *, const double *,
                          double, double, double * );
 CPL_C_END
 
