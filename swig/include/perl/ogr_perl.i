@@ -112,6 +112,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_GetLayerByIndex) GetLayerByIndex;
 %rename (_GetLayerByName) GetLayerByName;
 %rename (_CreateLayer) CreateLayer;
+%rename (_DeleteLayer) DeleteLayer;
 %rename (_GetFieldType) GetFieldType;
 %rename (_SetGeometryDirectly) SetGeometryDirectly;
 %rename (_ExportToWkb) ExportToWkb;
@@ -137,6 +138,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    return @cap;
 	}
+	*OpenDataSource = *Open;
 	package Geo::OGR::DataSource;
 	use strict;
 	use vars qw /@CAPABILITIES %LAYERS/;
@@ -163,16 +165,35 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub OpenShared {
 	    return Geo::OGR::OpenShared(@_);
 	}
+	sub Layer {
+	    my($self, $name) = @_;
+	    my $layer = _GetLayerByName($self, $name) if defined $name;
+	    $layer = _GetLayerByIndex($self, $name) unless $layer;
+	    return unless $layer;
+	    $LAYERS{tied(%$layer)} = $self;
+	    return $layer;
+	}
+	sub Layers {
+	    my $self = shift;
+	    my @names;
+	    for my $i (0..$self->GetLayerCount-1) {
+		my $layer = _GetLayerByIndex($self, $i);
+		push @names, $layer->GetName;
+	    }
+	    return @names;
+	}
 	sub GetLayerByIndex {
 	    my($self, $index) = @_;
 	    $index = 0 unless defined $index;
 	    my $layer = _GetLayerByIndex($self, $index);
+	    return unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
 	sub GetLayerByName {
 	    my($self, $name) = @_;
 	    my $layer = _GetLayerByName($self, $name);
+	    return unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
@@ -183,6 +204,24 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $layer = _CreateLayer(@p);
 	    $LAYERS{tied(%$layer)} = $p[0];
 	    return $layer;
+	}
+	sub DeleteLayer {
+	    my $self = shift;
+	    my $name;
+	    if (@_ == 2) {
+		my %param = @_;
+		_DeleteLayer($self, $param{index}), return if exists $param{index};
+		$name = $param{name};
+	    } else {
+		$name = shift;
+	    }
+	    my $index;
+	    for my $i (0..$self->GetLayerCount-1) {
+		my $layer = _GetLayerByIndex($self, $i);
+		$index = $i, last if $layer->GetName eq $name;
+	    }
+	    $index = $name unless defined $index;
+	    _DeleteLayer($self, $index) if defined $index;
 	}
 	package Geo::OGR::Layer;
 	use strict;
@@ -335,6 +374,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		# the Name cannot be set
 		$self->GeomType($schema{GeometryType}) if exists $schema{GeometryType};
 		for my $fd (@{$schema{Fields}}) {
+		    if (ref($fd) eq 'HASH') {
+			$fd = Geo::OGR::FieldDefn->create(%$fd);
+		    }
 		    AddFieldDefn($self, $fd);
 		}
 	    }
@@ -711,6 +753,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     sub GetDriver {
 	my($name_or_number) = @_;
 	return _GetDriver($name_or_number) if $name_or_number =~ /^\d/;
-	return GetDriverByName($name_or_number);
+	return GetDriverByName("$name_or_number");
     }
 %}
