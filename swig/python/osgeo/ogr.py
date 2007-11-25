@@ -814,6 +814,24 @@ class Layer(_object):
         """GetName(self) -> char"""
         return _ogr.Layer_GetName(*args)
 
+    def GetGeometryColumn(*args):
+        """
+        GetGeometryColumn(self) -> char
+
+        const char*
+        OGR_L_GetGeometryColumn(OGRLayerH hLayer) 
+        """
+        return _ogr.Layer_GetGeometryColumn(*args)
+
+    def GetFIDColumn(*args):
+        """
+        GetFIDColumn(self) -> char
+
+        const char*
+        OGR_L_GetFIDColumn(OGRLayerH hLayer) 
+        """
+        return _ogr.Layer_GetFIDColumn(*args)
+
     def GetFeature(*args):
         """
         GetFeature(self, long fid) -> Feature
@@ -2593,6 +2611,14 @@ class Geometry(_object):
         """GetZ(self, int point=0) -> double"""
         return _ogr.Geometry_GetZ(*args, **kwargs)
 
+    def GetPoint(*args):
+        """GetPoint(self, int iPoint=0, double argout=None)"""
+        return _ogr.Geometry_GetPoint(*args)
+
+    def GetPoint_2D(*args):
+        """GetPoint_2D(self, int iPoint=0, double argout=None)"""
+        return _ogr.Geometry_GetPoint_2D(*args)
+
     def GetGeometryCount(*args):
         """GetGeometryCount(self) -> int"""
         return _ogr.Geometry_GetGeometryCount(*args)
@@ -2600,6 +2626,10 @@ class Geometry(_object):
     def SetPoint(*args, **kwargs):
         """SetPoint(self, int point, double x, double y, double z=0)"""
         return _ogr.Geometry_SetPoint(*args, **kwargs)
+
+    def SetPoint_2D(*args, **kwargs):
+        """SetPoint_2D(self, int point, double x, double y)"""
+        return _ogr.Geometry_SetPoint_2D(*args, **kwargs)
 
     def GetGeometryRef(*args):
         """GetGeometryRef(self, int geom) -> Geometry"""
