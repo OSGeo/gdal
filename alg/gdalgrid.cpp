@@ -88,6 +88,9 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue )
 {
+    // TODO: For optimization purposes pre-computed parameters should be moved
+    // out of this routine to the calling function.
+
     // Pre-compute search ellipse parameters
     double      dfRadius1 =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfRadius1;
@@ -110,13 +113,13 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
         dfCoeff2 = sin(dfAngle);
     }
 
-    double  dfNominator = 0.0, dfDenominator = 0.0;
     const double    dfPower =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
     const double    dfSmoothing =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
     const GUInt32   nMaxPoints = 
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->nMaxPoints;
+    double  dfNominator = 0.0, dfDenominator = 0.0;
     GUInt32 i, n = 0;
 
     for ( i = 0; i < nPoints; i++ )
@@ -135,7 +138,7 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
             dfRY = dfRYRotated;
         }
 
-        // Does this point located inside the search ellipse?
+        // Is this point located inside the search ellipse?
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
             if ( CPLIsEqual(dfR2, 0.0) )
@@ -145,11 +148,11 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
             }
             else
             {
-                double  dfW = pow( sqrt(dfR2), dfPower );
+                const double  dfW = pow( sqrt(dfR2), dfPower );
                 dfNominator += pdfZ[i] / dfW;
                 dfDenominator += 1.0 / dfW;
                 n++;
-                if (nMaxPoints > 0 && n > nMaxPoints)
+                if ( nMaxPoints > 0 && n > nMaxPoints )
                     break;
             }
         }
@@ -167,6 +170,65 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
     return CE_None;
 }
 
+/************************************************************************/
+/*              GDALGridInverseDistanceToAPowerNoSearch()               */
+/************************************************************************/
+
+/**
+ * Inverse distance to a power for whole data set.
+ *
+ * This is somewhat optimized version of the Inverse Distance to a Power
+ * method. It is used when the search ellips is not set. The algorithm and
+ * parameters are the same as in GDALGridInverseDistanceToAPower(), but this
+ * implementation works faster, because of no search.
+ *
+ * @see GDALGridInverseDistanceToAPower()
+ */
+
+CPLErr
+GDALGridInverseDistanceToAPowerNoSearch( void *poOptions, GUInt32 nPoints,
+                                         double *pdfX, double *pdfY,
+                                         double *pdfZ,
+                                         double dfXPoint, double dfYPoint,
+                                         double *pdfValue )
+{
+    const double    dfPower =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+    const double    dfSmoothing =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
+    double  dfNominator = 0.0, dfDenominator = 0.0;
+    GUInt32 i;
+
+    for ( i = 0; i < nPoints; i++ )
+    {
+        const double dfRX = pdfX[i] - dfXPoint;
+        const double dfRY = pdfY[i] - dfYPoint;
+        const double dfR2 =
+            dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
+
+        if ( CPLIsEqual(dfR2, 0.0) )
+        {
+            (*pdfValue) = pdfZ[i];
+            return CE_None;
+        }
+        else
+        {
+            const double dfW = pow( sqrt(dfR2), dfPower );
+            dfNominator += pdfZ[i] / dfW;
+            dfDenominator += 1.0 / dfW;
+        }
+    }
+
+    if ( dfDenominator == 0.0 )
+    {
+        (*pdfValue) =
+            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = dfNominator / dfDenominator;
+
+    return CE_None;
+}
 /************************************************************************/
 /*                        GDALGridMovingAverage()                       */
 /************************************************************************/
@@ -200,6 +262,9 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
                        double *pdfX, double *pdfY, double *pdfZ,
                        double dfXPoint, double dfYPoint, double *pdfValue )
 {
+    // TODO: For optimization purposes pre-computed parameters should be moved
+    // out of this routine to the calling function.
+
     // Pre-compute search ellipse parameters
     double  dfRadius1 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius1;
     double  dfRadius2 = ((GDALGridMovingAverageOptions *)poOptions)->dfRadius2;
@@ -237,7 +302,7 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
             dfRY = dfRYRotated;
         }
 
-        // Does this point located inside the search ellipse?
+        // Is this point located inside the search ellipse?
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
             dfAccumulator += pdfZ[i];
@@ -290,6 +355,9 @@ GDALGridNearestNeighbor( void *poOptions, GUInt32 nPoints,
                          double *pdfX, double *pdfY, double *pdfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue )
 {
+    // TODO: For optimization purposes pre-computed parameters should be moved
+    // out of this routine to the calling function.
+
     // Pre-compute search ellipse parameters
     double  dfRadius1 =
         ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
@@ -334,7 +402,7 @@ GDALGridNearestNeighbor( void *poOptions, GUInt32 nPoints,
             dfRY = dfRYRotated;
         }
 
-        // Does this point located inside the search ellipse?
+        // Is this point located inside the search ellipse?
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
             const double    dfR2 = dfRX * dfRX + dfRY * dfRY;
@@ -411,7 +479,13 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
     switch ( eAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
-            pfnGDALGridMethod = GDALGridInverseDistanceToAPower;
+            if ( ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
+                 dfRadius1 == 0.0 &&
+                 ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
+                 dfRadius2 == 0.0 )
+                pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNoSearch;
+            else
+                pfnGDALGridMethod = GDALGridInverseDistanceToAPower;
             break;
 
         case GGA_MovingAverage:
@@ -474,5 +548,4 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
 
     return CE_None;
 }
-
 
