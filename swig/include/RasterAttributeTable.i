@@ -127,9 +127,11 @@ public:
         return GDALRATGetValueAsDouble( self, iRow, iCol );
     }
 
+    %apply ( tostring argin ) { (const char* pszValue) };
     void SetValueAsString( int iRow, int iCol, const char *pszValue ) { 
         GDALRATSetValueAsString( self, iRow, iCol, pszValue );
     }
+    %clear (const char* pszValue );
 
     void SetValueAsInt( int iRow, int iCol, int nValue ) { 
         GDALRATSetValueAsInt( self, iRow, iCol, nValue );
