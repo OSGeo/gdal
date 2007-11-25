@@ -19,6 +19,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdal_merge - Build a quick mosaic from a set of images.
 <li> \ref gdal2tiles - Create a TMS tile structure, KML and simple web viewer.
 <li> \ref gdal_rasterize - Rasterize vectors into raster file.
+<li> \ref gdaltransform - Transform coordinates.
 <li> \ref nearblack - Convert nearly black/white borders to exact value.
 <li> \ref gdal_retile - Retiles a set of tiles and/or build tiled pyramid levels.
 <li> \ref gdal-config - Get options required to build software using GDAL.
@@ -913,6 +914,86 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
 
+*******************************************************************************
+/*! \page gdaltransform gdaltransform
+	
+transforms coordinates 
+
+\if man
+\section synopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+gdaltransform [--help-general]
+	[i] [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps]
+	[-gcp pixel line easting northing [elevation]]*
+	[srcfile [dstfile]]
+\endverbatim
+
+\if man
+\section description DESCRIPTION
+\endif
+
+The gdaltransform utility reprojects a list of coordinates into any supported projection,including  
+GCP-based transformations.
+
+<dl>
+<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference set.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+containing well known text.</dd>
+<dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
+containing well known text.</dd>
+<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping
+(1 to 3). The default is to select a polynomial order based on the number of
+GCPs.</dd>
+<dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer based on
+available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
+<dt> <b>-i</b></dt><dd>Inverse transformation: from destination to source.</dd>
+<dt> <em>srcfile</em>:</dt><dd> File with source projection definition or GCP's. If
+    not given, source projection is read from the command-line -s_srs or -gcp parameters </dd>
+<dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>
+</dl>
+
+
+Coordinates are read as pairs (or triples) of numbers per line from standard input, 
+transformed, and written out to standard output in 
+the same way. All transformations offered by gdalwarp are handled, including gcp-based 
+ones.
+
+Note that input and output must always be in decimal form.  There is currently
+no support for DMS input or output.
+
+
+
+\if man
+\section example EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+\verbatim
+gdaltransform -s_srs epsg:28992 -t_srs epsg:31370
+177502 311865
+244510.77404604 166154.532871342 -1046.79270555763
+
+\endverbatim
+
+\if man
+\section author AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Jan Hartmann <j.l.h.hartmann@uva.nl>
+\endif
+*/
 *******************************************************************************
 /*! \page nearblack nearblack
 
