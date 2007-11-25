@@ -539,7 +539,7 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
                 ((double *)pData)[nYPoint * nXSize + nXPoint] = dfValue;
         }
 
-	if( !pfnProgress( (double)nYPoint / (nYSize - 1), NULL, pProgressArg ) )
+	if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
 	{
 	    CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
 	    return CE_Failure;
