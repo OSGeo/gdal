@@ -334,12 +334,17 @@ bool OGRGeoJSONReader::GenerateLayerDefn()
 		}
 	}
 
+    // TODO - mloskot: This is wrong! We want to add only FID field if
+    // found in source layer (by default name or by FID_PROPERTY= specifier,
+    // the latter has to be implemented).
+    /*
     if( !bHasFID )
     {
         OGRFieldDefn fldDefn( OGRGeoJSONLayer::DefaultFIDColumn, OFTInteger );
         poLayerDefn->AddFieldDefn( &fldDefn );
         poLayer_->SetFIDColumn( fldDefn.GetNameRef() );
     }
+    */
 
     return bSuccess;
 }
