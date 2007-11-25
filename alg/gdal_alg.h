@@ -279,6 +279,10 @@ typedef struct
     /*! Smoothing */
     double  dfSmoothing;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse */
+    double  dfAnisotropyRatio;
+    /*! Reserved for future use */
+    double  dfAnisotropyAngle;
+    /*! Reserved for future use */
     double  dfRadius1;
     /*! The first radius (Y axis if rotation angle is 0) of search ellipse */
     double  dfRadius2;
