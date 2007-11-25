@@ -94,7 +94,8 @@ OGRErr OGRGeoJSONReader::Parse( const char* pszText )
 /*                           ReadLayer                                  */
 /************************************************************************/
 
-OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
+OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
+                                              OGRGeoJSONDataSource* poDS )
 {
     CPLAssert( NULL == poLayer_ );
     bool bSuccess = false;
@@ -108,7 +109,7 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName )
         
     poLayer_ = new OGRGeoJSONLayer( pszName, NULL,
                                    OGRGeoJSONLayer::DefaultGeometryType,
-                                   NULL );
+                                   NULL, poDS );
 
     if( !GenerateLayerDefn() )
     {

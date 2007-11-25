@@ -33,6 +33,8 @@
 #include <cstdio>
 #include <vector> // used by OGRGeoJSONLayer
 
+class OGRGeoJSONDataSource;
+
 /************************************************************************/
 /*                           OGRGeoJSONLayer                            */
 /************************************************************************/
@@ -48,7 +50,8 @@ public:
     OGRGeoJSONLayer( const char* pszName,
                      OGRSpatialReference* poSRS,
                      OGRwkbGeometryType eGType,
-                     char** papszOptions);
+                     char** papszOptions,
+                     OGRGeoJSONDataSource* poDS );
     ~OGRGeoJSONLayer();
 
     //
@@ -62,6 +65,7 @@ public:
     OGRFeature* GetNextFeature();
     OGRFeature* GetFeature( long nFID );
     OGRErr CreateFeature( OGRFeature* poFeature );
+    OGRErr CreateField(OGRFieldDefn* poField, int bApproxOK);
     int TestCapability( const char* pszCap );
     const char* GetFIDColumn();
     void SetFIDColumn( const char* pszFIDColumn );
@@ -79,9 +83,12 @@ private:
     typedef std::vector<OGRFeature*> FeaturesSeq;
     FeaturesSeq seqFeatures_;
     FeaturesSeq::iterator iterCurrent_;
+
+    OGRGeoJSONDataSource* poDS_;
     OGRFeatureDefn* poFeatureDefn_;
     OGRSpatialReference* poSRS_;
     CPLString sFIDColumn_;
+    int nOutCounter_;
 };
 
 /************************************************************************/
@@ -112,6 +119,7 @@ public:
     // OGRGeoJSONDataSource Interface
     //
     int Create( const char* pszName, char** papszOptions );
+    FILE* GetOutputFile() const { return fpOut_; }
 
     enum GeometryTranslation
     {

@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include "ogr_geojson.h"
+#include "ogrgeojsonwriter.h"
+#include <json.h> // JSON-C
 #include <algorithm> // for_each, find_if
 
 /************************************************************************/
@@ -44,12 +46,13 @@ const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
-                                  char** papszOptions )
-    : poFeatureDefn_(new OGRFeatureDefn( pszName ) ),
-      poSRS_( NULL )
+                                  char** papszOptions,
+                                  OGRGeoJSONDataSource* poDS )
+    : poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL ), nOutCounter_( 0 )
 {
+    CPLAssert( NULL != poDS_ );
     CPLAssert( NULL != poFeatureDefn_ );
-
+    
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eGType );
 
@@ -65,6 +68,12 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
 
 OGRGeoJSONLayer::~OGRGeoJSONLayer()
 {
+    FILE* fp = poDS_->GetOutputFile();
+    if( NULL != fp )
+    {
+        VSIFPrintf( fp, "\n]\n}\n" );
+    }
+
     std::for_each(seqFeatures_.begin(), seqFeatures_.end(),
                   OGRFeature::DestroyFeature);
 
@@ -233,15 +242,54 @@ OGRFeature* OGRGeoJSONLayer::GetFeature( long nFID )
 
 OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
 {
+    FILE* fp = poDS_->GetOutputFile();
+    if( NULL == poFeature )
+    {
+        CPLDebug( "GeoJSON", "Target datasource file is invalid." );
+        return CE_Failure;
+    }
+
     if( NULL == poFeature )
     {
         CPLDebug( "GeoJSON", "Feature is null" );
         return OGRERR_INVALID_HANDLE;
     }
 
-    OGRFeature* poNewFeature = NULL;
-    poNewFeature = poFeature->Clone();
-    seqFeatures_.push_back( poNewFeature );
+    json_object* poObj = OGRGeoJSONWriteFeature( poFeature );
+    CPLAssert( NULL != poObj );
+
+    if( nOutCounter_ > 0 )
+    {
+        /* Separate "Feature" entries in "FeatureCollection" object. */
+        VSIFPrintf( fp, ",\n" );
+    }
+    VSIFPrintf( fp, "%s\n", json_object_to_json_string( poObj ) );
+
+    json_object_put( poObj );
+
+    ++nOutCounter_;
+
+    return OGRERR_NONE;
+}
+
+OGRErr OGRGeoJSONLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
+{
+    for( int i = 0; i < poFeatureDefn_->GetFieldCount(); ++i )
+    {
+        OGRFieldDefn* poDefn = poFeatureDefn_->GetFieldDefn(i);
+        CPLAssert( NULL != poDefn );
+
+        if( EQUAL( poDefn->GetNameRef(), poField->GetNameRef() ) )
+        {
+            CPLDebug( "GeoJSON", "Field '%s' already present in schema",
+                      poField->GetNameRef() );
+            
+            // TODO - mloskot: Is this return code correct?
+            return OGRERR_NONE;
+        }
+    }
+
+    poFeatureDefn_->AddFieldDefn( poField );
 
     return OGRERR_NONE;
 }
