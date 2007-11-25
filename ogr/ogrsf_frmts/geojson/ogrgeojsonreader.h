@@ -80,6 +80,8 @@ struct GeoJSONObject
 /*                           OGRGeoJSONReader                           */
 /************************************************************************/
 
+class OGRGeoJSONDataSource;
+
 class OGRGeoJSONReader
 {
 public:
@@ -91,7 +93,7 @@ public:
     void SetSkipAttributes( bool bSkip );
 
     OGRErr Parse( const char* pszText );
-    OGRGeoJSONLayer* ReadLayer( const char* pszName );
+    OGRGeoJSONLayer* ReadLayer( const char* pszName, OGRGeoJSONDataSource* poDS );
 
 private:
 

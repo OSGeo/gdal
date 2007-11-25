@@ -32,6 +32,8 @@
 #include <ogr_core.h>
 #include <json.h> // JSON-C
 
+class OGRGeometry;
+
 /************************************************************************/
 /*                           mloskot_deleter functor                    */
 /************************************************************************/
@@ -85,5 +87,11 @@ int GeoJSONIsObject( const char* pszText );
 /************************************************************************/
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject );
+
+/************************************************************************/
+/*                           OGRGeoJSONGetGeometryName                  */
+/************************************************************************/
+
+const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry );
 
 #endif /* OGR_GEOJSONUTILS_H_INCLUDED */

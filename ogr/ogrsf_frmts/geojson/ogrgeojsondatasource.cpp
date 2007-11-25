@@ -53,6 +53,12 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
 OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 {
     Clear();
+    
+    if( NULL != fpOut_ )
+    {
+        if ( fpOut_ != stdout )
+            VSIFClose( fpOut_ );
+    }
 }
 
 /************************************************************************/
@@ -178,7 +184,7 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
                                              char** papszOptions )
 {
     OGRGeoJSONLayer* poLayer = NULL;
-    poLayer = new OGRGeoJSONLayer( pszName_, poSRS, eGType, papszOptions );
+    poLayer = new OGRGeoJSONLayer( pszName_, poSRS, eGType, papszOptions, this );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -191,6 +197,11 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
         CPLRealloc( papoLayers_,  sizeof(OGRGeoJSONLayer*) * (nLayers_ + 1) );
     
     papoLayers_[nLayers_++] = poLayer;
+
+    if( NULL != fpOut_ )
+    {
+        VSIFPrintf( fpOut_, "{\n\"type\": \"FeatureCollection\",\n\"features\": [\n" );
+    }
 
     return poLayer;
 }
@@ -217,7 +228,7 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
 /*     File overwrite not supported.                                    */
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
-    if( VSIStatL( pszName, &sStatBuf ) == 0 )
+    if( 0 == VSIStatL( pszName, &sStatBuf ) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The GeoJSON driver does not overwrite existing files." );
@@ -453,7 +464,7 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
     if( OGRERR_NONE == err )
     {
         // TODO: Think about better name selection
-        poLayer = reader.ReadLayer( OGRGeoJSONLayer::DefaultName );
+        poLayer = reader.ReadLayer( OGRGeoJSONLayer::DefaultName, this );
     }
 
     return poLayer;
