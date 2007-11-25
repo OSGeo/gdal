@@ -14,6 +14,7 @@ ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
 		gdaltindex$(EXE) \
 		gdal_rasterize$(EXE) \
+		gdal_grid$(EXE) \
 		ogrinfo$(EXE) \
 		ogr2ogr$(EXE) \
 		ogrtindex$(EXE)
@@ -72,6 +73,10 @@ dumpoverviews$(EXE):	dumpoverviews.o $(DEP_LIBS)
 gdalenhance$(EXE):	gdalenhance.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalenhance.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o gdalenhance$(EXE)
+
+gdal_grid$(EXE):	gdal_grid.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdal_grid.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o gdal_grid$(EXE)
 
 gdalwarpsimple$(EXE): gdalwarpsimple.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalwarpsimple.o $(XTRAOBJ) \
