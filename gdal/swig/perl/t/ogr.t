@@ -67,6 +67,18 @@ $g2->GetDimension; # does not cause a kaboom
 {
     my $driver = Geo::OGR::GetDriver('Memory');
     my $datasource = $driver->CreateDataSource('test');
+    
+    $datasource->CreateLayer('a', undef, 'Point');
+    $datasource->CreateLayer('b', undef, 'Point');
+    $datasource->CreateLayer('c', undef, 'Point');
+    my @layers = $datasource->Layers;
+    ok(is_deeply(\@layers, ['a','b','c'], "layers"));
+    if ($datasource->TestCapability('DeleteLayer')) {
+        $datasource->DeleteLayer('b');
+	@layers = $datasource->Layers;
+	ok(is_deeply(\@layers, ['a','c'], "delete layer"));
+    }
+    
     my $layer = $datasource->CreateLayer('test', undef, 'Point');
     $layer->Schema(Fields => 
 		   [{Name => 'test1', Type => 'Integer'},
