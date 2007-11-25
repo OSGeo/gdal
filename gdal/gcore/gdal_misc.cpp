@@ -705,7 +705,7 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
  * @param dfMin the value to which 0.0 in the sub operation is mapped.
  * @param dfMax the value to which 1.0 is the sub operation is mapped.
  * @param pfnProgress the overall progress function.
- * @param dData the overall progress function callback data. 
+ * @param pData the overall progress function callback data. 
  *
  * @return pointer to pass as pProgressArg to sub functions.  Should be freed
  * with GDALDestroyScaledProgress(). 
