@@ -107,7 +107,8 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Verify that the extension is DDF if we are testopening.         */
 /* -------------------------------------------------------------------- */
-    if( bTestOpen && !EQUAL(pszFilename+strlen(pszFilename)-4,".ddf") )
+    if( bTestOpen && !(strlen(pszFilename) > 4 &&
+        EQUAL(pszFilename+strlen(pszFilename)-4,".ddf")) )
         return FALSE;
     
 /* -------------------------------------------------------------------- */

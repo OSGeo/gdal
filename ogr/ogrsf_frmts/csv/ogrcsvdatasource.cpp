@@ -114,6 +114,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /*      Is this a single CSV file?                                      */
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(sStatBuf.st_mode)
+        && strlen(pszFilename) > 4
         && EQUAL(pszFilename+strlen(pszFilename)-4,".csv") )
         return OpenTable( pszFilename );
 
