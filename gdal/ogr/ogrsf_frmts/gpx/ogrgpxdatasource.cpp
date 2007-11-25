@@ -214,6 +214,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
 
     FILE* fp = VSIFOpenL(pszFilename, "r");
+    if (fp == NULL)
+        return FALSE;
     
     validity = GPX_VALIDITY_UNKNOWN;
     bUseExtensions = FALSE;
