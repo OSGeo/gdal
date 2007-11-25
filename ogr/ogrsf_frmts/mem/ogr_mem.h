@@ -101,6 +101,7 @@ class OGRMemDataSource : public OGRDataSource
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
+    OGRErr              DeleteLayer( int iLayer );
 
     int                 TestCapability( const char * );
 };
