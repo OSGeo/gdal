@@ -7,6 +7,7 @@
   <cmt>waypoint comment</cmt>
   <desc>waypoint description</desc>
   <src>waypoint source</src>
+  <time>2007-11-25T17:58:00+01:00</time>
   <extensions></extensions>
 </wpt>
 <wpt lat="3" lon="4"/>
@@ -15,6 +16,7 @@
   <rtept lat="5" lon="6">
       <ele>7</ele> 
       <name>route point name</name>
+      <time>2007-11-25T17:58:00Z</time>
   </rtept>
   <rtept lat="8" lon="9">
       <ele>10</ele> 
