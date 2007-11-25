@@ -90,8 +90,8 @@ if src_ds is None:
     sys.exit(1)
 
 if src_ds.RasterCount < 3:
-    print '%s has %d bands, need 3 for inputs red, green and blue.' \
-          % src_ds.RasterCount
+    print '%s has %d band(s), need 3 for inputs red, green and blue.' \
+          % (src_filename, src_ds.RasterCount)
     sys.exit(1)
 
 # Ensure we recognise the driver.
