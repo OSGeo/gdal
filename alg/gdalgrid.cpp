@@ -83,8 +83,9 @@ CPL_CVSID("$Id$");
  */
 
 CPLErr
-GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
-                                 double *pdfX, double *pdfY, double *pdfZ,
+GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
+                                 const double *pdfX, const double *pdfY,
+                                 const double *pdfZ,
                                  double dfXPoint, double dfYPoint,
                                  double *pdfValue )
 {
@@ -186,9 +187,9 @@ GDALGridInverseDistanceToAPower( void *poOptions, GUInt32 nPoints,
  */
 
 CPLErr
-GDALGridInverseDistanceToAPowerNoSearch( void *poOptions, GUInt32 nPoints,
-                                         double *pdfX, double *pdfY,
-                                         double *pdfZ,
+GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
+                                         const double *pdfX, const double *pdfY,
+                                         const double *pdfZ,
                                          double dfXPoint, double dfYPoint,
                                          double *pdfValue )
 {
@@ -258,8 +259,9 @@ GDALGridInverseDistanceToAPowerNoSearch( void *poOptions, GUInt32 nPoints,
  */
 
 CPLErr
-GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
-                       double *pdfX, double *pdfY, double *pdfZ,
+GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
+                       const double *pdfX, const double *pdfY,
+                       const double *pdfZ,
                        double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -351,8 +353,9 @@ GDALGridMovingAverage( void *poOptions, GUInt32 nPoints,
  */
 
 CPLErr
-GDALGridNearestNeighbor( void *poOptions, GUInt32 nPoints,
-                         double *pdfX, double *pdfY, double *pdfZ,
+GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
+                         const double *pdfX, const double *pdfY,
+                         const double *pdfZ,
                          double dfXPoint, double dfYPoint, double *pdfValue )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -455,8 +458,9 @@ GDALGridNearestNeighbor( void *poOptions, GUInt32 nPoints,
  */
 
 CPLErr
-GDALGridCreate( GDALGridAlgorithm eAlgorithm, void *poOptions,
-                GUInt32 nPoints, double *pdfX, double *pdfY, double *pdfZ,
+GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
+                GUInt32 nPoints,
+                const double *pdfX, const double *pdfY, const double *pdfZ,
                 double dfXMin, double dfXMax, double dfYMin, double dfYMax,
                 GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
                 GDALProgressFunc pfnProgress, void *pProgressArg )
