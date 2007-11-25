@@ -48,7 +48,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRwkbGeometryType eGType,
                                   char** papszOptions,
                                   OGRGeoJSONDataSource* poDS )
-    : poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL ), nOutCounter_( 0 )
+    : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL ), nOutCounter_( 0 )
 {
     CPLAssert( NULL != poDS_ );
     CPLAssert( NULL != poFeatureDefn_ );
@@ -216,9 +216,14 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
 
     if( iterCurrent_ != seqFeatures_.end() )
     {
-        OGRFeature* poFeature = (*iterCurrent_)->Clone();
+        OGRFeature* poFeature = (*iterCurrent_);
+        CPLAssert( NULL != poFeature );
+
+        OGRFeature* poFeatureCopy = poFeature->Clone();
+        CPLAssert( NULL != poFeatureCopy );
+
         ++iterCurrent_;
-        return poFeature;
+        return poFeatureCopy;
     }
 
     return NULL;
@@ -344,9 +349,12 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
         int nFID = static_cast<int>(seqFeatures_.size());
         poNewFeature->SetFID( nFID );
 
+        // TODO - mlokot: We need to redesign creation of FID column
         int nField = poNewFeature->GetFieldIndex( DefaultFIDColumn );
-        CPLAssert( -1 != nField );
-        poNewFeature->SetField( nField, nFID );
+        if( -1 != nField )
+        {
+            poNewFeature->SetField( nField, nFID );
+        }
     }
 
     seqFeatures_.push_back( poNewFeature );
