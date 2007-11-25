@@ -40,8 +40,8 @@ gdalwarpsimple.exe:	gdalwarpsimple.c $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdaltransform.exe:	gdaltransform.c $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaltransform.c $(XTRAOBJ) $(LIBS) \
+gdaltransform.exe:	gdaltransform.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaltransform.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
