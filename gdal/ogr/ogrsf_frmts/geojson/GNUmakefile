@@ -11,7 +11,8 @@ OBJ = \
 	ogrgeojsondatasource.o \
 	ogrgeojsonlayer.o \
 	ogrgeojsonutils.o \
-	ogrgeojsonreader.o
+	ogrgeojsonreader.o \
+	ogrgeojsonwriter.o
 
 CPPFLAGS	:= -Ijsonc -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 

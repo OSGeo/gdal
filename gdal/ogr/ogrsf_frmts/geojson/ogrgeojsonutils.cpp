@@ -29,6 +29,7 @@
 #include "ogrgeojsonutils.h"
 #include <cpl_port.h>
 #include <cpl_conv.h>
+#include <ogr_geometry.h>
 #include <json.h> // JSON-C
 
 /************************************************************************/
@@ -121,4 +122,32 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject )
         return OFTStringList; /* string or JSON-string */
     else
         return OFTString; /* null, object */
+}
+
+/************************************************************************/
+/*                           OGRGeoJSONGetGeometryName()                */
+/************************************************************************/
+
+const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
+{
+    CPLAssert( NULL != poGeometry );
+    
+    OGRwkbGeometryType eType = poGeometry->getGeometryType();
+
+    if( wkbPoint == eType )
+        return "Point";
+    else if( wkbLineString == eType )
+        return "LineString";
+    else if( wkbPolygon == eType )
+        return "Polygon";
+    else if( wkbMultiPoint == eType )
+        return "MultiPoint";
+    else if( wkbMultiLineString == eType )
+        return "MultiLineString";
+    else if( wkbMultiPolygon == eType )
+        return "MultiPolygon";
+    else if( wkbGeometryCollection == eType )
+        return "GeometryCollection";
+    else
+        return "Unknown";
 }
