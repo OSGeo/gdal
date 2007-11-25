@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  GeoJSON driver testing.
+# Purpose:  GeoJSON driver test suite.
 # Author:   Mateusz Loskot <mateusz@loskot.net>
 # 
 ###############################################################################
@@ -43,24 +43,24 @@ def validate_layer(lyr, name, features, type, fields, box):
 
     if name != lyr.GetName():
         gdaltest.post_reason('Wrong layer name')
-        return 'fail'
+        return False
 
     if features != lyr.GetFeatureCount():
         gdaltest.post_reason('Wrong number of features')
-        return fail
+        return False
 
     lyrDefn = lyr.GetLayerDefn()
     if lyrDefn is None:
         gdaltest.post_reason('Layer definition is none')
-        return 'fail'
+        return False
 
     if type != lyrDefn.GetGeomType():
         gdaltest.post_reason('Wrong geometry type')
-        return 'fail'
+        return False
 
     if fields != lyrDefn.GetFieldCount():
         gdaltest.post_reason('Wrong number of fields')
-        return 'fail'
+        return False
 
     extent = lyr.GetExtent()
 
@@ -71,7 +71,112 @@ def validate_layer(lyr, name, features, type, fields, box):
 
     if max(minx, maxx, miny, maxy) > 0.0001:
         gdaltest.post_reason( 'Wrong spatial extent of layer' )
-        return 'fail'
+        return False
+
+    return True
+
+
+def verify_geojson_copy(name, fids, names):
+
+    if gdaltest.gjpoint_feat is None:
+        gdaltest.post_reason('Missing features collection')
+        return False
+
+    ds = ogr.Open('tmp/'+name+'.geojson')
+    lyr = ds.GetLayer(0)
+
+    if lyr is None:
+        gdaltest.post_reason('Missing layer')
+        return False
+
+
+    ######################################################
+    # Test attributes
+    ret = ogrtest.check_features_against_list( lyr, 'FID', fids)
+    if ret != 1:
+        gdaltest.post_reason('Wrong values in \'FID\' field')
+        return False
+
+    lyr.ResetReading()
+    ret = ogrtest.check_features_against_list( lyr, 'NAME', names)
+    if ret != 1:
+        gdaltest.post_reason('Wrong values in \'NAME\' field')
+        return False
+
+    ######################################################
+    # Test geometries
+    lyr.ResetReading()
+    for i in range(len(gdaltest.gjpoint_feat)):
+
+        orig_feat = gdaltest.gjpoint_feat[i]
+        feat = lyr.GetNextFeature()
+
+        if feat is None:
+            gdaltest.post_reason('Failed trying to read feature')
+            orig_feat.Destroy()
+            feat.Destroy()
+            return False
+
+        if ogrtest.check_feature_geometry( feat, orig_feat.GetGeometryRef(),
+                                           max_error = 0.001) != 0:
+            gdaltest.post_reason('Geometry test failed')
+            orig_feat.Destroy()
+            feat.Destroy()
+            gdaltest.gjpoint_feat = None
+            return False
+
+        orig_feat.Destroy()
+        feat.Destroy()
+
+    gdaltest.gjpoint_feat = None
+
+    return True
+
+
+def copy_shape_to_geojson(gjname):
+
+    if gdaltest.geojson_drv is None:
+        return False
+
+    ds = gdaltest.geojson_drv.CreateDataSource('tmp/'+gjname+'.geojson')
+    if ds is None:
+        return False
+
+    ######################################################
+    # Create layer
+    lyr = ds.CreateLayer(gjname)
+    if lyr is None:
+        return False
+
+    ######################################################
+    # Setup schema (all test shapefiles use common schmea)
+    ogrtest.quick_create_layer_def(lyr,
+                                   [ ('FID', ogr.OFTReal),
+                                     ('NAME', ogr.OFTString) ])
+
+    ######################################################
+    # Copy in gjpoint.shp
+
+    dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
+
+    shp_ds = ogr.Open('data/'+gjname+'.shp')
+    shp_lyr = shp_ds.GetLayer(0)
+    
+    feat = shp_lyr.GetNextFeature()
+    gdaltest.gjpoint_feat = []
+
+    while feat is not None:
+
+        gdaltest.gjpoint_feat.append(feat)
+
+        dst_feat.SetFrom(feat)
+        lyr.CreateFeature(dst_feat)
+
+        feat = shp_lyr.GetNextFeature()
+
+    dst_feat.Destroy()
+
+    return True
 
 ###############################################################################
 # Find GeoJSON driver
@@ -109,7 +214,9 @@ def ogr_geojson_2():
 
     extent = (100.0, 100.0, 0.0, 0.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 0, extent)
+    if rc is not True:
+        return 'fail'
 
     return 'success'
 
@@ -137,7 +244,9 @@ def ogr_geojson_3():
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
+    if rc is not True:
+        return 'fail'
 
     return 'success'
 
@@ -165,7 +274,9 @@ def ogr_geojson_4():
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
+    if rc is not True:
+        return 'fail'
 
     return 'success'
 
@@ -193,7 +304,9 @@ def ogr_geojson_5():
 
     extent = (100.0, 102.0, 0.0, 1.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
+    if rc is not True:
+        return 'fail'
 
     return 'success'
 
@@ -221,7 +334,9 @@ def ogr_geojson_6():
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 0, extent)
+    if rc is not True:
+        return 'fail'
 
     return 'success'
 
@@ -249,7 +364,9 @@ def ogr_geojson_7():
 
     extent = (100.0, 103.0, 0.0, 3.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiLineString, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiLineString, 0, extent)
+    if rc is not True:
+        return 'fail'
 
     return 'success'
 
@@ -277,13 +394,57 @@ def ogr_geojson_8():
 
     extent = (100.0, 103.0, 0.0, 3.0)
 
-    validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPolygon, 0, extent)
+    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPolygon, 0, extent)
+    if rc is not True:
+        return 'fail'
+
+    return 'success'
+
+##############################################################################
+# Test translation of data/gjpoint.shp to GeoJSON file
+
+def ogr_geojson_9():
+    
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    gdaltest.tests = [ 
+        ['gjpoint', [ 1 ], [ 'Point 1' ] ],
+        ['gjline',  [ 1 ], [ 'Line 1' ] ],
+        ['gjpoly',  [ 1 ], [ 'Polygon 1' ] ],
+        ['gjmultipoint', [ 1 ], [ 'MultiPoint 1' ] ],
+        ['gjmultiline', [ 2 ], [ 'MultiLine 1' ] ],
+        ['gjmultipoly', [ 2 ], [ 'MultiPoly 1' ] ]
+    ]
+
+    for i in range(len(gdaltest.tests)):
+        test = gdaltest.tests[i]
+        rc = copy_shape_to_geojson(test[0])
+
+        if rc is False:
+            gdaltest.post_reason('Failed making copy of \'' + test[0] +'\'.shp')
+            return 'fail'
+
+        rc = verify_geojson_copy(test[0], test[1], test[2])
+
+        if rc is False:
+            gdaltest.post_reason('Verification of copy of \'' + test[0] +'\'.shp failed')
+            return 'fail'
 
     return 'success'
 
 ###############################################################################
 
 def ogr_geojson_cleanup():
+
+    if gdaltest.tests is not None:
+        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        for i in range(len(gdaltest.tests)):
+            file = 'tmp/' + gdaltest.tests[i][0] + '.geojson'
+            ogr.GetDriverByName('GeoJSON').DeleteDataSource( file )
+        gdal.PopErrorHandler()
+
+    gdaltest.tests = None
 
     return 'success'
 
@@ -296,6 +457,7 @@ gdaltest_list = [
     ogr_geojson_6,
     ogr_geojson_7,
     ogr_geojson_8,
+    ogr_geojson_9,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
