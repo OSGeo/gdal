@@ -83,6 +83,12 @@ def ogr_gpx_1():
     expect = ['waypoint name', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'name', expect )
+    
+    lyr.ResetReading()
+    
+    expect = ['2007/11/25 17:58:00+01', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'time', expect )
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
