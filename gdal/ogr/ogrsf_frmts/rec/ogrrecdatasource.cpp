@@ -93,7 +93,8 @@ int OGRRECDataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Verify that the extension is REC.                               */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(pszFilename+strlen(pszFilename)-4,".rec") )
+    if( !(strlen(pszFilename) > 4 &&
+          EQUAL(pszFilename+strlen(pszFilename)-4,".rec") ) )
         return FALSE;
     
 /* -------------------------------------------------------------------- */
