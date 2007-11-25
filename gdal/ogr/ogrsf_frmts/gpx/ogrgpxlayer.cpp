@@ -95,7 +95,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldEle("ele", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldEle );
         
-        OGRFieldDefn oFieldTime("time", OFTString );
+        OGRFieldDefn oFieldTime("time", OFTDateTime );
         poFeatureDefn->AddFieldDefn( &oFieldTime );
         
         OGRFieldDefn oFieldMagVar("magvar", OFTReal );
@@ -737,7 +737,37 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             if (poFeature && pszSubElementValue && nSubElementValueLen)
             {
                 pszSubElementValue[nSubElementValueLen] = 0;
-                poFeature->SetField( iCurrentField, pszSubElementValue);
+                if (strcmp(pszSubElementName, "time") == 0)
+                {
+                    int year, month, day, hour, minute, TZHour, TZMinute;
+                    float second;
+                    char c;
+                    if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f%c",
+                               &year, &month, &day, &hour, &minute, &second, &c) == 7 && c == 'Z')
+                    {
+                        poFeature->SetField( iCurrentField,
+                                             year, month, day,
+                                             hour, minute, (int)floor(second + 0.5), 100);
+                    }
+                    else if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f%c%02d:%02d",
+                               &year, &month, &day, &hour, &minute, &second, &c, &TZHour, &TZMinute) == 9 &&
+                             (c == '+' || c == '-'))
+                    {
+                        poFeature->SetField( iCurrentField,
+                                             year, month, day,
+                                             hour, minute, (int)floor(second + 0.5),
+                                             100 + ((c == '+') ? 1 : -1) * ((TZHour * 60 + TZMinute) / 15));
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Could not parse %s as a valid dateTime", pszSubElementValue);
+                    }
+                }
+                else
+                {
+                    poFeature->SetField( iCurrentField, pszSubElementValue);
+                }
             }
 
             CPLFree(pszSubElementName);
@@ -863,13 +893,37 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
         if( poFeature->IsFieldSet( i ) )
         {
-            char* pszValue =
-                    CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
-            VSIFPrintf(fp, "  <%s>%s</%s>\n",
-                       poFieldDefn->GetNameRef(),
-                       pszValue,
-                       poFieldDefn->GetNameRef());
-            CPLFree(pszValue);
+            const char* pszName = poFieldDefn->GetNameRef();
+            if (strcmp(pszName, "time") == 0)
+            {
+                int year, month, day, hour, minute, second, TZFlag;
+                if (poFeature->GetFieldAsDateTime(i, &year, &month, &day,
+                                                  &hour, &minute, &second, &TZFlag))
+                {
+                    if (TZFlag == 0 || TZFlag == 100)
+                    {
+                        VSIFPrintf(fp, "  <time>%04d-%02d-%02dT%02d:%02d:%02dZ</time>\n",
+                                    year, month, day, hour, minute, second);
+                    }
+                    else
+                    {
+                        int TZOffset = ABS(TZFlag - 100) * 15;
+                        int TZHour = TZOffset / 60;
+                        int TZMinute = TZOffset - TZHour * 60;
+                        VSIFPrintf(fp, "  <time>%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d</time>\n",
+                                    year, month, day, hour, minute, second,
+                                    (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
+                    }
+                }
+            }
+            else
+            {
+                char* pszValue =
+                        CPLEscapeString(poFeature->GetFieldAsString( i ), -1, CPLES_XML);
+                VSIFPrintf(fp, "  <%s>%s</%s>\n",
+                        pszName, pszValue, pszName);
+                CPLFree(pszValue);
+            }
         }
     }
 
