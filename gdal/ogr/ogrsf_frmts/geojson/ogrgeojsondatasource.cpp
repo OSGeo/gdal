@@ -303,6 +303,7 @@ void OGRGeoJSONDataSource::Clear()
 
     if( NULL != fpOut_ && stdout != fpOut_ )
         VSIFClose( fpOut_ );
+    fpOut_ = NULL;
 }
 
 /************************************************************************/
