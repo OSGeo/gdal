@@ -79,6 +79,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
 %rename (_SetColorEntry) SetColorEntry;
 
+%rename (_GetUsageOfCol) GetUsageOfCol;
+%rename (_GetColOfUsage) GetColOfUsage;
+%rename (_GetTypeOfCol) GetTypeOfCol;
+%rename (_CreateColumn) CreateColumn;
+
 %perlcode %{
     use strict;
     use Carp;
@@ -403,8 +408,24 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub ColorTable {
 	my $self = shift;
-	SetRasterColorTable($self, $_[0]) if @_ > 0;
+	SetRasterColorTable($self, $_[0]) if @_;
+	return unless defined wantarray;
 	GetRasterColorTable($self);
+    }
+    sub CategoryNames {
+	my $self = shift;
+	SetRasterCategoryNames($self, \@_) if @_;
+	return unless defined wantarray;
+	my $n = GetRasterCategoryNames($self);
+	return @$n;
+    }
+    sub AttributeTable {
+	my $self = shift;
+	SetDefaultRAT($self, $_[0]) if @_;
+	return unless defined wantarray;
+	my $r = GetDefaultRAT($self);
+	$Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self;
+	return $r;
     }
     package Geo::GDAL::ColorTable;
     use strict;
@@ -451,4 +472,56 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	}
 	return @table;
     }
+    package Geo::GDAL::RasterAttributeTable;
+    use strict;
+    use vars qw/ %BANDS
+	%FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
+	%FIELD_USAGE_STRING2INT %FIELD_USAGE_INT2STRING
+	/;
+    for my $string (qw/Integer Real String/) {
+	my $int = eval "\$Geo::GDAL::Constc::GFT_$string";
+	$FIELD_TYPE_STRING2INT{$string} = $int;
+	$FIELD_TYPE_INT2STRING{$int} = $string;
+    }
+    for my $string (qw/Generic PixelCount Name Min Max MinMax 
+		    Red Green Blue Alpha RedMin 
+		    GreenMin BlueMin AlphaMin RedMax GreenMax BlueMax AlphaMax 
+		    MaxCount/) {
+	my $int = eval "\$Geo::GDAL::Constc::GFU_$string";
+	$FIELD_USAGE_STRING2INT{$string} = $int;
+	$FIELD_USAGE_INT2STRING{$int} = $string;
+    }
+    sub FieldTypes {
+	return keys %FIELD_TYPE_STRING2INT;
+    }
+    sub FieldUsages {
+	return keys %FIELD_USAGE_STRING2INT;
+    }
+    sub RELEASE_PARENTS {
+	my $self = shift;
+	delete $BANDS{$self};
+    }
+    sub GetUsageOfCol {
+	my($self, $col) = @_;
+	$FIELD_USAGE_INT2STRING{_GetUsageOfCol($self, $col)};
+    }
+    sub GetColOfUsage {
+	my($self, $usage) = @_;
+	_GetColOfUsage($self, $FIELD_USAGE_STRING2INT{$usage});
+    }
+    sub GetTypeOfCol {
+	my($self, $col) = @_;
+	$FIELD_TYPE_INT2STRING{_GetTypeOfCol($self, $col)};
+    }
+    sub CreateColumn {
+	my($self, $name, $type, $usage) = @_;
+	_CreateColumn($self, $name, $FIELD_TYPE_STRING2INT{$type}, $FIELD_USAGE_STRING2INT{$usage});
+    }
+    sub Value {
+	my($self, $row, $column) = @_;
+	SetValueAsString($self, $row, $column, $_[3]) if defined $_[3];
+	return unless defined wantarray;
+	GetValueAsString($self, $row, $column);
+    }
+
  %}
