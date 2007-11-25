@@ -168,7 +168,11 @@ OGRLayer* OGRGeoJSONDataSource::GetLayer( int nLayer )
     {
         CPLAssert( NULL != papoLayers_[nLayer] );
 
-        return papoLayers_[nLayer];
+        OGRLayer* poLayer = papoLayers_[nLayer];
+
+        /* Return layer in readable state. */
+        poLayer->ResetReading();
+        return poLayer;
     }
 
     return NULL;

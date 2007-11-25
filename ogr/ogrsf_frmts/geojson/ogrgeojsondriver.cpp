@@ -141,10 +141,14 @@ OGRDataSource* OGRGeoJSONDriver::CreateDataSource( const char* pszName,
 
 OGRErr OGRGeoJSONDriver::DeleteDataSource( const char* pszName )
 {
-    // TODO: To be implemented
-    // 1. Test if a regular file or text content
-    // 2. Unlink file or clear text buffer
-    return OGRERR_UNSUPPORTED_OPERATION;
+    if( VSIUnlink( pszName ) == 0 )
+    {
+        return OGRERR_NONE;
+    }
+    
+    CPLDebug( "GeoJSON", "Failed to delete \'%s\'", pszName);
+
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -156,7 +160,7 @@ int OGRGeoJSONDriver::TestCapability( const char* pszCap )
     if( EQUAL( pszCap, ODrCCreateDataSource ) )
         return TRUE;
     else if( EQUAL(pszCap, ODrCDeleteDataSource) )
-        return FALSE;
+        return TRUE;
     else
         return FALSE;
 }
