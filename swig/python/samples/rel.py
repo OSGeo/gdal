@@ -27,18 +27,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-#
-#  $Log$
-#  Revision 1.3  2005/06/14 15:14:10  dron
-#  Use empty() instead of zeros() to create scanline buffer.
-#
-#  Revision 1.2  2003/09/22 09:41:07  dron
-#  Spped optimizations, as suggested by Norman Vine.
-#
-#  Revision 1.1  2003/09/20 11:43:18  dron
-#  New.
-#
-#
 
 try:
     from osgeo import gdal
