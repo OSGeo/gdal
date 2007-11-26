@@ -2476,17 +2476,18 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 #define SWIGTYPE_p_GDALDatasetShadow swig_types[5]
 #define SWIGTYPE_p_GDALDriverShadow swig_types[6]
 #define SWIGTYPE_p_GDALMajorObjectShadow swig_types[7]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[8]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[9]
-#define SWIGTYPE_p_GDAL_GCP swig_types[10]
-#define SWIGTYPE_p_char swig_types[11]
-#define SWIGTYPE_p_double swig_types[12]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[13]
-#define SWIGTYPE_p_int swig_types[14]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[15]
-#define SWIGTYPE_p_p_char swig_types[16]
-static swig_type_info *swig_types[18];
-static swig_module_info swig_module = {swig_types, 17, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALProgressFunc swig_types[8]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[9]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[10]
+#define SWIGTYPE_p_GDAL_GCP swig_types[11]
+#define SWIGTYPE_p_char swig_types[12]
+#define SWIGTYPE_p_double swig_types[13]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[14]
+#define SWIGTYPE_p_int swig_types[15]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[16]
+#define SWIGTYPE_p_p_char swig_types[17]
+static swig_type_info *swig_types[19];
+static swig_module_info swig_module = {swig_types, 18, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2979,11 +2980,25 @@ SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadata__SWIG_1(GDALMajorObjectShado
     return GDALSetMetadata( self, tmpList, pszDomain );
   }
 SWIGINTERN GDALDatasetShadow *GDALDriverShadow_Create(GDALDriverShadow *self,char const *name,int xsize,int ysize,int bands=1,GDALDataType eType=GDT_Byte,char **options=0){
-    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate( self, name, xsize, ysize, bands, eType, options );
+
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self, 
+                                                                name, 
+                                                                xsize, 
+                                                                ysize, 
+                                                                bands, 
+                                                                eType, 
+                                                                options );
     return ds;
   }
-SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self,char const *name,GDALDatasetShadow *src,int strict=1,char **options=0){
-    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, options, 0, 0 );
+SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self,char const *name,GDALDatasetShadow *src,int strict=1,char **options=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
+                                                                    name, 
+                                                                    src, 
+                                                                    strict, 
+                                                                    options, 
+                                                                    callback, 
+                                                                    callback_data );
     return ds;
   }
 SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *name){
@@ -3228,8 +3243,8 @@ SWIGINTERN void GDALDatasetShadow_GetGeoTransform(GDALDatasetShadow *self,double
 SWIGINTERN CPLErr GDALDatasetShadow_SetGeoTransform(GDALDatasetShadow *self,double argin[6]){
     return GDALSetGeoTransform( self, argin );
   }
-SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0){
-    return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, 0, 0);
+SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+    return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, callback, callback_data);
   }
 SWIGINTERN int GDALDatasetShadow_GetGCPCount(GDALDatasetShadow *self){
     return GDALGetGCPCount( self );
@@ -3566,12 +3581,17 @@ SWIGINTERN int GDALRasterAttributeTableShadow_GetRowOfValue(GDALRasterAttributeT
         return GDALRATGetRowOfValue( self, dfValue );
     }
 
+int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
+  return GDALTermProgress( dfProgress, pszMessage, pData);
+}
+
+
 int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
                               GDALRasterBandShadow *green,
                               GDALRasterBandShadow *blue,
                               int num_colors,
                               GDALColorTableShadow* colors,
-                              int (*callback) (double, const char*, void*) = NULL,
+                              GDALProgressFunc callback = NULL,
                               void* callback_data=NULL) {
 
     CPLErrorReset();
@@ -3594,7 +3614,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
                      GDALRasterBandShadow *blue,
                      GDALRasterBandShadow *target,
                      GDALColorTableShadow *colors,
-                     int (*callback) (double, const char*, void*) = NULL,
+                     GDALProgressFunc callback = NULL,
                      void* callback_data=NULL) {
 
     CPLErrorReset();
@@ -5095,6 +5115,8 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   GDALDatasetShadow *arg3 = (GDALDatasetShadow *) 0 ;
   int arg4 = (int) 1 ;
   char **arg5 = (char **) 0 ;
+  GDALProgressFunc arg6 = (GDALProgressFunc) NULL ;
+  void *arg7 = (void *) NULL ;
   GDALDatasetShadow *result = 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -5110,11 +5132,19 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "name",(char *) "src",(char *) "strict",(char *) "options", NULL 
+    (char *) "self",(char *) "name",(char *) "src",(char *) "strict",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
   };
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OO:Driver_CreateCopy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOOO:Driver_CreateCopy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_CreateCopy" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
@@ -5157,8 +5187,44 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
       }
     }
   }
+  if (obj5) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj5) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj5, 
+          (void**)&cbfunction, 
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg6 = GDALTermProgress;
+        } else {
+          if (!PyFunction_Check(obj5)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj5;
+          arg6 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      
+      psProgressInfo->psPyCallbackData = obj6 ;
+      arg7 = psProgressInfo;
+      
+    }
+  }
   {
-    result = (GDALDatasetShadow *)GDALDriverShadow_CreateCopy(arg1,(char const *)arg2,arg3,arg4,arg5);
+    result = (GDALDatasetShadow *)GDALDriverShadow_CreateCopy(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -5172,12 +5238,24 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
     /* %typemap(freearg) char **options */
     CSLDestroy( arg5 );
   }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg5 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
   }
   return NULL;
 }
@@ -7794,6 +7872,8 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   char *arg2 = (char *) "NEAREST" ;
   int arg3 = (int) 0 ;
   int *arg4 = (int *) 0 ;
+  GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
+  void *arg6 = (void *) NULL ;
   int result;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -7803,11 +7883,19 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "resampling",(char *) "overviewlist", NULL 
+    (char *) "self",(char *) "resampling",(char *) "overviewlist",(char *) "callback",(char *) "callback_data", NULL 
   };
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OO:Dataset_BuildOverviews",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOO:Dataset_BuildOverviews",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_BuildOverviews" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -7838,8 +7926,44 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
       }
     }
   }
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj3) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj3, 
+          (void**)&cbfunction, 
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg5 = GDALTermProgress;
+        } else {
+          if (!PyFunction_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg5 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      
+      psProgressInfo->psPyCallbackData = obj4 ;
+      arg6 = psProgressInfo;
+      
+    }
+  }
   {
-    result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4);
+    result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4,arg5,arg6);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -7855,6 +7979,12 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
       free((void*) arg4);
     }
   }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
@@ -7863,6 +7993,12 @@ fail:
     if (arg4) {
       free((void*) arg4);
     }
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
   }
   return NULL;
 }
@@ -11441,6 +11577,62 @@ SWIGINTERN PyObject *RasterAttributeTable_swigregister(PyObject *SWIGUNUSEDPARM(
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap_TermProgress_nocb(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  double arg1 ;
+  char *arg2 = (char *) NULL ;
+  void *arg3 = (void *) NULL ;
+  int result;
+  double val1 ;
+  int ecode1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  char *  kwnames[] = {
+    (char *) "dfProgress",(char *) "pszMessage",(char *) "pData", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OO:TermProgress_nocb",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  ecode1 = SWIG_AsVal_double(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "TermProgress_nocb" "', argument " "1"" of type '" "double""'");
+  } 
+  arg1 = static_cast< double >(val1);
+  if (obj1) {
+    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "TermProgress_nocb" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+  }
+  if (obj2) {
+    res3 = SWIG_ConvertPtr(obj2,SWIG_as_voidptrptr(&arg3), 0, 0);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "TermProgress_nocb" "', argument " "3"" of type '" "void *""'"); 
+    }
+  }
+  {
+    result = (int)GDALTermProgress_nocb(arg1,(char const *)arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -11448,7 +11640,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
   GDALRasterBandShadow *arg3 = (GDALRasterBandShadow *) 0 ;
   int arg4 ;
   GDALColorTableShadow *arg5 = (GDALColorTableShadow *) 0 ;
-  int (*arg6)(double,char const *,void *) = (int (*)(double,char const *,void *)) NULL ;
+  GDALProgressFunc arg6 = (GDALProgressFunc) NULL ;
   void *arg7 = (void *) NULL ;
   int result;
   void *argp1 = 0 ;
@@ -11506,7 +11698,7 @@ SWIGINTERN PyObject *_wrap_ComputeMedianCutPCT(PyObject *SWIGUNUSEDPARM(self), P
   arg5 = reinterpret_cast< GDALColorTableShadow * >(argp5);
   if (obj5) {
     {
-      /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
       if (obj5) {
         void* cbfunction = NULL;
@@ -11575,7 +11767,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
   GDALRasterBandShadow *arg3 = (GDALRasterBandShadow *) 0 ;
   GDALRasterBandShadow *arg4 = (GDALRasterBandShadow *) 0 ;
   GDALColorTableShadow *arg5 = (GDALColorTableShadow *) 0 ;
-  int (*arg6)(double,char const *,void *) = (int (*)(double,char const *,void *)) NULL ;
+  GDALProgressFunc arg6 = (GDALProgressFunc) NULL ;
   void *arg7 = (void *) NULL ;
   int result;
   void *argp1 = 0 ;
@@ -11633,7 +11825,7 @@ SWIGINTERN PyObject *_wrap_DitherRGB2PCT(PyObject *SWIGUNUSEDPARM(self), PyObjec
   arg5 = reinterpret_cast< GDALColorTableShadow * >(argp5);
   if (obj5) {
     {
-      /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
       if (obj5) {
         void* cbfunction = NULL;
@@ -12880,6 +13072,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RasterAttributeTable_CreateColumn", _wrap_RasterAttributeTable_CreateColumn, METH_VARARGS, NULL},
 	 { (char *)"RasterAttributeTable_GetRowOfValue", _wrap_RasterAttributeTable_GetRowOfValue, METH_VARARGS, NULL},
 	 { (char *)"RasterAttributeTable_swigregister", RasterAttributeTable_swigregister, METH_VARARGS, NULL},
+	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"ComputeMedianCutPCT", (PyCFunction) _wrap_ComputeMedianCutPCT, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"DitherRGB2PCT", (PyCFunction) _wrap_DitherRGB2PCT, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"ReprojectImage", _wrap_ReprojectImage, METH_VARARGS, NULL},
@@ -12936,6 +13129,7 @@ static swig_type_info _swigt__p_GDALColorTableShadow = {"_p_GDALColorTableShadow
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)0, 0};
@@ -12955,6 +13149,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALDatasetShadow,
   &_swigt__p_GDALDriverShadow,
   &_swigt__p_GDALMajorObjectShadow,
+  &_swigt__p_GDALProgressFunc,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_GDAL_GCP,
@@ -12974,6 +13169,7 @@ static swig_cast_info _swigc__p_GDALColorTableShadow[] = {  {&_swigt__p_GDALColo
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDriverShadow[] = {  {&_swigt__p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_GDALDriverShadow, _p_GDALDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALDatasetShadow, _p_GDALDatasetShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterBandShadow, _p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALColorTableShadow, _p_GDALColorTableShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_GDALRasterAttributeTableShadow, _p_GDALRasterAttributeTableShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
@@ -12993,6 +13189,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALDatasetShadow,
   _swigc__p_GDALDriverShadow,
   _swigc__p_GDALMajorObjectShadow,
+  _swigc__p_GDALProgressFunc,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_GDAL_GCP,

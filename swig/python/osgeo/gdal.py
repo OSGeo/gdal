@@ -253,7 +253,10 @@ class Driver(MajorObject):
         return _gdal.Driver_Create(*args, **kwargs)
 
     def CreateCopy(*args, **kwargs):
-        """CreateCopy(self, char name, Dataset src, int strict=1, char options=0) -> Dataset"""
+        """
+        CreateCopy(self, char name, Dataset src, int strict=1, char options=0, 
+            GDALProgressFunc callback=None, void callback_data=None) -> Dataset
+        """
         return _gdal.Driver_CreateCopy(*args, **kwargs)
 
     def Delete(*args):
@@ -529,7 +532,10 @@ class Dataset(MajorObject):
         return _gdal.Dataset_SetGeoTransform(*args)
 
     def BuildOverviews(*args, **kwargs):
-        """BuildOverviews(self, char resampling="NEAREST", int overviewlist=0) -> int"""
+        """
+        BuildOverviews(self, char resampling="NEAREST", int overviewlist=0, GDALProgressFunc callback=None, 
+            void callback_data=None) -> int
+        """
         return _gdal.Dataset_BuildOverviews(*args, **kwargs)
 
     def GetGCPCount(*args):
@@ -915,6 +921,10 @@ class RasterAttributeTable(MajorObject):
 RasterAttributeTable_swigregister = _gdal.RasterAttributeTable_swigregister
 RasterAttributeTable_swigregister(RasterAttributeTable)
 
+
+def TermProgress_nocb(*args, **kwargs):
+  """TermProgress_nocb(double dfProgress, char pszMessage=None, void pData=None) -> int"""
+  return _gdal.TermProgress_nocb(*args, **kwargs)
 TermProgress = _gdal.TermProgress
 ComputeMedianCutPCT = _gdal.ComputeMedianCutPCT
 DitherRGB2PCT = _gdal.DitherRGB2PCT
