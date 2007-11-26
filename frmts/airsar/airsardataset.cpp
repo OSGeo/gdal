@@ -623,6 +623,8 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+    poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SYMMETRIZED_COVARIANCE" );
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */

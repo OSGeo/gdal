@@ -649,6 +649,11 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( char *pszWorkname )
         }
     }
 
+    /* Set an appropriate matrix representation metadata item for the set */
+    if ( poDS->GetRasterCount() == 4 ) {
+        poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
+    }
+
 /* ------------------------------------------------------------------------- */
 /*  Add georeferencing or pseudo-geocoding, if enough information found.     */
 /* ------------------------------------------------------------------------- */
@@ -975,6 +980,15 @@ GDALDataset *CPGDataset::InitializeType3Dataset( char *pszWorkname )
                                            !CPL_IS_LSB );
         poDS->SetBand( iBand+1, poBand );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Set appropriate MATRIX_REPRESENTATION.                          */
+/* -------------------------------------------------------------------- */
+    if ( poDS->GetRasterCount() == 6 ) {
+        poDS->SetMetadataItem( "MATRIX_REPRESENTATION", 
+            "COVARIANCE" );
+    }
+
 
 /* ------------------------------------------------------------------------- */
 /*  Add georeferencing, if enough information found.                         */

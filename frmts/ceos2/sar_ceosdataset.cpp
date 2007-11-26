@@ -1817,6 +1817,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand( poDS->nBands+1, 
                            new CCPRasterBand( poDS, poDS->nBands+1, eType ) );
         }
+
+        /* mark this as a Scattering Matrix product */
+        if ( poDS->GetRasterCount() == 4 ) {
+            poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1829,6 +1834,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand( poDS->nBands+1, 
                            new PALSARRasterBand( poDS, poDS->nBands+1 ) );
         }
+
+        /* mark this as a Symmetrized Covariance product if appropriate */
+        if ( poDS->GetRasterCount() == 6 ) {
+            poDS->SetMetadataItem( "MATRIX_REPRESENTATION", 
+                "SYMMETRIZED_COVARIANCE" );
+        } 
     }
 
 /* -------------------------------------------------------------------- */
