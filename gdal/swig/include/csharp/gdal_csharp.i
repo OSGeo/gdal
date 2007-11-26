@@ -99,7 +99,7 @@ public int BuildOverviews( string resampling, int[] overviewlist) {
       IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
       try {
           Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
-          retval = BuildOverviews(resampling, overviewlist.Length, ptr);
+          retval = BuildOverviews(resampling, overviewlist.Length, ptr, null, null);
       } finally {
           Marshal.FreeHGlobal(ptr);
       }
