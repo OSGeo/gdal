@@ -1,6 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
+use strict;
 use vars qw/%available_driver %test_driver $loaded $verbose @types %pack_types @fails @tested_drivers/;
 
 $loaded = 1;
@@ -35,32 +36,36 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 		);
 
 if (0) {
-    {
-	my $ds = Geo::OGR::DataSource::Open('/data');
-	$l = $ds->GetLayerByIndex();
-    }
-    $l->GetSpatialFilter();
-    exit;
+   my $l;	
+   { 
+       my $ds = Geo::OGR::DataSource::Open('/data');
+       $l = $ds->GetLayerByIndex();
+   }
+   $l->GetSpatialFilter();
+   exit;
 }
 
 {
-    my $d = Geo::OGR::FeatureDefn->new;
-    $d->Schema(Fields=>[Geo::OGR::FieldDefn->create(Name=>'Foo')]);
-    my $f = Geo::OGR::Feature->new($d);
-    my $g = Geo::OGR::Geometry->create('Point');
-    $f->SetGeometry($g);
-    my $fd = $f->GetDefnRef;
-    my $s = $fd->Schema;
-    my $s2 = $s->{Fields}[0]->Schema;
-    ok($s->{GeometryType} eq 'Unknown', 'Feature defn schema 0');
-    ok($s2->{Name} eq 'Foo', 'Feature defn schema 1');
-    ok($s2->{Type} eq 'String', 'Feature defn schema 2');
-    $g2 = $f->GetGeometry;
+    my $g2;
+    {
+	my $d = Geo::OGR::FeatureDefn->new;
+	$d->Schema(Fields=>[Geo::OGR::FieldDefn->create(Name=>'Foo')]);
+	my $f = Geo::OGR::Feature->new($d);
+	my $g = Geo::OGR::Geometry->create('Point');
+	$f->SetGeometry($g);
+	my $fd = $f->GetDefnRef;
+	my $s = $fd->Schema;
+	my $s2 = $s->{Fields}[0]->Schema;
+	ok($s->{GeometryType} eq 'Unknown', 'Feature defn schema 0');
+	ok($s2->{Name} eq 'Foo', 'Feature defn schema 1');
+	ok($s2->{Type} eq 'String', 'Feature defn schema 2');
+	$g2 = $f->GetGeometry;
+    }
+    $g2->GetDimension; # does not cause a kaboom
 }
-$g2->GetDimension; # does not cause a kaboom
 {
-    $f = Geo::OGR::FieldDefn->create();
-    $s = $f->Schema(Width => 10);
+    my $f = Geo::OGR::FieldDefn->create();
+    my $s = $f->Schema(Width => 10);
     ok($s->{Width} == 10, 'fieldefn schema 1');
     ok($s->{Type} eq 'String', 'fieldefn schema 2');
 }
@@ -132,26 +137,26 @@ for (@tmp) {
 
 ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
-$src = Geo::OSR::SpatialReference->new();
+my $src = Geo::OSR::SpatialReference->new();
 $src->ImportFromEPSG(2392);
-$dst = Geo::OSR::SpatialReference->new();
+my $dst = Geo::OSR::SpatialReference->new();
 $dst->ImportFromEPSG(2392);
 
-$t = Geo::OSR::CoordinateTransformation->new($src, $dst);
+my $t = Geo::OSR::CoordinateTransformation->new($src, $dst);
 
-@points = ([2492055.205, 6830493.772],
-	   [2492065.205, 6830483.772]);
+my @points = ([2492055.205, 6830493.772],
+	      [2492065.205, 6830483.772]);
 
 $t->TransformPoints(\@points);
 
-$methods = Geo::OSR::GetProjectionMethods;
+my $methods = Geo::OSR::GetProjectionMethods;
 
-for $method (@$methods) {
-    ($params, $name) = Geo::OSR::GetProjectionMethodParameterList($method);
+for my $method (@$methods) {
+    my($params, $name) = Geo::OSR::GetProjectionMethodParameterList($method);
     ok(ref($params) eq 'ARRAY', "GetProjectionMethodParameterList params");
     ok($name ne '', "GetProjectionMethodParameterList name");
-    for $parameter (@$params) {
-	($usrname, $type, $defaultval) = Geo::OSR::GetProjectionMethodParamInfo($method, $parameter);
+    for my $parameter (@$params) {
+	my($usrname, $type, $defaultval) = Geo::OSR::GetProjectionMethodParamInfo($method, $parameter);
 	ok($usrname ne '', "GetProjectionMethodParamInfo username");
 	ok($type ne '', "GetProjectionMethodParamInfo type");
 	ok($defaultval ne '', "GetProjectionMethodParamInfo defval");
@@ -277,9 +282,9 @@ sub ogr_tests {
 		my $schema = $layer->GetLayerDefn();
 		
 		$i = 0;
-		for $ft (@field_types) {
+		for my $ft (@field_types) {
 		    
-		    $column = $schema->GetFieldDefn($i++);
+		    my $column = $schema->GetFieldDefn($i++);
 		    my $n = $column->GetName;
 		    mytest($n eq $ft,"$n ne $ft",$name,$type,$ft,'field create');
 		    
@@ -302,7 +307,7 @@ sub ogr_tests {
 		} elsif ($type eq 'MultiLineString') {
 
 		    for (0..1) {
-			$g = Geo::OGR::Geometry->create('LineString');
+			my $g = Geo::OGR::Geometry->create('LineString');
 			test_geom($g,$name,'LineString','create');
 			$geom->AddGeometry($g);
 		    }
@@ -316,7 +321,7 @@ sub ogr_tests {
 		$feature->SetGeometry($geom);
 		
 		$i = 0;
-		for $ft (@field_types) {
+		for my $ft (@field_types) {
 		    my $v = 2;
 		    $v = 'kaksi' if $ft eq 'String';
 		    $feature->SetField($i++,$v);
@@ -354,12 +359,12 @@ sub ogr_tests {
 		
 		# check to see if the fields exist and the types are the same
 		
-		$schema = $layer->GetLayerDefn();
+		my $schema = $layer->GetLayerDefn();
 		
 		$i = 0;
-		for $ft (@field_types) {
-		    $column = $schema->GetFieldDefn($i++);
-		    $n = $column->GetName;
+		for my $ft (@field_types) {
+		    my $column = $schema->GetFieldDefn($i++);
+		    my $n = $column->GetName;
 		    mytest($n eq $ft,"$n ne $ft",$name,$type,$ft,'GetName');
 		    my $t2 = $column->Type;
 		    mytest($ft eq $t2,"$ft ne $t2",$name,$type,$ft,'Type');
@@ -368,19 +373,19 @@ sub ogr_tests {
 		if ($type eq 'Point' or $type eq 'LineString' or $type eq 'Polygon') {
 		    
 		    $layer->ResetReading;
-		    $feature = $layer->GetNextFeature;
+		    my $feature = $layer->GetNextFeature;
 		    
 		    mytest($feature,'GetFeature failed',$name,$type,'GetNextFeature');
 		    
 		    if ($feature) {
 			
-			$geom = $feature->GetGeometryRef();
+			my $geom = $feature->GetGeometryRef();
 			
 			if ($type eq 'Pointxx') {
 			    mytest('skipped',undef,$name,$type,'geom open');
 			} else {
 			    $t = $type eq 'Unknown' ? 'Polygon' : $type;
-			    $t2 = $geom->GeometryType;
+			    my $t2 = $geom->GeometryType;
 			    mytest($t eq $t2,"$t ne $t2",$name,$type,'geom open');
 
 			    if ($type eq 'MultiPoint') {
@@ -389,17 +394,17 @@ sub ogr_tests {
 				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
 
 				for my $i (0..1) {
-				    $g = $geom->GetGeometryRef($i);
+				    my $g = $geom->GetGeometryRef($i);
 				    test_geom($g,$name,'Point','open');
 				}
 
 			    } elsif ($type eq 'MultiLineString') {
 
-				$gn = $geom->GetGeometryCount;
+				my $gn = $geom->GetGeometryCount;
 				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
 
 				for $i (0..1) {
-				    $g = $geom->GetGeometryRef($i);
+				    my $g = $geom->GetGeometryRef($i);
 				    test_geom($g,$name,'LineString','open');
 				}
 				
@@ -409,7 +414,7 @@ sub ogr_tests {
 			}
 			
 			$i = 0;
-			for $ft (@field_types) {
+			for my $ft (@field_types) {
 			    #$feature->SetField($i++,2);
 			    my $f;
 			    if ($ft eq 'String') {
@@ -458,7 +463,7 @@ sub test_geom {
 	if ($mode eq 'create') {
 	    $geom->AddPoint(1,1);
 	    $geom->SetPoint_2D(0,1,1);
-	    @p = $geom->GetPoint;
+	    my @p = $geom->GetPoint;
 	    ok(is_deeply(\@p, [1,1]), "GetPoint");
 	} else {
 	    mytest($pc == 1,"$pc != 1",$name,$type,'point count');
