@@ -17,14 +17,14 @@ NUMPY_DEF = -DHAVE_NUMPY
 NUMPY_DEF =
 !ENDIF
 
-EXTRAFLAGS =	-I$(PYDIR)/include $(NUMPY_DEF)
+EXTRAFLAGS =	-I$(PYDIR)/include $(NUMPY_DEF) $(MSVC_VLD_FLAGS)
 
 
 default:	$(PYGDAL_DLL)
 
 $(PYGDAL_DLL):	$(OBJ)
 	link /dll /def:_gdal.def $(OBJ) ../gdal_i.lib /LIBPATH:$(PYDIR)/libs \
-		/out:$(PYGDAL_DLL)
+		/out:$(PYGDAL_DLL) $(MSVC_VLD_LIB)
 	
 clean:
 	-del *.obj *.dll *.lib
