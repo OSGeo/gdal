@@ -47,6 +47,36 @@
     warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
          DeprecationWarning)
 
+  def RGBFile2PCTFile( src_filename, dst_filename ):
+    src_ds = Open(src_filename)
+    if src_ds is None or src_ds == 'NULL':
+        return 1
+
+    ct = ColorTable()
+    err = ComputeMedianCutPCT( src_ds.GetRasterBand(1),
+                               src_ds.GetRasterBand(2),
+                               src_ds.GetRasterBand(3),
+                               256, ct )
+    if err <> 0:
+        return err
+
+    gtiff_driver = GetDriverByName('GTiff')
+    if gtiff_driver is None:
+        return 1
+
+    dst_ds = gtiff_driver.Create( dst_filename,
+                                  src_ds.RasterXSize, src_ds.RasterYSize )
+    dst_ds.GetRasterBand(1).SetRasterColorTable( ct )
+
+    err = DitherRGB2PCT( src_ds.GetRasterBand(1),
+                         src_ds.GetRasterBand(2),
+                         src_ds.GetRasterBand(3),
+                         dst_ds.GetRasterBand(1),
+                         ct )
+    dst_ds = None
+    src_ds = None
+
+    return 0
 %}
 
 
@@ -155,7 +185,7 @@
 }
 
 /* ==================================================================== */
-/*	Support function for progress callbacks to python.                  */
+/*	Support function for progress callbacks to python.              */
 /* ==================================================================== */
 
 %{
@@ -174,7 +204,6 @@ int CPL_STDCALL
 PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 {
-
     PyProgressData *psInfo = (PyProgressData *) pData;
     PyObject *psArgs, *psResult;
     int      bContinue = TRUE;
@@ -186,7 +215,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         return TRUE;
 
     psInfo->nLastReported = (int) 100.0 * dfComplete;
-
+    
     if( pszMessage == NULL )
         pszMessage = "";
 
@@ -213,7 +242,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( !PyArg_Parse( psResult, "i", &bContinue ) )
     {
         PyErr_SetString(PyExc_ValueError, "bad progress return value");
-        return FALSE;
+	return FALSE;
     }
 
     Py_XDECREF(psResult);
