@@ -98,8 +98,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     if( fp == NULL )
     {
         if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Failed to open ILI1 file `%s'.", 
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open ILI1 file `%s'.",
                       pszNewName );
 
         return FALSE;
@@ -123,26 +123,26 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
             return FALSE;
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      We assume now that it is ILI1.  Close and instantiate a          */
 /*      ILI1Reader on it.                                                */
 /* -------------------------------------------------------------------- */
     VSIFClose( fp );
-    
+
     poReader = CreateILI1Reader();
     if( poReader == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be ILI1 but the ILI1 reader can't\n"
                   "be instantiated, likely because Xerces support wasn't\n"
-                  "configured in.", 
+                  "configured in.",
                   pszNewName );
         return FALSE;
      }
 
     poReader->OpenFile( osBasename.c_str() );
-    
+
     pszName = CPLStrdup( osBasename.c_str() );
 
     if (osModelFilename.length() > 0 )
@@ -162,7 +162,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRILI1DataSource::Create( const char *pszFilename, 
+int OGRILI1DataSource::Create( const char *pszFilename,
                               char **papszOptions )
 
 {
@@ -188,8 +188,8 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 
     if( fpTransfer == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to create %s:\n%s", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to create %s:\n%s",
                   osBasename.c_str(), VSIStrerror( errno ) );
 
         return FALSE;
@@ -201,7 +201,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     iom_init();
 
-    // set error listener to a iom provided one, that just 
+    // set error listener to a iom provided one, that just
     // dumps all errors to stderr
     iom_seterrlistener(iom_stderrlistener);
 
@@ -211,8 +211,8 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     char *iliFiles[1] = {(char *)osModelFilename.c_str()};
     model=iom_compileIli(1,iliFiles);
     if(!model){
-        CPLError( CE_Warning, CPLE_OpenFailed, 
-                  "iom_compileIli .", 
+        CPLError( CE_Warning, CPLE_OpenFailed,
+                  "iom_compileIli .",
                   pszName, VSIStrerror( errno ) );
         iom_end();
         return FALSE;
@@ -223,9 +223,10 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /*      Write headers                                                   */
 /* -------------------------------------------------------------------- */
     VSIFPrintf( fpTransfer, "SCNT\n" );
+    VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n", GDAL_RELEASE_NAME );
     VSIFPrintf( fpTransfer, "////\n" );
     VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
-    const char* modelname = model ? GetAttrObjName(model, "iom04.metamodel.DataModel") : osBasename.c_str();
+    const char* modelname = model ? GetAttrObjName(model, "iom04.metamodel.DataModel") : osBasename.c_str(); //TODO: remove file extension (= table name)
     VSIFPrintf( fpTransfer, "MODL %s\n", modelname );
 
     return TRUE;
@@ -268,7 +269,7 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
     }
     else if (pszTopic == NULL)
     {
-      pszTopic = CPLStrdup("TOPIC"); //TODO: From model?
+      pszTopic = CPLStrdup("Topic"); //TODO: From model?
       VSIFPrintf( fpTransfer, "TOPI %s\n", pszTopic );
     }
     VSIFPrintf( fpTransfer, "TABL %s\n", table );
