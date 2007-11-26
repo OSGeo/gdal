@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+ 
 # Setup script for GDAL Python bindings.
 # Inspired by psycopg2 setup.py file
 # http://www.initd.org/tracker/psycopg/browser/psycopg2/trunk/setup.py
