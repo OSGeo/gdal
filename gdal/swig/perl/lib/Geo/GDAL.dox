@@ -165,10 +165,30 @@
 # @param ShortName
 # @return a new Geo::GDAL::Driver object
 
-## @fn $IdentifyDriver($datasource_name, $siblings = undef)
+## @fn $IdentifyDriver($datasource_name, $siblings)
 # @param datasource_name
-# @param siblings
+# @param siblings [optional]
 # @return a new Geo::GDAL::Driver object
+
+## @fn ComputeMedianCutPCT($red, $green, $blue, $num_colors, $colors, $callback, $callback_data)
+# @param red a Geo::GDAL::Band object
+# @param green a Geo::GDAL::Band object
+# @param blue a Geo::GDAL::Band object
+# @param num_colors integer
+# @param colors a Geo::GDAL::ColorTable object
+# @param callback [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, callback_data)
+# @param callback_data [optional]
+
+## @fn DitherRGB2PCT($red, $green, $blue, $target, $colors, $callback, $callback_data)
+# @param red a Geo::GDAL::Band object
+# @param green a Geo::GDAL::Band object
+# @param blue a Geo::GDAL::Band object
+# @param target a Geo::GDAL::Band object
+# @param colors a Geo::GDAL::ColorTable object
+# @param callback [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, callback_data)
+# @param callback_data [optional]
 
 ## @fn ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0.0, $maxerror=0.0)
 # @param src_ds
@@ -248,8 +268,8 @@
 ## @method SetDescription($NewDesc)
 # @param NewDesc
 
-## @method \%Metadata(\%metadata, $domain = '')
-# @param metadata [optional]
+## @method \%Metadata(\%metadata = undef, $domain = '')
+# @param metadata
 # @param domain
 # @return metadata in non-void context
 
@@ -415,7 +435,7 @@
 
 ## @method $Projection($projection)
 # Get or set the projection.
-# @param projection
+# @param projection [optional]
 # @return the projection
 
 ## @method $GetProjection()
@@ -428,7 +448,7 @@
 # @param proj a string
 
 ## @method @GeoTransform(@geo_transform)
-# @param geo_transform
+# @param geo_transform [optional]
 
 ## @method \@GetGeoTransform()
 # @return a reference to an array of six parameters 
@@ -442,8 +462,8 @@
 
 ## @method @GCPs(@GCPs, $GCPProjection)
 # Get or set the GCPs and their projection.
-# @param GCPs a list of Geo::GDAL::GCP objects
-# @param GCPProjection
+# @param GCPs [optional] a list of Geo::GDAL::GCP objects
+# @param GCPProjection [optional]
 # @return a list of Geo::GDAL::GCP objects followed by a GCPProjection
 
 ## @method $GetGCPCount()
@@ -519,7 +539,8 @@
 # @param color_interpretation [optional] new color interpretation
 # @return color interpretation
 
-## @method $NoDataValue(NoDataValue)
+## @method $NoDataValue($NoDataValue)
+# @param NoDataValue [optional]
 # Get or set the no data value.
 
 ## @method $GetNoDataValue()
@@ -573,16 +594,16 @@
 
 ## @method Fill($real_fill, $imag_fill = 0.0)
 
-## @method WriteTile($data, $xoff, $yoff)
+## @method WriteTile($data, $xoff = 0, $yoff = 0)
 # @param data a two-dimensional Perl array
-# @param xoff [optional]
-# @param yoff [optional]
+# @param xoff
+# @param yoff
 
-## @method \@ReadTile($xoff, $yoff, $xsize, $ysize)
-# @param xoff [optional]
-# @param yoff [optional]
-# @param xsize [optional]
-# @param ysize [optional]
+## @method \@ReadTile($xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>)
+# @param xoff
+# @param yoff
+# @param xsize
+# @param ysize
 # @return a two-dimensional Perl array
 
 ## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
@@ -610,7 +631,7 @@
 ## @method $GetMaskFlags()
 
 ## @method @CategoryNames(@names)
-# @param names
+# @param names [optional]
 # @return
 
 ## @method $GetRasterCategoryNames()
@@ -620,7 +641,7 @@
 # @param names
 
 ## @method $AttributeTable($AttributeTable)
-# @param AttributeTable a Geo::GDAL::RasterAttributeTable object
+# @param AttributeTable [optional] a Geo::GDAL::RasterAttributeTable object
 # @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
 
 ## @method $GetDefaultRAT()
@@ -669,7 +690,7 @@
 ## @method @ColorEntry($i, @color)
 # Get or set a color entry.
 # @param i
-# @param color
+# @param color [optional]
 # @return a color entry
 
 ## @method @GetColorEntry($i)
@@ -746,7 +767,7 @@
 ## @method $Value($row, $column, $value)
 # @param row
 # @param column
-# @param value
+# @param value [optional]
 # @return
 
 ## @method $GetValueAsString($row, $column)
