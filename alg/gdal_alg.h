@@ -274,17 +274,17 @@ typedef enum {
 /** Inverse distance to a power method control options */
 typedef struct
 {
-    /*! Weighting power */
+    /*! Weighting power. */
     double  dfPower;
-    /*! Smoothing */
+    /*! Smoothing parameter. */
     double  dfSmoothing;
-    /*! The first radius (X axis if rotation angle is 0) of search ellipse */
+    /*! Reserved for future use. */
     double  dfAnisotropyRatio;
-    /*! Reserved for future use */
+    /*! Reserved for future use. */
     double  dfAnisotropyAngle;
-    /*! Reserved for future use */
+    /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
-    /*! The first radius (Y axis if rotation angle is 0) of search ellipse */
+    /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
     double  dfRadius2;
     /*! Angle of ellipse rotation in degrees.
      *
@@ -293,13 +293,15 @@ typedef struct
     double  dfAngle;
     /*! Maximum number of data points to use.
      *
+     * Do not search for more points than this number.
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
     GUInt32 nMaxPoints;
-    /*! Maximum number of data points to use.
+    /*! Minimum number of data points to use.
      *
-     * Do not search for more points than this number.
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
      */
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
@@ -309,9 +311,9 @@ typedef struct
 /** Moving average method control options */
 typedef struct
 {
-    /*! The first radius (X axis if rotation angle is 0) of search ellipse */
+    /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
-    /*! The first radius (Y axis if rotation angle is 0) of search ellipse */
+    /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
     double  dfRadius2;
     /*! Angle of ellipse rotation in degrees.
      *
@@ -331,9 +333,9 @@ typedef struct
 /** Nearest neighbor method control options */
 typedef struct
 {
-    /*! The first radius (X axis if rotation angle is 0) of search ellipse */
+    /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
-    /*! The first radius (Y axis if rotation angle is 0) of search ellipse */
+    /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
     double  dfRadius2;
     /*! Angle of ellipse rotation in degrees.
      *
