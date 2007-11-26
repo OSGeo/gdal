@@ -34,6 +34,37 @@
   }
 %}
 
+%inline %{
+    typedef struct
+    {
+	SV *sv;
+	SV *sp;
+    } SavedEnv;
+    int callback_d_cp_vp(double d, const char *cp, void *vp)
+    {
+	int count, ret;
+	SavedEnv *env_ptr = (SavedEnv *)vp;
+	dSP;
+	ENTER;
+	SAVETMPS;
+	PUSHMARK(SP);
+	XPUSHs(sv_2mortal(newSVnv(d)));
+	XPUSHs(sv_2mortal(newSVpv(cp, 0)));
+	if (env_ptr->sp)
+	    XPUSHs(env_ptr->sp);
+	PUTBACK;
+	count = call_sv(env_ptr->sv, G_SCALAR);
+	SPAGAIN;
+	if (count != 1)
+	    croak("Big trouble\n");
+	ret = POPi;
+	PUTBACK;
+	FREETMPS;
+	LEAVE;
+	return ret;
+    }
+%}
+
 %include cpl_exceptions.i
 
 %rename (GetMetadata) GetMetadata_Dict;
