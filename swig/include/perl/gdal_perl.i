@@ -94,9 +94,9 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_OpenShared) OpenShared;
 %newobject _OpenShared;
 
+%rename (_ComputeMedianCutPCT) ComputeMedianCutPCT;
+%rename (_DitherRGB2PCT) DitherRGB2PCT;
 %rename (_ReprojectImage) ReprojectImage;
-%newobject _ReprojectImage;
-
 %rename (_AutoCreateWarpedVRT) AutoCreateWarpedVRT;
 %newobject _AutoCreateWarpedVRT;
 
@@ -207,6 +207,14 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my @p = @_;
 	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
 	return _OpenShared(@p);
+    }
+    sub ComputeMedianCutPCT {
+	my($red, $green, $blue, $num_colors, $colors, $callback, $callback_data) = @_;
+	_ComputeMedianCutPCT($red, $green, $blue, $num_colors, $colors, $callback, $callback_data);
+    }
+    sub DitherRGB2PCT {
+	my($red, $green, $blue, $target, $colors, $callback, $callback_data) = @_;
+	_DitherRGB2PCT($red, $green, $blue, $target, $colors, $callback, $callback_data);
     }
     sub ReprojectImage {
 	my @p = @_;
