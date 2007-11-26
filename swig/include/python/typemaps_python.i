@@ -688,3 +688,95 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
   /* %typemap(ret) (CPLXMLNode*) */
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
+
+
+
+/* ==================================================================== */
+/*	Support function for progress callbacks to python.                  */
+/* ==================================================================== */
+
+/*  The following scary, scary, voodoo -- hobu                          */
+/*                                                                      */
+/*  A number of things happen as part of callbacks in GDAL.  First,     */
+/*  there is a generic callback function internal to GDAL called        */
+/*  GDALTermProgress, which just outputs generic progress counts to the */
+/*  terminal as you would expect.  This callback function is a special  */
+/*  case.  Alternatively, a user can pass in a Python function that     */
+/*  can be used as a callback, and it will be eval'd by GDAL during     */
+/*  its update loop.  The typemaps here handle taking in                */
+/*  GDALTermProgress and the Python function.                           */
+
+/*  This arginit does some magic because it must create a               */
+/*  psProgressInfo that is global to the wrapper function.  The noblock */
+/*  option here allows it to end up being global and not being          */
+/*  instantiated within a {} block.  Both the callback_data and the     */
+/*  callback typemaps will then use this struct to hold pointers to the */
+/*  callback and callback_data PyObject*'s.                             */
+
+%typemap(arginit, noblock=1) ( void* callback_data=NULL)
+{
+    /* %typemap(arginit) ( const char* callback_data=NULL)  */
+        PyProgressData *psProgressInfo;
+        psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+        psProgressInfo->nLastReported = -1;
+        psProgressInfo->psPyCallback = NULL;
+        psProgressInfo->psPyCallbackData = NULL;
+
+}
+
+/*  This is kind of silly, but this typemap takes the $input'ed         */
+/*  PyObject* and hangs it on the struct's callback data *and* sets     */
+/*  the argument to the psProgressInfo void* that will eventually be    */
+/*  passed into the function as its callback data.  Confusing.  Sorry.  */
+%typemap(in) (void* callback_data=NULL) 
+{
+    /* %typemap(in) ( void* callback_data=NULL)  */
+  
+        psProgressInfo->psPyCallbackData = $input ;
+        $1 = psProgressInfo;
+
+}
+
+/*  Here is our actual callback function.  It could be a generic GDAL   */
+/*  callback function like GDALTermProgress, or it might be a user-     */
+/*  defined callback function that is actually a Python function.       */
+/*  If we were the generic function, set our argument to that,          */
+/*  otherwise, setup the psProgressInfo's callback to be our PyObject*  */
+/*  and set our callback function to be PyProgressProxy, which is       */
+/*  defined in gdal_python.i                                            */
+%typemap(in) (int (*callback) (double, const char*, void*) = NULL) 
+{
+    /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
+    /* callback_func typemap */
+    if ($input) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( $input, 
+                         (void**)&cbfunction, 
+                         SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
+                         SWIG_POINTER_EXCEPTION | 0 );
+
+        if ( cbfunction == GDALTermProgress ) {
+            $1 = GDALTermProgress;
+        } else {
+            if (!PyFunction_Check($input)) {
+                PyErr_SetString( PyExc_RuntimeError, 
+                                 "Object given is not a Python function" );
+                SWIG_fail;
+            }
+            psProgressInfo->psPyCallback = $input;
+            $1 = PyProgressProxy;
+        }
+        
+    }
+
+}
+
+/*  clean up our global (to the wrapper function) psProgressInfo        */
+/*  struct now that we're done with it.
+%typemap(freearg) (void* callback_data=NULL) 
+{
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+  
+        CPLFree(psProgressInfo);
+
+}
