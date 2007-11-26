@@ -29,18 +29,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.2  2003/08/27 19:09:13  warmerda
-#  handle remapping if some fields can't be copied
-#
-#  Revision 1.1  2003/07/16 20:25:08  warmerda
-#  New
-#
-#
 
-import osr
-import ogr
+try:
+    from osgeo import osr
+    from osgeo import ogr
+except ImportError:
+    import osr
+    import ogr
+
 import string
 import sys
 
