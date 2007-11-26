@@ -29,15 +29,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.1  2003/02/15 19:39:12  warmerda
-#  New
-#
-#
 
-import osr
-import ogr
+try:
+    from osgeo import osr
+    from osgeo import ogr
+except ImportError:
+    import osr
+    import ogr
+
 import string
 
 #############################################################################-
