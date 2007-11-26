@@ -31,6 +31,7 @@
 
 try:
     from osgeo import gdal
+    gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
 
@@ -150,7 +151,7 @@ tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time. 
 
-gdal.TermProgress_nocb( 0.0 )
+gdal.TermProgress( 0.0 )
 for iY in range(src_ds.RasterYSize):
     src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
 
@@ -160,7 +161,7 @@ for iY in range(src_ds.RasterYSize):
         dst_data = Numeric.take(band_lookup,src_data)
         tif_ds.GetRasterBand(iBand+1).WriteArray(dst_data,0,iY)
 
-    gdal.TermProgress_nocb( (iY+1.0) / src_ds.RasterYSize )
+    gdal.TermProgress( (iY+1.0) / src_ds.RasterYSize )
     
 
 tif_ds = None
