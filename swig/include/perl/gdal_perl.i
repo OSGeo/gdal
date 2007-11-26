@@ -37,8 +37,8 @@
 %inline %{
     typedef struct
     {
-	SV *sv;
-	SV *sp;
+	SV *fct;
+	SV *data;
     } SavedEnv;
     int callback_d_cp_vp(double d, const char *cp, void *vp)
     {
@@ -50,10 +50,10 @@
 	PUSHMARK(SP);
 	XPUSHs(sv_2mortal(newSVnv(d)));
 	XPUSHs(sv_2mortal(newSVpv(cp, 0)));
-	if (env_ptr->sp)
-	    XPUSHs(env_ptr->sp);
+	if (env_ptr->data)
+	    XPUSHs(env_ptr->data);
 	PUTBACK;
-	count = call_sv(env_ptr->sv, G_SCALAR);
+	count = call_sv(env_ptr->fct, G_SCALAR);
 	SPAGAIN;
 	if (count != 1)
 	    croak("Big trouble\n");
