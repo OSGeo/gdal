@@ -27,17 +27,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.2  2003/08/07 17:27:15  warmerda
-#  added -n (normalize) flag
-#
-#  Revision 1.1  2003/07/17 20:23:17  warmerda
-#  New
-#
-#
 
-import gdal
+try:
+    from osgeo import gdal
+    gdal.TermProgress = gdal.TermProgress_nocb
+except ImportError:
+    import gdal
+
 import sys
 import string
 
