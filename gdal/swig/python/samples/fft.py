@@ -28,16 +28,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.1  2003/03/21 13:14:21  dron
-#  New.
-#
-#
 
-import gdal
-from gdalconst import *
-import Numeric
+try:
+    from osgeo import gdal
+    from osgeo.gdalconst import *
+    import numpy as Numeric
+except ImportError:
+    import gdal
+    from gdalconst import *
+    import Numeric
+    
 import FFT
 import sys
 
