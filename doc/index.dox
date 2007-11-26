@@ -61,13 +61,13 @@ Download:
 
 \section index_maillist Mailing List
 
-A gdal-announce mailing list <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">subscription</a> is a low volume way of keeping track of major
+A gdal-announce mailing list <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce/">subscription</a> is a low volume way of keeping track of major
 developments with the GDAL project.
 
-The <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a>
+The <a href="mailto:gdal-dev@lists.osgeo.org">gdal-dev@lists.osgeo.org</a>
 mailing list can be used for discussion of development and user issues related
 to GDAL and related technologies.  Subscriptions can be done, and archives 
-reviewed <a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/">on 
+reviewed <a href="http://lists.osgeo.org/mailman/listinfo/gdal-dev/">on 
 the web</a>.  The mailing list is also available in read-only format by NNTP at
 <a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>
 and by HTTP at
