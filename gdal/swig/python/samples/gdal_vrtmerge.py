@@ -21,7 +21,11 @@
 # precision as the gdal 'C' utilities
 # Norman Vine  nhv@cape.com  03-Oct-2005 6:23:45 am
 
-import gdal
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+
 import sys
 
 # =============================================================================
