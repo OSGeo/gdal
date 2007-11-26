@@ -52,16 +52,37 @@ public:
 
 %newobject Create;
 %feature( "kwargs" ) Create;
-  GDALDatasetShadow *Create( const char *name, int xsize, int ysize, int bands =1,
-                       GDALDataType eType=GDT_Byte, char **options = 0 ) {
-    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate( self, name, xsize, ysize, bands, eType, options );
+  GDALDatasetShadow *Create(    const char *name, 
+                                int xsize, 
+                                int ysize, 
+                                int bands = 1,
+                                GDALDataType eType=GDT_Byte, 
+                                char **options = 0 ) {
+
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self, 
+                                                                name, 
+                                                                xsize, 
+                                                                ysize, 
+                                                                bands, 
+                                                                eType, 
+                                                                options );
     return ds;
   }
 
 %newobject CreateCopy;
 %feature( "kwargs" ) CreateCopy;
-  GDALDatasetShadow *CreateCopy( const char *name, GDALDatasetShadow* src, int strict =1, char **options = 0 ) {
-    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, options, 0, 0 );
+  GDALDatasetShadow *CreateCopy(    const char *name, 
+                                    GDALDatasetShadow* src, 
+                                    int strict = 1, 
+                                    char **options = 0 ) {
+
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
+                                                                    name, 
+                                                                    src, 
+                                                                    strict, 
+                                                                    options, 
+                                                                    NULL, 
+                                                                    NULL );
     return ds;
   }
 
