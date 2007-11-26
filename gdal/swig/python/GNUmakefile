@@ -45,6 +45,9 @@ generate: ${WRAPPERS}
 build:
 	python setup.py build
 
+egg:
+	python setup.py bdist_egg 
+	
 install:
 
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
