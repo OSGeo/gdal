@@ -238,6 +238,23 @@ def nitf_11():
     return tst.testOpen()
 
 ###############################################################################
+# Verify that TRE access via the metadata domain works.
+
+def nitf_12():
+
+    ds = gdal.Open( 'data/fake_nsif.ntf' )
+
+    md = ds.GetMetadata( 'TRE' )
+
+    ds = None
+
+    if md['BLOCKA'] != '010000001000000000                +41.319331+020.078400+41.317083+020.126072+41.281634+020.122570+41.283881+020.074924     ':
+        gdaltest.post_reason( 'did not find expected BLOCKA metadata.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -265,6 +282,7 @@ gdaltest_list = [
     nitf_9,
     nitf_10,
     nitf_11,
+    nitf_12,
     nitf_cleanup ]
 
 if __name__ == '__main__':
