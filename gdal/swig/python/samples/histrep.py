@@ -27,13 +27,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.1  2005/05/23 07:31:02  fwarmerdam
-#  New
-#
 
-import gdal
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
+
 import sys
 
 # =============================================================================
