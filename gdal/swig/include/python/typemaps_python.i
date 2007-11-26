@@ -92,7 +92,7 @@
 %typemap(out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
-  if ( result != 0) {
+  if ( result != 0 && bUseExceptions) {
     PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
     SWIG_fail;
   }
