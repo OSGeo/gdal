@@ -73,6 +73,9 @@ if (0) {
 	push @o, "$a Generating Histogram 6";
     }
     ok(is_deeply(\@out, \@o),"callback");
+
+    # without callback only implicit test:
+    Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,Geo::GDAL::ColorTable->new);
     
     my $band = $r;
 
