@@ -29,18 +29,22 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.2  2003/09/19 09:18:56  dron
-#  Make use of ProgressTerm() function.
-#
-#  Revision 1.1  2003/02/15 14:23:47  dron
-#  New
-#
 
-import gdal
-from gdalconst import *
-import Numeric
+try:
+    from osgeo import gdal
+    from osgeo.gdalconst import *
+    gdal.TermProgress = gdal.TermProgress_nocb
+except ImportError:
+    import gdal
+    from gdalconst import *
+
+try:
+    import numpy as Numeric
+    Numeric.arrayrange = Numeric.arange
+except ImportError:
+    import Numeric
+
+
 import sys
 
 # =============================================================================
