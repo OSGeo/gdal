@@ -27,21 +27,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.1  2006/04/05 15:26:34  fwarmerdam
-#  New
-#
-#  Revision 1.2  2006/04/05 14:38:56  fwarmerdam
-#  Removed old srs junk, not used.
-#
-#  Revision 1.1  2006/03/30 18:58:04  fwarmerdam
-#  New
-#
-#
 
-import osr
-import ogr
+try:
+    from osgeo import osr
+    from osgeo import ogr
+except ImportError:
+    import osr
+    import ogr
+
 import string
 import sys
 
