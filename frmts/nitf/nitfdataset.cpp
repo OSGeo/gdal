@@ -81,10 +81,11 @@ class NITFDataset : public GDALPamDataset
     GDAL_GCP    *pasGCPList;
     char        *pszGCPProjection;
 
-    char       **papszCGMMetadata;
+    GDALMultiDomainMetadata oSpecialMD;
 
     void         InitializeCGMMetadata();
-
+    void         InitializeTextMetadata();
+    void         InitializeTREMetadata();
 
     int         *panJPEGBlockOffset;
     GByte       *pabyJPEGBlock;
@@ -595,8 +596,6 @@ NITFDataset::NITFDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    papszCGMMetadata = NULL;
 }
 
 /************************************************************************/
@@ -690,7 +689,6 @@ NITFDataset::~NITFDataset()
             papoBands[i] = NULL;
     }
 
-    CSLDestroy( papszCGMMetadata );
     CPLFree( panJPEGBlockOffset );
     CPLFree( pabyJPEGBlock );
 }
@@ -1963,11 +1961,12 @@ const char *NITFDataset::GetProjectionRef()
 void NITFDataset::InitializeCGMMetadata()
 
 {
+    if( oSpecialMD.GetMetadataItem( "SEGMENT_COUNT", "CGM" ) != NULL )
+        return;
+
     int iSegment;
     int iCGM = 0;
-
-    if( papszCGMMetadata != NULL )
-        return;
+    char **papszCGMMetadata = NULL;
 
     papszCGMMetadata = 
         CSLSetNameValue( papszCGMMetadata, "SEGMENT_COUNT", "0" );
@@ -2065,6 +2064,130 @@ void NITFDataset::InitializeCGMMetadata()
         CSLSetNameValue( papszCGMMetadata, 
                          "SEGMENT_COUNT", 
                          CPLString().Printf( "%d", iCGM ) );
+
+    oSpecialMD.SetMetadata( papszCGMMetadata, "CGM" );
+
+    CSLDestroy( papszCGMMetadata );
+}
+
+/************************************************************************/
+/*                       InitializeTextMetadata()                       */
+/************************************************************************/
+
+void NITFDataset::InitializeTextMetadata()
+
+{
+    if( oSpecialMD.GetMetadata( "TEXT" ) != NULL )
+        return;
+
+    int iSegment;
+    int iText = 0;
+
+/* ==================================================================== */
+/*      Process all graphics segments.                                  */
+/* ==================================================================== */
+    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegment = psFile->pasSegmentInfo + iSegment;
+
+        if( !EQUAL(psSegment->szSegmentType,"TX") )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Load the raw CGM data itself.                                   */
+/* -------------------------------------------------------------------- */
+        char *pabyTextData;
+
+        pabyTextData = (char *) CPLCalloc(1,psSegment->nSegmentSize);
+        if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
+                       SEEK_SET ) != 0 
+            || VSIFReadL( pabyTextData, 1, psSegment->nSegmentSize, 
+                          psFile->fp ) != psSegment->nSegmentSize )
+        {
+            CPLError( CE_Warning, CPLE_FileIO, 
+                      "Failed to read %d bytes of graphic data at %d.", 
+                      psSegment->nSegmentSize,
+                      psSegment->nSegmentStart );
+            return;
+        }
+
+        oSpecialMD.SetMetadataItem( CPLString().Printf( "DATA_%d", iText),
+                                    pabyTextData, "TEXT" );
+        CPLFree( pabyTextData );
+
+        iText++;
+    }
+}
+
+/************************************************************************/
+/*                       InitializeTREMetadata()                        */
+/************************************************************************/
+
+void NITFDataset::InitializeTREMetadata()
+
+{
+    if( oSpecialMD.GetMetadata( "TRE" ) != NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over TRE sources (file and image).                         */
+/* -------------------------------------------------------------------- */
+    int nTRESrc;
+
+    for( nTRESrc = 0; nTRESrc < 2; nTRESrc++ )
+    {
+        int nTREBytes;
+        char *pszTREData;
+
+        if( nTRESrc == 0 )
+        {
+            nTREBytes = psFile->nTREBytes;
+            pszTREData = psFile->pachTRE;
+        }
+        else
+        {
+            if( psImage ) 
+            {
+                nTREBytes = psImage->nTREBytes;
+                pszTREData = psImage->pachTRE;
+            }
+            else
+            {
+                nTREBytes = 0;
+                pszTREData = NULL;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over TREs.                                                 */
+/* -------------------------------------------------------------------- */
+
+        while( nTREBytes >= 11 )
+        {
+            char szTemp[100];
+            char szTag[7];
+            char *pszEscapedData;
+            int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+
+            strncpy( szTag, pszTREData, 6 );
+            szTag[6] = '\0';
+
+            // trim white off tag. 
+            while( strlen(szTag) > 0 && szTag[strlen(szTag)-1] == ' ' )
+                szTag[strlen(szTag)-1] = '\0';
+            
+            // escape data. 
+            pszEscapedData = CPLEscapeString( pszTREData + 11,
+                                              nThisTRESize,
+                                              CPLES_BackslashQuotable );
+
+            oSpecialMD.SetMetadataItem( szTag, pszEscapedData, "TRE" );
+            CPLFree( pszEscapedData );
+            
+            nTREBytes -= (nThisTRESize + 11);
+            pszTREData += (nThisTRESize + 11);
+        }
+    }
 }
 
 /************************************************************************/
@@ -2074,12 +2197,25 @@ void NITFDataset::InitializeCGMMetadata()
 char **NITFDataset::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUAL(pszDomain,"CGM") )
-        return GDALPamDataset::GetMetadata( pszDomain );
+    if( pszDomain != NULL && EQUAL(pszDomain,"CGM") )
+    {
+        InitializeCGMMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
 
-    InitializeCGMMetadata();
+    if( pszDomain != NULL && EQUAL(pszDomain,"TEXT") )
+    {
+        InitializeTextMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
 
-    return papszCGMMetadata;
+    if( pszDomain != NULL && EQUAL(pszDomain,"TRE") )
+    {
+        InitializeTREMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
+    return GDALPamDataset::GetMetadata( pszDomain );
 }
 
 /************************************************************************/
@@ -2090,12 +2226,25 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
                                          const char * pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUAL(pszDomain,"CGM") )
-        return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
+    if( pszDomain != NULL && EQUAL(pszDomain,"CGM") )
+    {
+        InitializeCGMMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
 
-    InitializeCGMMetadata();
+    if( pszDomain != NULL && EQUAL(pszDomain,"TEXT") )
+    {
+        InitializeTextMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
 
-    return CSLFetchNameValue( papszCGMMetadata, pszName );
+    if( pszDomain != NULL && EQUAL(pszDomain,"TRE") )
+    {
+        InitializeTREMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
+
+    return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 }
 
 
