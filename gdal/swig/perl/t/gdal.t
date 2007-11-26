@@ -55,8 +55,26 @@ if (0) {
 
 {
     my $driver = Geo::GDAL::GetDriverByName('MEM');
-    my $dataset = $driver->Create('tmp', 10, 10, 1 , 'Int32', []);
-    my $band = $dataset->GetRasterBand(1);
+    my $dataset = $driver->Create('tmp', 10, 10, 3 , 'Int32', []);
+    my $r = $dataset->GetRasterBand(1);
+    my $g = $dataset->GetRasterBand(1);
+    my $b = $dataset->GetRasterBand(1);
+
+    my @out;
+    eval {
+	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
+				       Geo::GDAL::ColorTable->new,
+				       sub {push @out, "@_"; 
+					    return $_[0] < 0.5 ? 1 : 0},6);
+    };
+    my @o;
+    for (0..5) {
+	my $a = 0.1*$_;
+	push @o, "$a Generating Histogram 6";
+    }
+    ok(is_deeply(\@out, \@o),"callback");
+    
+    my $band = $r;
 
     $colors = $band->ColorTable(Geo::GDAL::ColorTable->new);
     @table = $colors->ColorTable([10,20,30,40],[20,20,30,40]);
