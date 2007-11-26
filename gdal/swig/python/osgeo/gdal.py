@@ -80,6 +80,36 @@ def deprecation_warn( module ):
   warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
        DeprecationWarning)
 
+def RGBFile2PCTFile( src_filename, dst_filename ):
+  src_ds = Open(src_filename)
+  if src_ds is None or src_ds == 'NULL':
+      return 1
+
+  ct = ColorTable()
+  err = ComputeMedianCutPCT( src_ds.GetRasterBand(1),
+                             src_ds.GetRasterBand(2),
+                             src_ds.GetRasterBand(3),
+                             256, ct )
+  if err <> 0:
+      return err
+
+  gtiff_driver = GetDriverByName('GTiff')
+  if gtiff_driver is None:
+      return 1
+
+  dst_ds = gtiff_driver.Create( dst_filename,
+                                src_ds.RasterXSize, src_ds.RasterYSize )
+  dst_ds.GetRasterBand(1).SetRasterColorTable( ct )
+
+  err = DitherRGB2PCT( src_ds.GetRasterBand(1),
+                       src_ds.GetRasterBand(2),
+                       src_ds.GetRasterBand(3),
+                       dst_ds.GetRasterBand(1),
+                       ct )
+  dst_ds = None
+  src_ds = None
+
+  return 0
 
 
 def UseExceptions(*args):
@@ -885,113 +915,33 @@ class RasterAttributeTable(MajorObject):
 RasterAttributeTable_swigregister = _gdal.RasterAttributeTable_swigregister
 RasterAttributeTable_swigregister(RasterAttributeTable)
 
-
-def VersionInfo(*args):
-  """VersionInfo(char request="VERSION_NUM") -> char"""
-  return _gdal.VersionInfo(*args)
-
-def AllRegister(*args):
-  """AllRegister()"""
-  return _gdal.AllRegister(*args)
-
-def GetCacheMax(*args):
-  """GetCacheMax() -> int"""
-  return _gdal.GetCacheMax(*args)
-
-def SetCacheMax(*args):
-  """SetCacheMax(int nBytes)"""
-  return _gdal.SetCacheMax(*args)
-
-def GetCacheUsed(*args):
-  """GetCacheUsed() -> int"""
-  return _gdal.GetCacheUsed(*args)
-
-def GetDataTypeSize(*args):
-  """GetDataTypeSize(GDALDataType ?) -> int"""
-  return _gdal.GetDataTypeSize(*args)
-
-def DataTypeIsComplex(*args):
-  """DataTypeIsComplex(GDALDataType ?) -> int"""
-  return _gdal.DataTypeIsComplex(*args)
-
-def GetDataTypeName(*args):
-  """GetDataTypeName(GDALDataType ?) -> char"""
-  return _gdal.GetDataTypeName(*args)
-
-def GetDataTypeByName(*args):
-  """GetDataTypeByName(char ?) -> GDALDataType"""
-  return _gdal.GetDataTypeByName(*args)
-
-def GetColorInterpretationName(*args):
-  """GetColorInterpretationName(GDALColorInterp ?) -> char"""
-  return _gdal.GetColorInterpretationName(*args)
-
-def GetPaletteInterpretationName(*args):
-  """GetPaletteInterpretationName(GDALPaletteInterp ?) -> char"""
-  return _gdal.GetPaletteInterpretationName(*args)
-
-def DecToDMS(*args):
-  """DecToDMS(double ?, char ?, int ?=2) -> char"""
-  return _gdal.DecToDMS(*args)
-
-def PackedDMSToDec(*args):
-  """PackedDMSToDec(double ?) -> double"""
-  return _gdal.PackedDMSToDec(*args)
-
-def DecToPackedDMS(*args):
-  """DecToPackedDMS(double ?) -> double"""
-  return _gdal.DecToPackedDMS(*args)
-
-def ParseXMLString(*args):
-  """ParseXMLString(char ?) -> CPLXMLNode"""
-  return _gdal.ParseXMLString(*args)
-
-def SerializeXMLTree(*args):
-  """SerializeXMLTree(CPLXMLNode xmlnode) -> char"""
-  return _gdal.SerializeXMLTree(*args)
-
-def GetDriverCount(*args):
-  """GetDriverCount() -> int"""
-  return _gdal.GetDriverCount(*args)
-
-def GetDriverByName(*args):
-  """GetDriverByName(char name) -> Driver"""
-  return _gdal.GetDriverByName(*args)
-
-def GetDriver(*args):
-  """GetDriver(int i) -> Driver"""
-  return _gdal.GetDriver(*args)
-
-def Open(*args):
-  """Open(char name, GDALAccess eAccess=GA_ReadOnly) -> Dataset"""
-  return _gdal.Open(*args)
-
-def OpenShared(*args):
-  """OpenShared(char name, GDALAccess eAccess=GA_ReadOnly) -> Dataset"""
-  return _gdal.OpenShared(*args)
-
-def IdentifyDriver(*args):
-  """IdentifyDriver(char pszDatasource, char papszSiblings=None) -> Driver"""
-  return _gdal.IdentifyDriver(*args)
-
-def ReprojectImage(*args):
-  """
-    ReprojectImage(Dataset src_ds, Dataset dst_ds, char src_wkt=None, 
-        char dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, 
-        double WarpMemoryLimit=0.0, 
-        double maxerror=0.0) -> CPLErr
-    """
-  return _gdal.ReprojectImage(*args)
-
-def AutoCreateWarpedVRT(*args):
-  """
-    AutoCreateWarpedVRT(Dataset src_ds, char src_wkt=0, char dst_wkt=0, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, 
-        double maxerror=0.0) -> Dataset
-    """
-  return _gdal.AutoCreateWarpedVRT(*args)
-
-def GeneralCmdLineProcessor(*args):
-  """GeneralCmdLineProcessor(char papszArgv, int nOptions=0) -> char"""
-  return _gdal.GeneralCmdLineProcessor(*args)
+TermProgress = _gdal.TermProgress
+ComputeMedianCutPCT = _gdal.ComputeMedianCutPCT
+DitherRGB2PCT = _gdal.DitherRGB2PCT
+ReprojectImage = _gdal.ReprojectImage
+AutoCreateWarpedVRT = _gdal.AutoCreateWarpedVRT
+VersionInfo = _gdal.VersionInfo
+AllRegister = _gdal.AllRegister
+GetCacheMax = _gdal.GetCacheMax
+SetCacheMax = _gdal.SetCacheMax
+GetCacheUsed = _gdal.GetCacheUsed
+GetDataTypeSize = _gdal.GetDataTypeSize
+DataTypeIsComplex = _gdal.DataTypeIsComplex
+GetDataTypeName = _gdal.GetDataTypeName
+GetDataTypeByName = _gdal.GetDataTypeByName
+GetColorInterpretationName = _gdal.GetColorInterpretationName
+GetPaletteInterpretationName = _gdal.GetPaletteInterpretationName
+DecToDMS = _gdal.DecToDMS
+PackedDMSToDec = _gdal.PackedDMSToDec
+DecToPackedDMS = _gdal.DecToPackedDMS
+ParseXMLString = _gdal.ParseXMLString
+SerializeXMLTree = _gdal.SerializeXMLTree
+GetDriverCount = _gdal.GetDriverCount
+GetDriverByName = _gdal.GetDriverByName
+GetDriver = _gdal.GetDriver
+Open = _gdal.Open
+OpenShared = _gdal.OpenShared
+IdentifyDriver = _gdal.IdentifyDriver
+GeneralCmdLineProcessor = _gdal.GeneralCmdLineProcessor
 
 
