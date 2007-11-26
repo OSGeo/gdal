@@ -744,9 +744,9 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 /*  otherwise, setup the psProgressInfo's callback to be our PyObject*  */
 /*  and set our callback function to be PyProgressProxy, which is       */
 /*  defined in gdal_python.i                                            */
-%typemap(in) (int (*callback) (double, const char*, void*) = NULL) 
+%typemap(in) ( GDALProgressFunc callback = NULL) 
 {
-    /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
+    /* %typemap(in) (GDALProgressFunc callback = NULL) */
     /* callback_func typemap */
     if ($input) {
         void* cbfunction = NULL;
