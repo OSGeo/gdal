@@ -27,29 +27,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.5  2005/07/29 04:49:46  fwarmerdam
-#  Set SRS on generated file.
-#  http://bugzilla.remotesensing.org/show_bug.cgi?id=644
-#
-#  Revision 1.4  2004/10/30 20:54:42  fwarmerdam
-#  Applied patch from Schuyler Erle (bug 646) to discard dangles and
-#  degenerate rings.
-#
-#  Revision 1.3  2003/07/11 14:52:13  warmerda
-#  Added logic to replicate all source polygon fields onto output file.
-#
-#  Revision 1.2  2003/07/11 14:31:17  warmerda
-#  Use provided input filename.
-#
-#  Revision 1.1  2003/03/03 05:17:06  warmerda
-#  New
-#
-#
 
-import osr
-import ogr
+try:
+    from osgeo import osr
+    from osgeo import ogr
+except ImportError:
+    import osr
+    import ogr
+
 import string
 import sys
 
