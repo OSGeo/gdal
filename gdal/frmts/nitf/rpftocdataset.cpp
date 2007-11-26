@@ -1263,8 +1263,8 @@ void GDALRegister_RPFTOC()
         poDriver->pfnIdentify = RPFTOCDataset::Identify;
         poDriver->pfnOpen = RPFTOCDataset::Open;
 
-        /* TODO */
-        /* poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rpftoc.html" ); */
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#RPFTOC" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "toc" );
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
