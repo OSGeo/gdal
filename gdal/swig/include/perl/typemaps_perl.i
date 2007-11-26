@@ -730,18 +730,23 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
     SavedEnv saved_env;
     saved_env.fct = NULL;
     saved_env.data = NULL;
-    arg7 = (void *)(&saved_env); /* can't seem to be able to avoid the hard coded arg7 */
 }
 
 %typemap(in) (int (*callback) (double, const char*, void*) = NULL)
 {
     /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
-    saved_env.fct = (SV *)$input;
-    $1 = &callback_d_cp_vp;
+    if (SvOK($input)) {
+	saved_env.fct = (SV *)$input;
+	$1 = &callback_d_cp_vp;
+    } else
+	$1 = NULL;
 }
 
 %typemap(in) (void* callback_data=NULL)
 {
     /* %typemap(in) (void* callback_data=NULL) */
-    saved_env.data = (SV *)$input;
+    if (SvOK($input))
+	saved_env.data = (SV *)$input;
+    if (saved_env.fct)
+	$1 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
 }
