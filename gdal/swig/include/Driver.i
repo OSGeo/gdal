@@ -74,15 +74,17 @@ public:
   GDALDatasetShadow *CreateCopy(    const char *name, 
                                     GDALDatasetShadow* src, 
                                     int strict = 1, 
-                                    char **options = 0 ) {
+                                    char **options = 0, 
+                                    GDALProgressFunc callback = NULL,
+                                    void* callback_data=NULL) {
 
     GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self, 
                                                                     name, 
                                                                     src, 
                                                                     strict, 
                                                                     options, 
-                                                                    NULL, 
-                                                                    NULL );
+                                                                    callback, 
+                                                                    callback_data );
     return ds;
   }
 

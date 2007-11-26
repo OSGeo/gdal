@@ -126,8 +126,18 @@ public:
 %apply (void *buffer_ptr) {int *pOverviews};
 #endif
   int BuildOverviews( const char *resampling = "NEAREST",
-                      int overviewlist = 0 , int *pOverviews = 0 ) {
-    return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, 0, 0);
+                      int overviewlist = 0 , int *pOverviews = 0,
+                      GDALProgressFunc callback = NULL,
+                      void* callback_data=NULL ) {
+                      
+    return GDALBuildOverviews(  self, 
+                                resampling, 
+                                overviewlist, 
+                                pOverviews, 
+                                0, 
+                                0, 
+                                callback, 
+                                callback_data);
   }
 #ifndef SWIGCSHARP
 %clear (int overviewlist, int *pOverviews);
