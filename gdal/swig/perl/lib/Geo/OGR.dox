@@ -290,9 +290,9 @@
 ## @attr name
 # string (access as $datasource->{name})
 
-## @method $Layer($layer)
+## @method $Layer($layer = 0)
 # @param layer a name (primary) or index (secondary) of the requested
-# layer. If undefined returns the first layer.
+# layer. If not given, then returns the first layer.
 # @return a new Geo::OGR::Layer object
 
 ## @method @Layers()
@@ -321,12 +321,16 @@
 # @return a new Geo::OGR::Layer object
 
 ## @method DeleteLayer($layer)
+# Deletes a layer from the data source. Note that if there are layer
+# objects for the deleted layer, they become unusable.
+# @param layer name (primary) or index (secondary) of the layer to be
+# deleted, if ambiguous use named parameter syntax (name or index)
+
+## @method DeleteLayer(%param)
 # Deletes a layer from the data source. Note that if there are layers
 # objects for the deleted layer, they become unusable.
-# @param layer name (primary) or index (secondary), if ambiguous use
-# named parameter syntax (name or index)
-# @param layer layer a name (primary) or index (secondary) of the
-# layer to be deleted
+# @param param named parameter (name or index) for the layer to be
+# deleted
 
 ## @method $ExecuteSQL($statement, $geom = undef, $dialect = "")
 # @param statement
@@ -375,7 +379,7 @@
 # it is ok to change the requested field definition to accommodate
 # limitations of the layer. The output contains keys Name,
 # GeometryType, and Fields.
-# @param schema
+# @param schema [optional]
 # @return
 
 ## @method \%Row(%row)
@@ -386,7 +390,7 @@
 # object whose data is owned by the feature. It is ok to set only a
 # subset of the fields, those fields whose keys do not exist are left
 # unchanged.
-# @param row
+# @param row [optional]
 # @return
 
 ## @method @Tuple(@tuple)
@@ -395,12 +399,22 @@
 # tuple is: feature id, Geometry, fields in their order. The geometry
 # is a Geo::OGR::Geometry object whose data is owned by the
 # feature. It is ok to leave Geometry undefined, it is set only if it
-# is defined. [not yet implemented]
-# @param tuple
+# is defined.
+# @param tuple [optional]
 # @return
 
+## @method $SpatialFilter($filter)
+# @param filter [optional] a Geo::OGR::Geometry object or a string. An
+# undefined value removes the filter if there is one.
+# @return a new Geo::OGR::Geometry object
+
+## @method $SpatialFilter(@filter)
+# @param filter [optional] a rectangle ($minx, $miny, $maxx, $maxy).
+# @return a new Geo::OGR::Geometry object
+
 ## @method SetSpatialFilter($filter)
-# @param filter a Geo::OGR::Geometry object
+# @param filter [optional] a Geo::OGR::Geometry object. If not given,
+# removes the filter if there is one.
 
 ## @method SetSpatialFilterRect($minx, $miny, $maxx, $maxy)
 # @param minx
@@ -412,7 +426,9 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @method SetAttributeFilter($filter_string)
-# @return scalar (OGRErr)
+# Set or clear the attribute filter.
+# @param filter_string a SQL WHERE clause or undef to clear the
+# filter.
 
 ## @method ResetReading()
 
@@ -426,7 +442,7 @@
 # @return integer
 
 ## @method $GetName()
-# @return scalar (string)
+# @return
 
 ## @method $GetFeature($fid)
 # @param fid feature id
@@ -462,7 +478,7 @@
 
 ## @method \@GetExtent($force = 1)
 # @param force
-# @return arrayref Extent = ($minx, $miny, $maxx, $maxy)
+# @return the extent = ($minx, $miny, $maxx, $maxy) as a listref
 
 ## @method CreateField($field_def, $approx_ok = 1)
 # @param field_def a Geo::OGR::FieldDefn object
@@ -501,7 +517,7 @@
 # hashref that is fed to Geo::OGR::Geometry::create). It is ok to set
 # only a subset of the fields, those fields whose keys do not exist
 # are left unchanged.
-# @param row
+# @param row [optional]
 # @return
 
 ## @method @Tuple(@tuple)
@@ -511,8 +527,8 @@
 # feature; or data from which a geometry object can be created (a
 # hashref that is fed to Geo::OGR::Geometry::create). It is ok to
 # leave FID and Geometry undefined, they are set only if they are
-# defined. [not yet implemented]
-# @param tuple
+# defined.
+# @param tuple [optional]
 # @return
 
 ## @method $GetDefnRef()
@@ -520,6 +536,7 @@
 
 ## @method $Geometry($geometry)
 # Get a copy of the geometry or copy the geometry into the feature.
+# @param geometry [optional]
 
 ## @method SetGeometry($geometry)
 # The geometry is copied into the feature.
@@ -546,20 +563,24 @@
 # @return an integer
 
 ## @method $GetFieldDefnRef($param)
-# @param param scalar (index or name of a field)
+# @param param the index or the name of the field
 # @return a new Geo::OGR::FieldDefn object
 
 ## @method $GetField($field)
-# @param field an index or a name of a field
+# @param field the index or the name of the field
 # @return the value of the field
 
 ## @method $IsFieldSet($field)
-# @param field an index or a name of a field
+# @param field the index or the name of the field
 # @return boolean
 
 ## @method $GetFieldIndex($name)
-# @param name field name
+# @param name the name of the field
 # @return integer the index of the field
+
+## @method $FID($fid)
+# @param fid [optional]
+# @return integer the feature id
 
 ## @method $GetFID()
 # @return integer the feature id
@@ -570,15 +591,19 @@
 ## @method DumpReadable()
 
 ## @method UnsetField($field)
-# @param field an index or a name of a field
+# @param field the index or the name of the field
 
 ## @method SetField($field, $value)
-# @param field an index or a name of a field
+# @param field the index or the name of the field
 # @param value
 
 ## @method SetFrom($other, $forgiving = 1)
 # @param other a Geo::OGR::Feature object
 # @param forgiving
+
+## @method $StyleString($string)
+# @param string [optional]
+# @return
 
 ## @method $GetStyleString()
 # @return a string
@@ -587,7 +612,7 @@
 # @param string
 
 ## @method $GetFieldType($field)
-# @param field an index or a name of a field
+# @param field the index or the name of the field
 # @return one of field types
 
 ## @method $GetFieldAsString($field)
@@ -624,6 +649,7 @@
 # Geo::OGR::FieldDefn objects or hashrefs from which such can be
 # created]. The Name cannot be set and the Fields are added to the
 # schema.
+# @param schema [optional]
 # @return
 
 ## @method $GetName()
@@ -645,7 +671,7 @@
 
 ## @method $GeomType($geometry_type)
 # Get or set the geometry type
-# @param geometry_type one of geometry types
+# @param geometry_type [optional] one of geometry types
 # @return the geometry types
 
 ## @method $GetGeomType()
@@ -685,14 +711,14 @@
 
 ## @method \%Schema(%parameters)
 # Get the schema or set parts of the schema
-# @param parameters named parameters: Name, Type, Justify, Width,
-# Precision
+# @param parameters [optional] named parameters: Name, Type, Justify,
+# Width, Precision
 # @return a reference to a hash whose keys are Name, Type, Justify,
 # Width, and Precision
 
 ## @method $Name($name)
 # Get and/or set the name
-# @param name {optional]
+# @param name [optional]
 # @return the name in non-void context
 
 ## @method $Type($type)
@@ -718,7 +744,7 @@
 # @return
 
 ## @method $GetNameRef()
-# Same as GetName instead of the "Ref".
+# Same as GetName.
 # @return
 
 ## @method SetName($name)
@@ -772,13 +798,28 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @cmethod $create($type)
-# @param type One of	 geometry type strings: 'Point', 'LineString', etc.
+# @param type One of geometry type strings: 'Point', 'LineString', etc.
 # @return a new Geo::OGR::Geometry object
 
 ## @cmethod $create(%params)
 # @param %params A named parameter, possible are: GeometryType, WKT,
 # WKB, GML, and Points (as in method Geo::OGR::Geometry::Points).
 # @return a new Geo::OGR::Geometry object
+
+## @method FlattenTo2D()
+
+## @method $CoordinateDimension($dimension)
+# @param dimension [optional]
+# @return 2 or 3
+
+## @method $GetCoordinateDimension()
+# @return an integer
+
+## @method SetCoordinateDimension($dimension)
+# @param dimension
+
+## @method $GetDimension()
+# @return 0, 1, or 2
 
 ## @method $ExportToWkt()
 # @return a WKT string
@@ -871,7 +912,7 @@
 # type. When setting, the geometry is first emptied. The method uses
 # internally either AddPoint_2D or AddPoint_3D depending on the
 # GeometryType.
-# @param points
+# @param points [optional]
 # @return
 
 ## @method Empty()
@@ -889,10 +930,10 @@
 ## @method $IsValid()
 # @return boolean
 
-## @method Move($dx, $dy, $dz = 0)
+## @method Move($dx, $dy, $dz)
 # @param dx
 # @param dy
-# @param dz
+# @param dz [optional]
 
 ## @method AddGeometryDirectly($other)
 # @param other a Geo::OGR::Geometry object
@@ -995,8 +1036,6 @@
 
 ## @method CloseRings()
 
-## @method FlattenTo2D()
-
 ## @method \@GetEnvelope()
 # @return arrayref = [$minx, $maxx, $miny, $maxy]
 
@@ -1004,15 +1043,6 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @method $WkbSize()
-# @return an integer
-
-## @method $GetCoordinateDimension()
-# @return an integer
-
-## @method SetCoordinateDimension($dimension)
-# @param dimension
-
-## @method $GetDimension()
 # @return an integer
 
 ## @method $GetGeometryType()
