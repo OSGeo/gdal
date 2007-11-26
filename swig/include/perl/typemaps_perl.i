@@ -725,17 +725,22 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
     if ($4) free($4);
 }
 
-%typemap(in) (int (*callback) (double, const char*, void*) = NULL) (SavedEnv e)
+%typemap(arginit, noblock=1) ( void* callback_data=NULL)
+{
+    SavedEnv saved_env;
+}
+
+%typemap(in) (int (*callback) (double, const char*, void*) = NULL)
 {
     /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
-    e.sv = (SV *)$input;
-    e.sp = NULL;
+    saved_env.sv = (SV *)$input;
+    saved_env.sp = NULL;
     $1 = &callback_d_cp_vp;
-    arg7 = (void *)(&e);
+    arg7 = (void *)(&saved_env);
 }
 
 %typemap(in) (void* callback_data=NULL)
 {
     /* %typemap(in) (void* callback_data=NULL) */
-    e6.sp = (SV *)$input;
+    saved_env.sp = (SV *)$input;
 }
