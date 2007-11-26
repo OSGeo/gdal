@@ -453,17 +453,13 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "RasterAttributeTable.i"
 
+
 //************************************************************************
 //
-// Define the global methods
+// Raster Operations
 //
 //************************************************************************
-//
-// Missing
-//
-// GeneralCmdLineProcessor
-// TermProgress
-//
+%include "Operations.i"
 
 const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
 
@@ -492,6 +488,7 @@ const char *GDALDecToDMS( double, const char *, int = 2 );
 double GDALPackedDMSToDec( double );
 
 double GDALDecToPackedDMS( double );
+
 
 #if defined(SWIGCSHARP)
 %newobject CPLParseXMLString;
@@ -574,59 +571,10 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 //************************************************************************
 
 // Missing
-// ComputeMedianCutPCT
-// DitherRGB2PCT
-// RGBFile2PCTFile
 // CreateAndReprojectImage
 // GCPsToGeoTransform
 
-%newobject ReprojectImage;
-%inline %{
-CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
-                         GDALDatasetShadow *dst_ds,
-                         const char *src_wkt=NULL,
-                         const char *dst_wkt=NULL,
-                         GDALResampleAlg eResampleAlg=GRA_NearestNeighbour,
-                         double WarpMemoryLimit=0.0,
-                         double maxerror = 0.0) {
 
-    CPLErrorReset();
-
-    CPLErr err = GDALReprojectImage( src_ds,
-                                     src_wkt,
-                                     dst_ds,
-                                     dst_wkt,
-                                     eResampleAlg,
-                                     WarpMemoryLimit,
-                                     maxerror,
-                                     NULL,
-                                     NULL,
-                                     NULL);
-    
-    return err;
-}
-%} 
-%newobject AutoCreateWarpedVRT;
-%inline %{
-GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
-                                        const char *src_wkt = 0,
-                                        const char *dst_wkt = 0,
-                                        GDALResampleAlg eResampleAlg = GRA_NearestNeighbour,
-                                        double maxerror = 0.0 ) {
-  GDALDatasetShadow *ds = GDALAutoCreateWarpedVRT( src_ds, src_wkt,
-                                                   dst_wkt,
-                                                   eResampleAlg,
-                                                   maxerror,
-                                                   0 );
-  if (ds == 0) {
-    /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
-  }
-  return ds;
-  
-}
-%}
-
-%newobject AutoCreateWarpedVRT;
 %apply (char **options) {char **};
 %inline %{
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
