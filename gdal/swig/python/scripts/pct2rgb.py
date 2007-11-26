@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #******************************************************************************
-#  $Id: pct2rgb.py 6029 2004-04-02 17:40:44Z warmerda $
+#  $Id$
 # 
 #  Name:     pct2rgb
 #  Project:  GDAL Python Interface
