@@ -40,10 +40,25 @@
 #
 #
 
-import gdal
-import gdalnumeric
-from gdalconst import *
-import Numeric
+try:
+    from osgeo import gdal
+    from osgeo.gdalconst import *
+    gdal.TermProgress = gdal.TermProgress_nocb
+except ImportError:
+    import gdal
+    from gdalconst import *
+
+try:
+    import numpy as Numeric
+    Numeric.arrayrange = Numeric.arange
+except ImportError:
+    import Numeric
+
+try:
+    from osgeo import gdal_array as gdalnumeric
+except ImportError:
+    import gdalnumeric
+
 import sys
 from math import *
 
