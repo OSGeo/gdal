@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #******************************************************************************
-#  $Id: pct2rgb.py 6029 2004-04-02 17:40:44Z warmerda $
+#  $Id$
 # 
 #  Name:     pct2rgb
 #  Project:  GDAL Python Interface
@@ -28,10 +28,22 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
+# 
+# $Log$
+# Revision 1.3  2004/04/02 17:40:44  warmerda
+# added GDALGeneralCmdLineProcessor() support
+#
+# Revision 1.2  2003/05/28 19:47:34  warmerda
+# upgrade progress reporting
+#
+# Revision 1.1  2003/05/28 16:19:45  warmerda
+# New
+#
+#
 
 import gdal
 import sys
-import numpy
+import Numeric
 import os.path
 
 def Usage():
@@ -104,10 +116,10 @@ if dst_driver is None:
 # ----------------------------------------------------------------------------
 # Build color table.
 
-lookup = [ numpy.arange(256), 
-           numpy.arange(256), 
-           numpy.arange(256), 
-           numpy.ones(256)*255 ]
+lookup = [ Numeric.arrayrange(256), 
+           Numeric.arrayrange(256), 
+           Numeric.arrayrange(256), 
+           Numeric.ones(256)*255 ]
 
 ct = src_band.GetRasterColorTable()
 
@@ -140,17 +152,17 @@ tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time. 
 
-#gdal.TermProgress( 0.0 )
+gdal.TermProgress( 0.0 )
 for iY in range(src_ds.RasterYSize):
     src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
 
     for iBand in range(out_bands):
         band_lookup = lookup[iBand]
 
-        dst_data = numpy.take(band_lookup,src_data)
+        dst_data = Numeric.take(band_lookup,src_data)
         tif_ds.GetRasterBand(iBand+1).WriteArray(dst_data,0,iY)
 
-  #  gdal.TermProgress( (iY+1.0) / src_ds.RasterYSize )
+    gdal.TermProgress( (iY+1.0) / src_ds.RasterYSize )
     
 
 tif_ds = None
