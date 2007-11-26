@@ -28,27 +28,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.5  2006/03/21 22:03:45  fwarmerdam
-#  added -where option
-#
-#  Revision 1.4  2005/11/02 19:56:01  fwarmerdam
-#  Added extents support
-#
-#  Revision 1.3  2005/11/02 19:42:25  fwarmerdam
-#  unix text format
-#
-#  Revision 1.2  2005/10/24 04:37:31  fwarmerdam
-#  use MEMO field for wkt geometry in access
-#
-#  Revision 1.1  2005/10/24 04:05:42  fwarmerdam
-#  New
-#
-#
 
-import osr
-import ogr
+try:
+    from osgeo import osr
+    from osgeo import ogr
+except ImportError:
+    import osr
+    import ogr
+
 import string
 import sys
 
