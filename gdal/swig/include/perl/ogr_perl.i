@@ -366,6 +366,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $self->CreateFeature($f);
 	}
 	package Geo::OGR::FeatureDefn;
+	use strict;
 	sub Schema {
 	    my $self = shift;
 	    my %schema;
@@ -578,6 +579,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		     Precision => $self->Precision };
 	}
 	package Geo::OGR::Geometry;
+	use strict;
 	use Carp;
 	use vars qw /
 	    %TYPE_STRING2INT %TYPE_INT2STRING
