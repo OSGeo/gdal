@@ -535,6 +535,7 @@ void GDALRegister_COASP(void)
 			"hdr" );
 /*		poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
 			"frmt_coasp.html"); */
+		poDriver->pfnIdentify = COASPDataset::Identify;
 		poDriver->pfnOpen = COASPDataset::Open;
 		GetGDALDriverManager()->RegisterDriver( poDriver );
 	}
