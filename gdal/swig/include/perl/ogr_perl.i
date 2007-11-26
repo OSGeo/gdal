@@ -351,6 +351,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    return @ret;
 	}
+	sub SpatialFilter {
+	    my $self = shift;
+	    $self->SetSpatialFilter($_[0]) if @_ == 1;
+	    $self->SetSpatialFilterRect(@_) if @_ == 4;
+	    return unless defined wantarray;
+	    $self->GetSpatialFilter;
+	}
 	sub InsertFeature {
 	    my $self = shift;
 	    my $f = shift;
@@ -403,6 +410,18 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::Feature;
 	use strict;
 	use vars qw /%GEOMETRIES/;
+	sub FID {
+	    my $self = shift;
+	    $self->SetFID($_[0]) if @_;
+	    return unless defined wantarray;
+	    $self->GetFID;
+	}
+	sub StyleString {
+	    my $self = shift;
+	    $self->SetStyleString($_[0]) if @_;
+	    return unless defined wantarray;
+	    $self->GetStyleString;
+	}
 	sub Row {
 	    my $self = shift;
 	    my %row = @_;
@@ -637,6 +656,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub GeometryType {
 	    my $self = shift;
 	    return $TYPE_INT2STRING{$self->GetGeometryType};
+	}
+	sub CoordinateDimension {
+	    my $self = shift;
+	    SetCoordinateDimension($self, $_[0]) if @_;
+	    GetCoordinateDimension($self) if defined wantarray;
 	}
 	sub AddPoint {
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
