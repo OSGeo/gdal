@@ -356,11 +356,13 @@ std::string KML::getError() const
 	return sError_;
 }
 
-void KML::classifyNodes() {
+void KML::classifyNodes()
+{
     poTrunk_->classify(this);
 }
 
-void KML::eliminateEmpty() {
+void KML::eliminateEmpty()
+{
     poTrunk_->eliminateEmpty(this);
 }
 
