@@ -534,10 +534,10 @@
 # @param dst a Geo::OSR::SpatialReference object
 # @return a new Geo::OSR::CoordinateTransformation object
 
-## @method \@TransformPoint($x, $y, $z = 0.0)
+## @method \@TransformPoint($x, $y, $z)
 # @param x
 # @param y
-# @param z
+# @param z [optional]
 # @return arrayref = [$x, $y, $z]
 
 ## @method TransformPoints(\@points)
