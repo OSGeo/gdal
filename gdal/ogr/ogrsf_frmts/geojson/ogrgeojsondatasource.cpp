@@ -57,7 +57,10 @@ OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
     if( NULL != fpOut_ )
     {
         if ( fpOut_ != stdout )
+        {
             VSIFClose( fpOut_ );
+            fpOut_ = NULL;
+        }
     }
 }
 
@@ -302,7 +305,9 @@ void OGRGeoJSONDataSource::Clear()
     pszGeoData_ = NULL;
 
     if( NULL != fpOut_ && stdout != fpOut_ )
+    {
         VSIFClose( fpOut_ );
+    }
     fpOut_ = NULL;
 }
 

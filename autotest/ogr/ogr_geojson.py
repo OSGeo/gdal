@@ -134,6 +134,11 @@ def verify_geojson_copy(name, fids, names):
 
     gdaltest.gjpoint_feat = None
 
+    lyr = None
+
+    # Required by old-gen python bindings
+    ds.Destroy()
+
     return True
 
 
@@ -182,6 +187,13 @@ def copy_shape_to_geojson(gjname):
 
     dst_feat.Destroy()
 
+    shp_lyr = None
+    lyr = None
+
+    # Required by old-gen python bindings
+    shp_ds.Destroy()
+    ds.Destroy()
+
     return True
 
 ###############################################################################
@@ -224,6 +236,10 @@ def ogr_geojson_2():
     if rc is not True:
         return 'fail'
 
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
+
     return 'success'
 
 ###############################################################################
@@ -253,6 +269,10 @@ def ogr_geojson_3():
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
     if rc is not True:
         return 'fail'
+
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
 
     return 'success'
 
@@ -284,6 +304,10 @@ def ogr_geojson_4():
     if rc is not True:
         return 'fail'
 
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
+
     return 'success'
 
 ##############################################################################
@@ -313,6 +337,10 @@ def ogr_geojson_5():
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
     if rc is not True:
         return 'fail'
+
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
 
     return 'success'
 
@@ -344,6 +372,10 @@ def ogr_geojson_6():
     if rc is not True:
         return 'fail'
 
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
+
     return 'success'
 
 ##############################################################################
@@ -374,6 +406,10 @@ def ogr_geojson_7():
     if rc is not True:
         return 'fail'
 
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
+
     return 'success'
 
 ##############################################################################
@@ -403,6 +439,10 @@ def ogr_geojson_8():
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPolygon, 0, extent)
     if rc is not True:
         return 'fail'
+
+    lyr = None
+    # Required by old-gen python bindings
+    ds.Destroy()
 
     return 'success'
 
@@ -465,7 +505,7 @@ gdaltest_list = [
     ogr_geojson_6,
     ogr_geojson_7,
     ogr_geojson_8,
-    #ogr_geojson_9,
+    ogr_geojson_9,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
