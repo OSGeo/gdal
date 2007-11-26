@@ -78,6 +78,31 @@ CPL_CVSID("$Id$");
                         // (added by Raj Gejjagaraguppe ARC for MODIS) 
 
 /************************************************************************/
+/*  GCTP ellipsoid codes.                                               */
+/************************************************************************/
+
+#define CLARKE1866          0L
+#define CLARKE1880          1L
+#define BESSEL              2L
+#define INTERNATIONAL1967   3L
+#define INTERNATIONAL1909   4L
+#define WGS72               5L
+#define EVEREST             6L
+#define WGS66               7L
+#define GRS1980             8L
+#define AIRY                9L
+#define MODIFIED_EVEREST    10L
+#define MODIFIED_AIRY       11L
+#define WGS84               12L
+#define SOUTHEAST_ASIA      13L
+#define AUSTRALIAN_NATIONAL 14L
+#define KRASSOVSKY          15L
+#define HOUGH               16L
+#define MERCURY1960         17L
+#define MODIFIED_MERCURY    18L
+#define SPHERE              19L
+
+/************************************************************************/
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
 /************************************************************************/
 
@@ -1205,61 +1230,67 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
 /* -------------------------------------------------------------------- */
     const char  *pszDatum = GetAttrValue( "DATUM" );
 
-    if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
-        *piDatum = 0L;
-
-    else if( EQUAL( pszDatum, SRS_DN_NAD83 ) )
-        *piDatum = 8L;
-
-    else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
-        *piDatum = 12L;
-
-    // If not found well known datum, translate ellipsoid
-    else
+    if ( pszDatum )
     {
-        double      dfSemiMajor = GetSemiMajor();
-        double      dfInvFlattening = GetInvFlattening();
+        if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
+            *piDatum = CLARKE1866;
 
-#ifdef DEBUG
-        CPLDebug( "OSR_USGS",
-                  "Datum \"%s\" unsupported by USGS GCTP. "
-                  "Try to translate ellipsoid definition.", pszDatum );
-#endif
-        
-        for ( i = 0; i < (int) NUMBER_OF_ELLIPSOIDS; i++ )
+        else if( EQUAL( pszDatum, SRS_DN_NAD83 ) )
+            *piDatum = GRS1980;
+
+        else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
+            *piDatum = WGS84;
+
+        // If not found well known datum, translate ellipsoid
+        else
         {
-            double  dfSM;
-            double  dfIF;
+            double      dfSemiMajor = GetSemiMajor();
+            double      dfInvFlattening = GetInvFlattening();
 
-            USGSGetEllipsoidInfo( aoEllips[i], NULL, &dfSM, &dfIF );
-            if( ABS( dfSemiMajor - dfSM ) < 0.01
-                && ABS( dfInvFlattening - dfIF ) < 0.0001 )
-            {
-                *piDatum = i;
-                break;
-            }
-        }
-
-        if ( i == NUMBER_OF_ELLIPSOIDS )    // Didn't found matches; set
-        {                                   // custom ellipsoid parameters
 #ifdef DEBUG
             CPLDebug( "OSR_USGS",
-                      "Ellipsoid \"%s\" unsupported by USGS GCTP. "
-                      "Custom ellipsoid definition will be used.", pszDatum );
+                      "Datum \"%s\" unsupported by USGS GCTP. "
+                      "Try to translate ellipsoid definition.", pszDatum );
 #endif
-            *piDatum = -1;
-            (*ppadfPrjParams)[0] = dfSemiMajor;
-            if ( ABS( dfInvFlattening ) < 0.000000000001 )
+            
+            for ( i = 0; i < (int) NUMBER_OF_ELLIPSOIDS; i++ )
             {
-                (*ppadfPrjParams)[1] = dfSemiMajor;
+                double  dfSM;
+                double  dfIF;
+
+                USGSGetEllipsoidInfo( aoEllips[i], NULL, &dfSM, &dfIF );
+                if( ABS( dfSemiMajor - dfSM ) < 0.01
+                    && ABS( dfInvFlattening - dfIF ) < 0.0001 )
+                {
+                    *piDatum = i;
+                    break;
+                }
             }
-            else
-            {
-                (*ppadfPrjParams)[1] =
-                    dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+
+            if ( i == NUMBER_OF_ELLIPSOIDS )    // Didn't found matches; set
+            {                                   // custom ellipsoid parameters
+#ifdef DEBUG
+                CPLDebug( "OSR_USGS",
+                          "Ellipsoid \"%s\" unsupported by USGS GCTP. "
+                          "Custom ellipsoid definition will be used.",
+                          pszDatum );
+#endif
+                *piDatum = -1;
+                (*ppadfPrjParams)[0] = dfSemiMajor;
+                if ( ABS( dfInvFlattening ) < 0.000000000001 )
+                {
+                    (*ppadfPrjParams)[1] = dfSemiMajor;
+                }
+                else
+                {
+                    (*ppadfPrjParams)[1] =
+                        dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+                }
             }
         }
     }
+    else
+        *piDatum = -1;
 
     return OGRERR_NONE;
 }
