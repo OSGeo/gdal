@@ -30,10 +30,16 @@
 #  $Log$
 #
 
-import gdal
+try:
+    from osgeo import gdal
+    from osgeo.gdalconst import GA_ReadOnly
+    from osgeo.osr import SpatialReference
+except ImportError:
+    import gdal
+    from gdalconst import GA_ReadOnly
+    from osr import SpatialReference
+
 import sys, os, tempfile
-from gdalconst import GA_ReadOnly
-from osr import SpatialReference
 from math import ceil, log10
 import operator
 
