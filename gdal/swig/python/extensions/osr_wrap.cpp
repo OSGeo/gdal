@@ -3385,7 +3385,7 @@ SWIGINTERN PyObject *_wrap_GetWellKnownGeogCSAsWKT(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -3462,7 +3462,7 @@ SWIGINTERN PyObject *_wrap_GetUserInputAsWKT(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -3828,7 +3828,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAuthority(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -3951,7 +3951,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAttrValue(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4020,7 +4020,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAngularUnits(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4117,7 +4117,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLinearUnits(PyObject *SWIGUNUSEDP
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4329,7 +4329,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetUTM(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4418,7 +4418,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetStatePlane(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4466,7 +4466,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_AutoIdentifyEPSG(PyObject *SWIGUNUSE
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4522,7 +4522,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjection(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4589,7 +4589,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjParm(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4709,7 +4709,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetNormProjParm(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4867,7 +4867,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetACEA(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -4952,7 +4952,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetAE(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5037,7 +5037,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetBonne(PyObject *SWIGUNUSEDPARM(se
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5122,7 +5122,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetCEA(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5207,7 +5207,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetCS(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5310,7 +5310,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEC(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5386,7 +5386,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEckertIV(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5462,7 +5462,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEckertVI(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5547,7 +5547,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEquirectangular(PyObject *SWIGUNU
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5623,7 +5623,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGS(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5699,7 +5699,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGH(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5784,7 +5784,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGEOS(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5869,7 +5869,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGnomonic(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -5981,7 +5981,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetHOM(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6102,7 +6102,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetHOM2PNO(PyObject *SWIGUNUSEDPARM(
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6214,7 +6214,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetKrovak(PyObject *SWIGUNUSEDPARM(s
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6299,7 +6299,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLAEA(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6402,7 +6402,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLCC(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6496,7 +6496,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLCC1SP(PyObject *SWIGUNUSEDPARM(s
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6599,7 +6599,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLCCB(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6684,7 +6684,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetMC(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6778,7 +6778,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetMercator(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6854,7 +6854,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetMollweide(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -6939,7 +6939,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetNZMG(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7033,7 +7033,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetOS(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7118,7 +7118,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetOrthographic(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7203,7 +7203,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetPolyconic(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7297,7 +7297,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetPS(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7373,7 +7373,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetRobinson(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7449,7 +7449,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetSinusoidal(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7543,7 +7543,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetStereographic(PyObject *SWIGUNUSE
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7628,7 +7628,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetSOC(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7722,7 +7722,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTM(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7826,7 +7826,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTMVariant(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7913,7 +7913,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTMG(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8007,7 +8007,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTMSO(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8083,7 +8083,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetVDG(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8139,7 +8139,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetWellKnownGeogCS(PyObject *SWIGUNU
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8197,7 +8197,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetFromUserInput(PyObject *SWIGUNUSE
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8254,7 +8254,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_CopyGeogCSFrom(PyObject *SWIGUNUSEDP
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8371,7 +8371,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetTOWGS84(PyObject *SWIGUNUSEDPARM(
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8423,7 +8423,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_GetTOWGS84(PyObject *SWIGUNUSEDPARM(
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8484,7 +8484,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLocalCS(PyObject *SWIGUNUSEDPARM(
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8626,7 +8626,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetGeogCS(PyObject *SWIGUNUSEDPARM(s
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8694,7 +8694,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetProjCS(PyObject *SWIGUNUSEDPARM(s
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8750,7 +8750,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromWkt(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8806,7 +8806,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromProj4(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8864,7 +8864,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUrl(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8932,7 +8932,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8995,7 +8995,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromEPSG(PyObject *SWIGUNUSEDP
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9087,7 +9087,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromPCI(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9192,7 +9192,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromUSGS(PyObject *SWIGUNUSEDP
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9248,7 +9248,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromXML(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9302,7 +9302,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToWkt(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9387,7 +9387,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPrettyWkt(PyObject *SWIGUNUS
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9461,7 +9461,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToProj4(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9547,7 +9547,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToPCI(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9668,7 +9668,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToUSGS(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9763,7 +9763,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ExportToXML(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9863,7 +9863,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_Validate(PyObject *SWIGUNUSEDPARM(se
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9909,7 +9909,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_StripCTParms(PyObject *SWIGUNUSEDPAR
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9955,7 +9955,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_FixupOrdering(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10001,7 +10001,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_Fixup(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10047,7 +10047,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_MorphToESRI(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10093,7 +10093,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_MorphFromESRI(PyObject *SWIGUNUSEDPA
   }
   {
     /* %typemap(out) OGRErr */
-    if ( result != 0) {
+    if ( result != 0 && bUseExceptions) {
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
