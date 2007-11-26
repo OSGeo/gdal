@@ -416,6 +416,13 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, FILE *fp ) {
     /* some generic metadata items */
     poDS->SetMetadataItem( "SENSOR_BAND", "L" ); /* PALSAR is L-band */
     poDS->SetMetadataItem( "RANGE_LOOKS", "1.0" );
+
+    /* Check if this is a PolSAR dataset */
+    if ( poDS->GetRasterCount() == 4 ) {
+        /* PALSAR data is only available from JAXA in Scattering Matrix form */
+        poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
+    }
+
 }
 
 /************************************************************************/
