@@ -29,22 +29,15 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.3  2005/04/22 08:19:00  dron
-#  Fixed mess with the lat/long variables naming.
-#
-#  Revision 1.2  2003/09/01 15:04:43  dron
-#  More comments, report improved.
-#
-#  Revision 1.1  2003/07/03 10:27:23  dron
-#  New.
-#
-#
 
-import gdal
-from gdalconst import *
-import osr
+try:
+    from osgeo import gdal
+    from osgeo import osr
+    from osgeo.gdalconst import *
+except ImportError:
+    import gdal
+    from gdalconst import *
+
 import sys
 
 # =============================================================================
