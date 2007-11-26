@@ -728,19 +728,20 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 %typemap(arginit, noblock=1) ( void* callback_data=NULL)
 {
     SavedEnv saved_env;
+    saved_env.fct = NULL;
+    saved_env.data = NULL;
+    arg7 = (void *)(&saved_env); /* can't seem to be able to avoid the hard coded arg7 */
 }
 
 %typemap(in) (int (*callback) (double, const char*, void*) = NULL)
 {
     /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
-    saved_env.sv = (SV *)$input;
-    saved_env.sp = NULL;
+    saved_env.fct = (SV *)$input;
     $1 = &callback_d_cp_vp;
-    arg7 = (void *)(&saved_env);
 }
 
 %typemap(in) (void* callback_data=NULL)
 {
     /* %typemap(in) (void* callback_data=NULL) */
-    saved_env.sp = (SV *)$input;
+    saved_env.data = (SV *)$input;
 }
