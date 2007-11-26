@@ -42,24 +42,24 @@ import gdal
 def validate_layer(lyr, name, features, type, fields, box):
 
     if name != lyr.GetName():
-        gdaltest.post_reason('Wrong layer name')
+        print 'Wrong layer name'
         return False
 
     if features != lyr.GetFeatureCount():
-        gdaltest.post_reason('Wrong number of features')
+        print 'Wrong number of features'
         return False
 
     lyrDefn = lyr.GetLayerDefn()
     if lyrDefn is None:
-        gdaltest.post_reason('Layer definition is none')
+        print 'Layer definition is none'
         return False
 
     if type != lyrDefn.GetGeomType():
-        gdaltest.post_reason('Wrong geometry type')
+        print 'Wrong geometry type'
         return False
 
     if fields != lyrDefn.GetFieldCount():
-        gdaltest.post_reason('Wrong number of fields')
+        print 'Wrong number of fields'
         return False
 
     extent = lyr.GetExtent()
@@ -70,7 +70,7 @@ def validate_layer(lyr, name, features, type, fields, box):
     maxy = abs(extent[3] - box[3])
 
     if max(minx, maxx, miny, maxy) > 0.0001:
-        gdaltest.post_reason( 'Wrong spatial extent of layer' )
+        print 'Wrong spatial extent of layer'
         return False
 
     return True
@@ -79,14 +79,18 @@ def validate_layer(lyr, name, features, type, fields, box):
 def verify_geojson_copy(name, fids, names):
 
     if gdaltest.gjpoint_feat is None:
-        gdaltest.post_reason('Missing features collection')
+        print 'Missing features collection'
         return False
 
-    ds = ogr.Open('tmp/'+name+'.geojson')
-    lyr = ds.GetLayer(0)
+    fname = os.path.join('tmp', name + '.geojson')
+    ds = ogr.Open(fname)
+    if ds is None:
+        print 'Can not open \'' + fname + '\''
+        return False
 
+    lyr = ds.GetLayer(0)
     if lyr is None:
-        gdaltest.post_reason('Missing layer')
+        print 'Missing layer'
         return False
 
 
@@ -94,13 +98,13 @@ def verify_geojson_copy(name, fids, names):
     # Test attributes
     ret = ogrtest.check_features_against_list( lyr, 'FID', fids)
     if ret != 1:
-        gdaltest.post_reason('Wrong values in \'FID\' field')
+        print 'Wrong values in \'FID\' field'
         return False
 
     lyr.ResetReading()
     ret = ogrtest.check_features_against_list( lyr, 'NAME', names)
     if ret != 1:
-        gdaltest.post_reason('Wrong values in \'NAME\' field')
+        print 'Wrong values in \'NAME\' field'
         return False
 
     ######################################################
@@ -112,14 +116,14 @@ def verify_geojson_copy(name, fids, names):
         feat = lyr.GetNextFeature()
 
         if feat is None:
-            gdaltest.post_reason('Failed trying to read feature')
+            print 'Failed trying to read feature'
             orig_feat.Destroy()
             feat.Destroy()
             return False
 
         if ogrtest.check_feature_geometry( feat, orig_feat.GetGeometryRef(),
                                            max_error = 0.001) != 0:
-            gdaltest.post_reason('Geometry test failed')
+            print 'Geometry test failed'
             orig_feat.Destroy()
             feat.Destroy()
             gdaltest.gjpoint_feat = None
@@ -138,7 +142,8 @@ def copy_shape_to_geojson(gjname):
     if gdaltest.geojson_drv is None:
         return False
 
-    ds = gdaltest.geojson_drv.CreateDataSource('tmp/'+gjname+'.geojson')
+    dst_name = os.path.join('tmp', gjname + '.geojson')
+    ds = gdaltest.geojson_drv.CreateDataSource(dst_name)
     if ds is None:
         return False
 
@@ -159,7 +164,8 @@ def copy_shape_to_geojson(gjname):
 
     dst_feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open('data/'+gjname+'.shp')
+    src_name = os.path.join('data', gjname + '.shp')
+    shp_ds = ogr.Open(src_name)
     shp_lyr = shp_ds.GetLayer(0)
     
     feat = shp_lyr.GetNextFeature()
@@ -419,16 +425,15 @@ def ogr_geojson_9():
 
     for i in range(len(gdaltest.tests)):
         test = gdaltest.tests[i]
-        rc = copy_shape_to_geojson(test[0])
 
+        rc = copy_shape_to_geojson(test[0])
         if rc is False:
-            gdaltest.post_reason('Failed making copy of \'' + test[0] +'\'.shp')
+            gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
-
         if rc is False:
-            gdaltest.post_reason('Verification of copy of \'' + test[0] +'\'.shp failed')
+            gdaltest.post_reason('Verification of copy of ' + test[0] + '.shp failed')
             return 'fail'
 
     return 'success'
@@ -441,8 +446,8 @@ def ogr_geojson_cleanup():
         if gdaltest.tests is not None:
             gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
             for i in range(len(gdaltest.tests)):
-                file = 'tmp/' + gdaltest.tests[i][0] + '.geojson'
-                ogr.GetDriverByName('GeoJSON').DeleteDataSource( file )
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
+                ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
             gdal.PopErrorHandler()
 
         gdaltest.tests = None
