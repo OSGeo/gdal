@@ -30,19 +30,27 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-#  $Log$
-#  Revision 1.2  2004/04/24 16:21:05  warmerda
-#  Updated to use numeric operators to replace values.
-#
-#  Revision 1.1  2003/02/15 09:16:13  dron
-#  New
-#
-#
 
-import gdal
-from gdalconst import *
-import gdalnumeric
+
+try:
+    from osgeo import gdal
+    from osgeo.gdalconst import *
+    gdal.TermProgress = gdal.TermProgress_nocb
+except ImportError:
+    import gdal
+    from gdalconst import *
+
+try:
+    import numpy as Numeric
+    Numeric.arrayrange = Numeric.arange
+except ImportError:
+    import Numeric
+
+try:
+    from osgeo import gdal_array as gdalnumeric
+except ImportError:
+    import gdalnumeric
+
 import sys
 
 # =============================================================================
