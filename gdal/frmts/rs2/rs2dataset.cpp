@@ -380,6 +380,14 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set the appropriate MATRIX_REPRESENTATION.                      */
+/* -------------------------------------------------------------------- */
+
+    if ( poDS->GetRasterCount() == 4 ) {
+        poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Collect GCPs.                                                   */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psGeoGrid = 
