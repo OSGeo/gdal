@@ -772,7 +772,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 }
 
 /*  clean up our global (to the wrapper function) psProgressInfo        */
-/*  struct now that we're done with it.
+/*  struct now that we're done with it.                                 */
 %typemap(freearg) (void* callback_data=NULL) 
 {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
