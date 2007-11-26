@@ -42,7 +42,7 @@ int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
                               GDALRasterBandShadow *blue,
                               int num_colors,
                               GDALColorTableShadow* colors,
-                              int (*callback) (double, const char*, void*) = NULL,
+                              GDALProgressFunc callback = NULL,
                               void* callback_data=NULL) {
 
     CPLErrorReset();
@@ -68,7 +68,7 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
                      GDALRasterBandShadow *blue,
                      GDALRasterBandShadow *target,
                      GDALColorTableShadow *colors,
-                     int (*callback) (double, const char*, void*) = NULL,
+                     GDALProgressFunc callback = NULL,
                      void* callback_data=NULL) {
 
     CPLErrorReset();
