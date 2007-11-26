@@ -329,6 +329,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_COSAR();
 #endif
 
+#ifdef FRMT_coasp
+    GDALRegister_COASP();
+#endif
+
 
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */

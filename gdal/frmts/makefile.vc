@@ -10,7 +10,8 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_ilwis -DFRMT_msgn -DFRMT_rik -DFRMT_pcraster \
 		-DFRMT_leveller -DFRMT_sgi -DFRMT_srtmhgt -DFRMT_idrisi \
 		-DFRMT_jaxapalsar -DFRMT_ers -DFRMT_ingr -DFRMT_dimap -DFRMT_gff \
-		-DFRMT_terragen -DFRMT_gsg -DFRMT_cosar -DFRMT_pds -DFRMT_adrg
+		-DFRMT_terragen -DFRMT_gsg -DFRMT_cosar -DFRMT_pds -DFRMT_adrg \
+		-DFRMT_cosar
 
 MOREEXTRA =	
 
