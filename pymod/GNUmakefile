@@ -12,7 +12,7 @@ CXXFLAGS	:=	$(PYTHON_CFLAGS) $(CXXFLAGS)
 
 SCRIPTSDIR	:=	../swig/python/scripts
 PY_COMMANDS	=	$(SCRIPTSDIR)/epsg_tr.py $(SCRIPTSDIR)/gdalchksum.py $(SCRIPTSDIR)/gdal2xyz.py $(SCRIPTSDIR)/gcps2wld.py \
-			gdalimport.py $(SCRIPTSDIR)/gdal_merge.py pct2rgb.py $(SCRIPTSDIR)/rgb2pct.py \
+			$(SCRIPTSDIR/gdalimport.py $(SCRIPTSDIR)/gdal_merge.py $(SCRIPTSDIR)/pct2rgb.py $(SCRIPTSDIR)/rgb2pct.py \
 			$(SCRIPTSDIR)/gcps2vec.py $(SCRIPTSDIR)/mkgraticule.py
 PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
 
