@@ -100,9 +100,9 @@ void OGRILI1Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
 OGRErr OGRILI1Layer::AddFeature (OGRFeature *poFeature) {
     papoFeatures = (OGRFeature **)
         CPLRealloc( papoFeatures, sizeof(void*) * ++nFeatures );
-    
+
     papoFeatures[nFeatures-1] = poFeature;
-    
+
     return OGRERR_NONE;
 }
 
@@ -210,31 +210,20 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 /* -------------------------------------------------------------------- */
     if( poGeometry->getGeometryType() == wkbPoint )
     {
-        /* embedded in non-geometry fields
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
-
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getX()) );
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getY()) );
-        */
+        /* embedded in from non-geometry fields */
     }
 /* -------------------------------------------------------------------- */
 /*      3D Point                                                        */
 /* -------------------------------------------------------------------- */
     else if( poGeometry->getGeometryType() == wkbPoint25D )
     {
-        /* embedded in from non-geometry fields
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
-
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getX()) );
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getY()) );
-        VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getZ()) );
-        */
+        /* embedded in from non-geometry fields */
     }
 
 /* -------------------------------------------------------------------- */
 /*      LineString and LinearRing                                       */
 /* -------------------------------------------------------------------- */
-    else if( poGeometry->getGeometryType() == wkbLineString 
+    else if( poGeometry->getGeometryType() == wkbLineString
              || poGeometry->getGeometryType() == wkbLineString25D )
     {
         AppendCoordinateList( (OGRLineString *) poGeometry, poDS );
@@ -243,7 +232,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 /* -------------------------------------------------------------------- */
 /*      Polygon                                                         */
 /* -------------------------------------------------------------------- */
-    else if( poGeometry->getGeometryType() == wkbPolygon 
+    else if( poGeometry->getGeometryType() == wkbPolygon
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
         OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
@@ -266,7 +255,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 /* -------------------------------------------------------------------- */
 /*      MultiPolygon                                                    */
 /* -------------------------------------------------------------------- */
-    else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon 
+    else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint
              || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
@@ -308,22 +297,55 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 /************************************************************************/
 
 OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
+    static long tid = -1; //system generated TID (must be unique within table)
     VSIFPrintf( poDS->GetTransferFile(), "OBJE" );
 
-    // Write all fields. 
+    if ( !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
+    {
+        //Input is not generated from an Interlis 1 source
+        if (poFeature->GetFID() != OGRNullFID)
+            tid = poFeature->GetFID();
+        else
+            ++tid;
+        VSIFPrintf( poDS->GetTransferFile(), " %ld", tid );
+        //Embedded geometry
+        if( poFeature->GetGeometryRef() != NULL )
+        {
+            OGRGeometry *poGeometry = poFeature->GetGeometryRef();
+            // 2D Point
+            if( poGeometry->getGeometryType() == wkbPoint )
+            {
+                OGRPoint *poPoint = (OGRPoint *) poGeometry;
+
+                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getX()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getY()) );
+            }
+            // 3D Point
+            else if( poGeometry->getGeometryType() == wkbPoint25D )
+            {
+                OGRPoint *poPoint = (OGRPoint *) poGeometry;
+
+                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getX()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getY()) );
+                VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poPoint->getZ()) );
+            }
+        }
+    }
+
+    // Write all fields.
     for(int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-          if ( !EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "ILI_Geometry") )
+        if ( !EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "ILI_Geometry") )
+        {
+          if ( poFeature->IsFieldSet( iField ) )
           {
-            if ( poFeature->IsFieldSet( iField ) )
-            {
-                const char *pszRaw = poFeature->GetFieldAsString( iField );
-                VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
-            }
-            else
-            {
-                VSIFPrintf( poDS->GetTransferFile(), " @" );
-            }
+              const char *pszRaw = poFeature->GetFieldAsString( iField );
+              VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+          }
+          else
+          {
+              VSIFPrintf( poDS->GetTransferFile(), " @" );
+          }
         }
     }
     VSIFPrintf( poDS->GetTransferFile(), "\n" );
@@ -333,10 +355,12 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
     {
         if (EQUAL(poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
         {
+            //Write original ILI geometry
             VSIFPrintf( poDS->GetTransferFile(), poFeature->GetFieldAsString( poFeatureDefn->GetFieldCount()-1 ) );
         }
         else
         {
+            //Convert to ILI geometry
             GeometryAppend(poFeature->GetGeometryRef());
         }
     }
