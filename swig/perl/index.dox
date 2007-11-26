@@ -26,11 +26,27 @@ illustrated like this:
 SomeMethod(arg1, arg2 = 4);
 
 arg1 is a required argument and an example or a variable with
-illustrative name is given
+illustrative name is given.
 
-arg2 is optional and if left off, will get the value 4 (in this case)
+arg2 may be left out and if left out, will get the value 4 (in this
+case).
 
-This documentation reflects the version in the GDAL SVN at
-https://svn.osgeo.org/gdal/trunk/gdal
+An argument can also be optional, i.e., not given at all, in which
+case there is no default value.
+
+Only the last argument or arguments can be left out.
+
+In some cases a method can be called in two or more ways, e.g.
+
+\code
+$object->method(1, 2, 3);
+$object->method(number=>1, param=>2, other=>3);
+\endcode
+
+In these cases the method is documented separately for each calling
+syntax.
+
+Most of the methods may throw an error, which can be caught by putting
+the call into eval{}; and then examining the contents of $@.
 
 */
