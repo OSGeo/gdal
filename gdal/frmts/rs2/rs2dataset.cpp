@@ -59,6 +59,7 @@ class RS2Dataset : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs();
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 
     CPLXMLNode *GetProduct() { return psProduct; }
 };
@@ -247,6 +248,30 @@ RS2Dataset::~RS2Dataset()
 }
 
 /************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo ) 
+{
+
+    if( strlen(poOpenInfo->pszFilename) < 11
+        || !EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename)-11,
+                  "product.xml") )
+        return 0;
+
+    if( poOpenInfo->nHeaderBytes < 100 )
+        return 0;
+
+    if( strstr((const char *) poOpenInfo->pabyHeader, "/rs2" ) == NULL
+        || strstr((const char *) poOpenInfo->pabyHeader, "<product" ) == NULL)
+        return 0;
+
+	return 1;
+
+}
+
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -254,20 +279,11 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Is this a RadardSat 2 Product.xml definition?                   */
+/*      Is this a RADARSAT-2 Product.xml definition?                   */
 /* -------------------------------------------------------------------- */
-    if( strlen(poOpenInfo->pszFilename) < 11 
-        || !EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename)-11,
-                  "product.xml") )
+	if ( !RS2Dataset::Identify( poOpenInfo ) ) {
         return NULL;
-
-    if( poOpenInfo->nHeaderBytes < 100 )
-        return NULL;
-
-    if( strstr((const char *) poOpenInfo->pabyHeader, "/rs2" ) == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "<product" ) == NULL)
-        return NULL;
-
+    }
 /* -------------------------------------------------------------------- */
 /*      Ingest the Product.xml file.                                    */
 /* -------------------------------------------------------------------- */
@@ -503,6 +519,7 @@ void GDALRegister_RS2()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rs2.html" );
 
         poDriver->pfnOpen = RS2Dataset::Open;
+        poDriver->pfnIdentify = RS2Dataset::Identify;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
