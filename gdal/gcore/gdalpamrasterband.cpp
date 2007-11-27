@@ -516,7 +516,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
     {
         if( poSrcBand->GetColorTable() != NULL )
         {
-            if( !bOnlyIfMissing || GetColorTable() != NULL )
+            if( !bOnlyIfMissing || GetColorTable() == NULL )
             {
                 GDALPamRasterBand::SetColorTable( 
                     poSrcBand->GetColorTable() );
