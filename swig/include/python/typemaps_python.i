@@ -97,6 +97,7 @@
     SWIG_fail;
   }
 }
+
 %typemap(ret) OGRErr
 {
   /* %typemap(ret) OGRErr */
@@ -689,6 +690,17 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
 
+/ * Check inputs to ensure they are not NULL but instead empty #1775 */
+%typemap(check) (const char *pszNewDesc)
+{
+  /* %typemap(check) (const char *pszNewDesc) */
+  if ( bUseExceptions && !$1) {
+    PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
+    SWIG_fail;
+  } else {
+    $1 = ""; // Set to empty string
+  }
+}
 
 
 /* ==================================================================== */
