@@ -258,6 +258,12 @@
 ## @ignore DISOWN
 ## @ignore ACQUIRE
 
+## @attr DOMAINS
+# a class specific list, well known metadata domains
+
+## @cmethod Domains
+# @return the class specific DOMAINS list
+
 ## @method $Description($description)
 # @param description [optional]
 # @return a description in non-void context
@@ -429,9 +435,15 @@
 ## @method $GetDriver()
 # @return a new Geo::GDAL::Driver object
 
-## @method $GetRasterBand($index)
+## @method $Band($index)
 # @param index 1...RasterCount
 # @return a new Geo::GDAL::Band object
+
+## @method $GetRasterBand($index)
+# same as Band
+
+## @method @Bands()
+# @return a list of new Geo::GDAL::Band objects
 
 ## @method $Projection($projection)
 # Get or set the projection.
