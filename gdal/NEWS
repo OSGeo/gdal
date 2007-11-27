@@ -1,3 +1,54 @@
+
+= GDAL/OGR 1.4.4 - Overview of Changes =
+
+The GDAL 1.4.4 release is a stable release, and contains the following bug fixes. 
+
+== GDAL ==
+
+ * Ensure that public memdataset.h and rawdataset.h get installed on win32.
+
+gdalwarp:
+ * generate dstvalidity mask properly for multiband (#1964) 
+
+GeoTIFF Driver:
+ * update from libtiff 3.9 beta branch.
+
+MrSID Driver:
+ * Added VC8 (manifest) support (#2011). 
+
+GMT Driver:
+ * We output things in "pixel as area" mode. Make sure right node_offset setting is used to reflect this (#1462). 
+
+JP2KAK Driver:
+ * Backported fix in building configuration of JP2KAK for libtool support to branches/1.4 (Ticket #1460) 
+
+== OGR == 
+
+Postgres/PostGIS Driver:
+ * Replaced Primary Key detection supported by PostgreSQL 8.1+ with bloated but more portable solution (Ticket #1889). Fix ported to branches/1.4. 
+ * Reverting patch for #1704 from branches/1.4 as breaking C++ ABI in GDAL 1.4.3. 
+ * fix up configure backtick quoting for MSYS (#1984)  
+
+GML driver:
+ * Backported fix for GML property truncation issue to the stable branch (Ticket #1844) 
+
+Shapefile driver:
+ * Fix memory leak 
+
+== Other ==
+
+CPL:
+ * use CPL TLS functions for CPLSPrintf() buffers (#1979) 
+
+SWIG:
+ * exit if any submakes fail (#1994) 
+ * Generate old gdal_wrap.c with swig11pl5 so we are sure to not accidentally generate with wrong version of swig screwing it up. (#1954) 
+
+OGRSpatialReference:
+ * added testing for proj.4 scale precision issue (#1970) 
+
+-----------------------------------------------------------------------------
+
 = GDAL/OGR 1.4.3 - Overview of Changes =
 
 The GDAL 1.4.3 release is a stable release, and contains the following bug fixes. There should be no noteworthy changes in interfaces or APIs.
