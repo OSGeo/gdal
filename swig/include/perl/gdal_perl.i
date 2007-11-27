@@ -227,7 +227,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return _AutoCreateWarpedVRT(@p);
     }
     package Geo::GDAL::MajorObject;
+    use vars qw/@DOMAINS/;
     use strict;
+    sub Domains {
+	return @DOMAINS;
+    }
     sub Description {
 	my($self, $desc) = @_;
 	SetDescription($self, $desc) if defined $desc;
@@ -242,9 +246,12 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	GetMetadata($self, $domain) if defined wantarray;
     }
     package Geo::GDAL::Driver;
-    use vars qw/@CAPABILITIES/;
+    use vars qw/@CAPABILITIES @DOMAINS/;
     use strict;
     @CAPABILITIES = ('Create', 'CreateCopy');
+    sub Domains {
+	return @DOMAINS;
+    }
     sub Name {
 	my $self = shift;
 	return $self->{ShortName};
@@ -313,7 +320,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     *CopyDataset = *CreateCopy;
     package Geo::GDAL::Dataset;
     use strict;
-    use vars qw/%BANDS/;
+    use vars qw/%BANDS @DOMAINS/;
+    @DOMAINS = ("IMAGE_STRUCTURE", "SUBDATASETS", "GEOLOCATION");
+    sub Domains {
+	return @DOMAINS;
+    }
     sub Open {
 	return Geo::GDAL::Open(@_);
     }
@@ -324,12 +335,21 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $self = shift;
 	return ($self->{RasterXSize}, $self->{RasterYSize});
     }
+    sub Bands {
+	my $self = shift;
+	my @bands;
+	for my $i (1..$self->{RasterCount}) {
+	    push @bands, GetRasterBand($self, $i);
+	}
+	return @bands;
+    }
     sub GetRasterBand {
 	my($self, $index) = @_;
 	my $band = _GetRasterBand($self, $index);
 	$BANDS{tied(%{$band})} = $self;
 	return $band;
     }
+    *Band = *GetRasterBand;
     sub AddBand {
 	my @p = @_;
 	$p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]} if $p[1] and exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
@@ -361,13 +381,17 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::Band;
     use strict;
     use vars qw/
-	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING
+	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
 	/;
     for my $string (qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
 		    HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand/) {
 	my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
 	$COLOR_INTERPRETATION_STRING2INT{$string} = $int;
 	$COLOR_INTERPRETATION_INT2STRING{$int} = $string;
+    }
+    @DOMAINS = ("IMAGE_STRUCTURE", "RESAMPLING");
+    sub Domains {
+	return @DOMAINS;
     }
     sub DESTROY {
 	my $self;
