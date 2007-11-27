@@ -732,9 +732,9 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
     saved_env.data = NULL;
 }
 
-%typemap(in) (int (*callback) (double, const char*, void*) = NULL)
+%typemap(in) (GDALProgressFunc callback = NULL)
 {
-    /* %typemap(in) (int (*callback) (double, const char*, void*) = NULL) */
+    /* %typemap(in) (GDALProgressFunc callback = NULL) */
     if (SvOK($input)) {
 	saved_env.fct = (SV *)$input;
 	$1 = &callback_d_cp_vp;
