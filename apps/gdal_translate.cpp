@@ -347,6 +347,13 @@ static int ProxyMain( int argc, char ** argv )
         exit( 10 );
     }
 
+    if ( strcmp(pszSource, pszDest) == 0)
+    {
+        fprintf(stderr, "Source and destination datasets must be different.\n");
+        GDALDestroyDriverManager();
+        exit( 1 );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */
