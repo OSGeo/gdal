@@ -188,7 +188,6 @@ endif
 # JPEG-2000 Support via JasPer library.
 #
 HAVE_JASPER     = @HAVE_JASPER@
-JASPER_INCLUDE  = -I../libjasper/include
 JASPER_FLAGS	= @JASPER_FLAGS@
 
 #
