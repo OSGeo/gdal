@@ -30,11 +30,11 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 CXX_OPTFLAGS =	@CXXFLAGS@
 C_OPTFLAGS =	@CFLAGS@
 # Flags to build debug version
-CXX_DBGFLAGS =	-g -DDEBUG 
-C_DBGFLAGS =	-g -DDEBUG 
+CXX_DBGFLAGS =	-g -DDEBUG @CFLAGS@
+C_DBGFLAGS =	-g -DDEBUG @CXXFLAGS@
 # Flags to build profiling version
-CXX_PROFFLAGS =	-g3 -pg -DDEBUG 
-C_PROFFLAGS =	-g3 -pg -DDEBUG 
+CXX_PROFFLAGS =	-g3 -pg -DDEBUG @CFLAGS@
+C_PROFFLAGS =	-g3 -pg -DDEBUG @CXXFLAGS@
 
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
