@@ -117,8 +117,7 @@ CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     for (int i = 0; i < this->nRasterXSize; i++) {
         ((GUInt32 *)pImage)[i] = 0;
     }
-/*	memset(pImage, 0, (nRSFV*4));
-	memset((char *)pImage+(nRSLV*4), 0, (nRTNB - 8) - (nRSLV*4)); */
+
     /* Read the valid samples: */
     VSIFRead(((char *)pImage)+((nRSFV - 1)*4),1,((nRSLV-1)*4)-((nRSFV-1)*4),pCDS->fp);
 
