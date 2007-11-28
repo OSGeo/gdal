@@ -23079,7 +23079,7 @@ echo "${ECHO_T}disabled" >&6
 
 else
 
-  if test "$with_expat" = "yes" ; then
+  if test "$with_expat" = "yes" -o "$with_expat" = "" ; then
     if test -f /usr/local/include/expat.h; then
       with_expat=/usr/local
     else
@@ -23090,7 +23090,9 @@ else
   if test "$with_expat_lib" != "" ; then
     LIBS="$with_expat_lib $LIBS"
   else
-    LIBS="-L$with_expat/lib -lexpat $LIBS"
+    if test -d "$with_expat/lib"; then
+      LIBS="-L$with_expat/lib -lexpat $LIBS"
+    fi
   fi
 
   if test "$with_expat_inc" != "" ; then
