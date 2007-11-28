@@ -329,6 +329,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_COSAR();
 #endif
 
+#ifdef FRMT_tsx
+	GDALRegister_TSX();
+#endif
+
 #ifdef FRMT_coasp
     GDALRegister_COASP();
 #endif
