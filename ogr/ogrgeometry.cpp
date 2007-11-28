@@ -2269,7 +2269,7 @@ int OGR_G_Crosses( OGRGeometryH hThis, OGRGeometryH hOther )
 /**
  * Test for containment.
  *
- * Tests if the passed in geometry is within the target geometry.
+ * Tests if actual geometry object is within the passed geometry.
  *
  * This method is the same as the C function OGR_G_Within().
  *
@@ -2330,7 +2330,7 @@ int OGR_G_Within( OGRGeometryH hThis, OGRGeometryH hOther )
 /**
  * Test for containment.
  *
- * Tests if the passed in geometry contains the target geometry.
+ * Tests if actual geometry object contains the passed geometry.
  *
  * This method is the same as the C function OGR_G_Contains().
  *
