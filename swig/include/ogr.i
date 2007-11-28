@@ -375,7 +375,7 @@ public:
               char** options=0) {
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
 								  name,
-								  reference,
+								  srs,
 								  geom_type,
 								  options);
     return layer;
