@@ -370,7 +370,7 @@ public:
   /* Note that datasources own their layers */
   %feature( "kwargs" ) CreateLayer;
   OGRLayerShadow *CreateLayer(const char* name, 
-              OSRSpatialReferenceShadow* reference=NULL,
+              OSRSpatialReferenceShadow* srs=NULL,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
