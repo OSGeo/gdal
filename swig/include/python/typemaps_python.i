@@ -691,16 +691,30 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 }
 
 /* Check inputs to ensure they are not NULL but instead empty #1775 */
+%define CHECK_NOT_UNDEF(type, param, msg)
 %typemap(check) (const char *pszNewDesc)
 {
-  /* %typemap(check) (const char *pszNewDesc) */
-  if ( bUseExceptions && !$1) {
-    PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-    SWIG_fail;
-  } else {
-    $1 = ""; // Set to empty string
-  }
+    /* %typemap(check) (type *param) */
+    if ( bUseExceptions && !$1) {
+        PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
+        SWIG_fail;
+    }
 }
+%enddef
+
+//CHECK_NOT_UNDEF(char, method, method)
+//CHECK_NOT_UNDEF(const char, name, name)
+//CHECK_NOT_UNDEF(const char, request, request)
+//CHECK_NOT_UNDEF(const char, cap, capability)
+//CHECK_NOT_UNDEF(const char, statement, statement)
+CHECK_NOT_UNDEF(const char, pszNewDesc, description)
+CHECK_NOT_UNDEF(OSRCoordinateTransformationShadow, , coordinate transformation)
+CHECK_NOT_UNDEF(OGRGeometryShadow, other, other geometry)
+CHECK_NOT_UNDEF(OGRGeometryShadow, other_disown, other geometry)
+CHECK_NOT_UNDEF(OGRGeometryShadow, geom, geometry)
+CHECK_NOT_UNDEF(OGRFieldDefnShadow, defn, field definition)
+CHECK_NOT_UNDEF(OGRFieldDefnShadow, field_defn, field definition)
+CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 
 
 /* ==================================================================== */
