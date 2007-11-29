@@ -3391,7 +3391,7 @@ SWIGINTERN char const *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self){
     return (const char *) OGR_G_ExportToGML(self);
   }
 SWIGINTERN char const *OGRGeometryShadow_ExportToKML(OGRGeometryShadow *self,char const *altitude_mode=NULL){
-    return (const char *) OGR_G_ExportToKML(self);
+    return (const char *) OGR_G_ExportToKML(self, altitude_mode);
   }
 SWIGINTERN void OGRGeometryShadow_AddPoint(OGRGeometryShadow *self,double x,double y,double z=0){
     OGR_G_AddPoint( self, x, y, z );
