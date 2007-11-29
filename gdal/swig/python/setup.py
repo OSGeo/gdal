@@ -223,7 +223,7 @@ if HAVE_SETUPTOOLS:
            data_files = data_files,
            zip_safe = False,
            exclude_package_data = exclude_package_data,
-           install_requires =['numpy>=1.0.0'],
+#           install_requires =['numpy>=1.0.0'],
            cmdclass={'build_ext':gdal_ext},
            ext_modules = ext_modules )
 else:
