@@ -690,7 +690,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
 
-/ * Check inputs to ensure they are not NULL but instead empty #1775 */
+/* Check inputs to ensure they are not NULL but instead empty #1775 */
 %typemap(check) (const char *pszNewDesc)
 {
   /* %typemap(check) (const char *pszNewDesc) */
