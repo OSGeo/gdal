@@ -1031,7 +1031,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     int nStyle = poFeature->GetFieldAsInteger( "Style" );
 
     nLevel = MAX(0,MIN(63,nLevel));
-    nColor = MAX(0,MIN(255,nGraphicGroup));
+    nColor = MAX(0,MIN(255,nColor));
     nWeight = MAX(0,MIN(31,nWeight));
     nStyle = MAX(0,MIN(7,nStyle));
 
