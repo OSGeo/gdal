@@ -173,8 +173,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
             break;
 
           case SE_DATE_TYPE:
-            eOGRType = OFTString;
-            nWidth = asColumnDefs[iCol].size;
+            eOGRType = OFTDateTime;
             break;
 
           case SE_SHAPE_TYPE:
@@ -1041,10 +1040,9 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               nSDEErr = SE_stream_get_date( hStream, anFieldMap[i]+1, 
                                             &sDateVal );
               if( nSDEErr == SE_SUCCESS )
-              {
-                  char szDate[128];
-                  strftime( szDate, sizeof(szDate), "%T %m/%d/%Y", &sDateVal );
-                  poFeat->SetField( i, szDate );
+			  {
+			      poFeat->SetField( i, sDateVal.tm_year + 1900, sDateVal.tm_mon + 1, sDateVal.tm_mday, 
+					  sDateVal.tm_hour, sDateVal.tm_min, sDateVal.tm_sec, (sDateVal.tm_isdst > 0));
               }
               else if( nSDEErr != SE_NULL_VALUE )
               {
