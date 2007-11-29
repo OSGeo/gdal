@@ -92,7 +92,7 @@ CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH );
 CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH );
 #endif
 
-char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH );
+char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode );
 
 void   CPL_DLL OGR_G_AssignSpatialReference( OGRGeometryH, 
                                              OGRSpatialReferenceH );

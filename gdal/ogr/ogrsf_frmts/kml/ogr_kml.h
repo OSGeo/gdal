@@ -114,6 +114,7 @@ public:
     int Create( const char* pszName, char** papszOptions );    
     const char* GetNameField() const { return pszNameField_; }
     const char* GetDescriptionField() const { return pszDescriptionField_; }
+    const char* GetAltitudeMode() { return pszAltitudeMode_; }
     FILE* GetOutputFP() { return fpOutput_; }
     void GrowExtents( OGREnvelope *psGeomBounds );
 #ifdef HAVE_EXPAT
@@ -132,9 +133,12 @@ private:
     int nLayers_;
 
 
-    //The name of the field to use for 
+    //The name of the field to use for the KML name element
     char* pszNameField_;
     char* pszDescriptionField_;
+
+    //The KML altitude mode to use 
+ 	char* pszAltitudeMode_; 
 
     char** papszCreateOptions_;
 
