@@ -1440,6 +1440,28 @@ char *OGRGeometry::exportToKML() const
 }
 
 /************************************************************************/
+/*                            exportToJson()                             */
+/************************************************************************/
+
+/**
+ * \fn char *OGRGeometry::exportToJson() const;
+ *
+ * Convert a geometry into GeoJSON format.
+ *
+ * The returned string should be freed with CPLFree() when no longer required.
+ *
+ * This method is the same as the C function OGR_G_ExportToJson().
+ *
+ * @return A GeoJSON fragment or NULL in case of error.
+ */
+
+char *OGRGeometry::exportToJson() const
+{
+    OGRGeometry* poGeometry = const_cast<OGRGeometry*>(this);
+    return OGR_G_ExportToJson( static_cast<OGRGeometryH>(poGeometry) );
+}
+
+/************************************************************************/
 /*                 OGRSetGenerate_DB2_V72_BYTE_ORDER()                  */
 /*                                                                      */
 /*      This is a special entry point to enable the hack for            */
