@@ -1436,7 +1436,7 @@ char *OGRGeometry::exportToGML() const
 
 char *OGRGeometry::exportToKML() const
 {
-    return OGR_G_ExportToKML( (OGRGeometryH) this );
+    return OGR_G_ExportToKML( (OGRGeometryH) this, NULL );
 }
 
 /************************************************************************/
