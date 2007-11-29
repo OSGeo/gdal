@@ -30,6 +30,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
 #include <json.h> // JSON-C
+#include <ogr_api.h>
 
 /************************************************************************/
 /*                           OGRGeoJSONReader                           */
@@ -76,7 +77,8 @@ OGRErr OGRGeoJSONReader::Parse( const char* pszText )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "GeoJSON parsing error: %s (at offset %d)",
             	      json_tokener_errors[jstok->err], jstok->char_offset);
-
+            
+            json_tokener_free(jstok);
             return OGRERR_CORRUPT_DATA;
         }
         json_tokener_free(jstok);
@@ -1156,4 +1158,41 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
 
     return poCollection;
 }
+
+/************************************************************************/
+/*                           OGR_G_ExportToJson                         */
+/************************************************************************/
+
+OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
+{
+    VALIDATE_POINTER1( pszJson, "OGR_G_CreateGeometryFromJson", NULL );
+
+    if( NULL != pszJson )
+    {
+        json_tokener* jstok = NULL;
+        json_object* poObj = NULL;
+
+        jstok = json_tokener_new();
+        poObj = json_tokener_parse_ex(jstok, pszJson, -1);
+        if( jstok->err != json_tokener_success)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "GeoJSON parsing error: %s (at offset %d)",
+                      json_tokener_errors[jstok->err], jstok->char_offset);
+            json_tokener_free(jstok);
+            return NULL;
+        }
+        json_tokener_free(jstok);
+
+        OGRGeometry* poGeometry = NULL;
+        poGeometry = OGRGeoJSONReadGeometry( poObj );
         
+        /* Release JSON tree. */
+        json_object_put( poObj );
+
+        return poGeometry;
+    }
+
+    /* Translation failed */
+    return NULL;
+}

@@ -30,6 +30,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
 #include <json.h> // JSON-C
+#include <ogr_api.h>
 
 /************************************************************************/
 /*                           OGRGeoJSONWriteFeature                     */
@@ -251,6 +252,10 @@ json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon )
     return poObj;
 }
 
+/************************************************************************/
+/*                           OGRGeoJSONWriteMultiPoint                  */
+/************************************************************************/
+
 json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry )
 {
     CPLAssert( NULL != poGeometry );
@@ -273,6 +278,10 @@ json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry )
 
     return poObj;
 }
+
+/************************************************************************/
+/*                           OGRGeoJSONWriteMultiLineString             */
+/************************************************************************/
 
 json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry )
 {
@@ -297,6 +306,10 @@ json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry )
     return poObj;
 }
 
+/************************************************************************/
+/*                           OGRGeoJSONWriteMultiPolygon                */
+/************************************************************************/
+
 json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry )
 {
     CPLAssert( NULL != poGeometry );
@@ -319,6 +332,10 @@ json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry )
 
     return poObj;
 }
+
+/************************************************************************/
+/*                           OGRGeoJSONWriteGeometryCollection          */
+/************************************************************************/
 
 json_object* OGRGeoJSONWriteGeometryCollection( OGRGeometryCollection* poGeometry )
 {
@@ -366,6 +383,10 @@ json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, double c
     return poObjCoords;
 }
 
+/************************************************************************/
+/*                           OGRGeoJSONWriteLineCoords                  */
+/************************************************************************/
+
 json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine )
 {
     json_object* poObjPoint = NULL;
@@ -381,3 +402,29 @@ json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine )
     return poObjCoords;
 }
 
+/************************************************************************/
+/*                           OGR_G_ExportToJson                         */
+/************************************************************************/
+
+char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
+{
+    VALIDATE_POINTER1( hGeometry, "OGR_G_ExportToJson", NULL );
+
+    OGRGeometry* poGeometry = static_cast<OGRGeometry*>(hGeometry);
+
+    json_object* poObj = NULL;
+    poObj = OGRGeoJSONWriteGeometry( poGeometry );
+    
+    if( NULL != poObj )
+    {
+        char* pszJson = CPLStrdup( json_object_to_json_string( poObj ) );
+        
+        /* Release JSON tree. */
+        json_object_put( poObj );
+
+        return pszJson;
+    }
+
+    /* Translation failed */
+    return NULL;
+}
