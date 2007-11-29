@@ -34,7 +34,7 @@
 #include "cpl_string.h"
 
 /* Function utility to dump OGRGeoemtry to KML text. */
-char *OGR_G_ExportToKML( OGRGeometryH hGeometry );
+char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char* pszAltitudeMode );
 
 /************************************************************************/
 /*                           OGRKMLLayer()                              */
@@ -348,7 +348,9 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
-        pszGeometry = OGR_G_ExportToKML( static_cast<OGRGeometryH>( poFeature->GetGeometryRef() ) );
+        pszGeometry = 
+            OGR_G_ExportToKML( static_cast<OGRGeometryH>( poFeature->GetGeometryRef() ),
+                               poDS_->GetAltitudeMode());
         
         VSIFPrintf( fp, "      %s\n", pszGeometry );
         CPLFree( pszGeometry );

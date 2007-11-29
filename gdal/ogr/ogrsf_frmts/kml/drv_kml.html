@@ -28,6 +28,12 @@ Each input layer is translated into a separate KML "Folder" element.</p>
 <li><b>DescriptionField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Description'</li>
 <pre>ogr2ogr -f KML output.kml input.shp -dsco NameField=RegionName</pre>
 </li>
+<li><b>AltitudeMode</b>: Allows you to specify the AltitudeMode to use for KML geometries. This will only affect 3D geometries   
+and must be one of the valid KML options.  
+See the <a href="http://code.google.com/apis/kml/documentation/kml_tags_21.html#altitudemode">relevant KML reference material</a>  
+for further information. 
+<pre>ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute</pre>  
+</li>  
 </ul>
 </p>
 

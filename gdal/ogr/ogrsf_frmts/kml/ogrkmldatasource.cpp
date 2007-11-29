@@ -43,6 +43,7 @@ OGRKMLDataSource::OGRKMLDataSource()
     pszName_ = NULL;
     pszNameField_ = NULL;
     pszDescriptionField_ = NULL;
+    pszAltitudeMode_ = NULL;
     papoLayers_ = NULL;
     nLayers_ = 0;
     
@@ -73,6 +74,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
     CPLFree( pszName_ );
     CPLFree( pszNameField_ );
     CPLFree( pszDescriptionField_ );
+    CPLFree( pszAltitudeMode_ );
 
     for( int i = 0; i < nLayers_; i++ )
     {
@@ -238,6 +240,29 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
         pszDescriptionField_ = CPLStrdup(CSLFetchNameValue(papszOptions, "DescriptionField"));
     else
         pszDescriptionField_ = CPLStrdup("Description");
+
+    pszAltitudeMode_ = CPLStrdup(CSLFetchNameValue(papszOptions, "AltitudeMode")); 
+    if( (NULL != pszAltitudeMode_) && strlen(pszAltitudeMode_) > 0) 
+    {
+        //Check to see that the specified AltitudeMode is valid 
+        if ( EQUAL(pszAltitudeMode_, "clampToGround")
+             || EQUAL(pszAltitudeMode_, "relativeToGround")
+             || EQUAL(pszAltitudeMode_, "absolute")) 
+        { 
+            CPLDebug("KML", "Using '%s' for AltitudeMode", pszAltitudeMode_); 
+        } 
+        else 
+        { 
+            CPLFree( pszAltitudeMode_ ); 
+            pszAltitudeMode_ = NULL; 
+            CPLError( CE_Warning, CPLE_AppDefined, "Invalide AltitideMode specified, ignoring" );  
+        } 
+    } 
+    else 
+    { 
+        CPLFree( pszAltitudeMode_ ); 
+        pszAltitudeMode_ = NULL; 
+    } 
     
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
