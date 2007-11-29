@@ -666,13 +666,19 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
 	}
 	sub SetPoint {
-	    @_ == 4 ? SetPoint_3D(@_) : SetPoint_2D(@_);
+	    @_ == 5 ? SetPoint_3D(@_) : SetPoint_2D(@_);
 	}
 	sub GetPoint {
 	    my($self, $i) = @_;
 	    $i = 0 unless defined $i;
 	    my $point = ($self->GetGeometryType & 0x80000000) == 0 ? GetPoint_2D($self, $i) : GetPoint_3D($self, $i);
 	    return @$point;
+	}
+	sub Point {
+	    my $self = shift;
+	    my $i = shift;
+	    SetPoint($self, $i, @_) if @_;
+	    return GetPoint($self, $i) if defined wantarray;
 	}
 	sub Points {
 	    my $self = shift;
