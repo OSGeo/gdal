@@ -1101,7 +1101,7 @@ public:
     return (const char *) OGR_G_ExportToGML(self);
   }
   
-  const char * ExportToKML() {
+  const char * ExportToKML(const char* altitude_mode=NULL) {
     return (const char *) OGR_G_ExportToKML(self);
   }
 
