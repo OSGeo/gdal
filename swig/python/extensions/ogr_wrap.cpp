@@ -5177,13 +5177,6 @@ SWIGINTERN PyObject *_wrap_Layer_SetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
   {
-    /* %typemap(check) (OGRFeatureShadow *feature) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5238,13 +5231,6 @@ SWIGINTERN PyObject *_wrap_Layer_CreateFeature(PyObject *SWIGUNUSEDPARM(self), P
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_CreateFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRFeatureShadow *feature) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
     if ( bUseExceptions ) {
@@ -5958,13 +5944,6 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometry(PyObject *SWIGUNUSEDPARM(self), P
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *geom) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6016,13 +5995,6 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometryDirectly(PyObject *SWIGUNUSEDPARM(
   res2 = SWIG_ConvertPtr(obj1, SWIG_as_voidptrptr(&arg2), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_DISOWN |  0 );
   if (!SWIG_IsOK(res2)) {
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_SetGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
-  }
-  {
-    /* %typemap(check) (OGRGeometryShadow *geom) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
   }
   {
     result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
@@ -6139,13 +6111,6 @@ SWIGINTERN PyObject *_wrap_Feature_Equal(PyObject *SWIGUNUSEDPARM(self), PyObjec
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_Equal" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRFeatureShadow *feature) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
     if ( bUseExceptions ) {
@@ -8376,13 +8341,6 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_AddFieldDefn(PyObject *SWIGUNUSEDPARM(sel
   }
   arg2 = reinterpret_cast< OGRFieldDefnShadow * >(argp2);
   {
-    /* %typemap(check) (OGRFieldDefnShadow *defn) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9603,13 +9561,6 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *SWIGUNUSEDPARM
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AddGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
   }
   {
-    /* %typemap(check) (OGRGeometryShadow *other_disown) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9664,13 +9615,6 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometry(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_AddGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
     if ( bUseExceptions ) {
@@ -10422,13 +10366,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersection(PyObject *SWIGUNUSEDPARM(self),
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10467,13 +10404,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Union(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Union" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
     if ( bUseExceptions ) {
@@ -10514,13 +10444,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Difference(PyObject *SWIGUNUSEDPARM(self), P
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10560,13 +10483,6 @@ SWIGINTERN PyObject *_wrap_Geometry_SymmetricDifference(PyObject *SWIGUNUSEDPARM
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10605,13 +10521,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Distance(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Distance" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (double)OGRGeometryShadow_Distance(arg1,arg2);
     if ( bUseExceptions ) {
@@ -10801,13 +10710,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersect(PyObject *SWIGUNUSEDPARM(self), Py
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10846,13 +10748,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Equal(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Equal" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
     if ( bUseExceptions ) {
@@ -10893,13 +10788,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Disjoint(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10938,13 +10826,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Touches(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Touches" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
     if ( bUseExceptions ) {
@@ -10985,13 +10866,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Crosses(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11030,13 +10904,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Within(PyObject *SWIGUNUSEDPARM(self), PyObj
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Within" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (bool)OGRGeometryShadow_Within(arg1,arg2);
     if ( bUseExceptions ) {
@@ -11077,13 +10944,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Contains(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11122,13 +10982,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Overlaps(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Overlaps" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
-  {
-    /* %typemap(check) (OGRGeometryShadow *other) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
     if ( bUseExceptions ) {
@@ -11223,13 +11076,6 @@ SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Transform" "', argument " "2"" of type '" "OSRCoordinateTransformationShadow *""'"); 
   }
   arg2 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp2);
-  {
-    /* %typemap(check) (OSRCoordinateTransformationShadow *) */
-    if ( bUseExceptions && !arg2) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
     if ( bUseExceptions ) {

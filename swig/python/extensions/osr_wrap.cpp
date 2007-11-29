@@ -10174,13 +10174,6 @@ SWIGINTERN PyObject *_wrap_delete_CoordinateTransformation(PyObject *SWIGUNUSEDP
   }
   arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
   {
-    /* %typemap(check) (OSRCoordinateTransformationShadow *) */
-    if ( bUseExceptions && !arg1) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
-  {
     delete_OSRCoordinateTransformationShadow(arg1);
     
     if ( bUseExceptions ) {
@@ -10230,13 +10223,6 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoint__SWIG_0(PyObj
       double val;
       PyArg_Parse(o, "d", &val );
       arg2[i] =  val;
-    }
-  }
-  {
-    /* %typemap(check) (OSRCoordinateTransformationShadow *) */
-    if ( bUseExceptions && !arg1) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
     }
   }
   {
@@ -10307,13 +10293,6 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoint__SWIG_1(PyObj
       SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "CoordinateTransformation_TransformPoint" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast< double >(val5);
-  }
-  {
-    /* %typemap(check) (OSRCoordinateTransformationShadow *) */
-    if ( bUseExceptions && !arg1) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
   }
   {
     OSRCoordinateTransformationShadow_TransformPoint__SWIG_1(arg1,arg2,arg3,arg4,arg5);
@@ -10446,13 +10425,6 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformation_TransformPoints(PyObject *SW
     SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "CoordinateTransformation_TransformPoints" "', argument " "5"" of type '" "double *""'"); 
   }
   arg5 = reinterpret_cast< double * >(argp5);
-  {
-    /* %typemap(check) (OSRCoordinateTransformationShadow *) */
-    if ( bUseExceptions && !arg1) {
-      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
-      SWIG_fail;
-    }
-  }
   {
     OSRCoordinateTransformationShadow_TransformPoints(arg1,arg2,arg3,arg4,arg5);
     if ( bUseExceptions ) {
