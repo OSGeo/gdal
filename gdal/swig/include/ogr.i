@@ -1115,7 +1115,7 @@ public:
   }
 
   const char * ExportToJson() {
-    return (const char *) OGR_G_ExportToGML(self);
+    return (const char *) OGR_G_ExportToJson(self);
   }
 
   %feature("kwargs") AddPoint;
