@@ -1042,6 +1042,15 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
  
 %}
 
+%newobject CreateGeometryFromJson;
+%inline %{
+  OGRGeometryShadow *CreateGeometryFromJson( const char * input_string ) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateFromJson(input_string);
+    return geom;
+  }
+ 
+%}
+
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
@@ -1103,6 +1112,10 @@ public:
   
   const char * ExportToKML(const char* altitude_mode=NULL) {
     return (const char *) OGR_G_ExportToKML(self, altitude_mode);
+  }
+
+  const char * ExportToJson() {
+    return (const char *) OGR_G_ExportToGML(self);
   }
 
   %feature("kwargs") AddPoint;
