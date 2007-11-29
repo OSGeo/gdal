@@ -3360,6 +3360,13 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
   }
  
 
+
+  OGRGeometryShadow *CreateGeometryFromJson( const char * input_string ) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateGeometryFromJson(input_string);
+    return geom;
+  }
+ 
+
 SWIGINTERN void delete_OGRGeometryShadow(OGRGeometryShadow *self){
     OGR_G_DestroyGeometry( self );
   }
@@ -3392,6 +3399,9 @@ SWIGINTERN char const *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self){
   }
 SWIGINTERN char const *OGRGeometryShadow_ExportToKML(OGRGeometryShadow *self,char const *altitude_mode=NULL){
     return (const char *) OGR_G_ExportToKML(self, altitude_mode);
+  }
+SWIGINTERN char const *OGRGeometryShadow_ExportToJson(OGRGeometryShadow *self){
+    return (const char *) OGR_G_ExportToJson(self);
   }
 SWIGINTERN void OGRGeometryShadow_AddPoint(OGRGeometryShadow *self,double x,double y,double z=0){
     OGR_G_AddPoint( self, x, y, z );
@@ -9079,6 +9089,39 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CreateGeometryFromJson(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  OGRGeometryShadow *result = 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:CreateGeometryFromJson",&obj0)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CreateGeometryFromJson" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  {
+    result = (OGRGeometryShadow *)CreateGeometryFromJson((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_delete_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -9427,6 +9470,36 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToKML(PyObject *SWIGUNUSEDPARM(self), 
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_ExportToJson(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  char *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_ExportToJson",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ExportToJson" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    result = (char *)OGRGeometryShadow_ExportToJson(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -11842,12 +11915,14 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CreateGeometryFromWkb", (PyCFunction) _wrap_CreateGeometryFromWkb, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"CreateGeometryFromWkt", (PyCFunction) _wrap_CreateGeometryFromWkt, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"CreateGeometryFromGML", _wrap_CreateGeometryFromGML, METH_VARARGS, NULL},
+	 { (char *)"CreateGeometryFromJson", _wrap_CreateGeometryFromJson, METH_VARARGS, NULL},
 	 { (char *)"delete_Geometry", _wrap_delete_Geometry, METH_VARARGS, NULL},
 	 { (char *)"new_Geometry", (PyCFunction) _wrap_new_Geometry, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt, METH_VARARGS, NULL},
 	 { (char *)"Geometry_ExportToWkb", (PyCFunction) _wrap_Geometry_ExportToWkb, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_ExportToGML", _wrap_Geometry_ExportToGML, METH_VARARGS, NULL},
 	 { (char *)"Geometry_ExportToKML", _wrap_Geometry_ExportToKML, METH_VARARGS, NULL},
+	 { (char *)"Geometry_ExportToJson", _wrap_Geometry_ExportToJson, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddPoint", (PyCFunction) _wrap_Geometry_AddPoint, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_AddPoint_2D", _wrap_Geometry_AddPoint_2D, METH_VARARGS, NULL},
 	 { (char *)"Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly, METH_VARARGS, NULL},
