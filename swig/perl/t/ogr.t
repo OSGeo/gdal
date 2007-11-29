@@ -332,30 +332,32 @@ sub ogr_tests {
 		
 	    }
 	    
-	    undef $layer;
+	    undef $layer if $name ne 'Memory';
 	    
 	    # now open
 	    
-	    if ($name eq 'Memory')
+	    if ($name eq 'MemoryXX')
 	    {
 		mytest('skipped',undef,$name,$type,'layer open');
 		
 	    } else {
 		
-		undef $datasource;
+		undef $datasource if $name ne 'Memory';
 		
-		eval {
-		    if ($name eq 'MapInfo File') {
-			$datasource = Geo::OGR::Open("$dir/$type.tab");
-			$layer = $datasource->GetLayerByIndex;
-		    } else {
-			$datasource = $driver->CreateDataSource($dir);
-			$layer = $datasource->GetLayerByName($type);
-		    }
-		};
-		
-		mytest($layer,'no message',$name,$type,"layer $type open");
-		next unless $layer;
+		if ($name ne 'Memory') {
+		    eval {
+			if ($name eq 'MapInfo File') {
+			    $datasource = Geo::OGR::Open("$dir/$type.tab");
+			    $layer = $datasource->GetLayerByIndex;
+			} else {
+			    $datasource = $driver->CreateDataSource($dir);
+			    $layer = $datasource->GetLayerByName($type);
+			}
+		    };
+		    
+		    mytest($layer,'no message',$name,$type,"layer $type open");
+		    next unless $layer;
+		}
 		
 		# check to see if the fields exist and the types are the same
 		
@@ -415,16 +417,17 @@ sub ogr_tests {
 			
 			$i = 0;
 			for my $ft (@field_types) {
+			    next if $name eq 'Memory' and $ft ne 'Integer'; 
 			    #$feature->SetField($i++,2);
 			    my $f;
 			    if ($ft eq 'String') {
 				$f = $feature->GetField($i);
-				mytest($f eq 'kaksi',"$f ne 'kaksi'",$name,$type,'GetField');
+				mytest($f eq 'kaksi',"$f ne 'kaksi'",$name,$type,"$ft GetField");
 			    } else {
 				$f = $feature->GetField($i);
-				mytest($f == 2,"$f != 2",$name,$type,'GetField');
-				$f = $feature->GetField($i);
-				mytest($f == 2,"$f != 2",$name,$type,'GetField');
+				mytest($f == 2,"$f != 2",$name,$type,"$ft GetField");
+				#$f = $feature->GetField($i);
+				#mytest($f == 2,"$f != 2",$name,$type,'GetField');
 			    }
 			    $i++;
 			}
@@ -493,16 +496,27 @@ sub test_geom {
 	if ($mode eq 'create') {
 	    my $r = Geo::OGR::Geometry->create('LinearRing');
 	    pop @pts;
+	    my $n = @pts;
 	    for my $pt (@pts) {
 		$r->AddPoint(@$pt);
 	    }
+	    $pc = $r->GetPointCount;
+	    mytest($pc == $n,"$pc != $n",$name,$type,'point count pre');
 	    $geom->AddGeometry($r);
-	    $geom->CloseRings; # this overwrites the last point
-	} else {
+	    $geom->CloseRings; # this adds the point we popped out
+	    $n++;
+	    $r = $geom->GetGeometryRef(0);
+	    $pc = $r->GetPointCount;
+	    for (0..$pc-1) {
+		my @p = $r->GetPoint($_);
+	    }
+	    mytest($pc == $n,"$pc != $n",$name,$type,'point count post 1');
+	} else {	       
 	    mytest($gn == 1,"$gn != 1",$name,$type,'geom count');
 	    my $r = $geom->GetGeometryRef(0);
 	    $pc = $r->GetPointCount;
-	    mytest($pc == 6,"$pc != 6",$name,$type,'point count');
+	    my $n = @pts;
+	    mytest($pc == $n,"$pc != $n",$name,$type,'point count post  2');
 	    for my $cxy (@pts) {
 		my @xy = ($r->GetX($i),$r->GetY($i)); $i++;
 		mytest(cmp_ar(2,\@xy,$cxy),"(@xy) != (@$cxy)",$name,$type,"get point $i");
