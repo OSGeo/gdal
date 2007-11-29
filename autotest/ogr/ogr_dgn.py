@@ -273,7 +273,7 @@ def ogr_dgn_8():
 
     feat = dgn2_lyr.GetNextFeature()
     if feat.GetField( 'Type' ) != 6 or feat.GetField( 'Level' ) != 2 \
-       or feat.GetField( 'ColorIndex' ) != 0:
+       or feat.GetField( 'ColorIndex' ) != 83:
         gdaltest.post_reason( 'feature 3: expected attributes' )
         return 'fail'
 
@@ -283,7 +283,7 @@ def ogr_dgn_8():
         return 'fail'
 
     # should be: 'BRUSH(fc:#b40000,id:"ogr-brush-0")'
-    if feat.GetStyleString() != 'PEN(id:"ogr-pen-0",c:#ffffff)':
+    if feat.GetStyleString() != 'PEN(id:"ogr-pen-0",c:#b40000)':
         gdaltest.post_reason( 'feature 3: Style string different than expected: '+ feat.GetStyleString() )
         return 'fail'
 
