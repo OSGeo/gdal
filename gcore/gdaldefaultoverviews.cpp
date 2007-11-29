@@ -166,8 +166,11 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
             if( poBand != NULL )
                 poOverDS = poBand->GetDataset();
             
-            poOverDS->oOvManager.poBaseDS = poDSIn;
-            poOverDS->oOvManager.poDS = poOverDS;
+            if( poOverDS != NULL )
+            {
+                poOverDS->oOvManager.poBaseDS = poDSIn;
+                poOverDS->oOvManager.poDS = poOverDS;
+            }
         }
     }
 
