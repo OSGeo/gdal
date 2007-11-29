@@ -69,9 +69,44 @@ directory::
   $ make generate
 
 To ensure that all of the bindings are regenerated, you can clean the 
-bindings code out by issuing::
+bindings code out before the generate command by issuing::
 
   $ make veryclean
+
+Usage
+-----
+
+Imports
+~~~~~~~
+
+There are five major modules that are included with the GDAL_ Python bindings.::
+
+  >>> from osgeo import gdal
+  >>> from osgeo import ogr
+  >>> from osgeo import osr
+  >>> from osgeo import gdal_array
+  >>> from osgeo import gdalconst
+
+Additionally, there are five compatibility modules that are included but 
+provide notices to state that they are deprecated and will be going away.  
+If you are using GDAL 1.5 bindings, you should update your imports to utilize 
+the usage above, but the following will work until at least GDAL 2.0. ::
+
+  >>> import gdal
+  >>> import ogr
+  >>> import osr
+  >>> import gdalnumeric
+  >>> import gdalconst
+
+Docstrings
+~~~~~~~~~~
+
+Currently, only the OGR module has docstrings which are generated from the 
+C/C++ API doxygen materials.  Some of the arguments and types might not 
+match up exactly with what you are seeing from Python, but they should be 
+enough to get you going.  Docstrings for GDAL and OSR are planned for another 
+release.
+
 
 .. _GDAL: http://www.gdal.org
 .. _SWIG: http://www.swig.org
