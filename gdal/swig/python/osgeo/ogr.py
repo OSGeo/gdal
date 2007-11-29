@@ -2501,7 +2501,7 @@ class Geometry(_object):
         return _ogr.Geometry_ExportToGML(*args)
 
     def ExportToKML(*args):
-        """ExportToKML(self) -> char"""
+        """ExportToKML(self, char altitude_mode=None) -> char"""
         return _ogr.Geometry_ExportToKML(*args)
 
     def AddPoint(*args, **kwargs):
