@@ -588,8 +588,14 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         sEnvelope.miny = m_sFilterEnvelope.MinY;
         sEnvelope.maxx = m_sFilterEnvelope.MaxX;
         sEnvelope.maxy = m_sFilterEnvelope.MaxY;
-        SE_shape_generate_rectangle( &sEnvelope, hRectShape );
 
+        nSDEErr = SE_shape_generate_rectangle( &sEnvelope, hRectShape );
+        if( nSDEErr != SE_SUCCESS) 
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_shape_generate_rectangle");
+            return FALSE;
+        }
+        
         sConstraint.filter.shape = hRectShape;
         strcpy( sConstraint.table, poFeatureDefn->GetName() );
         strcpy( sConstraint.column, osShapeColumnName.c_str() );
