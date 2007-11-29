@@ -152,7 +152,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
 static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry, 
                                   char **ppszText, int *pnLength, 
-                                  int *pnMaxLength )
+                                  int *pnMaxLength, char * szAltitudeMode )
 
 {
 /* -------------------------------------------------------------------- */
@@ -190,9 +190,18 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70, 
                      ppszText, pnMaxLength );
 
-        sprintf( *ppszText + *pnLength, 
-                "<Point><coordinates>%s</coordinates></Point>",
-                 szCoordinate );
+        if (NULL == szAltitudeMode) 
+        { 
+            sprintf( *ppszText + *pnLength,  
+                     "<Point><coordinates>%s</coordinates></Point>",
+                     szCoordinate );
+        }
+        else
+        { 
+            sprintf( *ppszText + *pnLength,  
+                     "<Point>%s<coordinates>%s</coordinates></Point>", 
+                     szAltitudeMode, szCoordinate ); 
+        }
 
         *pnLength += strlen( *ppszText + *pnLength );
     }
@@ -210,6 +219,11 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         else
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<LineString>" );
+
+        if (NULL != szAltitudeMode) 
+        { 
+            AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode); 
+        }
 
         AppendCoordinateList( (OGRLineString *) poGeometry, 
                               ppszText, pnLength, pnMaxLength );
@@ -232,13 +246,18 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendString( ppszText, pnLength, pnMaxLength, "<Polygon>" );
 
+        if (NULL != szAltitudeMode) 
+        { 
+            AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode); 
+        }
+
         if( poPolygon->getExteriorRing() != NULL )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<outerBoundaryIs>" );
 
             if( !OGR2KMLGeometryAppend( poPolygon->getExteriorRing(), 
-                                        ppszText, pnLength, pnMaxLength ) )
+                                        ppszText, pnLength, pnMaxLength, szAltitudeMode ) )
             {
                 return FALSE;
             }
@@ -254,7 +273,7 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
                           "<innerBoundaryIs>" );
             
             if( !OGR2KMLGeometryAppend( poRing, ppszText, pnLength, 
-                                        pnMaxLength ) )
+                                        pnMaxLength, szAltitudeMode ) )
             {
                 return FALSE;
             }
@@ -279,11 +298,17 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendString( ppszText, pnLength, pnMaxLength, "<MultiGeometry>" );
 
+        // XXX - mloskot
+        //if (NULL != szAltitudeMode) 
+        //{ 
+        //    AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode); 
+        //}
+
         for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
-            if( !OGR2KMLGeometryAppend( poMember, ppszText, pnLength, pnMaxLength ) )
+            if( !OGR2KMLGeometryAppend( poMember, ppszText, pnLength, pnMaxLength, szAltitudeMode ) )
             {
                 return FALSE;
             }
@@ -362,11 +387,12 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
 /*                         OGR_G_ExportToKML()                          */
 /************************************************************************/
 
-char *OGR_G_ExportToKML( OGRGeometryH hGeometry )
+char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
 {
     char* pszText = NULL;
     int nLength = 0;
     int nMaxLength = 1;
+    char szAltitudeMode[128] =  { 0 }; 
 
     // TODO - mloskot: Shouldn't we use VALIDATE_POINTER1 here?
     if( hGeometry == NULL )
@@ -375,8 +401,17 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry )
     pszText = (char *) CPLMalloc(nMaxLength);
     pszText[0] = '\0';
 
+    if (NULL != pszAltitudeMode) 
+ 	{ 
+        sprintf(szAltitudeMode, "<altitudeMode>%s</altitudeMode>", pszAltitudeMode); 
+ 	} 
+ 	else 
+ 	{ 
+ 	    szAltitudeMode[0] = 0; 
+ 	} 
+
     if( !OGR2KMLGeometryAppend( (OGRGeometry *) hGeometry, &pszText, 
-                                &nLength, &nMaxLength ))
+                                &nLength, &nMaxLength, szAltitudeMode ))
     {
         CPLFree( pszText );
         return NULL;
@@ -396,7 +431,7 @@ CPLXMLNode *OGR_G_ExportToKMLTree( OGRGeometryH hGeometry )
 
     // TODO - mloskot: If passed geometry is null the pszText is non-null,
     // so the condition below is false.
-    pszText = OGR_G_ExportToKML( hGeometry );
+    pszText = OGR_G_ExportToKML( hGeometry, NULL );
     if( pszText == NULL )
         return NULL;
 
@@ -406,3 +441,4 @@ CPLXMLNode *OGR_G_ExportToKMLTree( OGRGeometryH hGeometry )
 
     return psTree;
 }
+
