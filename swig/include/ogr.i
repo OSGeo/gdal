@@ -1045,7 +1045,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %newobject CreateGeometryFromJson;
 %inline %{
   OGRGeometryShadow *CreateGeometryFromJson( const char * input_string ) {
-    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateFromJson(input_string);
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateGeometryFromJson(input_string);
     return geom;
   }
  
