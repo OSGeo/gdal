@@ -3244,7 +3244,15 @@ SWIGINTERN CPLErr GDALDatasetShadow_SetGeoTransform(GDALDatasetShadow *self,doub
     return GDALSetGeoTransform( self, argin );
   }
 SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
-    return GDALBuildOverviews( self, resampling, overviewlist, pOverviews, 0, 0, callback, callback_data);
+                      
+    return GDALBuildOverviews(  self, 
+                                resampling, 
+                                overviewlist, 
+                                pOverviews, 
+                                0, 
+                                0, 
+                                callback, 
+                                callback_data);
   }
 SWIGINTERN int GDALDatasetShadow_GetGCPCount(GDALDatasetShadow *self){
     return GDALGetGCPCount( self );
@@ -4535,6 +4543,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetDescription(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetDescription" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
+  {
+    /* %typemap(check) (const char *pszNewDesc) */
+    if ( bUseExceptions && !arg2) {
+      PyErr_SetString( PyExc_RuntimeError, "Description cannot be None" );
+      SWIG_fail;
+    }
+  }
   {
     GDALMajorObjectShadow_SetDescription(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
