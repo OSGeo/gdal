@@ -3390,7 +3390,7 @@ SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,int *nLe
 SWIGINTERN char const *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self){
     return (const char *) OGR_G_ExportToGML(self);
   }
-SWIGINTERN char const *OGRGeometryShadow_ExportToKML(OGRGeometryShadow *self){
+SWIGINTERN char const *OGRGeometryShadow_ExportToKML(OGRGeometryShadow *self,char const *altitude_mode=NULL){
     return (const char *) OGR_G_ExportToKML(self);
   }
 SWIGINTERN void OGRGeometryShadow_AddPoint(OGRGeometryShadow *self,double x,double y,double z=0){
@@ -9432,19 +9432,31 @@ fail:
 SWIGINTERN PyObject *_wrap_Geometry_ExportToKML(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  char *arg2 = (char *) NULL ;
   char *result = 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_ExportToKML",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O|O:Geometry_ExportToKML",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ExportToKML" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  if (obj1) {
+    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_ExportToKML" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+  }
   {
-    result = (char *)OGRGeometryShadow_ExportToKML(arg1);
+    result = (char *)OGRGeometryShadow_ExportToKML(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -9453,8 +9465,10 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToKML(PyObject *SWIGUNUSEDPARM(self), 
     }
   }
   resultobj = SWIG_FromCharPtr((const char *)result);
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return resultobj;
 fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
 
