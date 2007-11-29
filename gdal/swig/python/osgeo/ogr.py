@@ -419,7 +419,7 @@ class DataSource(_object):
 
     def CreateLayer(*args, **kwargs):
         """
-        CreateLayer(self, char name, SpatialReference reference=None, OGRwkbGeometryType geom_type=wkbUnknown, 
+        CreateLayer(self, char name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, 
             char options=0) -> Layer
 
         OGRLayerH
