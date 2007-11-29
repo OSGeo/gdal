@@ -905,6 +905,14 @@
 # @param index
 # @return a number
 
+## @method @Point($index, $x, $y, $z)
+# Get or set the point
+# @param index
+# @param x [optional]
+# @param y [optional]
+# @param z [optional]
+# @return
+
 ## @method \@Points($points)
 # Get or set the points of the geometry. The points (vertices) are
 # stored in obvious lists of lists. Note that unique points structures
