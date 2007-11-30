@@ -204,16 +204,33 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
     if ($2)
 	free((void*) $2);
 }
-%fragment("CreateArrayFromIntegerArray","header") %{
-static SV *CreateArrayFromIntegerArray( double *first, unsigned int size ) {
-    AV *av = (AV*)sv_2mortal((SV*)newAV());
-    for( unsigned int i=0; i<size; i++ ) {
-	av_store(av,i,newSViv(*first));
-	++first;
+
+%typemap(in,numinputs=1) (int nList, double* pList)
+{
+    /* %typemap(in,numinputs=1) (int nList, double* pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    $2 = (double*) malloc($1*sizeof(double));
+    for( int i = 0; i<$1; i++ ) {
+	SV **sv = av_fetch(av, i, 0);
+	$2[i] =  SvNV(*sv);
     }
-    return newRV_noinc((SV*)av);
 }
-%}
+%typemap(freearg) (int nList, double* pList)
+{
+    /* %typemap(freearg) (int nList, double* pList) */
+    if ($2)
+	free((void*) $2);
+}
+
+%typemap(in,numinputs=1) (int defined, double value)
+{
+    /* %typemap(in,numinputs=1) (int defined, double value) */
+    $1 = SvOK($input);
+    $2 = SvNV($input);
+}
 
 /*
  * Typemap for buffers with length <-> AV
