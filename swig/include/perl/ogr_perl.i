@@ -201,8 +201,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my @p = @_;
 	    $p[3] = $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]} if 
 		$p[3] and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]};
+	    my $schema = pop @p if @p == 6;
 	    my $layer = _CreateLayer(@p);
 	    $LAYERS{tied(%$layer)} = $p[0];
+	    $layer->Schema(%$schema) if $schema;
 	    return $layer;
 	}
 	sub DeleteLayer {

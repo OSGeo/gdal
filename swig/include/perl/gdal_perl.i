@@ -490,6 +490,25 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self;
 	return $r;
     }
+    sub Contours {
+	my($self, $DataSource, $LayerConstructor,
+	   $ContourInterval, $ContourBase,
+	   $FixedLevels, $NoDataValue, 
+	   $IDField, $ElevField,
+	   $callback, $callback_data) = @_;
+	my $layer = $DataSource->CreateLayer(@$LayerConstructor);
+	$ContourBase = 0 unless defined $ContourBase;
+	$FixedLevels = [] unless defined $FixedLevels;
+	$IDField = -1 unless defined $IDField;
+	$ElevField = -1 unless defined $ElevField;
+	{
+	    no warnings; # avoid the annoying warning when no no data value has been given
+	    ContourGenerate($self, $ContourInterval, $ContourBase, $FixedLevels,
+			    $NoDataValue, $layer, $IDField, $ElevField,
+			    $callback, $callback_data);
+	}
+	return $layer;
+    }
     package Geo::GDAL::ColorTable;
     use strict;
     use vars qw/
@@ -588,3 +607,28 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
 
  %}
+
+#define GDAL_BINDINGS
+%import ogr.i
+%{
+typedef void OGRLayerShadow;
+%}
+%extend GDALRasterBandShadow {
+    %apply (int nList, double* pList) {(int nFixedLevelCount, double *padfFixedLevels)};
+    %apply (int defined, double value) {(int bUseNoData, double dfNoDataValue)};
+    CPLErr ContourGenerate(double dfContourInterval, double dfContourBase,
+			   int nFixedLevelCount, double *padfFixedLevels,
+			   int bUseNoData, double dfNoDataValue, 
+			   OGRLayerShadow *hLayer, int iIDField, int iElevField,
+			   GDALProgressFunc callback = NULL,
+			   void* callback_data = NULL) {
+	return GDALContourGenerate( self, dfContourInterval, dfContourBase,
+				    nFixedLevelCount, padfFixedLevels,
+				    bUseNoData, dfNoDataValue, 
+				    hLayer, iIDField, iElevField,
+				    callback,
+				    callback_data );
+    }
+    %clear (int nFixedLevelCount, double *padfFixedLevels);
+    %clear (int bUseNoData, double dfNoDataValue);
+}
