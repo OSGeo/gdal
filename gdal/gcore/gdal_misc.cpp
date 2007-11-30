@@ -2177,10 +2177,12 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Help Topic: %s\n", 
                         CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
             
-            if( CSLFetchNameValue( papszMD, GDAL_DCAP_CREATE ) )
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
                 printf( "  Supports: Create() - Create writeable dataset.\n" );
-            if( CSLFetchNameValue( papszMD, GDAL_DCAP_CREATECOPY ) )
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
                 printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
+                printf( "  Supports: Virtual IO - eg. /vsimem/\n" );
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) )
                 printf( "  Creation Datatypes: %s\n",
                         CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) );

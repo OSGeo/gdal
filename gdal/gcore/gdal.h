@@ -176,6 +176,7 @@ typedef struct {
 
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
+#define GDAL_DCAP_VIRTUALIO  "DCAP_VIRTUALIO"
 
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
