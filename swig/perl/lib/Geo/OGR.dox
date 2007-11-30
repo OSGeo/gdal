@@ -17,17 +17,17 @@
 ## @fn @GeometryTypes()
 # @return a list of all geometry types
 
-## @fn $CreateGeometryFromWkb($WKB, $srs = undef)
+## @fn Geo::OGR::Geometry CreateGeometryFromWkb($WKB, $srs = undef)
 # @param WKB buffer containing well known binary
 # @param srs a Geo::OSR::SpatialReference object
 # @return a new Geo::OGR::Geometry object
 
-## @fn $CreateGeometryFromWkt($WKT, $srs = undef)
+## @fn Geo::OGR::Geometry CreateGeometryFromWkt($WKT, $srs = undef)
 # @param WKT string containing well known text
 # @param srs a Geo::OSR::SpatialReference object
 # @return a new Geo::OGR::Geometry object
 
-## @fn $CreateGeometryFromGML($GML)
+## @fn Geo::OGR::Geometry CreateGeometryFromGML($GML)
 # @param GML string containing GML
 # @return a new Geo::OGR::Geometry object
 
@@ -43,25 +43,25 @@
 ## @fn RegisterAll()
 # Called in initialization.
 
-## @fn $GetOpenDS($number)
+## @fn Geo::OGR::DataSource GetOpenDS($number)
 # @param number the data source number
 # @return a new Geo::OGR::DataSource object
 
-## @fn $Open($name, $update = 0)
+## @fn Geo::OGR::DataSource Open($name, $update = 0)
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
-## @fn $OpenShared($name, $update = 0)
+## @fn Geo::OGR::DataSource OpenShared($name, $update = 0)
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
-## @fn $GetDriverByName($name)
+## @fn Geo::OGR::Driver GetDriverByName($name)
 # @param name
 # @return a new Geo::OGR::Driver object
 
-## @fn $GetDriver($driver)
+## @fn Geo::OGR::Driver GetDriver($driver)
 # @param driver the index or the name of the driver
 # @return a new Geo::OGR::Driver object
 
@@ -231,18 +231,18 @@
 ## @attr name
 # scalar (access as $driver->{name})
 
-## @method $CreateDataSource($name, \@options = undef )
+## @method Geo::OGR::DataSource CreateDataSource($name, \@options = undef )
 # @param name the data source name
 # @param options a list of driver specific options
 # @return a new Geo::OGR::DataSource object
 
-## @method $CopyDataSource($ds, $name, \@options = undef)
+## @method Geo::OGR::DataSource CopyDataSource($ds, $name, \@options = undef)
 # @param ds the Geo::OGR::DataSource object to be copied
 # @param name
 # @param options
 # @return a new Geo::OGR::DataSource object
 
-## @method $OpenDataSource($name, $update = 0)
+## @method Geo::OGR::DataSource OpenDataSource($name, $update = 0)
 # @param name
 # @param update
 # @return a new Geo::OGR::DataSource object
@@ -254,7 +254,7 @@
 ## @method $GetName()
 # @return the name
 
-## @method $Open($name, $update = 0)
+## @method Geo::OGR::DataSource Open($name, $update = 0)
 # An alias for OpenDataSource
 # @param name
 # @param update
@@ -277,12 +277,12 @@
 # @param cap
 # @return integer
 
-## @cmethod $Open($name, $update = 0)
+## @cmethod Geo::OGR::DataSource Open($name, $update = 0)
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
 
-## @cmethod $OpenShared($name, $update = 0)
+## @cmethod Geo::OGR::DataSource OpenShared($name, $update = 0)
 # @param name the data source name (directory, filename, etc.)
 # @param update if set to true, the data source can be updated
 # @return a new Geo::OGR::DataSource object
@@ -290,7 +290,7 @@
 ## @attr name
 # string (access as $datasource->{name})
 
-## @method $Layer($layer = 0)
+## @method Geo::OGR::Layer Layer($layer = 0)
 # @param layer a name (primary) or index (secondary) of the requested
 # layer. If not given, then returns the first layer.
 # @return a new Geo::OGR::Layer object
@@ -301,20 +301,21 @@
 ## @method $GetLayerCount()
 # @return integer
 
-## @method $GetDriver()
+## @method Geo::OGR::Driver GetDriver()
 # @return a Geo::OGR::Driver object for this data source
 
 ## @method $GetName()
 # @return string
 
-## @method $CreateLayer($name, $srs = undef, $geom_type = 'Unknown', \@options = undef)
+## @method Geo::OGR::Layer CreateLayer($name, $srs = undef, $geom_type = 'Unknown', \@options = undef, \%schema = undef)
 # @param name
 # @param srs a Geo::OSR::SpatialReference object
 # @param geom_type one of geometry types (a string: Point, LineString, etc)
 # @param options
+# @param schema
 # @return a new Geo::OGR::Layer object
 
-## @method $CopyLayer($layer, $name, \@options = undef)
+## @method Geo::OGR::Layer CopyLayer($layer, $name, \@options = undef)
 # @param layer a Geo::OGR::Layer object to be copied
 # @param name a name for the new layer
 # @param options

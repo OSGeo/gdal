@@ -664,6 +664,21 @@
 ## @method SetDefaultRAT($AttributeTable)
 # @param AttributeTable a Geo::GDAL::RasterAttributeTable object
 
+## @method Geo::OGR::Layer Contours($DataSource, \@LayerConstructor, $ContourInterval,
+# $ContourBase = 0, \@FixedLevels = [], $NoDataValue = undef, $IDField = '', $ElevField = '',
+# $callback = undef, $callback_data = undef)
+# @param DataSource
+# @param LayerConstructor
+# @param ContourInterval
+# @param ContourBase
+# @param FixedLevels
+# @param NoDataValue
+# @param IDField
+# @param ElevField,
+# @param callback
+# @param callback_data
+# @return
+
 ## @method $GetRasterColorInterpretation()
 # @deprecated use Geo::GDAL::Band::ColorInterpretation, which understands strings
 
