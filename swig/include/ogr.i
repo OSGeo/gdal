@@ -264,6 +264,7 @@ typedef struct
 } OGREnvelope;
 #endif
 
+#ifndef GDAL_BINDINGS
 /************************************************************************/
 /*                              OGRDriver                               */
 /************************************************************************/
@@ -320,6 +321,7 @@ public:
 
 } /* %extend */
 }; /* class OGRDriverShadow */
+#endif /* GDAL_BINDINGS */
 
 
 /************************************************************************/
@@ -1383,7 +1385,9 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 }
 %}
 
+#ifndef GDAL_BINDINGS
 int OGRGetDriverCount();
+#endif
 
 int OGRGetOpenDSCount();
 
@@ -1430,6 +1434,7 @@ void OGRRegisterAll();
   }
 %}
 
+#ifndef GDAL_BINDINGS
 %inline %{
 OGRDriverShadow* GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
@@ -1439,6 +1444,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
 %}
+#endif
 
 //************************************************************************
 //
