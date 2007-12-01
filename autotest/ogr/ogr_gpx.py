@@ -86,6 +86,42 @@ def ogr_gpx_1():
     
     lyr.ResetReading()
     
+    expect = ['href', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'link1_href', expect )
+    
+    lyr.ResetReading()
+    
+    expect = ['text', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'link1_text', expect )
+    
+    lyr.ResetReading()
+    
+    expect = ['type', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'link1_type', expect )
+    
+    lyr.ResetReading()
+    
+    expect = ['href2', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'link2_href', expect )
+    
+    lyr.ResetReading()
+    
+    expect = ['text2', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'link2_text', expect )
+    
+    lyr.ResetReading()
+    
+    expect = ['type2', None]
+
+    tr = ogrtest.check_features_against_list( lyr, 'link2_type', expect )
+    
+    lyr.ResetReading()
+    
     expect = ['2007/11/25 17:58:00+01', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'time', expect )
