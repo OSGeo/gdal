@@ -285,7 +285,7 @@
 ## @ignore DESTROY
 ## @ignore __str__
 
-## @cmethod $new($wkt = undef)
+## @cmethod Geo::OSR::SpatialReference new($wkt = undef)
 # @param wkt well known text
 # @return a new Geo::OSR::SpatialReference object
 
@@ -446,7 +446,7 @@
 ## @method $ExportToXML($dialect = "")
 # @return XML string
 
-## @method CloneGeogCS()
+## @method Geo::OSR::SpatialReference CloneGeogCS()
 # @return a new Geo::OSR::SpatialReference object
 
 ## @method Validate()
@@ -529,7 +529,7 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod $new($src, $dst)
+## @cmethod Geo::OSR::CoordinateTransformation new($src, $dst)
 # @param src a Geo::OSR::SpatialReference object
 # @param dst a Geo::OSR::SpatialReference object
 # @return a new Geo::OSR::CoordinateTransformation object

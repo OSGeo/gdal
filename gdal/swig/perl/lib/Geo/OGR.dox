@@ -333,7 +333,7 @@
 # @param param named parameter (name or index) for the layer to be
 # deleted
 
-## @method $ExecuteSQL($statement, $geom = undef, $dialect = "")
+## @method Geo::OGR::Layer ExecuteSQL($statement, $geom = undef, $dialect = "")
 # @param statement
 # @param geom a Geo::OGR::Geometry object
 # @param dialect
@@ -342,11 +342,11 @@
 ## @method ReleaseResultSet($layer)
 # @param layer a layer the has been created with ExecuteSQL
 
-## @method $GetLayerByIndex($index = 0)
+## @method Geo::OGR::Layer GetLayerByIndex($index = 0)
 # @param index
 # @return a new Geo::OGR::Layer object
 
-## @method $GetLayerByName($name)
+## @method Geo::OGR::Layer GetLayerByName($name)
 # @param name
 # @return a new Geo::OGR::Layer object
 
@@ -404,12 +404,12 @@
 # @param tuple [optional]
 # @return
 
-## @method $SpatialFilter($filter)
+## @method Geo::OGR::Geometry SpatialFilter($filter)
 # @param filter [optional] a Geo::OGR::Geometry object or a string. An
 # undefined value removes the filter if there is one.
 # @return a new Geo::OGR::Geometry object
 
-## @method $SpatialFilter(@filter)
+## @method Geo::OGR::Geometry SpatialFilter(@filter)
 # @param filter [optional] a rectangle ($minx, $miny, $maxx, $maxy).
 # @return a new Geo::OGR::Geometry object
 
@@ -423,7 +423,7 @@
 # @param maxx
 # @param maxy
 
-## @method $GetSpatialFilter()
+## @method Geo::OGR::Geometry GetSpatialFilter()
 # @return a new Geo::OGR::Geometry object
 
 ## @method SetAttributeFilter($filter_string)
@@ -433,7 +433,7 @@
 
 ## @method ResetReading()
 
-## @method $GetNextFeature()
+## @method Geo::OGR::Feature GetNextFeature()
 # @return a new Geo::OGR::Feature object
 
 ## @method SetNextByIndex($new_index)
@@ -445,7 +445,7 @@
 ## @method $GetName()
 # @return
 
-## @method $GetFeature($fid)
+## @method Geo::OGR::Feature GetFeature($fid)
 # @param fid feature id
 # @return a new Geo::OGR::Feature object
 
@@ -470,7 +470,7 @@
 
 ## @method SyncToDisk()
 
-## @method $GetLayerDefn()
+## @method Geo::OGR::FeatureDefn GetLayerDefn()
 # @return a new Geo::OGR::FeatureDefn object
 
 ## @method $GetFeatureCount($force = 1)
@@ -491,7 +491,7 @@
 
 ## @method RollbackTransaction()
 
-## @method $GetSpatialRef()
+## @method Geo::OSR::SpatialReference GetSpatialRef()
 # @return a new Geo::OSR::SpatialReference object
 
 ## @method $GetRefCount()
@@ -505,7 +505,7 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod $new($feature_def)
+## @cmethod Geo::OGR::Feature new($feature_def)
 # @param feature_def a Geo::OGR::FeatureDefn object
 # @return a new Geo::OGR::Feature object
 
@@ -532,7 +532,7 @@
 # @param tuple [optional]
 # @return
 
-## @method $GetDefnRef()
+## @method Geo::OGR::FeatureDefn GetDefnRef()
 # @return a new Geo::OGR::FeatureDefn object
 
 ## @method $Geometry($geometry)
@@ -547,13 +547,13 @@
 # This feature is not destroyed while the Geo::OGR::Geometry object exists.
 # @param geometry a Geo::OGR::Geometry object
 
-## @method $GetGeometry()
+## @method Geo::OGR::Geometry GetGeometry()
 # Creates a new Geo::OGR::Geometry object, whose data is owned by the
 # feature. The underlying OGR feature is not destroyed while the
 # geometry object exists.
 # @return a new Geo::OGR::Geometry object
 
-## @method $Clone()
+## @method Geo::OGR::Feature Clone()
 # @return a new Geo::OGR::Feature object
 
 ## @method $Equal($feature)
@@ -563,7 +563,7 @@
 ## @method $GetFieldCount()
 # @return an integer
 
-## @method $GetFieldDefnRef($param)
+## @method Geo::OGR::FieldDefn GetFieldDefnRef($param)
 # @param param the index or the name of the field
 # @return a new Geo::OGR::FieldDefn object
 
@@ -625,7 +625,7 @@
 ## @method $GetFieldAsDouble($field)
 # @deprecated use Geo::OGR::Feature::GetField
 
-## @method $GetGeometryRef()
+## @method Geo::OGR::Geometry GetGeometryRef()
 # Creates a new Geo::OGR::Geometry object, whose data is still owned
 # by the feature. This link is not recorded.
 # @deprecated use Geo::OGR::Feature::GetGeometry unless you know what
@@ -640,7 +640,7 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($name = undef)
+## @cmethod Geo::OGR::FeatureDefn new($name = undef)
 # @param name
 # @return a Geo::OGR::FeatureDefn object
 
@@ -659,7 +659,7 @@
 ## @method $GetFieldCount()
 # @return an integer
 
-## @method $GetFieldDefn($index)
+## @method Geo::OGR::FieldDefn GetFieldDefn($index)
 # @param index
 # @return a new Geo::OGR::FieldDefn object
 
@@ -694,18 +694,18 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
+## @cmethod Geo::OGR::FieldDefn new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
 # @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
 # @param name
 # @param field_type as integer
 # @return a new Geo::OGR::FieldDefn object
 
-## @cmethod $create($name = "unnamed", $field_type = 'String')
+## @cmethod Geo::OGR::FieldDefn create($name = "unnamed", $field_type = 'String')
 # @param name
 # @param field_type one of field types
 # @return a new Geo::OGR::FieldDefn object
 
-## @cmethod $create(%parameters)
+## @cmethod Geo::OGR::FieldDefn create(%parameters)
 # @param parameters named parameters: Name, Type, Justify, Width,
 # Precision
 # @return a new Geo::OGR::FieldDefn object
@@ -790,7 +790,7 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod $new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
+## @cmethod Geo::OGR::Geometry new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
 # @deprecated use Geo::OGR::Geometry::create, which accepts type as a string
 # @param type one of Geo::OGR::wkb*
 # @param WKT
@@ -798,11 +798,11 @@
 # @param GML
 # @return a new Geo::OGR::Geometry object
 
-## @cmethod $create($type)
+## @cmethod Geo::OGR::Geometry create($type)
 # @param type One of geometry type strings: 'Point', 'LineString', etc.
 # @return a new Geo::OGR::Geometry object
 
-## @cmethod $create(%params)
+## @cmethod Geo::OGR::Geometry create(%params)
 # @param %params A named parameter, possible are: GeometryType, WKT,
 # WKB, GML, and Points (as in method Geo::OGR::Geometry::Points).
 # @return a new Geo::OGR::Geometry object
@@ -951,7 +951,7 @@
 # Add a copy of another geometry to a geometry collection
 # @param other a Geo::OGR::Geometry object
 
-## @method $Clone()
+## @method Geo::OGR::Geometry Clone()
 # @return a new Geo::OGR::Geometry object
 
 ## @method $GeometryType()
@@ -968,36 +968,36 @@
 # @return a new Geo::OGR::Geometry object whose data is a part of the
 # parent geometry
 
-## @method $GetBoundary()
+## @method Geo::OGR::Geometry GetBoundary()
 # @return a new Geo::OGR::Geometry object
 
-## @method $ConvexHull()
+## @method Geo::OGR::Geometry ConvexHull()
 # @return a new Geo::OGR::Geometry object
 
-## @method $Buffer($distance, $quadsecs = 30)
+## @method Geo::OGR::Geometry Buffer($distance, $quadsecs = 30)
 # @param distance
 # @param quadsecs
 # @return a new Geo::OGR::Geometry object
 
-## @method $Intersection($other)
+## @method Geo::OGR::Geometry Intersection($other)
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
 
-## @method $Union($other)
+## @method Geo::OGR::Geometry Union($other)
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
 
-## @method $Difference($other)
+## @method Geo::OGR::Geometry Difference($other)
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
 
-## @method $SymmetricDifference($other)
+## @method Geo::OGR::Geometry SymmetricDifference($other)
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
 
 ## @method $Distance($other)
 # @param other a Geo::OGR::Geometry object
-# @return a new Geo::OGR::Geometry object
+# @return
 
 ## @method $Intersect($other)
 # @param other a Geo::OGR::Geometry object
@@ -1037,7 +1037,7 @@
 ## @method Transform($trans)
 # @param trans a Geo::OSR::CoordinateTransformation object
 
-## @method $GetSpatialReference()
+## @method Geo::OSR::SpatialReference GetSpatialReference()
 # @return a new Geo::OSR::SpatialReference object
 
 ## @method AssignSpatialReference($srs)
@@ -1048,7 +1048,7 @@
 ## @method \@GetEnvelope()
 # @return arrayref = [$minx, $maxx, $miny, $maxy]
 
-## @method $Centroid()
+## @method Geo::OGR::Geometry Centroid()
 # @return a new Geo::OGR::Geometry object
 
 ## @method $WkbSize()

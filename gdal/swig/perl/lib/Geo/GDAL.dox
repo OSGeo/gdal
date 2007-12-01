@@ -157,16 +157,16 @@
 ## @fn $GetDriverCount()
 # @return
 
-## @fn $GetDriver($driver)
+## @fn Geo::GDAL::Driver GetDriver($driver)
 # @param driver The name or number of the driver.
 # @return a new Geo::GDAL::Driver object
 
-## @fn $GetDriverByName($ShortName)
+## @fn Geo::GDAL::Driver GetDriverByName($ShortName)
 # @param ShortName
 # @return a new Geo::GDAL::Driver object
 
-## @fn $IdentifyDriver($datasource_name, $siblings)
-# @param datasource_name
+## @fn Geo::GDAL::Driver IdentifyDriver($name, $siblings)
+# @param name a name of a dataset
 # @param siblings [optional]
 # @return a new Geo::GDAL::Driver object
 
@@ -199,7 +199,7 @@
 # @param WarpMemoryLimit
 # @param maxerror
 
-## @fn AutoCreateWarpedVRT($src_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
+## @fn Geo::GDAL::Dataset AutoCreateWarpedVRT($src_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
 # @param src_ds a Geo::GDAL::Dataset object
 # @param src_wkt
 # @param dst_wkt
@@ -221,12 +221,12 @@
 # @param DataType GDAL data type value, typically from $band->{DataType}
 # @return character which can be used in Perl's pack and unpack
 
-## @fn $Open($datasource_name, $access='ReadOnly')
-# @param datasource_name 
+## @fn Geo::GDAL::Dataset Open($name, $access='ReadOnly')
+# @param name
 # @param access
 # @return a new Geo::GDAL::Dataset object
 
-## @fn $OpenShared($name, $access='ReadOnly')
+## @fn Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
 # @param name
 # @param access either ReadOnly or Update
 # @return a new Geo::GDAL::Dataset object
@@ -334,7 +334,7 @@
 ## @method $CreationDataTypes
 # @return
 
-## @method $CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
+## @method Geo::GDAL::Dataset CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
 # @brief Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
@@ -345,9 +345,9 @@
 # @return a new Geo::GDAL::Dataset object
 
 ## @method Create
-# Same as CreateDataset
+# An alias to CreateDataset
 
-## @method $CopyDataset($name, $src, $strict = 1, \@options = undef)
+## @method Geo::GDAL::Dataset CopyDataset($name, $src, $strict = 1, \@options = undef)
 # @brief Create a new Geo::GDAL::Dataset as a copy
 # @param name
 # @param src a Geo::GDAL::Dataset object
@@ -410,12 +410,12 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod $Open($datasource_name, $access='ReadOnly')
-# @param datasource_name 
+## @cmethod Geo::GDAL::Dataset Open($name, $access='ReadOnly')
+# @param name
 # @param access
 # @return a new Geo::GDAL::Dataset object
 
-## @cmethod $OpenShared($name, $access='ReadOnly')
+## @cmethod Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
 # @param name
 # @param access either ReadOnly or Update
 # @return a new Geo::GDAL::Dataset object
@@ -432,15 +432,15 @@
 ## @attr RasterCount
 # scalar (access as $dataset->{RasterCount})
 
-## @method $GetDriver()
+## @method Geo::GDAL::Driver GetDriver()
 # @return a new Geo::GDAL::Driver object
 
-## @method $Band($index)
+## @method Geo::GDAL::Band Band($index)
 # @param index 1...RasterCount
 # @return a new Geo::GDAL::Band object
 
 ## @method $GetRasterBand($index)
-# same as Band
+# An alisa to Band
 
 ## @method @Bands()
 # @return a list of new Geo::GDAL::Band objects
@@ -587,9 +587,9 @@
 ## @method $GetOverviewCount()
 # @return integer
 
-## @method $GetOverview($i)
+## @method Geo::GDAL::Band GetOverview($i)
 # @param i 0..GetOverviewCount-1
-# @return a new Geo::GDAL::RasterBand object
+# @return a new Geo::GDAL::Band object
 
 ## @method $Checksum($xoff = 0, $yoff = 0, $xsize = undef, $ysize = undef)
 # @param xoff
@@ -625,12 +625,12 @@
 
 ## @method FlushCache()
 
-## @method $ColorTable($ColorTable)
+## @method Geo::GDAL::ColorTable ColorTable($ColorTable)
 # Get or set the color table of this band.
 # @param ColorTable [optional] a Geo::GDAL::ColorTable object
 # @return a new Geo::GDAL::ColorTable object if in non-void context
 
-## @method $GetRasterColorTable()
+## @method Geo::GDAL::ColorTable GetRasterColorTable()
 # @return
 
 ## @method SetRasterColorTable($ColorTable)
@@ -652,11 +652,11 @@
 ## @method SetRasterCategoryNames($names)
 # @param names
 
-## @method $AttributeTable($AttributeTable)
+## @method Geo::GDAL::RasterAttributeTable AttributeTable($AttributeTable)
 # @param AttributeTable [optional] a Geo::GDAL::RasterAttributeTable object
 # @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
 
-## @method $GetDefaultRAT()
+## @method Geo::GDAL::RasterAttributeTable GetDefaultRAT()
 # @deprecated use Geo::GDAL::Band::AttributeTable, which makes sure
 # the band is not destroyed before the attribute table
 # @return a new Geo::GDAL::RasterAttributeTable object, whose data is contained within the band
@@ -667,7 +667,7 @@
 ## @method Geo::OGR::Layer Contours($DataSource, \@LayerConstructor, $ContourInterval,
 # $ContourBase = 0, \@FixedLevels = [], $NoDataValue = undef, $IDField = '', $ElevField = '',
 # $callback = undef, $callback_data = undef)
-# @param DataSource
+# @param DataSource a Geo::OGR::DataSource object or 'Memory' to create a memory layer
 # @param LayerConstructor
 # @param ContourInterval
 # @param ContourBase
@@ -693,14 +693,14 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod $new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
+## @cmethod Geo::GDAL::ColorTable new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
 # @deprecated use Geo::GDAL::ColorTable::create, which uses string constants
 # @return a new Geo::GDAL::ColorTable object
 
-## @cmethod $create($GDALPaletteInterp = 'RGB')
+## @cmethod Geo::GDAL::ColorTable create($GDALPaletteInterp = 'RGB')
 # @return a new Geo::GDAL::ColorTable object
 
-## @method $Clone()
+## @method Geo::GDAL::ColorTable Clone()
 # @return a new Geo::GDAL::ColorTable object
 
 ## @method $GetPaletteInterpretation()
@@ -746,7 +746,7 @@
 ## @ignore ACQUIRE
 ## @ignore DESTROY
 
-## @cmethod $new()
+## @cmethod Geo::GDAL::RasterAttributeTable new()
 # @return a new Geo::GDAL::RasterAttributeTable object
 
 ## @cmethod @FieldTypes()
@@ -755,7 +755,7 @@
 ## @cmethod @FieldUsages()
 # @return
 
-## @method $Clone()
+## @method Geo::GDAL::RasterAttributeTable Clone()
 # @return a new Geo::GDAL::RasterAttributeTable object
 
 ## @method SetRowCount($count)
