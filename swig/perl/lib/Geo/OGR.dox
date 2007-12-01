@@ -31,6 +31,9 @@
 # @param GML string containing GML
 # @return a new Geo::OGR::Geometry object
 
+## @fn @Drivers()
+# @return
+
 ## @fn $GetDriverCount()
 # @return count
 

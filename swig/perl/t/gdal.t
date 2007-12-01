@@ -140,7 +140,7 @@ if (0) {
     }
 }
 
-gdal_tests(Geo::GDAL::GetDriverCount());
+gdal_tests();
 
 $src = Geo::OSR::SpatialReference->new();
 $src->ImportFromEPSG(2392);
@@ -171,17 +171,20 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 ###########################################
 
 sub gdal_tests {
-    my $nr_drivers_tested = shift;
 
-    for my $i (0..$nr_drivers_tested-1) {
-
-	my $driver = Geo::GDAL::GetDriver($i);
-	unless ($driver) {
-	    mytest('',undef,"Geo::GDAL::GetDriver($i)");
-	    next;
-	}
+    for my $driver (Geo::GDAL::Drivers) {
 
 	my $name = $driver->{ShortName};
+	
+	unless (defined $name) {
+	    $name = 'unnamed';
+	    my $i = 1;
+	    while ($available_driver{$name}) {
+		$name = 'unnamed '.$i;
+		$i++;
+	    }
+	}
+
 	$available_driver{$name} = 1;
 	mytest('skipped: not tested',undef,$name,'test'),next unless $test_driver{$name};
 
