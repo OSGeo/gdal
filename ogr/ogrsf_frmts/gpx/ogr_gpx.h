@@ -98,6 +98,10 @@ class OGRGPXLayer : public OGRLayer
     int                inExtensions;
     int                extensionsDepthLevel;
     
+    int                inLink;
+    int                iCountLink;
+    int                nMaxLinks;
+    
     int                bEleAs25D;
     
     int                trkFID;
