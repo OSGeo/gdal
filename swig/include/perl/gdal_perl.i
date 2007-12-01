@@ -496,6 +496,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	   $FixedLevels, $NoDataValue, 
 	   $IDField, $ElevField,
 	   $callback, $callback_data) = @_;
+	$DataSource = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') unless defined $DataSource;
 	my $layer = $DataSource->CreateLayer(@$LayerConstructor);
 	$ContourBase = 0 unless defined $ContourBase;
 	$FixedLevels = [] unless defined $FixedLevels;
