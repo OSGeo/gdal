@@ -386,6 +386,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return (@$GCPs, $proj);
     }
     package Geo::GDAL::Band;
+    use Carp;
+    use UNIVERSAL qw(isa);
     use strict;
     use vars qw/
 	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
@@ -498,23 +500,43 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return $r;
     }
     sub Contours {
-	my($self, $DataSource, $LayerConstructor,
-	   $ContourInterval, $ContourBase,
-	   $FixedLevels, $NoDataValue, 
-	   $IDField, $ElevField,
-	   $callback, $callback_data) = @_;
-	$DataSource = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') unless defined $DataSource;
-	my $layer = $DataSource->CreateLayer(@$LayerConstructor);
-	$ContourBase = 0 unless defined $ContourBase;
-	$FixedLevels = [] unless defined $FixedLevels;
-	$IDField = -1 unless defined $IDField;
-	$ElevField = -1 unless defined $ElevField;
-	{
-	    no warnings; # avoid the annoying warning when no no data value has been given
-	    ContourGenerate($self, $ContourInterval, $ContourBase, $FixedLevels,
-			    $NoDataValue, $layer, $IDField, $ElevField,
-			    $callback, $callback_data);
+	my $self = shift;
+	my %defaults = (DataSource => undef,
+			LayerConstructor => ['contours'],
+			ContourInterval => 100, 
+			ContourBase => 0,
+			FixedLevels => [], 
+			NoDataValue => undef, 
+			IDField => -1, 
+			ElevField => -1,
+			callback => undef,
+			callback_data => undef);
+	my %params;
+	if (!defined($_[0]) or isa($_[0], 'Geo::OGR::DataSource')) {
+	    ($params{DataSource}, $params{LayerConstructor},
+	     $params{ContourInterval}, $params{ContourBase},
+	     $params{FixedLevels}, $params{NoDataValue}, 
+	     $params{IDField}, $params{ElevField},
+	     $params{callback}, $params{callback_data}) = @_;
+	} else {
+	    %params = @_;
 	}
+	for (keys %params) {
+	    croak "unknown parameter: $_" unless exists $defaults{$_};
+	}
+	for (keys %defaults) {
+	    $params{$_} = $defaults{$_} unless defined $params{$_};
+	}
+	$params{DataSource} = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') 
+	    unless defined $params{DataSource};
+	my $layer = $params{DataSource}->CreateLayer(@{$params{LayerConstructor}});
+	my $schema = $layer->GetLayerDefn;
+	for ('IDField', 'ElevField') {
+	    $params{$_} = $schema->GetFieldIndex($params{ElevField}) unless $params{ElevField} =~ /^[+-]?\d+$/;
+	}
+	ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
+			$params{NoDataValue}, $layer, $params{IDField}, $params{ElevField},
+			$params{callback}, $params{callback_data});
 	return $layer;
     }
     package Geo::GDAL::ColorTable;
