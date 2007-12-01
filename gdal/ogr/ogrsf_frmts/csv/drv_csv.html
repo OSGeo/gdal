@@ -72,6 +72,54 @@ such files, but instead to support simple .csv files that can be
 auto-recognised. Scripts or other mechanisms can generally be used to convert
 other variations into a form that is compatible with the OGR CSV driver.</p>
 
+<h2>Reading CSV containing spatial information</h2>
+
+<p>It is possible to extract spatial information (points) from a CSV file
+which has columns for the X and Y coordinates, through the use of the
+<a href="drv_vrt.html">VRT</a> driver</p>
+
+<p>Consider the following CSV file (test.csv):
+<pre>
+Latitude,Longitude,Name
+48.1,0.25,"First point"
+49.2,1.1,"Second point"
+47.5,0.75,"Third point"
+</pre>
+
+You can write the associated VRT file (test.vrt):
+<pre>
+&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTLayer name="test"&gt;
+        &lt;SrcDataSource&gt;test.csv&lt;/SrcDataSource&gt;
+        &lt;GeometryType&gt;wkbPoint&lt;/GeometryType&gt;
+        &lt;LayerSRS&gt;WGS84&lt;/LayerSRS&gt;
+        &lt;GeometryField encoding="PointFromColumns" x="Longitude" y="Latitude"/&gt;
+    &lt;/OGRVRTLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+</p>
+
+and <i>ogrinfo -ro -al test.vrt</i> will return :
+<pre>
+OGRFeature(test):1
+  Latitude (String) = 48.1
+  Longitude (String) = 0.25
+  Name (String) = First point
+  POINT (0.25 48.1 0)
+
+OGRFeature(test):2
+  Latitude (String) = 49.2
+  Longitude (String) = 1.1
+  Name (String) = Second point
+  POINT (1.1 49.200000000000003 0)
+
+OGRFeature(test):3
+  Latitude (String) = 47.5
+  Longitude (String) = 0.75
+  Name (String) = Third point
+  POINT (0.75 47.5 0)
+</pre>
+
 <h2>Creation Issues</h2>
 
 <p>The driver supports creating new databases (as a directory
@@ -89,6 +137,7 @@ LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
 (DOS format) or <b>LF</b> (Unix format).</li>
 </ul>
 </p>
+
 
 <h2>Other Notes</h2>
 
