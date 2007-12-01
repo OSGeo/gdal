@@ -34,9 +34,22 @@ be used to set the Z coordinates of waypoints, route points and track points.<p>
 The OGR/GPX reads and writes the GPX attributes for the waypoints, routes and tracks.<p>
 
 By default, up to 2 <i>&lt;link&gt;</i> elements can be taken into account by feature.
-This default number can be changed with the GPX_N_MAX_LINKS environment variable.
+This default number can be changed with the GPX_N_MAX_LINKS environment variable.<p>
 
-<p>
+<h2>Encoding issues</h2>
+
+Expat library supports the following built-in encodings :
+<ul>
+<li>US-ASCII</li>
+<li>UTF-8</li>
+<li>UTF-16</li>
+<li>ISO-8859-1</li>
+</ul>
+If your GPX file is not encoded in one of the previous encodings, it will not be parsed by the
+GPX driver. You may convert it into one of the supported encoding with the <i>iconv</i> utility
+for example and change accordingly the <i>encoding</i> parameter value in the XML header.<br>
+Note : Windows-1252 differs only on a small range of characters with ISO-8859-1.
+Patching the  <i>encoding</i> parameter value to ISO-8859-1 may be enough to make it work...<p>
 
 <h2>Extensions element reading</h2>
 

@@ -239,11 +239,23 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            CPLDebug("GPX",
-                     "XML parsing of file failed : %s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     XML_GetCurrentLineNumber(oParser),
-                     XML_GetCurrentColumnNumber(oParser));
+            aBuf[BUFSIZ-1] = 0;
+            if (strstr(aBuf, "<?xml") && strstr(aBuf, "<gpx"))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "XML parsing of GPX file failed : %s at line %d, column %d",
+                        XML_ErrorString(XML_GetErrorCode(oParser)),
+                        XML_GetCurrentLineNumber(oParser),
+                        XML_GetCurrentColumnNumber(oParser));
+            }
+            else
+            {
+                CPLDebug("GPX",
+                        "XML parsing of file failed : %s at line %d, column %d",
+                        XML_ErrorString(XML_GetErrorCode(oParser)),
+                        XML_GetCurrentLineNumber(oParser),
+                        XML_GetCurrentColumnNumber(oParser));
+            }
             break;
         }
         if (validity == GPX_VALIDITY_INVALID)
@@ -288,7 +300,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, 255, fp );
         aBuf[nLen] = 0;
-        if (strstr(aBuf, "<gpx"))
+        if (strstr(aBuf, "<?xml") && strstr(aBuf, "<gpx"))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "OGR/GPX driver has not been built with read support. Expat library required");
