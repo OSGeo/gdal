@@ -7,6 +7,9 @@
   <cmt>waypoint comment</cmt>
   <desc>waypoint description</desc>
   <src>waypoint source</src>
+  <link href="href"><text>text</text><type>type</type></link>
+  <link href="href2"><text>text2</text><type>type2</type></link>
+  <link href="href3"><text>text3</text><type>type3</type></link>
   <time>2007-11-25T17:58:00+01:00</time>
   <extensions></extensions>
 </wpt>
