@@ -47,9 +47,9 @@ init_list = [ \
     ('int32.raw', 1, 4672, None),
     ('uint32.raw', 1, 4672, None),
     ('float32.raw', 1, 4672, None),
-    ('float64.raw', 1, 4672, None),
-    ('cfloat32.raw', 1, 5028, None),
-    ('cfloat64.raw', 1, 5028, None)]
+    ('float64.raw', 1, 4672, None)]
+#    ('cfloat32.raw', 1, 5028, None),
+#    ('cfloat64.raw', 1, 5028, None)]
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'ENVI', item[0], item[1], item[2] )
