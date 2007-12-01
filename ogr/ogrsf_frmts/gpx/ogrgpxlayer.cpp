@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                            OGRGPXLayer()                             */
 /*                                                                      */
@@ -46,6 +45,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                           int bWriteMode)
 
 {
+    int i;
+
     eof = FALSE;
     nNextFID = 0;
     
@@ -54,6 +55,12 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     this->gpxGeomType = gpxGeomType;
     
     pszElementToScan = pszLayerName;
+    
+    nMaxLinks = atoi(CPLGetConfigOption("GPX_N_MAX_LINKS", "2"));
+    if (nMaxLinks < 0)
+        nMaxLinks = 2;
+    if (nMaxLinks > 100)
+        nMaxLinks = 100;
 
     nFeatures = 0;
     
@@ -118,7 +125,21 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
         
-        /* TODO : link */
+        for(i=1;i<=nMaxLinks;i++)
+        {
+            char szFieldName[32];
+            sprintf(szFieldName, "link%d_href", i);
+            OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
+            
+            sprintf(szFieldName, "link%d_text", i);
+            OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldLinkText );
+            
+            sprintf(szFieldName, "link%d_type", i);
+            OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldLinkType );
+        }
         
         OGRFieldDefn oFieldSym("sym", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSym );
@@ -168,7 +189,21 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
         
-        /* TODO : link */
+        for(i=1;i<=nMaxLinks;i++)
+        {
+            char szFieldName[32];
+            sprintf(szFieldName, "link%d_href", i);
+            OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
+            
+            sprintf(szFieldName, "link%d_text", i);
+            OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldLinkText );
+            
+            sprintf(szFieldName, "link%d_type", i);
+            OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldLinkType );
+        }
         
         OGRFieldDefn oFieldNumber("number", OFTInteger );
         poFeatureDefn->AddFieldDefn( &oFieldNumber );
@@ -372,6 +407,8 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         hasFoundLat = FALSE;
         hasFoundLon = FALSE;
         inExtensions = FALSE;
+        inLink = FALSE;
+        iCountLink = 0;
 
         for (i = 0; ppszAttr[i]; i += 2)
         {
@@ -415,12 +452,13 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         if (poFeature)
             delete poFeature;
         inExtensions = FALSE;
+        inLink = FALSE;
+        iCountLink = 0;
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
 
         multiLineString = new OGRMultiLineString ();
         lineString = NULL;
-        inExtensions = FALSE;
 
         poFeature->SetFID( nNextFID++ );
         poFeature->SetGeometryDirectly( multiLineString );
@@ -445,6 +483,8 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         poFeature = new OGRFeature( poFeatureDefn );
         inInterestingElement = TRUE;
         inExtensions = FALSE;
+        inLink = FALSE;
+        iCountLink = 0;
 
         lineString = new OGRLineString ();
         poFeature->SetFID( nNextFID++ );
@@ -543,25 +583,80 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             CPLFree(pszSubElementName);
             pszSubElementName = NULL;
             iCurrentField = -1;
-            for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+            
+            if (strcmp(pszName, "link") == 0)
             {
-                int bMatch;
-                if (iField >= nGPXFields)
+                iCountLink++;
+                if (iCountLink <= nMaxLinks)
                 {
-                    char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
-                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                                     pszCompatibleName ) == 0);
-                    CPLFree(pszCompatibleName);
+                    if (ppszAttr[0] && ppszAttr[1] &&
+                        strcmp(ppszAttr[0], "href") == 0)
+                    {
+                        char szFieldName[32];
+                        sprintf(szFieldName, "link%d_href", iCountLink);
+                        iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
+                        poFeature->SetField( iCurrentField, ppszAttr[1]);
+                    }
                 }
                 else
-                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                                     pszName ) == 0);
-
-                if (bMatch)
                 {
-                    iCurrentField = iField;
+                    static int once = 1;
+                    if (once)
+                    {
+                        once = 0;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "GPX driver only reads %d links per element. Others will be ignored. "
+                                 "This can be changed with the GPX_N_MAX_LINKS environment variable",
+                                 nMaxLinks);
+                    }
+                }
+                inLink = TRUE;
+                iCurrentField = -1;
+            }
+            else
+            {
+                for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+                {
+                    int bMatch;
+                    if (iField >= nGPXFields)
+                    {
+                        char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
+                        bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                                        pszCompatibleName ) == 0);
+                        CPLFree(pszCompatibleName);
+                    }
+                    else
+                        bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                                        pszName ) == 0);
+    
+                    if (bMatch)
+                    {
+                        iCurrentField = iField;
+                        pszSubElementName = CPLStrdup(pszName);
+                        break;
+                    }
+                }
+            }
+        }
+        else if (depthLevel == interestingDepthLevel + 2 && inLink)
+        {
+            char szFieldName[32];
+            CPLFree(pszSubElementName);
+            pszSubElementName = NULL;
+            iCurrentField = -1;
+            if (iCountLink <= nMaxLinks)
+            {
+                if (strcmp(pszName, "type") == 0)
+                {
+                    sprintf(szFieldName, "link%d_type", iCountLink);
+                    iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
                     pszSubElementName = CPLStrdup(pszName);
-                    break;
+                }
+                else if (strcmp(pszName, "text") == 0)
+                {
+                    sprintf(szFieldName, "link%d_text", iCountLink);
+                    iCurrentField = poFeatureDefn->GetFieldIndex(szFieldName);
+                    pszSubElementName = CPLStrdup(pszName);
                 }
             }
         }
@@ -769,6 +864,23 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                     poFeature->SetField( iCurrentField, pszSubElementValue);
                 }
             }
+            if (strcmp(pszName, "link") == 0)
+                inLink = FALSE;
+
+            CPLFree(pszSubElementName);
+            pszSubElementName = NULL;
+            CPLFree(pszSubElementValue);
+            pszSubElementValue = NULL;
+            nSubElementValueLen = 0;
+        }
+        else if (inLink && depthLevel == interestingDepthLevel + 2)
+        {
+            if (iCurrentField != -1 && pszSubElementName &&
+                strcmp(pszName, pszSubElementName) == 0 && poFeature && pszSubElementValue && nSubElementValueLen)
+            {
+                pszSubElementValue[nSubElementValueLen] = 0;
+                poFeature->SetField( iCurrentField, pszSubElementValue);
+            }
 
             CPLFree(pszSubElementName);
             pszSubElementName = NULL;
@@ -914,6 +1026,18 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
                                     year, month, day, hour, minute, second,
                                     (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
                     }
+                }
+            }
+            else if (strncmp(pszName, "link", 4) == 0)
+            {
+                if (strstr(pszName, "href"))
+                {
+                    VSIFPrintf(fp, "  <link href=\"%s\">", poFeature->GetFieldAsString( i ));
+                    if( poFeature->IsFieldSet( i + 1 ) )
+                        VSIFPrintf(fp, "<text>%s</text>", poFeature->GetFieldAsString( i + 1 ));
+                    if( poFeature->IsFieldSet( i + 2 ) )
+                        VSIFPrintf(fp, "<type>%s</type>", poFeature->GetFieldAsString( i + 2 ));
+                    VSIFPrintf(fp, "</link>\n");
                 }
             }
             else
