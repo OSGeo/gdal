@@ -784,6 +784,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     sub GeometryTypes {
 	return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
     }
+    sub Drivers {
+	my @drivers;
+	for my $i (0..GetDriverCount()-1) {
+	    push @drivers, _GetDriver($i);
+	}
+	return @drivers;
+    }
     sub GetDriver {
 	my($name_or_number) = @_;
 	return _GetDriver($name_or_number) if $name_or_number =~ /^\d/;

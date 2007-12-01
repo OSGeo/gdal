@@ -193,6 +193,13 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return 'd' if $t =~ /^Float64$/;
 	croak "unsupported data type: $t";
     }
+    sub Drivers {
+	my @drivers;
+	for my $i (0..GetDriverCount()-1) {
+	    push @drivers, _GetDriver($i);
+	}
+	return @drivers;
+    }
     sub GetDriver {
 	my $driver = shift;
 	return _GetDriver($driver) if $driver =~ /^\d/;
