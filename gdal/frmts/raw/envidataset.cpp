@@ -250,6 +250,7 @@ class ENVIDataset : public RawDataset
     virtual CPLErr  SetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
     virtual CPLErr  SetProjection( const char * );
+    virtual char  **GetFileList(void); 
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -433,6 +434,24 @@ void ENVIDataset::FlushCache()
             VSIFPrintf( fp, ",\n" );
     }
     VSIFPrintf( fp, "}\n" );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+	 	 
+char **ENVIDataset::GetFileList() 
+    
+{ 
+    char **papszFileList = NULL; 
+    
+    // Main data file, etc.  
+    papszFileList = GDALPamDataset::GetFileList(); 
+    
+    // Header file. 
+    papszFileList = CSLAddString( papszFileList, pszHDRFilename ); 
+    
+    return papszFileList; 
 }
 
 /************************************************************************/
