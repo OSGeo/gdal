@@ -248,12 +248,15 @@ void VRTRawRasterBand::ClearRawLink()
 {
     if( poRawRaster != NULL )
     {
-        if( poRawRaster->GetFP() != NULL )
-        {
-            CPLCloseShared( poRawRaster->GetFP() );
-        }
+        FILE* fp = poRawRaster->GetFP();
         delete poRawRaster;
         poRawRaster = NULL;
+        /* We close the file after deleting the raster band */
+        /* since data can be flushed in the destructor */
+        if( fp != NULL )
+        {
+            CPLCloseShared( fp );
+        }
     }
     CPLFree( pszSourceFilename );
     pszSourceFilename = NULL;
