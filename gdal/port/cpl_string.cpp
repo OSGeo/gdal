@@ -931,6 +931,27 @@ char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
 }
 
 /************************************************************************/
+/*                            CPLVASPrintf()                            */
+/*                                                                      */
+/*      This is intended to serve as an easy to use C callabable        */
+/*      vasprintf() alternative.  Used in the geojson library for       */
+/*      instance.                                                       */
+/************************************************************************/
+
+int CPLVASPrintf( char **buf, const char *fmt, va_list ap )
+
+{
+    CPLString osWork;
+
+    osWork.vPrintf( fmt, ap );
+
+    if( buf )
+        *buf = strdup(osWork.c_str());
+
+    return strlen(osWork);
+}
+
+/************************************************************************/
 /*                         CSLTestBoolean()                             */
 /************************************************************************/
 
