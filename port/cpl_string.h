@@ -94,6 +94,7 @@ int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
 
 const char CPL_DLL *CPLSPrintf(const char *fmt, ...);
 char CPL_DLL **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
+int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args );
 
 const char CPL_DLL *
       CPLParseNameValue(const char *pszNameValue, char **ppszKey );
