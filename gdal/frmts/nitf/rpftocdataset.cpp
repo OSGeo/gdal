@@ -1010,6 +1010,8 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
     int isRGBA = CSLTestBoolean(CPLGetConfigOption("RPFTOC_FORCE_RGBA", "NO"));
     RPFToc* toc = (psFile) ? RPFTOCRead( pszFilename, psFile ) :
                               RPFTOCReadFromBuffer( pszFilename, fp, buffer);
+    if (fp) VSIFCloseL(fp);
+    fp = NULL;
 
     if (entryName != NULL)
     {
@@ -1044,7 +1046,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
                         ds->SetMetadataItem("NITF_SERIES_NAME",
                                             (toc->entries[i].seriesName) ? toc->entries[i].seriesName : "Unknown");
                     }
-                    if (fp) VSIFCloseL(fp);
+
                     RPFTOCFree(toc);
                     return ds;
                 }
@@ -1052,7 +1054,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
             CPLError( CE_Failure, CPLE_AppDefined, 
                         "The entry %s does not exist in file %s.", entryName, pszFilename );
         }
-        if (fp) VSIFCloseL(fp);
+        RPFTOCFree(toc);
         return NULL;
     }
 
@@ -1117,12 +1119,11 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         }
         CPLFree(projectionRef);
         RPFTOCFree(toc);
-        if (fp) VSIFCloseL(fp);
+
         return ds;
     }
     else
     {
-        if (fp) VSIFCloseL(fp);
         return NULL;
     }
 }
