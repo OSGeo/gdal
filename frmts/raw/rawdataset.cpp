@@ -367,8 +367,18 @@ CPLErr RawRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( !bNativeOrder && eDataType != GDT_Byte )
     {
-        GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
-                       nBlockXSize, nPixelOffset );
+        if( GDALDataTypeIsComplex( eDataType ) )
+        {
+            int nWordSize;
+
+            nWordSize = GDALGetDataTypeSize(eDataType)/16;
+            GDALSwapWords( pLineBuffer, nWordSize, nBlockXSize, nPixelOffset );
+            GDALSwapWords( ((GByte *) pLineBuffer)+nWordSize, 
+                           nWordSize, nBlockXSize, nPixelOffset );
+        }
+        else
+            GDALSwapWords( pLineBuffer, GDALGetDataTypeSize(eDataType)/8,
+                           nBlockXSize, nPixelOffset );
     }
 
     bDirty = TRUE;
