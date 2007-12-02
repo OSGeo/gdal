@@ -2626,12 +2626,19 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
             double dMinLimit = poEntry->GetDoubleField( "BinFunction.minLimit" );
             double dMaxLimit = poEntry->GetDoubleField( "BinFunction.maxLimit" );
-            // fill the descriptor table
-            poEntry = new HFAEntry( hHFA, "Descriptor_Table", "Edsc_Table", poNode );
+            
+            // fill the descriptor table - check it isn't there already
+            poEntry = poNode->GetNamedChild( "Descriptor_Table" );
+            if( poEntry == NULL || !EQUAL(poEntry->GetType(),"Edsc_Table") )
+                poEntry = new HFAEntry( hHFA, "Descriptor_Table", "Edsc_Table", poNode );
+                
             poEntry->SetIntField( "numRows", nNumBins );
+
             // bin function
-            HFAEntry * poBinFunc = new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction",
-                                                 poEntry );
+            HFAEntry * poBinFunc = poEntry->GetNamedChild( "#Bin_Function#" );
+            if( poBinFunc == NULL || !EQUAL(poBinFunc->GetType(),"Edsc_BinFunction") )
+                poBinFunc = new HFAEntry( hHFA, "#Bin_Function#", "Edsc_BinFunction", poEntry );
+
             poBinFunc->MakeData( 30 );
             poBinFunc->SetIntField( "numBins", nNumBins );
             poBinFunc->SetDoubleField( "minLimit", dMinLimit );
@@ -2639,8 +2646,10 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             poBinFunc->SetStringField( "binFunctionType", "linear" ); // we use always a linear
 
             // we need a child named histogram
-            HFAEntry * poHisto = new HFAEntry( hHFA, "Histogram", "Edsc_Column",
-                                               poEntry );
+            HFAEntry * poHisto = poEntry->GetNamedChild( "Histogram" );
+            if( poHisto == NULL || !EQUAL(poHisto->GetType(),"Edsc_Column") )
+                poHisto = new HFAEntry( hHFA, "Histogram", "Edsc_Column", poEntry );
+                
             poHisto->SetIntField( "numRows", nNumBins );
             // allocate space for the bin values
             GUInt32 nOffset = HFAAllocateSpace( hHFA, nNumBins*4 );
