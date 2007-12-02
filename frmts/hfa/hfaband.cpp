@@ -1415,8 +1415,11 @@ CPLErr HFABand::SetPCT( int nColors,
     {
         HFAEntry	*poEdsc_Table;
 
-        poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", "Edsc_Table",
-                                     poNode );
+        poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
+        if( poEdsc_Table == NULL 
+            || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
+            poEdsc_Table = new HFAEntry( psInfo, "Descriptor_Table", 
+                                         "Edsc_Table", poNode );
 
         poEdsc_Table->SetIntField( "numrows", nColors );
 
@@ -1426,9 +1429,12 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
         HFAEntry       *poEdsc_BinFunction;
 
-        poEdsc_BinFunction = 
-            new HFAEntry( psInfo, "#Bin_Function#", "Edsc_BinFunction",
-                          poEdsc_Table );
+        poEdsc_BinFunction = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
+        if( poEdsc_BinFunction == NULL 
+            || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
+            poEdsc_BinFunction = new HFAEntry( psInfo, "#Bin_Function#", 
+                                               "Edsc_BinFunction", 
+                                               poEdsc_Table );
 
         // Because of the BaseData we have to hardcode the size. 
         poEdsc_BinFunction->MakeData( 30 );
@@ -1471,8 +1477,12 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
 /*      Create the Edsc_Column.                                         */
 /* -------------------------------------------------------------------- */
-            poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
+            poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
+            if( poEdsc_Column == NULL 
+                || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
+                poEdsc_Column = new HFAEntry( psInfo, pszName, "Edsc_Column", 
                                           poEdsc_Table );
+                                          
             poEdsc_Column->SetIntField( "numRows", nColors );
             poEdsc_Column->SetStringField( "dataType", "real" );
             poEdsc_Column->SetIntField( "maxNumChars", 0 );
