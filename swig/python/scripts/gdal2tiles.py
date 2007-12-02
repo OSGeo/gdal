@@ -71,8 +71,7 @@ def writetile( filename, data, dxsize, dysize, bands):
     if bands == 3 and tileformat == 'png':
         tmp = tempdriver.Create('', tilesize, tilesize, bands=4)
         alpha = tmp.GetRasterBand(4)
-        #from Numeric import zeros
-        alphaarray = (zeros((dysize, dxsize)) + 255).astype('b')
+        alphaarray = (zeros((dysize, dxsize)) + 255).astype('l')
         alpha.WriteArray( alphaarray, 0, tilesize-dysize )
     else:
         tmp = tempdriver.Create('', tilesize, tilesize, bands=bands)
@@ -504,24 +503,9 @@ def generate_openlayers( **args ):
         map.addControl(new OpenLayers.Control.MouseDefaults());
         map.addControl(new OpenLayers.Control.KeyboardDefaults());
 
-        // Patch for OpenLayers TMS is needed because string "1.0.0" is hardcoded in url no,
-        // there has to be optional parameter with version (default this "1.0.0")
-        // Hack to support local tiles by stable OpenLayers branch without a patch
-        OpenLayers.Layer.TMS.prototype.getURL = function ( bounds ) {
-            bounds = this.adjustBoundsByGutter(bounds);
-            var res = this.map.getResolution();
-            var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
-            var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-            var z = this.map.getZoom();
-            var path = z + "/" + x + "/" + y + "." + this.type;
-            var url = this.url;
-            if (url instanceof Array) {
-                url = this.selectUrl(path, url);
-            }
-            return url + path;
-        };
+        // OpenLayers 2.5 TMS driver
         layer = new OpenLayers.Layer.TMS( "TMS", 
-                "", {layername: 'map', type:'%(tileformat)s'} );
+                "", {layername: '.', serviceVersion: '.', type:'%(tileformat)s'} );
         map.addLayer(layer);
         map.zoomTo(%(zoom)d);
 
@@ -679,7 +663,10 @@ if __name__ == '__main__':
         
     bands = dataset.RasterCount
     if bands == 3 and tileformat == 'png':
-        from Numeric import zeros
+        try:
+            from numpy import zeros
+        except ImportError:
+            from Numeric import zeros
     xsize = dataset.RasterXSize
     ysize = dataset.RasterYSize
 
