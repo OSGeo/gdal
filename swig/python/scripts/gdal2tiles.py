@@ -241,7 +241,7 @@ def generate_kml( **args ):
 
             cnorth, csouth, ceast, cwest = nsew(cx, cy, rpixel/2)
             s += """    <NetworkLink>
-      <name>%d/%d/%d.png</name>
+      <name>%d/%d/%d.%s</name>
       <Region>
         <Lod>
           <minLodPixels>%d</minLodPixels>
@@ -260,7 +260,7 @@ def generate_kml( **args ):
         <viewFormat/>
       </Link>
     </NetworkLink>
-""" % (zoom+1, cx, cy, args['minlodpixels'], cnorth, csouth, ceast, cwest, zoom+1, cx, cy)
+""" % (zoom+1, cx, cy, tileformat, args['minlodpixels'], cnorth, csouth, ceast, cwest, zoom+1, cx, cy)
 
     s += """  </Document>
 </kml>
@@ -275,6 +275,7 @@ def generate_googlemaps( **args ):
     """
 
     args['zoom'] = min( 3, args['maxzoom'])
+    args['tileformat'] = tileformat
 
     s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"> 
@@ -396,7 +397,7 @@ def generate_googlemaps( **args ):
             tileLayer[0].getTileUrl = function(a,b) {
                 var y = Math.floor(MapHeight / (MapPxPerLon * Math.pow(2, (MapMaxZoom-b)))) - a.y;
                 // Google Maps indexed tiles from top left, we from bottom left, it causes problems during zooming, solution?
-                return b+"/"+a.x+"/"+y+".png";
+                return b+"/"+a.x+"/"+y+".%(tileformat)s";
             }
             var mapType = new GMapType(
                 tileLayer,
@@ -702,6 +703,9 @@ if __name__ == '__main__':
             print "Generating of KML is possible"
         else:
             print "It is not possible to generate KML (projection is not EPSG:4326 or there are no coordinates)!"
+    
+    if nokml:
+        generatekml = False
 
     if forcekml and (north, south, east, west) == (0, xsize, ysize, 0):
         print >> sys.stderr, "Geographic coordinates not available for given file '%s'" % input_file
@@ -823,31 +827,32 @@ if __name__ == '__main__':
             print "Zoom %s - pixel %.20f" % (zoom, zoompixels[zoom]), int(2.0**zoom*tilesize)
             print "-"*80
 
-        for ix in range(0, int( ceil( xsize / rmaxsize))):
+        for iy in range(0, int( ceil( ysize / rmaxsize))):
 
-            # Read window xsize in pixels.
-            if ix+1 == int( ceil( xsize / rmaxsize)) and xsize % rmaxsize != 0:
-                rxsize = int(xsize % rmaxsize)
+            # Read window ysize in pixels.
+            if iy+1 == int( ceil( ysize / rmaxsize)) and ysize % rmaxsize != 0:
+                rysize = int(ysize % rmaxsize)
             else:
-                rxsize = int(rmaxsize)
+                rysize = int(rmaxsize)
+
+            # Read window top coordinate in pixels.
+            ry = int(ysize - (iy * rmaxsize)) - rysize
             
-            # Read window left coordinate in pixels.
-            rx = int(ix * rmaxsize)
+            for ix in range(0, int( ceil( xsize / rmaxsize))):
 
-            for iy in range(0, int( ceil( ysize / rmaxsize))):
-
-                # Read window ysize in pixels.
-                if iy+1 == int( ceil( ysize / rmaxsize)) and ysize % rmaxsize != 0:
-                    rysize = int(ysize % rmaxsize)
+                # Read window xsize in pixels.
+                if ix+1 == int( ceil( xsize / rmaxsize)) and xsize % rmaxsize != 0:
+                    rxsize = int(xsize % rmaxsize)
                 else:
-                    rysize = int(rmaxsize)
+                    rxsize = int(rmaxsize)
+                
+                # Read window left coordinate in pixels.
+                rx = int(ix * rmaxsize)
 
-                # Read window top coordinate in pixels.
-                ry = int(ysize - (iy * rmaxsize)) - rysize
 
                 dxsize = int(rxsize/rmaxsize * tilesize)
                 dysize = int(rysize/rmaxsize * tilesize)
-                filename = os.path.join(output_dir, '%d/%d/%d.png' % (zoom, ix, iy))
+                filename = os.path.join(output_dir, '%d/%d/%d.%s' % (zoom, ix, iy, tileformat))
 
                 if verbose:
                     # Print info about tile and read area.
