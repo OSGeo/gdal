@@ -160,7 +160,12 @@
 ## @fn $GetDriverCount()
 # @return
 
+## @fn Geo::GDAL::Driver Driver($driver)
+# @param driver The name or number of the driver.
+# @return a new Geo::GDAL::Driver object
+
 ## @fn Geo::GDAL::Driver GetDriver($driver)
+# @brief An alias for the "Driver" method.
 # @param driver The name or number of the driver.
 # @return a new Geo::GDAL::Driver object
 
@@ -324,20 +329,20 @@
 # @param cap a capability string
 # @return boolean
 
-## @method $Extension
+## @method $Extension()
 # @return
 
-## @method $MIMEType
+## @method $MIMEType()
 # @return
 
-## @method @CreationOptionList
+## @method @CreationOptionList()
 # @return a list of options, each option is a hashref, the keys are
 # name, type and description or Value. Value is a listref.
 
-## @method $CreationDataTypes
+## @method $CreationDataTypes()
 # @return
 
-## @method Geo::GDAL::Dataset CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
+## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
 # @brief Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
@@ -347,19 +352,19 @@
 # @param options
 # @return a new Geo::GDAL::Dataset object
 
-## @method Create
-# An alias to CreateDataset
+## @method Geo::GDAL::Dataset CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
+# @brief An alias to the "CreateDataset" method.
 
-## @method Geo::GDAL::Dataset CopyDataset($name, $src, $strict = 1, \@options = undef)
-# @brief Create a new Geo::GDAL::Dataset as a copy
+## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \@options = undef)
+# @brief Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
 # @param name
 # @param src a Geo::GDAL::Dataset object
 # @param strict
 # @param options
 # @return a new Geo::GDAL::Dataset object 
 
-## @method CreateCopy
-# Same as CopyDataset
+## @method Geo::GDAL::Dataset CreateCopy($name, $src, $strict = 1, \@options = undef)
+# @brief An alias to the "Copy" method.
 
 ## @method Delete($name)
 # @param name
@@ -667,17 +672,18 @@
 ## @method SetDefaultRAT($AttributeTable)
 # @param AttributeTable a Geo::GDAL::RasterAttributeTable object
 
-## @method Geo::OGR::Layer Contours($DataSource, \@LayerConstructor, $ContourInterval, $ContourBase = 0, \@FixedLevels = [], $NoDataValue = undef, $IDField = '', $ElevField = '', $callback = undef, $callback_data = undef)
-# @param DataSource a Geo::OGR::DataSource object or 'Memory' to create a memory layer
-# @param LayerConstructor
-# @param ContourInterval
-# @param ContourBase
-# @param FixedLevels
-# @param NoDataValue
-# @param IDField
-# @param ElevField,
-# @param callback
-# @param callback_data
+## @method Geo::OGR::Layer Contours($DataSource, \%LayerConstructor, $ContourInterval, $ContourBase, \@FixedLevels, $NoDataValue, $IDField, $ElevField, $callback, $callback_data)
+# Generate contours for this raster band. This method can also be used with named parameters.
+# @param DataSource a Geo::OGR::DataSource object, default is a Memory data source
+# @param LayerConstructor data for Geo::OGR::DataSource::CreateLayer, default is {Name => 'contours'}
+# @param ContourInterval default is 100
+# @param ContourBase default is 0
+# @param FixedLevels a reference to a list of fixed contour levels, default is []
+# @param NoDataValue default is undef
+# @param IDField default is '', i.e., no field
+# @param ElevField default is '', i.e., no field
+# @param callback default is undef
+# @param callback_data default is undef
 # @return
 
 ## @method $GetRasterColorInterpretation()

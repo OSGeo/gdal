@@ -64,7 +64,12 @@
 # @param name
 # @return a new Geo::OGR::Driver object
 
+## @fn Geo::OGR::Driver Driver($driver)
+# @param driver the index or the name of the driver
+# @return a new Geo::OGR::Driver object
+
 ## @fn Geo::OGR::Driver GetDriver($driver)
+# @brief An alias for the "Driver" method.
 # @param driver the index or the name of the driver
 # @return a new Geo::OGR::Driver object
 
@@ -234,34 +239,52 @@
 ## @attr name
 # scalar (access as $driver->{name})
 
-## @method Geo::OGR::DataSource CreateDataSource($name, \@options = undef )
+## @method Geo::OGR::DataSource Create($name, \@options = undef )
 # @param name the data source name
 # @param options a list of driver specific options
 # @return a new Geo::OGR::DataSource object
 
-## @method Geo::OGR::DataSource CopyDataSource($ds, $name, \@options = undef)
+## @method Geo::OGR::DataSource CreateDataSource($name, \@options = undef )
+# @brief An alias to the "Create" method.
+# @param name the data source name
+# @param options a list of driver specific options
+# @return a new Geo::OGR::DataSource object
+
+## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
 # @param ds the Geo::OGR::DataSource object to be copied
 # @param name
 # @param options
 # @return a new Geo::OGR::DataSource object
 
-## @method Geo::OGR::DataSource OpenDataSource($name, $update = 0)
+## @method Geo::OGR::DataSource CopyDataSource($ds, $name, \@options = undef)
+# @brief An alias to the "Copy" method.
+# @param ds the Geo::OGR::DataSource object to be copied
+# @param name
+# @param options
+# @return a new Geo::OGR::DataSource object
+
+## @method Geo::OGR::DataSource Open($name, $update = 0)
 # @param name
 # @param update
 # @return a new Geo::OGR::DataSource object
 
+## @method Geo::OGR::DataSource OpenDataSource($name, $update = 0)
+# @brief An alias to the "Open" method.
+# @param name
+# @param update
+# @return a new Geo::OGR::DataSource object
+
+## @method Delete($name)
+# @param name
+# @return integer
+
 ## @method DeleteDataSource($name)
+# @brief An alias to the "Delete" method.
 # @param name
 # @return integer
 
 ## @method $GetName()
 # @return the name
-
-## @method Geo::OGR::DataSource Open($name, $update = 0)
-# An alias for OpenDataSource
-# @param name
-# @param update
-# @return a new Geo::OGR::DataSource object
 
 
 ## @class Geo::OGR::DataSource
@@ -310,12 +333,13 @@
 ## @method $GetName()
 # @return string
 
-## @method Geo::OGR::Layer CreateLayer($name, $srs = undef, $geom_type = 'Unknown', \@options = undef, \%schema = undef)
-# @param name
-# @param srs a Geo::OSR::SpatialReference object
-# @param geom_type one of geometry types (a string: Point, LineString, etc)
-# @param options
-# @param schema
+## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', \@Options = undef, \%Schema = undef)
+# This method can also be used with a named parameters syntax: $ds->CreateLayer({..named parameters..}).
+# @param Name
+# @param SRS a Geo::OSR::SpatialReference object
+# @param GeometryType one of geometry types (a string: Point, LineString, etc)
+# @param Options
+# @param Schema
 # @return a new Geo::OGR::Layer object
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, \@options = undef)
@@ -917,7 +941,7 @@
 # @param z [optional]
 # @return
 
-## @method \@Points($points)
+## @method \@Points(\@points)
 # Get or set the points of the geometry. The points (vertices) are
 # stored in obvious lists of lists. Note that unique points structures
 # may be different geometries depending on the actual geometry
