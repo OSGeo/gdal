@@ -585,7 +585,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         nSDEErr = SE_shape_create( hCoordRef, &hRectShape );
         if( nSDEErr != SE_SUCCESS) 
         {
-            poDS->IssueSDEError( nSDEErr, "SE_shape_generate_rectangle");
+            poDS->IssueSDEError( nSDEErr, "SE_shape_create");
             return FALSE;
         }
         sEnvelope.minx = m_sFilterEnvelope.MinX;
@@ -607,7 +607,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         sConstraint.filter_type = SE_SHAPE_FILTER;
         sConstraint.truth = TRUE;
 
-        nSDEErr = SE_stream_set_spatial_constraints( hStream, SE_SPATIAL_FIRST,
+        nSDEErr = SE_stream_set_spatial_constraints( hStream, nSearchOrder,
                                                      FALSE, 1, &sConstraint );
         if( nSDEErr != SE_SUCCESS) 
         {
