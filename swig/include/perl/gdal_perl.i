@@ -502,7 +502,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     sub Contours {
 	my $self = shift;
 	my %defaults = (DataSource => undef,
-			LayerConstructor => ['contours'],
+			LayerConstructor => {Name => 'contours'},
 			ContourInterval => 100, 
 			ContourBase => 0,
 			FixedLevels => [], 
@@ -529,7 +529,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	}
 	$params{DataSource} = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') 
 	    unless defined $params{DataSource};
-	my $layer = $params{DataSource}->CreateLayer(@{$params{LayerConstructor}});
+	my $layer = $params{DataSource}->CreateLayer($params{LayerConstructor});
 	my $schema = $layer->GetLayerDefn;
 	for ('IDField', 'ElevField') {
 	    $params{$_} = $schema->GetFieldIndex($params{ElevField}) unless $params{ElevField} =~ /^[+-]?\d+$/;
