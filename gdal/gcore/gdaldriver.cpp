@@ -114,11 +114,10 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we cleanup if there is an existing dataset of this    */
-/*      name.                                                           */
+/*      name.  But even if that seems to fail we will continue since    */
+/*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = QuietDelete( pszFilename );
-    if( eErr != CE_None )
-        return NULL;
+    QuietDelete( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Proceed with creation.                                          */
@@ -512,11 +511,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we cleanup if there is an existing dataset of this    */
-/*      name.                                                           */
+/*      name.  But even if that seems to fail we will continue since    */
+/*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = QuietDelete( pszFilename );
-    if( eErr != CE_None )
-        return NULL;
+    QuietDelete( pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      If the format provides a CreateCopy() method use that,          */
