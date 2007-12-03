@@ -70,7 +70,7 @@ if (0) {
     ok($s->{Type} eq 'String', 'fieldefn schema 2');
 }
 {
-    my $driver = Geo::OGR::GetDriver('Memory');
+    my $driver = Geo::OGR::Driver('Memory');
     my $datasource = $driver->CreateDataSource('test');
     
     $datasource->CreateLayer('a', undef, 'Point');

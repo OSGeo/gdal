@@ -54,7 +54,7 @@ if (0) {
 }
 
 {
-    my $driver = Geo::GDAL::GetDriverByName('MEM');
+    my $driver = Geo::GDAL::GetDriver('MEM');
     my $dataset = $driver->Create('tmp', 10, 10, 3 , 'Int32', []);
     my $r = $dataset->GetRasterBand(1);
     my $g = $dataset->GetRasterBand(1);
