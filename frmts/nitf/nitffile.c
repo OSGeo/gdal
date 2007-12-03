@@ -560,6 +560,15 @@ int NITFCreate( const char *pszFilename,
             else if( iBand == 2 )
                 pszIREPBAND = "B";
         }
+        else if( EQUALN(pszIREP,"YCbCr",5) )
+        {
+            if( iBand == 0 )
+                pszIREPBAND = "Y";
+            else if( iBand == 1 )
+                pszIREPBAND = "Cb";
+            else if( iBand == 2 )
+                pszIREPBAND = "Cr";
+        }
 
         PLACE(pachIMHDR+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
 //      PLACE(pachIMHDR+nOffset+ 2, ISUBCATn, ""                           );
