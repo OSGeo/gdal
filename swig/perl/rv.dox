@@ -19,13 +19,13 @@ $lname = "borders";      # name of the layer
 $field = "country";      # name of the field whose value we need
 
 $datasource = Geo::OGR::Open($dsname);
-$layer = $datasource->GetLayerByName($lname);
+$layer = $datasource->Layer($lname);
 
 $layer->ResetReading();
 while ($feature = $layer->GetNextFeature()) {  
-    $geom = $feature->GetGeometryRef();
-    $value = $feature->GetFieldAsString($field);
-    $extent = $geom->GetEnvelope();
+    my $geom = $feature->GetGeometry(); 
+    my $value = $feature->GetField($field);
+    my $extent = $geom->GetEnvelope();
     $data{$value}{width} = $extent->[1] - $extent->[0];
     $data{$value}{height} = $extent->[3] - $extent->[2];
 }
