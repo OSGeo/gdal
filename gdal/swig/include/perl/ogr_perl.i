@@ -138,7 +138,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    return @cap;
 	}
+	*Create = *CreateDataSource;
+	*Copy = *CopyDataSource;
 	*OpenDataSource = *Open;
+	*Delete = *DeleteDataSource;
+
 	package Geo::OGR::DataSource;
 	use Carp;
 	use strict;
@@ -242,6 +246,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $index = $name unless defined $index;
 	    _DeleteLayer($self, $index) if defined $index;
 	}
+
 	package Geo::OGR::Layer;
 	use strict;
 	use vars qw /@CAPABILITIES/;
@@ -391,6 +396,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    $self->CreateFeature($f);
 	}
+
 	package Geo::OGR::FeatureDefn;
 	use strict;
 	sub Schema {
@@ -426,6 +432,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
 	}
 	*GeometryType = *GeomType;
+
 	package Geo::OGR::Feature;
 	use strict;
 	use vars qw /%GEOMETRIES/;
@@ -523,6 +530,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $GEOMETRIES{tied(%$geom)} = $self;
 	    return $geom;
 	}
+
 	package Geo::OGR::FieldDefn;
 	use strict;
 	use vars qw /
@@ -616,6 +624,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		     Width  => $self->Width,
 		     Precision => $self->Precision };
 	}
+
 	package Geo::OGR::Geometry;
 	use strict;
 	use Carp;
@@ -813,4 +822,5 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	return _GetDriver($name_or_number) if $name_or_number =~ /^\d/;
 	return GetDriverByName("$name_or_number");
     }
+    *Driver = *GetDriver;
 %}
