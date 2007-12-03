@@ -20,6 +20,9 @@ veryclean: clean
 	-rm -f gdal.pm gdalconst.pm osr.pm ogr.pm
 
 generate: ${WRAPPERS}
+	if [ ! -d lib ]; then mkdir lib; fi
+	if [ ! -d "lib/Geo" ]; then mkdir "lib/Geo"; fi
+	if [ ! -d "lib/Geo/GDAL" ]; then mkdir "lib/Geo/GDAL"; fi
 	if [ -f GDAL.pm ]; then mv GDAL.pm lib/Geo; fi
 	if [ -f Const.pm ]; then mv Const.pm lib/Geo/GDAL; fi
 	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
