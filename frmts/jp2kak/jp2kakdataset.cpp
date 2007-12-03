@@ -1446,7 +1446,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
         poDS->SetDescription( poOpenInfo->pszFilename );
-        poDS->TryLoadXML();
+        if( !bIsSubfile )
+            poDS->TryLoadXML();
+        else
+            poDS->nPamFlags |= GPF_NOSAVE;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have PAM information to override other geo-info?          */
