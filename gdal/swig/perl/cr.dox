@@ -28,10 +28,9 @@ $nodata = -1;         # nodata value
 # We create a GTiff and set the extension to '.tiff'.
 # We add only one band to the raster.
 
-$driver = Geo::GDAL::GetDriver('GTiff');
-$dataset = $driver->Create($name.'.tiff', $width, $height, 1, $datatype, []);
+$dataset = Geo::GDAL::Driver('GTiff')->Create($name.'.tiff', $width, $height, 1, $datatype);
 $dataset->GeoTransform($minx, $dx, 0, $maxy, 0, -$dy);
-$band = $dataset->GetRasterBand(1);
+$band = $dataset->Band(1);
 $band->NoDataValue($nodata);
 
 for (1..100) {
