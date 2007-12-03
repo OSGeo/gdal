@@ -37,6 +37,11 @@ still TODO).<p>
     geometry type from the database.  Otherwise, the SDE driver will always 
     return an Unknown geometry type.
 </li>
+<li><b>OGR_SDE_SEARCHORDER</b>: This may be "ATTRIBUTE_FIRST" to tell ArcSDE 
+    to filter based on attributes *before* using a spatial filter or 
+    "SPATIAL_FIRST" to use the spatial filter.  By default, it uses the 
+    spatial filter first.
+</li>
 </ul>
 </body>
 </html>
