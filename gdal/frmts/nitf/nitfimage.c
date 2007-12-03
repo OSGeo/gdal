@@ -1581,6 +1581,24 @@ static void NITFEncodeDMSLoc( char *pszTarget, double dfValue,
 /*                          NITFWriteIGEOLO()                           */
 /************************************************************************/
 
+/* Check that easting can be represented as a 6 character string */
+#define CHECK_IGEOLO_UTM_X(name, x) \
+    if ((int) floor((x)+0.5) <= -100000 || (int) floor((x)+0.5) >= 1000000) \
+    { \
+        CPLError( CE_Failure, CPLE_AppDefined, \
+                  "Attempt to write UTM easting %s=%d which is outside of valid range.", name, (int) floor((x)+0.5) ); \
+        return FALSE; \
+    }
+
+/* Check that northing can be represented as a 7 character string */
+#define CHECK_IGEOLO_UTM_Y(name, y) \
+    if ((int) floor((y)+0.5) <= -1000000 || (int) floor((y)+0.5) >= 10000000) \
+    { \
+        CPLError( CE_Failure, CPLE_AppDefined, \
+                  "Attempt to write UTM northing %s=%d which is outside of valid range.", name, (int) floor((y)+0.5) ); \
+        return FALSE; \
+    }
+
 int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                      int nZone, 
                      double dfULX, double dfULY,
@@ -1639,6 +1657,14 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
 /* -------------------------------------------------------------------- */
     else if( chICORDS == 'N' || chICORDS == 'S' )
     {
+        CHECK_IGEOLO_UTM_X("dfULX", dfULX);
+        CHECK_IGEOLO_UTM_Y("dfULY", dfULY);
+        CHECK_IGEOLO_UTM_X("dfURX", dfURX);
+        CHECK_IGEOLO_UTM_Y("dfURY", dfURY);
+        CHECK_IGEOLO_UTM_X("dfLRX", dfLRX);
+        CHECK_IGEOLO_UTM_Y("dfLRY", dfLRY);
+        CHECK_IGEOLO_UTM_X("dfLLX", dfLLX);
+        CHECK_IGEOLO_UTM_Y("dfLLY", dfLLY);
         sprintf( szIGEOLO + 0, "%02d%06d%07d",
                  nZone, (int) floor(dfULX+0.5), (int) floor(dfULY+0.5) );
         sprintf( szIGEOLO + 15, "%02d%06d%07d",
