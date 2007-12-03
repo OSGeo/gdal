@@ -582,7 +582,12 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 
         NeedLayerInfo(); // need hCoordRef
 
-        SE_shape_create( hCoordRef, &hRectShape );
+        nSDEErr = SE_shape_create( hCoordRef, &hRectShape );
+        if( nSDEErr != SE_SUCCESS) 
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_shape_generate_rectangle");
+            return FALSE;
+        }
         sEnvelope.minx = m_sFilterEnvelope.MinX;
         sEnvelope.miny = m_sFilterEnvelope.MinY;
         sEnvelope.maxx = m_sFilterEnvelope.MaxX;
