@@ -205,6 +205,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return _GetDriver($driver) if $driver =~ /^\d/;
 	return GetDriverByName($driver);
     }
+    *Driver = *GetDriver;
     sub Open {
 	my @p = @_;
 	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
@@ -233,6 +234,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$p[3] = $RESAMPLING_STRING2INT{$p[3]} if $p[3] and exists $RESAMPLING_STRING2INT{$p[3]};
 	return _AutoCreateWarpedVRT(@p);
     }
+
     package Geo::GDAL::MajorObject;
     use vars qw/@DOMAINS/;
     use strict;
@@ -252,6 +254,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	SetMetadata($self, $metadata, $domain) if defined $metadata;
 	GetMetadata($self, $domain) if defined wantarray;
     }
+
     package Geo::GDAL::Driver;
     use vars qw/@CAPABILITIES @DOMAINS/;
     use strict;
@@ -324,7 +327,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return _Create(@p);
     }
     *Create = *CreateDataset;
-    *CopyDataset = *CreateCopy;
+    *Copy = *CreateCopy;
+
     package Geo::GDAL::Dataset;
     use strict;
     use vars qw/%BANDS @DOMAINS/;
@@ -385,6 +389,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	my $GCPs = GetGCPs($self);
 	return (@$GCPs, $proj);
     }
+
     package Geo::GDAL::Band;
     use Carp;
     use UNIVERSAL qw(isa);
@@ -539,6 +544,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 			$params{callback}, $params{callback_data});
 	return $layer;
     }
+
     package Geo::GDAL::ColorTable;
     use strict;
     use vars qw/
@@ -584,6 +590,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	}
 	return @table;
     }
+
     package Geo::GDAL::RasterAttributeTable;
     use strict;
     use vars qw/ %BANDS
