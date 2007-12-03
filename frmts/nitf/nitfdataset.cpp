@@ -2700,8 +2700,8 @@ NITFDataset::NITFCreateCopy(
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Only IC=NC (uncompressed) and IC=C8 (JPEG2000) allowed\n"
-                      "with NITF CreateCopy method." );
+                      "Only IC=NC (uncompressed), IC=C3 (JPEG) and IC=C8 (JPEG2000)\n"
+                      "allowed with NITF CreateCopy method." );
             return NULL;
         }
     }
@@ -2742,9 +2742,14 @@ NITFDataset::NITFCreateCopy(
     if( CSLFetchNameValue(papszFullOptions,"IREP") == NULL )
     {
         if( poSrcDS->GetRasterCount() == 3 && eType == GDT_Byte )
-            papszFullOptions = 
-                CSLSetNameValue( papszFullOptions, "IREP", "RGB" );
-        
+        {
+            if( bJPEG )
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, "IREP", "YCbCr601" );
+            else
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, "IREP", "RGB" );
+        }
         else if( poSrcDS->GetRasterCount() == 1 && eType == GDT_Byte
                  && poBand1->GetColorTable() != NULL )
         {
