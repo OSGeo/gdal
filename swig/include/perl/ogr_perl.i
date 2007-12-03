@@ -140,6 +140,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	*OpenDataSource = *Open;
 	package Geo::OGR::DataSource;
+	use Carp;
 	use strict;
 	use vars qw /@CAPABILITIES %LAYERS/;
 	for my $s (qw/CreateLayer DeleteLayer/) {
@@ -198,13 +199,29 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return $layer;
 	}
 	sub CreateLayer {
-	    my @p = @_;
-	    $p[3] = $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]} if 
-		$p[3] and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]};
-	    my $schema = pop @p if @p == 6;
-	    my $layer = _CreateLayer(@p);
-	    $LAYERS{tied(%$layer)} = $p[0];
-	    $layer->Schema(%$schema) if $schema;
+	    my $self = shift;
+	    my %defaults = (Name => 'unnamed',
+			    SRS => undef, 
+			    GeometryType => 'Unknown', 
+			    Options => [], 
+			    Schema => undef);
+	    my %params;
+	    if (ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	    } else {
+		($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
+	    }
+	    for (keys %params) {
+		croak "unknown parameter: $_" unless exists $defaults{$_};
+	    }
+	    for (keys %defaults) {
+		$params{$_} = $defaults{$_} unless defined $params{$_};
+	    }
+	    $params{GeometryType} = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}} if 
+		exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
+	    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $params{GeometryType}, $params{Options});
+	    $LAYERS{tied(%$layer)} = $self;
+	    $layer->Schema(%{$params{Schema}}) if $params{Schema};
 	    return $layer;
 	}
 	sub DeleteLayer {
