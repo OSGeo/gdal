@@ -80,6 +80,9 @@ static const char *CeosExtension[][6] = {
 /* Ers-1 from D-PAF */
 { "VDF", "LF", "SLC", "", "", "ext" },
 
+/* Radarsat-1 per #2051 */
+{ "vol", "sarl", "sard", "sart", "nvol", "ext" },
+
 /* end marker */
 { NULL, NULL, NULL, NULL, NULL, NULL } 
 };
