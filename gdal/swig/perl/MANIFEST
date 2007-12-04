@@ -8,7 +8,6 @@ lib/Geo/OSR.pm
 t/gdal.t
 t/ogr.t
 Makefile.PL
-clean.bat
 make.bat
 gdalconst_wrap.c
 gdal_wrap.cpp
