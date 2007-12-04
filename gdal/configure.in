@@ -145,6 +145,37 @@ AC_CHECK_FUNC(setlocale)
 OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
+dnl ---------------------------------------------------------------------------
+dnl Check for --enable-debug
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for --enable-debug])
+
+AC_ARG_WITH(enable_debug,[  --enable-debug      Build with -g -DDEBUG for debugging, instead of -O],,)
+
+if test "x$enable_debug" = "xyes" ; then
+
+  dnl Try to strip out optimization.
+
+  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-O2 //"` 
+  CFLAGS=`echo "$CFLAGS " | sed "s/-O2 //"` 
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-O //"` 
+  CFLAGS=`echo "$CFLAGS" | sed "s/-O //"` 
+
+  dnl remove existing -g to avoid duplicates. 
+
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"` 
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"` 
+
+  dnl add -g and -DDEBUG
+
+  CXXFLAGS="$CXXFLAGS -g -DDEBUG"
+  CFLAGS="$CFLAGS -g -DDEBUG"
+
+  AC_MSG_RESULT([yes, modified CFLAGS=]$CFLAGS)
+else
+  AC_MSG_RESULT([no, CFLAGS=]$CFLAGS)
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl Check if user requests hidding internal symbols
