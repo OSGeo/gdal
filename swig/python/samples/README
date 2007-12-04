@@ -73,7 +73,3 @@ vec_tr_spat.py		Example of using Intersect() to filter based on
 			rectangle.  Easily extended to general polygon!
 
 
-Additional scripts of interest may be found at:
-
-  http://www.gina.alaska.edu/page.xml?group=projects&page=gdalscripts
-
