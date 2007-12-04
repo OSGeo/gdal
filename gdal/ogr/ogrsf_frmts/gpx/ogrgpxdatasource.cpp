@@ -239,7 +239,10 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            aBuf[BUFSIZ-1] = 0;
+            if (nLen <= BUFSIZ-1)
+                aBuf[nLen] = 0;
+            else
+                aBuf[BUFSIZ-1] = 0;
             if (strstr(aBuf, "<?xml") && strstr(aBuf, "<gpx"))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
