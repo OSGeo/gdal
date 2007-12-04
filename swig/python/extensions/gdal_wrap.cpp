@@ -4297,7 +4297,7 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     }
   }
   {
-    /* %typemap(out) char ** -> ( string ) */
+    /* %typemap(out) char **options -> ( string ) */
     char **stringarray = result;
     if ( stringarray == NULL ) {
       resultobj = Py_None;
@@ -4313,6 +4313,10 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(ret) char **options */
+    CSLDestroy( result );
+  }
   return resultobj;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
@@ -4666,7 +4670,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM
     }
   }
   {
-    /* %typemap(out) char ** -> ( string ) */
+    /* %typemap(out) char **options -> ( string ) */
     char **stringarray = result;
     if ( stringarray == NULL ) {
       resultobj = Py_None;
@@ -4682,6 +4686,10 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM
     }
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) char **options */
+    CSLDestroy( result );
+  }
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
@@ -9102,7 +9110,7 @@ SWIGINTERN PyObject *_wrap_Band_GetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
     }
   }
   {
-    /* %typemap(out) char ** -> ( string ) */
+    /* %typemap(out) char **options -> ( string ) */
     char **stringarray = result;
     if ( stringarray == NULL ) {
       resultobj = Py_None;
@@ -9116,6 +9124,10 @@ SWIGINTERN PyObject *_wrap_Band_GetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
         PyList_SetItem(resultobj, i, o );
       }
     }
+  }
+  {
+    /* %typemap(ret) char **options */
+    CSLDestroy( result );
   }
   return resultobj;
 fail:
@@ -12881,7 +12893,7 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
     }
   }
   {
-    /* %typemap(out) char ** -> ( string ) */
+    /* %typemap(out) char **options -> ( string ) */
     char **stringarray = result;
     if ( stringarray == NULL ) {
       resultobj = Py_None;
@@ -12899,6 +12911,10 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(freearg) char **options */
     CSLDestroy( arg1 );
+  }
+  {
+    /* %typemap(ret) char **options */
+    CSLDestroy( result );
   }
   return resultobj;
 fail:
