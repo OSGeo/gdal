@@ -22,8 +22,8 @@ Core:
  * Support for "pam proxies" for files in read-only locations. 
  * Create and CreateCopy pre-Delete output existing dataset.
  * Added Identify() method on drivers (per RFC 11: Fast Format Identify)
- * Implement GetFileList() on datasets (per RFC 11).
- * Implement Delete(), Rename(), Copy() based on GetFileList() (per RFC 11).
+ * Implement GetFileList() on datasets (per RFC 12).
+ * Implement Delete(), Rename(), Copy() based on GetFileList() (per RFC 12).
  * vrtdataset.h, memdataset.h and rawdataset.h are now considered part of
    the public GDAL API, and will be installed along with gdal.h, etc. 
  * Support nodata/validity masks per RFC 14: Band Masks. 
