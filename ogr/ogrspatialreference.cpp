@@ -1759,7 +1759,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
         return OGRERR_FAILURE;
     }
 
-
+    CPLHTTPDestroyResult( psResult );
     return OGRERR_NONE;
 }
 
