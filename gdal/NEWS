@@ -1,3 +1,217 @@
+GDAL/OGR 1.5.0 - General Changes
+--------------------------------
+
+SWIG Bindings:
+ * The "Next Generation" Python SWIG bindings are now the default.
+ * Python utility and sample scripts migrated to swig/python/scripts and
+   swig/python/samples.
+ * Added Raster Attribute Tables to swig bindings.
+
+Build:
+
+Other:
+ * OGR and GDAL C APIs now generally check for NULL objects and recover
+   with an error report instead of crashing.
+
+
+GDAL 1.5.0 - Overview of Changes
+--------------------------------
+
+Core: 
+ * Enable Persistent Auxilary Metadata (.aux.xml) by default.
+ * Support for "pam proxies" for files in read-only locations. 
+ * Create and CreateCopy pre-Delete output existing dataset.
+ * Added Identify() method on drivers (per RFC 11: Fast Format Identify)
+ * Implement GetFileList() on datasets (per RFC 11).
+ * Implement Delete(), Rename(), Copy() based on GetFileList() (per RFC 11).
+ * vrtdataset.h, memdataset.h and rawdataset.h are now considered part of
+   the public GDAL API, and will be installed along with gdal.h, etc. 
+ * Support nodata/validity masks per RFC 14: Band Masks. 
+ * Plugin drivers test for ABI compatability at load time.
+ * Creation flags can now be validated (this is used by gdal_translate)
+ * Default block cache size changed to 40MB from 10MB.
+
+Algorithms / Utilities:
+ * gdal_grid: New utility to interpolate point data to a grid.
+ * gdal2tiles.py is new for 1.5.0.
+ * gdaltransform: stdin/stdout point transformer similar to PROJ.4 cs2cs. 
+ * gdalwarp: Several fixes related to destination "nodata" handling and
+   nodata mixing in resampling kernels.
+ * gdalwarp: Added Lanczos Windows Sinc resampling.
+ * gdal_rasterize: added -i flag to rasterize all areas outside geometry.
+ * gdalenhance: new utility for applying histogram equalization enhancements.
+ * gdalmanage: Utility for managing datasets (identify, delete, copy, rename)
+ * nearblack: Utility for fixing lossily compressed nodata collars.
+
+Intergraph Raster Driver:
+ * New for 1.5.0.
+
+COSAR (TerraSAR-X) Driver:
+ * New for 1.5.0.
+ * SAR Format.
+
+COASP Driver:
+ * New for 1.5.0
+ * SAR format produced by DRDC CASP SAR Processor.
+
+GFF Driver: 
+ * New for 1.5.0
+
+GENBIN (Generic Binary) Driver:
+ * New for 1.5.0.
+
+ISIS3 Driver:
+ * New for 1.5.0.
+ * Also PDS and ISIS2 driver improved substantially and all moved to frmts/pds
+
+WMS Driver:
+ * New for 1.5.0.
+
+SDE Raster Driver:
+ * New for 1.5.0.
+
+SRTMHGT Driver:
+ * New for 1.5.0.
+
+BNA Driver: 
+ * New for 1.5.0.
+
+PALSAR Driver:
+ * New for 1.5.0.
+ * SAR format.
+
+ERS Driver:
+ * New for 1.5.0.
+ * ERMapper ASCII Header
+
+HTTP Driver:
+ * New for 1.5.0.
+ * Fetches file by http and then GDALOpen()s. 
+
+GSG Driver:
+ * New for 1.5.0.
+ * Golden Software Surfer Grid.
+
+GS7 Driver:
+ * New for 1.5.0.
+ * Golden Software Surfer 7 Binary Grid.
+
+Spot DIMAP Driver:
+ * New for 1.5.0.
+
+RPFTOC Driver:
+ * New for 1.5.0. 
+
+ADRG Driver:
+ * New for 1.5.0.
+
+NITF Driver:
+ * Added support for writing JPEG compressed (IC=C3). 
+ * Added support for reading text segments and TREs as metadata.
+ * Added support for 1bit images. 
+ * Added support for GeoSDE TRE for georeferencing.
+ * Support PAM for subdatasets.
+ * Improved NSIF support.
+ * Support C1 (FAX3) compression.
+
+ENVI Driver:
+ * Many improvements, particularly to coordinate system handling and metadata.
+
+JP2KAK (Kakadu JPEG2000) Driver:
+ * Now builds with libtool enabled.
+
+GTIFF (GeoTIFF) Driver:
+ * Now supports BigTIFF (read and write) with libtiff4 (internal copy ok).
+ * Upgraded to include libtiff 4.0 (alpha2) as the internal option.
+ * Support AVERAGE_BIT2GRAYSCALE overviews.
+ * Produce pixel interleaved files instead of band interleaved by default.
+ * Support TIFF files with odd numbers of bits (1-8, 11, etc). 
+
+GIF Driver:
+ * Nodata/transparency support added.
+
+JPEG Driver: 
+ * Support in-file masks. 
+
+AIGrid Driver:
+ * Supports reading associated info table as a Raster Attribute Table.
+
+HFA Driver:
+ * Support MapInformation nodes.
+ * Support AVERAGE_BIT2GRAYSCALE overviews.
+ * Support Signed Byte pixel type.
+ * Support 1/2/4 bit pixel types.
+ * Support PE_STRING coordinate system definitions.
+
+WCS Driver: 
+ * Support WCS 1.1.0
+
+DTED Driver:
+ * Can now perform checksum verification.
+ * Better datum detection.
+ 
+HDF4 Driver: 
+ * Support PAM for subdatasets.
+
+Leveller Driver:
+ * Added write support.
+ * Added v7 (Leveller 2.6) support.
+
+
+
+OGR 1.5.0 - Overview of Changes
+-------------------------------
+
+General:
+ * Plugin drivers test for ABI compatability at load time.
+ * SFCOM/OLEDB stuff all removed (moved to /spike in subversion).
+ * Various thread safety improvements made.
+ * Added PointOnSurface implementation for OGRPolygon.
+
+Utilities: 
+ * All moved to gdal/apps. 
+
+OGRSpatialReference: 
+ * Supports URL SRS type.
+ * Upgraded to EPSG 6.13. 
+ * Operating much better in odd numeric locales.
+
+GPX Driver:
+ * New for 1.5.0.
+
+GeoJSON Driver:
+ * New for 1.5.0.
+
+GMT ASCII Driver:
+ * New for 1.5.0.
+
+KML Driver:
+ * Preliminary read support added. 
+
+DXF / DWG Driver:
+ * Removed due to licensing issues with some of the source code.  Still
+   available in subversion from under /spike if needed.
+
+PG (Postgres/PostGIS) Driver:
+ * Added support for recognising primary keys other than OGR_FID to use as FID.
+ * Improved schema support.
+ * Performance improvements related to enabling SEQSCAN and large cursor pages
+
+Shapefile Driver:
+ * Do not keep .shx open in read only mode (better file handle management).
+
+MySQL Driver:
+ * Added support for BLOB fields.
+
+Interlis Drivers:
+ * Support datasources without imported Interlis TID
+ * Remove ili2c.jar (available from http://home.gdal.org/dl/ili2c.jar
+ * Support for inner rings in Surface geometries.
+ * Support spatial and attribute filters.
+
+
+===============================================================================
+
 GDAL/OGR 1.4.0 - General Changes
 --------------------------------
  
