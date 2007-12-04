@@ -352,6 +352,8 @@ OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
             papoFeatures[i]->RemapFields( NULL, panRemap );
     }
 
+    CPLFree( panRemap );
+
     return OGRERR_NONE;
 }
 
