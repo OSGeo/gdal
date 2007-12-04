@@ -90,6 +90,7 @@ class HDF4ImageDataset : public HDF4Dataset
     int32       nComps, nPalEntries;
     int32       aiDimSizes[MAX_VAR_DIMS];
     int         iXDim, iYDim, iBandDim, i4Dim;
+    int         nBandCount;
     char        **papszLocalMetadata;
 #define    N_COLOR_ENTRIES    256
     uint8       aiPaletteData[N_COLOR_ENTRIES][3]; // XXX: Static array for now
@@ -631,6 +632,7 @@ HDF4ImageDataset::HDF4ImageDataset()
     hGR = 0;
     iGR = 0;
     iBandDim = -1;
+    nBandCount = 0;
     iDatasetType = HDF4_UNKNOWN;
     pszSubdatasetName = NULL;
     pszFieldName = NULL;
@@ -1193,7 +1195,7 @@ void HDF4ImageDataset::GetImageDimensions( char *pszDimList )
     // Search for the "Band" word in the name of dimension
     // or take the first one as a number of bands
     if ( iRank == 2 )
-        nBands = 1;
+        nBandCount = 1;
     else
     {
         for ( i = 0; i < nDimCount; i++ )
@@ -1201,14 +1203,14 @@ void HDF4ImageDataset::GetImageDimensions( char *pszDimList )
             if ( strstr( papszDimList[i], "band" ) )
             {
                 iBandDim = i;
-                nBands = aiDimSizes[i];
+                nBandCount = aiDimSizes[i];
                 // Handle 4D datasets
                 if ( iRank > 3 && i < nDimCount - 1 )
                 {
                     // FIXME: is there a better way to search for
                     // the 4th dimension?
                     i4Dim = i + 1;
-                    nBands *= aiDimSizes[i4Dim];
+                    nBandCount *= aiDimSizes[i4Dim];
                 }
                 break;
             }
@@ -1239,7 +1241,7 @@ void HDF4ImageDataset::GetImageDimensions( char *pszDimList )
         else if( iXDim != 2 && iYDim != 2 )
             iBandDim = 2;
 
-        nBands = aiDimSizes[iBandDim];
+        nBandCount = aiDimSizes[iBandDim];
     }
 
     CSLDestroy( papszDimList );
@@ -1563,12 +1565,12 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     int32   nDataFields, nDimMaps;
     void    *pLat = NULL, *pLong = NULL;
     void    *pLatticeX = NULL, *pLatticeY = NULL;
-    int32   iLatticeType, iLatticeDataSize, iRank;
+    int32   iLatticeType, iLatticeDataSize = 0, iRank;
     int32   nLatCount = 0, nLongCount = 0;
     int32   nXPoints=0, nYPoints=0;
     int32   nStrBufSize;
     int32   aiDimSizes[MAX_VAR_DIMS];
-    int     i, j, iDataSize, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
+    int     i, j, iDataSize = 0, iPixelDim=-1,iLineDim=-1, iLongDim=-1, iLatDim=-1;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
     char    **papszGeolocations = NULL;
@@ -1943,6 +1945,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             oSRS.exportToWkt( &pszGCPProjection );
 
             CSLDestroy( papszParms );
+            CPLFree( pszEllipsoidLine );
             CPLFree( pszZoneLine );
             CPLFree( pszParmsLine );
             CPLFree( pszProjLine );
@@ -2195,7 +2198,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     int32       iAttribute, nValues, iAttrNumType;
     double      dfNoData = 0.0;
     int         bNoDataSet = FALSE;
-    int         nBands = 0;
     
 /* -------------------------------------------------------------------- */
 /*      Select SDS or GR to read from.                                  */
@@ -2522,7 +2524,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           switch( poDS->iRank )
           {
             case 2:
-              nBands = 1;
+              poDS->nBandCount = 1;
               poDS->iXDim = 1;
               poDS->iYDim = 0;
               break;
@@ -2550,10 +2552,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                   }
               }
-              nBands = poDS->aiDimSizes[poDS->iBandDim];
+              poDS->nBandCount = poDS->aiDimSizes[poDS->iBandDim];
               break;
             case 4: // FIXME
-              nBands = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
+              poDS->nBandCount = poDS->aiDimSizes[2] * poDS->aiDimSizes[3];
               break;
             default:
               break;
@@ -2644,7 +2646,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->iXDim = 0;
         poDS->iYDim = 1;
-        nBands = poDS->iRank;
+        poDS->nBandCount = poDS->iRank;
         break;
       default:
         return NULL;
@@ -2658,13 +2660,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         // XXX: Hyperion SDSs has Height x Bands x Width dimensions scheme
         if ( poDS->iRank > 2 )
         {
-            nBands = poDS->aiDimSizes[1];
+            poDS->nBandCount = poDS->aiDimSizes[1];
             poDS->nRasterXSize = poDS->aiDimSizes[2];
             poDS->nRasterYSize = poDS->aiDimSizes[0];
         }
         else
         {
-            nBands = poDS->aiDimSizes[0];
+            poDS->nBandCount = poDS->aiDimSizes[0];
             poDS->nRasterXSize = poDS->aiDimSizes[1];
             poDS->nRasterYSize = 1;
         }
@@ -2673,7 +2675,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i <= nBands; i++ )
+    for( i = 1; i <= poDS->nBandCount; i++ )
     {
         HDF4ImageRasterBand *poBand = 
             new HDF4ImageRasterBand( poDS, i,
