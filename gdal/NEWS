@@ -79,9 +79,6 @@ SDE Raster Driver:
 SRTMHGT Driver:
  * New for 1.5.0.
 
-BNA Driver: 
- * New for 1.5.0.
-
 PALSAR Driver:
  * New for 1.5.0.
  * SAR format.
@@ -181,6 +178,9 @@ OGRSpatialReference:
  * Supports URL SRS type.
  * Upgraded to EPSG 6.13. 
  * Operating much better in odd numeric locales.
+
+BNA Driver:
+ * New for 1.5.0.
 
 GPX Driver:
  * New for 1.5.0.
