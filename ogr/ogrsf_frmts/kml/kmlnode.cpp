@@ -407,9 +407,9 @@ std::string KMLNode::getNameElement() const
             if( subsize > 0 )
             {
                 sElem = pvpoChildren_->at(i)->pvsContent_->at(0);
-                for( kml_nodes_t::size_type j = 1; j < subsize; ++i )
+                for( kml_nodes_t::size_type j = 1; j < subsize; ++j )
                 {
-                    sElem += " " + pvpoChildren_->at(j)->pvsContent_->at(j);
+                    sElem += " " + pvpoChildren_->at(i)->pvsContent_->at(j);
                 }
                 return sElem;
             }
