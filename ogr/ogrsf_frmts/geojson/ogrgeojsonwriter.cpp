@@ -101,16 +101,16 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
         else if( OFTString == poFieldDefn->GetType() )
         {
             poObjProp = json_object_new_string( 
-                CPLStrdup( poFeature->GetFieldAsString(nField) ) );
+                poFeature->GetFieldAsString(nField) );
         }
         else
         {
             poObjProp = json_object_new_string( 
-                CPLStrdup( poFeature->GetFieldAsString(nField) ) );
+                 poFeature->GetFieldAsString(nField) );
         }
 
         json_object_object_add( poObjProps,
-                                CPLStrdup( poFieldDefn->GetNameRef() ),
+                                poFieldDefn->GetNameRef(),
                                 poObjProp );
     }
 
