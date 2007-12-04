@@ -438,11 +438,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   CSLDestroy( $1 );
 }
 
-%typemap(ret) char **options
-{
-  /* %typemap(ret) char **options */
-  CSLDestroy( $1 );
-}
+
 /*
  * Typemap converts an array of strings into a list of strings
  * with the assumption that the called object maintains ownership of the
