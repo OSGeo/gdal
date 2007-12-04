@@ -26,16 +26,6 @@ INSTALL_LIB 	=	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
 INSTALL_DATA	= 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
-#Flags to build optimized relese version
-CXX_OPTFLAGS =	@CXXFLAGS@
-C_OPTFLAGS =	@CFLAGS@
-# Flags to build debug version
-CXX_DBGFLAGS =	-g -DDEBUG @CFLAGS@
-C_DBGFLAGS =	-g -DDEBUG @CXXFLAGS@
-# Flags to build profiling version
-CXX_PROFFLAGS =	-g3 -pg -DDEBUG @CFLAGS@
-C_PROFFLAGS =	-g3 -pg -DDEBUG @CXXFLAGS@
-
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB)
@@ -70,30 +60,9 @@ INST_PYMOD      =       @pymoddir@
 INST_DOCS	=	@exec_prefix@/doc
 INST_MAN	=	@mandir@
 
-#
-#	Whether we use debug flags, or optimization is determined by
-#	the CFG environment variable.  Set to debug for debug builds.
-#	This is similar to the OGDI builds. 
-#
-ifneq (,$(findstring debug,$(CFG)))
-C_ODFLAGS 	= $(C_DBGFLAGS)
-CXX_ODFLAGS 	= $(CXX_DBGFLAGS)
-endif
-
-ifneq (,$(findstring gprof,$(CFG)))
-C_ODFLAGS =	$(CXX_PROFFLAGS)
-CXX_ODFLAGS =	$(C_PROFFLAGS)
-LNK_FLAGS =	-pg
-endif
-
-ifeq ($(CFG),)
-C_ODFLAGS =	$(C_OPTFLAGS)
-CXX_ODFLAGS =	$(CXX_OPTFLAGS)
-endif
-
 CPPFLAGS	= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@
-CFLAGS		= @C_WFLAGS@ @C_PIC@ $(C_ODFLAGS) $(USER_DEFS)
-CXXFLAGS	= @CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS) $(USER_DEFS)
+CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
+CXXFLAGS	= @CXXFLAGS@ @CXX_WFLAGS@ $(USER_DEFS)
 
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
