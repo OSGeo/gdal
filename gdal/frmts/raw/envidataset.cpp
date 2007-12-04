@@ -213,7 +213,7 @@ class ENVIDataset : public RawDataset
 {
     FILE	*fpImage;	// image data file.
     FILE	*fp;		// header file
-    const char	*pszHDRFilename;
+    char	*pszHDRFilename;
 
     int		bFoundMapinfo;
 
@@ -299,6 +299,7 @@ ENVIDataset::~ENVIDataset()
 	CPLFree( pszProjection );
     if ( papszHeader )
 	CSLDestroy( papszHeader );
+    CPLFree(pszHDRFilename);
 }
 
 /************************************************************************/
@@ -893,7 +894,10 @@ char **ENVIDataset::SplitList( const char *pszCleanInput )
     char	*pszInput = CPLStrdup(pszCleanInput);
 
     if( pszInput[0] != '{' )
+    {
+        CPLFree(pszInput);
         return NULL;
+    }
 
     int iChar=1;
 
