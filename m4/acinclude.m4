@@ -194,31 +194,16 @@ AC_DEFUN([AC_COMPILER_LOCALHACK],
   rm -f comp.out
 ])
 
-AC_DEFUN([AC_COMPILER_WFLAGS],
-[
-	# Remove -g from compile flags, we will add via CFG variable if
-	# we need it.
-	CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
-	CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
-])
-
 AC_DEFUN([AC_COMPILER_PIC],
 [
 	echo 'void f(){}' > conftest.c
-	if test -z "`${CC-cc} -fPIC -c conftest.c 2>&1`"; then
-	  C_PIC=-fPIC
-	else
-	  C_PIC=
+	if test -z "`${CC-cc} $CFLAGS -fPIC -c conftest.c 2>&1`"; then
+	  CFLAGS="$CFLAGS -fPIC"
 	fi
-	if test -z "`${CXX-g++} -fPIC -c conftest.c 2>&1`"; then
-	  CXX_PIC=-fPIC
-	else
-	  CXX_PIC=
+	if test -z "`${CXX-g++} $CXXFLAGS -fPIC -c conftest.c 2>&1`"; then
+	  CXXFLAGS="$CXXFLAGS -fPIC"
 	fi
 	rm -f conftest*
-
-	AC_SUBST(CXX_PIC,$CXX_PIC)
-	AC_SUBST(C_PIC,$C_PIC)
 ])
 
 dnl
