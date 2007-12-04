@@ -806,3 +806,30 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
         CPLFree(psProgressInfo);
 
 }
+
+
+%typemap(arginit) ( GUInt32 ) 
+{
+    /* %typemap(out) ( GUInt32 )  */
+
+	$1 = 0;
+
+}
+
+%typemap(out) ( GUInt32 ) 
+{
+    /* %typemap(out) ( GUInt32 )  */
+
+	$result = PyLong_FromUnsignedLong($1);
+
+}
+
+%typemap(in) ( GUInt32 ) 
+{
+    /* %typemap(in) ( GUInt32 )  */
+
+    if (PyLong_Check($input) || PyInt_Check($input)) {
+		$1 = PyLong_AsUnsignedLong($input);
+	}
+
+}
