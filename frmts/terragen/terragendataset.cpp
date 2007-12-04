@@ -404,7 +404,7 @@ CPLErr TerragenRasterBand::IWriteBlock
 	{
 		// Convert each float32 to int16.
 		float* pfImage = (float*)pImage;
-		for(size_t x = 0; x < nBlockXSize; x++)
+		for(size_t x = 0; x < (size_t)nBlockXSize; x++)
 		{
 			float f = pfImage[x];
 			f *= ds.m_dMetersPerElevUnit;
@@ -597,7 +597,7 @@ bool TerragenDataset::write_header()
                   m_pszFilename );
         VSIFCloseL( m_fp );
 
-        return NULL;
+        return false;
 	}
 
 	// Compute physical scales and offsets.
@@ -617,8 +617,6 @@ bool TerragenDataset::write_header()
 
 	#define L2P_PX(n, hs, bh)	\
 		((int)(((n)-(bh)) * 65536.0 / (hs)))
-
-	int i;
 
 	// Increase the heightscale until the physical span
 	// fits within a 16-bit range. The smaller the logical span,
@@ -658,7 +656,7 @@ bool TerragenDataset::write_header()
                   m_pszFilename );
         VSIFCloseL( m_fp );
 
-        return NULL;
+        return false;
 	}
 		
 	m_nHeightScale = hs;
@@ -762,97 +760,97 @@ bool TerragenDataset::tag_is(const char* szTag, const char* sz)
 
 int TerragenDataset::LoadFromFile()
 {
-	GUInt16	nSize, xpts=0, ypts=0;
-	m_dSCAL = 30.0;
-	m_nDataOffset = 0;
+    GUInt16	nSize, xpts=0, ypts=0;
+    m_dSCAL = 30.0;
+    m_nDataOffset = 0;
 
     if(0 != VSIFSeekL(m_fp, 16, SEEK_SET))
         return 0;
 
-	char szTag[4];
-	if(!this->read_next_tag(szTag) || !tag_is(szTag, "SIZE"))
-		return 0;
+    char szTag[4];
+    if(!this->read_next_tag(szTag) || !tag_is(szTag, "SIZE"))
+        return 0;
 
-	if(!this->get(nSize) || !this->skip(2))
-		return 0;
+    if(!this->get(nSize) || !this->skip(2))
+        return 0;
 
-	// Set dimensions to SIZE chunk. If we don't 
-	// encounter XPTS/YPTS chunks, we can assume
-	// the terrain to be square.
-	xpts = ypts = nSize+1;
+    // Set dimensions to SIZE chunk. If we don't 
+    // encounter XPTS/YPTS chunks, we can assume
+    // the terrain to be square.
+    xpts = ypts = nSize+1;
 
-	while(this->read_next_tag(szTag))
-	{
-		if(this->tag_is(szTag, "XPTS"))
-		{
-			this->get(xpts);
-			if(xpts < nSize || !this->skip(2))
-				return 0;
-			continue;
-		}
+    while(this->read_next_tag(szTag))
+    {
+        if(this->tag_is(szTag, "XPTS"))
+        {
+            this->get(xpts);
+            if(xpts < nSize || !this->skip(2))
+                return 0;
+            continue;
+        }
 
-		if(this->tag_is(szTag, "YPTS"))
-		{
-			this->get(ypts);
-			if(ypts < nSize || !this->skip(2))
-				return 0;
-			continue;
-		}
+        if(this->tag_is(szTag, "YPTS"))
+        {
+            this->get(ypts);
+            if(ypts < nSize || !this->skip(2))
+                return 0;
+            continue;
+        }
 
-		if(this->tag_is(szTag, "SCAL"))
-		{
-			float sc[3];
-			this->get(sc[0]);
-			this->get(sc[1]);
-			this->get(sc[2]);
-			m_dSCAL = sc[1];
-			continue;
-		}
+        if(this->tag_is(szTag, "SCAL"))
+        {
+            float sc[3];
+            this->get(sc[0]);
+            this->get(sc[1]);
+            this->get(sc[2]);
+            m_dSCAL = sc[1];
+            continue;
+        }
 
-		if(this->tag_is(szTag, "CRAD"))
-		{
-			if(!this->skip(sizeof(float)))
-				return 0;
-			continue;
-		}
-		if(this->tag_is(szTag, "CRVM"))
-		{
-			if(!this->skip(sizeof(GUInt32)))
-				return 0;
-			continue;
-		}
-		if(this->tag_is(szTag, "ALTW"))
-		{
-			this->get(m_nHeightScale);
-			this->get(m_nBaseHeight);
-			m_nDataOffset = VSIFTellL(m_fp);
-			if(!this->skip(xpts * ypts * sizeof(GInt16)))
-				return 0;
-			continue;
-		}
-		if(this->tag_is(szTag, "EOF "))
-		{
-			break;
-		}
-	}
+        if(this->tag_is(szTag, "CRAD"))
+        {
+            if(!this->skip(sizeof(float)))
+                return 0;
+            continue;
+        }
+        if(this->tag_is(szTag, "CRVM"))
+        {
+            if(!this->skip(sizeof(GUInt32)))
+                return 0;
+            continue;
+        }
+        if(this->tag_is(szTag, "ALTW"))
+        {
+            this->get(m_nHeightScale);
+            this->get(m_nBaseHeight);
+            m_nDataOffset = VSIFTellL(m_fp);
+            if(!this->skip(xpts * ypts * sizeof(GInt16)))
+                return 0;
+            continue;
+        }
+        if(this->tag_is(szTag, "EOF "))
+        {
+            break;
+        }
+    }
 
 
-	if(xpts == 0 || ypts == 0 || m_nDataOffset == 0)
-		return 0;
+    if(xpts == 0 || ypts == 0 || m_nDataOffset == 0)
+        return 0;
 
-	nRasterXSize = xpts;
-	nRasterYSize = ypts;
+    nRasterXSize = xpts;
+    nRasterYSize = ypts;
 
     // todo: sanity check: do we have enough pixels?
 
     // Cache realworld scaling and offset.
     m_dScale = m_dSCAL / 65536 * m_nHeightScale;
-	m_dOffset = m_dSCAL * m_nBaseHeight;
+    m_dOffset = m_dSCAL * m_nBaseHeight;
     strcpy(m_szUnits, "m");
 
-	// Make our projection to have origin at the
-	// NW corner, and groundscale to match elev scale
-	// (i.e., uniform voxels).
+    // Make our projection to have origin at the
+    // NW corner, and groundscale to match elev scale
+    // (i.e., uniform voxels).
     m_adfTransform[0] = 0.0;
     m_adfTransform[1] = m_dSCAL;
     m_adfTransform[2] = 0.0;
@@ -862,19 +860,18 @@ int TerragenDataset::LoadFromFile()
 
 
 /* -------------------------------------------------------------------- */
-/*      Set projection.													*/
+/*      Set projection.							*/
 /* -------------------------------------------------------------------- */
-	// Terragen files as of Apr 2006 are partially georeferenced,
-	// we can declare a local coordsys that uses meters.
+    // Terragen files as of Apr 2006 are partially georeferenced,
+    // we can declare a local coordsys that uses meters.
     OGRSpatialReference sr;
 
     sr.SetLocalCS("Terragen world space");
-	double d;
-	if(OGRERR_NONE != sr.SetLinearUnits("m", 1.0))
-		return 0;
+    if(OGRERR_NONE != sr.SetLinearUnits("m", 1.0))
+        return 0;
 
     if(OGRERR_NONE != sr.exportToWkt(&m_pszProjection))
-		return 0;
+        return 0;
 
     return TRUE;
 }
@@ -888,27 +885,26 @@ int TerragenDataset::LoadFromFile()
 
 CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
 {
-	// Terragen files aren't really georeferenced, but 
-	// we should get the projection's linear units so 
-	// that we can scale elevations correctly.
+    // Terragen files aren't really georeferenced, but 
+    // we should get the projection's linear units so 
+    // that we can scale elevations correctly.
 
-	//m_dSCAL = 30.0; // default
+    //m_dSCAL = 30.0; // default
 
-	OGRSpatialReference oSRS( pszNewProjection );
-    GInt16  nShortTemp;
+    OGRSpatialReference oSRS( pszNewProjection );
 
 /* -------------------------------------------------------------------- */
 /*      Linear units.                                                   */
 /* -------------------------------------------------------------------- */
     m_bIsGeo = oSRS.IsGeographic();
-	if(m_bIsGeo)
-	{
-		// The caller is using degrees. We need to convert 
-		// to meters, otherwise we can't derive a SCAL
-		// value to scale elevations with.
-		m_bIsGeo = true;
-	}
-	else
+    if(m_bIsGeo)
+    {
+        // The caller is using degrees. We need to convert 
+        // to meters, otherwise we can't derive a SCAL
+        // value to scale elevations with.
+        m_bIsGeo = true;
+    }
+    else
     {
         double dfLinear = oSRS.GetLinearUnits();
 
@@ -920,7 +916,7 @@ CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
             m_dMetersPerGroundUnit = 1.0;
     }
 
-	return CE_None;
+    return CE_None;
 }
 
 /************************************************************************/
