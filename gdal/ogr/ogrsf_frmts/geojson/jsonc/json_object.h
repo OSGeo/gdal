@@ -116,7 +116,7 @@ extern struct lh_table* json_object_get_object(struct json_object *obj);
  * @param key the object field name (a private copy will be duplicated)
  * @param val a json_object or NULL member to associate with the given field
  */
-extern void json_object_object_add(struct json_object* obj, char *key,
+extern void json_object_object_add(struct json_object* obj, const char *key,
 				   struct json_object *val);
 
 /** Get the json_object associate with a given object field
@@ -290,9 +290,9 @@ extern double json_object_get_double(struct json_object *obj);
  * @param s the string
  * @returns a json_object of type json_type_string
  */
-extern struct json_object* json_object_new_string(char *s);
+extern struct json_object* json_object_new_string(const char *s);
 
-extern struct json_object* json_object_new_string_len(char *s, int len);
+extern struct json_object* json_object_new_string_len(const char *s, int len);
 
 /** Get the string value of a json_object
  *
