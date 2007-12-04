@@ -560,6 +560,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
     {
         SE_FILTER sConstraint;
         SE_ENVELOPE sEnvelope;
+        SE_ENVELOPE  sLayerEnvelope;
         SE_SHAPE hRectShape;
         SHORT nSearchOrder = SE_SPATIAL_FIRST;
 
@@ -593,6 +594,23 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         sEnvelope.maxx = m_sFilterEnvelope.MaxX;
         sEnvelope.maxy = m_sFilterEnvelope.MaxY;
 
+        nSDEErr = SE_layerinfo_get_envelope( hLayerInfo, &sLayerEnvelope );
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_layerinfo_get_envelope" );
+            return FALSE;
+        }
+        // ensure that the spatial filter overlaps area of the layer
+        if (sEnvelope.minx > sLayerEnvelope.maxx || sEnvelope.maxx < sLayerEnvelope.minx ||
+            sEnvelope.miny > sLayerEnvelope.maxy || sEnvelope.maxy < sLayerEnvelope.miny ) 
+        {
+            // using a small rectangle to filter out all the shapes
+            sEnvelope.minx = sLayerEnvelope.minx;
+            sEnvelope.miny = sLayerEnvelope.miny;
+            sEnvelope.maxx = sLayerEnvelope.minx + 0.00000001;
+            sEnvelope.maxy = sLayerEnvelope.miny + 0.00000001;  
+        }
+        
         nSDEErr = SE_shape_generate_rectangle( &sEnvelope, hRectShape );
         if( nSDEErr != SE_SUCCESS) 
         {
