@@ -149,9 +149,12 @@ dnl ---------------------------------------------------------------------------
 dnl Check for --enable-debug
 dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING([for --enable-debug])
+AC_MSG_CHECKING([to enable debug build])
 
-AC_ARG_WITH(enable_debug,[  --enable-debug      Build with -g -DDEBUG for debugging, instead of -O],,)
+AC_ARG_ENABLE(debug,
+	      AS_HELP_STRING([--enable-debug],
+			     [enable debugging (disabled by default)]),
+	      [HAVE_DEBUG=$enableval], [HAVE_DEBUG=yes])
 
 if test "x$enable_debug" = "xyes" ; then
 
@@ -172,9 +175,9 @@ if test "x$enable_debug" = "xyes" ; then
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
 
-  AC_MSG_RESULT([yes, modified CFLAGS=]$CFLAGS)
+  AC_MSG_RESULT([yes, modified CFLAGS="$CFLAGS"])
 else
-  AC_MSG_RESULT([no, CFLAGS=]$CFLAGS)
+  AC_MSG_RESULT([no, CFLAGS="$CFLAGS"])
 fi
 
 dnl ---------------------------------------------------------------------------
