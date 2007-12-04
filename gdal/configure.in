@@ -1987,8 +1987,6 @@ if test ! -z "`uname | grep Darwin`" ; then
   AC_SUBST(MACOSX_FRAMEWORK, $MACOSX_FRAMEWORK)
 fi
 
-AC_COMPILER_WFLAGS
-
 AC_SUBST(EXTRA_INCLUDES,$EXTRA_INCLUDES)
 
 dnl ---------------------------------------------------------------------------
@@ -2215,12 +2213,6 @@ LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
-if test "x$CFG" != "xdebug" -a "x$CFG" != "xDEBUG" ; then 
-    DEBUG_MODE="no"
-else
-    DEBUG_MODE="yes"
-fi
-LOC_MSG([  enable debug mode:         ${DEBUG_MODE}])
 LOC_MSG([  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}])
 LOC_MSG()
 
