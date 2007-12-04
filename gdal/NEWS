@@ -8,6 +8,11 @@ SWIG Bindings:
  * Added Raster Attribute Tables to swig bindings.
 
 Build:
+ * CFG environment variable now ignored.  Instead set CFLAGS and CXXFLAGS
+   environment variable to -g for debug builds or -O2 for optimized builds   
+   like most other packages. 
+ * Added --with-hide-internal-symbols to restrict exported API from .so files
+   to be the GDAL public API (as marked with CPL_DLL). 
 
 Other:
  * OGR and GDAL C APIs now generally check for NULL objects and recover
