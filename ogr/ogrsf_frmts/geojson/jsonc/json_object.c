@@ -256,10 +256,10 @@ struct lh_table* json_object_get_object(struct json_object *this)
   }
 }
 
-void json_object_object_add(struct json_object* this, char *key,
+void json_object_object_add(struct json_object* this, const char *key,
 			    struct json_object *val)
 {
-  lh_table_delete(this->o.c_object, key);
+  lh_table_delete(this->o.c_object, (void* )key);
   lh_table_insert(this->o.c_object, strdup(key), val);
 }
 
@@ -401,7 +401,7 @@ static void json_object_string_delete(struct json_object* this)
   json_object_generic_delete(this);
 }
 
-struct json_object* json_object_new_string(char *s)
+struct json_object* json_object_new_string(const char *s)
 {
   struct json_object *this = json_object_new(json_type_string);
   if(!this) return NULL;
@@ -411,7 +411,7 @@ struct json_object* json_object_new_string(char *s)
   return this;
 }
 
-struct json_object* json_object_new_string_len(char *s, int len)
+struct json_object* json_object_new_string_len(const char *s, int len)
 {
   struct json_object *this = json_object_new(json_type_string);
   if(!this) return NULL;
