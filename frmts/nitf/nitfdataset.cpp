@@ -2727,12 +2727,13 @@ NITFDataset::NITFCreateCopy(
         if( EQUALN(papszSrcMD[iMD],"NITF_BLOCKA",11) 
             || EQUALN(papszSrcMD[iMD],"NITF_FHDR",9) )
         {
-            char *pszName;
+            char *pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszSrcMD[iMD], 
                                                       &pszName );
             if( CSLFetchNameValue( papszFullOptions, pszName+5 ) == NULL )
                 papszFullOptions = 
                     CSLSetNameValue( papszFullOptions, pszName+5, pszValue );
+            CPLFree(pszName);
         }
     }
 
