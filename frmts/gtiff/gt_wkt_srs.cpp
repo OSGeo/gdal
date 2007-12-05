@@ -1599,7 +1599,8 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     GTIFDefn	sGTIFDefn;
     char        szFilename[100];
 
-    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%d.tif", CPLGetPID() );
+    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
+             (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
@@ -1725,7 +1726,8 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
     GTIF 	*hGTIF;
     char        szFilename[100];
 
-    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%d.tif", CPLGetPID() );
+    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
+             (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
