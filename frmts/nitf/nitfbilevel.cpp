@@ -57,7 +57,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
 /* -------------------------------------------------------------------- */
     CPLString osFilename;
 
-    osFilename.Printf( "/vsimem/nitf-wrk-%d.tif", CPLGetPID() );
+    osFilename.Printf( "/vsimem/nitf-wrk-%ld.tif", (long) CPLGetPID() );
 
     TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+" );
 
