@@ -258,6 +258,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, iPixelSize,
                                   nWidth*iPixelSize, eDataType, bMSBFirst, TRUE ));
+        poDS->GetRasterBand(1)->SetColorInterpretation( GCI_GrayIndex );
     }
     else
     {
@@ -272,6 +273,10 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
             3, new RawRasterBand( poDS, 3, poDS->fpImage, iIn+2*iPixelSize,
                                   3*iPixelSize, nWidth*3*iPixelSize,
                                   eDataType, bMSBFirst, TRUE ));
+
+        poDS->GetRasterBand(1)->SetColorInterpretation( GCI_RedBand );
+        poDS->GetRasterBand(2)->SetColorInterpretation( GCI_GreenBand );
+        poDS->GetRasterBand(3)->SetColorInterpretation( GCI_BlueBand );
     }
 
 /* -------------------------------------------------------------------- */
