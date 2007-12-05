@@ -263,7 +263,7 @@ AC_DEFUN([AC_LD_SHARED],
 
   echo '#include <stdio.h>' > conftest2.c
   echo 'void g(); void g(){printf("");}' >> conftest2.c
-  ${CC} ${C_PIC} -c conftest2.c
+  ${CC} ${CFLAGS} -c conftest2.c
 
   SO_EXT="so"
   export SO_EXT

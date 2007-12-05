@@ -458,7 +458,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB XERCES_CFLAGS XERCES_LDFLAGS XERCES_VERSION HAVE_XERCES XERCES_INCLUDE HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PAM_SETTING PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG HAVE_OGPYTHON LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CXX_WFLAGS C_WFLAGS AS ac_ct_AS DLLTOOL ac_ct_DLLTOOL OBJDUMP ac_ct_OBJDUMP LIBTOOL SED EGREP FGREP GREP LD DUMPBIN ac_ct_DUMPBIN NM LN_S AR ac_ct_AR STRIP ac_ct_STRIP RANLIB ac_ct_RANLIB lt_ECHO CPP CXXCPP LD_SHARED SO_EXT HAVE_LIBTOOL HAVE_HIDE_INTERNAL_SYMBOLS LIBZ_SETTING PG_CONFIG HAVE_PG PG_INC PG_LIB GRASS_SETTING GRASS_INCLUDE GRASS_GISBASE HAVE_GRASS FITS_SETTING PCRASTER_SETTING NETCDF_SETTING PNG_SETTING TIFF_SETTING TIFF_OPTS GEOTIFF_SETTING JPEG_SETTING GIF_SETTING HAVE_OGDI OGDI_INCLUDE X_FME_HOME HAVE_HDF4 HDF4_INCLUDE HAVE_HDF5 HDF5_INCLUDE HAVE_JASPER JASPER_FLAGS ECW_SETTING KAKDIR HAVE_MRSID MRSID_INCLUDE MRSID_FLAGS OPT_GDAL_FORMATS OGR_ENABLED MYSQL_CONFIG HAVE_MYSQL MYSQL_INC MYSQL_LIB XERCES_CFLAGS XERCES_LDFLAGS XERCES_VERSION HAVE_XERCES XERCES_INCLUDE EXPAT_CFLAGS EXPAT_LDFLAGS EXPAT_VERSION HAVE_EXPAT EXPAT_INCLUDE ODBC_SETTING ORACLE_OCI_VERSION ORACLE_OCI_CFLAGS ORACLE_OCI_LDFLAGS HAVE_OCI OCI_INCLUDE DODS_INC LIBCURL_CONFIG CURL_SETTING CURL_INC CURL_LIB SQLITE_INC HAVE_SQLITE DWG_PLT DWGDIRECT HAVE_PANORAMA PANORAMA_INC HAVE_IDB IDB_INC IDB_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_LIBS GEOS_CFLAGS HAVE_GEOS GEOS_VERSION GEOS_CONFIG PAM_SETTING PROJ_STATIC PROJ_INCLUDE GDAL_VERSION_MAJOR GDAL_VERSION_MINOR GDAL_VERSION_REV GDAL_VER MACOSX_FRAMEWORK EXTRA_INCLUDES EXE_EXT BINTRUE PY_HAVE_SETUPTOOLS BINDINGS PYTHON pythondir pyexecdir pymoddir PYTHON_INCLUDES PYTHON_CC PYTHON_OPT PYTHON_SO PYTHON_CFLAGS PYTHON_LIBS PYTHON_LINK PY_LD_SHARED PY_SO_EXT PYTHON_DEV HAVE_NUMPY NUMPY_FLAG HAVE_OGPYTHON LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1013,6 +1013,7 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-debug          enable debugging (disabled by default)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1023,7 +1024,6 @@ Optional Packages:
   --without-libtool     Don't use libtool to build the library
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
-  --enable-debug      Build with -g -DDEBUG for debugging, instead of -O
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=linkoptInclude thread safe support
@@ -1058,9 +1058,13 @@ Optional Packages:
                           path to Xerces C++ Parser headers
   --with-xerces-lib=[ARG]
                           link options for Xerces C++ Parser libraries
-  --with-expat=ARG      Include Expat support (for KML, GPX drivers)
-  --with-expat-inc=ARG  Expat include directory
-  --with-expat-lib=ARG  Expat link option(s)
+  --with-expat=[ARG]
+                          use Expat XML Parser from given prefix (ARG=path);
+                          check standard prefixes (ARG=yes); disable (ARG=no)
+  --with-expat-inc=[DIR]
+                          path to Expat XML Parser headers
+  --with-expat-lib=[ARG]
+                          link options for Expat XML Parser libraries
   --with-odbc=ARG       Include ODBC support (ARG=no or path)
   --with-oci=[ARG]  use Oracle OCI API from given Oracle home
                           (ARG=path); use existing ORACLE_HOME (ARG=yes);
@@ -4988,13 +4992,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4991: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4995: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4994: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4998: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4997: output\"" >&5)
+  (eval echo "\"\$as_me:5001: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6043,7 +6047,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6046 "configure"' > conftest.$ac_ext
+  echo '#line 6050 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7726,11 +7730,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7729: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7733: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7733: \$? = $ac_status" >&5
+   echo "$as_me:7737: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8048,11 +8052,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8051: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8055: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8055: \$? = $ac_status" >&5
+   echo "$as_me:8059: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8153,11 +8157,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8156: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8160: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8160: \$? = $ac_status" >&5
+   echo "$as_me:8164: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8208,11 +8212,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8211: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8215: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8215: \$? = $ac_status" >&5
+   echo "$as_me:8219: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10998,7 +11002,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11001 "configure"
+#line 11005 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11098,7 +11102,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11101 "configure"
+#line 11105 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13128,11 +13132,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13131: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13135: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13135: \$? = $ac_status" >&5
+   echo "$as_me:13139: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13227,11 +13231,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13230: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13234: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13234: \$? = $ac_status" >&5
+   echo "$as_me:13238: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13279,11 +13283,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13282: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13286: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13286: \$? = $ac_status" >&5
+   echo "$as_me:13290: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14351,7 +14355,7 @@ fi
 
   echo '#include <stdio.h>' > conftest2.c
   echo 'void g(); void g(){printf("");}' >> conftest2.c
-  ${CC} ${C_PIC} -c conftest2.c
+  ${CC} ${CFLAGS} -c conftest2.c
 
   SO_EXT="so"
   export SO_EXT
@@ -18439,14 +18443,15 @@ OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
 
-echo "$as_me:$LINENO: checking for --enable-debug" >&5
-echo $ECHO_N "checking for --enable-debug... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking to enable debug build" >&5
+echo $ECHO_N "checking to enable debug build... $ECHO_C" >&6
 
-
-# Check whether --with-enable_debug or --without-enable_debug was given.
-if test "${with_enable_debug+set}" = set; then
-  withval="$with_enable_debug"
-
+# Check whether --enable-debug or --disable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval="$enable_debug"
+  HAVE_DEBUG=$enableval
+else
+  HAVE_DEBUG=yes
 fi;
 
 if test "x$enable_debug" = "xyes" ; then
@@ -18454,22 +18459,22 @@ if test "x$enable_debug" = "xyes" ; then
 
   CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-O2 //"`
   CFLAGS=`echo "$CFLAGS " | sed "s/-O2 //"`
-  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-O //"`
-  CFLAGS=`echo "$CFLAGS " | sed "s/-O //"`
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-O //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-O //"`
 
 
-  CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-g //"`
-  CFLAGS=`echo "$CFLAGS " | sed "s/-g //"`
+  CXXFLAGS=`echo "$CXXFLAGS" | sed "s/-g //"`
+  CFLAGS=`echo "$CFLAGS" | sed "s/-g //"`
 
 
   CXXFLAGS="$CXXFLAGS -g -DDEBUG"
   CFLAGS="$CFLAGS -g -DDEBUG"
 
-  echo "$as_me:$LINENO: result: yes, modified CFLAGS=$CFLAGS" >&5
-echo "${ECHO_T}yes, modified CFLAGS=$CFLAGS" >&6
+  echo "$as_me:$LINENO: result: yes, modified CFLAGS=\"$CFLAGS\"" >&5
+echo "${ECHO_T}yes, modified CFLAGS=\"$CFLAGS\"" >&6
 else
-  echo "$as_me:$LINENO: result: no, CFLAGS=$CFLAGS" >&5
-echo "${ECHO_T}no, CFLAGS=$CFLAGS" >&6
+  echo "$as_me:$LINENO: result: no, CFLAGS=\"$CFLAGS\"" >&5
+echo "${ECHO_T}no, CFLAGS=\"$CFLAGS\"" >&6
 fi
 
 
@@ -23073,91 +23078,344 @@ XERCES_INCLUDE=$XERCES_CFLAGS
 
 
 
-HAVE_EXPAT=no
-
-echo "$as_me:$LINENO: checking for Expat C++" >&5
-echo $ECHO_N "checking for Expat C++... $ECHO_C" >&6
+EXPAT_REQ_VERSION="1.95.0"
 
 
 # Check whether --with-expat or --without-expat was given.
 if test "${with_expat+set}" = set; then
   withval="$with_expat"
 
-fi;
-
-# Check whether --with-expat_inc or --without-expat_inc was given.
-if test "${with_expat_inc+set}" = set; then
-  withval="$with_expat_inc"
-
-fi;
-
-# Check whether --with-expat_lib or --without-expat_lib was given.
-if test "${with_expat_lib+set}" = set; then
-  withval="$with_expat_lib"
-
-fi;
-
-if test "$with_expat" = "no" ; then
-
-  echo "$as_me:$LINENO: result: disabled" >&5
-echo "${ECHO_T}disabled" >&6
+        if test "$withval" = "yes"; then
+            if test -f /usr/local/include/expat.h ; then
+                expat_prefix=/usr/local
+            elif test -f /usr/include/expat.h ; then
+                expat_prefix=/usr
+            else
+                expat_prefix=""
+            fi
+            expat_requested="yes"
+        elif test -d "$withval"; then
+            expat_prefix="$withval"
+            expat_requested="yes"
+        else
+            expat_prefix=""
+            expat_requested="no"
+        fi
 
 else
 
-  if test "$with_expat" = "yes" -o "$with_expat" = "" ; then
-    if test -f /usr/local/include/expat.h; then
-      with_expat=/usr/local
+                if test -f /usr/local/include/expat.h ; then
+            expat_prefix=/usr/local
+        elif test -f /usr/include/expat.h ; then
+            expat_prefix=/usr
+        else
+            expat_prefix=""
+        fi
+
+
+fi;
+
+
+# Check whether --with-expat-inc or --without-expat-inc was given.
+if test "${with_expat_inc+set}" = set; then
+  withval="$with_expat_inc"
+  expat_include_dir="$withval"
+else
+  expat_include_dir=""
+
+fi;
+
+# Check whether --with-expat-lib or --without-expat-lib was given.
+if test "${with_expat_lib+set}" = set; then
+  withval="$with_expat_lib"
+  expat_lib_flags="$withval"
+else
+  expat_lib_flags=""
+
+fi;
+
+    EXPAT_CFLAGS=""
+    EXPAT_LDFLAGS=""
+    EXPAT_VERSION=""
+
+                run_expat_test="no"
+
+    if test -n "$expat_prefix"; then
+        expat_include_dir="$expat_prefix/include"
+        expat_lib_flags="-L$expat_prefix/lib -lexpat"
+        run_expat_test="yes"
+    elif test "$expat_requested" = "yes"; then
+        if test -n "$expat_include_dir" -a -n "$expat_lib_flags"; then
+            run_expat_test="yes"
+        fi
     else
-      with_expat=/usr
+        run_expat_test="no"
     fi
-  fi
 
-  if test "$with_expat_lib" != "" ; then
-    LIBS="$with_expat_lib $LIBS"
-  else
-    if test -d "$with_expat/lib"; then
-      LIBS="-L$with_expat/lib -lexpat $LIBS"
+                if test "$run_expat_test" = "yes"; then
+
+        saved_CPPFLAGS="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS -I$expat_include_dir"
+
+        saved_LDFLAGS="$LDFLAGS"
+        LDFLAGS="$LDFLAGS $expat_lib_flags"
+
+                                echo "$as_me:$LINENO: checking for Expat XML Parser headers in $expat_include_dir" >&5
+echo $ECHO_N "checking for Expat XML Parser headers in $expat_include_dir... $ECHO_C" >&6
+
+        ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        cat >conftest.$ac_ext <<_ACEOF
+
+            /* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <expat.h>
+
+int
+main ()
+{
+
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+            EXPAT_CFLAGS="-I$expat_include_dir"
+            expat_header_found="yes"
+            echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+            expat_header_found="no"
+            echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6
+
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+                                if test "$expat_header_found" = "yes"; then
+
+            echo "$as_me:$LINENO: checking for Expat XML Parser libraries" >&5
+echo $ECHO_N "checking for Expat XML Parser libraries... $ECHO_C" >&6
+
+            ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+            cat >conftest.$ac_ext <<_ACEOF
+
+                /* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <expat.h>
+
+int
+main ()
+{
+
+XML_Parser p = XML_ParserCreate(NULL);
+XML_ParserFree(p);
+p = NULL;
+
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+                EXPAT_LDFLAGS="$expat_lib_flags"
+                expat_lib_found="yes"
+                echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+                expat_lib_found="no"
+                echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6
+
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        fi
+
+        CPPFLAGS="$saved_CPPFLAGS"
+        LDFLAGS="$saved_LDFLAGS"
     fi
-  fi
 
-  if test "$with_expat_inc" != "" ; then
-    EXPAT_INCLUDE="-I$with_expat_inc"
-  else
-    EXPAT_INCLUDE="-I$with_expat/include"
-  fi
+    echo "$as_me:$LINENO: checking for Expat XML Parser" >&5
+echo $ECHO_N "checking for Expat XML Parser... $ECHO_C" >&6
 
-  echo '#include <expat.h>' >> conftest.cpp
-  echo 'int main() {  XML_Parser p = XML_ParserCreate(NULL); XML_ParserFree(p); }' >> conftest.cpp
-  CMD="${CXX} ${EXPAT_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
+    if test "$run_expat_test" = "yes"; then
+        if test "$expat_header_found" = "yes" -a "$expat_lib_found" = "yes"; then
 
-  if test -z "`$CMD 2>&1 | grep -v warning | grep -v skipping`" ; then
-    HAVE_EXPAT=yes
-    echo "$as_me:$LINENO: result: yes" >&5
+
+
+
+            HAVE_EXPAT="yes"
+        else
+            HAVE_EXPAT="no"
+        fi
+
+        echo "$as_me:$LINENO: result: $HAVE_EXPAT" >&5
+echo "${ECHO_T}$HAVE_EXPAT" >&6
+
+                                if test "$HAVE_EXPAT" = "yes"; then
+
+            expat_version_req=$EXPAT_REQ_VERSION
+
+            if test  -n "$expat_version_req"; then
+
+                echo "$as_me:$LINENO: checking if Expat XML Parser version is >= $expat_version_req" >&5
+echo $ECHO_N "checking if Expat XML Parser version is >= $expat_version_req... $ECHO_C" >&6
+
+                if test -f "$expat_include_dir/expat.h"; then
+
+                    expat_major=`cat $expat_include_dir/expat.h | \
+                                    grep '^#define.*XML_MAJOR_VERSION.*[0-9]$' | \
+                                    sed -e 's/#define XML_MAJOR_VERSION.//'`
+
+                    expat_minor=`cat $expat_include_dir/expat.h | \
+                                    grep '^#define.*XML_MINOR_VERSION.*[0-9]$' | \
+                                    sed -e 's/#define XML_MINOR_VERSION.//'`
+
+                    expat_revision=`cat $expat_include_dir/expat.h | \
+                                    grep '^#define.*XML_MICRO_VERSION.*[0-9]$' | \
+                                    sed -e 's/#define XML_MICRO_VERSION.//'`
+
+                    EXPAT_VERSION="$expat_major.$expat_minor.$expat_revision"
+
+
+                                        expat_version_req_major=`expr $expat_version_req : '\([0-9]*\)'`
+                    expat_version_req_minor=`expr $expat_version_req : '[0-9]*\.\([0-9]*\)'`
+                    expat_version_req_revision=`expr $expat_version_req : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+                    if test "x$expat_version_req_revision" = "x"; then
+                        expat_version_req_revision="0"
+                    fi
+
+                    expat_version_req_number=`expr $expat_version_req_major \* 10000 \
+                                               \+ $expat_version_req_minor \* 100 \
+                                               \+ $expat_version_req_revision`
+
+                                        expat_version_number=`expr $expat_major \* 10000 \
+                                          \+ $expat_minor \* 100 \
+                                           \+ $expat_revision`
+
+                    expat_version_check=`expr $expat_version_number \>\= $expat_version_req_number`
+                    if test "$expat_version_check" = "1"; then
+                        echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-  else
-    echo "$as_me:$LINENO: result: requested, but compile or link fails!" >&5
-echo "${ECHO_T}requested, but compile or link fails!" >&6
+                    else
+                        echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+                        { echo "$as_me:$LINENO: WARNING: Found Expat XML Parser $EXPAT_VERSION, which is older than required. Possible compilation failure." >&5
+echo "$as_me: WARNING: Found Expat XML Parser $EXPAT_VERSION, which is older than required. Possible compilation failure." >&2;}
+                    fi
+                else
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+                    { echo "$as_me:$LINENO: WARNING: Missing expat.h header. Unable to determine Expat version." >&5
+echo "$as_me: WARNING: Missing expat.h header. Unable to determine Expat version." >&2;}
+                fi
+            fi
+        fi
 
-    echo
-    echo $CMD
-    echo
-    $CMD
-    echo
-    echo cat conftest.cpp
-    cat conftest.cpp
+    else
+        HAVE_EXPAT="no"
+        echo "$as_me:$LINENO: result: $HAVE_EXPAT" >&5
+echo "${ECHO_T}$HAVE_EXPAT" >&6
 
-    { { echo "$as_me:$LINENO: error: Please correct Expat options, or don't enable Expat." >&5
-echo "$as_me: error: Please correct Expat options, or don't enable Expat." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-  rm -f conftest*
+        if test "$expat_requested" = "yes"; then
+            { echo "$as_me:$LINENO: WARNING: Expat XML Parser support requested but headers or library not found. Specify valid prefix of Expat using --with-expat=[DIR] or provide include directory and linker flags using --with-expat-inc and --with-expat-lib" >&5
+echo "$as_me: WARNING: Expat XML Parser support requested but headers or library not found. Specify valid prefix of Expat using --with-expat=[DIR] or provide include directory and linker flags using --with-expat-inc and --with-expat-lib" >&2;}
+        fi
+    fi
 
+
+if test "$HAVE_EXPAT" = "yes"; then
+    LIBS="$EXPAT_LDFLAGS $LIBS"
 fi
 
 HAVE_EXPAT=$HAVE_EXPAT
 
-EXPAT_INCLUDE=$EXPAT_INCLUDE
-
+EXPAT_INCLUDE=$EXPAT_CFLAGS
 
 
 
@@ -26998,6 +27256,9 @@ s,@XERCES_LDFLAGS@,$XERCES_LDFLAGS,;t t
 s,@XERCES_VERSION@,$XERCES_VERSION,;t t
 s,@HAVE_XERCES@,$HAVE_XERCES,;t t
 s,@XERCES_INCLUDE@,$XERCES_INCLUDE,;t t
+s,@EXPAT_CFLAGS@,$EXPAT_CFLAGS,;t t
+s,@EXPAT_LDFLAGS@,$EXPAT_LDFLAGS,;t t
+s,@EXPAT_VERSION@,$EXPAT_VERSION,;t t
 s,@HAVE_EXPAT@,$HAVE_EXPAT,;t t
 s,@EXPAT_INCLUDE@,$EXPAT_INCLUDE,;t t
 s,@ODBC_SETTING@,$ODBC_SETTING,;t t
