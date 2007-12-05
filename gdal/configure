@@ -23062,8 +23062,8 @@ echo "$as_me: WARNING: Missing header XercesVersion.hpp. Unable to determine Xer
 echo "${ECHO_T}$HAVE_XERCES" >&6
 
         if test "$xerces_requested" = "yes"; then
-            { echo "$as_me:$LINENO: WARNING: Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=[DIR] or provide headers and linker flags using --with-xerces-inc and --with-xerces-lib" >&5
-echo "$as_me: WARNING: Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=[DIR] or provide headers and linker flags using --with-xerces-inc and --with-xerces-lib" >&2;}
+            { echo "$as_me:$LINENO: WARNING: Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=[DIR] or provide include directory and linker flags using --with-xerces-inc and --with-xerces-lib" >&5
+echo "$as_me: WARNING: Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=[DIR] or provide include directory and linker flags using --with-xerces-inc and --with-xerces-lib" >&2;}
         fi
     fi
 
