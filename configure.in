@@ -1433,73 +1433,17 @@ dnl ---------------------------------------------------------------------------
 dnl Check for Expat configuration.
 dnl ---------------------------------------------------------------------------
 
-HAVE_EXPAT=no
+dnl Expat 1.95.0 released in 2000-09-28
+EXPAT_REQ_VERSION="1.95.0"
+AX_LIB_EXPAT($EXPAT_REQ_VERSION)
 
-AC_MSG_CHECKING([for Expat C++])
-
-AC_ARG_WITH(expat,
-    AS_HELP_STRING([--with-expat[=ARG]], [Include Expat support (for KML, GPX drivers)]),,)
-AC_ARG_WITH(expat_inc,
-    AS_HELP_STRING([--with-expat-inc[=ARG]], [Expat include directory]),,)
-AC_ARG_WITH(expat_lib,
-    AS_HELP_STRING([--with-expat-lib[=ARG]], [Expat link option(s)]),,)
-
-if test "$with_expat" = "no" ; then
-
-  AC_MSG_RESULT([disabled])
-
-else
-
-  if test "$with_expat" = "yes" -o "$with_expat" = "" ; then
-    if test -f /usr/local/include/expat.h; then 
-      with_expat=/usr/local
-    else 
-      with_expat=/usr
-    fi
-  fi
-
-  if test "$with_expat_lib" != "" ; then
-    LIBS="$with_expat_lib $LIBS"
-  else
-    if test -d "$with_expat/lib"; then
-      LIBS="-L$with_expat/lib -lexpat $LIBS"
-    fi
-  fi
-
-  if test "$with_expat_inc" != "" ; then
-    EXPAT_INCLUDE="-I$with_expat_inc"
-  else
-    EXPAT_INCLUDE="-I$with_expat/include"
-  fi
-
-  echo '#include <expat.h>' >> conftest.cpp
-  echo 'int main() {  XML_Parser p = XML_ParserCreate(NULL); XML_ParserFree(p); }' >> conftest.cpp
-  CMD="${CXX} ${EXPAT_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
-
-  if test -z "`$CMD 2>&1 | grep -v warning | grep -v skipping`" ; then
-    HAVE_EXPAT=yes
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([requested, but compile or link fails!])
-
-    echo
-    echo $CMD
-    echo
-    $CMD
-    echo
-    echo cat conftest.cpp
-    cat conftest.cpp
-    
-    AC_MSG_ERROR([Please correct Expat options, or don't enable Expat.])
-  fi
-  rm -f conftest*
-
+if test "$HAVE_EXPAT" = "yes"; then
+    LIBS="$EXPAT_LDFLAGS $LIBS"
 fi
 
 AC_SUBST([HAVE_EXPAT], $HAVE_EXPAT)
-AC_SUBST([EXPAT_INCLUDE], $EXPAT_INCLUDE)
-
-
+AC_SUBST([EXPAT_INCLUDE], $EXPAT_CFLAGS)
+ 
 dnl ---------------------------------------------------------------------------
 dnl Check for ODBC support.
 dnl ---------------------------------------------------------------------------
