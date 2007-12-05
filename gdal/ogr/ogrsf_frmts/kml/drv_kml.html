@@ -7,24 +7,64 @@
 
 <h1>KML - Keyhole Markup Language</h1>
 
-<p>OGR has limited support for KML writing and no support
-for reading KML. OGR generates KML 2.0. 
-The KML driver has no coordinate system support at this time.<p>
+<p>Keyhole Markup Language (KML) is an XML-based language for managing the display of 3D geospatial data. 
+KML has been submitted as an OGC standard candidate as of this writing, and is supported in one way or another
+on the major GeoBrowsers. 
+Note that KML by specification uses only a single projection, EPSG:4326. All OGR KML output will be 
+presented in EPSG:4326.</p>
+
+<p>At this time, only vector layers are output by the KML driver. There are additional scripts
+supplied with the GDAL project that can build other kinds of output.
+</p>
+
+<h3>KML Writing</h3>
+<p>The OGR KML driver has implemented basic support for writing KML. 
+Since not all features of KML
+are able to be represented in the internal OGR model, you will not be able to generate
+many KML-specific attributes from within GDAL/OGR. Please try
+a few test files to get a sense of what is possible.</p>
+
+<h3>KML Reading</h3>
+
+<p>KML reading has been added to OGR v1.5. To enable KML reading, you must 
+have the XML Parser Expat v2.0 or greater installed on your system, and 
+OGR must be built with the configure flag <code>--with-expat</code>. </p>
+
+<p>KML reading is also subject to the limitations of 
+the internal GDAL/OGR model.
+For example, nested folders in a source KML file are disregarded, and folder xxdescriptionxx tags will
+not carry through to ouput.</p>
+
 
 <h2>Creation Issues</h2>
 
-<p>KML is mix of formatting and feature data. When writing KML, attributes are added to
-the output with the following HTML structure:
+<p>When outputting KML, the OGR KML driver will translate an OGR Layer into a KML Folder.
+Although KML and a few other OGR formats allow mixing the geometry types of 
+Layer Elements, generally OGR prefers to keep one kind of geometry in a Layer.
+You may encounter unexpected behavior
+if you try to mix the geometry types of elements in a layer, for example, LINESTRING and
+POINT data. </p>
+
+<p>The KML Driver will rename some layers, or source KML folder names, into new names
+it considers valid, for example 'Layer #0', the default name of the first unnamed
+Layer, becomes Layer__0.</p>
+
+
+<p>KML is mix of formatting and feature data. The xxdescriptionxx tag of a Placemark will 
+be displayed in most geobrowsers as an HTML-filled balloon. When writing KML, Layer element
+attributes are added as description tag content with the following HTML structure:
 <pre><b>Attribute name</b>: Attribute content</pre>
 </p>
-<p>The OGR KML driver supports multiple layers of data.  
-Each input layer is translated into a separate KML "Folder" element.</p>
+
+<p>Limited support is available for fills, line color and other styling attributes. Please try a few sample
+files to get a better sense of actual behavior.</p>
 
 <h2>Creation Options</h2>
 
 <p>The following creation options are supported:
 <ul>
 <li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Name'</li>
+<pre>name field example??</pre> 
 <li><b>DescriptionField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Description'</li>
 <pre>ogr2ogr -f KML output.kml input.shp -dsco NameField=RegionName</pre>
 </li>
@@ -58,8 +98,8 @@ Here is the whole discussion about this issue on the <a href="http://groups.goog
 
 <h2>See Also</h2>
 <ul>
-<li> <a href="http://earth.google.com/kml/kml_intro.html">KML 2.0 Specification</a></li>
-<li> <a href="http://www.keyhole.com/kml/kml_tut.html">KML 2.0 Tutorial</a></li>
+<li> <a href="http://earth.google.com/kml/kml_intro.html">KML Specification</a></li>
+<li> <a href="http://www.keyhole.com/kml/kml_tut.html">KML Tutorial</a></li>
 </ul>
 
 </body>
