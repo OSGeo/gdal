@@ -87,6 +87,7 @@ def ogr_kml_attributes_1():
 
     if feat.GetField('description')[:23] != 'Attached to the ground.':
         gdaltest.post_reason( 'Wrong description field value' )
+        print 'got: ', feat.GetField('description')[:23]
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -210,6 +211,7 @@ def ogr_kml_attributes_4():
         name = 'Building %d' % i
         if feat.GetField('Name') != name:
             gdaltest.post_reason( 'Wrong name field value' )
+            print 'Got: "%s"' % feat.GetField('name')
             return 'fail'
 
         if feat.GetField('description') != '':
