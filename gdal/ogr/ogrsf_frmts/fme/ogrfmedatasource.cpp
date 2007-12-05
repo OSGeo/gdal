@@ -466,8 +466,8 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
         return FALSE;
     }
 
-    CPLDebug( kPROVIDERNAME, "OGRFMEDataSource::Open(%s):%p/%d", 
-              pszCompositeName, this, CPLGetPID() );
+    CPLDebug( kPROVIDERNAME, "OGRFMEDataSource::Open(%s):%p/%ld", 
+              pszCompositeName, this, (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Create an FME Session.                                          */
