@@ -455,8 +455,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   else {
     int len = CSLCount( stringarray );
     $result = PyList_New( len );
-    for ( int i = 0; i < len; ++i, ++stringarray ) {
-      PyObject *o = PyString_FromString( *stringarray );
+    for ( int i = 0; i < len; ++i ) {
+      PyObject *o = PyString_FromString( stringarray[i] );
       PyList_SetItem($result, i, o );
     }
   }
