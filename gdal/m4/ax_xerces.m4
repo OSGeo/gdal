@@ -262,7 +262,7 @@ XMLPlatformUtils::Initialize();
         AC_MSG_RESULT([$HAVE_XERCES])
 
         if test "$xerces_requested" = "yes"; then
-            AC_MSG_WARN([Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=@<:@DIR@:>@ or provide headers and linker flags using --with-xerces-inc and --with-xerces-lib])
+            AC_MSG_WARN([Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=@<:@DIR@:>@ or provide include directory and linker flags using --with-xerces-inc and --with-xerces-lib])
         fi
     fi
 ])
