@@ -409,7 +409,7 @@ public:
     return OGR_DS_TestCapability(self, cap);
   }
 
-  %newobject ExecuteSQL;
+
   %feature( "kwargs" ) ExecuteSQL;
   OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* spatialFilter=NULL,
