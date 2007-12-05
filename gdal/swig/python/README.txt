@@ -1,5 +1,5 @@
-GDAL/OGR
-========
+GDAL/OGR in Python
+==================
 
 This Python package and extensions are a number of tools for programming and 
 manipulating the GDAL_ Geospatial Data Abstraction Library.  Actually, it is 
@@ -7,11 +7,17 @@ two libraries -- GDAL for manipulating geospatial raster data and OGR for
 manipulating geospatial vector data -- but we'll refer to the entire package 
 as the GDAL library for the purposes of this document.
 
+The GDAL project (primarily Howard Butler) maintains SWIG generated Python 
+bindings for GDAL and OGR. Generally speaking the classes and methods mostly 
+match those of the GDAL and OGR C++ classes. There is no Python specific 
+reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
+
 Dependencies
 ------------
  
  * libgdal (1.5.0 or greater) and header files (gdal-devel)
- * numpy (1.0.0 or greater) and header files (numpy-devel)
+ * numpy (1.0.0 or greater) and header files (numpy-devel) (not explicitly 
+   required, but many examples and utilities will not work without it)
 
 Installation
 ------------
@@ -53,6 +59,28 @@ If you have setuptools installed, you can also generate an egg::
   
   $ python setup.py bdist_egg
 
+Building as part of the GDAL library source tree
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also have the GDAL Python bindings built as part of a source 
+build by specifying --with-python as part of your configure line::
+
+  $ ./configure --with-python
+
+Use the typical make and make install commands to complete the installation:: 
+  
+  $ make
+  $ make install
+
+A note about setuptools
+.......................
+
+./configure attempts to detect if you have setuptools installed in the tree 
+of the Python binary it was given (or detected on the execution path), and it 
+will use an egg build by default in that instance.  If you have a need to 
+use a distutils-only install, you will have to edit setup.py to ensure that 
+the HAVE_SETUPTOOLS variable is ultimately set to False and proceed with a 
+typical 'python setup.py install' command.
 
 SWIG
 ----
@@ -98,15 +126,82 @@ the usage above, but the following will work until at least GDAL 2.0. ::
   >>> import gdalnumeric
   >>> import gdalconst
 
+If you have previous code that imported the global module and still need to 
+support the old import, a simple try...except import can silence the 
+deprecation warning and keep things named essentially the same as before::
+
+  >>> try:
+  ...     from osgeo import gdal
+  ... except ImportError:
+  ...     import gdal
+
 Docstrings
 ~~~~~~~~~~
 
 Currently, only the OGR module has docstrings which are generated from the 
 C/C++ API doxygen materials.  Some of the arguments and types might not 
 match up exactly with what you are seeing from Python, but they should be 
-enough to get you going.  Docstrings for GDAL and OSR are planned for another 
+enough to get you going.  Docstrings for GDAL and OSR are planned for a future 
 release.
 
+The History of Using GDAL/OGR in Python
+---------------------------------------
 
+Python was the first set of bindings supported by GDAL/OGR and though the 
+bindings were generated with SWIG (1.1 series), the process was very Python 
+specific and contained a significant amount of hand written wrapper code. In 
+2005, Kevin Ruland launched an effort for a set of next generation bindings 
+generated with SWIG (1.3 series) and supported by a variety of languages. 
+With GDAL 1.4.0 the various bindings became fairly mature, and for GDAL 1.5.0, 
+the "next-generation" bindings become the default bindings.  The previous, 
+"old-generation," bindings will continue to be available, but they will not 
+be widely supported and no new development will be targeted at them.  From 
+the viewpoint of a user, with GDAL 1.5.0 and above, you should not have to 
+worry very much about the distinction between these two development efforts.
+
+Usage of Old-Generation Python Bindings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For certain legacy applications (most notably OpenEV 1.x), it may be necessary 
+to continue to use the old-generation Python bindings.  These can be built 
+and installed as part of a source build from ./configure::
+  
+  $ ./configure --with-ogpython=/usr/bin/python
+
+As noted earlier, these bindings are not widely supported and no new 
+development is expected to take place with them (including serious bug 
+fixes).  
+
+Numpy/Numeric
+-------------
+
+One advanced feature of the GDAL Python bindings not found in the other 
+language bindings (C#, Perl) is integration with the Python numerical array 
+facilities. The gdal.Dataset.ReadAsArray() method can be used to read raster 
+data as numerical arrays, ready to use with the Python numerical array 
+capabilities.
+
+These facilities have evolved somewhat over time. In the past the package was 
+known as "Numeric" and imported using "import Numeric". A new generation is 
+imported using "import numpy". Currently the old generation bindings only 
+support the older Numeric package, and the new generation bindings only 
+support the new generation numpy package. They are mostly compatible, and 
+by importing gdalnumeric you will get whichever is appropriate to the 
+current bindings type.
+
+Examples
+~~~~~~~~
+
+One example of GDAL/numpy integration is found in the `val_repl.py`_ script.
+
+Performance Notes
+~~~~~~~~~~~~~~~~~
+
+ReadAsArray expects to make an entire copy of a raster band or dataset unless 
+the data are explicitly subsetted as part of the function call. For large 
+data, this approach is expected to be prohibitively memory intensive.
+
+.. _GDAL API Tutorial: http://www.gdal.org/gdal_tutorial.html
+.. _val_repl.py: http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/python/samples/val_repl.py
 .. _GDAL: http://www.gdal.org
 .. _SWIG: http://www.swig.org
