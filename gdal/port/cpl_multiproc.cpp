@@ -56,8 +56,8 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
     nLine = nLineIn;
 
 #ifdef DEBUG_MUTEX
-    CPLDebug( "MH", "Request %p for pid %d at %d/%s", 
-              *phMutex, CPLGetPID(), nLine, pszFile );
+    CPLDebug( "MH", "Request %p for pid %ld at %d/%s", 
+              *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
     if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
@@ -68,8 +68,8 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
     else
     {
 #ifdef DEBUG_MUTEX
-        CPLDebug( "MH", "Acquired %p for pid %d at %d/%s", 
-                  *phMutex, CPLGetPID(), nLine, pszFile );
+        CPLDebug( "MH", "Acquired %p for pid %ld at %d/%s", 
+                  *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
         hMutex = *phMutex;
@@ -88,8 +88,8 @@ CPLMutexHolder::~CPLMutexHolder()
     if( hMutex != NULL )
     {
 #ifdef DEBUG_MUTEX
-        CPLDebug( "MH", "Release %p for pid %d at %d/%s", 
-                  hMutex, CPLGetPID(), nLine, pszFile );
+        CPLDebug( "MH", "Release %p for pid %ld at %d/%s", 
+                  hMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
         CPLReleaseMutex( hMutex );
     }
@@ -351,7 +351,7 @@ void CPLUnlockFile( void *hLock )
 /*                             CPLGetPID()                              */
 /************************************************************************/
 
-int CPLGetPID()
+GIntBig CPLGetPID()
 
 {
     return 1;
@@ -560,10 +560,10 @@ void CPLUnlockFile( void *hLock )
 /*                             CPLGetPID()                              */
 /************************************************************************/
 
-int CPLGetPID()
+GIntBig CPLGetPID()
 
 {
-    return GetCurrentThreadId();
+    return (GIntBig) GetCurrentThreadId();
 }
 
 /************************************************************************/
@@ -861,10 +861,10 @@ void CPLUnlockFile( void *hLock )
 /*                             CPLGetPID()                              */
 /************************************************************************/
 
-int CPLGetPID()
+GIntBig CPLGetPID()
 
 {
-    return (int) pthread_self();
+    return (GIntBig) pthread_self();
 }
 
 /************************************************************************/
@@ -1020,6 +1020,6 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
     papTLSList[nIndex] = pData;
-    papTLSList[CTLS_MAX + nIndex] = (void *) bFreeOnExit;
+    papTLSList[CTLS_MAX + nIndex] = (void *) (long) bFreeOnExit;
 }
 

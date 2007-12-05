@@ -61,7 +61,7 @@ int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
 
-int   CPL_DLL CPLGetPID();
+GIntBig CPL_DLL CPLGetPID();
 int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
