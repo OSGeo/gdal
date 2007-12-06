@@ -121,7 +121,7 @@ AC_DEFUN([GEOS_INIT],[
       
       HAVE_GEOS="no"
 
-      GEOS_LIBS="`${GEOS_CONFIG} --libs` -lgeos_c"
+      GEOS_LIBS="`${GEOS_CONFIG} --ldflags` -lgeos_c"
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
 
