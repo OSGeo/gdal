@@ -37,6 +37,12 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.40  2007/12/06 07:00:25  fwarmerdam
+ * dbfopen now using SAHooks for fileio
+ *
+ * Revision 1.39  2007/12/04 20:37:56  fwarmerdam
+ * preliminary implementation of hooks api for io and errors
+ *
  * Revision 1.38  2007/11/21 22:39:56  fwarmerdam
  * close shx file in readonly mode (GDAL #1956)
  *
@@ -98,6 +104,7 @@
 
 #ifdef USE_CPL
 #include "cpl_error.h"
+#include "cpl_vsi.h"
 #endif
 
 #ifdef __cplusplus
@@ -120,7 +127,7 @@ extern "C" {
 /*      is disabled.                                                    */
 /* -------------------------------------------------------------------- */
 #define DISABLE_MULTIPATCH_MEASURE
-
+    
 /* -------------------------------------------------------------------- */
 /*      SHPAPI_CALL                                                     */
 /*                                                                      */
@@ -178,14 +185,39 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #else
 #  define SHP_CVSID(string)
 #endif
+    
+/* -------------------------------------------------------------------- */
+/*      IO/Error hook functions.                                        */
+/* -------------------------------------------------------------------- */
+typedef int *SAFile;
+
+#ifndef SAOffset
+typedef unsigned long SAOffset;
+#endif
+
+typedef struct {
+    SAFile     (*FOpen) ( const char *filename, const char *path);
+    SAOffset   (*FRead) ( void *p, SAOffset size, SAOffset nmemb, SAFile file);
+    SAOffset   (*FWrite)( void *p, SAOffset size, SAOffset nmemb, SAFile file);
+    SAOffset   (*FSeek) ( SAFile file, SAOffset offset, int whence );
+    SAOffset   (*FTell) ( SAFile file );
+    int        (*FFlush)( SAFile file );
+    int        (*FClose)( SAFile file );
+
+    void       (*Error) ( const char *message );
+} SAHooks;
+
+void SHPAPI_CALL SASetupDefaultHooks( SAHooks *psHooks );
 
 /************************************************************************/
 /*                             SHP Support.                             */
 /************************************************************************/
 typedef	struct
 {
-    FILE        *fpSHP;
-    FILE	*fpSHX;
+    SAHooks sHooks;
+
+    SAFile      fpSHP;
+    SAFile 	fpSHX;
 
     int		nShapeType;				/* SHPT_* */
     
@@ -280,7 +312,13 @@ typedef struct
 SHPHandle SHPAPI_CALL
       SHPOpen( const char * pszShapeFile, const char * pszAccess );
 SHPHandle SHPAPI_CALL
+      SHPOpenLL( const char *pszShapeFile, const char *pszAccess, 
+                 SAHooks *psHooks );
+SHPHandle SHPAPI_CALL
       SHPCreate( const char * pszShapeFile, int nShapeType );
+SHPHandle SHPAPI_CALL
+      SHPCreateLL( const char * pszShapeFile, int nShapeType,
+                   SAHooks *psHooks );
 void SHPAPI_CALL
       SHPGetInfo( SHPHandle hSHP, int * pnEntities, int * pnShapeType,
                   double * padfMinBound, double * padfMaxBound );
@@ -394,7 +432,9 @@ SHPSearchDiskTree( FILE *fp,
 /************************************************************************/
 typedef	struct
 {
-    FILE	*fp;
+    SAHooks sHooks;
+
+    SAFile	fp;
 
     int         nRecords;
 
@@ -433,10 +473,16 @@ typedef enum {
 
 #define XBASE_FLDHDR_SZ       32
 
+
 DBFHandle SHPAPI_CALL
       DBFOpen( const char * pszDBFFile, const char * pszAccess );
 DBFHandle SHPAPI_CALL
+      DBFOpenLL( const char * pszDBFFile, const char * pszAccess,
+                 SAHooks *psHooks );
+DBFHandle SHPAPI_CALL
       DBFCreate( const char * pszDBFFile );
+DBFHandle SHPAPI_CALL
+      DBFCreateLL( const char * pszDBFFile, SAHooks *psHooks );
 
 int	SHPAPI_CALL
       DBFGetFieldCount( DBFHandle psDBF );
