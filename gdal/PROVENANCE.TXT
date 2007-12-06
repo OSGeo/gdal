@@ -137,12 +137,15 @@ Note: all the following are build options, not required.
 
 === gdal/pymod ===
 
-* gdal_merge.py: copyright held by Atlantis. 
+* gdal_merge.py: copyright held by Atlantis, under LGPL.  '''TO_RESOLVE'''
+* gdal2xyz.py: copyright me, under LGPL - relicensed MIT/X.
 * gdal_wrap.c: Generated with SWIG under very permissive license (noted in file). 
 * Scripts mostly by me, all ok. 
 
 === gdal/pymod/samples ===
 
+* gdal_vrtmerge.py: Under LGPL (derived from gdal_merge.py), several contributors.
+* histrep.py: corrected copyright message (Atlantis to FrankW), change license to MIT/X.
 * various contributors, all under proper and compatible copyright headers.
 
 === gdal/wince ===
@@ -196,7 +199,7 @@ Note: all the following are build options, not required.
 === gdal/ogr/ogrsf_frmts/ili ===
 
 * ili level code copyright Pirmin Kalberer (Sourcepole), MIT/X. 
-* iom/ili2c.jar is ambiguous.  '''TO_RESOLVE''' (#1812)
+* iom/ili2c.jar is ambiguous.  (#1812) (removed - ok)
 * iom source code is all LGPL (per iom/README.src.txt) but none of the source files have a copyright or license header.  '''TO_RESOLVE''' (#1812)
 
 === gdal/ogr/ogrsf_frmts/mem ===
@@ -446,8 +449,8 @@ I have added this license to LICENSE.TXT to satisfy the credit requirement.
 
 === gdal/frmts/jp2kak ===
 
-* dbg_file_source.h: Derived from Kakadu, no copyright or other history. '''TO_RESOLVE''' (#1820)
-* jp2kak_roi.h: Derived from Kakadu with proper credit.  But re-copyrighted FrankW improperly.  '''TO_RESOLVE''' (#1820)
+* dbg_file_source.h: Derived from Kakadu, no copyright or other history.  (#1820) (removed - ok)
+* jp2kak_roi.h: Derived from Kakadu with proper credit.  But re-copyrighted FrankW improperly.   (#1820) (removed - ok)
 * Otherwise FrankW, clean.
 
 === gdal/frmts/jpeg ===
