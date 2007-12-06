@@ -1,11 +1,11 @@
-/* ****************************************************************************
+/******************************************************************************
  * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL Image Translator Program
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
- * ****************************************************************************
+ ******************************************************************************
  * Copyright (c) 1998, 2002, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
