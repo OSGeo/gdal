@@ -2,10 +2,11 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	shape2ogr.o shpopen.o dbfopen.o shptree.o \
+OBJ	=	shape2ogr.o shpopen.o dbfopen.o shptree.o shp_vsi.o \
 		ogrshapedriver.o ogrshapedatasource.o ogrshapelayer.o
 
-CPPFLAGS	:=	-DUSE_CPL -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS :=	-DSAOffset=vsi_l_offset -DUSE_CPL \
+		-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS) 
 
 default:	$(O_OBJ)
 
