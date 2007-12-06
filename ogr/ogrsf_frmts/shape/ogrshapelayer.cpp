@@ -757,37 +757,37 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
 /* -------------------------------------------------------------------- */
 /*      Update .shp header.                                             */
 /* -------------------------------------------------------------------- */
-    nStartPos = ftell( hSHP->fpSHP );
+    nStartPos = hSHP->sHooks.FTell( hSHP->fpSHP );
 
-    if( fseek( hSHP->fpSHP, 0, SEEK_SET ) != 0
-        || fread( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
+    if( hSHP->sHooks.FSeek( hSHP->fpSHP, 0, SEEK_SET ) != 0
+        || hSHP->sHooks.FRead( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
         return FALSE;
 
     *((GInt32 *) (abyHeader + 32)) = CPL_LSBWORD32( nNewGeomType );
 
-    if( fseek( hSHP->fpSHP, 0, SEEK_SET ) != 0
-        || fwrite( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
+    if( hSHP->sHooks.FSeek( hSHP->fpSHP, 0, SEEK_SET ) != 0
+        || hSHP->sHooks.FWrite( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
         return FALSE;
 
-    if( fseek( hSHP->fpSHP, nStartPos, SEEK_SET ) != 0 )
+    if( hSHP->sHooks.FSeek( hSHP->fpSHP, nStartPos, SEEK_SET ) != 0 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Update .shx header.                                             */
 /* -------------------------------------------------------------------- */
-    nStartPos = ftell( hSHP->fpSHX );
-
-    if( fseek( hSHP->fpSHX, 0, SEEK_SET ) != 0
-        || fread( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
+    nStartPos = hSHP->sHooks.FTell( hSHP->fpSHX );
+    
+    if( hSHP->sHooks.FSeek( hSHP->fpSHX, 0, SEEK_SET ) != 0
+        || hSHP->sHooks.FRead( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
         return FALSE;
 
     *((GInt32 *) (abyHeader + 32)) = CPL_LSBWORD32( nNewGeomType );
 
-    if( fseek( hSHP->fpSHX, 0, SEEK_SET ) != 0
-        || fwrite( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
+    if( hSHP->sHooks.FSeek( hSHP->fpSHX, 0, SEEK_SET ) != 0
+        || hSHP->sHooks.FWrite( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
         return FALSE;
 
-    if( fseek( hSHP->fpSHX, nStartPos, SEEK_SET ) != 0 )
+    if( hSHP->sHooks.FSeek( hSHP->fpSHX, nStartPos, SEEK_SET ) != 0 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -818,12 +818,12 @@ OGRErr OGRShapeLayer::SyncToDisk()
 
     if( hSHP != NULL )
     {
-        fflush( hSHP->fpSHP );
-        fflush( hSHP->fpSHX );
+        hSHP->sHooks.FFlush( hSHP->fpSHP );
+        hSHP->sHooks.FFlush( hSHP->fpSHX );
     }
 
     if( hDBF != NULL )
-        fflush( hDBF->fp );
+        hDBF->sHooks.FFlush( hDBF->fp );
 
     return OGRERR_NONE;
 }
