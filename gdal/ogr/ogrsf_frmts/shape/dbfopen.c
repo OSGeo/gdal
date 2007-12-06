@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.73 2007/09/03 19:48:11 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.74 2007/12/06 07:00:25 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.74  2007/12/06 07:00:25  fwarmerdam
+ * dbfopen now using SAHooks for fileio
+ *
  * Revision 1.73  2007/09/03 19:48:11  fwarmerdam
  * move DBFReadAttribute() static dDoubleField into dbfinfo
  *
@@ -108,7 +111,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.73 2007/09/03 19:48:11 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.74 2007/12/06 07:00:25 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -176,9 +179,10 @@ static void DBFWriteHeader(DBFHandle psDBF)
 /*      Write the initial 32 byte file header, and all the field        */
 /*      descriptions.                                     		*/
 /* -------------------------------------------------------------------- */
-    fseek( psDBF->fp, 0, 0 );
-    fwrite( abyHeader, XBASE_FLDHDR_SZ, 1, psDBF->fp );
-    fwrite( psDBF->pszHeader, XBASE_FLDHDR_SZ, psDBF->nFields, psDBF->fp );
+    psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
+    psDBF->sHooks.FWrite( abyHeader, XBASE_FLDHDR_SZ, 1, psDBF->fp );
+    psDBF->sHooks.FWrite( psDBF->pszHeader, XBASE_FLDHDR_SZ, psDBF->nFields, 
+                          psDBF->fp );
 
 /* -------------------------------------------------------------------- */
 /*      Write out the newline character if there is room for it.        */
@@ -188,7 +192,7 @@ static void DBFWriteHeader(DBFHandle psDBF)
         char	cNewline;
 
         cNewline = 0x0d;
-        fwrite( &cNewline, 1, 1, psDBF->fp );
+        psDBF->sHooks.FWrite( &cNewline, 1, 1, psDBF->fp );
     }
 }
 
@@ -201,18 +205,20 @@ static void DBFWriteHeader(DBFHandle psDBF)
 static int DBFFlushRecord( DBFHandle psDBF )
 
 {
-    int		nRecordOffset;
+    SAOffset	nRecordOffset;
 
     if( psDBF->bCurrentRecordModified && psDBF->nCurrentRecord > -1 )
     {
 	psDBF->bCurrentRecordModified = FALSE;
 
-	nRecordOffset = psDBF->nRecordLength * psDBF->nCurrentRecord 
-	                                             + psDBF->nHeaderLength;
+	nRecordOffset = 
+            psDBF->nRecordLength * (SAOffset) psDBF->nCurrentRecord 
+            + psDBF->nHeaderLength;
 
-	if( fseek( psDBF->fp, nRecordOffset, 0 ) != 0 
-            || fwrite( psDBF->pszCurrentRecord, psDBF->nRecordLength, 
-                       1, psDBF->fp ) != 1 )
+	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 ) != 0 
+            || psDBF->sHooks.FWrite( psDBF->pszCurrentRecord, 
+                                     psDBF->nRecordLength, 
+                                     1, psDBF->fp ) != 1 )
         {
 #ifdef USE_CPL
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -238,28 +244,29 @@ static int DBFLoadRecord( DBFHandle psDBF, int iRecord )
 {
     if( psDBF->nCurrentRecord != iRecord )
     {
-        int nRecordOffset;
+        SAOffset nRecordOffset;
 
 	if( !DBFFlushRecord( psDBF ) )
             return FALSE;
 
-	nRecordOffset = psDBF->nRecordLength * iRecord + psDBF->nHeaderLength;
+	nRecordOffset = 
+            psDBF->nRecordLength * (SAOffset) iRecord + psDBF->nHeaderLength;
 
-	if( fseek( psDBF->fp, nRecordOffset, 0 ) != 0 )
+	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, SEEK_SET ) != 0 )
         {
 #ifdef USE_CPL
             CPLError( CE_Failure, CPLE_FileIO,
-                      "fseek(%d) failed on DBF file.\n",
-                      nRecordOffset );
+                      "fseek(%ld) failed on DBF file.\n",
+                      (long) nRecordOffset );
 #else
-            fprintf( stderr, "fseek(%d) failed on DBF file.\n",
-                     nRecordOffset );
+            fprintf( stderr, "fseek(%ld) failed on DBF file.\n",
+                     (long) nRecordOffset );
 #endif
             return FALSE;
         }
 
-	if( fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 
-                   1, psDBF->fp ) != 1 )
+	if( psDBF->sHooks.FRead( psDBF->pszCurrentRecord, 
+                                 psDBF->nRecordLength, 1, psDBF->fp ) != 1 )
         {
 #ifdef USE_CPL
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -293,18 +300,18 @@ DBFUpdateHeader( DBFHandle psDBF )
 
     DBFFlushRecord( psDBF );
 
-    fseek( psDBF->fp, 0, 0 );
-    fread( abyFileHeader, 32, 1, psDBF->fp );
+    psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
+    psDBF->sHooks.FRead( abyFileHeader, 32, 1, psDBF->fp );
     
     abyFileHeader[4] = (unsigned char) (psDBF->nRecords % 256);
     abyFileHeader[5] = (unsigned char) ((psDBF->nRecords/256) % 256);
     abyFileHeader[6] = (unsigned char) ((psDBF->nRecords/(256*256)) % 256);
     abyFileHeader[7] = (unsigned char) ((psDBF->nRecords/(256*256*256)) % 256);
     
-    fseek( psDBF->fp, 0, 0 );
-    fwrite( abyFileHeader, 32, 1, psDBF->fp );
+    psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
+    psDBF->sHooks.FWrite( abyFileHeader, 32, 1, psDBF->fp );
 
-    fflush( psDBF->fp );
+    psDBF->sHooks.FFlush( psDBF->fp );
 }
 
 /************************************************************************/
@@ -317,8 +324,25 @@ DBFHandle SHPAPI_CALL
 DBFOpen( const char * pszFilename, const char * pszAccess )
 
 {
+    SAHooks sHooks;
+
+    SASetupDefaultHooks( &sHooks );
+
+    return DBFOpenLL( pszFilename, pszAccess, &sHooks );
+}
+
+/************************************************************************/
+/*                              DBFOpen()                               */
+/*                                                                      */
+/*      Open a .dbf file.                                               */
+/************************************************************************/
+   
+DBFHandle SHPAPI_CALL
+DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
+
+{
     DBFHandle		psDBF;
-    unsigned char		*pabyBuf;
+    unsigned char	*pabyBuf;
     int			nFields, nHeadLen, iField, i;
     char		*pszBasename, *pszFullname;
 
@@ -354,12 +378,13 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
     sprintf( pszFullname, "%s.dbf", pszBasename );
         
     psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
-    psDBF->fp = fopen( pszFullname, pszAccess );
+    psDBF->fp = psHooks->FOpen( pszFullname, pszAccess );
+    memcpy( &(psDBF->sHooks), psHooks, sizeof(SAHooks) );
 
     if( psDBF->fp == NULL )
     {
         sprintf( pszFullname, "%s.DBF", pszBasename );
-        psDBF->fp = fopen(pszFullname, pszAccess );
+        psDBF->fp = psDBF->sHooks.FOpen(pszFullname, pszAccess );
     }
     
     free( pszBasename );
@@ -379,9 +404,9 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 /*  Read Table Header info                                              */
 /* -------------------------------------------------------------------- */
     pabyBuf = (unsigned char *) malloc(500);
-    if( fread( pabyBuf, 32, 1, psDBF->fp ) != 1 )
+    if( psDBF->sHooks.FRead( pabyBuf, 32, 1, psDBF->fp ) != 1 )
     {
-        fclose( psDBF->fp );
+        psDBF->sHooks.FClose( psDBF->fp );
         free( pabyBuf );
         free( psDBF );
         return NULL;
@@ -404,10 +429,10 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
     pabyBuf = (unsigned char *) SfRealloc(pabyBuf,nHeadLen);
     psDBF->pszHeader = (char *) pabyBuf;
 
-    fseek( psDBF->fp, 32, 0 );
-    if( fread( pabyBuf, nHeadLen-32, 1, psDBF->fp ) != 1 )
+    psDBF->sHooks.FSeek( psDBF->fp, 32, 0 );
+    if( psDBF->sHooks.FRead( pabyBuf, nHeadLen-32, 1, psDBF->fp ) != 1 )
     {
-        fclose( psDBF->fp );
+        psDBF->sHooks.FClose( psDBF->fp );
         free( pabyBuf );
         free( psDBF->pszCurrentRecord );
         free( psDBF );
@@ -481,7 +506,7 @@ DBFClose(DBFHandle psDBF)
 /* -------------------------------------------------------------------- */
 /*      Close, and free resources.                                      */
 /* -------------------------------------------------------------------- */
-    fclose( psDBF->fp );
+    psDBF->sHooks.FClose( psDBF->fp );
 
     if( psDBF->panFieldOffset != NULL )
     {
@@ -510,10 +535,28 @@ DBFHandle SHPAPI_CALL
 DBFCreate( const char * pszFilename )
 
 {
+    SAHooks sHooks;
+
+    SASetupDefaultHooks( &sHooks );
+
+    return DBFCreateLL( pszFilename, &sHooks );
+}
+
+/************************************************************************/
+/*                             DBFCreate()                              */
+/*                                                                      */
+/*      Create a new .dbf file.                                         */
+/************************************************************************/
+
+DBFHandle SHPAPI_CALL
+DBFCreateLL( const char * pszFilename, SAHooks *psHooks )
+
+{
     DBFHandle	psDBF;
-    FILE	*fp;
+    SAFile	fp;
     char	*pszFullname, *pszBasename;
     int		i;
+    char chZero = '\0';
 
 /* -------------------------------------------------------------------- */
 /*	Compute the base (layer) name.  If there is any extension	*/
@@ -536,14 +579,14 @@ DBFCreate( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
-    fp = fopen( pszFullname, "wb" );
+    fp = psHooks->FOpen( pszFullname, "wb" );
     if( fp == NULL )
         return( NULL );
+    
+    psHooks->FWrite( &chZero, 1, 1, fp );
+    psHooks->FClose( fp );
 
-    fputc( 0, fp );
-    fclose( fp );
-
-    fp = fopen( pszFullname, "rb+" );
+    fp = psHooks->FOpen( pszFullname, "rb+" );
     if( fp == NULL )
         return( NULL );
 
@@ -554,6 +597,7 @@ DBFCreate( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     psDBF = (DBFHandle) calloc(1,sizeof(DBFInfo));
 
+    memcpy( &(psDBF->sHooks), psHooks, sizeof(SAHooks) );
     psDBF->fp = fp;
     psDBF->nRecords = 0;
     psDBF->nFields = 0;
