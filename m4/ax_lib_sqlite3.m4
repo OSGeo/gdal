@@ -1,4 +1,4 @@
-dnl $Id: ax_lib_sqlite3.m4 83 2007-12-05 17:19:50Z mateusz@loskot.net $
+dnl $Id$
 dnl
 dnl @synopsis AX_LIB_SQLITE3([MINIMUM-VERSION])
 dnl 
@@ -24,10 +24,10 @@ dnl
 dnl @category InstalledPackages
 dnl @category Cxx
 dnl @author Mateusz Loskot <mateusz@loskot.net>
-dnl @version $Date: 2007-12-05 18:19:50 +0100 (Wed, 05 Dec 2007) $
+dnl @version $Date$
 dnl @license AllPermissive
 dnl
-dnl $Id: ax_lib_sqlite3.m4 83 2007-12-05 17:19:50Z mateusz@loskot.net $
+dnl $Id$
 dnl
 AC_DEFUN([AX_LIB_SQLITE3],
 [
