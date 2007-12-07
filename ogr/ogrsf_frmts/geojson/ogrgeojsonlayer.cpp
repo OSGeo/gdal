@@ -130,7 +130,10 @@ void OGRGeoJSONLayer::SetSpatialRef( OGRSpatialReference* poSRSIn )
 
 int OGRGeoJSONLayer::GetFeatureCount( int bForce )
 {
-    return static_cast<int>( seqFeatures_.size() );
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+        return static_cast<int>( seqFeatures_.size() );
+    else
+        return OGRLayer::GetFeatureCount(bForce);
 }
 
 /************************************************************************/
@@ -221,6 +224,11 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
 
         OGRFeature* poFeatureCopy = poFeature->Clone();
         CPLAssert( NULL != poFeatureCopy );
+
+        if (poFeatureCopy->GetGeometryRef() != NULL && poSRS_ != NULL)
+        {
+            poFeatureCopy->GetGeometryRef()->assignSpatialReference( poSRS_ );
+        }
 
         ++iterCurrent_;
         return poFeatureCopy;
