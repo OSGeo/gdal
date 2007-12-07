@@ -51,7 +51,6 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     
     iNextKMLId_ = 0;
     nTotalKMLCount_ = -1;
-    nNextFID_ = 0;
     
     poDS_ = poDSIn;
     
@@ -108,89 +107,109 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 #ifndef HAVE_EXPAT
     return NULL;
 #else
-    unsigned short nCount = 0;
-    unsigned short nCount2 = 0;
-    KML *poKMLFile = poDS_->GetKMLFile();
-    poKMLFile->selectLayer(nLayerNumber_);
-
-    Feature *poFeatureKML = NULL;
-    poFeatureKML = poKMLFile->getFeature(iNextKMLId_++);
-
-    if(poFeatureKML == NULL)
-        return NULL;
-
-    CPLAssert( poFeatureKML != NULL );
-
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
+    /* -------------------------------------------------------------------- */
+    /*      Loop till we find a feature matching our criteria.              */
+    /* -------------------------------------------------------------------- */
+    while(TRUE)
+    {
+        unsigned short nCount = 0;
+        unsigned short nCount2 = 0;
+        KML *poKMLFile = poDS_->GetKMLFile();
+        poKMLFile->selectLayer(nLayerNumber_);
     
-    // Handle a Point
-    if(poFeatureKML->eType == Point)
-    {
-        poFeature->SetGeometryDirectly(
-                new OGRPoint( poFeatureKML->pvpsCoordinates->at(0)->dfLongitude, poFeatureKML->pvpsCoordinates->at(0)->dfLatitude, poFeatureKML->pvpsCoordinates->at(0)->dfAltitude)
-                );
-    }
-    // Handle a LineString
-    else if(poFeatureKML->eType == LineString)
-    {
-        OGRLineString *poLS = new OGRLineString();
-        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
+        Feature *poFeatureKML = NULL;
+        poFeatureKML = poKMLFile->getFeature(iNextKMLId_++);
+    
+        if(poFeatureKML == NULL)
+            return NULL;
+    
+        CPLAssert( poFeatureKML != NULL );
+    
+        OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
+        
+        // Handle a Point
+        if(poFeatureKML->eType == Point)
         {
-            poLS->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
+            poFeature->SetGeometryDirectly(
+                    new OGRPoint( poFeatureKML->pvpsCoordinates->at(0)->dfLongitude, poFeatureKML->pvpsCoordinates->at(0)->dfLatitude, poFeatureKML->pvpsCoordinates->at(0)->dfAltitude)
+                    );
         }
-        poFeature->SetGeometryDirectly(poLS);
-    }
-    // Handle a Polygon
-    else if(poFeatureKML->eType == Polygon)
-    {
-        OGRPolygon *poPG = new OGRPolygon();
-        OGRLinearRing *poLR = new OGRLinearRing();
-        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
+        // Handle a LineString
+        else if(poFeatureKML->eType == LineString)
         {
-            poLR->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
-        }
-        poPG->addRingDirectly(poLR);
-        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
-        {
-            poLR = new OGRLinearRing();
-            for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
+            OGRLineString *poLS = new OGRLineString();
+            for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
             {
-                poLR->addPoint(poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLongitude, 
-                    poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLatitude, 
-                    poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfAltitude);
+                poLS->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
+            }
+            poFeature->SetGeometryDirectly(poLS);
+        }
+        // Handle a Polygon
+        else if(poFeatureKML->eType == Polygon)
+        {
+            OGRPolygon *poPG = new OGRPolygon();
+            OGRLinearRing *poLR = new OGRLinearRing();
+            for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
+            {
+                poLR->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
             }
             poPG->addRingDirectly(poLR);
+            for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
+            {
+                poLR = new OGRLinearRing();
+                for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
+                {
+                    poLR->addPoint(poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLongitude, 
+                        poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLatitude, 
+                        poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfAltitude);
+                }
+                poPG->addRingDirectly(poLR);
+            }
+            poFeature->SetGeometryDirectly(poPG);
         }
-        poFeature->SetGeometryDirectly(poPG);
-    }
-
-    // Add fields
-    poFeature->SetField( poFeatureDefn_->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
-    poFeature->SetField( poFeatureDefn_->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
-     poFeature->SetFID( nNextFID_++ );
-
-    // Clean up
-    for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
-    {
-        delete poFeatureKML->pvpsCoordinates->at(nCount);
-    }
-
-    if(poFeatureKML->pvpsCoordinatesExtra != NULL)
-    {
-        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
+    
+        // Add fields
+        poFeature->SetField( poFeatureDefn_->GetFieldIndex("Name"), poFeatureKML->sName.c_str() );
+        poFeature->SetField( poFeatureDefn_->GetFieldIndex("Description"), poFeatureKML->sDescription.c_str() );
+        poFeature->SetFID( iNextKMLId_ - 1 );
+    
+        // Clean up
+        for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
         {
-            for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
-                delete poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2);
-            delete poFeatureKML->pvpsCoordinatesExtra->at(nCount);
+            delete poFeatureKML->pvpsCoordinates->at(nCount);
         }
-        delete poFeatureKML->pvpsCoordinatesExtra;
+    
+        if(poFeatureKML->pvpsCoordinatesExtra != NULL)
+        {
+            for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
+            {
+                for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
+                    delete poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2);
+                delete poFeatureKML->pvpsCoordinatesExtra->at(nCount);
+            }
+            delete poFeatureKML->pvpsCoordinatesExtra;
+        }
+    
+        delete poFeatureKML->pvpsCoordinates;
+        delete poFeatureKML;
+    
+        if( poFeature->GetGeometryRef() != NULL && poSRS_ != NULL)
+        {
+            poFeature->GetGeometryRef()->assignSpatialReference( poSRS_ );
+        }
+    
+        /* Check spatial/attribute filters */
+        if ((m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) ) &&
+            (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
+        {
+        // Return the feature
+            return poFeature;
+        }
+        else
+        {
+            delete poFeature;
+        }
     }
-
-    delete poFeatureKML->pvpsCoordinates;
-    delete poFeatureKML;
-
-    // Return the feature
-    return poFeature;
 
 #endif /* HAVE_EXPAT */
 }
@@ -199,6 +218,8 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
+/* Disabled as it doesn't take into account spatial filters */
+/*
 int OGRKMLLayer::GetFeatureCount( int bForce )
 {
     int nCount = 0;
@@ -214,6 +235,7 @@ int OGRKMLLayer::GetFeatureCount( int bForce )
 
     return nCount;
 }
+*/
 
 /************************************************************************/
 /*                             GetExtent()                              */
