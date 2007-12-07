@@ -73,6 +73,21 @@ CPL_CVSID("$Id$");
 #define PAN_DATUM_WGS84     2L  // WGS84
 
 /************************************************************************/
+/*  "Panorama" ellipsod codes.                                          */
+/************************************************************************/
+
+#define PAN_ELLIPSOID_NONE          0L
+#define PAN_ELLIPSOID_KRASSOVSKY    1L  // Krassovsky, 1940
+#define PAN_ELLIPSOID_WGS72         2L  // WGS, 1972
+#define PAN_ELLIPSOID_INT1924       3L  // International, 1924 (Hayford, 1909)
+#define PAN_ELLIPSOID_CLARCKE1880   4L  // Clarke, 1880
+#define PAN_ELLIPSOID_CLARCKE1866   5L  // Clarke, 1866 (NAD1927)
+#define PAN_ELLIPSOID_EVEREST1830   6L  // Everest, 1830
+#define PAN_ELLIPSOID_BESSEL1841    7L  // Bessel, 1841
+#define PAN_ELLIPSOID_AIRY1830      8L  // Airy, 1830
+#define PAN_ELLIPSOID_WGS84         9L  // WGS, 1984 (GPS)
+
+/************************************************************************/
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
 /************************************************************************/
 
@@ -782,11 +797,20 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     const char  *pszDatum = GetAttrValue( "DATUM" );
 
     if ( pszDatum == NULL )
+    {
         *piDatum = PAN_DATUM_NONE;
+        *piEllips = PAN_ELLIPSOID_NONE;
+    }
     else if ( EQUAL( pszDatum, "Pulkovo_1942" ) )
+    {
         *piDatum = PAN_DATUM_PULKOVO42;
+        *piEllips = PAN_ELLIPSOID_KRASSOVSKY;
+    }
     else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
+    {
         *piDatum = PAN_DATUM_WGS84;
+        *piEllips = PAN_ELLIPSOID_WGS84;
+    }
 
     // If not found well known datum, translate ellipsoid
     else
