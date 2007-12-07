@@ -633,6 +633,62 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       }
       break;
 
+    case 'b': 
+    { 
+        // for now let's just do nRows = 1, nColumns = 1 
+        // somehow, though, we'll need to be able to set this dynamically 
+        GInt32 nRows = 1; 
+        GInt32 nColumns = 1; 
+
+        CPLAssert( nRows >= 1 && nColumns >= 1 ); 
+
+        if( nIndexValue < 0 || nIndexValue >= nRows * nColumns ) 
+            return CE_Failure; 
+
+        GInt16 nBaseItemType; 
+
+        // just implementing double for the moment 
+        switch (chReqType) 
+        { 
+            case 'd': 
+                nBaseItemType = EPT_f64; 
+                break; 
+
+            default: 
+                return CE_Failure; 
+                break; 
+        } 
+
+        HFAStandard( 4, &nRows ); 
+        memcpy( pabyData, &nRows, 4 ); 
+        HFAStandard( 4, &nColumns ); 
+        memcpy( pabyData+4, &nColumns, 4 ); 
+        HFAStandard( 2, &nBaseItemType ); 
+        memcpy ( pabyData + 8, &nBaseItemType, 2 ); 
+
+        // We ignore the 2 byte objecttype value.  
+
+        nDataSize -= 12; 
+
+        if ( chReqType == 'd' ) 
+        { 
+            if( nIndexValue * 8 + 8 > nDataSize ) 
+            { 
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Attempt to extend field %s in node past end of data,\n" 
+                          "not currently supported.", 
+                          pszField ); 
+                return CE_Failure; 
+            } 
+
+            double dfNumber = dfDoubleValue; 
+
+            HFAStandard( 8, &dfNumber ); 
+            memcpy( pabyData + 12 + nIndexValue * 8, &dfNumber, 8 ); 
+        } 
+    } 
+    break;               
+
       case 'o':
         if( poItemObjectType != NULL )
         {
