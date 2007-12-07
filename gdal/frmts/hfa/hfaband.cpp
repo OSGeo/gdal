@@ -1310,6 +1310,42 @@ void HFABand::SetBandName(const char *pszName)
     }
 }
 
+/************************************************************************/ 
+/*                         SetNoDataValue()                             */ 
+/*                                                                      */ 
+/*      Set the band no-data value                                      */ 
+/************************************************************************/ 
+
+CPLErr HFABand::SetNoDataValue( double dfValue ) 
+{ 
+ 	CPLErr eErr = CE_Failure; 
+ 	
+ 	if ( psInfo->eAccess == HFA_Update ) 
+ 	{ 
+        HFAEntry *poNDNode = poNode->GetNamedChild( "Eimg_NonInitializedValue" ); 
+        
+        if ( poNDNode == NULL ) 
+        { 
+            poNDNode = new HFAEntry( psInfo, 
+                                     "Eimg_NonInitializedValue",
+                                     "Eimg_NonInitializedValue",
+                                     poNode ); 
+        } 
+        
+        poNDNode->MakeData( 8 + 12 + 8 ); 
+        poNDNode->SetPosition(); 
+
+        if ( poNDNode->SetDoubleField( "valueBD", dfValue) != CE_Failure ) 
+        { 
+            bNoDataSet = TRUE; 
+            dfNoData = dfValue; 
+            eErr = CE_None; 
+        } 
+    } 
+
+    return eErr;     
+}
+
 /************************************************************************/
 /*                               GetPCT()                               */
 /*                                                                      */

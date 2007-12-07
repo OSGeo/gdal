@@ -174,6 +174,8 @@ class HFABand
     const char * GetBandName();
     void SetBandName(const char *pszName);
 
+    CPLErr  SetNoDataValue( double dfValue );
+
     CPLErr	GetPCT( int *, double **, double **, double **, double ** );
     CPLErr	SetPCT( int, double *, double *, double *, double * );
 

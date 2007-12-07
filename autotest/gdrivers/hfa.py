@@ -32,6 +32,7 @@ import os
 import sys
 import gdal
 import string
+import array
 
 sys.path.append( '../pymod' )
 
@@ -512,6 +513,64 @@ def hfa_mapinformation_units():
         return 'fail'
  
 ###############################################################################
+# Write nodata value.
+
+def hfa_nodata_write():
+
+    drv = gdal.GetDriverByName( 'HFA' )
+    ds = drv.Create( 'tmp/nodata.img', 7, 7, 1, gdal.GDT_Byte )
+
+    p = [ 1, 2, 1, 4, 1, 2, 1 ]
+    raw_data = array.array( 'h', p ).tostring()
+
+    for line in range( 7 ):
+        ds.WriteRaster( 0, line, 7, 1, raw_data,
+                        buf_type = gdal.GDT_Int16 )
+
+    b = ds.GetRasterBand(1)
+    b.SetNoDataValue( 1 )
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Verify written nodata value.
+
+def hfa_nodata_read():
+
+    ds = gdal.Open( 'tmp/nodata.img' )
+    b = ds.GetRasterBand(1)
+
+    if b.GetNoDataValue() != 1:
+        gdaltest.post_reason( 'failed to preserve nodata value' )
+        return 'fail'
+
+    stats = b.GetStatistics(False, True)
+
+    tolerance = 0.0001
+
+    if abs(stats[0] - 2) > tolerance:
+        gdaltest.post_reason( 'Minimum value is wrong.' )
+        return 'fail'
+
+    if abs(stats[1] - 4) > tolerance:
+        gdaltest.post_reason( 'Maximum value is wrong.' )
+        return 'fail'
+
+    if abs(stats[2] - 2.6666666666667) > tolerance:
+        gdaltest.post_reason( 'Mean value is wrong.' )
+        return 'fail'
+
+    if abs(stats[3] - 0.94280904158206) > tolerance:
+        gdaltest.post_reason( 'StdDev value is wrong.' )
+        return 'fail'
+
+    gdal.GetDriverByName( 'HFA' ).Delete( 'tmp/nodata.img' )
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -530,7 +589,10 @@ gdaltest_list = [
     hfa_grow_rrdlist,
     hfa_clean_ige,
     hfa_corrupt_aux,
-    hfa_mapinformation_units ]
+    hfa_mapinformation_units,
+    hfa_nodata_write,
+    hfa_nodata_read
+    ]
 
 if __name__ == '__main__':
 
