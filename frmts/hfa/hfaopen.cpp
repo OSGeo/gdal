@@ -585,6 +585,26 @@ int HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfNoData )
     return poBand->bNoDataSet;
 }
 
+/************************************************************************/ 
+/*                          HFASetBandNoData()                          */ 
+/*                                                                      */ 
+/*      attempts to set a no-data value on the given band               */ 
+/************************************************************************/ 
+
+CPLErr HFASetBandNoData( HFAHandle hHFA, int nBand, double dfValue ) 
+
+{ 
+    if ( nBand < 0 || nBand > hHFA->nBands ) 
+    { 
+        CPLAssert( FALSE ); 
+        return CE_Failure; 
+    } 
+
+    HFABand *poBand = hHFA->papoBand[nBand - 1]; 
+
+    return poBand->SetNoDataValue( dfValue ); 
+}
+
 /************************************************************************/
 /*                         HFAGetOverviewInfo()                         */
 /************************************************************************/

@@ -370,6 +370,7 @@ class HFARasterBand : public GDALPamRasterBand
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr SetNoDataValue( double dfValue );
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
@@ -697,7 +698,7 @@ void HFARasterBand::ReadAuxMetadata()
 }
 
 /************************************************************************/
-/*                             GetNoData()                              */
+/*                             GetNoDataValue()                         */
 /************************************************************************/
 
 double HFARasterBand::GetNoDataValue( int *pbSuccess )
@@ -713,6 +714,15 @@ double HFARasterBand::GetNoDataValue( int *pbSuccess )
     }
     else
         return GDALPamRasterBand::GetNoDataValue( pbSuccess );
+}
+
+/************************************************************************/ 
+/*                             SetNoDataValue()                         */ 
+/************************************************************************/ 
+
+CPLErr HFARasterBand::SetNoDataValue( double dfValue ) 
+{ 
+    return HFASetBandNoData( hHFA, nBand, dfValue ); 
 }
 
 /************************************************************************/
