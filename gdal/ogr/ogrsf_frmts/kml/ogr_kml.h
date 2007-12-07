@@ -65,7 +65,7 @@ public:
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
     void ResetReading();
     OGRFeature* GetNextFeature();
-    int GetFeatureCount( int bForce = TRUE );    
+    /*int GetFeatureCount( int bForce = TRUE );    */
     int TestCapability( const char* pszCap );
 
     //
@@ -79,7 +79,6 @@ private:
     OGRFeatureDefn* poFeatureDefn_;
 
     int iNextKMLId_;
-    int nNextFID_;
     int nTotalKMLCount_;
     int bWriter_;
     int nLayerNumber_;
