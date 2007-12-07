@@ -218,24 +218,26 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-/* Disabled as it doesn't take into account spatial filters */
-/*
 int OGRKMLLayer::GetFeatureCount( int bForce )
 {
     int nCount = 0;
 
 #ifdef HAVE_EXPAT
-    KML *poKMLFile = poDS_->GetKMLFile();
-    if( NULL != poKMLFile )
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
     {
-        poKMLFile->selectLayer(nLayerNumber_);
-        nCount = poKMLFile->getNumFeatures();
+        KML *poKMLFile = poDS_->GetKMLFile();
+        if( NULL != poKMLFile )
+        {
+            poKMLFile->selectLayer(nLayerNumber_);
+            nCount = poKMLFile->getNumFeatures();
+        }
     }
+    else
+        return OGRLayer::GetFeatureCount(bForce);
 #endif
 
     return nCount;
 }
-*/
 
 /************************************************************************/
 /*                             GetExtent()                              */
