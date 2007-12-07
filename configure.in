@@ -1601,30 +1601,16 @@ dnl ---------------------------------------------------------------------------
 dnl Check for SQLite.
 dnl ---------------------------------------------------------------------------
 
-HAVE_SQLITE=no
+SQLITE3_REQ_VERSION="3.0.0"
+AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
 
-AC_MSG_CHECKING(Checking for SQLite)
-AC_ARG_WITH(sqlite,
-    [  --with-sqlite[=ARG]     Include SQLite support (ARG=no or absolute path)],
-    ,,)
-    
-if test -z "$with_sqlite" -o "$with_sqlite" = "no"; then
-    AC_MSG_RESULT(disabled)
-else
-    if test "$with_sqlite" = "yes" ; then 
-        LIBS="$LIBS -lsqlite3"
-        SQLITE_INC=""
-        AC_MSG_RESULT(enabled)
-    else
-        LIBS="$LIBS -L$with_sqlite/lib -lsqlite3"
-        SQLITE_INC="-I$with_sqlite/include"
-        AC_MSG_RESULT(setting SQLite root directory to $with_sqlite)
-    fi
-    HAVE_SQLITE=yes
+if test "$HAVE_SQLITE3" = "yes"; then
+    LIBS="$SQLITE3_LDFLAGS $LIBS"
 fi
 
-AC_SUBST(SQLITE_INC)
-AC_SUBST(HAVE_SQLITE)
+AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
+AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
+HAVE_SQLITE=$HAVE_SQLITE3
 
 dnl ---------------------------------------------------------------------------
 dnl Check for DWGdirect.
