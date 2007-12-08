@@ -371,6 +371,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 
 	CPLFree(pszDataType);
 
+	CPLDestroyXMLNode(psData);
 
 /* -------------------------------------------------------------------- */
 /*      Check and set matrix representation.                            */
