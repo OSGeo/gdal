@@ -28,7 +28,7 @@
  ****************************************************************************/
 #include "ogr_geojson.h"
 #include "ogrgeojsonwriter.h"
-#include <json.h> // JSON-C
+#include <jsonc/json.h> // JSON-C
 #include <algorithm> // for_each, find_if
 
 /************************************************************************/
