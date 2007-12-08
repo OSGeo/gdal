@@ -30,7 +30,7 @@
 #define OGR_GEOJSONUTILS_H_INCLUDED
 
 #include <ogr_core.h>
-#include <json.h> // JSON-C
+#include <jsonc/json.h> // JSON-C
 
 class OGRGeometry;
 

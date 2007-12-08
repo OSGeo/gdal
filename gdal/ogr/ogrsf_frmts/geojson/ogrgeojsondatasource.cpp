@@ -30,7 +30,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonreader.h"
 #include <cpl_http.h>
-#include <json.h> // JSON-C
+#include <jsonc/json.h> // JSON-C
 #include <cstdlib>
 
 /************************************************************************/

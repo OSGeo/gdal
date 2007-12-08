@@ -62,7 +62,9 @@
 #define HAVE_STDARG_H 1
 
 /* Define to 1 if you have the `strerror' function. */
+#ifndef HAVE_STRERROR
 #define HAVE_STRERROR 1
+#endif
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -77,10 +79,18 @@
 #undef HAVE_SYS_PARAM_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
+#ifdef _WIN32_WCE
+#undef HAVE_SYS_STAT_H
+#else
 #define HAVE_SYS_STAT_H 1
+#endif
 
 /* Define to 1 if you have the <sys/types.h> header file. */
+#ifdef _WIN32_WCE
+#undef HAVE_SYS_TYPES_H
+#else
 #define HAVE_SYS_TYPES_H 1
+#endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

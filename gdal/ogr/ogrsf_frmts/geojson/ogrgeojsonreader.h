@@ -30,7 +30,7 @@
 #define OGR_GEOJSONREADER_H_INCLUDED
 
 #include <ogr_core.h>
-#include <json.h> // JSON-C
+#include <jsonc/json.h> // JSON-C
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
