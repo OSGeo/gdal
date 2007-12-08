@@ -156,6 +156,7 @@ void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageReque
     URLAppendF(url, "&bbox=%f,%f,%f,%f", 
         GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
         GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
+    CPLDebug("WMS", "URL = %s", (const char*)*url);
 }
 
 void GDALWMSMiniDriver_WMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
