@@ -9,6 +9,9 @@
  *
  */
 
+/* Excluded from GDAL for Windows CE port. */
+#ifndef _WIN32_WCE
+
 #include "config.h"
 
 #include <stdio.h>
@@ -119,3 +122,6 @@ int json_object_to_file(char *filename, struct json_object *obj)
   close(fd);
   return 0;
 }
+
+#endif
+
