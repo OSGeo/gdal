@@ -44,6 +44,9 @@ $(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
 	    -rpath $(INST_LIB) \
 	    -no-undefined \
 	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
+ifeq ($(MACOSX_FRAMEWORK),yes)
+	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL .libs/libgdal.dylib
+endif
 
 check-lib:	port-target core-target frmts-target ogr-target
 	$(MAKE) $(LIBGDAL-yes)
@@ -207,7 +210,6 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib
 	rm -f $(DESTDIR)$(INST_LIB)/libgdal.dylib
 	rm -f $(DESTDIR)$(INST_LIB)/libgdal.la
-	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL
 endif
 
 else
@@ -221,7 +223,6 @@ install-lib:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 ifeq ($(MACOSX_FRAMEWORK),yes)
 	$(INSTALL_LIB) $(GDAL_SLIB) $(DESTDIR)$(INST_LIB)/GDAL
-	install_name_tool -id ${OSX_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_LIB)/GDAL
 else
 	rm -f $(DESTDIR)$(INST_LIB)/$(GDAL_SLIB_B)
 	rm -f $(DESTDIR)$(INST_LIB)/$(GDAL_SLIB_B).$(GDAL_VERSION_MAJOR)
