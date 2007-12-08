@@ -1167,7 +1167,7 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
     int         iToken = 0;
     int         bSideSearch = FALSE;
 
-    if( psRoot == NULL )
+    if( psRoot == NULL || pszPath == NULL )
         return NULL;
 
     if( *pszPath == '=' )
