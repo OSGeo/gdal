@@ -425,9 +425,12 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
     static FILE *    fpLog = stderr;
     static int       nCount = 0;
 
-    nCount++;
-    if (nCount > MAX_NUMBER_OF_ERRORS_REPORTED)
-        return;
+    if (eErrClass != CE_Debug)
+    {
+        nCount++;
+        if (nCount > MAX_NUMBER_OF_ERRORS_REPORTED)
+            return;
+    }
 
     if( !bLogInit )
     {
@@ -449,7 +452,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
     else
         fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
 
-    if (nCount == MAX_NUMBER_OF_ERRORS_REPORTED)
+    if (eErrClass != CE_Debug && nCount == MAX_NUMBER_OF_ERRORS_REPORTED)
     {
         fprintf( fpLog, "More than %d errors or warnings have been reported. "
                         "No more will be reported from now.\n", MAX_NUMBER_OF_ERRORS_REPORTED );
