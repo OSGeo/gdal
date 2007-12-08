@@ -29,6 +29,7 @@
 
 #include "shapefil.h"
 #include "cpl_vsi.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id: ogrshapelayer.cpp 12930 2007-11-21 22:42:17Z warmerdam $");
 
