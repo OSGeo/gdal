@@ -674,7 +674,8 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
 {
     int         nBlockIndex;
     
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return CE_Failure;
     
 /* -------------------------------------------------------------------- */
 /*      Simple case without subblocking.                                */
@@ -970,7 +971,8 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
 {
     int             nBlockIndex;
     
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return( NULL );
     
 /* -------------------------------------------------------------------- */
 /*      Validate the request                                            */
@@ -1161,7 +1163,8 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
     }
 
     // Make sure block parameters are set
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return CE_Failure;
 
     // Allocate the source block
     int blockSize = nBlockXSize * nBlockYSize;
@@ -2396,7 +2399,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     int         nSampleRate;
     double      dfScale;
 
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return CE_Failure;
     
     if( bApproxOK )
         nSampleRate = 
@@ -2933,7 +2937,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         return CE_Failure;
     }
 
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return CE_Failure;
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
 
