@@ -758,6 +758,9 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
 CPLErr GDALRasterBand::FlushCache()
 
 {
+    if (papoBlocks == NULL)
+        return CE_None;
+
 /* -------------------------------------------------------------------- */
 /*      Flush all blocks in memory ... this case is without subblocking.*/
 /* -------------------------------------------------------------------- */
