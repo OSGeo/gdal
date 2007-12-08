@@ -8,6 +8,7 @@
  * it under the terms of the MIT license. See COPYING for details.
  *
  */
+#ifndef _WIN32_WCE
 
 #ifndef _json_util_h_
 #define _json_util_h_
@@ -19,5 +20,7 @@
 /* utlitiy functions */
 extern struct json_object* json_object_from_file(char *filename);
 extern int json_object_to_file(char *filename, struct json_object *obj);
+
+#endif /* _WIN32_WCE */
 
 #endif
