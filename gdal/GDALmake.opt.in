@@ -319,14 +319,22 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 
 ifeq ($(HAVE_LIBTOOL), yes)
 CONFIG_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
+ifeq ($(MACOSX_FRAMEWORK),yes)
+CONFIG_LIBS_INS	=	-L$(INST_LIB)/unix/lib -lgdal
+else
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
+endif
 EXE_DEP_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
 SO_EXT		=	la
 else
 
 ifeq ($(HAVE_LD_SHARED),yes)
 CONFIG_LIBS	=	$(GDAL_SLIB_LINK) $(LIBS)
+ifeq ($(MACOSX_FRAMEWORK),yes)
+CONFIG_LIBS_INS	=	-L$(INST_LIB)/unix/lib -lgdal
+else
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
+endif
 EXE_DEP_LIBS	=	$(GDAL_SLIB)
 else
 CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
