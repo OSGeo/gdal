@@ -395,7 +395,9 @@ GTIFFBuildOverviews( const char * pszFilename,
 
         eErr = 
             GDALRegenerateOverviews( hSrcBand, nDstOverviews, papoOverviews, 
-                                     pszResampling,pfnProgress,pProgressData);
+                                     pszResampling,
+                                     GDALScaledProgress, 
+                                     pScaledProgressData);
 
         GDALDestroyScaledProgress( pScaledProgressData );
 
