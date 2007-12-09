@@ -262,6 +262,19 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Forceably load the other bands associated with this scanline.   */
+/* -------------------------------------------------------------------- */
+    int iBand;
+    for(iBand = 1; iBand < poGDS->GetRasterCount(); iBand++)
+    {
+        GDALRasterBlock *poBlock;
+
+        poBlock = 
+            poGDS->GetRasterBand(iBand+1)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+        poBlock->DropLock();
+    }
+
     return CE_None;
 }
 
