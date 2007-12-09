@@ -714,6 +714,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     GDALClose( hDstDS );
     
+    CPLFree( pszSourceSRS );
     CPLFree( pszTargetSRS );
     CPLFree( pszDstFilename );
     CSLDestroy( argv );
