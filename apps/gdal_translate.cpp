@@ -810,6 +810,8 @@ static int ProxyMain( int argc, char ** argv )
     GDALClose( hDataset );
 
     CPLFree( panBandList );
+    
+    CPLFree( pszOutputSRS );
 
     if( !bSubCall )
     {
