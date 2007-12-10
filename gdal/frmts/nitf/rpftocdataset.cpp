@@ -32,6 +32,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "vrtdataset.h"
+#include "cpl_multiproc.h"
 
 #define GEOTRSFRM_TOPLEFT_X            0
 #define GEOTRSFRM_WE_RES               1
@@ -42,6 +43,16 @@
 
 CPL_CVSID("$Id: rpftocdataset.cpp rouault $");
 
+
+/** Overview of used classes :
+   - RPFTOCDataset : lists the different subdatasets, listed in the A.TOC,
+                     as subdatasets
+   - RPFTOCSubDataset : one of these subdatasets, implemented as a VRT, of
+                        the relevant NITF tiles
+   - RPFTOCGDALDatasetCache : a cache of a number of simultaneously opened datasets
+   - RPFTOCProxyRasterDataSet : a "fake" dataset that maps to a real datasets
+   - RPFTOCProxyRasterBandPalette / RPFTOCProxyRasterBandRGBA : bands of RPFTOCProxyRasterDataSet
+*/
 
 /************************************************************************/
 /* ==================================================================== */
@@ -79,7 +90,7 @@ class RPFTOCDataset : public GDALPamDataset
         nRasterXSize = rasterXSize;
         nRasterYSize = rasterYSize;
     }
-    
+
     virtual CPLErr GetGeoTransform( double * padfGeoTransform)
     {
         if (bGotGeoTransform)
@@ -127,6 +138,13 @@ class RPFTOCDataset : public GDALPamDataset
 
 class RPFTOCSubDataset : public VRTDataset
 {
+
+  int          cachedTileBlockXOff;
+  int          cachedTileBlockYOff;
+  void*        cachedTileData;
+  int          cachedTileDataSize;
+  const char*  cachedTileFileName;
+
   public:
     RPFTOCSubDataset(int nXSize, int nYSize) : VRTDataset(nXSize, nYSize)
     {
@@ -136,11 +154,47 @@ class RPFTOCSubDataset : public VRTDataset
         /* The driver is set to VRT in VRTDataset constructor. */
         /* We have to set it to the expected value ! */
         poDriver = (GDALDriver *) GDALGetDriverByName( "RPFTOC" );
+
+        cachedTileBlockXOff = cachedTileBlockYOff = -1;
+        cachedTileData = NULL;
+        cachedTileDataSize = 0;
+        cachedTileFileName = NULL;
     }
     
     ~RPFTOCSubDataset()
     {
+        CPLFree(cachedTileData);
     }
+    
+
+    void* GetCachedTile(const char* tileFileName, int nBlockXOff, int nBlockYOff)
+    {
+        if (cachedTileFileName == tileFileName  &&
+            cachedTileBlockXOff == nBlockXOff &&
+            cachedTileBlockYOff == nBlockYOff)
+        {
+            return cachedTileData;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+
+    void SetCachedTile(const char* tileFileName, int nBlockXOff, int nBlockYOff,
+                       const void* pData, int dataSize)
+    {
+        if (dataSize > cachedTileDataSize)
+        {
+            cachedTileData = CPLRealloc(cachedTileData, dataSize);
+            cachedTileDataSize = dataSize;
+        }
+        memcpy(cachedTileData, pData, dataSize);
+        cachedTileFileName = tileFileName;
+        cachedTileBlockXOff = nBlockXOff;
+        cachedTileBlockYOff = nBlockYOff;
+    }
+
     
     static GDALDataset* CreateDataSetFromTocEntry(RPFTocEntry* entry, int isRGBA);
 };
@@ -154,6 +208,7 @@ class RPFTOCSubDataset : public VRTDataset
 class RPFTOCGDALDatasetCache;
 static RPFTOCGDALDatasetCache* singleton = NULL;
 static int refCount = 0;
+static void* RPFTOCCacheMutex = NULL;
 
 typedef struct
 {
@@ -161,26 +216,21 @@ typedef struct
     GDALDataset* ds;
 } CacheEntry;
 
+/* This class is a singleton that maintains a pool of opened datasets */
+/* This is to handle efficiently a potential huge number of NITF tiles */
+/* inside a RPFTOC product */
+/* The cache uses a LRU strategy */
 class RPFTOCGDALDatasetCache
 {
     int size;
     CacheEntry* entries;
-    
-    const char* cachedTileFileName;
-    int cachedTileBlockXOff;
-    int cachedTileBlockYOff;
-    void* cachedTileImage;
-    int cachedTileByteSize;
-    
+
     RPFTOCGDALDatasetCache(int size)
     {
         this->size = size;
         entries = (CacheEntry*)CPLMalloc(size * sizeof(CacheEntry));
         memset(entries, 0, size * sizeof(CacheEntry));
-        
-        cachedTileFileName = NULL;
-        cachedTileImage = NULL;
-        cachedTileByteSize = 0;
+
     }
 
     ~RPFTOCGDALDatasetCache()
@@ -193,8 +243,6 @@ class RPFTOCGDALDatasetCache
                 GDALClose(entries[i].ds);
             }
         }
-        if (cachedTileImage)
-            CPLFree(cachedTileImage);
         CPLFree(entries);
     }
     
@@ -230,40 +278,11 @@ class RPFTOCGDALDatasetCache
         entries[0].ds = (GDALDataset *) GDALOpenShared( fileName, GA_ReadOnly );
         return entries[0].ds;
     }
-    
-    void _AddTileToCache(const char* fileName, int nBlockXOff, int nBlockYOff,
-                        const void* pImage, int byteSize )
-    {
-        cachedTileFileName = fileName;
-        cachedTileBlockXOff = nBlockXOff;
-        cachedTileBlockYOff = nBlockYOff;
-        if (byteSize != cachedTileByteSize)
-        {
-            if (cachedTileImage)
-                CPLFree(cachedTileImage);
-            cachedTileImage = CPLMalloc(byteSize);
-        }
-        memcpy(cachedTileImage, pImage, byteSize);
-        cachedTileByteSize = byteSize;
-    }
-    
-    void* _GetTileFromCache(const char* fileName, int nBlockXOff, int nBlockYOff)
-    {
-        if (fileName == cachedTileFileName && 
-            cachedTileBlockXOff == nBlockXOff &&
-            cachedTileBlockYOff == nBlockYOff)
-        {
-            return cachedTileImage;
-        }
-        else
-        {
-            return NULL;
-        }
-    }
-        
+
     public:
         static void Ref()
         {
+            CPLMutexHolderD( &RPFTOCCacheMutex );
             if (singleton == NULL)
                 singleton = new RPFTOCGDALDatasetCache(100);
             refCount++;
@@ -271,6 +290,7 @@ class RPFTOCGDALDatasetCache
 
         static void Unref()
         {
+            CPLMutexHolderD( &RPFTOCCacheMutex );
             refCount--;
             if (refCount == 0)
             {
@@ -281,21 +301,17 @@ class RPFTOCGDALDatasetCache
 
         static GDALDataset* GetDataset(const char* fileName)
         {
+            CPLMutexHolderD( &RPFTOCCacheMutex );
             if (! singleton) return NULL;
-            return singleton->_GetDataset(fileName);
+            GDALDataset* ds = singleton->_GetDataset(fileName);
+            ds->Reference();
+            return ds;
         }
 
-        static void AddTileToCache(const char* fileName, int nBlockXOff, int nBlockYOff,
-                                   const void* pImage, int byteSize )
+        static void ReleaseDataset(GDALDataset* ds)
         {
-            if (! singleton) return;
-            singleton->_AddTileToCache(fileName, nBlockXOff, nBlockYOff, pImage, byteSize);
-        }
-        
-        static void* GetTileFromCache(const char* fileName, int nBlockXOff, int nBlockYOff)
-        {
-            if (! singleton) return NULL;
-            return singleton->_GetTileFromCache(fileName, nBlockXOff, nBlockYOff);
+            CPLMutexHolderD( &RPFTOCCacheMutex );
+            ds->Dereference();
         }
 };
 
@@ -318,13 +334,15 @@ class RPFTOCProxyRasterDataSet : public GDALDataset
     GDALColorTable* colorTableRef;
     int bHasNoDataValue;
     double noDataValue;
+    RPFTOCSubDataset* subdataset;
     
     public:
-        RPFTOCProxyRasterDataSet(const char* fileName,
-                                int nRasterXSize, int nRasterYSize,
-                                int nBlockXSize, int nBlockYSize,
-                                const char* projectionRef, double nwLong, double nwLat,
-                                int nBands);
+        RPFTOCProxyRasterDataSet(RPFTOCSubDataset* subdataset,
+                                 const char* fileName,
+                                 int nRasterXSize, int nRasterYSize,
+                                 int nBlockXSize, int nBlockYSize,
+                                 const char* projectionRef, double nwLong, double nwLat,
+                                 int nBands);
 
         ~RPFTOCProxyRasterDataSet()
         {
@@ -351,6 +369,8 @@ class RPFTOCProxyRasterDataSet : public GDALDataset
         const char* GetFileName() { return fileName; }
         
         int SanityCheckOK(GDALDataset* sourceDS);
+        
+        RPFTOCSubDataset* GetSubDataset() { return subdataset; }
 };
 
 /************************************************************************/
@@ -437,12 +457,16 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
                                          void * pImage )
 {
     CPLErr ret;
-    const char* fileName = ((RPFTOCProxyRasterDataSet*)poDS)->GetFileName();
+    RPFTOCProxyRasterDataSet* proxyDS = (RPFTOCProxyRasterDataSet*)poDS;
+    const char* fileName = proxyDS->GetFileName();
     GDALDataset* ds = RPFTOCGDALDatasetCache::GetDataset(fileName);
     if (ds)
     {
-        if (((RPFTOCProxyRasterDataSet*)poDS)->SanityCheckOK(ds) == FALSE)
+        if (proxyDS->SanityCheckOK(ds) == FALSE)
+        {
+            RPFTOCGDALDatasetCache::ReleaseDataset(ds);
             return CE_Failure;
+        }
 
         GDALRasterBand* srcBand = ds->GetRasterBand(1);
         if (initDone == FALSE)
@@ -474,15 +498,37 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
         /* We use a 1-tile cache as the same source tile will be consecutively asked for */
         /* computing the R tile, the G tile, the B tile and the A tile */
         void* cachedImage =
-                RPFTOCGDALDatasetCache::GetTileFromCache(fileName, nBlockXOff, nBlockYOff);
+                proxyDS->GetSubDataset()->GetCachedTile(fileName, nBlockXOff, nBlockYOff);
         if (cachedImage == NULL)
         {
+            CPLDebug("RPFTOC", "Read (%d, %d) of band %d, of file %s",
+                     nBlockXOff, nBlockYOff, nBand, fileName);
             ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
             if (ret == CE_None)
             {
-                RPFTOCGDALDatasetCache::AddTileToCache
+                proxyDS->GetSubDataset()->SetCachedTile
                         (fileName, nBlockXOff, nBlockYOff, pImage, blockByteSize);
                 Expand(pImage, pImage);
+            }
+
+            /* -------------------------------------------------------------------- */
+            /*      Forceably load the other bands associated with this scanline.   */
+            /* -------------------------------------------------------------------- */
+            if(nBand == 1 )
+            {
+                GDALRasterBlock *poBlock;
+
+                poBlock = 
+                    poDS->GetRasterBand(2)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+                poBlock->DropLock();
+
+                poBlock = 
+                    poDS->GetRasterBand(3)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+                poBlock->DropLock();
+
+                poBlock = 
+                    poDS->GetRasterBand(4)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+                poBlock->DropLock();
             }
         }
         else
@@ -494,6 +540,9 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
         ret = CE_Failure;
+
+    RPFTOCGDALDatasetCache::ReleaseDataset(ds);
+
     return ret;
 }
 
@@ -558,12 +607,16 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
                                                  void * pImage )
 {
     CPLErr ret;
-    const char* fileName = ((RPFTOCProxyRasterDataSet*)poDS)->GetFileName();
+    RPFTOCProxyRasterDataSet* proxyDS = (RPFTOCProxyRasterDataSet*)poDS;
+    const char* fileName = proxyDS->GetFileName();
     GDALDataset* ds = RPFTOCGDALDatasetCache::GetDataset(fileName);
     if (ds)
     {
-        if (((RPFTOCProxyRasterDataSet*)poDS)->SanityCheckOK(ds) == FALSE)
+        if (proxyDS->SanityCheckOK(ds) == FALSE)
+        {
+            RPFTOCGDALDatasetCache::ReleaseDataset(ds);
             return CE_Failure;
+        }
 
         GDALRasterBand* srcBand = ds->GetRasterBand(1);
         ret = srcBand->ReadBlock(nBlockXOff, nBlockYOff, pImage);
@@ -602,6 +655,9 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
         ret = CE_Failure;
+
+    RPFTOCGDALDatasetCache::ReleaseDataset(ds);
+
     return ret;
 }
 
@@ -610,13 +666,15 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet
-        (const char* fileName,
+        (RPFTOCSubDataset* subdataset,
+         const char* fileName,
          int nRasterXSize, int nRasterYSize,
          int nBlockXSize, int nBlockYSize,
          const char* projectionRef, double nwLong, double nwLat,
          int nBands)
 {
     int i;
+    this->subdataset = subdataset;
     this->fileName = CPLStrdup(fileName);
     this->nRasterXSize = nRasterXSize;
     this->nRasterYSize = nRasterYSize;
@@ -895,6 +953,7 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int
         /* needed (IRasterIO operation). To improve a bit efficiency, we have a cache of opened */
         /* underlying datasets */
         RPFTOCProxyRasterDataSet* ds = new RPFTOCProxyRasterDataSet(
+                (RPFTOCSubDataset*)poVirtualDS,
                 entry->frameEntries[i].fullFilePath,
                 sizeX, sizeY,
                 nBlockXSize, nBlockYSize,
