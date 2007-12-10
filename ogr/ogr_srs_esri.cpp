@@ -1001,21 +1001,26 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Force Unnamed to Unknown for most common locations.             */
 /* -------------------------------------------------------------------- */
-    static char *apszUnknownMapping[] = { 
+    static const char *apszUnknownMapping[] = { 
         "Unknown", "Unnamed",
         NULL, NULL 
     };
 
     GetRoot()->applyRemapper( "PROJCS", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+                              (char **)apszUnknownMapping+1,
+                              (char **)apszUnknownMapping+0, 2 );
     GetRoot()->applyRemapper( "GEOGCS", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+                              (char **)apszUnknownMapping+1,
+                              (char **)apszUnknownMapping+0, 2 );
     GetRoot()->applyRemapper( "DATUM", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+                              (char **)apszUnknownMapping+1,
+                              (char **)apszUnknownMapping+0, 2 );
     GetRoot()->applyRemapper( "SPHEROID", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+                              (char **)apszUnknownMapping+1,
+                              (char **)apszUnknownMapping+0, 2 );
     GetRoot()->applyRemapper( "PRIMEM", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+                              (char **)apszUnknownMapping+1,
+                              (char **)apszUnknownMapping+0, 2 );
     
 /* -------------------------------------------------------------------- */
 /*      If the PROJCS name is unset, use the PROJECTION name in         */
