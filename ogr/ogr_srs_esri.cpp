@@ -816,6 +816,12 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                 oGCS.importFromEPSG( 4024 );
                 CopyGeogCSFrom( &oGCS );
             }
+            else if( EQUAL(osSpheroid,"Bessel") )
+            {
+                OGRSpatialReference oGCS;
+                oGCS.importFromEPSG( 4004 );
+                CopyGeogCSFrom( &oGCS );
+            }
             else
             {
                 // If we don't know, default to WGS84 so there is something there.
