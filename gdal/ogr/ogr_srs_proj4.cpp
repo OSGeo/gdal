@@ -723,6 +723,13 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         CopyGeogCSFrom( &oGCS );
         bFullyDefined = TRUE;
     }
+    else if( EQUAL(pszValue,"OSGB36") )
+    {
+        OGRSpatialReference oGCS;
+        oGCS.importFromEPSG( 4277 );
+        CopyGeogCSFrom( &oGCS );
+        bFullyDefined = TRUE;
+    }
     else
     {
         /* we don't recognise the datum, and ignore it */
@@ -1591,6 +1598,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     else if( nEPSGDatum == 6272 )
         pszPROJ4Datum = "+datum=nzgd49";
+
+    else if( nEPSGDatum == 6277 )
+        pszPROJ4Datum = "+datum=OSB36";
 
     else if( poTOWGS84 != NULL )
     {
