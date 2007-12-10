@@ -4002,6 +4002,7 @@ TIFFReadCustomDirectory(TIFF* tif, uint64 diroff,
 		return 0;
 	}
 	TIFFFreeDirectory(tif);
+	_TIFFmemset(&tif->tif_dir, 0, sizeof(TIFFDirectory));
 	TIFFReadDirectoryCheckOrder(tif,dir,dircount);
 	for (di=0, dp=dir; di<dircount; di++, dp++)
 	{
