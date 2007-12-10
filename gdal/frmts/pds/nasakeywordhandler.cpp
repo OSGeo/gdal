@@ -249,6 +249,18 @@ int NASAKeywordHandler::ReadWord( CPLString &osWord )
             }
             osWord += *(pszHeaderNext++);
         }
+        else if( *pszHeaderNext == '\'' )
+        {
+            osWord += *(pszHeaderNext++);
+            while( *pszHeaderNext != '\'' )
+            {
+                if( *pszHeaderNext == '\0' )
+                    return FALSE;
+
+                osWord += *(pszHeaderNext++);
+            }
+            osWord += *(pszHeaderNext++);
+        }
         else
         {
             osWord += *pszHeaderNext;
