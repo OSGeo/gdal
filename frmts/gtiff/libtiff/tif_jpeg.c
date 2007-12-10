@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.74 2007/10/22 18:39:54 joris Exp $ */
+/* $Id: tif_jpeg.c,v 1.75 2007/12/10 19:58:41 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -171,7 +171,7 @@ static int JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s);
 static int JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s);
 static int JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s);
 static int JPEGEncodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s);
-static int JPEGInitializeLibJPEG(TIFF * tif, int force_encode, int force_decode);
+static int JPEGInitializeLibJPEG(TIFF * tif, int decode );
 
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
 
@@ -892,7 +892,7 @@ JPEGSetupDecode(TIFF* tif)
 	JPEGState* sp = JState(tif);
 	TIFFDirectory *td = &tif->tif_dir;
 
-	JPEGInitializeLibJPEG( tif, 0, 1 );
+	JPEGInitializeLibJPEG( tif, TRUE );
 
 	assert(sp != NULL);
 	assert(sp->cinfo.comm.is_decompressor);
@@ -940,6 +940,12 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 	int ci;
 
 	assert(sp != NULL);
+  
+	if (sp->cinfo.comm.is_decompressor == 0)
+	{
+		tif->tif_setupdecode( tif );
+	}
+  
 	assert(sp->cinfo.comm.is_decompressor);
 	/*
 	 * Reset decoder state from any previous strip/tile,
@@ -1380,8 +1386,6 @@ prepare_JPEGTables(TIFF* tif)
 {
 	JPEGState* sp = JState(tif);
 
-        JPEGInitializeLibJPEG( tif, 0, 0 );
-
 	/* Initialize quant tables for current quality setting */
 	if (!TIFFjpeg_set_quality(sp, sp->jpegquality, FALSE))
 		return (0);
@@ -1416,7 +1420,7 @@ JPEGSetupEncode(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	static const char module[] = "JPEGSetupEncode";
 
-        JPEGInitializeLibJPEG( tif, 1, 0 );
+        JPEGInitializeLibJPEG( tif, FALSE );
 
 	assert(sp != NULL);
 	assert(!sp->cinfo.comm.is_decompressor);
@@ -1549,6 +1553,12 @@ JPEGPreEncode(TIFF* tif, uint16 s)
 	int downsampled_input;
 
 	assert(sp != NULL);
+  
+	if (sp->cinfo.comm.is_decompressor == 1)
+	{
+		tif->tif_setupencode( tif );
+	}
+  
 	assert(!sp->cinfo.comm.is_decompressor);
 	/*
 	 * Set encoding parameters for this strip/tile.
@@ -2002,18 +2012,17 @@ JPEGDefaultTileSize(TIFF* tif, uint32* tw, uint32* th)
  * NFW, Feb 3rd, 2003.
  */
 
-static int JPEGInitializeLibJPEG( TIFF * tif, int force_encode, int force_decode )
+static int JPEGInitializeLibJPEG( TIFF * tif, int decompress )
 {
     JPEGState* sp = JState(tif);
     uint64* byte_counts = NULL;
     int     data_is_empty = TRUE;
-    int     decompress;
 
     if(sp->cinfo_initialized)
     {
-        if( force_encode && sp->cinfo.comm.is_decompressor )
+        if( !decompress && sp->cinfo.comm.is_decompressor )
             TIFFjpeg_destroy( sp );
-        else if( force_decode && !sp->cinfo.comm.is_decompressor )
+        else if( decompress && !sp->cinfo.comm.is_decompressor )
             TIFFjpeg_destroy( sp );
         else
             return 1;
@@ -2039,24 +2048,12 @@ static int JPEGInitializeLibJPEG( TIFF * tif, int force_encode, int force_decode
         data_is_empty = byte_counts[0] == 0;
     }
 
-    if( force_decode )
-        decompress = 1;
-    else if( force_encode )
-        decompress = 0;
-    else if( tif->tif_mode == O_RDONLY )
-        decompress = 1;
-    else if( data_is_empty )
-        decompress = 0;
-    else
-        decompress = 1;
-
     /*
      * Initialize libjpeg.
      */
     if ( decompress ) {
         if (!TIFFjpeg_create_decompress(sp))
             return (0);
-
     } else {
         if (!TIFFjpeg_create_compress(sp))
             return (0);
