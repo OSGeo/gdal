@@ -932,6 +932,14 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->CollectMetadata();
 
 /* -------------------------------------------------------------------- */
+/*      More metadata.                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDS->nBands > 1 )
+    {
+        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
