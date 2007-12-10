@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static char *apszProjMapping[] = {
+static const char *apszProjMapping[] = {
     "Albers", SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     "Cassini", SRS_PT_CASSINI_SOLDNER,
     "Plate_Carree", SRS_PT_EQUIRECTANGULAR,
@@ -50,33 +50,33 @@ static char *apszProjMapping[] = {
     "Equidistant_Cylindrical", SRS_PT_EQUIRECTANGULAR,
     NULL, NULL }; 
  
-static char *apszAlbersMapping[] = {
+static const char *apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
     NULL, NULL };
 
-static char *apszECMapping[] = {
+static const char *apszECMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER, 
     NULL, NULL };
 
-static char *apszMercatorMapping[] = {
+static const char *apszMercatorMapping[] = {
     SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
-static char *apszPolarStereographicMapping[] = {
+static const char *apszPolarStereographicMapping[] = {
     SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
  
-static char *apszDefaultDatumMapping[] = {
+static const char *apszDefaultDatumMapping[] = {
     "6267", "North_American_1927", SRS_DN_NAD27,
     "6269", "North_American_1983", SRS_DN_NAD83,
     NULL, NULL, NULL }; 
 
-static char *apszUnitMapping[] = {
+static const char *apszUnitMapping[] = {
     "Meter", "meter",
     "Meter", "metre",
     "Foot", "foot",
@@ -91,7 +91,7 @@ static char *apszUnitMapping[] = {
 /* -------------------------------------------------------------------- */
 /*      Table relating USGS and ESRI state plane zones.                 */
 /* -------------------------------------------------------------------- */
-static int anUsgsEsriZones[] =
+static const int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,
@@ -358,7 +358,7 @@ static void InitDatumMappingTable()
 /* -------------------------------------------------------------------- */
     if( fp == NULL )
     {
-        papszDatumMapping = apszDefaultDatumMapping;
+        papszDatumMapping = (char **)apszDefaultDatumMapping;
         return;
     }
 
@@ -377,7 +377,7 @@ static void InitDatumMappingTable()
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Failed to find required field in gdal_datum.csv in InitDatumMappingTable(), using default table setup." );
         
-        papszDatumMapping = apszDefaultDatumMapping;
+        papszDatumMapping = (char **)apszDefaultDatumMapping;
         return;
     }
     
@@ -949,7 +949,8 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
-                              apszProjMapping+1, apszProjMapping, 2 );
+                              (char **)apszProjMapping+1,
+                              (char **)apszProjMapping, 2 );
     pszProjection = GetAttrValue("PROJECTION");
 
 /* -------------------------------------------------------------------- */
@@ -1062,7 +1063,8 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      case.                                                           */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "UNIT", 
-                              apszUnitMapping+1, apszUnitMapping, 2 );
+                              (char **)apszUnitMapping+1,
+                              (char **)apszUnitMapping, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      reset constants for decimal degrees to the exact string ESRI    */
@@ -1096,24 +1098,28 @@ OGRErr OGRSpatialReference::morphToESRI()
     
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
+            "PARAMETER", (char **)apszAlbersMapping + 1,
+            (char **)apszAlbersMapping + 0, 2 );
 
     if( pszProjection != NULL 
         && EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszECMapping + 1, apszECMapping + 0, 2 );
+            "PARAMETER", (char **)apszECMapping + 1,
+            (char **)apszECMapping + 0, 2 );
 
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszMercatorMapping + 1, apszMercatorMapping + 0, 2 );
+            "PARAMETER",
+            (char **)apszMercatorMapping + 1,
+            (char **)apszMercatorMapping + 0, 2 );
 
     if( pszProjection != NULL 
         && EQUALN(pszProjection,"Stereographic_",14)
         && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
         GetRoot()->applyRemapper( 
             "PARAMETER", 
-            apszPolarStereographicMapping + 1, 
-            apszPolarStereographicMapping + 0, 2 );
+            (char **)apszPolarStereographicMapping + 1, 
+            (char **)apszPolarStereographicMapping + 0, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Convert SPHEROID name to use underscores instead of spaces.     */
@@ -1206,7 +1212,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
     InitDatumMappingTable();
 
     GetRoot()->applyRemapper( "DATUM", 
-                              papszDatumMapping+1, papszDatumMapping+2, 3 );
+                              (char **)papszDatumMapping+1,
+                              (char **)papszDatumMapping+2, 3 );
 
 /* -------------------------------------------------------------------- */
 /*      Try to remove any D_ in front of the datum name.                */
@@ -1270,24 +1277,28 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszAlbersMapping + 0, apszAlbersMapping + 1, 2 );
+            "PARAMETER", (char **)apszAlbersMapping + 0,
+            (char **)apszAlbersMapping + 1, 2 );
 
     if( pszProjection != NULL 
         && EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszECMapping + 0, apszECMapping + 1, 2 );
+            "PARAMETER", (char **)apszECMapping + 0,
+            (char **)apszECMapping + 1, 2 );
 
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszMercatorMapping + 0, apszMercatorMapping + 1, 2 );
+            "PARAMETER",
+            (char **)apszMercatorMapping + 0,
+            (char **)apszMercatorMapping + 1, 2 );
 
     if( pszProjection != NULL 
         && EQUALN(pszProjection,"Stereographic_",14) 
         && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
         GetRoot()->applyRemapper( 
             "PARAMETER", 
-            apszPolarStereographicMapping + 0, 
-            apszPolarStereographicMapping + 1, 2 );
+            (char **)apszPolarStereographicMapping + 0, 
+            (char **)apszPolarStereographicMapping + 1, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Remap south and north polar stereographic to one value.         */
@@ -1304,7 +1315,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
-                              apszProjMapping, apszProjMapping+1, 2 );
+                              (char **)apszProjMapping,
+                              (char **)apszProjMapping+1, 2 );
     
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
@@ -1312,7 +1324,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
     InitDatumMappingTable();
 
     GetRoot()->applyRemapper( "DATUM", 
-                              papszDatumMapping+1, papszDatumMapping+2, 3 );
+                              (char **)papszDatumMapping+1,
+                              (char **)papszDatumMapping+2, 3 );
 
     return eErr;
 }
