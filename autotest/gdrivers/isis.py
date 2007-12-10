@@ -37,7 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-# Perform simple read test on isis3 dataset.
+# Perform simple read test on isis3 detached dataset.
 
 def isis_1():
     srs = """PROJCS["Equirectangular Mars",
@@ -58,8 +58,31 @@ def isis_1():
     tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978 )
     return tst.testOpen( check_prj = srs, check_gt = gt )
     
+###############################################################################
+# Perform simple read test on isis3 detached dataset.
+
+def isis_2():
+    srs = """PROJCS["Equirectangular mars",
+    GEOGCS["GCS_mars",
+        DATUM["D_mars",
+            SPHEROID["mars_localRadius",3388271702.61438,0]],
+        PRIMEM["Reference_Meridian",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Equirectangular"],
+    PARAMETER["latitude_of_origin",-38.88000106811523],
+    PARAMETER["central_meridian",195.9199981689453],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0]]
+"""  
+    gt = (653.132641495800044, 0.38, 0,
+          -2298409.710162799805403, 0, -0.38)
+    
+    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_unit_test.cub', 1, 42403 )
+    return tst.testOpen( check_prj = srs, check_gt = gt )
+    
 gdaltest_list = [
-    isis_1  ]
+    isis_1,
+    isis_2 ]
 
 
 if __name__ == '__main__':
