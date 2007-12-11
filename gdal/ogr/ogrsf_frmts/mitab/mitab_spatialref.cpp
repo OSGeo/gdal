@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.47 2006/07/10 17:58:48 fwarmerdam Exp $
+ * $Id: mitab_spatialref.cpp,v 1.48 2007/11/21 21:15:45 dmorissette Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.48  2007/11/21 21:15:45  dmorissette
+ * Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)
+ *
  * Revision 1.47  2006/07/10 17:58:48  fwarmerdam
  * North_American_Datum_1927 support
  *
@@ -370,7 +373,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {1015,"Tokyo",                      10, -146.414, 507.337, 680.507,0,0,0,0,0},
 {1016,"Finnish_KKJ",                4, -96.062, -82.428, -121.754, -4.801, -0.345, 1.376, 1.496, 0},
 
-{-1, NULL, 0, 0, 0, 0, 0, 0, 0, 0}
+{-1, NULL,                          0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 /* -------------------------------------------------------------------- */
