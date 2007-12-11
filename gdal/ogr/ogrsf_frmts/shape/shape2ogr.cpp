@@ -306,7 +306,8 @@ OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
 
     return ( poRing );
 }
-    
+
+
 /************************************************************************/
 /*                          SHPReadOGRObject()                          */
 /*                                                                      */
@@ -458,7 +459,30 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             poRing = CreateLinearRing ( psShape, 0 );
             poOGRPoly->addRingDirectly( poRing );
         }
-        else
+        else if( OGRGeometryFactory::haveGEOS() )
+        {
+            OGRPolygon** tabPolygons = new OGRPolygon*[psShape->nParts];
+            for( iRing = 0; iRing < psShape->nParts; iRing++ )
+            {
+                tabPolygons[iRing] = new OGRPolygon();
+                tabPolygons[iRing]->addRingDirectly(CreateLinearRing ( psShape, iRing ));
+            }
+
+            int isValidGeometry;
+            poOGR = OGRGeometryFactory::organizePolygons( 
+                (OGRGeometry**)tabPolygons, psShape->nParts, &isValidGeometry );
+
+            if (!isValidGeometry)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, 
+                        "Geometry of polygon of fid %d cannot be translated to Simple Geometry. "
+                        "All polygons will be contained in a multipolygon.\n",
+                        iShape);
+            }
+
+            delete[] tabPolygons;
+        }
+        else 
         {
             /* Multipart polygon. */
 
@@ -637,7 +661,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             CPLFree( direction );
             CPLFree( outer );
             CPLFree( outside );
-
         } /* End of multipart polygon processing. */
 
         if( psShape->nSHPType == SHPT_POLYGON )
