@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.11 2005/04/29 19:08:56 dmorissette Exp $
+ * $Id: mitab_indfile.cpp,v 1.12 2007/12/11 03:43:03 dmorissette Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
+ * Revision 1.12  2007/12/11 03:43:03  dmorissette
+ * Added reporting access mode to error message in TABINDFile::Open()
+ * (GDAL changeset r12460, ticket 1620)
+ *
  * Revision 1.11  2005/04/29 19:08:56  dmorissette
  * Produce an error if m_nSubtreeDepth > 255 when creating a .IND (OGR bug 839)
  *
