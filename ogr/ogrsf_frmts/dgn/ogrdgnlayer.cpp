@@ -897,6 +897,7 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
         /* poLabel->ForeColor(); */
 
         /* get font id */
+
     }
 
     papsGroup = (DGNElemCore **) CPLCalloc(sizeof(void*),2);
@@ -906,6 +907,9 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
                            poPoint->getX(), 
                            poPoint->getY(), 
                            poPoint->getZ() );
+
+    if( poLabel )
+        delete poLabel;
 
     return papsGroup;
 }
