@@ -605,6 +605,10 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry * forceToMultiPoint( OGRGeometry * );
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
 
+    static OGRGeometry * organizePolygons( OGRGeometry **papoPolygons,
+                                           int nPolygonCount,
+                                           int *pbResultValidGeometry );
+
     static void *getGEOSGeometryFactory();
 
     static int haveGEOS();
