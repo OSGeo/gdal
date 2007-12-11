@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.35 2007/06/21 13:23:43 fwarmerdam Exp $
+ * $Id: mitab_coordsys.cpp,v 1.36 2007/11/21 21:15:45 dmorissette Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.36  2007/11/21 21:15:45  dmorissette
+ * Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)
+ *
  * Revision 1.35  2007/06/21 13:23:43  fwarmerdam
  * Fixed support for predefined datums with non-greenwich prime meridians
  *
@@ -97,8 +100,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
-extern MapInfoDatumInfo asDatumInfoList[200];
-extern MapInfoSpheroidInfo asSpheroidInfoList[200];
+extern MapInfoDatumInfo asDatumInfoList[];
+extern MapInfoSpheroidInfo asSpheroidInfoList[];
 
 /************************************************************************/
 /*                             GetMIFParm()                             */

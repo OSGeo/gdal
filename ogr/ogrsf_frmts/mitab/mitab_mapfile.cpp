@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.40 2007/09/14 18:30:19 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.41 2007/11/08 18:57:56 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.41  2007/11/08 18:57:56  dmorissette
+ * Upgrade of OGR and CPL libs to the version from GDAL/OGR 1.4.3
+ *
  * Revision 1.40  2007/09/14 18:30:19  dmorissette
  * Fixed the splitting of object blocks with the optimized spatial
  * index mode that was producing files with misaligned bytes that
@@ -1922,6 +1925,9 @@ int TABMAPFile::MoveObjToBlock(TABMAPObjHdr       *poObjHdr,
     {
         TABMAPObjHdrWithCoord *poObjHdrCoord =(TABMAPObjHdrWithCoord*)poObjHdr;
         OGRFeatureDefn * poDummyDefn = new OGRFeatureDefn;
+        // Ref count defaults to 0... set it to 1
+        poDummyDefn->Reference();
+
         TABFeature *poFeature = 
             TABFeature::CreateFromMapInfoType(poObjHdr->m_nType, poDummyDefn);
 
@@ -1957,7 +1963,7 @@ int TABMAPFile::MoveObjToBlock(TABMAPObjHdr       *poObjHdr,
         poDstObjBlock->AddCoordBlockRef((*ppoDstCoordBlock)->GetStartAddress());
         /* Cleanup */
         delete poFeature;
-        delete poDummyDefn;
+        poDummyDefn->Release();
     }
 
     /*-----------------------------------------------------------------

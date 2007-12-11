@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.76 2007/09/18 17:43:56 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.77 2007/12/11 04:21:54 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.77  2007/12/11 04:21:54  dmorissette
+ * Fixed leaks in ITABFeature???::Set???FromStyleString() (GDAL ticket 1696)
+ *
  * Revision 1.76  2007/09/18 17:43:56  dmorissette
  * Fixed another index splitting issue: compr coordinates origin was not
  * stored in the TABFeature in ReadGeometry... (bug 1732)
@@ -8090,6 +8093,9 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         }
     }
 
+    delete poStyleMgr;
+    delete poStylePart;
+
     return;
 }
 
@@ -8274,8 +8280,10 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
         SetBrushFGColor((GInt32)nBrushColor);
     }
 
-     return;
-    
+    delete poStyleMgr;
+    delete poStylePart;
+
+    return;
 }  
 
 /**********************************************************************
@@ -8558,9 +8566,11 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
         nSymbolColor = strtol(pszSymbolColor, NULL, 16);
         SetSymbolColor((GInt32)nSymbolColor);
     }
+
+    delete poStyleMgr;
+    delete poStylePart;
     
     return;
-    
 }  
 
 /**********************************************************************

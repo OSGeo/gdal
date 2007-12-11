@@ -13,15 +13,35 @@ For a complete change history, please see the CVS log comments.
 CHANGES - Current Version:
 --------------------------
 
+
+Version 1.6.4 (2007-12-10)
+--------------------------
+
+- Upgrade of OGR and CPL libs to the version from GDAL/OGR 1.4.3
+
+- Fixed leak of SRS in OGRGeometry (bug 1816)
+
+- Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)
+
+- Added reporting access mode to error message in TABINDFile::Open()
+  (GDAL changeset r12460, ticket 1620)
+
+- Fixed leaks in ITABFeature???::Set???FromStyleString() (GDAL ticket 1696)
+
+
+Version 1.6.3 (2007-10-12)
+--------------------------
+
+- Remove static variables that interfere with reentrancy. 
+  http://trac.osgeo.org/gdal/ticket/1883
+
+
 Version 1.6.3-beta2 (2007-09-18)
 --------------------------------
 
 - Fixed another issue related to splitting of object blocks with the 
   optimized spatial index. The compressed coordinate origin values were
   not initialized properly before being written (bug 1732)
-
-- Remove static variables that interfere with reentrancy. 
-  http://trac.osgeo.org/gdal/ticket/1883
 
 
 Version 1.6.3-beta1 (2007-09-14)
@@ -836,5 +856,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.195 2007/10/09 17:43:16 fwarmerdam Exp $
+$Id: HISTORY.TXT,v 1.202 2007/12/11 04:26:28 dmorissette Exp $
 ------------
