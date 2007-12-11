@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_feature.h"
 #include "ogr_featurestyle.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -134,6 +135,27 @@ OGRStyleMgr::OGRStyleMgr(OGRStyleTable *poDataSetStyleTable)
     m_pszStyleString = NULL;
 }
 
+/************************************************************************/
+/*                            OGR_SM_Create()                           */
+/************************************************************************/
+/**
+ * OGRStyleMgr factory.
+ *
+ * This function is the same as the C++ method OGRStyleMgr::OGRStyleMgr().
+ * 
+ * @param hStyleTable (currently unused, reserved for future use), pointer 
+ * to OGRStyleTable. Pass NULL for now.
+ * 
+ * @return an handle to the new style manager object.
+ */
+
+OGRFeatureH OGR_SM_Create( void *hStyleTable )
+
+{
+    return (OGRStyleMgrH) new OGRStyleMgr( NULL );
+}
+
+
 /****************************************************************************/
 /*             OGRStyleMgr::~OGRStyleMgr()                                  */
 /*                                                                          */
@@ -143,6 +165,22 @@ OGRStyleMgr::~OGRStyleMgr()
     if ( m_pszStyleString )
         CPLFree(m_pszStyleString);
 }
+
+/************************************************************************/
+/*                           OGR_SM_Destroy()                            */
+/************************************************************************/
+/**
+ * Destroy Style Manager
+ *
+ * @param hSM handle to the style manager to destroy.
+ */
+
+void OGR_SM_Destroy( OGRStyleMgrH hSM )
+
+{
+    delete (OGRStyleMgr *) hSM;
+}
+
 
 /****************************************************************************/
 /*      GBool OGRStyleMgr::SetFeatureStyleString(OGRFeature *poFeature,     */
@@ -189,6 +227,34 @@ const char *OGRStyleMgr::InitFromFeature(OGRFeature *poFeature)
     return m_pszStyleString;
 
 }
+
+/************************************************************************/
+/*                     OGR_SM_InitFromFeature()                         */
+/************************************************************************/
+
+/**
+ * Initialize style manager from the style string of a feature.
+ *
+ * This function is the same as the C++ method 
+ * OGRStyleMgr::InitFromFeature().
+ *
+ * @param hSM handle to the style manager.
+ * @param hFeature handle to the new feature from which to read the style.
+ *
+ * @return a reference to the style string read from the feature, or NULL
+ * in case of error.. 
+ */ 
+
+const char *OGR_SM_InitFromFeature(OGRStyleMgrH hSM, 
+                                           OGRFeatureH hFeat)
+
+{
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitFromFeature", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_SM_InitFromFeature", NULL );
+
+    return ((OGRStyleMgr *) hSM)->InitFromFeature((OGRFeature *)hFeat);
+}
+
 /****************************************************************************/
 /*            GBool OGRStyleMgr::InitStyleString(char *pszStyleString)      */
 /*                                                                          */
@@ -210,6 +276,31 @@ GBool OGRStyleMgr::InitStyleString(const char *pszStyleString)
     
     return TRUE;
 }    
+
+/************************************************************************/
+/*                     OGR_SM_InitStyleString()                         */
+/************************************************************************/
+
+/**
+ * Initialize style manager from the style string.
+ *
+ * This function is the same as the C++ method OGRStyleMgr::InitStyleString().
+ *
+ * @param hSM handle to the style manager.
+ * @param pszStyleString the style string to use (can be NULL).
+ *
+ * @return TRUE on success, FALSE on errors. 
+ */ 
+
+int OGR_SM_InitStyleString(OGRStyleMgrH hSM, const char *pszStyleString)
+
+{
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", FALSE );
+
+    return ((OGRStyleMgr *) hSM)->InitStyleString(pszStyleString);
+}
+
+
 /****************************************************************************/
 /*      const char *OGRStyleMgr::GetStyleName(const char *pszStyleString)   */
 /*                                                                          */
@@ -217,7 +308,7 @@ GBool OGRStyleMgr::InitStyleString(const char *pszStyleString)
 const char *OGRStyleMgr::GetStyleName(const char *pszStyleString)
 {
 
-    // SECURITY:  the unit and the value for all parameter should be the same,  
+    // SECURITY:  the unit and the value for all parameter should be the same,
     // a text comparaison is executed .
 
     const char *pszStyle;
@@ -333,6 +424,31 @@ GBool OGRStyleMgr::AddPart(OGRStyleTool *poStyleTool)
     return FALSE;
 }
     
+/************************************************************************/
+/*                     OGR_SM_AddPart()                                 */
+/************************************************************************/
+
+/**
+ * Add a part (style tool) to the current style.
+ *
+ * This function is the same as the C++ method OGRStyleMgr::AddPart().
+ *
+ * @param hSM handle to the style manager.
+ * @param hST the style tool defining the part to add.
+ *
+ * @return TRUE on success, FALSE on errors. 
+ */ 
+
+int OGR_SM_AddPart(OGRStyleMgrH hSM, OGRStyleToolH hST)
+
+{
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", FALSE );
+    VALIDATE_POINTER1( hST, "OGR_SM_InitStyleString", FALSE );
+
+    return ((OGRStyleMgr *) hSM)->AddPart((OGRStyleTool *)hST);
+}
+
+
 /****************************************************************************/
 /*            int OGRStyleMgr::GetPartCount(const char *pszStyleString)     */
 /*            return the number of part in the stylestring                  */
@@ -365,13 +481,38 @@ int OGRStyleMgr::GetPartCount(const char *pszStyleString)
     return nPartCount;
 }
 
+/************************************************************************/
+/*                     OGR_SM_GetPartCount()                            */
+/************************************************************************/
+
+/**
+ * Add a part (style tool) to the current style.
+ *
+ * This function is the same as the C++ method OGRStyleMgr::GetPartCount().
+ *
+ * @param hSM handle to the style manager.
+ * @param pszStyleString (optional) the style string on which to operate.
+ * If NULL then the current style string stored in the style manager is used.
+ *
+ * @return the number of parts (style tools) in the style. 
+ */ 
+
+int OGR_SM_GetPartCount(OGRStyleMgrH hSM, const char *pszStyleString)
+
+{
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", FALSE );
+
+    return ((OGRStyleMgr *) hSM)->GetPartCount(pszStyleString);
+}
+
+
 /****************************************************************************/
-/*            OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,               */
+/*            OGRStyleTool *OGRStyleMgr::GetPart(int nPartId,               */
 /*                                 const char *pszStyleString)              */
 /*                                                                          */
 /*     Return a StyleTool of the type of the wanted part, could return NULL */
 /****************************************************************************/
-OGRStyleTool *OGRStyleMgr::GetPart(int hPartId, 
+OGRStyleTool *OGRStyleMgr::GetPart(int nPartId, 
                                    const char *pszStyleString)
 {
     char **papszStyleString;
@@ -392,7 +533,7 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
                                           | CSLT_PRESERVEQUOTES
                                           | CSLT_PRESERVEESCAPES );
 
-    pszString = CSLGetField( papszStyleString, hPartId );
+    pszString = CSLGetField( papszStyleString, nPartId );
     
     if ( pszString || strlen(pszString) > 0 )
     {
@@ -405,6 +546,32 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
 
     return poStyleTool;
 } 
+
+/************************************************************************/
+/*                     OGR_SM_GetPart()                                 */
+/************************************************************************/
+
+/**
+ * Fetch a part (style tool) from the current style.
+ *
+ * This function is the same as the C++ method OGRStyleMgr::GetPart().
+ *
+ * @param hSM handle to the style manager.
+ * @param nPartId the part number (0-based index)
+ * @param pszStyleString (optional) the style string on which to operate.
+ * If NULL then the current style string stored in the style manager is used.
+ *
+ * @return OGRStyleToolH of the requested part (style tools) or NULL on error.
+ */ 
+
+OGRStyleToolH OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId, 
+                             const char *pszStyleString)
+
+{
+    VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", NULL );
+
+    return ((OGRStyleMgr *) hSM)->GetPart(nPartId, pszStyleString);
+}
 
 
 /****************************************************************************/
@@ -457,6 +624,39 @@ OGRStyleTable::OGRStyleTable()
     m_papszStyleTable = NULL;
 }
 
+/************************************************************************/
+/*                            OGR_ST_Create()                           */
+/************************************************************************/
+/**
+ * OGRStyleTool factory.
+ *
+ * This function is a constructor for OGRStyleTool derived classes.
+ * 
+ * @param eClassId subclass of style tool to create. One of OGRSTCPen (1),
+ * OGRSTCBrush (2), OGRSTCSymbol (3) or OGRSTCLabel (4).
+ * 
+ * @return an handle to the new style tool object or NULL if the creation 
+ * failed.
+ */
+
+OGRStyleToolH OGR_ST_Create( OGRSTClassId eClassId )
+
+{
+    switch( eClassId )
+    {
+      case OGRSTCPen:
+        return new OGRStylePen();
+      case OGRSTCBrush:
+        return new OGRStyleBrush();
+      case OGRSTCSymbol:
+        return new OGRStyleSymbol();
+      case OGRSTCLabel:
+        return new OGRStyleLabel();
+      default:
+        return NULL;
+    }
+}
+
 /****************************************************************************/
 /*          OGRStyleTable::~OGRStyleTable()                                 */
 /*                                                                          */
@@ -464,6 +664,21 @@ OGRStyleTable::OGRStyleTable()
 OGRStyleTable::~OGRStyleTable()
 {
     Clear();
+}
+
+/************************************************************************/
+/*                           OGR_ST_Destroy()                            */
+/************************************************************************/
+/**
+ * Destroy Style Tool
+ *
+ * @param hST handle to the style tool to destroy.
+ */
+
+void OGR_ST_Destroy( OGRStyleToolH hST )
+
+{
+    delete (OGRStyleTool *) hST;
 }
 
 /****************************************************************************/
@@ -897,7 +1112,47 @@ OGRSTClassId OGRStyleTool::GetType()
 {
     return m_eClassId;
 }
-    
+
+/************************************************************************/
+/*                           OGR_ST_GetType()                           */
+/************************************************************************/
+/**
+ * Determine type of Style Tool
+ *
+ * @param hST handle to the style tool.
+ *
+ * @return the style tool type, one of OGRSTCPen (1), OGRSTCBrush (2), 
+ * OGRSTCSymbol (3) or OGRSTCLabel (4). Returns OGRSTCNone (0) if the 
+ * OGRStyleToolH is invalid.
+ */
+
+OGRSTClassId OGR_ST_GetType( OGRStyleToolH hST )
+
+{
+    VALIDATE_POINTER1( hST, "OGR_ST_GetType", OGRSTCNone );
+    return ((OGRStyleTool *) hST)->GetType();
+}
+
+
+/************************************************************************/
+/*                           OGR_ST_GetUnit()                           */
+/************************************************************************/
+/**
+ * Get Style Tool units
+ *
+ * @param hST handle to the style tool.
+ *
+ * @return the style tool units.
+ */
+
+OGRSTUnitId OGR_ST_GetUnit( OGRStyleToolH hST )
+
+{
+    VALIDATE_POINTER1( hST, "OGR_ST_GetUnit", OGRSTUGround );
+    return ((OGRStyleTool *) hST)->GetUnit();
+}
+
+
 /************************************************************************/
 /*                              SetUnit()                               */
 /************************************************************************/
@@ -905,6 +1160,28 @@ void OGRStyleTool::SetUnit(OGRSTUnitId eUnit,double dfScale)
 {
     m_dfScale = dfScale;
     m_eUnit = eUnit;
+}
+
+/************************************************************************/
+/*                           OGR_ST_SetUnit()                           */
+/************************************************************************/
+/**
+ * Set Style Tool units
+ *
+ * This function is the same as OGRStyleTool::SetUnit()
+ *
+ * @param hST handle to the style tool. 
+ * @param eUnit the new unit.
+ * @param dfGroundPaperScale ground to paper scale factor.
+ *
+ */
+
+void OGR_ST_SetUnit( OGRStyleToolH hST, OGRSTUnitId eUnit,
+                     double dfGroundPaperScale )
+
+{
+    VALIDATE_POINTER0( hST, "OGR_ST_SetUnit" );
+    return ((OGRStyleTool *) hST)->SetUnit(eUnit, dfGroundPaperScale);
 }
 
 /************************************************************************/
@@ -1427,6 +1704,370 @@ void OGRStyleTool::SetParamDbl(const OGRStyleParamId &sStyleParam ,
         sStyleValue.bValid = FALSE;
         break;
     }
+}
+
+/************************************************************************/
+/*                           OGR_ST_GetParamStr()                       */
+/************************************************************************/
+/**
+ * Get Style Tool parameter value as string
+ *
+ * Maps to the OGRStyleTool subclasses' GetParamStr() methods.
+ * 
+ * @param hST handle to the style tool.
+ * @param eParam the parameter id from the enumeration corresponding to the
+ * type of this style tool (one of the OGRSTPenParam, OGRSTBrushParam, 
+ * OGRSTSymbolParam or OGRSTLabelParam enumerations)
+ * @param bValueIsNull pointer to an integer that will be set to TRUE or FALSE
+ * to indicate whether the parameter value is NULL.
+ *
+ * @return the parameter value as string and sets bValueIsNull.
+ */
+
+const char *OGR_ST_GetParamStr( OGRStyleToolH hST, int eParam, int *bValueIsNull )
+{
+    GBool bIsNull = TRUE;
+    const char *pszVal = "";
+
+    VALIDATE_POINTER1( hST, "OGR_ST_GetParamStr", "" );
+    VALIDATE_POINTER1( bValueIsNull, "OGR_ST_GetParamStr", "" );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        pszVal = ((OGRStylePen *) hST)->GetParamStr((OGRSTPenParam)eParam, 
+                                                    bIsNull);
+        break;
+      case OGRSTCBrush:
+        pszVal = ((OGRStyleBrush *) hST)->GetParamStr((OGRSTBrushParam)eParam, 
+                                                      bIsNull);
+        break;
+      case OGRSTCSymbol:
+        pszVal = ((OGRStyleSymbol *) hST)->GetParamStr((OGRSTSymbolParam)eParam,
+                                                       bIsNull);
+        break;
+      case OGRSTCLabel:
+        pszVal = ((OGRStyleLabel *) hST)->GetParamStr((OGRSTLabelParam)eParam, 
+                                                      bIsNull);
+        break;
+      default:
+        break;
+    }
+
+    *bValueIsNull = bIsNull;
+    return pszVal;
+}
+
+/************************************************************************/
+/*                           OGR_ST_GetParamNum()                       */
+/************************************************************************/
+/**
+ * Get Style Tool parameter value as an integer
+ *
+ * Maps to the OGRStyleTool subclasses' GetParamNum() methods.
+ * 
+ * @param hST handle to the style tool.
+ * @param eParam the parameter id from the enumeration corresponding to the
+ * type of this style tool (one of the OGRSTPenParam, OGRSTBrushParam, 
+ * OGRSTSymbolParam or OGRSTLabelParam enumerations)
+ * @param bValueIsNull pointer to an integer that will be set to TRUE or FALSE
+ * to indicate whether the parameter value is NULL.
+ *
+ * @return the parameter value as integer and sets bValueIsNull.
+ */
+
+int OGR_ST_GetParamNum( OGRStyleToolH hST, int eParam, int *bValueIsNull )
+{
+    GBool bIsNull = TRUE;
+    int nVal = 0;
+
+    VALIDATE_POINTER1( hST, "OGR_ST_GetParamNum", 0 );
+    VALIDATE_POINTER1( bValueIsNull, "OGR_ST_GetParamNum", 0 );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        nVal = ((OGRStylePen *) hST)->GetParamNum((OGRSTPenParam)eParam, 
+                                                    bIsNull);
+        break;
+      case OGRSTCBrush:
+        nVal = ((OGRStyleBrush *) hST)->GetParamNum((OGRSTBrushParam)eParam, 
+                                                      bIsNull);
+        break;
+      case OGRSTCSymbol:
+        nVal = ((OGRStyleSymbol *) hST)->GetParamNum((OGRSTSymbolParam)eParam,
+                                                       bIsNull);
+        break;
+      case OGRSTCLabel:
+        nVal = ((OGRStyleLabel *) hST)->GetParamNum((OGRSTLabelParam)eParam, 
+                                                      bIsNull);
+        break;
+      default:
+        break;
+    }
+
+    *bValueIsNull = bIsNull;
+    return nVal;
+}
+
+/************************************************************************/
+/*                           OGR_ST_GetParamDbl()                       */
+/************************************************************************/
+/**
+ * Get Style Tool parameter value as a double
+ *
+ * Maps to the OGRStyleTool subclasses' GetParamDbl() methods.
+ * 
+ * @param hST handle to the style tool.
+ * @param eParam the parameter id from the enumeration corresponding to the
+ * type of this style tool (one of the OGRSTPenParam, OGRSTBrushParam, 
+ * OGRSTSymbolParam or OGRSTLabelParam enumerations)
+ * @param bValueIsNull pointer to an integer that will be set to TRUE or FALSE
+ * to indicate whether the parameter value is NULL.
+ *
+ * @return the parameter value as double and sets bValueIsNull.
+ */
+
+double OGR_ST_GetParamDbl( OGRStyleToolH hST, int eParam, int *bValueIsNull )
+{
+    GBool bIsNull = TRUE;
+    double dfVal = 0.0;
+
+    VALIDATE_POINTER1( hST, "OGR_ST_GetParamDbl", 0.0 );
+    VALIDATE_POINTER1( bValueIsNull, "OGR_ST_GetParamDbl", 0.0 );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        dfVal = ((OGRStylePen *) hST)->GetParamDbl((OGRSTPenParam)eParam, 
+                                                  bIsNull);
+        break;
+      case OGRSTCBrush:
+        dfVal = ((OGRStyleBrush *) hST)->GetParamDbl((OGRSTBrushParam)eParam, 
+                                                    bIsNull);
+        break;
+      case OGRSTCSymbol:
+        dfVal = ((OGRStyleSymbol *) hST)->GetParamDbl((OGRSTSymbolParam)eParam,
+                                                     bIsNull);
+        break;
+      case OGRSTCLabel:
+        dfVal = ((OGRStyleLabel *) hST)->GetParamDbl((OGRSTLabelParam)eParam, 
+                                                    bIsNull);
+        break;
+      default:
+        break;
+    }
+
+    *bValueIsNull = bIsNull;
+    return dfVal;
+}
+
+
+/************************************************************************/
+/*                           OGR_ST_SetParamStr()                       */
+/************************************************************************/
+/**
+ * Set Style Tool parameter value from a string
+ *
+ * Maps to the OGRStyleTool subclasses' SetParamStr() methods.
+ * 
+ * @param hST handle to the style tool.
+ * @param eParam the parameter id from the enumeration corresponding to the
+ * type of this style tool (one of the OGRSTPenParam, OGRSTBrushParam, 
+ * OGRSTSymbolParam or OGRSTLabelParam enumerations)
+ * @param pszValue the new parameter value
+ *
+ */
+
+void OGR_ST_SetParamStr( OGRStyleToolH hST, int eParam, const char *pszValue )
+{
+    VALIDATE_POINTER0( hST, "OGR_ST_SetParamStr" );
+    VALIDATE_POINTER0( pszValue, "OGR_ST_SetParamStr" );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        ((OGRStylePen *) hST)->SetParamStr((OGRSTPenParam)eParam, 
+                                           pszValue);
+        break;
+      case OGRSTCBrush:
+        ((OGRStyleBrush *) hST)->SetParamStr((OGRSTBrushParam)eParam, 
+                                             pszValue);
+        break;
+      case OGRSTCSymbol:
+        ((OGRStyleSymbol *) hST)->SetParamStr((OGRSTSymbolParam)eParam,
+                                              pszValue);
+        break;
+      case OGRSTCLabel:
+        ((OGRStyleLabel *) hST)->SetParamStr((OGRSTLabelParam)eParam, 
+                                             pszValue);
+        break;
+      default:
+        break;
+    }
+}
+
+
+/************************************************************************/
+/*                           OGR_ST_SetParamNum()                       */
+/************************************************************************/
+/**
+ * Set Style Tool parameter value from an integer
+ *
+ * Maps to the OGRStyleTool subclasses' SetParamNum() methods.
+ * 
+ * @param hST handle to the style tool.
+ * @param eParam the parameter id from the enumeration corresponding to the
+ * type of this style tool (one of the OGRSTPenParam, OGRSTBrushParam, 
+ * OGRSTSymbolParam or OGRSTLabelParam enumerations)
+ * @param nValue the new parameter value
+ *
+ */
+
+void OGR_ST_SetParamNum( OGRStyleToolH hST, int eParam, int nValue )
+{
+    VALIDATE_POINTER0( hST, "OGR_ST_SetParamNum" );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        ((OGRStylePen *) hST)->SetParamNum((OGRSTPenParam)eParam, 
+                                           nValue);
+        break;
+      case OGRSTCBrush:
+        ((OGRStyleBrush *) hST)->SetParamNum((OGRSTBrushParam)eParam, 
+                                             nValue);
+        break;
+      case OGRSTCSymbol:
+        ((OGRStyleSymbol *) hST)->SetParamNum((OGRSTSymbolParam)eParam,
+                                              nValue);
+        break;
+      case OGRSTCLabel:
+        ((OGRStyleLabel *) hST)->SetParamNum((OGRSTLabelParam)eParam, 
+                                             nValue);
+        break;
+      default:
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_ST_SetParamDbl()                       */
+/************************************************************************/
+/**
+ * Set Style Tool parameter value from a double
+ *
+ * Maps to the OGRStyleTool subclasses' SetParamDbl() methods.
+ * 
+ * @param hST handle to the style tool.
+ * @param eParam the parameter id from the enumeration corresponding to the
+ * type of this style tool (one of the OGRSTPenParam, OGRSTBrushParam, 
+ * OGRSTSymbolParam or OGRSTLabelParam enumerations)
+ * @param dfValue the new parameter value
+ *
+ */
+
+void OGR_ST_SetParamDbl( OGRStyleToolH hST, int eParam, int dfValue )
+{
+    VALIDATE_POINTER0( hST, "OGR_ST_SetParamDbl" );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        ((OGRStylePen *) hST)->SetParamDbl((OGRSTPenParam)eParam, 
+                                           dfValue);
+        break;
+      case OGRSTCBrush:
+        ((OGRStyleBrush *) hST)->SetParamDbl((OGRSTBrushParam)eParam, 
+                                             dfValue);
+        break;
+      case OGRSTCSymbol:
+        ((OGRStyleSymbol *) hST)->SetParamDbl((OGRSTSymbolParam)eParam,
+                                              dfValue);
+        break;
+      case OGRSTCLabel:
+        ((OGRStyleLabel *) hST)->SetParamDbl((OGRSTLabelParam)eParam, 
+                                             dfValue);
+        break;
+      default:
+        break;
+    }
+}
+
+
+/************************************************************************/
+/*                           OGR_ST_GetStyleString()                    */
+/************************************************************************/
+/**
+ * Get the style string for this Style Tool
+ *
+ * Maps to the OGRStyleTool subclasses' GetStyleString() methods.
+ * 
+ * @param hST handle to the style tool.
+ *
+ * @return the style string for this style tool or "" if the hST is invalid.
+ */
+
+const char *OGR_ST_GetStyleString( OGRStyleToolH hST )
+{
+    const char *pszVal = "";
+
+    VALIDATE_POINTER1( hST, "OGR_ST_GetStyleString", "" );
+
+    switch( ((OGRStyleTool *) hST)->GetType() )
+    {
+      case OGRSTCPen:
+        pszVal = ((OGRStylePen *) hST)->GetStyleString();
+        break;
+      case OGRSTCBrush:
+        pszVal = ((OGRStyleBrush *) hST)->GetStyleString();
+        break;
+      case OGRSTCSymbol:
+        pszVal = ((OGRStyleSymbol *) hST)->GetStyleString();
+        break;
+      case OGRSTCLabel:
+        pszVal = ((OGRStyleLabel *) hST)->GetStyleString();
+        break;
+      default:
+        break;
+    }
+
+    return pszVal;
+}
+
+/************************************************************************/
+/*                           OGR_ST_GetRGBFromString()                  */
+/************************************************************************/
+/**
+ * Return the r,g,b,a components of a color encoded in #RRGGBB[AA] format
+ *
+ * Maps to OGRStyleTool::GetRGBFromString().
+ * 
+ * @param hST handle to the style tool.
+ * @param pszColor the color to parse
+ * @param pnRed pointer to an int in which the red value will be returned
+ * @param pnGreen pointer to an int in which the green value will be returned
+ * @param pnBlue pointer to an int in which the blue value will be returned
+ * @param pnAlpha pointer to an int in which the (optional) alpha value will
+ * be returned
+ *
+ * @return TRUE if the color could be succesfully parsed, or FALSE in case of
+ * errors.
+ */
+
+int OGR_ST_GetRGBFRomString( OGRStyleToolH hST, const char *pszColor, 
+                             int *pnRed, int *pnGreen, int *pnBlue,
+                             int *pnAlpha )
+{
+
+    VALIDATE_POINTER1( hST, "OGR_ST_GetRGBFromString", FALSE );
+    VALIDATE_POINTER1( pnRed, "OGR_ST_GetRGBFromString", FALSE );
+    VALIDATE_POINTER1( pnGreen, "OGR_ST_GetRGBFromString", FALSE );
+    VALIDATE_POINTER1( pnBlue, "OGR_ST_GetRGBFromString", FALSE );
+    VALIDATE_POINTER1( pnAlpha, "OGR_ST_GetRGBFromString", FALSE );
+
+    return ((OGRStyleTool *) hST)->GetRGBFromString(pszColor, *pnRed, *pnGreen,
+                                                    *pnBlue, *pnAlpha );
 }
 
 
