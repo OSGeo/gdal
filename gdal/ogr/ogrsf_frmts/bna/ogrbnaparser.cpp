@@ -36,10 +36,14 @@ void BNA_FreeRecord(BNARecord* record)
 {
   if (record)
   {
-    if (record->ids[0]) VSIFree(record->ids[0]);
-    if (record->ids[1]) VSIFree(record->ids[1]);
-    if (record->ids[2]) VSIFree(record->ids[2]);
-    if (record->tabCoords) CPLFree(record->tabCoords);
+    int i;
+    for(i=0;i<NB_MAX_BNA_IDS;i++)
+    {
+        if (record->ids[i]) VSIFree(record->ids[i]);
+        record->ids[i] = NULL;
+    }
+    CPLFree(record->tabCoords);
+    record->tabCoords = NULL;
     CPLFree(record);
   }
 }
