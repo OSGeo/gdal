@@ -85,13 +85,19 @@ _XTIFFDefaultDirectory(TIFF *tif)
         (*_ParentExtender)(tif);
 }
 
-/*
- *  XTIFF Initializer -- sets up the callback
- *   procedure for the TIFF module.
- */
 
-static
-void _XTIFFInitialize(void)
+/**
+Registers an extension with libtiff for adding GeoTIFF tags.
+After this one-time intialization, any TIFF open function may be called in
+the usual manner to create a TIFF file that compatible with libgeotiff.
+The XTIFF open functions are simply for convenience: they call this
+and then pass their parameters on to the appropriate TIFF open function.
+
+<p>This function may be called any number of times safely, since it will
+only register the extension the first time it is called.
+**/
+
+void XTIFFInitialize(void)
 {
     static int first_time=1;
 	
@@ -131,7 +137,7 @@ XTIFFOpen(const char* name, const char* mode)
     TIFF *tif;
 
     /* Set up the callback */
-    _XTIFFInitialize();	
+    XTIFFInitialize();	
 	
     /* Open the file; the callback will set everything up
      */
@@ -147,7 +153,7 @@ XTIFFFdOpen(int fd, const char* name, const char* mode)
     TIFF *tif;
 
     /* Set up the callback */
-    _XTIFFInitialize();	
+    XTIFFInitialize();	
 
     /* Open the file; the callback will set everything up
      */
@@ -167,7 +173,7 @@ XTIFFClientOpen(const char* name, const char* mode, thandle_t thehandle,
     TIFF *tif;
     
     /* Set up the callback */
-    _XTIFFInitialize();	
+    XTIFFInitialize();	
     
     /* Open the file; the callback will set everything up
      */

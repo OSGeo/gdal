@@ -13,6 +13,9 @@
  *    7 July,  1995      Greg Martin             Fix index
  *
  * $Log: geo_new.c,v $
+ * Revision 1.13  2007/10/03 04:08:03  fwarmerdam
+ * avoid memory leak in case of error
+ *
  * Revision 1.12  2006/06/26 20:03:37  fwarmerdam
  * If the ascii parameters list is too short for the declared size
  * of an ascii parameter, but it doesn't start off the end of the
@@ -79,7 +82,8 @@ GTIF* GTIFNew(void *tif)
     KeyEntry *entptr;
     KeyHeader *header;
     TempKeyData tempData;
-	
+
+    memset( &tempData, 0, sizeof(tempData) );
     gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
     if (!gt) goto failure;	
 	
@@ -87,10 +91,6 @@ GTIF* GTIFNew(void *tif)
     gt->gt_tif = (tiff_t *)tif;
     _GTIFSetDefaultTIFF(&gt->gt_methods);
 
-    tempData.tk_asciiParams = 0;
-    tempData.tk_asciiParamsLength = 0;
-    tempData.tk_asciiParamsOffset = 0;
-	
     /* since this is an array, GTIF will allocate the memory */
     if ( tif == NULL 
          || !(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
@@ -171,6 +171,8 @@ GTIF* GTIFNew(void *tif)
 	
   failure:
     /* Notify of error */
+    if( tempData.tk_asciiParams != NULL )
+        _GTIFFree( tempData.tk_asciiParams );    
     GTIFFree (gt);
     return (GTIF *)0;
 }
