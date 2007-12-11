@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.48 2007/06/06 02:17:04 fwarmerdam Exp $
+ * $Id: geo_normalize.c,v 1.51 2007/12/11 17:58:34 fwarmerdam Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,15 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.51  2007/12/11 17:58:34  fwarmerdam
+ * Add EPSG 9822 (Albers Equal Area) support from EPSG
+ *
+ * Revision 1.50  2007/07/28 13:55:21  fwarmerdam
+ * Fix name for GCS_WGS_72 per gdal bug #1715.
+ *
+ * Revision 1.49  2007/07/20 18:10:41  fwarmerdam
+ * Pre-search pcs.override.csv and gcs.override.csv.
+ *
  * Revision 1.48  2007/06/06 02:17:04  fwarmerdam
  * added builtin known values for foot and us survey foot
  *
@@ -249,18 +258,30 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 {
     char	**papszRecord;
     char	szSearchKey[24];
-    const char	*pszFilename = CSVFilename( "pcs.csv" );
-    
+    const char	*pszFilename;
+
 /* -------------------------------------------------------------------- */
-/*      Search the units database for this unit.  If we don't find      */
-/*      it return failure.                                              */
+/*      Search the pcs.override table for this PCS.                     */
 /* -------------------------------------------------------------------- */
+    pszFilename = CSVFilename( "pcs.override.csv" );
     sprintf( szSearchKey, "%d", nPCSCode );
     papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                      szSearchKey, CC_Integer );
 
+/* -------------------------------------------------------------------- */
+/*      If not found, search the EPSG PCS database.                     */
+/* -------------------------------------------------------------------- */
     if( papszRecord == NULL )
-        return FALSE;
+    {
+        pszFilename = CSVFilename( "pcs.csv" );
+        
+        sprintf( szSearchKey, "%d", nPCSCode );
+        papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                         szSearchKey, CC_Integer );
+
+        if( papszRecord == NULL )
+            return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
@@ -443,15 +464,25 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 {
     char	szSearchKey[24];
     int		nDatum, nPM, nUOMAngle;
+    const char *pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
 /* -------------------------------------------------------------------- */
+    pszFilename = CSVFilename("gcs.override.csv");
     sprintf( szSearchKey, "%d", nGCSCode );
+    nDatum = atoi(CSVGetField( pszFilename,
+                               "COORD_REF_SYS_CODE", szSearchKey, 
+                               CC_Integer, "DATUM_CODE" ) );
 
-    nDatum = atoi(CSVGetField( CSVFilename("gcs.csv" ),
-                               "COORD_REF_SYS_CODE", szSearchKey, CC_Integer,
-                               "DATUM_CODE" ) );
+    if( nDatum < 1 )
+    {
+        pszFilename = CSVFilename("gcs.csv");
+        sprintf( szSearchKey, "%d", nGCSCode );
+        nDatum = atoi(CSVGetField( pszFilename,
+                                   "COORD_REF_SYS_CODE", szSearchKey, 
+                                   CC_Integer, "DATUM_CODE" ) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle some "well known" GCS codes directly if the table        */
@@ -480,7 +511,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
         else if( nGCSCode == GCS_WGS_72 )
         {
             nDatum = Datum_WGS72;
-            pszName = "WGS 82";
+            pszName = "WGS 72";
         }
         else
             return FALSE;
@@ -505,9 +536,9 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
     if( pnPM != NULL )
     {
-        nPM = atoi(CSVGetField( CSVFilename("gcs.csv" ),
-                            "COORD_REF_SYS_CODE", szSearchKey, CC_Integer,
-                            "PRIME_MERIDIAN_CODE" ) );
+        nPM = atoi(CSVGetField( pszFilename,
+                                "COORD_REF_SYS_CODE", szSearchKey, CC_Integer,
+                                "PRIME_MERIDIAN_CODE" ) );
 
         if( nPM < 1 )
             return FALSE;
@@ -518,7 +549,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the angular units.                                          */
 /* -------------------------------------------------------------------- */
-    nUOMAngle = atoi(CSVGetField( CSVFilename("gcs.csv" ),
+    nUOMAngle = atoi(CSVGetField( pszFilename,
                                   "COORD_REF_SYS_CODE",szSearchKey, CC_Integer,
                                   "UOM_CODE" ) );
 
@@ -533,7 +564,7 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
     if( ppszName != NULL )
         *ppszName =
-            CPLStrdup(CSVGetField( CSVFilename("gcs.csv" ),
+            CPLStrdup(CSVGetField( pszFilename,
                                    "COORD_REF_SYS_CODE",szSearchKey,CC_Integer,
                                    "COORD_REF_SYS_NAME" ));
     
@@ -1103,6 +1134,9 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 
       case 9816: /* tunesia mining grid has no counterpart */
         return( KvUserDefined );
+
+      case 9822:
+        return( CT_AlbersEqualArea );
     }
 
     return( KvUserDefined );
@@ -1213,6 +1247,22 @@ static int SetGTParmIds( int nCTProjection,
         panEPSGCodes[1] = EPSGFalseOriginLong;
         panEPSGCodes[2] = EPSGStdParallel1Lat;
         panEPSGCodes[3] = EPSGStdParallel2Lat;
+        panEPSGCodes[5] = EPSGFalseOriginEasting;
+        panEPSGCodes[6] = EPSGFalseOriginNorthing;
+        return TRUE;
+
+      case CT_AlbersEqualArea:
+        panProjParmId[0] = ProjStdParallel1GeoKey;
+        panProjParmId[1] = ProjStdParallel2GeoKey;
+        panProjParmId[2] = ProjNatOriginLatGeoKey;
+        panProjParmId[3] = ProjNatOriginLongGeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGStdParallel1Lat;
+        panEPSGCodes[1] = EPSGStdParallel2Lat;
+        panEPSGCodes[2] = EPSGFalseOriginLat;
+        panEPSGCodes[3] = EPSGFalseOriginLong;
         panEPSGCodes[5] = EPSGFalseOriginEasting;
         panEPSGCodes[6] = EPSGFalseOriginNorthing;
         return TRUE;
