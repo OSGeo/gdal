@@ -8,7 +8,7 @@
 
 2) Update the release date, and number information in gcore/gdal_version.h.
 
-3) Update the VERSION file. 
+3) Update the VERSION file. Update ./swig/python/setup.py version information.
 
 4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION. 
