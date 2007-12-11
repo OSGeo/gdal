@@ -36,7 +36,7 @@
  * C API and defines for OGRFeature, OGRGeometry, and OGRDataSource
  * related classes. 
  * 
- * See also: ogr_geometry.h, ogr_feature.h, ogrsf_frmts.h
+ * See also: ogr_geometry.h, ogr_feature.h, ogrsf_frmts.h, ogr_featurestyle.h
  */
 
 #include "ogr_core.h"
@@ -350,6 +350,53 @@ OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
 /* note: this is also declared in ogrsf_frmts.h */
 void CPL_DLL OGRRegisterAll(void);
 void CPL_DLL OGRCleanupAll(void);
+
+/* -------------------------------------------------------------------- */
+/*      ogrsf_featurestyle.h                                            */
+/* -------------------------------------------------------------------- */
+
+typedef void *OGRStyleMgrH;
+typedef void *OGRStyleToolH;
+
+
+/* OGRStyleMgr */
+
+OGRStyleMgrH CPL_DLL OGR_SM_Create(void *hStyleTable);
+void    CPL_DLL OGR_SM_Destroy(OGRStyleMgrH hSM);
+
+const char CPL_DLL *OGR_SM_InitFromFeature(OGRStyleMgrH hSM, 
+                                           OGRFeatureH hFeat);
+int     CPL_DLL OGR_SM_InitStyleString(OGRStyleMgrH hSM, 
+                                       const char *pszStyleString);
+int     CPL_DLL OGR_SM_GetPartCount(OGRStyleMgrH hSM, 
+                                    const char *pszStyleString);
+OGRStyleToolH CPL_DLL OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId, 
+                                     const char *pszStyleString);
+int     CPL_DLL OGR_SM_AddPart(OGRStyleMgrH hSM, OGRStyleToolH hST);
+
+
+/* OGRStyleTool */
+
+OGRStyleToolH CPL_DLL OGR_ST_Create(OGRSTClassId eClassId);
+void    CPL_DLL OGR_ST_Destroy(OGRStyleToolH hST);
+
+OGRSTClassId CPL_DLL OGR_ST_GetType(OGRStyleToolH hST);
+
+OGRSTUnitId CPL_DLL OGR_ST_GetUnit(OGRStyleToolH hST);
+void    CPL_DLL OGR_ST_SetUnit(OGRStyleToolH hST, OGRSTUnitId eUnit, 
+                               double dfGroundPaperScale);
+
+const char   *OGR_ST_GetParamStr(OGRStyleToolH hST, int eParam, int *bValueIsNull);
+int     CPL_DLL OGR_ST_GetParamNum(OGRStyleToolH hST, int eParam, int *bValueIsNull);
+double  CPL_DLL OGR_ST_GetParamDbl(OGRStyleToolH hST, int eParam, int *bValueIsNull);
+void    CPL_DLL OGR_ST_SetParamStr(OGRStyleToolH hST, int eParam, const char *pszValue);
+void    CPL_DLL OGR_ST_SetParamNum(OGRStyleToolH hST, int eParam, int nValue);
+void    CPL_DLL OGR_ST_SetParamDbl(OGRStyleToolH hST, int eParam, double dfValue);
+const char CPL_DLL *OGR_ST_GetStyleString(OGRStyleToolH hST);
+
+int CPL_DLL OGR_ST_GetRGBFromString(OGRStyleToolH hST, const char *pszColor, 
+                                    int *pnRed, int *pnGreen, int *pnBlue, 
+                                    int *pnAlpha);
 
 CPL_C_END
 
