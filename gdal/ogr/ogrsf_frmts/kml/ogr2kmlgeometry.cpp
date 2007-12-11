@@ -187,17 +187,21 @@ static int OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(), 
                            TRUE );
                            
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 70, 
-                     ppszText, pnMaxLength );
-
         if (NULL == szAltitudeMode) 
         { 
+            _GrowBuffer( *pnLength + strlen(szCoordinate) + 70, 
+                         ppszText, pnMaxLength );
+
             sprintf( *ppszText + *pnLength,  
                      "<Point><coordinates>%s</coordinates></Point>",
                      szCoordinate );
         }
         else
         { 
+            _GrowBuffer( *pnLength + strlen(szCoordinate) 
+                         + strlen(szAltitudeMode) + 70, 
+                         ppszText, pnMaxLength );
+
             sprintf( *ppszText + *pnLength,  
                      "<Point>%s<coordinates>%s</coordinates></Point>", 
                      szAltitudeMode, szCoordinate ); 
