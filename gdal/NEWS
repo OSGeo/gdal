@@ -1,11 +1,43 @@
-GDAL/OGR 1.5.0 - General Changes
---------------------------------
+= GDAL/OGR 1.5.0 = 
+
+'''These are preliminary release notes, the 1.5.0 release has not yet occured.'''
+
+== GDAL/OGR 1.5.0 - General Changes ==
 
 SWIG Bindings:
  * The "Next Generation" Python SWIG bindings are now the default.
  * Python utility and sample scripts migrated to swig/python/scripts and
    swig/python/samples.
  * Added Raster Attribute Tables to swig bindings.
+ * Added Geometry.ExportToKML
+ * Added CreateGeometryFromKML
+ * Added !CreateGeometryFromJson
+ * Added Geometry.!ExportToJson
+
+
+SWIG C# related changes:
+ * Support for the enumerated types of the C# interface
+ * C# namespace names and module names follows the .NET framework naming guidelines
+ * Changed the names of the Windows builds for a better match with the GNU/Linux/OSX builds
+ * The gdalconst assembly is now deprecated
+ * GDAL C# libtool build support 
+ * !CreateFromWkb support
+ * Dataset.!ReadRaster, Dataset.!WriteRaster support 
+ * Added support for Dataset.!BuildOverviews
+ * More examples added 
+
+SWIG Python related changes:
+ * Progress function callback support added.  You can use a Python function, or the standard GDALTermProgress variant
+ * Sugar, sweet, sweet sugar.
+    * ogr.Feature.geometry()
+    * ogr.Feature.items()
+    * ogr.Feature.keys()
+ * doxygen-generated docstrings for ogr.py
+ * geometry pickling
+ * setuptools support
+ * !PyPi http://pypi.python.org/pypi/GDAL/
+ * setup.cfg for configuring major significant items (libs, includes, location of gdal-config0
+ * support building the bindings from *outside* the GDAL source tree
 
 Build:
  * CFG environment variable now ignored.  Instead set CFLAGS and CXXFLAGS
@@ -19,26 +51,24 @@ Other:
    with an error report instead of crashing.
 
 
-GDAL 1.5.0 - Overview of Changes
---------------------------------
+== GDAL 1.5.0 - Overview of Changes ==
 
 Core: 
- * Enable Persistent Auxiliary Metadata (.aux.xml) by default.
+ * Enable Persistent Auxilary Metadata (.aux.xml) by default.
  * Support for "pam proxies" for files in read-only locations. 
- * Create and CreateCopy() pre-Delete output existing dataset.
+ * Create and !CreateCopy pre-Delete output existing dataset.
  * Added Identify() method on drivers (per RFC 11: Fast Format Identify)
- * Implement GetFileList() on datasets (per RFC 12).
- * Implement Delete(), Rename(), Copy() based on GetFileList() (per RFC 12).
+ * Implement !GetFileList() on datasets (per RFC 12).
+ * Implement Delete(), Rename(), Copy() based on !GetFileList() (per RFC 12).
  * vrtdataset.h, memdataset.h and rawdataset.h are now considered part of
    the public GDAL API, and will be installed along with gdal.h, etc. 
  * Support nodata/validity masks per RFC 14: Band Masks. 
- * Plug-in drivers test for ABI compatibility at load time.
+ * Plugin drivers test for ABI compatibility at load time.
  * Creation flags can now be validated (this is used by gdal_translate)
  * Default block cache size changed to 40MB from 10MB.
 
 Algorithms / Utilities:
- * GDALGridCreate(): New API to interpolate scattered point data to grid.
- * gdal_grid: New tool utilizing the scattered point data interpolation API.
+ * gdal_grid: New utility to interpolate point data to a grid.
  * gdal2tiles.py is new for 1.5.0.
  * gdaltransform: stdin/stdout point transformer similar to PROJ.4 cs2cs. 
  * gdalwarp: Several fixes related to destination "nodata" handling and
@@ -47,7 +77,7 @@ Algorithms / Utilities:
  * gdal_rasterize: added -i flag to rasterize all areas outside geometry.
  * gdalenhance: new utility for applying histogram equalization enhancements.
  * gdalmanage: Utility for managing datasets (identify, delete, copy, rename)
- * nearblack: Utility for fixing lossy compressed nodata collars.
+ * nearblack: Utility for fixing lossily compressed nodata collars.
 
 Intergraph Raster Driver:
  * New for 1.5.0.
@@ -162,8 +192,8 @@ Leveller Driver:
 
 
 
-OGR 1.5.0 - Overview of Changes
--------------------------------
+== OGR 1.5.0 - Overview of Changes ==
+
 
 General:
  * Plugin drivers test for ABI compatability at load time.
@@ -179,7 +209,7 @@ OGRSpatialReference:
  * Upgraded to EPSG 6.13. 
  * Operating much better in odd numeric locales.
 
-BNA Driver:
+BNA Driver: 
  * New for 1.5.0.
 
 GPX Driver:
