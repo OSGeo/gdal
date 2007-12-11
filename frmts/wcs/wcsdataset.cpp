@@ -689,8 +689,10 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                                     osBandList.c_str() );
         }
 
-        dfMaxX -= adfGeoTransform[1];
-        dfMinY -= adfGeoTransform[5];
+        dfMaxX -= adfGeoTransform[1] * 0.5;
+        dfMinX += adfGeoTransform[1] * 0.5;
+        dfMinY -= adfGeoTransform[5] * 0.5;
+        dfMaxY += adfGeoTransform[5] * 0.5;
 
         // Carefully adjust bounds for pixel centered values at new 
         // sampling density.
@@ -700,14 +702,16 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 
         if( nBufXSize != nXSize || nBufYSize != nYSize )
         {
-//            printf( "In scary code...\n" );
             dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
             dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
             
-            dfMinX = adfGeoTransform[0] + dfXStep * 0.5;
-            dfMaxX = dfMinX + dfXStep * (nBufXSize-1);
-            dfMaxY = adfGeoTransform[3] + dfYStep * 0.5;
-            dfMinY = dfMaxY + dfYStep * (nBufYSize-1);
+            dfMinX = nXOff * adfGeoTransform[1] + adfGeoTransform[0] 
+                + dfXStep * 0.5;
+            dfMaxX = dfMinX + (nBufXSize - 1) * dfXStep;
+
+            dfMaxY = nYOff * adfGeoTransform[5] + adfGeoTransform[3] 
+                + dfYStep * 0.5;
+            dfMinY = dfMaxY + (nBufYSize - 1) * dfYStep;
         }
 
         osRequest.Printf( 
