@@ -3594,6 +3594,42 @@ void GTiffDataset::SetupTFW( const char *pszTIFFilename )
     CPLFree( pszBasename );
 }
 
+static int GTiffGetZLevel(char** papszOptions)
+{
+    int nZLevel = -1;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "ZLEVEL" );
+    if( pszValue  != NULL )
+    {
+        nZLevel =  atoi( pszValue );
+        if (!(nZLevel >= 1 && nZLevel <= 9))
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                    "ZLEVEL=%s value not recognised, ignoring.",
+                    pszValue );
+            nZLevel = -1;
+        }
+    }
+    return nZLevel;
+}
+
+static int GTiffGetJpegQuality(char** papszOptions)
+{
+    int nJpegQuality = -1;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "JPEG_QUALITY" );
+    if( pszValue  != NULL )
+    {
+        nJpegQuality = atoi( pszValue );
+        if (!(nJpegQuality >= 1 && nJpegQuality <= 100))
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                    "JPEG_QUALITY=%s value not recognised, ignoring.",
+                    pszValue );
+            nJpegQuality = -1;
+        }
+    }
+    return nJpegQuality;
+}
+
 /************************************************************************/
 /*                            GTiffCreate()                             */
 /*                                                                      */
@@ -3612,7 +3648,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
-    int                 nPredictor = 1, nJpegQuality = -1, nZLevel = 6;
+    int                 nPredictor = 1, nJpegQuality = -1, nZLevel = -1;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -3704,22 +3740,9 @@ TIFF *GTiffCreate( const char * pszFilename,
     if( pszValue  != NULL )
         nPredictor =  atoi( pszValue );
 
-    pszValue = CSLFetchNameValue( papszParmList, "ZLEVEL" );
-    if( pszValue  != NULL )
-    {
-        nZLevel =  atoi( pszValue );
-        if (!(nZLevel >= 1 && nZLevel <= 9))
-        {
-            CPLError( CE_Warning, CPLE_IllegalArg, 
-                      "ZLEVEL=%s value not recognised, ignoring.",
-                      pszValue );
-            nZLevel = 6;
-        }
-    }
+    nZLevel = GTiffGetZLevel(papszParmList);
 
-    pszValue = CSLFetchNameValue( papszParmList, "JPEG_QUALITY" );
-    if( pszValue  != NULL )
-        nJpegQuality = atoi( pszValue );
+    nJpegQuality = GTiffGetJpegQuality(papszParmList);
 
 /* -------------------------------------------------------------------- */
 /*      Check if we are producing an uncompressed file and it is        */
@@ -3964,7 +3987,8 @@ TIFF *GTiffCreate( const char * pszFilename,
     if ( nCompression == COMPRESSION_LZW ||
          nCompression == COMPRESSION_ADOBE_DEFLATE )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
-    if (nCompression == COMPRESSION_ADOBE_DEFLATE)
+    if (nCompression == COMPRESSION_ADOBE_DEFLATE
+        && nZLevel != -1)
         TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
     if( nCompression == COMPRESSION_JPEG 
         && nJpegQuality != -1 )
@@ -4454,6 +4478,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     TIFFWriteDirectory( hTIFF );
     TIFFFlush( hTIFF );
     XTIFFClose( hTIFF );
+    hTIFF = NULL;
 
     if( eErr != CE_None )
     {
@@ -4465,17 +4490,40 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Re-open as a dataset and copy over missing metadata using       */
 /*      PAM facilities.                                                 */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS;
+    GTiffDataset *poDS;
 
-    poDS = (GDALPamDataset *) GDALOpen( pszFilename, GA_Update );
+    poDS = (GTiffDataset *) GDALOpen( pszFilename, GA_Update );
     if( poDS == NULL )
-        poDS = (GDALPamDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+        poDS = (GTiffDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDS != NULL && EQUAL(pszProfile,"GDALGeoTIFF") )
     {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
     }
+    
+    hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
 
+    /* We must re-set the compression level at this point, since it has */
+    /* been lost a few lines above when closing the newly create TIFF file */
+    /* The TIFFTAG_ZIPQUALITY & TIFFTAG_JPEGQUALITY are not store in the TIFF file. */
+    /* They are just TIFF session parameters */
+    if (nCompression == COMPRESSION_ADOBE_DEFLATE)
+    {
+        int nZLevel = GTiffGetZLevel(papszOptions);
+        if (nZLevel != -1)
+        {
+            TIFFSetField( hTIFF, TIFFTAG_ZIPQUALITY, nZLevel );
+        }
+    }
+    else if( nCompression == COMPRESSION_JPEG)
+    {
+        int nJpegQuality = GTiffGetJpegQuality(papszOptions);
+        if (nJpegQuality != -1)
+        {
+            TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
