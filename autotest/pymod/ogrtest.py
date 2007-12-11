@@ -32,6 +32,9 @@ sys.path.append( '../pymod' )
 import ogr as ogr
 import gdaltest
 
+geos_flag = None
+
+
 ###############################################################################
 def check_features_against_list( layer, field_name, value_list ):
 
@@ -162,3 +165,26 @@ def quick_create_feature( layer, field_values, wkt_geometry ):
     
     if result != 0:
         raise ValueError, 'CreateFeature() failed in ogrtest.quick_create_feature()'
+
+###############################################################################
+def have_geos():
+    global geos_flag
+    
+    if geos_flag is None:
+        pnt1 = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
+        pnt2 = ogr.CreateGeometryFromWkt( 'POINT(30 20)' )
+
+        try:
+            result = pnt1.Union( pnt2 )
+        except:
+            result = None
+
+        pnt1.Destroy()
+        pnt2.Destroy()
+        
+        if result is None:
+            geos_flag = 0
+        else:
+            geos_flag = 1
+
+    return geos_flag
