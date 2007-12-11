@@ -39,22 +39,17 @@ import ogr
 
 def ogr_geos_union():
 
+    if not ogrtest.have_geos():
+        return 'skip'
+
     pnt1 = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
     pnt2 = ogr.CreateGeometryFromWkt( 'POINT(30 20)' )
 
-    try:
-        result = pnt1.Union( pnt2 )
-    except:
-        result = None
+    result = pnt1.Union( pnt2 )
 
     pnt1.Destroy()
     pnt2.Destroy()
         
-    if result is None:
-        gdaltest.have_geos = 0
-        return 'skip'
-
-    gdaltest.have_geos = 1
     if ogrtest.check_feature_geometry( result, 'MULTIPOINT (10 20,30 20)' ):
         return 'fail'
 
@@ -67,7 +62,7 @@ def ogr_geos_union():
 
 def ogr_geos_intersection():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -91,7 +86,7 @@ def ogr_geos_intersection():
 
 def ogr_geos_difference():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -116,7 +111,7 @@ def ogr_geos_difference():
 
 def ogr_geos_symmetric_difference():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -141,7 +136,7 @@ def ogr_geos_symmetric_difference():
 
 def ogr_geos_intersect():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0, 10 10)' )
@@ -175,7 +170,7 @@ def ogr_geos_intersect():
 
 def ogr_geos_disjoint():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0, 10 10)' )
@@ -209,7 +204,7 @@ def ogr_geos_disjoint():
 
 def ogr_geos_touches():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0, 10 10)' )
@@ -243,7 +238,7 @@ def ogr_geos_touches():
 
 def ogr_geos_crosses():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0, 10 10)' )
@@ -276,7 +271,7 @@ def ogr_geos_crosses():
 
 def ogr_geos_within():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -303,7 +298,7 @@ def ogr_geos_within():
 
 def ogr_geos_contains():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -330,7 +325,7 @@ def ogr_geos_contains():
 
 def ogr_geos_overlaps():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -351,7 +346,7 @@ def ogr_geos_overlaps():
 
 def ogr_geos_centroid():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
@@ -369,12 +364,6 @@ def ogr_geos_centroid():
 
     return 'success'
 
-###############################################################################
-# cleanup
-
-def ogr_geos_cleanup():
-    return 'success'
-
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
@@ -387,8 +376,7 @@ gdaltest_list = [
     ogr_geos_within,
     ogr_geos_contains,
     ogr_geos_overlaps,
-    ogr_geos_centroid,
-    ogr_geos_cleanup ]
+    ogr_geos_centroid ]
 
 if __name__ == '__main__':
 
