@@ -312,6 +312,122 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
 
+
+/************************************************************************/
+/*                  ogr_featurestyle.h related definitions.             */
+/************************************************************************/
+
+/**
+ * OGRStyleTool derived class types (returned by GetType()).
+ */
+
+typedef enum ogr_style_tool_class_id
+{
+    OGRSTCNone   = 0,
+    OGRSTCPen    = 1,
+    OGRSTCBrush  = 2,
+    OGRSTCSymbol = 3,
+    OGRSTCLabel  = 4,
+    OGRSTCVector = 5
+} OGRSTClassId;
+
+/**
+ * List of units supported by OGRStyleTools.
+ */
+typedef enum ogr_style_tool_units_id
+{
+    OGRSTUGround = 0,
+    OGRSTUPixel  = 1,
+    OGRSTUPoints = 2,
+    OGRSTUMM     = 3,
+    OGRSTUCM     = 4,
+    OGRSTUInches = 5
+} OGRSTUnitId;
+
+/**
+ * List of parameters for use with OGRStylePen.
+ */
+typedef enum ogr_style_tool_param_pen_id
+{  
+    OGRSTPenColor       = 0,                   
+    OGRSTPenWidth       = 1,                   
+    OGRSTPenPattern     = 2,
+    OGRSTPenId          = 3,
+    OGRSTPenPerOffset   = 4,
+    OGRSTPenCap         = 5,
+    OGRSTPenJoin        = 6,
+    OGRSTPenPriority    = 7,
+    OGRSTPenLast        = 8
+              
+} OGRSTPenParam;
+
+/**
+ * List of parameters for use with OGRStyleBrush.
+ */
+typedef enum ogr_style_tool_param_brush_id
+{  
+    OGRSTBrushFColor    = 0,                   
+    OGRSTBrushBColor    = 1,                   
+    OGRSTBrushId        = 2,
+    OGRSTBrushAngle     = 3,                   
+    OGRSTBrushSize      = 4,
+    OGRSTBrushDx        = 5,
+    OGRSTBrushDy        = 6,
+    OGRSTBrushPriority  = 7,
+    OGRSTBrushLast      = 8
+              
+} OGRSTBrushParam;
+
+
+/**
+ * List of parameters for use with OGRStyleSymbol.
+ */
+typedef enum ogr_style_tool_param_symbol_id
+{  
+    OGRSTSymbolId       = 0,
+    OGRSTSymbolAngle    = 1,
+    OGRSTSymbolColor    = 2,
+    OGRSTSymbolSize     = 3,
+    OGRSTSymbolDx       = 4,
+    OGRSTSymbolDy       = 5,
+    OGRSTSymbolStep     = 6,
+    OGRSTSymbolPerp     = 7,
+    OGRSTSymbolOffset   = 8,
+    OGRSTSymbolPriority = 9,
+    OGRSTSymbolFontName = 10,
+    OGRSTSymbolLast     = 11
+              
+} OGRSTSymbolParam;
+
+/**
+ * List of parameters for use with OGRStyleLabel.
+ */
+typedef enum ogr_style_tool_param_label_id
+{  
+    OGRSTLabelFontName  = 0,
+    OGRSTLabelSize      = 1,
+    OGRSTLabelTextString = 2,
+    OGRSTLabelAngle     = 3,
+    OGRSTLabelFColor    = 4,
+    OGRSTLabelBColor    = 5,
+    OGRSTLabelPlacement = 6,
+    OGRSTLabelAnchor    = 7,
+    OGRSTLabelDx        = 8,
+    OGRSTLabelDy        = 9,
+    OGRSTLabelPerp      = 10,
+    OGRSTLabelBold      = 11,
+    OGRSTLabelItalic    = 12,
+    OGRSTLabelUnderline = 13,
+    OGRSTLabelPriority  = 14,
+    OGRSTLabelStrikeout = 15,
+    OGRSTLabelStretch   = 16,
+    OGRSTLabelAdjHor    = 17,
+    OGRSTLabelAdjVert   = 18,
+    OGRSTLabelHColor    = 19,
+    OGRSTLabelLast      = 20
+              
+} OGRSTLabelParam;
+
 /* ------------------------------------------------------------------- */
 /*                        Version checking                             */
 /* -------------------------------------------------------------------- */

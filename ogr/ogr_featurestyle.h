@@ -32,115 +32,31 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_core.h"
 
 class OGRFeature;
 
-typedef enum ogr_style_tool_class_id
-{
-    OGRSTCNone,
-    OGRSTCPen,
-    OGRSTCBrush,
-    OGRSTCSymbol,
-    OGRSTCLabel,
-    OGRSTCVector
-} OGRSTClassId;
 
-typedef enum ogr_style_tool_units_id
-{
-    OGRSTUGround,
-    OGRSTUPixel,
-    OGRSTUPoints,
-    OGRSTUMM,
-    OGRSTUCM,
-    OGRSTUInches
-} OGRSTUnitId;
-
-typedef enum ogr_style_tool_param_pen_id
-{  
-    OGRSTPenColor = 0,                   
-    OGRSTPenWidth,                   
-    OGRSTPenPattern,
-    OGRSTPenId,
-    OGRSTPenPerOffset,
-    OGRSTPenCap,
-    OGRSTPenJoin,
-    OGRSTPenPriority,
-    OGRSTPenLast
-              
-} OGRSTPenParam;
-
-typedef enum ogr_style_tool_param_brush_id
-{  
-    OGRSTBrushFColor = 0,                   
-    OGRSTBrushBColor,                   
-    OGRSTBrushId,
-    OGRSTBrushAngle,                   
-    OGRSTBrushSize,
-    OGRSTBrushDx,
-    OGRSTBrushDy,
-    OGRSTBrushPriority,
-    OGRSTBrushLast
-              
-} OGRSTBrushParam;
-
-
-
-typedef enum ogr_style_tool_param_symbol_id
-{  
-    OGRSTSymbolId = 0,
-    OGRSTSymbolAngle,
-    OGRSTSymbolColor,
-    OGRSTSymbolSize,
-    OGRSTSymbolDx,
-    OGRSTSymbolDy,
-    OGRSTSymbolStep,
-    OGRSTSymbolPerp,
-    OGRSTSymbolOffset,
-    OGRSTSymbolPriority,
-    OGRSTSymbolFontName,
-    OGRSTSymbolLast
-              
-} OGRSTSymbolParam;
-
-typedef enum ogr_style_tool_param_label_id
-{  
-    OGRSTLabelFontName = 0,
-    OGRSTLabelSize,
-    OGRSTLabelTextString,
-    OGRSTLabelAngle,
-    OGRSTLabelFColor,
-    OGRSTLabelBColor,
-    OGRSTLabelPlacement,
-    OGRSTLabelAnchor,
-    OGRSTLabelDx,
-    OGRSTLabelDy,
-    OGRSTLabelPerp,
-    OGRSTLabelBold,
-    OGRSTLabelItalic,
-    OGRSTLabelUnderline,
-    OGRSTLabelPriority,
-    OGRSTLabelStrikeout,
-    OGRSTLabelStretch,
-    OGRSTLabelAdjHor,
-    OGRSTLabelAdjVert,
-    OGRSTLabelHColor,
-    OGRSTLabelLast
-              
-} OGRSTLabelParam;
-
+/* All OGRStyleTool param lists are defined in ogr_core.h, except for 
+ * OGRSTVectorParam which is kept here because we do not want to expose
+ * it to the C API.
+ * 
+ * The OGRStyleVector class (and OGRSTVectorParam enum) are currently unused
+ * and will likely be removed in a future release, so their use is discouraged.
+ */
 typedef enum ogr_style_tool_param_vector_id
 {  
-    OGRSTVectorId = 0,
-    OGRSTVectorNoCompress,
-    OGRSTVectorSprain,
-    OGRSTVectorNoSlope,
-    OGRSTVectorMirroring,
-    OGRSTVectorCentering,
-    OGRSTVectorPriority,
-    OGRSTVectorPlacement,
-    OGRSTVectorLength,
-    OGRSTVectorEven,
-    OGRSTVectorLast
+    OGRSTVectorId       = 0,
+    OGRSTVectorNoCompress = 1,
+    OGRSTVectorSprain   = 2,
+    OGRSTVectorNoSlope  = 3,
+    OGRSTVectorMirroring = 4,
+    OGRSTVectorCentering = 5,
+    OGRSTVectorPriority = 6,
+    OGRSTVectorPlacement = 7,
+    OGRSTVectorLength   = 8,
+    OGRSTVectorEven     = 9,
+    OGRSTVectorLast     = 10
               
 } OGRSTVectorParam;
 
@@ -532,6 +448,12 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
      void SetParamDbl(OGRSTLabelParam eParam, double dfParam);
      const char *GetStyleString();
 };
+
+
+/* IMPORTANT NOTE:
+ * The OGRStyleVector class (and OGRSTVectorParam enum) are currently unused
+ * and will likely be removed in a future release, so their use is discouraged.
+ */
 
 class CPL_DLL OGRStyleVector : public OGRStyleTool
 {
