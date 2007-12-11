@@ -711,6 +711,318 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 }
 
 /************************************************************************/
+/*                          organizePolygons()                          */
+/************************************************************************/
+
+/**
+ * Organize polygons based on geometries.
+ *
+ * Analyse a set of rings (passed as simple polygons), and based on a 
+ * geometric analysis convert them into a polygon with inner rings, 
+ * or a MultiPolygon if dealing with more than one polygon.  The 
+ * contains analysis is done with GEOS if available, otherwise using a
+ * less robust approach based on ring envelopes. 
+ *
+ * All the input geometries must be OGRPolygons with only an exterior
+ * ring and no interior rings. 
+ *
+ * The passed in geometries become the responsibility of the method, but the
+ * papoPolygons "pointer array" remains owned by the caller.
+ * 
+ * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
+ * Ownership of the geometries is passed, but not of the array itself.
+ * @param nPolygonCount number of items in papoPolygons
+ * @param pbIsValidGeometry value will be set TRUE if result is valid or 
+ * FALSE otherwise. 
+ *
+ * @return a single resulting geometry (either OGRPolygon or OGRMultiPolygon).
+ */
+
+enum
+{
+    CONTAINS,
+    IS_CONTAINED_BY,
+    NOT_RELATED
+};
+
+OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
+                                                   int nPolygonCount,
+                                                   int *pbIsValidGeometry )
+{
+    int i, j;
+    OGRGeometry* geom = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Trivial case of a single polygon.                               */
+/* -------------------------------------------------------------------- */
+    if (nPolygonCount == 1)
+    {
+        geom = papoPolygons[0];
+        papoPolygons[0] = NULL;
+
+        if( pbIsValidGeometry )
+            *pbIsValidGeometry = TRUE;
+
+        return geom;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      A wee bit of a warning.                                         */
+/* -------------------------------------------------------------------- */
+    static int firstTime = 1;
+    if (!haveGEOS() && firstTime)
+    {
+        CPLDebug("OGR",
+                 "GDAL should be built with GEOS support enabled in order the "
+                 "SHAPE driver to provide reliable results on complex polygons.");
+        firstTime = 0;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup per polygon relation, envelope and area information.      */
+/* -------------------------------------------------------------------- */
+    OGREnvelope* envelopes = new OGREnvelope[nPolygonCount];
+    int** relations = new int*[nPolygonCount];
+    double* areas = new double[nPolygonCount];
+    int go_on = TRUE;
+    int bMixedUpGeometries = FALSE;
+    int bNonPolygon = FALSE;
+
+    for(i=0;i<nPolygonCount;i++)
+    {
+        relations[i] = new int[nPolygonCount];
+        papoPolygons[i]->getEnvelope(&envelopes[i]);
+
+        if( wkbFlatten(papoPolygons[i]->getGeometryType()) == wkbPolygon
+            && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0 )
+        {
+            areas[i] = ((OGRPolygon *)papoPolygons[i])->get_Area();
+        }
+        else
+        {
+            if( !bMixedUpGeometries )
+            {
+                CPLError( 
+                    CE_Warning, CPLE_AppDefined, 
+                    "organizePolygons() received an unexpected geometry.\n"
+                    "Either a polygon with interior rings, or a non-Polygon\n"
+                    "geometry.  Return arguments as a collection." );
+                bMixedUpGeometries = TRUE;
+            }
+            if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
+                bNonPolygon = TRUE;
+        }
+            
+    }
+        
+    /* This a several step algorithm :
+       1) Compute in a matrix how polygons relate to each other
+       (this is the moment for detecting pathological intersections and exiting)
+       2) For each polygon, find the smallest enclosing polygon
+       3) For each polygon, compute its inclusion depth (0 means toplevel)
+       4) For each polygon of odd depth (= inner ring), add it to its outer ring
+        
+       Complexity : O(nPolygonCount^2)
+    */
+        
+    /* Compute how each polygon relate to the other ones
+       To save a bit of computation we always begin the computation by a test 
+       on the enveloppe. We also take into account the areas to avoid some 
+       useless tests.  (A contains B implies envelop(A) contains envelop(B) 
+       and area(A) > area(B)) In practise, we can hope that few full geometry 
+       intersection of inclusion test is done:
+       * if the polygons are well separated geographically (a set of islands 
+       for example), no full geometry intersection or inclusion test is done. 
+       (the envelopes don't intersect each other)
+
+       * if the polygons are 'lake inside an island inside a lake inside an 
+       area' and that each polygon is much smaller than its enclosing one, 
+       their bounding boxes are stricly contained into each oter, and thus, 
+       no full geometry intersection or inclusion test is done
+    */
+
+/* -------------------------------------------------------------------- */
+/*      Compute relationships, if things seem well structured.          */
+/* -------------------------------------------------------------------- */
+    for(i=0; !bMixedUpGeometries && go_on && i<nPolygonCount; i++)
+    {
+        for(j=i+1; go_on && j<nPolygonCount;j++)
+        {
+            if (areas[i] > areas[j]
+                && envelopes[i].Contains(envelopes[j])
+                && (!haveGEOS() ||papoPolygons[i]->Contains(papoPolygons[j])))
+            {
+                relations[i][j] = CONTAINS;
+                relations[j][i] = IS_CONTAINED_BY;
+            }
+            else if (areas[j] > areas[i]
+                     && envelopes[j].Contains(envelopes[i])
+                     && (!haveGEOS() 
+                         || papoPolygons[j]->Contains(papoPolygons[i])) )
+            {
+                relations[j][i] = CONTAINS;
+                relations[i][j] = IS_CONTAINED_BY;
+            }
+
+            /* We use Overlaps instead of Intersects to be more 
+               tolerant about touching polygons */ 
+            else if ( !envelopes[i].Intersects(envelopes[j])
+                     || (haveGEOS() && !papoPolygons[i]->Overlaps(papoPolygons[j])) )
+            {
+                relations[i][j] = NOT_RELATED;
+                relations[j][i] = NOT_RELATED;
+            }
+            else
+            {
+                /* Bad... The polygons are intersecting but no one is
+                   contained inside the other one. This is a really broken
+                   case. We just make a multipolygon with the whole set of
+                   polygons */
+                go_on = FALSE;
+#ifdef notdef
+                CPLDebug( "OGR", 
+                          "Bad intersection for polygons %d and %d\n"
+                          "geom %d: %s\n"
+                          "geom %d: %s", 
+                          i, j, i, wkt1, j, wkt2 );
+                char* wkt1;
+                char* wkt2;
+                papoPolygons[i]->exportToWkt(&wkt1);
+                papoPolygons[j]->exportToWkt(&wkt2);
+                fprintf(stderr, "geom %d : %s\n", i, wkt1);
+                fprintf(stderr, "geom %d : %s\n", j, wkt2);
+                CPLFree(wkt1);
+                CPLFree(wkt2);
+#endif
+            }
+        }
+    }
+
+    if (pbIsValidGeometry)
+        *pbIsValidGeometry = go_on && !bMixedUpGeometries;
+
+/* -------------------------------------------------------------------- */
+/*      Things broke down - just turn everything into a multipolygon.   */
+/* -------------------------------------------------------------------- */
+    if ( !go_on || bMixedUpGeometries )
+    {
+        if( bNonPolygon )
+            geom = new OGRGeometryCollection();
+        else
+            geom = new OGRMultiPolygon();
+
+        for( i=0; i < nPolygonCount; i++ )
+        {
+            ((OGRGeometryCollection*)geom)->
+                addGeometryDirectly( papoPolygons[i] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to turn into one or more polygons based on the ring         */
+/*      relationships.                                                  */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int* directContainerIndex = new int[nPolygonCount];
+
+        /* Find the smallest enclosing polygon of each polygon */
+        for(i=0;i<nPolygonCount;i++)
+        {
+            int jSmallestContainer = -1;
+            double areaSmallestContainer = 0;
+            for(j=0;j<nPolygonCount;j++)
+            {
+                if (i != j)
+                {
+                    if (relations[i][j] == IS_CONTAINED_BY)
+                    {
+                        if (jSmallestContainer < 0 || areas[j] < areaSmallestContainer)
+                        {
+                            jSmallestContainer = j;
+                            areaSmallestContainer = areas[j];
+                        }
+                    }
+                }
+            }
+            directContainerIndex[i] = jSmallestContainer;
+        }
+
+        /* Compute the inclusion depth of each polygon */
+        int* containedDepth = new int [nPolygonCount];
+        for(i=0;i<nPolygonCount;i++)
+        {
+            int depth = 0;
+            int j = directContainerIndex[i];
+            while (j >= 0)
+            {
+                j = directContainerIndex[j];
+                depth++;
+            }
+            containedDepth[i] = depth;
+//          fprintf(stderr, "%d is of depth %d\n", i, depth);
+        }
+
+        int nbTopLevelPolygons = 0;
+        OGRPolygon** tempPolygons = new OGRPolygon*[nPolygonCount]; 
+
+        /* Create a copy of toplevel polygons */
+        for(i=0;i<nPolygonCount;i++)
+        {
+            if ((containedDepth[i] % 2) == 0)
+            {
+                nbTopLevelPolygons ++;
+                tempPolygons[i] = (OGRPolygon*)papoPolygons[i];
+                papoPolygons[i] = NULL;
+                if (nbTopLevelPolygons == 1)
+                    geom = tempPolygons[i];
+            }
+        }
+
+        /* Add interior rings to toplevel polygons */
+        for(i=0;i<nPolygonCount;i++)
+        {
+            if ((containedDepth[i] % 2) == 1)
+            {
+                tempPolygons[directContainerIndex[i]]->addRing(
+                    ((OGRPolygon *)papoPolygons[i])->getExteriorRing());
+                delete papoPolygons[i];
+            }
+        }
+
+        if (nbTopLevelPolygons > 1)
+        {
+            geom = new OGRMultiPolygon();
+
+            /* Add toplevel polygons to the multipolygon */
+            for(i=0;i<nPolygonCount;i++)
+            {
+                if ((containedDepth[i] % 2) == 0)
+                {
+                    ((OGRMultiPolygon*)geom)->addGeometryDirectly(
+                        tempPolygons[i]);
+                    tempPolygons[i] = NULL;
+                }
+            }
+        }
+
+        delete[] tempPolygons;
+        delete[] directContainerIndex;
+        delete[] containedDepth;
+    }
+
+    for(i=0;i<nPolygonCount;i++)
+    {
+        delete[] relations[i];
+    }
+    delete[] relations;
+    delete[] areas;
+    delete[] envelopes;
+
+    return geom;
+}
+
+/************************************************************************/
 /*                           createFromGML()                            */
 /************************************************************************/
 
