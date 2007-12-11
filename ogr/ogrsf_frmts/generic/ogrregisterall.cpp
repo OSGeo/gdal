@@ -63,9 +63,6 @@ void OGRRegisterAll()
 #ifdef VRT_ENABLED
     RegisterOGRVRT();
 #endif
-#ifdef AVCBIN_ENABLED
-    RegisterOGRAVCBin();
-#endif
 #ifdef REC_ENABLED
     RegisterOGRREC();
 #endif
@@ -123,6 +120,9 @@ void OGRRegisterAll()
 #endif
 #ifdef SDE_ENABLED
     RegisterOGRSDE();
+#endif
+#ifdef AVCBIN_ENABLED
+    RegisterOGRAVCBin();
 #endif
 #ifdef DWGDIRECT_ENABLED
     RegisterOGRDXFDWG();
