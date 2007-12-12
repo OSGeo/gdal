@@ -684,7 +684,7 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
  * caller otherwise the underlying file will remain in existance. 
  *
  * @param pszFilename the name of the file to grab the buffer of.
- * @param buffer (file) length returned in this variable.
+ * @param pnDataLength (file) length returned in this variable.
  * @param bUnlinkAndSeize TRUE to remove the file, or FALSE to leave unaltered.
  *
  * @return pointer to memory buffer or NULL on failure.
