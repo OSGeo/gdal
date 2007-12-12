@@ -386,7 +386,7 @@ OGRSTUnitId CPL_DLL OGR_ST_GetUnit(OGRStyleToolH hST);
 void    CPL_DLL OGR_ST_SetUnit(OGRStyleToolH hST, OGRSTUnitId eUnit, 
                                double dfGroundPaperScale);
 
-const char   *OGR_ST_GetParamStr(OGRStyleToolH hST, int eParam, int *bValueIsNull);
+const char CPL_DLL *OGR_ST_GetParamStr(OGRStyleToolH hST, int eParam, int *bValueIsNull);
 int     CPL_DLL OGR_ST_GetParamNum(OGRStyleToolH hST, int eParam, int *bValueIsNull);
 double  CPL_DLL OGR_ST_GetParamDbl(OGRStyleToolH hST, int eParam, int *bValueIsNull);
 void    CPL_DLL OGR_ST_SetParamStr(OGRStyleToolH hST, int eParam, const char *pszValue);
