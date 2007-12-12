@@ -2055,7 +2055,7 @@ const char *OGR_ST_GetStyleString( OGRStyleToolH hST )
  * errors.
  */
 
-int OGR_ST_GetRGBFRomString( OGRStyleToolH hST, const char *pszColor, 
+int OGR_ST_GetRGBFromString( OGRStyleToolH hST, const char *pszColor, 
                              int *pnRed, int *pnGreen, int *pnBlue,
                              int *pnAlpha )
 {
