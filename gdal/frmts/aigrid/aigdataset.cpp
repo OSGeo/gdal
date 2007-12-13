@@ -361,6 +361,8 @@ char **AIGDataset::GetFileList()
 void AIGDataset::ReadRAT()
 
 {
+#ifndef OGR_ENABLED
+#else
 /* -------------------------------------------------------------------- */
 /*      Check if we have an associated info directory.  If not          */
 /*      return quietly.                                                 */
@@ -473,6 +475,7 @@ void AIGDataset::ReadRAT()
 /* -------------------------------------------------------------------- */
 
     AVCBinReadClose( psFile );
+#endif /* OGR_ENABLED */
 }
 
 /************************************************************************/
