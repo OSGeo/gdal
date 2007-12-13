@@ -42,6 +42,11 @@
 
 %feature("compactdefaultargs");
 
+#ifdef SWIGCSHARP
+%csconst(1);
+%include "ogr_srs_const.h"
+%csconst(0);
+#else
 %constant char *SRS_PT_ALBERS_CONIC_EQUAL_AREA	= SRS_PT_ALBERS_CONIC_EQUAL_AREA;
 %constant char *SRS_PT_AZIMUTHAL_EQUIDISTANT	= SRS_PT_AZIMUTHAL_EQUIDISTANT;
 %constant char *SRS_PT_CASSINI_SOLDNER		= SRS_PT_CASSINI_SOLDNER;
@@ -129,6 +134,7 @@
 
 %constant double SRS_WGS84_SEMIMAJOR             = SRS_WGS84_SEMIMAJOR;
 %constant double SRS_WGS84_INVFLATTENING         = SRS_WGS84_INVFLATTENING;
+#endif
 
 %{
 #include <iostream>
