@@ -929,7 +929,8 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      on latitude.                                                    */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL
-        && EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
+        && ( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) 
+             || EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) ))
     {
         if( GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) < 0.0 )
         {
