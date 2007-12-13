@@ -1436,7 +1436,13 @@ char *OGRGeometry::exportToGML() const
 
 char *OGRGeometry::exportToKML() const
 {
+#ifdef OGR_ENABLED
     return OGR_G_ExportToKML( (OGRGeometryH) this, NULL );
+#else
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "OGRGeometry::exportToKML() not supported in builds without OGR drivers." );
+    return NULL;
+#endif
 }
 
 /************************************************************************/
@@ -1457,8 +1463,14 @@ char *OGRGeometry::exportToKML() const
 
 char *OGRGeometry::exportToJson() const
 {
+#ifdef OGR_ENABLED
     OGRGeometry* poGeometry = const_cast<OGRGeometry*>(this);
     return OGR_G_ExportToJson( static_cast<OGRGeometryH>(poGeometry) );
+#else
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "OGRGeometry::exportToJson() not supported in builds without OGR drivers." );
+    return NULL;
+#endif
 }
 
 /************************************************************************/
