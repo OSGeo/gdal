@@ -415,6 +415,14 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     int block_size = (nBlockXSize * bits_per_pixel + 7) / 8 * nBlockYSize;
     int bitmap_size = (nBlockXSize * nBlockYSize + 7) / 8;
 
+
+    if (length == 0) {
+        // ArcSDE says the block has no data in it.
+        // Write 0's and be done with it
+        memset( pImage, 0, 
+                nBlockXSize*nBlockYSize*GDALGetDataTypeSize(eDataType)/8);
+        return CE_None;
+    }
     if ((length == block_size) || (length == (block_size + bitmap_size))) {
     if (bits_per_pixel >= 8) {
         memcpy(pImage, pixels, block_size);
