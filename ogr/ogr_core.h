@@ -43,7 +43,7 @@
  * Simple container for a bounding region.
  */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 class CPL_DLL OGREnvelope
 {
   public:
