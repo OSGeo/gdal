@@ -53,7 +53,6 @@
 CPL_CVSID("$Id$");
 
 #define C_LEVELS	32
-#define C_SHIFT  	3
 
 static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap );
 
