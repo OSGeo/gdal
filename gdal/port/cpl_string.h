@@ -131,7 +131,7 @@ CPL_C_END
 /*                              CPLString                               */
 /************************************************************************/
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 #include <string>
 
@@ -208,6 +208,6 @@ public:
     CPLString &Trim();
 };
 
-#endif /* def __cplusplus */
+#endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 
 #endif /* _CPL_STRING_H_INCLUDED */
