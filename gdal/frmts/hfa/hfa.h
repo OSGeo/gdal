@@ -144,6 +144,7 @@ int CPL_DLL HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel);
 
 const Eprj_MapInfo CPL_DLL *HFAGetMapInfo( HFAHandle );
 int CPL_DLL HFAGetGeoTransform( HFAHandle, double* );
+CPLErr CPL_DLL HFASetGeoTransform( HFAHandle, const char*, const char*,double*);
 CPLErr CPL_DLL HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
 const Eprj_Datum CPL_DLL *HFAGetDatum( HFAHandle );
 CPLErr CPL_DLL HFASetDatum( HFAHandle, const Eprj_Datum * );
@@ -205,6 +206,10 @@ int CPL_DLL
 HFAReadXFormStack( HFAHandle psInfo, 
                    Efga_Polynomial **ppasPolyListForward,
                    Efga_Polynomial **ppasPolyListReverse );
+CPLErr CPL_DLL
+HFAWriteXFormStack( HFAHandle psInfo, int nBand, int nXFormCount,
+                    Efga_Polynomial **ppasPolyListForward,
+                    Efga_Polynomial **ppasPolyListReverse );
 int CPL_DLL 
 HFAEvaluateXFormStack( int nStepCount, int bForward,
                        Efga_Polynomial *pasPolyList,
