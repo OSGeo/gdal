@@ -49,9 +49,6 @@ CPL_CVSID("$Id$");
 #define	GMC_B_DEPTH		5		/* # bits/pixel to use */
 #define	GMC_B_LEN		(1L<<GMC_B_DEPTH)
 
-#define	C_DEPTH		2
-#define	C_LEN		(1L<<C_DEPTH)	/* # cells/color to use */
-
 #define	COLOR_SHIFT	(COLOR_DEPTH-GMC_B_DEPTH)
 
 typedef	struct colorbox {
