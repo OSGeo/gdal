@@ -133,8 +133,39 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     dfMinY = extent.miny;
     dfMaxX = extent.maxx;
     dfMaxY = extent.maxy;
-    
-    
+
+    CPLDebug("SDERASTER", "minx: %.5f, miny: %.5f, maxx: %.5f, maxy: %.5f", dfMinX, dfMinY, dfMaxX, dfMaxY);
+
+    // x0 roughly corresponds to dfMinX
+    // y0 roughly corresponds to dfMaxY
+    // They can be different than the extent parameters because 
+    // SDE uses offsets.  The following info is from Duarte Carreira 
+    // in relation to bug #2063 http://trac.osgeo.org/gdal/ticket/2063 :
+
+    // Depending on how the data was loaded, the pixel width 
+    // or pixel height may include a pixel offset from the nearest
+    // tile boundary. An offset will be indicated by aplus sign 
+    // "+" followed by a value. The value indicates the number 
+    // of pixels the nearest tile boundary is to the left of
+    // the image for the x dimension or the number of
+    // pixels the nearest tile boundary is above the image for 
+    // the y dimension. The offset information is only useful 
+    // for advanced application developers who need to know 
+    // where the image begins in relation to the underlying tile structure
+
+    LFLOAT x0, y0; 
+    nSDEErr = SE_rasbandinfo_get_tile_origin(band, &x0, &y0);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_tile_origin" );
+        return CE_Fatal;
+    }
+    CPLDebug("SDERASTER", "Tile origin: %.5f, %.5f", x0, y0);
+
+    // adjust the bbox based on the tile origin.
+    dfMinX = MIN(x0, dfMinX);
+    dfMaxY = MAX(y0, dfMaxY);
+
     nSDEErr = SE_rasterattr_create(&hAttributes, false);
     if( nSDEErr != SE_SUCCESS )
     {
