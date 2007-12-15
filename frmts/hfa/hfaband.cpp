@@ -1335,7 +1335,10 @@ CPLErr HFABand::SetNoDataValue( double dfValue )
         poNDNode->MakeData( 8 + 12 + 8 ); 
         poNDNode->SetPosition(); 
 
-        if ( poNDNode->SetDoubleField( "valueBD", dfValue) != CE_Failure ) 
+        poNDNode->SetIntField( "valueBD[-3]", EPT_f64 );
+        poNDNode->SetIntField( "valueBD[-2]", 1 );
+        poNDNode->SetIntField( "valueBD[-1]", 1 );
+        if ( poNDNode->SetDoubleField( "valueBD[0]", dfValue) != CE_Failure ) 
         { 
             bNoDataSet = TRUE; 
             dfNoData = dfValue; 

@@ -1675,6 +1675,7 @@ static const char *aszDefaultDD[] = {
 "1:lSkipFactorX,1:lSkipFactorY,1:*oEdsc_BinFunction,BinFunction,}Eimg_StatisticsParameters830,{1:lnumrows,}Edsc_Table,{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column,{1:lposition,0:pcname,1:e2:EMSC_FALSE,EMSC_TRUE,editable,1:e3:LEFT,CENTER,RIGHT,alignment,0:pcformat,1:e3:DEFAULT,APPLY,AUTO-APPLY,formulamode,0:pcformula,1:dcolumnwidth,0:pcunits,1:e5:NO_COLOR,RED,GREEN,BLUE,COLOR,colorflag,0:pcgreenname,0:pcbluename,}Eded_ColumnAttributes_1,{1:lversion,1:lnumobjects,1:e2:EAOI_UNION,EAOI_INTERSECTION,operation,}Eaoi_AreaOfInterest,",
 "{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject,",
 "{1:x{1:x{0:pcstring,}Emif_String,type,1:x{0:pcstring,}Emif_String,MIFDictionary,0:pCMIFObject,}Emif_MIFObject,projection,1:x{0:pcstring,}Emif_String,title,}Eprj_MapProjection842,",
+"{0:poEmif_String,titleList,}Exfr_GenericXFormHeader,{1:lorder,1:lnumdimtransform,1:lnumdimpolynomial,1:ltermcount,0:plexponentlist,1:*bpolycoefmtx,1:*bpolycoefvector,}Efga_Polynomial,",
 ".",
 NULL
 };
@@ -2972,7 +2973,7 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
 /************************************************************************/
 
 
-int HFAReadXFormStack( HFAHandle hHFA, 
+int HFAReadXFormStack( HFAHandle hHFA,
                        Efga_Polynomial **ppasPolyListForward,
                        Efga_Polynomial **ppasPolyListReverse )
  
@@ -3118,4 +3119,182 @@ int HFAEvaluateXFormStack( int nStepCount, int bForward,
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         HFAWriteXFormStack()                         */
+/************************************************************************/
+
+CPLErr HFAWriteXFormStack( HFAHandle hHFA, int nBand, int nXFormCount, 
+                           Efga_Polynomial **ppasPolyListForward,
+                           Efga_Polynomial **ppasPolyListReverse )
+
+{
+    CPLErr eErr;
+
+    if( nXFormCount == 0 )
+        return CE_None;
+
+    if( ppasPolyListForward[0]->order != 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "For now HFAWriteXFormStack() only supports order 1 polynomials" );
+        return CE_Failure;
+    }
+
+    if( nBand < 0 || nBand > hHFA->nBands )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      If no band number is provided, operate on all bands.            */
+/* -------------------------------------------------------------------- */
+    if( nBand == 0 )
+    {
+        for( nBand = 1; nBand <= hHFA->nBands; nBand++ )
+        {
+            eErr = HFAWriteXFormStack( hHFA, nBand, nXFormCount, 
+                                       ppasPolyListForward, 
+                                       ppasPolyListReverse );
+            if( eErr != CE_None )
+                return eErr;
+        }
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch our band node.                                            */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poBandNode = hHFA->papoBand[nBand-1]->poNode;
+    HFAEntry *poXFormHeader;
+    
+    poXFormHeader = poBandNode->GetNamedChild( "MapToPixelXForm" );
+    if( poXFormHeader == NULL )
+    {
+        poXFormHeader = new HFAEntry( hHFA, "MapToPixelXForm", 
+                                      "Exfr_GenericXFormHeader", poBandNode );
+        poXFormHeader->MakeData( 23 );
+        poXFormHeader->SetPosition();
+        poXFormHeader->SetStringField( "titleList.string", "Affine" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over XForms.                                               */
+/* -------------------------------------------------------------------- */
+    for( int iXForm = 0; iXForm < nXFormCount; iXForm++ )
+    {
+        Efga_Polynomial *psForward = *ppasPolyListForward + iXForm;
+        CPLString     osXFormName;
+        osXFormName.Printf( "XForm%d", iXForm );
+
+        HFAEntry *poXForm = poXFormHeader->GetNamedChild( osXFormName );
+        
+        if( poXForm == NULL )
+        {
+            poXForm = new HFAEntry( hHFA, osXFormName, "Efga_Polynomial",
+                                    poXFormHeader );
+            poXForm->MakeData( 136 );
+            poXForm->SetPosition();
+        }
+
+        poXForm->SetIntField( "order", 1 );
+        poXForm->SetIntField( "numdimtransform", 2 );
+        poXForm->SetIntField( "numdimpolynomial", 2 );
+        poXForm->SetIntField( "termcount", 3 );
+        poXForm->SetIntField( "exponentlist[0]", 0 );
+        poXForm->SetIntField( "exponentlist[1]", 0 );
+        poXForm->SetIntField( "exponentlist[2]", 1 );
+        poXForm->SetIntField( "exponentlist[3]", 0 );
+        poXForm->SetIntField( "exponentlist[4]", 0 );
+        poXForm->SetIntField( "exponentlist[5]", 1 );
+
+        poXForm->SetIntField( "polycoefmtx[-3]", EPT_f64 );
+        poXForm->SetIntField( "polycoefmtx[-2]", 2 );
+        poXForm->SetIntField( "polycoefmtx[-1]", 2 );
+        poXForm->SetDoubleField( "polycoefmtx[0]", 
+                                 psForward->polycoefmtx[0] );
+        poXForm->SetDoubleField( "polycoefmtx[1]", 
+                                 psForward->polycoefmtx[1] );
+        poXForm->SetDoubleField( "polycoefmtx[2]", 
+                                 psForward->polycoefmtx[2] );
+        poXForm->SetDoubleField( "polycoefmtx[3]", 
+                                 psForward->polycoefmtx[3] );
+
+        poXForm->SetIntField( "polycoefvector[-3]", EPT_f64 );
+        poXForm->SetIntField( "polycoefvector[-2]", 1 );
+        poXForm->SetIntField( "polycoefvector[-1]", 2 );
+        poXForm->SetDoubleField( "polycoefvector[0]", 
+                                 psForward->polycoefvector[0] );
+        poXForm->SetDoubleField( "polycoefvector[1]", 
+                                 psForward->polycoefvector[1] );
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         HFASetGeoTransform()                         */
+/*                                                                      */
+/*      Set a MapInformation and XForm block.  Allows for rotated       */
+/*      and shared geotransforms.                                       */
+/************************************************************************/
+
+CPLErr HFASetGeoTransform( HFAHandle hHFA, 
+                           const char *pszProName,
+                           const char *pszUnits,
+                           double *padfGeoTransform )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Write MapInformation.                                           */
+/* -------------------------------------------------------------------- */
+    int nBand;
+
+    for( nBand = 1; nBand <= hHFA->nBands; nBand++ )
+    {
+        HFAEntry *poBandNode = hHFA->papoBand[nBand-1]->poNode;
+        
+        HFAEntry *poMI = poBandNode->GetNamedChild( "MapInformation" );
+        if( poMI == NULL )
+        {
+            poMI = new HFAEntry( hHFA, "MapInformation", 
+                                 "Eimg_MapInformation", poBandNode );
+            poMI->MakeData( 18 + strlen(pszProName) + strlen(pszUnits) );
+            poMI->SetPosition();
+        }
+
+        poMI->SetStringField( "projection.string", pszProName );
+        poMI->SetStringField( "units.string", pszUnits );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write XForm.                                                    */
+/* -------------------------------------------------------------------- */
+    Efga_Polynomial sForward, sReverse;
+    double          adfAdjTransform[6], adfRevTransform[6];
+
+    // Offset by half pixel.
+
+    memcpy( adfAdjTransform, padfGeoTransform, sizeof(double) * 6 );
+    adfAdjTransform[0] += adfAdjTransform[1] * 0.5;
+    adfAdjTransform[0] += adfAdjTransform[2] * 0.5;
+    adfAdjTransform[3] += adfAdjTransform[4] * 0.5;
+    adfAdjTransform[3] += adfAdjTransform[5] * 0.5;
+
+    // Invert
+    HFAInvGeoTransform( adfAdjTransform, adfRevTransform );
+
+    // Assign to polynomial object.
+
+    sForward.order = 1;
+    sForward.polycoefvector[0] = adfRevTransform[0];
+    sForward.polycoefmtx[0]    = adfRevTransform[1];
+    sForward.polycoefmtx[1]    = adfRevTransform[4];
+    sForward.polycoefvector[1] = adfRevTransform[3];
+    sForward.polycoefmtx[2]    = adfRevTransform[2];
+    sForward.polycoefmtx[3]    = adfRevTransform[5];
+
+    sReverse = sForward;
+    Efga_Polynomial *psForward=&sForward, *psReverse=&sReverse;
+
+    return HFAWriteXFormStack( hHFA, 0, 1, &psForward, &psReverse );
 }

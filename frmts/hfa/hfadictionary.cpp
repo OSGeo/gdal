@@ -62,7 +62,7 @@ static const char *apszDefDefn[] = {
 
     "Eimg_NonInitializedValue", 
     "{1:*bvalueBD,}Eimg_NonInitializedValue",
-    
+
     NULL,
     NULL };
     
