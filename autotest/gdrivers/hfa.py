@@ -566,7 +566,97 @@ def hfa_nodata_read():
         gdaltest.post_reason( 'StdDev value is wrong.' )
         return 'fail'
 
+    ds = None
+    
     gdal.GetDriverByName( 'HFA' ).Delete( 'tmp/nodata.img' )
+
+    return 'success'
+
+###############################################################################
+# Verify we read simple affine geotransforms properly.
+
+def hfa_rotated_read():
+
+    ds = gdal.Open( 'data/fg118-91.aux' )
+
+    check_gt = ( 11856857.07898215, 0.895867662235625, 0.02684252936279331,
+                 7041861.472946444, 0.01962103617166367, -0.9007880319529181)
+
+    gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+                
+    new_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+            print
+            print 'old = ', check_gt
+            print 'new = ', new_gt
+            gdaltest.post_reason( 'Geotransform differs.' )
+            return 'fail'
+
+    ds = None
+    return 'success'
+
+###############################################################################
+# Verify we can write affine geotransforms.
+
+def hfa_rotated_write():
+
+    # make sure we aren't preserving info in .aux.xml file
+    try:
+        os.remove( 'tmp/rot.img.aux.xml' )
+    except:
+        pass
+    
+    drv = gdal.GetDriverByName('HFA')
+    ds = drv.Create( 'tmp/rot.img', 100, 150, 1, gdal.GDT_Byte )
+    
+    check_gt = ( 11856857.07898215, 0.895867662235625, 0.02684252936279331,
+                 7041861.472946444, 0.01962103617166367, -0.9007880319529181)
+
+    expected_wkt = """PROJCS["NAD83 / Virginia North",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.01745329251994328,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",39.2],
+    PARAMETER["standard_parallel_2",38.03333333333333],
+    PARAMETER["latitude_of_origin",37.66666666666666],
+    PARAMETER["central_meridian",-78.5],
+    PARAMETER["false_easting",11482916.66666667],
+    PARAMETER["false_northing",6561666.666666667],
+    UNIT["us_survey_feet",0.3048006096012192]]"""
+
+    ds.SetGeoTransform( check_gt )
+    ds.SetProjection( expected_wkt )
+
+    ds = None
+    
+    ds = gdal.Open( 'tmp/rot.img' )
+    gt_epsilon = (abs(check_gt[1])+abs(check_gt[2])) / 100.0
+                
+    new_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(new_gt[i]-check_gt[i]) > gt_epsilon:
+            print
+            print 'old = ', check_gt
+            print 'new = ', new_gt
+            gdaltest.post_reason( 'Geotransform differs.' )
+            return 'fail'
+
+    wkt = ds.GetProjection()
+    if not gdaltest.equal_srs_from_wkt( expected_wkt, wkt ):
+        return 'fail'
+    
+    ds = None
+
+    gdal.GetDriverByName( 'HFA' ).Delete( 'tmp/rot.img' )
 
     return 'success'
 
@@ -591,7 +681,9 @@ gdaltest_list = [
     hfa_corrupt_aux,
     hfa_mapinformation_units,
     hfa_nodata_write,
-    hfa_nodata_read
+    hfa_nodata_read,
+    hfa_rotated_read,
+    hfa_rotated_write
     ]
 
 if __name__ == '__main__':
