@@ -28,7 +28,17 @@ only supports specific RadarSat 2 polarimetric products.  All other will
 be ignored, or result in various runtime errors.  It is hoped that this
 driver can be generalized with other product samples become available. <p>
 
-See Also:<p>
+<h2>Data Calibration</h2>
+If you wish to have GDAL apply the LUTs provided by MDA with the product, you can open one of the subdatasets as provided in the SUBDATASETS metadata domain. The following LUTs can be applied:
+<ul>
+<li>beta<sub>0</sub> - open with RADARSAT_2_CALIB:BETA0: prepended to filename
+<li>sigma<sub>0</sub> - open with RADARSAT_2_CALIB:SIGMA0: prepended to filename
+<li>gamma - open with RADARSAT_2_CALIB:GAMMA: prepended to filename
+</ul>
+
+<p>Note that geocoded (SPG/SSG) products do not have this functionality available. Also be aware that the LUTs must be in the product directory where specified in the product.xml, otherwise loading the product with the calibration LUT applied will fail.
+
+<p>See Also:<p>
 
 <ul>
 <li> RadarSat document RN-RP-51-27.
