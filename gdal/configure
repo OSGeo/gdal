@@ -27058,6 +27058,12 @@ echo "${ECHO_T}yes, stripping extras" >&6; }
   rm -f comp.out
 
   HAVE_OGPYTHON=yes
+
+  if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    { { echo "$as_me:$LINENO: error: \"--with-hide-internal-symbols and --with-ogpython cannot be used at the same time\"" >&5
+echo "$as_me: error: \"--with-hide-internal-symbols and --with-ogpython cannot be used at the same time\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 else
   HAVE_OGPYTHON=no
   { echo "$as_me:$LINENO: result: disabled" >&5
