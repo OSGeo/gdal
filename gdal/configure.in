@@ -2092,6 +2092,10 @@ if test "x$with_ogpython" = "xyes" -o "x$with_ogpython" = "x"; then
   AM_CHECK_NUMPY
   AC_COMPILER_LOCALHACK
   HAVE_OGPYTHON=yes
+
+  if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    AC_MSG_ERROR("--with-hide-internal-symbols and --with-ogpython cannot be used at the same time")
+  fi
 else
   HAVE_OGPYTHON=no
   AC_MSG_RESULT([disabled])
