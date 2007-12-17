@@ -530,7 +530,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         if( poDstDS != NULL )
         {
             if( poDstDS->GetDescription() == NULL 
-                || strlen(poDstDS->GetDescription()) > 0 )
+                || strlen(poDstDS->GetDescription()) == 0 )
                 poDstDS->SetDescription( pszFilename );
 
             if( poDstDS->poDriver == NULL )
