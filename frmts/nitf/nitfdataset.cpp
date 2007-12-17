@@ -1905,7 +1905,7 @@ CPLErr NITFDataset::GetGeoTransform( double *padfGeoTransform )
     if( bGotGeoTransform )
         return CE_None;
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform( padfGeoTransform );
 }
 
 /************************************************************************/
@@ -1938,7 +1938,7 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
                          dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY ) )
         return CE_None;
     else
-        return CE_Failure;
+        return GDALPamDataset::SetGeoTransform( padfGeoTransform );
 }
 
 /************************************************************************/
@@ -1951,7 +1951,7 @@ const char *NITFDataset::GetProjectionRef()
     if( bGotGeoTransform )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
