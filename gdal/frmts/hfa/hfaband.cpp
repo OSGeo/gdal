@@ -891,7 +891,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
         if (pabyCData == NULL)
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "HFABand::LoadBlockInfo : Out of memory\n");
+                      "HFABand::GetRasterBlock : Out of memory\n");
             return CE_Failure;
         }
 
