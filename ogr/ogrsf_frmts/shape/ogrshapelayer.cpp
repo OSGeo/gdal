@@ -819,7 +819,8 @@ OGRErr OGRShapeLayer::SyncToDisk()
     if( hSHP != NULL )
     {
         hSHP->sHooks.FFlush( hSHP->fpSHP );
-        hSHP->sHooks.FFlush( hSHP->fpSHX );
+        if( hSHP->fpSHX != NULL )
+            hSHP->sHooks.FFlush( hSHP->fpSHX );
     }
 
     if( hDBF != NULL )
