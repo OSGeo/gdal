@@ -53,12 +53,12 @@ ILI2Handler::ILI2Handler( ILI2Reader *poReader ) {
   if (!ili2DomTreeInitialized) {
     XMLCh *tmpCh = XMLString::transcode("CORE");
     DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
-    delete [] tmpCh;
+    XMLString::release(&tmpCh);
     
     // the root element
     tmpCh = XMLString::transcode("ROOT");
     dom_doc = impl->createDocument(0,tmpCh,0);
-    delete [] tmpCh;
+    XMLString::release(&tmpCh);
   
     // the first element is root
     dom_elem = dom_doc->getDocumentElement();
@@ -99,7 +99,8 @@ void ILI2Handler::startElement(
     ) {
   
   // start to add the layers, features with the DATASECTION  
-  if ((level >= 0) || (cmpStr(ILI2_DATASECTION, XMLString::transcode(qname)) == 0)) {
+  char *tmpC = NULL;
+  if ((level >= 0) || (cmpStr(ILI2_DATASECTION, tmpC = XMLString::transcode(qname)) == 0)) {
     level++;
     
     if (level >= 2) { 
@@ -115,6 +116,7 @@ void ILI2Handler::startElement(
       dom_elem = elem;
     }
   }
+  XMLString::release(&tmpC);
 }
 
 void ILI2Handler::endElement(
@@ -148,11 +150,13 @@ void ILI2Handler::characters( const XMLCh *const chars,
   
   // add the text element
   if (level >= 3) {
-    std::string tmpCh = XMLString::transcode(chars);
+    char *tmpC = XMLString::transcode(chars);
     
     // only add the text if it is not empty
-    if (trim(tmpCh) != "") 
+    if (trim(tmpC) != "") 
       dom_elem->appendChild(dom_doc->createTextNode(chars));
+    
+    XMLString::release(&tmpC);
   }
 }
 
