@@ -41,6 +41,35 @@ static void MakeKMLCoordinate( char *pszTarget,
                                double x, double y, double z, int b3D )
 
 {
+    if (y < -90 || y > 90)
+    {
+        static int bFirstWarning = TRUE;
+        if (bFirstWarning)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Latitude %f is invalid. Valid range is [-90,90]. This warning will not be issued any more",
+                     y);
+            bFirstWarning = FALSE;
+        }
+    }
+
+    if (x < -180 || x > 180)
+    {
+        static int bFirstWarning = TRUE;
+        if (bFirstWarning)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Longitude %f has been modified to fit into range [-180,180]. This warning will not be issued any more",
+                     x);
+            bFirstWarning = FALSE;
+        }
+
+        if (x > 180)
+            x -= ((int) ((x+180)/360)*360);
+        else if (x < -180)
+            x += ((int) (180 - x)/360)*360;
+    }
+
     OGRMakeWktCoordinate( pszTarget, x, y, z, b3D ? 3 : 2 );
     while( *pszTarget != '\0' )
     {
