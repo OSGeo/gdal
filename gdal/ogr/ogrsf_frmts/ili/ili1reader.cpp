@@ -378,11 +378,16 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines, bool fi
     GEOSGeom hResultGeom = NULL;
     OGRGeometry *poMP = NULL;
 
-    if (fix_crossing_lines)
+    if (fix_crossing_lines && poLines->getNumGeometries() > 0)
     {
+#if (GEOS_VERSION_MAJOR >= 3)
         CPLDebug( "OGR_ILI", "Fixing crossing lines");
+        //A union of the geometry collection with one line fixes invalid geometries
         poNoncrossingLines = (OGRGeometryCollection*)poLines->Union(poLines->getGeometryRef(0));
         CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
+#else
+        #warning Interlis 1 AREA cleanup disabled. Needs GEOS >= 3.0
+#endif
     }
 
     ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries());
@@ -430,6 +435,7 @@ void ILI1Reader::PolygonizeAreaLayers()
       OGRMultiPolygon* polys = Polygonize( gc );
       if (polys->getNumGeometries() != poAreaLayer->GetFeatureCount())
       {
+          CPLDebug( "OGR_ILI", "Geometries after polygonize: %d", polys->getNumGeometries());
           delete polys;
           polys = Polygonize( gc, true ); //try again with crossing line fix
       }
