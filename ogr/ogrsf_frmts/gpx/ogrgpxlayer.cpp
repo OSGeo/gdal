@@ -1081,6 +1081,47 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                CheckAndFixCoordinatesValidity()                      */
+/************************************************************************/
+
+OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double* pdfLongitude )
+{
+    if (pdfLatitude != NULL && (*pdfLatitude < -90 || *pdfLatitude > 90))
+    {
+        static int bFirstWarning = TRUE;
+        if (bFirstWarning)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Latitude %f is invalid. Valid range is [-90,90]. This warning will not be issued any more",
+                     *pdfLatitude);
+            bFirstWarning = FALSE;
+        }
+        return CE_Failure;
+    }
+
+    if (pdfLongitude != NULL && (*pdfLongitude < -180 || *pdfLongitude > 180))
+    {
+        static int bFirstWarning = TRUE;
+        if (bFirstWarning)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Longitude %f has been modified to fit into range [-180,180]. This warning will not be issued any more",
+                     *pdfLongitude);
+            bFirstWarning = FALSE;
+        }
+
+        if (*pdfLongitude > 180)
+            *pdfLongitude -= ((int) ((*pdfLongitude+180)/360)*360);
+        else if (*pdfLongitude < -180)
+            *pdfLongitude += ((int) (180 - *pdfLongitude)/360)*360;
+
+        return CE_None;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -1117,7 +1158,10 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
             case wkbPoint25D:
             {
                 OGRPoint* point = (OGRPoint*)poGeom;
-                VSIFPrintf(fp, "<wpt lat=\"%.15f\" lon=\"%.15f\">\n", point->getY(), point->getX());
+                double lat = point->getY();
+                double lon = point->getX();
+                CheckAndFixCoordinatesValidity(&lat, &lon);
+                VSIFPrintf(fp, "<wpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                 WriteFeatureAttributes(poFeature);
                 VSIFPrintf(fp, "</wpt>\n");
                 break;
@@ -1186,7 +1230,10 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
             WriteFeatureAttributes(poFeature);
             for(i=0;i<n;i++)
             {
-                VSIFPrintf(fp, "  <rtept lat=\"%.15f\" lon=\"%.15f\">\n", line->getY(i), line->getX(i));
+                double lat = line->getY(i);
+                double lon = line->getX(i);
+                CheckAndFixCoordinatesValidity(&lat, &lon);
+                VSIFPrintf(fp, "  <rtept lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                 if (poGeom->getGeometryType() == wkbLineString25D ||
                     poGeom->getGeometryType() == wkbMultiLineString25D)
                 {
@@ -1213,7 +1260,10 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 VSIFPrintf(fp, "  <trkseg>\n");
                 for(i=0;i<n;i++)
                 {
-                    VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", line->getY(i), line->getX(i));
+                    double lat = line->getY(i);
+                    double lon = line->getX(i);
+                    CheckAndFixCoordinatesValidity(&lat, &lon);
+                    VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                     if (line->getGeometryType() == wkbLineString25D)
                     {
                         VSIFPrintf(fp, "        <ele>%f</ele>\n", line->getZ(i));
@@ -1240,7 +1290,10 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                     VSIFPrintf(fp, "  <trkseg>\n");
                     for(i=0;i<n;i++)
                     {
-                        VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", line->getY(i), line->getX(i));
+                        double lat = line->getY(i);
+                        double lon = line->getX(i);
+                        CheckAndFixCoordinatesValidity(&lat, &lon);
+                        VSIFPrintf(fp, "    <trkpt lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
                         if (line->getGeometryType() == wkbLineString25D)
                         {
                             VSIFPrintf(fp, "        <ele>%f</ele>\n", line->getZ(i));

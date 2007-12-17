@@ -143,6 +143,8 @@ class OGRGPXLayer : public OGRLayer
     void                startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
     void                endElementLoadSchemaCbk(const char *pszName);
     void                dataHandlerLoadSchemaCbk(const char *data, int nLen);
+
+    static OGRErr       CheckAndFixCoordinatesValidity( double* pdfLatitude, double* pdfLongitude );
 };
 
 /************************************************************************/
