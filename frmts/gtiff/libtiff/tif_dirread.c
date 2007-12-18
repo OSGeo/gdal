@@ -655,7 +655,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDouble(TIFF* tif, TIFFDirEntry* 
 				err=TIFFReadDirEntryCheckedLong8(tif,direntry,&m);
 				if (err!=TIFFReadDirEntryErrOk)
 					return(err);
-				*value=(double)m;
+				*value=(double)(TIFF_INT64_T)m;
 				return(TIFFReadDirEntryErrOk);
 			}
 		case TIFF_SLONG8:
@@ -2265,7 +2265,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloatArray(TIFF* tif, TIFFDirEnt
 				{
 					if (tif->tif_flags&TIFF_SWAB)
 						TIFFSwabLong8(ma);
-					*mb++=(float)(*ma++);
+					*mb++=(float)(TIFF_INT64_T)(*ma++);
 				}
 			}
 			break;
@@ -2499,7 +2499,7 @@ TIFFReadDirEntryDoubleArray(TIFF* tif, TIFFDirEntry* direntry, double** value)
 				{
 					if (tif->tif_flags&TIFF_SWAB)
 						TIFFSwabLong8(ma);
-					*mb++=(double)(*ma++);
+					*mb++=(double)(TIFF_INT64_T)(*ma++);
 				}
 			}
 			break;

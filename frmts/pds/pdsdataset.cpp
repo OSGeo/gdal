@@ -577,7 +577,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         } 
         else if (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) { 
             //isis uses local radius as a sphere, which is pre-calculated in the PDS label as the semi-major
-            sphere_name =+ "_localRadius";
+            sphere_name += "_localRadius";
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
                             semi_major, 0.0, 
                             "Reference_Meridian", 0.0 );

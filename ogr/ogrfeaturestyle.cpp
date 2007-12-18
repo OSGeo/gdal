@@ -1181,7 +1181,7 @@ void OGR_ST_SetUnit( OGRStyleToolH hST, OGRSTUnitId eUnit,
 
 {
     VALIDATE_POINTER0( hST, "OGR_ST_SetUnit" );
-    return ((OGRStyleTool *) hST)->SetUnit(eUnit, dfGroundPaperScale);
+    ((OGRStyleTool *) hST)->SetUnit(eUnit, dfGroundPaperScale);
 }
 
 /************************************************************************/
