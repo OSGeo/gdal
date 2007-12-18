@@ -4,7 +4,7 @@ GDAL_ROOT = .
 
 ##############################################################################
 # We need to add vb6 support if STDCALL is defined. 
-!IFDEF STDCALL
+!IF DEFINED(STDCALL) && $(MSVC_VER) < 1500
 VB6_OBJ = vb6\vb6_support.obj
 VB6_TARGET = vb6_dir
 !ENDIF
@@ -38,12 +38,16 @@ OGR_INCLUDE =	$(OGR_BASE_INCLUDE)
 !ENDIF
 
 !IF DEFINED(STDCALL) && !DEFINED(WIN64)
+
+!IF $(MSVC_VER) < 1500
+VB6_SAFEARRAYSYM =	/INCLUDE:_vbSafeArrayToPtr@16
+!ENDIF
+
 BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp@36 \
 		/INCLUDE:_GDALReprojectImage@48 \
 		/INCLUDE:_GDALComputeMedianCutPCT@32 \
 		/INCLUDE:_GDALDitherRGB2PCT@28 \
-		/INCLUDE:_vbSafeArrayToPtr@16 \
-		/INCLUDE:_OCTNewCoordinateTransformation@8
+		/INCLUDE:_OCTNewCoordinateTransformation@8 $(VB6_SAFEARRAYSYM)
 !ELSE
 BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 		/INCLUDE:$(SYM_PREFIX)GDALReprojectImage \
