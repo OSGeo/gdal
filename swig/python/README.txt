@@ -1,3 +1,4 @@
+
 GDAL/OGR in Python
 ==================
 
@@ -21,6 +22,9 @@ Dependencies
 
 Installation
 ------------
+
+Unix
+~~~~~~~~~~~~~
 
 The GDAL Python bindings support both distutils and setuptools, with a 
 preference for using setuptools.  If setuptools can be imported, setup will 
@@ -81,6 +85,42 @@ will use an egg build by default in that instance.  If you have a need to
 use a distutils-only install, you will have to edit setup.py to ensure that 
 the HAVE_SETUPTOOLS variable is ultimately set to False and proceed with a 
 typical 'python setup.py install' command.
+
+Windows
+~~~~~~~~~~~~
+
+You will need the following items to complete an install of the GDAL Python
+bindings on Windows:
+
+* `GDAL Windows Binaries`_ The basic install requires the gdalwin32exe###.zip 
+  (### is the version number).  Other files you see in the directory are 
+  for various optional plugins and development headers/include files. After 
+  downloading the zip file, extract it to the directory of your choosing.
+
+* GDAL Python Bindings available at the `Python Cheeseshop`_.  An executable 
+  installer is available for both Python 2.4 or 2.5 or as a Python egg.
+
+As explained in the README_EXE.txt file, after unzipping the GDAL binaries you 
+will need to modify your system path and variables. If you're not sure how to 
+do this, read the `Microsoft KnowledgeBase doc`_ 
+
+1. Add the installation directory bin folder to your system PATH, remember 
+   to put a semicolon in front of it before you add to the existing path.
+
+   ::
+  
+     C:\gdalwin32-1.5\bin
+
+2. Create a new user or system variable with the data folder from 
+   your installation.
+
+   ::
+  
+     Name : GDAL_DATA
+     Path : C:\gdalwin32-1.5\data
+
+Skip down to the `Usage`_ section to test your install. Note, a reboot 
+may be required.
 
 SWIG
 ----
@@ -186,8 +226,8 @@ known as "Numeric" and imported using "import Numeric". A new generation is
 imported using "import numpy". Currently the old generation bindings only 
 support the older Numeric package, and the new generation bindings only 
 support the new generation numpy package. They are mostly compatible, and 
-by importing gdalnumeric you will get whichever is appropriate to the 
-current bindings type.
+by importing gdalnumeric (or osgeo.gdal_array) you will get whichever is
+appropriate to the current bindings type.
 
 Examples
 ~~~~~~~~
@@ -202,6 +242,9 @@ the data are explicitly subsetted as part of the function call. For large
 data, this approach is expected to be prohibitively memory intensive.
 
 .. _GDAL API Tutorial: http://www.gdal.org/gdal_tutorial.html
+.. _GDAL Windows Binaries: http://download.osgeo.org/gdal/win32/1.5/
+.. _Microsoft KnowledgeBase doc: http://support.microsoft.com/kb/310519
+.. _Python Cheeseshop: http://pypi.python.org/pypi/GDAL/
 .. _val_repl.py: http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/python/samples/val_repl.py
 .. _GDAL: http://www.gdal.org
 .. _SWIG: http://www.swig.org
