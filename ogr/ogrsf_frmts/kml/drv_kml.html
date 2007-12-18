@@ -13,54 +13,39 @@ on the major GeoBrowsers.
 Note that KML by specification uses only a single projection, EPSG:4326. All OGR KML output will be 
 presented in EPSG:4326.</p>
 
-<p>At this time, only vector layers are output by the KML driver. There are additional scripts
-supplied with the GDAL project that can build other kinds of output.
-</p>
+<p>At this time, only vector layers are handled by the KML driver. <em>(there are additional scripts
+supplied with the GDAL project that can build other kinds of output)</em></p>
+
+<h3>KML Reading</h3>
+<p>KML reading is only available if GDAL/OGR is built with the Expat XML Parser, otherwise only KML writing will be supported.</p>
+
+<p>  Currently supported geometry types are <code>Point</code>, <code>Linestring</code> and <code>Polygon</code>. There are other limitations as well, for example: nested folders in a source KML file are disregarded; folder <code>&lt;description&gt;</code> tags will
+  not carry through to ouput; folders containing multiple geometry types, like <code>POINT</code> and <code>POLYGON</code>, will be disregarded. The last example can be a source of confusion. If the only Folder in a KML source file contains mixed or unsupported geometry types, the Folder will be rejected and the driver will report 'no layers found.' </p>
 
 <h3>KML Writing</h3>
-<p>The OGR KML driver has implemented basic support for writing KML. 
-Since not all features of KML
-are able to be represented in the internal OGR model, you will not be able to generate
+<p>Since not all features of KML
+are able to be represented in  the Simple Features geometry model, you will not be able to generate
 many KML-specific attributes from within GDAL/OGR. Please try
 a few test files to get a sense of what is possible.</p>
 
-<h3>KML Reading</h3>
-
-<p>KML reading has been added to OGR v1.5. To enable KML reading, you must 
-have the XML Parser Expat v2.0 or greater installed on your system, and 
-OGR must be built with the configure flag <code>--with-expat</code>. </p>
-
-<p>KML reading is also subject to the limitations of 
-the internal GDAL/OGR model.
-For example, nested folders in a source KML file are disregarded, and folder xxdescriptionxx tags will
-not carry through to ouput.</p>
-
-
-<h2>Creation Issues</h2>
-
-<p>When outputting KML, the OGR KML driver will translate an OGR Layer into a KML Folder.
-Although KML and a few other OGR formats allow mixing the geometry types of 
-Layer Elements, generally OGR prefers to keep one kind of geometry in a Layer.
-You may encounter unexpected behavior
-if you try to mix the geometry types of elements in a layer, for example, LINESTRING and
-POINT data. </p>
+<p>When outputting KML, the OGR KML driver will translate each OGR Layer into a  KML Folder.
+(you may encounter unexpected behavior
+if you try to mix the geometry types of elements in a layer, e.g. <code>LINESTRING</code> and
+<code>POINT</code> data. </p>
 
 <p>The KML Driver will rename some layers, or source KML folder names, into new names
-it considers valid, for example 'Layer #0', the default name of the first unnamed
-Layer, becomes Layer__0.</p>
+it considers valid, for example '<code>Layer #0</code>', the default name of the first unnamed
+Layer, becomes <code>'Layer__0'</code>.</p>
 
 
-<p>KML is mix of formatting and feature data. The xxdescriptionxx tag of a Placemark will 
+<p>KML is mix of formatting and feature data. The &lt;description&gt; tag of a Placemark will 
 be displayed in most geobrowsers as an HTML-filled balloon. When writing KML, Layer element
 attributes are added as description tag content with the following HTML structure:
 <pre><b>Attribute name</b>: Attribute content</pre>
-</p>
-
 <p>Limited support is available for fills, line color and other styling attributes. Please try a few sample
 files to get a better sense of actual behavior.</p>
 
-<h2>Creation Options</h2>
-
+<h3>Creation Options</h3>
 <p>The following creation options are supported:
 <ul>
 <li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name&gt; element. Default value : 'Name'</li>
@@ -71,11 +56,9 @@ files to get a better sense of actual behavior.</p>
 and must be one of the valid KML options.  
 See the <a href="http://code.google.com/apis/kml/documentation/kml_tags_21.html#altitudemode">relevant KML reference material</a>  
 for further information. 
-<pre>ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute</pre>  
+<pre>ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute</pre>
 </li>  
 </ul>
-</p>
-
 <h2>Example</h2>
 The ogr2ogr utility can be used to dump the results of a PostGIS query to
 KML:
@@ -85,9 +68,14 @@ ogr2ogr -f KML output.kml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_19
 </pre>
 </p>
 
+<p>How to dump contents of .kml file as OGR sees it:
+<pre>
+ogrinfo -ro somedisplay.kml
+</pre>
+</p>
 <h2>Caveats</h2>
 <p>
-The Google Earth seems to have some limits regarding the number of coordinates in complex geometries like polygons.
+Google Earth seems to have some limits regarding the number of coordinates in complex geometries like polygons.
 If the problem appears, then problematic geometries are displayed completely or partially covered by vertical stripes.
 Unfortunately, there are no exact number given in the KML specification about this limitation, so the KML driver
 will not warn about potential problems. One of possible and tested solutions is to simplify a line or a polygon to remove
