@@ -329,7 +329,7 @@ void CleanupESRIDatumMappingTable()
     if( papszDatumMapping == NULL )
         return;
 
-    if( papszDatumMapping != apszDefaultDatumMapping )
+    if( papszDatumMapping != (char **) apszDefaultDatumMapping )
     {
         CSLDestroy( papszDatumMapping );
         papszDatumMapping = NULL;

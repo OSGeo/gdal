@@ -1292,25 +1292,26 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
     SetMetadataItem("RPC_HEIGHT_SCALE",sVal);
 
     sVal[0] = '\0'; 
-    for(int i = 0; i < 20; i++ )
+    int i;
+    for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ", 
            atof(papszFields[10+i]));
     SetMetadataItem("RPC_LINE_NUM_COEFF",sVal);
 
     sVal[0] = '\0'; 
-    for(int i = 0; i < 20; i++ )
+    for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
            atof(papszFields[30+i]));
     SetMetadataItem("RPC_LINE_DEN_COEFF",sVal);
       
     sVal[0] = '\0'; 
-    for(int i = 0; i < 20; i++ )
+    for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
            atof(papszFields[50+i]));
     SetMetadataItem("RPC_SAMP_NUM_COEFF",sVal);
       
     sVal[0] = '\0'; 
-    for(int i = 0; i < 20; i++ )
+    for(i = 0; i < 20; i++ )
        snprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
            atof(papszFields[70+i]));
     SetMetadataItem("RPC_SAMP_DEN_COEFF",sVal);
