@@ -6,7 +6,9 @@
 #define HAVE_VPRINTF 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_SNPRINTF 1
+#if (_MSC_VER < 1500)
 #define vsnprintf _vsnprintf
+#endif
 #define snprintf _snprintf
 
 /* Define to 1 if you have the `copysign' function. */
