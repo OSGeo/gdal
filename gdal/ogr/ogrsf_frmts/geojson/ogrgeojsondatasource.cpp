@@ -331,7 +331,7 @@ int OGRGeoJSONDataSource::ReadFromFile( const char* pszSource )
     if( NULL == fp )
         return FALSE;
 
-    std::size_t nDataLen = 0;
+    size_t nDataLen = 0;
 
     VSIFSeek( fp, 0, SEEK_END );
     nDataLen = VSIFTell( fp );
