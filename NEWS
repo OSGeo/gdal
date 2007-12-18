@@ -4,45 +4,10 @@
 
 == GDAL/OGR 1.5.0 - General Changes ==
 
-SWIG Bindings:
- * The "Next Generation" Python SWIG bindings are now the default.
- * Python utility and sample scripts migrated to swig/python/scripts and
-   swig/python/samples.
- * Added Raster Attribute Tables to swig bindings.
- * Added Geometry.ExportToKML
- * Added CreateGeometryFromKML
- * Added !CreateGeometryFromJson
- * Added Geometry.!ExportToJson
-
-
-SWIG C# related changes:
- * Support for the enumerated types of the C# interface
- * C# namespace names and module names follows the .NET framework naming guidelines
- * Changed the names of the Windows builds for a better match with the GNU/Linux/OSX builds
- * The gdalconst assembly is now deprecated
- * GDAL C# libtool build support 
- * !CreateFromWkb support
- * Dataset.!ReadRaster, Dataset.!WriteRaster support 
- * Added support for Dataset.!BuildOverviews
- * More examples added 
-
-SWIG Python related changes:
- * Progress function callback support added.  You can use a Python function, or the standard GDALTermProgress variant
- * Sugar, sweet, sweet sugar.
-    * ogr.Feature.geometry()
-    * ogr.Feature.items()
-    * ogr.Feature.keys()
- * doxygen-generated docstrings for ogr.py
- * geometry pickling
- * setuptools support
- * !PyPi http://pypi.python.org/pypi/GDAL/
- * setup.cfg for configuring major significant items (libs, includes, location of gdal-config0
- * support building the bindings from *outside* the GDAL source tree
-
 Build:
  * CFG environment variable now ignored.  Instead set CFLAGS and CXXFLAGS
-   environment variable to -g for debug builds or -O2 for optimized builds   
-   like most other packages. 
+   environment variables to desired compilation options, or use --enable-debug
+   for a debug build.  Default is "-g -O2" like most other packages. 
  * Added --with-hide-internal-symbols to restrict exported API from .so files
    to be the GDAL public API (as marked with CPL_DLL). 
 
@@ -146,6 +111,7 @@ NITF Driver:
  * Support PAM for subdatasets.
  * Improved NSIF support.
  * Support C1 (FAX3) compression.
+ * Improved CADRG support (#913, #1750, #1751, #1754) 
 
 ENVI Driver:
  * Many improvements, particularly to coordinate system handling and metadata.
@@ -159,6 +125,7 @@ GTIFF (GeoTIFF) Driver:
  * Support AVERAGE_BIT2GRAYSCALE overviews.
  * Produce pixel interleaved files instead of band interleaved by default.
  * Support TIFF files with odd numbers of bits (1-8, 11, etc). 
+ * Add ZLEVEL creation option to specify level of compression for DEFLATE method
 
 GIF Driver:
  * Nodata/transparency support added.
@@ -170,11 +137,12 @@ AIGrid Driver:
  * Supports reading associated info table as a Raster Attribute Table.
 
 HFA Driver:
- * Support MapInformation nodes.
+ * Support MapInformation/xform nodes for read and write.
  * Support AVERAGE_BIT2GRAYSCALE overviews.
  * Support Signed Byte pixel type.
  * Support 1/2/4 bit pixel types.
  * Support PE_STRING coordinate system definitions.
+ * Support nodata values (#1567)
 
 WCS Driver: 
  * Support WCS 1.1.0
@@ -190,16 +158,14 @@ Leveller Driver:
  * Added write support.
  * Added v7 (Leveller 2.6) support.
 
-
-
 == OGR 1.5.0 - Overview of Changes ==
-
 
 General:
  * Plugin drivers test for ABI compatability at load time.
  * SFCOM/OLEDB stuff all removed (moved to /spike in subversion).
  * Various thread safety improvements made.
  * Added PointOnSurface implementation for OGRPolygon.
+ * Added C API interface to OGR Feature Style classes (RFC 18).
 
 Utilities: 
  * All moved to gdal/apps. 
@@ -235,9 +201,14 @@ PG (Postgres/PostGIS) Driver:
 
 Shapefile Driver:
  * Do not keep .shx open in read only mode (better file handle management).
+ * Use GEOS to classify rings into polygons with holes and multipolygons if it is available. 
+ * Support dbf files larger than 2GB.
 
 MySQL Driver:
  * Added support for BLOB fields.
+
+MITAB (MapInfo) Driver:
+ * Upgraded to MITAB 1.6.4.
 
 Interlis Drivers:
  * Support datasources without imported Interlis TID
@@ -245,6 +216,43 @@ Interlis Drivers:
  * Support for inner rings in Surface geometries.
  * Support spatial and attribute filters.
 
+== SWIG Language Bindings ==
+
+ * The "Next Generation" Python SWIG bindings are now the default.
+ * Python utility and sample scripts migrated to swig/python/scripts and
+   swig/python/samples.
+ * Added Raster Attribute Tables to swig bindings.
+ * Added Geometry.ExportToKML
+ * Added CreateGeometryFromKML
+ * Added !CreateGeometryFromJson
+ * Added Geometry.!ExportToJson
+
+SWIG C# related changes:
+ * Support for the enumerated types of the C# interface
+ * C# namespace names and module names follows the .NET framework naming guidelines
+ * Changed the names of the Windows builds for a better match with the GNU/Linux/OSX builds
+ * The gdalconst assembly is now deprecated
+ * GDAL C# libtool build support 
+ * !CreateFromWkb support
+ * Dataset.!ReadRaster, Dataset.!WriteRaster support 
+ * Added support for Dataset.!BuildOverviews
+ * More examples added 
+
+SWIG Python related changes:
+ * Progress function callback support added.  You can use a Python function, or the standard GDALTermProgress variant
+ * Sugar, sweet, sweet sugar.
+    * ogr.Feature.geometry()
+    * ogr.Feature.items()
+    * ogr.Feature.keys()
+ * doxygen-generated docstrings for ogr.py
+ * geometry pickling
+ * setuptools support
+ * !PyPi http://pypi.python.org/pypi/GDAL/
+ * setup.cfg for configuring major significant items (libs, includes, location of gdal-config0
+ * support building the bindings from *outside* the GDAL source tree
+
+SWIG Java:
+ * SWIG Java bindings are orphaned and believed to be broken at this time.
 
 ===============================================================================
 
