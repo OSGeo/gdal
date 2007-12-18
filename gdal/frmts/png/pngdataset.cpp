@@ -465,7 +465,7 @@ void PNGDataset::Restart()
 
     hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, this, NULL, NULL );
 
-    png_set_error_fn( hPNG, this, png_gdal_error, png_gdal_warning );
+    png_set_error_fn( hPNG, &sSetJmpContext, png_gdal_error, png_gdal_warning );
     if( setjmp( sSetJmpContext ) != 0 )
         return;
 
@@ -777,7 +777,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup error handling.                                           */
 /* -------------------------------------------------------------------- */
-    png_set_error_fn( poDS->hPNG, poDS, png_gdal_error, png_gdal_warning );
+    png_set_error_fn( poDS->hPNG, &poDS->sSetJmpContext, png_gdal_error, png_gdal_warning );
 
     if( setjmp( poDS->sSetJmpContext ) != 0 )
         return NULL;
@@ -1054,10 +1054,18 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     png_structp hPNG;
     png_infop   psPNGInfo;
     
+    jmp_buf     sSetJmpContext;
     hPNG = png_create_write_struct( PNG_LIBPNG_VER_STRING, 
-                                    NULL, NULL, NULL );
+                                    &sSetJmpContext, png_gdal_error, png_gdal_warning );
     psPNGInfo = png_create_info_struct( hPNG );
-    
+
+    if( setjmp( sSetJmpContext ) != 0 )
+    {
+        VSIFCloseL( fpImage );
+        png_destroy_write_struct( &hPNG, &psPNGInfo );
+        return NULL;
+    }
+
     png_set_write_fn( hPNG, fpImage, png_vsi_write_data, png_vsi_flush );
 
     png_set_IHDR( hPNG, psPNGInfo, nXSize, nYSize, 
@@ -1322,9 +1330,11 @@ static void png_gdal_error( png_structp png_ptr, const char *error_message )
     // libpng is generally not built as C++ and so won't honour unwind
     // semantics.  Ugg. 
 
-    PNGDataset *poDS = (PNGDataset *) png_ptr->error_ptr;
-
-    longjmp( poDS->sSetJmpContext, 1 );
+    jmp_buf* psSetJmpContext = (jmp_buf*) png_ptr->error_ptr;
+    if (psSetJmpContext)
+    {
+        longjmp( *psSetJmpContext, 1 );
+    }
 }
 
 /************************************************************************/
