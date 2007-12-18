@@ -617,6 +617,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_CInt16;
     else if( nBitsPerSample == 16 && EQUALN(pszDataType,"Mag",3) )
         eDataType = GDT_UInt16;
+    else if( nBitsPerSample == 8 && EQUALN(pszDataType,"Mag",3) )
+        eDataType = GDT_Byte;
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
