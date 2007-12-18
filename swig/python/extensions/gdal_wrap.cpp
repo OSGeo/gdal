@@ -4306,8 +4306,8 @@ SWIGINTERN PyObject *_wrap_ReadDir(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     else {
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i, ++stringarray ) {
-        PyObject *o = PyString_FromString( *stringarray );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = PyString_FromString( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -4675,8 +4675,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM
     else {
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i, ++stringarray ) {
-        PyObject *o = PyString_FromString( *stringarray );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = PyString_FromString( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -9111,8 +9111,8 @@ SWIGINTERN PyObject *_wrap_Band_GetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
     else {
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i, ++stringarray ) {
-        PyObject *o = PyString_FromString( *stringarray );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = PyString_FromString( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -12890,8 +12890,8 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
     else {
       int len = CSLCount( stringarray );
       resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i, ++stringarray ) {
-        PyObject *o = PyString_FromString( *stringarray );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = PyString_FromString( stringarray[i] );
         PyList_SetItem(resultobj, i, o );
       }
     }
