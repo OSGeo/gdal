@@ -7,7 +7,7 @@
 
 <h1>GeoJSON</h1>
 
-<p>This driver implements support for access to features encoded in GeoJSON 
+<p>This driver implements read/write support for access to features encoded in  
 <a href="http://geojson.org/">GeoJSON</a> format. The GeoJSON is a dialect based on the 
 <a href="http://json.org/">JavaScript Object Notation (JSON)</a>. The JSON is a lightweight 
 plain text format for data interchange and GeoJSON is nothing other than its specialization for geographic content.</p>
@@ -15,8 +15,6 @@ plain text format for data interchange and GeoJSON is nothing other than its spe
 <p>At the moment of writing this, GeoJSON is supported as output format of services implemented by 
 <a href="http://featureserver.org/">FeatureServer</a>, <a href="http://docs.codehaus.org/display/GEOSDOC/GeoJSON+Output+Format">GeoServer</a> 
 and <a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>.</p>
-
-<p>OGR GeoJSON driver supports reading of GeoJSON data. Writing is not supported at the moment.</p> 
 
 <p>The OGR GeoJSON driver translates a GeoJSON encoded data to objects of <a href="/ogr/ogr_arch.html">OGR Simple Features model</a>: 
 Datasource, Layer, Feature, Geometry. 
@@ -31,8 +29,6 @@ The implementation is based on <a href="http://wiki.geojson.org/GeoJSON_draft_ve
 <li>Plain text file with GeoJSON data</li>
 <li>Text passed directly and encoded in GeoJSON</li>
 </ul>
-</p>
-
 <h2>Layer</h2>
 
 <p>A GeoJSON datasource is translated to single OGRLayer object with pre-defined name <em>OGRGeoJSON</em>:
