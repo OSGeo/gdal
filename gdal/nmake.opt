@@ -96,7 +96,7 @@ OPTFLAGS=	/nologo /MDd /EHsc /Zi /DDEBUG /D_DEBUG /Fd$(GDAL_ROOT)\gdal.pdb
 STDCALL=YES
 
 # Version number embedded in DLL name. 
-VERSION =	15
+VERSION =	16dev
 
 # Comment the following out if you want PAM supported disabled
 # by default.  
