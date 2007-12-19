@@ -208,6 +208,16 @@ CPLErr RS2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   pImage, nBlockXSize, nRequestYSize,
                                   GDT_UInt16,
                                   1, NULL, 2, nBlockXSize * 2, 0 );
+    else if ( eDataType == GDT_Byte ) 
+        /* Ticket #2104: Support for ScanSAR products */
+        return
+            poBandFile->RasterIO( GF_Read,
+                                  nBlockXOff * nBlockXSize,
+                                  nBlockYOff * nBlockYSize,
+                                  nBlockXSize, nRequestYSize,
+                                  pImage, nBlockXSize, nRequestYSize,
+                                  GDT_Byte,
+                                  1, NULL, 1, nBlockXSize, 0 );
     else
     {
         CPLAssert( FALSE );
@@ -245,7 +255,7 @@ public:
 };
 
 /************************************************************************/
-/*                            ReadLUT()                                    */
+/*                            ReadLUT()                                 */
 /************************************************************************/
 /* Read the provided LUT in to m_ndTable                                */
 /************************************************************************/
@@ -273,7 +283,7 @@ void RS2CalibRasterBand::ReadLUT() {
 }
 
 /************************************************************************/
-/*                        RS2CalibRasterBand()                            */
+/*                        RS2CalibRasterBand()                          */
 /************************************************************************/
 
 RS2CalibRasterBand::RS2CalibRasterBand( RS2Dataset *poDataset, 
@@ -307,7 +317,7 @@ RS2CalibRasterBand::RS2CalibRasterBand( RS2Dataset *poDataset,
 }
 
 /************************************************************************/
-/*                        ~RS2CalibRasterBand()                            */
+/*                       ~RS2CalibRasterBand()                          */
 /************************************************************************/
 
 RS2CalibRasterBand::~RS2CalibRasterBand() {
@@ -322,14 +332,13 @@ RS2CalibRasterBand::~RS2CalibRasterBand() {
 }
 
 /************************************************************************/
-/*                        IReadBlock()                                    */
+/*                        IReadBlock()                                  */
 /************************************************************************/
 
 CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     void *pImage )
 {
     CPLErr eErr;
-    GInt16 *pnImageTmp;
     int nRequestYSize;
 
 /* -------------------------------------------------------------------- */
@@ -349,6 +358,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if (this->m_eType == GDT_CInt16) {
+        GInt16 *pnImageTmp;
         /* read in complex values */
         pnImageTmp = (GInt16 *)CPLMalloc(2 * nBlockXSize * nBlockYSize * 
             GDALGetDataTypeSize( GDT_Int16 ) / 8);
@@ -393,8 +403,10 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     (float)pnImageTmp[nPixOff + 1]/(m_nfTable[nBlockXOff + j]);
             }
         }
+        CPLFree(pnImageTmp);
     }
-    else {
+    else if (this->m_eType == GDT_Int16) {
+        GInt16 *pnImageTmp;
         /* read in detected values */
         pnImageTmp = (GInt16 *)CPLMalloc(nBlockXSize * nBlockYSize *
             GDALGetDataTypeSize( GDT_UInt16 ) / 8);
@@ -416,15 +428,42 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     this->m_nfOffset)/m_nfTable[nBlockXOff + j];
             }
         }
+        CPLFree(pnImageTmp);
+    } /* Ticket #2104: Support for ScanSAR products */
+    else if (this->m_eType == GDT_Byte) {
+        GByte *pnImageTmp;
+        pnImageTmp = (GByte *)CPLMalloc(nBlockXSize * nBlockYSize *
+            GDALGetDataTypeSize( GDT_Byte ) / 8);
+        eErr = m_poBandDataset->RasterIO( GF_Read,
+                            nBlockXOff * nBlockXSize,
+                            nBlockYOff * nBlockYSize,
+                            nBlockXSize, nRequestYSize,
+                            pnImageTmp, nBlockXSize, nRequestYSize,
+                            GDT_Byte,
+                            1, NULL, 1, 1, 0);
+
+        /* iterate over detected values */
+        for (int i = 0; i < nBlockYSize; i++) {
+            for (int j = 0; j < nBlockXSize; j++) {
+                int nPixOff = (i * nBlockYSize) + j;
+
+                ((float *)pImage)[nPixOff] = ((pnImageTmp[nPixOff] *
+                    pnImageTmp[nPixOff]) +
+                    this->m_nfOffset)/m_nfTable[nBlockXOff + j];
+            }
+        }
     }
-    free(pnImageTmp);
+    else {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
     return eErr;
 }
 
 
 /************************************************************************/
 /* ==================================================================== */
-/*                RS2Dataset                */
+/*                              RS2Dataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -627,6 +666,15 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    /* while we're at it, extract the pixel spacing information */
+    const char *pszPixelSpacing = CPLGetXMLValue( psImageAttributes,
+        "rasterAttributes.sampledPixelSpacing", "UNK" );
+    poDS->SetMetadataItem( "PIXEL_SPACING", pszPixelSpacing );
+
+    const char *pszLineSpacing = CPLGetXMLValue( psImageAttributes,
+        "rasterAttributes.sampledLineSpacing", "UNK" );
+    poDS->SetMetadataItem( "LINE_SPACING", pszLineSpacing );
+
 /* -------------------------------------------------------------------- */
 /*      Open each of the data files as a complex band.                  */
 /* -------------------------------------------------------------------- */
@@ -678,9 +726,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetMetadataItem( "GAMMA_LUT", pszLUTFile );
                 sBuf.Printf("RADARSAT_2_CALIB:GAMMA:%s", pszFilename);
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
-                    "SUBDATASET_1_NAME", sBuf );
+                    "SUBDATASET_4_NAME", sBuf );
                 papszSubdatasets = CSLSetNameValue( papszSubdatasets,
-                    "SUBDATASET_1_DESC", "Gamma calibrated" );
+                    "SUBDATASET_4_DESC", "Gamma calibrated" );
             }
             continue;
         }
@@ -745,6 +793,11 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if (papszSubdatasets != NULL) {
+        papszSubdatasets = CSLSetNameValue( papszSubdatasets,
+            "SUBDATASET_1_NAME", pszFilename );
+        papszSubdatasets = CSLSetNameValue( papszSubdatasets,
+            "SUBDATASET_1_DESC", "Uncalibrated digital numbers" );
+
         poDS->GDALMajorObject::SetMetadata( papszSubdatasets, "SUBDATASETS" );
         CSLDestroy( papszSubdatasets );
     }
@@ -757,6 +810,38 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
          eDataType == GDT_CFloat32) ) 
     {
         poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
+    }
+ 
+/* -------------------------------------------------------------------- */
+/*      Collect a few useful metadata items                             */
+/* -------------------------------------------------------------------- */
+
+    CPLXMLNode *psSourceAttrs = CPLGetXMLNode( psProduct,
+                                               "=product.sourceAttributes");
+    const char *pszItem;
+
+    if (psSourceAttrs != NULL) {
+        /* Get beam mode mnemonic */
+        pszItem = CPLGetXMLValue( psSourceAttrs, "beamModeMnemonic", "UNK" );
+        poDS->SetMetadataItem( "BEAM_MODE", pszItem );
+    }
+
+    CPLXMLNode *psSarProcessingInformation =
+        CPLGetXMLNode( psProduct, "=product.imageGenerationParameters" );
+
+    if (psSarProcessingInformation != NULL) {
+        /* Get incidence angle information */
+        pszItem = CPLGetXMLValue( psSarProcessingInformation, 
+            "sarProcessingInformation.incidenceAngleNearRange", "UNK" );
+        poDS->SetMetadataItem( "NEAR_RANGE_INCIDENCE_ANGLE", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+            "sarProcessingInformation.incidenceAngleFarRange", "UNK" );
+        poDS->SetMetadataItem( "FAR_RANGE_INCIDENCE_ANGLE", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+            "sarProcessingInformation.slantRangeNearEdge", "UNK" );
+        poDS->SetMetadataItem( "SLANT_RANGE_NEAR_EDGE", pszItem );
     }
 
 /* -------------------------------------------------------------------- */
