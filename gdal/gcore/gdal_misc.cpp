@@ -595,9 +595,13 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                     break;
                   case GDT_Float32:
                     dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    if( CPLIsNan(dfValue) )
+                        continue;
                     break;
                   case GDT_Float64:
                     dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    if( CPLIsNan(dfValue) )
+                        continue;
                     break;
                   case GDT_CInt16:
                     dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
@@ -607,9 +611,13 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                     break;
                   case GDT_CFloat32:
                     dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    if( CPLIsNan(dfValue) )
+                        continue;
                     break;
                   case GDT_CFloat64:
                     dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
+                    if( CPLIsNan(dfValue) )
+                        continue;
                     break;
                   default:
                     CPLAssert( FALSE );
