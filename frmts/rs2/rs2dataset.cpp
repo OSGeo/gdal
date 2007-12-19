@@ -666,6 +666,15 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    /* while we're at it, extract the pixel spacing information */
+    const char *pszPixelSpacing = CPLGetXMLValue( psImageAttributes,
+        "rasterAttributes.sampledPixelSpacing", "UNK" );
+    poDS->SetMetadataItem( "PIXEL_SPACING", pszPixelSpacing );
+
+    const char *pszLineSpacing = CPLGetXMLValue( psImageAttributes,
+        "rasterAttributes.sampledLineSpacing", "UNK" );
+    poDS->SetMetadataItem( "LINE_SPACING", pszLineSpacing );
+
 /* -------------------------------------------------------------------- */
 /*      Open each of the data files as a complex band.                  */
 /* -------------------------------------------------------------------- */
@@ -807,7 +816,33 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Collect a few useful metadata items                             */
 /* -------------------------------------------------------------------- */
 
+    CPLXMLNode *psSourceAttrs = CPLGetXMLNode( psProduct,
+                                               "=product.sourceAttributes");
+    const char *pszItem;
 
+    if (psSourceAttrs != NULL) {
+        /* Get beam mode mnemonic */
+        pszItem = CPLGetXMLValue( psSourceAttrs, "beamModeMnemonic", "UNK" );
+        poDS->SetMetadataItem( "BEAM_MODE", pszItem );
+    }
+
+    CPLXMLNode *psSarProcessingInformation =
+        CPLGetXMLNode( psProduct, "=product.imageGenerationParameters" );
+
+    if (psSarProcessingInformation != NULL) {
+        /* Get incidence angle information */
+        pszItem = CPLGetXMLValue( psSarProcessingInformation, 
+            "sarProcessingInformation.incidenceAngleNearRange", "UNK" );
+        poDS->SetMetadataItem( "NEAR_RANGE_INCIDENCE_ANGLE", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+            "sarProcessingInformation.incidenceAngleFarRange", "UNK" );
+        poDS->SetMetadataItem( "FAR_RANGE_INCIDENCE_ANGLE", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+            "sarProcessingInformation.slantRangeNearEdge", "UNK" );
+        poDS->SetMetadataItem( "SLANT_RANGE_NEAR_EDGE", pszItem );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect GCPs.                                                   */
