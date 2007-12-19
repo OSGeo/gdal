@@ -375,7 +375,6 @@
  is not supported by this driver. 
 */
 
-
 /**
  \fn OGRDataSource *OGRSFDriver::CreateDataSource( const char *pszName, 
                                         char ** papszOptions );
@@ -429,6 +428,14 @@ success.
 /************************************************************************/
 /*                            OGRDataSource                             */
 /************************************************************************/
+
+/**
+  \fn void OGR_DS_Destroy( OGRDataSourceH hDataSource )
+
+  Closes opened datasource and releases allocated resources.
+
+  @param hDataSource handle to allocated datasource object.
+*/
 
 /** 
  \fn const char *OGRDataSource::GetName();
