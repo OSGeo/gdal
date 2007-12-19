@@ -34,8 +34,8 @@
 
 CPL_CVSID("$Id$");
 
-#define TO_DEGREES (180.0 / 3.14159265358979323846)
-#define TO_RADIANS (3.14159265358979323846 / 180.0)
+#define TO_DEGREES 57.2957795130823208766
+#define TO_RADIANS 0.017453292519943295769
 
 // XXX: this macro computes zone number from the central meridian parameter.
 // Note, that "Panorama" parameters are set in radians.
@@ -43,7 +43,7 @@ CPL_CVSID("$Id$");
 //
 //              zone = (central_meridian + 3) / 6
 //
-#define TO_ZONE(x) (((x) + 0.052359877559829883) / 0.10471975511965977)
+#define TO_ZONE(x) (((x) + 0.05235987755982989) / 0.1047197551196597)
 
 /************************************************************************/
 /*  "Panorama" projection codes.                                        */
@@ -391,8 +391,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         case PAN_PROJ_UTM:
             {
-                // XXX: add some small value to avoid rounding errors.
-                long nZone = (long)(TO_ZONE(padfPrjParams[3]) + 0.0001);
+                long nZone = (long)TO_ZONE(padfPrjParams[3]);
 
                 // XXX: no way to determine south hemisphere. Always assume
                 // nothern hemisphere.
@@ -442,8 +441,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // parameter, because usually it is not contained in the
                 // "Panorama" projection definition.
                 // FIXME: what to do with negative values?
-                // XXX: add some small value to avoid rounding errors.
-                long nZone = (long)(TO_ZONE(padfPrjParams[3]) + 0.0001);
+                long nZone = (long)TO_ZONE(padfPrjParams[3]);
 
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
                 padfPrjParams[4] = 1.0;
