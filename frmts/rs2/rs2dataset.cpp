@@ -453,6 +453,7 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     this->m_nfOffset)/m_nfTable[nBlockXOff + j];
             }
         }
+        CPLFree(pnImageTmp);
     }
     else {
         CPLAssert( FALSE );
