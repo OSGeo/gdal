@@ -286,14 +286,15 @@ char * strdup (char *instr);
 
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
-/*      are supposed to be macros according to C99.  Some systems       */
-/*      (ie. Tru64) don't have isinf() at all, so if the macro is       */
-/*      not defined we just assume nothing is infinite.  This may       */
-/*      mean we have no real CPLIsInf() on systems with an isinf()      */
+/*      are supposed to be macros according to C99, defined in math.h   */
+/*      Some systems (ie. Tru64) don't have isinf() at all, so if       */
+/*      the macro is not defined we just assume nothing is infinite.    */
+/*      This may mean we have no real CPLIsInf() on systems with isinf()*/
 /*      function but no corresponding macro, but I can live with        */
 /*      that since it isn't that important a test.                      */
 /* -------------------------------------------------------------------- */
 #ifdef _MSC_VER
+#  include <float.h>
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
