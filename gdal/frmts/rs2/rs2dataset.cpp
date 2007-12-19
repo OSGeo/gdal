@@ -40,6 +40,7 @@ typedef enum eCalibration_t {
     Sigma0 = 0,
     Gamma,
     Beta0,
+    Uncalib,
     None
 } eCalibration;
 
@@ -559,6 +560,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             eCalib = Sigma0;
         else if (EQUALN("GAMMA", pszFilename,5))
             eCalib = Gamma;
+        else if (EQUALN("UNCALIB", pszFilename,7))
+            eCalib = Uncalib;
         else
             eCalib = None;
 
@@ -614,8 +617,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                              "-1" ));
 
 /* -------------------------------------------------------------------- */
-/*        Check product type, as to determine if there are LUTs for       */
-/*      calibration purposes.                                            */
+/*      Check product type, as to determine if there are LUTs for       */
+/*      calibration purposes.                                           */
 /* -------------------------------------------------------------------- */
 
     char *pszBeta0LUT = NULL;
@@ -693,7 +696,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                  || EQUAL(psNode->pszValue,"lookupTable")) )
             continue;
 
-        if ( EQUAL(psNode->pszValue, "lookupTable") && bCanCalib) {
+        if ( EQUAL(psNode->pszValue, "lookupTable") && bCanCalib ) {
             /* Determine which incidence angle correction this is */
             const char *pszLUTType = CPLGetXMLValue( psNode,
                 "incidenceAngleCorrection", "" );
@@ -758,7 +761,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create the band.                                                */
 /* -------------------------------------------------------------------- */
-        if (eCalib == None) {
+        if (eCalib == None || eCalib == Uncalib) {
             RS2RasterBand *poBand;
             poBand = new RS2RasterBand( poDS, eDataType,
                                         CPLGetXMLValue( psNode, "pole", "" ), 
@@ -792,14 +795,19 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree( pszFullname );
     }
 
-    if (papszSubdatasets != NULL) {
+    if (papszSubdatasets != NULL && eCalib == None) {
+        CPLString sBuf;
+        sBuf.Printf("RADARSAT_2_CALIB:UNCALIB:%s", pszFilename);
         papszSubdatasets = CSLSetNameValue( papszSubdatasets,
-            "SUBDATASET_1_NAME", pszFilename );
+            "SUBDATASET_1_NAME", sBuf );
         papszSubdatasets = CSLSetNameValue( papszSubdatasets,
             "SUBDATASET_1_DESC", "Uncalibrated digital numbers" );
 
         poDS->GDALMajorObject::SetMetadata( papszSubdatasets, "SUBDATASETS" );
         CSLDestroy( papszSubdatasets );
+    }
+    else if (papszSubdatasets != NULL) {
+        CSLDestroy( papszSubdatasets ); /* a subdataset was selected already */
     }
 
 /* -------------------------------------------------------------------- */
