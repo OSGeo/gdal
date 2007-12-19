@@ -629,10 +629,19 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
     json_object* poTmp = poObj;
 
     json_object_iter it;
-    json_object_object_foreachC(poTmp, it)
+    if( NULL != json_object_get_object(poTmp) )
     {
-        if( EQUAL( it.key, pszName ) )
-            return it.val;
+        CPLAssert( NULL != json_object_get_object(poTmp)->head );
+
+        for( it.entry = json_object_get_object(poTmp)->head;
+             ( it.entry ?
+               ( it.key = (char*)it.entry->k,
+                 it.val = (json_object*)it.entry->v, it.entry) : 0);
+             it.entry = it.entry->next)
+        {
+            if( EQUAL( it.key, pszName ) )
+                return it.val;
+        }
     }
 
     return NULL;
