@@ -391,7 +391,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         case PAN_PROJ_UTM:
             {
-                long nZone = (long)TO_ZONE(padfPrjParams[3]);
+                // XXX: add some small value to avoid rounding errors.
+                long nZone = (long)(TO_ZONE(padfPrjParams[3]) + 0.0001);
+
                 // XXX: no way to determine south hemisphere. Always assume
                 // nothern hemisphere.
                 SetUTM( nZone, TRUE );
@@ -440,7 +442,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // parameter, because usually it is not contained in the
                 // "Panorama" projection definition.
                 // FIXME: what to do with negative values?
-                long nZone = (long)TO_ZONE(padfPrjParams[3]);
+                // XXX: add some small value to avoid rounding errors.
+                long nZone = (long)(TO_ZONE(padfPrjParams[3]) + 0.0001);
+
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
                 padfPrjParams[4] = 1.0;
                 SetTM( TO_DEGREES * padfPrjParams[2],
