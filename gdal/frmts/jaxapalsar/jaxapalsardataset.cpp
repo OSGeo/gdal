@@ -31,7 +31,7 @@
 
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id: cpl_string.cpp 12683 2007-11-09 18:24:18Z warmerdam $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_PALSARJaxa(void);
