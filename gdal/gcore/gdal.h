@@ -488,15 +488,15 @@ GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
               GByte *pabyDstData, int nDstOffset, int nDstStep,
               int nBitCount, int nStepCount );
 
-int CPL_DLL CPL_STDCALL GDALReadWorldFile( const char *pszBaseFilename, 
-                       const char *pszExtension, 
-                       double * padfGeoTransform );
-int CPL_DLL CPL_STDCALL GDALWriteWorldFile( const char *pszBaseFilename, 
-                       const char *pszExtension, 
-                       double * padfGeoTransform );
-int CPL_DLL CPL_STDCALL GDALReadTabFile( const char *pszBaseFilename, 
-                             double *padfGeoTransform, char **ppszWKT,
-                             int *pnGCPCount, GDAL_GCP **ppasGCPs );
+int CPL_DLL CPL_STDCALL GDALLoadWorldFile( const char *, double * );
+int CPL_DLL CPL_STDCALL GDALReadWorldFile( const char *, const char *,
+                                           double * );
+int CPL_DLL CPL_STDCALL GDALWriteWorldFile( const char *, const char *,
+                                            double * );
+int CPL_DLL CPL_STDCALL GDALLoadTabFile( const char *, double *, char **,
+                                         int *, GDAL_GCP ** );
+int CPL_DLL CPL_STDCALL GDALReadTabFile( const char *, double *, char **,
+                                         int *, GDAL_GCP ** );
 
 const char CPL_DLL * CPL_STDCALL GDALDecToDMS( double, const char *, int );
 double CPL_DLL CPL_STDCALL GDALPackedDMSToDec( double );
