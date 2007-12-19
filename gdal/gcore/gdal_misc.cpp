@@ -1129,7 +1129,7 @@ GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 }
                              
 /************************************************************************/
-/*                         GDALReadTabFile()                            */
+/*                         GDALLoadTabFile()                            */
 /*                                                                      */
 /*      Helper function for translator implementators wanting           */
 /*      support for MapInfo .tab-files.                                 */
@@ -1137,47 +1137,24 @@ GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList )
 
 #define MAX_GCP 256
  
-int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename, 
+int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
                                  double *padfGeoTransform, char **ppszWKT, 
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
 
 {
-    const char	*pszTAB;
-    FILE	*fpTAB;
     char	**papszLines;
-    char    **papszTok=NULL;
-    int 	bTypeRasterFound = FALSE;
+    char        **papszTok=NULL;
+    int	        bTypeRasterFound = FALSE;
     int		bInsideTableDef = FALSE;
     int		iLine, numLines=0;
-    int 	nCoordinateCount = 0;
+    int	        nCoordinateCount = 0;
     GDAL_GCP    asGCPs[MAX_GCP];
     
+    papszLines = CSLLoad( pszFilename );
 
-/* -------------------------------------------------------------------- */
-/*      Try lower case, then upper case.                                */
-/* -------------------------------------------------------------------- */
-    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
-
-    fpTAB = VSIFOpen( pszTAB, "rt" );
-
-#ifndef WIN32
-    if( fpTAB == NULL )
-    {
-        pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
-        fpTAB = VSIFOpen( pszTAB, "rt" );
-    }
-#endif
-    
-    if( fpTAB == NULL )
+    if ( !papszLines )
         return FALSE;
-
-    VSIFClose( fpTAB );
-
-/* -------------------------------------------------------------------- */
-/*      We found the file, now load and parse it.                       */
-/* -------------------------------------------------------------------- */
-    papszLines = CSLLoad( pszTAB );
 
     numLines = CSLCount(papszLines);
 
@@ -1201,7 +1178,7 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
             // Only RASTER-type will be handled
             if (EQUAL(papszTok[1], "RASTER"))
             {
-            	bTypeRasterFound = TRUE;
+	        bTypeRasterFound = TRUE;
             }
             else
             {
@@ -1244,8 +1221,8 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
             }
 
 #else
-            CPLDebug( "GDAL", "GDALReadTabFile(): Found `%s',\n"
-                 "but GDALReadTabFile() not configured with MITAB callout.",
+            CPLDebug( "GDAL", "GDALLoadTabFile(): Found `%s',\n"
+                 "but GDALLoadTabFile() not configured with MITAB callout.",
                       papszLines[iLine] );
 #endif
         }
@@ -1277,8 +1254,8 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 
     if( nCoordinateCount == 0 )
     {
-        CPLDebug( "GDAL", "GDALReadTabFile(%s) did not get any GCPs.", 
-                  pszTAB );
+        CPLDebug( "GDAL", "GDALLoadTabFile(%s) did not get any GCPs.", 
+                  pszFilename );
         return FALSE;
     }
 
@@ -1289,15 +1266,18 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
     if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
                                  FALSE ) )
     {
-        CPLDebug( "GDAL", 
-                  "GDALReadTabFile(%s) found file, wasn't able to derive a\n"
-                  "first order geotransform.  Using points as GCPs.",
-                  pszTAB );
+        if (pnGCPCount && ppasGCPs)
+        {
+            CPLDebug( "GDAL", 
+                "GDALLoadTabFile(%s) found file, wasn't able to derive a\n"
+                "first order geotransform.  Using points as GCPs.",
+                pszFilename );
 
-        *ppasGCPs = (GDAL_GCP *) 
-            CPLCalloc(sizeof(GDAL_GCP),nCoordinateCount);
-        memcpy( *ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount );
-        *pnGCPCount = nCoordinateCount;
+            *ppasGCPs = (GDAL_GCP *) 
+                CPLCalloc( sizeof(GDAL_GCP),nCoordinateCount );
+            memcpy( *ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount );
+            *pnGCPCount = nCoordinateCount;
+        }
     }
     else
     {
@@ -1308,6 +1288,141 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
 }
 
 /************************************************************************/
+/*                         GDALReadTabFile()                            */
+/*                                                                      */
+/*      Helper function for translator implementators wanting           */
+/*      support for MapInfo .tab-files.                                 */
+/************************************************************************/
+
+#define MAX_GCP 256
+ 
+int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename, 
+                                 double *padfGeoTransform, char **ppszWKT, 
+                                 int *pnGCPCount, GDAL_GCP **ppasGCPs )
+
+
+{
+    const char	*pszTAB;
+    FILE	*fpTAB;
+
+/* -------------------------------------------------------------------- */
+/*      Try lower case, then upper case.                                */
+/* -------------------------------------------------------------------- */
+    pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
+
+    fpTAB = VSIFOpen( pszTAB, "rt" );
+
+#ifndef WIN32
+    if( fpTAB == NULL )
+    {
+        pszTAB = CPLResetExtension( pszBaseFilename, "TAB" );
+        fpTAB = VSIFOpen( pszTAB, "rt" );
+    }
+#endif
+    
+    if( fpTAB == NULL )
+        return FALSE;
+
+    VSIFClose( fpTAB );
+
+/* -------------------------------------------------------------------- */
+/*      We found the file, now load and parse it.                       */
+/* -------------------------------------------------------------------- */
+    return GDALLoadTabFile( pszTAB, padfGeoTransform, ppszWKT,
+                            pnGCPCount, ppasGCPs );
+}
+
+/************************************************************************/
+/*                         GDALLoadWorldFile()                          */
+/************************************************************************/
+
+/**
+ * Read ESRI world file. 
+ *
+ * This function reads an ESRI style world file, and formats a geotransform
+ * from it's contents.
+ *
+ * The world file contains an affine transformation with the parameters
+ * in a different order than in a geotransform array. 
+ *
+ *  geotransform[1] - width of pixel
+ *  geotransform[4] - rotational coefficient, zero for north up images.
+ *  geotransform[2] - rotational coefficient, zero for north up images.
+ *  geotransform[5] - height of pixel (but negative)
+ *  geotransform[0] - x offset to center of top left pixel.
+ *  geotrasnform[3] - y offset to center of top left pixel.
+ *
+ * @param pszFilename the world file name.
+ * @param padfGeoTransform the six double array into which the
+ * geotransformation should be placed. 
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int CPL_STDCALL 
+GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
+
+{
+    int         nLinesCount = 0;
+    char        **papszLines = NULL;
+    bool        bValid = false;
+
+    papszLines = CSLLoad( pszFilename );
+
+    if ( !papszLines )
+        return FALSE;
+
+    /* Handling of blank lines is not supported. */
+    nLinesCount = CSLCount(papszLines);
+    if( nLinesCount >= 6 )
+    {
+        int i;
+        bValid = true;
+
+        /* First six lines of a world file can not be empty. */
+        for ( i = 0; i < 6; i++ )
+        {
+           CPLString line(papszLines[i]);
+           if( line.Trim().empty() )
+           {
+               bValid = false;
+               break;
+           }
+        }
+    }
+
+    if( bValid
+        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0)  
+        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) ) 
+    {
+        padfGeoTransform[0] = CPLAtofM(papszLines[4]);
+        padfGeoTransform[1] = CPLAtofM(papszLines[0]);
+        padfGeoTransform[2] = CPLAtofM(papszLines[2]);
+        padfGeoTransform[3] = CPLAtofM(papszLines[5]);
+        padfGeoTransform[4] = CPLAtofM(papszLines[1]);
+        padfGeoTransform[5] = CPLAtofM(papszLines[3]);
+
+        // correct for center of pixel vs. top left of pixel
+        padfGeoTransform[0] -= 0.5 * padfGeoTransform[1];
+        padfGeoTransform[0] -= 0.5 * padfGeoTransform[2];
+        padfGeoTransform[3] -= 0.5 * padfGeoTransform[4];
+        padfGeoTransform[3] -= 0.5 * padfGeoTransform[5];
+
+        CSLDestroy(papszLines);
+
+        return TRUE;
+    }
+    else
+    {
+        CPLDebug( "GDAL", 
+                  "GDALLoadWorldFile(%s) found file, but it was corrupt.",
+                  pszFilename );
+        CSLDestroy(papszLines);
+        return FALSE;
+    }
+}
+
+/************************************************************************/
 /*                         GDALReadWorldFile()                          */
 /************************************************************************/
 
@@ -1315,11 +1430,11 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
  * Read ESRI world file. 
  *
  * This function reads an ESRI style world file, and formats a geotransform
- * from it's contents.  It will form the filename for the worldfile from the
- * filename of the raster file referred and the suggested extension.  If no
- * extension is provided, the code will internally try the unix style and
- * windows style world file extensions (eg. for .tif these would be .tfw and 
- * .tifw). 
+ * from it's contents.  It does the same as GDALLoadWorldFile() function, but
+ * it will form the filename for the worldfile from the filename of the raster
+ * file referred and the suggested extension.  If no extension is provided,
+ * the code will internally try the unix style and windows style world file
+ * extensions (eg. for .tif these would be .tfw and .tifw). 
  *
  * The world file contains an affine transformation with the parameters
  * in a different order than in a geotransform array. 
@@ -1341,16 +1456,13 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
  */
 
 int CPL_STDCALL 
-GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
+GDALReadWorldFile( const char *pszBaseFilename, const char *pszExtension,
                    double *padfGeoTransform )
 
 {
     const char  *pszTFW;
     char        szExtUpper[32], szExtLower[32];
-    int         i = 0;
-    int         nLinesCount = 0;
-    char        **papszLines = NULL;
-    bool        bValid = false;
+    int         i;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't given an extension, try both the unix and          */
@@ -1426,59 +1538,7 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
 /* -------------------------------------------------------------------- */
-    papszLines = CSLLoad( pszTFW );
-
-    /* Handling of blank lines is not supported. */
-    nLinesCount = CSLCount(papszLines);
-    if( nLinesCount >= 6 )
-    {
-        bValid = true;
-
-        /* First six lines of a world file can not be empty. */
-        for( i = 0; i < 6; i++)
-        {
-           CPLString line(papszLines[i]);
-           if( line.Trim().empty() )
-           {
-               bValid = false;
-               break;
-           }
-        }
-    }
-    else
-    {
-        bValid = false;
-    }
-
-    if( bValid
-        && (CPLAtofM(papszLines[0]) != 0.0 || CPLAtofM(papszLines[2]) != 0.0)  
-        && (CPLAtofM(papszLines[3]) != 0.0 || CPLAtofM(papszLines[1]) != 0.0) ) 
-    {
-        padfGeoTransform[0] = CPLAtofM(papszLines[4]);
-        padfGeoTransform[1] = CPLAtofM(papszLines[0]);
-        padfGeoTransform[2] = CPLAtofM(papszLines[2]);
-        padfGeoTransform[3] = CPLAtofM(papszLines[5]);
-        padfGeoTransform[4] = CPLAtofM(papszLines[1]);
-        padfGeoTransform[5] = CPLAtofM(papszLines[3]);
-
-        // correct for center of pixel vs. top left of pixel
-        padfGeoTransform[0] -= 0.5 * padfGeoTransform[1];
-        padfGeoTransform[0] -= 0.5 * padfGeoTransform[2];
-        padfGeoTransform[3] -= 0.5 * padfGeoTransform[4];
-        padfGeoTransform[3] -= 0.5 * padfGeoTransform[5];
-
-        CSLDestroy(papszLines);
-
-        return TRUE;
-    }
-    else
-    {
-        CPLDebug( "GDAL", 
-                  "GDALReadWorldFile(%s) found file, but it was corrupt.",
-                  pszTFW );
-        CSLDestroy(papszLines);
-        return FALSE;
-    }
+    return GDALLoadWorldFile( pszTFW, padfGeoTransform );
 }
 
 /************************************************************************/
