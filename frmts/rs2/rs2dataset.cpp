@@ -382,15 +382,15 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                       pnImageTmp, nBlockXSize, nRequestYSize, 
                                       GDT_UInt32,
                                       1, NULL, 4, nBlockXSize * 4, 0 );
-        }
 
 #ifdef CPL_LSB
-        /* First, undo the 32bit swap. */ 
-        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+            /* First, undo the 32bit swap. */ 
+            GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
 
-        /* Then apply 16 bit swap. */
-        GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize * 2, 2 );
+            /* Then apply 16 bit swap. */
+            GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize * 2, 2 );
 #endif        
+        }
 
         /* calibrate the complex values */
         for (int i = 0; i < nBlockYSize; i++) {
@@ -406,10 +406,10 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         CPLFree(pnImageTmp);
     }
-    else if (this->m_eType == GDT_Int16) {
-        GInt16 *pnImageTmp;
+    else if (this->m_eType == GDT_UInt16) {
+        GUInt16 *pnImageTmp;
         /* read in detected values */
-        pnImageTmp = (GInt16 *)CPLMalloc(nBlockXSize * nBlockYSize *
+        pnImageTmp = (GUInt16 *)CPLMalloc(nBlockXSize * nBlockYSize *
             GDALGetDataTypeSize( GDT_UInt16 ) / 8);
         eErr = m_poBandDataset->RasterIO( GF_Read, 
                               nBlockXOff * nBlockXSize, 
@@ -424,8 +424,8 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             for (int j = 0; j < nBlockXSize; j++) {
                 int nPixOff = (i * nBlockYSize) + j;
 
-                ((float *)pImage)[nPixOff] = ((pnImageTmp[nPixOff] * 
-                    pnImageTmp[nPixOff]) +
+                ((float *)pImage)[nPixOff] = (((float)pnImageTmp[nPixOff] * 
+                    (float)pnImageTmp[nPixOff]) +
                     this->m_nfOffset)/m_nfTable[nBlockXOff + j];
             }
         }
