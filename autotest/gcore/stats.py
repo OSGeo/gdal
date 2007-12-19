@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+###############################################################################
+# $Id$
+#
+# Project:  GDAL/OGR Test Suite
+# Purpose:  Test core numeric operations and statistics calculations
+# Author:   Mateusz Loskot <mateusz@loskot.net>
+# 
+###############################################################################
+# Copyright (c) 2007, Mateusz Loskot <mateusz@loskot.net>
+# 
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Library General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+# 
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Library General Public License for more details.
+# 
+# You should have received a copy of the GNU Library General Public
+# License along with this library; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+###############################################################################
+
+import os
+import sys
+
+sys.path.append( '../pymod' )
+
+import gdaltest
+import gdal
+
+###############################################################################
+# Test handling NaN with GDT_Float32 data
+
+def stats_nan_1():
+
+    gdaltest.gtiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.gtiff_drv is None:
+        return 'skip'
+
+    stats = (50.0, 58.0, 54.0, 2.5819888974716)
+
+    t = gdaltest.GDALTest( 'GTiff', 'nan32.tif', 1, 874 )
+    return t.testOpen( check_approx_stat = stats, check_stat = stats )
+
+###############################################################################
+# Test handling NaN with GDT_Float64 data
+
+def stats_nan_2():
+
+    if gdaltest.gtiff_drv is None:
+        return 'skip'
+
+    stats = (50.0, 58.0, 54.0, 2.5819888974716)
+
+    t = gdaltest.GDALTest( 'GTiff', 'nan64.tif', 1, 4414 )
+    return t.testOpen( check_approx_stat = stats, check_stat = stats )
+
+
+###############################################################################
+# Run tests
+
+gdaltest_list = [
+    stats_nan_1,
+    stats_nan_2
+    ]
+
+if __name__ == '__main__':
+
+    gdaltest.setup_run( 'stats' )
+
+    gdaltest.run_tests( gdaltest_list )
+
+    gdaltest.summarize()
+
