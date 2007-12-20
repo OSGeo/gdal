@@ -375,9 +375,11 @@ char **AAIGDataset::GetFileList()
 GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int         i, j;
-    GDALDataType eDataType;
-    char        **papszTokens;
+    int i = 0;
+    int j = 0;
+    char **papszTokens = NULL;
+    GDALDataType eDataType = GDT_Int16;
+    GDALDataType eNoDataType = GDT_Int16;
 
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
@@ -408,7 +410,8 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Parse the header.                                               */
 /* -------------------------------------------------------------------- */
-    double dfCellDX, dfCellDY;
+    double dfCellDX = 0;
+    double dfCellDY = 0;
 
     if ( (i = CSLFindString( papszTokens, "ncols" )) < 0 )
     {
@@ -475,8 +478,13 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( (i = CSLFindString( papszTokens, "NODATA_value" )) >= 0 )
     {
+        const char* pszNoData = papszTokens[i + 1];
+
         poDS->bNoDataSet = TRUE;
-        poDS->dfNoDataValue = atof(papszTokens[i + 1]);
+        poDS->dfNoDataValue = atof(pszNoData);
+        
+        if( strchr(pszNoData, '.' ) != NULL )
+            eNoDataType = GDT_Float32;
     }
     
     CSLDestroy( papszTokens );
@@ -524,34 +532,41 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Recognize the type of data.										*/
 /* -------------------------------------------------------------------- */
-
     CPLAssert( NULL != poDS->fp );
 
-    /* Default value type. */
-    eDataType = GDT_Int16; 
-
-    /* Allocate 100K chunk + 1 extra byte for NULL character. */
-    const size_t nChunkSize = 1024 * 100;
-    GByte* pabyChunk = (GByte *) CPLCalloc( nChunkSize + 1, sizeof(GByte) );
-    pabyChunk[nChunkSize] = '\0';
-
-    VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET );
-	
-    /* Scan for dot in subsequent chunks of data. */
-    while( !VSIFEofL( poDS->fp) )
+    /* Use type of nodata value. */
+    if( poDS->bNoDataSet && eNoDataType == GDT_Float32 )
     {
-        VSIFReadL( pabyChunk, sizeof(GByte), nChunkSize, poDS->fp );
-        CPLAssert( pabyChunk[nChunkSize] == '\0' );
-        
-        if( strchr( (const char *)pabyChunk, '.' ) != NULL )
-        {
-            eDataType = GDT_Float32;
-            break;
-        }
+        eDataType = GDT_Float32; 
     }
-    
-    /* Deallocate chunk. */
-    VSIFree( pabyChunk );
+    else
+    {
+        /* Default value type. */
+        eDataType = GDT_Int16;
+
+        /* Allocate 100K chunk + 1 extra byte for NULL character. */
+        const size_t nChunkSize = 1024 * 100;
+        GByte* pabyChunk = (GByte *) CPLCalloc( nChunkSize + 1, sizeof(GByte) );
+        pabyChunk[nChunkSize] = '\0';
+
+        VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET );
+
+        /* Scan for dot in subsequent chunks of data. */
+        while( !VSIFEofL( poDS->fp) )
+        {
+            VSIFReadL( pabyChunk, sizeof(GByte), nChunkSize, poDS->fp );
+            CPLAssert( pabyChunk[nChunkSize] == '\0' );
+
+            if( strchr( (const char *)pabyChunk, '.' ) != NULL )
+            {
+                eDataType = GDT_Float32;
+                break;
+            }
+        }
+
+        /* Deallocate chunk. */
+        VSIFree( pabyChunk );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
