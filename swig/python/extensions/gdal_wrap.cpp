@@ -2935,6 +2935,11 @@ SWIG_From_int  (int value)
 }
 
 
+char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
+    return CPLEscapeString(bin_string, len, scheme);
+} 
+
+
 SWIGINTERNINLINE PyObject *
 SWIG_FromCharPtrAndSize(const char* carray, size_t size)
 {
@@ -4076,6 +4081,50 @@ SWIGINTERN PyObject *_wrap_ErrorReset(PyObject *SWIGUNUSEDPARM(self), PyObject *
     }
   }
   resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  char *arg2 = (char *) 0 ;
+  int arg3 = (int) CPLES_SQL ;
+  char *result = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char *  kwnames[] = {
+    (char *) "len",(char *) "scheme", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:EscapeString",kwnames,&obj0,&obj1)) SWIG_fail;
+  {
+    Py_ssize_t   safeLen;
+    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    PyString_AsStringAndSize(obj0, &arg2, &safeLen );
+    arg1 = (int) safeLen;
+  }
+  if (obj1) {
+    ecode3 = SWIG_AsVal_int(obj1, &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "EscapeString" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+  }
+  {
+    result = (char *)EscapeString(arg1,arg2,arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
   return resultobj;
 fail:
   return NULL;
@@ -12918,6 +12967,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, NULL},
 	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, NULL},
 	 { (char *)"ErrorReset", _wrap_ErrorReset, METH_VARARGS, NULL},
+	 { (char *)"EscapeString", (PyCFunction) _wrap_EscapeString, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"GetLastErrorNo", _wrap_GetLastErrorNo, METH_VARARGS, NULL},
 	 { (char *)"GetLastErrorType", _wrap_GetLastErrorType, METH_VARARGS, NULL},
 	 { (char *)"GetLastErrorMsg", _wrap_GetLastErrorMsg, METH_VARARGS, NULL},
