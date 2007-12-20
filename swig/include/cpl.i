@@ -98,6 +98,7 @@ typedef enum
 %rename (GetConfigOption) CPLGetConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
+
 #endif
 
 void CPLPushErrorHandler( CPLErrorHandler );
@@ -105,6 +106,17 @@ void CPLPushErrorHandler( CPLErrorHandler );
 void CPLPopErrorHandler();
 
 void CPLErrorReset();
+
+
+%feature( "kwargs" ) EscapeString;
+
+%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+%inline %{
+char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
+    return CPLEscapeString(bin_string, len, scheme);
+} 
+%}
+%clear (int len, char *bin_string);
 
 int CPLGetLastErrorNo();
 
