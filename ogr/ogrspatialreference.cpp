@@ -1841,6 +1841,12 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
         return importFromEPSG( atoi(pszCode) );
 
 /* -------------------------------------------------------------------- */
+/*      Is this an IAU code?  Lets try for the IAU2000 dictionary.      */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszAuthority,"IAU",3) )
+        return importFromDict( "IAU2000.wkt", pszCode );
+
+/* -------------------------------------------------------------------- */
 /*      Is this an OGC code?                                            */
 /* -------------------------------------------------------------------- */
     if( !EQUALN(pszAuthority,"OGC:",4) )
