@@ -132,13 +132,32 @@ def aaigrid_5():
     return tst.testOpen(check_prj = prj)
 
 ###############################################################################
+# Verify data type determination from type of nodata 
+
+def aaigrid_6():
+
+    ds = gdal.Open( 'data/nodata_float.asc' )
+
+    b = ds.GetRasterBand(1)
+    if b.GetNoDataValue() != -99999.123:
+        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        return 'fail'
+
+    if b.DataType != gdal.GDT_Float32:
+        gdaltest.post_reason( 'Data type is not Float32!' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     aaigrid_1,
     aaigrid_2,
     aaigrid_3,
     aaigrid_4,
-    aaigrid_5 ]
+    aaigrid_5,
+    aaigrid_6 ]
   
 
 
