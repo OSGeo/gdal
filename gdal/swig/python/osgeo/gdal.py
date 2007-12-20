@@ -136,6 +136,10 @@ def ErrorReset(*args):
   """ErrorReset()"""
   return _gdal.ErrorReset(*args)
 
+def EscapeString(*args, **kwargs):
+  """EscapeString(int len, int scheme=CPLES_SQL) -> char"""
+  return _gdal.EscapeString(*args, **kwargs)
+
 def GetLastErrorNo(*args):
   """GetLastErrorNo() -> int"""
   return _gdal.GetLastErrorNo(*args)
