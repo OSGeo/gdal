@@ -438,7 +438,8 @@ class GDALTest:
 	new_ds = None
 	src_ds = None
 
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
@@ -504,7 +505,8 @@ class GDALTest:
 	
 	new_ds = None
 	
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
@@ -543,7 +545,8 @@ class GDALTest:
 
 	new_ds = None
 	
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
@@ -596,7 +599,8 @@ class GDALTest:
 
 	new_ds = None
 	
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
@@ -640,7 +644,8 @@ class GDALTest:
 
 	new_ds = None
 	
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
@@ -679,7 +684,8 @@ class GDALTest:
 
 	new_ds = None
 	
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
@@ -716,7 +722,8 @@ class GDALTest:
 
 	new_ds = None
 	
-	self.driver.Delete( new_filename )
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+            self.driver.Delete( new_filename )
 
 	return 'success'
 
