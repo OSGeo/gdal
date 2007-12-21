@@ -3475,6 +3475,43 @@ OGRErr OSRSetHOM2PNO( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                            SetIWMPolyconic()                         */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetIWMPolyconic(
+                                double dfLat1, double dfLat2,
+                                double dfCenterLong,
+                                double dfFalseEasting, double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_IMW_POLYCONIC );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, dfLat1 );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, dfLat2 );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRSetIWMPolyconic()                        */
+/************************************************************************/
+
+OGRErr OSRSetIWMPolyconic( OGRSpatialReferenceH hSRS, 
+                           double dfLat1, double dfLat2,
+                           double dfCenterLong,
+                           double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetIWMPolyconic", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetIWMPolyconic( 
+        dfLat1, dfLat2, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                             SetKrovak()                              */
 /************************************************************************/
 
@@ -4310,6 +4347,62 @@ int OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth )
     VALIDATE_POINTER1( hSRS, "OSRGetUTMZone", 0 );
 
     return ((OGRSpatialReference *) hSRS)->GetUTMZone( pbNorth );
+}
+
+/************************************************************************/
+/*                             SetWagner()                              */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetWagner( int nVariation /* 1 -- 7 */,
+                                       double dfCenterLat,
+                                       double dfFalseEasting,
+                                       double dfFalseNorthing )
+
+{
+    if( nVariation == 1 )
+        SetProjection( SRS_PT_WAGNER_I );
+    else if( nVariation == 2 )
+        SetProjection( SRS_PT_WAGNER_II );
+    else if( nVariation == 3 )
+    {
+        SetProjection( SRS_PT_WAGNER_III );
+        SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    }
+    else if( nVariation == 4 )
+        SetProjection( SRS_PT_WAGNER_IV );
+    else if( nVariation == 5 )
+        SetProjection( SRS_PT_WAGNER_V );
+    else if( nVariation == 6 )
+        SetProjection( SRS_PT_WAGNER_VI );
+    else if( nVariation == 7 )
+        SetProjection( SRS_PT_WAGNER_VII );
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported Wagner variation (%d).", nVariation );
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRSetWagner()                            */
+/************************************************************************/
+
+OGRErr OSRSetWagner( OGRSpatialReferenceH hSRS, 
+                     int nVariation, double dfCenterLat,
+                     double dfFalseEasting,
+                     double dfFalseNorthing )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetWagner", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->SetWagner( 
+        nVariation, dfCenterLat, dfFalseEasting, dfFalseNorthing );
 }
 
 /************************************************************************/
