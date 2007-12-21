@@ -1369,8 +1369,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
                     /* -------------------------------------------------------------------- */
                     /*      Initialize any PAM information.                                 */
                     /* -------------------------------------------------------------------- */
-                    //poDS->SetDescription( poOpenInfo->pszFilename );
-                    //poDS->TryLoadXML();
+                    poDS->SetDescription( poOpenInfo->pszFilename );
+                    poDS->TryLoadXML();
 
                 }
                 else if (overviewDS)
@@ -1394,7 +1394,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize,
