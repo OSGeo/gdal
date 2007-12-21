@@ -460,7 +460,7 @@ TerragenDataset::TerragenDataset()
     m_fp = NULL;
 	m_bIsGeo = false;
 	m_pszProjection = NULL;
-	m_nHeightScale = 65536;
+	m_nHeightScale = 0; // fix for ticket 2119
 	m_nBaseHeight = 0;
 	m_dMetersPerGroundUnit = 1.0;
 	m_dSCAL = 30.0;
