@@ -1084,7 +1084,9 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 		  
           VSIIOStream * poUnderlyingIOStream = 
               ((VSIIOStream *)(poFileView->GetStream()));
-          poUnderlyingIOStream->nFileViewCount++;
+
+          if ( poUnderlyingIOStream )
+            poUnderlyingIOStream->nFileViewCount++;
 
           if ( poIOStream != poUnderlyingIOStream ) 
           {
