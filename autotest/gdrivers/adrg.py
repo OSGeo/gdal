@@ -153,9 +153,26 @@ def png_7():
     return 'success'
 
 
+###############################################################################
+# Cleanup procedure
+
+def adrg_cleanup():
+
+    try:
+        os.remove('data/SMALL_ADRG/ABCDEF01.GEN.aux.xml')
+        os.remove('tmp/ABCDEF01.GEN.aux.xml')
+        os.remove('tmp/ABCDEF01.IMG')
+        os.remove('tmp/TRANSH01.THF')
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
 gdaltest_list = [
     adrg_1,
-    adrg_2 ]
+    adrg_2,
+    adrg_cleanup ]
 
 if __name__ == '__main__':
 
