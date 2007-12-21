@@ -49,7 +49,6 @@ def wcs_1():
     except:
         gdaltest.wcs_drv = None
 
-
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WCS service is online.
     # Nothing genuine but helps to keep the buildbot waterfall green.
@@ -58,6 +57,9 @@ def wcs_1():
         web = urllib2.urlopen(srv)
     except urllib2.HTTPError, e:
         print 'Test WCS service is down (HTTP Error: %d)' % e.code
+        gdaltest.wcs_drv = None
+    except:
+        print 'Test WCS service is down.'
         gdaltest.wcs_drv = None
 
     if gdaltest.wcs_drv is None:
