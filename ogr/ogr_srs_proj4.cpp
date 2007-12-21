@@ -674,6 +674,65 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                    OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( EQUAL(pszProj, "iwm_p") )
+    {
+        SetIWMPolyconic( OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                         OSR_GDV( papszNV, "lat_2", 0.0 ),
+                         OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                         OSR_GDV( papszNV, "x_0", 0.0 ), 
+                         OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag1") )
+    {
+        SetWagner( 1, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag2") )
+    {
+        SetWagner( 2, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag3") )
+    {
+        SetWagner( 3,
+                   OSR_GDV( papszNV, "lat_ts", 0.0 ),
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag1") )
+    {
+        SetWagner( 4, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag1") )
+    {
+        SetWagner( 5, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag1") )
+    {
+        SetWagner( 6, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj, "wag1") )
+    {
+        SetWagner( 7, 0.0,
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
     else if( EQUAL(pszProj,"tpeqd") )
     {
         SetTPED( OSR_GDV( papszNV, "lat_1", 0.0 ), 
@@ -1423,6 +1482,75 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
+    else if( EQUAL(pszProjection, SRS_PT_IMW_POLYCONIC) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=iwm_p +lat_1=%.16g +lat_2=%.16g +lon_0=%.16g "
+                 "+x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT, 0.0),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_2ND_POINT, 0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_I) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_II) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_III) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_IV) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_V) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_VI) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_VII) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=wag1 +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+    }
+
     /* Note: This never really gets used currently.  See bug 423 */
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
     {
@@ -1434,6 +1562,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
+
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,

@@ -335,6 +335,58 @@ static const char *papszProjectionDefinitions[] = {
     SRS_PP_FALSE_EASTING, 
     SRS_PP_FALSE_NORTHING,
 
+    "*",
+    SRS_PT_IMW_POLYCONIC,
+    "International Map of the World Polyconic",
+    SRS_PP_LATITUDE_OF_1ST_POINT,
+    SRS_PP_LATITUDE_OF_2ND_POINT,
+    SRS_PP_CENTRAL_MERIDIAN, 
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_I,
+    "Wagner I (Kavraisky VI)",
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_II,
+    "Wagner II",
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_III,
+    "Wagner III",
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_IV,
+    "Wagner IV",
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_V,
+    "Wagner V",
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_VI,
+    "Wagner VI",
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
+    "*",
+    SRS_PT_WAGNER_VII,
+    "Wagner VII",
+    SRS_PP_FALSE_EASTING, 
+    SRS_PP_FALSE_NORTHING,
+
     NULL
 };
 
