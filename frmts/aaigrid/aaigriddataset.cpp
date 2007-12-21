@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include <ctype.h>
+#include <limits.h>
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
@@ -379,7 +380,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     int j = 0;
     char **papszTokens = NULL;
     GDALDataType eDataType = GDT_Int16;
-    GDALDataType eNoDataType = GDT_Int16;
 
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
@@ -482,9 +482,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->bNoDataSet = TRUE;
         poDS->dfNoDataValue = atof(pszNoData);
-        
-        if( strchr(pszNoData, '.' ) != NULL )
-            eNoDataType = GDT_Float32;
     }
     
     CSLDestroy( papszTokens );
@@ -534,8 +531,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL != poDS->fp );
 
-    /* Use type of nodata value. */
-    if( poDS->bNoDataSet && eNoDataType == GDT_Float32 )
+    /* Use bigger data type. */
+    if( poDS->bNoDataSet
+        && ( SHRT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > SHRT_MAX) )
     {
         eDataType = GDT_Float32; 
     }
