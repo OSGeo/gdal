@@ -3,11 +3,10 @@
 # mkgdaldist.sh - prepares GDAL source distribution package
 #
 if [ $# -lt 1 ] ; then
-  echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-install]"
+  echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch]"
   echo " <version> - version number used in name of generated archive."
   echo " -date     - date of package generation, current date used if not provided"
   echo " -branch   - path to SVN branch, trunk is used if not provided"
-  echo " -install  - force to install package on remote server"
   echo "Example: mkgdaldist.sh 1.1.4"
   exit
 fi
@@ -17,13 +16,6 @@ fi
 #
 GDAL_VERSION=$1
 COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
-
-if test "$GDAL_VERSION" != "`cat VERSION`" ; then
-  echo
-  echo "NOTE: local VERSION file (`cat VERSION`) does not match supplied version ($GDAL_VERSION)."
-  echo "      Consider updating local VERSION file, and commiting to SVN." 
-  echo
-fi
 
 if test "$2" = "-date" ; then 
   forcedate=$3
@@ -134,13 +126,5 @@ zip -r ../gdal${COMPRESSED_VERSION}.zip gdal-${GDAL_VERSION}
 echo "* Cleaning..."
 cd ..
 rm -rf dist_wrk
-
-TARGETDIR=remotesensing.org:/ftp/remotesensing/pub/gdal
-if test "$2" = "-install" ; then
-
-  echo "Installing: $TARGETDIR/gdal-${GDAL_VERSION}.tar.gz"
-  echo "       and: $TARGETDIR/gdal${COMPRESSED_VERSION}.zip"
-  scp gdal-${GDAL_VERSION}.tar.gz $TARGETDIR/gdal${COMPRESSED_VERSION}.zip $TARGETDIR
-fi
 
 echo "*** The End ***"
