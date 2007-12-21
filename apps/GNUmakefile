@@ -5,6 +5,7 @@
 include ../GDALmake.opt
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
+LNK_FLAGS   :=  $(LDFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
