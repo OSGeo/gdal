@@ -1232,12 +1232,59 @@ GTiffBitmapBand::~GTiffBitmapBand()
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr GTiffBitmapBand::IWriteBlock( int, int, void * )
+CPLErr GTiffBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                     void * pImage )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "One bit raster bands are read-only." );
-    return CE_Failure;
+    int		nBlockId, nBlockBufSize;
+    CPLErr      eErr = CE_None;
+
+    poGDS->Crystalize();
+    poGDS->SetDirectory();
+
+    CPLAssert( poGDS != NULL
+               && nBlockXOff >= 0
+               && nBlockYOff >= 0
+               && pImage != NULL );
+
+    // First downsample to the particular number of bits in
+    // a temporary buffer.
+    int nLineOffset, iLine;
+    GByte *pabyOddImg = (GByte *) CPLCalloc(nBlockXSize,nBlockYSize);
+    
+    nLineOffset = (nBlockXSize * poGDS->nBitsPerSample + 7) / 8;
+    
+    for( iLine = 0; iLine < nBlockYSize; iLine++ )
+    {
+        GDALCopyBits( (GByte *) pImage, 
+                      iLine*nBlockXSize*8 + 8 - poGDS->nBitsPerSample, 8, 
+                      pabyOddImg, 
+                      iLine * nLineOffset * 8, poGDS->nBitsPerSample,
+                      poGDS->nBitsPerSample, nBlockXSize );
+    }
+    
+    // Then write as appropriate.
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
+        + (nBand-1) * poGDS->nBlocksPerBand;
+    
+    if( TIFFIsTiled(poGDS->hTIFF) )
+    {
+        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
+        if( TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pabyOddImg, 
+                                  nBlockBufSize ) == -1 )
+            eErr = CE_Failure;
+    }
+    else
+    {
+        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
+        if( TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pabyOddImg, 
+                                   nBlockBufSize ) == -1 )
+            eErr = CE_Failure;
+    }
+    
+    CPLFree( pabyOddImg );
+    
+    return eErr;
 }
 
 /************************************************************************/
