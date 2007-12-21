@@ -833,6 +833,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         /* Get beam mode mnemonic */
         pszItem = CPLGetXMLValue( psSourceAttrs, "beamModeMnemonic", "UNK" );
         poDS->SetMetadataItem( "BEAM_MODE", pszItem );
+        pszItem = CPLGetXMLValue( psSourceAttrs, "rawDataStartTime", "UNK" );
+        poDS->SetMetadataItem( "ACQUISITION_START_TIME", pszItem );
     }
 
     CPLXMLNode *psSarProcessingInformation =
