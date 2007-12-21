@@ -308,16 +308,21 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *      <h4>Supported Projections</h4>
  * <pre>
  *      1:  Gauss-Kruger (Transverse Mercator)
- *      4:  Lambert Azimuthal Equal Area
+ *      2:  Lambert Conformal Conic 2SP
  *      5:  Stereographic
  *      6:  Azimuthal Equidistant (Postel)
  *      8:  Mercator
- *      11: Polyconic
+ *      10: Polyconic
  *      13: Polar Stereographic
  *      15: Gnomonic
  *      17: Universal Transverse Mercator (UTM)
+ *      18: Wagner I (Kavraisky VI)
  *      19: Mollweide
  *      20: Equidistant Conic
+ *      24: Lambert Azimuthal Equal Area
+ *      27: Equirectangular
+ *      28: Cylindrical Equal Area (Lambert)
+ *      29: International Map of the World Polyconic
  * </pre>
  *
  * @param iDatum Input coordinate system.
@@ -503,7 +508,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             break;
 
         case PAN_PROJ_IMWP:
-            SetIMWPolyconyc( TO_DEGREES * padfPrjParams[0],
+            SetIWMPolyconic( TO_DEGREES * padfPrjParams[0],
                              TO_DEGREES * padfPrjParams[1],
                              TO_DEGREES * padfPrjParams[3],
                              padfPrjParams[5], padfPrjParams[6] );
