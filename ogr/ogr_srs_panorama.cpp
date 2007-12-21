@@ -58,12 +58,14 @@ CPL_CVSID("$Id$");
 #define PAN_PROJ_POLYC  10L     // Polyconic
 #define PAN_PROJ_PS     13L     // Polar Stereographic
 #define PAN_PROJ_GNOMON 15L     // Gnomonic
-#define PAN_PROJ_UTM    17L     // Universal Transverse Mercator (PAN_PROJ_UTM)
+#define PAN_PROJ_UTM    17L     // Universal Transverse Mercator (UTM)
+#define PAN_PROJ_WAG1   18L     // Wagner I (Kavraisky VI)
 #define PAN_PROJ_MOLL   19L     // Mollweide
 #define PAN_PROJ_EC     20L     // Equidistant Conic
 #define PAN_PROJ_LAEA   24L     // Lambert Azimuthal Equal Area
 #define PAN_PROJ_EQC    27L     // Equirectangular
 #define PAN_PROJ_CEA    28L     // Cylindrical Equal Area (Lambert)
+#define PAN_PROJ_IMWP   29L     // International Map of the World Polyconic
 
 /************************************************************************/
 /*  "Panorama" datum codes.                                             */
@@ -313,7 +315,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *      11: Polyconic
  *      13: Polar Stereographic
  *      15: Gnomonic
- *      17: Universal Transverse Mercator (PAN_PROJ_UTM)
+ *      17: Universal Transverse Mercator (UTM)
  *      19: Mollweide
  *      20: Equidistant Conic
  * </pre>
@@ -398,6 +400,11 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // nothern hemisphere.
                 SetUTM( nZone, TRUE );
             }
+            break;
+
+        case PAN_PROJ_WAG1:
+            SetWagner( 1, 0.0,
+                       padfPrjParams[5], padfPrjParams[6] );
             break;
 
         case PAN_PROJ_MERCAT:
@@ -493,6 +500,13 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             SetCEA( TO_DEGREES * padfPrjParams[0],
                     TO_DEGREES * padfPrjParams[3],
                     padfPrjParams[5], padfPrjParams[6] );
+            break;
+
+        case PAN_PROJ_IMWP:
+            SetIMWPolyconyc( TO_DEGREES * padfPrjParams[0],
+                             TO_DEGREES * padfPrjParams[1],
+                             TO_DEGREES * padfPrjParams[3],
+                             padfPrjParams[5], padfPrjParams[6] );
             break;
 
         default:
@@ -605,7 +619,7 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
  * @param piEllips Pointer to variable, where the spheroid code will be
  * returned.
  * 
- * @param piZone Pointer to variable, where the zone for PAN_PROJ_UTM projection
+ * @param piZone Pointer to variable, where the zone for UTM projection
  * system will be returned.
  *
  * @param padfPrjParams an existing 7 double buffer into which the
@@ -743,6 +757,13 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         }
     }
 
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_I) )
+    {
+        *piProjSys = PAN_PROJ_WAG1;
+        padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
     else if( EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC) )
     {
         *piProjSys = PAN_PROJ_STEREO;
@@ -815,6 +836,19 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
             TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
         padfPrjParams[2] = 
             TO_RADIANS * GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 );
+        padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_IMW_POLYCONIC) )
+    {
+        *piProjSys = PAN_PROJ_IMWP;
+        padfPrjParams[3] =
+            TO_RADIANS * GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 );
+        padfPrjParams[0] = 
+            TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, 0.0 );
+        padfPrjParams[1] = 
+            TO_RADIANS * GetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, 0.0 );
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
