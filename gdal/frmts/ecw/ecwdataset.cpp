@@ -107,8 +107,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     CPLErr      LoadNextLine();
 
   public:
-    		ECWDataset();
-    		~ECWDataset();
+		ECWDataset();
+		~ECWDataset();
                 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
@@ -348,7 +348,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Can we perform direct loads, or must we load into a working     */
 /*      buffer, and transform?                                          */
 /* -------------------------------------------------------------------- */
-    int      	nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
+    int	    nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
 
     bDirect = nPixelSpace == 1 && eBufType == GDT_Byte
 	    && nNewXSize == nBufXSize && nNewYSize == nBufYSize;
@@ -382,15 +382,15 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Supersampling is not supported by the ECW API, so we will do    */
 /*      it ourselves.                                                   */
 /* -------------------------------------------------------------------- */
-    double  	dfSrcYInc = (double)nNewYSize / nBufYSize;
-    double  	dfSrcXInc = (double)nNewXSize / nBufXSize;
-    int      	iSrcLine, iDstLine;
+    double	dfSrcYInc = (double)nNewYSize / nBufYSize;
+    double	dfSrcXInc = (double)nNewXSize / nBufXSize;
+    int	        iSrcLine, iDstLine;
 
     for( iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++ )
     {
         NCSEcwReadStatus eRStatus;
-        int     	iDstLineOff = iDstLine * nLineSpace;
-        unsigned char 	*pabySrcBuf;
+        int	        iDstLineOff = iDstLine * nLineSpace;
+        unsigned char	*pabySrcBuf;
 
         if( bDirect )
             pabySrcBuf = ((GByte *)pData) + iDstLineOff;
@@ -421,7 +421,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
 		else
 		{
-	            int 	iPixel;
+	            int	iPixel;
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
@@ -1084,12 +1084,12 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 		  
           VSIIOStream * poUnderlyingIOStream = 
               ((VSIIOStream *)(poFileView->GetStream()));
-          poUnderlyingIOStream->nFileViewCount++;
+
+          if ( poUnderlyingIOStream )
+              poUnderlyingIOStream->nFileViewCount++;
 
           if ( poIOStream != poUnderlyingIOStream ) 
-          {
               delete poIOStream;
-          } 		
 
           CPLReleaseMutex( hECWDatasetMutex );
 
@@ -1137,7 +1137,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ECWDataset 	*poDS;
+    ECWDataset  *poDS;
 
     poDS = new ECWDataset();
 
