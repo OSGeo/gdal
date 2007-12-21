@@ -212,13 +212,7 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
     CPLDebug("ADRG", "(%d,%d) -> nBlock = %d", nBlockXOff, nBlockYOff, nBlock);
-    
-    if (poDS->bCreation)
-    {
-        memset(pImage, 0, 128 * 128);
-        return CE_None;
-    }
-    
+
     if (poDS->TILEINDEX)
     {
         if (poDS->TILEINDEX[nBlock] == 0)
@@ -1267,7 +1261,15 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     ADRGDataset* overviewDS = NULL;
     CPLString fileName(poOpenInfo->pszFilename);
     CPLString NAM;
-    
+
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The ADRG driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
+
     if (EQUAL(CPLGetExtension((const char*)fileName), "thf"))
     {
         char** fileNames = GetGENListFromTHF((const char*)fileName);
@@ -1369,8 +1371,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
                     /* -------------------------------------------------------------------- */
                     /*      Initialize any PAM information.                                 */
                     /* -------------------------------------------------------------------- */
-                    //poDS->SetDescription( poOpenInfo->pszFilename );
-                    //poDS->TryLoadXML();
+                    poDS->SetDescription( poOpenInfo->pszFilename );
+                    poDS->TryLoadXML();
 
                 }
                 else if (overviewDS)
@@ -1394,7 +1396,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize,
@@ -1471,7 +1473,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     }
     
     CPLString imgFilename = CPLResetExtension(pszFilename, "IMG");
-    FILE* fdIMG = VSIFOpenL((const char*)imgFilename, "wb");
+    FILE* fdIMG = VSIFOpenL((const char*)imgFilename, "w+b");
     if (fdIMG == NULL)
     {
         VSIFCloseL(fdGEN);
