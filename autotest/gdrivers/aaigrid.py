@@ -139,7 +139,7 @@ def aaigrid_6():
     ds = gdal.Open( 'data/nodata_float.asc' )
 
     b = ds.GetRasterBand(1)
-    if b.GetNoDataValue() != -99999.123:
+    if b.GetNoDataValue() != -99999:
         gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
         return 'fail'
 
