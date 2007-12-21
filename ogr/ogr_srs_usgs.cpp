@@ -757,9 +757,13 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 
         // FIXME: HAMMER --- Hammer skipped
 
-        // FIXME: WAGIV --- Wagner IV skipped
+        case WAGIV:
+            SetWagner( 4, 0.0, padfPrjParams[6], padfPrjParams[7] );
+            break;
 
-        // FIXME: WAGVII --- Wagner VII skipped
+        case WAGVII:
+            SetWagner( 7, 0.0, padfPrjParams[6], padfPrjParams[7] );
+            break;
 
         // FIXME: OBEQA --- Oblated Equal Area skipped
 
@@ -1212,6 +1216,20 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
         *piProjSys = MOLL;
         (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
             GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
+        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_IV) )
+    {
+        *piProjSys = WAGIV;
+        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
+        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+    }
+
+    else if( EQUAL(pszProjection, SRS_PT_WAGNER_VII) )
+    {
+        *piProjSys = WAGVII;
         (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
