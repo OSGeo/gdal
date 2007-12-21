@@ -67,8 +67,6 @@ def adrg_2():
 def adrg_cleanup():
 
     try:
-        os.remove('data/SMALL_ADRG/ABCDEF01.GEN.aux.xml')
-        os.remove('tmp/ABCDEF01.GEN.aux.xml')
         os.remove('tmp/ABCDEF01.IMG')
         os.remove('tmp/TRANSH01.THF')
     except:
