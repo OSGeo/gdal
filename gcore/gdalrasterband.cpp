@@ -2905,17 +2905,20 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                    void *pProgressData )
 
 {
+#define GDALSTAT_APPROX_NUMSAMPLES 2500
+
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for min/max.                */
 /* -------------------------------------------------------------------- */
-    if( bApproxOK )
+    if( bApproxOK && !HasArbitraryOverviews() )
     {
         GDALRasterBand *poBand;
 
-        poBand = (GDALRasterBand *) GDALGetRasterSampleOverview( this, 2500 );
+        poBand = (GDALRasterBand *)
+            GDALGetRasterSampleOverview( this, GDALSTAT_APPROX_NUMSAMPLES );
 
         if( poBand != this )
             return poBand->ComputeStatistics( FALSE,  
@@ -2925,13 +2928,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Figure out the ratio of blocks we will read to get an           */
-/*      approximate value.                                              */
+/*      Read actual data and compute statistics.                        */
 /* -------------------------------------------------------------------- */
-    double      dfMin=0.0, dfMax=0.0;
-    int         nSampleRate;
+    double      dfMin = 0.0, dfMax = 0.0;
     int         bGotNoDataValue, bFirstValue = TRUE;
-    double      dfNoDataValue, dfSum=0.0, dfSum2=0.0;
+    double      dfNoDataValue, dfSum = 0.0, dfSum2 = 0.0;
     GIntBig     nSampleCount = 0;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
@@ -2945,82 +2946,80 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
 
-    if( bApproxOK )
-        nSampleRate = 
-            (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
-    else
-        nSampleRate = 1;
-    
-    for( int iSampleBlock = 0; 
-         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
-         iSampleBlock += nSampleRate )
+    if ( bApproxOK && HasArbitraryOverviews() )
     {
-        double dfValue = 0.0;
-        int  iXBlock, iYBlock, nXCheck, nYCheck;
-        GDALRasterBlock *poBlock;
+/* -------------------------------------------------------------------- */
+/*      Figure out how much the image should be reduced to get an       */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+        void    *pData;
+        int     nXReduced, nYReduced;
+        double  dfReduction = sqrt(
+            (double)nRasterXSize * nRasterYSize / GDALSTAT_APPROX_NUMSAMPLES );
 
-        iYBlock = iSampleBlock / nBlocksPerRow;
-        iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
-        
-        poBlock = GetLockedBlockRef( iXBlock, iYBlock );
-        if( poBlock == NULL )
-            continue;
-        
-        if( (iXBlock+1) * nBlockXSize > GetXSize() )
-            nXCheck = GetXSize() - iXBlock * nBlockXSize;
+        if ( dfReduction > 1.0 )
+        {
+            nXReduced = (int)( nRasterXSize / dfReduction );
+            nYReduced = (int)( nRasterYSize / dfReduction );
+        }
         else
-            nXCheck = nBlockXSize;
+        {
+            nXReduced = nRasterXSize;
+            nYReduced = nRasterYSize;
+        }
 
-        if( (iYBlock+1) * nBlockYSize > GetYSize() )
-            nYCheck = GetYSize() - iYBlock * nBlockYSize;
-        else
-            nYCheck = nBlockYSize;
+        pData =
+            CPLMalloc(GDALGetDataTypeSize(eDataType)/8 * nXReduced * nYReduced);
+
+        IRasterIO( GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
+                   nXReduced, nYReduced, eDataType, 0, 0 );
 
         /* this isn't the fastest way to do this, but is easier for now */
-        for( int iY = 0; iY < nYCheck; iY++ )
+        for( int iY = 0; iY < nYReduced; iY++ )
         {
-            for( int iX = 0; iX < nXCheck; iX++ )
+            for( int iX = 0; iX < nXReduced; iX++ )
             {
-                int    iOffset = iX + iY * nBlockXSize;
+                int    iOffset = iX + iY * nXReduced;
+                double dfValue = 0.0;
 
-                switch( poBlock->GetDataType() )
+                switch( eDataType )
                 {
                   case GDT_Byte:
-                    dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((GByte *)pData)[iOffset];
                     break;
                   case GDT_UInt16:
-                    dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((GUInt16 *)pData)[iOffset];
                     break;
                   case GDT_Int16:
-                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((GInt16 *)pData)[iOffset];
                     break;
                   case GDT_UInt32:
-                    dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((GUInt32 *)pData)[iOffset];
                     break;
                   case GDT_Int32:
-                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((GInt32 *)pData)[iOffset];
                     break;
                   case GDT_Float32:
-                    dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((float *)pData)[iOffset];
                     if (CPLIsNan(dfValue))
                         continue;
                     break;
                   case GDT_Float64:
-                    dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    dfValue = ((double *)pData)[iOffset];
                     if (CPLIsNan(dfValue))
                         continue;
                     break;
                   case GDT_CInt16:
-                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                    dfValue = ((GInt16 *)pData)[iOffset*2];
                     break;
                   case GDT_CInt32:
-                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                    dfValue = ((GInt32 *)pData)[iOffset*2];
                     break;
                   case GDT_CFloat32:
-                    dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    dfValue = ((float *)pData)[iOffset*2];
                     break;
                   case GDT_CFloat64:
-                    dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
+                    dfValue = ((double *)pData)[iOffset*2];
                     break;
                   default:
                     CPLAssert( FALSE );
@@ -3047,13 +3046,130 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             }
         }
 
-        poBlock->DropLock();
+        CPLFree( pData );
+    }
 
-        if( !pfnProgress( iSampleBlock / ((double) (nBlocksPerRow*nBlocksPerColumn)),
-                          "Compute Statistics", pProgressData ) )
+    else    // No arbitrary overviews
+    {
+        int         nSampleRate;
+        
+/* -------------------------------------------------------------------- */
+/*      Figure out the ratio of blocks we will read to get an           */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+        if ( bApproxOK )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            return CE_Failure;
+            nSampleRate = 
+                (int)MAX( 1, sqrt((double)nBlocksPerRow * nBlocksPerColumn) );
+        }
+        else
+            nSampleRate = 1;
+
+        for( int iSampleBlock = 0; 
+             iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+             iSampleBlock += nSampleRate )
+        {
+            int  iXBlock, iYBlock, nXCheck, nYCheck;
+            GDALRasterBlock *poBlock;
+
+            iYBlock = iSampleBlock / nBlocksPerRow;
+            iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+            
+            poBlock = GetLockedBlockRef( iXBlock, iYBlock );
+            if( poBlock == NULL )
+                continue;
+            
+            if( (iXBlock+1) * nBlockXSize > GetXSize() )
+                nXCheck = GetXSize() - iXBlock * nBlockXSize;
+            else
+                nXCheck = nBlockXSize;
+
+            if( (iYBlock+1) * nBlockYSize > GetYSize() )
+                nYCheck = GetYSize() - iYBlock * nBlockYSize;
+            else
+                nYCheck = nBlockYSize;
+
+            /* this isn't the fastest way to do this, but is easier for now */
+            for( int iY = 0; iY < nYCheck; iY++ )
+            {
+                for( int iX = 0; iX < nXCheck; iX++ )
+                {
+                    int    iOffset = iX + iY * nBlockXSize;
+                    double dfValue = 0.0;
+
+                    switch( poBlock->GetDataType() )
+                    {
+                      case GDT_Byte:
+                        dfValue = ((GByte *)poBlock->GetDataRef())[iOffset];
+                        break;
+                      case GDT_UInt16:
+                        dfValue = ((GUInt16 *)poBlock->GetDataRef())[iOffset];
+                        break;
+                      case GDT_Int16:
+                        dfValue = ((GInt16 *)poBlock->GetDataRef())[iOffset];
+                        break;
+                      case GDT_UInt32:
+                        dfValue = ((GUInt32 *)poBlock->GetDataRef())[iOffset];
+                        break;
+                      case GDT_Int32:
+                        dfValue = ((GInt32 *)poBlock->GetDataRef())[iOffset];
+                        break;
+                      case GDT_Float32:
+                        dfValue = ((float *)poBlock->GetDataRef())[iOffset];
+                        if (CPLIsNan(dfValue))
+                            continue;
+                        break;
+                      case GDT_Float64:
+                        dfValue = ((double *)poBlock->GetDataRef())[iOffset];
+                        if (CPLIsNan(dfValue))
+                            continue;
+                        break;
+                      case GDT_CInt16:
+                        dfValue = ((GInt16 *)poBlock->GetDataRef())[iOffset*2];
+                        break;
+                      case GDT_CInt32:
+                        dfValue = ((GInt32 *)poBlock->GetDataRef())[iOffset*2];
+                        break;
+                      case GDT_CFloat32:
+                        dfValue = ((float *)poBlock->GetDataRef())[iOffset*2];
+                        break;
+                      case GDT_CFloat64:
+                        dfValue = ((double *)poBlock->GetDataRef())[iOffset*2];
+                        break;
+                      default:
+                        CPLAssert( FALSE );
+                    }
+                    
+                    if( bGotNoDataValue && dfValue == dfNoDataValue )
+                        continue;
+
+                    if( bFirstValue )
+                    {
+                        dfMin = dfMax = dfValue;
+                        bFirstValue = FALSE;
+                    }
+                    else
+                    {
+                        dfMin = MIN(dfMin,dfValue);
+                        dfMax = MAX(dfMax,dfValue);
+                    }
+
+                    dfSum += dfValue;
+                    dfSum2 += dfValue * dfValue;
+
+                    nSampleCount++;
+                }
+            }
+
+            poBlock->DropLock();
+
+            if ( !pfnProgress(iSampleBlock
+                              / ((double)(nBlocksPerRow*nBlocksPerColumn)),
+                              "Compute Statistics", pProgressData) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                return CE_Failure;
+            }
         }
     }
 
@@ -3091,9 +3207,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to compute statistics, no valid pixels found in sampling." );
+        "Failed to compute statistics, no valid pixels found in sampling." );
         return CE_Failure;
     }
+
+#undef GDALSTAT_APPROX_NUMSAMPLES
 }
 
 /************************************************************************/
