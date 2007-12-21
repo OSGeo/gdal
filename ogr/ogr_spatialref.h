@@ -337,6 +337,12 @@ class CPL_DLL OGRSpatialReference
                             double dfScale,
                             double dfFalseEasting, double dfFalseNorthing );
 
+    /** International Map of the World Polyconic */
+    OGRErr      SetIWMPolyconic( double dfLat1, double dfLat2,
+                                 double dfCenterLong,
+                                 double dfFalseEasting,
+                                 double dfFalseNorthing );
+
     /** Krovak Oblique Conic Conformal */
     OGRErr      SetKrovak( double dfCenterLat, double dfCenterLong,
                            double dfAzimuth, double dfPseudoStdParallelLat,
@@ -450,6 +456,10 @@ class CPL_DLL OGRSpatialReference
     /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
     int         GetUTMZone( int *pbNorth = NULL ) const;
+
+    /** Wagner I -- VII */
+    OGRErr      SetWagner( int nVariation, double dfCenterLat,
+                           double dfFalseEasting, double dfFalseNorthing );
 
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
