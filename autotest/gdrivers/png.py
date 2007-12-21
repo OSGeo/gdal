@@ -141,6 +141,60 @@ def png_7():
 
     return 'success'
 
+###############################################################################
+# Test PNG file with broken IDAT chunk. This poor man test of clean
+# recovery from errors caused by reading broken file..
+
+def png_8():
+
+    drv = gdal.GetDriverByName( 'PNG' )
+    ds_src = gdal.Open( 'data/idat_broken.png' )
+
+    md = ds_src.GetMetadata()
+    if len(md) > 0:
+        gdaltest.post_reason('metadata list not expected')
+        return 'fail'
+
+    # Number of bands has been preserved
+    if ds_src.RasterCount != 4:
+        gdaltest.post_reason('wrong number of bands')
+        return 'fail'
+
+    # No reading is performed, so we expect valid reference
+    b = ds_src.GetRasterBand(1)
+    if b is None:
+        gdaltest.post_reason('band 1 is missing')
+        return 'fail'
+
+    # We're not interested in returned value but internal state of GDAL.
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    stats = b.ComputeBandStats()
+    err = gdal.GetLastErrorNo()
+    gdal.PopErrorHandler()
+
+    if err == 0:
+        gdaltest.post_reason('error condition expected')
+        return 'fail'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds_dst = drv.CreateCopy( 'tmp/idat_broken.png', ds_src )
+    err = gdal.GetLastErrorNo()
+    gdal.PopErrorHandler()
+    ds_src = None
+
+    if err == 0:
+        gdaltest.post_reason('error condition expected')
+        return 'fail'
+
+    if ds_dst is not None:
+        gdaltest.post_reason('dataset not expected')
+        return 'fail'
+
+    os.remove( 'tmp/idat_broken.png' )
+
+    return 'success'
+
+
 
 gdaltest_list = [
     png_1,
@@ -149,7 +203,8 @@ gdaltest_list = [
     png_4,
     png_5,
     png_6,
-    png_7 ]
+    png_7,
+    png_8 ]
 
 if __name__ == '__main__':
 

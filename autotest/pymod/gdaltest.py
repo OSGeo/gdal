@@ -290,6 +290,15 @@ class GDALTest:
 
             new_stat = oBand.GetStatistics(1, 1)
             for i in range(4):
+
+                # NOTE - mloskot: Poor man Nan/Inf value check. It's poor
+                # because we need to support old and buggy Python 2.3.
+                # Tested on Linux, Mac OS X and Windows, with Python 2.3/2.4/2.5.
+                sv = str(new_stat[i]).lower()
+                if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
+                    post_reason( 'NaN or Invinite value encountered '%'.' % sv )
+                    return 'fail'
+
                 if abs(new_stat[i]-check_approx_stat[i]) > stat_epsilon:
                     print
                     print 'old = ', check_approx_stat
@@ -308,6 +317,12 @@ class GDALTest:
 
             new_stat = oBand.GetStatistics(0, 1)
             for i in range(4):
+
+                sv = str(new_stat[i]).lower()
+                if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
+                    post_reason( 'NaN or Invinite value encountered '%'.' % sv )
+                    return 'fail'
+
                 if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
                     print
                     print 'old = ', check_stat
