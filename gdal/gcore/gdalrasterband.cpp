@@ -2961,6 +2961,12 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         {
             nXReduced = (int)( nRasterXSize / dfReduction );
             nYReduced = (int)( nRasterYSize / dfReduction );
+
+            // Catch the case of huge resizing ratios here
+            if ( nXReduced == 0 )
+                nXReduced = 1;
+            if ( nYReduced == 0 )
+                nYReduced = 1;
         }
         else
         {
