@@ -54,6 +54,12 @@ def adrg_2():
     
     dstds = drv.CreateCopy( 'tmp/ABCDEF01.GEN', srcds )
     
+    chksum = dstds.GetRasterBand(1).Checksum()
+
+    if chksum != 62833:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
     dstds = None
     
     drv.Delete( 'tmp/ABCDEF01.GEN' )
