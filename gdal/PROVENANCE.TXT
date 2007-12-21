@@ -51,6 +51,21 @@ Historical and Current:
  shalasz - Steve Halasz (Debian)
  srioux - Sylvain Rioux (Softmap)
  ldjohn (? - rawdataset.cpp - one commit - 2001)
+ pvachon - Phil Vachon
+ klokan - Petr Pridal
+ condit - Chris Condit (SDSC)
+ retsios - Bas Retsios (ITC) 
+ rouault - Even Rouault
+ rayg - Ray Gardener (Daylon Graphics)
+ kosta - Konstantin Baumann 
+ aaime - Andrea Aime (Openplans)
+ gaopeng - Gao Peng (ESRI)
+ hannah - hHannah Valbonesi (Safe Software)
+ mchapman - Martin Chapman 
+ dreamil - Swapnil Harjare (Indictrans)
+ 
+ 
+  
 
 == Issues ==
 
@@ -173,7 +188,7 @@ Note: all the following are build options, not required.
 
 * Copyright Avenza Systems (MIT/X).
 * dgn_pge.cpp, dgn_pge.h, pge_test.cpp, vbe_pge.cpp: copyright Pacific Gas and Electric, all rights reserved!  (this has all been removed from trunk)
-* web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree  '''TO_RESOLVE''' (#1813)
+* web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree - action: this has been removed from svn. (#1813)
 
 === gdal/ogr/ogrsf_frmts/dods ===
 
@@ -181,7 +196,7 @@ Note: all the following are build options, not required.
 
 === gdal/ogr/ogrsf_frmts/dxfdwg ===
 
-* OdFileBuf.h, OdFileBuf.cpp is derived from DWGdirect source code.  No copyright message! '''TO_RESOLVE''' (#1816)
+* OdFileBuf.h, OdFileBuf.cpp is derived from DWGdirect source code.  No copyright message! Action: This driver has been removed from subversion (#1816)
 
 === gdal/ogr/ogrsf_frmts/fme ===
 
@@ -200,7 +215,7 @@ Note: all the following are build options, not required.
 
 * ili level code copyright Pirmin Kalberer (Sourcepole), MIT/X. 
 * iom/ili2c.jar is ambiguous.  (#1812) (removed - ok)
-* iom source code is all LGPL (per iom/README.src.txt) but none of the source files have a copyright or license header.  '''TO_RESOLVE''' (#1812)
+* iom source code is all LGPL (per iom/README.src.txt) but none of the source files have a copyright or license header.  Action: this file has been removed. (#1812)
 
 === gdal/ogr/ogrsf_frmts/mem ===
 
@@ -599,7 +614,37 @@ I have added this license to LICENSE.TXT to satisfy the credit requirement.
 * aclocal.m4 and configure.in have copyright/license headers. 
 * Various readme's, Doxyfile, Makefiles, scripts without any licensing info.
 
-=== TODO ===
+=== gdal/swig/include ===
+* Kevin Ruland, HowardB, FrankW, TamasS, clean.
 
-* gdal/swig
+=== gdal/swig/include/csharp ===
+* Mostly written by TamasS, lacking copyright headers.  Emailing Tamas. 
+
+=== gdal/swig/include/java ===
+* Mostly written by BenC, AndreaA, lacking copyright headers.
+
+=== gdal/swig/include/python ===
+* Mostly written by HowardB, KevinR, lacking copyright headers.
+
+=== gdal/swig/include/python/docs ===
+* doxy2swig.py is imported from outside, but is under a compatible BSD license
+* The rest of the .i files are written or produced by HowardB and lack copyright headers.
+
+=== gdal/swig/include/perl ===
+* Written by Kevin and Ari, a few files lack copyright notices.
+
+=== gdal/swig/include/php ===
+* Written by Kevin, lacking copyright headers.
+
+=== gdal/swig/include/php ===
+* Written by Kevin, lacking copyright headers.
+
+=== gdal/swig/include/ruby ===
+* Written by Kevin and Charlie, most files lack copyright headers.
+
+=== gdal/swig/csharp ===
+* Just makefiles and stuff, no problems.
+
+=== gdal/swig/csharp/apps ===
+* Written by Tamas, lacking copyright headers (emailed).
 
