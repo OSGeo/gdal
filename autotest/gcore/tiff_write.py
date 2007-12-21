@@ -282,7 +282,7 @@ def tiff_write_7():
 
     ds = None
 
-#    gdaltest.tiff_drv.Delete( 'tmp/test_7.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_7.tif' )
 
     return 'success'
 
@@ -354,6 +354,15 @@ def tiff_write_10():
                             options = [ 'NBITS=1', 'INTERLEAVE=BAND' ] )
     return ut.testCreate( out_bands = 2 )
 
+###############################################################################
+# Simple 1 bit file, treated through the GTiffBitmapBand class.
+
+def tiff_write_11():
+
+    ut = gdaltest.GDALTest( 'GTiff', 'oddsize1bit.tif', 1, 5918,
+                            options = [ 'NBITS=1', 'COMPRESS=CCITTFAX4' ] )
+    return ut.testCreateCopy()
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -370,6 +379,7 @@ gdaltest_list = [
     tiff_write_8,
     tiff_write_9,
     tiff_write_10,
+    tiff_write_11,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
