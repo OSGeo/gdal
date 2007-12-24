@@ -170,7 +170,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
      
     hResult = PQexec(hPGConn, osCommand.c_str() );
 
-    if ( hResult && PGRES_TUPLES_OK == PQresultStatus( hResult) )
+    if ( hResult && PGRES_TUPLES_OK == PQresultStatus(hResult) )
     {
         if ( PQntuples( hResult ) == 1 && PQgetisnull( hResult,0,0 ) == false )
         {
@@ -182,12 +182,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
                 CPLDebug( "OGR_PG", "Primary key name (FID): %s", osPrimaryKey.c_str() );
             }
         }
-        else
+        else if ( PQntuples( hResult ) > 1 )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Multi-column primary key in \'%s\' detected but not supported.",
                       pszTableIn );
         }
+
+        /* Zero tuples means no PK is defined, perfectly valid case. */
     }
     else
     {
