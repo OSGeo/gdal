@@ -451,6 +451,11 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             nGCP++;
         }
     }
+    else if (psSceneInfo != NULL) {
+        /* extract the GCPs from the provided file */
+
+        /* TODO */
+    }
     else {
         CPLError(CE_Warning, CPLE_AppDefined, 
             "Unable to find sceneInfo tag in XML document. " 
