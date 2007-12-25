@@ -558,7 +558,7 @@ class CoordinateTransformation:
         """
         #
         # NOTE: A special requirement of the Atlantis Peppers system is
-        # that it needs to be able to instantiate a coordinate tranform
+        # that it needs to be able to instantiate a coordinate transform
         # by just passing in a tuple with two SpatialReference objects.  We
         # assume this is the case if target is None.
 
