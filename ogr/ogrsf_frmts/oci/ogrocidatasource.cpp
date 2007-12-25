@@ -212,6 +212,8 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
         OpenTable( papszTableList[i], -1, bUpdate, FALSE );
     }
 
+    CSLDestroy( papszTableList );
+
     return TRUE;
 }
 
