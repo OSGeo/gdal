@@ -415,6 +415,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 
     CPLXMLNode *psSceneInfo = CPLGetXMLNode( psData, 
         "=level1Product.productInfo.sceneInfo" );
+    /* for SSC products */
     if (poDS->nProduct == eSSC && psSceneInfo != NULL) {
         CPLXMLNode *psNode;
         int nGCP = 0;
@@ -449,6 +450,11 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 
             nGCP++;
         }
+    }
+    else {
+        CPLError(CE_Warning, CPLE_AppDefined, 
+            "Unable to find sceneInfo tag in XML document. " 
+            "Proceeding with caution.");
     }
 
 /* -------------------------------------------------------------------- */
