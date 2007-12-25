@@ -46,6 +46,14 @@ enum ePolarization {
 	VV
 };
 
+enum eProductType {
+    eSSC = 0,
+    eMGD,
+    eEEC,
+    eGEC,
+    eUnknown
+};
+
 /************************************************************************/
 /* Helper Functions                                                     */
 /************************************************************************/
@@ -76,10 +84,13 @@ const char *GetFilePath(CPLXMLNode *psXMLNode, char **pszNodeType) {
 class TSXDataset : public GDALPamDataset {
     int nGCPCount;
     GDAL_GCP *pasGCPList;
+
     char *pszGCPProjection;
 
 	char *pszGeorefFile;
 	FILE *fp;
+
+    eProductType nProduct;
 public:
 	TSXDataset();
 	~TSXDataset();
@@ -311,6 +322,24 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 	poDS->SetMetadataItem( "RANGE_LOOKS", CPLGetXMLValue( psProductInfo,
 		"imageDataInfo.imageRaster.rangeLooks", "unknown" ) );
 
+    const char *pszProductVariant;
+    pszProductVariant = CPLGetXMLValue( psProductInfo, 
+        "productVariantInfo.productVariant", "unknown" );
+
+    poDS->SetMetadataItem( "PRODUCT_VARIANT", pszProductVariant );
+
+    /* Determine what product variant this is */
+    if (EQUALN(pszProductVariant,"SSC",3))
+        poDS->nProduct = eSSC;
+    else if (EQUALN(pszProductVariant,"MGD",3))
+        poDS->nProduct = eMGD;
+    else if (EQUALN(pszProductVariant,"EEC",3))
+        poDS->nProduct = eEEC;
+    else if (EQUALN(pszProductVariant,"GEC",3))
+        poDS->nProduct = eGEC;
+    else
+        poDS->nProduct = eUnknown;
+
 	/* Start reading in the product components */
 	const char *pszPath;
 	char *pszGeorefFile = NULL;
@@ -371,7 +400,6 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 
 	CPLFree(pszDataType);
 
-	CPLDestroyXMLNode(psData);
 
 /* -------------------------------------------------------------------- */
 /*      Check and set matrix representation.                            */
@@ -382,11 +410,46 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 	}
 
 /* -------------------------------------------------------------------- */
-/*      Read the georef file.                                           */
+/*      Read the four corners and centre GCPs in                        */
 /* -------------------------------------------------------------------- */
-/*	if (pszGeorefFile != NULL) {
-		
-	} */
+
+    CPLXMLNode *psSceneInfo = CPLGetXMLNode( psData, 
+        "=level1Product.productInfo.sceneInfo" );
+    if (poDS->nProduct == eSSC && psSceneInfo != NULL) {
+        CPLXMLNode *psNode;
+        int nGCP = 0;
+        double dfAvgHeight = atof(CPLGetXMLValue(psSceneInfo, 
+            "sceneAverageHeight", "0.0"));
+        char szID[3];
+
+        poDS->nGCPCount = 5; /* 5 GCPs provided */
+        poDS->pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP), 
+            poDS->nGCPCount);
+
+        /* iterate over GCPs */
+        for (psNode = psSceneInfo->psChild; psNode != NULL; 
+             psNode = psNode->psNext )
+        {
+            GDAL_GCP *psGCP = poDS->pasGCPList + nGCP;
+
+            if (!EQUAL(psNode->pszValue, "sceneCenterCoord") && 
+                !EQUAL(psNode->pszValue, "sceneCornerCoord"))
+                continue;
+
+            CPLSPrintf( szID, "%d", nGCP );
+            
+            psGCP->dfGCPPixel = atof(CPLGetXMLValue(psNode, "refColumn", 
+                "0.0"));
+            psGCP->dfGCPLine = atof(CPLGetXMLValue(psNode, "refRow", "0.0"));
+            psGCP->dfGCPX = atof(CPLGetXMLValue(psNode, "lat", "0.0"));
+            psGCP->dfGCPY = atof(CPLGetXMLValue(psNode, "lon", "0.0"));
+            psGCP->dfGCPZ = dfAvgHeight;
+            psGCP->pszId = CPLStrdup( szID );
+            psGCP->pszInfo = CPLStrdup("");
+
+            nGCP++;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -398,6 +461,8 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+	CPLDestroyXMLNode(psData);
 
     return poDS;
 }
