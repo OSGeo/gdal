@@ -69,6 +69,9 @@ OGROCISession::OGROCISession()
     hDescribe = NULL;
     hGeometryTDO = NULL;
     hOrdinatesTDO = NULL;
+    pszUserid = NULL;
+    pszPassword = NULL;
+    pszDatabase = NULL;
 }
 
 /************************************************************************/
@@ -83,6 +86,10 @@ OGROCISession::~OGROCISession()
 
     if( hSvcCtx != NULL )
         OCILogoff( hSvcCtx, hError );
+
+    CPLFree( pszUserid );
+    CPLFree( pszPassword );
+    CPLFree( pszDatabase );
 }
 
 /************************************************************************/
