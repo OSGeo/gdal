@@ -23,7 +23,7 @@ supportados pela biblioteca atrav&eacute;s de
 \link gdal_datamodel_br.html um &uacute;nico modelo de dados abstrato\endlink.
 A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas 
 \link gdal_utilities.html utilit&aacute;rios de linha de comando \endlink 
-para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute; de outras fun&ccedil;&otilde;es. 
+para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es. 
 A p&aacute;gina 
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.5.0-News">novidades</a> descreve o 
 lan&ccedil;amento em Dezembro de 2007 da release 1.5.0 da biblioteca GDAL/OGR.
