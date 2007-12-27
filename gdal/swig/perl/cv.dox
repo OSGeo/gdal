@@ -27,7 +27,7 @@ $lname = "boxes";        # name of the layer
 @data = ({key => 'rect1', points => [[0,0],[1,0],[1,1],[0,1]]},
 	 {key => 'rect2', points => [[5,5],[7,5],[7,6],[5,6]]});
 
-$datasource = Geo::OGR::Driver('ESRI Shapefile')->Create($dsname, 1) or die;
+$datasource = Geo::OGR::Driver('ESRI Shapefile')->Create($dsname) or die;
 
 $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
