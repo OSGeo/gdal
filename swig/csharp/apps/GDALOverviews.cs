@@ -53,6 +53,7 @@ class GDALOverviews {
 
 	{ 
 		Console.WriteLine("usage: gdaloverviews {GDAL dataset name} {resamplealg} {level1} {level2} ....");
+		Console.WriteLine("example: gdaloverviews sample.tif \"NEAREST\" 2 4");
 		System.Environment.Exit(-1);
 	}
  
@@ -93,7 +94,8 @@ class GDALOverviews {
             {
                 levels[i-2] = int.Parse(args[i]);
             }
-            if (ds.BuildOverviews(args[1], levels) != (int)CPLErr.CE_None)
+			
+            if (ds.BuildOverviews(args[1], levels, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data") != (int)CPLErr.CE_None)
             {
                 Console.WriteLine("The BuildOverviews operation doesn't work");
                 System.Environment.Exit(-1);
@@ -127,4 +129,16 @@ class GDALOverviews {
             Console.WriteLine("Application error: " + e.Message);
         }
     }
+
+	public static int ProgressFunc(double Complete, IntPtr Message, IntPtr Data)
+	{
+		Console.Write("Processing ... " + Complete * 100 + "% Completed.");
+		if (Message != IntPtr.Zero)
+			Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
+		if (Data != IntPtr.Zero)
+			Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Data));
+	
+		Console.WriteLine("");
+		return 1;
+	}
 }
