@@ -35,6 +35,16 @@
 
 %include typemaps_csharp.i
 
+%pragma(csharp) modulecode="public delegate int GDALProgressFuncDelegate(double Complete, IntPtr Message, IntPtr Data);"
+
+%typemap(imtype) (GDALProgressFunc callback)  "$module.GDALProgressFuncDelegate"
+%typemap(cstype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
+%typemap(csin) (GDALProgressFunc callback)  "$csinput"
+%typemap(in) (GDALProgressFunc callback) %{ $1 = ($1_ltype)$input; %}
+%typemap(imtype) (void* callback_data) "string"
+%typemap(cstype) (void* callback_data) "string"
+%typemap(csin) (void* callback_data) "$csinput"
+
 %define %rasterio_functions(GDALTYPE,CSTYPE)
  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
       CPLErr retval;
@@ -117,7 +127,7 @@
 /*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
 
-public int BuildOverviews( string resampling, int[] overviewlist) {
+public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data) {
       int retval;
       if (overviewlist.Length <= 0)
         throw new ArgumentException("overviewlist size is small (BuildOverviews)");
@@ -125,12 +135,15 @@ public int BuildOverviews( string resampling, int[] overviewlist) {
       IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
       try {
           Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
-          retval = BuildOverviews(resampling, overviewlist.Length, ptr, null, null);
+          retval = BuildOverviews(resampling, overviewlist.Length, ptr, callback, callback_data);
       } finally {
           Marshal.FreeHGlobal(ptr);
       }
       GC.KeepAlive(this);
       return retval;
+  }
+public int BuildOverviews( string resampling, int[] overviewlist) {
+      return BuildOverviews( resampling, overviewlist, null, null);
   }
 }
 
