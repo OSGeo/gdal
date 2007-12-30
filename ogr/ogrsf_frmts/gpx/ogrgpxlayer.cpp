@@ -1475,6 +1475,18 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName, const char **pp
         inExtensions = FALSE;
         interestingDepthLevel = depthLevel;
     }
+    else if (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trkpt") == 0)
+    {
+        inInterestingElement = TRUE;
+        inExtensions = FALSE;
+        interestingDepthLevel = depthLevel;
+    }
+    else if (gpxGeomType == GPX_ROUTE_POINT && strcmp(pszName, "rtept") == 0)
+    {
+        inInterestingElement = TRUE;
+        inExtensions = FALSE;
+        interestingDepthLevel = depthLevel;
+    }
     else if (inInterestingElement)
     {
         if (depthLevel == interestingDepthLevel + 1 &&
@@ -1565,6 +1577,16 @@ void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
             inExtensions = FALSE;
         }
         else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
+        {
+            inInterestingElement = FALSE;
+            inExtensions = FALSE;
+        }
+        else if (gpxGeomType == GPX_TRACK_POINT && strcmp(pszName, "trkpt") == 0)
+        {
+            inInterestingElement = FALSE;
+            inExtensions = FALSE;
+        }
+        else if (gpxGeomType == GPX_ROUTE_POINT && strcmp(pszName, "rtept") == 0)
         {
             inInterestingElement = FALSE;
             inExtensions = FALSE;
