@@ -354,7 +354,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn( S57ClassRegistrar *poCR,
             if( nOptionFlags & S57M_SPLIT_MULTIPOINT )
                 poFDefn->SetGeomType( wkbPoint25D );
             else
-                poFDefn->SetGeomType( wkbMultiPoint );
+                poFDefn->SetGeomType( wkbMultiPoint25D );
         }
         else
             poFDefn->SetGeomType( wkbPoint );
