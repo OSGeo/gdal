@@ -837,6 +837,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                     int year, month, day, hour, minute, TZHour, TZMinute;
                     float second;
                     char c;
+                    /* Date is expressed as a UTC date */
                     if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f%c",
                                &year, &month, &day, &hour, &minute, &second, &c) == 7 && c == 'Z')
                     {
@@ -844,6 +845,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                                              year, month, day,
                                              hour, minute, (int)floor(second + 0.5), 100);
                     }
+                    /* Date is expressed as a UTC date, with a timezone */
                     else if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f%c%02d:%02d",
                                &year, &month, &day, &hour, &minute, &second, &c, &TZHour, &TZMinute) == 9 &&
                              (c == '+' || c == '-'))
@@ -852,6 +854,14 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                                              year, month, day,
                                              hour, minute, (int)floor(second + 0.5),
                                              100 + ((c == '+') ? 1 : -1) * ((TZHour * 60 + TZMinute) / 15));
+                    }
+                    /* Date is expressed into an unknown timezone */
+                    else if (sscanf(pszSubElementValue, "%04d-%02d-%02dT%02d:%02d:%f",
+                                    &year, &month, &day, &hour, &minute, &second) == 6)
+                    {
+                        poFeature->SetField( iCurrentField,
+                                             year, month, day,
+                                             hour, minute, (int)floor(second + 0.5));
                     }
                     else
                     {
