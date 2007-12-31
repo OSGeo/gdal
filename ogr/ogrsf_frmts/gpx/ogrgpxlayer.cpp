@@ -45,6 +45,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                           int bWriteMode)
 
 {
+    const char* gpxVersion = poDS->GetVersion();
+
     int i;
 
     eof = FALSE;
@@ -105,6 +107,16 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldTime("time", OFTDateTime );
         poFeatureDefn->AddFieldDefn( &oFieldTime );
         
+        if (gpxGeomType == GPX_TRACK_POINT &&
+            gpxVersion && strcmp(gpxVersion, "1.0") == 0)
+        {
+            OGRFieldDefn oFieldCourse("course", OFTReal );
+            poFeatureDefn->AddFieldDefn( &oFieldCourse );
+            
+            OGRFieldDefn oFieldSpeed("speed", OFTReal );
+            poFeatureDefn->AddFieldDefn( &oFieldSpeed );
+        }
+        
         OGRFieldDefn oFieldMagVar("magvar", OFTReal );
         poFeatureDefn->AddFieldDefn( &oFieldMagVar );
     
@@ -125,20 +137,31 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
         
-        for(i=1;i<=nMaxLinks;i++)
+        if (gpxVersion && strcmp(gpxVersion, "1.0") == 0)
         {
-            char szFieldName[32];
-            sprintf(szFieldName, "link%d_href", i);
-            OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
-            poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
+            OGRFieldDefn oFieldUrl("url", OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldUrl );
             
-            sprintf(szFieldName, "link%d_text", i);
-            OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
-            poFeatureDefn->AddFieldDefn( &oFieldLinkText );
-            
-            sprintf(szFieldName, "link%d_type", i);
-            OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
-            poFeatureDefn->AddFieldDefn( &oFieldLinkType );
+            OGRFieldDefn oFieldUrlName("urlname", OFTString );
+            poFeatureDefn->AddFieldDefn( &oFieldUrlName );
+        }
+        else
+        {
+            for(i=1;i<=nMaxLinks;i++)
+            {
+                char szFieldName[32];
+                sprintf(szFieldName, "link%d_href", i);
+                OGRFieldDefn oFieldLinkHref( szFieldName, OFTString );
+                poFeatureDefn->AddFieldDefn( &oFieldLinkHref );
+                
+                sprintf(szFieldName, "link%d_text", i);
+                OGRFieldDefn oFieldLinkText( szFieldName, OFTString );
+                poFeatureDefn->AddFieldDefn( &oFieldLinkText );
+                
+                sprintf(szFieldName, "link%d_type", i);
+                OGRFieldDefn oFieldLinkType( szFieldName, OFTString );
+                poFeatureDefn->AddFieldDefn( &oFieldLinkType );
+            }
         }
         
         OGRFieldDefn oFieldSym("sym", OFTString );
