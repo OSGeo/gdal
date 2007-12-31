@@ -49,6 +49,7 @@ OGRGPXDataSource::OGRGPXDataSource()
     fpOutput = NULL;
 
     pszName = NULL;
+    pszVersion = NULL;
 }
 
 /************************************************************************/
@@ -70,6 +71,7 @@ OGRGPXDataSource::~OGRGPXDataSource()
     CPLFree( papoLayers );
     CPLFree( pszExtensionsNS );
     CPLFree( pszName );
+    CPLFree( pszVersion );
 }
 
 /************************************************************************/
@@ -161,7 +163,16 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszName, const char *
     {
         if (strcmp(pszName, "gpx") == 0)
         {
+            int i;
             validity = GPX_VALIDITY_VALID;
+            for(i=0; ppszAttr[i] != NULL; i+= 2)
+            {
+                if (strcmp(ppszAttr[i], "version") == 0)
+                {
+                    pszVersion = CPLStrdup(ppszAttr[i+1]);
+                    break;
+                }
+            }
         }
         else
         {
@@ -218,6 +229,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     
     validity = GPX_VALIDITY_UNKNOWN;
+    CPLFree(pszVersion);
+    pszVersion = NULL;
     bUseExtensions = FALSE;
     nElementsRead = 0;
     
@@ -286,6 +299,25 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         CPLDebug("GPX", "%s seems to be a GPX file.", pszFilename);
         if (bUseExtensions)
             CPLDebug("GPX", "It uses <extensions>");
+
+        if (pszVersion == NULL)
+        {
+            /* Default to 1.1 */
+            CPLError(CE_Warning, CPLE_AppDefined, "GPX schema version is unknown. "
+                     "The driver may not be able to handle the file correctly and will behave as if it is GPX 1.1.");
+            pszVersion = CPLStrdup("1.1");
+        }
+        else if (strcmp(pszVersion, "1.0") == 0 || strcmp(pszVersion, "1.1") == 0)
+        {
+            /* Fine */
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "GPX schema version '%s' is not handled by the driver. "
+                     "The driver may not be able to handle the file correctly and will behave as if it is GPX 1.1.", pszVersion);
+        }
+
         nLayers = 5;
         papoLayers = (OGRGPXLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGPXLayer*));
         papoLayers[0] = new OGRGPXLayer( pszName, "waypoints", GPX_WPT, this, FALSE );
