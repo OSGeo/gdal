@@ -175,6 +175,7 @@ class OGRGPXDataSource : public OGRDataSource
     
     OGRGPXValidity      validity;
     int                 nElementsRead;
+    char*               pszVersion;
     
   public:
                         OGRGPXDataSource();
@@ -207,6 +208,8 @@ class OGRGPXDataSource : public OGRDataSource
     const char*         GetExtensionsNS() { return pszExtensionsNS; }
     
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
+    
+    const char*         GetVersion() { return pszVersion; }
 };
 
 /************************************************************************/
