@@ -65,8 +65,8 @@ static void Usage()
             "       [-of format] [-co \"NAME=VALUE\"]*\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}]\n"
-            "       [-scale_src[_n] src_min src_max]\n"
-            "       [-scale_dst[_n] dst_min dst_max]\n"
+            "       [-src_scale[_n] src_min src_max]\n"
+            "       [-dst_scale[_n] dst_min dst_max]\n"
             "       [-lutbins count]\n" 
             "       [-s_nodata[_n] value]\n"
             "       [-stddev multiplier]\n"
@@ -154,11 +154,13 @@ int main( int argc, char ** argv )
 
         else if( EQUALN(argv[i],"-src_scale",10) && i < argc-2)
         {
+            // TODO
             i += 2;
         }
 
         else if( EQUALN(argv[i],"-dst_scale",10) && i < argc-2 )
         {
+            // TODO
             i += 2;
         }
 
@@ -358,6 +360,12 @@ int main( int argc, char ** argv )
         exit( 0 );
     }
 
+    if (padfScaleMin == NULL || padfScaleMax == NULL)
+    {
+        fprintf( stderr, "-equalize or -config filename command line options must be specified.\n");
+        exit(1);
+    }
+
 /* ==================================================================== */
 /*      Create a virtual dataset.                                       */
 /* ==================================================================== */
@@ -419,7 +427,7 @@ int main( int argc, char ** argv )
 /*      enhancement.                                                    */
 /* -------------------------------------------------------------------- */
         pasEInfo[iBand].poSrcBand = poSrcBand;
-        pasEInfo[iBand].eWrkType = eOutputType;
+        pasEInfo[iBand].eWrkType = eBandType;
         pasEInfo[iBand].dfScaleMin = padfScaleMin[iBand];
         pasEInfo[iBand].dfScaleMax = padfScaleMax[iBand];
         pasEInfo[iBand].nLUTBins = nLUTBins;
