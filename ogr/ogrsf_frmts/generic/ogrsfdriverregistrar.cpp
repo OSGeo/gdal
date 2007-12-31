@@ -43,6 +43,14 @@ static const char *pszUpdatableINST_DATA =
 /*                         OGRSFDriverRegistrar                         */
 /************************************************************************/
 
+/**
+ * Constructor
+ *
+ * Normally the driver registrar is constucted by the 
+ * OGRSFDriverRegistrar::GetRegistrar() accessor which ensures singleton
+ * status.  
+ */
+
 OGRSFDriverRegistrar::OGRSFDriverRegistrar()
 
 {
@@ -105,14 +113,36 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 /*                           OGRCleanupAll()                            */
 /************************************************************************/
 
+/**
+ * Cleanup all OGR related resources. 
+ *
+ * This function will destroy the OGRSFDriverRegistrar along with all registered
+ * drivers, and then cleanup long lived OSR (OGRSpatialReference) and CPL
+ * resources.  This may be called in an application when OGR services are
+ * no longer needed.  It is not normally required, but by freeing all
+ * dynamically allocated memory it can make memory leak testing easier.
+ * 
+ * In addition to destroying the OGRDriverRegistrar, this function also calls:
+ * - OSRCleanup()
+ * - CPLFinderClean()
+ * - VSICleanupFileManager()
+ * - CPLFreeConfig()
+ * - CPLCleanupTLS()
+ */
 void OGRCleanupAll()
 
 {
-    CPLMutexHolderD( &hDRMutex );
+    {
+        // We don't want to hold the mutex while CPL level mutex services
+        // are being destroyed ... just long enough to avoid conflict while
+        // cleaning up OGR and OSR services.
+        CPLMutexHolderD( &hDRMutex );
+    
+        if( poRegistrar != NULL )
+            delete poRegistrar;
+        OSRCleanup();
+    }
 
-    if( poRegistrar != NULL )
-        delete poRegistrar;
-    OSRCleanup();
     CPLFinderClean();
     VSICleanupFileManager();
     CPLFreeConfig();
@@ -123,6 +153,16 @@ void OGRCleanupAll()
 /************************************************************************/
 /*                            GetRegistrar()                            */
 /************************************************************************/
+
+/**
+ * Fetch registrar.
+ *
+ * This static method should be used to fetch the singleton 
+ * registrar.  It will create a registrar if there is not already
+ * one in existance.
+ *
+ * @return the current driver registrar.
+ */
 
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 
