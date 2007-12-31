@@ -254,8 +254,11 @@ class CPL_DLL OGRSFDriver
 /************************************************************************/
 
 /**
- * Singleton manager for drivers.
- *
+ * Singleton manager for OGRSFDriver instances that will be used to try
+ * and open datasources.  Normally the registrar is populated with 
+ * standard drivers using the OGRRegisterAll() function and does not need
+ * to be directly accessed.  The driver registrar and all registered drivers
+ * may be cleaned up on shutdown using OGRCleanupAll().
  */
 
 class CPL_DLL OGRSFDriverRegistrar
