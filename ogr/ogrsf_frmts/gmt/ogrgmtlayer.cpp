@@ -757,11 +757,17 @@ OGRErr OGRGmtLayer::CreateFeature( OGRFeature *poFeature )
 
         for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
+            OGRFieldType eFType=poFeatureDefn->GetFieldDefn(iField)->GetType();
             const char *pszRawValue = poFeature->GetFieldAsString(iField);
             char *pszEscapedVal;
 
             if( iField > 0 )
                 osFieldData += "|";
+
+            // We don't want prefix spaces for numeric values.
+            if( eFType == OFTInteger || eFType == OFTReal )
+                while( *pszRawValue == ' ' )
+                    pszRawValue++;
 
             if( strchr(pszRawValue,' ') || strchr(pszRawValue,'|') 
                 || strchr(pszRawValue, '\t') || strchr(pszRawValue, '\n') )
