@@ -29,6 +29,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <tut.h>
 #include <string>
+#include "cpl_list.h"
 
 namespace tut
 {
@@ -46,13 +47,68 @@ namespace tut
     typedef group::object object;
     group test_cpl_group("CPL");
 
-    // Test ...
+    // Test cpl_list API
     template<>
     template<>
     void object::test<1>()
     {
-        // TODO: Replace following dummy test
-        ensure(true);
+        CPLList* list;
+    
+        list = CPLListInsert(NULL, (void*)0, 0);
+        ensure(CPLListCount(list) == 1);
+        list = CPLListRemove(list, 2);
+        ensure(CPLListCount(list) == 1);
+        list = CPLListRemove(list, 1);
+        ensure(CPLListCount(list) == 1);
+        list = CPLListRemove(list, 0);
+        ensure(CPLListCount(list) == 0);
+        list = NULL;
+        
+        list = CPLListInsert(NULL, (void*)0, 2);
+        ensure(CPLListCount(list) == 3);
+        list = CPLListRemove(list, 2);
+        ensure(CPLListCount(list) == 2);
+        list = CPLListRemove(list, 1);
+        ensure(CPLListCount(list) == 1);
+        list = CPLListRemove(list, 0);
+        ensure(CPLListCount(list) == 0);
+        list = NULL;
+    
+        list = CPLListAppend(list, (void*)1);
+        ensure(CPLListGet(list,0) == list);
+        ensure(CPLListGet(list,1) == NULL);
+        list = CPLListAppend(list, (void*)2);
+        list = CPLListInsert(list, (void*)3, 2);
+        ensure(CPLListCount(list) == 3);
+        CPLListDestroy(list);
+        list = NULL;
+    
+        list = CPLListAppend(list, (void*)1);
+        list = CPLListAppend(list, (void*)2);
+        list = CPLListInsert(list, (void*)4, 3);
+        CPLListGet(list,2)->pData = (void*)3;
+        ensure(CPLListCount(list) == 4);
+        ensure(CPLListGet(list,0)->pData == (void*)1);
+        ensure(CPLListGet(list,1)->pData == (void*)2);
+        ensure(CPLListGet(list,2)->pData == (void*)3);
+        ensure(CPLListGet(list,3)->pData == (void*)4);
+        CPLListDestroy(list);
+        list = NULL;
+    
+        list = CPLListInsert(list, (void*)4, 1);
+        CPLListGet(list,0)->pData = (void*)2;
+        list = CPLListInsert(list, (void*)1, 0);
+        list = CPLListInsert(list, (void*)3, 2);
+        ensure(CPLListCount(list) == 4);
+        ensure(CPLListGet(list,0)->pData == (void*)1);
+        ensure(CPLListGet(list,1)->pData == (void*)2);
+        ensure(CPLListGet(list,2)->pData == (void*)3);
+        ensure(CPLListGet(list,3)->pData == (void*)4);
+        list = CPLListRemove(list, 1);
+        list = CPLListRemove(list, 1);
+        list = CPLListRemove(list, 0);
+        list = CPLListRemove(list, 0);
+        ensure(list == NULL);
     }
 
 } // namespace tut
