@@ -98,12 +98,28 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
 
     nCount = CPLListCount( psList );
 
-    /* Allocate room for the new object */
-    if ( nCount < nPosition )
+    if ( nPosition == 0)
     {
-        for ( i = nCount; i < nPosition - 1; i++ )
-            CPLListAppend( psList, NULL );
-        CPLListAppend( psList, pData );
+        CPLList *psNew = (CPLList *)CPLMalloc( sizeof(CPLList) );
+        psNew->pData = pData;
+        psNew->psNext = psList;
+        psList = psNew;
+    }
+    else if ( nCount < nPosition )
+    {
+        /* Allocate room for the new object */
+        CPLList* psLast = CPLListGetLast(psList);
+        for ( i = nCount; i <= nPosition - 1; i++ )
+        {
+            psLast = CPLListAppend( psLast, NULL );
+            if (psList == NULL)
+                psList = psLast;
+            else
+                psLast = psLast->psNext;
+        }
+        psLast = CPLListAppend( psLast, pData );
+        if (psList == NULL)
+            psList = psLast;
     }
     else
     {
@@ -162,7 +178,7 @@ CPLList *CPLListGet( CPLList *psList, int nPosition )
     int     iItem = 0;
     CPLList *psCurrent = psList;
 
-    if ( psList == NULL )
+    if ( nPosition < 0 )
         return NULL;
 
     while ( iItem < nPosition && psCurrent )
@@ -205,7 +221,7 @@ int CPLListCount( CPLList *psList )
 /************************************************************************/
 
 /**
- * Remone the element from the specified position (zero based) in a list. Data
+ * Remove the element from the specified position (zero based) in a list. Data
  * object contained in removed element must be freed by the caller first.
  * 
  * @param psList pointer to list head.
@@ -217,19 +233,39 @@ int CPLListCount( CPLList *psList )
 CPLList *CPLListRemove( CPLList *psList, int nPosition )
 {
     CPLList *psCurrent, *psRemoved;
-    int     i, nCount;
-    
-    nCount = CPLListCount( psList );
+    int     i;
 
-    if ( nPosition < 0 || nCount < nPosition )
+    if ( psList == NULL)
+    {
+        return NULL;
+    }
+    else if ( nPosition < 0)
+    {
         return psList;      /* Nothing to do!*/
-
-    psCurrent = psList;
-    for ( i = 0; i < nPosition - 1; i++ )
-        psCurrent = psCurrent->psNext;
-    psRemoved = psCurrent->psNext;
-    psCurrent->psNext = psRemoved->psNext;
-    CPLFree( psRemoved );
+    }
+    else if ( nPosition == 0 )
+    {
+        psCurrent = psList->psNext;
+        CPLFree( psList );
+        psList = psCurrent;
+    }
+    else
+    {
+        psCurrent = psList;
+        for ( i = 0; i < nPosition - 1; i++ )
+        {
+            psCurrent = psCurrent->psNext;
+            /* psCurrent == NULL if nPosition >= CPLListCount(psList) */
+            if (psCurrent == NULL)
+                return psList;
+        }
+        psRemoved = psCurrent->psNext;
+        /* psRemoved == NULL if nPosition >= CPLListCount(psList) */
+        if (psRemoved == NULL)
+            return psList;
+        psCurrent->psNext = psRemoved->psNext;
+        CPLFree( psRemoved );
+    }
 
     return psList;
 }
@@ -293,7 +329,7 @@ CPLList *CPLListGetNext( CPLList *psElement )
 
 void *CPLListGetData( CPLList *psElement )
 {
-    if ( psElement == NULL || psElement->pData == NULL )
+    if ( psElement == NULL )
         return NULL;
     else
         return psElement->pData;
