@@ -50,6 +50,7 @@ OGRGeoconceptDataSource::OGRGeoconceptDataSource()
     _nLayers = 0;
     _bSingleNewFile = FALSE;
     _bUpdate = FALSE;
+    _papszOptions = NULL;
 }
 
 /************************************************************************/
