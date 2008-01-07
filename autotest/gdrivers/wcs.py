@@ -44,6 +44,10 @@ import gdaltest
 
 def wcs_1():
 
+    # Disable wcs tests till we have a more reliable test server.
+    gdaltest.wcs_drv = None
+    return 'skip'
+
     try:
         gdaltest.wcs_drv = gdal.GetDriverByName( 'WCS' )
     except:
