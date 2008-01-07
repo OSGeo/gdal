@@ -74,7 +74,7 @@ default:
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
 				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
-				 gmt\*.obj bna\*.obj \
+				 gmt\*.obj bna\*.obj geoconcept\*.obj \
 				 geojson\*.obj geojson\jsonc\*.obj \
 				 gpx\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
