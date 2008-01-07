@@ -94,10 +94,17 @@ typedef enum {
 #define SRS_PT_ECKERT_IV        "Eckert_IV"
 #define SRS_PT_ECKERT_V         "Eckert_V"
 #define SRS_PT_ECKERT_VI        "Eckert_VI"
-#define SRS_PT_EQUIDISTANT_CONIC "Equidistant_Conic"
+#define SRS_PT_EQUIDISTANT_CONIC                                        \
+                                "Equidistant_Conic"
+#define SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE                            \
+                                "Equidistant_Cylindrical_Sphere"
 #define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
-#define SRS_PT_GALL_STEREOGRAPHIC "Gall_Stereographic"
-#define SRS_PT_GEOSTATIONARY_SATELLITE "Geostationary_Satellite"
+#define SRS_PT_GALL_STEREOGRAPHIC                                       \
+                                "Gall_Stereographic"
+#define SRS_PT_GAUSSLABORDEREUNION                                      \
+                                "Gauss_Laborde_Sphere_Geometric_Mean"
+#define SRS_PT_GEOSTATIONARY_SATELLITE                                  \
+                                "Geostationary_Satellite"
 #define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
 #define SRS_PT_GNOMONIC         "Gnomonic"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
