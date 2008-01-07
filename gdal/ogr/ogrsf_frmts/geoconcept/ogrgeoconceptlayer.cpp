@@ -95,7 +95,6 @@ OGRErr OGRGeoconceptLayer::Open( const char* pszName,
 
 {
     GCField* aField;
-    OGRFieldDefn* ofd;
     int n, i;
 
     if( (_hGCT= Open_GCIO(pszName,pszExt,pszMode,pszGCTName))==NULL )
@@ -202,8 +201,8 @@ OGRErr OGRGeoconceptLayer::Open( const char* pszName,
             oft= OFTString;
             break;
           }
-          ofd= new OGRFieldDefn(GetFieldName_GCIO(aField), oft);
-          _poFeatureDefn->AddFieldDefn(ofd);
+          OGRFieldDefn ofd(GetFieldName_GCIO(aField), oft);
+          _poFeatureDefn->AddFieldDefn(&ofd);
         }
       }
     }
