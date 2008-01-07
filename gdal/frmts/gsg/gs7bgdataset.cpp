@@ -515,14 +515,17 @@ CPLErr GS7BGDataset::GetGeoTransform( double *padfGeoTransform )
     if( eErr == CE_None )
         return CE_None;
 
-    padfGeoTransform[0] = poGRB->dfMinX;
-    padfGeoTransform[1] = ( (poGRB->dfMaxX - poGRB->dfMinX)/
-        (nRasterXSize - 1) );
-    padfGeoTransform[2] = 0.0;
-    padfGeoTransform[3] = poGRB->dfMinY;
+    /* calculate pixel size first */
+    padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
+    padfGeoTransform[5] = (poGRB->dfMinY - poGRB->dfMaxY)/(nRasterYSize - 1);
+
+    /* then calculate image origin */
+    padfGeoTransform[0] = poGRB->dfMinX - padfGeoTransform[1] / 2;
+    padfGeoTransform[3] = poGRB->dfMaxY - padfGeoTransform[5] / 2;
+
+    /* tilt/rotation does not supported by the GS grids */
     padfGeoTransform[4] = 0.0;
-    padfGeoTransform[5] = ( (poGRB->dfMaxY - poGRB->dfMinY)/
-        (nRasterYSize - 1) );
+    padfGeoTransform[2] = 0.0;
 
     return CE_None;
 }
