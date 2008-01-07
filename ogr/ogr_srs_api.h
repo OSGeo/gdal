@@ -390,7 +390,7 @@ OGRErr CPL_DLL OSRSetEC( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStd
                        double dfFalseEasting, double dfFalseNorthing );
 
 /** Equidistant Cylindrical Sphere */
-OGRErr OSRSetEquidistantCylindricalSphere( OGRSpatialReferenceH hSRS,
+OGRErr CPL_DLL OSRSetEquidistantCylindricalSphere( OGRSpatialReferenceH hSRS,
                                   double dfCenterLat, double dfCenterLong,
                                   double dfScale,
                                   double dfFalseEasting,
@@ -428,7 +428,7 @@ OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS,
                            double dfFalseEasting, double dfFalseNorthing );
 
 /** GaussLabordeReunion */    
-OGRErr OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
+OGRErr CPL_DLL OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
                                   double dfCenterLat, double dfCenterLong,
                                   double dfScale,
                                   double dfFalseEasting,
