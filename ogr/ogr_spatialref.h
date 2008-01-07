@@ -306,6 +306,11 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetEckertVI( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
+    /** Equidistant Cylindrical Sphere */
+    OGRErr      SetEquidistantCylindricalSphere(double dfCenterLat, double dfCenterLong,
+                            double dfScale,
+                            double dfFalseEasting, double dfFalseNorthing );
+
     /** Equirectangular */
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
@@ -321,7 +326,12 @@ class CPL_DLL OGRSpatialReference
     /** Gall Stereograpic */
     OGRErr      SetGS( double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
-    
+ 
+    /** Gauss Laborde Reunion */
+    OGRErr      SetGaussLabordeReunion(double dfCenterLat, double dfCenterLong,
+                                       double dfScale,
+                                       double dfFalseEasting, double dfFalseNorthing );
+
     /** Gnomonic */
     OGRErr      SetGnomonic(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );

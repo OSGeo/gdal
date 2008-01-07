@@ -3172,6 +3172,43 @@ OGRErr OSRSetEckertVI( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                         SetEquidistantCylindricalSphere()            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetEquidistantCylindricalSphere(
+                                   double dfCenterLat, double dfCenterLong,
+                                   double dfScale,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       OSRSetEquidistantCylindricalSphere()           */
+/************************************************************************/
+
+OGRErr OSRSetEquidistantCylindricalSphere( OGRSpatialReferenceH hSRS,
+                                  double dfCenterLat, double dfCenterLong,
+                                  double dfScale,
+                                  double dfFalseEasting,
+                                  double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetEquidistantCylindricalSphere(
+        dfCenterLat, dfCenterLong, dfScale,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                         SetEquirectangular()                         */
 /************************************************************************/
 
@@ -3309,6 +3346,43 @@ OGRErr OSRSetGEOS( OGRSpatialReferenceH hSRS,
 
     return ((OGRSpatialReference *) hSRS)->SetGEOS( 
         dfCentralMeridian, dfSatelliteHeight,
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
+/*                         SetGaussLabordeReunion()                     */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetGaussLabordeReunion(
+                                   double dfCenterLat, double dfCenterLong,
+                                   double dfScale,
+                                   double dfFalseEasting,
+                                   double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_GAUSSLABORDEREUNION );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       OSRSetGaussLabordeReunion()                    */
+/************************************************************************/
+
+OGRErr OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
+                                  double dfCenterLat, double dfCenterLong,
+                                  double dfScale,
+                                  double dfFalseEasting,
+                                  double dfFalseNorthing )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetGaussLabordeReunion(
+        dfCenterLat, dfCenterLong, dfScale,
         dfFalseEasting, dfFalseNorthing );
 }
 
