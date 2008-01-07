@@ -2,6 +2,7 @@ GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt bna kml gpx \
+			geoconcept \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) 
