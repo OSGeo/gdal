@@ -55,6 +55,7 @@ package Geo::OGR;
 *CreateGeometryFromWkb = *Geo::OGRc::CreateGeometryFromWkb;
 *CreateGeometryFromWkt = *Geo::OGRc::CreateGeometryFromWkt;
 *CreateGeometryFromGML = *Geo::OGRc::CreateGeometryFromGML;
+*CreateGeometryFromJson = *Geo::OGRc::CreateGeometryFromJson;
 *GetDriverCount = *Geo::OGRc::GetDriverCount;
 *GetOpenDSCount = *Geo::OGRc::GetOpenDSCount;
 *SetGenerate_DB2_V72_BYTE_ORDER = *Geo::OGRc::SetGenerate_DB2_V72_BYTE_ORDER;
@@ -124,7 +125,7 @@ sub DESTROY {
 *GetLayerCount = *Geo::OGRc::DataSource_GetLayerCount;
 *_GetDriver = *Geo::OGRc::DataSource__GetDriver;
 *GetName = *Geo::OGRc::DataSource_GetName;
-*DeleteLayer = *Geo::OGRc::DataSource_DeleteLayer;
+*_DeleteLayer = *Geo::OGRc::DataSource__DeleteLayer;
 *_CreateLayer = *Geo::OGRc::DataSource__CreateLayer;
 *CopyLayer = *Geo::OGRc::DataSource_CopyLayer;
 *_GetLayerByIndex = *Geo::OGRc::DataSource__GetLayerByIndex;
@@ -158,6 +159,8 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *SetAttributeFilter = *Geo::OGRc::Layer_SetAttributeFilter;
 *ResetReading = *Geo::OGRc::Layer_ResetReading;
 *GetName = *Geo::OGRc::Layer_GetName;
+*GetGeometryColumn = *Geo::OGRc::Layer_GetGeometryColumn;
+*GetFIDColumn = *Geo::OGRc::Layer_GetFIDColumn;
 *GetFeature = *Geo::OGRc::Layer_GetFeature;
 *GetNextFeature = *Geo::OGRc::Layer_GetNextFeature;
 *SetNextByIndex = *Geo::OGRc::Layer_SetNextByIndex;
@@ -390,6 +393,7 @@ sub new {
 *_ExportToWkb = *Geo::OGRc::Geometry__ExportToWkb;
 *ExportToGML = *Geo::OGRc::Geometry_ExportToGML;
 *ExportToKML = *Geo::OGRc::Geometry_ExportToKML;
+*ExportToJson = *Geo::OGRc::Geometry_ExportToJson;
 *AddPoint_3D = *Geo::OGRc::Geometry_AddPoint_3D;
 *AddPoint_2D = *Geo::OGRc::Geometry_AddPoint_2D;
 *AddGeometryDirectly = *Geo::OGRc::Geometry_AddGeometryDirectly;
@@ -402,6 +406,8 @@ sub new {
 *GetX = *Geo::OGRc::Geometry_GetX;
 *GetY = *Geo::OGRc::Geometry_GetY;
 *GetZ = *Geo::OGRc::Geometry_GetZ;
+*GetPoint_3D = *Geo::OGRc::Geometry_GetPoint_3D;
+*GetPoint_2D = *Geo::OGRc::Geometry_GetPoint_2D;
 *GetGeometryCount = *Geo::OGRc::Geometry_GetGeometryCount;
 *SetPoint_3D = *Geo::OGRc::Geometry_SetPoint_3D;
 *SetPoint_2D = *Geo::OGRc::Geometry_SetPoint_2D;
@@ -526,7 +532,13 @@ package Geo::OGR;
 	    }
 	    return @cap;
 	}
+	*Create = *CreateDataSource;
+	*Copy = *CopyDataSource;
+	*OpenDataSource = *Open;
+	*Delete = *DeleteDataSource;
+
 	package Geo::OGR::DataSource;
+	use Carp;
 	use strict;
 	use vars qw /@CAPABILITIES %LAYERS/;
 	for my $s (qw/CreateLayer DeleteLayer/) {
@@ -552,27 +564,83 @@ package Geo::OGR;
 	sub OpenShared {
 	    return Geo::OGR::OpenShared(@_);
 	}
+	sub Layer {
+	    my($self, $name) = @_;
+	    my $layer = _GetLayerByName($self, $name) if defined $name;
+	    $layer = _GetLayerByIndex($self, $name) if !$layer and $name =~ /^\d+$/;
+	    return unless $layer;
+	    $LAYERS{tied(%$layer)} = $self;
+	    return $layer;
+	}
+	sub Layers {
+	    my $self = shift;
+	    my @names;
+	    for my $i (0..$self->GetLayerCount-1) {
+		my $layer = _GetLayerByIndex($self, $i);
+		push @names, $layer->GetName;
+	    }
+	    return @names;
+	}
 	sub GetLayerByIndex {
 	    my($self, $index) = @_;
 	    $index = 0 unless defined $index;
-	    my $layer = _GetLayerByIndex($self, $index);
+	    my $layer = _GetLayerByIndex($self, $index+0);
+	    return unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
 	sub GetLayerByName {
 	    my($self, $name) = @_;
 	    my $layer = _GetLayerByName($self, $name);
+	    return unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
 	sub CreateLayer {
-	    my @p = @_;
-	    $p[3] = $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]} if 
-		$p[3] and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$p[3]};
-	    my $layer = _CreateLayer(@p);
-	    $LAYERS{tied(%$layer)} = $p[0];
+	    my $self = shift;
+	    my %defaults = (Name => 'unnamed',
+			    SRS => undef, 
+			    GeometryType => 'Unknown', 
+			    Options => [], 
+			    Schema => undef);
+	    my %params;
+	    if (ref($_[0]) eq 'HASH') {
+		%params = %{$_[0]};
+	    } else {
+		($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
+	    }
+	    for (keys %params) {
+		croak "unknown parameter: $_" unless exists $defaults{$_};
+	    }
+	    for (keys %defaults) {
+		$params{$_} = $defaults{$_} unless defined $params{$_};
+	    }
+	    $params{GeometryType} = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}} if 
+		exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
+	    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $params{GeometryType}, $params{Options});
+	    $LAYERS{tied(%$layer)} = $self;
+	    $layer->Schema(%{$params{Schema}}) if $params{Schema};
 	    return $layer;
 	}
+	sub DeleteLayer {
+	    my $self = shift;
+	    my $name;
+	    if (@_ == 2) {
+		my %param = @_;
+		_DeleteLayer($self, $param{index}), return if exists $param{index};
+		$name = $param{name};
+	    } else {
+		$name = shift;
+	    }
+	    my $index;
+	    for my $i (0..$self->GetLayerCount-1) {
+		my $layer = _GetLayerByIndex($self, $i);
+		$index = $i, last if $layer->GetName eq $name;
+	    }
+	    $index = $name unless defined $index;
+	    _DeleteLayer($self, $index) if defined $index;
+	}
+
 	package Geo::OGR::Layer;
 	use strict;
 	use vars qw /@CAPABILITIES/;
@@ -701,6 +769,13 @@ package Geo::OGR;
 	    }
 	    return @ret;
 	}
+	sub SpatialFilter {
+	    my $self = shift;
+	    $self->SetSpatialFilter($_[0]) if @_ == 1;
+	    $self->SetSpatialFilterRect(@_) if @_ == 4;
+	    return unless defined wantarray;
+	    $self->GetSpatialFilter;
+	}
 	sub InsertFeature {
 	    my $self = shift;
 	    my $f = shift;
@@ -715,7 +790,9 @@ package Geo::OGR;
 	    }
 	    $self->CreateFeature($f);
 	}
+
 	package Geo::OGR::FeatureDefn;
+	use strict;
 	sub Schema {
 	    my $self = shift;
 	    my %schema;
@@ -724,6 +801,9 @@ package Geo::OGR;
 		# the Name cannot be set
 		$self->GeomType($schema{GeometryType}) if exists $schema{GeometryType};
 		for my $fd (@{$schema{Fields}}) {
+		    if (ref($fd) eq 'HASH') {
+			$fd = Geo::OGR::FieldDefn->create(%$fd);
+		    }
 		    AddFieldDefn($self, $fd);
 		}
 	    }
@@ -746,9 +826,22 @@ package Geo::OGR;
 	    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
 	}
 	*GeometryType = *GeomType;
+
 	package Geo::OGR::Feature;
 	use strict;
 	use vars qw /%GEOMETRIES/;
+	sub FID {
+	    my $self = shift;
+	    $self->SetFID($_[0]) if @_;
+	    return unless defined wantarray;
+	    $self->GetFID;
+	}
+	sub StyleString {
+	    my $self = shift;
+	    $self->SetStyleString($_[0]) if @_;
+	    return unless defined wantarray;
+	    $self->GetStyleString;
+	}
 	sub Row {
 	    my $self = shift;
 	    my %row = @_;
@@ -831,6 +924,7 @@ package Geo::OGR;
 	    $GEOMETRIES{tied(%$geom)} = $self;
 	    return $geom;
 	}
+
 	package Geo::OGR::FieldDefn;
 	use strict;
 	use vars qw /
@@ -924,7 +1018,9 @@ package Geo::OGR;
 		     Width  => $self->Width,
 		     Precision => $self->Precision };
 	}
+
 	package Geo::OGR::Geometry;
+	use strict;
 	use Carp;
 	use vars qw /
 	    %TYPE_STRING2INT %TYPE_INT2STRING
@@ -983,19 +1079,29 @@ package Geo::OGR;
 	    my $self = shift;
 	    return $TYPE_INT2STRING{$self->GetGeometryType};
 	}
+	sub CoordinateDimension {
+	    my $self = shift;
+	    SetCoordinateDimension($self, $_[0]) if @_;
+	    GetCoordinateDimension($self) if defined wantarray;
+	}
 	sub AddPoint {
 	    @_ == 4 ? AddPoint_3D(@_) : AddPoint_2D(@_);
 	}
 	sub SetPoint {
-	    @_ == 4 ? SetPoint_3D(@_) : SetPoint_2D(@_);
+	    @_ == 5 ? SetPoint_3D(@_) : SetPoint_2D(@_);
 	}
-	sub GetPoint { # todo: implement with a typemap
+	sub GetPoint {
 	    my($self, $i) = @_;
 	    $i = 0 unless defined $i;
-	    return ($self->GetGeometryType & 0x80000000) == 0 ?
-		($self->GetX($i), $self->GetY($i)) :
-		($self->GetX($i), $self->GetY($i), $self->GetZ($i));
-	}	
+	    my $point = ($self->GetGeometryType & 0x80000000) == 0 ? GetPoint_2D($self, $i) : GetPoint_3D($self, $i);
+	    return @$point;
+	}
+	sub Point {
+	    my $self = shift;
+	    my $i = shift;
+	    SetPoint($self, $i, @_) if @_;
+	    return GetPoint($self, $i) if defined wantarray;
+	}
 	sub Points {
 	    my $self = shift;
 	    my $t = $self->GetGeometryType;
@@ -1059,16 +1165,16 @@ package Geo::OGR;
 	    } else {
 		$n = $self->GetPointCount;
 		if ($n == 1) {
-		    push @points, $flat ? [$self->GetX, $self->GetY] : [$self->GetX, $self->GetY, $self->GetZ];
+		    push @points, $flat ? GetPoint_2D($self) : GetPoint_3D($self);
 		} else {
 		    my $i;
 		    if ($flat) {
 			for my $i (0..$n-1) {
-			    push @points, [$self->GetX($i), $self->GetY($i)];
+			    push @points, GetPoint_2D($self, $i);
 			}
 		    } else {
 			for my $i (0..$n-1) {
-			    push @points, [$self->GetX($i), $self->GetY($i), $self->GetZ($i)];
+			    push @points, GetPoint_3D($self, $i);
 			}
 		    }
 		}
@@ -1098,9 +1204,17 @@ package Geo::OGR;
     sub GeometryTypes {
 	return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
     }
+    sub Drivers {
+	my @drivers;
+	for my $i (0..GetDriverCount()-1) {
+	    push @drivers, _GetDriver($i);
+	}
+	return @drivers;
+    }
     sub GetDriver {
 	my($name_or_number) = @_;
 	return _GetDriver($name_or_number) if $name_or_number =~ /^\d/;
-	return GetDriverByName($name_or_number);
+	return GetDriverByName("$name_or_number");
     }
+    *Driver = *GetDriver;
 1;
