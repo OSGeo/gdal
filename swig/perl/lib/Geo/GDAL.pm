@@ -7,6 +7,8 @@ package Geo::GDAL;
 require Exporter;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);
+require Geo::OGR;
+require Geo::OSR;
 package Geo::GDALc;
 bootstrap Geo::GDAL;
 package Geo::GDAL;
@@ -49,6 +51,7 @@ sub this {
 
 package Geo::GDAL;
 
+*callback_d_cp_vp = *Geo::GDALc::callback_d_cp_vp;
 *UseExceptions = *Geo::GDALc::UseExceptions;
 *DontUseExceptions = *Geo::GDALc::DontUseExceptions;
 *Debug = *Geo::GDALc::Debug;
@@ -97,6 +100,11 @@ package Geo::GDAL;
 *GDAL_GCP_get_Id = *Geo::GDALc::GDAL_GCP_get_Id;
 *GDAL_GCP_set_Id = *Geo::GDALc::GDAL_GCP_set_Id;
 *GCPsToGeoTransform = *Geo::GDALc::GCPsToGeoTransform;
+*TermProgress_nocb = *Geo::GDALc::TermProgress_nocb;
+*_ComputeMedianCutPCT = *Geo::GDALc::_ComputeMedianCutPCT;
+*_DitherRGB2PCT = *Geo::GDALc::_DitherRGB2PCT;
+*_ReprojectImage = *Geo::GDALc::_ReprojectImage;
+*_AutoCreateWarpedVRT = *Geo::GDALc::_AutoCreateWarpedVRT;
 *VersionInfo = *Geo::GDALc::VersionInfo;
 *AllRegister = *Geo::GDALc::AllRegister;
 *GetCacheMax = *Geo::GDALc::GetCacheMax;
@@ -119,9 +127,48 @@ package Geo::GDAL;
 *_Open = *Geo::GDALc::_Open;
 *_OpenShared = *Geo::GDALc::_OpenShared;
 *IdentifyDriver = *Geo::GDALc::IdentifyDriver;
-*_ReprojectImage = *Geo::GDALc::_ReprojectImage;
-*_AutoCreateWarpedVRT = *Geo::GDALc::_AutoCreateWarpedVRT;
 *GeneralCmdLineProcessor = *Geo::GDALc::GeneralCmdLineProcessor;
+
+############# Class : Geo::GDAL::SavedEnv ##############
+
+package Geo::GDAL::SavedEnv;
+use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
+@ISA = qw( Geo::GDAL );
+%OWNER = ();
+%ITERATORS = ();
+*swig_fct_get = *Geo::GDALc::SavedEnv_fct_get;
+*swig_fct_set = *Geo::GDALc::SavedEnv_fct_set;
+*swig_data_get = *Geo::GDALc::SavedEnv_data_get;
+*swig_data_set = *Geo::GDALc::SavedEnv_data_set;
+sub new {
+    my $pkg = shift;
+    my $self = Geo::GDALc::new_SavedEnv(@_);
+    bless $self, $pkg if defined($self);
+}
+
+sub DESTROY {
+    return unless $_[0]->isa('HASH');
+    my $self = tied(%{$_[0]});
+    return unless defined $self;
+    delete $ITERATORS{$self};
+    if (exists $OWNER{$self}) {
+        Geo::GDALc::delete_SavedEnv($self);
+        delete $OWNER{$self};
+    }
+}
+
+sub DISOWN {
+    my $self = shift;
+    my $ptr = tied(%$self);
+    delete $OWNER{$ptr};
+}
+
+sub ACQUIRE {
+    my $self = shift;
+    my $ptr = tied(%$self);
+    $OWNER{$ptr} = 1;
+}
+
 
 ############# Class : Geo::GDAL::MajorObject ##############
 
@@ -337,6 +384,7 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *GetMaskBand = *Geo::GDALc::Band_GetMaskBand;
 *GetMaskFlags = *Geo::GDALc::Band_GetMaskFlags;
 *CreateMaskBand = *Geo::GDALc::Band_CreateMaskBand;
+*ContourGenerate = *Geo::GDALc::Band_ContourGenerate;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
@@ -431,9 +479,9 @@ sub DESTROY {
 *Clone = *Geo::GDALc::RasterAttributeTable_Clone;
 *GetColumnCount = *Geo::GDALc::RasterAttributeTable_GetColumnCount;
 *GetNameOfCol = *Geo::GDALc::RasterAttributeTable_GetNameOfCol;
-*GetUsageOfCol = *Geo::GDALc::RasterAttributeTable_GetUsageOfCol;
-*GetTypeOfCol = *Geo::GDALc::RasterAttributeTable_GetTypeOfCol;
-*GetColOfUsage = *Geo::GDALc::RasterAttributeTable_GetColOfUsage;
+*_GetUsageOfCol = *Geo::GDALc::RasterAttributeTable__GetUsageOfCol;
+*_GetTypeOfCol = *Geo::GDALc::RasterAttributeTable__GetTypeOfCol;
+*_GetColOfUsage = *Geo::GDALc::RasterAttributeTable__GetColOfUsage;
 *GetRowCount = *Geo::GDALc::RasterAttributeTable_GetRowCount;
 *GetValueAsString = *Geo::GDALc::RasterAttributeTable_GetValueAsString;
 *GetValueAsInt = *Geo::GDALc::RasterAttributeTable_GetValueAsInt;
@@ -442,7 +490,7 @@ sub DESTROY {
 *SetValueAsInt = *Geo::GDALc::RasterAttributeTable_SetValueAsInt;
 *SetValueAsDouble = *Geo::GDALc::RasterAttributeTable_SetValueAsDouble;
 *SetRowCount = *Geo::GDALc::RasterAttributeTable_SetRowCount;
-*CreateColumn = *Geo::GDALc::RasterAttributeTable_CreateColumn;
+*_CreateColumn = *Geo::GDALc::RasterAttributeTable__CreateColumn;
 *GetRowOfValue = *Geo::GDALc::RasterAttributeTable_GetRowOfValue;
 sub DISOWN {
     my $self = shift;
@@ -461,7 +509,9 @@ sub ACQUIRE {
 
 package Geo::GDAL;
 
+*TermProgress = *Geo::GDALc::TermProgress;
 
+    use strict;
     use Carp;
     use Geo::GDAL::Const;
     use Geo::OGR;
@@ -503,6 +553,18 @@ package Geo::GDAL;
 	return $NODE_TYPE_INT2STRING{$type} if $type =~ /^\d/;
 	return $NODE_TYPE_STRING2INT{$type};
     }
+    sub NodeData {
+	my $node = shift;
+	return (Geo::GDAL::NodeType($node->[0]), $node->[1]);
+    }
+    sub Children {
+	my $node = shift;
+	return @$node[2..$#$node];
+    }
+    sub Child {
+	my($node, $child) = @_;
+	return $node->[2+$child];
+    }
     sub GetDataTypeSize {
 	my $t = shift;
 	$t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
@@ -526,11 +588,19 @@ package Geo::GDAL;
 	return 'd' if $t =~ /^Float64$/;
 	croak "unsupported data type: $t";
     }
+    sub Drivers {
+	my @drivers;
+	for my $i (0..GetDriverCount()-1) {
+	    push @drivers, _GetDriver($i);
+	}
+	return @drivers;
+    }
     sub GetDriver {
 	my $driver = shift;
 	return _GetDriver($driver) if $driver =~ /^\d/;
 	return GetDriverByName($driver);
     }
+    *Driver = *GetDriver;
     sub Open {
 	my @p = @_;
 	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
@@ -540,6 +610,14 @@ package Geo::GDAL;
 	my @p = @_;
 	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
 	return _OpenShared(@p);
+    }
+    sub ComputeMedianCutPCT {
+	my($red, $green, $blue, $num_colors, $colors, $callback, $callback_data) = @_;
+	_ComputeMedianCutPCT($red, $green, $blue, $num_colors, $colors, $callback, $callback_data);
+    }
+    sub DitherRGB2PCT {
+	my($red, $green, $blue, $target, $colors, $callback, $callback_data) = @_;
+	_DitherRGB2PCT($red, $green, $blue, $target, $colors, $callback, $callback_data);
     }
     sub ReprojectImage {
 	my @p = @_;
@@ -551,8 +629,13 @@ package Geo::GDAL;
 	$p[3] = $RESAMPLING_STRING2INT{$p[3]} if $p[3] and exists $RESAMPLING_STRING2INT{$p[3]};
 	return _AutoCreateWarpedVRT(@p);
     }
+
     package Geo::GDAL::MajorObject;
+    use vars qw/@DOMAINS/;
     use strict;
+    sub Domains {
+	return @DOMAINS;
+    }
     sub Description {
 	my($self, $desc) = @_;
 	SetDescription($self, $desc) if defined $desc;
@@ -566,16 +649,88 @@ package Geo::GDAL;
 	SetMetadata($self, $metadata, $domain) if defined $metadata;
 	GetMetadata($self, $domain) if defined wantarray;
     }
+
     package Geo::GDAL::Driver;
+    use vars qw/@CAPABILITIES @DOMAINS/;
     use strict;
-    sub Create {
+    @CAPABILITIES = ('Create', 'CreateCopy');
+    sub Domains {
+	return @DOMAINS;
+    }
+    sub Name {
+	my $self = shift;
+	return $self->{ShortName};
+    }
+    sub Capabilities {
+	my $self = shift;
+	return @CAPABILITIES unless shift;
+	my $h = $self->GetMetadata;
+	my @cap;
+	for my $cap (@CAPABILITIES) {
+	    push @cap, $cap if $h->{'DCAP_'.uc($cap)} eq 'YES';
+	}
+	return @cap;
+    }
+    sub TestCapability {
+	my($self, $cap) = @_;
+	my $h = $self->GetMetadata;
+	return $h->{'DCAP_'.uc($cap)} eq 'YES' ? 1 : undef;
+    }
+    sub Extension {
+	my $self = shift;
+	my $h = $self->GetMetadata;
+	return $h->{DMD_EXTENSION};
+    }
+    sub MIMEType {
+	my $self = shift;
+	my $h = $self->GetMetadata;
+	return $h->{DMD_MIMETYPE};
+    }
+    sub CreationOptionList {
+	my $self = shift;
+	my @options;
+	my $h = $self->GetMetadata->{DMD_CREATIONOPTIONLIST};
+	if ($h) {
+	    $h = Geo::GDAL::ParseXMLString($h);
+	    my($type, $value) = Geo::GDAL::NodeData($h);
+	    if ($value eq 'CreationOptionList') {
+		for my $o (Geo::GDAL::Children($h)) {
+		    my %option;
+		    for my $a (Geo::GDAL::Children($o)) {
+			my(undef, $key) = Geo::GDAL::NodeData($a);
+			my(undef, $value) = Geo::GDAL::NodeData(Geo::GDAL::Child($a, 0));
+			if ($key eq 'Value') {
+			    push @{$option{$key}}, $value;
+			} else {
+			    $option{$key} = $value;
+			}
+		    }
+		    push @options, \%option;
+		}
+	    }
+	}
+	return @options;
+    }
+    sub CreationDataTypes {
+	my $self = shift;
+	my $h = $self->GetMetadata;
+	return split /\s+/, $h->{DMD_CREATIONDATATYPES};
+    }
+    sub CreateDataset {
 	my @p = @_;
 	$p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]} if $p[5] and exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
 	return _Create(@p);
     }
+    *Create = *CreateDataset;
+    *Copy = *CreateCopy;
+
     package Geo::GDAL::Dataset;
     use strict;
-    use vars qw/%BANDS/;
+    use vars qw/%BANDS @DOMAINS/;
+    @DOMAINS = ("IMAGE_STRUCTURE", "SUBDATASETS", "GEOLOCATION");
+    sub Domains {
+	return @DOMAINS;
+    }
     sub Open {
 	return Geo::GDAL::Open(@_);
     }
@@ -586,12 +741,21 @@ package Geo::GDAL;
 	my $self = shift;
 	return ($self->{RasterXSize}, $self->{RasterYSize});
     }
+    sub Bands {
+	my $self = shift;
+	my @bands;
+	for my $i (1..$self->{RasterCount}) {
+	    push @bands, GetRasterBand($self, $i);
+	}
+	return @bands;
+    }
     sub GetRasterBand {
 	my($self, $index) = @_;
 	my $band = _GetRasterBand($self, $index);
 	$BANDS{tied(%{$band})} = $self;
 	return $band;
     }
+    *Band = *GetRasterBand;
     sub AddBand {
 	my @p = @_;
 	$p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]} if $p[1] and exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
@@ -620,16 +784,23 @@ package Geo::GDAL;
 	my $GCPs = GetGCPs($self);
 	return (@$GCPs, $proj);
     }
+
     package Geo::GDAL::Band;
+    use Carp;
+    use UNIVERSAL qw(isa);
     use strict;
     use vars qw/
-	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING
+	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
 	/;
     for my $string (qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
 		    HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand/) {
 	my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
 	$COLOR_INTERPRETATION_STRING2INT{$string} = $int;
 	$COLOR_INTERPRETATION_INT2STRING{$int} = $string;
+    }
+    @DOMAINS = ("IMAGE_STRUCTURE", "RESAMPLING");
+    sub Domains {
+	return @DOMAINS;
     }
     sub DESTROY {
 	my $self;
@@ -709,9 +880,66 @@ package Geo::GDAL;
     }
     sub ColorTable {
 	my $self = shift;
-	SetRasterColorTable($self, $_[0]) if @_ > 0;
+	SetRasterColorTable($self, $_[0]) if @_;
+	return unless defined wantarray;
 	GetRasterColorTable($self);
     }
+    sub CategoryNames {
+	my $self = shift;
+	SetRasterCategoryNames($self, \@_) if @_;
+	return unless defined wantarray;
+	my $n = GetRasterCategoryNames($self);
+	return @$n;
+    }
+    sub AttributeTable {
+	my $self = shift;
+	SetDefaultRAT($self, $_[0]) if @_;
+	return unless defined wantarray;
+	my $r = GetDefaultRAT($self);
+	$Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self;
+	return $r;
+    }
+    sub Contours {
+	my $self = shift;
+	my %defaults = (DataSource => undef,
+			LayerConstructor => {Name => 'contours'},
+			ContourInterval => 100, 
+			ContourBase => 0,
+			FixedLevels => [], 
+			NoDataValue => undef, 
+			IDField => -1, 
+			ElevField => -1,
+			callback => undef,
+			callback_data => undef);
+	my %params;
+	if (!defined($_[0]) or isa($_[0], 'Geo::OGR::DataSource')) {
+	    ($params{DataSource}, $params{LayerConstructor},
+	     $params{ContourInterval}, $params{ContourBase},
+	     $params{FixedLevels}, $params{NoDataValue}, 
+	     $params{IDField}, $params{ElevField},
+	     $params{callback}, $params{callback_data}) = @_;
+	} else {
+	    %params = @_;
+	}
+	for (keys %params) {
+	    croak "unknown parameter: $_" unless exists $defaults{$_};
+	}
+	for (keys %defaults) {
+	    $params{$_} = $defaults{$_} unless defined $params{$_};
+	}
+	$params{DataSource} = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') 
+	    unless defined $params{DataSource};
+	my $layer = $params{DataSource}->CreateLayer($params{LayerConstructor});
+	my $schema = $layer->GetLayerDefn;
+	for ('IDField', 'ElevField') {
+	    $params{$_} = $schema->GetFieldIndex($params{ElevField}) unless $params{ElevField} =~ /^[+-]?\d+$/;
+	}
+	ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
+			$params{NoDataValue}, $layer, $params{IDField}, $params{ElevField},
+			$params{callback}, $params{callback_data});
+	return $layer;
+    }
+
     package Geo::GDAL::ColorTable;
     use strict;
     use vars qw/
@@ -757,4 +985,57 @@ package Geo::GDAL;
 	}
 	return @table;
     }
+
+    package Geo::GDAL::RasterAttributeTable;
+    use strict;
+    use vars qw/ %BANDS
+	%FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
+	%FIELD_USAGE_STRING2INT %FIELD_USAGE_INT2STRING
+	/;
+    for my $string (qw/Integer Real String/) {
+	my $int = eval "\$Geo::GDAL::Constc::GFT_$string";
+	$FIELD_TYPE_STRING2INT{$string} = $int;
+	$FIELD_TYPE_INT2STRING{$int} = $string;
+    }
+    for my $string (qw/Generic PixelCount Name Min Max MinMax 
+		    Red Green Blue Alpha RedMin 
+		    GreenMin BlueMin AlphaMin RedMax GreenMax BlueMax AlphaMax 
+		    MaxCount/) {
+	my $int = eval "\$Geo::GDAL::Constc::GFU_$string";
+	$FIELD_USAGE_STRING2INT{$string} = $int;
+	$FIELD_USAGE_INT2STRING{$int} = $string;
+    }
+    sub FieldTypes {
+	return keys %FIELD_TYPE_STRING2INT;
+    }
+    sub FieldUsages {
+	return keys %FIELD_USAGE_STRING2INT;
+    }
+    sub RELEASE_PARENTS {
+	my $self = shift;
+	delete $BANDS{$self};
+    }
+    sub GetUsageOfCol {
+	my($self, $col) = @_;
+	$FIELD_USAGE_INT2STRING{_GetUsageOfCol($self, $col)};
+    }
+    sub GetColOfUsage {
+	my($self, $usage) = @_;
+	_GetColOfUsage($self, $FIELD_USAGE_STRING2INT{$usage});
+    }
+    sub GetTypeOfCol {
+	my($self, $col) = @_;
+	$FIELD_TYPE_INT2STRING{_GetTypeOfCol($self, $col)};
+    }
+    sub CreateColumn {
+	my($self, $name, $type, $usage) = @_;
+	_CreateColumn($self, $name, $FIELD_TYPE_STRING2INT{$type}, $FIELD_USAGE_STRING2INT{$usage});
+    }
+    sub Value {
+	my($self, $row, $column) = @_;
+	SetValueAsString($self, $row, $column, $_[3]) if defined $_[3];
+	return unless defined wantarray;
+	GetValueAsString($self, $row, $column);
+    }
+
  1;
