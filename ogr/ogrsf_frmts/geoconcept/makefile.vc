@@ -1,7 +1,7 @@
 OBJ     =       geoconcept.obj geoconcept_syscoord.obj \
 		ogrgeoconceptdriver.obj \
 		ogrgeoconceptdatasource.obj ogrgeoconceptlayer.obj
-EXTRAFLAGS =	-I.. -I..\.. /DGCIO_DLLEXPORT -DUSE_CPL
+EXTRAFLAGS =	-I.. -I..\.. -DUSE_CPL
 
 GDAL_ROOT	=	..\..\..
 
