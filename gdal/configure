@@ -29436,7 +29436,7 @@ echo "  CFITSIO support:           ${FITS_SETTING}"
 echo "  PCRaster support:          ${PCRASTER_SETTING}"
 
 
-echo "  NETCDF support:            ${NETCDF_SETTING}"
+echo "  NetCDF support:            ${NETCDF_SETTING}"
 
 
 echo "  LIBPNG support:            ${PNG_SETTING}"
@@ -29463,15 +29463,15 @@ echo "  HDF4 support:              ${HAVE_HDF4}"
 echo "  HDF5 support:              ${HAVE_HDF5}"
 
 
-echo "  KAKADU support:            ${HAVE_KAKADU}"
+echo "  Kakadu support:            ${HAVE_KAKADU}"
 
 if test "x$HAVE_JASPER_UUID" != "x" ; then
 
-echo "  JASPER support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})"
+echo "  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})"
 
 else
 
-echo "  JASPER support:            ${HAVE_JASPER}"
+echo "  JasPer support:            ${HAVE_JASPER}"
 
 fi
 
@@ -29484,16 +29484,16 @@ echo "  MrSID support:             ${HAVE_MRSID}"
 echo "  GRIB support:              ${HAVE_GRIB}"
 
 
-echo "  CURL support (wms/wcs/...):${CURL_SETTING}"
+echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
 
 
-echo "  POSTGRESQL support:        ${HAVE_PG}"
+echo "  PostgreSQL support:        ${HAVE_PG}"
 
 
 echo "  MySQL support:             ${HAVE_MYSQL}"
 
 
-echo "  XERCES support:            ${HAVE_XERCES}"
+echo "  Xerces-C support:            ${HAVE_XERCES}"
 
 
 echo "  Expat support:             ${HAVE_EXPAT}"
@@ -29502,7 +29502,7 @@ echo "  Expat support:             ${HAVE_EXPAT}"
 echo "  ODBC support:              ${ODBC_SETTING}"
 
 
-echo "  PGEO support:              ${ODBC_SETTING}"
+echo "  PGeo support:              ${ODBC_SETTING}"
 
 
 echo "  OCI support:               ${HAVE_OCI}"
