@@ -338,6 +338,7 @@ void CPL_DLL RegisterOGRIDB();
 void CPL_DLL RegisterOGRGMT();
 void CPL_DLL RegisterOGRBNA();
 void CPL_DLL RegisterOGRGPX();
+void CPL_DLL RegisterOGRGeoconcept();
 
 CPL_C_END
 

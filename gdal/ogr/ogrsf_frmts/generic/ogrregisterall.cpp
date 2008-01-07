@@ -136,5 +136,8 @@ void OGRRegisterAll()
 #ifdef IDB_ENABLED
     RegisterOGRIDB();
 #endif
+#ifdef GEOCONCEPT_ENABLED
+    RegisterOGRGeoconcept();
+#endif
 } /* OGRRegisterAll */
 

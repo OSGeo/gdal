@@ -1,0 +1,249 @@
+<html>
+<head>
+<title>G&eacute;oconcept Export</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>G&eacute;oconcept text export</h1>
+
+G&eacute;oconcept text export files should be available for writing as of
+editing this page.<p>
+
+Normally the OGR G&eacute;oconcept driver treats a whole directory of G&eacute;oconcept
+as a dataset, and a single G&eacute;oconcept within that directory as a layer.  In
+this case, the directory name should be used as the dataset name.  However,
+it is also possible to use one of the files (<code>.txt</code>, <code>.gxt</code>) in a
+G&eacute;oconcept files set as the dataset name, and then it will be treated as a dataset
+with one layer.<p>
+
+Currently the G&eacute;oconcept driver only supports multi-polygons, lines and
+points.  <p>
+
+<h2>Creation Issues</h2>
+
+The G&eacute;oconcept driver treats a directory as a dataset, and each
+G&eacute;oconcept files set (.txt or .gxt) as a layer.  The dataset name
+will be treated as a directory name.  If the directory already exists it
+is used and existing files in the directory are ignored.  If the directory
+does not exist it will be created (<span style="color:red;">EXPERIMENTAL</span>).<p>
+
+As a special case attempts to create a new dataset with the extension .gxt
+will result in a single file set being created instead of a directory.<p>
+
+G&eacute;oconcept files can store multiple kinds of geometry, even if
+a G&eacute;oconcept feature can only have one kind of geometry.<p>
+
+Note tthis makes it very difficult to translate a mixed geometry layer
+from another format into G&eacute;oconcept format using ogr2ogr, since ogr2ogr has
+no support for separating out geometries from a source layer.<p>
+
+G&eacute;oconcept feature fields definition are stored in an associated .gct file, and so
+fields suffer a number of limitations (<span style="color:red;">FIXME</span>)&nbsp;:<p>
+
+<ul>
+<li> Attribute names are not limited in length. </li>
+
+<li> Only Integer, Real and String field types are supported.  The various
+list, and other field types cannot be created for the moment (they exist in
+the G&eacute;oconcept model, but are not yet supported by the G&eacute;oconcept
+driver).</li>
+</ul>
+
+The OGR G&eacute;oconcept driver does not support reading existing G&eacute;oconcept
+files as well as deleting features. <p> 
+
+<h3>Dataset Creation Options</h3>
+
+<b>EXTENSION=TXT|GXT</b>&nbsp;: indicates the G&eacute;oconcept export file extension. <code>TXT</code>
+was used by earlier releases of G&eacute;oconcept. <code>GXT</code> is currently used.<p>
+
+<b>CONFIG=path to the GCT</b>&nbsp;: the GCT file describe the G&eacute;oconcept types
+definitions&nbsp;: In this file, every line must start with <code>//#</code> followed by
+a keyword. Lines starting with <code>//</code> are comments.<p>
+
+It is important to note that a G&eacute;oconcept export file can hold different types and
+associated sub-types.<p>
+
+<ul>
+<li>configuration section&nbsp;: the GCT file starts with <code>//#SECTION CONFIG</code>
+and ends with <code>//#ENDSECTION CONFIG</code>. All the configuration is enclosed within
+these marks.</li>
+
+<li>map section&nbsp;: purely for documentation at the time of writing this document.
+This section starts with <code>//#SECTION MAP</code> and ends with <code>//#ENDSECTION MAP</code>.</li>
+
+<li>type section&nbsp;: this section defines a class of features. A type has a name
+ (keyword <code>Name</code>) and an ID (keyword <code>ID</code>). A type holds sub-types and
+fields.
+This section starts with <code>//#SECTION TYPE</code> and ends with <code>//#ENDSECTION TYPE</code>.
+
+<ul>
+<li>sub-type section&nbsp;: this sub-section defines a kind og features within a class.
+A sub-type has a name (keyword <code>Name</code>), an ID (keyword <code>ID</code>),
+a type of geometry (keyword <code>Kind</code>) and a dimension. The following types of
+ geometry are supported&nbsp;: POINT, LINE, POLYGON. The current release of this driver does not
+support the TEXT geometry. The dimension can be 2D, 3DM or 3D. A sub-type holds fields.
+This section starts with <code>//#SECTION SUBTYPE</code> and ends with <code>//#ENDSECTION SUBTYPE</code>.
+
+<ul>
+<li>fields section&nbsp;: defines user fields. A field has a name (keyword <code>Name</code>),
+an ID (keyword <code>ID</code>), a type (keyword <code>Kind</code>). The following types
+of fields are supported : INT, REAL, MEMO, CHOICE, DATE, TIME, LENGTH, AREA.
+This section starts with <code>//#SECTION FIELD</code> and ends with <code>//#ENDSECTION FIELD</code>.</li>
+
+</ul>
+</li>
+
+<li>field section&nbsp;: defines type fields. See above.</li>
+
+</ul>
+</li>
+
+<li>field section&nbsp;: defines general fields. Out of these, the following rules apply&nbsp;:
+
+<ul>
+
+<li>private field names start with a '@'&nbsp;: the private fields are <code>Identifier</code>,
+<code>Class</code>, <code>Subclass</code>, <code>Name</code>, <code>NbFields</code>, <code>X</code>,
+<code>Y</code>, <code>XP</code>, <code>YP</code>, <code>Graphics</code>, <code>Angle</code>.</li>
+
+<li>some private field are mandatory (they must appear in the configuration)&nbsp;:
+<code>Identifier</code>, <code>Class</code>, <code>Subclass</code>, <code>X</code>,
+<code>Y</code>.</li>
+
+<li>If the sub-type is linear (LINE), then the following fields must be declared
+<code>XP</code>, <code>YP</code>.</li>
+
+<li>If the sub-type is linear or polygonal (LINE, POLY), then <code>Graphics</code>
+must be declared.</li>
+
+<li>If the sub-type is ponctual or textual (POINT, TEXT), the <code>Angle</code>
+may be declared.</li>
+
+</ul>
+
+</li>
+
+</ul>
+
+<h3>Layer Creation Options</h3>
+
+<b>FEATURETYPE=TYPE.SUBTYPE</b>&nbsp;: defines the feature to be created/appended. The <code>TYPE</code>
+corresponds to one of the <code>Name</code> found in the GCT file for a type section.
+The <code>SUBTYPE</code> corresponds to one of the <code>Name</code> found in the GCT file for a
+sub-type section within the previous type section.<p>
+
+<h3>Examples</h3>
+
+<h4>Example of a .gct file :</h4>
+
+<pre>
+//#SECTION CONFIG
+//#SECTION MAP
+//# Name=SCAN1000-TILES-LAMB93
+//# Unit=m
+//# Precision=1000
+//#ENDSECTION MAP
+//#SECTION TYPE
+//# Name=TILE
+//# ID=10
+//#SECTION SUBTYPE
+//# Name=TILE
+//# ID=100
+//# Kind=POLYGON
+//# 3D=2D
+//#SECTION FIELD
+//# Name=IDSEL
+//# ID=101
+//# Kind=TEXT
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=NOM
+//# ID=102
+//# Kind=TEXT
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=WITHDATA
+//# ID=103
+//# Kind=INT
+//#ENDSECTION FIELD
+//#ENDSECTION SUBTYPE
+//#ENDSECTION TYPE
+//#SECTION FIELD
+//# Name=@Identifier
+//# ID=-1
+//# Kind=INT
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=@Class
+//# ID=-2
+//# Kind=CHOICE
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=@Subclass
+//# ID=-3
+//# Kind=CHOICE
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=@Name
+//# ID=-4
+//# Kind=TEXT
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=@X
+//# ID=-5
+//# Kind=REAL
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=@Y
+//# ID=-6
+//# Kind=REAL
+//#ENDSECTION FIELD
+//#SECTION FIELD
+//# Name=@Graphics
+//# ID=-7
+//# Kind=REAL
+//#ENDSECTION FIELD
+//#ENDSECTION CONFIG
+</pre>
+
+<h4>Example of a G&eacute;oconcept text export :</h4>
+
+<pre>
+//$DELIMITER "&#x9;"
+//$QUOTED-TEXT "no"
+//$CHARSET ANSI
+//$UNIT Distance=m
+//$FORMAT 2
+//$SYSCOORD {Type: 9999}
+//$FIELDS Class=TILE;Subclass=TILE;Kind=4;Fields=Private#Identifier&#x9;Private#Class&#x9;Private#Subclass&#x9;Private#Name&#x9;Private#NbFields&#x9;IDSEL&#x9;NOM&#x9;WITHDATA&#x9;Private#X&#x9;Private#Y&#x9;Private#Graphics
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-7130-LAMB93&#x9;&#x9;0&#x9;50000&#x9;7.13e+06&#x9;4&#x9;600000&#x9;7.13e+06&#x9;600000&#x9;6.58e+06&#x9;50000&#x9;6.58e+06&#x9;50000&#x9;7.13e+06
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-7130-LAMB93&#x9;&#x9;0&#x9;595000&#x9;7.13e+06&#x9;4&#x9;1.145e+06&#x9;7.13e+06&#x9;1.145e+06&#x9;6.58e+06&#x9;595000&#x9;6.58e+06&#x9;595000&#x9;7.13e+06
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-6585-LAMB93&#x9;&#x9;0&#x9;595000&#x9;6.585e+06&#x9;4&#x9;1.145e+06&#x9;6.585e+06&#x9;1.145e+06&#x9;6.035e+06&#x9;595000&#x9;6.035e+06&#x9;595000&#x9;6.585e+06
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-1145-6250-LAMB93&#x9;&#x9;0&#x9;1.145e+06&#x9;6.25e+06&#x9;4&#x9;1.265e+06&#x9;6.25e+06&#x9;1.265e+06&#x9;6.03e+06&#x9;1.145e+06&#x9;6.03e+06&#x9;1.145e+06&#x9;6.25e+06
+-1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-6585-LAMB93&#x9;&#x9;0&#x9;50000&#x9;6.585e+06&#x9;4&#x9;600000&#x9;6.585e+06&#x9;600000&#x9;6.035e+06&#x9;50000&#x9;6.035e+06&#x9;50000&#x9;6.585e+06
+</pre>
+
+<h4>Example of use :</h4>
+
+Creating a G&eacute;oconcept export file&nbsp;:<br/>
+
+<pre>
+ogr2ogr -f "Geoconcept Export" -a_srs "+init=IGNF:LAMB93" -dsco EXTENSION=txt -dsco CONFIG=tile_schema.gct tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
+</pre>
+
+Appending new features to an existing G&eacute;oconcept export file&nbsp;:<br/>
+
+<pre>
+ogr2ogr -f "Geoconcept Export" -update tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
+</pre>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.geoconcept.com/">G&eacute;oconcept web site</a></li>
+</ul>
+
+</body>
+</html>
