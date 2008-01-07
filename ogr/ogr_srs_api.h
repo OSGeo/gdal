@@ -389,6 +389,13 @@ OGRErr CPL_DLL OSRSetEC( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStd
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
+/** Equidistant Cylindrical Sphere */
+OGRErr OSRSetEquidistantCylindricalSphere( OGRSpatialReferenceH hSRS,
+                                  double dfCenterLat, double dfCenterLong,
+                                  double dfScale,
+                                  double dfFalseEasting,
+                                  double dfFalseNorthing );
+
 /** Eckert I-VI */
 OGRErr CPL_DLL OSRSetEckert( OGRSpatialReferenceH hSRS,  int nVariation,
                              double dfCentralMeridian,
@@ -419,7 +426,13 @@ OGRErr CPL_DLL OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
 OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS, 
                            double dfCentralMeridian, double dfSatelliteHeight,
                            double dfFalseEasting, double dfFalseNorthing );
-    
+
+/** GaussLabordeReunion */    
+OGRErr OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
+                                  double dfCenterLat, double dfCenterLong,
+                                  double dfScale,
+                                  double dfFalseEasting,
+                                  double dfFalseNorthing );
 /** Gnomonic */
 OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong,
