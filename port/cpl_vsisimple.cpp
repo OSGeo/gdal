@@ -312,6 +312,158 @@ char *VSIStrdup( const char * pszString )
 }
 
 /************************************************************************/
+/*                          VSICheckMul2()                              */
+/************************************************************************/
+
+static size_t VSICheckMul2( size_t mul1, size_t mul2, int *pbOverflowFlag)
+{
+    size_t res = mul1 * mul2;
+    if (mul1 != 0)
+    {
+        if (res / mul1 == mul2)
+        {
+            if (pbOverflowFlag)
+                *pbOverflowFlag = FALSE;
+            return res;
+        }
+        else
+        {
+            if (pbOverflowFlag)
+                *pbOverflowFlag = TRUE;
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Multiplication overflow : %lu * %lu",
+                     (unsigned long)mul1, (unsigned long)mul2);
+        }
+    }
+    else
+    {
+        if (pbOverflowFlag)
+             *pbOverflowFlag = FALSE;
+    }
+    return 0;
+}
+
+/************************************************************************/
+/*                          VSICheckMul3()                              */
+/************************************************************************/
+
+static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3, int *pbOverflowFlag)
+{
+    if (mul1 != 0)
+    {
+        size_t res = mul1 * mul2;
+        if (res / mul1 == mul2)
+        {
+            size_t res2 = res * mul3;
+            if (mul3 != 0)
+            {
+                if (res2 / mul3 == res)
+                {
+                    if (pbOverflowFlag)
+                        *pbOverflowFlag = FALSE;
+                    return res2;
+                }
+                else
+                {
+                    if (pbOverflowFlag)
+                        *pbOverflowFlag = TRUE;
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Multiplication overflow : %lu * %lu * %lu",
+                     (unsigned long)mul1, (unsigned long)mul2, (unsigned long)mul3);
+                }
+            }
+            else
+            {
+                if (pbOverflowFlag)
+                    *pbOverflowFlag = FALSE;
+            }
+        }
+        else
+        {
+            if (pbOverflowFlag)
+                *pbOverflowFlag = TRUE;
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Multiplication overflow : %lu * %lu * %lu",
+                     (unsigned long)mul1, (unsigned long)mul2, (unsigned long)mul3);
+        }
+    }
+    else
+    {
+        if (pbOverflowFlag)
+             *pbOverflowFlag = FALSE;
+    }
+    return 0;
+}
+
+
+
+/**
+ VSIMalloc2 allocates (nSize1 * nSize2) bytes.
+ In case of overflow of the multiplication, or if memory allocation fails, a
+ NULL pointer is returned and a CE_Failure error is raised with CPLError().
+ If nSize1 == 0 || nSize2 == 0, a NULL pointer will also be returned.
+ CPLFree() or VSIFree() can be used to free memory allocated by this function.
+*/
+void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 )
+{
+    int bOverflowFlag = FALSE;
+    size_t nSizeToAllocate;
+    void* pReturn;
+
+    nSizeToAllocate = VSICheckMul2( nSize1, nSize2, &bOverflowFlag );
+    if (bOverflowFlag)
+        return NULL;
+
+    if (nSizeToAllocate == 0)
+        return NULL;
+
+    pReturn = VSIMalloc(nSizeToAllocate);
+
+    if( pReturn == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc2(): Out of memory allocating %lu bytes.\n",
+                  (unsigned long)nSizeToAllocate );
+    }
+
+    return pReturn;
+}
+
+/**
+ VSIMalloc3 allocates (nSize1 * nSize2 * nSize3) bytes.
+ In case of overflow of the multiplication, or if memory allocation fails, a
+ NULL pointer is returned and a CE_Failure error is raised with CPLError().
+ If nSize1 == 0 || nSize2 == 0 || nSize3 == 0, a NULL pointer will also be returned.
+ CPLFree() or VSIFree() can be used to free memory allocated by this function.
+*/
+void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
+{
+    int bOverflowFlag = FALSE;
+
+    size_t nSizeToAllocate;
+    void* pReturn;
+
+    nSizeToAllocate = VSICheckMul3( nSize1, nSize2, nSize3, &bOverflowFlag );
+    if (bOverflowFlag)
+        return NULL;
+
+    if (nSizeToAllocate == 0)
+        return NULL;
+
+    pReturn = VSIMalloc(nSizeToAllocate);
+
+    if( pReturn == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc3(): Out of memory allocating %lu bytes.\n",
+                  (unsigned long)nSizeToAllocate );
+    }
+
+    return pReturn;
+}
+
+
+/************************************************************************/
 /*                              VSIStat()                               */
 /************************************************************************/
 
