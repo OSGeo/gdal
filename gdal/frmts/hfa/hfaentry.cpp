@@ -267,7 +267,14 @@ void HFAEntry::LoadData()
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data.                                 */
 /* -------------------------------------------------------------------- */
-    pabyData = (GByte *) CPLMalloc(nDataSize);
+    pabyData = (GByte *) VSIMalloc(nDataSize);
+    if (pabyData == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "VSIMalloc() failed in HFAEntry::LoadData()." );
+        return;
+    }
+    
     if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) < 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -353,7 +360,7 @@ void HFAEntry::DumpFieldValues( FILE * fp, const char * pszPrefix )
 
     LoadData();
 
-    if( poType == NULL )
+    if( pabyData == NULL || poType == NULL )
         return;
 
     poType->DumpInstValue( fp,

@@ -1239,6 +1239,7 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
     //      Get ready for reading and writing
     // -------------------------------------------------------------------- 
 
+    // FIXME : risk of overflow in multiplication
     nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8 * poDS->nBands;
     pabyScanLine = ( GByte * ) VSIMalloc( nRecordSize );
     if (pabyScanLine == NULL)

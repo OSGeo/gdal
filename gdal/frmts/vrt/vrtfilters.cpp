@@ -183,6 +183,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     int nExtraYSize = nBufYSize + 2 * nExtraEdgePixels;
     GByte *pabyWorkData;
 
+    // FIXME? : risk of multiplication overflow
     pabyWorkData = (GByte *) 
         VSICalloc( nExtraXSize * nExtraYSize,
                    (GDALGetDataTypeSize(eOperDataType) / 8) );
@@ -208,7 +209,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         || eOperDataType != eBufType )
     {
         pabyOutData = (GByte *) 
-            VSIMalloc( nBufXSize * nBufYSize * nPixelOffset );
+            VSIMalloc3(nBufXSize, nBufYSize, nPixelOffset );
 
         if( pabyOutData == NULL )
         {

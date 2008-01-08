@@ -66,13 +66,22 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     bNoDataSet = FALSE;
     dfNoData = 0.0;
 
-    if (nBlockXSize <= 0 || nBlockYSize <= 0)
+    if (nWidth <= 0 || nHeight <= 0 || nBlockXSize <= 0 || nBlockYSize <= 0)
     {
+        nWidth = nHeight = 0;
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "HFABand::HFABand : (nBlockXSize <= 0 || nBlockYSize <= 0)");
+                 "HFABand::HFABand : (nWidth <= 0 || nHeight <= 0 || nBlockXSize <= 0 || nBlockYSize <= 0)");
+        return;
+    }
+    if (HFAGetDataTypeBits(nDataType) == 0)
+    {
+        nWidth = nHeight = 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HFABand::HFABand : nDataType=%d unhandled", nDataType);
         return;
     }
 
+    /* FIXME? : risk of overflow in additions and multiplication */
     nBlocksPerRow = (nWidth + nBlockXSize - 1) / nBlockXSize;
     nBlocksPerColumn = (nHeight + nBlockYSize - 1) / nBlockYSize;
     nBlocks = nBlocksPerRow * nBlocksPerColumn;
@@ -174,6 +183,13 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
             papoOverviews = (HFABand **) 
                 CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
             papoOverviews[nOverviews-1] = new HFABand( psHFA, poOvEntry );
+            if (papoOverviews[nOverviews-1]->nWidth == 0)
+            {
+                nWidth = nHeight = 0;
+                delete papoOverviews[nOverviews-1];
+                papoOverviews[nOverviews-1] = NULL;
+                return;
+            }
         }
     }
 
@@ -195,6 +211,13 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
                 papoOverviews = (HFABand **) 
                     CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
                 papoOverviews[nOverviews-1] = new HFABand( psInfo, poChild );
+                if (papoOverviews[nOverviews-1]->nWidth == 0)
+                {
+                    nWidth = nHeight = 0;
+                    delete papoOverviews[nOverviews-1];
+                    papoOverviews[nOverviews-1] = NULL;
+                    return;
+                }
             }
         }
     }
@@ -254,9 +277,9 @@ CPLErr	HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
-    panBlockStart = (vsi_l_offset *)VSIMalloc(sizeof(vsi_l_offset) * nBlocks);
-    panBlockSize = (int *) VSIMalloc(sizeof(int) * nBlocks);
-    panBlockFlag = (int *) VSIMalloc(sizeof(int) * nBlocks);
+    panBlockStart = (vsi_l_offset *)VSIMalloc2(sizeof(vsi_l_offset), nBlocks);
+    panBlockSize = (int *) VSIMalloc2(sizeof(int), nBlocks);
+    panBlockFlag = (int *) VSIMalloc2(sizeof(int), nBlocks);
 
     if (panBlockStart == NULL || panBlockSize == NULL || panBlockFlag == NULL)
     {
@@ -360,7 +383,7 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate blockmap.                                              */
 /* -------------------------------------------------------------------- */
-    panBlockFlag = (int *) VSIMalloc(sizeof(int) * nBlocks);
+    panBlockFlag = (int *) VSIMalloc2(sizeof(int), nBlocks);
     if (panBlockFlag == NULL)
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -1382,10 +1405,17 @@ CPLErr HFABand::GetPCT( int * pnColors,
         if( poColumnEntry == NULL )
             return( CE_Failure );
 
+        /* FIXME? : we could also check that nPCTColors is not too big */
         nPCTColors = poColumnEntry->GetIntField( "numRows" );
         for( iColumn = 0; iColumn < 4; iColumn++ )
         {
-            apadfPCT[iColumn] = (double *)CPLMalloc(sizeof(double)*nPCTColors);
+            apadfPCT[iColumn] = (double *)VSIMalloc2(sizeof(double),nPCTColors);
+            if (apadfPCT[iColumn] == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Color palette will be ignored");
+                return CE_Failure;
+            }
+
             if( iColumn == 0 )
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Red");
             else if( iColumn == 1 )
@@ -1404,10 +1434,20 @@ CPLErr HFABand::GetPCT( int * pnColors,
             }
             else
             {
-                VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
-                           SEEK_SET );
-                VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
-                           psInfo->fp);
+                if (VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
+                           SEEK_SET ) < 0)
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "VSIFSeekL() failed in HFABand::GetPCT()." );
+                    return CE_Failure;
+                }
+                if (VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
+                           psInfo->fp) != (size_t)nPCTColors)
+                {
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "VSIFReadL() failed in HFABand::GetPCT()." );
+                    return CE_Failure;
+                }
                 
                 for( i = 0; i < nPCTColors; i++ )
                     HFAStandard( 8, apadfPCT[iColumn] + i );

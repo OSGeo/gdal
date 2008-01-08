@@ -583,7 +583,7 @@ ParseXPM( const char *pszInput, int *pnXSize, int *pnYSize,
 /* -------------------------------------------------------------------- */
     GByte *pabyImage;
 
-    pabyImage = (GByte *) VSIMalloc(*pnXSize * *pnYSize);
+    pabyImage = (GByte *) VSIMalloc2(*pnXSize, *pnYSize);
     if( pabyImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 

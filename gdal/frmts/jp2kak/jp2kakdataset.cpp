@@ -1609,7 +1609,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
         else
         {
             GByte *pabyIntermediate = (GByte *) 
-                VSIMalloc( dims.size.x * dims.size.y * nBandCount );
+                VSIMalloc3(dims.size.x, dims.size.y, nBandCount );
             if( pabyIntermediate == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory, 

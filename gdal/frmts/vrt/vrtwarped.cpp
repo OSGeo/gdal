@@ -805,6 +805,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
     int   nDstBufferSize;
     int   nWordSize = (GDALGetDataTypeSize(psWO->eWorkingDataType) / 8);
 
+    // FIXME? : risk of overflow in multiplication if nBlockXSize or nBlockYSize are very large
     nDstBufferSize = nBlockXSize * nBlockYSize * psWO->nBandCount * nWordSize;
 
     pabyDstBuffer = (GByte *) VSIMalloc(nDstBufferSize);
