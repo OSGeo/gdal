@@ -1268,7 +1268,7 @@ static int USGSDEMLoadRaster( USGSDEMWriteInfo *psWInfo,
 /*      Allocate output array, and pre-initialize to NODATA value.      */
 /* -------------------------------------------------------------------- */
     psWInfo->panData = 
-        (GInt16 *) VSIMalloc( 2 * psWInfo->nXSize * psWInfo->nYSize );
+        (GInt16 *) VSIMalloc3( 2, psWInfo->nXSize, psWInfo->nYSize );
     if( psWInfo->panData == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 

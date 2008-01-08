@@ -190,7 +190,7 @@ GSBGRasterBand::~GSBGRasterBand( )
 CPLErr GSBGRasterBand::ScanForMinMaxZ()
 
 {
-    float *pafRowVals = (float *)VSIMalloc( nRasterXSize * 4 );
+    float *pafRowVals = (float *)VSIMalloc2( nRasterXSize, 4 );
 
     if( pafRowVals == NULL )
     {
@@ -333,7 +333,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( pafRowMinZ == NULL || pafRowMaxZ == NULL
 	|| nMinZRow < 0 || nMaxZRow < 0 )
     {
-	pafRowMinZ = (float *)VSIMalloc( nRasterYSize*sizeof(float) );
+	pafRowMinZ = (float *)VSIMalloc2( nRasterYSize,sizeof(float) );
 	if( pafRowMinZ == NULL )
 	{
 	    CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -341,7 +341,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 	    return CE_Failure;
 	}
 
-	pafRowMaxZ = (float *)VSIMalloc( nRasterYSize*sizeof(float) );
+	pafRowMaxZ = (float *)VSIMalloc2( nRasterYSize,sizeof(float) );
 	if( pafRowMaxZ == NULL )
 	{
 	    VSIFree( pafRowMinZ );
@@ -1003,7 +1003,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy band data.							*/
 /* -------------------------------------------------------------------- */
-    float *pfData = (float *)VSIMalloc(nXSize * sizeof( float ) );
+    float *pfData = (float *)VSIMalloc2( nXSize, sizeof( float ) );
     if( pfData == NULL )
     {
 	VSIFCloseL( fp );

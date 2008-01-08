@@ -587,7 +587,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     float *pafSrc;
 
-    pafSrc = (float *) VSIMalloc(sizeof(float) * nReqXSize * nReqYSize);
+    pafSrc = (float *) VSIMalloc3(sizeof(float), nReqXSize, nReqYSize);
     if( pafSrc == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 

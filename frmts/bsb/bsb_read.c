@@ -401,7 +401,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      Initialize line offset list.                                    */
 /* -------------------------------------------------------------------- */
     psInfo->panLineOffset = (int *) 
-        VSIMalloc(sizeof(int) * psInfo->nYSize);
+        VSIMalloc2(sizeof(int), psInfo->nYSize);
     if (psInfo->panLineOffset == NULL)
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 

@@ -356,6 +356,11 @@ CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
                 CPLRealloc(psInfo->papoBand,
                            sizeof(HFABand *) * (psInfo->nBands+1));
             psInfo->papoBand[psInfo->nBands] = new HFABand( psInfo, poNode );
+            if (psInfo->papoBand[psInfo->nBands]->nWidth == 0)
+            {
+                delete psInfo->papoBand[psInfo->nBands];
+                return CE_Failure;
+            }
             psInfo->nBands++;
         }
 
@@ -2381,8 +2386,8 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
 /* -------------------------------------------------------------------- */
 /*      read up to nMaxNumChars bytes from the indicated location.      */
 /*      allocate required space temporarily                             */
-/*      nMaxNumChars should have been set by GDAL orginally so we can   */
-/*      trust it.                                                       */
+/*      nMaxNumChars should have been set by GDAL orginally so we should*/
+/*      trust it, but who knows...                                      */
 /* -------------------------------------------------------------------- */
         int nMaxNumChars = poColumn->GetIntField( "maxNumChars" );
 
@@ -2392,7 +2397,13 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
         }
         else
         {
-            char *pszMDValue = (char*) CPLMalloc(nMaxNumChars);
+            char *pszMDValue = (char*) VSIMalloc(nMaxNumChars);
+            if (pszMDValue == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "HFAGetMetadata : Out of memory while allocating %d bytes", nMaxNumChars);
+                continue;
+            }
 
             if( VSIFSeekL( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
                 continue;

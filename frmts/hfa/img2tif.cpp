@@ -581,6 +581,7 @@ static CPLErr LoadRowOfTiles( HFABand * poBand, unsigned char * pabyRowOfTiles,
     unsigned char	*pabyTile;
     int			iTileX;
 
+    // FIXME? : risk of overflow in multiplication
     pabyTile = (unsigned char *) VSIMalloc(nTileXSize*nTileYSize*nDataBits/8);
     if( pabyTile == NULL )
         return CE_Failure;
@@ -652,6 +653,7 @@ static CPLErr CopyOneBandToStrips( HFABand * poBand, TIFF * hTIFF, int nSample)
 /*      Allocate a buffer big enough to hold a whole row of tiles,      */
 /*      and another big enough to hold a strip on the output file.      */
 /* -------------------------------------------------------------------- */
+    //FIXME? : risk of overflow in multiplication
     pabyRowOfTiles = (unsigned char *)
         VSIMalloc((nStripWidth * nTileYSize * nDataBits) / 8);
     pabyStrip = (unsigned char *)
@@ -661,6 +663,8 @@ static CPLErr CopyOneBandToStrips( HFABand * poBand, TIFF * hTIFF, int nSample)
     {
         fprintf( stderr,
                  "Out of memory allocating working buffer(s).\n" );
+        CPLFree(pabyRowOfTiles);
+        CPLFree(pabyStrip);
         return( CE_Failure );
     }
 
@@ -987,6 +991,11 @@ CPLErr CopyPyramidsToTiff( HFAHandle psInfo, HFABand *poBand, TIFF * hTIFF,
             continue;
 
         poOverviewBand = new HFABand( psInfo, poSubNode );
+        if (poOverviewBand->nWidth == 0)
+        {
+            delete poOverviewBand;
+            return CE_Failure;
+        }
         
         if( RRD2Tiff( poOverviewBand, hTIFF, nPhotometric, nCompressFlag )
 						            == CE_None

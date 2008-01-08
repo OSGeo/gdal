@@ -732,6 +732,7 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
     papBandData = (GByte **) CPLCalloc(sizeof(void *),nBands);
     for( iBand = 0; iBand < nBands; iBand++ )
     {
+        // FIXME? : risk of overflow in multiplication
         papBandData[iBand] = (GByte *) VSICalloc( nWordSize, nXSize * nYSize );
         if( papBandData[iBand] == NULL )
         {
