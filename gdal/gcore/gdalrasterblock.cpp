@@ -357,14 +357,15 @@ CPLErr GDALRasterBlock::Internalize()
     int         nSizeInBytes;
     int         nCurCacheMax = GDALGetCacheMax();
 
+    //FIXME? : risk of overflow in multiplication
     nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
 
     pNewData = VSIMalloc( nSizeInBytes );
     if( pNewData == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating %d byte raster cache block.",
-                  nSizeInBytes );
+                  "GDALRasterBlock::Internalize : Out of memory allocating %d bytes.",
+                  nSizeInBytes);
         return( CE_Failure );
     }
 
