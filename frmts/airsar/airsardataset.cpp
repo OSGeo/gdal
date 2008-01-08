@@ -318,9 +318,9 @@ CPLErr AirSARDataset::LoadLine( int iLine )
 /* -------------------------------------------------------------------- */
     if( pabyCompressedLine == NULL )
     {
-        pabyCompressedLine = (GByte *) VSIMalloc(nRasterXSize * 10);
+        pabyCompressedLine = (GByte *) VSIMalloc2(nRasterXSize, 10);
 
-        padfMatrix = (double *) VSIMalloc(sizeof(double) * nRasterXSize*10);
+        padfMatrix = (double *) VSIMalloc2(10* sizeof(double), nRasterXSize);
         if (pabyCompressedLine == NULL ||
             padfMatrix == NULL)
         {

@@ -209,7 +209,7 @@ GSAGRasterBand::~GSAGRasterBand()
 CPLErr GSAGRasterBand::ScanForMinMaxZ()
 
 {
-    double *padfRowValues = (double *)VSIMalloc( nBlockXSize * sizeof(double) );
+    double *padfRowValues = (double *)VSIMalloc2( nBlockXSize, sizeof(double) );
     if( padfRowValues == NULL )
     {
 	CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -550,7 +550,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( padfRowMinZ == NULL || padfRowMaxZ == NULL
 	|| nMinZRow < 0 || nMaxZRow < 0 )
     {
-	padfRowMinZ = (double *)VSIMalloc( nRasterYSize*sizeof(double) );
+	padfRowMinZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
 	if( padfRowMinZ == NULL )
 	{
 	    CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -558,7 +558,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 	    return CE_Failure;
 	}
 
-	padfRowMaxZ = (double *)VSIMalloc( nRasterYSize*sizeof(double) );
+	padfRowMaxZ = (double *)VSIMalloc2( nRasterYSize,sizeof(double) );
 	if( padfRowMaxZ == NULL )
 	{
 	    VSIFree( padfRowMinZ );
@@ -1632,7 +1632,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy band data.							*/
 /* -------------------------------------------------------------------- */
-    double *pdfData = (double *)VSIMalloc(nXSize * sizeof( double ) );
+    double *pdfData = (double *)VSIMalloc2( nXSize, sizeof( double ) );
     if( pdfData == NULL )
     {
 	VSIFCloseL( fp );
