@@ -285,6 +285,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
     nBlockXSize = poDS->GetRasterXSize();
+    // FIXME? : risk of overflow in multiplication and addition
     nScanSize =
         ((poDS->GetRasterXSize() * poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
     nBlockYSize = 1;
@@ -685,6 +686,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     GUInt32         iComprSize, iUncomprSize;
 
     iComprSize = poDS->sFileHeader.iSize - poDS->sFileHeader.iOffBits;
+    // FIXME? : risk of overflow in multiplication
     iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
     pabyComprBuf = (GByte *) VSIMalloc( iComprSize );
     pabyUncomprBuf = (GByte *) VSIMalloc( iUncomprSize );
@@ -1136,7 +1138,14 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
             else
                 poDS->nColorTableSize = 1 << poDS->sInfoHeader.iBitCount;
             poDS->pabyColorTable =
-                (GByte *)CPLMalloc( poDS->nColorElems * poDS->nColorTableSize );
+                (GByte *)VSIMalloc2( poDS->nColorElems, poDS->nColorTableSize );
+            if (poDS->pabyColorTable == NULL)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Color palette will be ignored");
+                poDS->nColorTableSize = 0;
+                break;
+            }
+
             VSIFSeekL( poDS->fp, BFH_SIZE + poDS->sInfoHeader.iSize, SEEK_SET );
             VSIFReadL( poDS->pabyColorTable, poDS->nColorElems,
                       poDS->nColorTableSize, poDS->fp );

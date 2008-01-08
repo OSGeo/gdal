@@ -317,7 +317,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, FILE* fp, const char* tocH
         CPL_MSBPTR32( &toc->entries[i].nHorizFrames );
         
         toc->entries[i].frameEntries = (RPFTocFrameEntry*)
-                VSIMalloc(toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames * sizeof(RPFTocFrameEntry));
+                VSIMalloc3(toc->entries[i].nVertFrames, toc->entries[i].nHorizFrames, sizeof(RPFTocFrameEntry));
         if (toc->entries[i].frameEntries == NULL)
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,

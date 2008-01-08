@@ -830,6 +830,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
     VSIFSeekL( fp, 24, SEEK_SET );
     VSIFReadL( &nValue, 1, 4, fp );
 
+    // FIXME? : risk of overflow in multiplication
     nLength = CPL_MSBWORD32(nValue) * 2;
 
 /* -------------------------------------------------------------------- */
@@ -837,7 +838,7 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /*      into the buffer.                                                */
 /* -------------------------------------------------------------------- */
     psTInfo->nBlocks = (nLength-100) / 8;
-    panIndex = (GUInt32 *) VSIMalloc(psTInfo->nBlocks * 8);
+    panIndex = (GUInt32 *) VSIMalloc2(psTInfo->nBlocks, 8);
     if (panIndex == NULL)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -853,8 +854,8 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /* -------------------------------------------------------------------- */
 /*	Allocate AIGInfo block info arrays.				*/
 /* -------------------------------------------------------------------- */
-    psTInfo->panBlockOffset = (GUInt32 *) VSIMalloc(4 * psTInfo->nBlocks);
-    psTInfo->panBlockSize = (int *) VSIMalloc(4 * psTInfo->nBlocks);
+    psTInfo->panBlockOffset = (GUInt32 *) VSIMalloc2(4, psTInfo->nBlocks);
+    psTInfo->panBlockSize = (int *) VSIMalloc2(4, psTInfo->nBlocks);
     if (psTInfo->panBlockOffset == NULL || 
         psTInfo->panBlockSize == NULL)
     {

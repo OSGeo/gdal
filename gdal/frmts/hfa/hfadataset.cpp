@@ -876,7 +876,9 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         || nHFADataType == EPT_u4 )
     {
         int nPixCount =  nBlockXSize * nBlockYSize;
-        pabyOutBuf = (GByte *) CPLMalloc(nPixCount);
+        pabyOutBuf = (GByte *) VSIMalloc2(nBlockXSize, nBlockYSize);
+        if (pabyOutBuf == NULL)
+            return CE_Failure;
 
         if( nHFADataType == EPT_u1 )
         {
