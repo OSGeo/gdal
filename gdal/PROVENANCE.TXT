@@ -63,11 +63,29 @@ Historical and Current:
  hannah - hHannah Valbonesi (Safe Software)
  mchapman - Martin Chapman 
  dreamil - Swapnil Harjare (Indictrans)
- 
- 
-  
 
-== Issues ==
+== Outstanding Issues ==
+
+In gdal/data we have several coordinate system dictionary files derived in one fashion or another from other source (via translation scripts):
+
+* gdal/data/cubewerx_extra.wkt: derived from definitions distributed by Cubewerx, rights unclear. '''TO_RESOLVE''' (emailed Edric)
+* gdal/data/ecw_cs.dat: Derived via much processing from ERMapper GDT definitions, rights unclear. '''TO_RESOLVE'''
+* gdal/data/esri_extra.wkt: Derived with some processing from projections definitions in ArcGIS, rights unclear. '''TO_RESOLVE'''
+
+
+Also two data files - one a seed (template) used when creating DGN files, and one a list of Canadian mapsheet names used by the DTED writer:
+
+* gdal/data/seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear. '''TO_RESOLVE'''
+* gdal/data/NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear.  '''TO_RESOLVE'''
+
+Discovered that the gdal_merge.py script is accidentally distributed under LGPL instead of MIT/X license: 
+
+* gdal/swig/python/scripts/gdal_merge.py: copyright held by Atlantis, under LGPL.  '''TO_RESOLVE'''
+
+Noted some concern about the license terms of libgeotiff: 
+
+* Contains copy of libgeotiff, license terms not made clear.  '''TO_RESOLVE''' (Emailed Niles about using MIT/X license for his libgeotiff code). 
+* gdal/frmts/gtiff/geoextra.c: Derived by public domain contribution to libgeotiff from PCI but the terms are not clear.  (this also affects libgeotiff) '''TO_RESOLVE'''  Email send to Dave Stanley to allow relicensing under MIT/X license.
 
 == Included Libraries ==
 
