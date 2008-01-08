@@ -187,12 +187,11 @@ static CPLErr CopyBandImageData( GDALRasterBand *poSrcBand,
     int            iLine;
     CPLErr         eErr = CE_None;
 
-    pData = VSIMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
+    pData = VSIMalloc2(nXSize, GDALGetDataTypeSize(eType) / 8);
     if( pData == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "CreateCopy(): Out of memory allocating %d byte line buffer.\n",
-                  nXSize * GDALGetDataTypeSize(eType) / 8 );
+                  "CopyBandImageData(): Out of memory.\n");
         eErr = CE_Failure;
     }
 
