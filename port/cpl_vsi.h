@@ -153,6 +153,25 @@ void CPL_DLL    VSIFree( void * );
 void CPL_DLL   *VSIRealloc( void *, size_t );
 char CPL_DLL   *VSIStrdup( const char * );
 
+/**
+ VSIMalloc2 allocates (nSize1 * nSize2) bytes.
+ In case of overflow of the multiplication, or if memory allocation fails, a
+ NULL pointer is returned and a CE_Failure error is raised with CPLError().
+ If nSize1 == 0 || nSize2 == 0, a NULL pointer will also be returned.
+ CPLFree() or VSIFree() can be used to free memory allocated by this function.
+*/
+void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 );
+
+/**
+ VSIMalloc3 allocates (nSize1 * nSize2 * nSize3) bytes.
+ In case of overflow of the multiplication, or if memory allocation fails, a
+ NULL pointer is returned and a CE_Failure error is raised with CPLError().
+ If nSize1 == 0 || nSize2 == 0 || nSize3 == 0, a NULL pointer will also be returned.
+ CPLFree() or VSIFree() can be used to free memory allocated by this function.
+*/
+void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 );
+
+
 /* ==================================================================== */
 /*      Other...                                                        */
 /* ==================================================================== */
