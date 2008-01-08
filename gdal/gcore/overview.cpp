@@ -31,6 +31,13 @@
 
 CPL_CVSID("$Id$");
 
+typedef enum
+{
+    GRM_Near = 0,
+    GRM_Average = 1,
+    GRM_Gauss = 2
+} GDALResamplingMethod;
+
 /************************************************************************/
 /*                       GDALDownsampleChunk32R()                       */
 /************************************************************************/
@@ -43,6 +50,32 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                         int bHasNoData, float fNoDataValue)
 
 {
+/* -------------------------------------------------------------------- */
+/*      Check the input parameters.                                     */
+/*      TODO: I think that instead of passing the pszResampling string  */
+/*            and endless string comparisons this function should take  */
+/*            GDALResamplingMethod flag. The string to flag conversion  */
+/*            should be done on upper level.                            */
+/* -------------------------------------------------------------------- */
+    GDALResamplingMethod eResampling;
+
+    if ( EQUALN(pszResampling, "NEAR", 4) )
+        eResampling = GRM_Near;
+    else if ( EQUALN(pszResampling, "AVER", 4) )
+        eResampling = GRM_Average;
+    else if ( EQUALN(pszResampling, "GAUSS", 5) )
+        eResampling = GRM_Gauss;
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "GDALDownsampleChunk32R: Unsupported resampling method \"%s\".",
+                  pszResampling );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the filter kernel and allocate scanline buffer.          */
+/* -------------------------------------------------------------------- */
     int      nDstYOff, nDstYOff2, nOXSize, nOYSize;
     float    *pafDstScanline;
 
@@ -90,38 +123,34 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; iDstLine++ )
     {
         float *pafSrcScanline;
-        int   nSrcYOff, nSrcYOff2, iDstPixel;
+        int   nSrcYOff, nSrcYOff2 = 0, iDstPixel;
 
-        if( (EQUALN(pszResampling,"NEAR",4)) || (EQUALN(pszResampling,"AVER",4)) )
+        nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
+        if ( nSrcYOff < nChunkYOff )
+            nSrcYOff = nChunkYOff;
+
+        if ( eResampling == GRM_Near || eResampling == GRM_Average )
         {
-            nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
-            if( nSrcYOff < nChunkYOff )
-                nSrcYOff = nChunkYOff;
         
-            nSrcYOff2 = (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight);
+            nSrcYOff2 = 
+                (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight);
             if( nSrcYOff2 > nSrcHeight || iDstLine == nOYSize-1 )
                 nSrcYOff2 = nSrcHeight;
             if( nSrcYOff2 > nChunkYOff + nChunkYSize )
                 nSrcYOff2 = nChunkYOff + nChunkYSize;
-
-            pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth);
-
-        } else if (EQUALN(pszResampling,"GAUSS",5)){
-
-            nSrcYOff = (int) (0.5 + (iDstLine/(double)nOYSize) * nSrcHeight);
-            if( nSrcYOff < nChunkYOff )
-                nSrcYOff = nChunkYOff;
-        
-            nSrcYOff2 = (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight) + 1;
+        }
+        else if ( eResampling == GRM_Gauss )
+        {
+            nSrcYOff2 =
+                (int) (0.5 + ((iDstLine+1)/(double)nOYSize) * nSrcHeight) + 1;
             if( nSrcYOff2 > nSrcHeight || iDstLine == nOYSize-1 )
                 nSrcYOff2 = nSrcHeight;
             if( nSrcYOff2 > nChunkYOff + nChunkYSize + 1){
                 nSrcYOff2 = nChunkYOff + nChunkYSize + 1;
             }
-
-            pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth);
-
         }
+
+        pafSrcScanline = pafChunk + ((nSrcYOff-nChunkYOff) * nSrcWidth);
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -130,15 +159,17 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
         {
             int   nSrcXOff, nSrcXOff2;
 
-            if( (EQUALN(pszResampling,"GAUSS",5)))
+            if ( eResampling == GRM_Gauss )
             {
                 nSrcXOff = (int) (0.5 + iDstPixel*(int)(nSrcWidth/nOXSize));
                 nSrcXOff2 = nSrcXOff + 3;
                 if( nSrcXOff2 > nSrcWidth )
                     nSrcXOff2 = nSrcWidth;
-            } else {
-		
-                nSrcXOff = (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
+            }
+            else
+            {
+                nSrcXOff =
+                    (int) (0.5 + (iDstPixel/(double)nOXSize) * nSrcWidth);
                 nSrcXOff2 = (int) 
                     (0.5 + ((iDstPixel+1)/(double)nOXSize) * nSrcWidth);
                 if( nSrcXOff2 > nSrcWidth )
@@ -146,11 +177,11 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                 
             }
             
-            if( EQUALN(pszResampling,"NEAR",4) )
+            if ( eResampling == GRM_Near )
             {
                 pafDstScanline[iDstPixel] = pafSrcScanline[nSrcXOff];
             }
-            else if( EQUALN(pszResampling,"AVER",4) )
+            else if ( eResampling == GRM_Average )
             {
                 double val;
                 double dfTotal = 0.0;
@@ -169,7 +200,6 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                 }
 
-              after_subsampling_loop:
                 if (bHasNoData && nCount == 0)
                 {
                     pafDstScanline[iDstPixel] = fNoDataValue;
@@ -184,7 +214,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                 }
 
             }
- 	    else if( EQUALN(pszResampling,"GAUSS",5) )
+	    else if ( eResampling == GRM_Gauss )
             {
                 double dfTotal = 0.0;
                 int    iX, iY;
@@ -200,8 +230,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                     }
                 }
            
- 		CPLAssert( dfCountWeight > 0 );
- 		if( dfCountWeight == 0 )
+		CPLAssert( dfCountWeight > 0 );
+		if( dfCountWeight == 0 )
                     pafDstScanline[iDstPixel] = 0.0;
                 else
                     pafDstScanline[iDstPixel] = (float) (dfTotal / dfCountWeight);
@@ -577,7 +607,7 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
                                  pafChunk, nWidth, widthHelp, eType,
                                  0, 0 );
         } else {
- 			
+			
             if( nFullResYChunk + nChunkYOff > poSrcBand->GetYSize() )
                 nFullResYChunk = poSrcBand->GetYSize() - nChunkYOff;
          
