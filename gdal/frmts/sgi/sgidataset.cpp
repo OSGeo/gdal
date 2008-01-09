@@ -264,7 +264,7 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         printf("ERROR:  unhandled block value\n");
         exit(0);
     }
-g
+
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.              */
 /* -------------------------------------------------------------------- */
