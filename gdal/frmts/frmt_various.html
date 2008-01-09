@@ -786,15 +786,14 @@ NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
 
 <h2><a name="SGI">SGI - SGI Image Format</a></h2>
 
-The SGI driver currently supports the reading of SGI Image files.<p>
+The SGI driver currently supports the reading and writing of SGI Image files.<p>
 
 The driver currently supports 1, 2, 3, and 4 band images. The driver 
 currently supports "8 bit per channel value" images. The driver supports 
-both uncompressed and run-length encoded (RLE) images.<p>
+both uncompressed and run-length encoded (RLE) images for reading, but 
+created files are always RLE compressed..<p>
 
 The GDAL SGI Driver was based on Paul Bourke's SGI image read code.<p>
-
-The driver does not currently have any image creation capabilities.<p>
 
 See Also:<p>
 

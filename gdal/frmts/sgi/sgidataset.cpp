@@ -264,7 +264,7 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         printf("ERROR:  unhandled block value\n");
         exit(0);
     }
-
+g
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.              */
 /* -------------------------------------------------------------------- */
@@ -778,6 +778,8 @@ void GDALRegister_SGI()
                                   "SGI Image File Format 1.0");
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "rgb");
         poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/rgb");
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "frmt_various.html#SGI" );
         poDriver->pfnOpen = SGIDataset::Open;
         poDriver->pfnCreate = SGIDataset::Create;
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
