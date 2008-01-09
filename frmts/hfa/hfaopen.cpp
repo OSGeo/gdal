@@ -3141,8 +3141,6 @@ CPLErr HFAWriteXFormStack( HFAHandle hHFA, int nBand, int nXFormCount,
                            Efga_Polynomial **ppasPolyListReverse )
 
 {
-    CPLErr eErr;
-
     if( nXFormCount == 0 )
         return CE_None;
 
@@ -3161,6 +3159,8 @@ CPLErr HFAWriteXFormStack( HFAHandle hHFA, int nBand, int nXFormCount,
 /* -------------------------------------------------------------------- */
     if( nBand == 0 )
     {
+        CPLErr eErr = CE_None;
+
         for( nBand = 1; nBand <= hHFA->nBands; nBand++ )
         {
             eErr = HFAWriteXFormStack( hHFA, nBand, nXFormCount, 
@@ -3169,6 +3169,7 @@ CPLErr HFAWriteXFormStack( HFAHandle hHFA, int nBand, int nXFormCount,
             if( eErr != CE_None )
                 return eErr;
         }
+
         return eErr;
     }
 
