@@ -51,7 +51,7 @@ OGRGeoconceptDriver::~OGRGeoconceptDriver()
 const char *OGRGeoconceptDriver::GetName()
 
 {
-    return "Geoconcept Export";
+    return "Geoconcept";
 }
 
 /************************************************************************/
@@ -62,12 +62,14 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
                                           int bUpdate )
 
 {
+    if( !bUpdate )
+        return NULL;
+
     OGRGeoconceptDataSource  *poDS;
 
     poDS = new OGRGeoconceptDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, FALSE ) ||
-        (!bUpdate && poDS->GetLayerCount() == 0) )
+    if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
         return NULL;
