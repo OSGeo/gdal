@@ -55,13 +55,12 @@ class OGRGeoconceptDataSource : public OGRDataSource
                    OGRGeoconceptDataSource();
                   ~OGRGeoconceptDataSource();
 
-    int            Open( const char* pszName, int bUpdate, int bTestOpen );
+    int            Open( const char* pszName, int bUpdate );
     int            Create( const char* pszName, char** papszOptions );
 
     const char*    GetName() { return _pszName; }
     int            GetLayerCount() { return _nLayers; }
     OGRLayer*      GetLayer( int iLayer );
-//    OGRLayer*      GetLayerByName( const char* pszName );
 //    OGRErr         DeleteLayer( int iLayer );
     int            TestCapability( const char* pszCap );
 
@@ -69,15 +68,8 @@ class OGRGeoconceptDataSource : public OGRDataSource
                                 OGRSpatialReference* poSpatialRef = NULL,
                                 OGRwkbGeometryType eGType = wkbUnknown,
                                 char** papszOptions = NULL );
-//    OGRStyleTable* GetStyleTable( );
-//    void           SetStyleTableDirectly( OGRStyleTable* poStyleTable );
-//    void           SetStyleTable( OGRStyleTable* poStyleTable );
-//    OGRLayer*      ExecuteSQL( const char* pszStatement, OGRGeometry* poSpatialFilter, const char* pszDialect );
-//    void           ReleaseResultSet( OGRLayer* poResultsSet );
-//    OGRErr         SyncToDisk( );
-
   private:
-    int            LoadFile( const char *, int bUpdate, int bTestOpen );
+    int            LoadFile( const char *, int bUpdate );
 };
 
 #endif /* _GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_ */
