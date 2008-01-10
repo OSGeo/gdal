@@ -7,7 +7,7 @@
  * Language: C++
  *
  ******************************************************************************
- * Copyright (c) 2007,  Geoconcept and IGN
+ * Copyright (c) 2007, Geoconcept and IGN
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -96,7 +96,7 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
 /*      Open an existing file, or directory of files.                   */
 /************************************************************************/
 
-int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate, int bTestOpen )
+int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate )
 
 {
     VSIStatBuf  stat;
@@ -115,10 +115,9 @@ int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate, int bTestOp
     if( CPLStat( pszName, &stat ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
-        if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                   "%s is neither a file or directory, Geoconcept access failed.\n",
-                      pszName );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s is neither a file or directory, Geoconcept access failed.\n",
+                  pszName );
 
         return FALSE;
     }
@@ -129,14 +128,13 @@ int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate, int bTestOp
     if( VSI_ISREG(stat.st_mode) )
     {
         _bSingleNewFile= TRUE;
-        if( !LoadFile( pszName, bUpdate, bTestOpen ) )
+        if( !LoadFile( pszName, bUpdate ) )
         {
-            if( !bTestOpen )
-                CPLError( CE_Failure, CPLE_OpenFailed,
-                          "Failed to open Geoconcept %s.\n"
-                          "It may be corrupt.\n",
-                          pszName );
-
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open Geoconcept %s.\n"
+                      "It may be corrupt.\n",
+                      pszName );
+            
             return FALSE;
         }
 
@@ -160,8 +158,7 @@ int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate, int bTestOp
             pszFilename =
                 CPLStrdup(CPLFormFilename(pszName, pszCandidate, NULL));
 
-            if( !LoadFile( pszFilename, bUpdate, bTestOpen )
-                && !bTestOpen )
+            if( !LoadFile( pszFilename, bUpdate ) )
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Failed to open Geoconcept %s.\n"
@@ -176,32 +173,25 @@ int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate, int bTestOp
 
         CSLDestroy( papszCandidates );
 
-        if( !bTestOpen && _nLayers == 0 && !bUpdate )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "No Geoconcept found in directory %s\n",
-                      pszName );
-        }
-        else
+        if( _nLayers > 0 )
         {
             _pszDirectory = CPLStrdup(pszName);
         }
     }
 
-    return _nLayers > 0 || bUpdate;
+    return _nLayers > 0;
 }
 
 /************************************************************************/
 /*                              LoadFile()                              */
 /************************************************************************/
 
-int OGRGeoconceptDataSource::LoadFile( const char *pszName, int bUpdate, int bTestOpen )
+int OGRGeoconceptDataSource::LoadFile( const char *pszName, int bUpdate )
 
 {
     OGRGeoconceptLayer *poFile;
 
     _bUpdate= bUpdate;
-    (void) bTestOpen;
 
     /* Let CreateLayer do the job ... */
     if( bUpdate )
@@ -240,7 +230,8 @@ int OGRGeoconceptDataSource::LoadFile( const char *pszName, int bUpdate, int bTe
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
-    _papoLayers = (OGRGeoconceptLayer **)CPLRealloc( _papoLayers,  sizeof(OGRGeoconceptLayer *) * (_nLayers+1) );
+    _papoLayers = (OGRGeoconceptLayer **)
+        CPLRealloc( _papoLayers,  sizeof(OGRGeoconceptLayer *) * (_nLayers+1) );
     _papoLayers[_nLayers++] = poFile;
 
     CPLDebug("GEOCONCEPT",
