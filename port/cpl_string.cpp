@@ -1760,3 +1760,97 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 
     return pabyWKB;
 }
+
+
+
+/************************************************************************/
+/*                         CPLGetValueType()                            */
+/************************************************************************/
+
+/**
+ * Detect the type of the value contained in a string, whether it is
+ * a real, an integer or a string
+ * Leading and trailing spaces are skipped in the analysis.
+ *
+ * @param pszValue the string to analyze
+ *
+ * @return returns the type of the value contained in the string.
+ */
+
+CPLValueType CPLGetValueType(const char* pszValue)
+{
+    /*
+    doubles : "+25.e+3", "-25.e-3", "25.e3", "25e3", " 25e3 "
+    not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3"
+    */
+
+    int bFoundDot = FALSE;
+    int bFoundExponent = FALSE;
+    int bIsLastCharExponent = FALSE;
+    int bIsReal = FALSE;
+
+    if (pszValue == NULL)
+        return CPL_VALUE_STRING;
+
+    /* Skip leading + or - */
+    if (*pszValue == '+' || *pszValue == '-')
+        pszValue ++;
+
+    /* Skip leading spaces */
+    while( isspace( *pszValue ) )
+        pszValue ++;
+
+    for(; *pszValue != '\0'; pszValue++ )
+    {
+        if( isdigit( *pszValue))
+        {
+            bIsLastCharExponent = FALSE;
+            /* do nothing */
+        }
+        else if ( isspace (*pszValue) )
+        {
+            const char* pszTmp = pszValue;
+            while( isspace( *pszTmp ) )
+                pszTmp ++;
+            if (*pszTmp == 0)
+                break;
+            else
+                return CPL_VALUE_STRING;
+        }
+        else if ( *pszValue == '-' || *pszValue == '+' )
+        {
+            if (bIsLastCharExponent)
+            {
+                /* do nothing */
+            }
+            else
+                return CPL_VALUE_STRING;
+            bIsLastCharExponent = FALSE;
+        }
+        else if ( *pszValue == '.')
+        {
+            bIsReal = TRUE;
+            if (!bFoundDot && bIsLastCharExponent == FALSE)
+                bFoundDot = TRUE;
+            else
+                return CPL_VALUE_STRING;
+            bIsLastCharExponent = FALSE;
+        }
+        else if (*pszValue == 'D' || *pszValue == 'd'
+                 || *pszValue == 'E' || *pszValue == 'e' )
+        {
+            bIsReal = TRUE;
+            if (!bFoundExponent)
+                bFoundExponent = TRUE;
+            else
+                return CPL_VALUE_STRING;
+            bIsLastCharExponent = TRUE;
+        }
+        else 
+        {
+            return CPL_VALUE_STRING;
+        }
+    }
+
+    return (bIsReal) ? CPL_VALUE_REAL : CPL_VALUE_INTEGER;
+}
