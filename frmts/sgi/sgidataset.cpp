@@ -551,8 +551,6 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         return NULL;
     }
 
-    poDS->eAccess = GA_ReadOnly;
-
 /* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
