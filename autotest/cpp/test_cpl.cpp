@@ -30,6 +30,7 @@
 #include <tut.h>
 #include <string>
 #include "cpl_list.h"
+#include "cpl_string.h"
 
 namespace tut
 {
@@ -109,6 +110,49 @@ namespace tut
         list = CPLListRemove(list, 0);
         list = CPLListRemove(list, 0);
         ensure(list == NULL);
+    }
+
+    typedef struct
+    {
+        const char* testString;
+        CPLValueType expectedResult;
+    } TestStringStruct;
+
+    // Test CPLGetValueType
+    template<>
+    template<>
+    void object::test<2>()
+    {
+        TestStringStruct apszTestStrings[] =
+        {
+            { "+25.e+3", CPL_VALUE_REAL },
+            { "-25.e-3", CPL_VALUE_REAL },
+            { "25.e3", CPL_VALUE_REAL },
+            { "25e3", CPL_VALUE_REAL },
+            { " 25e3 ", CPL_VALUE_REAL },
+    
+            { "25", CPL_VALUE_INTEGER },
+            { "-25", CPL_VALUE_INTEGER },
+            { "+25", CPL_VALUE_INTEGER },
+    
+            { "25e 3", CPL_VALUE_STRING },
+            { "25e.3", CPL_VALUE_STRING },
+            { "-2-5e3", CPL_VALUE_STRING },
+            { "2-5e3", CPL_VALUE_STRING },
+            { "25.25.3", CPL_VALUE_STRING },
+            { "25e25e3", CPL_VALUE_STRING },
+        };
+    
+        int i;
+        for(i=0;i < sizeof(apszTestStrings) / sizeof(apszTestStrings[0]); i++)
+        {
+            ensure(CPLGetValueType(apszTestStrings[i].testString) == apszTestStrings[i].expectedResult);
+            if (CPLGetValueType(apszTestStrings[i].testString) != apszTestStrings[i].expectedResult)
+                fprintf(stderr, "mismatch on item %d : value=\"%s\", expect_result=%d, result=%d\n", i,
+                        apszTestStrings[i].testString, 
+                        apszTestStrings[i].expectedResult,
+                        CPLGetValueType(apszTestStrings[i].testString));
+        }
     }
 
 } // namespace tut
