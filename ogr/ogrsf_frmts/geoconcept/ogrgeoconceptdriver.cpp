@@ -233,5 +233,5 @@ int OGRGeoconceptDriver::TestCapability( const char * pszCap )
 void RegisterOGRGeoconcept()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoconceptDriver );
+    //OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoconceptDriver );
 }
