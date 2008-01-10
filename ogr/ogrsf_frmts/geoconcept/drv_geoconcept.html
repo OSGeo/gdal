@@ -230,13 +230,13 @@ sub-type section within the previous type section.<p>
 Creating a G&eacute;oconcept export file&nbsp;:<br/>
 
 <pre>
-ogr2ogr -f "Geoconcept Export" -a_srs "+init=IGNF:LAMB93" -dsco EXTENSION=txt -dsco CONFIG=tile_schema.gct tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
+ogr2ogr -f "Geoconcept" -a_srs "+init=IGNF:LAMB93" -dsco EXTENSION=txt -dsco CONFIG=tile_schema.gct tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
 </pre>
 
 Appending new features to an existing G&eacute;oconcept export file&nbsp;:<br/>
 
 <pre>
-ogr2ogr -f "Geoconcept Export" -update tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
+ogr2ogr -f "Geoconcept" -update tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
 </pre>
 
 <h3>See Also</h3>
