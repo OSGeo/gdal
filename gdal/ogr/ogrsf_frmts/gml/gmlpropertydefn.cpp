@@ -29,6 +29,7 @@
 
 #include "gmlreader.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                           GMLPropertyDefn                            */
@@ -93,32 +94,18 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
 /*      Does the string consist entirely of numeric values?             */
 /* -------------------------------------------------------------------- */
     int bIsReal = FALSE;
-    
-    /* Saved to calculate length of string property value. */
-    const char* pszTmp = pszValue;
 
-    for(; *pszValue != '\0'; pszValue++ )
-    {
-        if( isdigit( *pszValue) || *pszValue == '-' || *pszValue == '+' 
-            || isspace( *pszValue ) )
-            /* do nothing */;
-        else if( *pszValue == '.' || *pszValue == 'D' || *pszValue == 'd'
-                 || *pszValue == 'E' || *pszValue == 'e' )
-            bIsReal = TRUE;
-        else 
-        {
-            m_eType = GMLPT_String;
-
-            /* Skip forward to calculate property width. */
-            break;
-        }
-    }
+    CPLValueType valueType = CPLGetValueType(pszValue);
+    if (valueType == CPL_VALUE_STRING)
+        m_eType = GMLPT_String;
+    else
+        bIsReal = (valueType == CPL_VALUE_REAL);
 
     if( m_eType == GMLPT_String )
     {
         /* grow the Width to the length of the string passed in */
         int nWidth;
-        nWidth = strlen(pszTmp);
+        nWidth = strlen(pszValue);
         if ( m_nWidth < nWidth ) 
             SetWidth( nWidth );
     }
