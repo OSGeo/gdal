@@ -483,6 +483,37 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
         pabyValues = pabyCData + 13;
         nValueBitOffset = 0;
 
+/* -------------------------------------------------------------------- */
+/*      For floating point output, the saved 16-bit value will be       */
+/*      based on the minimum value for the tile. Note that the there    */
+/*      still seems to be some problems selecting the correct factor    */
+/*      right near a power of 2 boundary (like 512). I have not been    */
+/*      able to determine how the switchover occurs at power of 2       */
+/*      boundaries for the minimum value. (#1000)                       */
+/* -------------------------------------------------------------------- */
+        float fMultFactor = 1.0;
+        float fMinValue = 0.0;
+        if ( nDataType == EPT_f32 )
+        {
+            int nDataMin = ( fMinValue > 0.0 ) ? (int)fMinValue : (int)-fMinValue;
+            int nDivShift = -9;
+
+            fMinValue = *((float *) &nDataMin);
+            for ( ; ( nDataMin > 0 ); nDivShift++, nDataMin >>= 1 ) {}
+            if ( nDivShift < 0 )
+            {
+                nDivShift = -nDivShift;
+                fMultFactor = 1.0 / ( 1 << nDivShift );
+            }
+            else
+            {
+                fMultFactor = ( 1 << nDivShift );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over block pixels.                                         */
+/* -------------------------------------------------------------------- */
         for( nPixelsOutput = 0; nPixelsOutput < nMaxPixels; nPixelsOutput++ )
         {
             int	nDataValue, nRawValue;
@@ -598,10 +629,10 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /* -------------------------------------------------------------------- */
             else if( nDataType == EPT_f32 )
             {
-                float fValue = *((float *) &nDataMin);
+                float fValue;
 
                 if( nNumBits == 16 )
-                    fValue = fValue + 0.25 * (nRawValue / 65536.0);
+                    fValue = fMinValue + fMultFactor * (nRawValue / 32768.0);
                 else
                     CPLAssert( FALSE );
                 
