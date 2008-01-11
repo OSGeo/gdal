@@ -495,10 +495,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
         float fMinValue = 0.0;
         if ( nDataType == EPT_f32 )
         {
+            fMinValue = *((float *) &nDataMin);
+
             int nDataMin = ( fMinValue > 0.0 ) ? (int)fMinValue : (int)-fMinValue;
             int nDivShift = -9;
 
-            fMinValue = *((float *) &nDataMin);
             for ( ; ( nDataMin > 0 ); nDivShift++, nDataMin >>= 1 ) {}
             if ( nDivShift < 0 )
             {
