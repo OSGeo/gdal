@@ -249,6 +249,32 @@ public:
       return GDALCreateMaskBand( self, nFlags );
   }
 
+ 
+  CPLErr GetHistogram( double dfMin=-0.5,
+                     double dfMax=255.5,
+                     int nBuckets=255,
+                     int bIncludeOutOfRange = 0,
+                     int bApproxOk = 1,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data=NULL ) {
+
+   int* panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
+    CPLErr err;
+    CPLErrorReset();
+
+    err = GDALGetRasterHistogram(  self, 
+                                dfMin,
+                                dfMax,
+                                nBuckets,
+                                panHistogram,
+                                bIncludeOutOfRange,
+                                bApproxOk,
+                                callback, 
+                                callback_data);
+    return err;
+  }
+
+
 /* NEEDED */
 /* ReadAsArray */
 /* WriteArray */
