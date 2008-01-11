@@ -30,6 +30,9 @@
 
 #include "gdal_priv.h"
 
+#define RMF_COMPRESSION_NONE    0
+#define RMF_COMPRESSION_LZW     1
+
 enum RMFType
 {
     RMFT_RSW,       // Raster map
@@ -90,7 +93,7 @@ typedef struct
     GByte       iInverse;
 #define RMF_INVISIBLE_COLORS_SIZE 32
     GByte       abyInvisibleColors[RMF_INVISIBLE_COLORS_SIZE];
-    double      dfElevMinMax[2];
+    double      adfElevMinMax[2];
     double      dfNoData;
     GUInt32     iElevationUnit;
     GByte       iElevationType;
@@ -123,11 +126,9 @@ class RMFDataset : public GDALDataset
     const char      *pszFilename;
     FILE            *fp;
 
+    CPLErr          WriteHeader();
     static int      LZWDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
- 
-  protected:
-    CPLErr              WriteHeader();
-    int                 (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
+    int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
 
   public:
                 RMFDataset();

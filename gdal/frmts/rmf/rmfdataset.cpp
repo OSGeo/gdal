@@ -798,8 +798,8 @@ CPLErr RMFDataset::WriteHeader()
     *(abyHeader + 245) = sHeader.iInverse;
     memcpy( abyHeader + 248, sHeader.abyInvisibleColors,
             RMF_INVISIBLE_COLORS_SIZE );
-    RMF_WRITE_DOUBLE( sHeader.dfElevMinMax[0], 280 );
-    RMF_WRITE_DOUBLE( sHeader.dfElevMinMax[1], 288 );
+    RMF_WRITE_DOUBLE( sHeader.adfElevMinMax[0], 280 );
+    RMF_WRITE_DOUBLE( sHeader.adfElevMinMax[1], 288 );
     RMF_WRITE_DOUBLE( sHeader.dfNoData, 296 );
     RMF_WRITE_ULONG( sHeader.iElevationUnit, 304 );
     RMF_WRITE_ULONG( sHeader.iElevationType, 308 );
@@ -843,8 +843,11 @@ void RMFDataset::FlushCache()
         return;
 
     if ( eRMFType == RMFT_MTW )
+    {
         GDALComputeRasterMinMax( GetRasterBand(1), FALSE,
-                                 sHeader.dfElevMinMax );
+                                 sHeader.adfElevMinMax );
+        bHeaderDirty = TRUE;
+    }
     WriteHeader();
 }
 
@@ -943,8 +946,8 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->sHeader.iInverse = *(poDS->abyHeader + 245);
     memcpy( poDS->sHeader.abyInvisibleColors,
             poDS->abyHeader + 248, RMF_INVISIBLE_COLORS_SIZE );
-    RMF_READ_DOUBLE( poDS->sHeader.dfElevMinMax[0], 280 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfElevMinMax[1], 288 );
+    RMF_READ_DOUBLE( poDS->sHeader.adfElevMinMax[0], 280 );
+    RMF_READ_DOUBLE( poDS->sHeader.adfElevMinMax[1], 288 );
     RMF_READ_DOUBLE( poDS->sHeader.dfNoData, 296 );
     RMF_READ_ULONG( poDS->sHeader.iElevationUnit, 304 );
     RMF_READ_ULONG( poDS->sHeader.iElevationType, 308 );
@@ -1103,9 +1106,9 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Choose compression scheme.                                          */
 /* -------------------------------------------------------------------- */
-    if (poDS->sHeader.iCompression == 1)
+    if (poDS->sHeader.iCompression == RMF_COMPRESSION_LZW)
         poDS->Decompress = &LZWDecompress;
-    else
+    else    // No compression
         poDS->Decompress = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1330,8 +1333,8 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.iGeorefFlag = 0;
     poDS->sHeader.iInverse = 0;
     memset( poDS->sHeader.abyInvisibleColors, 0, RMF_INVISIBLE_COLORS_SIZE );
-    poDS->sHeader.dfElevMinMax[0] = 0.0;
-    poDS->sHeader.dfElevMinMax[1] = 0.0;
+    poDS->sHeader.adfElevMinMax[0] = 0.0;
+    poDS->sHeader.adfElevMinMax[1] = 0.0;
     poDS->sHeader.dfNoData = 0.0;
     poDS->sHeader.iElevationUnit = 0;
     poDS->sHeader.iElevationType = 0;
