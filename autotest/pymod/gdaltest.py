@@ -70,10 +70,10 @@ def run_tests( test_list ):
                 outline = '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' 
             else:
                 outline = '  TEST: ' + func.__name__ + ': ' + name + ' ... ' 
-	except:
+        except:
             func = test_item
             name = func.__name__
-	    outline =  '  TEST: ' + name + ' ... '
+            outline =  '  TEST: ' + name + ' ... '
 
         sys.stdout.write( outline )
         sys.stdout.flush()
@@ -199,28 +199,28 @@ def clean_tmp():
 
 class GDALTest:
     def __init__(self, drivername, filename, band, chksum,
-		 xoff = 0, yoff = 0, xsize = 0, ysize = 0, options = [],
+                 xoff = 0, yoff = 0, xsize = 0, ysize = 0, options = [],
                  filename_absolute = 0 ):
-	self.driver = None
-	self.drivername = drivername
-	self.filename = filename
+        self.driver = None
+        self.drivername = drivername
+        self.filename = filename
         self.filename_absolute = filename_absolute
-	self.band = band
-	self.chksum = chksum
-	self.xoff = xoff
-	self.yoff = yoff
-	self.xsize = xsize
-	self.ysize = ysize
-	self.options = options
+        self.band = band
+        self.chksum = chksum
+        self.xoff = xoff
+        self.yoff = yoff
+        self.xsize = xsize
+        self.ysize = ysize
+        self.options = options
 
     def testDriver(self):
-	if self.driver is None:
-	    self.driver = gdal.GetDriverByName( self.drivername )
-	    if self.driver is None:
-		post_reason( self.drivername + ' driver not found!' )
-		return 'fail'
+        if self.driver is None:
+            self.driver = gdal.GetDriverByName( self.drivername )
+            if self.driver is None:
+                post_reason( self.drivername + ' driver not found!' )
+                return 'fail'
 
-	return 'success'
+        return 'success'
 
     def testOpen(self, check_prj = None, check_gt = None, gt_epsilon = None, \
                  check_stat = None, check_approx_stat = None, \
@@ -229,13 +229,13 @@ class GDALTest:
         matrix (tuple), gt_epsilon - geotransformation tolerance,
         check_stat - band statistics (tuple), stat_epsilon - statistics
         tolerance."""
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
         if self.filename_absolute:
             wrk_filename = self.filename
         else:
-            wrk_filename = 'data/' + self.filename 
+            wrk_filename = 'data/' + self.filename
 
         ds = gdal.Open( wrk_filename, gdal.GA_ReadOnly )
 
@@ -333,17 +333,17 @@ class GDALTest:
         if self.chksum is None or chksum == self.chksum:
             return 'success'
         else:
-            post_reason( 'Checksum for %s is %d, but expected %d.' \
-                         % (self.filename, chksum, self.chksum) )
+            post_reason('Checksum for band %d in "%s" is %d, but expected %d.' \
+                        % (self.band, self.filename, chksum, self.chksum) )
             return 'fail'
-	
+        
 
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
                        vsimem = 0, new_filename = None, strict_in = 0 ):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
+        src_ds = gdal.Open( 'data/' + self.filename )
         if self.band > 0:
             minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
             
@@ -357,19 +357,19 @@ class GDALTest:
                 new_filename = 'tmp/' + self.filename + '.tst'
 
         gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-	new_ds = self.driver.CreateCopy( new_filename, src_ds,
+        new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                          strict = strict_in,
-	                                 options = self.options )
+                                         options = self.options )
         gdal.PopErrorHandler()
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using CreateCopy method.'\
+        if new_ds is None:
+            post_reason( 'Failed to create test file using CreateCopy method.'\
                          + '\n' + gdal.GetLastErrorMsg() )
-	    return 'fail'
+            return 'fail'
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
             if self.chksum is not None and bnd.Checksum() != self.chksum:
-                post_reason( 
+                post_reason(
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' % (bnd.Checksum(),self.chksum))
                 return 'fail'
@@ -381,15 +381,15 @@ class GDALTest:
                 % ( got_minmax[0], got_minmax[1], minmax[0], minmax[1] ) )
                 return 'fail'
 
-	bnd = None
-	new_ds = None
+        bnd = None
+        new_ds = None
 
-	# hopefully it's closed now!
+        # hopefully it's closed now!
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
@@ -434,48 +434,48 @@ class GDALTest:
                 post_reason( 'Projections differ' )
                 return 'fail'
 
-	bnd = None
-	new_ds = None
-	src_ds = None
+        bnd = None
+        new_ds = None
+        src_ds = None
 
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
     def testCreate(self, new_filename = None, out_bands = 3):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
-	xsize = src_ds.RasterXSize
-	ysize = src_ds.RasterYSize
-	src_img = src_ds.GetRasterBand(self.band).ReadRaster(0,0,xsize,ysize)
-	minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
+        src_img = src_ds.GetRasterBand(self.band).ReadRaster(0,0,xsize,ysize)
+        minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
 
         if new_filename is None:
             new_filename = 'tmp/' + self.filename + '.tst'
 
-	new_ds = self.driver.Create( new_filename, xsize, ysize, out_bands,
-				     src_ds.GetRasterBand(self.band).DataType,
-				     options = self.options )
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using Create method.' )
-	    return 'fail'
-	
-	src_ds = None
+        new_ds = self.driver.Create( new_filename, xsize, ysize, out_bands,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+        
+        src_ds = None
 
-	try:
+        try:
             for band in range(1,out_bands+1):
                 new_ds.GetRasterBand(band).WriteRaster( 0, 0, xsize, ysize, src_img )
-	except:
-	    post_reason( 'Failed to write raster bands to test file.' )
-	    return 'fail'
+        except:
+            post_reason( 'Failed to write raster bands to test file.' )
+            return 'fail'
 
         for band in range(1,out_bands+1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
-                post_reason( 
+                post_reason(
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' \
                     % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
@@ -485,13 +485,13 @@ class GDALTest:
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax:
                 post_reason( 'Did not get expected min/max values on still-open file.' )
                 return 'fail'
-	
-	new_ds = None
+        
+        new_ds = None
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
         for band in range(1,out_bands+1):
             if self.chksum is not None \
@@ -502,230 +502,230 @@ class GDALTest:
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax:
                 post_reason( 'Did not get expected min/max values on reopened file.' )
                 return 'fail'
-	
-	new_ds = None
-	
+        
+        new_ds = None
+        
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
     def testSetGeoTransform(self):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
-	xsize = src_ds.RasterXSize
-	ysize = src_ds.RasterYSize
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
 
-	new_filename = 'tmp/' + self.filename + '.tst'
-	new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
-				     src_ds.GetRasterBand(self.band).DataType,
-				     options = self.options  )
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using Create method.' )
-	    return 'fail'
-	
-	gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
-	if new_ds.SetGeoTransform( gt ) is not gdal.CE_None:
-	    post_reason( 'Failed to set geographic transformation.' )
-	    return 'fail'
+        new_filename = 'tmp/' + self.filename + '.tst'
+        new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options  )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+        
+        gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
+        if new_ds.SetGeoTransform( gt ) is not gdal.CE_None:
+            post_reason( 'Failed to set geographic transformation.' )
+            return 'fail'
 
-	src_ds = None
-	new_ds = None
+        src_ds = None
+        new_ds = None
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
-	if gt != new_ds.GetGeoTransform():
-	    post_reason( 'Did not get expected geotransform.' )
-	    return 'fail'
+        if gt != new_ds.GetGeoTransform():
+            post_reason( 'Did not get expected geotransform.' )
+            return 'fail'
 
-	new_ds = None
-	
+        new_ds = None
+        
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
     def testSetProjection(self, prj = None ):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
-	xsize = src_ds.RasterXSize
-	ysize = src_ds.RasterYSize
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
 
-	new_filename = 'tmp/' + self.filename + '.tst'
-	new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
-				     src_ds.GetRasterBand(self.band).DataType,
-				     options = self.options  )
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using Create method.' )
-	    return 'fail'
-	
-	gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
+        new_filename = 'tmp/' + self.filename + '.tst'
+        new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options  )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+        
+        gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
         if prj is None:
             # This is a challenging SRS since it has non-meter linear units.
             prj='PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["feet",0.3048006096012192]]'
 
-	src_osr = osr.SpatialReference()
-	src_osr.ImportFromWkt(prj)
-	
-	new_ds.SetGeoTransform( gt )
-	if new_ds.SetProjection( prj ) is not gdal.CE_None:
-	    post_reason( 'Failed to set geographic projection string.' )
-	    return 'fail'
+        src_osr = osr.SpatialReference()
+        src_osr.ImportFromWkt(prj)
+        
+        new_ds.SetGeoTransform( gt )
+        if new_ds.SetProjection( prj ) is not gdal.CE_None:
+            post_reason( 'Failed to set geographic projection string.' )
+            return 'fail'
 
-	src_ds = None
-	new_ds = None
+        src_ds = None
+        new_ds = None
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
-	new_osr = osr.SpatialReference()
-	new_osr.ImportFromWkt(new_ds.GetProjection())
-	if not new_osr.IsSame(src_osr):
-	    post_reason( 'Did not get expected projection reference.' )
+        new_osr = osr.SpatialReference()
+        new_osr.ImportFromWkt(new_ds.GetProjection())
+        if not new_osr.IsSame(src_osr):
+            post_reason( 'Did not get expected projection reference.' )
             print 'Got: '
             print new_osr.ExportToPrettyWkt()
             print 'Expected:'
             print src_osr.ExportToPrettyWkt()
-	    return 'fail'
+            return 'fail'
 
-	new_ds = None
-	
+        new_ds = None
+        
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
     def testSetMetadata(self):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
-	xsize = src_ds.RasterXSize
-	ysize = src_ds.RasterYSize
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
 
-	new_filename = 'tmp/' + self.filename + '.tst'
-	new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
-				     src_ds.GetRasterBand(self.band).DataType,
-				     options = self.options  )
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using Create method.' )
-	    return 'fail'
-	
-	dict = {}
-	dict['TEST_KEY'] = 'TestValue'
-	new_ds.SetMetadata( dict )
+        new_filename = 'tmp/' + self.filename + '.tst'
+        new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options  )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+        
+        dict = {}
+        dict['TEST_KEY'] = 'TestValue'
+        new_ds.SetMetadata( dict )
 # FIXME
-	#if new_ds.SetMetadata( dict ) is not gdal.CE_None:
-	    #print new_ds.SetMetadata( dict )
-	    #post_reason( 'Failed to set metadata item.' )
-	    #return 'fail'
+        #if new_ds.SetMetadata( dict ) is not gdal.CE_None:
+            #print new_ds.SetMetadata( dict )
+            #post_reason( 'Failed to set metadata item.' )
+            #return 'fail'
 
-	src_ds = None
-	new_ds = None
+        src_ds = None
+        new_ds = None
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
-	md_dict = new_ds.GetMetadata()
-	if md_dict['TEST_KEY'] != 'TestValue':
-	    post_reason( 'Did not get expected metadata item.' )
-	    return 'fail'
+        md_dict = new_ds.GetMetadata()
+        if md_dict['TEST_KEY'] != 'TestValue':
+            post_reason( 'Did not get expected metadata item.' )
+            return 'fail'
 
-	new_ds = None
-	
+        new_ds = None
+        
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
     def testSetNoDataValue(self):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
-	xsize = src_ds.RasterXSize
-	ysize = src_ds.RasterYSize
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
 
-	new_filename = 'tmp/' + self.filename + '.tst'
-	new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
-				     src_ds.GetRasterBand(self.band).DataType,
-				     options = self.options  )
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using Create method.' )
-	    return 'fail'
-	
-	nodata = 11
-	if new_ds.GetRasterBand(1).SetNoDataValue(nodata) is not gdal.CE_None:
-	    post_reason( 'Failed to set NoData value.' )
-	    return 'fail'
+        new_filename = 'tmp/' + self.filename + '.tst'
+        new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options  )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+        
+        nodata = 11
+        if new_ds.GetRasterBand(1).SetNoDataValue(nodata) is not gdal.CE_None:
+            post_reason( 'Failed to set NoData value.' )
+            return 'fail'
 
-	src_ds = None
-	new_ds = None
+        src_ds = None
+        new_ds = None
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
-	if nodata != new_ds.GetRasterBand(1).GetNoDataValue():
-	    post_reason( 'Did not get expected NoData value.' )
-	    return 'fail'
+        if nodata != new_ds.GetRasterBand(1).GetNoDataValue():
+            post_reason( 'Did not get expected NoData value.' )
+            return 'fail'
 
-	new_ds = None
-	
+        new_ds = None
+        
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
     def testSetDescription(self):
-	if self.testDriver() == 'fail':
-	    return 'skip'
+        if self.testDriver() == 'fail':
+            return 'skip'
 
-	src_ds = gdal.Open( 'data/' + self.filename )
-	xsize = src_ds.RasterXSize
-	ysize = src_ds.RasterYSize
+        src_ds = gdal.Open( 'data/' + self.filename )
+        xsize = src_ds.RasterXSize
+        ysize = src_ds.RasterYSize
 
-	new_filename = 'tmp/' + self.filename + '.tst'
-	new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
-				     src_ds.GetRasterBand(self.band).DataType,
-				     options = self.options  )
-	if new_ds is None:
-	    post_reason( 'Failed to create test file using Create method.' )
-	    return 'fail'
-	
-	description = "Description test string"
-	new_ds.GetRasterBand(1).SetDescription(description)
+        new_filename = 'tmp/' + self.filename + '.tst'
+        new_ds = self.driver.Create( new_filename, xsize, ysize, 1,
+                                     src_ds.GetRasterBand(self.band).DataType,
+                                     options = self.options  )
+        if new_ds is None:
+            post_reason( 'Failed to create test file using Create method.' )
+            return 'fail'
+        
+        description = "Description test string"
+        new_ds.GetRasterBand(1).SetDescription(description)
 
-	src_ds = None
-	new_ds = None
+        src_ds = None
+        new_ds = None
 
-	new_ds = gdal.Open( new_filename )
-	if new_ds is None:
-	    post_reason( 'Failed to open dataset: ' + new_filename )
-	    return 'fail'
+        new_ds = gdal.Open( new_filename )
+        if new_ds is None:
+            post_reason( 'Failed to open dataset: ' + new_filename )
+            return 'fail'
 
-	if description != new_ds.GetRasterBand(1).GetDescription():
-	    post_reason( 'Did not get expected description string.' )
-	    return 'fail'
+        if description != new_ds.GetRasterBand(1).GetDescription():
+            post_reason( 'Did not get expected description string.' )
+            return 'fail'
 
-	new_ds = None
-	
+        new_ds = None
+        
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
-	return 'success'
+        return 'success'
 
 
 def approx_equal( a, b ):
