@@ -156,8 +156,18 @@ pixels that are nodata in the dataset.  With this style of nodata a pixel
 is considered nodata in all bands if and only if all bands match the 
 corresponding value in the NODATA_VALUES tuple.  This metadata is not widely
 honoured by GDAL drivers, algorithms or utilities at this time. 
-<li> POLARMETRIC_INTERP: SAR oriented - to be defined.
-<li> MATRIX_REPRESENTATION: SAR oriented - to be defined.
+<li> MATRIX_REPRESENTATION: This value, used for Polarimetric SAR datasets, contains the matrix representation that this data is provided in. The following are acceptable values:
+    <ul>
+    <li>SCATTERING
+    <li>SYMMETRIZED_SCATTERING
+    <li>COVARIANCE
+    <li>SYMMETRIZED_COVARIANCE
+    <li>COHERENCY
+    <li>SYMMETRIZED_COHERENCY
+    <li>KENNAUGH
+    <li>SYMMETRIZED_KENNAUGH
+    </ul>
+<li> POLARMETRIC_INTERP: This metadata item is defined for Raster Bands for polarimetric SAR data. This indicates which entry in the specified matrix representation of the data this band represents. For a dataset provided as a scattering matrix, for example, acceptable values for this metadata item are HH, HV, VH, VV. When the dataset is a covariance matrix, for example, this metadata item will be one of Covariance_11, Covariance_22, Covariance_33, Covariance_12, Covariance_13, Covariance_23 (since the matrix itself is a hermitian matrix, that is all the data that is required to describe the matrix).
 </ul>
 
 \subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
