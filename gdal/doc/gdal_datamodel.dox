@@ -126,9 +126,6 @@ The metadata handling system is not well tuned to handling very large bodies
 of metadata.  Handling of more than 100K of metadata for a dataset is likely
 to lead to performance degradation. 
 
-Over time there will be some well known names defined with established
-semantics; however, that has not occurred at this time. 
-
 Some formats will support generic (user defined) metadata, while other
 format drivers will map specific format fields to metadata names.  For
 instance the TIFF driver returns a few information tags as metadata
@@ -142,7 +139,26 @@ Metadata is split into named groups called domains, with the default
 domain having no name (NULL or "").  Some specific domains exist for 
 special purposes.  Note that currently there is no way to enumerate all
 the domains available for a given object, but applications can "test" for
-any domains they know how to interprete. 
+any domains they know how to interprete.
+
+The following metadata items have well defined semantics in the default
+domain:
+
+<ul>
+<li> AREA_OR_POINT: May be either "Area" (the default) or "Point".  Indicates 
+whether a pixel value should be assumed to represent a sampling over the 
+region of the pixel or a point sample at the center of the pixel.  This is not 
+intended to influence interpretation of georeferencing which remains area 
+oriented.
+<li> NODATA_VALUES: The value is a list of space separated pixel values matching
+the number of bands in the dataset that can be collectively used to identify
+pixels that are nodata in the dataset.  With this style of nodata a pixel
+is considered nodata in all bands if and only if all bands match the 
+corresponding value in the NODATA_VALUES tuple.  This metadata is not widely
+honoured by GDAL drivers, algorithms or utilities at this time. 
+<li> POLARMETRIC_INTERP: SAR oriented - to be defined.
+<li> MATRIX_REPRESENTATION: SAR oriented - to be defined.
+</ul>
 
 \subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
 
@@ -178,9 +194,16 @@ to a particular file format and storage mechanism.  In order to prevent
 this getting copied along with datasets it is placed in a special domain
 called IMAGE_STRUCTURE that should not normally be copied to new formats. 
 
-One item that appears in the IMAGE_STRUCTURE domain is the compression
-scheme used for a fromat.  The metadata item name is COMPRESSION but the
-value can be format specific.
+Currently the following items are defined by 
+<a href="http://trac.osgeo.org/gdal/rfc14_imagestructure">RFC 14</a> 
+as having specific semantics in the IMAGE_STRUCTURE domain. 
+
+<ul>
+<li> COMPRESSION:     The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there. 
+<li> NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_Byte.
+<li> INTERLEAVE: This only applies on datasets, and the value should be one of PIXEL, LINE or BAND. It can be used as a data access hint.
+<li> PIXELTYPE: This may appear on a GDT_Byte band (or the corresponding dataset) and have the value SIGNEDBYTE to indicate the unsigned byte values between 128 and 255 should be interpreted as being values between -128 and -1 for applications that recognise the SIGNEDBYTE type.
+</ul>
 
 \subsubsection gdal_datamodel_xml xml: Domains
 
@@ -214,6 +237,14 @@ normally be one scanline.
 but of information that is potentially specific to this band.
 
 <li> An optional description string. 
+
+<li> An optional single nodata pixel value (see also NODATA_VALUES metadata on 
+the dataset for multi-band style nodata values).
+
+<li> An optional nodata mask band marking pixels as nodata or in some cases 
+transparency as discussed in <a 
+href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15: Band 
+Masks</a>.
 
 <li> An optional list of category names (effectively class names in a 
 thematic image).  
@@ -304,11 +335,5 @@ raster can be read at any resolution efficiently but with no distinct
 overview levels.  This applies to some FFT encoded images, or images pulled
 through gateways (like OGDI) where downsampling can be done efficiently
 at the remote point. 
-
-\htmlonly
-<p>
-$Id$
-</p>
-\endhtmlonly
 
 */
