@@ -336,6 +336,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     sub Domains {
 	return @DOMAINS;
     }
+    *GetDriver = *_GetDriver;
     sub Open {
 	return Geo::GDAL::Open(@_);
     }
