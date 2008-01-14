@@ -33,7 +33,7 @@ convention.  This is the current default, but was not as recently as GDAL
 1.2.6.  So ensure you get a version more recent than 1.2.6.  
 
 Then add the GDAL VB6 class and module files to your VB6 project.  These
-come from the <a href="http://www.gdal.org/srctree/vb6">gdal/vb6 directory</a>
+come from the <a href="http://svn.osgeo.org/gdal/trunk/gdal/vb6">gdal/vb6 directory</a>
 and include the following key files:
 
 <ul>
