@@ -484,10 +484,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                       GDALProgressFunc, void *pProgressData );
     virtual CPLErr SetStatistics( double dfMin, double dfMax, 
                                   double dfMean, double dfStdDev );
+    virtual CPLErr ComputeRasterMinMax( int, double* );
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+    virtual GDALRasterBand *GetRasterSampleOverview( int );
     virtual CPLErr BuildOverviews( const char *, int, int *,
                                    GDALProgressFunc, void * );
 
