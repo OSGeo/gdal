@@ -36,6 +36,10 @@
 #define TO_SUBBLOCK(x) ((x) >> 6)
 #define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
 
+// Number of data samples that will be used to compute approximate statistics
+// (minimum value, maximum value, etc.)
+#define GDALSTAT_APPROX_NUMSAMPLES 2500
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1823,7 +1827,7 @@ int CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH hBand )
 /**
  * Return the number of overview layers available.
  *
- * This method is the same as the C function GDALGetOverviewCount();
+ * This method is the same as the C function GDALGetOverviewCount().
  *
  * @return overview count, zero if none.
  */
@@ -1891,6 +1895,66 @@ GDALRasterBandH CPL_STDCALL GDALGetOverview( GDALRasterBandH hBand, int i )
     VALIDATE_POINTER1( hBand, "GDALGetOverview", NULL );
 
     return (GDALRasterBandH) ((GDALRasterBand *) hBand)->GetOverview(i);
+}
+
+/************************************************************************/
+/*                      GetRasterSampleOverview()                       */
+/************************************************************************/
+
+/**
+ * Fetch best sampling overview.
+ *
+ * Returns the most reduced overview of the given band that still satisfies
+ * the desired number of samples.  This function can be used with zero
+ * as the number of desired samples to fetch the most reduced overview. 
+ * The same band as was passed in will be returned if it has not overviews,
+ * or if none of the overviews have enough samples.
+ *
+ * This method is the same as the C function GDALGetRasterSampleOverview().
+ *
+ * @param nDesiredSamples the returned band will have at least this many 
+ * pixels.
+ *
+ * @return optimal overview or the band itself. 
+ */
+
+GDALRasterBand *GDALRasterBand::GetRasterSampleOverview( int nDesiredSamples )
+
+{
+    double dfBestSamples; 
+    GDALRasterBand *poBestBand = this;
+
+    dfBestSamples = GetXSize() * (double)GetYSize();
+
+    for( int iOverview = 0; iOverview < GetOverviewCount(); iOverview++ )
+    {
+        GDALRasterBand  *poOBand = GetOverview( iOverview );
+        double          dfOSamples;
+
+        dfOSamples = poOBand->GetXSize() * (double)poOBand->GetYSize();
+
+        if( dfOSamples < dfBestSamples && dfOSamples > nDesiredSamples )
+        {
+            dfBestSamples = dfOSamples;
+            poBestBand = poOBand;
+        }
+    }
+
+    return poBestBand;
+}
+
+/************************************************************************/
+/*                    GDALGetRasterSampleOverview()                     */
+/************************************************************************/
+
+GDALRasterBandH CPL_STDCALL 
+GDALGetRasterSampleOverview( GDALRasterBandH hBand, int nDesiredSamples )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALGetRasterSampleOverview", NULL );
+
+    return (GDALRasterBandH)
+        ((GDALRasterBand *)hBand)->GetRasterSampleOverview( nDesiredSamples );
 }
 
 /************************************************************************/
@@ -2905,8 +2969,6 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                    void *pProgressData )
 
 {
-#define GDALSTAT_APPROX_NUMSAMPLES 2500
-
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
@@ -2917,8 +2979,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     {
         GDALRasterBand *poBand;
 
-        poBand = (GDALRasterBand *)
-            GDALGetRasterSampleOverview( this, GDALSTAT_APPROX_NUMSAMPLES );
+        poBand = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
 
         if( poBand != this )
             return poBand->ComputeStatistics( FALSE,  
@@ -3216,8 +3277,6 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         "Failed to compute statistics, no valid pixels found in sampling." );
         return CE_Failure;
     }
-
-#undef GDALSTAT_APPROX_NUMSAMPLES
 }
 
 /************************************************************************/
@@ -3299,6 +3358,206 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
 
     return ((GDALRasterBand *) hBand)->SetStatistics( 
         dfMin, dfMax, dfMean, dfStdDev );
+}
+
+/************************************************************************/
+/*                        ComputeRasterMinMax()                         */
+/************************************************************************/
+
+/**
+ * Compute the min/max values for a band.
+ * 
+ * If approximate is OK, then the band's GetMinimum()/GetMaximum() will
+ * be trusted.  If it doesn't work, a subsample of blocks will be read to
+ * get an approximate min/max.  If the band has a nodata value it will
+ * be excluded from the minimum and maximum.
+ *
+ * If bApprox is FALSE, then all pixels will be read and used to compute
+ * an exact range.
+ *
+ * This method is the same as the C function GDALComputeRasterMinMax().
+ * 
+ * @param bApproxOK TRUE if an approximate (faster) answer is OK, otherwise
+ * FALSE.
+ * @param adfMinMax the array in which the minimum (adfMinMax[0]) and the
+ * maximum (adfMinMax[1]) are returned.
+ *
+ * @return CE_None on success or CE_Failure on failure.
+ */
+
+
+CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
+                                            double adfMinMax[2] )
+{
+    double dfMin = 0.0;
+    double dfMax = 0.0;
+    GDALRasterBand *poBand = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Does the driver already know the min/max?                       */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK )
+    {
+        int          bSuccessMin, bSuccessMax;
+
+        dfMin = GetMinimum( &bSuccessMin );
+        dfMax = GetMaximum( &bSuccessMax );
+
+        if( bSuccessMin && bSuccessMax )
+        {
+            adfMinMax[0] = dfMin;
+            adfMinMax[1] = dfMax;
+            return CE_None;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for min/max.                */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK )
+        poBand = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
+    else 
+        poBand = this;
+    
+/* -------------------------------------------------------------------- */
+/*      Figure out the ratio of blocks we will read to get an           */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+    int         nBlockXSize, nBlockYSize;
+    int         nBlocksPerRow, nBlocksPerColumn;
+    int         nSampleRate;
+    int         bGotNoDataValue, bFirstValue = TRUE;
+    double      dfNoDataValue;
+
+    dfNoDataValue = poBand->GetNoDataValue( &bGotNoDataValue );
+
+    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+    nBlocksPerRow = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    nBlocksPerColumn = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
+
+    if( bApproxOK )
+        nSampleRate = 
+            (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+    else
+        nSampleRate = 1;
+    
+    for( int iSampleBlock = 0; 
+         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+         iSampleBlock += nSampleRate )
+    {
+        double dfValue = 0.0;
+        int  iXBlock, iYBlock, nXCheck, nYCheck;
+        GDALRasterBlock *poBlock;
+
+        iYBlock = iSampleBlock / nBlocksPerRow;
+        iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+        
+        poBlock = poBand->GetLockedBlockRef( iXBlock, iYBlock );
+        if( poBlock == NULL )
+            continue;
+        
+        if( (iXBlock+1) * nBlockXSize > poBand->GetXSize() )
+            nXCheck = poBand->GetXSize() - iXBlock * nBlockXSize;
+        else
+            nXCheck = nBlockXSize;
+
+        if( (iYBlock+1) * nBlockYSize > poBand->GetYSize() )
+            nYCheck = poBand->GetYSize() - iYBlock * nBlockYSize;
+        else
+            nYCheck = nBlockYSize;
+
+        /* this isn't the fastest way to do this, but is easier for now */
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            for( int iX = 0; iX < nXCheck; iX++ )
+            {
+                int    iOffset = iX + iY * nBlockXSize;
+
+                switch( poBlock->GetDataType() )
+                {
+                  case GDT_Byte:
+                    dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt16:
+                    dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt32:
+                    dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    if( CPLIsNan(dfValue) )
+                        continue;
+                    break;
+                  case GDT_Float64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    if( CPLIsNan(dfValue) )
+                        continue;
+                    break;
+                  case GDT_CInt16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CInt32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CFloat32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    if( CPLIsNan(dfValue) )
+                        continue;
+                    break;
+                  case GDT_CFloat64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
+                    if( CPLIsNan(dfValue) )
+                        continue;
+                    break;
+                  default:
+                    CPLAssert( FALSE );
+                }
+                
+                if( bGotNoDataValue && dfValue == dfNoDataValue )
+                    continue;
+
+                if( bFirstValue )
+                {
+                    dfMin = dfMax = dfValue;
+                    bFirstValue = FALSE;
+                }
+                else
+                {
+                    dfMin = MIN(dfMin,dfValue);
+                    dfMax = MAX(dfMax,dfValue);
+                }
+            }
+        }
+
+        poBlock->DropLock();
+    }
+
+    adfMinMax[0] = dfMin;
+    adfMinMax[1] = dfMax;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      GDALComputeRasterMinMax()                       */
+/************************************************************************/
+
+void CPL_STDCALL 
+GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK, 
+                         double adfMinMax[2] )
+
+{
+    VALIDATE_POINTER0( hBand, "GDALComputeRasterMinMax" );
+
+    ((GDALRasterBand *) hBand)->ComputeRasterMinMax( bApproxOK, adfMinMax );
+
 }
 
 /************************************************************************/
