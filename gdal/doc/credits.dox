@@ -111,21 +111,6 @@ objectives.
 <li> <a href="http://www.microimages.com/">MicroImages Inc.</a>
 </ul>
 
-\subsection past_sponsors Past Sponsors
-
-\htmlonly
-<table border="0" cellspacing="4" cellpadding="4">
-
-<tr><td><a href="http://www.ermapper.com/"><img src="ERMapperlogo_small.gif" alt="ER Mapper" border="0" width="154" height="46"></a></td>
-
-<td><a href="http://www.ermapper.com/">ER Mapper</a> generously provided
-primary sponsorship for GDAL from February 2005 to November 2006 to support 
-work on GDAL improvement efforts not focused on any particular client project.
-</td></tr>
-
-</table>
-\endhtmlonly
-
 \section credits_personal Personal
 
 <ul>
@@ -194,6 +179,11 @@ Supported the development of the DGN driver, the OGR Arc/Info Binary
 Coverage driver, OGR WCTS (Web Coordinate Transformation Server), 
 OGR VRT driver, ODBC driver, MySQL driver, SQLite driver, OGR JOIN and
 OGR C API.
+<p>
+
+<li> <b><a href="http://www.ermapper.com">ERMapper</a></b>: provided
+primary sponsorship for GDAL from February 2005 to November 2006 to support 
+work on GDAL improvement efforts not focused on any particular client project.
 <p>
 
 <li> <b><a href="http://gsc.nrcan.gc.ca">Geological Survey of Canada</a></b>, 
