@@ -16,14 +16,10 @@
 			ConfigurationType="0">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd $(ProjectDir)
-nmake -f makefile.vc"
-				ReBuildCommandLine="cd $(ProjectDir)
-nmake -f makefile.vc
-nmake -f makefile.vc install"
-				CleanCommandLine="cd $(ProjectDir)
-nmake -f makefile.vc clean"
-				Output="gdal15.dll"/>
+				BuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc &amp;&amp; nmake -f makefile.vc install"
+				CleanCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean"
+				Output="gdal16.dll"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -32,15 +28,10 @@ nmake -f makefile.vc clean"
 			ConfigurationType="0">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd $(ProjectDir)
-nmake -f makefile.vc"
-				ReBuildCommandLine="cd $(ProjectDir)
-nmake -f makefile.vc clean
-nmake -f makefile.vc
-nmake -f makefile.vc install"
-				CleanCommandLine="cd $(ProjectDir)
-nmake -f makefile.vc clean"
-				Output="gdal15.dll"/>
+				BuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean &amp;&amp; nmake -f makefile.vc &amp;&amp; nmake -f makefile.vc install"
+				CleanCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean"
+				Output="gdal16.dll"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -302,6 +293,9 @@ nmake -f makefile.vc clean"
 					</Filter>
 					<Filter Name="generic" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\generic\makefile.vc" />
+					</Filter>
+					<Filter Name="geoconcept" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\makefile.vc" />
 					</Filter>
 					<Filter Name="geojson" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\makefile.vc" />
@@ -664,6 +658,13 @@ nmake -f makefile.vc clean"
 					</Filter>
 					<Filter Name="generic" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\generic\ogr_gensql.h" />
+					</Filter>
+					<Filter Name="geoconcept" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\geoconcept.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\geoconcept_syscoord.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptdatasource.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptdriver.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptlayer.h" />
 					</Filter>
 					<Filter Name="geojson" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonreader.h" />
@@ -1550,6 +1551,13 @@ nmake -f makefile.vc clean"
 						<File RelativePath=".\ogr\ogrsf_frmts\generic\ogr_gensql.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\generic\ogr_miattrind.cpp" />
 					</Filter>
+					<Filter Name="geoconcept" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\geoconcept.c" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\geoconcept_syscoord.c" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptlayer.cpp" />
+					</Filter>
 					<Filter Name="geojson" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsondatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsondriver.cpp" />
@@ -1765,6 +1773,7 @@ nmake -f makefile.vc clean"
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\dbfopen.c" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\shpopen.c" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\shptree.c" />
+						<File RelativePath=".\ogr\ogrsf_frmts\shape\shp_vsi.c" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\ogrshapedatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\ogrshapedriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\ogrshapelayer.cpp" />
