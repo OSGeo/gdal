@@ -1074,13 +1074,14 @@ int WCSDataset::ExtractGridInfo100()
 
     if( strlen(osBandIdentifier) == 0
         && psAD != NULL 
-        && EQUAL(CPLGetXMLValue(psAD,"name",""),"Band") 
+        && (EQUAL(CPLGetXMLValue(psAD,"name",""),"Band") 
+            || EQUAL(CPLGetXMLValue(psAD,"name",""),"Bands"))
         && ( (psValues = CPLGetXMLNode( psAD, "values" )) != NULL ) )
     {
         CPLXMLNode *psSV;
         int iBand;
 
-        osBandIdentifier = "Band";
+        osBandIdentifier = CPLGetXMLValue(psAD,"name","");
 
         for( psSV = psValues->psChild, iBand = 1; 
              psSV != NULL; 
@@ -1471,7 +1472,8 @@ int WCSDataset::ExtractGridInfo()
     CPLXMLNode * psAxis = CPLGetXMLNode( 
         psService, "CoverageDescription.Range.Field.Axis" );
 
-    if( EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Band")
+    if( (EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Band")
+         || EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Bands"))
         && CPLGetXMLNode(psAxis,"AvailableKeys") != NULL )
     {
         osBandIdentifier = "Band";
@@ -1623,9 +1625,10 @@ int WCSDataset::EstablishRasterDetails()
     if( poDS->GetRasterCount() < 1 )
         return FALSE;
     
-    CPLCreateXMLElementAndValue( 
-        psService, "BandCount", 
-        CPLString().Printf("%d",poDS->GetRasterCount()));
+    if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
+        CPLCreateXMLElementAndValue( 
+            psService, "BandCount", 
+            CPLString().Printf("%d",poDS->GetRasterCount()));
     
     CPLCreateXMLElementAndValue( 
         psService, "BandType", 
