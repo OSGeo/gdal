@@ -51,13 +51,18 @@ def rmf_2():
 
 def rmf_3():
 
+    tst = gdaltest.GDALTest( 'rmf', 'float64.mtw', 1, 4672 )
+    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
+def rmf_4():
+
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 1, 21212 )
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 2, 21053 )
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 3, 21349 )
     return tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432) )
 
-def rmf_4():
+def rmf_5():
 
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall-lzw.rsw', 1, 21212 )
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall-lzw.rsw', 2, 21053 )
@@ -68,17 +73,17 @@ def rmf_4():
 ###############################################################################
 # Create simple copy and check.
 
-def rmf_5():
+def rmf_6():
 
     tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
 
-    return tst.testCreateCopy( check_gt = 1 )
+    return tst.testCreateCopy( check_srs = 1, check_gt = 1 )
     
-def rmf_6():
+def rmf_7():
 
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 2, 21053 )
 
-    return tst.testCreateCopy( check_gt = 1 )
+    return tst.testCreateCopy( check_srs = 1, check_gt = 1 )
     
 ###############################################################################
 
@@ -88,7 +93,8 @@ gdaltest_list = [
     rmf_3,
     rmf_4,
     rmf_5,
-    rmf_6
+    rmf_6,
+    rmf_7
 ]
   
 if __name__ == '__main__':
