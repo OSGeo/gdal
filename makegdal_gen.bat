@@ -37,7 +37,7 @@
 if "%1"=="" (
     echo Usage: makegdal_gen "MS Visual C++ version" ^> makegdalNN.vcproj
     echo Examples:
-    echo    makegdal_gen 7.10 ^> makegdal80.vcproj
+    echo    makegdal_gen 7.10 ^> makegdal71.vcproj
     echo    makegdal_gen 8.00 ^> makegdal80.vcproj
     goto :end
 )
@@ -78,13 +78,9 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=^"cd $(ProjectDir)
-echo nmake -f makefile.vc^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir)
-echo nmake -f makefile.vc
-echo nmake -f makefile.vc install^"
-echo 				CleanCommandLine=^"cd $(ProjectDir)
-echo nmake -f makefile.vc clean^"
+echo 				BuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				CleanCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 		^<Configuration
@@ -94,14 +90,9 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=^"cd $(ProjectDir)
-echo nmake -f makefile.vc^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir)
-echo nmake -f makefile.vc clean
-echo nmake -f makefile.vc
-echo nmake -f makefile.vc install^"
-echo 				CleanCommandLine=^"cd $(ProjectDir)
-echo nmake -f makefile.vc clean^"
+echo 				BuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				CleanCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 	^</Configurations^>
