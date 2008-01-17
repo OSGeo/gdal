@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <errno.h>
 
 CPL_CVSID("$Id$");
 
@@ -126,6 +127,8 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
 int VSIUnixStdioHandle::Close()
 
 {
+    VSIDebug1( "VSIUnixStdioHandle::Close(%p)", fp );
+
     return fclose( fp );
 }
 
@@ -136,7 +139,38 @@ int VSIUnixStdioHandle::Close()
 int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
+#ifdef VSI_DEBUG
+
+    int nResult = VSI_FSEEK64( fp, nOffset, nWhence );
+
+    if( nWhence == SEEK_SET )
+    {
+        VSIDebug3( "VSIUnixStdioHandle::Seek(%p,%d,SEEK_SET) = %d",
+                   fp, nOffset, nResult );
+    }
+    else if( nWhence == SEEK_END )
+    {
+        VSIDebug3( "VSIUnixStdioHandle::Seek(%p,%d,SEEK_END) = %d",
+                   fp, nOffset, nResult );
+    }
+    else if( nWhence == SEEK_CUR )
+    {
+        VSIDebug3( "VSIUnixStdioHandle::Seek(%p,%d,SEEK_CUR) = %d",
+                   fp, nOffset, nResult );
+    }
+    else
+    {
+        VSIDebug4( "VSIUnixStdioHandle::Seek(%p,%d,%d-Unknown) = %d",
+                   fp, nOffset, nWhence, nResult );
+    }
+
+    return nResult;
+
+#else
+
     return( VSI_FSEEK64( fp, nOffset, nWhence ) );
+
+#endif 
 }
 
 /************************************************************************/
@@ -146,7 +180,11 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIUnixStdioHandle::Tell()
 
 {
-    return( VSI_FTELL64( fp ) );
+    vsi_l_offset nOffset = VSI_FTELL64( fp );
+
+    VSIDebug2( "VSIUnixStdioHandle::Tell(%p) = %ld", fp, (long)nOffset );
+
+    return nOffset;
 }
 
 /************************************************************************/
@@ -156,6 +194,8 @@ vsi_l_offset VSIUnixStdioHandle::Tell()
 int VSIUnixStdioHandle::Flush()
 
 {
+    VSIDebug1( "VSIUnixStdioHandle::Flush(%p)", fp );
+
     return fflush( fp );
 }
 
@@ -166,7 +206,25 @@ int VSIUnixStdioHandle::Flush()
 size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    return fread( pBuffer, nSize, nCount, fp );
+    size_t  nResult = fread( pBuffer, nSize, nCount, fp );
+
+    // Here we saving the error state to avoid side effects during debug
+    // prints (file stream and error states will be cleared after print call).
+    // We want debug line to come before the possible error lines.
+    int     nError = errno;
+    int     nFpError = ferror(fp);
+
+    VSIDebug4( "VSIUnixStdioHandle::Read(%p,%ld,%ld) = %ld", 
+               fp, (long)nSize, (long)nCount, (long)nResult );
+
+    if ( !nResult && nFpError )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read %ld blocks of %ld byte(s).\n%s",
+                  (long)nCount, (long)nSize, VSIStrerror(nError) );
+    }
+
+    return nResult;
 }
 
 /************************************************************************/
@@ -177,7 +235,12 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
                                   size_t nCount )
 
 {
-    return fwrite( pBuffer, nSize, nCount, fp );
+    size_t nResult = fwrite( pBuffer, nSize, nCount, fp );
+
+    VSIDebug4( "VSIUnixStdioHandle::Write(%p,%ld,%ld) = %ld", 
+               fp, (long)nSize, (long)nCount, (long)nResult );
+
+    return nResult;
 }
 
 /************************************************************************/
@@ -206,6 +269,9 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 
 {
     FILE *fp = VSI_FOPEN64( pszFilename, pszAccess );
+
+    VSIDebug3( "VSIUnixStdioFilesystemHandler::Open(\"%s\",\"%s\") = %p",
+               pszFilename, pszAccess, fp );
     
     if( fp == NULL )
         return NULL;
