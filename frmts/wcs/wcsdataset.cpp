@@ -260,7 +260,10 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                   nBlockXSize, nBlockYSize );
 
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Returned tile does not match expected configuration." );
+                  "Returned tile does not match expected configuration.\n"
+                  "Got %dx%d instead of %dx%d.", 
+                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
+                  nBlockXSize, nBlockYSize );
         return CE_Failure;
     }
 
@@ -542,7 +545,10 @@ WCSDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                   nBufXSize, nBufYSize );
 
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Returned tile does not match expected configuration." );
+                  "Returned tile does not match expected configuration.\n"
+                  "Got %dx%d instead of %dx%d.", 
+                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
+                  nBufXSize, nBufXSize );
         return CE_Failure;
     }
 
@@ -610,14 +616,15 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     double dfMinX, dfMaxX, dfMinY, dfMaxY;
     
+    // WCS 1.0 extents are the outer edges of outer pixels.
     dfMinX = adfGeoTransform[0] + 
-        (nXOff + 0.5) * adfGeoTransform[1];
+        (nXOff) * adfGeoTransform[1];
     dfMaxX = adfGeoTransform[0] + 
-        (nXOff + nXSize + 0.5) * adfGeoTransform[1];
+        (nXOff + nXSize) * adfGeoTransform[1];
     dfMaxY = adfGeoTransform[3] + 
-        (nYOff + 0.5) * adfGeoTransform[5];
+        (nYOff) * adfGeoTransform[5];
     dfMinY = adfGeoTransform[3] + 
-        (nYOff + nYSize + 0.5) * adfGeoTransform[5];
+        (nYOff + nYSize) * adfGeoTransform[5];
 
 /* -------------------------------------------------------------------- */
 /*      Build band list if we have the band identifier.                 */
@@ -689,6 +696,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                                     osBandList.c_str() );
         }
 
+        // WCS 1.1 extents are centers of outer pixels.
         dfMaxX -= adfGeoTransform[1] * 0.5;
         dfMinX += adfGeoTransform[1] * 0.5;
         dfMinY -= adfGeoTransform[5] * 0.5;
@@ -706,12 +714,12 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
             
             dfMinX = nXOff * adfGeoTransform[1] + adfGeoTransform[0] 
-                + dfXStep * 0.5;
-            dfMaxX = dfMinX + (nBufXSize - 1) * dfXStep;
+                + dfXStep * 0.49;
+            dfMaxX = dfMinX + (nBufXSize - 1 + 0.02) * dfXStep;
 
             dfMaxY = nYOff * adfGeoTransform[5] + adfGeoTransform[3] 
-                + dfYStep * 0.5;
-            dfMinY = dfMaxY + (nBufYSize - 1) * dfYStep;
+                + dfYStep * 0.49;
+            dfMinY = dfMaxY + (nBufYSize - 1 + 0.02) * dfYStep;
         }
 
         osRequest.Printf( 
@@ -736,7 +744,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                 "&GridOffsets=%.15g,%.15g",
                 osCRS.c_str(), 
                 osCRS.c_str(), 
-                dfMinX, dfMaxY,
+                dfMinX+dfXStep, dfMaxY+dfYStep,
                 dfXStep, dfYStep );
         }
     }
