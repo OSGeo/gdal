@@ -1923,11 +1923,13 @@ int CPLUnlinkTree( const char *pszPath )
 
     if( VSIStat( pszPath, &sStatBuf ) != 0 )
     {
+        int nError = errno;
+
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "It seems no file system object called '%s' exists.",
                   pszPath );
 
-        return errno;
+        return nError;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1937,10 +1939,12 @@ int CPLUnlinkTree( const char *pszPath )
     {
         if( VSIUnlink( pszPath ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to unlink %s.\n%s", 
-                      pszPath, VSIStrerror( errno ) );
-            return errno;
+            int nError = errno;
+
+            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.\n%s", 
+                      pszPath, VSIStrerror( nError ) );
+
+            return nError;
         }
         else
             return 0;
@@ -1979,10 +1983,12 @@ int CPLUnlinkTree( const char *pszPath )
 
         if( VSIRmdir( pszPath ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to unlink %s.\n%s", 
-                      pszPath, VSIStrerror( errno ) );
-            return errno;
+            int nError = errno;
+
+            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.\n%s", 
+                      pszPath, VSIStrerror( nError ) );
+
+            return nError;
         }
         else
             return 0;
