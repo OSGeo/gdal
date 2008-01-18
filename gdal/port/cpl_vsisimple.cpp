@@ -65,11 +65,18 @@ CPL_CVSID("$Id$");
 FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 
 {
-    FILE * fp;
-
-    fp = fopen( (char *) pszFilename, (char *) pszAccess );
+    FILE    *fp = fopen( (char *) pszFilename, (char *) pszAccess );
+    int     nError = errno;
 
     VSIDebug3( "VSIFOpen(%s,%s) = %p", pszFilename, pszAccess, fp );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to open \"%s\" file.\n%s",
+                  pszFilename, VSIStrerror(nError) );
+        return NULL;
+    }
 
     return( fp );
 }
@@ -145,10 +152,19 @@ void VSIRewind( FILE * fp )
 size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
-    size_t nResult = fread( pBuffer, nSize, nCount, fp );
+    size_t  nResult = fread( pBuffer, nSize, nCount, fp );
+    int     nError = errno;
+    int     nFpError = ferror(fp);
 
-    VSIDebug3( "VSIFRead(%p,%ld) = %ld", 
-               fp, (long) nSize * nCount, (long) nResult * nSize );
+    VSIDebug4( "VSIFRead(%p,%ld,%ld) = %ld", 
+               fp, (long)nSize, (long)nCount, (long)nResult );
+
+    if ( !nResult && nFpError )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read %ld blocks of %ld byte(s).\n%s",
+                  (long)nCount, (long)nSize, VSIStrerror(nError) );
+    }
 
     return nResult;
 }
@@ -162,8 +178,8 @@ size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
 {
     size_t nResult = fwrite( pBuffer, nSize, nCount, fp );
 
-    VSIDebug3( "VSIFWrite(%p,%ld) = %ld", 
-               fp, (long) nSize * nCount, (long) nResult );
+    VSIDebug4( "VSIFWrite(%p,%ld,%ld) = %ld", 
+               fp, (long)nSize, (long)nCount, (long)nResult );
 
     return nResult;
 }
@@ -221,11 +237,18 @@ int     VSIFPrintf( FILE * fp, const char * pszFormat, ... )
 
 {
     va_list     args;
-    int         nReturn;
+    int         nReturn, nError;
 
     va_start( args, pszFormat );
     nReturn = vfprintf( fp, pszFormat, args );
+    nError = errno;
     va_end( args );
+
+    if ( nReturn < 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "VSIFPrintf() failed.\n%s", VSIStrerror(nError) );
+    }
 
     return( nReturn );
 }
