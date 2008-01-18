@@ -101,6 +101,9 @@ def ogr_index_2():
         return 'failure'
 
     gdaltest.s_ds.Release()
+    gdaltest.s_lyr = None
+    gdaltest.s_ds = None
+    
     gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName( 'join_t' )
                                   
