@@ -1770,7 +1770,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         pszPROJ4Datum = "+datum=nzgd49";
 
     else if( nEPSGDatum == 6277 )
-        pszPROJ4Datum = "+datum=OSB36";
+        pszPROJ4Datum = "+datum=OSGB36";
 
     else if( poTOWGS84 != NULL )
     {
