@@ -236,7 +236,7 @@ In Python (note several bindings are missing):
 	min = band.GetMinimum()
 	max = band.GetMaximum()
 	if min is None or max is None:
-	    (min,max) = ComputeRasterMinMax(1)
+	    (min,max) = band.ComputeRasterMinMax(1)
 	print 'Min=%.3f, Max=%.3f' % (min,max)
 
 	if band.GetOverviewCount() > 0:
