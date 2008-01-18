@@ -308,8 +308,9 @@ char **CSLLoad(const char *pszFname)
     else
     {
         /* Unable to open file */
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "CSLLoad(%s): %s", pszFname, strerror(errno));
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "CSLLoad(\"%s\") failed: unable to open output file.",
+                  pszFname );
     }
 
     return papszStrList;
@@ -336,9 +337,9 @@ int  CSLSave(char **papszStrList, const char *pszFname)
             {
                 if( VSIFPrintfL( fp, "%s\n", *papszStrList ) < 1 )
                 {
-                    CPLError(CE_Failure, CPLE_FileIO,
-                             "CSLSave(%s): %s", pszFname, 
-                             strerror(errno));
+                    CPLError( CE_Failure, CPLE_FileIO,
+                    "CSLSave(\"%s\") failed: unable to write to output file.",
+                              pszFname );
                     break;  /* A Problem happened... abort */
                 }
 
@@ -351,8 +352,9 @@ int  CSLSave(char **papszStrList, const char *pszFname)
         else
         {
             /* Unable to open file */
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "CSLSave(%s): %s", pszFname, strerror(errno));
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "CSLSave(\"%s\") failed: unable to open output file.",
+                      pszFname );
         }
     }
 
