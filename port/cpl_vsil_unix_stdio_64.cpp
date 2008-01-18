@@ -268,13 +268,19 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
                                      const char *pszAccess )
 
 {
-    FILE *fp = VSI_FOPEN64( pszFilename, pszAccess );
-
+    FILE    *fp = VSI_FOPEN64( pszFilename, pszAccess );
+    int     nError = errno;
+    
     VSIDebug3( "VSIUnixStdioFilesystemHandler::Open(\"%s\",\"%s\") = %p",
                pszFilename, pszAccess, fp );
     
     if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to open \"%s\" file.\n%s",
+                  pszFilename, VSIStrerror(nError) );
         return NULL;
+    }
 
     VSIUnixStdioHandle *poHandle = new VSIUnixStdioHandle;
     
