@@ -38,7 +38,6 @@ CPL_CVSID("$Id$");
 
 #if defined(WIN32CE)
 #  include "cpl_wince.h"
-#  include <wce_errno.h>
 #endif
 
 static void *hConfigMutex = NULL;
@@ -1913,6 +1912,10 @@ void CPLDumpSharedList( FILE *fp )
 /*                           CPLUnlinkTree()                            */
 /************************************************************************/
 
+/**
+ * @return 0 on successful completion, -1 if function fails.
+ */
+
 int CPLUnlinkTree( const char *pszPath )
 
 {
@@ -1923,13 +1926,11 @@ int CPLUnlinkTree( const char *pszPath )
 
     if( VSIStat( pszPath, &sStatBuf ) != 0 )
     {
-        int nError = errno;
-
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "It seems no file system object called '%s' exists.",
                   pszPath );
 
-        return nError;
+        return -1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1939,12 +1940,10 @@ int CPLUnlinkTree( const char *pszPath )
     {
         if( VSIUnlink( pszPath ) != 0 )
         {
-            int nError = errno;
+            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.", 
+                      pszPath );
 
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.\n%s", 
-                      pszPath, VSIStrerror( nError ) );
-
-            return nError;
+            return -1;
         }
         else
             return 0;
@@ -1983,12 +1982,10 @@ int CPLUnlinkTree( const char *pszPath )
 
         if( VSIRmdir( pszPath ) != 0 )
         {
-            int nError = errno;
+            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.", 
+                      pszPath );
 
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.\n%s", 
-                      pszPath, VSIStrerror( nError ) );
-
-            return nError;
+            return -1;
         }
         else
             return 0;
