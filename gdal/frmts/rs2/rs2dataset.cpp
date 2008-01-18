@@ -29,6 +29,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_minixml.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -57,6 +58,7 @@ class RS2Dataset : public GDALPamDataset
     int           nGCPCount;
     GDAL_GCP      *pasGCPList;
     char          *pszGCPProjection;
+
   public:
             RS2Dataset();
                 ~RS2Dataset();
@@ -853,6 +855,45 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszItem = CPLGetXMLValue( psSarProcessingInformation,
             "sarProcessingInformation.slantRangeNearEdge", "UNK" );
         poDS->SetMetadataItem( "SLANT_RANGE_NEAR_EDGE", pszItem );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect Projection String Information                           */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psEllipsoid = 
+        CPLGetXMLNode( psImageAttributes,
+                       "geographicInformation.referenceEllipsoidParameters" );
+
+    if ( psEllipsoid != NULL )
+    {
+        const char *pszEllipsoidName;
+        double minor_axis, major_axis, inv_flattening;
+        OGRSpatialReference oLL;
+
+        pszEllipsoidName = CPLGetXMLValue( psEllipsoid, "ellipsoidName", "" );
+        minor_axis = atof(CPLGetXMLValue( psEllipsoid, "semiMinorAxis", "0.0" ));
+        major_axis = atof(CPLGetXMLValue( psEllipsoid, "semiMajorAxis", "0.0" ));
+
+        if ( EQUAL(pszEllipsoidName, "") || ( minor_axis == 0.0 ) || ( major_axis == 0.0 ) )
+        {
+            CPLError(CE_Warning,CPLE_AppDefined,"Warning- incomplete ellipsoid information.  Using wgs-84 parameters.\n");
+            oLL.SetWellKnownGeogCS( "WGS84" );
+        }
+        else if ( EQUAL( pszEllipsoidName, "WGS84" ) )
+        {
+            oLL.SetWellKnownGeogCS( "WGS84" );
+        }
+        else
+        {
+            inv_flattening = major_axis/(major_axis - minor_axis);
+            oLL.SetGeogCS( "","",pszEllipsoidName, major_axis, inv_flattening);
+        }
+       
+        
+        CPLFree( poDS->pszGCPProjection );
+        poDS->pszGCPProjection = NULL;
+        oLL.exportToWkt( &(poDS->pszGCPProjection) );
+
     }
 
 /* -------------------------------------------------------------------- */
