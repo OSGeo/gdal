@@ -219,9 +219,11 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     if ( !nResult && nFpError )
     {
+#ifdef notdef
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %ld blocks of %ld byte(s).\n%s",
                   (long)nCount, (long)nSize, VSIStrerror(nError) );
+#endif
     }
 
     return nResult;
@@ -276,9 +278,11 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     
     if( fp == NULL )
     {
+#ifdef notdef
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to open \"%s\" file.\n%s",
                   pszFilename, VSIStrerror(nError) );
+#endif
         return NULL;
     }
 

@@ -72,9 +72,11 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 
     if( fp == NULL )
     {
+#ifdef notdef
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to open \"%s\" file.\n%s",
                   pszFilename, VSIStrerror(nError) );
+#endif
         return NULL;
     }
 
@@ -161,9 +163,11 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
     if ( !nResult && nFpError )
     {
+#ifdef notdef
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %ld blocks of %ld byte(s).\n%s",
                   (long)nCount, (long)nSize, VSIStrerror(nError) );
+#endif
     }
 
     return nResult;
