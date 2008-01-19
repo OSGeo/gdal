@@ -566,6 +566,12 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
         poDstFeat->SetFID( poSrcFeat->GetFieldAsInteger( iFIDField ) );
     
 /* -------------------------------------------------------------------- */
+/*      Handle style string.                                            */
+/* -------------------------------------------------------------------- */
+    if( poSrcFeat->GetStyleString() != NULL )
+        poDstFeat->SetStyleString(poSrcFeat->GetStyleString());
+    
+/* -------------------------------------------------------------------- */
 /*      Handle the geometry.  Eventually there will be several more     */
 /*      supported options.                                              */
 /* -------------------------------------------------------------------- */
