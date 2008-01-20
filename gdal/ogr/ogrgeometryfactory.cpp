@@ -719,15 +719,19 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
  *
  * Analyse a set of rings (passed as simple polygons), and based on a 
  * geometric analysis convert them into a polygon with inner rings, 
- * or a MultiPolygon if dealing with more than one polygon.  The 
- * contains analysis is done with GEOS if available, otherwise using a
- * less robust approach based on ring envelopes. 
+ * or a MultiPolygon if dealing with more than one polygon.
  *
- * All the input geometries must be OGRPolygons with only an exterior
- * ring and no interior rings. 
+ * All the input geometries must be OGRPolygons with only a valid exterior
+ * ring (at least 4 points) and no interior rings. 
  *
  * The passed in geometries become the responsibility of the method, but the
  * papoPolygons "pointer array" remains owned by the caller.
+ *
+ * For faster computation, a polygon is considered to be inside
+ * another one if a single point of its external ring is included into the other one.
+ * (unless 'OGR_DEBUG_ORGANIZE_POLYGONS' configuration option is set to TRUE.
+ * In that case, a slower algorithm that tests exact topological relationships 
+ * is used if GEOS is available.)
  * 
  * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
  * Ownership of the geometries is passed, but not of the array itself.
@@ -749,6 +753,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int nPolygonCount,
                                                    int *pbIsValidGeometry )
 {
+    int bUseFastVersion;
     int i, j;
     OGRGeometry* geom = NULL;
 
@@ -766,16 +771,24 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         return geom;
     }
 
-/* -------------------------------------------------------------------- */
-/*      A wee bit of a warning.                                         */
-/* -------------------------------------------------------------------- */
-    static int firstTime = 1;
-    if (!haveGEOS() && firstTime)
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS", "NO")))
     {
-        CPLDebug("OGR",
-                 "GDAL should be built with GEOS support enabled in order the "
-                 "SHAPE driver to provide reliable results on complex polygons.");
-        firstTime = 0;
+        /* -------------------------------------------------------------------- */
+        /*      A wee bit of a warning.                                         */
+        /* -------------------------------------------------------------------- */
+        static int firstTime = 1;
+        if (!haveGEOS() && firstTime)
+        {
+            CPLDebug("OGR",
+                    "In OGR_DEBUG_ORGANIZE_POLYGONS mode, GDAL should be built with GEOS support enabled in order "
+                    "OGRGeometryFactory::organizePolygons to provide reliable results on complex polygons.");
+            firstTime = 0;
+        }
+        bUseFastVersion = !haveGEOS();
+    }
+    else
+    {
+        bUseFastVersion = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -793,8 +806,11 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         relations[i] = new int[nPolygonCount];
         papoPolygons[i]->getEnvelope(&envelopes[i]);
 
+        //fprintf(stderr, "[%d] %d points\n", i, ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints());
+
         if( wkbFlatten(papoPolygons[i]->getGeometryType()) == wkbPolygon
-            && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0 )
+            && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0
+            && ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints() >= 4)
         {
             areas[i] = ((OGRPolygon *)papoPolygons[i])->get_Area();
         }
@@ -805,8 +821,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 CPLError( 
                     CE_Warning, CPLE_AppDefined, 
                     "organizePolygons() received an unexpected geometry.\n"
-                    "Either a polygon with interior rings, or a non-Polygon\n"
-                    "geometry.  Return arguments as a collection." );
+                    "Either a polygon with interior rings, or a polygon with less than 4 points,\n"
+                    "or a non-Polygon geometry.  Return arguments as a collection." );
                 bMixedUpGeometries = TRUE;
             }
             if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
@@ -848,26 +864,30 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     {
         for(j=i+1; go_on && j<nPolygonCount;j++)
         {
-            if (areas[i] > areas[j]
-                && envelopes[i].Contains(envelopes[j])
-                && (!haveGEOS() ||papoPolygons[i]->Contains(papoPolygons[j])))
+            OGRPoint pointI, pointJ;
+            const OGRLinearRing* exteriorRingI = ((OGRPolygon *)papoPolygons[i])->getExteriorRing();
+            const OGRLinearRing* exteriorRingJ = ((OGRPolygon *)papoPolygons[j])->getExteriorRing();
+            exteriorRingI->getPoint(0, &pointI);
+            exteriorRingJ->getPoint(0, &pointJ);
+
+            if (areas[i] > areas[j] && envelopes[i].Contains(envelopes[j]) &&
+                ((bUseFastVersion && exteriorRingI->isPointInRing(&pointJ)) ||
+                 (!bUseFastVersion && papoPolygons[i]->Contains(papoPolygons[j]))))
             {
                 relations[i][j] = CONTAINS;
                 relations[j][i] = IS_CONTAINED_BY;
             }
-            else if (areas[j] > areas[i]
-                     && envelopes[j].Contains(envelopes[i])
-                     && (!haveGEOS() 
-                         || papoPolygons[j]->Contains(papoPolygons[i])) )
+            else if (areas[j] > areas[i] && envelopes[j].Contains(envelopes[i]) &&
+                     ((bUseFastVersion && exteriorRingJ->isPointInRing(&pointI)) ||
+                      (!bUseFastVersion && papoPolygons[j]->Contains(papoPolygons[i]))))
             {
                 relations[j][i] = CONTAINS;
                 relations[i][j] = IS_CONTAINED_BY;
             }
-
             /* We use Overlaps instead of Intersects to be more 
                tolerant about touching polygons */ 
-            else if ( !envelopes[i].Intersects(envelopes[j])
-                     || (haveGEOS() && !papoPolygons[i]->Overlaps(papoPolygons[j])) )
+            else if ( bUseFastVersion || !envelopes[i].Intersects(envelopes[j])
+                     || !papoPolygons[i]->Overlaps(papoPolygons[j]) )
             {
                 relations[i][j] = NOT_RELATED;
                 relations[j][i] = NOT_RELATED;
@@ -879,18 +899,16 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                    case. We just make a multipolygon with the whole set of
                    polygons */
                 go_on = FALSE;
-#ifdef notdef
+#ifdef DEBUG
+                char* wkt1;
+                char* wkt2;
+                papoPolygons[i]->exportToWkt(&wkt1);
+                papoPolygons[j]->exportToWkt(&wkt2);
                 CPLDebug( "OGR", 
                           "Bad intersection for polygons %d and %d\n"
                           "geom %d: %s\n"
                           "geom %d: %s", 
                           i, j, i, wkt1, j, wkt2 );
-                char* wkt1;
-                char* wkt2;
-                papoPolygons[i]->exportToWkt(&wkt1);
-                papoPolygons[j]->exportToWkt(&wkt2);
-                fprintf(stderr, "geom %d : %s\n", i, wkt1);
-                fprintf(stderr, "geom %d : %s\n", j, wkt2);
                 CPLFree(wkt1);
                 CPLFree(wkt2);
 #endif
