@@ -1864,10 +1864,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _completeHeader_GCIO (
     theSubType= NULL;
   }
 
-  if( GetGCMode_GCIO(H)==vReadAccess_GCIO )
-  {
-    Rewind_GCIO(H,NULL);
-  }
+  Rewind_GCIO(H,NULL);
 
   return Meta;
 }/* _completeHeader_GCIO */
