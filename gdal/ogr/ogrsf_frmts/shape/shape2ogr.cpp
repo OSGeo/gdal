@@ -459,7 +459,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             poRing = CreateLinearRing ( psShape, 0 );
             poOGRPoly->addRingDirectly( poRing );
         }
-        else if( OGRGeometryFactory::haveGEOS() )
+
+        // OGRGeometryFactory::organizePolygons does not require GOES anymore 
+        else if( TRUE /* OGRGeometryFactory::haveGEOS()*/ )
         {
             OGRPolygon** tabPolygons = new OGRPolygon*[psShape->nParts];
             for( iRing = 0; iRing < psShape->nParts; iRing++ )
