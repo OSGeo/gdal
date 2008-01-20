@@ -7,39 +7,35 @@
 
 <h1>G&eacute;oconcept text export</h1>
 
-G&eacute;oconcept text export files should be available for writing as of
-editing this page.<p>
+G&eacute;oconcept text export files should be available for writing and reading.<p>
 
-Normally the OGR G&eacute;oconcept driver treats a whole directory of G&eacute;oconcept
-as a dataset, and a single G&eacute;oconcept within that directory as a layer.  In
-this case, the directory name should be used as the dataset name.  However,
-it is also possible to use one of the files (<code>.txt</code>, <code>.gxt</code>) in a
-G&eacute;oconcept files set as the dataset name, and then it will be treated as a dataset
-with one layer.<p>
+The OGR G&eacute;oconcept driver treats a single G&eacute;oconcept file within
+a directory as a dataset comprising layers.
+G&eacute;oconcept files extensions are <code>.txt</code> or <code>.gxt</code>.<p>
 
 Currently the G&eacute;oconcept driver only supports multi-polygons, lines and
-points.  <p>
+points.<p>
 
 <h2>Creation Issues</h2>
 
-The G&eacute;oconcept driver treats a directory as a dataset, and each
-G&eacute;oconcept files set (.txt or .gxt) as a layer.  The dataset name
-will be treated as a directory name.  If the directory already exists it
-is used and existing files in the directory are ignored.  If the directory
-does not exist it will be created (<span style="color:red;">EXPERIMENTAL</span>).<p>
+The G&eacute;oconcept driver treats a G&eacute;oconcept file (<code>.txt</code>
+or <code>.gxt</code>) as a dataset.<p>
 
-As a special case attempts to create a new dataset with the extension .gxt
-will result in a single file set being created instead of a directory.<p>
+G&eacute;oconcept files can store multiple kinds of geometry (one by layer),
+even if a G&eacute;oconcept layer can only have one kind of geometry.<p>
 
-G&eacute;oconcept files can store multiple kinds of geometry, even if
-a G&eacute;oconcept feature can only have one kind of geometry.<p>
-
-Note tthis makes it very difficult to translate a mixed geometry layer
+Note this makes it very difficult to translate a mixed geometry layer
 from another format into G&eacute;oconcept format using ogr2ogr, since ogr2ogr has
 no support for separating out geometries from a source layer.<p>
 
-G&eacute;oconcept feature fields definition are stored in an associated .gct file, and so
-fields suffer a number of limitations (<span style="color:red;">FIXME</span>)&nbsp;:<p>
+G&eacute;oconcept sub-type is treated as OGR feature. The name of a layer is therefore
+the concatenation of the G&eacute;oconcept type name, <code>'.'</code> and G&eacute;oconcept
+sub-type name.<p>
+
+G&eacute;oconcept type definition (<code>.gct</code> files) are used for creation only.<p>
+
+G&eacute;oconcept feature fields definition are stored in an associated <code>.gct</code>
+file, and so fields suffer a number of limitations (<span style="color:red;">FIXME</span>)&nbsp;:<p>
 
 <ul>
 <li> Attribute names are not limited in length. </li>
@@ -50,8 +46,7 @@ the G&eacute;oconcept model, but are not yet supported by the G&eacute;oconcept
 driver).</li>
 </ul>
 
-The OGR G&eacute;oconcept driver does not support reading existing G&eacute;oconcept
-files as well as deleting features. <p> 
+The OGR G&eacute;oconcept driver does not support deleting features. <p> 
 
 <h3>Dataset Creation Options</h3>
 
@@ -123,13 +118,15 @@ may be declared.</li>
 
 </ul>
 
+When this option is not used, the driver manage types and sub-types name based on either
+the layer name or on the use of <code>-nln</code> option. 
 </li>
 
 </ul>
 
 <h3>Layer Creation Options</h3>
 
-<b>FEATURETYPE=TYPE.SUBTYPE</b>&nbsp;: defines the feature to be created/appended. The <code>TYPE</code>
+<b>FEATURETYPE=TYPE.SUBTYPE</b>&nbsp;: defines the feature to be created. The <code>TYPE</code>
 corresponds to one of the <code>Name</code> found in the GCT file for a type section.
 The <code>SUBTYPE</code> corresponds to one of the <code>Name</code> found in the GCT file for a
 sub-type section within the previous type section.<p>
@@ -211,12 +208,12 @@ sub-type section within the previous type section.<p>
 <h4>Example of a G&eacute;oconcept text export :</h4>
 
 <pre>
-//$DELIMITER "&#x9;"
-//$QUOTED-TEXT "no"
+//$DELIMITER &quot;&#x9;&quot;
+//$QUOTED-TEXT &quot;no&quot;
 //$CHARSET ANSI
 //$UNIT Distance=m
 //$FORMAT 2
-//$SYSCOORD {Type: 9999}
+//$SYSCOORD {Type: 2001}
 //$FIELDS Class=TILE;Subclass=TILE;Kind=4;Fields=Private#Identifier&#x9;Private#Class&#x9;Private#Subclass&#x9;Private#Name&#x9;Private#NbFields&#x9;IDSEL&#x9;NOM&#x9;WITHDATA&#x9;Private#X&#x9;Private#Y&#x9;Private#Graphics
 -1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0050-7130-LAMB93&#x9;&#x9;0&#x9;50000&#x9;7.13e+06&#x9;4&#x9;600000&#x9;7.13e+06&#x9;600000&#x9;6.58e+06&#x9;50000&#x9;6.58e+06&#x9;50000&#x9;7.13e+06
 -1&#x9;TILE&#x9;TILE&#x9;TILE&#x9;3&#x9;000-2007-0595-7130-LAMB93&#x9;&#x9;0&#x9;595000&#x9;7.13e+06&#x9;4&#x9;1.145e+06&#x9;7.13e+06&#x9;1.145e+06&#x9;6.58e+06&#x9;595000&#x9;6.58e+06&#x9;595000&#x9;7.13e+06
@@ -230,13 +227,19 @@ sub-type section within the previous type section.<p>
 Creating a G&eacute;oconcept export file&nbsp;:<br/>
 
 <pre>
-ogr2ogr -f "Geoconcept" -a_srs "+init=IGNF:LAMB93" -dsco EXTENSION=txt -dsco CONFIG=tile_schema.gct tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
+ogr2ogr -f &quot;Geoconcept&quot; -a_srs &quot;+init=IGNF:LAMB93&quot; -dsco EXTENSION=txt -dsco CONFIG=tile_schema.gct tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
 </pre>
 
 Appending new features to an existing G&eacute;oconcept export file&nbsp;:<br/>
 
 <pre>
-ogr2ogr -f "Geoconcept" -update tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
+ogr2ogr -f &quot;Geoconcept&quot; -update -append tile.gxt tile.shp -nln TILE.TILE
+</pre>
+
+Translating a G&eacute;oconcept export file layer into MapInfo file&nbsp;:<br/>
+
+<pre>
+ogr2ogr -f &quot;MapInfo File&quot; -dsco FORMAT=MIF tile.mif tile.gxt TILE.TILE
 </pre>
 
 <h3>See Also</h3>

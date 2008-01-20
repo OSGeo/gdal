@@ -50,6 +50,7 @@ class OGRGeoconceptDataSource : public OGRDataSource
     char               **_papszOptions;
     int                  _bSingleNewFile;
     int                  _bUpdate;
+    GCExportFileH       *_hGXT;
 
   public:
                    OGRGeoconceptDataSource();
@@ -69,7 +70,7 @@ class OGRGeoconceptDataSource : public OGRDataSource
                                 OGRwkbGeometryType eGType = wkbUnknown,
                                 char** papszOptions = NULL );
   private:
-    int            LoadFile( const char *, int bUpdate );
+    int            LoadFile( const char * );
 };
 
 #endif /* _GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_ */

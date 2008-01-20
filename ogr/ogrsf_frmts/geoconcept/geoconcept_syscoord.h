@@ -62,10 +62,28 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------- */
+/*      GCSRS API Types                                                 */
+/* -------------------------------------------------------------------- */
+typedef struct _tSysCoord_GCSRS GCSysCoord;
+
+struct _tSysCoord_GCSRS {
+  int coordSystemID;
+  int timeZoneValue;
+};
+
+/* -------------------------------------------------------------------- */
 /*      GCSRS API Prototypes                                            */
 /* -------------------------------------------------------------------- */
 
-int GCSRSAPI_CALL OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialReferenceH poSR );
+GCSysCoord GCSRSAPI_CALL1(*) CreateSysCoord_GCSRS ( int srsid, int timezone );
+void GCSRSAPI_CALL DestroySysCoord_GCSRS ( GCSysCoord** theSysCoord );
+GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialReferenceH poSR );
+OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoord* syscoord );
+
+#define GetSysCoordSystemID_GCSRS(theSysCoord)   (theSysCoord)->coordSystemID
+#define SetSysCoordSystemID_GCSRS(theSysCoord,v) (theSysCoord)->coordSystemID= (v)
+#define GetSysCoordTimeZone_GCSRS(theSysCoord)   (theSysCoord)->timeZoneValue
+#define SetSysCoordTimeZone_GCSRS(theSysCoord,v) (theSysCoord)->timeZoneValue= (v)
 
 #ifdef __cplusplus
 }
