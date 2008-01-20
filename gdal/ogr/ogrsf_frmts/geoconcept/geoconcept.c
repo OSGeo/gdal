@@ -1339,7 +1339,6 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
   if( !GetMetaSRS_GCIO(Meta) && GetMetaSysCoord_GCIO(Meta) )
   {
     SetMetaSRS_GCIO(Meta, SysCoord2OGRSpatialReference_GCSRS(GetMetaSysCoord_GCIO(Meta)));
-    OSRReference( GetMetaSRS_GCIO(Meta) );
   }
   if( GetMetaSRS_GCIO(Meta) )
   {
@@ -1700,7 +1699,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     return NULL;
   }
-  OGR_FD_Reference(fd);/* FIXME ? */
+
   switch( GetSubTypeKind_GCIO(*theSubType) )
   {
     case vPoint_GCIO :
@@ -1714,7 +1713,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
       break;
     case vText_GCIO  :
     default          :
-      OGR_FD_Dereference(fd);
+
       OGR_FD_Destroy(fd);
       CPLError( CE_Failure, CPLE_NotSupported,
                 "Unknown Geoconcept type for '%s'.\n",
@@ -1738,6 +1737,8 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
       return NULL;
     }
     OGR_FD_AddFieldDefn(fd,fld);
+    OGR_Fld_Destroy(fld);
+    fld = NULL;
   }
   if( !(f= OGR_F_Create(fd)) )
   {

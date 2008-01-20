@@ -93,7 +93,7 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
   const char *pszProjection;
   char* pszProj4;
   double a, rf, pm, lat_0, lon_0, lat_1, lat_2, lat_ts, x_0, y_0, k_0;
-  GCSysCoord* syscoord;
+  GCSysCoord* syscoord = NULL;
 
   if( !poSR ) return NULL;
 
