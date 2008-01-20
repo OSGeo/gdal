@@ -41,12 +41,8 @@ CPL_CVSID("$Id: ogrgeoconceptlayer.cpp 00000 2007-11-03 16:08:14Z drichard $");
 OGRGeoconceptLayer::OGRGeoconceptLayer()
 
 {
-    _poSRS = NULL;
     _poFeatureDefn = NULL;
-    _nTotalFeatures = 0;
-    _pszFullName = NULL;
     _gcFeature = NULL;
-    _hGCT = NULL;
 }
 
 /************************************************************************/
@@ -57,68 +53,35 @@ OGRGeoconceptLayer::~OGRGeoconceptLayer()
 
 {
   CPLDebug( "GEOCONCEPT",
-            "%ld features on layer %s.\n",
-            _nTotalFeatures, _poFeatureDefn? _poFeatureDefn->GetName():"");
-  _nTotalFeatures= 0;
+            "%ld features on layer %s.",
+            GetSubTypeNbFeatures_GCIO(_gcFeature),
+            _poFeatureDefn->GetName());
 
   if( _poFeatureDefn )
   {
     _poFeatureDefn->Release();
   }
-  if( _poSRS )
-  {
-    _poSRS->Release();
-  }
 
-  if( _pszFullName )
-  {
-    CPLFree( _pszFullName );
-  }
-
-  _gcFeature= NULL; /* deleted when _hGCT destroyed */
-
-  if( _hGCT )
-  {
-    Close_GCIO(&_hGCT);
-  }
+  _gcFeature= NULL; /* deleted when OGCGeoconceptDatasource destroyed */
 }
 
 /************************************************************************/
 /*                              Open()                                  */
 /************************************************************************/
 
-OGRErr OGRGeoconceptLayer::Open( const char* pszName,
-                                 const char* pszExt,
-                                 const char* pszMode,
-                                 const char* pszGCTName,
-                                 const char* pszLayerName )
+OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
 
 {
     GCField* aField;
     int n, i;
+    char pszln[512];
 
-    if( (_hGCT= Open_GCIO(pszName,pszExt,pszMode,pszGCTName))==NULL )
-    {
-      return OGRERR_FAILURE;
-    }
-    _nTotalFeatures= GetGCNbObjects_GCIO(_hGCT);
+    _gcFeature= Subclass;
+    snprintf(pszln, 511, "%s.%s", GetSubTypeName_GCIO(_gcFeature),
+                                  GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)));
+    pszln[511]='\0';
 
-    /* pszLayerName is -lco FEATURETYPE=Class.Subclass or NULL */
-    if( !pszLayerName)
-    {
-       _poFeatureDefn = new OGRFeatureDefn("");
-       _poFeatureDefn->Reference();
-       return OGRERR_NONE;
-    }
-    if( !(_gcFeature= FindFeature_GCIO(_hGCT,pszLayerName)) )
-    {
-      CPLError( CE_Failure, CPLE_NotSupported,
-                "Can't find feature %s as a Geoconcept layer within %s.\n",
-                pszLayerName,
-                pszGCTName? pszGCTName:"'not given schema'");
-      return OGRERR_FAILURE;
-    }
-    _poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+    _poFeatureDefn = new OGRFeatureDefn(pszln);
     _poFeatureDefn->Reference();
     /* can't make difference between single and multi-geometry for some types */
     switch(GetSubTypeKind_GCIO(_gcFeature)) {
@@ -172,12 +135,7 @@ OGRErr OGRGeoconceptLayer::Open( const char* pszName,
       {
         if( (aField= GetSubTypeField_GCIO(_gcFeature,i)) )
         {
-          /*
-           * Keep the same order in Geoconcept and OGR : 
-           */
-#if 0
           if( IsPrivateField_GCIO(aField) ) continue;
-#endif /* 0 */
           switch(GetFieldKind_GCIO(aField)) {
           case vIntFld_GCIO      :
           case vPositionFld_GCIO :
@@ -217,7 +175,7 @@ OGRErr OGRGeoconceptLayer::Open( const char* pszName,
 void OGRGeoconceptLayer::ResetReading()
 
 {
-    Rewind_GCIO(_hGCT);
+    Rewind_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature),_gcFeature);
 }
 
 /************************************************************************/
@@ -227,7 +185,17 @@ void OGRGeoconceptLayer::ResetReading()
 OGRFeature *OGRGeoconceptLayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature = NULL;
+    OGRFeature* poFeature = NULL;
+
+    poFeature= (OGRFeature*)ReadNextFeature_GCIO(_gcFeature);
+
+    CPLDebug( "GEOCONCEPT",
+              "FID : %ld\n"
+              "%s  : %s",
+              poFeature? poFeature->GetFID():-1L,
+              poFeature && poFeature->GetFieldCount()>0? poFeature->GetFieldDefnRef(0)->GetNameRef():"-",
+              poFeature && poFeature->GetFieldCount()>0? poFeature->GetFieldAsString(0):"");
+
     return poFeature;
 }
 
@@ -242,12 +210,6 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
     OGRGeometry* poGeom;
     int nextField, iGeom, nbGeom, isSingle;
 
-    if( !_gcFeature )
-    {
-      CPLError( CE_Failure, CPLE_NotSupported,
-                "Can't write anonymous feature in a Geoconcept layer.\n");
-      return OGRERR_FAILURE;
-    }
     poGeom= poFeature->GetGeometryRef();
     eGt= poGeom->getGeometryType();
     switch( eGt ) {
@@ -364,12 +326,20 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
       break;
     }
 
+    /* 1st feature, let's write header : */
+    if( GetGCMode_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature)) == vWriteAccess_GCIO &&
+        GetFeatureCount(TRUE) == 0 )
+      if( WriteHeader_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature))==NULL )
+      {
+        return OGRERR_FAILURE;
+      }
+
     if( nbGeom>0 )
     {
       for( iGeom= 0; iGeom<nbGeom; iGeom++ )
       {
-        nextField= StartWritingFeature_GCIO(_hGCT,_gcFeature,
-                                                  isSingle? poFeature->GetFID():OGRNullFID);
+        nextField= StartWritingFeature_GCIO(_gcFeature,
+                                            isSingle? poFeature->GetFID():OGRNullFID);
         while (nextField!=WRITECOMPLETED_GCIO)
         {
           if( nextField==WRITEERROR_GCIO )
@@ -378,9 +348,10 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
           }
           if( nextField==GEOMETRYEXPECTED_GCIO )
           {
-            OGRGeometry* poGeomPart;
-            poGeomPart= isSingle? poGeom:((OGRGeometryCollection*)poGeom)->getGeometryRef(iGeom);
-            nextField= WriteFeatureGeometry_GCIO(_hGCT,_gcFeature,poGeomPart);
+            OGRGeometry* poGeomPart=
+                isSingle? poGeom:((OGRGeometryCollection*)poGeom)->getGeometryRef(iGeom);
+            nextField= WriteFeatureGeometry_GCIO(_gcFeature,
+                                                 poGeomPart);
           }
           else
           {
@@ -395,12 +366,12 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
                 poField= poFeature->GetFieldDefnRef(iF);
                 if( EQUAL(poField->GetNameRef(), GetFieldName_GCIO(theField)) )
                 {
-                  nextField= WriteFeatureFieldAsString_GCIO(_hGCT,_gcFeature,
-                                                                  nextField,
-                                                                  poFeature->IsFieldSet(iF)?
-                                                                    poFeature->GetFieldAsString(iF)
-                                                                  :
-                                                                    NULL);
+                  nextField= WriteFeatureFieldAsString_GCIO(_gcFeature,
+                                                            nextField,
+                                                            poFeature->IsFieldSet(iF)?
+                                                              poFeature->GetFieldAsString(iF)
+                                                            :
+                                                              NULL);
                   break;
                 }
               }
@@ -418,8 +389,7 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
             }
           }
         }
-        StopWritingFeature_GCIO(_hGCT,_gcFeature);
-        _nTotalFeatures= GetGCNbObjects_GCIO(_hGCT);
+        StopWritingFeature_GCIO(_gcFeature);
       }
     }
 
@@ -433,7 +403,11 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
 OGRSpatialReference *OGRGeoconceptLayer::GetSpatialRef()
 
 {
-    return _poSRS;
+    GCExportFileH* hGXT= GetSubTypeGCHandle_GCIO(_gcFeature);
+    if( !hGXT ) return NULL;
+    GCExportFileMetadata* Meta= GetGCMeta_GCIO(hGXT);
+    if( !Meta ) return NULL;
+    return (OGRSpatialReference*)GetMetaSRS_GCIO(Meta);
 }
 
 /************************************************************************/
@@ -449,7 +423,7 @@ int OGRGeoconceptLayer::GetFeatureCount( int bForce )
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
-        return _nTotalFeatures;
+        return GetSubTypeNbFeatures_GCIO(_gcFeature);
 }
 
 /************************************************************************/
@@ -461,10 +435,7 @@ OGRErr OGRGeoconceptLayer::GetExtent( OGREnvelope* psExtent, int bForce )
 {
     GCExtent* theExtent;
 
-    if( _hGCT == NULL )
-        return OGRERR_FAILURE;
-
-    theExtent= GetMetaExtent_GCIO( GetGCMeta_GCIO( _hGCT ) );
+    theExtent= GetSubTypeExtent_GCIO( _gcFeature );
     psExtent->MinX= GetExtentULAbscissa_GCIO(theExtent);
     psExtent->MinY= GetExtentLROrdinate_GCIO(theExtent);
     psExtent->MaxX= GetExtentLRAbscissa_GCIO(theExtent);
@@ -518,7 +489,7 @@ int OGRGeoconceptLayer::TestCapability( const char* pszCap )
 OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    if( GetGCMode_GCIO(_hGCT)==vReadAccess_GCIO )
+    if( GetGCMode_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature))==vReadAccess_GCIO )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Can't create fields on a read-only Geoconcept layer.\n");
@@ -530,45 +501,55 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /*      Add field to layer                                              */
 /* -------------------------------------------------------------------- */
 
-    if( _gcFeature==NULL ) /* FIXME */
-    {
-      if( poField->GetType() == OFTInteger ||
-          poField->GetType() == OFTReal    ||
-          poField->GetType() == OFTString  ||
-          poField->GetType() == OFTDate    ||
-          poField->GetType() == OFTDateTime )
-      {
-        _poFeatureDefn->AddFieldDefn( poField );
-      }
-      else
-      {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields of type %s on Geoconcept layers.\n",
-                  OGRFieldDefn::GetFieldTypeName(poField->GetType()) );
-        return OGRERR_FAILURE;
-      }
-    }
-    else
     {
       /* check whether field exists ... */
       GCField* theField;
-      int i;
 
       if( !(theField= FindFeatureField_GCIO(_gcFeature,poField->GetNameRef())) )
       {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Field %s not found for Feature %s.\n",
-                  poField->GetNameRef(), _poFeatureDefn->GetName()
-                );
-        return OGRERR_FAILURE;
+        if( GetFeatureCount(TRUE) > 0 )
+        {
+          CPLError( CE_Failure, CPLE_NotSupported,
+                    "Can't create field '%s' on existing Geoconcept layer '%s.%s'.\n",
+                    poField->GetNameRef(),
+                    GetSubTypeName_GCIO(_gcFeature),
+                    GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)) );
+          return OGRERR_FAILURE;
+        }
+        if( GetSubTypeNbFields_GCIO(_gcFeature)==-1)
+          SetSubTypeNbFields_GCIO(_gcFeature, 0L);
+        if( !(theField= AddSubTypeField_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature),
+                                             GetSubTypeName_GCIO(_gcFeature),
+                                             GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)),
+                                             FindFeatureFieldIndex_GCIO(_gcFeature,kNbFields_GCIO)
+                                            +GetSubTypeNbFields_GCIO(_gcFeature)+1L,
+                                             poField->GetNameRef(),
+                                             GetSubTypeNbFields_GCIO(_gcFeature)-999L,
+                                             vUnknownItemType_GCIO, NULL, NULL)) )
+        {
+          CPLError( CE_Failure, CPLE_AppDefined,
+                    "Field '%s' could not be created for Feature %s.%s.\n",
+                    poField->GetNameRef(),
+                    GetSubTypeName_GCIO(_gcFeature),
+                    GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature))
+                  );
+          return OGRERR_FAILURE;
+        }
+        SetSubTypeNbFields_GCIO(_gcFeature, GetSubTypeNbFields_GCIO(_gcFeature)+1L);
+        _poFeatureDefn->AddFieldDefn(poField);
       }
-      if( (i= _poFeatureDefn->GetFieldIndex(GetFieldName_GCIO(theField)))==-1 )
+      else
       {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Field %s not found for Feature %s.\n",
-                  GetFieldName_GCIO(theField), _poFeatureDefn->GetName()
-                );
-        return OGRERR_FAILURE;
+        if( _poFeatureDefn->GetFieldIndex(GetFieldName_GCIO(theField))==-1 )
+        {
+          CPLError( CE_Failure, CPLE_AppDefined,
+                    "Field %s not found for Feature %s.%s.\n",
+                    GetFieldName_GCIO(theField),
+                    GetSubTypeName_GCIO(_gcFeature),
+                    GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature))
+                  );
+          return OGRERR_FAILURE;
+        }
       }
       /* check/update type ? */
       if( GetFieldKind_GCIO(theField)==vUnknownItemType_GCIO )
@@ -584,6 +565,7 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
           SetFieldKind_GCIO(theField,vDateFld_GCIO);
           break;
         case OFTTime           :
+        case OFTDateTime       :
           SetFieldKind_GCIO(theField,vTimeFld_GCIO);
           break;
         case OFTString         :
@@ -595,7 +577,6 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         case OFTWideString     :
         case OFTWideStringList :
         case OFTBinary         :
-        case OFTDateTime       :
         default                :
           CPLError( CE_Failure, CPLE_NotSupported,
                     "Can't create fields of type %s on Geoconcept feature %s.\n",
@@ -616,7 +597,7 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 OGRErr OGRGeoconceptLayer::SyncToDisk()
 
 {
-    FFlush_GCIO(_hGCT);
+    FFlush_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature));
     return OGRERR_NONE;
 }
 
@@ -627,31 +608,39 @@ OGRErr OGRGeoconceptLayer::SyncToDisk()
 void OGRGeoconceptLayer::SetSpatialRef( OGRSpatialReference *poSpatialRef )
 
 {
-    int os, ns;
+    GCSysCoord* os, *ns;
+    OGRSpatialReference* poSRS= GetSpatialRef();
+    GCExportFileH* hGXT;
+    GCExportFileMetadata* Meta;
     /*-----------------------------------------------------------------
      * Keep a copy of the OGRSpatialReference...
      * Note: we have to take the reference count into account...
      *----------------------------------------------------------------*/
-    if( _poSRS && _poSRS->Dereference() == 0) delete _poSRS;
+    if( poSRS && poSRS->Dereference() == 0) delete poSRS;
 
     if( !poSpatialRef ) return;
 
-    _poSRS= poSpatialRef->Clone();
-    os= GetMetaSysCoord_GCIO(GetGCMeta_GCIO(_hGCT));
-    ns= OGRSpatialReference2SysCoord_GCSRS((OGRSpatialReferenceH)_poSRS);
+    poSRS= poSpatialRef->Clone();
+    if( !(hGXT= GetSubTypeGCHandle_GCIO(_gcFeature)) ) return;
+    if( !(Meta= GetGCMeta_GCIO(hGXT)) ) return;
+    os= GetMetaSysCoord_GCIO(Meta);
+    ns= OGRSpatialReference2SysCoord_GCSRS((OGRSpatialReferenceH)poSRS);
 
-    if( os!=-1 && os!=ns )
+    if( os && ns &&
+        GetSysCoordSystemID_GCSRS(os)!=-1 &&
+        (
+          GetSysCoordSystemID_GCSRS(os)!=GetSysCoordSystemID_GCSRS(ns) ||
+          GetSysCoordTimeZone_GCSRS(os)!=GetSysCoordTimeZone_GCSRS(ns)
+        )
+      )
     {
       CPLError( CE_Warning, CPLE_AppDefined,
                 "Can't change SRS on Geoconcept layers.\n" );
       return;
     }
 
-    SetMetaSysCoord_GCIO(GetGCMeta_GCIO(_hGCT), ns);
-    if( GetGCMode_GCIO(_hGCT) == vWriteAccess_GCIO &&
-        GetFeatureCount(TRUE) == 0 )
-      if( WriteHeader_GCIO(_hGCT)==NULL )
-      {
-        return;
-      }
+    if( os ) DestroySysCoord_GCSRS(&os);
+    SetMetaSysCoord_GCIO(Meta, ns);
+    SetMetaSRS_GCIO(Meta, (OGRSpatialReferenceH)poSRS);
+    return;
 }

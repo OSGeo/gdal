@@ -43,16 +43,13 @@ class OGRGeoconceptLayer : public OGRLayer
     OGRSpatialReference *_poSRS;
     OGRFeatureDefn      *_poFeatureDefn;
 
-    long                 _nTotalFeatures;
-    char                *_pszFullName;
     GCSubType           *_gcFeature;
-    GCExportFileH       *_hGCT;
 
   public:
                          OGRGeoconceptLayer();
                         ~OGRGeoconceptLayer();
 
-    OGRErr               Open( const char *pszName, const char *pszExt, const char *pszMode, const char *pszGCTName, const char *pszLayerName );
+    OGRErr               Open( GCSubType* Subclass );
 
 //    OGRGeometry*         GetSpatialFilter( );
 //    void                 SetSpatialFilter( OGRGeometry* poGeomIn );

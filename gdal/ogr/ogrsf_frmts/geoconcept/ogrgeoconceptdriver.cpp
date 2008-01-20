@@ -62,9 +62,6 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
                                           int bUpdate )
 
 {
-    if( !bUpdate )
-        return NULL;
-
     OGRGeoconceptDataSource  *poDS;
 
     poDS = new OGRGeoconceptDataSource();
@@ -233,5 +230,5 @@ int OGRGeoconceptDriver::TestCapability( const char * pszCap )
 void RegisterOGRGeoconcept()
 
 {
-    //OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoconceptDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGeoconceptDriver );
 }
