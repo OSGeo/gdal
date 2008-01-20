@@ -116,8 +116,6 @@ extern "C" {
 
 #define  kConfigUnit_GCIO         "Unit"
 #define  kConfigPrecision_GCIO    "Precision"
-#define  kConfigZUnit_GCIO        "ZUnit"
-#define  kConfigZPrecision_GCIO   "ZPrecision"
 #define  kConfigName_GCIO         "Name"
 #define  kConfigID_GCIO           "ID"
 #define  kConfigKind_GCIO         "Kind"
@@ -125,6 +123,9 @@ extern "C" {
 #define  kConfigExtra_GCIO        "Extra"
 #define  kConfigExtraText_GCIO    "ExtraText"
 #define  kConfigList_GCIO         "List"
+/* unused config keywords : */
+#define  kConfigZUnit_GCIO        "ZUnit"
+#define  kConfigZPrecision_GCIO   "ZPrecision"
 
 #define  kMetadataDELIMITER_GCIO  "DELIMITER"
 #define  kMetadataQUOTEDTEXT_GCIO "QUOTED-TEXT"
@@ -139,6 +140,18 @@ extern "C" {
 #define  k3DOBJECT_GCIO           "3DOBJECT"
 #define  k2DOBJECT_GCIO           "2DOBJECT"
 
+#define  kIdentifier_GCIO         "@Identifier"
+#define  kClass_GCIO              "@Class"
+#define  kSubclass_GCIO           "@Subclass"
+#define  kName_GCIO               "@Name"
+#define  kNbFields_GCIO           "@NbFields"
+#define  kX_GCIO                  "@X"
+#define  kY_GCIO                  "@Y"
+#define  kXP_GCIO                 "@XP"
+#define  kYP_GCIO                 "@YP"
+#define  kGraphics_GCIO           "@Graphics"
+#define  kAngle_GCIO              "@Angle"
+
 #define  WRITEERROR_GCIO          -1
 #define  GEOMETRYEXPECTED_GCIO    -2
 #define  WRITECOMPLETED_GCIO      -3
@@ -146,6 +159,13 @@ extern "C" {
 /* -------------------------------------------------------------------- */
 /*      GCIO API Enumerations                                           */
 /* -------------------------------------------------------------------- */
+
+typedef enum _tCharset_GCIO {
+  vUnknownCharset_GCIO = 0,
+  vANSI_GCIO, /* Windows */
+  vDOS_GCIO,
+  vMAC_GCIO
+} GCCharset;
 
 typedef enum _tAccessMode_GCIO {
    vUnknownAccessMode_GCIO = 0,
@@ -217,33 +237,42 @@ typedef enum _boolean_GCIO {vFALSE=0,vTRUE} tBOOLEAN_GCIO ;
 /* -------------------------------------------------------------------- */
 /*      GCIO API Types                                                  */
 /* -------------------------------------------------------------------- */
+typedef struct _tDocFrame_GCIO GCExtent;
+typedef struct _tField_GCIO GCField;
+typedef struct _tSubType_GCIO GCSubType;
+typedef struct _tType_GCIO GCType;
+typedef struct _tExportHeader_GCIO GCExportFileMetadata;
+typedef struct _GCExportFileH GCExportFileH;
 
-typedef struct _tDocFrame_GCIO {
+struct _tDocFrame_GCIO {
   double XUL;
   double YUL;
   double XLR;
   double YLR;
-} GCExtent;
+};
 
-typedef struct _tField_GCIO {
+struct _tField_GCIO {
   char*      name; /* @name => private */
   char*      extra;
   char**     enums;
   long       id;
   GCTypeKind knd;
-} GCField;
+};
 
-typedef struct _tType_GCIO GCType;
-
-typedef struct _tSubType_GCIO {
-  GCType*    _type;
-  char*      name;
-  CPLList*   fields;     /* GCField */
-  long       id;
-  GCTypeKind knd;
-  GCDim      sys;
-  int        _nbf; /* number of user's fields */
-} GCSubType;
+struct _tSubType_GCIO {
+  GCExportFileH* _h;
+  GCType*        _type;     /* parent's type */
+  char*          name;
+  CPLList*       fields;    /* GCField */
+  GCExtent*      frame;
+  long           id;
+  long           _foff;     /* offset 1st feature */
+  unsigned long  _flin;     /* 1st ligne 1st feature */
+  GCTypeKind     knd;
+  GCDim          sys;
+  int            _nbf;      /* number of user's fields */
+  unsigned long  _nFeatures;
+};
 
 struct _tType_GCIO {
   char*          name;
@@ -252,22 +281,21 @@ struct _tType_GCIO {
   long           id;
 };
 
-typedef struct _tExportHeader_GCIO {
-  CPLList*  types;         /* GCType */
-  CPLList*  fields;        /* GCField */
-  char      charset[kCharsetMAX_GCIO+1];
-  char      delimiter;
-  char      unit[kUnitMAX_GCIO+1];
-  char      zUnit[kUnitMAX_GCIO+1];
-  double    resolution;
-  double    zResolution;
-  int       quotedtext;
-  int       format;
-  int       sysCoord;
-  GCExtent* frame;
-} GCExportFileMetadata;
+struct _tExportHeader_GCIO {
+  CPLList*             types;         /* GCType */
+  CPLList*             fields;        /* GCField */
+  OGRSpatialReferenceH srs;
+  GCExtent*            frame;
+  char                 unit[kUnitMAX_GCIO+1];
+  double               resolution;
+  GCCharset            charset;
+  int                  quotedtext;
+  int                  format;
+  GCSysCoord*          sysCoord;
+  char                 delimiter;
+};
 
-typedef struct _GCExportFileH {
+struct _GCExportFileH {
   char                  cache[kCacheSize_GCIO+1];
   char*                 path;
   char*                 bn;
@@ -280,12 +308,14 @@ typedef struct _GCExportFileH {
   GCAccessMode          mode;
   GCAccessStatus        status;
   GCTypeKind            whatIs;
-} GCExportFileH;
+};
 
 /* -------------------------------------------------------------------- */
 /*      GCIO API Prototypes                                             */
 /* -------------------------------------------------------------------- */
 
+const char GCIOAPI_CALL1(*) GCCharset2str_GCIO ( GCCharset cs );
+GCCharset GCIOAPI_CALL str2GCCharset_GCIO ( const char* s);
 const char GCIOAPI_CALL1(*) GCAccessMode2str_GCIO ( GCAccessMode mode );
 GCAccessMode str2GCAccessMode_GCIO ( const char* s);
 const char GCIOAPI_CALL1(*) GCAccessStatus2str_GCIO ( GCAccessStatus stts );
@@ -297,23 +327,28 @@ GCTypeKind str2GCTypeKind_GCIO ( const char *s );
 
 GCExportFileH GCIOAPI_CALL1(*) Open_GCIO ( const char* pszGeoconceptFile, const char* ext, const char* mode, const char* gctPath );
 void GCIOAPI_CALL Close_GCIO ( GCExportFileH** hGCT );
-GCExportFileH GCIOAPI_CALL1(*) Rewind_GCIO ( GCExportFileH* H );
+GCExportFileH GCIOAPI_CALL1(*) Rewind_GCIO ( GCExportFileH* H, GCSubType* theSubType );
 GCExportFileH GCIOAPI_CALL1(*) FFlush_GCIO ( GCExportFileH* H );
 
 GCType GCIOAPI_CALL1(*) AddType_GCIO (  GCExportFileH* H, const char* typName, long id );
-void GCIOAPI_CALL DropType_GCIO ( GCExportFileH* H, GCType **theClass );
 GCSubType GCIOAPI_CALL1(*) AddSubType_GCIO ( GCExportFileH* H, const char* typName, const char* subtypName, long id, GCTypeKind knd, GCDim sys );
 GCField GCIOAPI_CALL1(*) AddTypeField_GCIO ( GCExportFileH* H, const char* typName, int where, const char* name, long id, GCTypeKind knd, const char* extra, const char* enums );
 GCField GCIOAPI_CALL1(*) AddSubTypeField_GCIO ( GCExportFileH* H, const char* typName, const char* subtypName, int where, const char* name, long id, GCTypeKind knd, const char* extra, const char* enums );
 GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO ( GCExportFileH* H );
 GCExportFileH GCIOAPI_CALL1(*) WriteHeader_GCIO ( GCExportFileH* H );
+GCExportFileMetadata GCIOAPI_CALL1(*) CreateHeader_GCIO ( );
+void GCIOAPI_CALL DestroyHeader_GCIO ( GCExportFileMetadata** m );
+GCExtent GCIOAPI_CALL1(*) CreateExtent_GCIO ( double Xmin, double Ymin, double Xmax, double Ymax );
+void GCIOAPI_CALL DestroyExtent_GCIO ( GCExtent** theExtent );
 GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO ( GCExportFileH* H );
 GCSubType GCIOAPI_CALL1(*) FindFeature_GCIO ( GCExportFileH* H, const char* typDOTsubtypName );
+int GCIOAPI_CALL FindFeatureFieldIndex_GCIO ( GCSubType* theSubType, const char *fieldName );
 GCField GCIOAPI_CALL1(*) FindFeatureField_GCIO ( GCSubType* theSubType, const char *fieldName );
-int GCIOAPI_CALL StartWritingFeature_GCIO ( GCExportFileH* H, GCSubType* theSubType, long id );
-int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO ( GCExportFileH* H, GCSubType* theSubType, int iField, const char* theValue );
-int GCIOAPI_CALL WriteFeatureGeometry_GCIO ( GCExportFileH* H, GCSubType* theSubType, OGRGeometryH poGeom );
-void GCIOAPI_CALL StopWritingFeature_GCIO ( GCExportFileH* H, GCSubType* theSubType );
+int GCIOAPI_CALL StartWritingFeature_GCIO ( GCSubType* theSubType, long id );
+int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO ( GCSubType* theSubType, int iField, const char* theValue );
+int GCIOAPI_CALL WriteFeatureGeometry_GCIO ( GCSubType* theSubType, OGRGeometryH poGeom );
+void GCIOAPI_CALL StopWritingFeature_GCIO ( GCSubType* theSubType );
+OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 
 #define GetGCCache_GCIO(gc) (gc)->cache
 #define SetGCCache_GCIO(gc,v) strncpy((gc)->cache, (v), kCacheSize_GCIO), (gc)->cache[kCacheSize_GCIO]= '\0';
@@ -342,10 +377,12 @@ void GCIOAPI_CALL StopWritingFeature_GCIO ( GCExportFileH* H, GCSubType* theSubT
 
 #define GetMetaTypes_GCIO(header) (header)->types
 #define SetMetaTypes_GCIO(header,v) (header)->types= (v)
+#define CountMetaTypes_GCIO(header) CPLListCount((header)->types)
+#define GetMetaType_GCIO(header,rank) (GCType*)CPLListGetData(CPLListGet((header)->types,(rank)))
 #define GetMetaFields_GCIO(header) (header)->fields
 #define SetMetaFields_GCIO(header,v) (header)->fields= (v)
 #define GetMetaCharset_GCIO(header) (header)->charset
-#define SetMetaCharset_GCIO(header,v) strncpy((header)->charset, (v), kCharsetMAX_GCIO), (header)->charset[kCharsetMAX_GCIO]= '\0';
+#define SetMetaCharset_GCIO(header,v) (header)->charset= (v)
 #define GetMetaDelimiter_GCIO(header) (header)->delimiter
 #define SetMetaDelimiter_GCIO(header,v) (header)->delimiter= (v)
 #define GetMetaUnit_GCIO(header) (header)->unit
@@ -364,6 +401,8 @@ void GCIOAPI_CALL StopWritingFeature_GCIO ( GCExportFileH* H, GCSubType* theSubT
 #define SetMetaSysCoord_GCIO(header,v) (header)->sysCoord= (v)
 #define GetMetaExtent_GCIO(header) (header)->frame
 #define SetMetaExtent_GCIO(header,v) (header)->frame= (v)
+#define GetMetaSRS_GCIO(header) (header)->srs
+#define SetMetaSRS_GCIO(header,v) (header)->srs= (v)
 
 #define GetTypeName_GCIO(theClass) (theClass)->name
 #define SetTypeName_GCIO(theClass,v) (theClass)->name= (v)
@@ -373,6 +412,10 @@ void GCIOAPI_CALL StopWritingFeature_GCIO ( GCExportFileH* H, GCSubType* theSubT
 #define SetTypeSubtypes_GCIO(theClass,v) (theClass)->subtypes= (v)
 #define GetTypeFields_GCIO(theClass) (theClass)->fields
 #define SetTypeFields_GCIO(theClass,v) (theClass)->fields= (v)
+#define CountTypeSubtypes_GCIO(theClass) CPLListCount((theClass)->subtypes)
+#define GetTypeSubtype_GCIO(theClass,rank) (GCSubType*)CPLListGetData(CPLListGet((theClass)->subtypes,(rank)))
+#define CountTypeFields_GCIO(theClass) CPLListCount((theClass)->fields)
+#define GetTypeField_GCIO(theClass,rank) (GCField*)CPLListGetData(CPLListGet((theClass)->fields,(rank)))
 
 #define GetSubTypeType_GCIO(theSubType) (theSubType)->_type
 #define SetSubTypeType_GCIO(theSubType,v) (theSubType)->_type= (v)
@@ -390,6 +433,16 @@ void GCIOAPI_CALL StopWritingFeature_GCIO ( GCExportFileH* H, GCSubType* theSubT
 #define GetSubTypeField_GCIO(theSubType,rank) (GCField*)CPLListGetData(CPLListGet((theSubType)->fields,(rank)))
 #define GetSubTypeNbFields_GCIO(theSubType) (theSubType)->_nbf
 #define SetSubTypeNbFields_GCIO(theSubType,v) (theSubType)->_nbf= (v)
+#define GetSubTypeNbFeatures_GCIO(theSubType) (theSubType)->_nFeatures
+#define SetSubTypeNbFeatures_GCIO(theSubType,v) (theSubType)->_nFeatures= (v)
+#define GetSubTypeBOF_GCIO(theSubType) (theSubType)->_foff
+#define SetSubTypeBOF_GCIO(theSubType,v) (theSubType)->_foff= (v)
+#define GetSubTypeBOFLinenum_GCIO(theSubType) (theSubType)->_flin
+#define SetSubTypeBOFLinenum_GCIO(theSubType,v) (theSubType)->_flin= (v)
+#define GetSubTypeExtent_GCIO(theSubType) (theSubType)->frame
+#define SetSubTypeExtent_GCIO(theSubType,v) (theSubType)->frame= (v)
+#define GetSubTypeGCHandle_GCIO(theSubType) (theSubType)->_h
+#define SetSubTypeGCHandle_GCIO(theSubType,v) (theSubType)->_h= (v)
 
 #define GetFieldName_GCIO(theField) (theField)->name
 #define SetFieldName_GCIO(theField,v) (theField)->name= (v)
