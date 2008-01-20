@@ -282,7 +282,6 @@ int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
 /*      Create a new single file.                                       */
 /*      OGRGeoconceptDriver::CreateLayer() will do the job.             */
 /* -------------------------------------------------------------------- */
-    _pszName = CPLStrdup( pszName );
     _pszDirectory = CPLStrdup( CPLGetPath(pszName) );
     _bSingleNewFile = TRUE;
 
@@ -506,7 +505,6 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
           break;
       }
       SetSubTypeGCHandle_GCIO(aSubclass,_hGXT);
-      CSLDestroy(ft);
 
       /* Add layer to data source layers list */
       _papoLayers = (OGRGeoconceptLayer **)
@@ -517,6 +515,8 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
                "nLayers=%d - last=[%s]",
                _nLayers, poFile->GetLayerDefn()->GetName());
     }
+
+    CSLDestroy(ft);
 
 /* -------------------------------------------------------------------- */
 /*      Assign the coordinate system (if provided)                      */
