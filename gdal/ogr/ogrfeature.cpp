@@ -2771,7 +2771,16 @@ OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
 
 const char *OGRFeature::GetStyleString()
 {
-    return m_pszStyleString;
+	int  iStyleFieldIndex;
+
+	if (m_pszStyleString)
+       return m_pszStyleString;
+
+	iStyleFieldIndex = GetFieldIndex("OGR_STYLE");
+	if (iStyleFieldIndex >= 0)
+       return GetFieldAsString(iStyleFieldIndex);
+
+	return NULL;
 }
 
 /************************************************************************/
