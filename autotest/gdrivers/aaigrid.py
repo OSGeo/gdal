@@ -150,6 +150,15 @@ def aaigrid_6():
     return 'success'
 
 ###############################################################################
+# Verify writing files with non-square pixels.
+
+def aaigrid_7():
+
+    tst = gdaltest.GDALTest( 'AAIGRID', 'nonsquare.vrt', 1, 12481 )
+
+    return tst.testCreateCopy( check_gt = 1 )
+
+###############################################################################
 
 gdaltest_list = [
     aaigrid_1,
@@ -157,7 +166,8 @@ gdaltest_list = [
     aaigrid_3,
     aaigrid_4,
     aaigrid_5,
-    aaigrid_6 ]
+    aaigrid_6,
+    aaigrid_7 ]
   
 
 
