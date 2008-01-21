@@ -189,6 +189,8 @@ void OGR_F_Destroy( OGRFeatureH hFeat )
  * applications creating features but wanting to ensure they       
  * are created out of the OGR/GDAL heap.                           
  * 
+ * This method is the same as the C function OGR_F_Create().
+ *
  * @param poDefn Feature definition defining schema.
  * 
  * @return new feature object with null fields and no geometry.  May be
