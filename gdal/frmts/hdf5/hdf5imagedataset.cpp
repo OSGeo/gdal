@@ -357,7 +357,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 	strcat(szFilename, poDS->papszName[2]);
         nDatasetPos = 3;
     }
-    printf("szFilenname %s\n",szFilename);
+
     if( !H5Fis_hdf5(szFilename) ) {
         delete poDS;
         return NULL;
