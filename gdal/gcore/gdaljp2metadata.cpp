@@ -606,9 +606,9 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     {
         adfGeoTransform[0] = poOriginGeometry->getX();
         adfGeoTransform[1] = atof(papszOffset1Tokens[0]);
-        adfGeoTransform[2] = atof(papszOffset1Tokens[1]);
+        adfGeoTransform[2] = atof(papszOffset2Tokens[0]);
         adfGeoTransform[3] = poOriginGeometry->getY();
-        adfGeoTransform[4] = atof(papszOffset2Tokens[0]);
+        adfGeoTransform[4] = atof(papszOffset1Tokens[1]);
         adfGeoTransform[5] = atof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
@@ -645,6 +645,8 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      If we have gotten a geotransform, then try to interprete the    */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
+    int bNeedAxisFlip = FALSE;
+
     if( bSuccess && pszSRSName != NULL 
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
@@ -659,7 +661,17 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                  && strstr(pszSRSName,":def:") != NULL
                  && oSRS.importFromURN(pszSRSName) == OGRERR_NONE )
         {
+            const char *pszCode = strrchr(pszSRSName,':') + 1;
+
             oSRS.exportToWkt( &pszProjection );
+
+            // Per #2131
+            if( atoi(pszCode) >= 4000 && atoi(pszCode) <= 4999 )
+            {
+                CPLDebug( "GMLJP2", "Request axis flip for SRS=%s",
+                          pszSRSName );
+                bNeedAxisFlip = TRUE;
+            }
         }
         else if( !GMLSRSLookup( pszSRSName ) )
         {
@@ -673,6 +685,37 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         CPLDebug( "GDALJP2Metadata", 
                   "Got projection from GML box: %s", 
                  pszProjection );
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to flip the axes?                                    */
+/* -------------------------------------------------------------------- */
+    if( bNeedAxisFlip
+        && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
+                                               "FALSE" ) ) )
+    {
+        bNeedAxisFlip = FALSE;
+        CPLDebug( "GMLJP2", "Supressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
+    }
+
+    if( bNeedAxisFlip )
+    {
+        double dfTemp;
+
+        CPLDebug( "GMLJP2", 
+                  "Flipping axis orientation in GMLJP2 coverage description." );
+
+        dfTemp = adfGeoTransform[0];
+        adfGeoTransform[0] = adfGeoTransform[3];
+        adfGeoTransform[3] = dfTemp;
+
+        dfTemp = adfGeoTransform[1];
+        adfGeoTransform[1] = adfGeoTransform[4];
+        adfGeoTransform[4] = dfTemp;
+
+        dfTemp = adfGeoTransform[2];
+        adfGeoTransform[2] = adfGeoTransform[5];
+        adfGeoTransform[5] = dfTemp;
+    }
 
     return pszProjection != NULL && bSuccess;
 }
@@ -804,6 +847,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     char *pszWKTCopy = (char *) pszProjection;
     int nEPSGCode = 0;
     char szSRSName[100];
+    int  bNeedAxisFlip = FALSE;
 
     if( oSRS.importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
         return NULL;
@@ -824,6 +868,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
         {
             nEPSGCode = atoi(oSRS.GetAuthorityCode( "GEOGCS" ));
+            bNeedAxisFlip = TRUE;
         }
     }
 
@@ -832,6 +877,51 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     else
         strcpy( szSRSName, 
                 "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
+
+/* -------------------------------------------------------------------- */
+/*      Prepare coverage origin and offset vectors.  Take axis          */
+/*      order into account if needed.                                   */
+/* -------------------------------------------------------------------- */
+    double adfOrigin[2];
+    double adfXVector[2];
+    double adfYVector[2];
+    
+    adfOrigin[0] = adfGeoTransform[0] + adfGeoTransform[1] * 0.5
+        + adfGeoTransform[4] * 0.5;
+    adfOrigin[1] = adfGeoTransform[3] + adfGeoTransform[2] * 0.5
+        + adfGeoTransform[5] * 0.5;
+    adfXVector[0] = adfGeoTransform[1];
+    adfXVector[1] = adfGeoTransform[2];
+        
+    adfYVector[0] = adfGeoTransform[4];
+    adfYVector[1] = adfGeoTransform[5];
+    
+    if( bNeedAxisFlip
+        && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
+                                               "FALSE" ) ) )
+    {
+        bNeedAxisFlip = FALSE;
+        CPLDebug( "GMLJP2", "Supressed axis flipping on write based on GDAL_IGNORE_AXIS_ORIENTATION." );
+    }
+
+    if( bNeedAxisFlip )
+    {
+        double dfTemp;
+        
+        CPLDebug( "GMLJP2", "Flipping GML coverage axis order." );
+        
+        dfTemp = adfOrigin[0];
+        adfOrigin[0] = adfOrigin[1];
+        adfOrigin[1] = dfTemp;
+
+        dfTemp = adfXVector[0];
+        adfXVector[0] = adfXVector[1];
+        adfXVector[1] = dfTemp;
+
+        dfTemp = adfYVector[0];
+        adfYVector[0] = adfYVector[1];
+        adfYVector[1] = dfTemp;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      For now we hardcode for a minimal instance format.              */
@@ -880,15 +970,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "    </gml:FeatureCollection>\n"
 "  </gml:featureMember>\n"
 "</gml:FeatureCollection>\n",
-             nXSize-1, nYSize-1, szSRSName,
-             adfGeoTransform[0] + adfGeoTransform[1] * 0.5
-                                + adfGeoTransform[4] * 0.5, 
-             adfGeoTransform[3] + adfGeoTransform[2] * 0.5
-                                + adfGeoTransform[5] * 0.5,
-             szSRSName, 
-             adfGeoTransform[1], adfGeoTransform[2],
-             szSRSName,
-             adfGeoTransform[4], adfGeoTransform[5] );
+             nXSize-1, nYSize-1, szSRSName, adfOrigin[0], adfOrigin[1],
+             szSRSName, adfXVector[0], adfXVector[1], 
+             szSRSName, adfYVector[0], adfYVector[1] );
 
 /* -------------------------------------------------------------------- */
 /*      If we need a user defined CRSDictionary entry, prepare it       */
