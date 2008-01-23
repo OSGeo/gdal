@@ -101,6 +101,7 @@ HDF5ImageDataset::HDF5ImageDataset()
     fp=NULL;
     nGCPCount       = -1;
     pszProjection   = NULL;
+    pszGCPProjection= NULL;
     pasGCPList      = NULL;
     papszName       = NULL;
     pszFilename     = NULL;
@@ -122,6 +123,9 @@ HDF5ImageDataset::~HDF5ImageDataset( )
 
     if( papszName != NULL )
     	CSLDestroy( papszName );
+
+    CPLFree(pszProjection);
+    CPLFree(pszGCPProjection);
 
     if( dims )
 	CPLFree( dims );
@@ -547,6 +551,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
 		  Longitude );
 	
 	oSRS.SetWellKnownGeogCS( "WGS84" );
+  CPLFree(pszProjection);
 	oSRS.exportToWkt( &pszProjection );
 	oSRS.exportToWkt( &pszGCPProjection );
 	

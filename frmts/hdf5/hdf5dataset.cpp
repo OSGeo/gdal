@@ -290,6 +290,10 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
     if( poH5Object->pszName != NULL ) {
 	CPLFree( poH5Object->pszName );
     }
+
+    if( poH5Object->pszUnderscorePath != NULL ) {
+	CPLFree( poH5Object->pszUnderscorePath );
+    }
 /* -------------------------------------------------------------------- */
 /*      All Children are visited and can be deleted.                    */
 /* -------------------------------------------------------------------- */
@@ -336,7 +340,7 @@ char* CreatePath( HDF5GroupObjects *poH5Object )
 
 	if( strlen( poH5Object->pszName ) == 1 ) {
 	    strcat(pszPath, poH5Object->pszName );
-	    strcat(pszUnderscoreSpaceInName, poH5Object->pszName);
+	    strcpy(pszUnderscoreSpaceInName, poH5Object->pszName);
 	}
 	else {
 /* -------------------------------------------------------------------- */
