@@ -46,6 +46,7 @@ static void Usage()
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
         "                    [-off <offset>] [-fl <level> <level>...]\n" 
+        "                    [-nln <outlayername>]\n"
         "                    <src_filename> <dst_filename>\n" );
     exit( 1 );
 }
@@ -67,6 +68,7 @@ int main( int argc, char ** argv )
     const char *pszFormat = "ESRI Shapefile";
     double adfFixedLevels[1000];
     int    nFixedLevelCount = 0;
+    const char *pszNewLayerName = "contour";
 
     GDALAllRegister();
     OGRRegisterAll();
@@ -114,6 +116,10 @@ int main( int argc, char ** argv )
         {
             bNoDataSet = TRUE;
             dfNoData = atof(argv[++i]);
+        }
+        else if( EQUAL(argv[i],"-nln")  && i < argc-1 )
+        {
+            pszNewLayerName = argv[++i];
         }
         else if( EQUAL(argv[i],"-inodata") )
         {
@@ -186,7 +192,7 @@ int main( int argc, char ** argv )
     if( hDS == NULL )
         exit( 1 );
 
-    hLayer = OGR_DS_CreateLayer( hDS, "contour", hSRS, 
+    hLayer = OGR_DS_CreateLayer( hDS, pszNewLayerName, hSRS, 
                                  b3D ? wkbLineString25D : wkbLineString,
                                  NULL );
     if( hLayer == NULL )

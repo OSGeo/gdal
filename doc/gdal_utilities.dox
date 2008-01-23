@@ -596,6 +596,7 @@ builds vector contour lines from a raster elevation model
 Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
                     [-snodata n] [-f <formatname>] [-i <interval>]
                     [-off <offset>] [-fl <level> <level>...]
+                    [-nln <outlayername>]
                     <src_filename> <dst_filename> 
 \endverbatim
 
@@ -635,6 +636,8 @@ create output in a particular format, default is shapefiles.</dd>
 
 <dt> <b>-fl</b> <em>level</em>:</dt>
 <dd> Name one or more "fixed levels" to extract.</dd>
+<dt> <b>-nln</b> <em>outlayername</em>:</dt>
+<dd> Provide a name for the output vector layer.  Defaults to "contour".</dd>
 </dl>
 
 \section iexample EXAMPLE
