@@ -431,8 +431,9 @@ int main( int argc, char ** argv )
             && !bEnableSrcAlpha )
         {
             bEnableSrcAlpha = TRUE;
-            printf( "Using band %d of source image as alpha.\n", 
-                    GDALGetRasterCount(hSrcDS) );
+            if( !bQuiet )
+                printf( "Using band %d of source image as alpha.\n", 
+                        GDALGetRasterCount(hSrcDS) );
         }
 
 /* -------------------------------------------------------------------- */
@@ -529,8 +530,9 @@ int main( int argc, char ** argv )
                 GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS))) 
             == GCI_AlphaBand )
         {
-            printf( "Using band %d of destination image as alpha.\n", 
-                    GDALGetRasterCount(hDstDS) );
+            if( !bQuiet )
+                printf( "Using band %d of destination image as alpha.\n", 
+                        GDALGetRasterCount(hDstDS) );
                 
             bEnableDstAlpha = TRUE;
         }
