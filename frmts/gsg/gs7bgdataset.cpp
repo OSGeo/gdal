@@ -267,6 +267,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPL_LSBPTR32( &nTag );
+
     if(nTag != nHEADER_TAG)
     {
         delete poDS;
@@ -282,6 +284,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPL_LSBPTR32( &nSize );
+
     if( VSIFReadL( (void *)&nVersion, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -289,6 +293,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to read file version.\n" );
         return NULL;
     }
+
+    CPL_LSBPTR32( &nVersion );
 
     if(nVersion != 1)
     {
@@ -307,6 +313,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
+        CPL_LSBPTR32( &nTag );
+
         if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
         {
             delete poDS;
@@ -314,6 +322,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
                 "Unable to read file section size.\n" );
             return NULL;
         }
+
+        CPL_LSBPTR32( &nSize );
 
         if(nTag != nGRID_TAG)
         {
