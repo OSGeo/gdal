@@ -349,7 +349,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to read raster Y size.\n" );
         return NULL;
     }
-    poDS->nRasterYSize = CPL_LSBWORD32( nRows );
+    CPL_LSBPTR32( &nRows );
+    poDS->nRasterYSize = nRows;
 
     /* Parse number of X axis grid columns */
     GInt32 nCols;
@@ -360,7 +361,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to read raster X size.\n" );
         return NULL;
     }
-    poDS->nRasterXSize = CPL_LSBWORD32( nCols );
+    CPL_LSBPTR32( &nCols );
+    poDS->nRasterXSize = nCols;
 
     /* --------------------------------------------------------------------*/
     /*      Create band information objects.                               */
@@ -468,6 +470,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPL_LSBPTR32( &nTag );
     if(nTag != nDATA_TAG)
     {
         delete poDS;
