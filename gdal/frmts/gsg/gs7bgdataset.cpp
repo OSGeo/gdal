@@ -267,6 +267,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPL_LSBPTR32( &nTag );
+
     if(nTag != nHEADER_TAG)
     {
         delete poDS;
@@ -282,6 +284,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPL_LSBPTR32( &nSize );
+
     if( VSIFReadL( (void *)&nVersion, sizeof(GInt32), 1, poDS->fp ) != 1 )
     {
         delete poDS;
@@ -289,6 +293,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to read file version.\n" );
         return NULL;
     }
+
+    CPL_LSBPTR32( &nVersion );
 
     if(nVersion != 1)
     {
@@ -307,6 +313,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
+        CPL_LSBPTR32( &nTag );
+
         if( VSIFReadL( (void *)&nSize, sizeof(GInt32), 1, poDS->fp ) != 1 )
         {
             delete poDS;
@@ -314,6 +322,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
                 "Unable to read file section size.\n" );
             return NULL;
         }
+
+        CPL_LSBPTR32( &nSize );
 
         if(nTag != nGRID_TAG)
         {
@@ -339,7 +349,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to read raster Y size.\n" );
         return NULL;
     }
-    poDS->nRasterYSize = CPL_LSBWORD32( nRows );
+    CPL_LSBPTR32( &nRows );
+    poDS->nRasterYSize = nRows;
 
     /* Parse number of X axis grid columns */
     GInt32 nCols;
@@ -350,7 +361,8 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to read raster X size.\n" );
         return NULL;
     }
-    poDS->nRasterXSize = CPL_LSBWORD32( nCols );
+    CPL_LSBPTR32( &nCols );
+    poDS->nRasterXSize = nCols;
 
     /* --------------------------------------------------------------------*/
     /*      Create band information objects.                               */
@@ -458,6 +470,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPL_LSBPTR32( &nTag );
     if(nTag != nDATA_TAG)
     {
         delete poDS;
