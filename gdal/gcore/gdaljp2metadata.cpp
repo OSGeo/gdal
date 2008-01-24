@@ -99,6 +99,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
 
     CPLFree( pabyGeoTIFFData );
     CPLFree( pabyMSIGData );
+    CSLDestroy( papszGMLMetadata );
 }
 
 /************************************************************************/
@@ -685,6 +686,9 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         CPLDebug( "GDALJP2Metadata", 
                   "Got projection from GML box: %s", 
                  pszProjection );
+
+    CPLDestroyXMLNode( psXML );
+    psXML = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to flip the axes?                                    */
