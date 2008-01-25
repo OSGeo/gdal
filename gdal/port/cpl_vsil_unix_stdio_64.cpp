@@ -26,6 +26,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************
+ *
+ * NB: Note that in wrappers we are always saving the error state (errno
+ * variable) to avoid side effects during debug prints or other possible
+ * standard function calls (error states will be overwritten after such
+ * a call).
+ *
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -139,9 +146,10 @@ int VSIUnixStdioHandle::Close()
 int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-#ifdef VSI_DEBUG
+    int     nResult = VSI_FSEEK64( fp, nOffset, nWhence );
+    int     nError = errno;
 
-    int nResult = VSI_FSEEK64( fp, nOffset, nWhence );
+#ifdef VSI_DEBUG
 
     if( nWhence == SEEK_SET )
     {
@@ -164,13 +172,10 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
                    fp, nOffset, nWhence, nResult );
     }
 
-    return nResult;
-
-#else
-
-    return( VSI_FSEEK64( fp, nOffset, nWhence ) );
-
 #endif 
+
+    errno = nError;
+    return nResult;
 }
 
 /************************************************************************/
@@ -180,10 +185,12 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSIUnixStdioHandle::Tell()
 
 {
-    vsi_l_offset nOffset = VSI_FTELL64( fp );
+    vsi_l_offset    nOffset = VSI_FTELL64( fp );
+    int             nError = errno;
 
     VSIDebug2( "VSIUnixStdioHandle::Tell(%p) = %ld", fp, (long)nOffset );
 
+    errno = nError;
     return nOffset;
 }
 
@@ -207,25 +214,12 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
     size_t  nResult = fread( pBuffer, nSize, nCount, fp );
-
-    // Here we saving the error state to avoid side effects during debug
-    // prints (file stream and error states will be cleared after print call).
-    // We want debug line to come before the possible error lines.
     int     nError = errno;
-    int     nFpError = ferror(fp);
 
     VSIDebug4( "VSIUnixStdioHandle::Read(%p,%ld,%ld) = %ld", 
                fp, (long)nSize, (long)nCount, (long)nResult );
 
-    if ( !nResult && nFpError )
-    {
-#ifdef notdef
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %ld blocks of %ld byte(s).\n%s",
-                  (long)nCount, (long)nSize, VSIStrerror(nError) );
-#endif
-    }
-
+    errno = nError;
     return nResult;
 }
 
@@ -237,11 +231,13 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
                                   size_t nCount )
 
 {
-    size_t nResult = fwrite( pBuffer, nSize, nCount, fp );
+    size_t  nResult = fwrite( pBuffer, nSize, nCount, fp );
+    int     nError = errno;
 
     VSIDebug4( "VSIUnixStdioHandle::Write(%p,%ld,%ld) = %ld", 
                fp, (long)nSize, (long)nCount, (long)nResult );
 
+    errno = nError;
     return nResult;
 }
 
@@ -275,14 +271,10 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     
     VSIDebug3( "VSIUnixStdioFilesystemHandler::Open(\"%s\",\"%s\") = %p",
                pszFilename, pszAccess, fp );
-    
+
     if( fp == NULL )
     {
-#ifdef notdef
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to open \"%s\" file.\n%s",
-                  pszFilename, VSIStrerror(nError) );
-#endif
+        errno = nError;
         return NULL;
     }
 
@@ -290,6 +282,7 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     
     poHandle->fp = fp;
 
+    errno = nError;
     return poHandle;
 }
 

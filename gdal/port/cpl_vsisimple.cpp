@@ -25,6 +25,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************
+ *
+ * NB: Note that in wrappers we are always saving the error state (errno
+ * variable) to avoid side effects during debug prints or other possible
+ * standard function calls (error states will be overwritten after such
+ * a call).
+ *
  ****************************************************************************/
 
 #include "cpl_config.h"
@@ -70,16 +77,7 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 
     VSIDebug3( "VSIFOpen(%s,%s) = %p", pszFilename, pszAccess, fp );
 
-    if( fp == NULL )
-    {
-#ifdef notdef
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to open \"%s\" file.\n%s",
-                  pszFilename, VSIStrerror(nError) );
-#endif
-        return NULL;
-    }
-
+    errno = nError;
     return( fp );
 }
 
@@ -102,26 +100,31 @@ int VSIFClose( FILE * fp )
 int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 
 {
+    int     nResult = fseek( fp, nOffset, nWhence );
+    int     nError = errno;
+
 #ifdef VSI_DEBUG
     if( nWhence == SEEK_SET )
     {
-        VSIDebug2( "VSIFSeek(%p,%d,SEEK_SET)", fp, nOffset );
+        VSIDebug3( "VSIFSeek(%p,%d,SEEK_SET) = %d", fp, nOffset, nResult );
     }
     else if( nWhence == SEEK_END )
     {
-        VSIDebug2( "VSIFSeek(%p,%d,SEEK_END)", fp, nOffset );
+        VSIDebug3( "VSIFSeek(%p,%d,SEEK_END) = %d", fp, nOffset, nResult );
     }
     else if( nWhence == SEEK_CUR )
     {
-        VSIDebug2( "VSIFSeek(%p,%d,SEEK_CUR)", fp, nOffset );
+        VSIDebug3( "VSIFSeek(%p,%d,SEEK_CUR) = %d", fp, nOffset, nResult );
     }
     else
     {
-        VSIDebug3( "VSIFSeek(%p,%d,%d-Unknown)", fp, nOffset, nWhence );
+        VSIDebug4( "VSIFSeek(%p,%d,%d-Unknown) = %d",
+                   fp, nOffset, nWhence, nResult );
     }
 #endif 
 
-    return( fseek( fp, nOffset, nWhence ) );
+    errno = nError;
+    return nResult;
 }
 
 /************************************************************************/
@@ -131,9 +134,13 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 long VSIFTell( FILE * fp )
 
 {
-    VSIDebug2( "VSIFTell(%p) = %ld", fp, ftell(fp) );
+    long    nOffset = ftell(fp);
+    int     nError = errno;
 
-    return( ftell( fp ) );
+    VSIDebug2( "VSIFTell(%p) = %ld", fp, nOffset );
+
+    errno = nError;
+    return nOffset;
 }
 
 /************************************************************************/
@@ -156,20 +163,11 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 {
     size_t  nResult = fread( pBuffer, nSize, nCount, fp );
     int     nError = errno;
-    int     nFpError = ferror(fp);
 
     VSIDebug4( "VSIFRead(%p,%ld,%ld) = %ld", 
                fp, (long)nSize, (long)nCount, (long)nResult );
 
-    if ( !nResult && nFpError )
-    {
-#ifdef notdef
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %ld blocks of %ld byte(s).\n%s",
-                  (long)nCount, (long)nSize, VSIStrerror(nError) );
-#endif
-    }
-
+    errno = nError;
     return nResult;
 }
 
@@ -180,11 +178,13 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
-    size_t nResult = fwrite( pBuffer, nSize, nCount, fp );
+    size_t  nResult = fwrite( pBuffer, nSize, nCount, fp );
+    int     nError = errno;
 
     VSIDebug4( "VSIFWrite(%p,%ld,%ld) = %ld", 
                fp, (long)nSize, (long)nCount, (long)nResult );
 
+    errno = nError;
     return nResult;
 }
 
@@ -241,18 +241,11 @@ int     VSIFPrintf( FILE * fp, const char * pszFormat, ... )
 
 {
     va_list     args;
-    int         nReturn, nError;
+    int         nReturn;
 
     va_start( args, pszFormat );
     nReturn = vfprintf( fp, pszFormat, args );
-    nError = errno;
     va_end( args );
-
-    if ( nReturn < 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "VSIFPrintf() failed.\n%s", VSIStrerror(nError) );
-    }
 
     return( nReturn );
 }
