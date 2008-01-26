@@ -303,6 +303,21 @@ void NASAKeywordHandler::SkipWhite()
             continue;
         }
 
+        // Skip # style comments 
+        if( *pszHeaderNext == '#'  )
+        {
+            pszHeaderNext += 1;
+
+            // consume till end of line.
+            while( *pszHeaderNext != '\0' 
+                   && *pszHeaderNext != 10
+                   && *pszHeaderNext != 13 )
+            {
+                pszHeaderNext++;
+            }
+            continue;
+        }
+
         // not white space, return. 
         return;
     }
