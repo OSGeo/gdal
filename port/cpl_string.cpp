@@ -66,6 +66,8 @@ CPL_CVSID("$Id$");
  * Append a string to a StringList and return a pointer to the modified
  * StringList.
  * If the input StringList is NULL, then a new StringList is created.
+ * Note that CSLAddString performance when building a list is in O(n^2)
+ * which can cause noticable slow down when n > 10000.
  **********************************************************************/
 char **CSLAddString(char **papszStrList, const char *pszNewString)
 {

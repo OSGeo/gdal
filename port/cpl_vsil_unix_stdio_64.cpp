@@ -355,9 +355,28 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
 
     if ( (hDir = opendir(pszPath)) != NULL )
     {
+        /* In case of really big number of files in the directory, CSLAddString */
+        /* can be slow (see #2158). We then directly build the list. */
+        int nItems=0;
+        int nAllocatedItems=0;
         while( (psDirEntry = readdir(hDir)) != NULL )
         {
-            papszDir = CSLAddString(papszDir, psDirEntry->d_name);
+            if (nItems == 0)
+            {
+                papszDir = (char**) CPLCalloc(2,sizeof(char*));
+                nAllocatedItems = 1;
+            }
+            else if (nItems >= nAllocatedItems)
+            {
+                nAllocatedItems = nAllocatedItems * 2;
+                papszDir = (char**)CPLRealloc(papszDir, 
+                                              (nAllocatedItems+2)*sizeof(char*));
+            }
+
+            papszDir[nItems] = CPLStrdup(psDirEntry->d_name);
+            papszDir[nItems+1] = NULL;
+
+            nItems++;
         }
 
         closedir( hDir );
