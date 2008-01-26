@@ -49,6 +49,7 @@ Object = IsisCube
   End_Group
 End_Object
 
+# Make sure we test hash style comments.
 Object = Label
   Bytes = 65536
 End_Object
