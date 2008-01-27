@@ -243,14 +243,6 @@ int main( int nArgc, char ** papszArgv )
     if( pszDataSource == NULL )
         Usage();
 
-
-    if ( strcmp(pszDataSource, pszDestDataSource) == 0)
-    {
-        printf( "FAILURE:\n"
-                "Source and destination datasets must be different.\n");
-        exit( 1 );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
