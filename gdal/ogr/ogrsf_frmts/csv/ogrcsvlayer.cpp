@@ -163,6 +163,29 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
         OGRFieldDefn oField(pszFieldName, OFTString);
         if (papszFieldTypes!=NULL && iField<CSLCount(papszFieldTypes)) {
+
+            char* pszLeftParenthesis = strchr(papszFieldTypes[iField], '(');
+            if (pszLeftParenthesis && pszLeftParenthesis != papszFieldTypes[iField] &&
+                pszLeftParenthesis[1] >= '0' && pszLeftParenthesis[1] <= '9')
+            {
+                int nWidth = 0;
+                int nPrecision = 0;
+
+                char* pszDot = strchr(pszLeftParenthesis, '.');
+                if (pszDot) *pszDot = 0;
+                *pszLeftParenthesis = 0;
+
+                if (pszLeftParenthesis[-1] == ' ')
+                    pszLeftParenthesis[-1] = 0;
+
+                nWidth = atoi(pszLeftParenthesis+1);
+                if (pszDot)
+                    nPrecision = atoi(pszDot+1);
+
+                oField.SetWidth(nWidth);
+                oField.SetPrecision(nPrecision);
+            }
+
             if (EQUAL(papszFieldTypes[iField], "Integer"))
                 oField.SetType(OFTInteger);
             else if (EQUAL(papszFieldTypes[iField], "Real"))
@@ -174,7 +197,9 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             else if (EQUAL(papszFieldTypes[iField], "Time"))
                 oField.SetType(OFTTime);
             else if (EQUAL(papszFieldTypes[iField], "DateTime"))
-                oField.SetType(OFTDateTime); 
+                oField.SetType(OFTDateTime);
+            else
+                CPLError(CE_Warning, CPLE_NotSupported, "Unknown type : %s", papszFieldTypes[iField]);
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
