@@ -249,9 +249,9 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char *pszHref = CPLGetXMLValue(
         psDoc, "Data_Access.Data_File.DATA_FILE_PATH.href", "" );
+    CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
     CPLString osImageFilename = 
-        CPLFormFilename( CPLGetPath(poOpenInfo->pszFilename), 
-                         pszHref, NULL );
+        CPLFormFilename( osPath, pszHref, NULL );
                                    
 /* -------------------------------------------------------------------- */
 /*      Try and open the file.                                          */
