@@ -383,6 +383,58 @@ def ogr_csv_10():
     return 'success'
 
 ###############################################################################
+# Verify handling of csvt with width and precision specified
+#
+
+def ogr_csv_11():
+    gdaltest.csv_ds = None
+    gdaltest.csv_ds = ogr.Open( 'data/testcsvt.csv' )
+
+    if gdaltest.csv_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.csv_ds.GetLayerByName( 'testcsvt' )
+
+    expect = [ 12 ]
+    tr = ogrtest.check_features_against_list( lyr,'INTCOL',expect)
+    if not tr:
+        return 'fail'
+
+    lyr.ResetReading()
+
+    expect = [ 5.7 ]
+    tr = ogrtest.check_features_against_list( lyr,'REALCOL',expect)
+    if not tr:
+        return 'fail'
+
+    lyr.ResetReading()
+
+    expect = [ 'foo' ]
+    tr = ogrtest.check_features_against_list( lyr,'STRINGCOL',expect)
+    if not tr:
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetWidth() != 5:
+        gdaltest.post_reason( 'Field 0 : expecting width = 5')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetWidth() != 10:
+        gdaltest.post_reason( 'Field 1 : expecting width = 10')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetPrecision() != 7:
+        gdaltest.post_reason( 'Field 1 : expecting precision = 7')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetWidth() != 15:
+        gdaltest.post_reason( 'Field 2 : expecting width = 15')
+        return 'fail'
+
+    lyr.ResetReading()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -421,6 +473,7 @@ gdaltest_list = [
     ogr_csv_8,
     ogr_csv_9,
     ogr_csv_10,
+    ogr_csv_11,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
