@@ -353,7 +353,10 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         if( oSRS.SetFromUserInput( pszSRS ) == OGRERR_NONE )
         {
             if( poDS->nGCPCount > 0 )
+            {
+                CPLFree(poDS->pszGCPProjection);
                 oSRS.exportToWkt( &(poDS->pszGCPProjection) );
+            }
             else
             {
                 char *pszProjection = NULL;
