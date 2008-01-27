@@ -112,7 +112,7 @@ int VSI_SHP_Close( SAFile file )
 void VSI_SHP_Error( const char *message )
 
 {
-    CPLError( CE_Fatal, CPLE_AppDefined, "%s", message );
+    CPLError( CE_Failure, CPLE_AppDefined, "%s", message );
 }
 
 /************************************************************************/
