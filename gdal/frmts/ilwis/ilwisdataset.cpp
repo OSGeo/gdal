@@ -55,20 +55,15 @@ string TrimSpaces(const string& input)
     return input.substr(iFirstNonSpace, iFindLastSpace - iFirstNonSpace + 1);
 }
 
-char line[1024];
-
 string GetLine(FILE* fil)
 {
-    char *p = fgets(line, 1024, fil);
+    const char *p = CPLReadLineL( fil );
     if (p == NULL)
         return string();
 
-    p = line + strlen(line) - 1; // move to last char in buffer
-    while ((p >= line) && isspace(*p))
-        --p;         // isspace is succesful at least once, because of the "\n"
-    *(p + 1) = '\0';   // therefore this will not fail
-
-    return string(line);
+    CPLString osWrk = p;
+    osWrk.Trim();
+    return string(osWrk);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -161,14 +156,14 @@ void IniFile::RemoveSection(const string& section)
 void IniFile::Load()
 {
     enum ParseState { FindSection, FindKey, ReadFindKey, StoreKey, None } state;
-    FILE *filIni = fopen(filename.c_str(), "r");
+    FILE *filIni = VSIFOpenL(filename.c_str(), "r");
     if (filIni == NULL)
         return;
 
     string section, key, value;
     state = FindSection;
     string s;
-    while (!feof(filIni))
+    while (!VSIFEofL(filIni) || !s.empty() )
     {
         switch (state)
         {
@@ -215,32 +210,37 @@ void IniFile::Load()
         }
     }
 
-    fclose(filIni);
+    VSIFCloseL(filIni);
 }
 
 void IniFile::Flush()
 {
-    FILE *filIni = fopen(filename.c_str(), "w+");
+    FILE *filIni = VSIFOpenL(filename.c_str(), "w+");
     if (filIni == NULL)
         return;
 
     Sections::iterator iterSect;
     for (iterSect = sections.begin(); iterSect != sections.end(); ++iterSect)
     {
+        CPLString osLine;
+
         // write the section name
-        fprintf(filIni, "[%s]\n", (*iterSect).first.c_str());
+        osLine.Printf( "[%s]\r\n", (*iterSect).first.c_str());
+        VSIFWriteL( osLine.c_str(), 1, strlen(osLine), filIni );
         SectionEntries *entries = (*iterSect).second;
         SectionEntries::iterator iterEntry;
         for (iterEntry = (*entries).begin(); iterEntry != (*entries).end(); ++iterEntry)
         {
             string key = (*iterEntry).first;
-            fprintf(filIni, "%s=%s\n", TrimSpaces(key).c_str(), (*iterEntry).second.c_str());
+            osLine.Printf( "%s=%s\r\n", 
+                           TrimSpaces(key).c_str(), (*iterEntry).second.c_str());
+            VSIFWriteL( osLine.c_str(), 1, strlen(osLine), filIni );
         }
 
-        fprintf(filIni, "\n");
+        VSIFWriteL( "\r\n", 1, 2, filIni );
     }
 
-    fclose(filIni);
+    VSIFCloseL( filIni );
 }
 
 // End of the implementation of IniFile class. ///////////////////////
@@ -664,7 +664,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like an ILWIS file                               */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL)
+    if( poOpenInfo->nHeaderBytes < 1 )
         return NULL;
 
     string sExt = CPLGetExtension( poOpenInfo->pszFilename );
@@ -949,7 +949,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 /*      Try to create the data file.                                    */
 /* -------------------------------------------------------------------- */
         pszDataName = CPLResetExtension(pszODFName.c_str(), "mp#" );
-//				FILE  *fp = fopen( pszDataName.c_str(), "wb" );
+
         FILE  *fp = VSIFOpenL( pszDataName.c_str(), "wb" );
 
         if( fp == NULL )
@@ -1181,7 +1181,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                             (( double * )pData)[iCol] = rUNDEF;
                     }
                 }
-                int iSize = VSIFWrite( pData, 1, nLineSize, desBand->fpRaw );
+                int iSize = VSIFWriteL( pData, 1, nLineSize, desBand->fpRaw );
                 if ( iSize < 1 )
                 {
                     CPLFree( pData );
@@ -1194,6 +1194,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             if( !pfnProgress(iLine / (nYSize * nBands), NULL, pProgressData ) )
                 return NULL;
         }
+        VSIFFlushL( fpData );
         CPLFree( pData );
     }
 
@@ -1245,6 +1246,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
     {
         GetStoreType(sBandName, psInfo.stStoreType);
         eDataType = ILWIS2GDALType(psInfo.stStoreType);
+        psInfo.bValue = false;
     }					
     else
         GetILWISInfo(sBandName);
@@ -1282,7 +1284,7 @@ ILWISRasterBand::~ILWISRasterBand()
 {
     if( fpRaw != NULL )
     {
-        VSIFClose( fpRaw );
+        VSIFCloseL( fpRaw );
         fpRaw = NULL;
     }
 }
@@ -1302,9 +1304,9 @@ void ILWISRasterBand::ILWISOpen( string pszFileName )
 #else
     if (access(pszDataFile.c_str(), 2) == 0)
 #endif
-        fpRaw = VSIFOpen( pszDataFile.c_str(), "rb+");
+        fpRaw = VSIFOpenL( pszDataFile.c_str(), "rb+");
     else
-        fpRaw = VSIFOpen( pszDataFile.c_str(), "rb");
+        fpRaw = VSIFOpenL( pszDataFile.c_str(), "rb");
 }
 
 /************************************************************************/
@@ -1434,20 +1436,31 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*	return.								*/
 /* -------------------------------------------------------------------- */
     ILWISDataset* poIDS = (ILWISDataset*) poDS;
+
+#ifdef notdef
     if( poIDS->bNewDataset && (poIDS->eAccess == GA_Update))
     {
         FillWithNoData(pImage);
         return CE_None;
     }
+#endif
 
-    VSIFSeek( fpRaw, nBlockSize*nBlockYOff, SEEK_SET );
+    VSIFSeekL( fpRaw, nBlockSize*nBlockYOff, SEEK_SET );
     pBuffer = (char *)CPLMalloc(nBlockSize);
-    if (VSIFRead( pBuffer, 1, nBlockSize, fpRaw ) < 1)
+    if (VSIFReadL( pBuffer, 1, nBlockSize, fpRaw ) < 1)
     {
-        CPLFree( pBuffer );
-        CPLError( CE_Failure, CPLE_FileIO, 
-                  "Read of file failed with fread error.");
-        return CE_Failure;
+        if( poIDS->bNewDataset )
+        {
+            FillWithNoData(pImage);
+            return CE_None;
+        }
+        else
+        {
+            CPLFree( pBuffer );
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Read of file failed with fread error.");
+            return CE_Failure;
+        }
     }
 
     switch (psInfo.stStoreType)
@@ -1544,9 +1557,9 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     void *pData;
     pData = CPLMalloc(nBlockSize);
     
-    VSIFSeek( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
+    VSIFSeekL( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
 
-    bool fDataExists = (VSIFRead( pData, 1, nBlockSize, fpRaw ) >= 1);
+    bool fDataExists = (VSIFReadL( pData, 1, nBlockSize, fpRaw ) >= 1);
 
     if( eErr == CE_None )
     {
@@ -1625,9 +1638,9 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             }
         }
 
-        VSIFSeek( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
+        VSIFSeekL( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
 
-        if (VSIFWrite( pData, 1, nBlockSize, fpRaw ) < 1)
+        if (VSIFWriteL( pData, 1, nBlockSize, fpRaw ) < 1)
         {
             CPLFree( pData );
             CPLError( CE_Failure, CPLE_FileIO, 
