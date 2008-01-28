@@ -481,9 +481,12 @@ class GDALTest:
                     % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
 
                 return 'fail'
-        
-            if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax:
+
+            computed_minmax = new_ds.GetRasterBand(band).ComputeRasterMinMax()
+            if computed_minmax != minmax:
                 post_reason( 'Did not get expected min/max values on still-open file.' )
+                print 'expect: ', minmax
+                print 'got: ', computed_minmax 
                 return 'fail'
         
         new_ds = None
