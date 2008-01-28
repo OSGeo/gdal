@@ -266,7 +266,11 @@ string ReadElement(string section, string entry, string filename)
     MyIniFile = IniFile();
     MyIniFile.Open(filename);
 
-    return MyIniFile.GetKeyValue(section, entry);
+    string ret = MyIniFile.GetKeyValue(section, entry);
+
+    MyIniFile.Close();
+
+    return ret;
 }
 
 bool WriteElement(string sSection, string sEntry,
@@ -967,7 +971,6 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     poDS->eAccess = GA_Update;
     poDS->bNewDataset = TRUE;
     poDS->SetDescription(pszFilename);
-    poDS->pszProjection = CPLStrdup("");
     poDS->osFileName = pszFileName;
     poDS->pszIlwFileName = string(pszFileName);
     if ( nBands == 1 )
