@@ -12,13 +12,15 @@ optional gridspacing (but not positioning).
 The file extension for Terragen heightfields is "TER" or "TERRAIN" (which 
 in the former case is the same as Leveller, but the driver only recognizes Terragen files). The driver ID is "Terragen".
 The dataset is file-based and has only one elevation band.
-Void elevations are not supported. Pixels are considered points.
-<p>
+Void elevations are not supported.
 
+<p>
 <h2>Reading</h2>
 <blockquote>
 <tt>dataset::GetProjectionRef()</tt> returns a local coordinate system 
-using meters.
+using meters. The origin is offset back half a pixel to conform 
+with pixels-as-areas (Terragen considers pixels as points). The 
+coordinate (0,&nbsp;0) will be at the center of the northwest pixel.
 <p>
 <tt>band::GetUnitType()</tt> returns meters.
 <p>
@@ -38,7 +40,8 @@ Call <tt>dataset::SetProjection()</tt> and <tt>dataset::SetGeoTransform()</tt>
 with your coordinate system details. Otherwise, the driver 
 will not encode physical elevations properly. Geographic 
 (degree-based) coordinate systems will be converted to 
-a local meter-based system.
+a local meter-based system. No half-pixel origin shift is done since 
+the Terragen format does not store a projection origin.
 <p>
 To maintain precision, a best-fit baseheight and scaling will 
 be used to use as much of the 16-bit range as possible.
@@ -63,7 +66,8 @@ only uses meters.
 <h2>History</h2>
 v1.0 (Mar 26/06): Created.<br>
 v1.1 (Apr 20/06): Added Create() support and SIZE-only read fix.<br>
-v1.2 (Jun  6/07): Improved baseheight/scale determination when writing. 
+v1.2 (Jun  6/07): Improved baseheight/scale determination when writing.<br>
+v1.3 (Jan 27/08): Pixels-as-areas correction when reading. 
 <p>
 
 <h2>See Also:</h2>

@@ -1,5 +1,5 @@
 /******************************************************************************
- * terragendataset.cpp,v 1.2
+ * terragendataset.cpp,v 1.3
  *
  * Project:  Terragen(tm) TER Driver
  * Purpose:  Reader for Terragen TER documents
@@ -16,9 +16,11 @@
  rcg	jun  6/07	Better heightscale/baseheight determination
                     when writing.
 
+ rcg    jan 27/08   Enforce pixels-as-areas.
+
  *
  ******************************************************************************
- * Copyright (c) 2006-2007 Daylon Graphics Ltd.
+ * Copyright (c) 2006-2008 Daylon Graphics Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -851,10 +853,10 @@ int TerragenDataset::LoadFromFile()
     // Make our projection to have origin at the
     // NW corner, and groundscale to match elev scale
     // (i.e., uniform voxels).
-    m_adfTransform[0] = 0.0;
+    m_adfTransform[0] = m_dSCAL * -0.5;
     m_adfTransform[1] = m_dSCAL;
     m_adfTransform[2] = 0.0;
-    m_adfTransform[3] = 0.0;
+    m_adfTransform[3] = m_dSCAL * -0.5;
     m_adfTransform[4] = 0.0;
     m_adfTransform[5] = m_dSCAL;
 
