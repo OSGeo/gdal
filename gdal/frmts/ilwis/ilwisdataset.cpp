@@ -406,7 +406,6 @@ static string GDALType2ILWIS(GDALDataType type)
 static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
 {
     string st = ReadElement("MapStore", "Type", pszFileName.c_str());
-    transform(st.begin(), st.end(), st.begin(), tolower);
 		
     if( EQUAL(st.c_str(),"byte"))
     {
@@ -481,8 +480,6 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
         georef = ReadElement("Map", "GeoRef", osFileName);
     else
         georef = ReadElement("MapList", "GeoRef", osFileName);
-
-    transform(georef.begin(), georef.end(), georef.begin(), tolower);
 
     //Capture the geotransform, only if the georef is not 'none', 
     //otherwise, the default transform should be returned.
@@ -788,15 +785,14 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 		
         //	Fetch coordinate system
         string csy = ReadElement("GeoRef", "CoordSystem", pszGeoRef);
-        transform(csy.begin(), csy.end(), csy.begin(), tolower);
-
         string pszProj;
+
         if( (csy.length() != 0) && !EQUAL(csy.c_str(),"unknown.csy"))
         {
 
             //Form the coordinate system file name
             if( !(EQUALN( csy.c_str(), "latlon.csy", 10 )) && 
-                !(EQUALN( csy.c_str(), "LatlonWGS84.csy", 15 )))			
+                !(EQUALN( csy.c_str(), "LatlonWGS84.csy", 15 )))            
             {
                 string pszBaseName = string(CPLGetBasename(csy.c_str()) );
                 string pszPath = string(CPLGetPath( poDS->osFileName ));
@@ -1318,7 +1314,6 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 {
     string domName = ReadElement("BaseMap", "Domain", pszFileName.c_str());
     string pszBaseName = string(CPLGetBasename( domName.c_str() ));
-    transform(pszBaseName.begin(), pszBaseName.end(), pszBaseName.begin(), tolower);
     string pszPath = string(CPLGetPath( pszFileName.c_str() ));
 		
     if (GetStoreType(pszFileName, psInfo.stStoreType) != CE_None)
@@ -1370,7 +1365,6 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
         pszDomainName = string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"dom" ));
 				
         string domType = ReadElement("Domain", "Type", pszDomainName.c_str());
-        transform(domType.begin(), domType.end(), domType.begin(), tolower);
         if EQUAL(domType.c_str(),"domainvalue")  
             {
                 if (psInfo.stStoreType == stFloat)
