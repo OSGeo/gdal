@@ -1,15 +1,15 @@
 /******************************************************************************
- * levellerdataset.cpp,v 1.22
+ * levellerdataset.cpp,v 1.3
  *
  * Project:  Leveller TER Driver
- * Purpose:  Reader for Leveller TER documents
+ * Purpose:  I/O for Leveller TER documents
  * Author:   Ray Gardener, Daylon Graphics Ltd.
  *
  * Portions of this module derived from GDAL drivers by 
  * Frank Warmerdam, see http://www.gdal.org
  *
  ******************************************************************************
- * Copyright (c) 2005-2007 Daylon Graphics Ltd.
+ * Copyright (c) 2005-2008 Daylon Graphics Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,11 +45,6 @@ CPL_C_END
 #define str_equal(_s1, _s2)	(0 == strcmp((_s1),(_s2)))
 #define array_size(_a)		(sizeof(_a) / sizeof(_a[0]))
 
-/*GDALDataset *LevellerCreateCopy( const char *, GDALDataset *, int, char **,
-                                GDALProgressFunc pfnProgress, 
-                                void * pProgressData );
-
-*/
 
 /************************************************************************/
 /* ==================================================================== */
@@ -259,7 +254,6 @@ class LevellerDataset : public GDALPamDataset
     double		m_dElevScale;	// physical-to-logical scaling.
     double		m_dElevBase;	// logical offset.
     double		m_adfTransform[6];
-	//double		m_dMeasurePerPixel;
 	double		m_dLogSpan[2];
 
     FILE*			m_fp;
@@ -437,7 +431,7 @@ LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDS )
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = 1;//poDS->GetRasterYSize();
+    nBlockYSize = 1;
 
 	m_pLine = (float*)CPLMalloc(sizeof(float) * nBlockXSize);
 }
@@ -464,10 +458,6 @@ CPLErr LevellerRasterBand::IWriteBlock
     CPLAssert( pImage != NULL );
 	CPLAssert( m_pLine != NULL );
 
-/*	#define sgn(_n) ((_n) < 0 ? -1 : ((_n) > 0 ? 1 : 0) )
-	#define sround(_f)	\
-		(int)((_f) + (0.5 * sgn(_f)))
-*/
 	const size_t pixelsize = sizeof(float);
 
 	LevellerDataset& ds = *(LevellerDataset*)poDS;
@@ -575,15 +565,6 @@ CPLErr LevellerRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         for(size_t i = 0; i < (size_t)nBlockXSize; i++)
             pf[i] = (float)pi[i] / 65536;
     }
-
-
-#if 0
-/* -------------------------------------------------------------------- */
-/*      Convert raw elevations to realworld elevs.                      */
-/* -------------------------------------------------------------------- */
-    for(size_t i = 0; i < nBlockXSize; i++)
-        pf[i] *= poGDS->m_dWorldscale; //this->GetScale();
-#endif
 
     return CE_None;
 }
@@ -809,20 +790,18 @@ bool LevellerDataset::write_header()
 			return false;
 		}
 
-		// todo: GDAL gridpost spacing is based on extent / rastersize
-		// instead of extent / (rastersize-1) like Leveller.
-		// We need to look into this and adjust accordingly.
-
+		// GDAL uses pixels as areas, not points. Adjust accordingly.
+		
 		// Write north-south digital axis.
 		this->write_tag("coordsys_da0_style", LEV_DA_PIXEL_SIZED);
 		this->write_tag("coordsys_da0_fixedend", 0);
-		this->write_tag("coordsys_da0_v0", m_adfTransform[3]);
+		this->write_tag("coordsys_da0_v0", m_adfTransform[3] + m_adfTransform[5] / 2);
 		this->write_tag("coordsys_da0_v1", m_adfTransform[5]);
 
 		// Write east-west digital axis.
 		this->write_tag("coordsys_da1_style", LEV_DA_PIXEL_SIZED);
 		this->write_tag("coordsys_da1_fixedend", 0);
-		this->write_tag("coordsys_da1_v0", m_adfTransform[0]);
+		this->write_tag("coordsys_da1_v0", m_adfTransform[0] + m_adfTransform[1] / 2);
 		this->write_tag("coordsys_da1_v1", m_adfTransform[1]);
 	}
 
@@ -1462,6 +1441,10 @@ bool LevellerDataset::load_from_file(FILE* file, const char* pszFilename)
 			return false;
 		}
 	}
+
+	// GDAL uses pixels as areas, not points.
+	m_adfTransform[0] -= m_adfTransform[1] / 2;
+	m_adfTransform[3] -= m_adfTransform[5] / 2;
 
     return true;
 }
