@@ -443,7 +443,8 @@ class GDALTest:
 
         return 'success'
 
-    def testCreate(self, new_filename = None, out_bands = 3):
+    def testCreate(self, new_filename = None, out_bands = 3,
+                   check_minmax = 1 ):
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -483,7 +484,7 @@ class GDALTest:
                 return 'fail'
 
             computed_minmax = new_ds.GetRasterBand(band).ComputeRasterMinMax()
-            if computed_minmax != minmax:
+            if computed_minmax != minmax and check_minmax:
                 post_reason( 'Did not get expected min/max values on still-open file.' )
                 print 'expect: ', minmax
                 print 'got: ', computed_minmax 
