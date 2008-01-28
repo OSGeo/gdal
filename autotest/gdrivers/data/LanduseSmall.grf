@@ -1,0 +1,17 @@
+[Ilwis]
+Description=Created from MapSubMap(C:\warmerda\ilwisdata\Landuse.mpr,1,1,75,75)
+Time=1201538956
+Version=3.1
+Class=GeoReference SubMap
+Type=GeoRef
+[GeoRef]
+CoordSystem=c:\warmerda\ilwisdata\cochabamba.csy
+Lines=75
+Columns=75
+Type=GeoRefSubMap
+[GeoRefSubMap]
+GeoRef=C:\warmerda\ilwisdata\Cochabamba.grf
+Start=0 0
+[ObjectDependency]
+NrDepObjects=1
+Object0=C:\warmerda\ilwisdata\Cochabamba.grf
