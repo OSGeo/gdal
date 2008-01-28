@@ -748,6 +748,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
         oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
     }
     oSRS.FixupOrdering();
+    CPLFree(pszProjection);
     oSRS.exportToWkt( &pszProjection );
     
 
