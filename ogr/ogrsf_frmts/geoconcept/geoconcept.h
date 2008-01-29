@@ -260,18 +260,20 @@ struct _tField_GCIO {
 };
 
 struct _tSubType_GCIO {
-  GCExportFileH* _h;
-  GCType*        _type;     /* parent's type */
-  char*          name;
-  CPLList*       fields;    /* GCField */
-  GCExtent*      frame;
-  long           id;
-  long           _foff;     /* offset 1st feature */
-  unsigned long  _flin;     /* 1st ligne 1st feature */
-  GCTypeKind     knd;
-  GCDim          sys;
-  int            _nbf;      /* number of user's fields */
-  unsigned long  _nFeatures;
+  GCExportFileH*  _h;
+  GCType*         _type;     /* parent's type */
+  char*           name;
+  CPLList*        fields;    /* GCField */
+  GCExtent*       frame;
+  OGRFeatureDefnH _poFeaDefn;
+  long            id;
+  long            _foff;     /* offset 1st feature */
+  unsigned long   _flin;     /* 1st ligne 1st feature */
+  unsigned long   _nFeatures;
+  GCTypeKind      knd;
+  GCDim           sys;
+  int             _nbf;      /* number of user's fields */
+  int             _hdrW;     /* pragma field written */
 };
 
 struct _tType_GCIO {
@@ -443,6 +445,10 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #define SetSubTypeExtent_GCIO(theSubType,v) (theSubType)->frame= (v)
 #define GetSubTypeGCHandle_GCIO(theSubType) (theSubType)->_h
 #define SetSubTypeGCHandle_GCIO(theSubType,v) (theSubType)->_h= (v)
+#define GetSubTypeFeatureDefn_GCIO(theSubType) (theSubType)->_poFeaDefn
+#define SetSubTypeFeatureDefn_GCIO(theSubType,v) (theSubType)->_poFeaDefn= (v)
+#define IsSubTypeHeaderWritten_GCIO(theSubType) (theSubType)->_hdrW
+#define SetSubTypeHeaderWritten_GCIO(theSubType,v) (theSubType)->_hdrW= (v)
 
 #define GetFieldName_GCIO(theField) (theField)->name
 #define SetFieldName_GCIO(theField,v) (theField)->name= (v)
@@ -464,6 +470,23 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #define GetExtentLROrdinate_GCIO(theExtent) (theExtent)->YLR
 #define SetExtentLRAbscissa_GCIO(theExtent,v) (theExtent)->XLR= (v) > (theExtent)->XLR? (v): (theExtent)->XLR
 #define SetExtentLROrdinate_GCIO(theExtent,v) (theExtent)->YLR= (v) < (theExtent)->YLR? (v): (theExtent)->YLR
+
+/* OGREnvelope C API : */
+#define InitOGREnvelope_GCIO(poEvlp) \
+  if( poEvlp ) \
+  {\
+    (poEvlp)->MinX= (poEvlp)->MinY= HUGE_VAL;\
+    (poEvlp)->MaxX= (poEvlp)->MaxY= -HUGE_VAL;\
+  }
+
+#define MergeOGREnvelope_GCIO(poEvlp,x,y) \
+  if( poEvlp ) \
+  {\
+    if( (x) < (poEvlp)->MinX ) (poEvlp)->MinX= (x);\
+    if( (x) > (poEvlp)->MaxX ) (poEvlp)->MaxX= (x);\
+    if( (y) < (poEvlp)->MinY ) (poEvlp)->MinY= (y);\
+    if( (y) > (poEvlp)->MaxY ) (poEvlp)->MaxY= (y);\
+  }
 
 #ifdef __cplusplus
 }
