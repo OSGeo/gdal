@@ -83,7 +83,9 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
     if ( _papoLayers )
     {
       for( int i = 0; i < _nLayers; i++ )
+      {
         delete _papoLayers[i];
+      }
 
       CPLFree( _papoLayers );
     }
@@ -427,22 +429,10 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
     if( !poFile )
     {
       GCSubType* aSubclass= NULL;
-      if( GetGCMeta_GCIO(_hGXT) )
-      {
-        if( GetGCNbObjects_GCIO(_hGXT)>0 )
-        {
-          CSLDestroy(ft);
-          CPLError( CE_Failure, CPLE_NotSupported,
-                    "Adding layer '%s' to an existing dataset"
-                    "not supported in Geoconcept driver.",
-                    pszLayerName );
-          return NULL;
-        }
-      }
-      else
-      {
-        GCExportFileMetadata* m;
+      GCExportFileMetadata* m;
 
+      if( !(m= GetGCMeta_GCIO(_hGXT)) )
+      {
         if( !(m= CreateHeader_GCIO()) )
         {
           CSLDestroy(ft);
@@ -475,14 +465,6 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
                   pszFeatureType );
         return NULL;
       }
-      poFile = new OGRGeoconceptLayer;
-      if( poFile->Open(aSubclass) != OGRERR_NONE )
-      {
-        CSLDestroy(ft);
-        delete poFile;
-        return NULL;
-      }
-
       /* complete feature type with private fields : */
       AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kIdentifier_GCIO, -100, vIntFld_GCIO, NULL, NULL);
       AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kClass_GCIO, -101, vMemoFld_GCIO, NULL, NULL);
@@ -507,6 +489,14 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
       SetSubTypeGCHandle_GCIO(aSubclass,_hGXT);
 
       /* Add layer to data source layers list */
+      poFile = new OGRGeoconceptLayer;
+      if( poFile->Open(aSubclass) != OGRERR_NONE )
+      {
+        CSLDestroy(ft);
+        delete poFile;
+        return NULL;
+      }
+
       _papoLayers = (OGRGeoconceptLayer **)
                       CPLRealloc( _papoLayers,  sizeof(OGRGeoconceptLayer *) * (_nLayers+1) );
       _papoLayers[_nLayers++] = poFile;
@@ -515,7 +505,6 @@ OGRLayer *OGRGeoconceptDataSource::CreateLayer( const char * pszLayerName,
                "nLayers=%d - last=[%s]",
                _nLayers, poFile->GetLayerDefn()->GetName());
     }
-
     CSLDestroy(ft);
 
 /* -------------------------------------------------------------------- */

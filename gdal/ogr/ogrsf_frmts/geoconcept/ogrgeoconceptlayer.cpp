@@ -72,97 +72,64 @@ OGRGeoconceptLayer::~OGRGeoconceptLayer()
 OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
 
 {
-    GCField* aField;
-    int n, i;
-    char pszln[512];
-
     _gcFeature= Subclass;
-    snprintf(pszln, 511, "%s.%s", GetSubTypeName_GCIO(_gcFeature),
-                                  GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)));
-    pszln[511]='\0';
-
-    _poFeatureDefn = new OGRFeatureDefn(pszln);
-    _poFeatureDefn->Reference();
-    /* can't make difference between single and multi-geometry for some types */
-    switch(GetSubTypeKind_GCIO(_gcFeature)) {
-    case vPoint_GCIO :
-      switch(GetSubTypeDim_GCIO(_gcFeature)) {
-      case v2D_GCIO  :
-        _poFeatureDefn->SetGeomType(wkbPoint);
-        break;
-      case v3D_GCIO  :
-      case v3DM_GCIO :
-        _poFeatureDefn->SetGeomType(wkbPoint25D);
-        break;
-      default        :
-        break;
-      }
-      break;
-    case vLine_GCIO  :
-      switch(GetSubTypeDim_GCIO(_gcFeature)) {
-      case v2D_GCIO  :
-        _poFeatureDefn->SetGeomType(wkbLineString);
-        break;
-      case v3D_GCIO  :
-      case v3DM_GCIO :
-        _poFeatureDefn->SetGeomType(wkbLineString25D);
-        break;
-      default        :
-        break;
-      }
-      break;
-    case vPoly_GCIO  :
-      switch(GetSubTypeDim_GCIO(_gcFeature)) {
-      case v2D_GCIO  :
-        _poFeatureDefn->SetGeomType(wkbMultiPolygon);
-        break;
-      case v3D_GCIO  :
-      case v3DM_GCIO :
-        _poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
-        break;
-      default        :
-        break;
-      }
-      break;
-    default          :
-      _poFeatureDefn->SetGeomType(wkbUnknown);
-      break;
-    }
-    if( (n= CountSubTypeFields_GCIO(_gcFeature))>0 )
+    if( GetSubTypeFeatureDefn_GCIO(_gcFeature) )
     {
-      OGRFieldType oft;
-      for( i= 0; i<n; i++ )
+      _poFeatureDefn = (OGRFeatureDefn *)GetSubTypeFeatureDefn_GCIO(_gcFeature);
+      _poFeatureDefn->Reference();
+    }
+    else
+    {
+      char pszln[512];
+      int n, i;
+
+      snprintf(pszln, 511, "%s.%s", GetSubTypeName_GCIO(_gcFeature),
+                                    GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)));
+      pszln[511]='\0';
+
+      _poFeatureDefn = new OGRFeatureDefn(pszln);
+      _poFeatureDefn->Reference();
+      _poFeatureDefn->SetGeomType(wkbUnknown);
+
+      if( (n= CountSubTypeFields_GCIO(_gcFeature))>0 )
       {
-        if( (aField= GetSubTypeField_GCIO(_gcFeature,i)) )
+        GCField* aField= NULL;
+        OGRFieldType oft;
+        for( i= 0; i<n; i++ )
         {
-          if( IsPrivateField_GCIO(aField) ) continue;
-          switch(GetFieldKind_GCIO(aField)) {
-          case vIntFld_GCIO      :
-          case vPositionFld_GCIO :
-            oft= OFTInteger;
-            break;
-          case vRealFld_GCIO     :
-          case vLengthFld_GCIO   :
-          case vAreaFld_GCIO     :
-            oft= OFTReal;
-            break;
-          case vDateFld_GCIO     :
-            oft= OFTDate;
-            break;
-          case vTimeFld_GCIO     :
-            oft= OFTTime;
-            break;
-          case vMemoFld_GCIO     :
-          case vChoiceFld_GCIO   :
-          case vInterFld_GCIO    :
-          default                :
-            oft= OFTString;
-            break;
+          if( (aField= GetSubTypeField_GCIO(_gcFeature,i)) )
+          {
+            if( IsPrivateField_GCIO(aField) ) continue;
+            switch(GetFieldKind_GCIO(aField)) {
+            case vIntFld_GCIO      :
+            case vPositionFld_GCIO :
+              oft= OFTInteger;
+              break;
+            case vRealFld_GCIO     :
+            case vLengthFld_GCIO   :
+            case vAreaFld_GCIO     :
+              oft= OFTReal;
+              break;
+            case vDateFld_GCIO     :
+              oft= OFTDate;
+              break;
+            case vTimeFld_GCIO     :
+              oft= OFTTime;
+              break;
+            case vMemoFld_GCIO     :
+            case vChoiceFld_GCIO   :
+            case vInterFld_GCIO    :
+            default                :
+              oft= OFTString;
+              break;
+            }
+            OGRFieldDefn ofd(GetFieldName_GCIO(aField), oft);
+            _poFeatureDefn->AddFieldDefn(&ofd);
           }
-          OGRFieldDefn ofd(GetFieldName_GCIO(aField), oft);
-          _poFeatureDefn->AddFieldDefn(&ofd);
         }
       }
+      SetSubTypeFeatureDefn_GCIO(_gcFeature, _poFeatureDefn);
+      _poFeatureDefn->Reference();
     }
 
     return OGRERR_NONE;
@@ -187,7 +154,28 @@ OGRFeature *OGRGeoconceptLayer::GetNextFeature()
 {
     OGRFeature* poFeature = NULL;
 
-    poFeature= (OGRFeature*)ReadNextFeature_GCIO(_gcFeature);
+    for( ;; )
+    {
+      if( !(poFeature= (OGRFeature*)ReadNextFeature_GCIO(_gcFeature)) )
+      {
+        /*
+         * As several features are embed in the Geoconcept file,
+         * when reaching the end of the feature type, resetting
+         * the reader would allow reading other features :
+         * ogrinfo -ro export.gxt FT1 FT2 ...
+         * will be all features for all features types !
+         */ 
+        Rewind_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature),NULL);
+        break;
+      }
+      if( (m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) )
+          &&
+          (m_poAttrQuery == NULL  || m_poAttrQuery->Evaluate( poFeature )) )
+      {
+        break;
+      }
+      delete poFeature;
+    }
 
     CPLDebug( "GEOCONCEPT",
               "FID : %ld\n"
