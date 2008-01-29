@@ -103,10 +103,11 @@ void KML::parse()
         nDone = nLen < sizeof(aBuf);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            fprintf(stderr,
-                "%s at line %u\n",
-                XML_ErrorString(XML_GetErrorCode(oParser)),
-                XML_GetCurrentLineNumber(oParser));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "XML parsing of KML file failed : %s at line %d, column %d",
+                        XML_ErrorString(XML_GetErrorCode(oParser)),
+                        XML_GetCurrentLineNumber(oParser),
+                        XML_GetCurrentColumnNumber(oParser));
             XML_ParserFree(oParser);
             VSIRewind(pKMLFile_);
             return;
@@ -152,6 +153,27 @@ void KML::checkValidity()
         nDone = nLen < sizeof(aBuf);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
+            if (nLen <= BUFSIZ-1)
+                aBuf[nLen] = 0;
+            else
+                aBuf[BUFSIZ-1] = 0;
+            if (strstr(aBuf, "<?xml") && strstr(aBuf, "<kml"))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "XML parsing of KML file failed : %s at line %d, column %d",
+                        XML_ErrorString(XML_GetErrorCode(oParser)),
+                        XML_GetCurrentLineNumber(oParser),
+                        XML_GetCurrentColumnNumber(oParser));
+            }
+            else
+            {
+                CPLDebug("KML",
+                        "XML parsing of file failed : %s at line %d, column %d",
+                        XML_ErrorString(XML_GetErrorCode(oParser)),
+                        XML_GetCurrentLineNumber(oParser),
+                        XML_GetCurrentColumnNumber(oParser));
+            }
+
             XML_ParserFree(oParser);
             VSIRewind(pKMLFile_);
             return;
