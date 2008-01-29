@@ -93,7 +93,8 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
   const char *pszProjection;
   char* pszProj4;
   double a, rf, pm, lat_0, lon_0, lat_1, lat_2, lat_ts, x_0, y_0, k_0;
-  GCSysCoord* syscoord = NULL;
+  double p[7];
+  GCSysCoord* syscoord= NULL;
 
   if( !poSR ) return NULL;
 
@@ -125,12 +126,69 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
   a= OSRGetSemiMajor(poSR,NULL);
   rf= OSRGetInvFlattening(poSR,NULL);
   pm= OSRGetPrimeMeridian(poSR,NULL);
+  OSRGetTOWGS84(poSR,p,7);
 
   if( OSRIsGeographic(poSR) )
   {
-    double p[7];
-
-    OSRGetTOWGS84(poSR,p,7);
+    if( fabs(a-6378137.0000)<=1e-4 && fabs(rf-298.2572)<=1e-4 )
+    {
+      if( p[0]==0.0 &&
+          p[1]==0.0 &&
+          p[2]==0.0 &&
+          p[3]==0.0 &&
+          p[4]==0.0 &&
+          p[5]==0.0 &&
+          p[6]==0.0 )
+      {
+        /* epsg:4326, IGNF:RGM04GEO, IGNF:RGFG95GEO */ /* FIXME : SRS name ? */
+        SetSysCoordSystemID_GCSRS(syscoord, 101);
+        goto end_proc;
+      }
+      goto onError;
+    }
+    else if( fabs(a-6378388.0000)<=1e-4 && fabs(rf-297.0000)<=1e-4 )
+    {
+      if( fabs(p[0]+84.0000)<=1e-4 &&
+          fabs(p[1]+97.0000)<=1e-4 &&
+          fabs(p[2]+117.0000)<=1e-4 &&
+          p[3]==0.0 &&
+          p[4]==0.0 &&
+          p[5]==0.0 &&
+          p[6]==0.0 )
+      {
+        /* epsg:4230 */
+        SetSysCoordSystemID_GCSRS(syscoord, 102);
+        goto end_proc;
+      }
+      goto onError;
+    }
+    else if( fabs(a-6378135.0000)<=1e-4 && fabs(rf-298.2600)<=1e-4 )
+    {
+      if( p[0]==0.0 &&
+          fabs(p[1]-12.0000)<=1e-4 &&
+          fabs(p[2]-6.0000)<=1e-4 &&
+          p[3]==0.0 &&
+          p[4]==0.0 &&
+          p[5]==0.0 &&
+          p[6]==0.0 )
+      {
+        /* epsg:4322 */
+        SetSysCoordSystemID_GCSRS(syscoord, 107);
+        goto end_proc;
+      }
+      goto onError;
+    }
+    else if( fabs(a-6378249.2000)<=1e-4 && fabs(rf-293.4660)<=1e-4 )
+    {
+      if( fabs(pm-2.3372)<=1e-4 )
+      {
+        /* IGNF:NTFP */ /* FIXME : nadgrids and towgs84 */
+        SetSysCoordSystemID_GCSRS(syscoord, 105);
+        goto end_proc;
+      }
+      goto onError;
+    }
+    goto onError;
   }
 
   lat_0= OSRGetProjParm(poSR,SRS_PP_LATITUDE_OF_ORIGIN,0.0,NULL);
@@ -145,7 +203,7 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
   if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
   {
     /* IGNF:IGN72LAM ? */
-    if( fabs(a-6378388.0000)<=1e-4 && rf==297.0 )
+    if( fabs(a-6378388.0000)<=1e-4 && fabs(rf-297.0)<=1e-4 )
     {
       goto onError;
     }
@@ -240,7 +298,7 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
       goto onError;
     }
 
-    if( fabs(a-6378137.0000)<=1e-4)
+    if( fabs(a-6378137.0000)<=1e-4 && fabs(rf-298.2572)<=1e-4)
     {
       if( fabs(lon_0-3.0)<=1.e-4 )
       {
@@ -592,9 +650,15 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
 
   else if( EQUAL(pszProjection,SRS_PT_EQUIRECTANGULAR) )
   {
-    if( fabs(a-6378137.0000)<=1e-4 && lon_0==0.0 && x_0==0.0 && y_0==0.0 && k_0==a )
+    if( fabs(a-6378137.0000)<=1e-4 && lon_0==0.0 && x_0==0.0 && y_0==0.0 )
     {
-      if( fabs(lat_ts-15.0)<=1e-4 )
+      if( lat_ts==0.0 )
+      {
+        /* epsg:32662 */
+        SetSysCoordSystemID_GCSRS(syscoord, 13);
+        goto end_proc;
+      }
+      else if( fabs(lat_ts-15.0)<=1e-4 )
       {
         /* IGNF:GEOPORTALANF */
         SetSysCoordSystemID_GCSRS(syscoord, 2016);
@@ -802,8 +866,10 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
     if( pszWKT!=NULL )
     {
         CPLDebug( "GEOCONCEPT",
-                  "This SysCoord value:\n%d\nwas translated to:\n%s",
-                  syscoord, pszWKT );
+                  "This SysCoord value:\n%d:%d\nwas translated to:\n%s",
+                  GetSysCoordSystemID_GCSRS(syscoord),
+                  GetSysCoordTimeZone_GCSRS(syscoord),
+                  pszWKT );
         CPLFree( pszWKT );
     }
   }
