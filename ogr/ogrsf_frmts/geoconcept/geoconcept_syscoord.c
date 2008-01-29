@@ -104,15 +104,6 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
 
   CPLDebug("GEOCONCEPT", "SRS :\n%s", pszProj4);
 
-  pszProjection = OSRGetAttrValue(poSR, "PROJECTION", 0);
-  if( pszProjection == NULL )
-  {
-    CPLError(CE_Warning, CPLE_IllegalArg,
-             "Failed parsing spatial reference system '%s'.\n",
-             pszProj4);
-    goto onError;
-  }
-
   if( !OSRIsProjected(poSR) && !OSRIsGeographic(poSR) )
   {
     goto onError;
@@ -199,6 +190,15 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
   x_0= OSRGetProjParm(poSR,SRS_PP_FALSE_EASTING,0.0,NULL);
   y_0= OSRGetProjParm(poSR,SRS_PP_FALSE_NORTHING,0.0,NULL);
   k_0= OSRGetProjParm(poSR,SRS_PP_SCALE_FACTOR,1.0,NULL);
+
+  pszProjection = OSRGetAttrValue(poSR, "PROJECTION", 0);
+  if( pszProjection == NULL )
+  {
+    CPLError(CE_Warning, CPLE_IllegalArg,
+             "Failed parsing spatial reference system '%s'.\n",
+             pszProj4);
+    goto onError;
+  }
 
   if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
   {
