@@ -122,8 +122,16 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
     }
     else if( bStatOK && !bIsDirectory )
     {
-        CPLString osDir = CPLGetDirname( pszFilename );
-        papszSiblingFiles = VSIReadDir( osDir );
+        if( CSLTestBoolean( 
+                CPLGetConfigOptions( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" )) )
+        {
+            /* skip reading the directory */
+        }
+        else
+        {
+            CPLString osDir = CPLGetDirname( pszFilename );
+            papszSiblingFiles = VSIReadDir( osDir );
+        }
     }
     else
         papszSiblingFiles = NULL;
