@@ -2,6 +2,10 @@
 
 include ../../GDALmake.opt
 
+ifndef $(PYTHON)
+        export PYTHON=python
+endif
+
 all: build
 
 BINDING = python
@@ -43,33 +47,33 @@ osr_wrap.cpp: ../include/python/osr_python.i
 generate: ${WRAPPERS}
 
 build:
-	python setup.py build
+	$(PYTHON) setup.py build
 
 egg:
-	python setup.py bdist_egg 
+	$(PYTHON) setup.py bdist_egg 
 	
 install:
 
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
-	python setup.py install 
+	$(PYTHON) setup.py install 
 else
-	python setup.py install --prefix=$(DESTDIR)$(prefix)
+	$(PYTHON) setup.py install --prefix=$(DESTDIR)$(prefix)
 endif
 
 	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
 	
 docs:
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrlayer_8cpp.xml ../include/python/docs/ogr_layer_docs.i OGRLayerShadow OGR_L_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrlayer_8cpp.xml ../include/python/docs/ogr_layer_docs.i OGRLayerShadow OGR_L_
 
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrgeometry_8cpp.xml ../include/python/docs/ogr_geometry_docs.i OGRGeometryShadow OGR_G_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrgeometry_8cpp.xml ../include/python/docs/ogr_geometry_docs.i OGRGeometryShadow OGR_G_
 
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrdatasource_8cpp.xml ../include/python/docs/ogr_datasource_docs.i OGRDataSourceShadow OGR_DS_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrdatasource_8cpp.xml ../include/python/docs/ogr_datasource_docs.i OGRDataSourceShadow OGR_DS_
 
 
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrsfdriver_8cpp.xml ../include/python/docs/ogr_driver_docs.i OGRDriverShadow OGR_Dr_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrsfdriver_8cpp.xml ../include/python/docs/ogr_driver_docs.i OGRDriverShadow OGR_Dr_
 
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrfeature_8cpp.xml ../include/python/docs/ogr_feature_docs.i OGRFeatureShadow OGR_F_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrfeature_8cpp.xml ../include/python/docs/ogr_feature_docs.i OGRFeatureShadow OGR_F_
 
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrfeaturedefn_8cpp.xml ../include/python/docs/ogr_featuredef_docs.i OGRFeatureDefnShadow OGR_FD_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrfeaturedefn_8cpp.xml ../include/python/docs/ogr_featuredef_docs.i OGRFeatureDefnShadow OGR_FD_
 
-	python ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrfielddefn_8cpp.xml ../include/python/docs/ogr_fielddef_docs.i OGRFieldDefnShadow OGR_Fld_
+	$(PYTHON) ../include/python/docs/doxy2swig.py ../../ogr/xml/ogrfielddefn_8cpp.xml ../include/python/docs/ogr_fielddef_docs.i OGRFieldDefnShadow OGR_Fld_
