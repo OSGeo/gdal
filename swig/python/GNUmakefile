@@ -3,7 +3,7 @@
 include ../../GDALmake.opt
 
 ifndef $(PYTHON)
-        export PYTHON=python
+        PYTHON=python
 endif
 
 all: build
