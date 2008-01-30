@@ -815,6 +815,8 @@ int WCSDataset::DescribeCoverage()
     if( psDC == NULL )
         return FALSE;
 
+    CPLStripXMLNamespace( psDC, NULL, TRUE );
+
 /* -------------------------------------------------------------------- */
 /*      Did we get a CoverageOffering?                                  */
 /* -------------------------------------------------------------------- */
@@ -1206,7 +1208,8 @@ int WCSDataset::ExtractGridInfo()
         CSLTokenizeStringComplex( CPLGetXMLValue( psGCRS, "GridOffsets", ""),
                                   " ", FALSE, FALSE );
 
-    if( strstr(pszGridType,":2dGridIn2dCrs") )
+    if( strstr(pszGridType,":2dGridIn2dCrs") 
+        || strstr(pszGridType,":2dGridin2dCrs") )
     {
         if( CSLCount(papszOffsetTokens) == 4
             && CSLCount(papszOriginTokens) == 2 )
