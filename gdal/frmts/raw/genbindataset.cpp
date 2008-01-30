@@ -439,14 +439,23 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
     CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
+    CPLString osHDRFilename;
 
-    int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
-                              CPLFormFilename( NULL, osName, "hdr" ) );
-    if( iFile < 0 ) // return if there is no corresponding .hdr file
-        return NULL;
+    if( poOpenInfo->papszSiblingFiles )
+    {
+        int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
+                                  CPLFormFilename( NULL, osName, "hdr" ) );
+        if( iFile < 0 ) // return if there is no corresponding .hdr file
+            return NULL;
 
-    CPLString osHDRFilename = 
-        CPLFormFilename( osPath, poOpenInfo->papszSiblingFiles[iFile], NULL );
+        osHDRFilename = 
+            CPLFormFilename( osPath, poOpenInfo->papszSiblingFiles[iFile],
+                             NULL );
+    }
+    else
+    {
+        osHDRFilename = CPLFormCIFilename( NULL, osName, "hdr" );
+    }
 
     bSelectedHDR = EQUAL( osHDRFilename, poOpenInfo->pszFilename );
 
