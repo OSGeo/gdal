@@ -123,7 +123,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
     else if( bStatOK && !bIsDirectory )
     {
         if( CSLTestBoolean( 
-                CPLGetConfigOptions( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" )) )
+                CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" )) )
         {
             /* skip reading the directory */
         }
