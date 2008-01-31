@@ -566,6 +566,18 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCDeleteFeature) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCRandomWrite) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return bUpdateAccess;
+
     else 
         return OGRMySQLLayer::TestCapability( pszCap );
 }
