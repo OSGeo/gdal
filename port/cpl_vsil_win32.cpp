@@ -460,9 +460,28 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
 
     if ( (hFile = _findfirst( pszFileSpec, &c_file )) != -1L )
     {
+        /* In case of really big number of files in the directory, CSLAddString */
+        /* can be slow (see #2158). We then directly build the list. */
+        int nItems=0;
+        int nAllocatedItems=0;
         do
         {
-            papszDir = CSLAddString(papszDir, c_file.name);
+            if (nItems == 0)
+            {
+                papszDir = (char**) CPLCalloc(2,sizeof(char*));
+                nAllocatedItems = 1;
+            }
+            else if (nItems >= nAllocatedItems)
+            {
+                nAllocatedItems = nAllocatedItems * 2;
+                papszDir = (char**)CPLRealloc(papszDir, 
+                                              (nAllocatedItems+2)*sizeof(char*));
+            }
+
+            papszDir[nItems] = CPLStrdup(c_file.name);
+            papszDir[nItems+1] = NULL;
+
+            nItems++;
         } while( _findnext( hFile, &c_file ) == 0 );
 
         _findclose( hFile );
