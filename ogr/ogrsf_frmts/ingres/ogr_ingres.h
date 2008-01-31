@@ -60,6 +60,7 @@ public:
     
     char **GetRow();
     void   DumpRow( FILE * );
+    static void         ReportError( IIAPI_GENPARM *, const char * = NULL );
 };
 
 /************************************************************************/
@@ -171,7 +172,6 @@ class OGRIngresTableLayer : public OGRIngresLayer
 //    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 };
 
-#ifdef notdef
 /************************************************************************/
 /*                         OGRIngresResultLayer                          */
 /************************************************************************/
@@ -189,8 +189,8 @@ class OGRIngresResultLayer : public OGRIngresLayer
 
   public:
                         OGRIngresResultLayer( OGRIngresDataSource *,
-                                             const char * pszRawStatement,
-                                             INGRES_RES *hResultSetIn );
+                                              const char * pszRawStatement,
+                                              OGRIngresStatement *hStmt );
     virtual             ~OGRIngresResultLayer();
 
     OGRFeatureDefn     *ReadResultDefinition();
@@ -199,9 +199,6 @@ class OGRIngresResultLayer : public OGRIngresLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 };
-#endif
-
-class OGRIngresLayer;
 
 /************************************************************************/
 /*                          OGRIngresDataSource                          */
@@ -261,8 +258,6 @@ class OGRIngresDataSource : public OGRDataSource
 
     // nonstandard
 
-    void                ReportError( const char * = NULL );
-    
     char               *LaunderName( const char * );
 };
 

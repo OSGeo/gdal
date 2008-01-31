@@ -6,7 +6,7 @@ INGRES_INC = 	-I$(II_SYSTEM)/ingres/files
 include ../../../GDALmake.opt
 
 OBJ	=	ogringresdriver.o ogringresstatement.o ogringresdatasource.o \
-		ogringrestablelayer.o ogringreslayer.o
+		ogringrestablelayer.o ogringreslayer.o ogringresresultlayer.o
 
 #	ogringresresultlayer.o
 
