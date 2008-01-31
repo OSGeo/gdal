@@ -532,11 +532,16 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
     CPLMutexHolder oHolder( &hMutex );
 
     std::map<CPLString,VSIMemFile*>::const_iterator iter;
-    char **papszResult = NULL;
+    char **papszDir = NULL;
     int nPathLen = strlen(pszPath);
 
     if( pszPath[nPathLen-1] == '/' )
         nPathLen--;
+
+    /* In case of really big number of files in the directory, CSLAddString */
+    /* can be slow (see #2158). We then directly build the list. */
+    int nItems=0;
+    int nAllocatedItems=0;
 
     for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
     {
@@ -545,12 +550,26 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
             && pszFilePath[nPathLen] == '/' 
             && strstr(pszFilePath+nPathLen+1,"/") == NULL )
         {
-            papszResult = CSLAddString( papszResult, 
-                                        pszFilePath+nPathLen+1 );
+            if (nItems == 0)
+            {
+                papszDir = (char**) CPLCalloc(2,sizeof(char*));
+                nAllocatedItems = 1;
+            }
+            else if (nItems >= nAllocatedItems)
+            {
+                nAllocatedItems = nAllocatedItems * 2;
+                papszDir = (char**)CPLRealloc(papszDir, 
+                                              (nAllocatedItems+2)*sizeof(char*));
+            }
+
+            papszDir[nItems] = CPLStrdup(pszFilePath+nPathLen+1);
+            papszDir[nItems+1] = NULL;
+
+            nItems++;
         }
     }
 
-    return papszResult;
+    return papszDir;
 }
 
 /************************************************************************/
