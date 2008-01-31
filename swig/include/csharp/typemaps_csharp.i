@@ -184,7 +184,7 @@ OPTIONAL_POD(int,i);
 %typemap(cstype) char **options %{string[]%}
 %typemap(in) char **options %{ $1 = ($1_ltype)$input; %}
 %typemap(out) char **options %{ $result = $1; %}
-%typemap(csin) char **options "new $modulePINVOKE.StringListMarshal($csinput)._ar"
+%typemap(csin) char **options "($csinput != null)? new $modulePINVOKE.StringListMarshal($csinput)._ar : null"
 %typemap(csout, excode=SWIGEXCODE) char**options {
         /* %typemap(csout) char**options */
         IntPtr cPtr = $imcall;
