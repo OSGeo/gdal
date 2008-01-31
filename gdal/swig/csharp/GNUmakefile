@@ -28,7 +28,7 @@ clean:
 	-rm -f ${CSHARP_MODULES} *.$(OBJ_EXT) *.config *.dll *.mdb *.exe
 
 veryclean: clean
-	-rm -f *.cs *.cpp *.c const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp
+	-rm -f const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp
 
 generate: interface
 interface:
@@ -39,6 +39,9 @@ interface:
 	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -namespace OSGeo.OGR -dllimport ogr_wrap -o ogr/ogr_wrap.cpp ../include/ogr.i
 
 build: ${CSHARP_OBJECTS} ${CSHARP_MODULES} gdal_csharp samples
+
+sign:
+	sn -k gdal.snk
 
 install:
 	@echo "No installation to be done"
@@ -60,10 +63,10 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(CC) $(CFLAGS) $(GDAL_INCLUDE) -c $<
 
 gdal_csharp:
-	$(CSC) /debug:full /target:library /out:ogr_csharp.dll ogr/*.cs
-	$(CSC) /debug:full /target:library /out:gdal_csharp.dll gdal/*.cs
-	$(CSC) /debug:full /target:library /out:gdalconst_csharp.dll const/*.cs
-	$(CSC) /debug:full /target:library /out:osr_csharp.dll osr/*.cs
+	$(CSC) /debug:full /target:library /out:ogr_csharp.dll ogr/*.cs AssemblyInfo.cs
+	$(CSC) /debug:full /target:library /out:gdal_csharp.dll gdal/*.cs AssemblyInfo.cs
+	$(CSC) /debug:full /target:library /out:gdalconst_csharp.dll const/*.cs AssemblyInfo.cs
+	$(CSC) /debug:full /target:library /out:osr_csharp.dll osr/*.cs AssemblyInfo.cs
 
 samples:
 	$(CSC) /r:ogr_csharp.dll /out:ogrinfo.exe apps/ogrinfo.cs
