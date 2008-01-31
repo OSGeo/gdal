@@ -78,6 +78,7 @@ samples:
 	$(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps/ReadXML.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALInfo.exe apps/GDALInfo.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALOverviews.exe apps/GDALOverviews.cs
+	$(CSC) /r:gdal_csharp.dll /out:GDALCreateCopy.exe apps/GDALCreateCopy.cs
 
 test:
 	LC_ALL=C mono createdata.exe Data pointlayer
