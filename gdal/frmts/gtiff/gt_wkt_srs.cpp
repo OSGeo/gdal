@@ -344,7 +344,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                     pszAngularUnits,
                     psDefn->UOMAngleInDegrees * 0.0174532925199433 );
 
-    if( psDefn->GCS != KvUserDefined )
+    if( psDefn->GCS != KvUserDefined && psDefn->GCS > 0 )
         oSRS.SetAuthority( "GEOGCS", "EPSG", psDefn->GCS );
 
     if( psDefn->Datum != KvUserDefined )
