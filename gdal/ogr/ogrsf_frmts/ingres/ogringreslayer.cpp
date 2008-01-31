@@ -112,7 +112,6 @@ void OGRIngresLayer::ResetReading()
 OGRFeature *OGRIngresLayer::GetNextFeature()
 
 {
-
     for( ; TRUE; )
     {
         OGRFeature      *poFeature;
@@ -310,10 +309,7 @@ OGRFeature *OGRIngresLayer::GetNextRawFeature()
         poResultSet = new OGRIngresStatement( poDS->GetConn() );
 
         if( !poResultSet->ExecuteSQL( pszQueryStatement ) )
-        {
-            poDS->ReportError( pszQueryStatement );
             return NULL;
-        }
     }
 
 /* -------------------------------------------------------------------- */

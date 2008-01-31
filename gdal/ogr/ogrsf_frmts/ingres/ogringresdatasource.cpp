@@ -82,25 +82,6 @@ OGRIngresDataSource::~OGRIngresDataSource()
 }
 
 /************************************************************************/
-/*                            ReportError()                             */
-/************************************************************************/
-
-void OGRIngresDataSource::ReportError( const char *pszDescription )
-
-{
-#ifdef notdef
-    if( pszDescription )
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Ingres error message:%s Description: %s", 
-                  ingres_error( hConn ), 
-                  pszDescription );
-    else
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", ingres_error( hConn ) );
-#endif
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -151,17 +132,17 @@ int OGRIngresDataSource::Open( const char * pszNewName, int bUpdate )
     connParm.co_timeout = -1;
 
     IIapi_connect( &connParm );
-    
+       
     while( connParm.co_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
 
     hConn = connParm.co_connHandle;
 
-    if( hConn == NULL )
+    if( connParm.co_genParm.gp_status != IIAPI_ST_SUCCESS 
+        || hConn == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to connect to Ingres database '%s' failed.",
-                  pszDBName );
+        OGRIngresStatement::ReportError( &(connParm.co_genParm), 
+                                    "Failed to connect to Ingres database." );
         return FALSE;
     }
 
@@ -542,13 +523,6 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
-#ifdef notdef
-    if( poSpatialFilter != NULL )
-    {
-        CPLDebug( "OGR_INGRES", 
-          "Spatial filter ignored for now in OGRIngresDataSource::ExecuteSQL()" );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for OGRSQL dialect.                  */
 /* -------------------------------------------------------------------- */
@@ -557,53 +531,21 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           poSpatialFilter, 
                                           pszDialect );
 
-/* -------------------------------------------------------------------- */
-/*      Special case DELLAYER: command.                                 */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    if( poSpatialFilter != NULL )
     {
-        const char *pszLayerName = pszSQLCommand + 9;
-
-        while( *pszLayerName == ' ' )
-            pszLayerName++;
-
-        DeleteLayer( pszLayerName );
-        return NULL;
+        CPLDebug( "OGR_INGRES", 
+          "Spatial filter ignored for now in OGRIngresDataSource::ExecuteSQL()" );
     }
-#endif
-
-/* -------------------------------------------------------------------- */
-/*      Make sure there isn't an active transaction already.            */
-/* -------------------------------------------------------------------- */
-    InterruptLongResult();
 
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
-    INGRES_RES *hResultSet;
+    OGRIngresStatement *poStatement = new OGRIngresStatement( hConn );
 
-    if( ingres_query( hConn, pszSQLCommand ) )
+    if( !poStatement->ExecuteSQL( pszSQLCommand ) )
     {
-        ReportError( pszSQLCommand );
+        delete poStatement;
         return NULL;
-    }
-
-    hResultSet = ingres_use_result( hConn );
-    if( hResultSet == NULL )
-    {
-        if( ingres_field_count( hConn ) == 0 )
-        {
-            CPLDebug( "INGRES", "Command '%s' succeeded, %d rows affected.", 
-                      pszSQLCommand, 
-                      (int) ingres_affected_rows(hConn) );
-            return NULL;
-        }
-        else
-        {
-            ReportError( pszSQLCommand );
-            return NULL;
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -613,11 +555,9 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     OGRIngresResultLayer *poLayer = NULL;
 
-    poLayer = new OGRIngresResultLayer( this, pszSQLCommand, hResultSet );
+    poLayer = new OGRIngresResultLayer( this, pszSQLCommand, poStatement );
         
     return poLayer;
-#endif
-    return NULL;
 }
 
 /************************************************************************/

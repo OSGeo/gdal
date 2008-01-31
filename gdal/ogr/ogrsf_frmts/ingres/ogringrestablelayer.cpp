@@ -113,7 +113,6 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 
     if( !oStatement.ExecuteSQL( osCommand ) )
     {
-        poDS->ReportError( "DESCRIBE Failed" );
         return NULL;
     }
 

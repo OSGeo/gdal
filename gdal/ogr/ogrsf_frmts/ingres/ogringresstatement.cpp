@@ -128,6 +128,14 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     while( queryParm.qy_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
 
+    if( queryParm.qy_genParm.gp_status != IIAPI_ST_SUCCESS 
+        || hConn == NULL )
+    {
+        ReportError( &(queryParm.qy_genParm), 
+                     CPLString().Printf( "IIapi_query(%s)", pszStatement ) );
+        return FALSE;
+    }
+
     if( queryParm.qy_stmtHandle == NULL )
         return FALSE;
 
@@ -233,5 +241,97 @@ void OGRIngresStatement::DumpRow( FILE *fp )
                  getDescrParm.gd_descriptor[i].ds_columnName, 
                  papszFields[i] );
     }                 
+}
+
+/************************************************************************/
+/*                            ReportError()                             */
+/************************************************************************/
+
+void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
+                                      const char *pszDescription )
+
+{
+    IIAPI_GETEINFOPARM  getErrParm; 
+
+    /*
+    ** Check API call status.
+    */
+    const char *pszCode = 
+        (genParm->gp_status == IIAPI_ST_SUCCESS) ?  
+        "IIAPI_ST_SUCCESS" :
+        (genParm->gp_status == IIAPI_ST_MESSAGE) ?  
+        "IIAPI_ST_MESSAGE" :
+        (genParm->gp_status == IIAPI_ST_WARNING) ?  
+        "IIAPI_ST_WARNING" :
+        (genParm->gp_status == IIAPI_ST_NO_DATA) ?  
+        "IIAPI_ST_NO_DATA" :
+        (genParm->gp_status == IIAPI_ST_ERROR)   ?  
+        "IIAPI_ST_ERROR"   :
+        (genParm->gp_status == IIAPI_ST_FAILURE) ? 
+        "IIAPI_ST_FAILURE" :
+        (genParm->gp_status == IIAPI_ST_NOT_INITIALIZED) ?
+        "IIAPI_ST_NOT_INITIALIZED" :
+        (genParm->gp_status == IIAPI_ST_INVALID_HANDLE) ?
+        "IIAPI_ST_INVALID_HANDLE"  :
+        (genParm->gp_status == IIAPI_ST_OUT_OF_MEMORY) ?
+        "IIAPI_ST_OUT_OF_MEMORY"   :
+        "(unknown status)";
+
+    /*
+    ** Check for error information.
+    */
+    if ( ! genParm->gp_errorHandle ) return;
+    getErrParm.ge_errorHandle = genParm->gp_errorHandle;
+    
+    CPLString osErrorMessage;
+    CPLErr eType = CE_Failure;
+        
+    osErrorMessage.Printf( "%s: %s", pszDescription, pszCode );
+
+    do
+    { 
+	/*
+	** Invoke API function call.
+ 	*/
+    	IIapi_getErrorInfo( &getErrParm );
+
+ 	/*
+	** Break out of the loop if no data or failed.
+	*/
+    	if ( getErrParm.ge_status != IIAPI_ST_SUCCESS )
+	    break;
+
+	/*
+	** Process result.
+	*/
+
+	switch( getErrParm.ge_type )
+	{
+           case IIAPI_GE_ERROR		: 
+            eType = CE_Failure; 
+            break;
+
+          case IIAPI_GE_WARNING	:
+            eType = CE_Warning;
+            break;
+
+          case IIAPI_GE_MESSAGE	:
+            eType = CE_Debug;
+            break;
+
+          default:
+            eType = CE_Failure;
+            break;
+	}
+
+        CPLString osMoreMsg;
+
+        osMoreMsg.Printf( "\n'%s' 0x%x\n%s",
+                  getErrParm.ge_SQLSTATE, getErrParm.ge_errorCode,
+                  getErrParm.ge_message ? getErrParm.ge_message : "NULL" );
+        osErrorMessage += osMoreMsg;
+    } while( 1 );
+
+    CPLError( eType, CPLE_AppDefined, "%s", osErrorMessage.c_str() );
 }
 
