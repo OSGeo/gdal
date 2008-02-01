@@ -108,6 +108,7 @@ ds[0:4] would return a list of the first four layers."""
         """Support list and slice -like access to the layer.
 layer[0] would return the first feature on the layer.
 layer[0:4] would return a list of the first four features."""
+        import types
         if isinstance(value, types.SliceType):
             output = []
             if value.stop == sys.maxint:
