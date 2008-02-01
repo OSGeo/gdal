@@ -1901,18 +1901,6 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
         return CE_None;
 
 /* -------------------------------------------------------------------- */
-/*      This is rather overkill, but relatively harmless so we do it    */
-/*      here to be sure.                                                */
-/* -------------------------------------------------------------------- */
-    if( nCompression == COMPRESSION_JPEG 
-        && nPhotometric == PHOTOMETRIC_YCBCR 
-        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                              "YES") ) )
-    {
-        TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
-    }
-
-/* -------------------------------------------------------------------- */
 /*      If we have a dirty loaded block, flush it out first.            */
 /* -------------------------------------------------------------------- */
     if( nLoadedBlock != -1 && bLoadedBlockDirty )
@@ -3100,8 +3088,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         nPhotometric == PHOTOMETRIC_LOGL ||
         nPhotometric == PHOTOMETRIC_LOGLUV ||
         ( nPhotometric == PHOTOMETRIC_YCBCR 
-          && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                                "YES") ))  )
+          && nCompression != COMPRESSION_JPEG ) )
     {
         char	szMessage[1024];
 
@@ -3116,6 +3103,19 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         }
     }
         
+/* -------------------------------------------------------------------- */
+/*      YCbCr JPEG compressed images should be translated on the fly    */
+/*      to RGB by libtiff/libjpeg unless specifically requested         */
+/*      otherwise.                                                      */
+/* -------------------------------------------------------------------- */
+    if( nCompression == COMPRESSION_JPEG 
+        && nPhotometric == PHOTOMETRIC_YCBCR 
+        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                              "YES") ) )
+    {
+        TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the odd bits interface?                */
 /* -------------------------------------------------------------------- */
