@@ -122,10 +122,10 @@ int PNMDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fp == NULL )
         return FALSE;
 
-    if( poOpenInfo->pabyHeader[0] != 'P'  &&
-        (poOpenInfo->pabyHeader[2] != ' '  ||    // XXX: Magick number
-         poOpenInfo->pabyHeader[2] != '\t' ||    // may be followed
-         poOpenInfo->pabyHeader[2] != '\n' ||    // any of the blank
+    if( poOpenInfo->pabyHeader[0] != 'P'  ||
+        (poOpenInfo->pabyHeader[2] != ' '  &&    // XXX: Magick number
+         poOpenInfo->pabyHeader[2] != '\t' &&    // may be followed
+         poOpenInfo->pabyHeader[2] != '\n' &&    // any of the blank
          poOpenInfo->pabyHeader[2] != '\r') )    // characters
         return FALSE;
 
