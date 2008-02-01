@@ -155,14 +155,15 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char  *pszSrc = (const char *) poOpenInfo->pabyHeader;
     char        szToken[512];
-    int         iIn, iOut, iToken = 0, nWidth =-1, nHeight=-1, nMaxValue=-1;
+    int         iIn, iToken = 0, nWidth =-1, nHeight=-1, nMaxValue=-1;
+    unsigned int iOut;
 
     iIn = 2;
     while( iIn < poOpenInfo->nHeaderBytes && iToken < 3 )
     {
         iOut = 0;
         szToken[0] = '\0';
-        while( iIn < poOpenInfo->nHeaderBytes )
+        while( iOut < sizeof(szToken) && iIn < poOpenInfo->nHeaderBytes )
         {
             if( pszSrc[iIn] == '#' )
             {
