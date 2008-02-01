@@ -363,6 +363,38 @@ def tiff_write_11():
                             options = [ 'NBITS=1', 'COMPRESS=CCITTFAX4' ] )
     return ut.testCreateCopy()
 
+###############################################################################
+# Read JPEG Compressed YCbCr subsampled image. 
+
+def tiff_write_12():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'JPEG') == -1:
+        return 'skip'
+    
+    ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 31952 )
+                           
+    return ut.testOpen()
+
+###############################################################################
+# Write JPEG Compressed YCbCr subsampled image. 
+
+def tiff_write_13():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'JPEG') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 17255,
+                            options = [ 'TILED=YES',
+                                        'COMPRESS=JPEG',
+                                        'PHOTOMETRIC=YCBCR',
+                                        'JPEG_QUALITY=31' ] )
+                           
+    return ut.testCreateCopy( skip_preclose_test=1 )
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -380,6 +412,8 @@ gdaltest_list = [
     tiff_write_9,
     tiff_write_10,
     tiff_write_11,
+    tiff_write_12,
+    tiff_write_13,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':

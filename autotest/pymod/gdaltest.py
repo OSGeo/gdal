@@ -339,7 +339,9 @@ class GDALTest:
         
 
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
-                       vsimem = 0, new_filename = None, strict_in = 0 ):
+                       vsimem = 0, new_filename = None, strict_in = 0,
+                       skip_preclose_test = 0 ):
+
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -366,7 +368,7 @@ class GDALTest:
                          + '\n' + gdal.GetLastErrorMsg() )
             return 'fail'
 
-        if self.band > 0:
+        if self.band > 0 and skip_preclose_test == 0:
             bnd = new_ds.GetRasterBand(self.band)
             if self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason(
@@ -394,8 +396,11 @@ class GDALTest:
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
             if self.chksum is not None and bnd.Checksum() != self.chksum:
-                post_reason( 'Did not get expected checksum on reopened file.' )
+                post_reason( 'Did not get expected checksum on reopened file.\n'
+                             '    Got %d instead of %d.' \
+                             % (bnd.Checksum(), self.chksum) )
                 return 'fail'
+            
             got_minmax = bnd.ComputeRasterMinMax()
             if got_minmax != minmax and check_minmax:
                 post_reason( \
