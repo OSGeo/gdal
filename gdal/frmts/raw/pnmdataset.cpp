@@ -121,10 +121,10 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fp == NULL )
         return NULL;
 
-    if( poOpenInfo->pabyHeader[0] != 'P'  &&
-        (poOpenInfo->pabyHeader[2] != ' '  ||    // XXX: Magick number
-         poOpenInfo->pabyHeader[2] != '\t' ||    // may be followed
-         poOpenInfo->pabyHeader[2] != '\n' ||    // any of the blank
+    if( poOpenInfo->pabyHeader[0] != 'P'  ||
+        (poOpenInfo->pabyHeader[2] != ' '  &&    // XXX: Magick number
+         poOpenInfo->pabyHeader[2] != '\t' &&    // may be followed
+         poOpenInfo->pabyHeader[2] != '\n' &&    // any of the blank
          poOpenInfo->pabyHeader[2] != '\r') )    // characters
         return NULL;
 
@@ -137,14 +137,15 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char  *pszSrc = (const char *) poOpenInfo->pabyHeader;
     char        szToken[512];
-    int         iIn, iOut, iToken = 0, nWidth =-1, nHeight=-1, nMaxValue=-1;
+    int         iIn, iToken = 0, nWidth =-1, nHeight=-1, nMaxValue=-1;
+    unsigned int iOut;
 
     iIn = 2;
     while( iIn < poOpenInfo->nHeaderBytes && iToken < 3 )
     {
         iOut = 0;
         szToken[0] = '\0';
-        while( iIn < poOpenInfo->nHeaderBytes )
+        while( iOut < sizeof(szToken) && iIn < poOpenInfo->nHeaderBytes )
         {
             if( pszSrc[iIn] == '#' )
             {
