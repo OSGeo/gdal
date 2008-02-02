@@ -81,14 +81,24 @@ GDALChecksumImage( GDALRasterBandH hBand,
     {
         if( bComplex )
         {
-            GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
-                          panLineData, nXSize, 1, GDT_CInt32, 0, 0 );
+            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
+                              panLineData, nXSize, 1, GDT_CInt32, 0, 0 ) != CE_None)
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Checksum value couldn't be computed due to I/O read error.\n");
+                break;
+            }
             nCount = nXSize * 2;
         }
         else
         {
-            GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
-                          panLineData, nXSize, 1, GDT_Int32, 0, 0 );
+            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
+                              panLineData, nXSize, 1, GDT_Int32, 0, 0 ) != CE_None)
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Checksum value couldn't be computed due to I/O read error.\n");
+                break;
+            }
             nCount = nXSize;
         }
 
