@@ -84,6 +84,11 @@ class GDALColorTable {
 
             if( ct != null )
                 Console.WriteLine( "Band has a color table with " + ct.GetCount() + " entries.");
+            else 
+            {
+                Console.WriteLine( "Data source has no color table");
+                return;
+            }
 
             buffer = new byte [ds.RasterXSize * ds.RasterYSize];
             ba.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
