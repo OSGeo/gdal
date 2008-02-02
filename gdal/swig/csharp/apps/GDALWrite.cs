@@ -61,7 +61,7 @@ class GDALWrite {
         if (args.Length != 1) usage();
 
         // Using early initialization of System.Console
-        Console.WriteLine("");
+        Console.WriteLine("Writing sample: " + args[0]);
 
         int bXSize, bYSize;
         int w, h;
