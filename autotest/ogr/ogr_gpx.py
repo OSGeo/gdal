@@ -77,54 +77,72 @@ def ogr_gpx_1():
     expect = [2, None]
 
     tr = ogrtest.check_features_against_list( lyr, 'ele', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['waypoint name', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'name', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['href', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'link1_href', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['text', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'link1_text', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['type', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'link1_type', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['href2', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'link2_href', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['text2', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'link2_text', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['type2', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'link2_type', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     
     expect = ['2007/11/25 17:58:00+01', None]
 
     tr = ogrtest.check_features_against_list( lyr, 'time', expect )
+    if not tr:
+        return 'fail'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -381,19 +399,24 @@ def ogr_gpx_7():
     expect = ['PID1', 'PID2']
 
     tr = ogrtest.check_features_against_list( gpx_lyr, 'ogr_Primary_ID', expect )
+    if not tr:
+        return 'fail'
     
     gpx_lyr.ResetReading()
     
     expect = ['SID1', 'SID2']
 
     tr = ogrtest.check_features_against_list( gpx_lyr, 'ogr_Secondary_ID', expect )
+    if not tr:
+        return 'fail'
     
     gpx_lyr.ResetReading()
     
     expect = ['TID1', None]
 
     tr = ogrtest.check_features_against_list( gpx_lyr, 'ogr_Third_ID', expect )
-    
+    if not tr:
+        return 'fail'
 
     return 'success'
     

@@ -77,6 +77,8 @@ def ogr_bna_2():
     expect = ['PID3']
 
     tr = ogrtest.check_features_against_list( lyr, 'Primary ID', expect )
+    if not tr:
+        return 'fail'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
