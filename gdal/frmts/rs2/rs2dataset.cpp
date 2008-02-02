@@ -60,7 +60,7 @@ static bool IsValidXMLFile( const char *pszPath, const char *pszLut)
     
     if (psLut != NULL)
     {
-        CPLFree(psLut);
+        CPLDestroyXMLNode(psLut);
         retVal = true;
     }
 
@@ -316,6 +316,8 @@ void RS2CalibRasterBand::ReadLUT() {
         m_nfTable[i] = CPLAtof(papszLUTList[i]);
     }
 
+    CPLDestroyXMLNode(psLUT);
+
     CSLDestroy(papszLUTList);
 }
 
@@ -539,6 +541,7 @@ RS2Dataset::~RS2Dataset()
     FlushCache();
 
     CPLDestroyXMLNode( psProduct );
+    CPLFree( pszProjection );
 
     CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
@@ -636,6 +639,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     psImageAttributes = CPLGetXMLNode(psProduct, "=product.imageAttributes" );
     if( psImageAttributes == NULL )
     {
+        CPLDestroyXMLNode( psProduct );
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to find <imageAttributes> in document." );
         return NULL;
@@ -644,8 +648,10 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     psImageGenerationParameters = CPLGetXMLNode( psProduct, 
         "=product.imageGenerationParameters" );
     if (psImageGenerationParameters == NULL) {
+        CPLDestroyXMLNode( psProduct );
         CPLError( CE_Failure, CPLE_OpenFailed,
             "Failed to find <imageGenerationParameters> in document." );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -666,6 +672,14 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         atoi(CPLGetXMLValue( psImageAttributes, 
                              "rasterAttributes.numberofLines", 
                              "-1" ));
+    if (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0) {
+        CPLDestroyXMLNode( psProduct );
+        delete poDS;
+        CPLError( CE_Failure, CPLE_OpenFailed,
+            "Non-sane raster dimensions provided in product.xml. If this is "
+            "a valid RADARSAT-2 scene, please contact your data provider for "
+            "a corrected dataset." );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check product type, as to determine if there are LUTs for       */
@@ -714,6 +728,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Byte;
     else
     {
+        delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
                "dataType=%s, bitsPerSample=%d: not a supported configuration.",
                 pszDataType, nBitsPerSample );
@@ -768,6 +783,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_3_DESC", 
                     "Beta Nought calibrated" );
+                CPLFree(pszBuf);
             }
             else if (EQUAL(pszLUTType, "Sigma Nought") && 
                 IsValidXMLFile(pszPath,pszLUTFile)) 
@@ -782,6 +798,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_2_DESC", 
                     "Sigma Nought calibrated" );
+                CPLFree(pszBuf);
             }
             else if (EQUAL(pszLUTType, "Gamma") && 
                 IsValidXMLFile(pszPath,pszLUTFile)) 
@@ -795,6 +812,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->papszSubDatasets = CSLSetNameValue( 
                     poDS->papszSubDatasets, "SUBDATASET_4_DESC", 
                     "Gamma calibrated" );
+                CPLFree(pszBuf);
             }
             continue;
         }
@@ -866,6 +884,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             "SUBDATASET_1_NAME", pszBuf );
         poDS->papszSubDatasets = CSLSetNameValue( poDS->papszSubDatasets,
             "SUBDATASET_1_DESC", "Uncalibrated digital numbers" );
+        CPLFree(pszBuf);
     }
     else if (poDS->papszSubDatasets != NULL) {
         CSLDestroy( poDS->papszSubDatasets );
@@ -1072,9 +1091,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                 origNorthing = strtod(CPLGetXMLValue( psUtmParams, 
                     "mapOriginFalseNorthing", "0.0" ), NULL);
 
-                if ( EQUALN(pszHemisphere,"Southern",8) || 
-                     EQUALN(pszHemisphere,"SOUTHERN",8) ||
-                     EQUALN(pszHemisphere,"southern",8) )
+                if ( EQUALN(pszHemisphere,"southern",8) )
                      bNorth = FALSE;
                 
                 if (EQUALN(pszProj,"UTM",3)) {
@@ -1230,6 +1247,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->SetDescription( pszDescription );
+    CPLFree( pszDescription );
     poDS->TryLoadXML();
 
     return( poDS );
