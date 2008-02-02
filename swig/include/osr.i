@@ -37,7 +37,6 @@
 
 #ifdef SWIGCSHARP
 %include swig_csharp_extensions.i
-%implement_class(SWIGTYPE)
 #endif
 
 %feature("compactdefaultargs");

@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifndef SWIGCSHARP
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
 %inline %{
@@ -40,6 +41,7 @@ int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void
 %callback("%s");
 int GDALTermProgress( double, const char *, void * );
 %nocallback;
+#endif
 
 
 %feature( "kwargs" ) ComputeMedianCutPCT;
