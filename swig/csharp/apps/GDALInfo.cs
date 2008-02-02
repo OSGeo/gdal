@@ -196,6 +196,15 @@ class GDALInfo {
                 if (hasval != 0) Console.WriteLine("   Offset: " + val.ToString());
                 band.GetScale(out val, out hasval);
                 if (hasval != 0) Console.WriteLine("   Scale: " + val.ToString());
+
+                for (int iOver = 0; iOver < band.GetOverviewCount(); iOver++)
+                {
+                    Band over = band.GetOverview(iOver);
+                    Console.WriteLine("      OverView " + iOver + " :");
+                    Console.WriteLine("         DataType: " + over.DataType);
+                    Console.WriteLine("         Size (" + over.XSize + "," + over.YSize + ")");
+                    Console.WriteLine("         PaletteInterp: " + over.GetRasterColorInterpretation().ToString());
+                }
             }
         }
         catch (Exception e) 
