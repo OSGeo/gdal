@@ -1395,14 +1395,15 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       p++;
       while( isspace(*p) ) p++;
       e= p;
+      if( *p=='-') p++; /* allow -1 as SysCoord */
       while( isdigit(*p) ) p++;
       *p= '\0';
       if( sscanf(e,"%d",&v)!= 1 )
       {
         DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid SRS.\n"
-                  "Geoconcept export syntax error at line %ld.\n",
+                  "Invalid SRS identifier. "
+                  "Geoconcept export syntax error at line %ld.",
                   GetGCCurrentLinenum_GCIO(hGXT) );
         return NULL;
       }
@@ -1413,14 +1414,15 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
           p++;
           while( isspace(*p) ) p++;
           e= p;
+          if( *p=='-') p++; /* allow -1 as TimeZone */
           while( isdigit(*p) ) p++;
           *p= '\0';
           if( sscanf(e,"%d",&z)!= 1 )
           {
             DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid SRS.\n"
-                      "Geoconcept export syntax error at line %ld.\n",
+                      "Invalid TimeZone. "
+                      "Geoconcept export syntax error at line %ld.",
                       GetGCCurrentLinenum_GCIO(hGXT) );
             return NULL;
           }
