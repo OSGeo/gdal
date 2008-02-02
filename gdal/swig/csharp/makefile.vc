@@ -122,10 +122,18 @@ test:
 	mono createdata.exe Data pointlayer
     mono ogrinfo.exe Data/pointlayer.shp
     mono OSRTransform.exe
+    mono GDALWrite.exe Data/sample.tif
+	mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
+	mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
+	mono GDALInfo.exe Data/sample.tif
 !ELSE
     createdata.exe Data pointlayer
     ogrinfo.exe Data/pointlayer.shp
 	OSRTransform.exe
+	GDALWrite.exe Data/sample.tif
+	GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
+	GDALOverviews.exe Data/sample.tif NEAREST 2 4
+	GDALInfo.exe Data/sample.tif
 !ENDIF
 	
 clean:	
@@ -153,6 +161,7 @@ clean:
 	-del *.mdb
 	-del *.exe
 	-del *.manifest
+	-del /q /s Data
 	
 install:
     -mkdir $(GDAL_HOME)\csharp

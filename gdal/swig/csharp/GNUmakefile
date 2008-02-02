@@ -28,7 +28,7 @@ clean:
 	-rm -f ${CSHARP_MODULES} *.$(OBJ_EXT) *.config *.dll *.mdb *.exe
 
 veryclean: clean
-	-rm -f const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp
+	-rm -f const/*.cs const/*.c gdal/*.cs gdal/*.cpp osr/*.cs osr/*.cpp ogr/*.cs ogr/*.cpp Data
 
 generate: interface
 interface:
@@ -87,3 +87,7 @@ test:
 	LC_ALL=C mono createdata.exe Data pointlayer
 	LC_ALL=C mono ogrinfo.exe Data/pointlayer.shp
 	LC_ALL=C mono OSRTransform.exe
+	LC_ALL=C mono GDALWrite.exe Data/sample.tif
+	LC_ALL=C mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
+	LC_ALL=C mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
+	LC_ALL=C mono GDALInfo.exe Data/sample.tif
