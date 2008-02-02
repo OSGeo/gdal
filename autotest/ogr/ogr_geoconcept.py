@@ -38,6 +38,7 @@ import gdaltest
 import ogrtest
 import ogr
 import gdal
+import osr;
 
 ###############################################################################
 # Simple read test of known file.
@@ -74,14 +75,136 @@ def ogr_gxt_1():
                '000-2007-0050-6585-LAMB93' ]
     
     tr = ogrtest.check_features_against_list( lyr, 'idSel', expect )
-
-    if tr:
-        return 'success'
-    else:
+    if not tr:
         return 'fail'
+
+    lyr.ResetReading()
+
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,
+          'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
+                                      max_error = 0.000000001 ) != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read a GXT file containing 2 points, duplicate it, and check the newly written file
+
+def ogr_gxt_2():
+
+    if gdaltest.gxt_ds is not None:
+        gdaltest.gxt_ds.Destroy()
+    gdaltest.gxt_ds = None
+
+    src_ds = ogr.Open( 'data/points.gxt' )
+
+    try:
+        os.remove ('tmp/tmp.gxt')
+    except:
+        pass
+
+    # Duplicate all the points from the source GXT
+    src_lyr = src_ds.GetLayerByName( 'points.points' )
+
+    gdaltest.gxt_ds = ogr.GetDriverByName('Geoconcept').CreateDataSource('tmp/tmp.gxt')
+
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS( 'WGS84' )
+
+    gxt_lyr = gdaltest.gxt_ds.CreateLayer( 'points', srs, geom_type = ogr.wkbPoint )
+
+    src_lyr.ResetReading()
+
+    for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
+        field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
+        gxt_lyr.CreateField( field_defn )
+
+    dst_feat = ogr.Feature( feature_def = gxt_lyr.GetLayerDefn() )
+
+    feat = src_lyr.GetNextFeature()
+    while feat is not None:
+        dst_feat.SetFrom( feat )
+        if gxt_lyr.CreateFeature( dst_feat ) != 0:
+            gdaltest.post_reason('CreateFeature failed.')
+            return 'fail'
+
+        feat = src_lyr.GetNextFeature()
+
+    dst_feat.Destroy()
+
+    src_ds.Destroy()
+    gdaltest.gxt_ds.Destroy()
+    gdaltest.gxt_ds = None
+
+
+    # Read the newly written GXT file and check its features and geometries
+    gdaltest.gxt_ds = ogr.Open('tmp/tmp.gxt')
+    gxt_lyr = gdaltest.gxt_ds.GetLayerByName( 'points.points' )
+
+    if not gxt_lyr.GetSpatialRef().IsSame(srs):
+        gdaltest.post_reason('Output SRS is not the one expected.')
+        return 'fail'
+
+    expect = ['PID1', 'PID2']
+
+    tr = ogrtest.check_features_against_list( gxt_lyr, 'Primary_ID', expect )
+    if not tr:
+        return 'fail'
+
+    gxt_lyr.ResetReading()
+
+    expect = ['SID1', 'SID2']
+
+    tr = ogrtest.check_features_against_list( gxt_lyr, 'Secondary_ID', expect )
+    if not tr:
+        return 'fail'
+
+    gxt_lyr.ResetReading()
+
+    expect = ['TID1', None]
+
+    tr = ogrtest.check_features_against_list( gxt_lyr, 'Third_ID', expect )
+    if not tr:
+        return 'fail'
+
+    gxt_lyr.ResetReading()
+
+    feat = gxt_lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,'POINT(0 1)',
+                                      max_error = 0.000000001 ) != 0:
+        return 'fail'
+
+    feat = gxt_lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,'POINT(2 3)',
+                                      max_error = 0.000000001 ) != 0:
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# 
+
+def ogr_gxt_cleanup():
+
+    if gdaltest.gxt_ds is not None:
+        gdaltest.gxt_ds.Destroy()
+    gdaltest.gxt_ds = None
+    try:
+        os.remove ('tmp/tmp.gxt')
+    except:
+        pass
+    return 'success'
+
 
 gdaltest_list = [ 
     ogr_gxt_1,
+    ogr_gxt_2,
+    ogr_gxt_cleanup,
     None ]
 
 if __name__ == '__main__':
