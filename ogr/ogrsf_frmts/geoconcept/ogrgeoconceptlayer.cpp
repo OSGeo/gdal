@@ -188,6 +188,22 @@ OGRFeature *OGRGeoconceptLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*            OGRGeoconceptLayer_GetCompatibleFieldName()               */
+/************************************************************************/
+
+static char* OGRGeoconceptLayer_GetCompatibleFieldName(const char* pszName)
+{
+    char* pszCompatibleName = CPLStrdup(pszName);
+    int i;
+    for(i=0;pszCompatibleName[i] != 0;i++)
+    {
+        if (pszCompatibleName[i] == ' ')
+            pszCompatibleName[i] = '_';
+    }
+    return pszCompatibleName;
+}
+
+/************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
 
@@ -352,8 +368,10 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
               for( iF= 0; iF<nF; iF++ )
               {
                 poField= poFeature->GetFieldDefnRef(iF);
-                if( EQUAL(poField->GetNameRef(), GetFieldName_GCIO(theField)) )
+                char* pszName = OGRGeoconceptLayer_GetCompatibleFieldName(poField->GetNameRef());
+                if( EQUAL(pszName, GetFieldName_GCIO(theField)) )
                 {
+                  CPLFree(pszName);
                   nextField= WriteFeatureFieldAsString_GCIO(_gcFeature,
                                                             nextField,
                                                             poFeature->IsFieldSet(iF)?
@@ -362,6 +380,7 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
                                                               NULL);
                   break;
                 }
+                CPLFree(pszName);
               }
               if( iF==nF )
               {
@@ -492,16 +511,18 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     {
       /* check whether field exists ... */
       GCField* theField;
+      char* pszName = OGRGeoconceptLayer_GetCompatibleFieldName(poField->GetNameRef());
 
-      if( !(theField= FindFeatureField_GCIO(_gcFeature,poField->GetNameRef())) )
+      if( !(theField= FindFeatureField_GCIO(_gcFeature,pszName)) )
       {
         if( GetFeatureCount(TRUE) > 0 )
         {
           CPLError( CE_Failure, CPLE_NotSupported,
                     "Can't create field '%s' on existing Geoconcept layer '%s.%s'.\n",
-                    poField->GetNameRef(),
+                    pszName,
                     GetSubTypeName_GCIO(_gcFeature),
                     GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)) );
+          CPLFree(pszName);
           return OGRERR_FAILURE;
         }
         if( GetSubTypeNbFields_GCIO(_gcFeature)==-1)
@@ -511,16 +532,17 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
                                              GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature)),
                                              FindFeatureFieldIndex_GCIO(_gcFeature,kNbFields_GCIO)
                                             +GetSubTypeNbFields_GCIO(_gcFeature)+1L,
-                                             poField->GetNameRef(),
+                                             pszName,
                                              GetSubTypeNbFields_GCIO(_gcFeature)-999L,
                                              vUnknownItemType_GCIO, NULL, NULL)) )
         {
           CPLError( CE_Failure, CPLE_AppDefined,
                     "Field '%s' could not be created for Feature %s.%s.\n",
-                    poField->GetNameRef(),
+                    pszName,
                     GetSubTypeName_GCIO(_gcFeature),
                     GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature))
                   );
+          CPLFree(pszName);
           return OGRERR_FAILURE;
         }
         SetSubTypeNbFields_GCIO(_gcFeature, GetSubTypeNbFields_GCIO(_gcFeature)+1L);
@@ -536,9 +558,14 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
                     GetSubTypeName_GCIO(_gcFeature),
                     GetTypeName_GCIO(GetSubTypeType_GCIO(_gcFeature))
                   );
+          CPLFree(pszName);
           return OGRERR_FAILURE;
         }
       }
+
+      CPLFree(pszName);
+      pszName = NULL;
+
       /* check/update type ? */
       if( GetFieldKind_GCIO(theField)==vUnknownItemType_GCIO )
       {
