@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id:  $
+ * $Id$
  *
  * Name:     GDALOverviews.cs
  * Project:  GDAL CSharp Interface
