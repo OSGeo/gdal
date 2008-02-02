@@ -1546,6 +1546,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     vl= CSLTokenizeString2(kv[2],"=",0);
     if( !vl || CSLCount(vl)!=2 )
     {
+      CPLFree(nm);
       CSLDestroy(vl);
       CSLDestroy(kv);
       DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
@@ -2126,6 +2127,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   }
   if( (nbtf= CSLCount(pszFields)) <= 5 )
   {
+    CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Missing fields.\n",
               GetGCCurrentLinenum_GCIO(H) );
@@ -2134,6 +2136,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   /* Class */
   if( (whereClass = _findTypeByName_GCIO(H,pszFields[1]))==-1 )
   {
+    CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Unknown type '%s'.\n",
               GetGCCurrentLinenum_GCIO(H), pszFields[1] );
@@ -2145,12 +2148,14 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     /* reading ... */
     if( !EQUAL(GetTypeName_GCIO(GetSubTypeType_GCIO(*theSubType)),GetTypeName_GCIO(theClass)) )
     {
+      CSLDestroy(pszFields);
       return NULL;
     }
   }
   /* Subclass */
   if( (whereSubType= _findSubTypeByName_GCIO(theClass,pszFields[2]))==-1 )
   {
+    CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Unknown subtype found '%s' for type '%s'.\n",
               GetGCCurrentLinenum_GCIO(H), pszFields[2], pszFields[1] );
@@ -2160,6 +2165,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( !EQUAL(GetSubTypeName_GCIO(_getSubType_GCIO(theClass,whereSubType)),GetSubTypeName_GCIO(*theSubType)) )
     {
+      CSLDestroy(pszFields);
       return NULL;
     }
   }
@@ -2193,6 +2199,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   }
   if( atoi(pszFields[nbf])!=GetSubTypeNbFields_GCIO(*theSubType) )
   {
+    CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Number of user's fields differs with type definition '%s' (%d found, %d expected).\n",
               GetGCCurrentLinenum_GCIO(H), tdst, atoi(pszFields[nbf]), GetSubTypeNbFields_GCIO(*theSubType) );
@@ -2205,6 +2212,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( !(fd= OGR_FD_Create(tdst)) )
     {
+      CSLDestroy(pszFields);
       return NULL;
     }
 
@@ -2248,6 +2256,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
         break;
       case vText_GCIO  :
       default          :
+        CSLDestroy(pszFields);
         OGR_FD_Destroy(fd);
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unknown Geoconcept type for '%s'.\n",
@@ -2256,6 +2265,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     }
     if( nbtf < 1 + nbf + GetSubTypeNbFields_GCIO(*theSubType) + 1)
     {
+      CSLDestroy(pszFields);
       OGR_FD_Destroy(fd);
       CPLError( CE_Failure, CPLE_AppDefined,
                 "Line %ld, Missing fields.\n",
@@ -2267,6 +2277,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
       theField= GetSubTypeField_GCIO(*theSubType,i);
       if( !(fld= OGR_Fld_Create(GetFieldName_GCIO(theField),OFTString)) ) /* FIXME */
       {
+        CSLDestroy(pszFields);
         OGR_FD_Destroy(fd);
         return NULL;
       }
@@ -2285,6 +2296,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     {
       if( !GetSubTypeFeatureDefn_GCIO(*theSubType) )
         OGR_FD_Destroy(fd);
+      CSLDestroy(pszFields);
       return NULL;
     }
     OGR_F_SetFID(f, atol(pszFields[0])); /* FID */
@@ -2312,6 +2324,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
      */
     if( buildFeature )
     {
+      CSLDestroy(pszFields);
       if( f ) OGR_F_Destroy(f);
       return NULL;
     }
@@ -2320,6 +2333,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( OGR_F_SetGeometryDirectly(f,g)!=OGRERR_NONE )
     {
+      CSLDestroy(pszFields);
       if( f ) OGR_F_Destroy(f);
       return NULL;
     }
