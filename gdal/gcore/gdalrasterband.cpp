@@ -862,6 +862,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 {
     int             nBlockIndex;
     GDALRasterBlock *poBlock;
+    CPLErr eErr = CE_None;
 
     if( !papoBlocks )
         return CE_None;
@@ -937,7 +938,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
     poBlock->Detach();
 
     if( poBlock->GetDirty() )
-        poBlock->Write();
+        eErr = poBlock->Write();
 
 /* -------------------------------------------------------------------- */
 /*      Deallocate the block;                                           */
@@ -945,7 +946,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
     poBlock->DropLock();
     delete poBlock;
 
-    return( CE_None );
+    return( eErr );
 }
 
 /************************************************************************/
