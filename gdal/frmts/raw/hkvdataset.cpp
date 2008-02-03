@@ -1339,6 +1339,8 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->pszPath = CPLStrdup( poOpenInfo->pszFilename );
     poDS->papszAttrib = papszAttrib;
+
+    poDS->eAccess = poOpenInfo->eAccess;
     
 /* -------------------------------------------------------------------- */
 /*      Set some dataset wide information.                              */
