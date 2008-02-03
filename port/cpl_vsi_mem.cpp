@@ -596,13 +596,14 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
 void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
 
 {
-    unsigned int  i;
+    int  i, nSize = oPath.size();
 
-    for( i = 0; i < oPath.size(); i++ )
+    for( i = 0; i < nSize; i++ )
     {
         if( oPath[i] == '\\' )
             oPath[i] = '/';
     }
+
 }
 
 /************************************************************************/
