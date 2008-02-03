@@ -758,7 +758,9 @@ void GDALRegister_DTED()
                                    "frmt_various.html#DTED" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16" );
-        
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = DTEDDataset::Open;
         poDriver->pfnCreateCopy = DTEDCreateCopy;
 

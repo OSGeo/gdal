@@ -1095,19 +1095,19 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         /* in space imaging style format                               */
         pszHDR = CPLResetExtension( pszFilename, "hdr" );
         
-        fpHDR = VSIFOpen( pszHDR, "rt" );
+        fpHDR = VSIFOpenL( pszHDR, "rt" );
 
 #ifndef WIN32
         if( fpHDR == NULL )
         {
             pszHDR = CPLResetExtension( pszFilename, "HDR" );
-            fpHDR = VSIFOpen( pszHDR, "rt" );
+            fpHDR = VSIFOpenL( pszHDR, "rt" );
         }
 #endif
     
         if( fpHDR != NULL )
         {
-            VSIFClose( fpHDR );
+            VSIFCloseL( fpHDR );
             papszLines=CSLLoad(pszHDR);
             if (CSLCount(papszLines) == 16)
             {
@@ -3274,6 +3274,8 @@ void GDALRegister_NITF()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16 Int16 UInt32 Int32 Float32" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

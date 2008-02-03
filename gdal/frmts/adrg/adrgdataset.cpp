@@ -250,6 +250,10 @@ CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     ADRGDataset* poDS = (ADRGDataset*)this->poDS;
     int offset;
     int nBlock = nBlockYOff * poDS->NFC + nBlockXOff;
+    if (poDS->eAccess != GA_Update)
+    {
+        return CE_Failure;
+    }
     if (nBlockXOff >= poDS->NFC || nBlockYOff >= poDS->NFL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "nBlockXOff=%d, NFC=%d, nBlockYOff=%d, NFL=%d",
@@ -1485,6 +1489,8 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     
     ADRGDataset* poDS = new ADRGDataset();
 
+    poDS->eAccess = GA_Update;
+
     poDS->fdGEN = fdGEN;
     poDS->fdIMG = fdIMG;
     poDS->fdTHF = fdTHF;
@@ -2026,7 +2032,9 @@ void GDALRegister_ADRG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
-        
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = ADRGDataset::Open;
         poDriver->pfnCreate = ADRGDataset::Create;
 
