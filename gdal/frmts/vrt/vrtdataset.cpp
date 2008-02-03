@@ -628,27 +628,30 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char        *pszXML;
 
-    if( poOpenInfo->fp != NULL )
+    FILE        *fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
+    if( fp != NULL )
     {
         unsigned int nLength;
      
-        VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
-        nLength = VSIFTell( poOpenInfo->fp );
-        VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
+        VSIFSeekL( fp, 0, SEEK_END );
+        nLength = VSIFTellL( fp );
+        VSIFSeekL( fp, 0, SEEK_SET );
         
         nLength = MAX(0,nLength);
         pszXML = (char *) VSIMalloc(nLength+1);
         
         if( pszXML == NULL )
         {
+            VSIFCloseL(fp);
             CPLError( CE_Failure, CPLE_OutOfMemory, 
                       "Failed to allocate %d byte buffer to hold VRT xml file.",
                       nLength );
             return NULL;
         }
         
-        if( VSIFRead( pszXML, 1, nLength, poOpenInfo->fp ) != nLength )
+        if( VSIFReadL( pszXML, 1, nLength, fp ) != nLength )
         {
+            VSIFCloseL(fp);
             CPLFree( pszXML );
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read %d bytes from VRT xml file.",
@@ -658,6 +661,8 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         
         pszXML[nLength] = '\0';
         pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+
+        VSIFCloseL(fp);
     }
 /* -------------------------------------------------------------------- */
 /*      Or use the filename as the XML input.                           */
@@ -681,7 +686,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp != NULL && poDS != NULL )
+    if( fp != NULL && poDS != NULL )
         poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     return poDS;
