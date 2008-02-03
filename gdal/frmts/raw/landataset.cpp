@@ -343,6 +343,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new LANDataset();
 
+    poDS->eAccess = poOpenInfo->eAccess;
+
 /* -------------------------------------------------------------------- */
 /*      Adopt the openinfo file pointer for use with this file.         */
 /* -------------------------------------------------------------------- */
