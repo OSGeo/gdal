@@ -205,14 +205,19 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 /* -------------------------------------------------------------------- */
     if( Seek(nImgOffset + (vsi_l_offset)iLine * nLineOffset, SEEK_SET) == -1 )
     {
-        // for now I just set to zero under the assumption we might
-        // be trying to read from a file past the data that has
-        // actually been written out.  Eventually we should differentiate
-        // between newly created datasets, and existing datasets. Existing
-        // datasets should generate an error in this case.
-        memset( pLineBuffer, 0, nPixelOffset * nBlockXSize );
-        nLoadedScanline = iLine;
-        return CE_None;
+        if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to seek to scanline %d @ %d.\n",
+                  iLine, (int) (nImgOffset + (vsi_l_offset)iLine * nLineOffset) );
+            return CE_Failure;
+        }
+        else
+        {
+            memset( pLineBuffer, 0, nPixelOffset * nBlockXSize );
+            nLoadedScanline = iLine;
+            return CE_None;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -228,13 +233,18 @@ CPLErr RawRasterBand::AccessLine( int iLine )
     nBytesActuallyRead = Read( pLineBuffer, 1, nBytesToRead );
     if( nBytesActuallyRead < nBlockXSize )
     {
-        // for now I just set to zero under the assumption we might
-        // be trying to read from a file past the data that has
-        // actually been written out.  Eventually we should differentiate
-        // between newly created datasets, and existing datasets. Existing
-        // datasets should generate an error in this case.
-        memset( ((GByte *) pLineBuffer) + nBytesActuallyRead, 
-                0, nBytesToRead - nBytesActuallyRead );
+        if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Failed to read scanline %d.\n",
+                      iLine);
+            return CE_Failure;
+        }
+        else
+        {
+            memset( ((GByte *) pLineBuffer) + nBytesActuallyRead, 
+                    0, nBytesToRead - nBytesActuallyRead );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -269,11 +279,11 @@ CPLErr RawRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    CPLErr		eErr = CE_None;
+    CPLErr		eErr;
 
     CPLAssert( nBlockXOff == 0 );
 
-    AccessLine( nBlockYOff );
+    eErr = AccessLine( nBlockYOff );
     
 /* -------------------------------------------------------------------- */
 /*      Copy data from disk buffer to user block buffer.                */

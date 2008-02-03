@@ -740,6 +740,8 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new MFFDataset();
 
     poDS->papszHdrLines = papszHdrLines;
+
+    poDS->eAccess = poOpenInfo->eAccess;
     
 /* -------------------------------------------------------------------- */
 /*      Set some dataset wide information.                              */
