@@ -138,6 +138,7 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
+    static  void     NormalizePath( CPLString & );
 };
 
 /************************************************************************/
@@ -371,14 +372,16 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 {
     CPLMutexHolder oHolder( &hMutex );
     VSIMemFile *poFile;
+    CPLString osFilename = pszFilename;
+    NormalizePath( osFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Get the filename we are opening, create if needed.              */
 /* -------------------------------------------------------------------- */
-    if( oFileList.find(pszFilename) == oFileList.end() )
+    if( oFileList.find(osFilename) == oFileList.end() )
         poFile = NULL;
     else
-        poFile = oFileList[pszFilename];
+        poFile = oFileList[osFilename];
 
     if( strstr(pszAccess,"w") == NULL && poFile == NULL )
     {
@@ -393,7 +396,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         else
         {
             poFile = new VSIMemFile;
-            poFile->osFilename = pszFilename;
+            poFile->osFilename = osFilename;
             oFileList[poFile->osFilename] = poFile;
             poFile->nRefCount++; // for file list
         }
@@ -431,13 +434,16 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    if( oFileList.find(pszFilename) == oFileList.end() )
+    CPLString osFilename = pszFilename;
+    NormalizePath( osFilename );
+
+    if( oFileList.find(osFilename) == oFileList.end() )
     {
         errno = ENOENT;
         return -1;
     }
 
-    VSIMemFile *poFile = oFileList[pszFilename];
+    VSIMemFile *poFile = oFileList[osFilename];
 
     memset( pStatBuf, 0, sizeof(VSIStatBufL) );
 
@@ -464,21 +470,24 @@ int VSIMemFilesystemHandler::Unlink( const char * pszFilename )
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    CPLString osFilename = pszFilename;
+    NormalizePath( osFilename );
+
     VSIMemFile *poFile;
 
-    if( oFileList.find(pszFilename) == oFileList.end() )
+    if( oFileList.find(osFilename) == oFileList.end() )
     {
         errno = ENOENT;
         return -1;
     }
     else
     {
-        poFile = oFileList[pszFilename];
+        poFile = oFileList[osFilename];
 
         if( --(poFile->nRefCount) == 0 )
             delete poFile;
 
-        oFileList.erase( oFileList.find(pszFilename) );
+        oFileList.erase( oFileList.find(osFilename) );
 
         return 0;
     }
@@ -494,7 +503,11 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    if( oFileList.find(pszPathname) != oFileList.end() )
+    CPLString osPathname = pszPathname;
+
+    NormalizePath( osPathname );
+
+    if( oFileList.find(osPathname) != oFileList.end() )
     {
         errno = EEXIST;
         return -1;
@@ -502,9 +515,9 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
 
     VSIMemFile *poFile = new VSIMemFile;
 
-    poFile->osFilename = pszPathname;
+    poFile->osFilename = osPathname;
     poFile->bIsDirectory = TRUE;
-    oFileList[pszPathname] = poFile;
+    oFileList[osPathname] = poFile;
     poFile->nRefCount++; /* referenced by file list */
 
     return 0;
@@ -531,11 +544,15 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    CPLString osPath = pszPath;
+
+    NormalizePath( osPath );
+
     std::map<CPLString,VSIMemFile*>::const_iterator iter;
     char **papszDir = NULL;
-    int nPathLen = strlen(pszPath);
+    int nPathLen = strlen(osPath);
 
-    if( pszPath[nPathLen-1] == '/' )
+    if( osPath[nPathLen-1] == '/' )
         nPathLen--;
 
     /* In case of really big number of files in the directory, CSLAddString */
@@ -546,7 +563,7 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
     for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
     {
         const char *pszFilePath = iter->second->osFilename.c_str();
-        if( EQUALN(pszPath,pszFilePath,nPathLen)
+        if( EQUALN(osPath,pszFilePath,nPathLen)
             && pszFilePath[nPathLen] == '/' 
             && strstr(pszFilePath+nPathLen+1,"/") == NULL )
         {
@@ -570,6 +587,22 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
     }
 
     return papszDir;
+}
+
+/************************************************************************/
+/*			NormalizePath() 				*/
+/************************************************************************/
+
+void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
+
+{
+    unsigned int  i;
+
+    for( i = 0; i < oPath.size(); i++ )
+    {
+        if( oPath[i] == '\\' )
+            oPath[i] = '/';
+    }
 }
 
 /************************************************************************/
