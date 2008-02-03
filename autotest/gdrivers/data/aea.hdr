@@ -2,7 +2,7 @@ ENVI
 description = {
   Registration Result. Method: 1st degree Polynomial w/ nearest neighbor}
 samples = 434
-lines   = 436
+lines   = 3
 bands   = 1
 header offset = 0
 file type = ENVI Standard

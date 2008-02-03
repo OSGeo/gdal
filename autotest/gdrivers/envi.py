@@ -43,7 +43,7 @@ import gdaltest
 
 def envi_1():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
+    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
 
     prj = """PROJCS["unnamed",
     GEOGCS["Ellipse Based",
@@ -69,7 +69,7 @@ def envi_1():
 
 def envi_2():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
+    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
     return tst.testCreateCopy( check_gt = 1 )
     
 ###############################################################################
