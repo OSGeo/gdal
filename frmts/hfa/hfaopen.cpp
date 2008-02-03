@@ -441,9 +441,9 @@ void HFAClose( HFAHandle hHFA )
 CPLErr HFARemove( const char *pszFilename )
 
 {
-    VSIStatBuf      sStat;
+    VSIStatBufL      sStat;
 
-    if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
+    if( VSIStatL( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
     {
         if( VSIUnlink( pszFilename ) == 0 )
             return CE_None;

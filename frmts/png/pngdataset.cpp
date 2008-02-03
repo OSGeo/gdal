@@ -1375,6 +1375,8 @@ void GDALRegister_PNG()
 "   <Option name='WORLDFILE' type='boolean' description='Create world file'/>\n"
 "</CreationOptionList>\n" );
 
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = PNGDataset::Open;
         poDriver->pfnCreateCopy = PNGCreateCopy;
         poDriver->pfnIdentify = PNGDataset::Identify;

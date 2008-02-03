@@ -1978,6 +1978,8 @@ void GDALRegister_JPEG()
 "   <Option name='WORLDFILE' type='boolean'/>\n"
 "</CreationOptionList>\n" );
 
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnIdentify = JPGDataset::Identify;
         poDriver->pfnOpen = JPGDataset::Open;
         poDriver->pfnCreateCopy = JPEGCreateCopy;
