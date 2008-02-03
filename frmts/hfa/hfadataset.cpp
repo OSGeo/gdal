@@ -3382,6 +3382,8 @@ void GDALRegister_HFA()
 "   <Option name='NBITS' type='integer' description='Create file with special sub-byte data type (1/2/4)'/>"
 "</CreationOptionList>" );
 
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = HFADataset::Open;
         poDriver->pfnCreate = HFADataset::Create;
         poDriver->pfnCreateCopy = HFADataset::CreateCopy;

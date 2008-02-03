@@ -755,6 +755,8 @@ void GDALRegister_GIF()
 "   <Option name='WORLDFILE' type='boolean'/>\n"
 "</CreationOptionList>\n" );
 
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
         poDriver->pfnOpen = GIFDataset::Open;
         poDriver->pfnCreateCopy = GIFCreateCopy;
         poDriver->pfnIdentify = GIFDataset::Identify;

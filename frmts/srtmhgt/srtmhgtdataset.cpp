@@ -272,8 +272,8 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*	We check the file size to see if it is 25,934,402 bytes	*/
 /*	(SRTM 1) or 2,884,802 bytes (SRTM 3)				*/    
 /* -------------------------------------------------------------------- */
-  VSIStatBuf fileStat;
-  if(VSIStat(poOpenInfo->pszFilename, &fileStat) != 0)
+  VSIStatBufL fileStat;
+  if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
       return FALSE;
   if(fileStat.st_size != 25934402 && fileStat.st_size != 2884802)
       return FALSE;
@@ -552,6 +552,8 @@ void GDALRegister_SRTMHGT()
                               "frmt_various.html#SRTMHGT" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16" );
+
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = SRTMHGTDataset::Identify;
     poDriver->pfnOpen = SRTMHGTDataset::Open;

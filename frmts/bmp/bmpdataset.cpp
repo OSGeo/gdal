@@ -982,9 +982,10 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     BMPDataset      *poDS;
-    VSIStatBuf      sStat;
+    VSIStatBufL     sStat;
 
     poDS = new BMPDataset();
+    poDS->eAccess = poOpenInfo->eAccess;
 
     if( poOpenInfo->eAccess == GA_ReadOnly )
         poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
@@ -993,7 +994,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( !poDS->fp )
         return NULL;
 
-    CPLStat(poOpenInfo->pszFilename, &sStat);
+    VSIStatL(poOpenInfo->pszFilename, &sStat);
 
 /* -------------------------------------------------------------------- */
 /*      Read the BMPFileHeader. We need iOffBits value only             */
@@ -1487,6 +1488,8 @@ void GDALRegister_BMP()
 "<CreationOptionList>"
 "   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
 "</CreationOptionList>" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = BMPDataset::Open;
         poDriver->pfnCreate = BMPDataset::Create;
