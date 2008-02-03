@@ -753,8 +753,6 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     ILWISDataset 	*poDS;
     poDS = new ILWISDataset();
 		
-    poOpenInfo->fp = NULL;
-    
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
