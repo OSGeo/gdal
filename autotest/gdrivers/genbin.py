@@ -41,8 +41,8 @@ import gdaltest
 
 def genbin_1():
 
-    tst = gdaltest.GDALTest( 'GenBin', 'tm4628_96.bil', 1, 24,
-                             0, 0, 500, 2 )
+    tst = gdaltest.GDALTest( 'GenBin', 'tm4628_96.bil', 1, 5738,
+                             0, 0, 500, 1 )
 
     prj = """PROJCS["NAD27 / Washington South",
     GEOGCS["NAD27",
