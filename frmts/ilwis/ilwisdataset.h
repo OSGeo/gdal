@@ -36,7 +36,6 @@
 #include "ogr_spatialref.h"
 //#include "Windows.h"
 #include <string>
-#include <algorithm>
 #include <map>
 
 #ifdef WIN32
