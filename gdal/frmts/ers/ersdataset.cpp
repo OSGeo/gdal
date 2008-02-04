@@ -665,6 +665,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new ERSDataset();
     poDS->poHeader = poHeader;
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
