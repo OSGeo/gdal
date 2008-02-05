@@ -191,7 +191,7 @@ using std::map;
 class CompareAsNum
 {
 public:
-	bool operator() (const string&, const string&) const;
+    bool operator() (const string&, const string&) const;
 };
 
 typedef map<string, string>          SectionEntries;
@@ -200,24 +200,22 @@ typedef map<string, SectionEntries*> Sections;
 class IniFile  
 {
 public:
-	IniFile();
-	virtual ~IniFile();
+    IniFile(const string& filename);
+    virtual ~IniFile();
 
-	void Open(const string& filename);
-	void Close();
+    void SetKeyValue(const string& section, const string& key, const string& value);
+    string GetKeyValue(const string& section, const string& key);
 
-	void SetKeyValue(const string& section, const string& key, const string& value);
-	string GetKeyValue(const string& section, const string& key);
-
-	void RemoveKeyValue(const string& section, const string& key);
-	void RemoveSection(const string& section);
+    void RemoveKeyValue(const string& section, const string& key);
+    void RemoveSection(const string& section);
 
 private:
-	string filename;
-	Sections sections;
+    string filename;
+    Sections sections;
+    bool bChanged;
 
-	void Load();
-	void Flush();
+    void Load();
+    void Store();
 };
 
 
