@@ -69,26 +69,20 @@ string GetLine(FILE* fil)
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-IniFile::IniFile()
+IniFile::IniFile(const string& filenam)
 {
-
+    filename = filenam;
+    Load();
+    bChanged = false; // Start tracking changes
 }
 
 IniFile::~IniFile()
 {
-
-}
-
-void IniFile::Open(const string& filenam)
-{
-    filename = filenam;
-
-    Load();
-}
-
-void IniFile::Close()
-{
-    Flush();
+    if (bChanged)
+    {
+        Store();
+        bChanged = false;
+    }
 
     for (Sections::iterator iter = sections.begin(); iter != sections.end(); ++iter)
     {
@@ -115,7 +109,9 @@ void IniFile::SetKeyValue(const string& section, const string& key, const string
         SectionEntries *entries = (*iterSect).second;
         (*entries)[key] = value;
     }
+    bChanged = true;
 }
+
 string IniFile::GetKeyValue(const string& section, const string& key)
 {
 	Sections::iterator iterSect = sections.find(section);
@@ -138,6 +134,7 @@ void IniFile::RemoveKeyValue(const string& section, const string& key)
         // The section exists, now erase entry "key"
         SectionEntries *entries = (*iterSect).second;
         (*entries).erase(key);
+        bChanged = true;
     }
 }
 
@@ -150,6 +147,7 @@ void IniFile::RemoveSection(const string& section)
         SectionEntries *entries = (*iterSect).second;
         (*entries).clear();
         sections.erase(iterSect);
+        bChanged = true;
     }
 }
 
@@ -213,7 +211,7 @@ void IniFile::Load()
     VSIFCloseL(filIni);
 }
 
-void IniFile::Flush()
+void IniFile::Store()
 {
     FILE *filIni = VSIFOpenL(filename.c_str(), "w+");
     if (filIni == NULL)
@@ -262,15 +260,9 @@ string ReadElement(string section, string entry, string filename)
     if (filename.length() == 0)
         return string();
 
-    IniFile MyIniFile;
-    MyIniFile = IniFile();
-    MyIniFile.Open(filename);
+    IniFile MyIniFile (filename);
 
-    string ret = MyIniFile.GetKeyValue(section, entry);
-
-    MyIniFile.Close();
-
-    return ret;
+    return MyIniFile.GetKeyValue(section, entry);;
 }
 
 bool WriteElement(string sSection, string sEntry,
@@ -279,12 +271,9 @@ bool WriteElement(string sSection, string sEntry,
     if (0 == fn.length())
         return false;
 
-    IniFile MyIniFile;
-    MyIniFile = IniFile();
-    MyIniFile.Open(fn);
+    IniFile MyIniFile (fn);
 
     MyIniFile.SetKeyValue(sSection, sEntry, sValue);
-    MyIniFile.Close();
     return true;
 }
 
