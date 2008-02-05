@@ -90,7 +90,7 @@ const char * netCDFDataset::GetProjectionRef()
     if( bGotGeoTransform )
 	return pszProjection;
     else
-	return "";
+	return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -103,7 +103,10 @@ double netCDFRasterBand::GetNoDataValue( int * pbSuccess )
     if( pbSuccess )
         *pbSuccess = bNoDataSet;
 
-    return dfNoDataValue;
+    if( bNoDataSet )
+        return dfNoDataValue;
+    else
+        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/
@@ -897,29 +900,68 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 /*      Enable GeoTransform                                             */
 /* -------------------------------------------------------------------- */
-                poDS->bGotGeoTransform = TRUE;
-		    
-                poDS->adfGeoTransform[0] = pdfXCoord[0];
-                poDS->adfGeoTransform[3] = pdfYCoord[0];
-                poDS->adfGeoTransform[2] = 0;
-                poDS->adfGeoTransform[4] = 0;
-                poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - 
-                                              pdfXCoord[0] ) / 
-                                            ( poDS->nRasterXSize - 1 ));
+                /* ----------------------------------------------------------*/
+                /*    In the following "actual_range" and "node_offset"      */
+                /*    are attributes used by netCDF files created by GMT.    */
+                /*    If we find them we know how to proceed. Else, use      */
+                /*    the original algorithm.                                */
+                /* --------------------------------------------------------- */
+                double	dummy[2], xMinMax[2], yMinMax[2];
+                int	node_offset = 0;
 
-                poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - 
-                                              pdfYCoord[0] ) / 
-                                            ( poDS->nRasterYSize - 1 ));
+                poDS->bGotGeoTransform = TRUE;
+
+                nc_get_att_int (cdfid, NC_GLOBAL, "node_offset", &node_offset);
+
+                if (!nc_get_att_double (cdfid, nVarDimXID, "actual_range", dummy)) {
+                    xMinMax[0] = dummy[0];		
+                    xMinMax[1] = dummy[1];
+                }
+                else {
+                    xMinMax[0] = pdfXCoord[0];
+                    xMinMax[1] = pdfXCoord[xdim-1];
+                    node_offset = 0;
+                }
+
+                if (!nc_get_att_double (cdfid, nVarDimYID, "actual_range", dummy)) {
+                    yMinMax[0] = dummy[0];		
+                    yMinMax[1] = dummy[1];
+                }
+                else {
+                    yMinMax[0] = pdfYCoord[0];	
+                    yMinMax[1] = pdfYCoord[ydim-1];
+                    node_offset = 0;
+                }
+
+#ifdef notdef
+                // Check for reverse order of y-coordinate
+                if ( yMinMax[0] > yMinMax[1] ) {
+                    dummy[0] = yMinMax[1];
+                    dummy[1] = yMinMax[0];
+                    yMinMax[0] = dummy[0];
+                    yMinMax[1] = dummy[1];
+                }
+#endif
+
+                poDS->adfGeoTransform[0] = xMinMax[0];
+                poDS->adfGeoTransform[2] = 0;
+                poDS->adfGeoTransform[3] = yMinMax[1];
+                poDS->adfGeoTransform[4] = 0;
+                poDS->adfGeoTransform[1] = ( xMinMax[1] - xMinMax[0] ) / 
+                    ( poDS->nRasterXSize + (node_offset - 1) );
+                poDS->adfGeoTransform[5] = ( yMinMax[0] - yMinMax[1] ) / 
+                    ( poDS->nRasterYSize + (node_offset - 1) );
+
 /* -------------------------------------------------------------------- */
 /*     Compute the center of the pixel                                  */
 /* -------------------------------------------------------------------- */
-                poDS->adfGeoTransform[0] = pdfXCoord[0]
-                    - (poDS->adfGeoTransform[1] / 2);
-
-                poDS->adfGeoTransform[3] = pdfYCoord[0]
-                    - (poDS->adfGeoTransform[5] / 2);
+                if ( !node_offset ) {	// Otherwise its already the pixel center
+                    poDS->adfGeoTransform[0] -= (poDS->adfGeoTransform[1] / 2);
+                    poDS->adfGeoTransform[3] -= (poDS->adfGeoTransform[5] / 2);
+                }
 
                 oSRS.exportToWkt( &(poDS->pszProjection) );
+		    
 	    } 
 	}
 
@@ -1039,7 +1081,7 @@ CPLErr netCDFDataset::GetGeoTransform( double * padfTransform )
     if( bGotGeoTransform )
         return CE_None;
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform( padfTransform );;
 }
 
 /************************************************************************/
@@ -1070,18 +1112,30 @@ double netCDFDataset::rint( double dfX)
 /************************************************************************/
 /*                        ReadAttributes()                              */
 /************************************************************************/
+CPLErr netCDFDataset::SafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize)
+{
+    /* Reallocate the data string until the content fits */
+    while(*nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1)) {
+        (*nDestSize) *= 2;
+        *ppszDest = (char*) CPLRealloc((void*) *ppszDest, *nDestSize);
+    }
+    strcat(*ppszDest, pszSrc);
+    
+    return CE_None;
+}
 
 CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 
 {
     char    szAttrName[ NC_MAX_NAME ];
     char    szVarName [ NC_MAX_NAME ];
-    char    szMetaName[ NC_MAX_NAME ];
-    char    szMetaTemp[ MAX_STR_LEN ];
+    char    szMetaName[ NC_MAX_NAME * 2 ];
+    char    *pszMetaTemp = NULL;
+    size_t  nMetaTempSize;
     nc_type nAttrType;
-    size_t  nAttrLen,m;
+    size_t  nAttrLen, m;
     int     nbAttr;
-    char    szTemp[ NC_MAX_NAME ];
+    char    szTemp[ MAX_STR_LEN ];
 
     nc_inq_varnatts( cdfid, var, &nbAttr );
     if( var == NC_GLOBAL ) {
@@ -1091,75 +1145,69 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 	nc_inq_varname(  cdfid, var, szVarName );
     }
 
-    for( int l=0; l < nbAttr; l++){
+    for( int l=0; l < nbAttr; l++) {
 	
 	nc_inq_attname( cdfid, var, l, szAttrName);
 	sprintf( szMetaName, "%s#%s", szVarName, szAttrName  );
-	*szMetaTemp='\0';
 	nc_inq_att( cdfid, var, szAttrName, &nAttrType, &nAttrLen );
 	
+        /* Allocate guaranteed minimum size */
+        nMetaTempSize = nAttrLen + 1;
+        pszMetaTemp = (char *) CPLCalloc( nMetaTempSize, sizeof( char ));
+        *pszMetaTemp = '\0';
 	
 	switch (nAttrType) {
 	case NC_CHAR:
-	    char *pszTemp;
-	    pszTemp = (char *) CPLCalloc( nAttrLen+1, sizeof( char ) );
-	    nc_get_att_text( cdfid, var, szAttrName,pszTemp );
-	    pszTemp[nAttrLen]='\0';
-	    strcpy(szMetaTemp,pszTemp);
-	    CPLFree(pszTemp);
+                nc_get_att_text( cdfid, var, szAttrName, pszMetaTemp );
+                pszMetaTemp[nAttrLen]='\0';
 	    break;
 	case NC_SHORT:
 	    short *psTemp;
-	    
 	    psTemp = (short *) CPLCalloc( nAttrLen, sizeof( short ) );
 	    nc_get_att_short( cdfid, var, szAttrName, psTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%d, ",psTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%hd, ", psTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%d",psTemp[m] );
+                sprintf( szTemp, "%hd", psTemp[m] );
+                SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    CPLFree(psTemp);
-	    strcat(szMetaTemp,szTemp);
-	    
 	    break;
 	case NC_INT:
 	    int *pnTemp;
-	    
 	    pnTemp = (int *) CPLCalloc( nAttrLen, sizeof( int ) );
 	    nc_get_att_int( cdfid, var, szAttrName, pnTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%d",pnTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%d, ", pnTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%d",pnTemp[m] );
+        	    sprintf( szTemp, "%d", pnTemp[m] );
+        	    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    CPLFree(pnTemp);
-	    strcat(szMetaTemp,szTemp);
 	    break;
 	case NC_FLOAT:
 	    float *pfTemp;
 	    pfTemp = (float *) CPLCalloc( nAttrLen, sizeof( float ) );
 	    nc_get_att_float( cdfid, var, szAttrName, pfTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%e",pfTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%e, ", pfTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%e",pfTemp[m] );
+        	    sprintf( szTemp, "%e", pfTemp[m] );
+        	    SafeStrcat(&pszMetaTemp,szTemp, &nMetaTempSize);
 	    CPLFree(pfTemp);
-	    strcat(szMetaTemp,szTemp);
-	    
 	    break;
 	case NC_DOUBLE:
 	    double *pdfTemp;
 	    pdfTemp = (double *) CPLCalloc(nAttrLen, sizeof(double));
 	    nc_get_att_double( cdfid, var, szAttrName, pdfTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%g",pdfTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%g, ", pdfTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%g",pdfTemp[m] );
+        	    sprintf( szTemp, "%g", pdfTemp[m] );
+        	    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    CPLFree(pdfTemp);
-	    strcat(szMetaTemp,szTemp);
-	    
 	    break;
 	default:
 	    break;
@@ -1167,14 +1215,15 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 
 	papszMetadata = CSLSetNameValue(papszMetadata, 
 					szMetaName, 
-					szMetaTemp);
-	
+                                        pszMetaTemp);
+        CPLFree(pszMetaTemp);
     }
 	
 
     return CE_None;
 
 }
+
 
 /************************************************************************/
 /*                netCDFDataset::CreateSubDatasetList()                 */
