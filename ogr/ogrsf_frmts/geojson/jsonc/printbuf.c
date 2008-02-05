@@ -26,7 +26,8 @@
 #include "debug.h"
 #include "printbuf.h"
 
-#include "cpl_string.h"
+#include <cpl_port.h> /* MIN and MAX macros */
+#include <cpl_string.h>
 
 struct printbuf* printbuf_new()
 {
@@ -47,7 +48,7 @@ int printbuf_memappend(struct printbuf *p, char *buf, int size)
 {
   char *t;
   if(p->size - p->bpos <= size) {
-    int new_size = max(p->size * 2, p->bpos + size + 8);
+    int new_size = MAX(p->size * 2, p->bpos + size + 8);
 #ifdef PRINTBUF_DEBUG
     mc_debug("printbuf_memappend: realloc "
 	     "bpos=%d wrsize=%d old_size=%d new_size=%d\n",
