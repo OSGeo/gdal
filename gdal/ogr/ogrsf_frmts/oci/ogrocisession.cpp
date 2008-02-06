@@ -69,6 +69,7 @@ OGROCISession::OGROCISession()
     hDescribe = NULL;
     hGeometryTDO = NULL;
     hOrdinatesTDO = NULL;
+    hElemInfoTDO = NULL;
     pszUserid = NULL;
     pszPassword = NULL;
     pszDatabase = NULL;
@@ -158,22 +159,28 @@ int OGROCISession::EstablishSession( const char *pszUserid,
 /* -------------------------------------------------------------------- */
     hGeometryTDO = PinTDO( SDO_GEOMETRY );
     if( hGeometryTDO == NULL )
-        return FALSE;
-
+    {
+        /* If we have no MDSYS.SDO_GEOMETRY then we consider we are
+        working along with the VRT driver and access non spatial tables.
+        See #2202 for more details (Tamas Szekeres)*/
+        CPLErrorReset();
+    }
+    else
+    {
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ORDINATE_ARRAY type object.            */
 /* -------------------------------------------------------------------- */
-    hOrdinatesTDO = PinTDO( "MDSYS.SDO_ORDINATE_ARRAY" );
-    if( hOrdinatesTDO == NULL )
-        return FALSE;
+        hOrdinatesTDO = PinTDO( "MDSYS.SDO_ORDINATE_ARRAY" );
+        if( hOrdinatesTDO == NULL )
+            return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ELEM_INFO_ARRAY type object.           */
 /* -------------------------------------------------------------------- */
-    hElemInfoTDO = PinTDO( "MDSYS.SDO_ELEM_INFO_ARRAY" );
-    if( hElemInfoTDO == NULL )
-        return FALSE;
-
+        hElemInfoTDO = PinTDO( "MDSYS.SDO_ELEM_INFO_ARRAY" );
+        if( hElemInfoTDO == NULL )
+            return FALSE;
+    }
 /* -------------------------------------------------------------------- */
 /*      Record information about the session.                           */
 /* -------------------------------------------------------------------- */
