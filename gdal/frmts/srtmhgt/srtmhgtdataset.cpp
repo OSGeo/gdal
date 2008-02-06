@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: srtmhgtdataset $
+ * $Id$
  *
  * Project:  SRTM HGT Driver
  * Purpose:  SRTM HGT File Read Support.
@@ -37,7 +37,7 @@
 
 #define SRTMHG_NODATA_VALUE -32768
 
-CPL_CVSID("$Id: srtmhgtdataset.cpp $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_SRTMHGT(void);
