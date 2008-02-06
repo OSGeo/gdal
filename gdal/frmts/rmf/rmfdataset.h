@@ -134,6 +134,7 @@ class RMFDataset : public GDALDataset
                 RMFDataset();
                 ~RMFDataset();
 
+    static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
