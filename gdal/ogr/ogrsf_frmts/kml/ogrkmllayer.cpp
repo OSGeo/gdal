@@ -27,10 +27,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "ogr_kml.h"
 #include "ogr_api.h"
 #include "cpl_conv.h"
-#include "cpl_port.h"
 #include "cpl_string.h"
 
 /* Function utility to dump OGRGeoemtry to KML text. */
@@ -131,7 +131,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         if(poFeatureKML->eType == Point)
         {
             poFeature->SetGeometryDirectly(
-                    new OGRPoint( poFeatureKML->pvpsCoordinates->at(0)->dfLongitude, poFeatureKML->pvpsCoordinates->at(0)->dfLatitude, poFeatureKML->pvpsCoordinates->at(0)->dfAltitude)
+                    new OGRPoint( (*poFeatureKML->pvpsCoordinates)[0]->dfLongitude, (*poFeatureKML->pvpsCoordinates)[0]->dfLatitude, (*poFeatureKML->pvpsCoordinates)[0]->dfAltitude)
                     );
         }
         // Handle a LineString
@@ -140,7 +140,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
             OGRLineString *poLS = new OGRLineString();
             for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
             {
-                poLS->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
+                poLS->addPoint( (*poFeatureKML->pvpsCoordinates)[nCount]->dfLongitude, (*poFeatureKML->pvpsCoordinates)[nCount]->dfLatitude, (*poFeatureKML->pvpsCoordinates)[nCount]->dfAltitude );
             }
             poFeature->SetGeometryDirectly(poLS);
         }
@@ -151,17 +151,17 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
             OGRLinearRing *poLR = new OGRLinearRing();
             for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
             {
-                poLR->addPoint(poFeatureKML->pvpsCoordinates->at(nCount)->dfLongitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfLatitude, poFeatureKML->pvpsCoordinates->at(nCount)->dfAltitude);
+                poLR->addPoint( (*poFeatureKML->pvpsCoordinates)[nCount]->dfLongitude, (*poFeatureKML->pvpsCoordinates)[nCount]->dfLatitude, (*poFeatureKML->pvpsCoordinates)[nCount]->dfAltitude );
             }
             poPG->addRingDirectly(poLR);
             for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
             {
                 poLR = new OGRLinearRing();
-                for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
+                for(nCount2 = 0; nCount2 < (*poFeatureKML->pvpsCoordinatesExtra)[nCount]->size(); nCount2++)
                 {
-                    poLR->addPoint(poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLongitude, 
-                        poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfLatitude, 
-                        poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2)->dfAltitude);
+                    poLR->addPoint( (*(*poFeatureKML->pvpsCoordinatesExtra)[nCount])[nCount2]->dfLongitude, 
+                        (*(*poFeatureKML->pvpsCoordinatesExtra)[nCount])[nCount2]->dfLatitude, 
+                        (*(*poFeatureKML->pvpsCoordinatesExtra)[nCount])[nCount2]->dfAltitude );
                 }
                 poPG->addRingDirectly(poLR);
             }
@@ -176,16 +176,16 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         // Clean up
         for(nCount = 0; nCount < poFeatureKML->pvpsCoordinates->size(); nCount++)
         {
-            delete poFeatureKML->pvpsCoordinates->at(nCount);
+            delete (*poFeatureKML->pvpsCoordinates)[nCount];
         }
     
         if(poFeatureKML->pvpsCoordinatesExtra != NULL)
         {
             for(nCount = 0; nCount < poFeatureKML->pvpsCoordinatesExtra->size(); nCount++)
             {
-                for(nCount2 = 0; nCount2 < poFeatureKML->pvpsCoordinatesExtra->at(nCount)->size(); nCount2++)
-                    delete poFeatureKML->pvpsCoordinatesExtra->at(nCount)->at(nCount2);
-                delete poFeatureKML->pvpsCoordinatesExtra->at(nCount);
+                for(nCount2 = 0; nCount2 < (*poFeatureKML->pvpsCoordinatesExtra)[nCount]->size(); nCount2++)
+                    delete (*(*poFeatureKML->pvpsCoordinatesExtra)[nCount])[nCount2];
+                delete (*poFeatureKML->pvpsCoordinatesExtra)[nCount];
             }
             delete poFeatureKML->pvpsCoordinatesExtra;
         }
