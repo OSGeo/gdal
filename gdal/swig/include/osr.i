@@ -324,6 +324,10 @@ public:
     return OSRSetLinearUnits( self, name, to_meters );
   }
 
+  OGRErr SetLinearUnitsAndUpdateParameters( const char*name, double to_meters) {
+    return OSRSetLinearUnitsAndUpdateParameters( self, name, to_meters );
+  }
+
   double GetLinearUnits() {
     // Return code ignored.
     return OSRGetLinearUnits( self, 0 );
