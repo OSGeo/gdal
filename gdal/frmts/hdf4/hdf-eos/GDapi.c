@@ -492,10 +492,10 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 		}
 		else
 		{
-		    sprintf(refstr1, "%s%lf%s%lf%s",
+		    sprintf(refstr1, "%s%f%s%f%s",
 			    "(", upleftpt[0], ",", upleftpt[1], ")");
 
-		    sprintf(refstr2, "%s%lf%s%lf%s",
+		    sprintf(refstr2, "%s%f%s%f%s",
 			    "(", lowrightpt[0], ",", lowrightpt[1], ")");
 		}
 
@@ -1065,8 +1065,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 		    /* else projparm[i] is non-zero floating point ... */
 		    else
 		    {
-			sprintf(utlbuf, "%lf%s",
-				projparm[i], ",");
+			sprintf(utlbuf, "%f%s",	projparm[i], ",");
 		    }
 		}
 		strcat(projparmbuf, utlbuf);
