@@ -2830,7 +2830,16 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #else
     bool bMeter = true;
 #endif    
-
+    
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+                  "MrSID driver ignores color table. "
+                  "The source raster band will be considered as grey level.\n" );
+        if (bStrict)
+            return NULL;
+    }
+    
     // Output Mrsid Version 2 file.
     if( pszVersion && atoi(pszVersion) == 2 )
     {
@@ -2990,6 +2999,15 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nXSize = poSrcDS->GetRasterXSize();
     int nYSize = poSrcDS->GetRasterYSize();
     LT_STATUS  eStat;
+    
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+                  "MrSID driver ignores color table. "
+                  "The source raster band will be considered as grey level.\n" );
+        if (bStrict)
+            return NULL;
+    }
       
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
