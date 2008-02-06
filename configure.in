@@ -1843,7 +1843,7 @@ else
     AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
   else
   
-    LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
+    LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
     AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
 
     if test "$PROJ_STATIC" = "no"; then
@@ -1856,7 +1856,7 @@ else
 
       unset ac_cv_lib_proj_pj_init
 
-      LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
+      LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
       AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
 
