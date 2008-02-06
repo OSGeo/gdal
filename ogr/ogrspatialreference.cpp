@@ -940,6 +940,21 @@ OGRErr OGRSpatialReference::SetLinearUnitsAndUpdateParameters(
 }
 
 /************************************************************************/
+/*                OSRSetLinearUnitsAndUpdateParameters()                */
+/************************************************************************/
+
+OGRErr OSRSetLinearUnitsAndUpdateParameters( OGRSpatialReferenceH hSRS, 
+                                             const char * pszUnits, 
+                                             double dfInMeters )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetLinearUnitsAndUpdateParameters", 
+                       CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->
+        SetLinearUnitsAndUpdateParameters( pszUnits, dfInMeters );
+}
+/************************************************************************/
 /*                           SetLinearUnits()                           */
 /************************************************************************/
 
@@ -1811,6 +1826,15 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "URN %s not a supported format.", pszURN );
         return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Clear any existing definition.                                  */
+/* -------------------------------------------------------------------- */
+    if( GetRoot() != NULL )
+    {
+        delete poRoot;
+        poRoot = NULL;
     }
 
 /* -------------------------------------------------------------------- */
