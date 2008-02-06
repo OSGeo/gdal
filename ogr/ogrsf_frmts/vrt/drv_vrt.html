@@ -10,7 +10,7 @@
 OGR Virtual Format is a driver that transforms features read from other
 drivers based on criteria specified in an XML control file.  It is primarily
 used to derive spatial layers from flat tables with spatial information in
-attribute columns.  It can also be used to associated coordinate system
+attribute columns.  It can also be used to associate coordinate system
 information with a datasource, merge layers from different datasources into
 a single data source, or even just to provide an anchor file for access to 
 non-file oriented datasources.<p>
@@ -19,7 +19,7 @@ The virtual files are currently normally prepared by hand.<p>
 
 <h2>Creation Issues</h2>
 
-Currently the ODBC VRT driver is read-only, so new features, tables and
+Currently the OGR VRT driver is read-only, so new features, tables and
 datasources cannot normally be created by OGR applications.  This limitation
 may be removed in the future. <p>
 
@@ -30,7 +30,7 @@ an <b>OGRVRTLayer</b> child for each layer in the virtual datasource.  That
 element may have the following subelements:
 
 <ul>
-<li> <b>SrcDataSource</b> (manditory): The value is the name of the datasource
+<li> <b>SrcDataSource</b> (mandatory): The value is the name of the datasource
 that this layer will be derived from.  The element may optionally have
 a <b>relativeToVRT</b> attribute which defaults to "0", but if "1" indicates
 that the source datasource should be interpreted as relative to the virtual
@@ -82,8 +82,7 @@ database DISEASE is used to form a spatial layer.  The virtual file
 uses the "x" and "y" columns to get the spatial location.  It also marks
 the layer as a point layer, and as being in the WGS84 coordinate system.<p>
 
-<pre>
-&lt;OGRVRTDataSource&gt;
+<pre>&lt;OGRVRTDataSource&gt;
 
     &lt;OGRVRTLayer name="worms"&gt;
         &lt;SrcDataSource&gt;ODBC:DISEASE,worms&lt;/SrcDataSource&gt; 
@@ -112,7 +111,7 @@ is important it can be helpful to index the X and Y columns in the source
 datastore, if that is possible.  For instance if the source is an RDBMS. <p>
 
 <li> Normally the SrcDataSource is a non-spatial tabular format (such as
-MySQL, SQLite, CSV, or ODBC) but it can also be a spatial database in which
+MySQL, SQLite, CSV, OCI, or ODBC) but it can also be a spatial database in which
 case the geometry can be directly copied over. <p>
 
 </ul>
