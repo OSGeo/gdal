@@ -26083,7 +26083,7 @@ fi
 
   else
 
-    LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
+    LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
     { echo "$as_me:$LINENO: checking for pj_init in -lproj" >&5
 echo $ECHO_N "checking for pj_init in -lproj... $ECHO_C" >&6; }
 if test "${ac_cv_lib_proj_pj_init+set}" = set; then
@@ -26156,7 +26156,7 @@ fi
 
       unset ac_cv_lib_proj_pj_init
 
-      LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
+      LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
       { echo "$as_me:$LINENO: checking for pj_init in -lproj" >&5
 echo $ECHO_N "checking for pj_init in -lproj... $ECHO_C" >&6; }
 if test "${ac_cv_lib_proj_pj_init+set}" = set; then
