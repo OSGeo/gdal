@@ -42,7 +42,29 @@ import gdaltest
 def ilwis_1():
 
     tst = gdaltest.GDALTest( 'ilwis', 'LanduseSmall.mpr', 1, 2351 )
-    return tst.testOpen()
+
+    srs = """PROJCS["UTM",
+    GEOGCS["PSAD56",
+        DATUM["Provisional_South_American_Datum_1956",
+            SPHEROID["International 1924",6378388,297,
+                AUTHORITY["EPSG","7022"]],
+            AUTHORITY["EPSG","6248"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.01745329251994328,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4248"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-69],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",10000000],
+    UNIT["Meter",1]]"""
+
+    gt = (795480, 20, 0, 8090520, 0, -20)
+    
+    return tst.testOpen( check_gt = gt, check_prj = srs )
 
 ###############################################################################
 # copy byte data and verify.
