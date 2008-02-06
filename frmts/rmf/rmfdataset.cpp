@@ -121,8 +121,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't seek to offset %ld in input file to read data.",
-                      poGDS->paiTiles[2 * nTile] );
+                "Can't seek to offset %ld in input file to read data.\n%s\n",
+                      poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
             return CE_Failure;
         }
     }
@@ -144,8 +144,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             else
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Can't read from offset %ld in input file.",
-                          poGDS->paiTiles[2 * nTile] );
+                          "Can't read from offset %ld in input file.\n%s\n",
+                          poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
                 // XXX: Do not fail here, just return empty block and continue
                 // reading.
                 return CE_None;
@@ -192,8 +192,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             else
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Can't read from offset %ld in input file.",
-                          poGDS->paiTiles[2 * nTile] );
+                          "Can't read from offset %ld in input file.\n%s\n",
+                          poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
                 // XXX: Do not fail here, just return empty block and continue
                 // reading.
                 CPLFree( pabyTile );
@@ -822,7 +822,7 @@ CPLErr RMFDataset::WriteHeader()
     }
 
 /* -------------------------------------------------------------------- */
-/*  Write out the block table, swapped if needed.                       */
+/*  Write out the block table, swap if needed.                          */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
     GUInt32 i;
@@ -876,16 +876,29 @@ void RMFDataset::FlushCache()
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
+
+{
+    if( poOpenInfo->fp == NULL )
+        return FALSE;
+
+    if( memcmp(poOpenInfo->pabyHeader, "RSW\0", 4) != 0
+        && memcmp(poOpenInfo->pabyHeader, "MTW\0", 4) != 0 )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->fp == NULL )
-        return NULL;
-
-    if( memcmp(poOpenInfo->pabyHeader, "RSW\0", 4) != 0
-        && memcmp(poOpenInfo->pabyHeader, "MTW\0", 4) != 0 )
+    if (!Identify(poOpenInfo))
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1416,6 +1429,7 @@ void GDALRegister_RMF()
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
 "</CreationOptionList>" );
 
+        poDriver->pfnIdentify = RMFDataset::Identify;
         poDriver->pfnOpen = RMFDataset::Open;
         poDriver->pfnCreate = RMFDataset::Create;
 
