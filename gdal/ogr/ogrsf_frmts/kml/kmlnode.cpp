@@ -176,17 +176,17 @@ void KMLNode::print(unsigned int what)
     if(what == 1 || what == 3)
     {
         for(kml_content_t::size_type z = 0; z < pvsContent_->size(); z++)
-            CPLDebug("KML", "%s|->pvsContent_: '%s'", indent.c_str(), pvsContent_->at(z).c_str());
+            CPLDebug("KML", "%s|->pvsContent_: '%s'", indent.c_str(), (*pvsContent_)[z].c_str());
     }
 
     if(what == 2 || what == 3)
     {
         for(kml_attributes_t::size_type z = 0; z < pvoAttributes_->size(); z++)
-            CPLDebug("KML", "%s|->pvoAttributes_: %s = '%s'", indent.c_str(), pvoAttributes_->at(z)->sName.c_str(), pvoAttributes_->at(z)->sValue.c_str());
+            CPLDebug("KML", "%s|->pvoAttributes_: %s = '%s'", indent.c_str(), (*pvoAttributes_)[z]->sName.c_str(), (*pvoAttributes_)[z]->sValue.c_str());
     }
 
     for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
-        pvpoChildren_->at(z)->print(what);
+        (*pvpoChildren_)[z]->print(what);
 }
 
 void KMLNode::classify(KML* poKML)
@@ -198,30 +198,30 @@ void KMLNode::classify(KML* poKML)
     for(kml_nodes_t::size_type z = 0; z < size; z++)
     {
         // Leafs are ignored
-        if(poKML->isLeaf(pvpoChildren_->at(z)->sName_))
+        if(poKML->isLeaf( (*pvpoChildren_)[z]->sName_) )
             continue;
 
         // Classify pvpoChildren_
-        pvpoChildren_->at(z)->classify(poKML);
+        (*pvpoChildren_)[z]->classify(poKML);
 
         if(poKML->isContainer(sName_))
         {
-            curr = pvpoChildren_->at(z)->eType_;
+            curr = (*pvpoChildren_)[z]->eType_;
         }
         else if(poKML->isFeatureContainer(sName_))
         {
-            if(poKML->isFeature(pvpoChildren_->at(z)->sName_))
+            if(poKML->isFeature( (*pvpoChildren_)[z]->sName_) )
             {
-                if(pvpoChildren_->at(z)->sName_.compare("Point") == 0)
+                if((*pvpoChildren_)[z]->sName_.compare("Point") == 0)
                     curr = Point;
-                else if(pvpoChildren_->at(z)->sName_.compare("LineString") == 0)
+                else if((*pvpoChildren_)[z]->sName_.compare("LineString") == 0)
                     curr = LineString;
-                else if(pvpoChildren_->at(z)->sName_.compare("Polygon") == 0)
+                else if((*pvpoChildren_)[z]->sName_.compare("Polygon") == 0)
                     curr = Polygon;
             }
             else if(poKML->isContainer(sName_))
             {
-                curr = pvpoChildren_->at(z)->eType_;
+                curr = (*pvpoChildren_)[z]->eType_;
             }
         }
         else if(poKML->isFeature(sName_) || poKML->isRest(sName_))
@@ -257,17 +257,17 @@ void KMLNode::eliminateEmpty(KML* poKML)
 {
     for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
     {
-        if(pvpoChildren_->at(z)->eType_ == Empty
-           && (poKML->isContainer(pvpoChildren_->at(z)->sName_)
-               || poKML->isFeatureContainer(pvpoChildren_->at(z)->sName_)))
+        if((*pvpoChildren_)[z]->eType_ == Empty
+           && (poKML->isContainer((*pvpoChildren_)[z]->sName_)
+               || poKML->isFeatureContainer((*pvpoChildren_)[z]->sName_)))
         {
-            delete pvpoChildren_->at(z);
+            delete (*pvpoChildren_)[z];
             pvpoChildren_->erase(pvpoChildren_->begin() + z);
             z--;
         }
         else
         {
-            pvpoChildren_->at(z)->eliminateEmpty(poKML);
+            (*pvpoChildren_)[z]->eliminateEmpty(poKML);
         }
     }
     calcExtent(poKML);
@@ -330,7 +330,7 @@ std::size_t KMLNode::countChildren()
 
 KMLNode* KMLNode::getChild(std::size_t index) const
 {
-    return pvpoChildren_->at(index);
+    return (*pvpoChildren_)[index];
 }
 
 void KMLNode::addContent(std::string const& text)
@@ -340,7 +340,7 @@ void KMLNode::addContent(std::string const& text)
 
 void KMLNode::appendContent(std::string const& text)
 {
-    std::string& tmp = pvsContent_->at(pvsContent_->size() - 1);
+    std::string& tmp = (*pvsContent_)[pvsContent_->size() - 1];
     tmp += text;
 }
 
@@ -349,7 +349,7 @@ std::string KMLNode::getContent(std::size_t index) const
     std::string tmp;
     if( index < pvsContent_->size() )
     {
-        tmp = pvsContent_->at(index);
+        tmp = (*pvsContent_)[index];
     }
     return tmp;
 }
@@ -386,7 +386,7 @@ KMLNode* KMLNode::getLayer(int nNum)
     kml_nodes_t::size_type size = pvpoChildren_->size();
     for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if((poTmp = pvpoChildren_->at(i)->getLayer(nNum)) != NULL)
+        if((poTmp = (*pvpoChildren_)[i]->getLayer(nNum)) != NULL)
             return poTmp;
     }
 
@@ -401,15 +401,15 @@ std::string KMLNode::getNameElement() const
 
     for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if( pvpoChildren_->at(i)->sName_.compare("name") == 0 )
+        if( (*pvpoChildren_)[i]->sName_.compare("name") == 0 )
         {
-            subsize = pvpoChildren_->at(i)->pvsContent_->size();
+            subsize = (*pvpoChildren_)[i]->pvsContent_->size();
             if( subsize > 0 )
             {
-                sElem = pvpoChildren_->at(i)->pvsContent_->at(0);
+                sElem = (*(*pvpoChildren_)[i]->pvsContent_)[0];
                 for( kml_nodes_t::size_type j = 1; j < subsize; ++j )
                 {
-                    sElem += " " + pvpoChildren_->at(i)->pvsContent_->at(j);
+                    sElem += " " + (*(*pvpoChildren_)[i]->pvsContent_)[j];
                 }
                 return sElem;
             }
@@ -426,15 +426,15 @@ std::string KMLNode::getDescriptionElement() const
     kml_nodes_t::size_type size = pvpoChildren_->size();
     for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if( pvpoChildren_->at(i)->sName_.compare("description") == 0 )
+        if( (*pvpoChildren_)[i]->sName_.compare("description") == 0 )
         {
-            subsize = pvpoChildren_->at(i)->pvsContent_->size();
+            subsize = (*pvpoChildren_)[i]->pvsContent_->size();
             if ( subsize > 0 )
             {
-                sElem = pvpoChildren_->at(i)->pvsContent_->at(0);
+                sElem = (*(*pvpoChildren_)[i]->pvsContent_)[0];
                 for( kml_nodes_t::size_type j = 1; j < subsize; ++j )
                 {
-                    sElem += " " + pvpoChildren_->at(i)->pvsContent_->at(j);
+                    sElem += " " + (*(*pvpoChildren_)[i]->pvsContent_)[j];
                 }
                 return sElem;
             }
@@ -451,7 +451,7 @@ std::size_t KMLNode::getNumFeatures() const
     
     for( kml_nodes_t::size_type i = 0; i < size; ++i )
     {
-        if(pvpoChildren_->at(i)->sName_ == "Placemark" )
+        if( (*pvpoChildren_)[i]->sName_ == "Placemark" )
             nNum++;
     }
     return nNum;
@@ -472,11 +472,11 @@ Feature* KMLNode::getFeature(std::size_t nNum)
 
     for(nCount = 0; nCount < pvpoChildren_->size(); nCount++)
     {
-        if(pvpoChildren_->at(nCount)->sName_.compare("Placemark") == 0)
+        if((*pvpoChildren_)[nCount]->sName_.compare("Placemark") == 0)
         {
             if(nCountP == nNum)
             {
-                poFeat = pvpoChildren_->at(nCount);
+                poFeat = (*pvpoChildren_)[nCount];
                 break;
             }
             nCountP++;
@@ -501,9 +501,9 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search Point Element
         for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
         {
-            if(poFeat->pvpoChildren_->at(nCount)->sName_.compare("Point") == 0)
+            if((*poFeat->pvpoChildren_)[nCount]->sName_.compare("Point") == 0)
             {
-                poTemp = poFeat->pvpoChildren_->at(nCount);
+                poTemp = (*poFeat->pvpoChildren_)[nCount];
                 break;
             }
         }
@@ -518,12 +518,12 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search coordinate Element
         for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
         {
-            if(poTemp->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
+            if((*poTemp->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
             {
-                poCoor = poTemp->pvpoChildren_->at(nCount);
+                poCoor = (*poTemp->pvpoChildren_)[nCount];
                 for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
                 {
-                    psCoord = ParseCoordinate(poCoor->pvsContent_->at(nCountP));
+                    psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                         psReturn->pvpsCoordinates->push_back(psCoord);
                 }
@@ -534,7 +534,7 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         else
         {
             for(unsigned short nNum = 0; nNum < psReturn->pvpsCoordinates->size(); nNum++)
-                delete psReturn->pvpsCoordinates->at(nNum);
+                delete (*psReturn->pvpsCoordinates)[nNum];
             delete psReturn->pvpsCoordinates;
             delete psReturn;
             return NULL;
@@ -547,9 +547,9 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search LineString Element
         for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
         {
-            if(poFeat->pvpoChildren_->at(nCount)->sName_.compare("LineString") == 0)
+            if((*poFeat->pvpoChildren_)[nCount]->sName_.compare("LineString") == 0)
             {
-                poTemp = poFeat->pvpoChildren_->at(nCount);
+                poTemp = (*poFeat->pvpoChildren_)[nCount];
                 break;
             }
         }
@@ -564,12 +564,12 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search coordinate Element
         for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
         {
-            if(poTemp->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
+            if((*poTemp->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
             {
-                poCoor = poTemp->pvpoChildren_->at(nCount);
+                poCoor = (*poTemp->pvpoChildren_)[nCount];
                 for(nCountP = 0; nCountP < poCoor->pvsContent_->size(); nCountP++)
                 {
-                    psCoord = ParseCoordinate(poCoor->pvsContent_->at(nCountP));
+                    psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                         psReturn->pvpsCoordinates->push_back(psCoord);
                 }
@@ -591,9 +591,9 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search Polygon Element
         for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
         {
-            if(poFeat->pvpoChildren_->at(nCount)->sName_.compare("Polygon") == 0)
+            if((*poFeat->pvpoChildren_)[nCount]->sName_.compare("Polygon") == 0)
             {
-                poTemp = poFeat->pvpoChildren_->at(nCount);
+                poTemp = (*poFeat->pvpoChildren_)[nCount];
                 break;
             }
         }
@@ -610,9 +610,9 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         //*********************************
         for(nCount = 0; nCount < poTemp->pvpoChildren_->size(); nCount++)
         {
-            if(poTemp->pvpoChildren_->at(nCount)->sName_.compare("outerBoundaryIs") == 0)
+            if((*poTemp->pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0)
             {
-                poCoor = poTemp->pvpoChildren_->at(nCount)->pvpoChildren_->at(0);
+                poCoor = (*(*poTemp->pvpoChildren_)[nCount]->pvpoChildren_)[0];
             }
         }
         // No outer boundary found
@@ -625,11 +625,11 @@ Feature* KMLNode::getFeature(std::size_t nNum)
         // Search coordinate Element
         for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
         {
-            if(poCoor->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
+            if((*poCoor->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
             {
-                for(nCountP = 0; nCountP < poCoor->pvpoChildren_->at(nCount)->pvsContent_->size(); nCountP++)
+                for(nCountP = 0; nCountP < (*poCoor->pvpoChildren_)[nCount]->pvsContent_->size(); nCountP++)
                 {
-                    psCoord = ParseCoordinate(poCoor->pvpoChildren_->at(nCount)->pvsContent_->at(nCountP));
+                    psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                         psReturn->pvpsCoordinates->push_back(psCoord);
                 }
@@ -649,18 +649,18 @@ Feature* KMLNode::getFeature(std::size_t nNum)
 
         for(nCount2 = 0; nCount2 < poTemp->pvpoChildren_->size(); nCount2++)
         {
-            if(poTemp->pvpoChildren_->at(nCount2)->sName_.compare("innerBoundaryIs") == 0)
+            if((*poTemp->pvpoChildren_)[nCount2]->sName_.compare("innerBoundaryIs") == 0)
             {
                 pvpsTmp = new std::vector<Coordinate*>; 
-                poCoor = poTemp->pvpoChildren_->at(nCount2)->pvpoChildren_->at(0);
+                poCoor = (*(*poTemp->pvpoChildren_)[nCount2]->pvpoChildren_)[0];
                 // Search coordinate Element
                 for(nCount = 0; nCount < poCoor->pvpoChildren_->size(); nCount++)
                 {
-                    if(poCoor->pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
+                    if((*poCoor->pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
                     {
-                        for(nCountP = 0; nCountP < poCoor->pvpoChildren_->at(nCount)->pvsContent_->size(); nCountP++)
+                        for(nCountP = 0; nCountP < (*poCoor->pvpoChildren_)[nCount]->pvsContent_->size(); nCountP++)
                         {
-                            psCoord = ParseCoordinate(poCoor->pvpoChildren_->at(nCount)->pvsContent_->at(nCountP));
+                            psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
                             if(psCoord != NULL)
                                 pvpsTmp->push_back(psCoord);
                         }
@@ -705,20 +705,20 @@ void KMLNode::calcExtent(KML *poKML)
         {
             for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
             {
-                if(pvpoChildren_->at(nCount)->sName_.compare("outerBoundaryIs") == 0
-                   || pvpoChildren_->at(nCount)->sName_.compare("innerBoundaryIs") == 0)
+                if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0
+                   || (*pvpoChildren_)[nCount]->sName_.compare("innerBoundaryIs") == 0)
                 {
-                    if(pvpoChildren_->at(nCount)->pvpoChildren_->size() == 1)
+                    if((*pvpoChildren_)[nCount]->pvpoChildren_->size() == 1)
                     {
-                        poTmp = pvpoChildren_->at(nCount)->pvpoChildren_->at(0);
+                        poTmp = (*(*pvpoChildren_)[nCount]->pvpoChildren_)[0];
                         for(unsigned short nCount3 = 0; nCount3 < poTmp->pvpoChildren_->size(); nCount3++)
                         {
-                            if(poTmp->pvpoChildren_->at(nCount3)->sName_.compare("coordinates") == 0)
+                            if((*poTmp->pvpoChildren_)[nCount3]->sName_.compare("coordinates") == 0)
                             {
                                 for(unsigned short nCount2 = 0;
-                                    nCount2 < poTmp->pvpoChildren_->at(nCount3)->pvsContent_->size(); nCount2++)
+                                    nCount2 < (*poTmp->pvpoChildren_)[nCount3]->pvsContent_->size(); nCount2++)
                                 {
-                                    psCoords = ParseCoordinate(poTmp->pvpoChildren_->at(nCount3)->pvsContent_->at(nCount2));
+                                    psCoords = ParseCoordinate((*(*poTmp->pvpoChildren_)[nCount3]->pvsContent_)[nCount2]);
                                     if(psCoords != NULL)
                                     {
                                         if(psCoords->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0)
@@ -743,12 +743,12 @@ void KMLNode::calcExtent(KML *poKML)
         {
             for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
             {
-                if(pvpoChildren_->at(nCount)->sName_.compare("coordinates") == 0)
+                if((*pvpoChildren_)[nCount]->sName_.compare("coordinates") == 0)
                 {
-                    poTmp = pvpoChildren_->at(nCount);
+                    poTmp = (*pvpoChildren_)[nCount];
                     for(unsigned short nCount2 = 0; nCount2 < poTmp->pvsContent_->size(); nCount2++)
                     {
-                        psCoords = ParseCoordinate(poTmp->pvsContent_->at(nCount2));
+                        psCoords = ParseCoordinate((*poTmp->pvsContent_)[nCount2]);
                         if(psCoords != NULL)
                         {
                             if(psCoords->dfLongitude < psExtent_->dfX1 || psExtent_->dfX1 == 0.0)
@@ -774,21 +774,21 @@ void KMLNode::calcExtent(KML *poKML)
         psExtent_->dfX1 = psExtent_->dfX2 = psExtent_->dfY1 = psExtent_->dfY2 = 0.0;
         for(unsigned short nCount = 0; nCount < pvpoChildren_->size(); nCount++)
         {
-            pvpoChildren_->at(nCount)->calcExtent(poKML);
-            if(pvpoChildren_->at(nCount)->psExtent_ != NULL)
+            (*pvpoChildren_)[nCount]->calcExtent(poKML);
+            if((*pvpoChildren_)[nCount]->psExtent_ != NULL)
             {
-                if(pvpoChildren_->at(nCount)->psExtent_->dfX1 < psExtent_->dfX1
+                if((*pvpoChildren_)[nCount]->psExtent_->dfX1 < psExtent_->dfX1
                    || psExtent_->dfX1 == 0)
-                    psExtent_->dfX1 = pvpoChildren_->at(nCount)->psExtent_->dfX1;
-                if(pvpoChildren_->at(nCount)->psExtent_->dfX2 > psExtent_->dfX2
+                    psExtent_->dfX1 = (*pvpoChildren_)[nCount]->psExtent_->dfX1;
+                if((*pvpoChildren_)[nCount]->psExtent_->dfX2 > psExtent_->dfX2
                    || psExtent_->dfX2 == 0)
-                    psExtent_->dfX2 = pvpoChildren_->at(nCount)->psExtent_->dfX2;
-                if(pvpoChildren_->at(nCount)->psExtent_->dfY1 < psExtent_->dfY1
+                    psExtent_->dfX2 = (*pvpoChildren_)[nCount]->psExtent_->dfX2;
+                if((*pvpoChildren_)[nCount]->psExtent_->dfY1 < psExtent_->dfY1
                    || psExtent_->dfY1 == 0)
-                    psExtent_->dfY1 = pvpoChildren_->at(nCount)->psExtent_->dfY1;
-                if(pvpoChildren_->at(nCount)->psExtent_->dfY2 > psExtent_->dfY2
+                    psExtent_->dfY1 = (*pvpoChildren_)[nCount]->psExtent_->dfY1;
+                if((*pvpoChildren_)[nCount]->psExtent_->dfY2 > psExtent_->dfY2
                    || psExtent_->dfY2 == 0)
-                    psExtent_->dfY2 = pvpoChildren_->at(nCount)->psExtent_->dfY2;
+                    psExtent_->dfY2 = (*pvpoChildren_)[nCount]->psExtent_->dfY2;
             }
         }
     }
