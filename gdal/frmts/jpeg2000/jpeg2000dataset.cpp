@@ -732,6 +732,15 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
 
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+                  "JPEG2000 driver ignores color table. "
+                  "The source raster band will be considered as grey level.\n" );
+        if (bStrict)
+            return NULL;
+    }
+    
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 

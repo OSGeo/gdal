@@ -1012,6 +1012,15 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
                   
         return NULL;
     }
+    
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+                  "ECW driver ignores color table. "
+                  "The source raster band will be considered as grey level.\n" );
+        if (bStrict)
+            return NULL;
+    }
 
     return ECWCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions, 
                           pfnProgress, pProgressData, FALSE );
@@ -1051,6 +1060,15 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         return NULL;
+    }
+
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    {
+        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
+                  "ECW driver ignores color table. "
+                  "The source raster band will be considered as grey level.\n" );
+        if (bStrict)
+            return NULL;
     }
 
     return ECWCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions, 
