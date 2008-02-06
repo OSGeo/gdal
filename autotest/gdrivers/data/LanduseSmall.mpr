@@ -1,44 +1,48 @@
 [BaseMap]
-AttributeTable=C:\warmerda\ilwisdata\landuse.tbt
-CoordSystem=c:\warmerda\ilwisdata\cochabamba.csy
+AttributeTable=LanduseSmall.tbt
 CoordBounds=795479.99999999988 8089020 796979.99999999988 8090520
-Domain=C:\warmerda\ilwisdata\landuse.dom
-DomainInfo=C:\warmerda\ilwisdata\landuse.dom;Byte;class;12;;
-Type=Map
+CoordSystem=LanduseSmall.csy
+Domain=LanduseSmall.dom
+DomainInfo=LanduseSmall.dom;Byte;class;12;;
 Proximity=63.700000
+Type=Map
+
 [Ilwis]
-Description=MapSubMap(C:\warmerda\ilwisdata\Landuse.mpr,1,1,75,75)
+Class=Raster Map
+Description=MapSubMap(Landuse.mpr,1,1,75,75)
 Time=1201538962
-Version=3.1
-Class=Dependent Raster Map
 Type=BaseMap
+Version=3.1
+GeoRefChangeable=Yes
+
+[IlwisObjectVirtual]
+DefOnlyPossible=Yes
+Expression=MapSubMap(Landuse.mpr,1,1,75,75)
+
 [Map]
 GeoRef=LanduseSmall.grf
 Size=75 75
-Type=MapVirtual
-[IlwisObjectVirtual]
-Expression=MapSubMap(C:\warmerda\ilwisdata\Landuse.mpr,1,1,75,75)
-DefOnlyPossible=Yes
-[ObjectDependency]
-NrDepObjects=2
-Object0=C:\warmerda\ilwisdata\Landuse.mpr
-Object1=LanduseSmall.grf
-[MapVirtual]
-Expression=MapSubMap(C:\warmerda\ilwisdata\Landuse.mpr,1,1,75,75)
-Type=MapFromMap
+Type=MapStore
+
 [MapFromMap]
-Map=C:\warmerda\ilwisdata\Landuse.mpr
+Map=Landuse.mpr
 Type=MapSubMap
-[MapSubMap]
-Offset=0 0
-Corners=No
+
 [MapStore]
-StoreTime=1201538962
 Data=LanduseSmall.mp#
-Structure=Line
-StartOffset=0
-RowLength=75
 PixelInterLeaved=No
+RowLength=75
+StartOffset=0
+StoreTime=1201538962
+Structure=Line
 SwapBytes=No
 Type=Byte
 UseAs=No
+
+[MapSubMap]
+Corners=No
+Offset=0 0
+
+[MapVirtual]
+Expression=MapSubMap(Landuse.mpr,1,1,75,75)
+Type=MapFromMap
