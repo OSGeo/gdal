@@ -29,13 +29,14 @@
 #ifndef OGR_KML_KML_H_INCLUDED
 #define OGR_KML_KML_H_INCLUDED
 
-#include "kmlutility.h"
-
 #include <expat.h>
 // std
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include "cpl_port.h"
+#include "kmlutility.h"
 
 #ifndef XMLCALL
 #error "Old version of expat, please upgrade to expat 2.x"
