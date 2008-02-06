@@ -294,6 +294,8 @@ const char CPL_DLL * CPL_STDCALL OSRGetAttrValue( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetAngularUnits( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetAngularUnits( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
+OGRErr CPL_DLL OSRSetLinearUnitsAndUpdateParameters( 
+    OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
 double CPL_DLL OSRGetPrimeMeridian( OGRSpatialReferenceH, char ** );
