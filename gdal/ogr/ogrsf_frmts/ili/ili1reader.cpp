@@ -539,9 +539,6 @@ int ILI1Reader::ReadTable() {
 
         if (feature == NULL)
         {
-          //start new feature
-          feature = new OGRFeature(featureDef);
-
           if (featureDef->GetFieldCount() == 0)
           {
             CPLDebug( "OGR_ILI", "No field definition found for table: %s", featureDef->GetName() );
@@ -554,6 +551,9 @@ int ILI1Reader::ReadTable() {
               featureDef->AddFieldDefn(fieldDef);
             }
           }
+
+          //start new feature
+          feature = new OGRFeature(featureDef);
 
           int fieldno = 0;
           for (fIndex=1; fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount(); fIndex++, fieldno++)
