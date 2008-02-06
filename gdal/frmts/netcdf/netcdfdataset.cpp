@@ -1236,18 +1236,30 @@ double netCDFDataset::rint( double dfX)
 /************************************************************************/
 /*                        ReadAttributes()                              */
 /************************************************************************/
+CPLErr netCDFDataset::SafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize)
+{
+    /* Reallocate the data string until the content fits */
+    while(*nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1)) {
+        (*nDestSize) *= 2;
+        *ppszDest = (char*) CPLRealloc((void*) *ppszDest, *nDestSize);
+    }
+    strcat(*ppszDest, pszSrc);
+    
+    return CE_None;
+}
 
 CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 
 {
     char    szAttrName[ NC_MAX_NAME ];
     char    szVarName [ NC_MAX_NAME ];
-    char    szMetaName[ NC_MAX_NAME ];
-    char    szMetaTemp[ MAX_STR_LEN ];
+    char    szMetaName[ NC_MAX_NAME * 2 ];
+    char    *pszMetaTemp = NULL;
+    size_t  nMetaTempSize;
     nc_type nAttrType;
-    size_t  nAttrLen,m;
+    size_t  nAttrLen, m;
     int     nbAttr;
-    char    szTemp[ NC_MAX_NAME ];
+    char    szTemp[ MAX_STR_LEN ];
 
     nc_inq_varnatts( cdfid, var, &nbAttr );
     if( var == NC_GLOBAL ) {
@@ -1257,75 +1269,69 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 	nc_inq_varname(  cdfid, var, szVarName );
     }
 
-    for( int l=0; l < nbAttr; l++){
+    for( int l=0; l < nbAttr; l++) {
 	
 	nc_inq_attname( cdfid, var, l, szAttrName);
 	sprintf( szMetaName, "%s#%s", szVarName, szAttrName  );
-	*szMetaTemp='\0';
 	nc_inq_att( cdfid, var, szAttrName, &nAttrType, &nAttrLen );
 	
+        /* Allocate guaranteed minimum size */
+        nMetaTempSize = nAttrLen + 1;
+        pszMetaTemp = (char *) CPLCalloc( nMetaTempSize, sizeof( char ));
+        *pszMetaTemp = '\0';
 	
 	switch (nAttrType) {
 	case NC_CHAR:
-	    char *pszTemp;
-	    pszTemp = (char *) CPLCalloc( nAttrLen+1, sizeof( char ) );
-	    nc_get_att_text( cdfid, var, szAttrName,pszTemp );
-	    pszTemp[nAttrLen]='\0';
-	    strcpy(szMetaTemp,pszTemp);
-	    CPLFree(pszTemp);
+                nc_get_att_text( cdfid, var, szAttrName, pszMetaTemp );
+                pszMetaTemp[nAttrLen]='\0';
 	    break;
 	case NC_SHORT:
 	    short *psTemp;
-	    
 	    psTemp = (short *) CPLCalloc( nAttrLen, sizeof( short ) );
 	    nc_get_att_short( cdfid, var, szAttrName, psTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%d, ",psTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%hd, ", psTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%d",psTemp[m] );
+                sprintf( szTemp, "%hd", psTemp[m] );
+                SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    CPLFree(psTemp);
-	    strcat(szMetaTemp,szTemp);
-	    
 	    break;
 	case NC_INT:
 	    int *pnTemp;
-	    
 	    pnTemp = (int *) CPLCalloc( nAttrLen, sizeof( int ) );
 	    nc_get_att_int( cdfid, var, szAttrName, pnTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%d",pnTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%d, ", pnTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%d",pnTemp[m] );
+        	    sprintf( szTemp, "%d", pnTemp[m] );
+        	    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    CPLFree(pnTemp);
-	    strcat(szMetaTemp,szTemp);
 	    break;
 	case NC_FLOAT:
 	    float *pfTemp;
 	    pfTemp = (float *) CPLCalloc( nAttrLen, sizeof( float ) );
 	    nc_get_att_float( cdfid, var, szAttrName, pfTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%e",pfTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%e, ", pfTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%e",pfTemp[m] );
+        	    sprintf( szTemp, "%e", pfTemp[m] );
+        	    SafeStrcat(&pszMetaTemp,szTemp, &nMetaTempSize);
 	    CPLFree(pfTemp);
-	    strcat(szMetaTemp,szTemp);
-	    
 	    break;
 	case NC_DOUBLE:
 	    double *pdfTemp;
 	    pdfTemp = (double *) CPLCalloc(nAttrLen, sizeof(double));
 	    nc_get_att_double( cdfid, var, szAttrName, pdfTemp );
 	    for(m=0; m < nAttrLen-1; m++) {
-		sprintf( szTemp, "%g",pdfTemp[m] );
-		strcat(szMetaTemp,szTemp);
+                    sprintf( szTemp, "%g, ", pdfTemp[m] );
+                    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    }
-	    sprintf( szTemp, "%g",pdfTemp[m] );
+        	    sprintf( szTemp, "%g", pdfTemp[m] );
+        	    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
 	    CPLFree(pdfTemp);
-	    strcat(szMetaTemp,szTemp);
-	    
 	    break;
 	default:
 	    break;
@@ -1333,14 +1339,14 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
 
 	papszMetadata = CSLSetNameValue(papszMetadata, 
 					szMetaName, 
-					szMetaTemp);
-	
+                                        pszMetaTemp);
+        CPLFree(pszMetaTemp);
     }
 	
-
     return CE_None;
 
 }
+
 
 /************************************************************************/
 /*                netCDFDataset::CreateSubDatasetList()                 */
