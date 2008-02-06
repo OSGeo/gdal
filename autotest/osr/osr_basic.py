@@ -251,6 +251,36 @@ def osr_basic_7():
 
     return 'success'
 
+###############################################################################
+# Test the SetLinearUnitsAndUpdateParameters() method.
+
+def osr_basic_8():
+
+    srs = osr.SpatialReference()
+
+    srs.SetFromUserInput( '+proj=tmerc +x_0=1000 +datum=WGS84 +units=m' )
+    srs.SetLinearUnits( 'Foot', 0.3048 )
+    fe = srs.GetProjParm( 'false_easting' )
+
+    if fe != 1000.0:
+        gdaltest.post_reason( 'false easting was unexpectedly updated.')
+        return 'fail'
+
+    srs.SetFromUserInput( '+proj=tmerc +x_0=1000 +datum=WGS84 +units=m' )
+    srs.SetLinearUnitsAndUpdateParameters( 'Foot', 0.3048 )
+    fe = srs.GetProjParm( 'false_easting' )
+
+    if fe == 1000.0:
+        gdaltest.post_reason( 'false easting was unexpectedly not updated.')
+        return 'fail'
+
+    if abs(fe-3280.840) > 0.01:
+        print fe
+        gdaltest.post_reason( 'wrong updated false easting value.' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_basic_1,
     osr_basic_2,
@@ -259,6 +289,7 @@ gdaltest_list = [
     osr_basic_5,
     osr_basic_6,
     osr_basic_7,
+    osr_basic_8,
     None ]
 
 if __name__ == '__main__':
