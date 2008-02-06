@@ -30,9 +30,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "gdal_pam.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -41,6 +38,7 @@
 #define SRTMHG_NODATA_VALUE -32768
 
 CPL_CVSID("$Id: srtmhgtdataset.cpp $");
+
 CPL_C_START
 void	GDALRegister_SRTMHGT(void);
 CPL_C_END
@@ -86,7 +84,7 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 {
     friend class SRTMHGTDataset;
 
-    int 	bNoDataSet;
+    int	        bNoDataSet;
     double	dfNoDataValue;
 
   public:
@@ -121,14 +119,16 @@ SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDS, int nBand)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                     void* pImage)
 {
   SRTMHGTDataset* poGDS = (SRTMHGTDataset*) poDS;
 
   CPLAssert(nBlockXOff == 0);
   if(nBlockXOff != 0)
   {
-      CPLError(CE_Failure, CPLE_NotSupported, "unhandled nBlockXOff value : %d", nBlockXOff);
+      CPLError(CE_Failure, CPLE_NotSupported,
+               "unhandled nBlockXOff value : %d", nBlockXOff);
       return CE_Failure;
   }
 
@@ -136,7 +136,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pImag
     return CE_Failure;
 
 /* -------------------------------------------------------------------- */
-/*      Load the desired data into the working buffer.              */
+/*      Load the desired data into the working buffer.                  */
 /* -------------------------------------------------------------------- */
   VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
   VSIFReadL((unsigned char*)pImage, nBlockXSize, 2, poGDS->fpImage);
@@ -269,10 +269,11 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	We check the file size to see if it is 25,934,402 bytes	*/
+/*	We check the file size to see if it is 25,934,402 bytes	        */
 /*	(SRTM 1) or 2,884,802 bytes (SRTM 3)				*/    
 /* -------------------------------------------------------------------- */
   VSIStatBufL fileStat;
+
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
       return FALSE;
   if(fileStat.st_size != 25934402 && fileStat.st_size != 2884802)
@@ -460,9 +461,11 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename, GDALDataset 
 /*      Check filename.                                                 */
 /* -------------------------------------------------------------------- */
     char expectedFileName[12];
-    sprintf(expectedFileName, "%c%02d%c%03d.HGT",
-            (nLLOriginLat >= 0) ? 'N' : 'S', (nLLOriginLat >= 0) ? nLLOriginLat : -nLLOriginLat,
-            (nLLOriginLong >= 0) ? 'E' : 'W', (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
+    snprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
+             (nLLOriginLat >= 0) ? 'N' : 'S',
+             (nLLOriginLat >= 0) ? nLLOriginLat : -nLLOriginLat,
+             (nLLOriginLong >= 0) ? 'E' : 'W',
+             (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
