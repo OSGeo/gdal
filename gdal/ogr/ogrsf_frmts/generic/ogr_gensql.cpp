@@ -166,6 +166,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         /* setting up the target_type */
         switch (psColDef->target_type)
         {
+            case SWQ_OTHER:
+              break;
             case SWQ_INTEGER:
               oFDefn.SetType( OFTInteger );
               break;
