@@ -55,8 +55,10 @@ SRS_PT_CYLINDRICAL_EQUAL_AREA = _osr.SRS_PT_CYLINDRICAL_EQUAL_AREA
 SRS_PT_ECKERT_IV = _osr.SRS_PT_ECKERT_IV
 SRS_PT_ECKERT_VI = _osr.SRS_PT_ECKERT_VI
 SRS_PT_EQUIDISTANT_CONIC = _osr.SRS_PT_EQUIDISTANT_CONIC
+SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE = _osr.SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE
 SRS_PT_EQUIRECTANGULAR = _osr.SRS_PT_EQUIRECTANGULAR
 SRS_PT_GALL_STEREOGRAPHIC = _osr.SRS_PT_GALL_STEREOGRAPHIC
+SRS_PT_GAUSSLABORDEREUNION = _osr.SRS_PT_GAUSSLABORDEREUNION
 SRS_PT_GNOMONIC = _osr.SRS_PT_GNOMONIC
 SRS_PT_GOODE_HOMOLOSINE = _osr.SRS_PT_GOODE_HOMOLOSINE
 SRS_PT_HOTINE_OBLIQUE_MERCATOR = _osr.SRS_PT_HOTINE_OBLIQUE_MERCATOR
@@ -209,6 +211,10 @@ class SpatialReference(_object):
         """SetLinearUnits(self, char name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetLinearUnits(*args)
 
+    def SetLinearUnitsAndUpdateParameters(*args):
+        """SetLinearUnitsAndUpdateParameters(self, char name, double to_meters) -> OGRErr"""
+        return _osr.SpatialReference_SetLinearUnitsAndUpdateParameters(*args)
+
     def GetLinearUnits(*args):
         """GetLinearUnits(self) -> double"""
         return _osr.SpatialReference_GetLinearUnits(*args)
@@ -298,6 +304,14 @@ class SpatialReference(_object):
     def SetEquirectangular(*args, **kwargs):
         """SetEquirectangular(self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEquirectangular(*args, **kwargs)
+
+    def SetEquidistantCylindricalSphere(*args, **kwargs):
+        """SetEquidistantCylindricalSphere(self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
+        return _osr.SpatialReference_SetEquidistantCylindricalSphere(*args, **kwargs)
+
+    def SetGaussLabordeReunion(*args, **kwargs):
+        """SetGaussLabordeReunion(self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
+        return _osr.SpatialReference_SetGaussLabordeReunion(*args, **kwargs)
 
     def SetGS(*args, **kwargs):
         """SetGS(self, double cm, double fe, double fn) -> OGRErr"""
