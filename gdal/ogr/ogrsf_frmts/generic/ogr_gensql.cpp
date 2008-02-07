@@ -129,7 +129,11 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
             && psColDef->field_index < poLayerDefn->GetFieldCount() )
             poSrcFDefn = poLayerDefn->GetFieldDefn(psColDef->field_index);
 
-        if( psColDef->col_func_name != NULL )
+        if( psColDef->field_alias != NULL )
+        {
+            oFDefn.SetName(psColDef->field_alias);
+        }
+        else if( psColDef->col_func_name != NULL )
         {
             oFDefn.SetName( CPLSPrintf( "%s_%s",psColDef->col_func_name,
                                         psColDef->field_name) );
@@ -157,6 +161,39 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
                 oFDefn.SetType( OFTString );
                 break;
             }
+        }
+
+        /* setting up the target_type */
+        switch (psColDef->target_type)
+        {
+            case SWQ_INTEGER:
+              oFDefn.SetType( OFTInteger );
+              break;
+            case SWQ_FLOAT:
+              oFDefn.SetType( OFTReal );
+              break;
+            case SWQ_STRING:
+              oFDefn.SetType( OFTString );
+              break;
+            case SWQ_TIMESTAMP:
+              oFDefn.SetType( OFTDateTime );
+              break;
+            case SWQ_DATE:
+              oFDefn.SetType( OFTDate );
+              break;
+            case SWQ_TIME:
+              oFDefn.SetType( OFTTime );
+              break;
+        }
+
+        if (psColDef->field_length > 0)
+        {
+            oFDefn.SetWidth( psColDef->field_length );
+        }
+
+        if (psColDef->field_precision >= 0)
+        {
+            oFDefn.SetPrecision( psColDef->field_precision );
         }
 
         poDefn->AddFieldDefn( &oFDefn );
@@ -547,8 +584,29 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             }
         }
         else if( psColDef->table_index == 0 )
-            poDstFeat->SetField( iField,
+        {
+            switch (psColDef->target_type)
+            {
+              case SWQ_INTEGER:
+                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+                break;
+
+              case SWQ_FLOAT:
+                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
+                break;
+              
+              case SWQ_STRING:
+              case SWQ_TIMESTAMP:
+              case SWQ_DATE:
+              case SWQ_TIME:
+                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
+                break;
+
+              default:
+                poDstFeat->SetField( iField,
                          poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

@@ -44,6 +44,9 @@ typedef enum {
     SWQ_FLOAT,
     SWQ_STRING, 
     SWQ_BOOLEAN,
+    SWQ_DATE,
+    SWQ_TIME,
+    SWQ_TIMESTAMP,
     SWQ_OTHER
 } swq_field_type;
 
@@ -132,9 +135,13 @@ typedef struct {
     swq_col_func col_func;
     char         *col_func_name;
     char         *field_name;
+	char         *field_alias;
     int          table_index;
     int          field_index;
     swq_field_type field_type;
+    swq_field_type target_type;
+    int          field_length;
+    int          field_precision;
     int          distinct_flag;
 } swq_col_def;
 
