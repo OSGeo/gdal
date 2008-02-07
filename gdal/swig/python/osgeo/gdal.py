@@ -772,6 +772,14 @@ class Band(MajorObject):
         """CreateMaskBand(self, int nFlags) -> CPLErr"""
         return _gdal.Band_CreateMaskBand(*args)
 
+    def GetHistogram(*args):
+        """
+        GetHistogram(self, double dfMin=-0.5, double dfMax=255.5, int nBuckets=255, 
+            int bIncludeOutOfRange=0, int bApproxOk=1, 
+            GDALProgressFunc callback=None, void callback_data=None) -> CPLErr
+        """
+        return _gdal.Band_GetHistogram(*args)
+
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_obj=None):
         import gdalnumeric
