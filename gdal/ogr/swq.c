@@ -1102,6 +1102,10 @@ static int swq_parse_table_def( swq_select *select_info,
                                 int *is_literal,
                                 char **token, char **input );
 
+static int swq_parse_typename( swq_col_def *col_def, 
+                                int *is_literal,
+                                char **token, char **input );
+
 /************************************************************************/
 /*                        swq_select_preparse()                         */
 /************************************************************************/
