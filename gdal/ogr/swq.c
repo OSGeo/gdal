@@ -1061,18 +1061,28 @@ SELECT <field-list> FROM <table_def>
      [WHERE <where-expr>] 
      [ORDER BY <sort specification list>]
 
+<field-list> ::= <column-spec> [ { , <column-spec> }... ]
 
-<field-list> ::= DISTINCT <field_ref> | <field-spec> 
-                 | <field-spec> , <field-list>
+<column-spec> ::= <field-spec> [ <as clause> ]
+                 | CAST ( <field-spec> AS <data type> ) [ <as clause> ]
 
-<field-spec> ::= <field_ref>
-                 | <field_func> ( [DISTINCT] <field-func> )
+<field-spec> ::= [DISTINCT] <field_ref>
+                 | <field_func> ( [DISTINCT] <field-ref> )
                  | Count(*)
+
+<as clause> ::= [ AS ] <column_name>
+
+<data type> ::= character [ ( field_length ) ]
+                | float [ ( field_length ) ]
+                | numeric [ ( field_length [, field_precision ] ) ]
+                | integer [ ( field_length ) ]
+                | date [ ( field_length ) ]
+                | time [ ( field_length ) ]
+                | timestamp [ ( field_length ) ]
 
 <field-func> ::= AVG | MAX | MIN | SUM | COUNT
 
 <field_ref>  ::= [<table_ref>.]field_name
-
 
 <sort specification list> ::=
               <sort specification> [ { <comma> <sort specification> }... ]
@@ -1104,6 +1114,7 @@ const char *swq_select_preparse( const char *select_statement,
     char *token;
     char *input;
     int  is_literal;
+    int  type_cast;
     swq_col_def  *swq_cols;
 
 #define MAX_COLUMNS 250
@@ -1179,8 +1190,22 @@ const char *swq_select_preparse( const char *select_statement,
         /* read an extra token to check for brackets. */
         
         select_info->result_columns++;
+        swq_cols[select_info->result_columns-1].field_precision = -1; 
+        swq_cols[select_info->result_columns-1].target_type = SWQ_OTHER;
 
         next_token = swq_token( input, &input, &next_is_literal );
+
+        /* Detect the type cast. */
+        type_cast = 0;
+        if (token != NULL && next_token != NULL &&strcasecmp(token,"CAST") == 0 
+            && strcasecmp(next_token,"(") == 0)
+        {
+            type_cast = 1;
+            SWQ_FREE( token );
+            SWQ_FREE( next_token );
+            token = swq_token( input, &input, &is_literal );
+            next_token = swq_token( input, &input, &next_is_literal );
+        }
 
         /*
         ** Handle function operators.
@@ -1239,6 +1264,58 @@ const char *swq_select_preparse( const char *select_statement,
             swq_cols[select_info->result_columns-1].field_name = token;
             token = next_token;
             is_literal = next_is_literal;
+        }
+        
+        /* handle the type cast*/
+        if (type_cast && token != NULL)
+        {
+            if (strcasecmp(token,"AS") != 0)
+            {
+                SWQ_FREE( token );
+                swq_select_free( select_info );
+                return "Missing 'AS' keyword in the type cast in SELECT statement.";
+            }
+
+            SWQ_FREE( token );
+            token = swq_token( input, &input, &is_literal );
+
+            /* processing the typename */
+            if( swq_parse_typename( &swq_cols[select_info->result_columns-1], &is_literal, &token, &input) != 0 )
+            {
+                swq_select_free( select_info );
+                return swq_get_errbuf();
+            }
+
+            if (token != NULL && strcasecmp(token,")") != 0)
+            {
+                if( token != NULL )
+                    SWQ_FREE( token );
+                swq_select_free( select_info );
+                return "Missing closing bracket after the type cast in SELECT statement.";
+            }
+
+            SWQ_FREE( token );
+            token = swq_token( input, &input, &is_literal );
+
+            type_cast = 0;
+        }
+        
+        /* Handle the field alias */
+        if( token != NULL && strcasecmp(token,",") != 0 && strcasecmp(token,"from") != 0)
+        {
+            /* Skip field alias keyword. */
+            if (strcasecmp(token,"AS") == 0)
+            {
+                SWQ_FREE( token );
+                token = swq_token( input, &input, &is_literal );
+                if (token == NULL)
+                {
+                    swq_select_free( select_info );
+                    return "Unexpected terminator after the type cast in SELECT statement.";
+                }
+            }
+            swq_cols[select_info->result_columns-1].field_alias = token;
+            token = swq_token( input, &input, &is_literal );
         }
     }
 
@@ -1483,6 +1560,123 @@ const char *swq_select_preparse( const char *select_statement,
     *select_info_ret = select_info;
 
     return NULL;
+}
+
+/************************************************************************/
+/*                        swq_parse_typename()                          */
+/************************************************************************/
+
+static int swq_parse_typename( swq_col_def *col_def, 
+                                int *is_literal,
+                                char **token, char **input )
+
+{
+    int parse_length;
+    int parse_precision;
+
+    if( *token == NULL )
+        *token = swq_token( *input, input, is_literal );
+
+    if( *token == NULL )
+    {
+        strcpy( swq_get_errbuf(), "Corrupt type name, insufficient tokens." );
+        return -1;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Check for the SQL92 typenames                                   */
+/* -------------------------------------------------------------------- */
+    parse_length = 0;
+    parse_precision = 0;
+    if( strcasecmp(*token,"character") == 0 )
+    {
+        col_def->target_type = SWQ_STRING;
+        col_def->field_length = 1;
+        parse_length = 1;
+    }
+    else if( strcasecmp(*token,"integer") == 0 )
+    {
+        col_def->target_type = SWQ_INTEGER;
+        parse_length = 1;
+    }
+    else if( strcasecmp(*token,"float") == 0 )
+    {
+        col_def->target_type = SWQ_FLOAT;
+        parse_length = 1;
+    }
+    else if( strcasecmp(*token,"numeric") == 0 )
+    {
+        col_def->target_type = SWQ_FLOAT;
+        parse_length = 1;
+        parse_precision = 1;
+    }
+    else if( strcasecmp(*token,"timestamp") == 0 )
+    {
+        col_def->target_type = SWQ_TIMESTAMP;
+        parse_length = 1;
+    }
+    else if( strcasecmp(*token,"date") == 0 )
+    {
+        col_def->target_type = SWQ_DATE;
+        parse_length = 1;
+    }
+    else if( strcasecmp(*token,"time") == 0 )
+    {
+        col_def->target_type = SWQ_TIME;
+        parse_length = 1;
+    }
+    else
+    {
+        sprintf( swq_get_errbuf(), 
+                 "Unrecognized typename %s.", *token );
+        return -1;
+    }
+    
+    SWQ_FREE( *token );
+    *token = swq_token( *input, input, is_literal );
+    
+/* -------------------------------------------------------------------- */
+/*      Check for the field length and precision                        */
+/* -------------------------------------------------------------------- */
+    if (parse_length && *token != NULL && strcasecmp(*token,"(") == 0)
+    {
+        SWQ_FREE( *token );
+        *token = swq_token( *input, input, is_literal );
+        
+        if (*token != NULL) 
+        {
+            col_def->field_length = atoi( *token );
+            SWQ_FREE( *token );
+            *token = swq_token( *input, input, is_literal );
+        }
+
+        if (parse_precision && *token != NULL && strcasecmp(*token,",") == 0) 
+        {
+            SWQ_FREE( *token );
+            *token = swq_token( *input, input, is_literal );
+            if (*token != NULL) 
+            {
+                col_def->field_precision = atoi( *token );
+                SWQ_FREE( *token );
+                *token = swq_token( *input, input, is_literal );
+            }
+        }
+        
+        if (*token == NULL || strcasecmp(*token,")") != 0) 
+        {
+            if (*token != NULL)
+            {
+                SWQ_FREE( *token );
+                *token = swq_token( *input, input, is_literal );
+            }
+            strcpy( swq_get_errbuf(), "Missing closing bracket in the field length specifier." );
+            return -1;
+        }
+
+        SWQ_FREE( *token );
+        *token = swq_token( *input, input, is_literal );
+    }
+    return  0;
 }
 
 /************************************************************************/
