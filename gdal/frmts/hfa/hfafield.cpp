@@ -379,6 +379,12 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         if( nBytes > -1 )
             nCount = nItemCount;
 
+        // The count returned for BASEDATA's are the contents, 
+        // but here we really want to mark it as one BASEDATA instance
+        // (see #2144)
+        if( chItemType == 'b' ) 
+            nCount = 1;
+
         /* Set the size from string length */
         else if( chReqType == 's' && (chItemType == 'c' || chItemType == 'C'))
         {
