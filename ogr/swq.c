@@ -1191,11 +1191,10 @@ const char *swq_select_preparse( const char *select_statement,
             token = swq_token( input, &input, &is_literal );
         }
 
-        /* read an extra token to check for brackets. */
-        
+        /* set up some default values. */
+        swq_cols[select_info->result_columns].field_precision = -1; 
+        swq_cols[select_info->result_columns].target_type = SWQ_OTHER;
         select_info->result_columns++;
-        swq_cols[select_info->result_columns-1].field_precision = -1; 
-        swq_cols[select_info->result_columns-1].target_type = SWQ_OTHER;
 
         next_token = swq_token( input, &input, &next_is_literal );
 
@@ -1920,6 +1919,10 @@ const char *swq_select_expand_wildcard( swq_select *select_info,
         {
             swq_col_def *def = select_info->column_defs + iout;
             int compose = itable != -1;
+
+            /* set up some default values. */
+            def->field_precision = -1; 
+            def->target_type = SWQ_OTHER;
 
             /* skip this field if it isn't in the target table.  */
             if( itable != -1 && field_list->table_ids != NULL 
