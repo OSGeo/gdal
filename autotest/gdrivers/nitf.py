@@ -32,6 +32,7 @@ import os
 import sys
 import gdal
 import array
+import string
 
 sys.path.append( '../pymod' )
 
@@ -254,6 +255,63 @@ def nitf_12():
 
     return 'success'
 
+
+###############################################################################
+# Test creation of an NITF file in UTM Zone 11, Southern Hemisphere.
+
+def nitf_13():
+    drv = gdal.GetDriverByName( 'NITF' )
+    ds = drv.Create( 'tmp/test_13.ntf', 200, 100, 1, gdal.GDT_Byte,
+                     [ 'ICORDS=S' ] )
+    ds.SetGeoTransform( (400000, 10, 0.0, 6000000, 0.0, -10 ) )
+    ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
+
+    list = range(200)
+    raw_data = array.array('f',list).tostring()
+
+    for line in range(100):
+        ds.WriteRaster( 0, line, 200, 1, raw_data,
+                        buf_type = gdal.GDT_Int16,
+                        band_list = [1] )
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Verify previous file
+
+def nitf_14():
+    ds = gdal.Open( 'tmp/test_13.ntf' )
+
+    chksum = ds.GetRasterBand(1).Checksum()
+    chksum_expect = 55964
+    if chksum != chksum_expect:
+        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        print chksum, chksum_expect
+        return 'fail'
+
+    geotransform = ds.GetGeoTransform()
+    if abs(geotransform[0]-400000) > .1 \
+    or abs(geotransform[1]-10) > 0.001 \
+    or abs(geotransform[2]-0) > 0.001 \
+    or abs(geotransform[3]-6000000) > .1 \
+    or abs(geotransform[4]-0) > 0.001 \
+    or abs(geotransform[5]- -10) > 0.001:
+        print geotransform
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
+
+    prj = ds.GetProjectionRef()
+    if string.find(prj,'UTM Zone 11, Southern Hemisphere') == -1:
+        print prj
+        gdaltest.post_reason( 'Coordinate system not UTM Zone 11, Southern Hemisphere' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -265,6 +323,11 @@ def nitf_cleanup():
 
     try:
         gdal.GetDriverByName('NITF').Delete( 'tmp/nitf9.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/test_13.ntf' )
     except:
         pass
 
@@ -283,6 +346,8 @@ gdaltest_list = [
     nitf_10,
     nitf_11,
     nitf_12,
+    nitf_13,
+    nitf_14,
     nitf_cleanup ]
 
 if __name__ == '__main__':
