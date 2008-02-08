@@ -1076,7 +1076,7 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
             {
                 char* endPtr = NULL;
                 CPLStrtod(pszValue, &endPtr);
-                if (endPtr != NULL)
+                if ( !(endPtr == NULL || *endPtr == '\0') )
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s creation option of type float.",
