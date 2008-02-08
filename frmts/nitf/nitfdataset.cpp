@@ -114,6 +114,7 @@ class NITFDataset : public GDALPamDataset
                               int, int *, int, int, int );
 
     virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
@@ -1918,6 +1919,8 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
     double dfIGEOLOULX, dfIGEOLOULY, dfIGEOLOURX, dfIGEOLOURY, 
            dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY;
 
+    bGotGeoTransform = TRUE;
+    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
 
     dfIGEOLOULX = padfGeoTransform[0] + 0.5 * padfGeoTransform[1] 
                                       + 0.5 * padfGeoTransform[2];
@@ -1952,6 +1955,71 @@ const char *NITFDataset::GetProjectionRef()
         return pszProjection;
     else
         return GDALPamDataset::GetProjectionRef();
+}
+
+/************************************************************************/
+/*                            SetProjection()                           */
+/************************************************************************/
+
+CPLErr NITFDataset::SetProjection(const char* _pszProjection)
+
+{
+    int    bNorth, nZone = 0;
+    OGRSpatialReference oSRS, oSRS_WGS84;
+    char *pszWKT = (char *) _pszProjection;
+
+    if( pszWKT != NULL )
+        oSRS.importFromWkt( &pszWKT );
+    else
+        return CE_Failure;
+
+    oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
+    if ( oSRS.IsSameGeogCS(&oSRS_WGS84) == FALSE)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "NITF only supports WGS84 geographic and UTM projections.\n");
+        return CE_Failure;
+    }
+
+    if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0)
+    {
+        if (psImage->chICORDS != 'G')
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "NITF file should have been created with creation option 'ICOORDS=G'.\n");
+            return CE_Failure;
+        }
+    }
+    else if( oSRS.GetUTMZone( &bNorth ) > 0)
+    {
+        if (bNorth && psImage->chICORDS != 'N')
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "NITF file should have been created with creation option 'ICOORDS=N'.\n");
+            return CE_Failure;
+        }
+        else if (!bNorth && psImage->chICORDS != 'S')
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "NITF file should have been created with creation option 'ICOORDS=S'.\n");
+            return CE_Failure;
+        }
+
+        psImage->nZone = oSRS.GetUTMZone( NULL );
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "NITF only supports WGS84 geographic and UTM projections.\n");
+        return CE_Failure;
+    }
+
+    CPLFree(pszProjection);
+    pszProjection = CPLStrdup(_pszProjection);
+
+    SetGeoTransform(adfGeoTransform);
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -2776,14 +2844,22 @@ NITFDataset::NITFCreateCopy(
     double adfGeoTransform[6];
     int    bWriteGeoTransform = FALSE;
     int    bNorth, nZone = 0;
-    OGRSpatialReference oSRS;
+    OGRSpatialReference oSRS, oSRS_WGS84;
     char *pszWKT = (char *) poSrcDS->GetProjectionRef();
 
     if( pszWKT != NULL )
         oSRS.importFromWkt( &pszWKT );
 
-    // For now we write all geographic coordinate systems whether WGS84 or not.
-    // But really NITF is always WGS84 and we ought to reflect that. 
+    /* NITF is only WGS84 */
+    oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
+    if ( oSRS.IsSameGeogCS(&oSRS_WGS84) == FALSE)
+    {
+        CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                 "NITF only supports WGS84 geographic and UTM projections.\n");
+        if (bStrict)
+            return NULL;
+    }
+
     if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
         && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
     {
@@ -2804,6 +2880,13 @@ NITFDataset::NITFCreateCopy(
 
         nZone = oSRS.GetUTMZone( NULL );
         bWriteGeoTransform = TRUE;
+    }
+    else
+    {
+        CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                 "NITF only supports WGS84 geographic and UTM projections.\n");
+        if (bStrict)
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
