@@ -417,6 +417,12 @@ CPLErr BTDataset::SetGeoTransform( double *padfTransform )
     dfTop = adfGeoTransform[3];
     dfBottom = dfTop + adfGeoTransform[5] * nRasterYSize;
 
+    // rcg, feb 7/08, pixel-as-point fix:
+    dfLeft   += adfGeoTransform[1] / 2;
+    dfRight  -= adfGeoTransform[1] / 2;
+    dfTop    += adfGeoTransform[5] / 2;
+    dfBottom -= adfGeoTransform[5] / 2;
+
     memcpy( abyHeader + 28, &dfLeft, 8 );
     memcpy( abyHeader + 36, &dfRight, 8 );
     memcpy( abyHeader + 44, &dfBottom, 8 );
@@ -600,7 +606,6 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     /*
         rcg, apr 7/06: read offset 62 for vert. units.
         If zero, assume 1.0 as per spec.
-
     */
     memcpy( &poDS->m_fVscale, poDS->abyHeader + 62, 4 );
     CPL_LSBPTR32(&poDS->m_fVscale);
@@ -739,12 +744,16 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         memcpy( &dfTop, poDS->abyHeader + 52, 8 );
         CPL_LSBPTR64( &dfTop );
 
+        // rcg, feb 7/08, pixel-as-point fix.
         poDS->adfGeoTransform[0] = dfLeft;
-        poDS->adfGeoTransform[1] = (dfRight - dfLeft) / poDS->nRasterXSize;
+        poDS->adfGeoTransform[1] = (dfRight - dfLeft) / (poDS->nRasterXSize - 1);
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = dfTop;
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = (dfBottom - dfTop) / poDS->nRasterYSize;
+        poDS->adfGeoTransform[5] = (dfBottom - dfTop) / (poDS->nRasterYSize - 1);
+
+        poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] / 2;
+        poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] / 2;
         
         poDS->bGeoTransformValid = TRUE;
     }
