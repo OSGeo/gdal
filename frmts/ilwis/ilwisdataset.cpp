@@ -532,13 +532,8 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
 
 CPLErr ILWISDataset::WriteGeoReference()
 {
-    string grFileName = CPLResetExtension(osFileName, "grf" );
-    double dLLLat, dLLLong, dURLat, dURLong;
-    string georef;
-		
-    int   nXSize = GetRasterXSize();
-    int   nYSize = GetRasterYSize();
-		
+    //check wheather we should write out a georeference file. 
+    //dataset must be north up 
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
         || adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0 )
@@ -546,14 +541,16 @@ CPLErr ILWISDataset::WriteGeoReference()
         SetGeoTransform( adfGeoTransform ); // is this needed?
         if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
         {
-            //check wheather we should write out a georeference file. 
-            //dataset must be north up 
-            dLLLat = (adfGeoTransform[3] 
-                      + GetRasterYSize() * adfGeoTransform[5] );
-            dLLLong = (adfGeoTransform[0] );
-            dURLat  = (adfGeoTransform[3] );
-            dURLong = (adfGeoTransform[0] 
-                       + GetRasterXSize() * adfGeoTransform[1] );
+            int   nXSize = GetRasterXSize();
+            int   nYSize = GetRasterYSize();
+            double dLLLat = (adfGeoTransform[3] 
+                      + nYSize * adfGeoTransform[5] );
+            double dLLLong = (adfGeoTransform[0] );
+            double dURLat  = (adfGeoTransform[3] );
+            double dURLong = (adfGeoTransform[0] 
+                       + nXSize * adfGeoTransform[1] );
+
+            string grFileName = CPLResetExtension(osFileName, "grf" );
             WriteElement("Ilwis", "Type", grFileName, "GeoRef");
             WriteElement("GeoRef", "lines", grFileName, nYSize);
             WriteElement("GeoRef", "columns", grFileName, nXSize);
@@ -919,20 +916,24 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         WriteElement("BaseMap", "Type", pszODFName, "Map");
         WriteElement("Map", "Type", pszODFName, "MapStore");
 				
-        double adfMinMax[2];
-        adfMinMax[0] = -9999999.9;
-        adfMinMax[1] = 9999999.9;
-        
         WriteElement("BaseMap", "Domain", pszODFName, sDomain);
         string pszDataName = pszDataBaseName + ".mp#";
         WriteElement("MapStore", "Data", pszODFName, pszDataName);
         WriteElement("MapStore", "Structure", pszODFName, "Line");
+        // sStoreType is used by ILWISRasterBand constructor to determine eDataType
         WriteElement("MapStore", "Type", pszODFName, sStoreType);
 
+        // For now write-out a "Range" that is as broad as possible.
+        // If later a better range is found (by inspecting metadata in the source dataset),
+        // the "Range" will be overwritten by a better version.
+        double adfMinMax[2];
+        adfMinMax[0] = -9999999.9;
+        adfMinMax[1] = 9999999.9;
         char strdouble[45];
         sprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
         string range = string(strdouble);
         WriteElement("BaseMap", "Range", pszODFName, range);
+
         WriteElement("Map", "GeoRef", pszODFName, "none.grf");
         WriteElement("Map", "Size", pszODFName, string(strsize));
 							
@@ -1026,9 +1027,10 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*  Copy and geo-transform and projection information.                  */
 /* -------------------------------------------------------------------- */
     double adfGeoTransform[6];
-    string georef;
-    const char  *pszProj;
+    string georef = "none.grf";
 
+    //check wheather we should create georeference file. 
+    //source dataset must be north up 
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
         && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
             || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
@@ -1036,18 +1038,10 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         poDS->SetGeoTransform( adfGeoTransform );
         if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
-        {
-            //check wheather we should create georeference file. 
-            //source dataset must be north up 
             georef = pszBaseName + ".grf";
-        }
-        else
-        {
-            georef = "none.grf";
-        }
     }
 
-    pszProj = poSrcDS->GetProjectionRef();
+    const char *pszProj = poSrcDS->GetProjectionRef();
     if( pszProj != NULL && strlen(pszProj) > 0 )
         poDS->SetProjection( pszProj );
 
@@ -1066,15 +1060,16 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
 /* -------------------------------------------------------------------- */
-        double stepsize = 1;
-        double dNoDataValue;
-        int pbSuccess;
-        dNoDataValue = poBand->GetNoDataValue(&pbSuccess); 
         int nLineSize =  nXSize * GDALGetDataTypeSize(eType) / 8;
         pData = (GByte *) CPLMalloc( nLineSize );
+
+        //Determine the nodata value
+        int bHasNoDataValue;
+        double dNoDataValue = poBand->GetNoDataValue(&bHasNoDataValue); 
         				
         //Determine store type of ILWIS raster
         string sStoreType = GDALType2ILWIS( eType );
+        double stepsize = 1;
         if( EQUAL(sStoreType.c_str(),""))
             return NULL;
         else if( EQUAL(sStoreType.c_str(),"Real") || EQUAL(sStoreType.c_str(),"float"))
@@ -1141,34 +1136,38 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             if( eErr == CE_None )
             {
-                //Translater the NoDataValue from each band to ILWIS
-                for (int iCol = 0; iCol < nXSize; iCol++ )
+                if (bHasNoDataValue)
                 {
-                    if( EQUAL(sStoreType.c_str(),"Byte"))
+                    // pData may have entries with value = dNoDataValue
+                    // ILWIS uses a fixed value for nodata, depending on the data-type
+                    // Therefore translate the NoDataValue from each band to ILWIS
+                    for (int iCol = 0; iCol < nXSize; iCol++ )
                     {
-                        if ( pbSuccess && ((GByte * )pData)[iCol] == dNoDataValue )
-                            (( GByte * )pData)[iCol] = 0;
-                    }
-                    else if( EQUAL(sStoreType.c_str(),"Int"))	
-                    {
-                        if ( pbSuccess && ((GInt16 * )pData)[iCol] == dNoDataValue )
-                            (( GInt16 * )pData)[iCol] = shUNDEF;
-                    }
-                    else if( EQUAL(sStoreType.c_str(),"Long"))	
-                    {
-                        if ( pbSuccess && ((GInt32 * )pData)[iCol] == dNoDataValue )
-                            (( GInt32 * )pData)[iCol] = iUNDEF;
-                    }
-                    else if( EQUAL(sStoreType.c_str(),"float"))	
-                    {
-                        float fNoDataValue = (float)dNoDataValue; // needed for comparing for NoDataValue
-                        if (( pbSuccess && ((float * )pData)[iCol] == fNoDataValue ) || (CPLIsNan((( float * )pData)[iCol])))
-                            (( float * )pData)[iCol] = flUNDEF;
-                    }
-                    else if( EQUAL(sStoreType.c_str(),"Real"))	
-                    {
-                        if (( pbSuccess && ((double * )pData)[iCol] == dNoDataValue ) || (CPLIsNan((( double * )pData)[iCol])))
-                            (( double * )pData)[iCol] = rUNDEF;
+                        if( EQUAL(sStoreType.c_str(),"Byte"))
+                        {
+                            if ( ((GByte * )pData)[iCol] == dNoDataValue )
+                                (( GByte * )pData)[iCol] = 0;
+                        }
+                        else if( EQUAL(sStoreType.c_str(),"Int"))	
+                        {
+                            if ( ((GInt16 * )pData)[iCol] == dNoDataValue )
+                                (( GInt16 * )pData)[iCol] = shUNDEF;
+                        }
+                        else if( EQUAL(sStoreType.c_str(),"Long"))	
+                        {
+                            if ( ((GInt32 * )pData)[iCol] == dNoDataValue )
+                                (( GInt32 * )pData)[iCol] = iUNDEF;
+                        }
+                        else if( EQUAL(sStoreType.c_str(),"float"))	
+                        {
+                            if ((((float * )pData)[iCol] == dNoDataValue ) || (CPLIsNan((( float * )pData)[iCol])))
+                                (( float * )pData)[iCol] = flUNDEF;
+                        }
+                        else if( EQUAL(sStoreType.c_str(),"Real"))	
+                        {
+                            if ((((double * )pData)[iCol] == dNoDataValue ) || (CPLIsNan((( double * )pData)[iCol])))
+                                (( double * )pData)[iCol] = rUNDEF;
+                        }
                     }
                 }
                 int iSize = VSIFWriteL( pData, 1, nLineSize, desBand->fpRaw );
@@ -1232,13 +1231,17 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
             sBandName = string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));		
     }
 
-    if (poDS->bNewDataset)  //for Create() function
+    if (poDS->bNewDataset)
     {
+      // Called from Create():
+      // eDataType is defaulted to GDT_Byte by GDALRasterBand::GDALRasterBand
+      // Here we set it to match the value of sStoreType (that was set in ILWISDataset::Create)
+      // Unfortunately we can't take advantage of the ILWIS "ValueRange" object that would use
+      // the most compact storeType possible, without going through all values.
         GetStoreType(sBandName, psInfo.stStoreType);
         eDataType = ILWIS2GDALType(psInfo.stStoreType);
-        psInfo.bValue = false;
     }					
-    else
+    else // Called from Open(), thus convert ILWIS type from ODF to eDataType
         GetILWISInfo(sBandName);
     this->poDS = poDS;
     this->nBand = nBand;
@@ -1300,40 +1303,100 @@ void ILWISRasterBand::ILWISOpen( string pszFileName )
 }
 
 /************************************************************************/
+/*                 ReadValueDomainProperties()                          */
+/************************************************************************/
+// Helper function for GetILWISInfo, to avoid code-duplication
+// Unfortunately with side-effect (changes members psInfo and eDataType)
+void ILWISRasterBand::ReadValueDomainProperties(string pszFileName)
+{
+    string rangeString = ReadElement("BaseMap", "Range", pszFileName.c_str());
+    psInfo.vr = ValueRange(rangeString);
+    double rStep = psInfo.vr.get_rStep();
+    if ( rStep != 0 )
+    {
+        psInfo.bUseValueRange = true; // use ILWIS ValueRange object to convert from "raw" to "value"
+        double rMin = psInfo.vr.get_rLo();
+        double rMax = psInfo.vr.get_rHi();
+        if (rStep - (long)rStep == 0.0) // Integer values
+        {
+            if ( rMin >= 0 && rMax <= UCHAR_MAX)
+              eDataType =  GDT_Byte;
+            else if ( rMin >= SHRT_MIN && rMax <= SHRT_MAX)
+              eDataType =  GDT_Int16;
+            else if ( rMin >= 0 && rMax <= USHRT_MAX)
+              eDataType =  GDT_UInt16;
+            else if ( rMin >= INT_MIN && rMax <= INT_MAX)
+              eDataType =  GDT_Int32;
+            else if ( rMin >= 0 && rMax <= UINT_MAX)
+              eDataType =  GDT_UInt32;
+            else
+              eDataType = GDT_Float64;
+        }
+        else // Floating point values
+        {
+            if ((rMin >= -FLT_MAX) && (rMax <= FLT_MAX) && (fabs(rStep) >= FLT_EPSILON)) // is "float" good enough?
+              eDataType = GDT_Float32;
+            else
+              eDataType = GDT_Float64;
+        }
+    }
+    else
+    {
+        if (psInfo.stStoreType == stFloat) // is "float" good enough?
+          eDataType = GDT_Float32;
+        else
+          eDataType = GDT_Float64;
+    }
+}
+
+/************************************************************************/
 /*                       GetILWISInfo()                                 */
 /************************************************************************/
+// Calculates members psInfo and eDataType
 CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 {
-    string domName = ReadElement("BaseMap", "Domain", pszFileName.c_str());
-    string pszBaseName = string(CPLGetBasename( domName.c_str() ));
-    string pszPath = string(CPLGetPath( pszFileName.c_str() ));
-		
+    // Fill the psInfo struct with defaults.
+    // Get the store type from the ODF
     if (GetStoreType(pszFileName, psInfo.stStoreType) != CE_None)
     {
         return CE_Failure;
     }
-    psInfo.bValue = false;
+    psInfo.bUseValueRange = false;
     psInfo.stDomain = "";
 
-    if( EQUAL(pszBaseName.c_str(),"value") 
+    // ILWIS has several (currently 22) predefined "system-domains", that influence the data-type
+    // The user can also create his own domains. The possible types for these are "class", "identifier", "bool" and "value"
+    // The last one has Type=DomainValue
+    // Here we make an effort to determine the most-compact gdal-type (eDataType) that is suitable
+    // for the data in the current ILWIS band.
+    // First check against all predefined domain names (the "system-domains")
+    // If no match is found, read the domain ODF from disk, and get its type
+    // We have hardcoded the system domains here, because ILWIS may not be installed, and even if it is,
+    // we don't know where (thus it is useless to attempt to read a system-domain-file).
+
+    string domName = ReadElement("BaseMap", "Domain", pszFileName.c_str());
+    string pszBaseName = string(CPLGetBasename( domName.c_str() ));
+    string pszPath = string(CPLGetPath( pszFileName.c_str() ));
+
+    // Check against all "system-domains"
+    if ( EQUAL(pszBaseName.c_str(),"value") // is it a system domain with Type=DomainValue?
         || EQUAL(pszBaseName.c_str(),"count") 
         || EQUAL(pszBaseName.c_str(),"distance") 
         || EQUAL(pszBaseName.c_str(),"min1to1") 
+        || EQUAL(pszBaseName.c_str(),"nilto1") 
         || EQUAL(pszBaseName.c_str(),"noaa") 
         || EQUAL(pszBaseName.c_str(),"perc") 
         || EQUAL(pszBaseName.c_str(),"radar") )
     {
-        if (psInfo.stStoreType == stFloat)
-            eDataType = GDT_Float32;
-        else
-            eDataType = GDT_Float64;
-        psInfo.bValue = true;
+        ReadValueDomainProperties(pszFileName);
     }
     else if( EQUAL(pszBaseName.c_str(),"bool") 
              || EQUAL(pszBaseName.c_str(),"byte") 
+             || EQUAL(pszBaseName.c_str(),"bit") 
              || EQUAL(pszBaseName.c_str(),"image") 
              || EQUAL(pszBaseName.c_str(),"colorcmp") 
              || EQUAL(pszBaseName.c_str(),"flowdirection") 
+             || EQUAL(pszBaseName.c_str(),"hortonratio") 
              || EQUAL(pszBaseName.c_str(),"yesno") )
     {
         eDataType = GDT_Byte;
@@ -1353,18 +1416,13 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
     }
     else
     {
-        string pszDomainName;
-        pszDomainName = string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"dom" ));
-				
-        string domType = ReadElement("Domain", "Type", pszDomainName.c_str());
-        if EQUAL(domType.c_str(),"domainvalue")  
-            {
-                if (psInfo.stStoreType == stFloat)
-                    eDataType = GDT_Float32;
-                else
-                    eDataType = GDT_Float64;
-                psInfo.bValue = true; 
-            }
+        // No match found. Assume it is a self-created domain. Read its type and decide the GDAL type.
+        string pszDomainFileName = string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"dom" ));
+        string domType = ReadElement("Domain", "Type", pszDomainFileName.c_str());
+        if EQUAL(domType.c_str(),"domainvalue") // is it a self-created domain of type=DomainValue?
+        {
+            ReadValueDomainProperties(pszFileName);
+        }
         else if((!EQUAL(domType.c_str(),"domainbit")) 
                 && (!EQUAL(domType.c_str(),"domainstring")) 
                 && (!EQUAL(domType.c_str(),"domaincolor"))
@@ -1372,7 +1430,10 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
                 && (!EQUAL(domType.c_str(),"domaincoordBuf")) 
                 && (!EQUAL(domType.c_str(),"domaincoord")))
         {
-            eDataType = ILWIS2GDALType(psInfo.stStoreType);   
+            // Type is "DomainClass", "DomainBool" or "DomainIdentifier".
+            // For now we set the GDAL storeType be the same as the ILWIS storeType
+            // The user will have to convert the classes manually.
+            eDataType = ILWIS2GDALType(psInfo.stStoreType);
         }
         else
         {
@@ -1382,11 +1443,6 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
         }
     }
 		
-    if (psInfo.bValue)
-    {
-        string rangeString = ReadElement("BaseMap", "Range", pszFileName.c_str());
-        psInfo.vr = ValueRange(rangeString);
-    }
     return CE_None;
 }
 
@@ -1403,11 +1459,11 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 /************************************************************************/
 CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
-
 {
-    char * pBuffer;
-		
-    // If the x block offsets is non-zero, something is wrong.
+    // pImage is empty; this function fills it with data from fpRaw
+    // (ILWIS data to foreign data)
+
+    // If the x block offset is non-zero, something is wrong.
     CPLAssert( nBlockXOff == 0 );
 		
     int nBlockSize =  nBlockXSize * nBlockYSize * nSizePerPixel;
@@ -1417,13 +1473,11 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                   "Failed to open ILWIS data file.");  
         return( CE_Failure );
     }
-    
-
 
 /* -------------------------------------------------------------------- */
-/*	Handle the case of a strip in a writable file that doesn't	*/
-/*	exist yet, but that we want to read.  Just set to zeros and	*/
-/*	return.								*/
+/*	Handle the case of a strip in a writable file that doesn't          */
+/*	exist yet, but that we want to read.  Just set to zeros and         */
+/*	return.                                                             */
 /* -------------------------------------------------------------------- */
     ILWISDataset* poIDS = (ILWISDataset*) poDS;
 
@@ -1436,8 +1490,8 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #endif
 
     VSIFSeekL( fpRaw, nBlockSize*nBlockYOff, SEEK_SET );
-    pBuffer = (char *)CPLMalloc(nBlockSize);
-    if (VSIFReadL( pBuffer, 1, nBlockSize, fpRaw ) < 1)
+    void *pData = (char *)CPLMalloc(nBlockSize);
+    if (VSIFReadL( pData, 1, nBlockSize, fpRaw ) < 1)
     {
         if( poIDS->bNewDataset )
         {
@@ -1446,55 +1500,113 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            CPLFree( pBuffer );
+            CPLFree( pData );
             CPLError( CE_Failure, CPLE_FileIO, 
                       "Read of file failed with fread error.");
             return CE_Failure;
         }
     }
 
+    // Copy the data from pData to pImage, and convert the store-type
+    // The data in pData has store-type = psInfo.stStoreType
+    // The data in pImage has store-type = eDataType
+    // They may not match, because we have chosen the most compact store-type,
+    // and for GDAL this may be different than for ILWIS.
+
     switch (psInfo.stStoreType)
     {
-        int i;
+      int iCol;
       case stByte:
-        for( i = 0; i < nBlockXSize; i++ )
+        for( iCol = 0; iCol < nBlockXSize; iCol++ )
         {
-            if (psInfo.bValue)
-                ((double *) pImage)[i] = psInfo.vr.rValue( (GByte)pBuffer[i]);
-            else
-                ((GByte *)pImage)[i] = (GByte)pBuffer[i];
-
+          double rV = psInfo.bUseValueRange ? psInfo.vr.rValue(((GByte *) pData)[iCol]) : ((GByte *) pData)[iCol];
+          SetValue(pImage, iCol, rV);
         }
         break;
       case stInt:
-        for( i = 0; i < nBlockXSize; i++ )
+        for( iCol = 0; iCol < nBlockXSize; iCol++ )
         {
-            if (psInfo.bValue)
-                ((double *) pImage)[i] = psInfo.vr.rValue( ((GInt16 *) pBuffer)[i]);
-            else
-                ((GInt16 *) pImage)[i] = ((GInt16 *) pBuffer)[i];
+          double rV = psInfo.bUseValueRange ? psInfo.vr.rValue(((GInt16 *) pData)[iCol]) : ((GInt16 *) pData)[iCol];
+          SetValue(pImage, iCol, rV);
+        }
+      break;
+      case stLong:
+        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+        {
+          double rV = psInfo.bUseValueRange ? psInfo.vr.rValue(((GInt32 *) pData)[iCol]) : ((GInt32 *) pData)[iCol];
+          SetValue(pImage, iCol, rV);
         }
         break;
-      case stLong:
-        for( i = 0; i < nBlockXSize; i++ )
-            if (psInfo.bValue)
-                ((double *) pImage)[i] = psInfo.vr.rValue( ((GInt32 *) pBuffer)[i]);
-            else
-                ((GInt32 *) pImage)[i] = ((GInt32 *) pBuffer)[i];
-        break;
       case stFloat:
-        for( i = 0; i < nBlockXSize; i++ )
-            ((float *) pImage)[i] = ((float *) pBuffer)[i];
+        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+          ((float *) pImage)[iCol] = ((float *) pData)[iCol];
         break;  
       case stReal:
-        for( i = 0; i < nBlockXSize; i++ )
-            ((double *) pImage)[i] = ((double *) pBuffer)[i];
+        for( iCol = 0; iCol < nBlockXSize; iCol++ )
+          ((double *) pImage)[iCol] = ((double *) pData)[iCol];
         break;
     }
 
-    CPLFree( pBuffer );
+    // Officially we should also translate "nodata" values, but at this point
+    // we can't tell what's the "nodata" value of the destination (foreign) dataset
+
+    CPLFree( pData );
 
     return CE_None;
+}
+
+void ILWISRasterBand::SetValue(void *pImage, int i, double rV) {
+    switch ( eDataType ) {
+    case GDT_Byte:
+      ((GByte *)pImage)[i] = rV;
+      break;
+    case GDT_UInt16:
+      ((GUInt16 *) pImage)[i] = rV;
+      break;
+    case GDT_Int16:
+      ((GInt16 *) pImage)[i] = rV;
+      break;
+    case GDT_UInt32:
+      ((GUInt32 *) pImage)[i] = rV;
+      break;
+    case GDT_Int32:
+      ((GInt32 *) pImage)[i] = rV;
+      break;
+    case GDT_Float32:
+      ((float *) pImage)[i] = rV;
+      break;
+    case GDT_Float64:
+      ((double *) pImage)[i] = rV;
+      break;
+    }
+}
+
+double ILWISRasterBand::GetValue(void *pImage, int i) {
+  double rV = 0; // Does GDAL have an official nodata value?
+    switch ( eDataType ) {
+    case GDT_Byte:
+      rV = ((GByte *)pImage)[i];
+      break;
+    case GDT_UInt16:
+      rV = ((GUInt16 *) pImage)[i];
+      break;
+    case GDT_Int16:
+      rV = ((GInt16 *) pImage)[i];
+      break;
+    case GDT_UInt32:
+      rV = ((GUInt32 *) pImage)[i];
+      break;
+    case GDT_Int32:
+      rV = ((GInt32 *) pImage)[i];
+      break;
+    case GDT_Float32:
+      rV = ((float *) pImage)[i];
+      break;
+    case GDT_Float64:
+      rV = ((double *) pImage)[i];
+      break;
+    }
+    return rV;
 }
 
 void ILWISRasterBand::FillWithNoData(void * pImage)
@@ -1532,7 +1644,13 @@ void ILWISRasterBand::FillWithNoData(void * pImage)
 /************************************************************************/
 
 CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
-				   void* pImage) {
+				   void* pImage)
+{
+    // pImage has data; this function reads this data and stores it to fpRaw
+    // (foreign data to ILWIS data)
+
+    // Note that this function will not overwrite existing data in fpRaw, but
+    // it will "fill gaps" marked by "nodata" values
 
     ILWISDataset* dataset = (ILWISDataset*) poDS;
 
@@ -1541,103 +1659,115 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
-    CPLErr eErr = CE_None;
     int nXSize = dataset->GetRasterXSize();
     int nBlockSize = nBlockXSize * nBlockYSize * nSizePerPixel;
-    void *pData;
-    pData = CPLMalloc(nBlockSize);
+    void *pData = CPLMalloc(nBlockSize);
     
     VSIFSeekL( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
 
     bool fDataExists = (VSIFReadL( pData, 1, nBlockSize, fpRaw ) >= 1);
 
-    if( eErr == CE_None )
+    // Copy the data from pImage to pData, and convert the store-type
+    // The data in pData has store-type = psInfo.stStoreType
+    // The data in pImage has store-type = eDataType
+    // They may not match, because we have chosen the most compact store-type,
+    // and for GDAL this may be different than for ILWIS.
+
+    if( fDataExists )
     {
-        //Translater the NoDataValue per band to ILWIS
-        for (int iCol = 0; iCol < nXSize; iCol++ )
+        // fpRaw (thus pData) already has data
+        // Take care to not overwrite it
+        // thus only fill in gaps (nodata values)
+        switch (psInfo.stStoreType)
         {
-            switch (psInfo.stStoreType)
-            {
-              case stByte:
-                if (fDataExists)
+          int iCol;
+          case stByte:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                if ((( GByte * )pData)[iCol] == 0)
                 {
-                    if ((( GByte * )pData)[iCol] == 0)
-                    {
-                        (( GByte * )pData)[iCol] = ((GByte* )pImage)[iCol];
-                    } // else do not overwrite the existing data in pData
+                    double rV = GetValue(pImage, iCol);
+                    (( GByte * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
                 }
-                else
+            break;
+          case stInt:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                if ((( GInt16 * )pData)[iCol] == shUNDEF)
                 {
-                    (( GByte * )pData)[iCol] = ((GByte * )pImage)[iCol];
+                    double rV = GetValue(pImage, iCol);
+                    (( GInt16 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
                 }
-                break;
-              case stInt:
-                if (fDataExists)
+            break;
+          case stLong:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                if ((( GInt32 * )pData)[iCol] == iUNDEF)
                 {
-                    if ((( GInt16 * )pData)[iCol] == shUNDEF)
-                    {
-                        (( GInt16 * )pData)[iCol] = ((GInt16* )pImage)[iCol];
-                    } // else do not overwrite the existing data in pData
+                    double rV = GetValue(pImage, iCol);
+                    (( GInt32 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
                 }
-                else
-                {
-                    (( GInt16 * )pData)[iCol] = ((GInt16* )pImage)[iCol];
-                }
-                break;
-              case stLong:
-                if (fDataExists)
-                {
-                    if ((( GInt32 * )pData)[iCol] == shUNDEF)
-                    {
-                        (( GInt32 * )pData)[iCol] = ((GInt32* )pImage)[iCol];
-                    } // else do not overwrite the existing data in pData
-                }
-                else
-                {
-                    (( GInt32 * )pData)[iCol] = ((GInt32* )pImage)[iCol];
-                }
-                break;
-              case stFloat:
-                if (fDataExists)
-                {
-                    if ((( float * )pData)[iCol] == flUNDEF)
-                    {
-                        (( float * )pData)[iCol] = ((float* )pImage)[iCol];
-                    }
-                    // else do not overwrite the existing data in pData
-                }
-                else
-                {  
+            break;
+          case stFloat:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                if ((( float * )pData)[iCol] == flUNDEF)
                     (( float * )pData)[iCol] = ((float* )pImage)[iCol];
-                }
-                break;
-              case stReal:
-                if (fDataExists)
-                {
-                    if ((( double * )pData)[iCol] == rUNDEF)
-                    {
-                        (( double * )pData)[iCol] = ((double* )pImage)[iCol];
-                    }
-                    // else do not overwrite the existing data in pData
-                }
-                else
-                {  
+            break;
+          case stReal:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                if ((( double * )pData)[iCol] == rUNDEF)
                     (( double * )pData)[iCol] = ((double* )pImage)[iCol];
-                }
-                break;
-            }
-        }
-
-        VSIFSeekL( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
-
-        if (VSIFWriteL( pData, 1, nBlockSize, fpRaw ) < 1)
-        {
-            CPLFree( pData );
-            CPLError( CE_Failure, CPLE_FileIO, 
-                      "Write of file failed with fwrite error.");
-            return CE_Failure;
+            break;
         }
     }
+    else
+    {
+        // fpRaw (thus pData) is still empty, just write the data
+        switch (psInfo.stStoreType)
+        {
+          int iCol;
+          case stByte:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+            {
+                double rV = GetValue(pImage, iCol);
+                (( GByte * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+            }
+            break;
+          case stInt:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+            {
+                double rV = GetValue(pImage, iCol);
+                (( GInt16 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+            }
+            break;
+          case stLong:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+            {
+                double rV = GetValue(pImage, iCol);
+                (( GInt32 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+            }
+            break;
+          case stFloat:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                (( float * )pData)[iCol] = ((float* )pImage)[iCol];
+            break;
+          case stReal:
+            for (iCol = 0; iCol < nXSize; iCol++ )
+                (( double * )pData)[iCol] = ((double* )pImage)[iCol];
+            break;
+        }
+    }
+
+    // Officially we should also translate "nodata" values, but at this point
+    // we can't tell what's the "nodata" value of the source (foreign) dataset
+
+    VSIFSeekL( fpRaw, nBlockSize * nBlockYOff, SEEK_SET );
+
+    if (VSIFWriteL( pData, 1, nBlockSize, fpRaw ) < 1)
+    {
+        CPLFree( pData );
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Write of file failed with fwrite error.");
+        return CE_Failure;
+    }
+
     CPLFree( pData );
     return CE_None;
 }
