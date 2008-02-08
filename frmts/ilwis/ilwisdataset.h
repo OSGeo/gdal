@@ -73,11 +73,6 @@ public:
     ValueRange(double min, double max, double step);	
     ValueRange(string str);
     string ToString();
-    double get_Minimum() { return _rLo; }
-    double get_Maximum() { return _rHi; }
-    double get_StepSize() { return _rStep; }
-
-public:
     ilwisStoreType get_NeededStoreType() { return st; }
     double get_rLo() { return _rLo; }
     double get_rHi() { return _rHi; }
@@ -86,6 +81,7 @@ public:
     int get_iDec() { return _iDec; }	
     double rValue(int raw);
     int iRaw(double value);
+
 private:
     void init(double rRaw0);
     void init();
@@ -104,8 +100,8 @@ private:
 
 struct ILWISInfo
 {
-    ILWISInfo() : vr(0, 0){}
-    bool bValue;
+    ILWISInfo() : vr(0, 0), bUseValueRange(false) {}
+    bool bUseValueRange;
     ValueRange vr;
     ilwisStoreType stStoreType;
     string stDomain;
@@ -136,6 +132,9 @@ public:
 
 private:
     void FillWithNoData(void * pImage);
+    void SetValue(void *pImage, int i, double rV);
+    double GetValue(void *pImage, int i);
+    void ReadValueDomainProperties(string pszFileName);
 };
 
 /************************************************************************/
