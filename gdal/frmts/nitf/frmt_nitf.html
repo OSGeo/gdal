@@ -58,8 +58,12 @@ file header.  Use the official field names from the NITF specification
 document.<p>
 
 <li> <b>ICORDS</b>: Set to "G" to ensure that space will be reserved for
-geographic corner coordinates to be set later via SetGeoTransform().  (Only 
-needed for Create() method, not CopyCreate()).<p>
+geographic corner coordinates to be set later via SetGeoTransform(), set to "N"
+for UTM WGS84 projection in Northern hemisphere or to "S" for UTM WGS84 projection in
+southern hemisphere (Only needed for Create() method, not CopyCreate()).
+If you Create() a new NITF file and have specified "N" or "S" for ICORDS,
+you need to call later the SetProjection method with a consistent
+UTM SRS to set the UTM zone number (otherwise it will default to zone 0).<p>
 
 <li> <b>FHDR</b>: File version can be selected though currently the only 
 two variations supported are "NITF02.10" (the default), and "NSIF01.00". <p>
