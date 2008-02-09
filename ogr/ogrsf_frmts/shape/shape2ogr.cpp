@@ -229,7 +229,11 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
         
         //CPLDebug( "Shape", "Shape type: polygon with nParts=%d \n", psShape->nParts );
 
-        if ( psShape->nParts == 1 )
+        if ( psShape->nParts == 0 )
+        {
+            poOGR = NULL;
+        }
+        else if ( psShape->nParts == 1 )
         {
             /* Surely outer ring */
             OGRPolygon *poOGRPoly = NULL;
@@ -264,7 +268,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             delete[] tabPolygons;
         }
 
-        if( psShape->nSHPType == SHPT_POLYGON )
+        if( poOGR != NULL && psShape->nSHPType == SHPT_POLYGON )
         {
             poOGR->setCoordinateDimension( 2 );
         }
