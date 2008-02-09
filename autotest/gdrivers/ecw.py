@@ -213,7 +213,7 @@ def ecw_7():
 
     ds = gdal.Open( 'data/small.vrt' )
     drv = gdal.GetDriverByName( 'NITF' )
-    drv.CreateCopy( 'tmp/ecw_7.ntf', ds, options = ['IC=C8'] )
+    drv.CreateCopy( 'tmp/ecw_7.ntf', ds, options = ['IC=C8'], strict = 0 )
     ds = None
 
     return 'success' 
