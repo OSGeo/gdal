@@ -182,9 +182,14 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
     nBlockYSize = 1;
 
     panLineOffset =
-	(vsi_l_offset *)CPLCalloc( poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
+	(vsi_l_offset *)VSICalloc( poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
     if( panLineOffset == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GSAGRasterBand::GSAGRasterBand : Out of memory allocating %d * %d bytes",
+                 poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
 	return;
+    }
 
     panLineOffset[0] = nDataStart;
 }
@@ -855,7 +860,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	pabyHeader[nRead+1] = '\0';
     }
 
-    const char *szErrorMsg;
+    const char *szErrorMsg = NULL;
     const char *szStart = pabyHeader + 5;
     char *szEnd;
     double dfTemp;
@@ -993,6 +998,12 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     {
     GSAGRasterBand *poBand = new GSAGRasterBand( poDS, 1, szEnd-pabyHeader );
+    if( poBand->panLineOffset == NULL )
+    {
+        delete poBand;
+        goto error;
+    }
+
     poBand->dfMinX = dfMinX;
     poBand->dfMaxX = dfMaxX;
     poBand->dfMinY = dfMinY;
@@ -1024,7 +1035,8 @@ error:
 
     delete poDS;
 
-    CPLError( CE_Failure, CPLE_AppDefined, szErrorMsg );
+    if (szErrorMsg)
+        CPLError( CE_Failure, CPLE_AppDefined, szErrorMsg );
     return NULL;
 }
 
