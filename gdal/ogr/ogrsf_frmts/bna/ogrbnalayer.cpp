@@ -265,7 +265,14 @@ OGRErr OGRBNALayer::CreateFeature( OGRFeature *poFeature )
     OGRGeometry     *poGeom = poFeature->GetGeometryRef();
     char eol[3];
     const char* partialEol = (poDS->GetMultiLine()) ? eol : poDS->GetCoordinateSeparator();
-    
+
+    if (poGeom == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR BNA driver cannot write features with empty geometries.");
+        return OGRERR_FAILURE;
+    }
+
     if (poDS->GetUseCRLF())
     {
         eol[0] = 13;
