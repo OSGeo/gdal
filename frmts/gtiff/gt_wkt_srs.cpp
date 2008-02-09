@@ -640,7 +640,10 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     poSRS = new OGRSpatialReference();
 
     if( poSRS->importFromWkt((char **) &pszOGCWKT) != OGRERR_NONE )
+    {
+        delete poSRS;
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the ellipsoid definition.                                   */
