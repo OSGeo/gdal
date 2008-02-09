@@ -857,7 +857,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	}
 
 	size_t nRead = VSIFReadL( pabyHeader, 1, nMAX_HEADER_SIZE-1, poDS->fp );
-	pabyHeader[nRead+1] = '\0';
+	pabyHeader[nRead] = '\0';
     }
 
     const char *szErrorMsg = NULL;
