@@ -1470,6 +1470,9 @@ void GDALRegister_ECW()
 #ifdef FRMT_ecw 
     GDALDriver	*poDriver;
 
+    if (! GDAL_CHECK_VERSION("ECW driver"))
+        return;
+
     if( GDALGetDriverByName( "ECW" ) == NULL )
     {
         poDriver = new GDALDriver();
