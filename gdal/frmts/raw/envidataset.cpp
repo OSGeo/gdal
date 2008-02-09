@@ -1583,37 +1583,69 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char	*pszMode;
     CPLString   osHdrFilename;
-    FILE	*fpHeader;
+    FILE	*fpHeader = NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
 	pszMode = "r+";
     else
 	pszMode = "r";
+    
+    if (poOpenInfo->papszSiblingFiles == NULL)
+    {
+        osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
+        fpHeader = VSIFOpen( osHdrFilename, pszMode );
+    
+    #ifndef WIN32
+        if( fpHeader == NULL )
+        {
+            osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
+            fpHeader = VSIFOpen( osHdrFilename, pszMode );
+        }
+    #endif
+        if( fpHeader == NULL )
+        {
+            osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+                                            "hdr" );
+            fpHeader = VSIFOpen( osHdrFilename, pszMode );
+        }
+    #ifndef WIN32
+        if( fpHeader == NULL )
+        {
+            osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
+                                            "HDR" );
+            fpHeader = VSIFOpen( osHdrFilename, pszMode );
+        }
+    #endif
+    }
+    else
+    {
+        /* -------------------------------------------------------------------- */
+        /*      Now we need to tear apart the filename to form a .HDR           */
+        /*      filename.                                                       */
+        /* -------------------------------------------------------------------- */
+        CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+        CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
 
-    osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
-    fpHeader = VSIFOpen( osHdrFilename, pszMode );
-
-#ifndef WIN32
-    if( fpHeader == NULL )
-    {
-        osHdrFilename = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
-        fpHeader = VSIFOpen( osHdrFilename, pszMode );
+        int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
+                                  CPLResetExtension( osName, "hdr" ) );
+        if( iFile >= 0 )
+        {
+            osHdrFilename = CPLFormFilename( osPath, poOpenInfo->papszSiblingFiles[iFile], 
+                                             NULL );
+            fpHeader = VSIFOpen( osHdrFilename, pszMode );
+        }
+        else
+        {
+            iFile = CSLFindString(poOpenInfo->papszSiblingFiles,
+                                  CPLFormFilename( NULL, osName, "hdr" ));
+            if( iFile >= 0 )
+            {
+                osHdrFilename = CPLFormFilename( osPath, poOpenInfo->papszSiblingFiles[iFile], 
+                                                 NULL );
+                fpHeader = VSIFOpen( osHdrFilename, pszMode );
+            }
+        }
     }
-#endif
-    if( fpHeader == NULL )
-    {
-        osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
-                                         "hdr" );
-        fpHeader = VSIFOpen( osHdrFilename, pszMode );
-    }
-#ifndef WIN32
-    if( fpHeader == NULL )
-    {
-        osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
-                                         "HDR" );
-        fpHeader = VSIFOpen( osHdrFilename, pszMode );
-    }
-#endif
 
     if( fpHeader == NULL )
         return NULL;
