@@ -207,7 +207,8 @@ GXFHandle GXFOpen( const char * pszFilename )
         }
         else if( EQUALN(szTitle,"#DUMM",5) )
         {
-            strcpy( psGXF->szDummy, papszList[0] );
+            memset( psGXF->szDummy, 0, sizeof(psGXF->szDummy));
+            strncpy( psGXF->szDummy, papszList[0], sizeof(psGXF->szDummy) - 1);
             psGXF->dfSetDummyTo = atof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#XORI",5) )
