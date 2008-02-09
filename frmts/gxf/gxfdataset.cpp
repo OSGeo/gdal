@@ -55,6 +55,7 @@ class GXFDataset : public GDALPamDataset
     GXFHandle	hGXF;
 
     char	*pszProjection;
+    double      dfNoDataValue;
 
   public:
                 GXFDataset();
@@ -79,7 +80,8 @@ class GXFRasterBand : public GDALPamRasterBand
   public:
 
     		GXFRasterBand( GXFDataset *, int );
-    
+    double      GetNoDataValue(int* bGotNoDataValue);
+
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
@@ -98,6 +100,19 @@ GXFRasterBand::GXFRasterBand( GXFDataset *poDS, int nBand )
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+}
+
+/************************************************************************/
+/*                          GetNoDataValue()                          */
+/************************************************************************/
+
+double GXFRasterBand::GetNoDataValue(int* bGotNoDataValue)
+
+{
+    GXFDataset	*poGXF_DS = (GXFDataset *) poDS;
+    if (bGotNoDataValue)
+        *bGotNoDataValue = (fabs(poGXF_DS->dfNoDataValue - -1e12) > .1);
+    return poGXF_DS->dfNoDataValue;
 }
 
 /************************************************************************/
@@ -142,6 +157,7 @@ GXFDataset::GXFDataset()
 {
     pszProjection = NULL;
     hGXF = NULL;
+    dfNoDataValue = 0;
 }
 
 /************************************************************************/
@@ -290,7 +306,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
     GXFGetRawInfo( hGXF, &(poDS->nRasterXSize), &(poDS->nRasterYSize), NULL,
-                   NULL, NULL, NULL );
+                   NULL, NULL, &(poDS->dfNoDataValue) );
     
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
