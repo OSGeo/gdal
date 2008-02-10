@@ -47,7 +47,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
                             json_object_new_string("Feature") );
 
 /* -------------------------------------------------------------------- */
-/*      Write feature attributes to GeoJSOn "properties" object.        */
+/*      Write feature attributes to GeoJSON "properties" object.        */
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
 
@@ -55,16 +55,18 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
     json_object_object_add( poObj, "properties", poObjProps );
 
 /* -------------------------------------------------------------------- */
-/*      Write feature geometry to GeoJSOn "geometry" object.            */
+/*      Write feature geometry to GeoJSON "geometry" object.            */
+/*      Null geometries are allowed, according to the GeoJSON Spec.     */
 /* -------------------------------------------------------------------- */
     json_object* poObjGeom = NULL;
 
     OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-    CPLAssert( NULL != poGeometry );
-
-    poObjGeom = OGRGeoJSONWriteGeometry( poGeometry );
-    CPLAssert( NULL != poObjGeom );
-
+    if ( NULL != poGeometry )
+    {
+        poObjGeom = OGRGeoJSONWriteGeometry( poGeometry );
+        CPLAssert( NULL != poObjGeom );
+    }
+    
     json_object_object_add( poObj, "geometry", poObjGeom );
 
     return poObj;
