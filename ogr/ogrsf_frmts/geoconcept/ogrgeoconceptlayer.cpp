@@ -215,6 +215,14 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
     int nextField, iGeom, nbGeom, isSingle;
 
     poGeom= poFeature->GetGeometryRef();
+
+    if (poGeom == NULL)
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "NULL geometry not supported in Geoconcept, feature skipped.\n");
+        return OGRERR_NONE;
+    }
+
     eGt= poGeom->getGeometryType();
     switch( eGt ) {
     case wkbPoint                 :
