@@ -451,7 +451,7 @@ int OGRVRTLayer::ResetSourceReading()
 /*      Do we want to let source layer do spatial restriction?          */
 /* -------------------------------------------------------------------- */
     char *pszFilter = NULL;
-    if( m_poFilterGeom && m_bFilterIsEnvelope && bUseSpatialSubquery )
+    if( m_poFilterGeom && bUseSpatialSubquery && eGeometryType == VGS_PointFromColumns )
     {
         const char *pszXField, *pszYField;
 
