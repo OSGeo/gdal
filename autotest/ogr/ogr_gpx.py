@@ -177,6 +177,11 @@ def ogr_gpx_2():
         return 'fail'
     feat.Destroy()
     
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING EMPTY', max_error = 0.0001 ) != 0:
+        return 'fail'
+    feat.Destroy()
+    
     return 'success'
 
 
@@ -219,6 +224,17 @@ def ogr_gpx_4():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((15 14,18 17),(21 20,24 23))', max_error = 0.0001 ) != 0:
+        return 'fail'
+    feat.Destroy()
+    
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING EMPTY', max_error = 0.0001 ) != 0:
+        return 'fail'
+    feat.Destroy()
+    
+    feat = lyr.GetNextFeature()
+    f_geom = feat.GetGeometryRef()
+    if f_geom.ExportToWkt()!= 'MULTILINESTRING (EMPTY)':
         return 'fail'
     feat.Destroy()
     

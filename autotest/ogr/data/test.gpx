@@ -28,6 +28,9 @@
       <ele>13</ele> 
   </rtept>
 </rte>
+<rte>
+    <name>empty route</name>
+</rte>
 <trk>
     <name>track name</name>
     <trkseg>
@@ -46,6 +49,14 @@
         <trkpt lat="23" lon="24">
             <ele>25</ele> 
         </trkpt>
+    </trkseg>
+</trk>
+<trk>
+    <name>empty track</name>
+</trk>
+<trk>
+    <name>empty track 2</name>
+    <trkseg>
     </trkseg>
 </trk>
 </gpx>
