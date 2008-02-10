@@ -1161,7 +1161,14 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
         }
         
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
-        
+
+        if ( poGeom == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Features without geometry not supported by GPX writer in waypoints layer." );
+            return OGRERR_FAILURE;
+        }
+
         switch( poGeom->getGeometryType() )
         {
             case wkbPoint:
@@ -1196,8 +1203,17 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
         }
         
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
-            
+
         OGRLineString* line = NULL;
+
+        if ( poGeom == NULL )
+        {
+            VSIFPrintf(fp, "<rte>\n");
+            WriteFeatureAttributes(poFeature);
+            VSIFPrintf(fp, "</rte>\n");
+            return OGRERR_NONE;
+        }
+
         switch( poGeom->getGeometryType() )
         {
             case wkbLineString:
@@ -1206,11 +1222,16 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 line = (OGRLineString*)poGeom;
                 break;
             }
-            
+
             case wkbMultiLineString:
             case wkbMultiLineString25D:
             {
-                if (((OGRGeometryCollection*)poGeom)->getNumGeometries () == 1)
+                int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
+                if (nGeometries == 0)
+                {
+                    line = NULL;
+                }
+                else if (nGeometries == 1)
                 {
                     line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(0) );
                 }
@@ -1231,32 +1252,38 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 return OGRERR_FAILURE;
             }
         }
-        
-        if (line)
+
+        int n = (line) ? line->getNumPoints() : 0;
+        int i;
+        VSIFPrintf(fp, "<rte>\n");
+        WriteFeatureAttributes(poFeature);
+        for(i=0;i<n;i++)
         {
-            int n = line->getNumPoints();
-            int i;
-            VSIFPrintf(fp, "<rte>\n");
-            WriteFeatureAttributes(poFeature);
-            for(i=0;i<n;i++)
+            double lat = line->getY(i);
+            double lon = line->getX(i);
+            CheckAndFixCoordinatesValidity(&lat, &lon);
+            VSIFPrintf(fp, "  <rtept lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
+            if (poGeom->getGeometryType() == wkbLineString25D ||
+                poGeom->getGeometryType() == wkbMultiLineString25D)
             {
-                double lat = line->getY(i);
-                double lon = line->getX(i);
-                CheckAndFixCoordinatesValidity(&lat, &lon);
-                VSIFPrintf(fp, "  <rtept lat=\"%.15f\" lon=\"%.15f\">\n", lat, lon);
-                if (poGeom->getGeometryType() == wkbLineString25D ||
-                    poGeom->getGeometryType() == wkbMultiLineString25D)
-                {
-                    VSIFPrintf(fp, "    <ele>%f</ele>\n", line->getZ(i));
-                }
-                VSIFPrintf(fp, "  </rtept>\n");
+                VSIFPrintf(fp, "    <ele>%f</ele>\n", line->getZ(i));
             }
-            VSIFPrintf(fp, "</rte>\n");
+            VSIFPrintf(fp, "  </rtept>\n");
         }
+        VSIFPrintf(fp, "</rte>\n");
     }
     else
     {
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
+
+        if (poGeom == NULL)
+        {
+            VSIFPrintf(fp, "<trk>\n");
+            WriteFeatureAttributes(poFeature);
+            VSIFPrintf(fp, "</trk>\n");
+            return OGRERR_NONE;
+        }
+
         switch( poGeom->getGeometryType() )
         {
             case wkbLineString:
@@ -1295,7 +1322,7 @@ OGRErr OGRGPXLayer::CreateFeature( OGRFeature *poFeature )
                 for(j=0;j<nGeometries;j++)
                 {
                     OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
-                    int n = line->getNumPoints();
+                    int n = (line) ? line->getNumPoints() : 0;
                     int i;
                     VSIFPrintf(fp, "  <trkseg>\n");
                     for(i=0;i<n;i++)
