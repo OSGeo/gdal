@@ -231,7 +231,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 
         if ( psShape->nParts == 0 )
         {
-            poOGR = NULL;
+            poOGR = new OGRMultiPolygon();
         }
         else if ( psShape->nParts == 1 )
         {
