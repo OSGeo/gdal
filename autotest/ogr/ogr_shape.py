@@ -635,6 +635,61 @@ def ogr_shape_19():
     return 'success'
 
 ###############################################################################
+# Test empty multipoint, multiline, multipolygon.
+# From GDAL 1.6.0, the expected behaviour is to return a feature with a NULL geometry
+
+def ogr_shape_20():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    ds = ogr.Open('data/emptymultipoint.shp')
+    lyr = ds.GetLayer(0)
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+
+    if feat is None:
+        return 'fail'
+    if feat.GetGeometryRef() is not None:
+        return 'fail'
+
+    feat.Destroy()
+    lyr = None
+    ds.Destroy()
+
+
+    ds = ogr.Open('data/emptymultiline.shp')
+    lyr = ds.GetLayer(0)
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+
+    if feat is None:
+        return 'fail'
+    if feat.GetGeometryRef() is not None:
+        return 'fail'
+
+    feat.Destroy()
+    lyr = None
+    ds.Destroy()
+
+
+    ds = ogr.Open('data/emptymultipoly.shp')
+    lyr = ds.GetLayer(0)
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+
+    if feat is None:
+        return 'fail'
+    if feat.GetGeometryRef() is not None:
+        return 'fail'
+
+    feat.Destroy()
+    lyr = None
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -670,6 +725,7 @@ gdaltest_list = [
     ogr_shape_17,
     ogr_shape_18,
     ogr_shape_19,
+    ogr_shape_20,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
