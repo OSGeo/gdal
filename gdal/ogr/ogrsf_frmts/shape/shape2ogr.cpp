@@ -132,25 +132,32 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_MULTIPOINTM
              || psShape->nSHPType == SHPT_MULTIPOINTZ )
     {
-        OGRMultiPoint *poOGRMPoint = new OGRMultiPoint();
-        int             i;
-
-        for( i = 0; i < psShape->nVertices; i++ )
+        if (psShape->nVertices == 0)
         {
-            OGRPoint    *poPoint;
-
-            poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
-                                    psShape->padfZ[i] );
-            
-            poOGRMPoint->addGeometry( poPoint );
-
-            delete poPoint;
+            poOGR = NULL;
         }
-        
-        poOGR = poOGRMPoint;
+        else
+        {
+            OGRMultiPoint *poOGRMPoint = new OGRMultiPoint();
+            int             i;
 
-        if( psShape->nSHPType == SHPT_MULTIPOINT )
-            poOGR->setCoordinateDimension( 2 );
+            for( i = 0; i < psShape->nVertices; i++ )
+            {
+                OGRPoint    *poPoint;
+
+                poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
+                                        psShape->padfZ[i] );
+
+                poOGRMPoint->addGeometry( poPoint );
+
+                delete poPoint;
+            }
+
+            poOGR = poOGRMPoint;
+
+            if( psShape->nSHPType == SHPT_MULTIPOINT )
+                poOGR->setCoordinateDimension( 2 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -162,13 +169,17 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_ARCM
              || psShape->nSHPType == SHPT_ARCZ )
     {
-        if( psShape->nParts == 1 )
+        if( psShape->nParts == 0 )
+        {
+            poOGR = NULL;
+        }
+        else if( psShape->nParts == 1 )
         {
             OGRLineString *poOGRLine = new OGRLineString();
 
             poOGRLine->setPoints( psShape->nVertices,
                                   psShape->padfX, psShape->padfY, psShape->padfZ );
-        
+
             poOGR = poOGRLine;
         }
         else
@@ -231,7 +242,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 
         if ( psShape->nParts == 0 )
         {
-            poOGR = new OGRMultiPolygon();
+            poOGR = NULL;
         }
         else if ( psShape->nParts == 1 )
         {
