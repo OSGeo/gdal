@@ -223,7 +223,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             }
         }
 
-        if( psShape->nSHPType == SHPT_ARC )
+        if( poOGR != NULL && psShape->nSHPType == SHPT_ARC )
             poOGR->setCoordinateDimension( 2 );
     }
 
