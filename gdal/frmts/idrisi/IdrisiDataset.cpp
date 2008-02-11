@@ -269,7 +269,6 @@ private:
     char *pszProjection;
     char **papszCategories;
     char *pszUnitType;
-	bool bDirty;
 
     CPLErr GeoReference2Wkt( const char *pszRefSystem,
         const char *pszRefUnits,
@@ -278,8 +277,6 @@ private:
     CPLErr Wkt2GeoReference( const char *pszProjString,
         char **pszRefSystem, 
         char **pszRefUnit );
-
-	void CalculateMinMax();
 
 protected:
     GDALColorTable *poColorTable;
@@ -347,6 +344,10 @@ public:
         double dfMean, double dfStdDev );
     virtual const GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+
+    float  dfMaximum;
+    float  dfMinimum;
+    bool   bFirstVal;
 };
 
 //  ------------------------------------------------------------------------  //
@@ -367,7 +368,6 @@ IdrisiDataset::IdrisiDataset()
     poColorTable = new GDALColorTable();
     papszCategories = NULL;
     pszUnitType = NULL;
-	bDirty = false;
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -387,14 +387,19 @@ IdrisiDataset::~IdrisiDataset()
 
     if( papszRDC != NULL )
     {
-		if( eAccess == GA_Update )
+        if( eAccess == GA_Update )
         {	
-			if( bDirty )
-			{
-				CalculateMinMax();
-			}
-			CSLSetNameValueSeparator( papszRDC, ": " );
+            int i;
+
+            for( i = 0; i < nBands; i++ )
+            {
+                IdrisiRasterBand *poBand = (IdrisiRasterBand*) GetRasterBand( i + 1 );
+                poBand->SetStatistics( poBand->dfMinimum, poBand->dfMaximum, 0.0, 0.0 );
+            }
+
+            CSLSetNameValueSeparator( papszRDC, ": " );
             CSLSave( papszRDC, pszDocFilename );
+
 #ifndef WIN32        
             FormatCRLF( pszDocFilename );
 #endif 
@@ -414,24 +419,6 @@ IdrisiDataset::~IdrisiDataset()
 
     if( fp != NULL )
         VSIFCloseL( fp );
-}
-
-/************************************************************************/
-/*                           CalculateMinMax()                          */
-/************************************************************************/
-
-void IdrisiDataset::CalculateMinMax()
-{
-	int iBand;
-	double dfMin  = 0.0;
-	double dfMax  = 0.0;
-
-    for( iBand = 0; iBand < nBands; iBand++ )
-	{
-        IdrisiRasterBand *poBand = (IdrisiRasterBand*) GetRasterBand( iBand + 1 );
-		poBand->ComputeStatistics( true, &dfMin, &dfMax, NULL, NULL, NULL, NULL );
-		poBand->SetStatistics( dfMin, dfMax, 0.0, 0.0 );
-	}	
 }
 
 /************************************************************************/
@@ -1026,16 +1013,24 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
 
     poDS->GetRasterBand( 1 )->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
+    void *pData = VSIMalloc3( nBlockXSize, nBlockYSize, 
+                              GDALGetDataTypeSize( eType ) / 8 );
+
+    if( pData == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                "IdrisiRasterBand::CreateCopy : Out of memory " );
+        delete poDS;
+        return NULL;
+    }
+
     for( int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
         GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand );
 
         int    iYOffset, iXOffset;
-        void *pData;
         CPLErr eErr = CE_None;
-
-        pData = CPLMalloc( nBlockXSize * nBlockYSize * GDALGetDataTypeSize( eType ) / 8 );
 
         for( iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
         {
@@ -1067,16 +1062,15 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()" );
             }
         }
-        CPLFree( pData );
     }
+
+    CPLFree( pData );
 
     // --------------------------------------------------------------------
     //      Finalize
     // --------------------------------------------------------------------
 
     poDS->FlushCache();
-
-	poDS->bDirty = ( ! ( bSuccessMin && bSuccessMax ) );
 
     return poDS;
 }
@@ -1227,6 +1221,9 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
     this->nBand = nBand;
     this->eDataType = eDataType;
     this->poDefaultRAT = NULL;
+    this->dfMinimum = 0.0;
+    this->dfMaximum = 0.0;
+    this->bFirstVal = true;
 
     // -------------------------------------------------------------------- 
     //      Set Dimension
@@ -1239,15 +1236,18 @@ IdrisiRasterBand::IdrisiRasterBand( IdrisiDataset *poDS,
     //      Get ready for reading and writing
     // -------------------------------------------------------------------- 
 
-    // FIXME : risk of overflow in multiplication
-    nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8 * poDS->nBands;
-    pabyScanLine = ( GByte * ) VSIMalloc( nRecordSize );
-    if (pabyScanLine == NULL)
+    nRecordSize  = poDS->GetRasterXSize() * GDALGetDataTypeSize( eDataType ) / 8;
+
+    pabyScanLine = (GByte*) VSIMalloc2( nRecordSize, poDS->nBands );
+
+    if( pabyScanLine == NULL )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "IdrisiRasterBand::IdrisiRasterBand : Out of memory (nRasterXSize = %d)",
                   poDS->GetRasterXSize());
     }
+
+    nRecordSize *= poDS->nBands;
 }
 
 /************************************************************************/
@@ -1316,12 +1316,10 @@ CPLErr IdrisiRasterBand::IReadBlock( int nBlockXOff,
 /************************************************************************/
 
 CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff, 
-                                     int nBlockYOff,
-                                     void *pImage )
+                                      int nBlockYOff,
+                                      void *pImage )
 {
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
-	poGDS->bDirty = true;
 
 #ifdef CPL_MSB    
     // Swap in input buffer if needed.
@@ -1363,6 +1361,66 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
         return CE_Failure;
     }
 
+    // -------------------------------------------------------------------- 
+    //      Store the first value as mimunm and maximum
+    // -------------------------------------------------------------------- 
+
+    if( bFirstVal )
+    {
+        switch( eDataType )
+        {
+            case GDT_Float32:
+                dfMinimum = dfMaximum = (double) ((float*) pabyScanLine)[0];
+                break;
+            case GDT_Int16:
+                dfMinimum = dfMaximum = (double) ((GInt16*) pabyScanLine)[0];
+                break;
+            default:
+                dfMinimum = dfMaximum = (double) ((GByte*) pabyScanLine)[ 
+                    poGDS->nBands == 1 ? 0 : 3 - this->nBand ];
+        }
+        bFirstVal = false;
+    }
+
+    // -------------------------------------------------------------------- 
+    //      Search for the minimum and maximum values
+    // -------------------------------------------------------------------- 
+
+    int i, j;
+
+    if( eDataType == GDT_Float32 )
+    {
+        for( i = 0; i < nBlockXSize; i++ )
+        {
+            dfMinimum = MIN( dfMinimum, ((float*) pabyScanLine)[i] );
+            dfMaximum = MAX( dfMaximum, ((float*) pabyScanLine)[i] );
+        }
+    }
+    else if( eDataType == GDT_Int16 )
+    {
+        for( i = 0; i < nBlockXSize; i++ )
+        {
+            dfMinimum = MIN( dfMinimum, ((GInt16*) pabyScanLine)[i] );
+            dfMaximum = MAX( dfMaximum, ((GInt16*) pabyScanLine)[i] );
+        }
+    }
+    else if( poGDS->nBands == 1 )
+    {
+        for( i = 0; i < nBlockXSize; i++ )
+        {
+            dfMinimum = MIN( dfMinimum, ((GByte*) pabyScanLine)[i] );
+            dfMaximum = MAX( dfMaximum, ((GByte*) pabyScanLine)[i] );
+        }
+    }
+    else
+    {
+        for( i = 0, j = ( 3 - nBand ); i < nBlockXSize; i++, j += 3 )
+        {
+            dfMinimum = MIN( dfMinimum, ((GByte*) pabyScanLine)[j] );
+            dfMaximum = MAX( dfMaximum, ((GByte*) pabyScanLine)[j] );
+        }
+    }
+
     return CE_None;
 }
 
@@ -1380,7 +1438,7 @@ double IdrisiRasterBand::GetMinimum( int *pbSuccess )
 
     if( pbSuccess )
 	{
-        *pbSuccess = ( ! poGDS->bDirty );
+        *pbSuccess = true;
 	}
 
     return adfMinValue[this->nBand - 1];
@@ -1400,7 +1458,7 @@ double IdrisiRasterBand::GetMaximum( int *pbSuccess )
 
     if( pbSuccess )
 	{
-        *pbSuccess = ( ! poGDS->bDirty );
+        *pbSuccess = true;
 	}
 
     return adfMaxValue[this->nBand - 1];
