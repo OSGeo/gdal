@@ -292,11 +292,11 @@ void GMLHandler::fatalError( const SAXParseException &exception)
 int GMLHandler::IsGeometryElement( const char *pszElement )
 
 {
-    return EQUAL(pszElement,"Polygon") 
-        || EQUAL(pszElement,"MultiPolygon") 
-        || EQUAL(pszElement,"MultiPoint") 
-        || EQUAL(pszElement,"MultiLineString") 
-        || EQUAL(pszElement,"GeometryCollection") 
-        || EQUAL(pszElement,"Point") 
-        || EQUAL(pszElement,"LineString");
+    return strcmp(pszElement,"Polygon") == 0
+        || strcmp(pszElement,"MultiPolygon") == 0 
+        || strcmp(pszElement,"MultiPoint") == 0 
+        || strcmp(pszElement,"MultiLineString") == 0 
+        || strcmp(pszElement,"GeometryCollection") == 0
+        || strcmp(pszElement,"Point") == 0 
+        || strcmp(pszElement,"LineString") == 0;
 }
