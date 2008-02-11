@@ -1,4 +1,12 @@
 
+/* We define this here in general so that a VC++ build will publically
+   declare STDCALL interfaces even if an application is built against it
+   using MinGW */
+
+#ifndef CPL_DISABLE_STDCALL
+#  define CPL_STDCALL __stdcall
+#endif
+
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
 
@@ -11,11 +19,15 @@
 #endif
 #define snprintf _snprintf
 
-/* Define to 1 if you have the `copysign' function. */
 #define HAVE_COPYSIGN
+
+/* We only redefine the following for MSVC since it actually breaks
+   an MinGW build using GDAL otherwise. */
+#ifdef _MSC_VER
 #define copysign _copysign
 #define copysignf _copysign
 #define copysignl _copysign
+#endif
 
 #define HAVE_GETCWD 1
 #define getcwd _getcwd
