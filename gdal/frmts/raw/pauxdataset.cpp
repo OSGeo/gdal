@@ -684,7 +684,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
     VSIFCloseL( fp );
 
-    if( pszLine == NULL || !EQUALN(pszLine,"AuxilaryTarget",14) )
+    if( pszLine == NULL 
+        || (!EQUALN(pszLine,"AuxilaryTarget",14) 
+            && !EQUALN(pszLine,"AuxiliaryTarget",15)) ) 
     {
         return NULL;
     }
