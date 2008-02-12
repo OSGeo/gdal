@@ -628,6 +628,20 @@ class Dataset(MajorObject):
                                            buf_xsize, buf_ysize, buf_type,
                                            band_list)
 
+    def GetSubDatasets(self):
+        sd_list = []
+        
+        sd = self.GetMetadata('SUBDATASETS')
+        if sd is None:
+            return sd_list
+
+        i = 1
+        while sd.has_key('SUBDATASET_'+str(i)+'_NAME'):
+            sd_list.append( ( sd['SUBDATASET_'+str(i)+'_NAME'],
+                              sd['SUBDATASET_'+str(i)+'_DESC'] ) )
+            i = i + 1
+        return sd_list
+
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
 
