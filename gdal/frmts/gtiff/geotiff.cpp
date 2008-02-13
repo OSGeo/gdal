@@ -3076,6 +3076,23 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         nCompression = COMPRESSION_NONE;
 
 /* -------------------------------------------------------------------- */
+/*      YCbCr JPEG compressed images should be translated on the fly    */
+/*      to RGB by libtiff/libjpeg unless specifically requested         */
+/*      otherwise.                                                      */
+/* -------------------------------------------------------------------- */
+    if( nCompression == COMPRESSION_JPEG 
+        && nPhotometric == PHOTOMETRIC_YCBCR 
+        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                              "YES") ) )
+    {
+        int nColorMode;
+
+        TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
+        if( nColorMode != JPEGCOLORMODE_RGB )
+            TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Get strip/tile layout.                                          */
 /* -------------------------------------------------------------------- */
     if( TIFFIsTiled(hTIFF) )
