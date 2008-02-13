@@ -907,6 +907,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\..\ogr\ogrsf_frmts\shape\shp_vsi.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\..\ogr\ogrsf_frmts\shape\shpopen.c"
 						>
 					</File>
