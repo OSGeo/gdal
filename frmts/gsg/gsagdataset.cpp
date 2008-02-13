@@ -84,10 +84,6 @@ class GSAGDataset : public GDALPamDataset
 		~GSAGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-			 	int nXSize, int nYSize, int nBands,
-				GDALDataType eType,
-				char **papszParmList );
     static GDALDataset *CreateCopy( const char *pszFilename,
 				    GDALDataset *poSrcDS,
 				    int bStrict, char **papszOptions,
@@ -123,6 +119,7 @@ class GSAGRasterBand : public GDALPamRasterBand
     double dfMaxZ;
 
     vsi_l_offset *panLineOffset;
+	int nLastReadLine;
 
     double *padfRowMinZ;
     double *padfRowMaxZ;
@@ -191,7 +188,8 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
 	return;
     }
 
-    panLineOffset[0] = nDataStart;
+	panLineOffset[poDS->nRasterYSize-1] = nDataStart;
+	nLastReadLine = poDS->nRasterYSize;
 }
 
 /************************************************************************/
@@ -308,20 +306,25 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     assert( poGDS != NULL );
 
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
-	return CE_Failure;
+        return CE_Failure;
 
     if( panLineOffset[nBlockYOff] == 0 )
-	IReadBlock( nBlockXOff, nBlockYOff-1, NULL );
+    {
+		// Discover the last read block
+		for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
+		{
+			IReadBlock( nBlockXOff, iFoundLine, NULL);
+		}
+    }
 
     if( panLineOffset[nBlockYOff] == 0 )
-	return CE_Failure;
-
+        return CE_Failure;
     if( VSIFSeekL( poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
     {
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "Can't seek to offset %ld to read grid row %d.",
-		  panLineOffset[nBlockYOff], nBlockYOff );
-	return CE_Failure;
+        CPLError( CE_Failure, CPLE_FileIO,
+              "Can't seek to offset %ld to read grid row %d.",
+              panLineOffset[nBlockYOff], nBlockYOff );
+        return CE_Failure;
     }
 
     size_t nLineBufSize;
@@ -329,10 +332,10 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     size_t nCharsRead;
     size_t nCharsExamined = 0;
     /* If we know the offsets, we can just read line directly */
-    if( panLineOffset[nBlockYOff+1] != 0 )
+    if( (nBlockYOff > 0) && ( panLineOffset[nBlockYOff-1] != 0 ) )
     {
-	assert(panLineOffset[nBlockYOff+1] > panLineOffset[nBlockYOff]);
-	nLineBufSize = panLineOffset[nBlockYOff+1]
+	assert(panLineOffset[nBlockYOff-1] > panLineOffset[nBlockYOff]);
+	nLineBufSize = panLineOffset[nBlockYOff-1]
 			      - panLineOffset[nBlockYOff] + 1;
     }
     else
@@ -524,7 +527,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nCharsExamined >= nMaxLineSize )
 	nMaxLineSize = nCharsExamined + 1;
 
-    panLineOffset[nBlockYOff + 1] = panLineOffset[nBlockYOff] + nCharsExamined;
+    panLineOffset[nBlockYOff - 1] = panLineOffset[nBlockYOff] + nCharsExamined;
+	nLastReadLine = nBlockYOff;
 
     VSIFree( szLineBuf );
 
@@ -1452,108 +1456,6 @@ CPLErr GSAGDataset::UpdateHeader()
 }
 
 /************************************************************************/
-/*                               Create()                               */
-/************************************************************************/
-
-GDALDataset *GSAGDataset::Create( const char * pszFilename,
-				  int nXSize, int nYSize, int nBands,
-				  GDALDataType eType,
-				  char **papszParmList )
-
-{
-    if( nXSize <= 0 || nYSize <= 0 )
-    {
-	CPLError( CE_Failure, CPLE_IllegalArg,
-		  "Unable to create grid, both X and Y size must be "
-		  "non-negative.\n" );
-
-	return NULL;
-    }
-
-    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
-        && eType != GDT_Int16 && eType != GDT_Float64 && eType != GDT_Int32
-	&& eType != GDT_UInt32 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-		  "Golden Software ASCII Grid only supports Byte, Int16, "
-		  "Uint16, Int32, Uint32, Float32, and Float64 datatypes.  "
-		  "Unable to create with type %s.\n",
-		  GDALGetDataTypeName( eType ) );
-
-        return NULL;
-    }
-
-    FILE *fp = VSIFOpenL( pszFilename, "w+b" );
-
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file '%s' failed.\n",
-                  pszFilename );
-        return NULL;
-    }
-
-    std::ostringstream ssHeader;
-
-    ssHeader << "DSAA\x0D\x0A";
-    ssHeader << nXSize << " " << nYSize << "\x0D\x0A";
-    ssHeader << 0.0 << " " << nXSize << "\x0D\x0A";
-    ssHeader << 0.0 << " " << nYSize << "\x0D\x0A";
-    ssHeader << 0.0 << " " << 0.0 << "\x0D\x0A";
-
-    if( VSIFWriteL( (void *)ssHeader.str().c_str(), 1, ssHeader.str().length(),
-		    fp ) != ssHeader.str().length() )
-    {
-	VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to create copy, writing header failed.\n" );
-        return NULL;
-    }
-
-    /* grid data, row major, max 10 values per line (to mimic Surfer) */
-    std::ostringstream ssOutStream;
-    ssOutStream.precision( nFIELD_PRECISION );
-    ssOutStream.setf( std::ios::uppercase );
-    ssOutStream << dfNODATA_VALUE << " ";
-    CPLString sOut = ssOutStream.str();
-    const char *szOut = sOut.c_str();
-    size_t nOutLen = sOut.length();
-    for( int iRow=0; iRow<nYSize; iRow++ )
-    {
-	for( int iLine=0; iLine<nXSize/10+1; iLine++ )
-	{
-	    for( int iCol=0; iCol<10 && iLine*10+iCol<nXSize; iCol++ )
-	    {
-		if( VSIFWriteL( szOut, 1, nOutLen, fp ) != nOutLen )
-		{
-		    CPLError( CE_Failure, CPLE_FileIO,
-			      "Unable to write grid cell.  Disk full?\n" );
-		    return NULL;
-		}
-	    }
-
-	    if( VSIFWriteL( (void *)"\x0D\x0A", 1, 2, fp ) != 2 )
-	    {
-		CPLError( CE_Failure, CPLE_FileIO,
-			  "Unable to finish write of grid line. Disk full?\n" );
-		return NULL;
-	    }
-	}
-
-	if( VSIFWriteL( (void *)"\x0D\x0A", 1, 2, fp ) != 2 )
-	{
-	    CPLError( CE_Failure, CPLE_FileIO,
-		      "Unable to finish write of grid row. Disk full?\n" );
-	    return NULL;
-	}
-    }
-
-    VSIFCloseL( fp );
-
-    return (GDALDataset *)GDALOpen( pszFilename, GA_Update );
-}
-
-/************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
@@ -1660,7 +1562,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     double dfMax = -DBL_MAX;
     for( int iRow=0; iRow<nYSize; iRow++ )
     {
-	CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
+	CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, nYSize-iRow-1,
 					   nXSize, 1, pdfData,
 					   nXSize, 1, GDT_Float64, 0, 0 );
 
@@ -1903,8 +1805,7 @@ void GDALRegister_GSAG()
 				   "Byte Int16 UInt16 Int32 UInt32 "
 				   "Float32 Float64" );
 
-        poDriver->pfnOpen = GSAGDataset::Open;
-	poDriver->pfnCreate = GSAGDataset::Create;
+    poDriver->pfnOpen = GSAGDataset::Open;
 	poDriver->pfnCreateCopy = GSAGDataset::CreateCopy;
 	poDriver->pfnDelete = GSAGDataset::Delete;
 
