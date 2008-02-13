@@ -46,7 +46,7 @@ def gsg_1():
 
 def gsg_2():
 
-    tst = gdaltest.GDALTest( 'gsag', 'gsg_ascii.grd', 1, 4855 )
+    tst = gdaltest.GDALTest( 'gsag', 'gsg_ascii.grd', 1, 4672 )
     return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
 
 def gsg_3():
