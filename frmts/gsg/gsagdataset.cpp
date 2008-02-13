@@ -310,11 +310,11 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( panLineOffset[nBlockYOff] == 0 )
     {
-		// Discover the last read block
-		for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
-		{
-			IReadBlock( nBlockXOff, iFoundLine, NULL);
-		}
+        // Discover the last read block
+        for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
+        {
+            IReadBlock( nBlockXOff, iFoundLine, NULL);
+        }
     }
 
     if( panLineOffset[nBlockYOff] == 0 )
@@ -322,8 +322,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( VSIFSeekL( poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-              "Can't seek to offset %ld to read grid row %d.",
-              panLineOffset[nBlockYOff], nBlockYOff );
+                  "Can't seek to offset %ld to read grid row %d.",
+                  panLineOffset[nBlockYOff], nBlockYOff );
         return CE_Failure;
     }
 
@@ -336,7 +336,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
 	assert(panLineOffset[nBlockYOff-1] > panLineOffset[nBlockYOff]);
 	nLineBufSize = panLineOffset[nBlockYOff-1]
-			      - panLineOffset[nBlockYOff] + 1;
+            - panLineOffset[nBlockYOff] + 1;
     }
     else
     {
@@ -420,7 +420,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 			  "offset %ld.\n", nBlockYOff, szStart - szLineBuf );
 
 		while( *szStart == '\0' &&
-			static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
+                       static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
 		    szStart++;
 
 		szEnd = szStart;
@@ -442,15 +442,15 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    continue;
 	}
 	else if( *szEnd == '\0'
-		|| (*szEnd == '.' && *(szEnd+1) == '\0')
-		|| (*szEnd == '-' && *(szEnd+1) == '\0')
-		|| (*szEnd == '+' && *(szEnd+1) == '\0')
-		|| (*szEnd == 'E' && *(szEnd+1) == '\0')
-		|| (*szEnd == 'E' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
-		|| (*szEnd == 'E' && *(szEnd+1) == '+' && *(szEnd+2) == '\0')
-		|| (*szEnd == 'e' && *(szEnd+1) == '\0')
-		|| (*szEnd == 'e' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
-		|| (*szEnd == 'e' && *(szEnd+1) == '+' && *(szEnd+2) == '\0'))
+                 || (*szEnd == '.' && *(szEnd+1) == '\0')
+                 || (*szEnd == '-' && *(szEnd+1) == '\0')
+                 || (*szEnd == '+' && *(szEnd+1) == '\0')
+                 || (*szEnd == 'E' && *(szEnd+1) == '\0')
+                 || (*szEnd == 'E' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
+                 || (*szEnd == 'E' && *(szEnd+1) == '+' && *(szEnd+2) == '\0')
+                 || (*szEnd == 'e' && *(szEnd+1) == '\0')
+                 || (*szEnd == 'e' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
+                 || (*szEnd == 'e' && *(szEnd+1) == '+' && *(szEnd+2) == '\0'))
 	{
 	    /* Number was interrupted by a nul character */
 	    while( *szEnd != '\0' )
@@ -517,7 +517,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( *szEnd != '\0' && *szEnd != poGDS->szEOL[0] )
 	CPLDebug( "GSAG", "Grid row %d does not end with a newline.  "
-			 "Possible skew.\n", nBlockYOff );
+                  "Possible skew.\n", nBlockYOff );
 
     while( isspace( *szEnd ) )
 	szEnd++;
@@ -527,8 +527,11 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( nCharsExamined >= nMaxLineSize )
 	nMaxLineSize = nCharsExamined + 1;
 
-    panLineOffset[nBlockYOff - 1] = panLineOffset[nBlockYOff] + nCharsExamined;
-	nLastReadLine = nBlockYOff;
+    if( nBlockYOff > 0 )
+        panLineOffset[nBlockYOff - 1] = 
+            panLineOffset[nBlockYOff] + nCharsExamined;
+
+    nLastReadLine = nBlockYOff;
 
     VSIFree( szLineBuf );
 
