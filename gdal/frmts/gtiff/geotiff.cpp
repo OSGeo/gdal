@@ -2741,10 +2741,37 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
     if( TIFFCurrentDirOffset(hTIFF) == nNewOffset )
         return TRUE;
 
+    CPLDebug( "GTiff", "SetDirectory(%15.0f)",(double) nNewOffset );
+
     if( GetAccess() == GA_Update )
         TIFFFlush( hTIFF );
     
-    return TIFFSetSubDirectory( hTIFF, nNewOffset );
+    int nSetDirResult = TIFFSetSubDirectory( hTIFF, nNewOffset );
+
+/* -------------------------------------------------------------------- */
+/*      YCbCr JPEG compressed images should be translated on the fly    */
+/*      to RGB by libtiff/libjpeg unless specifically requested         */
+/*      otherwise.                                                      */
+/* -------------------------------------------------------------------- */
+    if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
+        nCompression = COMPRESSION_NONE;
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
+        nPhotometric = PHOTOMETRIC_MINISBLACK;
+    
+    if( nCompression == COMPRESSION_JPEG 
+        && nPhotometric == PHOTOMETRIC_YCBCR 
+        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                              "YES") ) )
+    {
+        int nColorMode;
+
+        TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
+        if( nColorMode != JPEGCOLORMODE_RGB )
+            TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+    }
+
+    return nSetDirResult;
 }
 
 /************************************************************************/
@@ -3103,19 +3130,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         }
     }
         
-/* -------------------------------------------------------------------- */
-/*      YCbCr JPEG compressed images should be translated on the fly    */
-/*      to RGB by libtiff/libjpeg unless specifically requested         */
-/*      otherwise.                                                      */
-/* -------------------------------------------------------------------- */
-    if( nCompression == COMPRESSION_JPEG 
-        && nPhotometric == PHOTOMETRIC_YCBCR 
-        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                              "YES") ) )
-    {
-        TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the odd bits interface?                */
 /* -------------------------------------------------------------------- */
