@@ -891,6 +891,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 		  "Number of X axis grid columns not representable.\n" );
 	poDS->nRasterXSize = INT_MAX;
     }
+    else if ( nTemp == 0 )
+    {
+        szErrorMsg = "Number of X axis grid columns is zero, which is invalid.\n";
+        goto error;
+    }
     else
     {
 	poDS->nRasterXSize = static_cast<int>(nTemp);
@@ -909,6 +914,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	CPLError( CE_Warning, CPLE_AppDefined,
 		  "Number of Y axis grid rows not representable.\n" );
 	poDS->nRasterYSize = INT_MAX;
+    }
+    else if ( nTemp == 0)
+    {
+        szErrorMsg = "Number of Y axis grid rows is zero, which is invalid.\n";
+        goto error;
     }
     else
     {
