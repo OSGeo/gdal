@@ -970,7 +970,7 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
 /************************************************************************/
 /*                       CaptureNRLGeoTransform()                       */
 /*                                                                      */
-/*      Capture geotransform and coordinate system from NRL (Navel      */
+/*      Capture geotransform and coordinate system from NRL (Naval      */
 /*      Research Laboratory, Stennis Space Center) metadata.            */
 /************************************************************************/
 
@@ -1028,10 +1028,14 @@ Metadata:
 void HDF4ImageDataset::CaptureNRLGeoTransform()
 
 {
+/* -------------------------------------------------------------------- */
+/*      Collect the four corners.                                       */
+/* -------------------------------------------------------------------- */
     double adfXY[8];
     static const char *apszItems[] = {
         "mapUpperLeft", "mapUpperRight", "mapLowerLeft", "mapLowerRight" };
     int iCorner;
+    int bLLPossible = TRUE;
 
     for( iCorner = 0; iCorner < 4; iCorner++ )
     {
@@ -1049,10 +1053,18 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         adfXY[iCorner*2+0] = CPLAtof( papszTokens[1] );
         adfXY[iCorner*2+1] = CPLAtof( papszTokens[0] );
 
+        if( adfXY[iCorner*2+0] < -360 || adfXY[iCorner*2+0] > 360 
+            || adfXY[iCorner*2+1] < -90 || adfXY[iCorner*2+1] > 90 )
+            bLLPossible = FALSE;
+
         CSLDestroy( papszTokens );
     }
 
-    if( adfXY[0*2+0] == adfXY[2*2+0] && adfXY[0*2+1] == adfXY[1*2+1] )
+/* -------------------------------------------------------------------- */
+/*      Does this look like nice clean "northup" lat/long data?         */
+/* -------------------------------------------------------------------- */
+    if( adfXY[0*2+0] == adfXY[2*2+0] && adfXY[0*2+1] == adfXY[1*2+1] 
+        && bLLPossible )
     {
         bHasGeoTransform = TRUE;
         adfGeoTransform[0] = adfXY[0*2+0];
@@ -1065,6 +1077,115 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         oSRS.SetWellKnownGeogCS( "WGS84" );
         CPLFree( pszProjection );
         oSRS.exportToWkt( &pszProjection );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Can we find the USGS Projection Parameters?                     */
+/* -------------------------------------------------------------------- */
+    int  bGotGCTPProjection = FALSE;
+    int  iSDSIndex = FAIL, iSDS = FAIL;
+    const char *mapProjection = CSLFetchNameValue( papszGlobalMetadata, 
+                                                   "mapProjection" );
+    
+    if( mapProjection )
+        iSDSIndex = SDnametoindex( hSD, mapProjection );
+
+    if( iSDSIndex != FAIL )
+        iSDS = SDselect( hSD, iSDSIndex );
+       
+    if( iSDS != FAIL )
+    {
+        char        szName[HDF4_SDS_MAXNAMELEN];
+        int32	    iRank, iNumType, nAttrs;
+        int32       aiDimSizes[MAX_VAR_DIMS];
+
+        double adfGCTP[29];
+        int32 aiStart[MAX_NC_DIMS], aiEdges[MAX_NC_DIMS];
+
+        aiStart[0] = 0;
+        aiEdges[0] = 29;
+
+	if( SDgetinfo( iSDS, szName, &iRank, aiDimSizes, &iNumType, 
+                       &nAttrs) == 0 
+            && iNumType == DFNT_FLOAT64 
+            && iRank == 1
+            && aiDimSizes[0] >= 29 
+            && SDreaddata( iSDS, aiStart, NULL, aiEdges, adfGCTP ) == 0 
+            && oSRS.importFromUSGS( (long) adfGCTP[1], (long) adfGCTP[2], 
+                                    adfGCTP+4, 
+                                    (long) adfGCTP[3] ) == OGRERR_NONE )
+        {
+            CPLDebug( "HDF4Image", "GCTP Parms = %g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g",
+                      adfGCTP[0], 
+                      adfGCTP[1], 
+                      adfGCTP[2], 
+                      adfGCTP[3], 
+                      adfGCTP[4], 
+                      adfGCTP[5], 
+                      adfGCTP[6], 
+                      adfGCTP[7], 
+                      adfGCTP[8], 
+                      adfGCTP[9], 
+                      adfGCTP[10], 
+                      adfGCTP[11], 
+                      adfGCTP[12], 
+                      adfGCTP[13], 
+                      adfGCTP[14], 
+                      adfGCTP[15], 
+                      adfGCTP[16], 
+                      adfGCTP[17], 
+                      adfGCTP[18], 
+                      adfGCTP[19], 
+                      adfGCTP[20], 
+                      adfGCTP[21], 
+                      adfGCTP[22], 
+                      adfGCTP[23], 
+                      adfGCTP[24], 
+                      adfGCTP[25], 
+                      adfGCTP[26], 
+                      adfGCTP[27], 
+                      adfGCTP[28] );
+            
+            CPLFree( pszProjection );
+            oSRS.exportToWkt( &pszProjection );
+            bGotGCTPProjection = TRUE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we derived a GCTP based projection, then we need to          */
+/*      transform the lat/long corners into this projection and use     */
+/*      them to establish the geotransform.                             */
+/* -------------------------------------------------------------------- */
+    if( bLLPossible && bGotGCTPProjection )
+    {
+        double dfULX, dfULY, dfLRX, dfLRY;
+        OGRSpatialReference oWGS84;
+
+        oWGS84.SetWellKnownGeogCS( "WGS84" );
+
+        OGRCoordinateTransformation *poCT = 
+            OGRCreateCoordinateTransformation( &oWGS84, &oSRS );
+
+        dfULX = adfXY[0*2+0];
+        dfULY = adfXY[0*2+1];
+        
+        dfLRX = adfXY[3*2+0];
+        dfLRY = adfXY[3*2+1];
+        
+        if( poCT->Transform( 1, &dfULX, &dfULY ) 
+            && poCT->Transform( 1, &dfLRX, &dfLRY ) )
+        {
+            bHasGeoTransform = TRUE;
+            adfGeoTransform[0] = dfULX;
+            adfGeoTransform[1] = (dfLRX - dfULX) / nRasterXSize;
+            adfGeoTransform[2] = 0.0;
+            adfGeoTransform[3] = dfULY;
+            adfGeoTransform[4] = 0.0;
+            adfGeoTransform[5] = (dfLRY - dfULY) / nRasterYSize;
+        }
+
+        delete poCT;
     }
 }
 
