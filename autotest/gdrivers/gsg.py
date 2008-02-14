@@ -65,7 +65,7 @@ def gsg_4():
     
 def gsg_5():
 
-    tst = gdaltest.GDALTest( 'gsag', 'gsg_ascii.grd', 1, 4855 )
+    tst = gdaltest.GDALTest( 'gsag', 'gsg_ascii.grd', 1, 4672 )
 
     return tst.testCreateCopy( check_gt = 1 )
     
@@ -76,7 +76,7 @@ gdaltest_list = [
     gsg_2,
     gsg_3,
     gsg_4,
-    #    gsg_5, FIXME: does not passed
+    gsg_5
 ]
   
 if __name__ == '__main__':
