@@ -191,7 +191,17 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
     dfOffset = 0.0;
 
     nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = 1;
+
+    // Aim for a block of about 100000 pixels.  Chunking up substantially
+    // improves performance in some situations.  For now we only chunk up for
+    // SDS based datasets since other variations haven't been tested. #2208  
+    if( poDS->iDatasetType == HDF4_SDS )
+    {
+        nBlockYSize = 100000 / poDS->GetRasterXSize();
+        nBlockYSize = MAX(1,MIN(nBlockYSize,poDS->GetRasterYSize()));
+    }
+    else
+        nBlockYSize = 1;
 }
 
 /************************************************************************/
@@ -212,6 +222,13 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_None;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Work out some block oriented details.                           */
+/* -------------------------------------------------------------------- */
+    int nYOff = nBlockYOff * nBlockYSize;
+    int nYSize = MIN(nYOff + nBlockYSize, poDS->GetRasterYSize()) - nYOff;
+    CPLAssert( nBlockXOff == 0 );
+    
 /* -------------------------------------------------------------------- */
 /*      HDF files with external data files, such as some landsat        */
 /*      products (eg. data/hdf/L1G) need to be told what directory      */
@@ -258,22 +275,22 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               aiEdges[3] = 1;
               aiStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;
               aiEdges[2] = 1;
-              aiStart[1] = nBlockYOff; aiEdges[1] = nBlockYSize;
+              aiStart[1] = nYOff; aiEdges[1] = nYSize;
               aiStart[0] = nBlockXOff; aiEdges[0] = nBlockXSize;
               break;
             case 3: // 3Dim: volume
               aiStart[poGDS->iBandDim] = nBand - 1;
               aiEdges[poGDS->iBandDim] = 1;
                     
-              aiStart[poGDS->iYDim] = nBlockYOff;
-              aiEdges[poGDS->iYDim] = nBlockYSize;
+              aiStart[poGDS->iYDim] = nYOff;
+              aiEdges[poGDS->iYDim] = nYSize;
                     
               aiStart[poGDS->iXDim] = nBlockXOff;
               aiEdges[poGDS->iXDim] = nBlockXSize;
               break;
             case 2: // 2Dim: rows/cols
-              aiStart[poGDS->iYDim] = nBlockYOff;
-              aiEdges[poGDS->iYDim] = nBlockYSize;
+              aiStart[poGDS->iYDim] = nYOff;
+              aiEdges[poGDS->iYDim] = nYSize;
                     
               aiStart[poGDS->iXDim] = nBlockXOff;
               aiEdges[poGDS->iXDim] = nBlockXSize;
@@ -300,8 +317,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize);
           int     i, j;
             
-          aiStart[poGDS->iYDim] = nBlockYOff;
-          aiEdges[poGDS->iYDim] = nBlockYSize;
+          aiStart[poGDS->iYDim] = nYOff;
+          aiEdges[poGDS->iYDim] = nYSize;
             
           aiStart[poGDS->iXDim] = nBlockXOff;
           aiEdges[poGDS->iXDim] = nBlockXSize;
@@ -347,8 +364,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         % poGDS->aiDimSizes[poGDS->iBandDim];
                     aiEdges[poGDS->iBandDim] = 1;
                                 
-                    aiStart[poGDS->iYDim] = nBlockYOff;
-                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                    aiStart[poGDS->iYDim] = nYOff;
+                    aiEdges[poGDS->iYDim] = nYSize;
                                 
                     aiStart[poGDS->iXDim] = nBlockXOff;
                     aiEdges[poGDS->iXDim] = nBlockXSize;
@@ -357,15 +374,15 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     aiStart[poGDS->iBandDim] = nBand - 1;
                     aiEdges[poGDS->iBandDim] = 1;
                                 
-                    aiStart[poGDS->iYDim] = nBlockYOff;
-                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                    aiStart[poGDS->iYDim] = nYOff;
+                    aiEdges[poGDS->iYDim] = nYSize;
                                 
                     aiStart[poGDS->iXDim] = nBlockXOff;
                     aiEdges[poGDS->iXDim] = nBlockXSize;
                     break;
                   case 2: // 2Dim: rows/cols
-                    aiStart[poGDS->iYDim] = nBlockYOff;
-                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                    aiStart[poGDS->iYDim] = nYOff;
+                    aiEdges[poGDS->iYDim] = nYSize;
                                 
                     aiStart[poGDS->iXDim] = nBlockXOff;
                     aiEdges[poGDS->iXDim] = nBlockXSize;
@@ -395,15 +412,15 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     aiStart[poGDS->iBandDim] = nBand - 1;
                     aiEdges[poGDS->iBandDim] = 1;
                                 
-                    aiStart[poGDS->iYDim] = nBlockYOff;
-                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                    aiStart[poGDS->iYDim] = nYOff;
+                    aiEdges[poGDS->iYDim] = nYSize;
                                 
                     aiStart[poGDS->iXDim] = nBlockXOff;
                     aiEdges[poGDS->iXDim] = nBlockXSize;
                     break;
                   case 2: // 2Dim: rows/cols
-                    aiStart[poGDS->iYDim] = nBlockYOff;
-                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                    aiStart[poGDS->iYDim] = nYOff;
+                    aiEdges[poGDS->iYDim] = nYSize;
                                 
                     aiStart[poGDS->iXDim] = nBlockXOff;
                     aiEdges[poGDS->iXDim] = nBlockXSize;
@@ -445,10 +462,20 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     CPLErr              eErr = CE_None;
 
     CPLAssert( poGDS != NULL
-               && nBlockXOff >= 0
+               && nBlockXOff == 0
                && nBlockYOff >= 0
                && pImage != NULL );
 
+/* -------------------------------------------------------------------- */
+/*      Work out some block oriented details.                           */
+/* -------------------------------------------------------------------- */
+    int nYOff = nBlockYOff * nBlockYSize;
+    int nYSize = MIN(nYOff + nBlockYSize, poDS->GetRasterYSize()) - nYOff;
+    CPLAssert( nBlockXOff == 0 );
+    
+/* -------------------------------------------------------------------- */
+/*      Process based on rank.                                          */
+/* -------------------------------------------------------------------- */
     switch ( poGDS->iRank )
     {
         case 3:
@@ -458,8 +485,8 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 aiStart[poGDS->iBandDim] = nBand - 1;
                 aiEdges[poGDS->iBandDim] = 1;
             
-                aiStart[poGDS->iYDim] = nBlockYOff;
-                aiEdges[poGDS->iYDim] = nBlockYSize;
+                aiStart[poGDS->iYDim] = nYOff;
+                aiEdges[poGDS->iYDim] = nYSize;
             
                 aiStart[poGDS->iXDim] = nBlockXOff;
                 aiEdges[poGDS->iXDim] = nBlockXSize;
@@ -475,8 +502,8 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         case 2:
             {
                 int32 iSDS = SDselect( poGDS->hSD, nBand - 1 );
-                aiStart[poGDS->iYDim] = nBlockYOff;
-                aiEdges[poGDS->iYDim] = nBlockYSize;
+                aiStart[poGDS->iYDim] = nYOff;
+                aiEdges[poGDS->iYDim] = nYSize;
             
                 aiStart[poGDS->iXDim] = nBlockXOff;
                 aiEdges[poGDS->iXDim] = nBlockXSize;
