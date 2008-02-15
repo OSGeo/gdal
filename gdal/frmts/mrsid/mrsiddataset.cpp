@@ -3,10 +3,10 @@
  *
  * Project:  Multi-resolution Seamless Image Database (MrSID)
  * Purpose:  Read/write LizardTech's MrSID file format - Version 4+ SDK.
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2003, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2003, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1254,10 +1254,16 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new MrSIDDataset();
 #ifdef MRSID_J2K
     if ( bIsJP2 )
-        poDS->poImageReader = new LTIDLLReader<J2KImageReader>( oFileSpec, true );
+    {
+        poDS->poImageReader =
+            new LTIDLLReader<J2KImageReader>( oFileSpec, true );
+    }
     else
 #endif
-        poDS->poImageReader = new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
+    {
+        poDS->poImageReader =
+            new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
+    }
 
     if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
     {
@@ -1569,7 +1575,7 @@ static int SetGTParmIds( int nCTProjection,
     }
 }
 
-static char *papszDatumEquiv[] =
+static const char *papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
     "Militar_Geographische_Institute",
@@ -2343,17 +2349,17 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->Model == ModelTypeProjected )
     {
-        char	*pszPCSName = "unnamed";
-        int         bNeedFree = FALSE;
+        char	*pszPCSName;
+        int     bPCSNameSet = FALSE;
 
         if( psDefn->PCS != KvUserDefined )
         {
 
             if( GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL ) )
-                bNeedFree = TRUE;
+                bPCSNameSet = TRUE;
             
-            oSRS.SetNode( "PROJCS", pszPCSName );
-            if( bNeedFree )
+            oSRS.SetNode( "PROJCS", bPCSNameSet ? pszPCSName : "unnamed" );
+            if( bPCSNameSet )
                 GTIFFreeMemory( pszPCSName );
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
