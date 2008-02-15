@@ -252,6 +252,12 @@ void GDALPamRasterBand::PamClear()
             psPam->poDefaultRAT = NULL;
         }
 
+        if (psPam->psSavedHistograms != NULL)
+        {
+            CPLDestroyXMLNode (psPam->psSavedHistograms );
+            psPam->psSavedHistograms = NULL;
+        }
+
         CPLFree( psPam );
         psPam = NULL;
     }
