@@ -79,7 +79,7 @@ CPL_CVSID("$Id$");
 /*  "Panorama" ellipsod codes.                                          */
 /************************************************************************/
 
-#define PAN_ELLIPSOID_NONE          0L
+#define PAN_ELLIPSOID_NONE          -1L
 #define PAN_ELLIPSOID_KRASSOVSKY    1L  // Krassovsky, 1940
 #define PAN_ELLIPSOID_WGS72         2L  // WGS, 1972
 #define PAN_ELLIPSOID_INT1924       3L  // International, 1924 (Hayford, 1909)
@@ -121,7 +121,7 @@ static const long aoEllips[] =
     7030    // WGS, 1984 (GPS)
 };
 
-#define NUMBER_OF_ELLIPSOIDS    (long)(sizeof(aoEllips)/sizeof(aoEllips[0]))
+#define NUMBER_OF_ELLIPSOIDS    (sizeof(aoEllips)/sizeof(aoEllips[0]))
 
 /************************************************************************/
 /*                    PanoramaGetUOMLengthInfo()                        */
@@ -536,7 +536,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
         }
 
         else if ( iEllips > 0
-                  && iEllips < NUMBER_OF_ELLIPSOIDS
+                  && iEllips < (long)NUMBER_OF_ELLIPSOIDS
                   && aoEllips[iEllips] )
         {
             char    *pszName = NULL;
@@ -893,25 +893,28 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     {
         double      dfSemiMajor = GetSemiMajor();
         double      dfInvFlattening = GetInvFlattening();
-        int         i;
+        size_t      i;
 
 #ifdef DEBUG
         CPLDebug( "OSR_Panorama",
                   "Datum \"%s\" unsupported by \"Panorama\" GIS. "
                   "Try to translate ellipsoid definition.", pszDatum );
 #endif
-        
-        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS && aoEllips[i]; i++ )
+       
+        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
         {
-            double  dfSM = 0.0;
-            double  dfIF = 1.0;
-
-            PanoramaGetEllipsoidInfo( aoEllips[i], NULL, &dfSM, &dfIF );
-            if( CPLIsEqual(dfSemiMajor, dfSM)
-                && CPLIsEqual(dfInvFlattening, dfIF) )
+            if ( aoEllips[i] )
             {
-                *piEllips = i;
-                break;
+                double  dfSM = 0.0;
+                double  dfIF = 1.0;
+
+                PanoramaGetEllipsoidInfo( aoEllips[i], NULL, &dfSM, &dfIF );
+                if( CPLIsEqual(dfSemiMajor, dfSM)
+                    && CPLIsEqual(dfInvFlattening, dfIF) )
+                {
+                    *piEllips = i;
+                    break;
+                }
             }
         }
 
@@ -922,7 +925,8 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                       "Ellipsoid \"%s\" unsupported by \"Panorama\" GIS.",
                       pszDatum );
 #endif
-            *piEllips = 0;
+            *piDatum = PAN_DATUM_NONE;
+            *piEllips = PAN_ELLIPSOID_NONE;
         }
     }
 
