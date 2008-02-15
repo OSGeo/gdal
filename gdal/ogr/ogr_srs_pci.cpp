@@ -37,9 +37,9 @@ CPL_CVSID("$Id$");
 typedef struct 
 {
     const char  *pszPCIDatum;
-    int    nEPSGCode;
-    double dfSemiMajor;
-    double dfSemiMinor;
+    int         nEPSGCode;
+    double      dfSemiMajor;
+    double      dfSemiMinor;
 } PCIDatums;
 
 static const PCIDatums aoDatums[] =
@@ -93,37 +93,37 @@ static const PCIDatums aoDatums[] =
 
 static const PCIDatums aoEllips[] =
 {
-    { "E000", 7008, 0, 0 },   // Clarke, 1866 (NAD1927)
-    { "E001", 7034, 0, 0 },   // Clarke, 1880
-    { "E002", 7004, 0, 0 },   // Bessel, 1841
+    { "E000", 7008, 0, 0 },     // Clarke, 1866 (NAD1927)
+    { "E001", 7034, 0, 0 },     // Clarke, 1880
+    { "E002", 7004, 0, 0 },     // Bessel, 1841
     { "E003", 0, 6378157.5,6356772.2 },   // New International, 1967
-    { "E004", 7022, 0, 0 },   // International, 1924 (Hayford, 1909)
-    { "E005", 7043, 0, 0 },   // WGS, 1972
-    { "E006", 7042, 0, 0 },   // Everest, 1830
+    { "E004", 7022, 0, 0 },     // International, 1924 (Hayford, 1909)
+    { "E005", 7043, 0, 0 },     // WGS, 1972
+    { "E006", 7042, 0, 0 },     // Everest, 1830
     { "E007", 0, 6378145.,6356759.769356 }, // WGS, 1966
-    { "E008", 7019, 0, 0 },   // GRS, 1980 (NAD1983)
-    { "E009", 7001, 0, 0 },   // Airy, 1830
-    { "E010", 7018, 0, 0 },   // Modified Everest 
-    { "E011", 7002, 0, 0 },   // Modified Airy
-    { "E012", 7030, 0, 0 },   // WGS, 1984 (GPS)
+    { "E008", 7019, 0, 0 },     // GRS, 1980 (NAD1983)
+    { "E009", 7001, 0, 0 },     // Airy, 1830
+    { "E010", 7018, 0, 0 },     // Modified Everest 
+    { "E011", 7002, 0, 0 },     // Modified Airy
+    { "E012", 7030, 0, 0 },     // WGS, 1984 (GPS)
     { "E013", 0, 6378155.,6356773.3205 }, // Southeast Asia
-    { "E014", 7003, 0, 0 },   // Australian National, 1965
-    { "E015", 7024, 0, 0 },   // Krassovsky, 1940
-    { "E016", 0, 6378270.,6356794.343479 }, // Hough
+    { "E014", 7003, 0, 0 },     // Australian National, 1965
+    { "E015", 7024, 0, 0 },     // Krassovsky, 1940
+    { "E016", 7053, 0, 0 },     // Hough
     { "E017", 0, 6378166.,6356784.283666 }, // Mercury, 1960
     { "E018", 0, 6378150.,6356768.337303 }, //  Modified Mercury, 1968
-    { "E019", 0, 6370997.,6370997.}, // normal sphere
-    { "E333", 7046, 0, 0 },    // Bessel 1841 (Japan By Law)
+    { "E019", 7052, 0, 0},      // normal sphere
+    { "E333", 7046, 0, 0 },     // Bessel 1841 (Japan By Law)
     { "E600", 0, 6378144.0,6356759.0 }, // D-PAF (Orbits)
-    { "E900", 7006, 0, 0 },   // Bessel, 1841 (Namibia)
-    { "E901", 7044, 0, 0 },   // Everest, 1956
-    { "E902", 0, 6377295.664,6356094.667915 }, // Everest, 1969
-    { "E903", 7016, 0, 0 },   // Everest (Sabah & Sarawak)
-    { "E904", 7020, 0, 0 },   // Helmert, 1906
+    { "E900", 7006, 0, 0 },     // Bessel, 1841 (Namibia)
+    { "E901", 7044, 0, 0 },     // Everest, 1956
+    { "E902", 7056, 0, 0 },     // Everest, 1969
+    { "E903", 7016, 0, 0 },     // Everest (Sabah & Sarawak)
+    { "E904", 7020, 0, 0 },     // Helmert, 1906
     { "E905", 0, 6378136.,6356751.301569 }, // SGS 85
     { "E906", 0, 6378165.,6356783.286959 }, // WGS 60
-    { "E907", 7036, 0, 0 },   // South American, 1969
-    { "E910", 7041, 0, 0 },   // ATS77
+    { "E907", 7036, 0, 0 },     // South American, 1969
+    { "E910", 7041, 0, 0 },     // ATS77
     { NULL, 0 }
 };
 
@@ -1091,7 +1091,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
 /*      Translate the linear units.                                     */
 /* -------------------------------------------------------------------- */
-    char        *pszUnits;
+    const char  *pszUnits;
         
     if( EQUALN( szProj, "LONG/LAT", 8 ) )
         pszUnits = "DEGREE";
