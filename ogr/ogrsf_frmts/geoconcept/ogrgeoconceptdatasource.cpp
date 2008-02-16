@@ -107,7 +107,7 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
 /*      Open an existing file.                                          */
 /************************************************************************/
 
-int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate )
+int OGRGeoconceptDataSource::Open( const char* pszName, int bTestOpen, int bUpdate )
 
 {
     VSIStatBuf  stat;
@@ -118,9 +118,12 @@ int OGRGeoconceptDataSource::Open( const char* pszName, int bUpdate )
     if( CPLStat( pszName, &stat ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                 "%s is neither a file or directory, Geoconcept access failed.\n",
-                 pszName );
+        if( !bTestOpen )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s is neither a file or directory, Geoconcept access failed.\n",
+                    pszName );
+        }
 
         return FALSE;
     }
