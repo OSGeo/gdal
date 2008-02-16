@@ -190,7 +190,7 @@ void GDALRegister_COSAR() {
 		pDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
 			"COSAR Annotated Binary Matrix (TerraSAR-X)");
 		pDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-			"COSAR.html");
+			"frmt_cosar.html");
 		pDriver->pfnOpen = COSARDataset::Open;
 		GetGDALDriverManager()->RegisterDriver(pDriver);
 	}
