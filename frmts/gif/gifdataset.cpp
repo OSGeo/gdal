@@ -432,9 +432,9 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+        GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
                            poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".gfw", 
+        || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                               poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
