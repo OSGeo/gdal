@@ -182,25 +182,37 @@ static int anUsgsEsriZones[] =
 };
 
 /************************************************************************/
-/*                           ESRIToUSGSZone()                           */
+/*                           ITTVISToUSGSZone()                         */
 /*                                                                      */
-/*      Convert ESRI style state plane zones to USGS style state        */
-/*      plane zones.                                                    */
+/*      Convert ITTVIS style state plane zones to NOS style state       */
+/*      plane zones.  The ENVI default is to use the new NOS zones,     */
+/*      but the old state plane zones can be used.  Handle this.        */ 
 /************************************************************************/
 
-static int ESRIToUSGSZone( int nESRIZone )
+static int ITTVISToUSGSZone( int nITTVISZone )
 
 {
     int		nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
     int		i;
     
+	// Default is to use the zone as-is, as long as it is in the 
+	// available list
     for( i = 0; i < nPairs; i++ )
     {
-        if( anUsgsEsriZones[i*2+1] == nESRIZone )
+        if( anUsgsEsriZones[i*2] == nITTVISZone )
             return anUsgsEsriZones[i*2];
     }
 
-    return nESRIZone; // perhaps it *is* the USGS zone?
+	// If not found in the new style, see if it is present in the
+	// old style list and convert it.  We don't expect to see this
+	// often, but older files allowed it and may still exist.
+    for( i = 0; i < nPairs; i++ )
+    {
+        if( anUsgsEsriZones[i*2+1] == nITTVISZone )
+            return anUsgsEsriZones[i*2];
+    }
+
+    return nITTVISZone; // perhaps it *is* the USGS zone?
 }
 
 /************************************************************************/
@@ -1070,12 +1082,12 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     else if( EQUALN(papszFields[0],"State Plane (NAD 27)",19)
              && nCount >= 7 )
     {
-        oSRS.SetStatePlane( ESRIToUSGSZone(atoi(papszFields[7])), FALSE );
+        oSRS.SetStatePlane( ITTVISToUSGSZone(atoi(papszFields[7])), FALSE );
     }
     else if( EQUALN(papszFields[0],"State Plane (NAD 83)",19)
              && nCount >= 7 )
     {
-        oSRS.SetStatePlane( ESRIToUSGSZone(atoi(papszFields[7])), TRUE );
+        oSRS.SetStatePlane( ITTVISToUSGSZone(atoi(papszFields[7])), TRUE );
     }
     else if( EQUALN(papszFields[0],"Geographic Lat",14) 
              && nCount >= 8 )
