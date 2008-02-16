@@ -1385,7 +1385,7 @@ The following would create raster TIFF file from VRT datasource described in
 \ref gdal_grid_csv section using the inverse distance to a power method.
 
 \verbatim
-gdal_grid -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiffG -ot Float64 -l dem dem.vrt dem.tiff
+gdal_grid -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
 \endverbatim
 
 \if man
