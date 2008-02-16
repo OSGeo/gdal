@@ -1454,10 +1454,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".jgw", 
+        GDALReadWorldFile( poOpenInfo->pszFilename, NULL, 
                            poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".jpgw", 
-                              poDS->adfGeoTransform )
         || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                               poDS->adfGeoTransform );
 

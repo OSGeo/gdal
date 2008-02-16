@@ -3313,13 +3313,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
         else
         {
             bGeoTransformValid = 
-                GDALReadWorldFile( GetDescription(), "tfw", adfGeoTransform );
+                GDALReadWorldFile( GetDescription(), NULL, adfGeoTransform );
 
-            if( !bGeoTransformValid )
-            {
-                bGeoTransformValid = 
-                    GDALReadWorldFile( GetDescription(), "tifw", adfGeoTransform );
-            }
             if( !bGeoTransformValid )
             {
                 bGeoTransformValid = 

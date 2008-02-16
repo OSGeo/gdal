@@ -1221,17 +1221,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid =
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
+        GDALReadWorldFile( poOpenInfo->pszFilename, NULL,
                            poDS->adfGeoTransform );
 
     if( !poDS->bGeoTransformValid )
         poDS->bGeoTransformValid =
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".bpw",
-                               poDS->adfGeoTransform );
-
-    if( !poDS->bGeoTransformValid )
-        poDS->bGeoTransformValid =
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".bmpw",
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
                                poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
