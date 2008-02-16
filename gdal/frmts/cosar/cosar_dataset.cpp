@@ -105,7 +105,8 @@ CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     nRSLV = CPL_SWAP32(nRSLV);
 #endif
 
-    if (nRSLV - nRSFV < 0 || nRSFV >= this->nRTNB || nRSLV > this->nRTNB) {
+    if (nRSLV < nRSFV || nRSFV == 0 || nRSFV-1 >= nBlockXSize ||
+        nRSLV - nRSFV > nBlockXSize || nRSFV >= this->nRTNB || nRSLV > this->nRTNB) {
         /* throw an error */
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RSLV/RSFV values are not sane... oh dear.\n");	
