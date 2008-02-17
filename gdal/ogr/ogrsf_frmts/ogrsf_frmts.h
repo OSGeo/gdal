@@ -272,6 +272,7 @@ class CPL_DLL OGRSFDriverRegistrar
     char        **papszOpenDSRawName;
     OGRDataSource **papoOpenDS;
     OGRSFDriver **papoOpenDSDriver;
+    GIntBig     *panOpenDSPID;
 
   public:
 
