@@ -62,6 +62,7 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar()
     papszOpenDSRawName = NULL;
     papoOpenDS = NULL;
     papoOpenDSDriver = NULL;
+    panOpenDSPID = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
@@ -275,12 +276,14 @@ OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
     {
         int iDS;
         CPLMutexHolderD( &hDRMutex );
+        GIntBig nThisPID = CPLGetPID();
         
         for( iDS = 0; iDS < nOpenDSCount; iDS++ )
         {
             poDS = papoOpenDS[iDS];
             
-            if( strcmp( pszName, papszOpenDSRawName[iDS]) == 0 )
+            if( strcmp( pszName, papszOpenDSRawName[iDS]) == 0 
+                && nThisPID == panOpenDSPID[iDS] )
             {
                 poDS->Reference();
                 
@@ -298,7 +301,8 @@ OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
         {
             poDS = papoOpenDS[iDS];
             
-            if( strcmp( pszName, poDS->GetName()) == 0 )
+            if( strcmp( pszName, poDS->GetName()) == 0 
+                && nThisPID == panOpenDSPID[iDS] )
             {
                 poDS->Reference();
                 
@@ -335,9 +339,13 @@ OGRSFDriverRegistrar::OpenShared( const char * pszName, int bUpdate,
         papoOpenDSDriver = (OGRSFDriver **) 
             CPLRealloc( papoOpenDSDriver, sizeof(char*) * (nOpenDSCount+1) );
 
+        panOpenDSPID = (GIntBig *) 
+            CPLRealloc( panOpenDSPID, sizeof(GIntBig) * (nOpenDSCount+1) );
+
         papszOpenDSRawName[nOpenDSCount] = CPLStrdup( pszName );
         papoOpenDS[nOpenDSCount] = poDS;
         papoOpenDSDriver[nOpenDSCount] = poTempDriver;
+        panOpenDSPID[nOpenDSCount] = CPLGetPID();
 
         nOpenDSCount++;
     }
@@ -427,6 +435,8 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
                  sizeof(char *) * (nOpenDSCount - iDS - 1) );
         memmove( papoOpenDSDriver + iDS, papoOpenDSDriver + iDS + 1, 
                  sizeof(char *) * (nOpenDSCount - iDS - 1) );
+        memmove( panOpenDSPID + iDS, panOpenDSPID + iDS + 1, 
+                 sizeof(GIntBig) * (nOpenDSCount - iDS - 1) );
 
         nOpenDSCount--;
 
@@ -438,6 +448,8 @@ OGRErr OGRSFDriverRegistrar::ReleaseDataSource( OGRDataSource * poDS )
             papoOpenDS = NULL;
             CPLFree( papoOpenDSDriver );
             papoOpenDSDriver = NULL;
+            CPLFree( panOpenDSPID );
+            panOpenDSPID = NULL;
         }
     }
 
