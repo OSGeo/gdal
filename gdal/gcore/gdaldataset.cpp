@@ -35,6 +35,7 @@ CPL_CVSID("$Id$");
 
 static volatile int nGDALDatasetCount = 0;
 static GDALDataset ** volatile papoGDALDatasetList = NULL;
+static GIntBig * volatile panGDALDatasetPID = NULL;
 static void *hDLMutex = NULL;
 
 /************************************************************************/
@@ -81,6 +82,9 @@ GDALDataset::GDALDataset()
         papoGDALDatasetList = (GDALDataset ** volatile) 
             CPLRealloc( papoGDALDatasetList, sizeof(void *)*nGDALDatasetCount);
         papoGDALDatasetList[nGDALDatasetCount-1] = this;
+        panGDALDatasetPID = (GIntBig * volatile) 
+            CPLRealloc( panGDALDatasetPID, sizeof(GIntBig)*nGDALDatasetCount);
+        panGDALDatasetPID[nGDALDatasetCount-1] = CPLGetPID();
     }
 
 /* -------------------------------------------------------------------- */
@@ -127,11 +131,15 @@ GDALDataset::~GDALDataset()
             {
                 papoGDALDatasetList[i] = 
                     papoGDALDatasetList[nGDALDatasetCount-1];
+                panGDALDatasetPID[i] = 
+                    panGDALDatasetPID[nGDALDatasetCount-1];
                 nGDALDatasetCount--;
                 if( nGDALDatasetCount == 0 )
                 {
                     CPLFree( papoGDALDatasetList );
                     papoGDALDatasetList = NULL;
+                    CPLFree( panGDALDatasetPID );
+                    panGDALDatasetPID = NULL;
                 }
                 break;
             }
@@ -1845,11 +1853,13 @@ GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
     {
         CPLMutexHolderD( &hDLMutex );
         int         i;
+        GIntBig nThisPID = CPLGetPID();
     
         for( i = 0; i < nGDALDatasetCount; i++ )
         {
             if( strcmp(pszFilename,
                        papoGDALDatasetList[i]->GetDescription()) == 0 
+                && nThisPID == panGDALDatasetPID[i]
                 && (eAccess == GA_ReadOnly 
                     || papoGDALDatasetList[i]->GetAccess() == eAccess ) )
                 
@@ -1956,10 +1966,11 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
             pszDriverName = poDS->GetDriver()->GetDescription();
 
         poDS->Reference();
-        VSIFPrintf( fp, "  %d %c %-6s %dx%dx%d %s\n", 
+        VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n", 
                     poDS->Dereference(), 
                     poDS->GetShared() ? 'S' : 'N',
                     pszDriverName, 
+                    (int) panGDALDatasetPID[i],
                     poDS->GetRasterXSize(),
                     poDS->GetRasterYSize(),
                     poDS->GetRasterCount(),
