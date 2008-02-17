@@ -161,9 +161,11 @@ class PALSARJaxaDataset : public GDALPamDataset {
 private:
     GDAL_GCP *pasGCPList;
     int nGCPCount;
-    FILE *fp;
     eFileType nFileType;
 public:
+    PALSARJaxaDataset();
+    ~PALSARJaxaDataset();
+
     int GetGCPCount();
     const GDAL_GCP *GetGCPs();
 
@@ -171,6 +173,21 @@ public:
     static int Identify( GDALOpenInfo *poOpenInfo );
     static void ReadMetadata( PALSARJaxaDataset *poDS, FILE *fp );
 };
+
+PALSARJaxaDataset::PALSARJaxaDataset()
+{
+    pasGCPList = NULL;
+    nGCPCount = 0;
+}
+
+PALSARJaxaDataset::~PALSARJaxaDataset()
+{
+    if( nGCPCount > 0 ) 
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList ); 
+        CPLFree( pasGCPList ); 
+    }
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -189,6 +206,7 @@ class PALSARJaxaRasterBand : public GDALRasterBand {
     int nRecordSize;
 public:
     PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, FILE *fp );
+    ~PALSARJaxaRasterBand();
 
     CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
@@ -259,6 +277,16 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDS,
     /* set the file pointer to the first SAR data record */
     VSIFSeekL( fp, IMAGE_OPT_DESC_LENGTH, SEEK_SET );
 }	
+
+/************************************************************************/
+/*                        ~PALSARJaxaRasterBand()                       */
+/************************************************************************/
+
+PALSARJaxaRasterBand::~PALSARJaxaRasterBand()
+{
+    if (fp)
+        VSIFCloseL(fp);
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -371,6 +399,7 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, FILE *fp ) {
         for (i = 0; i < poDS->nGCPCount; i++) {
             char pszID[2];
             sprintf( pszID, "%d", i + 1);
+            CPLFree(poDS->pasGCPList[i].pszId);
             poDS->pasGCPList[i].pszId = CPLStrdup( pszID );
             poDS->pasGCPList[i].dfGCPZ = 0.0;
         }
@@ -483,14 +512,6 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
         return NULL;
 
     PALSARJaxaDataset *poDS = new PALSARJaxaDataset();
-    /* steal the file pointer */
-
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( poDS->fp == NULL )
-    {
-        delete poDS;
-        return NULL;
-    }
 
     /* Get the suffix of the filename, we'll need this */
     char *pszSuffix = VSIStrdup( (char *)
