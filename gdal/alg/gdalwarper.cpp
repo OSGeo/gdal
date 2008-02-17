@@ -84,15 +84,6 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     GDALWarpOptions *psWOptions;
 
 /* -------------------------------------------------------------------- */
-/*      Default a few parameters.                                       */
-/* -------------------------------------------------------------------- */
-    if( pszSrcWKT == NULL )
-        pszSrcWKT = GDALGetProjectionRef( hSrcDS );
-
-    if( pszDstWKT == NULL )
-        pszDstWKT = pszSrcWKT;
-
-/* -------------------------------------------------------------------- */
 /*      Setup a reprojection based transformer.                         */
 /* -------------------------------------------------------------------- */
     void *hTransformArg;
