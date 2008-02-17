@@ -476,8 +476,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char achHeader[1000];
     
-    VSIFReadL( achHeader, 1, sizeof(achHeader), fp );
-    achHeader[999] = '\0';
+    int nRead = VSIFReadL( achHeader, 1, sizeof(achHeader) - 1, fp );
+    achHeader[nRead] = '\0';
     VSIFSeekL( fp, 0, SEEK_SET );
 
     if( strstr( achHeader, "BANDS:" ) == NULL 
