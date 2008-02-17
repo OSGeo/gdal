@@ -68,9 +68,23 @@ class GFFDataset : public GDALDataset
     long nOffsetExponent;
     long nOffsetMantissa;
 public:
+    GFFDataset();
+    ~GFFDataset();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * poOpenInfo );
 };
+
+GFFDataset::GFFDataset()
+{
+    fp = NULL;
+}
+
+GFFDataset::~GFFDataset()
+{
+    if (fp != NULL)
+        VSIFClose(fp);
+}
 
 /*********************************************************************
  * Declaration and implementation of the GFFRasterBand Class         *
@@ -189,7 +203,18 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
      */
     VSIFSeek(poDS->fp,56,SEEK_SET);
 
-    VSIFRead(&poDS->nBPP,4,1,poDS->fp);
+    /* By looking at the Matlab code, one should write something like the following test */
+    /* but the results don't seem to be the ones really expected */
+    /*if ((poDS->nVersionMajor == 1 && poDS->nVersionMinor > 7) || (poDS->nVersionMajor > 1))
+    {
+        float fBPP;
+        VSIFRead(&fBPP,4,1,poDS->fp);
+        poDS->nBPP = fBPP;
+    }
+    else*/
+    {
+        VSIFRead(&poDS->nBPP,4,1,poDS->fp);
+    }
     VSIFRead(&poDS->nFrameCnt,4,1,poDS->fp);
     VSIFRead(&poDS->nImageType,4,1,poDS->fp);
     VSIFRead(&poDS->nRowMajor,4,1,poDS->fp);
