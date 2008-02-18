@@ -56,6 +56,7 @@ class OGRVRTLayer : public OGRLayer
     OGRLayer            *poSrcLayer;
     int                 bNeedReset;
     int                 bSrcLayerFromSQL;
+    int                 bSrcDSShared;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
