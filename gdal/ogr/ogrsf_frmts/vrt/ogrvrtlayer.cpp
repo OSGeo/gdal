@@ -104,7 +104,10 @@ OGRVRTLayer::~OGRVRTLayer()
         if( bSrcLayerFromSQL && poSrcLayer )
             poSrcDS->ReleaseResultSet( poSrcLayer );
 
-        OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( poSrcDS );
+        if( bSrcDSShared )
+            OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( poSrcDS );
+        else
+            delete poSrcDS;
     }
 
     if( poFeatureDefn )
@@ -170,10 +173,32 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Are we accessing this datasource in shared mode?  We default    */
+/*      to shared for SrcSQL requests, but we also allow the XML to     */
+/*      control our shared setting with an attribute on the             */
+/*      datasource element.                                             */
+/* -------------------------------------------------------------------- */
+    const char *pszSharedSetting = CPLGetXMLValue( psLTree, 
+                                                   "SrcDataSource.shared",
+                                                   NULL );
+    if( pszSharedSetting == NULL )
+    {
+        if( CPLGetXMLValue( psLTree, "SrcSQL", NULL ) == NULL )
+            pszSharedSetting = "OFF";
+        else
+            pszSharedSetting = "ON";
+    }
+
+    bSrcDSShared = CSLTestBoolean( pszSharedSetting );
+
+/* -------------------------------------------------------------------- */
 /*      Try to access the datasource.                                   */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    poSrcDS = poReg->OpenShared( pszSrcDSName, FALSE, NULL );
+    if( bSrcDSShared )
+        poSrcDS = poReg->OpenShared( pszSrcDSName, FALSE, NULL );
+    else
+        poSrcDS = poReg->Open( pszSrcDSName, FALSE, NULL );
 
     if( poSrcDS == NULL ) 
     {
