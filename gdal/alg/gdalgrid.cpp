@@ -388,7 +388,9 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
         ((GDALGridNearestNeighborOptions *)poOptions)->dfNoDataValue;
     // Nearest distance will be initialized with a largest ellipse semi-axis.
     // All nearest points should be located in this range.
-    double      dfNearestR = MAX(dfRadius1, dfRadius2);
+    double      dfNearestR =
+        MAX(((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1,
+            ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2);
     GUInt32 i = 0;
 
     while ( i < nPoints )
@@ -409,7 +411,7 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
         if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
         {
             const double    dfR2 = dfRX * dfRX + dfRY * dfRY;
-            if ( dfR2 < dfNearestR )
+            if ( dfNearestR == 0.0 || dfR2 < dfNearestR )
             {
                 dfNearestR = dfR2;
                 dfNearestValue = pdfZ[i];
