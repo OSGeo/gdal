@@ -45,7 +45,6 @@ class TerraLibDataset : public GDALPamDataset
 
 private:
     FILE           *fp;
-    char           *pszFilename;
     double          adfGeoTransform[6];
     TeDatabase*     m_db;
 

@@ -44,8 +44,8 @@ protected:
     GByte	       *pabyBlockBuf;
 
 public:
-    TerraLibRasterBand( TerraLibDataset *poDS, int nBand );
-    ~TerraLibRasterBand();
+                    TerraLibRasterBand( TerraLibDataset *poDS, int nBand );
+                   ~TerraLibRasterBand();
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );    
