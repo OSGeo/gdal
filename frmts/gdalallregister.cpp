@@ -226,27 +226,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_HDF4Image();
 #endif
 
-#ifdef FRMT_raw
-    GDALRegister_PNM();
-    GDALRegister_DOQ1();
-    GDALRegister_DOQ2();
-    GDALRegister_ENVI();
-    GDALRegister_EHdr();
-    GDALRegister_GenBin();
-    GDALRegister_PAux();
-    GDALRegister_MFF();
-    GDALRegister_HKV();
-    GDALRegister_FujiBAS();
-    GDALRegister_GSC();
-    GDALRegister_FAST();
-    GDALRegister_BT();
-    GDALRegister_LAN();
-    GDALRegister_CPG();
-    GDALRegister_IDA();
-    GDALRegister_NDF();
-    GDALRegister_DIPEx();
-#endif
-
 #ifdef FRMT_pds
     GDALRegister_ISIS3();
     GDALRegister_ISIS2();
@@ -306,7 +285,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SDE();
 #endif
 
-
 #ifdef FRMT_msgn
     GDALRegister_MSGN();
 #endif
@@ -330,18 +308,46 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_tsx
-	GDALRegister_TSX();
+    GDALRegister_TSX();
 #endif
 
 #ifdef FRMT_coasp
     GDALRegister_COASP();
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Put raw formats at the end of the list. These drivers support   */
+/*      various ASCII-header labeled formats, so the driver could be    */
+/*      confused if you have files in some of above formats and such    */
+/*      ASCII-header in the same directory.                             */
+/* -------------------------------------------------------------------- */
+
+#ifdef FRMT_raw
+    GDALRegister_PNM();
+    GDALRegister_DOQ1();
+    GDALRegister_DOQ2();
+    GDALRegister_ENVI();
+    GDALRegister_EHdr();
+    GDALRegister_GenBin();
+    GDALRegister_PAux();
+    GDALRegister_MFF();
+    GDALRegister_HKV();
+    GDALRegister_FujiBAS();
+    GDALRegister_GSC();
+    GDALRegister_FAST();
+    GDALRegister_BT();
+    GDALRegister_LAN();
+    GDALRegister_CPG();
+    GDALRegister_IDA();
+    GDALRegister_NDF();
+    GDALRegister_DIPEx();
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
 /* -------------------------------------------------------------------- */
+
 #ifdef FRMT_rik
     GDALRegister_RIK();
 #endif
