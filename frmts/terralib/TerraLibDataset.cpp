@@ -47,7 +47,10 @@ TerraLibDataset::TerraLibDataset()
 
 TerraLibDataset::~TerraLibDataset()
 {
-    FreeLibrary( (HMODULE) pLibrary );
+    if( m_db )
+    {
+        m_db->close();
+    }
 }
 
 //  ----------------------------------------------------------------------------
@@ -74,92 +77,141 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     //  Parser the arguments
     //  -------------------------------------------------------------------
 
-    char **papszParam = CSLTokenizeString2( poOpenInfo->pszFilename, ":", 
+    char **papszParam = CSLTokenizeString2( poOpenInfo->pszFilename + 9, ",", 
                         CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     int nArgc = CSLCount( papszParam );
 
-    //  -------------------------------------------------------------------
-    //  Load TerraLib.dll
-    //  -------------------------------------------------------------------
-/*
-    void *pLibrary = LoadLibrary( "terralib.dll" );
-
-    if( pLibrary == NULL )
-    {
-        return NULL;
-    }
-*/
     //  ------------------------------------------------------------------------
     //  Check parameters:
     //  ------------------------------------------------------------------------
 
-    if( nArgc < 7 )
+    if( nArgc < 6 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Incorrect number of paramters (%d). \n"
-            "TERRALIB:<rdbms>:<host>:<user>:<password>:<database>:<layer>.\n", nArgc );
+            "TERRALIB:<rdbms>,<host>,<user>,<password>,<database>,<layer>\n", nArgc );
         CPLFree( papszParam[0] );
         return FALSE;
     }
 
-    const char *pszRDBMS     = CPLStrdup( papszParam[1] );
-    const char *pszHost      = CPLStrdup( papszParam[2] );
-    const char *pszUser      = CPLStrdup( papszParam[3] );
-    const char *pszPassword  = CPLStrdup( papszParam[4] );
-    const char *pszDatabase  = CPLStrdup( papszParam[5] );
-    const char *pszLayer     = CPLStrdup( papszParam[6] );
+    const char *pszRDBMS     = CPLStrdup( papszParam[0] );
+    const char *pszHost      = CPLStrdup( papszParam[1] );
+    const char *pszUser      = CPLStrdup( papszParam[2] );
+    const char *pszPassword  = CPLStrdup( papszParam[3] );
+    const char *pszDatabase  = CPLStrdup( papszParam[4] );
+    const char *pszLayer     = CPLStrdup( papszParam[5] );
 
-    if( EQUAL( pszHost, "" ) )
-        pszHost = CPLStrdup( "localhost" );
+    CSLDestroy( papszParam );
 
-//    if( EQUAL( pszUser, "" ) )
-//        pszUser = CPLStrdup( "localuser" );
+    // -------------------------------------------------------------------- 
+    // Create Dataset
+    // -------------------------------------------------------------------- 
 
-    CPLFree( papszParam[0] );
+    TerraLibDataset* poDS = new TerraLibDataset;
+    poDS->eAccess         = poOpenInfo->eAccess;
+    poDS->fp              = NULL;
 
     //  ------------------------------------------------------------------------
-    //  Select RBDMS:
+    //  Open from Access "database" file
     //  ------------------------------------------------------------------------
 
-    TeDatabase*     db;
-
-    if( EQUAL( pszRDBMS, "ADO" ) )
+    if( EQUAL( pszRDBMS, "ADO" ) ||
+        EQUAL( pszRDBMS, "SQLServer" ) ||
+        EQUAL( pszRDBMS, "OracleADO" ) )
     {
-        db = new TeAdo();
+        poDS->m_db = new TeAdo();
+    }
 
-        if ( ! db->connect( pszHost, pszUser, pszPassword, pszDatabase ) )
+    //  --------------------------------------------------------------------
+    //  Open MySQL database
+    //  --------------------------------------------------------------------
+
+    if( EQUAL( pszRDBMS, "MySQL" ) )
+    {
+        if( EQUAL( pszHost, "" ) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                (CPLString) db->errorMessage() );
-            return FALSE;
+            pszHost = CPLStrdup( "localhost" );
         }
+
+        if( EQUAL( pszUser, "" ) )
+        {
+            pszUser = CPLStrdup( "localuser" );
+        }
+
+        poDS->m_db = new TeMySQL();
     }
 
-    return NULL;
-
     //  --------------------------------------------------------------------
-    //  Open the database:
+    //  Open PostgreSQL
     //  --------------------------------------------------------------------
 
-    db = new TeMySQL();
+    if( EQUAL( pszRDBMS, "PostgreSQL" ) || 
+        EQUAL( pszRDBMS, "PostGIS" ) )
+    {
+        poDS->m_db = new TeMySQL();
+    }
 
-    if ( ! db->connect( pszHost, pszUser, pszPassword, pszDatabase ) )
+    //  --------------------------------------------------------------------
+    //  Connect to database server
+    //  --------------------------------------------------------------------
+
+    if ( ! poDS->m_db->connect( pszHost, pszUser, pszPassword, pszDatabase ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
+        return FALSE;
+    }
+
+    //  --------------------------------------------------------------------
+    //  Look for layer
+    //  --------------------------------------------------------------------
+
+    if ( ! poDS->m_db->layerExist( pszLayer ) )
     {
         return NULL;
     }
 
+    TeLayer* layer = new TeLayer( pszLayer );
+
+    if( ! poDS->m_db->loadLayer( layer ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
+        return FALSE;
+    }
+
     //  --------------------------------------------------------------------
-    //  Look for layer:
+    //  Look for raster
     //  --------------------------------------------------------------------
 
-    if ( ! db->layerExist( pszLayer ) )
+    TeRaster* raster      = layer->raster();
+
+    if( ! raster )
     {
-        db->close();
         return NULL;
     }
 
-    return NULL;
+    TeRasterParams params = raster->params();
+
+    // -------------------------------------------------------------------- 
+    // Load raster parameters
+    // -------------------------------------------------------------------- 
+
+    poDS->nRasterXSize = params.nlines_;
+    poDS->nRasterXSize = params.ncols_;
+    poDS->nBands       = params.nBands();
+
+    // -------------------------------------------------------------------- 
+    // Create Band Information
+    // -------------------------------------------------------------------- 
+
+    int i = 0;
+/*
+    for( i = 0; i < poDS->nBands; i++ )
+    {
+        poDS->SetBand( i + 1, new TerraLibRasterBand( poDS, i + 1 ) );
+    }
+*/
+    return (GDALDataset*) poDS;
 }
 
 //  ----------------------------------------------------------------------------
