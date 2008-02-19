@@ -190,7 +190,7 @@ def dted_7():
 
 def dted_8():
     # this will enable DTED_VERIFY_CHECKSUM
-    os.environ['DTED_VERIFY_CHECKSUM'] = 'YES'
+    gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'YES')
 
     ds = gdal.Open( 'data/n43_bad_crc.dt0' )
     band = ds.GetRasterBand(1)
@@ -199,6 +199,8 @@ def dted_8():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     chksum = band.Checksum()
     gdal.PopErrorHandler()
+
+    gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'NO')
 
     # 49187 is the checksum of data is the DTED is read without checking its checksum
     # so we should not get this value
@@ -271,8 +273,7 @@ gdaltest_list = [
     dted_5,
     dted_6,
     dted_7,
-# disabled as it fails on szekerest-vc80-full and szekerest-vc80x64-full
-#    dted_8,
+    dted_8,
     dted_9,
     dted_cleanup
     ]
