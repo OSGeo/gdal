@@ -1,5 +1,5 @@
 
-OBJ	=	mrsiddataset.obj
+OBJ	=	mrsiddataset.obj mrsidstream.obj
 
 EXTRAFLAGS = 	$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
 
