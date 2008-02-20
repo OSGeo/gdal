@@ -126,6 +126,12 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
                                          NULL, pszDstWKT,
                                          TRUE, 1.0, 0 );
 
+    if( psWO->pTransformerArg == NULL )
+    {
+        GDALDestroyWarpOptions( psWO );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Figure out the desired output bounds and resolution.            */
 /* -------------------------------------------------------------------- */
