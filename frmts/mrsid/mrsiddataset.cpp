@@ -97,6 +97,8 @@ CPL_C_END
 #  define MRSID_HAVE_GETWKT
 #endif
 
+#include "mrsidstream.h"
+
 LT_USE_NAMESPACE(LizardTech)
 
 /* -------------------------------------------------------------------- */
@@ -121,6 +123,10 @@ class LTIDLLReader : public T
 public:
    LTIDLLReader(const LTFileSpec& fileSpec,
                 bool useWorldFile = false) : T(fileSpec, useWorldFile) {}
+   LTIDLLReader(LTIOStreamInf &oStream,
+                bool useWorldFile = false) : T(oStream, useWorldFile) {}
+   LTIDLLReader(LTIOStreamInf *poStream,
+                LTIOStreamInf *poWorldFile = NULL) : T(poStream, poWorldFile) {}
    virtual ~LTIDLLReader() {};
 };
 
@@ -160,6 +166,8 @@ public:
 class MrSIDDataset : public GDALPamDataset
 {
     friend class MrSIDRasterBand;
+
+    LTIVSIStream        oStream;
 
     LTIImageReader      *poImageReader;
 
@@ -1248,29 +1256,44 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MrSIDDataset        *poDS;
-    const LTFileSpec    oFileSpec( poOpenInfo->pszFilename );
+    MrSIDDataset    *poDS;
+    LT_STATUS       eStat;
 
     poDS = new MrSIDDataset();
+    eStat = poDS->oStream.initialize( poOpenInfo->pszFilename, "rb" );
+    if ( !LT_SUCCESS(eStat) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDStream::initialize(): "
+                  "failed to open file \"%s\".\n%s",
+                  poOpenInfo->pszFilename, getLastStatusString( eStat ) );
+        delete poDS;
+        return NULL;
+    }
+
+    poDS->oStream.open();
+
 #ifdef MRSID_J2K
     if ( bIsJP2 )
     {
         poDS->poImageReader =
-            new LTIDLLReader<J2KImageReader>( oFileSpec, true );
+            new LTIDLLReader<J2KImageReader>( poDS->oStream, true );
     }
     else
 #endif
     {
         poDS->poImageReader =
-            new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
+            new LTIDLLReader<MrSIDImageReader>( &poDS->oStream, NULL );
     }
 
-    if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
+    eStat = poDS->poImageReader->initialize();
+    if ( !LT_SUCCESS(eStat) )
     {
-        delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "MrSIDDataset::Open(): Failed to open file %s",
-                  poOpenInfo->pszFilename );
+                  "LTIImageReader::initialize(): "
+                  "failed to initialize reader from the stream \"%s\".\n%s",
+                  poOpenInfo->pszFilename, getLastStatusString( eStat ) );
+        delete poDS;
         return NULL;
     }
 

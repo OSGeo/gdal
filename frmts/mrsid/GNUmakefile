@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	mrsiddataset.o
+OBJ	=	mrsiddataset.o mrsidstream.o
 
 ifeq ($(GEOTIFF_SETTING),internal)
 GEOTIFF_INCLUDE	=	-I../../frmts/gtiff/libgeotiff
