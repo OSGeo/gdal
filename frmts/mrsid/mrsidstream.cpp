@@ -40,7 +40,7 @@ LT_USE_NAMESPACE(LizardTech)
 /* ==================================================================== */
 /************************************************************************/
 
-LTIVSIStream::LTIVSIStream() : poFileHandle(NULL)
+LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0)
 {
 }
 
@@ -51,7 +51,10 @@ LTIVSIStream::LTIVSIStream() : poFileHandle(NULL)
 LTIVSIStream::~LTIVSIStream()
 {
     if ( poFileHandle )
+    {
         VSIFCloseL( (FILE *)poFileHandle );
+        nError = errno;
+    }
 }
 
 /************************************************************************/
@@ -62,6 +65,8 @@ LT_STATUS LTIVSIStream::initialize( const char *pszFilename,
                                     const char *pszAccess )
 {
     poFileHandle = (VSIVirtualHandle *)VSIFOpenL( pszFilename, pszAccess );
+    nError = errno;
+
     return poFileHandle ? LT_STS_Success : LT_STS_Failure;
 }
 
@@ -72,6 +77,7 @@ LT_STATUS LTIVSIStream::initialize( const char *pszFilename,
 LT_STATUS LTIVSIStream::initialize( VSIVirtualHandle *poFileHandle )
 {
     this->poFileHandle = poFileHandle;
+
     return poFileHandle ? LT_STS_Success : LT_STS_Failure;
 }
 
@@ -81,7 +87,10 @@ LT_STATUS LTIVSIStream::initialize( VSIVirtualHandle *poFileHandle )
 
 bool LTIVSIStream::isEOF()
 {
-    return 0 != poFileHandle->Eof();
+    bool    bIsEOF = (0 != poFileHandle->Eof());
+    nError = errno;
+
+    return bIsEOF;
 }
 
 /************************************************************************/
@@ -111,7 +120,10 @@ LT_STATUS LTIVSIStream::close()
     if ( poFileHandle->Seek( 0, SEEK_SET ) == 0 )
         return LT_STS_Success;
     else
+    {
+        nError = errno;
         return LT_STS_Failure;
+    }
 }
 
 /************************************************************************/
@@ -120,7 +132,11 @@ LT_STATUS LTIVSIStream::close()
 
 lt_uint32 LTIVSIStream::read( lt_uint8 *pDest, lt_uint32 nBytes )
 {
-    return (lt_uint32)poFileHandle->Read( pDest, 1, nBytes );
+    lt_uint32   nBytesRead =
+        (lt_uint32)poFileHandle->Read( pDest, 1, nBytes );
+    nError = errno;
+
+    return nBytesRead;
 }
 
 /************************************************************************/
@@ -129,7 +145,11 @@ lt_uint32 LTIVSIStream::read( lt_uint8 *pDest, lt_uint32 nBytes )
 
 lt_uint32 LTIVSIStream::write( const lt_uint8 *pSrc, lt_uint32 nBytes )
 {
-    return (lt_uint32)poFileHandle->Write( pSrc, 1, nBytes );
+    lt_uint32   nBytesWritten =
+        (lt_uint32)poFileHandle->Write( pSrc, 1, nBytes );
+    nError = errno;
+
+    return nBytesWritten;
 }
 
 /************************************************************************/
@@ -160,7 +180,10 @@ LT_STATUS LTIVSIStream::seek( lt_int64 nOffset, LTIOSeekDir nOrigin )
     if ( poFileHandle->Seek( (vsi_l_offset)nOffset, nWhence ) == 0 )
         return LT_STS_Success;
     else
+    {
+        nError = errno;
         return LT_STS_Failure;
+    }
 }
 
 /************************************************************************/
@@ -169,7 +192,10 @@ LT_STATUS LTIVSIStream::seek( lt_int64 nOffset, LTIOSeekDir nOrigin )
 
 lt_int64 LTIVSIStream::tell()
 {
-    return (lt_int64)poFileHandle->Tell();
+    lt_int64    nPos = (lt_int64)poFileHandle->Tell();
+    nError = errno;
+
+    return nPos;
 }
 
 /************************************************************************/
@@ -190,7 +216,7 @@ LTIOStreamInf* LTIVSIStream::duplicate()
 
 LT_STATUS LTIVSIStream::getLastError() const
 {
-    return LT_STS_Success;
+    return nError;
 }
 
 /************************************************************************/
