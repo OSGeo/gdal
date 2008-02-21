@@ -61,7 +61,7 @@ static const OGRStyleParamId asStyleBrush[] =
     {OGRSTBrushFColor,"fc",FALSE,OGRSTypeString},
     {OGRSTBrushBColor,"bc",FALSE,OGRSTypeString},
     {OGRSTBrushId,"id",FALSE,OGRSTypeString},
-    {OGRSTBrushAngle,"a",TRUE,OGRSTypeDouble},
+    {OGRSTBrushAngle,"a",FALSE,OGRSTypeDouble},
     {OGRSTBrushSize,"s",TRUE,OGRSTypeDouble},
     {OGRSTBrushDx,"dx",TRUE,OGRSTypeDouble},
     {OGRSTBrushDy,"dy",TRUE,OGRSTypeDouble},
