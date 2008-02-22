@@ -100,7 +100,7 @@ private:
 
 struct ILWISInfo
 {
-    ILWISInfo() : vr(0, 0), bUseValueRange(false) {}
+    ILWISInfo() : bUseValueRange(false), vr(0, 0) {}
     bool bUseValueRange;
     ValueRange vr;
     ilwisStoreType stStoreType;
