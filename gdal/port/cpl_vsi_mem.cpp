@@ -107,6 +107,7 @@ class VSIMemHandle : public VSIVirtualHandle
   public:
     VSIMemFile    *poFile;
     vsi_l_offset  nOffset;
+    int           bUpdate;
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -254,8 +255,22 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
     
     if( this->nOffset > poFile->nLength )
     {
-        if( !poFile->SetLength( this->nOffset ) )
+        if( !bUpdate ) // Read-only files cannot be extended by seek.
+        {
+            CPLDebug( "VSIMemHandle", 
+                      "Attempt to extend read-only file '%s' to length %d from %d, .", 
+                      poFile->osFilename.c_str(), 
+                      (int) this->nOffset, (int) poFile->nLength );
+
+            this->nOffset = poFile->nLength;
+            errno = EACCES;
             return -1;
+        }
+        else // Writeable files are zero-extended by seek past end.
+        {
+            if( !poFile->SetLength( this->nOffset ) )
+                return -1;
+        }
     }
 
     return 0;
@@ -300,6 +315,12 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
 
 {
+    if( !bUpdate )
+    {
+        errno = EACCES;
+        return 0;
+    }
+
     // FIXME: Integer overflow check should be placed here:
     size_t nBytesToWrite = nSize * nCount; 
 
@@ -415,6 +436,11 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 
     poHandle->poFile = poFile;
     poHandle->nOffset = 0;
+    if( strstr(pszAccess,"w") || strstr(pszAccess,"+") 
+        || strstr(pszAccess,"a") )
+        poHandle->bUpdate = TRUE;
+    else
+        poHandle->bUpdate = FALSE;
 
     poFile->nRefCount++;
 
