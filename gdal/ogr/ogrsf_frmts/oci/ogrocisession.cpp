@@ -156,24 +156,32 @@ int OGROCISession::EstablishSession( const char *pszUserid,
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_GEOMETRY type object.                  */
 /* -------------------------------------------------------------------- */
-    hGeometryTDO = PinTDO( SDO_GEOMETRY );
-    if( hGeometryTDO == NULL )
-        return FALSE;
+    /* If we have no MDSYS.SDO_GEOMETRY then we consider we are
+        working along with the VRT driver and access non spatial tables.
+        See #2202 for more details (Tamas Szekeres)*/
+    if (OCIDescribeAny(hSvcCtx, hError, 
+                       (text *) SDO_GEOMETRY, (ub4) strlen(SDO_GEOMETRY), 
+                       OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE, 
+                       hDescribe ) != OCI_ERROR)
+    {
+        hGeometryTDO = PinTDO( SDO_GEOMETRY );
+        if( hGeometryTDO == NULL )
+            return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ORDINATE_ARRAY type object.            */
 /* -------------------------------------------------------------------- */
-    hOrdinatesTDO = PinTDO( "MDSYS.SDO_ORDINATE_ARRAY" );
-    if( hOrdinatesTDO == NULL )
-        return FALSE;
+        hOrdinatesTDO = PinTDO( "MDSYS.SDO_ORDINATE_ARRAY" );
+        if( hOrdinatesTDO == NULL )
+            return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ELEM_INFO_ARRAY type object.           */
 /* -------------------------------------------------------------------- */
-    hElemInfoTDO = PinTDO( "MDSYS.SDO_ELEM_INFO_ARRAY" );
-    if( hElemInfoTDO == NULL )
-        return FALSE;
-
+        hElemInfoTDO = PinTDO( "MDSYS.SDO_ELEM_INFO_ARRAY" );
+        if( hElemInfoTDO == NULL )
+            return FALSE;
+    }
 /* -------------------------------------------------------------------- */
 /*      Record information about the session.                           */
 /* -------------------------------------------------------------------- */
