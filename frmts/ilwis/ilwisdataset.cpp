@@ -1538,6 +1538,8 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         for( iCol = 0; iCol < nBlockXSize; iCol++ )
           ((double *) pImage)[iCol] = ((double *) pData)[iCol];
         break;
+      default:
+        CPLAssert(0);
     }
 
     // Officially we should also translate "nodata" values, but at this point
@@ -1571,6 +1573,8 @@ void ILWISRasterBand::SetValue(void *pImage, int i, double rV) {
     case GDT_Float64:
       ((double *) pImage)[i] = rV;
       break;
+    default:
+      CPLAssert(0);
     }
 }
 
@@ -1598,6 +1602,8 @@ double ILWISRasterBand::GetValue(void *pImage, int i) {
     case GDT_Float64:
       rV = ((double *) pImage)[i];
       break;
+    default:
+      CPLAssert(0);
     }
     return rV;
 }
