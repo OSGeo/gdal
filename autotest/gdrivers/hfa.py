@@ -660,6 +660,16 @@ def hfa_rotated_write():
 
     return 'success'
 
+
+###############################################################################
+# Test creating an in memory copy.
+
+def hfa_vsimem():
+
+    tst = gdaltest.GDALTest( 'HFA', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
 ###############################################################################
 #
 
@@ -683,7 +693,8 @@ gdaltest_list = [
     hfa_nodata_write,
     hfa_nodata_read,
     hfa_rotated_read,
-    hfa_rotated_write
+    hfa_rotated_write,
+    hfa_vsimem
     ]
 
 if __name__ == '__main__':

@@ -195,6 +195,15 @@ def png_8():
     return 'success'
 
 
+###############################################################################
+# Test creating an in memory copy.
+
+def png_9():
+
+    tst = gdaltest.GDALTest( 'PNG', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
 
 gdaltest_list = [
     png_1,
@@ -204,7 +213,8 @@ gdaltest_list = [
     png_5,
     png_6,
     png_7,
-    png_8 ]
+    png_8,
+    png_9 ]
 
 if __name__ == '__main__':
 

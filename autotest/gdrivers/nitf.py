@@ -313,6 +313,15 @@ def nitf_14():
     return 'success'
 
 ###############################################################################
+# Test creating an in memory copy.
+
+def nitf_15():
+
+    tst = gdaltest.GDALTest( 'NITF', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -348,6 +357,7 @@ gdaltest_list = [
     nitf_12,
     nitf_13,
     nitf_14,
+    nitf_15,
     nitf_cleanup ]
 
 if __name__ == '__main__':

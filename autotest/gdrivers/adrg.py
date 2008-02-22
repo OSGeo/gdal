@@ -68,6 +68,29 @@ def adrg_2():
     
 
 ###############################################################################
+# Test creating an in memory copy.
+
+def adrg_3():
+
+    drv = gdal.GetDriverByName( 'ADRG' )
+    srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
+    
+    dstds = drv.CreateCopy( '/vsimem/ABCDEF01.GEN', srcds )
+    
+    chksum = dstds.GetRasterBand(1).Checksum()
+
+    if chksum != 62833:
+        gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    dstds = None
+    
+    drv.Delete( '/vsimem/ABCDEF01.GEN' )
+
+    return 'success'
+    
+
+###############################################################################
 # Cleanup procedure
 
 def adrg_cleanup():
@@ -84,6 +107,7 @@ def adrg_cleanup():
 gdaltest_list = [
     adrg_1,
     adrg_2,
+    adrg_3,
     adrg_cleanup ]
 
 if __name__ == '__main__':

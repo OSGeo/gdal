@@ -248,6 +248,14 @@ def dted_9():
     return 'success'
 
 ###############################################################################
+# Test creating an in memory copy.
+
+def dted_10():
+
+    tst = gdaltest.GDALTest( 'dted', 'n43.dt0', 1, 49187)
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
 # Cleanup.
 
 def dted_cleanup():
@@ -275,6 +283,7 @@ gdaltest_list = [
     dted_7,
     dted_8,
     dted_9,
+    dted_10,
     dted_cleanup
     ]
   
