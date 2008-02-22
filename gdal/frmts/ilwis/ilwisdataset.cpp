@@ -1288,18 +1288,11 @@ ILWISRasterBand::~ILWISRasterBand()
 /************************************************************************/
 void ILWISRasterBand::ILWISOpen( string pszFileName )
 {
+    ILWISDataset* dataset = (ILWISDataset*) poDS;
     string pszDataFile;
     pszDataFile = string(CPLResetExtension( pszFileName.c_str(), "mp#" ));
-    //both for reading and writing, the file must exist
 
-#ifdef WIN32
-    if (_access(pszDataFile.c_str(), 2) == 0)
-#else
-    if (access(pszDataFile.c_str(), 2) == 0)
-#endif
-        fpRaw = VSIFOpenL( pszDataFile.c_str(), "rb+");
-    else
-        fpRaw = VSIFOpenL( pszDataFile.c_str(), "rb");
+    fpRaw = VSIFOpenL( pszDataFile.c_str(), (dataset->eAccess == GA_Update) ? "rb+" : "rb");
 }
 
 /************************************************************************/
@@ -2034,6 +2027,7 @@ void GDALRegister_ILWIS()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mpr/mpl" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 Int32 Float64" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = ILWISDataset::Open;
         poDriver->pfnCreate = ILWISDataset::Create;
