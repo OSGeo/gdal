@@ -192,14 +192,39 @@ def jpeg_6():
     ds = None
 
     return 'success'
-    
+
+
+###############################################################################
+# Test creating an in memory copy.
+
+def jpeg_7():
+
+    ds = gdal.Open('data/byte.tif')
+
+    options = ['PROGRESSIVE=YES',
+               'QUALITY=50']
+    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', ds,
+                                                  options = options )
+
+    if ds.GetRasterBand(1).Checksum() != 4794:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(1).Checksum()
+        return 'fail'
+
+    ds = None
+    gdal.GetDriverByName('JPEG').Delete( '/vsimem/byte.jpg' )
+
+    return 'success'
+
+
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
     jpeg_3,
     jpeg_4,
     jpeg_5,
-    jpeg_6 ]
+    jpeg_6,
+    jpeg_7 ]
 
 if __name__ == '__main__':
 

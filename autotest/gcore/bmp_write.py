@@ -34,10 +34,22 @@ sys.path.append( '../pymod' )
 import gdaltest
 import gdal
 
+
+
+###############################################################################
+# Test creating an in memory copy.
+
+def bmp_vsimem():
+
+    tst = gdaltest.GDALTest( 'BMP', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = []
+gdaltest_list = [ bmp_vsimem ]
 
 init_list = [ \
     ('byte.tif', 1, 4672, None),

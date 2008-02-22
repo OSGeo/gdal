@@ -395,6 +395,16 @@ def tiff_write_13():
                            
     return ut.testCreateCopy( skip_preclose_test=1 )
 
+###############################################################################
+# Test creating an in memory copy.
+
+def tiff_write_14():
+
+    tst = gdaltest.GDALTest( 'GTiff', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -414,6 +424,7 @@ gdaltest_list = [
     tiff_write_11,
     tiff_write_12,
     tiff_write_13,
+    tiff_write_14,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':

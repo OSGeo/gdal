@@ -158,6 +158,16 @@ def aaigrid_7():
 
     return tst.testCreateCopy( check_gt = 1 )
 
+
+###############################################################################
+# Test creating an in memory copy.
+
+def aaigrid_8():
+
+    tst = gdaltest.GDALTest( 'AAIGRID', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1 )
+
 ###############################################################################
 
 gdaltest_list = [
@@ -167,7 +177,8 @@ gdaltest_list = [
     aaigrid_4,
     aaigrid_5,
     aaigrid_6,
-    aaigrid_7 ]
+    aaigrid_7,
+    aaigrid_8 ]
   
 
 
