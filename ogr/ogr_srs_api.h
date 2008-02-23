@@ -96,8 +96,6 @@ typedef enum {
 #define SRS_PT_ECKERT_VI        "Eckert_VI"
 #define SRS_PT_EQUIDISTANT_CONIC                                        \
                                 "Equidistant_Conic"
-#define SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE                            \
-                                "Equidistant_Cylindrical_Sphere"
 #define SRS_PT_EQUIRECTANGULAR  "Equirectangular"
 #define SRS_PT_GALL_STEREOGRAPHIC                                       \
                                 "Gall_Stereographic"
@@ -391,13 +389,6 @@ OGRErr CPL_DLL OSRSetEC( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStd
                        double dfCenterLat, double dfCenterLong,
                        double dfFalseEasting, double dfFalseNorthing );
 
-/** Equidistant Cylindrical Sphere */
-OGRErr CPL_DLL OSRSetEquidistantCylindricalSphere( OGRSpatialReferenceH hSRS,
-                                  double dfCenterLat, double dfCenterLong,
-                                  double dfScale,
-                                  double dfFalseEasting,
-                                  double dfFalseNorthing );
-
 /** Eckert I-VI */
 OGRErr CPL_DLL OSRSetEckert( OGRSpatialReferenceH hSRS,  int nVariation,
                              double dfCentralMeridian,
@@ -416,6 +407,13 @@ OGRErr CPL_DLL OSRSetEquirectangular(OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong,
                               double dfFalseEasting, double dfFalseNorthing );
 
+/** Equirectangular generalized form */
+OGRErr CPL_DLL OSRSetEquirectangular2( OGRSpatialReferenceH hSRS,
+                              double dfCenterLat, double dfCenterLong,
+                              double dfPseudoStdParallel1,
+                              double dfFalseEasting,
+                              double dfFalseNorthing );
+
 /** Gall Stereograpic */
 OGRErr CPL_DLL OSRSetGS( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                        double dfFalseEasting, double dfFalseNorthing );
@@ -429,7 +427,7 @@ OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS,
                            double dfCentralMeridian, double dfSatelliteHeight,
                            double dfFalseEasting, double dfFalseNorthing );
 
-/** GaussLabordeReunion */    
+/** Gauss Laborde Reunion */    
 OGRErr CPL_DLL OSRSetGaussLabordeReunion( OGRSpatialReferenceH hSRS,
                                   double dfCenterLat, double dfCenterLong,
                                   double dfScale,

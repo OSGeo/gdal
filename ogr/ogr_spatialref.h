@@ -306,14 +306,13 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetEckertVI( double dfCentralMeridian,
                              double dfFalseEasting, double dfFalseNorthing );
 
-    /** Equidistant Cylindrical Sphere */
-    OGRErr      SetEquidistantCylindricalSphere(double dfCenterLat, double dfCenterLong,
-                            double dfScale,
-                            double dfFalseEasting, double dfFalseNorthing );
-
     /** Equirectangular */
     OGRErr      SetEquirectangular(double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
+    /** Equirectangular generalized form : */
+    OGRErr      SetEquirectangular2( double dfCenterLat, double dfCenterLong,
+                                     double dfPseudoStdParallel1,
+                                     double dfFalseEasting, double dfFalseNorthing );
 
     /** Geostationary Satellite */
     OGRErr      SetGEOS( double dfCentralMeridian, double dfSatelliteHeight, 
