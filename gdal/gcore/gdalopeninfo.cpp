@@ -126,6 +126,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
                 CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" )) )
         {
             /* skip reading the directory */
+            papszSiblingFiles = NULL;
         }
         else
         {
