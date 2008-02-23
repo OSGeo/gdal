@@ -227,12 +227,12 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     
     if (VSIFSeekL(poDS->fdIMG, offset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot seek to offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
         return CE_Failure;
     }
     if (VSIFReadL(pImage, 1, 128 * 128, poDS->fdIMG) != 128 * 128)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read data at offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %d", offset);
         return CE_Failure;
     }
     
@@ -283,12 +283,12 @@ CPLErr ADRGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if (VSIFSeekL(poDS->fdIMG, offset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot seek to offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
         return CE_Failure;
     }
     if (VSIFWriteL(pImage, 1, 128 * 128, poDS->fdIMG) != 128 * 128)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read data at offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %d", offset);
         return CE_Failure;
     }
 
@@ -1461,8 +1461,8 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     FILE* fdGEN = VSIFOpenL(pszFilename, "wb");
     if (fdGEN == NULL)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "Cannot create GEN file.\n");
+        CPLError( CE_Failure, CPLE_FileIO,
+                "Cannot create GEN file : %s.\n", pszFilename);
         return NULL;
     }
     
@@ -1472,8 +1472,8 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     if (fdTHF == NULL)
     {
         VSIFCloseL(fdGEN);
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "Cannot create THF file.\n");
+        CPLError( CE_Failure, CPLE_FileIO,
+                "Cannot create THF file : %s.\n", osTransh01THF.c_str());
         return NULL;
     }
     
@@ -1483,8 +1483,8 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     {
         VSIFCloseL(fdGEN);
         VSIFCloseL(fdTHF);
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "Cannot create image file.\n");
+        CPLError( CE_Failure, CPLE_FileIO,
+                "Cannot create image file : %s.\n", osImgFilename.c_str());
         return NULL;
     }
     
