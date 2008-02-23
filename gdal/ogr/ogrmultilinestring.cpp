@@ -234,14 +234,8 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszLines;
-    int         iLine, nCumulativeLength = 0;
+    int         iLine, nCumulativeLength = 0, nValidLineStrings=0;
     OGRErr      eErr;
-
-    if( getNumGeometries() == 0 )
-    {
-        *ppszDstText = CPLStrdup("MULTILINESTRING EMPTY");
-        return OGRERR_NONE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
@@ -254,10 +248,28 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
         if( eErr != OGRERR_NONE )
             return eErr;
 
-        CPLAssert( EQUALN(papszLines[iLine],"LINESTRING (", 12) );
+        if( !EQUALN(papszLines[iLine],"LINESTRING (", 12) )
+        {
+            CPLDebug( "OGR", "OGRMultiLineString::exportToWkt() - skipping %s.",
+                      papszLines[iLine] );
+            CPLFree( papszLines[iLine] );
+            papszLines[iLine] = NULL;
+            continue;
+        }
+
         nCumulativeLength += strlen(papszLines[iLine] + 11);
+        nValidLineStrings++;
     }
     
+/* -------------------------------------------------------------------- */
+/*      Return MULTILINESTRING EMPTY if we get no valid line string.    */
+/* -------------------------------------------------------------------- */
+    if( nValidLineStrings == 0 )
+    {
+        *ppszDstText = CPLStrdup("MULTILINESTRING EMPTY");
+        return OGRERR_NONE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
@@ -276,6 +288,9 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 
     for( iLine = 0; iLine < getNumGeometries(); iLine++ )
     {                                                           
+        if( papszLines[iLine] == NULL )
+            continue;
+
         if( iLine > 0 )
             strcat( pszAppendPoint, "," );
         
