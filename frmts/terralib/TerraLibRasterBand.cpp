@@ -27,14 +27,52 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "TerraLibDataset.h"
 #include "TerraLibRasterBand.h"
 
 //  ----------------------------------------------------------------------------
 //                                                          TerraLibRasterBand()
 //  ----------------------------------------------------------------------------
 
-TerraLibRasterBand::TerraLibRasterBand( TerraLibDataset *poDS, int nBand )
+TerraLibRasterBand::TerraLibRasterBand( TerraLibDataset *poDS )
 {
+    this->poDS          = poDS;
+    this->nBand         = nBand != 0 ? nBand : poDS->nBands;
+    this->pabyBlockBuf  = NULL;
+    this->nRasterXSize  = poDS->m_params.ncols_;
+    this->nRasterYSize  = poDS->m_params.nlines_;
+    this->nBlockXSize   = poDS->m_params.blockWidth_;
+    this->nBlockYSize   = poDS->m_params.blockHeight_;
+
+    switch ( poDS->m_params.dataType_[0] )
+    {
+    case (TeUNSIGNEDCHAR):
+    case (TeCHAR) :
+        this->eDataType     = GDT_Byte;
+        break;
+    case (TeUNSIGNEDSHORT):
+        this->eDataType     = GDT_UInt16;
+        break;
+    case (TeSHORT):
+        this->eDataType     = GDT_Int16;
+        break;
+    case (TeUNSIGNEDLONG):
+        this->eDataType     = GDT_UInt32;
+        break;
+    case (TeLONG):
+        this->eDataType     = GDT_Int32;
+        break;
+    case (TeFLOAT):
+        this->eDataType     = GDT_Float32;
+        break;
+    case (TeDOUBLE):
+        this->eDataType     = GDT_Float64;
+        break;
+    default:
+        break;
+    }
+
+
 }
 
 //  ----------------------------------------------------------------------------
