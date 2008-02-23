@@ -266,6 +266,11 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
     if( nValidLineStrings == 0 )
     {
+        for( iLine = 0; iLine < getNumGeometries(); iLine++ )
+        {
+            CPLFree( papszLines[iLine] );
+        }
+        CPLFree( papszLines );
         *ppszDstText = CPLStrdup("MULTILINESTRING EMPTY");
         return OGRERR_NONE;
     }
