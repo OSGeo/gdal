@@ -39,7 +39,7 @@
 KML::KML()
 {
 	nDepth_ = 0;
-	bValid_ = false;
+	validity = KML_VALIDITY_UNKNOWN;
 	pKMLFile_ = NULL;
 	sError_ = "";
 	poTrunk_ = NULL;
@@ -50,7 +50,7 @@ KML::KML()
 KML::~KML()
 {
     if( NULL != pKMLFile_ )
-        VSIFClose(pKMLFile_);
+        VSIFCloseL(pKMLFile_);
 
     delete poTrunk_;
 }
@@ -58,9 +58,9 @@ KML::~KML()
 bool KML::open(const char * pszFilename)
 {
     if( NULL != pKMLFile_ )
-        VSIFClose( pKMLFile_ );
+        VSIFCloseL( pKMLFile_ );
 
-    pKMLFile_ = VSIFOpen( pszFilename, "r" );
+    pKMLFile_ = VSIFOpenL( pszFilename, "r" );
     if( NULL == pKMLFile_ )
     {
         return FALSE;
@@ -74,12 +74,12 @@ void KML::parse()
     std::size_t nDone = 0;
     std::size_t nLen = 0;
     char aBuf[BUFSIZ] = { 0 };
-	
-	if( NULL == pKMLFile_ )
+
+    if( NULL == pKMLFile_ )
     {
-		sError_ = "No file given";
-		return;
-	}
+        sError_ = "No file given";
+        return;
+    }
 
     if(poTrunk_ != NULL) {
         delete poTrunk_;
@@ -91,16 +91,16 @@ void KML::parse()
         delete poCurrent_;
         poCurrent_ = NULL;
     }
-	
-	XML_Parser oParser = XML_ParserCreate(NULL);
-	XML_SetUserData(oParser, this);
-	XML_SetElementHandler(oParser, startElement, endElement);
-	XML_SetCharacterDataHandler(oParser, dataHandler);
+
+    XML_Parser oParser = XML_ParserCreate(NULL);
+    XML_SetUserData(oParser, this);
+    XML_SetElementHandler(oParser, startElement, endElement);
+    XML_SetCharacterDataHandler(oParser, dataHandler);
 
     do
     {
-        nLen = (int)VSIFRead( aBuf, 1, sizeof(aBuf), pKMLFile_ );
-        nDone = nLen < sizeof(aBuf);
+        nLen = (int)VSIFReadL( aBuf, 1, sizeof(aBuf), pKMLFile_ );
+        nDone = VSIFEofL(pKMLFile_);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -109,13 +109,13 @@ void KML::parse()
                         XML_GetCurrentLineNumber(oParser),
                         XML_GetCurrentColumnNumber(oParser));
             XML_ParserFree(oParser);
-            VSIRewind(pKMLFile_);
+            VSIRewindL(pKMLFile_);
             return;
         }
-    } while (!nDone);
+    } while (!nDone && nLen > 0 );
 
-	XML_ParserFree(oParser);
-    VSIRewind(pKMLFile_);
+    XML_ParserFree(oParser);
+    VSIRewindL(pKMLFile_);
     poCurrent_ = NULL;
 }
 
@@ -130,27 +130,28 @@ void KML::checkValidity()
         delete poTrunk_;
         poTrunk_ = NULL;
     }
-    
+
     if(poCurrent_ != NULL)
     {
         delete poCurrent_;
         poCurrent_ = NULL;
     }
-	
-	if(pKMLFile_ == NULL)
+
+    if(pKMLFile_ == NULL)
     {
-		this->sError_ = "No file given";
-		return;
-	}
-	
+        this->sError_ = "No file given";
+        return;
+    }
+
     XML_Parser oParser = XML_ParserCreate(NULL);
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, startElementValidate, NULL);
 
+    /* Parses the file until we find the first element */
     do
     {
-        nLen = (int)VSIFRead( aBuf, 1, sizeof(aBuf), pKMLFile_ );
-        nDone = nLen < sizeof(aBuf);
+        nLen = (int)VSIFReadL( aBuf, 1, sizeof(aBuf), pKMLFile_ );
+        nDone = VSIFEofL(pKMLFile_);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             if (nLen <= BUFSIZ-1)
@@ -175,13 +176,14 @@ void KML::checkValidity()
             }
 
             XML_ParserFree(oParser);
-            VSIRewind(pKMLFile_);
+            VSIRewindL(pKMLFile_);
             return;
         }
-    } while (!nDone || bValid_);
-	
+
+    } while (!nDone && nLen > 0 && validity == KML_VALIDITY_UNKNOWN);
+
     XML_ParserFree(oParser);
-    VSIRewind(pKMLFile_);
+    VSIRewindL(pKMLFile_);
     poCurrent_ = NULL;
 }
 
@@ -232,43 +234,48 @@ void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char*
 
 void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, const char** ppszAttr)
 {
-	int i = 0;
-	std::string* sName = new std::string(pszName);
-	std::string* sAttribute = NULL;
-	
-	if(sName->compare("kml") == 0)
-    {
-		// Check all Attributes
-		for (i = 0; ppszAttr[i]; i += 2)
-        {
-			sAttribute = new std::string(ppszAttr[i]);
-			// Find the namespace
+    int i = 0;
+    std::string* sName = new std::string(pszName);
+    std::string* sAttribute = NULL;
 
-			if(sAttribute->compare("xmlns") == 0)
+    if (((KML *)pUserData)->validity != KML_VALIDITY_UNKNOWN)
+        return;
+
+    ((KML *)pUserData)->validity = KML_VALIDITY_INVALID;
+
+    if(sName->compare("kml") == 0)
+    {
+        // Check all Attributes
+        for (i = 0; ppszAttr[i]; i += 2)
+        {
+            sAttribute = new std::string(ppszAttr[i]);
+            // Find the namespace
+
+            if(sAttribute->compare("xmlns") == 0)
             {
-			    delete sAttribute;
-				sAttribute = new std::string(ppszAttr[i + 1]);
-				// Is it KML 2.1?
-				if(sAttribute->compare("http://earth.google.com/kml/2.2") == 0)
-                {
-					((KML *)pUserData)->bValid_ = true;
-					((KML *)pUserData)->sVersion_ = "2.2 (beta)";
-				}
-                else if(sAttribute->compare("http://earth.google.com/kml/2.1") == 0)
-                {
-					((KML *)pUserData)->bValid_ = true;
-					((KML *)pUserData)->sVersion_ = "2.1";
-				}
-                else if(sAttribute->compare("http://earth.google.com/kml/2.0") == 0)
-                {
-					((KML *)pUserData)->bValid_ = true;
-					((KML *)pUserData)->sVersion_ = "2.0";
-				}
-			}
-			delete sAttribute;
-		}
-	}
-	delete sName;
+                delete sAttribute;
+                    sAttribute = new std::string(ppszAttr[i + 1]);
+                    // Is it KML 2.1?
+                    if(sAttribute->compare("http://earth.google.com/kml/2.2") == 0)
+                    {
+                        ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
+                        ((KML *)pUserData)->sVersion_ = "2.2 (beta)";
+                    }
+                    else if(sAttribute->compare("http://earth.google.com/kml/2.1") == 0)
+                    {
+                        ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
+                        ((KML *)pUserData)->sVersion_ = "2.1";
+                    }
+                    else if(sAttribute->compare("http://earth.google.com/kml/2.0") == 0)
+                    {
+                        ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
+                        ((KML *)pUserData)->sVersion_ = "2.0";
+                    }
+            }
+            delete sAttribute;
+        }
+    }
+    delete sName;
 }
 
 void XMLCALL KML::endElement(void* pUserData, const char* pszName)
@@ -367,10 +374,11 @@ void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
 
 bool KML::isValid()
 {
-	checkValidity();
-	
-    CPLDebug("KML", "Valid: %d Version: %s", bValid_, sVersion_.c_str());
-	return bValid_;
+    checkValidity();
+
+    CPLDebug("KML", "Valid: %d Version: %s", validity == KML_VALIDITY_VALID, sVersion_.c_str());
+
+    return validity == KML_VALIDITY_VALID;
 }
 
 std::string KML::getError() const
