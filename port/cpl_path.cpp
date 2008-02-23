@@ -114,6 +114,7 @@ const char *CPLGetPath( const char *pszFilename )
     char       *pszStaticResult = CPLGetStaticResult();
 
     CPLAssert( iFileStart < CPL_PATH_BUF_SIZE );
+    CPLAssert( ! (pszFilename >= pszStaticResult && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( iFileStart == 0 )
     {
@@ -165,6 +166,7 @@ const char *CPLGetDirname( const char *pszFilename )
     char       *pszStaticResult = CPLGetStaticResult();
 
     CPLAssert( iFileStart < CPL_PATH_BUF_SIZE );
+    CPLAssert( ! (pszFilename >= pszStaticResult && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( iFileStart == 0 )
     {
@@ -244,6 +246,8 @@ const char *CPLGetBasename( const char *pszFullFilename )
     size_t  iExtStart, nLength;
     char    *pszStaticResult = CPLGetStaticResult();
 
+    CPLAssert( ! (pszFullFilename >= pszStaticResult && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
+
     for( iExtStart = strlen(pszFullFilename);
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
          iExtStart-- ) {}
@@ -291,6 +295,8 @@ const char *CPLGetExtension( const char *pszFullFilename )
     size_t  iFileStart = CPLFindFilenameStart( pszFullFilename );
     size_t  iExtStart;
     char    *pszStaticResult = CPLGetStaticResult();
+
+    CPLAssert( ! (pszFullFilename >= pszStaticResult && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     for( iExtStart = strlen(pszFullFilename);
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
@@ -364,6 +370,8 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
     char    *pszStaticResult = CPLGetStaticResult();
     size_t  i;
 
+    CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
+
 /* -------------------------------------------------------------------- */
 /*      First, try and strip off any existing extension.                */
 /* -------------------------------------------------------------------- */
@@ -433,6 +441,9 @@ const char *CPLFormFilename( const char * pszPath,
     char *pszStaticResult = CPLGetStaticResult();
     const char  *pszAddedPathSep = "";
     const char  *pszAddedExtSep = "";
+
+    CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
+    CPLAssert( ! (pszBasename >= pszStaticResult && pszBasename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( pszPath == NULL )
         pszPath = "";
@@ -588,6 +599,9 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
 
 {
     char *pszStaticResult = CPLGetStaticResult();
+
+    CPLAssert( ! (pszProjectDir >= pszStaticResult && pszProjectDir < pszStaticResult + CPL_PATH_BUF_SIZE) );
+    CPLAssert( ! (pszSecondaryFilename >= pszStaticResult && pszSecondaryFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( !CPLIsFilenameRelative( pszSecondaryFilename ) )
         return pszSecondaryFilename;
@@ -771,6 +785,9 @@ const char *CPLCleanTrailingSlash( const char *pszFilename )
 {
     char       *pszStaticResult = CPLGetStaticResult();
     int        iPathLength = strlen(pszFilename);
+
+    CPLAssert( iPathLength < CPL_PATH_BUF_SIZE );
+    CPLAssert( ! (pszFilename >= pszStaticResult && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     strncpy( pszStaticResult, pszFilename, iPathLength );
     pszStaticResult[iPathLength] = '\0';
