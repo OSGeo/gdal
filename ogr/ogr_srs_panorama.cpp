@@ -515,8 +515,8 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             break;
 
         default:
-            CPLDebug( "OSR_Panorama", "Unsupported projection: %d", iProjSys );
-            SetLocalCS( CPLString().Printf("\"Panorama\" projection number %d",
+            CPLDebug( "OSR_Panorama", "Unsupported projection: %ld", iProjSys );
+            SetLocalCS( CPLString().Printf("\"Panorama\" projection number %ld",
                                    iProjSys) );
             break;
             
