@@ -169,7 +169,7 @@ void KMLNode::print(unsigned int what)
     else
     {
         CPLDebug("KML", "%s%s (nLevel: %d Type: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
-            indent.c_str(), sName_.c_str(), Nodetype2String(eType_).c_str(), nLevel_, pvpoChildren_->size(), 
+            indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), pvpoChildren_->size(), 
             pvsContent_->size(), pvoAttributes_->size());
     }
 
