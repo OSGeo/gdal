@@ -211,7 +211,8 @@ public:
 
     void Clear() { resize(0); }
 
-    CPLString &Printf( const char *pszFormat, ... );
+    /* There seems to be a bug in the way the compiler count indices... Should be CPL_PRINT_FUNC_FORMAT (1, 2) */
+    CPLString &Printf( const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
     CPLString &vPrintf( const char *pszFormat, va_list args );
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
