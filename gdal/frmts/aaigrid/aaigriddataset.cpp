@@ -833,7 +833,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( !EQUAL( pszOriginalProjection, "" ) )
     {
         char                    *pszDirname, *pszBasename;
-        const char              *pszPrjFilename;
+        char                    *pszPrjFilename;
         char                    *pszESRIProjection = NULL;
         FILE                    *fp;
         OGRSpatialReference     oSRS;
@@ -841,18 +841,26 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
         pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
 
-        pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+        pszPrjFilename = CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
         fp = VSIFOpenL( pszPrjFilename, "wt" );
-        
-        oSRS.importFromWkt( (char **) &pszOriginalProjection );
-        oSRS.morphToESRI();
-        oSRS.exportToWkt( &pszESRIProjection );
-        VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
+        if (fp != NULL)
+        {
+            oSRS.importFromWkt( (char **) &pszOriginalProjection );
+            oSRS.morphToESRI();
+            oSRS.exportToWkt( &pszESRIProjection );
+            VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
 
-        VSIFCloseL( fp );
+            VSIFCloseL( fp );
+            CPLFree( pszESRIProjection );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Unable to create file %s.\n", pszPrjFilename );
+        }
         CPLFree( pszDirname );
         CPLFree( pszBasename );
-        CPLFree( pszESRIProjection );
+        CPLFree( pszPrjFilename );
     }
     
 /* -------------------------------------------------------------------- */
