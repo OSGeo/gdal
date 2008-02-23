@@ -29,13 +29,12 @@
 
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "gdal_pam.h"
 
 //  ----------------------------------------------------------------------------
 //     TerraLib TerraLibRasterBand
 //  ----------------------------------------------------------------------------
 
-class TerraLibRasterBand : public GDALPamRasterBand
+class TerraLibRasterBand : public GDALRasterBand
 {
     friend class TerraLibDataset;
 
@@ -44,8 +43,8 @@ protected:
     GByte	       *pabyBlockBuf;
 
 public:
-                    TerraLibRasterBand( TerraLibDataset *poDS, int nBand );
-                   ~TerraLibRasterBand();
+    TerraLibRasterBand( TerraLibDataset *poDS );
+    ~TerraLibRasterBand();
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );    

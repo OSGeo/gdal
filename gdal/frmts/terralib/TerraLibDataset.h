@@ -44,15 +44,17 @@ class TerraLibDataset : public GDALPamDataset
     friend class TerraLibRasterBand;
 
 private:
-    FILE           *fp;
-    double          adfGeoTransform[6];
-    TeDatabase*     m_db;
+    TeDatabase*         m_db;
+    TeLayer*            m_layer;
+    TeRaster*           m_raster;
+    TeRasterParams      m_params;
+    char*               m_ProjectionRef;
+    double              m_adfGeoTransform[6];
+    bool                m_bGeoTransformValid;
 
 public:
-    TerraLibDataset();
-    ~TerraLibDataset();
-
-    void	       *pLibrary;
+                    TerraLibDataset();
+                   ~TerraLibDataset();
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Create( const char *pszFilename,
@@ -71,5 +73,6 @@ public:
     virtual CPLErr GetGeoTransform( double *padfTransform );
     virtual CPLErr SetGeoTransform( double *padfTransform );
     virtual CPLErr SetProjection( const char *pszProjString );
+    virtual const char* GetProjectionRef( void );
 };
 
