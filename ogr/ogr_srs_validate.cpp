@@ -709,8 +709,7 @@ OGRErr OGRSpatialReference::Validate()
         if( poDATUM->GetChildCount() == 0 )
         {
             CPLDebug( "OGRSpatialReference::Validate",
-                      "DATUM has no children.",
-                      poDATUM->GetChildCount() );
+                      "DATUM has no children." );
             
             return OGRERR_CORRUPT_DATA;
         }

@@ -776,8 +776,8 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
         // FIXME: ISINUS --- Integrized Sinusoidal skipped
 
         default:
-            CPLDebug( "OSR_USGS", "Unsupported projection: %d", iProjSys );
-            SetLocalCS( CPLString().Printf("GCTP projection number %d", iProjSys) );
+            CPLDebug( "OSR_USGS", "Unsupported projection: %ld", iProjSys );
+            SetLocalCS( CPLString().Printf("GCTP projection number %ld", iProjSys) );
             break;
             
     }

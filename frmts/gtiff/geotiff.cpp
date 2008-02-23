@@ -3539,7 +3539,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     {
         for (int i = 0; i < nBands; ++i)
             GetRasterBand(i+1)->SetMetadataItem( "NBITS", 
-                                                 CPLString().Printf( "%ld", nBitsPerSample ),
+                                                 CPLString().Printf( "%d", (int)nBitsPerSample ),
                                                  "IMAGE_STRUCTURE" );
     }
         
