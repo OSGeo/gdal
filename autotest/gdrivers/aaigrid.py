@@ -178,8 +178,7 @@ gdaltest_list = [
     aaigrid_5,
     aaigrid_6,
     aaigrid_7,
-#    aaigrid_8 ]
-    ]
+    aaigrid_8 ]
   
 
 
