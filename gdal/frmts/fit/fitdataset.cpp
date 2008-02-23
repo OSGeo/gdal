@@ -1221,7 +1221,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     long maxx_full = (long) floor(poSrcDS->GetRasterXSize() / (double) blockX);
     long maxy_full = (long) floor(poSrcDS->GetRasterYSize() / (double) blockY);
 
-    CPLDebug("FIT", "about to write %ix%i blocks", maxx, maxy);
+    CPLDebug("FIT", "about to write %ld x %ld blocks", maxx, maxy);
 
     for(long y=0; y < maxy; y++)
         for(long x=0; x < maxx; x++) {

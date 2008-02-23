@@ -59,7 +59,7 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
                                                   psResult->nDataAlloc);
         if( psResult->pabyData == NULL )
         {
-            psResult->pszErrBuf = CPLStrdup(CPLString().Printf("Out of memory allocating %s bytes for HTTP data buffer.", psResult->nDataAlloc));
+            psResult->pszErrBuf = CPLStrdup(CPLString().Printf("Out of memory allocating %d bytes for HTTP data buffer.", psResult->nDataAlloc));
             psResult->nDataAlloc = psResult->nDataLen = 0;
 
             return 0;

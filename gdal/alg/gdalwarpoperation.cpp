@@ -1927,8 +1927,8 @@ void GDALWarpOperation::ReportTiming( const char * pszMessage )
 
     if( pszMessage != NULL )
     {
-        CPLDebug( "WARP_TIMING", "%s: %ds", 
-                  pszMessage, nNewTime - nLastTimeReported );
+        CPLDebug( "WARP_TIMING", "%s: %lds", 
+                  pszMessage, (long)(nNewTime - nLastTimeReported) );
     }
 
     nLastTimeReported = nNewTime;

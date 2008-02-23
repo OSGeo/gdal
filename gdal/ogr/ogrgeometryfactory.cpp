@@ -105,8 +105,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
                   pabyData[4],
                   pabyData[5],
                   pabyData[6],
-                  pabyData[7],
-                  pabyData[8] );
+                  pabyData[7] );
         return OGRERR_CORRUPT_DATA;
     }
 
