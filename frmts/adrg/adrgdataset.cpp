@@ -58,7 +58,7 @@ class ADRGDataset : public GDALPamDataset
     int          bGeoTransformValid;
     double       adfGeoTransform[6];
     int          nNextAvailableBlock;
-    CPLString    baseFileName;
+    CPLString    osBaseFileName;
 
   public:
                  ADRGDataset();
@@ -72,8 +72,8 @@ class ADRGDataset : public GDALPamDataset
 
     void                AddSubDataset(const char* pszFilename);
 
-    static char** GetGENListFromTHF(const char* fileName);
-    static ADRGDataset* GetFromRecord(const char* fileName, DDFRecord * record, int isGIN);
+    static char** GetGENListFromTHF(const char* pszFileName);
+    static ADRGDataset* GetFromRecord(const char* pszFileName, DDFRecord * record, int isGIN);
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create(const char* pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType, char **papszOptions);
@@ -731,7 +731,7 @@ double ADRGDataset::GetLatitudeFromString(const char* str)
 /*                           GetFromRecord()                            */
 /************************************************************************/
 
-ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record, int isGIN)
+ADRGDataset* ADRGDataset::GetFromRecord(const char* pszFileName, DDFRecord * record, int isGIN)
 {
     int SCA = 0;
     int ZNA = 0;
@@ -742,7 +742,7 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
     double PSO;
     int NFL;
     int NFC;
-    CPLString BAD;
+    CPLString osBAD;
     int TIF;
     int* TILEINDEX = NULL;
     int i;
@@ -968,13 +968,13 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
         return NULL;
     }
     
-    BAD = subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 12, NULL);
+    osBAD = subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 12, NULL);
     {
-        char* c = (char*) strchr((const char*) BAD, ' ');
+        char* c = (char*) strchr(osBAD.c_str(), ' ');
         if (c)
             *c = 0;
     }
-    CPLDebug("ADRG", "BAD=%s", (const char*)BAD);
+    CPLDebug("ADRG", "BAD=%s", osBAD.c_str());
     
     subfieldDefn = fieldDefn->GetSubfield(14);
     if (!(strcmp(subfieldDefn->GetName(), "TIF") == 0 &&
@@ -1018,33 +1018,33 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
         }
     }
     
-    CPLString dirname = CPLGetDirname(fileName);
-    CPLString imgname = CPLFormFilename(dirname, (const char*)BAD, NULL);
+    CPLString osDirname = CPLGetDirname(pszFileName);
+    CPLString osImgName = CPLFormFilename(osDirname.c_str(), osBAD.c_str(), NULL);
 
-    FILE* fdIMG = VSIFOpenL((const char*)imgname, "rb");
+    FILE* fdIMG = VSIFOpenL(osImgName.c_str(), "rb");
     if (fdIMG == NULL)
     {
-        char** dirContent = VSIReadDir((const char*)dirname);
-        char** ptr = dirContent;
+        char** papszDirContent = VSIReadDir(osDirname.c_str());
+        char** ptr = papszDirContent;
         if (ptr)
         {
             while(*ptr)
             {
-                if (EQUAL(*ptr, (const char*)BAD))
+                if (EQUAL(*ptr, osBAD.c_str()))
                 {
-                    imgname = CPLFormFilename(dirname, *ptr, NULL);
-                    fdIMG = VSIFOpenL((const char*)imgname, "rb");
+                    osImgName = CPLFormFilename(osDirname.c_str(), *ptr, NULL);
+                    fdIMG = VSIFOpenL(osImgName.c_str(), "rb");
                     if (fdIMG)
                         break;
                 }
                 ptr ++;
             }
         }
-        CSLDestroy(dirContent);
+        CSLDestroy(papszDirContent);
         
         if (fdIMG == NULL)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s\n", (const char*)imgname);
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s\n", osImgName.c_str());
             return NULL;
         }
     }
@@ -1144,7 +1144,7 @@ ADRGDataset* ADRGDataset::GetFromRecord(const char* fileName, DDFRecord * record
 /*                          GetGENListFromTHF()                             */
 /************************************************************************/
 
-char** ADRGDataset::GetGENListFromTHF(const char* fileName)
+char** ADRGDataset::GetGENListFromTHF(const char* pszFileName)
 {
     DDFModule module;
     DDFRecord * record;
@@ -1153,10 +1153,10 @@ char** ADRGDataset::GetGENListFromTHF(const char* fileName)
     DDFSubfieldDefn* subfieldDefn;
     int i;
     int nFilenames = 0;
-    char** fileNames = NULL;
+    char** papszFileNames = NULL;
 
-    if (!module.Open((const char*)fileName, TRUE))
-        return fileNames;
+    if (!module.Open(pszFileName, TRUE))
+        return papszFileNames;
 
     while ((record = module.ReadRecord()) != NULL)
     {
@@ -1201,30 +1201,30 @@ char** ADRGDataset::GetGENListFromTHF(const char* fileName)
                     continue;
                 }
                 
-                CPLString subFileName(subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 300, NULL));
-                char* c = (char*) strchr((const char*) subFileName, ' ');
+                CPLString osSubFileName(subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 300, NULL));
+                char* c = (char*) strchr(osSubFileName.c_str(), ' ');
                 if (c)
                     *c = 0;
-                if (EQUAL(CPLGetExtension((const char*)subFileName), "GEN"))
+                if (EQUAL(CPLGetExtension(osSubFileName.c_str()), "GEN"))
                 {
-                    CPLDebug("ADRG", "Found GEN file in THF : %s", (const char*)subFileName);
-                    CPLString GENFileName(CPLGetDirname(fileName));
-                    char** tokens = CSLTokenizeString2( subFileName, "/\"", 0);
+                    CPLDebug("ADRG", "Found GEN file in THF : %s", osSubFileName.c_str());
+                    CPLString osGENFileName(CPLGetDirname(pszFileName));
+                    char** tokens = CSLTokenizeString2( osSubFileName.c_str(), "/\"", 0);
                     char** ptr = tokens;
                     if (ptr == NULL)
                         continue;
                     while(*ptr)
                     {
-                        char** dirContent = VSIReadDir((const char*)GENFileName);
-                        char** ptrDir = dirContent;
+                        char** papszDirContent = VSIReadDir(osGENFileName.c_str());
+                        char** ptrDir = papszDirContent;
                         if (ptrDir)
                         {
                             while(*ptrDir)
                             {
                                 if (EQUAL(*ptrDir, *ptr))
                                 {
-                                    GENFileName = CPLFormFilename((const char*)GENFileName, *ptrDir, NULL);
-                                    CPLDebug("ADRG", "Building GEN full file name : %s", (const char*)GENFileName);
+                                    osGENFileName = CPLFormFilename(osGENFileName.c_str(), *ptrDir, NULL);
+                                    CPLDebug("ADRG", "Building GEN full file name : %s", osGENFileName.c_str());
                                     break;
                                 }
                                 ptrDir ++;
@@ -1232,23 +1232,23 @@ char** ADRGDataset::GetGENListFromTHF(const char* fileName)
                         }
                         if (ptrDir == NULL)
                             break;
-                        CSLDestroy(dirContent);
+                        CSLDestroy(papszDirContent);
                         ptr++;
                     }
                     int isNameValid = *ptr == NULL;
                     CSLDestroy(tokens);
                     if (isNameValid)
                     {
-                        fileNames = (char**)CPLRealloc(fileNames, sizeof(char*) * (nFilenames + 2));
-                        fileNames[nFilenames] = CPLStrdup(GENFileName);
-                        fileNames[nFilenames + 1] = NULL;
+                        papszFileNames = (char**)CPLRealloc(papszFileNames, sizeof(char*) * (nFilenames + 2));
+                        papszFileNames[nFilenames] = CPLStrdup(osGENFileName.c_str());
+                        papszFileNames[nFilenames + 1] = NULL;
                         nFilenames ++;
                     }
                 }
             }
         }
     }
-    return fileNames;
+    return papszFileNames;
 }
 
 /************************************************************************/
@@ -1263,8 +1263,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     DDFFieldDefn *fieldDefn;
     DDFSubfieldDefn* subfieldDefn;
     ADRGDataset* overviewDS = NULL;
-    CPLString fileName(poOpenInfo->pszFilename);
-    CPLString NAM;
+    CPLString osFileName(poOpenInfo->pszFilename);
+    CPLString osNAM;
 
     if( poOpenInfo->eAccess == GA_Update )
     {
@@ -1274,34 +1274,34 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if (EQUAL(CPLGetExtension((const char*)fileName), "thf"))
+    if (EQUAL(CPLGetExtension(osFileName.c_str()), "thf"))
     {
-        char** fileNames = GetGENListFromTHF((const char*)fileName);
-        if (fileNames == NULL)
+        char** papszFileNames = GetGENListFromTHF(osFileName.c_str());
+        if (papszFileNames == NULL)
             return NULL;
-        if (fileNames[1] == NULL)
+        if (papszFileNames[1] == NULL)
         {
-            fileName = fileNames[0];
-            CSLDestroy(fileNames);
+            osFileName = papszFileNames[0];
+            CSLDestroy(papszFileNames);
         }
         else
         {
-            char** ptr = fileNames;
+            char** ptr = papszFileNames;
             ADRGDataset* poDS = new ADRGDataset();
             while(*ptr)
             {
                 poDS->AddSubDataset(*ptr);
                 ptr ++;
             }
-            CSLDestroy(fileNames);
+            CSLDestroy(papszFileNames);
             return poDS;
         }
     }
     
-    if (!EQUAL(CPLGetExtension((const char*)fileName), "gen"))
+    if (!EQUAL(CPLGetExtension(osFileName.c_str()), "gen"))
         return NULL;
 
-    if (!module.Open((const char*)fileName, TRUE))
+    if (!module.Open(osFileName.c_str(), TRUE))
         return NULL;
 
     while ((record = module.ReadRecord()) != NULL)
@@ -1355,15 +1355,15 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
                 continue;
             }
 
-            NAM = subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 8, NULL);
-            CPLDebug("ADRG", "NAM=%s", (const char*)NAM);
+            osNAM = subfieldDefn->ExtractStringData(field->GetSubfieldData(subfieldDefn), 8, NULL);
+            CPLDebug("ADRG", "NAM=%s", osNAM.c_str());
 
             if (isGIN)
             {
-                ADRGDataset* poDS = GetFromRecord((const char*)fileName, record, TRUE);
+                ADRGDataset* poDS = GetFromRecord(osFileName.c_str(), record, TRUE);
                 if (poDS)
                 {
-                    poDS->SetMetadataItem( "ADRG_NAM", (const char*)NAM );
+                    poDS->SetMetadataItem( "ADRG_NAM", osNAM.c_str() );
 
                     poDS->poOverviewDS = overviewDS;
 
@@ -1387,7 +1387,7 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 #if 0
             else
-                overviewDS = GetFromRecord((const char*)fileName, record, FALSE);
+                overviewDS = GetFromRecord(osFileName.c_str(), record, FALSE);
 #endif
 
         }
@@ -1440,8 +1440,8 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
         return NULL;
     }
 
-    CPLString baseFileName(CPLGetBasename(pszFilename));
-    if (strlen(baseFileName) != 8 || baseFileName[6] != '0' || baseFileName[7] != '1')
+    CPLString osBaseFileName(CPLGetBasename(pszFilename));
+    if (strlen(osBaseFileName) != 8 || osBaseFileName[6] != '0' || osBaseFileName[7] != '1')
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                 "Invalid filename. Must be xxxxxx01.GEN where x is between A and Z\n");
@@ -1450,7 +1450,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     
     for(i=0;i<6;i++)
     {
-        if (!(baseFileName[i] >= 'A' && baseFileName[i] <= 'Z'))
+        if (!(osBaseFileName[i] >= 'A' && osBaseFileName[i] <= 'Z'))
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                 "Invalid filename. Must be xxxxxx01.GEN where x is between A and Z\n");
@@ -1458,7 +1458,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
         }
     }
 
-    FILE* fdGEN = VSIFOpenL((const char*)pszFilename, "wb");
+    FILE* fdGEN = VSIFOpenL(pszFilename, "wb");
     if (fdGEN == NULL)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1466,8 +1466,9 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
         return NULL;
     }
     
-    CPLString dirname(CPLGetDirname(pszFilename));
-    FILE* fdTHF = VSIFOpenL(CPLFormFilename((const char*)dirname, "TRANSH01.THF", NULL), "wb");
+    CPLString osDirname(CPLGetDirname(pszFilename));
+    CPLString osTransh01THF(CPLFormFilename(osDirname.c_str(), "TRANSH01.THF", NULL));
+    FILE* fdTHF = VSIFOpenL(osTransh01THF.c_str(), "wb");
     if (fdTHF == NULL)
     {
         VSIFCloseL(fdGEN);
@@ -1476,8 +1477,8 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
         return NULL;
     }
     
-    CPLString imgFilename = CPLResetExtension(pszFilename, "IMG");
-    FILE* fdIMG = VSIFOpenL((const char*)imgFilename, "w+b");
+    CPLString osImgFilename = CPLResetExtension(pszFilename, "IMG");
+    FILE* fdIMG = VSIFOpenL(osImgFilename.c_str(), "w+b");
     if (fdIMG == NULL)
     {
         VSIFCloseL(fdGEN);
@@ -1495,7 +1496,7 @@ GDALDataset *ADRGDataset::Create(const char* pszFilename, int nXSize, int nYSize
     poDS->fdIMG = fdIMG;
     poDS->fdTHF = fdTHF;
 
-    poDS->baseFileName = baseFileName;
+    poDS->osBaseFileName = osBaseFileName;
     poDS->bCreation = TRUE;
     poDS->nNextAvailableBlock = 1;
     poDS->NFC = (nXSize + 127) / 128;
@@ -1616,7 +1617,7 @@ void ADRGDataset::WriteGENFile()
 
         /* Field DSI */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, baseFileName, 8); /* NAM */
+        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
         nFields++;
         
@@ -1644,7 +1645,7 @@ void ADRGDataset::WriteGENFile()
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* PCB */
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 8, 1); /* PVB */
         char tmp[12+1];
-        sprintf(tmp, "%s.IMG", (const char*)baseFileName); /* FIXME */
+        sprintf(tmp, "%s.IMG", osBaseFileName.c_str()); /* FIXME */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 12); /* BAD */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "Y", 1); /* TIF */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
@@ -1690,7 +1691,7 @@ void ADRGDataset::WriteGENFile()
 
         /* Field DSI */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, baseFileName, 8); /* NAM */
+        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
         nFields++;
         
@@ -1734,7 +1735,7 @@ void ADRGDataset::WriteGENFile()
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 1); /* PCB */
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 8, 1); /* PVB */
         char tmp[12+1];
-        sprintf(tmp, "%s.IMG", (const char*)baseFileName);
+        sprintf(tmp, "%s.IMG", osBaseFileName.c_str());
         sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 12); /* BAD */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "Y", 1); /* TIF */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
@@ -1839,7 +1840,7 @@ void ADRGDataset::WriteTHFFile()
         nFields++;
 
         /* Field FDR */
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, baseFileName, 8); /* NAM */
+        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 3, 1); /* STR */
         sizeOfFields[nFields] += WriteSubFieldStr(fd, "ADRG", 4); /* PRT */
         sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* SWO */
@@ -1981,13 +1982,13 @@ void ADRGDataset::WriteTHFFile()
         nFields++;
 
         /* Field VFF */
-        sprintf(tmp, "%s.GEN", (const char*)baseFileName);
+        sprintf(tmp, "%s.GEN", osBaseFileName.c_str());
         sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
         nFields++;
 
         /* Field VFF */
-        sprintf(tmp, "%s.IMG", (const char*)baseFileName);
+        sprintf(tmp, "%s.IMG", osBaseFileName.c_str());
         sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
         nFields++;
@@ -1995,13 +1996,13 @@ void ADRGDataset::WriteTHFFile()
         if (nTotalFields == 7)
         {
             /* Field VFF */
-            sprintf(tmp, "%s.GEN", (const char*)baseFileName);
+            sprintf(tmp, "%s.GEN", osBaseFileName.c_str());
             sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
             sizeOfFields[nFields] += WriteFieldTerminator(fd);
             nFields++;
     
             /* Field VFF */
-            sprintf(tmp, "%s.IMG", (const char*)baseFileName);
+            sprintf(tmp, "%s.IMG", osBaseFileName.c_str());
             sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
             sizeOfFields[nFields] += WriteFieldTerminator(fd);
             nFields++;
