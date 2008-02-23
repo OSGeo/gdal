@@ -295,10 +295,6 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
     if( nValidPolys == 0 )
     {
-        for( iLine = 0; iLine < getNumGeometries(); iLine++ )
-        {
-            CPLFree( papszLines[iLine] );
-        }
         CPLFree( papszLines );
         *ppszDstText = CPLStrdup("MULTIPOLYGON EMPTY");
         return OGRERR_NONE;
