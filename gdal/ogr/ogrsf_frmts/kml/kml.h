@@ -44,6 +44,14 @@
 
 class KMLNode;
 
+
+typedef enum
+{
+    KML_VALIDITY_UNKNOWN,
+    KML_VALIDITY_INVALID,
+    KML_VALIDITY_VALID
+} OGRKMLValidity;
+
 class KML
 {
 public:
@@ -90,8 +98,8 @@ private:
 	unsigned int nDepth_;
 	// KML version number
 	std::string sVersion_;
-	// set when the file was validated and is kml
-	bool bValid_;
+	// set to KML_VALIDITY_VALID if the beginning of the file is detected as KML
+	OGRKMLValidity validity;
 	// file descriptor
 	FILE *pKMLFile_;
 	// error text ("" when everything is OK")
