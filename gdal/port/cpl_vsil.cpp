@@ -586,12 +586,15 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
 {
     VSIFileManager *poThis = Get();
     std::map<std::string,VSIFilesystemHandler*>::const_iterator iter;
+    int nPathLen = strlen(pszPath);
 
     for( iter = poThis->oHandlers.begin();
          iter != poThis->oHandlers.end();
          iter++ )
     {
-        if( strncmp(pszPath,iter->first.c_str(),iter->first.size()) == 0 )
+        const char* pszIterKey = iter->first.c_str();
+        int nIterKeyLen = iter->first.size();
+        if( strncmp(pszPath,pszIterKey,nIterKeyLen) == 0 )
             return iter->second;
 
         /* "/vsimem\foo" should be handled as "/vsimem/foo" */
