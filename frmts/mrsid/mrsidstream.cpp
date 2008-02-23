@@ -40,7 +40,7 @@ LT_USE_NAMESPACE(LizardTech)
 /* ==================================================================== */
 /************************************************************************/
 
-LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0)
+LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0), pnRefCount(NULL)
 {
 }
 
@@ -50,10 +50,15 @@ LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0)
 
 LTIVSIStream::~LTIVSIStream()
 {
-    if ( poFileHandle )
+    if ( poFileHandle)
     {
-        VSIFCloseL( (FILE *)poFileHandle );
-        nError = errno;
+        (*pnRefCount)--;
+        if (*pnRefCount == 0)
+        {
+            VSIFCloseL( (FILE *)poFileHandle );
+            nError = errno;
+            delete pnRefCount;
+        }
     }
 }
 
@@ -64,7 +69,14 @@ LTIVSIStream::~LTIVSIStream()
 LT_STATUS LTIVSIStream::initialize( const char *pszFilename,
                                     const char *pszAccess )
 {
+    CPLAssert(poFileHandle == NULL);
+
     poFileHandle = (VSIVirtualHandle *)VSIFOpenL( pszFilename, pszAccess );
+    if (poFileHandle)
+    {
+        pnRefCount = new int;
+        *pnRefCount = 1;
+    }
     nError = errno;
 
     return poFileHandle ? LT_STS_Success : LT_STS_Failure;
@@ -74,9 +86,16 @@ LT_STATUS LTIVSIStream::initialize( const char *pszFilename,
 /*                              initialize()                            */
 /************************************************************************/
 
-LT_STATUS LTIVSIStream::initialize( VSIVirtualHandle *poFileHandle )
+LT_STATUS LTIVSIStream::initialize( LTIVSIStream* ltiVSIStream )
 {
-    this->poFileHandle = poFileHandle;
+    CPLAssert(poFileHandle == NULL);
+
+    poFileHandle = ltiVSIStream->poFileHandle;
+    if (poFileHandle)
+    {
+        pnRefCount = ltiVSIStream->pnRefCount;
+        (*pnRefCount) ++;
+    }
 
     return poFileHandle ? LT_STS_Success : LT_STS_Failure;
 }
@@ -87,6 +106,8 @@ LT_STATUS LTIVSIStream::initialize( VSIVirtualHandle *poFileHandle )
 
 bool LTIVSIStream::isEOF()
 {
+    CPLAssert(poFileHandle);
+
     bool    bIsEOF = (0 != poFileHandle->Eof());
     nError = errno;
 
@@ -117,6 +138,8 @@ LT_STATUS LTIVSIStream::open()
 
 LT_STATUS LTIVSIStream::close()
 {
+    CPLAssert(poFileHandle);
+
     if ( poFileHandle->Seek( 0, SEEK_SET ) == 0 )
         return LT_STS_Success;
     else
@@ -132,6 +155,8 @@ LT_STATUS LTIVSIStream::close()
 
 lt_uint32 LTIVSIStream::read( lt_uint8 *pDest, lt_uint32 nBytes )
 {
+    CPLAssert(poFileHandle);
+
     lt_uint32   nBytesRead =
         (lt_uint32)poFileHandle->Read( pDest, 1, nBytes );
     nError = errno;
@@ -145,6 +170,8 @@ lt_uint32 LTIVSIStream::read( lt_uint8 *pDest, lt_uint32 nBytes )
 
 lt_uint32 LTIVSIStream::write( const lt_uint8 *pSrc, lt_uint32 nBytes )
 {
+    CPLAssert(poFileHandle);
+
     lt_uint32   nBytesWritten =
         (lt_uint32)poFileHandle->Write( pSrc, 1, nBytes );
     nError = errno;
@@ -158,6 +185,8 @@ lt_uint32 LTIVSIStream::write( const lt_uint8 *pSrc, lt_uint32 nBytes )
 
 LT_STATUS LTIVSIStream::seek( lt_int64 nOffset, LTIOSeekDir nOrigin )
 {
+    CPLAssert(poFileHandle);
+
     int nWhence;
     switch (nOrigin)
     {
@@ -192,6 +221,8 @@ LT_STATUS LTIVSIStream::seek( lt_int64 nOffset, LTIOSeekDir nOrigin )
 
 lt_int64 LTIVSIStream::tell()
 {
+    CPLAssert(poFileHandle);
+
     lt_int64    nPos = (lt_int64)poFileHandle->Tell();
     nError = errno;
 
@@ -205,7 +236,7 @@ lt_int64 LTIVSIStream::tell()
 LTIOStreamInf* LTIVSIStream::duplicate()
 {
     LTIVSIStream *poNew = new LTIVSIStream;
-    poNew->initialize( poFileHandle );
+    poNew->initialize( this );
 
     return poNew;
 }
