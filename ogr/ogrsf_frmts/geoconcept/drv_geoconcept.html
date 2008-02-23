@@ -1,40 +1,59 @@
 <html>
 <head>
-<title>G&eacute;oconcept Export</title>
+<title>GeoConcept Export</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>G&eacute;oconcept text export</h1>
+<h1>GeoConcept text export</h1>
 
-G&eacute;oconcept text export files should be available for writing and reading.<p>
+GeoConcept text export files should be available for writing and reading.<p>
 
-The OGR G&eacute;oconcept driver treats a single G&eacute;oconcept file within
+The OGR GeoConcept driver treats a single GeoConcept file within
 a directory as a dataset comprising layers.
-G&eacute;oconcept files extensions are <code>.txt</code> or <code>.gxt</code>.<p>
+GeoConcept files extensions are <code>.txt</code> or <code>.gxt</code>.<p>
 
-Currently the G&eacute;oconcept driver only supports multi-polygons, lines and
+Currently the GeoConcept driver only supports multi-polygons, lines and
 points.<p>
+
+<h2>GeoConcept Text File Format (gxt)</h2>
+
+GeoConcept is a GIS developped by the Company GeoConcept SA. <p>
+
+It's an object oriented GIS, where the features are named &laquo;&nbsp;objects&nbsp;&raquo;,
+and feature types are named &laquo;&nbsp;type/subtype&nbsp;&raquo; (class allowing inheritance).<p>
+
+Among its import/export formats, it proposes a simple text format
+named gxt. A gxt file may contain objects from several type/subtype.<p>
+
+GeoConcept text export files should be available for writing and reading. <p>
+
+The OGR GeoConcept driver treats a single GeoConcept file within a
+directory as a dataset comprising layers. GeoConcept files extensions
+are <code>.txt</code> or <code>.gxt</code>.<p>
+
+Currently the GeoConcept driver only supports multi-polygons,
+lines and points.<p>
 
 <h2>Creation Issues</h2>
 
-The G&eacute;oconcept driver treats a G&eacute;oconcept file (<code>.txt</code>
+The GeoConcept driver treats a GeoConcept file (<code>.txt</code>
 or <code>.gxt</code>) as a dataset.<p>
 
-G&eacute;oconcept files can store multiple kinds of geometry (one by layer),
-even if a G&eacute;oconcept layer can only have one kind of geometry.<p>
+GeoConcept files can store multiple kinds of geometry (one by layer),
+even if a GeoConcept layer can only have one kind of geometry.<p>
 
 Note this makes it very difficult to translate a mixed geometry layer
-from another format into G&eacute;oconcept format using ogr2ogr, since ogr2ogr has
+from another format into GeoConcept format using ogr2ogr, since ogr2ogr has
 no support for separating out geometries from a source layer.<p>
 
-G&eacute;oconcept sub-type is treated as OGR feature. The name of a layer is therefore
-the concatenation of the G&eacute;oconcept type name, <code>'.'</code> and G&eacute;oconcept
+GeoConcept sub-type is treated as OGR feature. The name of a layer is therefore
+the concatenation of the GeoConcept type name, <code>'.'</code> and GeoConcept
 sub-type name.<p>
 
-G&eacute;oconcept type definition (<code>.gct</code> files) are used for creation only.<p>
+GeoConcept type definition (<code>.gct</code> files) are used for creation only.<p>
 
-G&eacute;oconcept feature fields definition are stored in an associated <code>.gct</code>
+GeoConcept feature fields definition are stored in an associated <code>.gct</code>
 file, and so fields suffer a number of limitations (<span style="color:red;">FIXME</span>)&nbsp;:<p>
 
 <ul>
@@ -42,22 +61,22 @@ file, and so fields suffer a number of limitations (<span style="color:red;">FIX
 
 <li> Only Integer, Real and String field types are supported.  The various
 list, and other field types cannot be created for the moment (they exist in
-the G&eacute;oconcept model, but are not yet supported by the G&eacute;oconcept
+the GeoConcept model, but are not yet supported by the GeoConcept
 driver).</li>
 </ul>
 
-The OGR G&eacute;oconcept driver does not support deleting features. <p> 
+The OGR GeoConcept driver does not support deleting features. <p> 
 
 <h3>Dataset Creation Options</h3>
 
-<b>EXTENSION=TXT|GXT</b>&nbsp;: indicates the G&eacute;oconcept export file extension. <code>TXT</code>
-was used by earlier releases of G&eacute;oconcept. <code>GXT</code> is currently used.<p>
+<b>EXTENSION=TXT|GXT</b>&nbsp;: indicates the GeoConcept export file extension. <code>TXT</code>
+was used by earlier releases of GeoConcept. <code>GXT</code> is currently used.<p>
 
-<b>CONFIG=path to the GCT</b>&nbsp;: the GCT file describe the G&eacute;oconcept types
+<b>CONFIG=path to the GCT</b>&nbsp;: the GCT file describe the GeoConcept types
 definitions&nbsp;: In this file, every line must start with <code>//#</code> followed by
 a keyword. Lines starting with <code>//</code> are comments.<p>
 
-It is important to note that a G&eacute;oconcept export file can hold different types and
+It is important to note that a GeoConcept export file can hold different types and
 associated sub-types.<p>
 
 <ul>
@@ -205,7 +224,7 @@ sub-type section within the previous type section.<p>
 //#ENDSECTION CONFIG
 </pre>
 
-<h4>Example of a G&eacute;oconcept text export :</h4>
+<h4>Example of a GeoConcept text export :</h4>
 
 <pre>
 //$DELIMITER &quot;&#x9;&quot;
@@ -224,19 +243,19 @@ sub-type section within the previous type section.<p>
 
 <h4>Example of use :</h4>
 
-Creating a G&eacute;oconcept export file&nbsp;:<br/>
+Creating a GeoConcept export file&nbsp;:<br/>
 
 <pre>
 ogr2ogr -f &quot;Geoconcept&quot; -a_srs &quot;+init=IGNF:LAMB93&quot; -dsco EXTENSION=txt -dsco CONFIG=tile_schema.gct tile.gxt tile.shp -lco FEATURETYPE=TILE.TILE
 </pre>
 
-Appending new features to an existing G&eacute;oconcept export file&nbsp;:<br/>
+Appending new features to an existing GeoConcept export file&nbsp;:<br/>
 
 <pre>
 ogr2ogr -f &quot;Geoconcept&quot; -update -append tile.gxt tile.shp -nln TILE.TILE
 </pre>
 
-Translating a G&eacute;oconcept export file layer into MapInfo file&nbsp;:<br/>
+Translating a GeoConcept export file layer into MapInfo file&nbsp;:<br/>
 
 <pre>
 ogr2ogr -f &quot;MapInfo File&quot; -dsco FORMAT=MIF tile.mif tile.gxt TILE.TILE
@@ -245,7 +264,7 @@ ogr2ogr -f &quot;MapInfo File&quot; -dsco FORMAT=MIF tile.mif tile.gxt TILE.TILE
 <h3>See Also</h3>
 
 <ul>
-<li> <a href="http://www.geoconcept.com/">G&eacute;oconcept web site</a></li>
+<li> <a href="http://www.geoconcept.com/">GeoConcept web site</a></li>
 </ul>
 
 </body>
