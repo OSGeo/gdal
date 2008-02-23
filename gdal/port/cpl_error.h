@@ -71,7 +71,7 @@ CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
 void CPL_DLL CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler );
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
-void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... );
+void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... )  CPL_PRINT_FUNC_FORMAT (2, 3);
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int );
 
 #ifdef DEBUG
