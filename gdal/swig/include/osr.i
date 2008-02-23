@@ -53,7 +53,6 @@
 %constant char *SRS_PT_ECKERT_IV		= SRS_PT_ECKERT_IV;
 %constant char *SRS_PT_ECKERT_VI		= SRS_PT_ECKERT_VI;
 %constant char *SRS_PT_EQUIDISTANT_CONIC	= SRS_PT_EQUIDISTANT_CONIC;
-%constant char *SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE = SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE;
 %constant char *SRS_PT_EQUIRECTANGULAR		= SRS_PT_EQUIRECTANGULAR;
 %constant char *SRS_PT_GALL_STEREOGRAPHIC	= SRS_PT_GALL_STEREOGRAPHIC;
 %constant char *SRS_PT_GAUSSLABORDEREUNION      = SRS_PT_GAUSSLABORDEREUNION;
@@ -451,9 +450,13 @@ public:
                                   fe, fn );
   }
 
-%feature( "kwargs" ) SetEquidistantCylindricalSphere;
-  OGRErr SetEquidistantCylindricalSphere( double clat, double clong, double sc, double fe, double fn ) {
-    return OSRSetEquidistantCylindricalSphere( self, clat, clong, sc, fe, fn );
+%feature( "kwargs" ) SetEquirectangular2;
+  OGRErr SetEquirectangular2( double clat, double clong,
+                              double pseudostdparallellat,
+                              double fe, double fn ) {
+    return OSRSetEquirectangular2( self, clat, clong,
+                                   pseudostdparallellat,
+                                   fe, fn );
   }
 
 %feature( "kwargs" ) SetGaussLabordeReunion;
