@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 #include "TerraLibDataset.h"
+#include "TerraLibRasterBand.h"
 
 CPL_C_START
 void CPL_DLL GDALRegister_TERRALIB( void );
@@ -39,6 +40,14 @@ CPL_C_END
 
 TerraLibDataset::TerraLibDataset()
 {
+    m_ProjectionRef      = NULL;
+    m_adfGeoTransform[0] = 0.0;
+    m_adfGeoTransform[1] = 1.0;
+    m_adfGeoTransform[2] = 0.0;
+    m_adfGeoTransform[3] = 0.0;
+    m_adfGeoTransform[4] = 0.0;
+    m_adfGeoTransform[5] = 1.0;
+    m_bGeoTransformValid = false;
 }
 
 //  ----------------------------------------------------------------------------
@@ -47,6 +56,11 @@ TerraLibDataset::TerraLibDataset()
 
 TerraLibDataset::~TerraLibDataset()
 {
+    if( m_ProjectionRef )
+    {
+        CPLFree( m_ProjectionRef );
+    }
+
     if( m_db )
     {
         m_db->close();
@@ -110,7 +124,6 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
 
     TerraLibDataset* poDS = new TerraLibDataset;
     poDS->eAccess         = poOpenInfo->eAccess;
-    poDS->fp              = NULL;
 
     //  ------------------------------------------------------------------------
     //  Open from Access "database" file
@@ -171,9 +184,9 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
         return NULL;
     }
 
-    TeLayer* layer = new TeLayer( pszLayer );
+    poDS->m_layer = new TeLayer( pszLayer );
 
-    if( ! poDS->m_db->loadLayer( layer ) )
+    if( ! poDS->m_db->loadLayer( poDS->m_layer ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
         return FALSE;
@@ -183,34 +196,44 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     //  Look for raster
     //  --------------------------------------------------------------------
 
-    TeRaster* raster      = layer->raster();
+    poDS->m_raster = poDS->m_layer->raster();
 
-    if( ! raster )
+    if( ! poDS->m_raster )
     {
         return NULL;
     }
 
-    TeRasterParams params = raster->params();
+    poDS->m_params = poDS->m_raster->params();
 
     // -------------------------------------------------------------------- 
     // Load raster parameters
     // -------------------------------------------------------------------- 
 
-    poDS->nRasterXSize = params.nlines_;
-    poDS->nRasterXSize = params.ncols_;
-    poDS->nBands       = params.nBands();
+    poDS->nRasterXSize      = poDS->m_params.ncols_;
+    poDS->nRasterYSize      = poDS->m_params.nlines_;
+    poDS->nBands            = poDS->m_params.nBands();
+    poDS->m_ProjectionRef   = CPLStrdup( TeGetWKTFromTeProjection( poDS->m_params.projection() ).c_str() );
+    poDS->m_adfGeoTransform[0] = poDS->m_params.box().x1_;
+    poDS->m_adfGeoTransform[1] = poDS->m_params.resx_;
+    poDS->m_adfGeoTransform[2] = 0.0;
+    poDS->m_adfGeoTransform[3] = poDS->m_params.box().y2_;
+    poDS->m_adfGeoTransform[4] = 0.0;
+    poDS->m_adfGeoTransform[5] = poDS->m_params.resy_;
+    poDS->m_bGeoTransformValid = true;
 
     // -------------------------------------------------------------------- 
     // Create Band Information
     // -------------------------------------------------------------------- 
 
-    int i = 0;
-/*
-    for( i = 0; i < poDS->nBands; i++ )
+    int nBands = 0;
+
+    do
     {
-        poDS->SetBand( i + 1, new TerraLibRasterBand( poDS, i + 1 ) );
+        nBands++;
+        poDS->SetBand( nBands, new TerraLibRasterBand( poDS ) );
     }
-*/
+    while( ! nBands > poDS->nBands );
+
     return (GDALDataset*) poDS;
 }
 
@@ -248,7 +271,12 @@ GDALDataset *TerraLibDataset::CreateCopy( const char *pszFilename,
 
 CPLErr TerraLibDataset::GetGeoTransform( double *padfTransform )
 {
-    return CE_None;
+    memcpy( padfTransform, m_adfGeoTransform, sizeof(double) * 6 );
+
+    if( ! m_bGeoTransformValid )
+        return CE_Failure;
+    else
+        return CE_None;
 }
 
 //  ----------------------------------------------------------------------------
@@ -258,6 +286,15 @@ CPLErr TerraLibDataset::GetGeoTransform( double *padfTransform )
 CPLErr TerraLibDataset::SetGeoTransform( double *padfTransform )
 {
     return CE_None;
+}
+
+//  ----------------------------------------------------------------------------
+//                                                            GetProjectionRef()
+//  ----------------------------------------------------------------------------
+
+const char* TerraLibDataset::GetProjectionRef( void )
+{
+    return m_ProjectionRef;
 }
 
 //  ----------------------------------------------------------------------------
