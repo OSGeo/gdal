@@ -454,7 +454,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        osHDRFilename = CPLFormCIFilename( NULL, osName, "hdr" );
+        osHDRFilename = CPLFormCIFilename( osPath, osName, "hdr" );
     }
 
     bSelectedHDR = EQUAL( osHDRFilename, poOpenInfo->pszFilename );
