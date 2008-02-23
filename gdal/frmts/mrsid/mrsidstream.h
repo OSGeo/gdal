@@ -42,7 +42,7 @@ class LTIVSIStream : public LTIOStreamInf
   public:
     LTIVSIStream();
     LT_STATUS initialize( const char *, const char * );
-    LT_STATUS initialize( VSIVirtualHandle * );
+    LT_STATUS initialize( LTIVSIStream* ltiVSIStream );
     ~LTIVSIStream();
 
     bool isEOF();
@@ -66,6 +66,7 @@ class LTIVSIStream : public LTIOStreamInf
   private:
     VSIVirtualHandle    *poFileHandle;
     int                 nError;
+    int                 *pnRefCount;
 };
 
 #endif /* MRSIDSTREAM_H_INCLUDED */
