@@ -1641,7 +1641,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         CPLDebug( "OGR", 
                   "OGRSpatialReference::SetFromUserInput(%s), opened file\n"
                   "but it is to large for our generous buffer.  Is it really\n"
-                  "just a WKT definition?" );
+                  "just a WKT definition?", pszDefinition );
         CPLFree( pszBuffer );
         return OGRERR_FAILURE;
     }
@@ -2220,7 +2220,7 @@ OGRErr OGRSpatialReference::SetLocalCS( const char * pszName )
         CPLDebug( "OGR", 
                   "OGRSpatialReference::SetLocalCS(%s) failed.\n"
                "It appears an incompatible root node (%s) already exists.\n",
-                  GetRoot()->GetValue() );
+                  pszName, GetRoot()->GetValue() );
         return OGRERR_FAILURE;
     }
     else
@@ -2277,7 +2277,7 @@ OGRErr OGRSpatialReference::SetProjCS( const char * pszName )
         CPLDebug( "OGR", 
                   "OGRSpatialReference::SetProjCS(%s) failed.\n"
                "It appears an incompatible root node (%s) already exists.\n",
-                  GetRoot()->GetValue() );
+                  pszName, GetRoot()->GetValue() );
         return OGRERR_FAILURE;
     }
 

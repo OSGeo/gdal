@@ -175,7 +175,7 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDS,
         nBlockYSize = 1;
 
         SetMetadataItem( "NBITS", 
-                         CPLString().Printf( "%ld", nBits ),
+                         CPLString().Printf( "%d", nBits ),
                          "IMAGE_STRUCTURE" );
     }
 }
