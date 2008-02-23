@@ -234,7 +234,7 @@ def ogr_gpx_4():
     
     feat = lyr.GetNextFeature()
     f_geom = feat.GetGeometryRef()
-    if f_geom.ExportToWkt()!= 'MULTILINESTRING (EMPTY)':
+    if f_geom.ExportToWkt()!= 'MULTILINESTRING EMPTY':
         return 'fail'
     feat.Destroy()
     
