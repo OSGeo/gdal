@@ -593,6 +593,13 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
     {
         if( strncmp(pszPath,iter->first.c_str(),iter->first.size()) == 0 )
             return iter->second;
+
+        /* "/vsimem\foo" should be handled as "/vsimem/foo" */
+        if (nIterKeyLen && nPathLen > nIterKeyLen &&
+            pszIterKey[nIterKeyLen-1] == '/' &&
+            pszPath[nIterKeyLen-1] == '\\' &&
+            strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
+            return iter->second;
     }
     
     return poThis->poDefaultHandler;
