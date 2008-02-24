@@ -117,7 +117,8 @@ int OGROCISession::EstablishSession( const char *pszUserid,
         {
             CPLDebug("OCI", 
                      "OCIEnvCreate() failed with status %d.\n"
-                     "Presumably Oracle is not properly installed, skipping.");
+                     "Presumably Oracle is not properly installed, skipping.",
+                     (int)nStatus);
                       
             return FALSE;
         }
