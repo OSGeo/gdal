@@ -3097,8 +3097,10 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEquirectangular(OSRSpatialReferen
     return OSRSetEquirectangular( self, clat, clong, 
                                   fe, fn );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEquidistantCylindricalSphere(OSRSpatialReferenceShadow *self,double clat,double clong,double sc,double fe,double fn){
-    return OSRSetEquidistantCylindricalSphere( self, clat, clong, sc, fe, fn );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetEquirectangular2(OSRSpatialReferenceShadow *self,double clat,double clong,double pseudostdparallellat,double fe,double fn){
+    return OSRSetEquirectangular2( self, clat, clong,
+                                   pseudostdparallellat,
+                                   fe, fn );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetGaussLabordeReunion(OSRSpatialReferenceShadow *self,double clat,double clong,double sc,double fe,double fn){
     return OSRSetGaussLabordeReunion( self, clat, clong, sc, fe, fn );
@@ -5644,7 +5646,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_SpatialReference_SetEquidistantCylindricalSphere(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+SWIGINTERN PyObject *_wrap_SpatialReference_SetEquirectangular2(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -5672,42 +5674,42 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetEquidistantCylindricalSphere(PyOb
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "clat",(char *) "clong",(char *) "sc",(char *) "fe",(char *) "fn", NULL 
+    (char *) "self",(char *) "clat",(char *) "clong",(char *) "pseudostdparallellat",(char *) "fe",(char *) "fn", NULL 
   };
   
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOO:SpatialReference_SetEquidistantCylindricalSphere",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOO:SpatialReference_SetEquirectangular2",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetEquidistantCylindricalSphere" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetEquirectangular2" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetEquidistantCylindricalSphere" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetEquirectangular2" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast< double >(val2);
   ecode3 = SWIG_AsVal_double(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetEquidistantCylindricalSphere" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetEquirectangular2" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast< double >(val3);
   ecode4 = SWIG_AsVal_double(obj3, &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetEquidistantCylindricalSphere" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetEquirectangular2" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast< double >(val4);
   ecode5 = SWIG_AsVal_double(obj4, &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetEquidistantCylindricalSphere" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetEquirectangular2" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast< double >(val5);
   ecode6 = SWIG_AsVal_double(obj5, &val6);
   if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetEquidistantCylindricalSphere" "', argument " "6"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetEquirectangular2" "', argument " "6"" of type '" "double""'");
   } 
   arg6 = static_cast< double >(val6);
   {
-    result = (OGRErr)OSRSpatialReferenceShadow_SetEquidistantCylindricalSphere(arg1,arg2,arg3,arg4,arg5,arg6);
+    result = (OGRErr)OSRSpatialReferenceShadow_SetEquirectangular2(arg1,arg2,arg3,arg4,arg5,arg6);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -10754,7 +10756,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetEckertIV", (PyCFunction) _wrap_SpatialReference_SetEckertIV, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"SpatialReference_SetEckertVI", (PyCFunction) _wrap_SpatialReference_SetEckertVI, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"SpatialReference_SetEquirectangular", (PyCFunction) _wrap_SpatialReference_SetEquirectangular, METH_VARARGS | METH_KEYWORDS, NULL},
-	 { (char *)"SpatialReference_SetEquidistantCylindricalSphere", (PyCFunction) _wrap_SpatialReference_SetEquidistantCylindricalSphere, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"SpatialReference_SetEquirectangular2", (PyCFunction) _wrap_SpatialReference_SetEquirectangular2, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"SpatialReference_SetGaussLabordeReunion", (PyCFunction) _wrap_SpatialReference_SetGaussLabordeReunion, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"SpatialReference_SetGS", (PyCFunction) _wrap_SpatialReference_SetGS, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"SpatialReference_SetGH", (PyCFunction) _wrap_SpatialReference_SetGH, METH_VARARGS | METH_KEYWORDS, NULL},
@@ -11390,7 +11392,6 @@ SWIGEXPORT void SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_IV",SWIG_FromCharPtr(SRS_PT_ECKERT_IV));
   SWIG_Python_SetConstant(d, "SRS_PT_ECKERT_VI",SWIG_FromCharPtr(SRS_PT_ECKERT_VI));
   SWIG_Python_SetConstant(d, "SRS_PT_EQUIDISTANT_CONIC",SWIG_FromCharPtr(SRS_PT_EQUIDISTANT_CONIC));
-  SWIG_Python_SetConstant(d, "SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE",SWIG_FromCharPtr(SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE));
   SWIG_Python_SetConstant(d, "SRS_PT_EQUIRECTANGULAR",SWIG_FromCharPtr(SRS_PT_EQUIRECTANGULAR));
   SWIG_Python_SetConstant(d, "SRS_PT_GALL_STEREOGRAPHIC",SWIG_FromCharPtr(SRS_PT_GALL_STEREOGRAPHIC));
   SWIG_Python_SetConstant(d, "SRS_PT_GAUSSLABORDEREUNION",SWIG_FromCharPtr(SRS_PT_GAUSSLABORDEREUNION));
