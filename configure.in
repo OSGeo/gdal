@@ -1335,10 +1335,15 @@ dnl ---------------------------------------------------------------------------
 dnl Check for grib in the local tree.
 dnl ---------------------------------------------------------------------------
 
-HAVE_GRIB=no
-if test -d frmts/grib ; then
+AC_ARG_WITH(grib,[  --without-grib        Disable GRIB format],,)
+
+if test "$with_grib" = yes -o x"$with_grib" = x ; then
+  echo checking for GRIB ... enabled
   OPT_GDAL_FORMATS="grib $OPT_GDAL_FORMATS"
   HAVE_GRIB=yes
+else
+  echo checking for GRIB ... disabled by user
+  HAVE_GRIB=no
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -2153,7 +2158,7 @@ LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
-LOC_MSG([  Xerces-C support:            ${HAVE_XERCES}])
+LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
