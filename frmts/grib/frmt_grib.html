@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>GRIB -- WMO General Regularly-distributed Information in Binary form</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GRIB -- WMO General Regularly-distributed Information in Binary form</h1>
+
+GDAL supports reading of GRIB1 and GRIB2 format raster data, with some degree 
+of support for coordinate system, georeferencing and other metadata.  GRIB
+format is commonly used for distribution of Meteorological information, and
+is propagated by the World Meteorological Organization.<p>
+
+The GDAL GRIB driver is based on a modified version of the degrib application
+which is written primarily by Arthur Taylor of NOAA NWS NDFD (MDL).  The
+degrib application (and the GDAL GRIB driver) are built on the g2clib
+grib decoding library written primarily by John Huddleston of NOAA NWS NCEP. 
+<p>
+
+There are several encoding schemes for raster data in GRIB format.  Most
+common ones should be supported including PNG encoding.  JPEG2000 encoded
+GRIB files will generally be supported if GDAL is also built with JPEG2000
+support via one of the GDAL JPEG2000 drivers.  The JasPer library generally
+provides the best jpeg2000 support for the GRIB driver.<p>
+
+GRIB files may a be represented in GDAL as having many bands, with some sets 
+of bands representing a time sequence.  GRIB metadata is used to set band
+descriptions that may be helpful in deducing what each band is - for instance
+<tt>100000[Pa] ISBL="Isobaric surface"</tt> or <tt>2743[m] GPML="Specific altitude above mean sea level"</tt>.  GRIB bands are represented as Float64 (double 
+precision floating point) regardless of the actual values.<p>
+
+See Also:<p>
+
+<ul>
+
+<li> <a href="http://www.weather.gov/mdl/NDFD_GRIB2Decoder/">NOAA NWS NDFD "degrib" GRIB2 Decoder</a>
+<li> <a href="http://www.nco.ncep.noaa.gov/pmb/codes/GRIB2/">NOAA NWS NCEP g2clib grib decoding library</a>
+<li> <a href="http://www.wmo.int/pages/prog/www/WMOCodes/GRIB.html">WMS GRIB Format Documents</a>
+</ul>
+
+</body>
+</html>
