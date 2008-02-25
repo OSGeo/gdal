@@ -55,7 +55,6 @@ SRS_PT_CYLINDRICAL_EQUAL_AREA = _osr.SRS_PT_CYLINDRICAL_EQUAL_AREA
 SRS_PT_ECKERT_IV = _osr.SRS_PT_ECKERT_IV
 SRS_PT_ECKERT_VI = _osr.SRS_PT_ECKERT_VI
 SRS_PT_EQUIDISTANT_CONIC = _osr.SRS_PT_EQUIDISTANT_CONIC
-SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE = _osr.SRS_PT_EQUIDISTANT_CYLINDRICAL_SHERE
 SRS_PT_EQUIRECTANGULAR = _osr.SRS_PT_EQUIRECTANGULAR
 SRS_PT_GALL_STEREOGRAPHIC = _osr.SRS_PT_GALL_STEREOGRAPHIC
 SRS_PT_GAUSSLABORDEREUNION = _osr.SRS_PT_GAUSSLABORDEREUNION
@@ -305,9 +304,12 @@ class SpatialReference(_object):
         """SetEquirectangular(self, double clat, double clong, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetEquirectangular(*args, **kwargs)
 
-    def SetEquidistantCylindricalSphere(*args, **kwargs):
-        """SetEquidistantCylindricalSphere(self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
-        return _osr.SpatialReference_SetEquidistantCylindricalSphere(*args, **kwargs)
+    def SetEquirectangular2(*args, **kwargs):
+        """
+        SetEquirectangular2(self, double clat, double clong, double pseudostdparallellat, 
+            double fe, double fn) -> OGRErr
+        """
+        return _osr.SpatialReference_SetEquirectangular2(*args, **kwargs)
 
     def SetGaussLabordeReunion(*args, **kwargs):
         """SetGaussLabordeReunion(self, double clat, double clong, double sc, double fe, double fn) -> OGRErr"""
