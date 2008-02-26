@@ -18,7 +18,8 @@ sChar Clock_GetTimeZone ();
 int Clock_IsDaylightSaving2 (double clock, sChar TimeZone);
 void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
                       int *hour, int *min, double *sec);
-void Clock_Print (char *buffer, int n, double clock, char *format, char f_gmt);
+void Clock_Print (char *buffer, int n, double clock, const char *format,
+                  char f_gmt);
 void Clock_Print2 (char *buffer, int n, double clock, char *format,
                    sChar timeZone, sChar f_dayCheck);
 double Clock_Clicks (void);

@@ -293,8 +293,8 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
  * NOTES
  *****************************************************************************
  */
-static char *TDLP_TableLookUp (TDLP_TableType * table, int tableLen,
-                               int index)
+static const char *TDLP_TableLookUp(TDLP_TableType * table, int tableLen,
+                                    int index)
 {
    int i;               /* Loop counter. */
 

@@ -280,8 +280,9 @@ static GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
  * NOTES
  *****************************************************************************
  */
-static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, char **name,
-                                char **comment, char **unit, int *convert,
+static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
+                                const char **comment, const char **unit,
+                                int *convert,
                                 unsigned short int center,
                                 unsigned short int subcenter)
 {
@@ -675,9 +676,9 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
    char f_bms;          /* flag if there is a bms section. */
    short int DSF;       /* Decimal Scale Factor for unpacking the data. */
    uChar gridID;        /* Which GDS specs to use. */
-   char *varName;       /* The name of the data stored in the grid. */
-   char *varComment;    /* Extra comments about the data stored in grid. */
-   char *varUnit;       /* Holds the name of the unit [K] [%] .. etc */
+   const char *varName; /* The name of the data stored in the grid. */
+   const char *varComment; /* Extra comments about the data stored in grid. */
+   const char *varUnit; /* Holds the name of the unit [K] [%] .. etc */
    int convert;         /* Conversion method for this variable's unit. */
    uInt4 curLoc;        /* Where we are in the current GRIB message. */
    unsigned short int center; /* The Center that created the data */
@@ -1713,9 +1714,9 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    double unitM = 1;    /* M in y = Mx + B, for unit conversion. */
    double unitB = 0;    /* B in y = Mx + B, for unit conversion. */
    uChar gridID;        /* Which GDS specs to use. */
-   char *varName;       /* The name of the data stored in the grid. */
-   char *varComment;    /* Extra comments about the data stored in grid. */
-   char *varUnit;       /* Holds the name of the unit [K] [%] .. etc */
+   const char *varName; /* The name of the data stored in the grid. */
+   const char *varComment; /* Extra comments about the data stored in grid. */
+   const char *varUnit; /* Holds the name of the unit [K] [%] .. etc */
    sInt4 li_temp;       /* Used to make sure section 5 is 7777. */
    char unitName[15];   /* Holds the string name of the current unit. */
    int unitLen;         /* String length of string name of current unit. */
