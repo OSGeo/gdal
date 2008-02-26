@@ -21,7 +21,7 @@
 #include "myassert.h"
 #include "myutil.h"
 
-char *centerLookup (unsigned short int center)
+const char *centerLookup (unsigned short int center)
 {
    /* see:
     * http://www.wmo.ch/web/www/WMOCodes/Operational/CommonTables/BUFRCommon-2005feb.pdf
@@ -32,7 +32,7 @@ char *centerLookup (unsigned short int center)
 /* *INDENT-OFF* */
    static struct {
       unsigned short int num;
-      char *name;
+      const char *name;
    } Center[] = {
       {0, "WMO Secretariat"},
       {1, "Melbourne"},
@@ -337,8 +337,8 @@ char *centerLookup (unsigned short int center)
    return NULL;
 }
 
-char *subCenterLookup (unsigned short int center,
-                       unsigned short int subcenter)
+const char *subCenterLookup(unsigned short int center,
+                            unsigned short int subcenter)
 {
 /* *INDENT-OFF* */
 /* see:
@@ -350,7 +350,7 @@ char *subCenterLookup (unsigned short int center,
  */
    static struct {
       unsigned short int center, subcenter;
-      char *name;
+      const char *name;
    } SubCenter[] = {
       {7, 1, "NCEP Re-Analysis Project"}, {7, 2, "NCEP Ensemble Products"},
       {7, 3, "NCEP Central Operations"},
@@ -417,7 +417,7 @@ char *subCenterLookup (unsigned short int center,
    return NULL;
 }
 
-char *processLookup (unsigned short int center, unsigned char process)
+const char *processLookup (unsigned short int center, unsigned char process)
 {
    /* see: http://www.nco.ncep.noaa.gov/pmb/docs/on388/tablea.html I typed
     * this in on 10/12/2005 */
@@ -425,7 +425,7 @@ char *processLookup (unsigned short int center, unsigned char process)
    static struct {
       unsigned short int center;
       unsigned char process;
-      char *name;
+      const char *name;
    } Process[] = {
       {7, 2, "Ultra Violet Index Model"},
       {7, 3, "NCEP/ARL Transport and Dispersion Model"},
@@ -532,18 +532,18 @@ char *processLookup (unsigned short int center, unsigned char process)
 }
 
 typedef struct {
-   char *name, *comment, *unit;
+   const char *name, *comment, *unit;
    unit_convert convert;
 } GRIB2ParmTable;
 
 typedef struct {
    int prodType, cat, subcat;
-   char *name, *comment, *unit;
+   const char *name, *comment, *unit;
    unit_convert convert;
 } GRIB2LocalTable;
 
 typedef struct {
-   char *GRIB2name, *NDFDname;
+    const char *GRIB2name, *NDFDname;
 } NDFD_AbrevOverideTable;
 
 /* *INDENT-OFF* */

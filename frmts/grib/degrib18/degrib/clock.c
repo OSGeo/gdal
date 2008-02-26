@@ -919,7 +919,8 @@ void Clock_PrintDate (double clock, sInt4 *year, int *month, int *day,
  * NOTES
  *****************************************************************************
  */
-void Clock_Print (char *buffer, int n, double clock, char *format, char f_gmt)
+void Clock_Print (char *buffer, int n, double clock, const char *format,
+                  char f_gmt)
 {
    sInt4 totDay, year;
    sInt4 sec;

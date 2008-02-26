@@ -8,12 +8,12 @@ extern "C" {
 #include "type.h"
 #include "meta.h"
 
-char * centerLookup (unsigned short int center);
+const char *centerLookup(unsigned short int center);
 
-char * subCenterLookup (unsigned short int center,
-                        unsigned short int subcenter);
+const char *subCenterLookup(unsigned short int center,
+                            unsigned short int subcenter);
 
-char * processLookup (unsigned short int center, unsigned char process);
+const char *processLookup(unsigned short int center, unsigned char process);
 
 void ParseElemName (unsigned short int center, unsigned short int subcenter,
                     int prodType, int templat, int cat, int subcat,
@@ -29,7 +29,7 @@ int ComputeUnit (int prodType, int templat, int cat, int subcat, sChar f_unit,
                  double *unitM, double *unitB, char *name);
 */
 typedef struct {
-   char *name, *comment, *unit;
+    const char *name, *comment, *unit;
 } GRIB2SurfTable;
 
 GRIB2SurfTable Table45Index (int i, int *f_reserved, uShort2 center,
