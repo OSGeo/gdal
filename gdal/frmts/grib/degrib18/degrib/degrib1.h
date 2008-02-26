@@ -8,12 +8,12 @@
 #include "inventory.h"
 
 typedef struct {
-	char *name, *comment, *unit;
-   unit_convert convert;
+    const char *name, *comment, *unit;
+    unit_convert convert;
 } GRIB1ParmTable;
 
 typedef struct {
-   char *name, *comment, *unit;
+   const char *name, *comment, *unit;
    char f_twoPart;
 } GRIB1SurfTable;
 

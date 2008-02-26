@@ -487,7 +487,7 @@ typedef enum {
    Prt_F, Prt_FS, Prt_E, Prt_ES, Prt_G, Prt_GS, Prt_SS, Prt_NULL
 } Prt_TYPE;
 
-char *Print (char *label, char *varName, Prt_TYPE fmt, ...);
+char *Print(const char *label, const char *varName, Prt_TYPE fmt, ...);
 
 void MetaInit (grib_MetaData *meta);
 
