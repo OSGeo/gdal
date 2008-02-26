@@ -1293,6 +1293,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
             oJP2Palette = jp2_src->access_palette();
             oJP2Channels = jp2_src->access_channels();
+
+            jp2_colour oColors = jp2_src->access_colour();
+            if( oColors.get_space() != JP2_sRGB_SPACE
+                && oColors.get_space() != JP2_sLUM_SPACE )
+            {
+                CPLDebug( "JP2KAK", "Unusual ColorSpace=%d, not further interpreted.", 
+                          (int) oColors.get_space() );
+            }
         }
         else if( poRawInput == NULL )
         {
