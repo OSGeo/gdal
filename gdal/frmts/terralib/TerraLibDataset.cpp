@@ -126,7 +126,7 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->eAccess         = poOpenInfo->eAccess;
 
     //  ------------------------------------------------------------------------
-    //  Open from Access "database" file
+    //  Create a ADO handler
     //  ------------------------------------------------------------------------
 
     if( EQUAL( pszRDBMS, "ADO" ) ||
@@ -137,7 +137,7 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     //  --------------------------------------------------------------------
-    //  Open MySQL database
+    //  Create a MySQL handler
     //  --------------------------------------------------------------------
 
     if( EQUAL( pszRDBMS, "MySQL" ) )
@@ -156,7 +156,7 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     //  --------------------------------------------------------------------
-    //  Open PostgreSQL
+    //  Create PostgreSQL/PostGIS handler
     //  --------------------------------------------------------------------
 
     if( EQUAL( pszRDBMS, "PostgreSQL" ) || 
@@ -166,13 +166,14 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     //  --------------------------------------------------------------------
-    //  Connect to database server
+    //  Connect to database
     //  --------------------------------------------------------------------
 
     if ( ! poDS->m_db->connect( pszHost, pszUser, pszPassword, pszDatabase ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
-        return FALSE;
+        delete poDS;
+        return NULL;
     }
 
     //  --------------------------------------------------------------------
@@ -181,6 +182,8 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if ( ! poDS->m_db->layerExist( pszLayer ) )
     {
+        CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
+        delete poDS;
         return NULL;
     }
 
@@ -189,6 +192,7 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     if( ! poDS->m_db->loadLayer( poDS->m_layer ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
+        delete poDS;
         return FALSE;
     }
 
@@ -200,6 +204,8 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( ! poDS->m_raster )
     {
+        CPLError( CE_Failure, CPLE_AppDefined, (CPLString) poDS->m_db->errorMessage() );
+        delete poDS;
         return NULL;
     }
 
@@ -209,20 +215,20 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
     // Load raster parameters
     // -------------------------------------------------------------------- 
 
-    poDS->nRasterXSize      = poDS->m_params.ncols_;
-    poDS->nRasterYSize      = poDS->m_params.nlines_;
-    poDS->nBands            = poDS->m_params.nBands();
-    poDS->m_ProjectionRef   = CPLStrdup( TeGetWKTFromTeProjection( poDS->m_params.projection() ).c_str() );
-    poDS->m_adfGeoTransform[0] = poDS->m_params.box().x1_;
-    poDS->m_adfGeoTransform[1] = poDS->m_params.resx_;
-    poDS->m_adfGeoTransform[2] = 0.0;
-    poDS->m_adfGeoTransform[3] = poDS->m_params.box().y2_;
-    poDS->m_adfGeoTransform[4] = 0.0;
-    poDS->m_adfGeoTransform[5] = poDS->m_params.resy_;
-    poDS->m_bGeoTransformValid = true;
+    poDS->nRasterXSize          = poDS->m_params.ncols_;
+    poDS->nRasterYSize          = poDS->m_params.nlines_;
+    poDS->nBands                = poDS->m_params.nBands();
+    poDS->m_ProjectionRef       = CPLStrdup( TeGetWKTFromTeProjection( poDS->m_params.projection() ).c_str() );
+    poDS->m_adfGeoTransform[0]  = poDS->m_params.box().x1_;
+    poDS->m_adfGeoTransform[1]  = poDS->m_params.resx_;
+    poDS->m_adfGeoTransform[2]  = 0.0;
+    poDS->m_adfGeoTransform[3]  = poDS->m_params.box().y2_;
+    poDS->m_adfGeoTransform[4]  = 0.0;
+    poDS->m_adfGeoTransform[5]  = poDS->m_params.resy_;
+    poDS->m_bGeoTransformValid  = true;
 
     // -------------------------------------------------------------------- 
-    // Create Band Information
+    // Create Band(s) Information
     // -------------------------------------------------------------------- 
 
     int nBands = 0;
@@ -232,7 +238,7 @@ GDALDataset *TerraLibDataset::Open( GDALOpenInfo *poOpenInfo )
         nBands++;
         poDS->SetBand( nBands, new TerraLibRasterBand( poDS ) );
     }
-    while( ! nBands > poDS->nBands );
+    while( nBands < poDS->nBands );
 
     return (GDALDataset*) poDS;
 }

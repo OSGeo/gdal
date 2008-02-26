@@ -36,7 +36,6 @@
 
 TerraLibRasterBand::TerraLibRasterBand( TerraLibDataset *poDS )
 {
-    this->poDS          = poDS;
     this->nBand         = nBand != 0 ? nBand : poDS->nBands;
     this->pabyBlockBuf  = NULL;
     this->nRasterXSize  = poDS->m_params.ncols_;
@@ -71,8 +70,6 @@ TerraLibRasterBand::TerraLibRasterBand( TerraLibDataset *poDS )
     default:
         break;
     }
-
-
 }
 
 //  ----------------------------------------------------------------------------
@@ -125,6 +122,22 @@ GDALColorInterp TerraLibRasterBand::GetColorInterpretation()
 
 CPLErr TerraLibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage )
 {
+/***
+ * experimenting with the terralib API
+ ***
+
+    TerraLibDataset* poGDS = (TerraLibDataset*) poDS;
+
+    TeDatabasePortal* poDBP = poGDS->m_db->getPortal();
+
+    unsigned long nBlockId = ( poGDS->m_params.blockHeight_ * nBlockYOff ) + ( poGDS->m_params.blockWidth_ * nBlockXOff );
+
+    CPLDebug( "Te", "%d %d = %d", nBlockXOff, nBlockYOff, nBlockId );
+
+    poDBP->getRasterBlock( nBlockId, (GByte*) pImage );
+
+***/
+
     return CE_None;
 }
 
