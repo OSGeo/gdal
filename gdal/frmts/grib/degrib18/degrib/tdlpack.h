@@ -14,7 +14,7 @@ enum {GRIB2BIT_1=128, GRIB2BIT_2=64, GRIB2BIT_3=32, GRIB2BIT_4=16,
 
 typedef struct {
    int index;
-   char *data;
+   const char *data;
 } TDLP_TableType;
 
 
