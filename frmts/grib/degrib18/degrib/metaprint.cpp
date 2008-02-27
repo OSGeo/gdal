@@ -26,6 +26,8 @@
 #include "myassert.h"
 #include "clock.h"
 
+#define pow(a,b) pow((double)(a),b) // to help Visual Studio 8 to pickup the right version of pow 
+
 /*****************************************************************************
  * Lookup() --
  *
