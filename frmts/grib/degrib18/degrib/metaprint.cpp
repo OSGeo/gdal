@@ -26,8 +26,6 @@
 #include "myassert.h"
 #include "clock.h"
 
-#define pow(a,b) pow((double)(a),b) // to help Visual Studio 8 to pickup the right version of pow 
-
 /*****************************************************************************
  * Lookup() --
  *
@@ -766,12 +764,12 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
                   sect4->lowerLimit.factor);
          Print ("PDS-S4", "Lower limit (scale value, scale factor)", Prt_GS,
                 sect4->lowerLimit.value *
-                pow (10, -1 * sect4->lowerLimit.factor), buffer);
+                pow (10.0, -1 * sect4->lowerLimit.factor), buffer);
          sprintf (buffer, "%d, %d", sect4->upperLimit.value,
                   sect4->upperLimit.factor);
          Print ("PDS-S4", "Upper limit (scale value, scale factor)", Prt_GS,
                 sect4->upperLimit.value *
-                pow (10, -1 * sect4->upperLimit.factor), buffer);
+                pow (10.0, -1 * sect4->upperLimit.factor), buffer);
 /*         printf ("Hello world 1\n");*/
          break;
       case GS4_PERCENTILE:
@@ -819,12 +817,12 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
                   sect4->lowerLimit.factor);
          Print ("PDS-S4", "Lower limit (scale value, scale factor)", Prt_GS,
                 sect4->lowerLimit.value *
-                pow (10, -1 * sect4->lowerLimit.factor), buffer);
+                pow (10.0, -1 * sect4->lowerLimit.factor), buffer);
          sprintf (buffer, "%d, %d", sect4->upperLimit.value,
                   sect4->upperLimit.factor);
          Print ("PDS-S4", "Upper limit (scale value, scale factor)", Prt_GS,
                 sect4->upperLimit.value *
-                pow (10, -1 * sect4->upperLimit.factor), buffer);
+                pow (10.0, -1 * sect4->upperLimit.factor), buffer);
          /* Intentionally fall through. */
       case GS4_STATISTIC:
 /*         strftime (buffer, 100, "%m/%d/%Y %H:%M:%S UTC",

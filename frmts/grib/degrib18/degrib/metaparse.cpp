@@ -28,8 +28,6 @@
 #include "memendian.h"
 #include "myutil.h"
 
-#define pow(a,b) pow((double)(a),b) // prevent Visual Studio 7 from using int pow(int,int)
-
 /*****************************************************************************
  * MetaInit() --
  *
@@ -721,7 +719,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
 
          if ((is3[16] != GRIB2MISSING_s4) && (is3[15] != GRIB2MISSING_s1)) {
             /* Assumes data is given in m (not km). */
-            meta->gds.majEarth = is3[16] / (pow (10, is3[15]) * 1000.);
+            meta->gds.majEarth = is3[16] / (pow (10.0, is3[15]) * 1000.);
             meta->gds.minEarth = meta->gds.majEarth;
          } else {
             errSprintf ("Missing info on radius of Earth.\n");
@@ -759,8 +757,8 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          if ((is3[21] != GRIB2MISSING_s4) && (is3[20] != GRIB2MISSING_s1) &&
              (is3[26] != GRIB2MISSING_s4) && (is3[25] != GRIB2MISSING_s1)) {
             /* Assumes data is given in km (not m). */
-            meta->gds.majEarth = is3[21] / (pow (10, is3[20]));
-            meta->gds.minEarth = is3[26] / (pow (10, is3[25]));
+            meta->gds.majEarth = is3[21] / (pow (10.0, is3[20]));
+            meta->gds.minEarth = is3[26] / (pow (10.0, is3[25]));
          } else {
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
@@ -784,8 +782,8 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          if ((is3[21] != GRIB2MISSING_s4) && (is3[20] != GRIB2MISSING_s1) &&
              (is3[26] != GRIB2MISSING_s4) && (is3[25] != GRIB2MISSING_s1)) {
             /* Assumes data is given in m (not km). */
-            meta->gds.majEarth = is3[21] / (pow (10, is3[20]) * 1000.);
-            meta->gds.minEarth = is3[26] / (pow (10, is3[25]) * 1000.);
+            meta->gds.majEarth = is3[21] / (pow (10.0, is3[20]) * 1000.);
+            meta->gds.minEarth = is3[26] / (pow (10.0, is3[25]) * 1000.);
          } else {
             errSprintf ("Missing info on major / minor axis of Earth.\n");
             return -2;
@@ -818,7 +816,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
    }
 
    /* Initialize variables prior to parsing the specific templates. */
-   unit = pow (10, -6);
+   unit = 1e-6;
    meta->gds.center = 0;
    meta->gds.scaleLat1 = meta->gds.scaleLat2 = 0;
    meta->gds.southLat = meta->gds.southLon = 0;
@@ -1253,7 +1251,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       meta->pds2.sect4.fstSurfValue = 0;
    } else {
       meta->pds2.sect4.fstSurfScale = is4[23];
-      meta->pds2.sect4.fstSurfValue = is4[24] / pow (10, is4[23]);
+      meta->pds2.sect4.fstSurfValue = is4[24] / pow (10.0, is4[23]);
    }
    meta->pds2.sect4.sndSurfType = (uChar) is4[28];
    if ((is4[30] == GRIB2MISSING_s4) || (is4[29] == GRIB2MISSING_s1) ||
@@ -1262,7 +1260,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       meta->pds2.sect4.sndSurfValue = 0;
    } else {
       meta->pds2.sect4.sndSurfScale = is4[29];
-      meta->pds2.sect4.sndSurfValue = is4[30] / pow (10, is4[29]);
+      meta->pds2.sect4.sndSurfValue = is4[30] / pow (10.0, is4[29]);
    }
    switch (meta->pds2.sect4.templat) {
       case GS4_ANALYSIS: /* 4.0 */
@@ -1774,9 +1772,9 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
        (meta->pds2.sect4.templat == GS4_PROBABIL_PNT)) {
       probType = meta->pds2.sect4.probType;
       lowerProb = meta->pds2.sect4.lowerLimit.value *
-            pow (10, -1 * meta->pds2.sect4.lowerLimit.factor);
+            pow (10.0, -1 * meta->pds2.sect4.lowerLimit.factor);
       upperProb = meta->pds2.sect4.upperLimit.value *
-            pow (10, -1 * meta->pds2.sect4.upperLimit.factor);
+            pow (10.0, -1 * meta->pds2.sect4.upperLimit.factor);
    } else {
       probType = 0;
       lowerProb = 0;
@@ -2008,7 +2006,7 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
                /* Convert the units. */
                if (attrib->fieldType) {
                   if (unitM == -10) {
-                     value = pow (10, (*itemp++));
+                     value = pow (10.0, (*itemp++));
                   } else {
                      value = unitM * (*itemp++) + unitB;
                   }
