@@ -21,6 +21,7 @@ extern "C" {
 #include <stdio.h>
 #include "type.h"
 #include "datasource.h"
+#include "cpl_port.h"
 
 /*
  * MadeOnIntel    ==> LittleEndian

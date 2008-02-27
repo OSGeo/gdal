@@ -19,6 +19,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include "type.h"
+#include "cpl_port.h"
 
 /*
  * MadeOnIntel    ==> LittleEndian
