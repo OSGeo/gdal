@@ -25,8 +25,6 @@
 #include "metaname.h"
 #include "clock.h"
 
-#define pow(a,b) pow((double)(a),b) // prevent Visual Studio 7 from using int pow(int,int)
-
 /* default missing data value (see: bitmap GRIB1: sect3 and sect4) */
 /* UNDEFINED is default, UNDEFINED_PRIM is desired choice. */
 #define UNDEFINED 9.999e20
@@ -823,7 +821,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
 {
    uInt4 sectLen;       /* Length in bytes of the current section. */
    int gridType;        /* Which type of grid. (see enumerated types). */
-   double unit = pow (10, -3); /* Used for converting to the correct unit. */
+   double unit = 1e-3; /* Used for converting to the correct unit. */
    uInt4 uli_temp;      /* Used for reading a GRIB1 float. */
    int i;
    int f_allZero;       /* Used to find out if the "lat/lon" extension part
@@ -1501,7 +1499,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       meta->gridAttrib.min = pow (10.0, (refVal * pow (2.0, ESF) /
                                        pow (10.0, DSF)));
    } else {
-/*      meta->gridAttrib.min = unitM * (refVal / pow (10, DSF)) + unitB; */
+/*      meta->gridAttrib.min = unitM * (refVal / pow (10.0, DSF)) + unitB; */
       meta->gridAttrib.min = unitM * (refVal * pow (2.0, ESF) /
                                       pow (10.0, DSF)) + unitB;
    }
@@ -1544,7 +1542,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                memBitRead (&uli_temp, sizeof (sInt4), bds, numBits,
                            &bufLoc, &numUsed);
                bds += numUsed;
-               d_temp = (refVal + (uli_temp * pow (2, ESF))) / pow (10, DSF);
+               d_temp = (refVal + (uli_temp * pow (2.0, ESF))) / pow (10.0, DSF);
                /* Convert Units. */
                if (unitM == -10) {
                   d_temp = pow (10.0, d_temp);
@@ -1556,8 +1554,8 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                }
                data[newIndex] = d_temp;
             } else {
-               /* Assert: d_temp = unitM * refVal / pow (10,DSF) + unitB. */
-               /* Assert: min = unitM * refVal / pow (10, DSF) + unitB. */
+               /* Assert: d_temp = unitM * refVal / pow (10.0,DSF) + unitB. */
+               /* Assert: min = unitM * refVal / pow (10.0, DSF) + unitB. */
                data[newIndex] = meta->gridAttrib.min;
             }
          }
@@ -1616,7 +1614,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc,
                         &numUsed);
             bds += numUsed;
-            d_temp = (refVal + (uli_temp * pow (2, ESF))) / pow (10, DSF);
+            d_temp = (refVal + (uli_temp * pow (2.0, ESF))) / pow (10.0, DSF);
 
 #ifdef DEBUG
 /*
