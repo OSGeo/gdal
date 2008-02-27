@@ -27,8 +27,6 @@
 #include "memwatch.h"
 #endif
 
-#define pow(a,b) pow((double)(a),b) // prevent Visual Studio 7 from using int pow(int,int)
-
 #define GRIB2MISSING_1 (int) (0xff)
 #define GRIB2MISSING_2 (int) (0xffff)
 #define GRIB2MISSING_4 (sInt4) (0xffffffff)
@@ -471,7 +469,7 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
    en->lenGdsTmpl = templatesgrid[i].mapgridlen;
 
    /* using 1 / 10^-6 to reduce division later */
-   unit = pow (10, 6);
+   unit = 1e6;
    /* lat/lon grid */
    if (tmplNum == 0) {
       getShpEarth (majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
@@ -698,7 +696,7 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
       en->pdsTmpl[11] = GRIB2MISSING_4;
    } else {
       en->pdsTmpl[10] = surfScale1;
-      en->pdsTmpl[11] = NearestInt (dSurfVal1 * pow (10, surfScale1));
+      en->pdsTmpl[11] = NearestInt (dSurfVal1 * pow (10.0, surfScale1));
    }
    en->pdsTmpl[12] = surfType2;
    if (surfType2 == GRIB2MISSING_1) {
@@ -706,7 +704,7 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
       en->pdsTmpl[14] = GRIB2MISSING_4;
    } else {
       en->pdsTmpl[13] = surfScale2;
-      en->pdsTmpl[14] = NearestInt (dSurfVal2 * pow (10, surfScale2));
+      en->pdsTmpl[14] = NearestInt (dSurfVal2 * pow (10.0, surfScale2));
    }
    return 34;
 }
@@ -841,14 +839,14 @@ int fillSect4_5 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
       en->pdsTmpl[19] = GRIB2MISSING_4;
    } else {
       en->pdsTmpl[18] = lowScale;
-      en->pdsTmpl[19] = NearestInt (dlowVal * pow (10, lowScale));
+      en->pdsTmpl[19] = NearestInt (dlowVal * pow (10.0, lowScale));
    }
    if ((uChar) upScale == GRIB2MISSING_1) {
       en->pdsTmpl[20] = GRIB2MISSING_1;
       en->pdsTmpl[21] = GRIB2MISSING_4;
    } else {
       en->pdsTmpl[20] = upScale;
-      en->pdsTmpl[21] = NearestInt (dupVal * pow (10, upScale));
+      en->pdsTmpl[21] = NearestInt (dupVal * pow (10.0, upScale));
    }
    return 47;
 }
@@ -988,14 +986,14 @@ int fillSect4_9 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
       en->pdsTmpl[19] = GRIB2MISSING_4;
    } else {
       en->pdsTmpl[18] = lowScale;
-      en->pdsTmpl[19] = NearestInt (dlowVal * pow (10, lowScale));
+      en->pdsTmpl[19] = NearestInt (dlowVal * pow (10.0, lowScale));
    }
    if ((uChar) upScale == GRIB2MISSING_1) {
       en->pdsTmpl[20] = GRIB2MISSING_1;
       en->pdsTmpl[21] = GRIB2MISSING_4;
    } else {
       en->pdsTmpl[20] = upScale;
-      en->pdsTmpl[21] = NearestInt (dupVal * pow (10, upScale));
+      en->pdsTmpl[21] = NearestInt (dupVal * pow (10.0, upScale));
    }
    en->pdsTmpl[22] = endYear;
    en->pdsTmpl[23] = endMonth;

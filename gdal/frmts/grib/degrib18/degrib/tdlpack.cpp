@@ -14,8 +14,6 @@
 #include "memwatch.h"
 #endif
 
-#define pow(a,b) pow((double)(a),b) // prevent Visual Studio 7 from using int pow(int,int)
-
 #define GRIB_UNSIGN_INT3(a,b,c) ((a<<16)+(b<<8)+c)
 #define GRIB_UNSIGN_INT2(a,b) ((a<<8)+b)
 #define GRIB_SIGN_INT3(a,b,c) ((1-(int) ((unsigned) (a & 0x80) >> 6)) * (int) (((a & 127) << 16)+(b<<8)+c))
@@ -226,7 +224,7 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    if (YY >= 50) {
       YY = -1 * (YY - 50);
    }
-   pdsMeta->thresh = (XXXX / 10000.) * pow (10, YY);
+   pdsMeta->thresh = (XXXX / 10000.) * pow (10.0, YY);
    pdsMeta->I = li_temp / 100;
    li_temp -= pdsMeta->I * 100L;
    pdsMeta->S = li_temp / 10;
@@ -1072,7 +1070,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
 #endif
 
    /* Binary scale factor in TDLP has reverse sign from GRIB definition. */
-   scale = pow (10, -1 * DSF) * pow (2, -1 * BSF);
+   scale = pow (10.0, -1 * DSF) * pow (2.0, -1 * BSF);
 
    meta->gridAttrib.f_maxmin = 0;
    /* Work with Second order complex packed data. */
@@ -1675,7 +1673,7 @@ static void TDL_ScaleData (double *Src, sInt4 *Dst, sInt4 numData,
    sInt4 cnt;
    double *src = Src;
    sInt4 *dst = Dst;
-   double scale = pow (10, -1 * DSF) * pow (2, -1 * BSF);
+   double scale = pow (10.0, -1 * DSF) * pow (2.0, -1 * BSF);
    char f_actualPrim = 0;
    char f_actualSec = 0;
    sInt4 li_primMiss = (sInt4) (*primMiss * SCALE_MISSING + .5);
@@ -2678,7 +2676,7 @@ static void shiftGroup2 (sInt4 *Data, int start1, int start2,
    int i;               /* Loop counter. */
    int range;           /* The range defined by bit. */
 
-   range = (int) (pow (2, bit) - 1) - 1;
+   range = (int) (pow (2.0, bit) - 1) - 1;
    myAssert (start2 <= start1);
    for (i = start1; i >= start2; i--) {
       if ((Data[i] != li_primMiss) && (Data[i] != li_secMiss)) {
@@ -2745,7 +2743,7 @@ static void shiftGroup1 (sInt4 *Data, int start1, int start2,
    int i;               /* Loop counter. */
    int range;           /* The range defined by bit. */
 
-   range = (int) (pow (2, bit) - 1) - 1;
+   range = (int) (pow (2.0, bit) - 1) - 1;
    myAssert (start2 <= start1);
    for (i = start1; i >= start2; i--) {
       if (Data[i] != li_primMiss) {
@@ -2810,7 +2808,7 @@ static void shiftGroup0 (sInt4 *Data, int start1, int start2, int bit,
    int i;               /* Loop counter. */
    int range;           /* The range defined by bit. */
 
-   range = (int) (pow (2, bit) - 1) - 0;
+   range = (int) (pow (2.0, bit) - 1) - 0;
    myAssert (start2 <= start1);
    for (i = start1; i >= start2; i--) {
       if (Data[i] > *max) {
@@ -2886,7 +2884,7 @@ static void doSplit (sInt4 *Data, int numData, TDLGroupType * G,
     * Example n = 2, 2^2 -1 = 3 range of (3,2,1,0) is 3.
     * The G.bit - 1 is because we are trying to reduce the range. */
    /* *INDENT-ON* */
-   range = (int) (pow (2, G->bit - 1) - 1) - (f_secMiss + f_primMiss);
+   range = (int) (pow (2.0, G->bit - 1) - 1) - (f_secMiss + f_primMiss);
    split = G->start;
    start = G->start;
    final = G->start + G->num;
@@ -3017,7 +3015,7 @@ static void doSplitRight (sInt4 *Data, int numData, TDLGroupType * G,
     * Example n = 2, 2^2 -1 = 3 range of (3,2,1,0) is 3.
     * The G.bit - 1 is because we are trying to reduce the range. */
    /* *INDENT-ON* */
-   range = (int) (pow (2, G->bit - 1) - 1) - (f_secMiss + f_primMiss);
+   range = (int) (pow (2.0, G->bit - 1) - 1) - (f_secMiss + f_primMiss);
    final = G->start + G->num;
    split = final;
    myAssert (final <= numData);
