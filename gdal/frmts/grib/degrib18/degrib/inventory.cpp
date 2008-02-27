@@ -33,8 +33,6 @@
 
 #define SECT0LEN_BYTE 16
 
-#define pow(a,b) pow((double)(a),b) // prevent Visual Studio 7 from using int pow(int,int)
-
 typedef union {
    sInt4 li;
    char buffer[4];
@@ -512,10 +510,10 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             probType = (*buffer)[37 - 5];
             factor = (sChar) (*buffer)[38 - 5];
             MEMCPY_BIG (&value, *buffer + 39 - 5, sizeof (sInt4));
-            lowerProb = value * pow (10, -1 * factor);
+            lowerProb = value * pow (10.0, -1 * factor);
             factor = (sChar) (*buffer)[43 - 5];
             MEMCPY_BIG (&value, *buffer + 44 - 5, sizeof (sInt4));
-            upperProb = value * pow (10, -1 * factor);
+            upperProb = value * pow (10.0, -1 * factor);
             break;
          case GS4_DERIVED_INTERVAL: /* 4.12 */
             if (InventoryParseTime (*buffer + 37 - 5, &(inv->validTime)) != 0) {
@@ -590,7 +588,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
                factor = (*buffer)[38 - 5];
             }
             MEMCPY_BIG (&value, *buffer + 39 - 5, sizeof (sInt4));
-            lowerProb = value * pow (10, -1 * factor);
+            lowerProb = value * pow (10.0, -1 * factor);
 
             if ((uChar) (*buffer)[43 - 5] > 128) {
                factor = 128 - (uChar) (*buffer)[43 - 5];
@@ -598,7 +596,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
                factor = (*buffer)[43 - 5];
             }
             MEMCPY_BIG (&value, *buffer + 44 - 5, sizeof (sInt4));
-            upperProb = value * pow (10, -1 * factor);
+            upperProb = value * pow (10.0, -1 * factor);
 
             if (InventoryParseTime (*buffer + 48 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.9 bytes 48-54\n");
@@ -708,7 +706,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1)) {
          fstSurfValue = 0;
       } else {
-         fstSurfValue = value * pow (10, (int) (-1 * scale));
+         fstSurfValue = value * pow (10.0, (int) (-1 * scale));
       }
       sndSurfType = (*buffer)[29 - 5];
       scale = (*buffer)[30 - 5];
@@ -718,7 +716,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
          sndSurfValue = 0;
          f_sndValue = 0;
       } else {
-         sndSurfValue = value * pow (10, -1 * scale);
+         sndSurfValue = value * pow (10.0, -1 * scale);
          f_sndValue = 1;
       }
 

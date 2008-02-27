@@ -27,8 +27,6 @@
 
 //#include "config.h" /*config.h created by configure - ADT mod*/
 
-#define pow(a,b) pow((double)(a),b) // prevent Visual Studio 7 from using int pow(int,int)
-
 /* Declare the external FORTRAN routine
  * gcc has two __ if there is one _ in the procedure name. */
 #ifdef _FORTRAN
@@ -143,7 +141,7 @@ static int mdl_LocalUnpack (unsigned char *local, sInt4 locallen,
       MEMCPY_BIG (&numVal, local, sizeof (sInt4));
       MEMCPY_BIG (&refVal, local + 4, sizeof (float));
       scale = GRIB_UNSIGN_INT2 (local[8], local[9]);
-      recScale10 = 1 / pow (10, scale);
+      recScale10 = 1 / pow (10.0, scale);
       numBits = local[10];
       if (numBits >= 32) {
 #ifdef DEBUG
