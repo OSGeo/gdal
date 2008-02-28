@@ -3,10 +3,10 @@
  *
  * Project:  JPEG-2000
  * Purpose:  Partial implementation of the ISO/IEC 15444-1 standard
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ void    GDALRegister_JPEG2000(void);
 CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
-// must be in sync with JasPer version (this one works with JasPer 1.900.0)
+// must be in sync with JasPer version (this one works with JasPer 1.900.1)
 #define JP2_FTYP_MAXCOMPATCODES 32
 #define JP2_BOX_IHDR    0x69686472      /* Image Header */
 #define JP2_BOX_BPCC    0x62706363      /* Bits Per Component */
