@@ -351,6 +351,61 @@ def ogr_sql_16():
         return 'fail'
 
 
+###############################################################################
+# Test the RFC 21 CAST operator.
+#
+def ogr_sql_17():
+
+    expect = [ '1', '2' ]
+
+    ds = ogr.Open( 'data/small.mif' )
+    sql_lyr = ds.ExecuteSQL( "select CAST(fid as CHARACTER(10)), CAST(block as numeric(7,3)) from small" )
+
+    fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(0)
+
+    if fld_def.GetName() != 'fid':
+        gdaltest.post_reason( 'got wrong fid field name' )
+        print fld_def.GetName()
+        return 'fail'
+
+    if fld_def.GetType() != ogr.OFTString:
+        gdaltest.post_reason( 'got wrong fid field type' )
+        print fld_def.GetType()
+        
+    if fld_def.GetWidth() != 10:
+        gdaltest.post_reason( 'got wrong fid field width' )
+        print fld_def.GetWidth()
+        
+    fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
+
+    if fld_def.GetName() != 'block':
+        gdaltest.post_reason( 'got wrong block field name' )
+        print fld_def.GetName()
+        return 'fail'
+
+    if fld_def.GetType() != ogr.OFTReal:
+        gdaltest.post_reason( 'got wrong block field type' )
+        print fld_def.GetType()
+        
+    if fld_def.GetWidth() != 7:
+        gdaltest.post_reason( 'got wrong block field width' )
+        print fld_def.GetWidth()
+        
+    if fld_def.GetPrecision() != 3:
+        gdaltest.post_reason( 'got wrong block field precision' )
+        print fld_def.GetPrecision()
+        
+    tr = ogrtest.check_features_against_list( sql_lyr, 'fid', expect )
+
+    ds.ReleaseResultSet( sql_lyr )
+    ds = None
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+
 
 ###############################################################################
 
@@ -379,6 +434,7 @@ gdaltest_list = [
     ogr_sql_14,
     ogr_sql_15,
     ogr_sql_16,
+    ogr_sql_17,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
