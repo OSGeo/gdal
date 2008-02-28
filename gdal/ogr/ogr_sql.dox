@@ -7,6 +7,55 @@ SQL SELECT capability to applications.  This page discusses the generic SQL
 implementation implemented within OGR, and issue with driver specific SQL
 support.<p>
 
+\section ogr_sql_syntax Supported SQL syntax
+
+OGR SQL supports the following pseudo-syntax:
+
+\code
+SELECT <field-list> FROM <table_def>
+     [LEFT JOIN <table_def> 
+      ON [<table_ref>.]<key_field> = [<table_ref>.].<key_field>]*
+     [WHERE <where-expr>] 
+     [ORDER BY <sort specification list>]
+
+<field-list> ::= <column-spec> [ { , <column-spec> }... ]
+
+<column-spec> ::= <field-spec> [ <as clause> ]
+                 | CAST ( <field-spec> AS <data type> ) [ <as clause> ]
+
+<field-spec> ::= [DISTINCT] <field_ref>
+                 | <field_func> ( [DISTINCT] <field-ref> )
+                 | Count(*)
+
+<as clause> ::= [ AS ] <column_name>
+
+<data type> ::= character [ ( field_length ) ]
+                | float [ ( field_length ) ]
+                | numeric [ ( field_length [, field_precision ] ) ]
+                | integer [ ( field_length ) ]
+                | date [ ( field_length ) ]
+                | time [ ( field_length ) ]
+                | timestamp [ ( field_length ) ]
+
+<field-func> ::= AVG | MAX | MIN | SUM | COUNT
+
+<field_ref>  ::= [<table_ref>.]field_name
+
+<sort specification list> ::=
+              <sort specification> [ { <comma> <sort specification> }... ]
+
+<sort specification> ::= <sort key> [ <ordering specification> ]
+
+<sort key> ::=  <field_ref>
+
+<ordering specification> ::= ASC | DESC
+
+<table_def> ::= ['<datasource name>'.]table_name [table_alias]
+
+<table_ref> ::= table_name | table_alias
+\endcode
+
+
 \section ogr_sql_select SELECT
 
 The SELECT statement is used to fetch layer features (analygous to table
@@ -96,6 +145,54 @@ Field names can also be prefixed by a table name though this is only
 really meaningful when performing joins.  It is further demonstrated in 
 the JOIN section.
 
+\subsubsection ogr_sql_fname_alias Using the field name alias
+
+OGR SQL supports renaming the fields following the SQL92 specification by
+using the AS keyword according to the following example:
+
+\code
+SELECT select *, OGR_STYLE AS 'STYLE' FROM polylayer
+\endcode
+
+The field name alias can be used as the last operation in the column specification.
+Therefore we cannot rename the fields inside an operator, but we can
+rename whole column expression, like:
+
+\code
+SELECT COUNT(areacode) AS 'count' FROM polylayer
+\endcode
+
+We can optionally omit the AS keyword in the field name aliases, like:
+
+\code
+SELECT *, OGR_STYLE 'STYLE' FROM polylayer
+\endcode
+
+\subsubsection ogr_sql_ftype_cast Changing the type of the fields
+
+OGR SQL supports changing the type of the columns by using the SQL92 compliant CAST
+operator according to the following example:
+
+\code
+SELECT *, CAST(OGR_STYLE AS character(255)) FROM rivers
+\endcode
+
+Currently casting to the following target types are supported:
+
+<ol>
+<li> character(field_length)
+<li> float(field_length)
+<li> numeric(field_length, field_precision)
+<li> integer(field_length)
+<li> date(field_length)
+<li> time(field_length)
+<li> timestamp(field_length)
+</ol>
+
+Specifying the field_length and/or the field_precision is optional.
+Conversion to the 'integer list', 'double list' and 'string list' OGR data types are not
+supported, which doesn't conform to the SQL92 specification.
+
 \subsubsection ogr_sql_flist_limits Field List Limitations
 
 <ol>
@@ -107,10 +204,6 @@ do something like:
 \code
 SELECT prop_value / area FROM invoices
 \endcode
-
-<li>
-There is no mechanism to rename a column.  In fact, I don't even know how this
-is done in real SQL.  
 
 <li> Lots of operators are missing.  
 
