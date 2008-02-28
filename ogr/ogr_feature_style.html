@@ -10,7 +10,7 @@
 OGR - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>DRAFT V0.010 - 2008/02/28</H2>
+  <H2>DRAFT V0.011 - 2008/02/28</H2>
 </CENTER>
 
 <HR WIDTH=50%>
@@ -899,7 +899,7 @@ This would apply to formats like ArcView Shapes.
 <P>&nbsp;
 <P>
 <H2>2.9 Using OGR SQL to transfer the style between the data sources</H2>
-<P>We can use the OGR_STYLE special field to extract the feature level style, and ogr2ogr can be used to transfer the style string between the data sources according to the following example:</P>
+<P>We can use the <B>OGR_STYLE</B> special field to extract the feature level style, and ogr2ogr can be used to transfer the style string between the data sources according to the following example:</P>
 <PRE>  ogr2ogr -f "ESRI Shapefile" -sql "select *, OGR_STYLE from rivers" rivers.shp rivers.tab</PRE>
 <P>Without specifying the length of the style field the output driver may truncate the length to a default value. Therefore it may be necessary to specify the target length manually, like:</P>
 <PRE>  ogr2ogr -f "ESRI Shapefile" -sql "select *, CAST(OGR_STYLE AS character(255)) from rivers" rivers.shp rivers.tab</PRE>
