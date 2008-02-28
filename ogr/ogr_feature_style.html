@@ -10,12 +10,14 @@
 OGR - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>DRAFT V0.010 - 2006/09/23</H2>
+  <H2>DRAFT V0.010 - 2008/02/28</H2>
 </CENTER>
 
 <HR WIDTH=50%>
 <H2>REVISION HISTORY</H2>
 <UL>
+<LI><B>Version 0.011 - 2008-02-28 - Tamas Szekeres</B><BR>
+    Note about OGR SQL to transfer the style between the data sources
 <LI><B>Version 0.010 - 2006-09-23- Andrey Kiselev</B><BR>
     Added label styles 'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'
 <LI><B>Version 0.009 - 2005-03-11- Frank Warmerdam</B><BR>
@@ -894,6 +896,14 @@ This would apply to formats like ArcView Shapes.
 <P><B>2.8.2 Use of custom brushes in pen definitions</B></P>
 <P>In some cases one might want a pen's pattern to be a brush.  To achieve this, a PEN() definition would have to contain a BRUSH() definition (e.g. PEN(c:&quot;#FF00FFFF&quot;,BRUSH(id:&quot;ogr-brush-4&quot;)) or PEN(c:&quot;#FF00FFFF&quot;,pen-brush,id:&quot;ogr-brush-4&quot;) or ???) but this is currently impossible with the current specs.
 <P>Since there is no current need for custom brush patterns in pen (no file formats that we know of support that), we won't include it now but may do it later.  In the meantime, one can use the &quot;gp&quot; (geometric pattern) pen parameter to allow specifying one of the OGR brushes as a pen brush pattern.
+<P>&nbsp;
+<P>
+<H2>2.9 Using OGR SQL to transfer the style between the data sources</H2>
+<P>We can use the OGR_STYLE special field to extract the feature level style, and ogr2ogr can be used to transfer the style string between the data sources according to the following example:</P>
+<PRE>  ogr2ogr -f "ESRI Shapefile" -sql "select *, OGR_STYLE from rivers" rivers.shp rivers.tab</PRE>
+<P>Without specifying the length of the style field the output driver may truncate the length to a default value. Therefore it may be necessary to specify the target length manually, like:</P>
+<PRE>  ogr2ogr -f "ESRI Shapefile" -sql "select *, CAST(OGR_STYLE AS character(255)) from rivers" rivers.shp rivers.tab</PRE>
+<P>OGR is aware of using the OGR_STYLE field if exists and OGRFeature::GetStyleString will return the value of this field if no style string have been specified programmatically.</P>
 <P>&nbsp;
 <P>
 <HR WIDTH=50%>
