@@ -64,54 +64,107 @@ GDALChecksumImage( GDALRasterBandH hBand,
         { 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43 };
 
     int  iLine, i, nChecksum = 0, iPrime = 0, nCount;
-    int  *panLineData;
-    int  bComplex = GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) );
-
-    panLineData = (GInt32 *) VSIMalloc2(nXSize, sizeof(GInt32) * 2);
-    if (panLineData == NULL)
+    GDALDataType eDataType = GDALGetRasterDataType( hBand );
+    int  bComplex = GDALDataTypeIsComplex( eDataType );
+    
+    if (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
+        eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64)
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
-                  "VSIMalloc2(): Out of memory in GDALChecksumImage. "
-                  "Checksum value couldn't be computed\n");
-        return 0;
-    }
+        double* padfLineData;
+        GDALDataType eDstDataType = (bComplex) ? GDT_CFloat64 : GDT_Float64;
 
-    for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
-    {
-        if( bComplex )
+        padfLineData = (double *) VSIMalloc2(nXSize, sizeof(double) * 2);
+        if (padfLineData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                    "VSIMalloc2(): Out of memory in GDALChecksumImage. "
+                    "Checksum value couldn't be computed\n");
+            return 0;
+        }
+
+        for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
         {
             if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
-                              panLineData, nXSize, 1, GDT_CInt32, 0, 0 ) != CE_None)
+                              padfLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Checksum value couldn't be computed due to I/O read error.\n");
+                        "Checksum value couldn't be computed due to I/O read error.\n");
                 break;
             }
-            nCount = nXSize * 2;
+            nCount = (bComplex) ? nXSize * 2 : nXSize;
+
+            for( i = 0; i < nCount; i++ )
+            {
+                double dfVal = padfLineData[i];
+                int nVal;
+                if (CPLIsNan(dfVal) || CPLIsInf(dfVal))
+                {
+                    /* Most compilers seem to cast NaN or Inf to 0x80000000. */
+                    /* but VC7 is an exception. So we force the result */
+                    /* of such a cast */
+                    nVal = 0x80000000;
+                }
+                else
+                {
+                    /* Standard behaviour of GDALCopyWords when converting */
+                    /* from floating point to Int32 */
+                    dfVal += 0.5;
+
+                    if( dfVal < -2147483647.0 )
+                        nVal = -2147483647;
+                    else if( dfVal > 2147483647 )
+                        nVal = 2147483647;
+                    else
+                        nVal = (GInt32) floor(dfVal);
+                }
+
+                nChecksum += (nVal % anPrimes[iPrime++]);
+                if( iPrime > 10 )
+                    iPrime = 0;
+
+                nChecksum &= 0xffff;
+            }
         }
-        else
+
+        CPLFree(padfLineData);
+    }
+    else
+    {
+        int  *panLineData;
+        GDALDataType eDstDataType = (bComplex) ? GDT_CInt32 : GDT_Int32;
+
+        panLineData = (GInt32 *) VSIMalloc2(nXSize, sizeof(GInt32) * 2);
+        if (panLineData == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                    "VSIMalloc2(): Out of memory in GDALChecksumImage. "
+                    "Checksum value couldn't be computed\n");
+            return 0;
+        }
+
+        for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
         {
             if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1, 
-                              panLineData, nXSize, 1, GDT_Int32, 0, 0 ) != CE_None)
+                            panLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Checksum value couldn't be computed due to I/O read error.\n");
+                        "Checksum value couldn't be computed due to I/O read error.\n");
                 break;
             }
-            nCount = nXSize;
+            nCount = (bComplex) ? nXSize * 2 : nXSize;
+
+            for( i = 0; i < nCount; i++ )
+            {
+                nChecksum += (panLineData[i] % anPrimes[iPrime++]);
+                if( iPrime > 10 )
+                    iPrime = 0;
+
+                nChecksum &= 0xffff;
+            }
         }
 
-        for( i = 0; i < nCount; i++ )
-        {
-            nChecksum += (panLineData[i] % anPrimes[iPrime++]);
-            if( iPrime > 10 )
-                iPrime = 0;
-
-            nChecksum &= 0xffff;
-        }
+        CPLFree( panLineData );
     }
-
-    CPLFree( panLineData );
 
     return nChecksum;
 }
