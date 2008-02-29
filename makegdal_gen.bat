@@ -78,9 +78,9 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				CleanCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
+echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^ ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 		^<Configuration
@@ -90,9 +90,9 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				CleanCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
+echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^ ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 	^</Configurations^>
