@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_srs_dict.cpp 10929 2007-03-11 08:41:47Z warmerdam $
+ * $Id: ogr_srs_erm.cpp 10929 2007-03-11 08:41:47Z warmerdam $
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implement ERMapper projection conversions.
@@ -30,7 +30,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogr_srs_dict.cpp 10929 2007-03-11 08:41:47Z warmerdam $");
+CPL_CVSID("$Id: ogr_srs_erm.cpp 10929 2007-03-11 08:41:47Z warmerdam $");
 
 /************************************************************************/
 /*                           importFromERM()                            */
@@ -160,7 +160,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     if( pszWKTDatum != NULL 
         && oSRSWork.importFromDict( pszWKTDatum, "ecw_cs.wkt" ) == OGRERR_NONE)
     {
-        strcpy( pszDatum, pszWKTDatum );
+        strncpy( pszDatum, pszWKTDatum, 32 );
+        pszDatum[31] = '\0';
     }
 
 /* -------------------------------------------------------------------- */
@@ -250,7 +251,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
             && oSRSWork.importFromDict( pszPROJCS, "ecw_cs.wkt" ) == OGRERR_NONE 
             && oSRSWork.IsProjected() )
         {
-            strcpy( pszProj, pszPROJCS );
+            strncpy( pszProj, pszPROJCS, 32 );
+            pszProj[31] = '\0';
         }
     }
 
