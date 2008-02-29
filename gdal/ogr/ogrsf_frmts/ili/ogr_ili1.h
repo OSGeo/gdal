@@ -46,7 +46,6 @@ class OGRILI1Layer : public OGRLayer
 private:
     OGRSpatialReference *poSRS;
     OGRFeatureDefn      *poFeatureDefn;
-    OGRGeometry         *poFilterGeom;
 
     int                 nFeatures;
     OGRFeature          **papoFeatures;
@@ -65,9 +64,6 @@ private:
 
                        ~OGRILI1Layer();
 
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
-
     OGRErr              AddFeature(OGRFeature *poFeature);
     
     void                ResetReading();
@@ -76,7 +72,6 @@ private:
     OGRFeature *        GetFeatureRef( long nFID );
 
     int                 GetFeatureCount( int bForce = TRUE );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
     int                 GeometryAppend( OGRGeometry *poGeometry );
@@ -101,6 +96,8 @@ class OGRILI1DataSource : public OGRDataSource
     IILI1Reader *poReader;
     FILE       *fpTransfer;
     char       *pszTopic;
+    int         nLayers;
+    OGRILI1Layer** papoLayers;
 
   public:
                 OGRILI1DataSource();

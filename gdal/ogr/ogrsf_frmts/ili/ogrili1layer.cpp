@@ -43,8 +43,6 @@ OGRILI1Layer::OGRILI1Layer( const char * pszName,
                           OGRILI1DataSource *poDSIn )
 
 {
-    poFilterGeom = NULL;
-
     if( poSRSIn == NULL )
         poSRS = NULL;
     else
@@ -68,38 +66,29 @@ OGRILI1Layer::OGRILI1Layer( const char * pszName,
 /************************************************************************/
 
 OGRILI1Layer::~OGRILI1Layer()
-
 {
+    int i;
+
+    for(i=0;i<nFeatures;i++)
+    {
+        delete papoFeatures[i];
+    }
+    CPLFree(papoFeatures);
+
     if( poFeatureDefn )
         poFeatureDefn->Release();
 
     if( poSRS != NULL )
         poSRS->Release();
-
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
 }
 
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
 
-void OGRILI1Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
+OGRErr OGRILI1Layer::AddFeature (OGRFeature *poFeature)
 {
-    if( poFilterGeom != NULL )
-    {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
-    }
+    nFeatures++;
 
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
-}
-
-OGRErr OGRILI1Layer::AddFeature (OGRFeature *poFeature) {
     papoFeatures = (OGRFeature **)
-        CPLRealloc( papoFeatures, sizeof(void*) * ++nFeatures );
+        CPLRealloc( papoFeatures, sizeof(void*) * nFeatures );
 
     papoFeatures[nFeatures-1] = poFeature;
 
@@ -118,9 +107,17 @@ void OGRILI1Layer::ResetReading(){
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature *OGRILI1Layer::GetNextFeature() {
-    OGRFeature *poFeature = GetNextFeatureRef();
-    return poFeature ? poFeature->Clone() : NULL;
+OGRFeature *OGRILI1Layer::GetNextFeature()
+{
+    OGRFeature *poFeature;
+
+    while(nFeatureIdx < nFeatures)
+    {
+        poFeature = GetNextFeatureRef();
+        if (poFeature)
+            return poFeature->Clone();
+    }
+    return NULL;
 }
 
 OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
@@ -161,16 +158,16 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRILI1Layer::GetFeatureCount( int bForce ) {
-    return nFeatures;
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/************************************************************************/
-
-OGRErr OGRILI1Layer::GetExtent(OGREnvelope *psExtent, int bForce ) {
-  return OGRLayer::GetExtent( psExtent, bForce );
+int OGRILI1Layer::GetFeatureCount( int bForce )
+{
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    {
+        return nFeatures;
+    }
+    else
+    {
+        return OGRLayer::GetFeatureCount(bForce);
+    }
 }
 
 static char* d2str(double val)

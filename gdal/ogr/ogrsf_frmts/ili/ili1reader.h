@@ -47,5 +47,6 @@ public:
 };
 
 IILI1Reader *CreateILI1Reader();
+void DestroyILI1Reader(IILI1Reader* reader);
 
 #endif
