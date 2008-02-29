@@ -51,6 +51,8 @@ OGRILI1DataSource::OGRILI1DataSource()
     poReader = NULL;
     fpTransfer = NULL;
     pszTopic = NULL;
+    nLayers = 0;
+    papoLayers = NULL;
 }
 
 /************************************************************************/
@@ -60,7 +62,17 @@ OGRILI1DataSource::OGRILI1DataSource()
 OGRILI1DataSource::~OGRILI1DataSource()
 
 {
+    int i;
+
+    for(i=0;i<nLayers;i++)
+    {
+        delete papoLayers[i];
+    }
+    CPLFree( papoLayers );
+
     CPLFree( pszName );
+    CPLFree( pszTopic );
+    DestroyILI1Reader( poReader );
     if( fpTransfer )
     {
         VSIFPrintf( fpTransfer, "ETAB\n" );
@@ -266,6 +278,10 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
         pszTopic = topic;
         VSIFPrintf( fpTransfer, "TOPI %s\n", pszTopic );
       }
+      else
+      {
+        CPLFree(topic);
+      }
     }
     else if (pszTopic == NULL)
     {
@@ -273,7 +289,13 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
       VSIFPrintf( fpTransfer, "TOPI %s\n", pszTopic );
     }
     VSIFPrintf( fpTransfer, "TABL %s\n", table );
-    OGRILI1Layer *poLayer = new OGRILI1Layer(CPLStrdup(table), poSRS, TRUE, eType, this);
+
+    OGRILI1Layer *poLayer = new OGRILI1Layer(table, poSRS, TRUE, eType, this);
+
+    nLayers ++;
+    papoLayers = (OGRILI1Layer**)CPLRealloc(papoLayers, sizeof(OGRILI1Layer*) * nLayers);
+    papoLayers[nLayers-1] = poLayer;
+    
     return poLayer;
 }
 
