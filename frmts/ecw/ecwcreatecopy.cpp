@@ -87,6 +87,9 @@ public:
 
     NCSFileViewFileInfoEx sFileInfo;
     GDALDataType eWorkDT;
+
+    JP2UserBox** papoJP2UserBox;
+    int          nJP2UserBox;
 };
 
 /************************************************************************/
@@ -101,6 +104,8 @@ GDALECWCompressor::GDALECWCompressor()
     m_bCancelled = FALSE;
     pfnProgress = GDALDummyProgress;
     pProgressData = NULL;
+    papoJP2UserBox = NULL;
+    nJP2UserBox = 0;
 }
 
 /************************************************************************/
@@ -110,6 +115,10 @@ GDALECWCompressor::GDALECWCompressor()
 GDALECWCompressor::~GDALECWCompressor()
 
 {
+    int i;
+    for(i=0;i<nJP2UserBox;i++)
+        delete papoJP2UserBox[i];
+    CPLFree(papoJP2UserBox);
 }
 
 /************************************************************************/
@@ -405,9 +414,14 @@ CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
     poECWBox->SetData( poBox->GetDataLength(), 
                        poBox->GetWritableData() );
 
-    AddBox( poECWBox ); // never freed?
+    AddBox( poECWBox );
 
     delete poBox;
+
+    papoJP2UserBox =(JP2UserBox**) CPLRealloc(papoJP2UserBox,
+                                    (nJP2UserBox + 1) * sizeof(JP2UserBox*));
+    papoJP2UserBox[nJP2UserBox] = poECWBox;
+    nJP2UserBox ++;
 
     return CE_None;
 }
@@ -418,7 +432,9 @@ CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
 
 static int ECWTranslateFromWKT( const char *pszWKT, 
                                 char *pszProjection,
-                                char *pszDatum )
+                                int nProjectionLen,
+                                char *pszDatum,
+                                int nDatumLen)
 
 {
     OGRSpatialReference oSRS;
@@ -472,10 +488,18 @@ static int ECWTranslateFromWKT( const char *pszWKT,
         if( oErr.GetErrorNumber() == NCS_SUCCESS
             && pszEPSGProj != NULL && pszEPSGDatum != NULL )
         {
-            strcpy( pszProjection, pszEPSGProj );
-            strcpy( pszDatum, pszEPSGDatum );
+            strncpy( pszProjection, pszEPSGProj, nProjectionLen );
+            strncpy( pszDatum, pszEPSGDatum, nDatumLen );
+            pszProjection[nProjectionLen - 1] = 0;
+            pszDatum[nDatumLen - 1] = 0;
+            NCSFree( pszEPSGProj );
+            NCSFree( pszEPSGDatum );
             return TRUE;
         }
+
+        NCSFree( pszEPSGProj );
+        NCSFree( pszEPSGDatum );
+
     }
 
 /* -------------------------------------------------------------------- */
@@ -771,19 +795,23 @@ CPLErr GDALECWCompressor::Initialize(
     strcpy( szDatum, "RAW" );
     
     if( CSLFetchNameValue(papszOptions, "PROJ") != NULL )
-        strcpy( szProjection, 
-                CSLFetchNameValue(papszOptions, "PROJ") );
+    {
+        strncpy( szProjection, 
+                CSLFetchNameValue(papszOptions, "PROJ"), sizeof(szProjection) );
+        szProjection[sizeof(szProjection)-1] = 0;
+    }
 
     if( CSLFetchNameValue(papszOptions, "DATUM") != NULL )
     {
-        strcpy( szDatum, CSLFetchNameValue(papszOptions, "DATUM") );
+        strncpy( szDatum, CSLFetchNameValue(papszOptions, "DATUM"), sizeof(szDatum) );
+        szDatum[sizeof(szDatum)-1] = 0;
         if( EQUAL(szProjection,"RAW") )
             strcpy( szProjection, "GEODETIC" );
     }
 
     if( EQUAL(szProjection,"RAW") && pszWKT != NULL )
     {
-        ECWTranslateFromWKT( pszWKT, szProjection, szDatum );
+        ECWTranslateFromWKT( pszWKT, szProjection, sizeof(szProjection), szDatum, sizeof(szDatum) );
     }
 
     psClient->szDatum = szDatum;
@@ -892,8 +920,11 @@ CPLErr GDALECWCompressor::Initialize(
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", oError.GetErrorMessage() );
+        char* pszErrorMessage = oError.GetErrorMessage();
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s", pszErrorMessage );
+        NCSFree(pszErrorMessage);
+
         return CE_Failure;
     }
 }
@@ -1065,7 +1096,7 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
     if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
-                  "ECW driver ignores color table. "
+                  "JP2ECW driver ignores color table. "
                   "The source raster band will be considered as grey level.\n" );
         if (bStrict)
             return NULL;
@@ -1218,6 +1249,7 @@ ECWWriteDataset::~ECWWriteDataset()
         oCompressor.CloseDown();
     }
 
+    CPLFree( pabyBILBuffer );
     CPLFree( pszProjection );
     CSLDestroy( papszOptions );
     CPLFree( pszFilename );
@@ -1329,9 +1361,12 @@ CPLErr ECWWriteDataset::FlushLine()
         CPLFree( papOutputLine );
         if( oError.GetErrorNumber() != NCS_SUCCESS )
         {
+            char* pszErrorMessage = oError.GetErrorMessage();
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Scanline write write failed.\n%s",
-                      oError.GetErrorMessage() );
+                      pszErrorMessage );
+            NCSFree(pszErrorMessage);
+
             return CE_Failure;
         }
     }

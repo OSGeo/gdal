@@ -371,8 +371,10 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         CPLFree( pabyWorkBuffer );
+        char* pszErrorMessage = oErr.GetErrorMessage();
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", oErr.GetErrorMessage() );
+                  "%s", pszErrorMessage );
+        NCSFree(pszErrorMessage);
         
         return CE_Failure;
     }
@@ -610,8 +612,10 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLFree( panAdjustedBandList );
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
+        char* pszErrorMessage = oErr.GetErrorMessage();
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", oErr.GetErrorMessage() );
+                  "%s", pszErrorMessage );
+        NCSFree(pszErrorMessage);
         bWinActive = FALSE;
         return CE_Failure;
     }
@@ -1003,6 +1007,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     int              i;
     FILE            *fpVSIL = NULL;
     VSIIOStream *poIOStream = NULL;
+    int              bUsingCustomStream = FALSE;
 
     ECWInitialize();
 
@@ -1089,14 +1094,26 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
               poUnderlyingIOStream->nFileViewCount++;
 
           if ( poIOStream != poUnderlyingIOStream ) 
+          {
               delete poIOStream;
+          }
+          else
+          {
+              bUsingCustomStream = TRUE;
+          }
 
           CPLReleaseMutex( hECWDatasetMutex );
 
           if( oErr.GetErrorNumber() != NCS_SUCCESS )
           {
-              CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                        oErr.GetErrorMessage() );			
+              if (poFileView)
+                  delete poFileView;
+
+              char* pszErrorMessage = oErr.GetErrorMessage();
+              CPLError( CE_Failure, CPLE_AppDefined, 
+                        "%s", pszErrorMessage );
+              NCSFree(pszErrorMessage);
+
               return NULL;
           }
     }
@@ -1145,6 +1162,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fpVSIL != NULL )
         poDS->nPamFlags |= GPF_DISABLED;
+
+    poDS->bUsingCustomStream = bUsingCustomStream;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch general file information.                                 */
