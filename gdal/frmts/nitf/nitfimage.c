@@ -819,7 +819,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             psBandInfo->pabyLUT[512+psBandInfo->nSignificantLUTEntries] = 0;
             psImage->bNoDataSet = TRUE;
             psImage->nNoDataValue = psBandInfo->nSignificantLUTEntries;
-            psBandInfo->nSignificantLUTEntries ++;
         }
     }
 
