@@ -244,9 +244,16 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDS, int nBand )
             sEntry.c1 = psBandInfo->pabyLUT[  0 + iColor];
             sEntry.c2 = psBandInfo->pabyLUT[256 + iColor];
             sEntry.c3 = psBandInfo->pabyLUT[512 + iColor];
-            sEntry.c4 = (psImage->bNoDataSet && psImage->nNoDataValue == iColor) ? 0 : 255;
+            sEntry.c4 = 255;
 
             poColorTable->SetColorEntry( iColor, &sEntry );
+        }
+
+        if (psImage->bNoDataSet)
+        {
+            GDALColorEntry sEntry;
+            sEntry.c1 = sEntry.c2 = sEntry.c3 = sEntry.c4 = 0;
+            poColorTable->SetColorEntry( psImage->nNoDataValue, &sEntry );
         }
     }
 
