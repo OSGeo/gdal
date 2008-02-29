@@ -71,7 +71,28 @@ ILI1Reader::ILI1Reader() {
 }
 
 ILI1Reader::~ILI1Reader() {
+ int i;
  if (fpItf) VSIFClose( fpItf );
+
+ for(i=0;i<nLayers;i++)
+     delete papoLayers[i];
+ CPLFree(papoLayers);
+
+ for(i=0;i<nAreaLayers;i++)
+ {
+     delete papoAreaLayers[i];
+     delete papoAreaLineLayers[i];
+ }
+ CPLFree(papoAreaLayers);
+ CPLFree(papoAreaLineLayers);
+
+ for(i=0;i<nSurfaceLayers;i++)
+ {
+     delete papoSurfaceLayers[i];
+     delete papoSurfacePolyLayers[i];
+ }
+ CPLFree(papoSurfaceLayers);
+ CPLFree(papoSurfacePolyLayers);
 }
 
 void ILI1Reader::SetArcDegrees(double arcDegrees) {
@@ -267,7 +288,7 @@ int ILI1Reader::ReadFeatures() {
     char **tokens = NULL;
     const char *firsttok = NULL;
     const char *pszLine;
-    const char *topic = NULL;
+    char *topic = NULL;
     int ret = TRUE;
 
     while (ret && (tokens = ReadParseLine()))
@@ -301,6 +322,7 @@ int ILI1Reader::ReadFeatures() {
       }
       else if (EQUAL(firsttok, "TOPI"))
       {
+        CPLFree(topic);
         topic = CPLStrdup(CSLGetField(tokens, 1));
       }
       else if (EQUAL(firsttok, "TABL"))
@@ -329,6 +351,8 @@ int ILI1Reader::ReadFeatures() {
       }
       else if (EQUAL(firsttok, "ENDE"))
       {
+        CSLDestroy(tokens);
+        CPLFree(topic);
         JoinSurfaceLayers();
         PolygonizeAreaLayers();
         return TRUE;
@@ -339,7 +363,12 @@ int ILI1Reader::ReadFeatures() {
       }
 
       CSLDestroy(tokens);
+      tokens = NULL;
     }
+
+    CSLDestroy(tokens);
+    CPLFree(topic);
+
     return ret;
 }
 
@@ -512,7 +541,6 @@ int ILI1Reader::ReadTable() {
     int fIndex;
 
     OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
-    OGRFieldDefn *fieldDef = NULL;
     OGRFeature *feature = NULL;
 
     long fpos = VSIFTell(fpItf);
@@ -545,10 +573,10 @@ int ILI1Reader::ReadTable() {
             //Model not read - use heuristics
             for (fIndex=1; fIndex<CSLCount(tokens); fIndex++)
             {
-              fieldDef = new OGRFieldDefn(CPLStrdup("Field00"), OFTString);
-              *(char *)(fieldDef->GetNameRef()+strlen(fieldDef->GetNameRef())-2) = '0'+fIndex/10;
-              *(char *)(fieldDef->GetNameRef()+strlen(fieldDef->GetNameRef())-1) = '0'+fIndex%10;
-              featureDef->AddFieldDefn(fieldDef);
+              char szFieldName[32];
+              sprintf(szFieldName, "Field%02d", fIndex);
+              OGRFieldDefn oFieldDefn(szFieldName, OFTString);
+              featureDef->AddFieldDefn(&oFieldDefn);
             }
           }
 
@@ -560,7 +588,7 @@ int ILI1Reader::ReadTable() {
           {
             if (!EQUAL(tokens[fIndex], "@")) {
               //CPLDebug( "OGR_ILI", "Adding Field %d: %s", fieldno, tokens[fIndex]);
-              feature->SetField(fieldno, CPLStrdup(tokens[fIndex]));
+              feature->SetField(fieldno, tokens[fIndex]);
               if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
                   && fieldno > 0
                   && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal
@@ -732,8 +760,10 @@ void ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType, OGRFeature *f
 void ILI1Reader::AddLayer( OGRILI1Layer * poNewLayer )
 
 {
+    nLayers++;
+
     papoLayers = (OGRILI1Layer **)
-        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
+        CPLRealloc( papoLayers, sizeof(void*) * nLayers );
 
     papoLayers[nLayers-1] = poNewLayer;
 }
@@ -843,7 +873,11 @@ char ** ILI1Reader::ReadParseLine()
 
       pszLine = CPLReadLine( fpItf );
       conttok = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
-      if (!conttok || !EQUAL(conttok[0], "CONT")) break;
+      if (!conttok || !EQUAL(conttok[0], "CONT"))
+      {
+          CSLDestroy(conttok);
+          break;
+      }
 
       //append
       tokens = CSLInsertStrings(tokens, -1, &conttok[1]);
@@ -858,4 +892,10 @@ char ** ILI1Reader::ReadParseLine()
 
 IILI1Reader *CreateILI1Reader() {
     return new ILI1Reader();
+}
+
+void DestroyILI1Reader(IILI1Reader* reader)
+{
+    if (reader)
+        delete reader;
 }
