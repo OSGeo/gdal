@@ -1157,7 +1157,8 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
     poExt->AddChild( new OGR_SRSNode( "CENTER_LONG" ) );
     poExt->AddChild( new OGR_SRSNode( CPLString().Printf("%g",dfCenterLong) ));
     
-    oSRS.GetRoot()->AddChild( poExt );
+    oSRS.GetRoot()->AddChild( poExt->Clone() );
+    delete poExt;
 
 /* -------------------------------------------------------------------- */
 /*      Convert back to wkt.                                            */
