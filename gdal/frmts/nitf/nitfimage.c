@@ -377,6 +377,14 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             atoi(NITFGetField( szTemp, pachHeader, nOffset, 5 ));
         nOffset += 5;
 
+        if (psBandInfo->nSignificantLUTEntries > 256)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "LUT for band %d is corrupted : nSignificantLUTEntries=%d. Truncating to 256",
+                      iBand + 1, psBandInfo->nSignificantLUTEntries);
+            psBandInfo->nSignificantLUTEntries = 256;
+        }
+
         psBandInfo->nLUTLocation = nOffset + psSegInfo->nSegmentHeaderStart;
 
         psBandInfo->pabyLUT = (unsigned char *) CPLCalloc(768,1);
