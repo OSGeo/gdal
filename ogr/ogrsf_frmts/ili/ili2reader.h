@@ -54,5 +54,6 @@ public:
 };
 
 IILI2Reader *CreateILI2Reader();
+void DestroyILI2Reader(IILI2Reader* reader);
 
 #endif
