@@ -188,8 +188,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
 
     // Non standard
     virtual void setCoordinateDimension( int nDimension ); 
-    void        setX( double xIn ) { x = xIn; }
-    void        setY( double yIn ) { y = yIn; }
+    void        setX( double xIn ) { x = xIn; if (nCoordDimension == 0) nCoordDimension = 2; }
+    void        setY( double yIn ) { y = yIn; if (nCoordDimension == 0) nCoordDimension = 2; }
     void        setZ( double zIn ) { z = zIn; nCoordDimension=3; }
 
     // ISpatialRelation
@@ -201,6 +201,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
 
+    virtual OGRBoolean  IsEmpty() const;
 };
 
 /************************************************************************/
@@ -438,6 +439,8 @@ class CPL_DLL OGRPolygon : public OGRSurface
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
     virtual void closeRings();
+
+    virtual OGRBoolean  IsEmpty() const;
 };
 
 /************************************************************************/
