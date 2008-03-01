@@ -39,7 +39,6 @@ CPL_CVSID("$Id: ogrgeoconceptlayer.cpp 00000 2007-11-03 16:08:14Z drichard $");
 /************************************************************************/
 
 OGRGeoconceptLayer::OGRGeoconceptLayer()
-
 {
     _poFeatureDefn = NULL;
     _gcFeature = NULL;

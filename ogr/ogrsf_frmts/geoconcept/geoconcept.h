@@ -98,7 +98,7 @@ extern "C" {
 #define  kCacheSize_GCIO          65535
 #define  kCharsetMAX_GCIO            15
 #define  kUnitMAX_GCIO                7
-#define  kTAB_GCIO                "	"   /* '\t' */
+#define  kTAB_GCIO                "\t"
 #define  kCom_GCIO                "//"
 #define  kHeader_GCIO             "//#"
 #define  kPragma_GCIO             "//$"
@@ -127,6 +127,7 @@ extern "C" {
 #define  kConfigZUnit_GCIO        "ZUnit"
 #define  kConfigZPrecision_GCIO   "ZPrecision"
 
+#define  kMetadataVERSION_GCIO    "VERSION"
 #define  kMetadataDELIMITER_GCIO  "DELIMITER"
 #define  kMetadataQUOTEDTEXT_GCIO "QUOTED-TEXT"
 #define  kMetadataCHARSET_GCIO    "CHARSET"
@@ -288,6 +289,7 @@ struct _tExportHeader_GCIO {
   CPLList*             fields;        /* GCField */
   OGRSpatialReferenceH srs;
   GCExtent*            frame;
+  char*                version;
   char                 unit[kUnitMAX_GCIO+1];
   double               resolution;
   GCCharset            charset;
@@ -405,6 +407,8 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #define SetMetaExtent_GCIO(header,v) (header)->frame= (v)
 #define GetMetaSRS_GCIO(header) (header)->srs
 #define SetMetaSRS_GCIO(header,v) (header)->srs= (v)
+#define GetMetaVersion_GCIO(header) (header)->version
+#define SetMetaVersion_GCIO(header,v) (header)->version= (v)
 
 #define GetTypeName_GCIO(theClass) (theClass)->name
 #define SetTypeName_GCIO(theClass,v) (theClass)->name= (v)
