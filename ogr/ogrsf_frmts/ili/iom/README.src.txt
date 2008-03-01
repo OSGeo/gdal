@@ -11,11 +11,18 @@ How to use it?
 - see samples and test programs for API usage
 
 License
-IOM is licensed under the LGPL (Lesser GNU Public License).
+IOM is licensed under the MIT/X.
+ili2c.jar is licensed under the LGPL.
+IOM and ili2c include software developed by the Apache Software 
+Foundation (http://www.apache.org/).
+
+Latest Version
+The current version of iom can be found at
+http://iom.sourceforge.net/
 
 System Configuration
 Although IOM is written in C/C++, to use IOM in a application, a Java Runtime Environment is required.
-In order to compile IOM, a C/C++ compiler (on Windows MSVC 6; on Linux GCC) is required.
+In order to compile IOM, a C/C++ compiler (on Windows MSVC 6; on Linux GCC 3.2.3) is required.
 To test IOM, python and a diff utility is required.
 To recreate the distribution zip-file, the build tool ant is required. Download it from http://ant.apache.org and install it as documented there.
 
@@ -33,7 +40,7 @@ You need to pick up:
 You must make sure that you are linking your application with the iom.lib library and also make sure that the associated DLL (xerces_c), the INTERLIS-Compiler (ili2c) and the JAVA virtual machine (java) is somewhere in your path.
 
 How to compile it on Linux using GCC?
-...tbd.
+FIXME
 
 To build a distribution, use
  ant dist
