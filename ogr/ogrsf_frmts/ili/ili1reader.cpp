@@ -77,20 +77,8 @@ ILI1Reader::~ILI1Reader() {
  for(i=0;i<nLayers;i++)
      delete papoLayers[i];
  CPLFree(papoLayers);
-
- for(i=0;i<nAreaLayers;i++)
- {
-     delete papoAreaLayers[i];
-     delete papoAreaLineLayers[i];
- }
  CPLFree(papoAreaLayers);
  CPLFree(papoAreaLineLayers);
-
- for(i=0;i<nSurfaceLayers;i++)
- {
-     delete papoSurfaceLayers[i];
-     delete papoSurfacePolyLayers[i];
- }
  CPLFree(papoSurfaceLayers);
  CPLFree(papoSurfacePolyLayers);
 }
@@ -390,15 +378,14 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
     }
     pszRawData[nBlockLen]= '\0';
     feature->SetField(iField, pszRawData);
+    CPLFree( pszRawData );
 #endif
     return TRUE;
 }
 
 OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )
 {
-    OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
-
-    if (poLines->getNumGeometries() == 0) return poPolygon;
+    if (poLines->getNumGeometries() == 0) return new OGRMultiPolygon();
 
 #if defined(POLYGONIZE_AREAS)
     GEOSGeom *ahInGeoms = NULL;
@@ -442,7 +429,7 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines, bool fi
 
 #endif
 
-    return poPolygon;
+    return new OGRMultiPolygon();
 }
 
 
@@ -507,6 +494,7 @@ void ILI1Reader::PolygonizeAreaLayers()
           GEOSGeom_destroy( ahInGeoms[i] );
       CPLFree( ahInGeoms );
 #endif
+      delete polys;
     }
 }
 
