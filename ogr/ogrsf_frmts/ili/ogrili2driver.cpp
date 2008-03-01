@@ -108,7 +108,8 @@ int OGRILI2Driver::TestCapability( const char * pszCap ) {
 /*                           RegisterOGRILI2()                           */
 /************************************************************************/
 
-void RegisterOGRILI2() {
+void RegisterOGRILI2()
+{
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRILI2Driver );
 }
 

@@ -43,8 +43,6 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
                           OGRILI2DataSource *poDSIn )
 
 {
-    poFilterGeom = NULL;
-
     if( poSRSIn == NULL )
         poSRS = NULL;
     else
@@ -72,26 +70,14 @@ OGRILI2Layer::~OGRILI2Layer()
     if( poSRS != NULL )
         poSRS->Release();
 
-    if( poFilterGeom != NULL )
-        delete poFilterGeom;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRILI2Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( poFilterGeom != NULL )
+    listFeatureIt = listFeature.begin();
+    while(listFeatureIt != listFeature.end())
     {
-        delete poFilterGeom;
-        poFilterGeom = NULL;
+      OGRFeature *poFeature = *(listFeatureIt++);
+      delete poFeature;
     }
-
-    if( poGeomIn != NULL )
-        poFilterGeom = poGeomIn->clone();
 }
+
 
 /************************************************************************/
 /*                             SetFeature()                             */
@@ -116,7 +102,7 @@ void OGRILI2Layer::ResetReading(){
 
 OGRFeature *OGRILI2Layer::GetNextFeature() {
     OGRFeature *poFeature = NULL;
-    if (listFeatureIt != listFeature.end())
+    while (listFeatureIt != listFeature.end())
     {
       poFeature = *(listFeatureIt++);
       //apply filters
@@ -133,16 +119,16 @@ OGRFeature *OGRILI2Layer::GetNextFeature() {
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRILI2Layer::GetFeatureCount( int bForce ) {
-  return listFeature.size(); //nTotalILI2Count;
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/************************************************************************/
-
-OGRErr OGRILI2Layer::GetExtent(OGREnvelope *psExtent, int bForce ) {
-  return OGRLayer::GetExtent( psExtent, bForce );
+int OGRILI2Layer::GetFeatureCount( int bForce )
+{
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    {
+        return listFeature.size();
+    }
+    else
+    {
+        return OGRLayer::GetFeatureCount(bForce);
+    }
 }
 
 static char* d2str(double val)
