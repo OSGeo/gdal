@@ -80,9 +80,6 @@ def ogr_geom_empty():
     except:
         return 'skip'
 
-    # We know this fails for POINT EMPTY.  Add test for points when this
-    # is fixed.
-    
     geom_wkt = 'LINESTRING EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 

@@ -41,6 +41,11 @@ def ogr_wktempty_1():
     geom = ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION(EMPTY)' )
     wkt = geom.ExportToWkt()
 
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
     if wkt == 'GEOMETRYCOLLECTION EMPTY':
         return 'success'
     else:
@@ -51,6 +56,11 @@ def ogr_wktempty_2():
 
     geom = ogr.CreateGeometryFromWkt( 'MULTIPOLYGON( EMPTY)' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'MULTIPOLYGON EMPTY':
         return 'success'
@@ -63,6 +73,11 @@ def ogr_wktempty_3():
     geom = ogr.CreateGeometryFromWkt( ' MULTILINESTRING(EMPTY)' )
     wkt = geom.ExportToWkt()
 
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
     if wkt == 'MULTILINESTRING EMPTY':
         return 'success'
     else:
@@ -73,6 +88,11 @@ def ogr_wktempty_4():
 
     geom = ogr.CreateGeometryFromWkt( 'MULTIPOINT(EMPTY)' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'MULTIPOINT EMPTY':
         return 'success'
@@ -85,7 +105,12 @@ def ogr_wktempty_5():
     geom = ogr.CreateGeometryFromWkt( 'POINT ( EMPTY )' )
     wkt = geom.ExportToWkt()
 
-    if wkt == 'POINT (0 0)':
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
+    if wkt == 'POINT EMPTY':
         return 'success'
     else:
         gdaltest.post_reason( 'WKT is wrong: ' + wkt )
@@ -95,6 +120,11 @@ def ogr_wktempty_6():
 
     geom = ogr.CreateGeometryFromWkt( 'LINESTRING(EMPTY)' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'LINESTRING EMPTY':
         return 'success'
@@ -107,6 +137,11 @@ def ogr_wktempty_7():
     geom = ogr.CreateGeometryFromWkt( 'POLYGON ( EMPTY ) ' )
     wkt = geom.ExportToWkt()
 
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
     if wkt == 'POLYGON EMPTY':
         return 'success'
     else:
@@ -117,6 +152,11 @@ def ogr_wktempty_8():
 
     geom = ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION EMPTY' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'GEOMETRYCOLLECTION EMPTY':
         return 'success'
@@ -129,6 +169,11 @@ def ogr_wktempty_9():
     geom = ogr.CreateGeometryFromWkt( 'MULTIPOLYGON EMPTY' )
     wkt = geom.ExportToWkt()
 
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
     if wkt == 'MULTIPOLYGON EMPTY':
         return 'success'
     else:
@@ -139,6 +184,11 @@ def ogr_wktempty_10():
 
     geom = ogr.CreateGeometryFromWkt( ' MULTILINESTRING EMPTY' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'MULTILINESTRING EMPTY':
         return 'success'
@@ -151,6 +201,11 @@ def ogr_wktempty_11():
     geom = ogr.CreateGeometryFromWkt( 'MULTIPOINT EMPTY' )
     wkt = geom.ExportToWkt()
 
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
     if wkt == 'MULTIPOINT EMPTY':
         return 'success'
     else:
@@ -162,7 +217,12 @@ def ogr_wktempty_12():
     geom = ogr.CreateGeometryFromWkt( 'POINT EMPTY ' )
     wkt = geom.ExportToWkt()
 
-    if wkt == 'POINT (0 0)':
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
+
+    if wkt == 'POINT EMPTY':
         return 'success'
     else:
         gdaltest.post_reason( 'WKT is wrong: ' + wkt )
@@ -172,6 +232,11 @@ def ogr_wktempty_13():
 
     geom = ogr.CreateGeometryFromWkt( 'LINESTRING EMPTY' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'LINESTRING EMPTY':
         return 'success'
@@ -183,6 +248,11 @@ def ogr_wktempty_14():
 
     geom = ogr.CreateGeometryFromWkt( 'POLYGON  EMPTY  ' )
     wkt = geom.ExportToWkt()
+
+    if (geom.IsEmpty() == False):
+        geom.Destroy()
+        gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+        return 'fail'
 
     if wkt == 'POLYGON EMPTY':
         return 'success'
