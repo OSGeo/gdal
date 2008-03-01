@@ -244,6 +244,17 @@ GCTypeKind GCIOAPI_CALL str2GCTypeKind_GCIO ( const char *s )
 }/* str2GCTypeKind_GCIO */
 
 /* -------------------------------------------------------------------- */
+static const char GCIOAPI_CALL1(*) _metaDelimiter2str_GCIO ( char delim )
+{
+  switch( delim ) {
+  case '\t' :
+    return "tab";
+  default   :
+    return "\t";
+  }
+}/* _metaDelimiter2str_GCIO */
+
+/* -------------------------------------------------------------------- */
 static long GCIOAPI_CALL _read_GCIO (
                                       GCExportFileH* hGXT
                                     )
@@ -261,13 +272,13 @@ static long GCIOAPI_CALL _read_GCIO (
   {
     c= (0x00FF & (unsigned char)(c));
     switch (c) {
-    case 0X1A : continue ; /* caractere de fin de fichier PC */
-    case '\r' :            /* PC '\r\n' line */
+    case 0X1A : continue ; /* PC end-of-file           */
+    case '\r' :            /* PC '\r\n' line, MAC '\r' */
       if ((c= VSIFGetc(h))!='\n')
       {
         VSIUngetc(c,h);
+        c= '\n';
       }
-      c= '\n';
     case '\n' :
       SetGCCurrentLinenum_GCIO(hGXT,GetGCCurrentLinenum_GCIO(hGXT)+1L);
       if (nread==0L) continue;
@@ -855,6 +866,7 @@ static void GCIOAPI_CALL _InitHeader_GCIO (
                                             GCExportFileMetadata* header
                                           )
 {
+  SetMetaVersion_GCIO(header, NULL);
   SetMetaDelimiter_GCIO(header, kTAB_GCIO[0]);
   SetMetaQuotedText_GCIO(header, FALSE);
   SetMetaCharset_GCIO(header, vANSI_GCIO);
@@ -889,6 +901,10 @@ static void GCIOAPI_CALL _ReInitHeader_GCIO (
                                               GCExportFileMetadata* header
                                             )
 {
+  if( GetMetaVersion_GCIO(header) )
+  {
+    CPLFree( GetMetaVersion_GCIO(header) );
+  }
   if( GetMetaExtent_GCIO(header) )
   {
     DestroyExtent_GCIO(&(GetMetaExtent_GCIO(header)));
@@ -1313,13 +1329,34 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
 
   Meta= GetGCMeta_GCIO(hGXT);
 
+  if( (p= strstr(GetGCCache_GCIO(hGXT),kMetadataVERSION_GCIO))!=NULL )
+  {
+    /* //$VERSION char* */
+    p+= strlen(kMetadataVERSION_GCIO);
+    while( isspace(*p) ) p++;
+    e= p;
+    while( isalpha(*p) ) p++;
+    *p= '\0';
+    SetMetaVersion_GCIO(Meta,CPLStrdup(e));
+    return Meta;
+  }
   if( (p= strstr(GetGCCache_GCIO(hGXT),kMetadataDELIMITER_GCIO))!=NULL )
   {
-    /* //$DELIMITER "char" */
+    /* //$DELIMITER "char*" */
     if( (p= strchr(p,'"')) )
     {
       p++;
-      SetMetaDelimiter_GCIO(Meta,*p); /* FIXME : only TAB is allowed */
+      e= p;
+      while( *p!='"' && *p!='\0' ) p++;
+      *p= '\0';
+      if( !( EQUAL(e,"tab") || EQUAL(e,kTAB_GCIO) ) )
+      {
+        CPLDebug("GEOCONCEPT","%s%s only supports \"tab\" value",
+                              kPragma_GCIO, kMetadataDELIMITER_GCIO);
+        SetMetaDelimiter_GCIO(Meta,kTAB_GCIO[0]);
+      } else {
+        SetMetaDelimiter_GCIO(Meta,kTAB_GCIO[0]);
+      }
     }
     return Meta;
   }
@@ -2080,12 +2117,12 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   OGRFeatureDefnH fd;
   OGRFeatureH f;
   OGRGeometryH g;
+  int bTokenBehaviour= CSLT_ALLOWEMPTYTOKENS;
 
   fd= NULL;
   f= NULL;
   Meta= GetGCMeta_GCIO(H);
-  delim[0]= GetMetaDelimiter_GCIO(Meta);
-  delim[1]= '\0';
+  delim[0]= GetMetaDelimiter_GCIO(Meta), delim[1]= '\0';
   if( d==vUnknown3D_GCIO) d= v2D_GCIO;
   if( bbox==NULL )
   {
@@ -2117,13 +2154,16 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   /*   9.- increment number of features                   */
   /* FIXME : add index when reading feature to            */
   /*         allow direct access !                        */
-  if( !(pszFields= CSLTokenizeStringComplex(GetGCCache_GCIO(H),
-                                            delim,
-                                            GetMetaQuotedText_GCIO(Meta),
-                                            TRUE)) )
+  if( GetMetaQuotedText_GCIO(Meta) )
+  {
+    bTokenBehaviour|= CSLT_HONOURSTRINGS;
+  }
+  if( !(pszFields= CSLTokenizeString2(GetGCCache_GCIO(H),
+                                      delim,
+                                      bTokenBehaviour)) )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
-              "Line %ld, Geoconcept line syntax is incorrect.\n",
+              "Line %ld, Geoconcept line syntax is wrong.\n",
               GetGCCurrentLinenum_GCIO(H) );
     return NULL;
   }
@@ -2131,17 +2171,26 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
-              "Line %ld, Missing fields.\n",
-              GetGCCurrentLinenum_GCIO(H) );
+              "Line %ld, Missing fields (at least 5 are expected, %d found).\n",
+              GetGCCurrentLinenum_GCIO(H), nbtf );
     return NULL;
   }
   /* Class */
   if( (whereClass = _findTypeByName_GCIO(H,pszFields[1]))==-1 )
   {
+    if( CPLListCount(GetMetaTypes_GCIO(Meta))==0 )
+    {
+      CPLError( CE_Failure, CPLE_AppDefined,
+                "Line %ld, %s%s pragma expected fro type definition before objects dump.",
+                GetGCCurrentLinenum_GCIO(H), kPragma_GCIO, kMetadataFIELDS_GCIO );
+    }
+    else
+    {
+      CPLError( CE_Failure, CPLE_AppDefined,
+                "Line %ld, Unknown type '%s'.\n",
+                GetGCCurrentLinenum_GCIO(H), pszFields[1] );
+    }
     CSLDestroy(pszFields);
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "Line %ld, Unknown type '%s'.\n",
-              GetGCCurrentLinenum_GCIO(H), pszFields[1] );
     return NULL;
   }
   theClass= _getType_GCIO(H,whereClass);
@@ -2157,10 +2206,10 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   /* Subclass */
   if( (whereSubType= _findSubTypeByName_GCIO(theClass,pszFields[2]))==-1 )
   {
-    CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Unknown subtype found '%s' for type '%s'.\n",
               GetGCCurrentLinenum_GCIO(H), pszFields[2], pszFields[1] );
+    CSLDestroy(pszFields);
     return NULL;
   }
   if( *theSubType )
@@ -2201,10 +2250,10 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   }
   if( atoi(pszFields[nbf])!=GetSubTypeNbFields_GCIO(*theSubType) )
   {
-    CSLDestroy(pszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Number of user's fields differs with type definition '%s' (%d found, %d expected).\n",
               GetGCCurrentLinenum_GCIO(H), tdst, atoi(pszFields[nbf]), GetSubTypeNbFields_GCIO(*theSubType) );
+    CSLDestroy(pszFields);
     return NULL;
   }
   /*
@@ -4391,10 +4440,15 @@ GCExportFileH GCIOAPI_CALL1(*) WriteHeader_GCIO (
   CPLList* e;
   FILE* gc;
 
-  /* FIXME : howto change default values ? */
+  /* FIXME : howto change default values ?                              */
+  /*         there seems to be no ways in Geoconcept to change them ... */
   Meta= GetGCMeta_GCIO(H);
   gc= GetGCHandle_GCIO(H);
-  fprintf(gc,"%s%s \"%c\"\n", kPragma_GCIO, kMetadataDELIMITER_GCIO, GetMetaDelimiter_GCIO(Meta));
+  if( GetMetaVersion_GCIO(Meta) )
+  {
+    fprintf(gc,"%s%s %s\n", kPragma_GCIO, kMetadataVERSION_GCIO, GetMetaVersion_GCIO(Meta));
+  }
+  fprintf(gc,"%s%s \"%s\"\n", kPragma_GCIO, kMetadataDELIMITER_GCIO, _metaDelimiter2str_GCIO(GetMetaDelimiter_GCIO(Meta)));
   fprintf(gc,"%s%s \"%s\"\n", kPragma_GCIO, kMetadataQUOTEDTEXT_GCIO, GetMetaQuotedText_GCIO(Meta)? "yes":"no");
   fprintf(gc,"%s%s %s\n", kPragma_GCIO, kMetadataCHARSET_GCIO, GCCharset2str_GCIO(GetMetaCharset_GCIO(Meta)));
   if( strcmp(GetMetaUnit_GCIO(Meta),"deg")==0     ||
