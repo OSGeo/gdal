@@ -86,13 +86,64 @@ def ogr_gxt_1():
           'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
                                       max_error = 0.000000001 ) != 0:
         return 'fail'
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('PROJCS["Lambert 93",GEOGCS["unnamed",DATUM["ITRS-89",SPHEROID["GRS 80",6378137,298.257222099657],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",44],PARAMETER["standard_parallel_2",49],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000]]')
+    
+    if not lyr.GetSpatialRef().IsSame(srs):
+        gdaltest.post_reason('SRS is not the one expected.')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Similar test than previous one with TAB separator.
+
+def ogr_gxt_2():
+
+    gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD_TAB.txt' )
+
+    if gdaltest.gxt_ds is None:
+        return 'fail'
+
+    if gdaltest.gxt_ds.GetLayerCount() != 1:
+        gdaltest.post_reason( 'Got wrong layer count.' )
+        return 'fail'
+
+    lyr = gdaltest.gxt_ds.GetLayer(0)
+    if lyr.GetName() != '000_GRD.000_GRD':
+        gdaltest.post_reason( 'got unexpected layer name.' )
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason( 'got wrong feature count.' )
+        return 'fail'
+
+    expect = [ '000-2007-0050-7130-LAMB93',
+               '000-2007-0595-7130-LAMB93',
+               '000-2007-0595-6585-LAMB93',
+               '000-2007-1145-6250-LAMB93',
+               '000-2007-0050-6585-LAMB93' ]
+    
+    tr = ogrtest.check_features_against_list( lyr, 'idSel', expect )
+    if not tr:
+        return 'fail'
+
+    lyr.ResetReading()
+
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,
+          'MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))',
+                                      max_error = 0.000000001 ) != 0:
+        return 'fail'
 
     return 'success'
 
 ###############################################################################
 # Read a GXT file containing 2 points, duplicate it, and check the newly written file
 
-def ogr_gxt_2():
+def ogr_gxt_3():
 
     if gdaltest.gxt_ds is not None:
         gdaltest.gxt_ds.Destroy()
@@ -204,6 +255,7 @@ def ogr_gxt_cleanup():
 gdaltest_list = [ 
     ogr_gxt_1,
     ogr_gxt_2,
+    ogr_gxt_3,
     ogr_gxt_cleanup,
     None ]
 
