@@ -44,9 +44,7 @@ CPL_CVSID("$Id$");
 OGRPoint::OGRPoint()
 
 {
-    x = 0;
-    y = 0;
-    z = 0;
+    empty();
 }
 
 /************************************************************************/
@@ -112,6 +110,7 @@ void OGRPoint::empty()
 
 {
     x = y = z = 0.0;
+    nCoordDimension = 0;
 }
 
 /************************************************************************/
@@ -155,7 +154,8 @@ void OGRPoint::flattenTo2D()
 
 {
     z = 0;
-    nCoordDimension = 2;
+    if (nCoordDimension > 2)
+        nCoordDimension = 2;
 }
 
 /************************************************************************/
@@ -407,9 +407,14 @@ OGRErr OGRPoint::exportToWkt( char ** ppszDstText ) const
     char        szTextEquiv[140];
     char        szCoordinate[80];
 
-    OGRMakeWktCoordinate(szCoordinate, x, y, z, nCoordDimension );
-    sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
-    *ppszDstText = CPLStrdup( szTextEquiv );
+    if (nCoordDimension == 0)
+        *ppszDstText = CPLStrdup( "POINT EMPTY" );
+    else
+    {
+        OGRMakeWktCoordinate(szCoordinate, x, y, z, nCoordDimension );
+        sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
+        *ppszDstText = CPLStrdup( szTextEquiv );
+    }
     
     return OGRERR_NONE;
 }
@@ -525,4 +530,13 @@ OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
     else
         return OGRERR_FAILURE;
 #endif
+}
+
+/************************************************************************/
+/*                               IsEmpty()                              */
+/************************************************************************/
+
+OGRBoolean OGRPoint::IsEmpty(  ) const
+{
+    return nCoordDimension == 0;
 }
