@@ -235,47 +235,39 @@ void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char*
 void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, const char** ppszAttr)
 {
     int i = 0;
-    std::string* sName = new std::string(pszName);
-    std::string* sAttribute = NULL;
-
+    
     if (((KML *)pUserData)->validity != KML_VALIDITY_UNKNOWN)
         return;
 
     ((KML *)pUserData)->validity = KML_VALIDITY_INVALID;
 
-    if(sName->compare("kml") == 0)
+    if(strcmp(pszName, "kml") == 0)
     {
         // Check all Attributes
         for (i = 0; ppszAttr[i]; i += 2)
         {
-            sAttribute = new std::string(ppszAttr[i]);
             // Find the namespace
-
-            if(sAttribute->compare("xmlns") == 0)
+            if(strcmp(ppszAttr[i], "xmlns") == 0)
             {
-                delete sAttribute;
-                    sAttribute = new std::string(ppszAttr[i + 1]);
-                    // Is it KML 2.1?
-                    if(sAttribute->compare("http://earth.google.com/kml/2.2") == 0)
-                    {
-                        ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                        ((KML *)pUserData)->sVersion_ = "2.2 (beta)";
-                    }
-                    else if(sAttribute->compare("http://earth.google.com/kml/2.1") == 0)
-                    {
-                        ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                        ((KML *)pUserData)->sVersion_ = "2.1";
-                    }
-                    else if(sAttribute->compare("http://earth.google.com/kml/2.0") == 0)
-                    {
-                        ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                        ((KML *)pUserData)->sVersion_ = "2.0";
-                    }
+                // Is it KML 2.1?
+                if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.2") == 0)
+                {
+                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
+                    ((KML *)pUserData)->sVersion_ = "2.2 (beta)";
+                }
+                else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.1") == 0)
+                {
+                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
+                    ((KML *)pUserData)->sVersion_ = "2.1";
+                }
+                else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.0") == 0)
+                {
+                    ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
+                    ((KML *)pUserData)->sVersion_ = "2.0";
+                }
             }
-            delete sAttribute;
         }
     }
-    delete sName;
 }
 
 void XMLCALL KML::endElement(void* pUserData, const char* pszName)
