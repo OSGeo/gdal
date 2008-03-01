@@ -48,7 +48,6 @@ class OGRILI2Layer : public OGRLayer
 private:
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
-    OGRGeometry        *poFilterGeom;
     std::list<OGRFeature *>    listFeature;
     std::list<OGRFeature *>::const_iterator listFeatureIt;
 
@@ -65,16 +64,12 @@ private:
 
                        ~OGRILI2Layer();
 
-    OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
-
     OGRErr              SetFeature(OGRFeature *poFeature);
     
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
     int                 GetFeatureCount( int bForce = TRUE );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
     
@@ -97,10 +92,12 @@ class OGRILI2DataSource : public OGRDataSource
     std::list<OGRLayer *> listLayer;
     
     char        *pszName;
-    const char  *pszModelFilename;
     IILI2Reader *poReader;
     IOM_FILE    fpTransfer;  //for writing
     IOM_BASKET  basket;
+
+    int         nLayers;
+    OGRILI2Layer** papoLayers;
 
   public:
                 OGRILI2DataSource();

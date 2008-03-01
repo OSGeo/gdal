@@ -101,22 +101,24 @@ string trim(string tmpstr) {
 
 int getGeometryTypeOfElem(DOMElement* elem) {
   int type = ILI2_STRING_TYPE;
+  char* pszTagName = XMLString::transcode(elem->getTagName());
 
   if (elem && elem->getNodeType() == DOMNode::ELEMENT_NODE) {
-    if (cmpStr(ILI2_COORD, XMLString::transcode(elem->getTagName())) == 0) {
+    if (cmpStr(ILI2_COORD, pszTagName) == 0) {
       type = ILI2_COORD_TYPE;
-    } else if (cmpStr(ILI2_ARC, XMLString::transcode(elem->getTagName())) == 0) {
+    } else if (cmpStr(ILI2_ARC, pszTagName) == 0) {
       type = ILI2_ARC_TYPE;
-    } else if (cmpStr(ILI2_POLYLINE, XMLString::transcode(elem->getTagName())) == 0) {
+    } else if (cmpStr(ILI2_POLYLINE, pszTagName) == 0) {
       type = ILI2_POLYLINE_TYPE;
-    } else if (cmpStr(ILI2_BOUNDARY, XMLString::transcode(elem->getTagName())) == 0) {
+    } else if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0) {
       type = ILI2_BOUNDARY_TYPE;
-    } else if (cmpStr(ILI2_AREA, XMLString::transcode(elem->getTagName())) == 0) {
+    } else if (cmpStr(ILI2_AREA, pszTagName) == 0) {
       type = ILI2_AREA_TYPE;
-    } else if (cmpStr(ILI2_SURFACE, XMLString::transcode(elem->getTagName())) == 0) {
+    } else if (cmpStr(ILI2_SURFACE, pszTagName) == 0) {
       type = ILI2_AREA_TYPE;
     }
   }
+  XMLString::release(&pszTagName);
   return type;
 }
 
@@ -124,13 +126,23 @@ char *getObjValue(DOMElement *elem) {
   DOMElement *textElem = (DOMElement *)elem->getFirstChild();
 
   if ((textElem != NULL) && (textElem->getNodeType() == DOMNode::TEXT_NODE))
-    return CPLStrdup(XMLString::transcode(textElem->getNodeValue()));
+  {
+    char* pszNodeValue = XMLString::transcode(textElem->getNodeValue());
+    char* pszRet = CPLStrdup(pszNodeValue);
+    XMLString::release(&pszNodeValue);
+    return pszRet;
+  }
 
   return NULL;
 }
 
 char *getREFValue(DOMElement *elem) {
-  return CPLStrdup(XMLString::transcode(elem->getAttribute(XMLString::transcode(ILI2_REF))));
+  XMLCh* pszIli2_ref = XMLString::transcode(ILI2_REF);
+  char* pszREFValue = XMLString::transcode(elem->getAttribute(pszIli2_ref));
+  char* pszRet = CPLStrdup(pszREFValue);
+  XMLString::release(&pszIli2_ref);
+  XMLString::release(&pszREFValue);
+  return pszRet;
 }
 
 OGRPoint *getPoint(DOMElement *elem) {
@@ -139,12 +151,16 @@ OGRPoint *getPoint(DOMElement *elem) {
 
   DOMElement *coordElem = (DOMElement *)elem->getFirstChild();
   while (coordElem != NULL) {
-    if (cmpStr("C1", XMLString::transcode(coordElem->getTagName())) == 0)
-      pt->setX(atof(getObjValue(coordElem)));
-    else if (cmpStr("C2", XMLString::transcode(coordElem->getTagName())) == 0)
-      pt->setY(atof(getObjValue(coordElem)));
-    else if (cmpStr("C3", XMLString::transcode(coordElem->getTagName())) == 0)
-      pt->setZ(atof(getObjValue(coordElem)));
+    char* pszTagName = XMLString::transcode(coordElem->getTagName());
+    char* pszObjValue = getObjValue(coordElem);
+    if (cmpStr("C1", pszTagName) == 0)
+      pt->setX(atof(pszObjValue));
+    else if (cmpStr("C2", pszTagName) == 0)
+      pt->setY(atof(pszObjValue));
+    else if (cmpStr("C3", pszTagName) == 0)
+      pt->setZ(atof(pszObjValue));
+    CPLFree(pszObjValue);
+    XMLString::release(&pszTagName);
     coordElem = (DOMElement *)coordElem->getNextSibling();
   }
   pt->flattenTo2D();
@@ -164,21 +180,24 @@ OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
 
   DOMElement *arcElem = (DOMElement *)elem->getFirstChild();
   while (arcElem != NULL) {
-    if (cmpStr("C1", XMLString::transcode(arcElem->getTagName())) == 0)
-      ptEnd->setX(atof(getObjValue(arcElem)));
-    else if (cmpStr("C2", XMLString::transcode(arcElem->getTagName())) == 0)
-      ptEnd->setY(atof(getObjValue(arcElem)));
-    else if (cmpStr("C3", XMLString::transcode(arcElem->getTagName())) == 0)
-      ptEnd->setZ(atof(getObjValue(arcElem)));
-    else if (cmpStr("A1", XMLString::transcode(arcElem->getTagName())) == 0)
-      ptOnArc->setX(atof(getObjValue(arcElem)));
-    else if (cmpStr("A2", XMLString::transcode(arcElem->getTagName())) == 0)
-      ptOnArc->setY(atof(getObjValue(arcElem)));
-    else if (cmpStr("A3", XMLString::transcode(arcElem->getTagName())) == 0)
-      ptOnArc->setZ(atof(getObjValue(arcElem)));
-    else if (cmpStr("R", XMLString::transcode(arcElem->getTagName())) == 0)
-      radius = atof(getObjValue(arcElem));
-
+    char* pszTagName = XMLString::transcode(arcElem->getTagName());
+    char* pszObjValue = getObjValue(arcElem);
+    if (cmpStr("C1", pszTagName) == 0)
+      ptEnd->setX(atof(pszObjValue));
+    else if (cmpStr("C2", pszTagName) == 0)
+      ptEnd->setY(atof(pszObjValue));
+    else if (cmpStr("C3", pszTagName) == 0)
+      ptEnd->setZ(atof(pszObjValue));
+    else if (cmpStr("A1", pszTagName) == 0)
+      ptOnArc->setX(atof(pszObjValue));
+    else if (cmpStr("A2", pszTagName) == 0)
+      ptOnArc->setY(atof(pszObjValue));
+    else if (cmpStr("A3", pszTagName) == 0)
+      ptOnArc->setZ(atof(pszObjValue));
+    else if (cmpStr("R", pszTagName) == 0)
+      radius = atof(pszObjValue);
+    CPLFree(pszObjValue);
+    XMLString::release(&pszTagName);
     arcElem = (DOMElement *)arcElem->getNextSibling();
   }
   ptEnd->flattenTo2D();
@@ -193,9 +212,10 @@ OGRLineString *getLineString(DOMElement *elem) {
 
   DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
   while (lineElem != NULL) {
-    if (cmpStr(ILI2_COORD, XMLString::transcode(lineElem->getTagName())) == 0)
+    char* pszTagName = XMLString::transcode(lineElem->getTagName());
+    if (cmpStr(ILI2_COORD, pszTagName) == 0)
       ls->addPoint(getPoint(lineElem));
-    else if (cmpStr(ILI2_ARC, XMLString::transcode(lineElem->getTagName())) == 0) {
+    else if (cmpStr(ILI2_ARC, pszTagName) == 0) {
       // end point
       OGRPoint *ptEnd = new OGRPoint();
       // point on the arc
@@ -205,20 +225,24 @@ OGRLineString *getLineString(DOMElement *elem) {
 
       DOMElement *arcElem = (DOMElement *)lineElem->getFirstChild();
       while (arcElem != NULL) {
-        if (cmpStr("C1", XMLString::transcode(arcElem->getTagName())) == 0)
-          ptEnd->setX(atof(getObjValue(arcElem)));
-        else if (cmpStr("C2", XMLString::transcode(arcElem->getTagName())) == 0)
-          ptEnd->setY(atof(getObjValue(arcElem)));
-        else if (cmpStr("C3", XMLString::transcode(arcElem->getTagName())) == 0)
-          ptEnd->setZ(atof(getObjValue(arcElem)));
-        else if (cmpStr("A1", XMLString::transcode(arcElem->getTagName())) == 0)
-          ptOnArc->setX(atof(getObjValue(arcElem)));
-        else if (cmpStr("A2", XMLString::transcode(arcElem->getTagName())) == 0)
-          ptOnArc->setY(atof(getObjValue(arcElem)));
-        else if (cmpStr("A3", XMLString::transcode(arcElem->getTagName())) == 0)
-          ptOnArc->setZ(atof(getObjValue(arcElem)));
-        else if (cmpStr("R", XMLString::transcode(arcElem->getTagName())) == 0)
-          radius = atof(getObjValue(arcElem));
+        char* pszTagName = XMLString::transcode(arcElem->getTagName());
+        char* pszObjValue = getObjValue(arcElem);
+        if (cmpStr("C1", pszTagName) == 0)
+          ptEnd->setX(atof(pszObjValue));
+        else if (cmpStr("C2", pszTagName) == 0)
+          ptEnd->setY(atof(pszObjValue));
+        else if (cmpStr("C3", pszTagName) == 0)
+          ptEnd->setZ(atof(pszObjValue));
+        else if (cmpStr("A1", pszTagName) == 0)
+          ptOnArc->setX(atof(pszObjValue));
+        else if (cmpStr("A2", pszTagName) == 0)
+          ptOnArc->setY(atof(pszObjValue));
+        else if (cmpStr("A3", pszTagName) == 0)
+          ptOnArc->setZ(atof(pszObjValue));
+        else if (cmpStr("R", pszTagName) == 0)
+          radius = atof(pszObjValue);
+        CPLFree(pszObjValue);
+        XMLString::release(&pszTagName);
 
         arcElem = (DOMElement *)arcElem->getNextSibling();
       }
@@ -229,6 +253,7 @@ OGRLineString *getLineString(DOMElement *elem) {
       interpolateArc(ls, ptStart, ptOnArc, ptEnd, PI/180);
     } /* else { // FIXME StructureValue in Polyline not yet supported
     } */
+    XMLString::release(&pszTagName);
 
     lineElem = (DOMElement *)lineElem->getNextSibling();
   }
@@ -240,8 +265,15 @@ OGRLineString *getBoundary(DOMElement *elem) {
 
   DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
   if (lineElem != NULL)
-    if (cmpStr(ILI2_POLYLINE, XMLString::transcode(lineElem->getTagName())) == 0)
+  {
+    char* pszTagName = XMLString::transcode(lineElem->getTagName());
+    if (cmpStr(ILI2_POLYLINE, pszTagName) == 0)
+    {
+      XMLString::release(&pszTagName);
       return getLineString(lineElem);
+    }
+    XMLString::release(&pszTagName);
+  }
 
   return new OGRLineString;
 }
@@ -251,9 +283,10 @@ OGRPolygon *getPolygon(DOMElement *elem) {
 
   DOMElement *boundaryElem = (DOMElement *)elem->getFirstChild(); // outer boundary
   while (boundaryElem != NULL) {
-    if (cmpStr(ILI2_BOUNDARY, XMLString::transcode(boundaryElem->getTagName())) == 0)
+    char* pszTagName = XMLString::transcode(boundaryElem->getTagName());
+    if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
       pg->addRing((OGRLinearRing *)getBoundary(boundaryElem));
-
+    XMLString::release(&pszTagName);
     boundaryElem = (DOMElement *)boundaryElem->getNextSibling(); // inner boundaries
   }
 
@@ -265,36 +298,58 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
 
   DOMElement *childElem = elem;
   while (childElem != NULL) {
+    char* pszTagName = XMLString::transcode(childElem->getTagName());
     switch (type) {
       case ILI2_COORD_TYPE :
-        if (cmpStr(ILI2_COORD, XMLString::transcode(childElem->getTagName())) == 0)
+        if (cmpStr(ILI2_COORD, pszTagName) == 0)
+        {
+          delete gm;
+          XMLString::release(&pszTagName);
           return getPoint(childElem);
+        }
         break;
       case ILI2_ARC_TYPE :
         // is it possible here? It have to be a ARC or COORD before (getPreviousSibling)
-        if (cmpStr(ILI2_ARC, XMLString::transcode(childElem->getTagName())) == 0)
+        if (cmpStr(ILI2_ARC, pszTagName) == 0)
+        {
+          delete gm;
+          XMLString::release(&pszTagName);
           return getArc(childElem);
+        }
         break;
       case ILI2_POLYLINE_TYPE :
-        if (cmpStr(ILI2_POLYLINE, XMLString::transcode(childElem->getTagName())) == 0)
+        if (cmpStr(ILI2_POLYLINE, pszTagName) == 0)
+        {
+          delete gm;
+          XMLString::release(&pszTagName);
           return getLineString(childElem);
+        }
         break;
       case ILI2_BOUNDARY_TYPE :
-        if (cmpStr(ILI2_BOUNDARY, XMLString::transcode(childElem->getTagName())) == 0)
+        if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
+        {
+          delete gm;
+          XMLString::release(&pszTagName);
           return getLineString(childElem);
+        }
         break;
       case ILI2_AREA_TYPE :
-        if ((cmpStr(ILI2_AREA, XMLString::transcode(childElem->getTagName())) == 0) ||
-          (cmpStr(ILI2_SURFACE, XMLString::transcode(childElem->getTagName())) == 0))
+        if ((cmpStr(ILI2_AREA, pszTagName) == 0) ||
+          (cmpStr(ILI2_SURFACE, pszTagName) == 0))
+        {
+          delete gm;
+          XMLString::release(&pszTagName);
           return getPolygon(childElem);
+        }
         break;
       default :
         if (type >= ILI2_GEOMCOLL_TYPE) {
           int subType = getGeometryTypeOfElem(childElem); //????
-          gm->addGeometry(getGeometry(childElem, subType));
+          gm->addGeometryDirectly(getGeometry(childElem, subType));
         }
         break;
     }
+    XMLString::release(&pszTagName);
 
     // GEOMCOLL
     childElem = (DOMElement *)childElem->getNextSibling();
@@ -428,7 +483,9 @@ char* fieldName(DOMElement* elem) {
   for (node = elem; d<depth; node = node->getParentNode()) elements[d++] = node;
   for (d=depth-1; d>=0; --d) {
     if (d < depth-1) fullname += "_";
-    fullname += XMLString::transcode(elements[d]->getNodeName());
+    char* pszNodeName = XMLString::transcode(elements[d]->getNodeName());
+    fullname += pszNodeName;
+    XMLString::release(&pszNodeName);
   }
   return CPLStrdup(fullname.c_str());
 }
@@ -447,8 +504,8 @@ void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
         char *fName = fieldName(childElem);
         if (featureDef->GetFieldIndex(fName) == -1) {
           CPLDebug( "OGR_ILI", "AddFieldDefn: %s",fName );
-          OGRFieldDefn *fieldDef = new OGRFieldDefn(fName, OFTString);
-          featureDef->AddFieldDefn(fieldDef);
+          OGRFieldDefn oFieldDefn(fName, OFTString);
+          featureDef->AddFieldDefn(&oFieldDefn);
         }
         CPLFree(fName);
       }
@@ -474,13 +531,14 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
           if (objVal == NULL)
             objVal = getREFValue(childElem); // only to try
           feature->SetField(fIndex, objVal);
+          CPLFree(objVal);
         } else {
           m_missAttrs.push_back(fName);
         }
         CPLFree(fName);
       }
     } else {
-      feature->SetGeometry(getGeometry(childElem, type));
+      feature->SetGeometryDirectly(getGeometry(childElem, type));
     }
   }
 }
@@ -506,6 +564,13 @@ ILI2Reader::~ILI2Reader() {
     CPLFree( m_pszFilename );
 
     CleanupParser();
+
+    list<OGRLayer *>::const_iterator layerIt = m_listLayer.begin();
+    while (layerIt != m_listLayer.end()) {
+        OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
+        delete tmpLayer;
+        layerIt++;
+    }
 }
 
 void ILI2Reader::SetArcDegrees(double arcDegrees) {
@@ -651,7 +716,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
     int bWriterIn = 0;
     OGRwkbGeometryType eReqType = wkbUnknown;
     OGRILI2DataSource *poDSIn = NULL;
-    curLayer = new OGRILI2Layer(CPLStrdup(pszName), poSRSIn, bWriterIn, eReqType, poDSIn);
+    curLayer = new OGRILI2Layer(pszName, poSRSIn, bWriterIn, eReqType, poDSIn);
     m_listLayer.push_back(curLayer);
   }
 
@@ -659,8 +724,8 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
   if (newLayer) {
     // the TID feature
-    OGRFieldDefn *fieldDef = new OGRFieldDefn(CPLStrdup(ILI2_TID), OFTString);
-    featureDef->AddFieldDefn(fieldDef);
+    OGRFieldDefn ofieldDefn (ILI2_TID, OFTString);
+    featureDef->AddFieldDefn(&ofieldDefn);
 
     setFieldDefn(featureDef, elem);
   }
@@ -670,15 +735,26 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
 
   // the TID feature
   int fIndex = feature->GetFieldIndex(ILI2_TID);
-  char *fChVal = XMLString::transcode(elem->getAttribute(XMLString::transcode(ILI2_TID)));
-  feature->SetField(fIndex, CPLStrdup(fChVal));
+  XMLCh *pszIli2_tid = XMLString::transcode(ILI2_TID);
+  char *fChVal = XMLString::transcode(elem->getAttribute(pszIli2_tid));
+  feature->SetField(fIndex, fChVal);
+  XMLString::release (&pszIli2_tid);
+  XMLString::release (&fChVal);
 
   SetFieldValues(feature, elem);
   curLayer->SetFeature(feature);
+  
+  XMLString::release (&pszName);
 
   return 0;
 }
 
 IILI2Reader *CreateILI2Reader() {
     return new ILI2Reader();
+}
+
+void DestroyILI2Reader(IILI2Reader* reader)
+{
+    if (reader)
+        delete reader;
 }
