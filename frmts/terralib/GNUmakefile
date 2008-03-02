@@ -1,10 +1,23 @@
-GDAL_ROOT	=	../..
+include ../../GDALmake.opt
 
-include $(GDAL_ROOT)/GDALmake.opt
+TERRALIB_DIR	=	../../../terralib
 
-OBJ	=	TerraLibDataset.o TerraLibRasterBand.o
+SRC		=	$(TERRALIB_DIR)/src/terralib/drivers/MySQL/TeMySQL.cpp
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I$(TERRALIBDIR)\src\terralib\kernel
+OBJ		=	TerraLibDataset.o \
+			TerraLibRasterBand.o \
+			$(TERRALIB_DIR)/src/terralib/drivers/MySQL/TeMySQL.o
+
+TERRALIB_LIB	=	$(TERRALIB_DIR)/terralibx/lib/libterralib.so \
+			$(TERRALIB_DIR)/terralibx/lib/libjpeg.so
+
+EXTRAFLAGS	=  	-I$(TERRALIB_DIR)/src/terralib/kernel \
+			-I$(TERRALIB_DIR)/src/terralib/drivers/MySQL \
+			-I$(TERRALIB_DIR)/src/terralib/drivers/MySQL/include/
+
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(EXTRAFLAGS)
+
+EXTRA_LIBS	:=	 $(EXTRA_LIBS) $(TERRALIB_LIB)
 
 default:	$(OBJ)
 
@@ -12,4 +25,10 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 install-obj:	$(O_OBJ)
+
+plugin: gdal_TERRALIB.so
+
+gdal_TERRALIB.so:	$(OBJ)
+	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) \
+	$(GDAL_LIBS) $(EXTRA_LIBS) -o gdal_TERRALIB.so
 
