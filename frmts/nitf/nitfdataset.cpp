@@ -1971,7 +1971,7 @@ const char *NITFDataset::GetProjectionRef()
 CPLErr NITFDataset::SetProjection(const char* _pszProjection)
 
 {
-    int    bNorth, nZone = 0;
+    int    bNorth;
     OGRSpatialReference oSRS, oSRS_WGS84;
     char *pszWKT = (char *) _pszProjection;
 
@@ -3089,7 +3089,7 @@ static void NITFPatchImageLength( const char *pszFilename,
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 342, SEEK_SET );
-    VSIFWriteL( (void *) CPLString().Printf("%012d",nFileLen).c_str(),
+    VSIFWriteL( (void *) CPLString().Printf("%012ld",(long)nFileLen).c_str(),
                 1, 12, fpVSIL );
     
 /* -------------------------------------------------------------------- */
@@ -3097,8 +3097,8 @@ static void NITFPatchImageLength( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fpVSIL, 369, SEEK_SET );
     VSIFWriteL( (void *) 
-                CPLString().Printf("%010d",nFileLen-nImageOffset).c_str(), 
-                1, 10, fpVSIL );
+        CPLString().Printf("%010ld",(long)(nFileLen-nImageOffset)).c_str(), 
+        1, 10, fpVSIL );
 
 /* -------------------------------------------------------------------- */
 /*      Update COMRAT, the compression rate variable.  It is a bit      */
