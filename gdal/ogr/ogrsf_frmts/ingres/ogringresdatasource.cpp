@@ -225,8 +225,8 @@ int OGRIngresDataSource::TestCapability( const char * pszCap )
 	
     if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
-	if( EQUAL(pszCap, ODsCDeleteLayer))
-		return TRUE;
+    else if( EQUAL(pszCap, ODsCDeleteLayer))
+        return TRUE;
     else
         return FALSE;
 }
@@ -597,7 +597,6 @@ char *OGRIngresDataSource::LaunderName( const char *pszSrcName )
 int OGRIngresDataSource::DeleteLayer( int iLayer)
 
 {
-#ifdef notdef
     if( iLayer < 0 || iLayer >= nLayers )
         return OGRERR_FAILURE;
         
@@ -617,24 +616,20 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
 /* -------------------------------------------------------------------- */
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
-    char        		szCommand[1024];
+    char        	szCommand[1024];
+    OGRIngresStatement  oStmt( hConn );
 
     sprintf( szCommand,
              "DROP TABLE %s ",
              osLayerName.c_str() );
-
-    if( !ingres_query(GetConn(), szCommand ) )
+    
+    if( oStmt.ExecuteSQL( szCommand ) )
     {
         CPLDebug("INGRES","Dropped table %s.", osLayerName.c_str());
         return OGRERR_NONE;
     }
     else
-    {
-        ReportError( szCommand );
         return OGRERR_FAILURE;
-    }
-#endif
-    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -648,13 +643,9 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
                               char ** papszOptions )
 
 {
-#ifdef notdef
-
-    INGRES_RES           *hResult=NULL;
-    char        		szCommand[1024];
-    const char          *pszGeometryType;
-    const char			*pszGeomColumnName;
-    const char 			*pszExpectedFIDName; 
+//    const char          *pszGeometryType = NULL;
+    const char		*pszGeomColumnName;
+    const char 		*pszExpectedFIDName; 
 	
     char                *pszLayerName;
     int                 nDimension = 3; // Ingres only supports 2d currently
@@ -699,6 +690,9 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      What do we want to use for geometry and FID columns?            */
+/* -------------------------------------------------------------------- */
     pszGeomColumnName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if (!pszGeomColumnName)
         pszGeomColumnName="SHAPE";
@@ -711,12 +705,19 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     CPLDebug("INGRES","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("INGRES","FID Column Name %s.", pszExpectedFIDName);
 
+/* -------------------------------------------------------------------- */
+/*      Form table creation command.                                    */
+/* -------------------------------------------------------------------- */
+    CPLString osCommand;
+
+#ifdef notdef
     if( wkbFlatten(eType) == wkbNone )
     {
-        sprintf( szCommand,
-                 "CREATE TABLE %s ( "
-                 "   %s INT UNIQUE NOT NULL AUTO_INCREMENT )",
-                 pszLayerName, pszExpectedFIDName );
+#endif
+        osCommand.Printf( "CREATE TABLE %s ( "
+                          "   %s INTEGER )",
+                          pszLayerName, pszExpectedFIDName );
+#ifdef notdef
     }
     else
     {
@@ -726,37 +727,20 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
                  "   %s GEOMETRY NOT NULL )",
                  pszLayerName, pszExpectedFIDName, pszGeomColumnName );
     }
+#endif
 
-    if( CSLFetchNameValue( papszOptions, "ENGINE" ) != NULL )
+/* -------------------------------------------------------------------- */
+/*      Execute the create table command.                               */
+/* -------------------------------------------------------------------- */
     {
-        strcat( szCommand, " ENGINE = " );
-        strcat( szCommand, CSLFetchNameValue( papszOptions, "ENGINE" ) );
-    }
-	
-    if( !ingres_query(GetConn(), szCommand ) )
-    {
-        if( ingres_field_count( GetConn() ) == 0 )
-            CPLDebug("INGRES","Created table %s.", pszLayerName);
-        else
-        {
-            ReportError( szCommand );
+        OGRIngresStatement  oStmt( hConn );
+
+        if( !oStmt.ExecuteSQL( osCommand ) )
             return NULL;
-        }
-    }
-    else
-    {
-        ReportError( szCommand );
-        return NULL;
     }
 
-    // make sure to attempt to free results of successful queries
-    hResult = ingres_store_result( GetConn() );
-    if( hResult != NULL )
-        ingres_free_result( hResult );
-    hResult = NULL;
-    
     // Calling this does no harm
-    InitializeMetadataTables();
+    //InitializeMetadataTables();
     
 /* -------------------------------------------------------------------- */
 /*      Try to get the SRS Id of this spatial reference system,         */
@@ -771,8 +755,8 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      Sometimes there is an old crufty entry in the geometry_columns  */
 /*      table if things were not properly cleaned up before.  We make   */
 /*      an effort to clean out such cruft.                              */
-/*                                                                      */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     sprintf( szCommand,
              "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
              pszLayerName );
@@ -788,11 +772,13 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     if( hResult != NULL )
         ingres_free_result( hResult );
     hResult = NULL;   
+#endif
         
 /* -------------------------------------------------------------------- */
 /*      Attempt to add this table to the geometry_columns table, if     */
 /*      it is a spatial layer.                                          */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     if( eType != wkbNone )
     {
         int nCoordDimension;
@@ -876,34 +862,7 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
             ingres_free_result( hResult );
         hResult = NULL;   
     }
-
-/* -------------------------------------------------------------------- */
-/*      Create the spatial index.                                       */
-/*                                                                      */
-/*      We're doing this before we add geometry and record to the table */
-/*      so this may not be exactly the best way to do it.               */
-/* -------------------------------------------------------------------- */
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-
-    if( eType != wkbNone && (pszSI == NULL || CSLTestBoolean(pszSI)) )
-    {
-        sprintf( szCommand,
-                 "ALTER TABLE %s ADD SPATIAL INDEX(%s) ",
-                 pszLayerName,
-                 pszGeomColumnName);
-
-        if( ingres_query(GetConn(), szCommand ) )
-        {
-            ReportError( szCommand );
-            return NULL;
-        }
-
-        // make sure to attempt to free results of successful queries
-        hResult = ingres_store_result( GetConn() );
-        if( hResult != NULL )
-            ingres_free_result( hResult );
-        hResult = NULL;   
-    }
+#endif
         
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -914,7 +873,10 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     poLayer = new OGRIngresTableLayer( this, pszLayerName, TRUE, nSRSId );
     eErr = poLayer->Initialize(pszLayerName);
     if (eErr == OGRERR_FAILURE)
+    {
+        delete poLayer;
         return NULL;
+    }
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
@@ -930,6 +892,4 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     CPLFree( pszLayerName );
 
     return poLayer;
-#endif
-    return NULL;
 }

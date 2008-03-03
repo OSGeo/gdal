@@ -145,13 +145,7 @@ OGRFeatureDefn *OGRIngresResultLayer::ReadResultDefinition()
 void OGRIngresResultLayer::BuildFullQueryStatement()
 
 {
-    if( pszQueryStatement != NULL )
-    {
-        CPLFree( pszQueryStatement );
-        pszQueryStatement = NULL;
-    }
-
-    pszQueryStatement = CPLStrdup(pszRawStatement);
+    osQueryStatement = pszRawStatement;
 }
 
 /************************************************************************/

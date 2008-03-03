@@ -48,6 +48,7 @@ OGRIngresStatement::OGRIngresStatement( II_PTR hConn )
     hTransaction = NULL;
 
     memset( &getDescrParm, 0, sizeof(getDescrParm) );
+    memset( &queryInfo, 0, sizeof(queryInfo) );
 }
 
 /************************************************************************/
@@ -91,6 +92,8 @@ OGRIngresStatement::~OGRIngresStatement()
         hTransaction = NULL;
     }
 
+    ClearDynamicColumns();
+
     CPLFree( papszFields );
     CPLFree( pabyWrkBuffer );
     CPLFree( pasDataBuffer );
@@ -120,6 +123,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     queryParm.qy_tranHandle = NULL;
     queryParm.qy_stmtHandle = NULL;
 
+    CPLDebug( "INGRES", "IIapi_query(%s)", pszStatement );
     IIapi_query( &queryParm );
   
 /* -------------------------------------------------------------------- */
@@ -136,11 +140,14 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
         return FALSE;
     }
 
-    if( queryParm.qy_stmtHandle == NULL )
-        return FALSE;
-
     hTransaction = queryParm.qy_tranHandle;
     hStmt = queryParm.qy_stmtHandle;
+
+    if( hStmt == NULL )						
+    {
+        CPLDebug( "INGRES", "No resulting statement." );
+        return TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get description of result columns.                              */
@@ -155,6 +162,45 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     
     while( getDescrParm.gd_genParm.gp_completed == FALSE )
 	IIapi_wait( &waitParm );
+
+    if( getDescrParm.gd_genParm.gp_status != IIAPI_ST_SUCCESS )
+    {
+        if( getDescrParm.gd_genParm.gp_errorHandle )
+        {
+            ReportError( &(getDescrParm.gd_genParm), "IIapi_getDescriptor()" );
+            return FALSE;
+        }
+        else
+        {
+            CPLDebug( "INGRES", "Got gp_status = %d from getDescriptor.",
+                      getDescrParm.gd_genParm.gp_status );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get query info.                                                 */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+    queryInfo.gq_stmtHandle = hStmt;
+
+    IIapi_getQueryInfo( &queryInfo );
+
+    while( queryInfo.gq_genParm.gp_completed == FALSE )
+        IIapi_wait( &waitParm );
+
+    CPLDebug( "INGRES", "gq_flags=%x, gq_mask=%x, gq_rowCount=%d, gq_rowStatus=%d, rowPosition=%d", 
+              queryInfo.gq_flags, 
+              queryInfo.gq_mask, 
+              queryInfo.gq_rowCount, 
+              queryInfo.gq_rowStatus, 
+              queryInfo.gq_rowPosition ); 
+              
+    if( queryInfo.gq_genParm.gp_status != IIAPI_ST_SUCCESS )
+    {
+        ReportError( &(queryInfo.gq_genParm), "IIapi_getQueryInfo()" );
+        return FALSE;
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Setup buffers for returned rows.                                */
@@ -192,7 +238,20 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     getColParm.gc_moreSegments = 0;
 
     for( i = 0; i < getDescrParm.gd_descriptorCount; i++ )
+    {
         getColParm.gc_columnData[i].dv_value = papszFields[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We don't want papszFields[] pointing to anything but            */
+/*      dynamically allocated data for long (blob) fields, so clear     */
+/*      these pointers now.                                             */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < getDescrParm.gd_descriptorCount; i++ )
+    {
+        if( IsColumnLong( i ) )
+            papszFields[i] = NULL;
+    }
 
     return TRUE;
 }
@@ -209,20 +268,95 @@ char **OGRIngresStatement::GetRow()
 
 {
     IIAPI_WAITPARM	waitParm = { -1 };
-    int                 i;
+    int                 iBaseCol;
 
-    IIapi_getColumns( &getColParm );
-    
-    while( getColParm.gc_genParm.gp_completed == FALSE )
-        IIapi_wait( &waitParm );
-    
-    if ( getColParm.gc_genParm.gp_status >= IIAPI_ST_NO_DATA )
+    ClearDynamicColumns();
+
+    if( hStmt == NULL )
         return NULL;
 
-    for( i = 0; i < getDescrParm.gd_descriptorCount; i++ )
-        papszFields[i][pasDataBuffer[i].dv_length] = '\0';
+/* ==================================================================== */
+/*      Loop over all column, processing the columns in sub-groups      */
+/*      so we can isolate blob columns for special handling.            */
+/* ==================================================================== */
+    for( iBaseCol = 0; iBaseCol < getDescrParm.gd_descriptorCount; iBaseCol++)
+    {
+        getColParm.gc_columnCount = 1;
+        getColParm.gc_columnData = pasDataBuffer + iBaseCol;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch column(s)                                                 */
+/* -------------------------------------------------------------------- */
+        if( !IsColumnLong( iBaseCol ) )
+        {
+            IIapi_getColumns( &getColParm );
+    
+            while( getColParm.gc_genParm.gp_completed == FALSE )
+                IIapi_wait( &waitParm );
+
+            if( getColParm.gc_genParm.gp_status >= IIAPI_ST_NO_DATA )
+                return NULL;
+
+            papszFields[iBaseCol][pasDataBuffer[iBaseCol].dv_length] = '\0';
+        }
+
+/* -------------------------------------------------------------------- */
+/*      blob columns may require some extra processing.                 */
+/* -------------------------------------------------------------------- */
+        else
+        {
+            GUInt16 nSegmentLen;
+            char   *pachData = NULL;
+            int     nDataLen = 0;
+
+            do {
+                IIapi_getColumns( &getColParm );
+    
+                while( getColParm.gc_genParm.gp_completed == FALSE )
+                    IIapi_wait( &waitParm );
+
+                if( getColParm.gc_genParm.gp_status >= IIAPI_ST_NO_DATA )
+                    return NULL;
+
+                memcpy( &nSegmentLen, pasDataBuffer[iBaseCol].dv_value, 2 );
+
+                pachData = (char *) CPLRealloc(pachData,
+                                               nDataLen + nSegmentLen + 1 );
+
+                memcpy( pachData + nDataLen,
+                        ((char *) pasDataBuffer[iBaseCol].dv_value)+2,
+                        nSegmentLen );
+
+                nDataLen += nSegmentLen;
+                pachData[nDataLen] = '\0';
+            } while( getColParm.gc_moreSegments );
+
+            papszFields[iBaseCol] = pachData;
+        }
+    }
 
     return papszFields;
+}
+
+/************************************************************************/
+/*                        ClearDynamicColumns()                         */
+/*                                                                      */
+/*      Free dynamic buffers associated with long/blob columns.         */
+/************************************************************************/
+
+void OGRIngresStatement::ClearDynamicColumns()
+
+{
+    int i;
+
+    for( i = 0; i < getDescrParm.gd_descriptorCount; i++ )
+    {
+        if( IsColumnLong( i ) )
+        {
+            CPLFree( papszFields[i] );
+            papszFields[i] = NULL;
+        }
+    }
 }
 
 /************************************************************************/
@@ -241,6 +375,32 @@ void OGRIngresStatement::DumpRow( FILE *fp )
                  getDescrParm.gd_descriptor[i].ds_columnName, 
                  papszFields[i] );
     }                 
+}
+
+/************************************************************************/
+/*                            IsColumnLong()                            */
+/*                                                                      */
+/*      Returns TRUE if the indicated column (zero based) is a blob     */
+/*      type (long varchar, long byte, etc)                             */
+/************************************************************************/
+
+int OGRIngresStatement::IsColumnLong( int iColumn )
+
+{
+    if( iColumn < 0 || iColumn >= getDescrParm.gd_descriptorCount )
+        return FALSE;
+
+    switch( getDescrParm.gd_descriptor[iColumn].ds_dataType )
+    {
+      case IIAPI_LVCH_TYPE:
+      case IIAPI_LBYTE_TYPE:
+      case IIAPI_LNVCH_TYPE:
+      case IIAPI_LTXT_TYPE:
+        return TRUE;
+
+      default:
+        return FALSE;
+    }
 }
 
 /************************************************************************/
@@ -280,7 +440,13 @@ void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
     /*
     ** Check for error information.
     */
-    if ( ! genParm->gp_errorHandle ) return;
+    if ( ! genParm->gp_errorHandle )
+    { 
+        CPLDebug( "INGRES", "No gp_errorHandle in ReportError(%s)", 
+                  pszDescription );
+        return;
+    }
+
     getErrParm.ge_errorHandle = genParm->gp_errorHandle;
     
     CPLString osErrorMessage;
