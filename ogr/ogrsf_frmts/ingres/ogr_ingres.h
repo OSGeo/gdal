@@ -49,6 +49,7 @@ public:
     IIAPI_GETDESCRPARM	getDescrParm;
     IIAPI_GETCOLPARM	getColParm;
     IIAPI_DATAVALUE	*pasDataBuffer;
+    IIAPI_GETQINFOPARM  queryInfo;
     
     GByte             *pabyWrkBuffer;
     char              **papszFields;
@@ -61,6 +62,9 @@ public:
     char **GetRow();
     void   DumpRow( FILE * );
     static void         ReportError( IIAPI_GENPARM *, const char * = NULL );
+
+    int    IsColumnLong(int iCol);
+    void   ClearDynamicColumns();
 };
 
 /************************************************************************/
@@ -80,20 +84,19 @@ class OGRIngresLayer : public OGRLayer
 
     OGRIngresDataSource    *poDS;
  
-    char               *pszQueryStatement;
+    CPLString           osQueryStatement;
 
     int                 nResultOffset;
 
-    char                *pszGeomColumn;
-    char                *pszGeomColumnTable;
-    int                 nGeomType;
+    CPLString           osGeomColumn;
+    CPLString           osIngresGeomType;
 
-    int                 bHasFid;
-    char               *pszFIDColumn;
+    CPLString           osFIDColumn;
 
     OGRIngresStatement *poResultSet; /* stmt */
 
     int                 FetchSRSId();
+    OGRGeometry        *TranslateGeometry( const char * );
 
   public:
                         OGRIngresLayer();
@@ -133,8 +136,8 @@ class OGRIngresTableLayer : public OGRIngresLayer
     char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
-    char                *pszQuery;
-    char                *pszWHERE;
+    CPLString           osQuery;
+    CPLString           osWHERE;
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
@@ -155,14 +158,15 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
-#ifdef notdef
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+#ifdef notdef
     virtual OGRErr      DeleteFeature( long nFID );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
-    
+#endif
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-#endif
+
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
