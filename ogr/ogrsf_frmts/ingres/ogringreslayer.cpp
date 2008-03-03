@@ -42,14 +42,6 @@ OGRIngresLayer::OGRIngresLayer()
 {
     poDS = NULL;
 
-    pszGeomColumn = NULL;
-    pszGeomColumnTable = NULL;
-    pszFIDColumn = NULL;
-    pszQueryStatement = NULL;
-
-    bHasFid = FALSE;
-    pszFIDColumn = NULL;
-
     iNextShapeId = 0;
     nResultOffset = 0;
 
@@ -76,11 +68,6 @@ OGRIngresLayer::~OGRIngresLayer()
     }
 
     ResetReading();
-
-    CPLFree( pszGeomColumn );
-    CPLFree( pszGeomColumnTable );
-    CPLFree( pszFIDColumn );
-    CPLFree( pszQueryStatement );
 
     if( poSRS != NULL )
         poSRS->Release();
@@ -129,6 +116,190 @@ OGRFeature *OGRIngresLayer::GetNextFeature()
         delete poFeature;
     }
 }
+
+/************************************************************************/
+/*                              ParseXY()                               */
+/************************************************************************/
+
+static int ParseXY( const char **ppszNext, double *padfXY )
+
+{
+    int iStartY;
+    const char *pszNext = *ppszNext;
+
+    for( iStartY = 0; ; iStartY++ )
+    {
+        if( pszNext[iStartY] == '\0' )
+            return FALSE;
+
+        if( pszNext[iStartY] == ',' )
+        {
+            iStartY++;
+            break;
+        }
+    }
+
+    padfXY[0] = atof(pszNext);
+    padfXY[1] = atof(pszNext + iStartY);
+
+    int iEnd;
+
+    for( iEnd = iStartY;
+         pszNext[iEnd] != ')';
+         iEnd++ )
+    {
+        if( pszNext[iEnd] == '\0' )
+            return FALSE;
+    }
+    
+    *ppszNext += iEnd;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         TranslateGeometry()                          */
+/*                                                                      */
+/*      This currently only supports "old style" ingres geometry in     */
+/*      text format.  Essentially tuple lists of vertices.              */
+/************************************************************************/
+
+OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
+
+{
+    OGRGeometry *poGeom = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the tuple list into an array of x/y vertices.  The        */
+/*      input may look like "(2,3)" or "((2,3),(4,5),...)".  Extra      */
+/*      spaces may occur between tokens.                                */
+/* -------------------------------------------------------------------- */
+    double *padfXY = NULL;
+    int    nVertMax = 0, nVertCount = 0;
+    int    nDepth = 0;
+    const char *pszNext = pszGeom;
+
+    while( *pszNext != '\0' )
+    {
+        while( *pszNext == ' ' )
+            pszNext++;
+
+        if( *pszNext == '(' )
+        {
+            pszNext++;
+            nDepth++;
+            continue;
+        }
+
+        if( *pszNext == ')' )
+        {
+            pszNext++;
+            CPLAssert( nDepth == 1 );
+            nDepth--;
+            break;
+        }
+
+        if( *pszNext == ',' )
+        {
+            pszNext++;
+            CPLAssert( nDepth == 1 );
+            continue;
+        }
+
+        if( nVertCount == nVertMax )
+        {
+            nVertMax = nVertMax * 2 + 1;
+            padfXY = (double *) 
+                CPLRealloc(padfXY, sizeof(double) * nVertMax * 2 );
+        }
+
+        if( !ParseXY( &pszNext, padfXY + nVertCount*2 ) )
+        {
+            CPLDebug( "INGRES", "Error parsing geometry: %s", 
+                      pszGeom );
+            CPLFree( padfXY );
+            return NULL;
+        }
+        
+        CPLAssert( *pszNext == ')' );
+        nVertCount++;
+        pszNext++;
+        nDepth--;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle Box/IBox.                                                */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(osIngresGeomType,"BOX")
+        || EQUAL(osIngresGeomType,"IBOX") )
+    {
+        CPLAssert( nVertCount == 2 );
+
+        OGRLinearRing *poRing = new OGRLinearRing();
+        poRing->addPoint( padfXY[0], padfXY[1] );
+        poRing->addPoint( padfXY[2], padfXY[1] );
+        poRing->addPoint( padfXY[2], padfXY[3] );
+        poRing->addPoint( padfXY[0], padfXY[3] );
+        poRing->addPoint( padfXY[0], padfXY[1] );
+
+        OGRPolygon *poPolygon = new OGRPolygon();
+        poPolygon->addRingDirectly( poRing );
+
+        poGeom = poPolygon;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle Point/IPoint                                             */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(osIngresGeomType,"POINT")
+             || EQUAL(osIngresGeomType,"IPOINT") )
+    {
+        CPLAssert( nVertCount == 1 );
+
+        poGeom = new OGRPoint( padfXY[0], padfXY[1] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle various linestring types.                                */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(osIngresGeomType,"LSEG")
+             || EQUAL(osIngresGeomType,"ILSEG")
+             || EQUAL(osIngresGeomType,"LINE")
+             || EQUAL(osIngresGeomType,"LONG LINE")
+             || EQUAL(osIngresGeomType,"ILINE") )
+    {
+        OGRLineString *poLine = new OGRLineString();
+        int iVert;
+
+        poLine->setNumPoints( nVertCount );
+        for( iVert = 0; iVert < nVertCount; iVert++ )
+            poLine->setPoint( iVert, padfXY[iVert*2+0], padfXY[iVert*2+1] );
+
+        poGeom = poLine;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle Polygon/IPolygon/LongPolygon.                            */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(osIngresGeomType,"POLYGON")
+             || EQUAL(osIngresGeomType,"IPOLYGON")
+             || EQUAL(osIngresGeomType,"LONG POLYGON") )
+    {
+        OGRLinearRing *poLine = new OGRLinearRing();
+        int iVert;
+
+        poLine->setNumPoints( nVertCount );
+        for( iVert = 0; iVert < nVertCount; iVert++ )
+            poLine->setPoint( iVert, padfXY[iVert*2+0], padfXY[iVert*2+1] );
+
+        OGRPolygon *poPolygon = new OGRPolygon();
+        poPolygon->addRingDirectly( poLine );
+        poGeom = poPolygon;
+    }
+
+    return poGeom;
+}
+
 /************************************************************************/
 /*                          RecordToFeature()                           */
 /*                                                                      */
@@ -170,7 +341,8 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
 /* -------------------------------------------------------------------- */
 /*      Handle FID.                                                     */
 /* -------------------------------------------------------------------- */
-        if( bHasFid && EQUAL(psFDesc->ds_columnName,pszFIDColumn) )
+        if( osFIDColumn.size() 
+            && EQUAL(psFDesc->ds_columnName,osFIDColumn) )
         {
             if( papszRow[iField] == NULL )
             {
@@ -185,20 +357,11 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
 /* -------------------------------------------------------------------- */
 /*      Handle Ingres geometry                                           */
 /* -------------------------------------------------------------------- */
-        if( pszGeomColumn && EQUAL(psFDesc->ds_columnName,pszGeomColumn))
+        if( osGeomColumn.size() 
+            && EQUAL(psFDesc->ds_columnName,osGeomColumn))
         {
-#ifdef notdef            
-            OGRGeometry *poGeometry = NULL;
-            // Geometry columns will have the first 4 bytes contain the SRID.
-            OGRGeometryFactory::createFromWkb(
-                ((GByte *)papszRow[iField]) + 4, 
-                NULL,
-                &poGeometry,
-                panLengths[iField] - 4 );
-
-            if( poGeometry != NULL )
-                poFeature->SetGeometryDirectly( poGeometry );
-#endif
+            poFeature->SetGeometryDirectly( 
+                TranslateGeometry( papszRow[iField] ) );
             continue;
         }
 
@@ -304,11 +467,11 @@ OGRFeature *OGRIngresLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( iNextShapeId == 0 && poResultSet == NULL )
     {
-        CPLAssert( pszQueryStatement != NULL );
+        CPLAssert( osQueryStatement.size() != 0 );
 
         poResultSet = new OGRIngresStatement( poDS->GetConn() );
 
-        if( !poResultSet->ExecuteSQL( pszQueryStatement ) )
+        if( !poResultSet->ExecuteSQL( osQueryStatement ) )
             return NULL;
     }
 
@@ -355,16 +518,16 @@ int OGRIngresLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return TRUE;
+        return FALSE;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return TRUE;
+        return FALSE;
 
     else if( EQUAL(pszCap,OLCTransactions) )
         return FALSE;
 
-	else if( EQUAL(pszCap,OLCFastGetExtent) )
-		return FALSE;
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return FALSE;
 
     else
         return FALSE;
@@ -380,10 +543,7 @@ int OGRIngresLayer::TestCapability( const char * pszCap )
 const char *OGRIngresLayer::GetFIDColumn() 
 
 {
-    if( pszFIDColumn != NULL )
-        return pszFIDColumn;
-    else
-        return "";
+    return osFIDColumn;
 }
 
 /************************************************************************/
@@ -393,10 +553,7 @@ const char *OGRIngresLayer::GetFIDColumn()
 const char *OGRIngresLayer::GetGeometryColumn() 
 
 {
-    if( pszGeomColumn != NULL )
-        return pszGeomColumn;
-    else
-        return "";
+    return osGeomColumn;
 }
 
 
