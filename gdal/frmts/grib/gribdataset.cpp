@@ -240,7 +240,7 @@ GRIBDataset::~GRIBDataset()
 {
     FlushCache();
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 		
     CPLFree( pszProjection );
 }
@@ -302,8 +302,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GRIBDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
@@ -318,7 +317,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* simply so that the same portion of the file is not read twice.       */
 /* -------------------------------------------------------------------- */
     
-    VSIFSeek( poDS->fp, 0, SEEK_SET );
+    VSIFSeekL( poDS->fp, 0, SEEK_SET );
 
     FileDataSource grib_fp (poDS->fp);
 
@@ -328,6 +327,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (GRIB2Inventory (grib_fp, &Inv, &LenInv, 0, &msgNum) <= 0 )
     {
+        char * errMsg = errSprintf(NULL);
+        if( errMsg != NULL )
+            CPLDebug( "GRIB", "%s", errMsg );
+        free(errMsg);
+
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s is a grib file, but no raster dataset was successfully identified.",
                   poOpenInfo->pszFilename );
