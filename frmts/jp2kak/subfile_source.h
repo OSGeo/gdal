@@ -38,10 +38,6 @@ class subfile_source : public kdu_compressed_source {
 
   public: 
     subfile_source() { file = NULL; }
-    subfile_source(const char *fname, bool allow_seeks=true)
-      { file = NULL; open(fname,allow_seeks); }
-
-
     ~subfile_source() { close(); }
 
 
@@ -49,34 +45,42 @@ class subfile_source : public kdu_compressed_source {
 
     bool operator!() { return (file == NULL); }
 
-    void open(const char *fname, bool allow_seeks=true)
+    void open(const char *fname )
       {
           const char *real_filename;
           close();
 
-          if( sscanf( fname, "J2K_SUBFILE:%d,%d", 
-                      &subfile_offset, &subfile_size ) != 2 )
+          if( EQUALN( fname, "J2K_SUBFILE:",12) )
           {
-              kdu_error e;
-
-              e << "Corrupt subfile definition:" << fname;
-              return;
+              if( sscanf( fname, "J2K_SUBFILE:%d,%d", 
+                          &subfile_offset, &subfile_size ) != 2 )
+              {
+                  kdu_error e;
+                  
+                  e << "Corrupt subfile definition:" << fname;
+                  return;
+              }
+              real_filename = strstr(fname,",");
+              if( real_filename != NULL )
+                  real_filename = strstr(real_filename+1,",");
+              if( real_filename != NULL )
+                  real_filename++;
+              else
+              {
+                  kdu_error e;
+              
+                  e << "Could not find filename in subfile definition." << fname;
+                  return;
+              }
           }
-
-          real_filename = strstr(fname,",");
-          if( real_filename != NULL )
-              real_filename = strstr(real_filename+1,",");
-          if( real_filename != NULL )
-              real_filename++;
           else
           {
-              kdu_error e;
-
-              e << "Could not find filename in subfile definition." << fname;
-              return;
+              real_filename = fname;
+              subfile_offset = 0;
+              subfile_size = 0; 
           }
 
-          file = VSIFOpenL( real_filename, "rb" );
+          file = VSIFOpenL( real_filename, "r");
           if( file == NULL )
           {
               kdu_error e;
@@ -85,9 +89,7 @@ class subfile_source : public kdu_compressed_source {
               return;
           }
 
-          capabilities = KDU_SOURCE_CAP_SEQUENTIAL;
-          if (allow_seeks)
-              capabilities |= KDU_SOURCE_CAP_SEEKABLE;
+          capabilities = KDU_SOURCE_CAP_SEQUENTIAL | KDU_SOURCE_CAP_SEEKABLE;
 
           seek_origin = subfile_offset;
           seek( 0 );
@@ -121,7 +123,7 @@ class subfile_source : public kdu_compressed_source {
     kdu_long get_pos(bool absolute)
       { 
         if (file == NULL) return -1;
-        kdu_long result = VSIFTell( file );
+        kdu_long result = VSIFTellL( file );
         if (!absolute) 
             result -= seek_origin;
         else

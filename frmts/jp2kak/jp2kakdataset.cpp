@@ -42,6 +42,7 @@
 #include "kdu_stripe_decompressor.h"
 
 #include "subfile_source.h"
+#include "vsil_target.h"
 
 // Application level includes
 #include "kdu_file_io.h"
@@ -52,15 +53,7 @@
 #include "kdu_image.h"
 #include "roi_sources.h"
 
-#ifdef J2_INPUT_MAX_BUFFER_BYTES
-#  define KAKADU4
-
-#  ifdef JP2_COMPRESSION_TYPE_NONE
-#    define KAKADU41
-#  endif
-#endif									
-
-#if defined(KAKADU4) && defined(WIN32) && !defined(KAKADU41)
+#if defined(WIN32)
 #  define USE_JPIP
 #endif
 
@@ -69,6 +62,8 @@
 #else
 #  define kdu_client void
 #endif
+
+// #define KAKADU_JPX	1
 
 CPL_CVSID("$Id$");
 
@@ -108,9 +103,7 @@ class JP2KAKDataset : public GDALPamDataset
     kdu_codestream oCodeStream;
     kdu_compressed_source *poInput;
     kdu_compressed_source *poRawInput;
-#ifdef KAKADU4
     jp2_family_src  *family;
-#endif
     kdu_client      *jpip_client;
     kdu_dims dims; 
     int            nResCount;
@@ -324,29 +317,17 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
     if( oJP2Channels.exists() )
     {
         int nRedIndex=-1, nGreenIndex=-1, nBlueIndex=-1, nLutIndex;
-#ifdef KAKADU41
         int nCSI;
-#endif
 
         if( oJP2Channels.get_num_colours() == 3 )
         {
-#ifdef KAKADU41 
             oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
             oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex, nCSI );
             oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex, nCSI );
-#else
-            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
-            oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex );
-            oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex );
-#endif
         }
         else
         {
-#ifdef KAKADU41 
             oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
-#else
-            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex );
-#endif
             if( nBand == 1 )
                 eInterp = GCI_GrayIndex;
         }
@@ -376,7 +357,6 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
             for( color_idx = 0; 
                  color_idx < oJP2Channels.get_num_colours(); color_idx++ )
             {
-#ifdef KAKADU41 
                 if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
                                                       lut_idx, nCSI ) )
                 {
@@ -389,20 +369,6 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                     if( opacity_idx == nBand - 1 )
                         eInterp = GCI_AlphaBand;
                 }
-#else
-                if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
-                                                      lut_idx ) )
-                {
-                    if( opacity_idx == nBand - 1 )
-                        eInterp = GCI_AlphaBand;
-                }
-                if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
-                                                      lut_idx ) )
-                {
-                    if( opacity_idx == nBand - 1 )
-                        eInterp = GCI_AlphaBand;
-                }
-#endif
             }
         }
     }
@@ -940,9 +906,7 @@ JP2KAKDataset::JP2KAKDataset()
     pszProjection = NULL;
     nGCPCount = 0;
     pasGCPList = NULL;
-#ifdef KAKADU4
     family = NULL;
-#endif
 
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -975,13 +939,11 @@ JP2KAKDataset::~JP2KAKDataset()
         oCodeStream.destroy();
         poInput->close();
         delete poInput;
-#ifdef KAKADU4
         if( family )
         {
             family->close();
             delete family;
         }
-#endif
         if( poRawInput != NULL )
             delete poRawInput;
 #ifdef USE_JPIP
@@ -1149,6 +1111,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
+    KakaduInitialize();
+        
     pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
     if( poOpenInfo->nHeaderBytes < 16 )
     {
@@ -1163,10 +1127,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             static GByte abySubfileHeader[16];
 
-            KakaduInitialize();
             try
             {
-                poRawInput = new subfile_source( poOpenInfo->pszFilename );
+                poRawInput = new subfile_source;
+                poRawInput->open( poOpenInfo->pszFilename );
                 poRawInput->seek( 0 );
 
                 poRawInput->read( abySubfileHeader, 16 );
@@ -1189,8 +1153,26 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         pabyHeader = poOpenInfo->pabyHeader;
     }
 
-    KakaduInitialize();
-        
+/* -------------------------------------------------------------------- */
+/*      If we think this should be access via vsil, then open it        */
+/*      accordingly.                                                    */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->fp == NULL
+        && poRawInput == NULL
+        && !bIsJPIP )
+    {
+        try
+        {
+            poRawInput = new subfile_source;
+            poRawInput->open( poOpenInfo->pszFilename );
+            poRawInput->seek( 0 );
+        }
+        catch( ... )
+        {
+            return NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If the header is a JP2 header, mark this as a JP2 dataset.      */
 /* -------------------------------------------------------------------- */
@@ -1205,9 +1187,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     jp2_palette oJP2Palette;
     jp2_channels oJP2Channels;
 
-#ifdef KAKADU4
     jp2_family_src *family = NULL;
-#endif
 
     try
     {
@@ -1276,7 +1256,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             jp2_source *jp2_src;
 
-#ifdef KAKADU4
             family = new jp2_family_src;
             if( poRawInput != NULL )
                 family->open( poRawInput );
@@ -1285,10 +1264,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             jp2_src = new jp2_source;
             jp2_src->open( family );
             jp2_src->read_header();
-#else
-            jp2_src = new jp2_source;
-            jp2_src->open( poOpenInfo->pszFilename, true );
-#endif
+
             poInput = jp2_src;
 
             oJP2Palette = jp2_src->access_palette();
@@ -1336,9 +1312,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->jpip_client = jpip_client;
 
-#ifdef KAKADU4
         poDS->family = family;
-#endif
+
 /* -------------------------------------------------------------------- */
 /*      Get overall image size.                                         */
 /* -------------------------------------------------------------------- */
@@ -1960,21 +1935,12 @@ static void JP2KAKWriteBox( jp2_target *jp2_out, GDALJP2Box *poBox )
 /* -------------------------------------------------------------------- */
 /*      Write to a box on the JP2 file.                                 */
 /* -------------------------------------------------------------------- */
-#ifdef KAKADU4
     jp2_out->open_next( nBoxType );
 
     jp2_out->write( (kdu_byte *) poBox->GetWritableData(), 
                     poBox->GetDataLength() );
 
     jp2_out->close();
-#else
-    jp2_output_box &uuid_box = jp2_out->open_box( nBoxType );
-
-    uuid_box.write( (kdu_byte *) poBox->GetWritableData(), 
-                    poBox->GetDataLength() );
-
-    uuid_box.close();
-#endif
 
     delete poBox;
 }
@@ -2342,10 +2308,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Open output file, and setup codestream.                         */
 /* -------------------------------------------------------------------- */
-#ifdef KAKADU4
     jp2_family_tgt         family;
-#endif
-#ifdef KAKADU42
+#ifdef KAKADU_JPX
     jpx_family_tgt         jpx_family;
     jpx_target             jpx_out;
     int			   bIsJPX = !EQUAL(CPLGetExtension(pszFilename),"jpf");
@@ -2355,28 +2319,28 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     kdu_compressed_target *poOutputFile = NULL;
     jp2_target             jp2_out;
-    kdu_simple_file_target jpc_out;
     int                    bIsJP2 = !EQUAL(CPLGetExtension(pszFilename),"jpc")
         && !bIsJPX;
     kdu_codestream         oCodeStream;
+
+    vsil_target            oVSILTarget;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 
     try
     {
+        oVSILTarget.open( pszFilename, "w" );
+
         if( bIsJP2 )
         {
-#ifdef KAKADU4
-            family.open( pszFilename );
+            //family.open( pszFilename );
+            family.open( &oVSILTarget );
 
             jp2_out.open( &family );
-#else
-            jp2_out.open( pszFilename );
-#endif
             poOutputFile = &jp2_out;
         }
-#ifdef KAKADU42
+#ifdef KAKADU_JPX
         else if( bIsJPX )
         {
             jpx_family.open( pszFilename );
@@ -2386,10 +2350,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 #endif
         else
-        {
-            jpc_out.open( pszFilename );
-            poOutputFile = &jpc_out;
-        }
+            poOutputFile = &oVSILTarget;
 
         oCodeStream.create(&oSizeParams, poOutputFile );
     }
@@ -2560,12 +2521,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oJP2Channels.set_colour_mapping( 2, 0, 2 );
     }
 
-#ifdef KAKADU4
     if( bIsJP2 )
     {
         jp2_out.write_header();
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Set the GeoTIFF and GML boxes if georeferencing is available,   */
@@ -2629,10 +2588,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Open codestream box.                                            */
 /* -------------------------------------------------------------------- */
-#ifdef KAKADU4
     if( bIsJP2 )
         jp2_out.open_codestream();
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create one big tile, and a compressing engine, and line         */
@@ -2708,14 +2665,14 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( bIsJP2 )
     {
         jp2_out.close();
-#ifdef KAKADU4
         family.close();
-#endif
     }
     else
     {
         poOutputFile->close();
     }
+
+    oVSILTarget.close();
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
         return NULL;
@@ -2752,11 +2709,13 @@ void GDALRegister_JP2KAK()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 (based on Kakadu)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_jpeg2000.html" );
+                                   "frmt_jp2kak.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
