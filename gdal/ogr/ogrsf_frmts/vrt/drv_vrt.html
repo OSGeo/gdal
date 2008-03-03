@@ -96,6 +96,21 @@ the layer as a point layer, and as being in the WGS84 coordinate system.<p>
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
+<h2>Example: Renaming attributes</h2>
+
+It can be usefull in some circumstances to be able to rename the field names from
+a source layer to other names. This is particularly true when you want to transcode
+to a format whose schema is fixed, such as GPX (&lt;name&gt;, &lt;desc&gt, etc.).<p>
+
+<pre>&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTLayer name="remapped_layer"&gt;
+        &lt;SrcDataSource&gt;your_source.shp&lt;/SrcDataSource&gt;
+        &lt;SrcSQL&gt;SELECT src_field_1 AS name, src_field_2 AS desc FROM your_source_layer_name&lt;/SrcSQL&gt;
+    &lt;/OGRVRTLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+
 <h2>Other Notes</h2>
 
 <ul>
