@@ -1,49 +1,58 @@
 #include "filedatasource.h"
+#include "cpl_vsi.h"
+#include "cpl_error.h"
 
 FileDataSource::FileDataSource(const char * fileName)
-: closeFile(true)
+  : closeFile(true)
 {
-	fp = fopen(fileName, "rb");
+    fp = VSIFOpenL(fileName, "rb");
 }
 
 FileDataSource::FileDataSource(FILE * fp)
 : closeFile(false)
 {
-	this->fp = fp;
+    this->fp = fp;
 }
 
 FileDataSource::~FileDataSource()
 {
-	if (closeFile)
-		fclose(fp);
+    if (closeFile)
+        VSIFCloseL(fp);
 }
 
 size_t FileDataSource::DataSourceFread(void* lpBuf, size_t size, size_t count)
 {
-	return fread(lpBuf, size, count, fp);
+    return VSIFReadL(lpBuf, size, count, fp);
 }
 
 int FileDataSource::DataSourceFgetc()
 {
-	return fgetc(fp);
+    char chData;
+
+    if( VSIFReadL( &chData, 1, 1, fp ) == 1 )
+        return chData;
+    else
+        return EOF;
 }
 
 int FileDataSource::DataSourceUngetc(int c)
 {
-	return ungetc(c, fp);
+    VSIFSeekL( fp, -1, SEEK_CUR );
+    
+    return c;
 }
 
 int FileDataSource::DataSourceFseek(long offset, int origin)
 {
-	return fseek(fp, offset, origin);
+    return VSIFSeekL(fp, offset, origin);
 }
 
 int FileDataSource::DataSourceFeof()
 {
-	return feof(fp);	
+    return VSIFEofL( fp );
 }
 
 long FileDataSource::DataSourceFtell()
 {
-	return ftell(fp);
+    return VSIFTellL( fp );
 }
