@@ -200,6 +200,21 @@ def jp2kak_7():
     return 'success'
     
 ###############################################################################
+# Test VSI*L support with a JPC rather than jp2 datastream.
+#
+
+def jp2kak_8():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+    
+    tst = gdaltest.GDALTest( 'JP2KAK', 'byte.jp2', 1, 50054,
+                             options = [ 'QUALITY=100' ] )
+
+    return tst.testCreateCopy( vsimem = 1,
+                               new_filename = '/vsimem/jp2kak_8.jpc' )
+    
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -215,6 +230,7 @@ gdaltest_list = [
     jp2kak_5,
     jp2kak_6,
     jp2kak_7,
+    jp2kak_8,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
