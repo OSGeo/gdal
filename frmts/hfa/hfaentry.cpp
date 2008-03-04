@@ -747,7 +747,7 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
         GUInt32		nLong;
 
-        VSIFFlushL( psHFA->fp );
+        //VSIFFlushL( psHFA->fp );
         if( VSIFSeekL( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -802,7 +802,7 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
 /*      Write out the data.                                             */
 /* -------------------------------------------------------------------- */
-        VSIFFlushL( psHFA->fp );
+        //VSIFFlushL( psHFA->fp );
         if( nDataSize > 0 && pabyData != NULL )
         {
             if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) != 0 
@@ -816,7 +816,7 @@ CPLErr HFAEntry::FlushToDisk()
             }
         }
 
-        VSIFFlushL( psHFA->fp );
+        //VSIFFlushL( psHFA->fp );
     }
 
 /* -------------------------------------------------------------------- */
