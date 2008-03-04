@@ -107,12 +107,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             if( eDataType == eBufType )
             {
                 if( eRWFlag == GF_Read )
-                    memcpy( ((GByte *) pData) + iBufYOff * nLineSpace,
+                    memcpy( ((GByte *) pData) + (size_t)iBufYOff * nLineSpace,
                             pabySrcBlock + nSrcByteOffset, 
                             nLineSpace );
                 else
                     memcpy( pabySrcBlock + nSrcByteOffset, 
-                            ((GByte *) pData) + iBufYOff * nLineSpace,
+                            ((GByte *) pData) + (size_t)iBufYOff * nLineSpace,
                             nLineSpace );
             }
             else
@@ -122,10 +122,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( eRWFlag == GF_Read )
                     GDALCopyWords( pabySrcBlock + nSrcByteOffset,
                                    eDataType, nBandDataSize,
-                                   ((GByte *) pData) + iBufYOff * nLineSpace,
+                                   ((GByte *) pData) + (size_t)iBufYOff * nLineSpace,
                                    eBufType, nPixelSpace, nBufXSize );
                 else
-                    GDALCopyWords( ((GByte *) pData) + iBufYOff * nLineSpace,
+                    GDALCopyWords( ((GByte *) pData) + (size_t)iBufYOff * nLineSpace,
                                    eBufType, nPixelSpace,
                                    pabySrcBlock + nSrcByteOffset,
                                    eDataType, nBandDataSize, nBufXSize );
@@ -176,9 +176,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         for( iBufYOff = 0, iSrcY = nYOff; iBufYOff < nBufYSize; iBufYOff++, iSrcY++ )
         {
-            int     iBufOffset, iSrcOffset, nXSpan;
-            
-            iBufOffset = iBufYOff * nLineSpace;
+            size_t  iBufOffset, iSrcOffset;
+            int     nXSpan;
+
+            iBufOffset = (size_t)iBufYOff * nLineSpace;
             nLBlockY = iSrcY / nBlockYSize;
             nLBlockX = nLBlockXStart;
             iSrcX = nXOff;
@@ -229,8 +230,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
-                iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
-                    + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+                iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
+                    + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
 
                 if( eDataType == eBufType 
                     && nPixelSpace == nBufDataSize )
@@ -293,12 +294,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
     {
-        int     iBufOffset, iSrcOffset;
+        size_t   iBufOffset, iSrcOffset;
         
         dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
         iSrcY = (int) dfSrcY;
 
-        iBufOffset = iBufYOff * nLineSpace;
+        iBufOffset = (size_t)iBufYOff * nLineSpace;
         
         for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
         {
@@ -348,8 +349,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Copy over this pixel of data.                                   */
 /* -------------------------------------------------------------------- */
-            iSrcOffset = (iSrcX - nLBlockX*nBlockXSize
-                + (iSrcY - nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+            iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
+                + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
 
             if( eDataType == eBufType )
             {
