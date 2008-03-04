@@ -1636,7 +1636,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         /*      filename.                                                       */
         /* -------------------------------------------------------------------- */
         CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-        CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
+        CPLString osName = CPLGetFilename( poOpenInfo->pszFilename );
 
         int iFile = CSLFindString(poOpenInfo->papszSiblingFiles, 
                                   CPLResetExtension( osName, "hdr" ) );
