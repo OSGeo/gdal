@@ -136,7 +136,12 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_Open", NULL );
 
-    return ((OGRSFDriver *)hDriver)->Open( pszName, bUpdate );
+    OGRDataSource *poDS = ((OGRSFDriver *)hDriver)->Open( pszName, bUpdate );
+
+    if( poDS != NULL && poDS->GetDriver() == NULL )
+        poDS->SetDriver( (OGRSFDriver *)hDriver );
+
+    return poDS;
 }
 
 /************************************************************************/
