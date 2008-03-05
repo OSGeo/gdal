@@ -511,10 +511,10 @@ void GDALDriverManager::AutoSkipDrivers()
  *
  * This function will automatically load drivers from shared libraries.  It
  * searches the "driver path" for .so (or .dll) files that start with the
- * prefix "gdal_X.so".  It then tries to load them and then tries to call
- * a function within them called GDALRegister_X() where the 'X' is the same 
- * as the remainder of the shared library basename, or failing that to 
- * call GDALRegisterMe().  
+ * prefix "gdal_X.so".  It then tries to load them and then tries to call a
+ * function within them called GDALRegister_X() where the 'X' is the same as
+ * the remainder of the shared library basename ('X' is case sensitive), or
+ * failing that to call GDALRegisterMe().
  *
  * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH
  * environment variable it set, it is taken to be a list of directories
