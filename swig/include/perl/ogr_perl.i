@@ -160,6 +160,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    return @cap;
 	}
+	*GetDriver = *_GetDriver;
 	sub new {
 	    my $pkg = shift;
 	    return Geo::OGR::Open(@_);
