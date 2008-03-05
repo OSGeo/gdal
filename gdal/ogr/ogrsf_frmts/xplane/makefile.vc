@@ -1,5 +1,5 @@
 
-OBJ	=	ogrxplanedriver.obj ogrxplanedatasource.obj ogrxplanelayer.obj 
+OBJ	=	ogrxplanedriver.obj ogrxplanedatasource.obj ogrxplanelayer.obj ogr_xplane_geo_utils.obj
 
 EXTRAFLAGS =	-I.. -I..\.. 
 
