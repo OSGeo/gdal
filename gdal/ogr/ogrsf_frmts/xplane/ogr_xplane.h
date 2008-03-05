@@ -103,7 +103,7 @@ class OGRXPlaneILSLayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneILSLayer();
-    void                AddFeature(const char* pszNavaidID,
+    OGRFeature*         AddFeature(const char* pszNavaidID,
                                    const char* pszAptICAO,
                                    const char* pszRwyNum,
                                    const char* pszSubType,
@@ -124,7 +124,7 @@ class OGRXPlaneVORLayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneVORLayer();
-    void                AddFeature(const char* pszNavaidID,
+    OGRFeature*         AddFeature(const char* pszNavaidID,
                                    const char* pszNavaidName,
                                    const char* pszSubType,
                                    double dfLat,
@@ -144,7 +144,7 @@ class OGRXPlaneNDBLayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneNDBLayer();
-    void                AddFeature(const char* pszNavaidID,
+    OGRFeature*         AddFeature(const char* pszNavaidID,
                                    const char* pszNavaidName,
                                    const char* pszSubType,
                                    double dfLat,
@@ -163,7 +163,7 @@ class OGRXPlaneGSLayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneGSLayer();
-    void                AddFeature(const char* pszNavaidID,
+    OGRFeature*         AddFeature(const char* pszNavaidID,
                                    const char* pszAptICAO,
                                    const char* pszRwyNum,
                                    double dfLat,
@@ -184,7 +184,7 @@ class OGRXPlaneMarkerLayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneMarkerLayer();
-    void                AddFeature(const char* pszAptICAO,
+    OGRFeature*         AddFeature(const char* pszAptICAO,
                                    const char* pszRwyNum,
                                    const char* pszSubType,
                                    double dfLat,
@@ -202,7 +202,7 @@ class OGRXPlaneDMEILSLayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneDMEILSLayer();
-    void                AddFeature(const char* pszNavaidID,
+    OGRFeature*         AddFeature(const char* pszNavaidID,
                                    const char* pszAptICAO,
                                    const char* pszRwyNum,
                                    double dfLat,
@@ -223,7 +223,7 @@ class OGRXPlaneDMELayer : public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneDMELayer();
-    void                AddFeature(const char* pszNavaidID,
+    OGRFeature*         AddFeature(const char* pszNavaidID,
                                    const char* pszNavaidName,
                                    const char* pszSubType,
                                    double dfLat,
@@ -246,7 +246,7 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
 
     /* If the airport has a tower, its coordinates are the tower coordinates */
     /* If it has no tower, then we pick up the coordinates of the threshold of its first found runway */
-    void                AddFeature(const char* pszAptICAO,
+    OGRFeature*         AddFeature(const char* pszAptICAO,
                                    const char* pszAptName,
                                    double dfElevation,
                                    int bHasCoordinates = FALSE,
@@ -259,7 +259,7 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
 
 
 /************************************************************************/
-/*                         OGRXPlaneRunwayLayer                         */
+/*                OGRXPlaneRunwayThresholdLayerLayer                    */
 /************************************************************************/
 
 static const sEnumerationElement runwaySurfaceType[] =
@@ -312,8 +312,8 @@ static const sEnumerationElement approachLightingType[] =
 static const sEnumerationElement runwayREILType[] =
 {
     { 0, "None" },
-    { 1, "omni-directional" },
-    { 2, "unidirectional" }
+    { 1, "Omni-directional" },
+    { 2, "Unidirectional" }
 };
 
 DEFINE_XPLANE_ENUMERATION(RunwaySurfaceEnumeration, runwaySurfaceType);
@@ -323,13 +323,13 @@ DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumeration, approachLightingTyp
 DEFINE_XPLANE_ENUMERATION(RunwayREILEnumeration, runwayREILType);
 
 
-class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
+class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
 {
   public:
-                        OGRXPlaneRunwayLayer();
+                        OGRXPlaneRunwayThresholdLayer();
 
-    void                AddFeature(const char* pszAptICAO,
-                                   const char* pszRunwayID,
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszRwyNum,
                                    double dfLat,
                                    double dfLon,
                                    double dfWidth,
@@ -345,8 +345,134 @@ class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
                                    const char* pszApproachLightingCode,
                                    int bHasTouchdownLights,
                                    const char* pszREIL);
+
+    /* Set a few computed values */
+    void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
+                                                   double dfLength,
+                                                   double dfHeading);
 };
 
+/************************************************************************/
+/*                          OGRXPlaneRunwayLayer                        */
+/************************************************************************/
+
+
+class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneRunwayLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszRwyNum1,
+                                   const char* pszRwyNum2,
+                                   double dfLat1,
+                                   double dfLon1,
+                                   double dfLat2,
+                                   double dfLon2,
+                                   double dfWidth,
+                                   const char* pszSurfaceType,
+                                   const char* pszShoulderType,
+                                   double dfSmoothness,
+                                   int bHasCenterLineLights,
+                                   int bHasMIRL,
+                                   int bHasDistanceRemainingSigns);
+};
+
+
+/************************************************************************/
+/*                   OGRXPlaneWaterRunwayThresholdLayer                 */
+/************************************************************************/
+
+
+class OGRXPlaneWaterRunwayThresholdLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneWaterRunwayThresholdLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszRwyNum,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfWidth,
+                                   int bBuoys);
+
+    /* Set a few computed values */
+    void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
+                                                   double dfLength,
+                                                   double dfHeading);
+};
+
+
+/************************************************************************/
+/*                         OGRXPlaneWaterRunwayLayer                    */
+/************************************************************************/
+
+/* Polygonal object */
+
+class OGRXPlaneWaterRunwayLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneWaterRunwayLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszRwyNum1,
+                                   const char* pszRwyNum2,
+                                   double dfLat1,
+                                   double dfLon1,
+                                   double dfLat2,
+                                   double dfLon2,
+                                   double dfWidth,
+                                   int bBuoys);
+};
+
+
+/************************************************************************/
+/*                        OGRXPlaneHelipadLayer                         */
+/************************************************************************/
+
+
+class OGRXPlaneHelipadLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneHelipadLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszHelipadNum,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfTrueHeading,
+                                   double dfLength,
+                                   double dfWidth,
+                                   const char* pszSurfaceType,
+                                   const char* pszMarkings,
+                                   const char* pszShoulderType,
+                                   double dfSmoothness,
+                                   int bYellowEdgeLights);
+};
+
+/************************************************************************/
+/*                     OGRXPlaneHelipadPolygonLayer                     */
+/************************************************************************/
+
+
+class OGRXPlaneHelipadPolygonLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneHelipadPolygonLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszHelipadNum,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfTrueHeading,
+                                   double dfLength,
+                                   double dfWidth,
+                                   const char* pszSurfaceType,
+                                   const char* pszMarkings,
+                                   const char* pszShoulderType,
+                                   double dfSmoothness,
+                                   int bYellowEdgeLights);
+};
 
 /************************************************************************/
 /*                         OGRXPlaneATCFreqLayer                         */
@@ -357,10 +483,119 @@ class OGRXPlaneATCFreqLayer : public OGRXPlaneLayer
   public:
                         OGRXPlaneATCFreqLayer();
 
-    void                AddFeature(const char* pszAptICAO,
+    OGRFeature*         AddFeature(const char* pszAptICAO,
                                    const char* pszATCType,
                                    const char* pszATCFreqName,
-                                   double dFrequency);
+                                   double dfFrequency);
+};
+
+
+/************************************************************************/
+/*                     OGRXPlaneStartupLocationLayer                    */
+/************************************************************************/
+
+class OGRXPlaneStartupLocationLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneStartupLocationLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszName,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfTrueHeading);
+};
+
+/************************************************************************/
+/*                     OGRXPlaneAPTLightBeaconLayer                     */
+/************************************************************************/
+
+
+static const sEnumerationElement APTLightBeaconColorType[] =
+{
+    { 0, "None" },
+    { 1, "White-green" },           /* land airport */
+    { 2, "White-yellow" },          /* seaplane base */
+    { 3, "Green-yellow-white" },    /* heliports */
+    { 4, "White-white-green" }     /* military field */
+};
+
+DEFINE_XPLANE_ENUMERATION(APTLightBeaconColorEnumeration, APTLightBeaconColorType);
+
+class OGRXPlaneAPTLightBeaconLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneAPTLightBeaconLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszName,
+                                   double dfLat,
+                                   double dfLon,
+                                   const char* pszColor);
+};
+
+/************************************************************************/
+/*                       OGRXPlaneAPTWindsockLayer                      */
+/************************************************************************/
+
+class OGRXPlaneAPTWindsockLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneAPTWindsockLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszName,
+                                   double dfLat,
+                                   double dfLon,
+                                   int bIsIllumnited);
+};
+
+
+/************************************************************************/
+/*                       OGRXPlaneTaxiwaySignLayer                      */
+/************************************************************************/
+
+class OGRXPlaneTaxiwaySignLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneTaxiwaySignLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszText,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfHeading,
+                                   int nSize);
+};
+
+/************************************************************************/
+/*                   OGRXPlane_VASI_PAPI_WIGWAG_Layer                   */
+/************************************************************************/
+
+static const sEnumerationElement VASI_PAPI_WIGWAG_Type[] =
+{
+    { 1, "VASI" },
+    { 2, "PAPI Left" },
+    { 3, "PAPI Right" },
+    { 4, "Space Shuttle PAPI" },
+    { 5, "Tri-colour VASI" },
+    { 6, "Wig-Wag lights" }
+};
+
+DEFINE_XPLANE_ENUMERATION(VASI_PAPI_WIGWAG_Enumeration, VASI_PAPI_WIGWAG_Type);
+
+class OGRXPlane_VASI_PAPI_WIGWAG_Layer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlane_VASI_PAPI_WIGWAG_Layer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszRwyNum,
+                                   const char* pszObjectType,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfHeading,
+                                   double dfVisualGlidePathAngle);
 };
 
 
