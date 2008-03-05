@@ -269,8 +269,13 @@
   Attempt to open file with this driver. 
 
   This method is what OGRSFDriverRegistrar uses to implement its Open() 
-  method.
-  See it for more details.
+  method.  See it for more details.
+
+  Note, drivers do not normally set their own m_poDriver value, so a direct
+  call to this method (instead of indirectly via OGRSFDriverRegistrar) will
+  usually result in a datasource that does not know what driver it relates to
+  if GetDriver() is called on the datasource.  The application may directly
+  call SetDriver() after opening with this method to avoid this problem.
 
   This method is the same as the C function OGR_Dr_Open().
 
