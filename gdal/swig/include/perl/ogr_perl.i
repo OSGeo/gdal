@@ -173,7 +173,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub Layer {
 	    my($self, $name) = @_;
-	    my $layer = _GetLayerByName($self, $name) if defined $name;
+	    my $layer;
+	    if (defined $name) {
+		$layer = _GetLayerByName($self, "$name");
+	    } else {
+		$name = 0;
+	    }
 	    $layer = _GetLayerByIndex($self, $name) if !$layer and $name =~ /^\d+$/;
 	    return unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
