@@ -339,7 +339,7 @@
 # @param SRS a Geo::OSR::SpatialReference object
 # @param GeometryType one of geometry types (a string: Point, LineString, etc)
 # @param Options
-# @param Schema
+# @param Schema Forwarded to Layer::Schema, which is called if this parameter exists.
 # @return a new Geo::OGR::Layer object
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, \@options = undef)
@@ -406,7 +406,8 @@
 # which they can be created). ApproxOK is a flag telling OGR whether
 # it is ok to change the requested field definition to accommodate
 # limitations of the layer. The output contains keys Name,
-# GeometryType, and Fields.
+# GeometryType, and Fields. Fields is an array of hashrefs that
+# contain schemas of FieldDefns
 # @param schema [optional]
 # @return
 
@@ -535,6 +536,16 @@
 ## @cmethod Geo::OGR::Feature new($feature_def)
 # @param feature_def a Geo::OGR::FeatureDefn object
 # @return a new Geo::OGR::Feature object
+
+## @method \%Schema(%schema)
+# Get or set the schema. The schema is a hash (Name => name,
+# GeometryType => geometry_type, Fields => [list of
+# Geo::OGR::FieldDefn objects or hashrefs from which such can be
+# created]. The Name and GeometryType cannot be set and the Fields are
+# added to the schema. Fields is an array of hashrefs that
+# contain schemas of FieldDefns
+# @param schema [optional]
+# @return
 
 ## @method \%Row(%row)
 # Get and/or set the data of the feature. The key of the key value,
@@ -675,8 +686,9 @@
 # Get or set the schema. The schema is a hash (Name => name,
 # GeometryType => geometry_type, Fields => [list of
 # Geo::OGR::FieldDefn objects or hashrefs from which such can be
-# created]. The Name cannot be set and the Fields are added to the
-# schema.
+# created]. The Name nor GeometryType cannot be set and the Fields are
+# added to the schema. Fields is an array of hashrefs that
+# contain schemas of FieldDefns
 # @param schema [optional]
 # @return
 
