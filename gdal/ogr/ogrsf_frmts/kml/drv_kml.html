@@ -24,11 +24,11 @@ supplied with the GDAL project that can build other kinds of output)</em></p>
 
 <h3>KML Writing</h3>
 <p>Since not all features of KML
-are able to be represented in  the Simple Features geometry model, you will not be able to generate
+are able to be represented in the Simple Features geometry model, you will not be able to generate
 many KML-specific attributes from within GDAL/OGR. Please try
 a few test files to get a sense of what is possible.</p>
 
-<p>When outputting KML, the OGR KML driver will translate each OGR Layer into a  KML Folder.
+<p>When outputting KML, the OGR KML driver will translate each OGR Layer into a KML Folder.
 (you may encounter unexpected behavior
 if you try to mix the geometry types of elements in a layer, e.g. <code>LINESTRING</code> and
 <code>POINT</code> data. </p>
@@ -40,8 +40,7 @@ Layer, becomes <code>'Layer__0'</code>.</p>
 
 <p>KML is mix of formatting and feature data. The &lt;description&gt; tag of a Placemark will 
 be displayed in most geobrowsers as an HTML-filled balloon. When writing KML, Layer element
-attributes are added as description tag content with the following HTML structure:
-<pre><b>Attribute name</b>: Attribute content</pre>
+attributes are added as simple schema fields. This best preserves feature type information.</p>
 <p>Limited support is available for fills, line color and other styling attributes. Please try a few sample
 files to get a better sense of actual behavior.</p>
 

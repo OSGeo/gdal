@@ -82,6 +82,8 @@ private:
     int nTotalKMLCount_;
     int bWriter_;
     int nLayerNumber_;
+    int nWroteFeatureCount_;
+    char* pszName_;
 };
 
 /************************************************************************/
