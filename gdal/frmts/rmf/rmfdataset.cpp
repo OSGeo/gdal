@@ -411,7 +411,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     nTileBytes *= nCurBlockYSize;
         
-    pabyTile = (GByte *) CPLMalloc( nTileBytes );
+    pabyTile = (GByte *) VSICalloc( nTileBytes, 1 );
     if ( !pabyTile )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -436,7 +436,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            memset( pabyTile, 0, nTileBytes );
             if ( poGDS->paiTiles[2 * nTile + 1] )
             {
                 VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
@@ -459,7 +458,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             memcpy( pabyTile, pImage, nTileBytes );
         else
         {
-            memset( pabyTile, 0, nTileBytes );
             if ( poGDS->paiTiles[2 * nTile + 1] )
             {
                 VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
@@ -504,12 +502,12 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't write block with X offset %d and Y offset %d.\n%s",
                   nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
-        CPLFree( pabyTile );
+        VSIFree( pabyTile );
         return CE_Failure;
     }
     
     poGDS->paiTiles[2 * nTile + 1] = nTileBytes;
-    CPLFree( pabyTile );
+    VSIFree( pabyTile );
 
     poGDS->bHeaderDirty = TRUE;
 
@@ -618,8 +616,8 @@ RMFDataset::RMFDataset()
     adfGeoTransform[5] = 1.0;
     pabyColorTable = NULL;
     poColorTable = NULL;
-    memset( abyHeader, 0, RMF_HEADER_SIZE ); 
     memset( &sHeader, 0, sizeof(sHeader) );
+    memset( &sExtHeader, 0, sizeof(sExtHeader) );
 
     Decompress = NULL;
 
@@ -711,25 +709,6 @@ CPLErr RMFDataset::SetProjection( const char * pszNewProjection )
 /*                           WriteHeader()                              */
 /************************************************************************/
 
-#define RMF_WRITE_LONG(value, offset)               \
-{                                                   \
-    GInt32  iLong = CPL_LSBWORD32( value );         \
-    memcpy( abyHeader + (offset), &iLong, 4 );      \
-}
-
-#define RMF_WRITE_ULONG(value, offset)              \
-{                                                   \
-    GUInt32 iULong = CPL_LSBWORD32( value );        \
-    memcpy( abyHeader + (offset), &iULong, 4 );     \
-}
-
-#define RMF_WRITE_DOUBLE(value, offset)             \
-{                                                   \
-    double  dfDouble = (value);                     \
-    CPL_LSBPTR64( &dfDouble );                      \
-    memcpy( abyHeader + (offset), &dfDouble, 8 );   \
-}
-
 CPLErr RMFDataset::WriteHeader()
 {
 /* -------------------------------------------------------------------- */
@@ -752,69 +731,121 @@ CPLErr RMFDataset::WriteHeader()
             sHeader.dfStdP2 = adfPrjParams[1];
             sHeader.dfCenterLat = adfPrjParams[2];
             sHeader.dfCenterLong = adfPrjParams[3];
+
+            sExtHeader.nEllipsoid = iEllips;
+            sExtHeader.nDatum = iDatum;
+            sExtHeader.nZone = iZone;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*  Write out the file header.                                          */
-/* -------------------------------------------------------------------- */
-    memcpy( abyHeader, sHeader.szSignature, RMF_SIGNATURE_SIZE );
-    RMF_WRITE_ULONG( sHeader.iVersion, 4 );
-    // Длина
-    RMF_WRITE_ULONG( sHeader.nOvrOffset, 12 );
-    RMF_WRITE_ULONG( sHeader.iUserID, 16 );
-    memcpy( abyHeader + 20, sHeader.byName, RMF_NAME_SIZE );
-    RMF_WRITE_ULONG( sHeader.nBitDepth, 52 );
-    RMF_WRITE_ULONG( sHeader.nHeight, 56 );
-    RMF_WRITE_ULONG( sHeader.nWidth, 60 );
-    RMF_WRITE_ULONG( sHeader.nXTiles, 64 );
-    RMF_WRITE_ULONG( sHeader.nYTiles, 68 );
-    RMF_WRITE_ULONG( sHeader.nTileHeight, 72 );
-    RMF_WRITE_ULONG( sHeader.nTileWidth, 76 );
-    RMF_WRITE_ULONG( sHeader.nLastTileHeight, 80 );
-    RMF_WRITE_ULONG( sHeader.nLastTileWidth, 84 );
-    RMF_WRITE_ULONG( sHeader.nROIOffset, 88 );
-    RMF_WRITE_ULONG( sHeader.nROISize, 92 );
-    RMF_WRITE_ULONG( sHeader.nClrTblOffset, 96 );
-    RMF_WRITE_ULONG( sHeader.nClrTblSize, 100 );
-    RMF_WRITE_ULONG( sHeader.nTileTblOffset, 104 );
-    RMF_WRITE_ULONG( sHeader.nTileTblSize, 108 );
-    RMF_WRITE_LONG( sHeader.iMapType, 124 );
-    RMF_WRITE_LONG( sHeader.iProjection, 128 );
-    RMF_WRITE_DOUBLE( sHeader.dfScale, 136 );
-    RMF_WRITE_DOUBLE( sHeader.dfResolution, 144 );
-    RMF_WRITE_DOUBLE( sHeader.dfPixelSize, 152 );
-    RMF_WRITE_DOUBLE( sHeader.dfLLY, 160 );
-    RMF_WRITE_DOUBLE( sHeader.dfLLX, 168 );
-    RMF_WRITE_DOUBLE( sHeader.dfStdP1, 176 );
-    RMF_WRITE_DOUBLE( sHeader.dfStdP2, 184 );
-    RMF_WRITE_DOUBLE( sHeader.dfCenterLong, 192 );
-    RMF_WRITE_DOUBLE( sHeader.dfCenterLat, 200 );
-    *(abyHeader + 208) = sHeader.iCompression;
-    *(abyHeader + 209) = sHeader.iMaskType;
-    *(abyHeader + 210) = sHeader.iMaskStep;
-    *(abyHeader + 211) = sHeader.iFrameFlag;
-    RMF_WRITE_ULONG( sHeader.nFlagsTblOffset, 212 );
-    RMF_WRITE_ULONG( sHeader.nFlagsTblSize, 216 );
-    RMF_WRITE_ULONG( sHeader.nFileSize0, 220 );
-    RMF_WRITE_ULONG( sHeader.nFileSize1, 224 );
-    *(abyHeader + 228) = sHeader.iUnknown;
-    *(abyHeader + 244) = sHeader.iGeorefFlag;
-    *(abyHeader + 245) = sHeader.iInverse;
-    memcpy( abyHeader + 248, sHeader.abyInvisibleColors,
-            RMF_INVISIBLE_COLORS_SIZE );
-    RMF_WRITE_DOUBLE( sHeader.adfElevMinMax[0], 280 );
-    RMF_WRITE_DOUBLE( sHeader.adfElevMinMax[1], 288 );
-    RMF_WRITE_DOUBLE( sHeader.dfNoData, 296 );
-    RMF_WRITE_ULONG( sHeader.iElevationUnit, 304 );
-    RMF_WRITE_ULONG( sHeader.iElevationType, 308 );
+#define RMF_WRITE_LONG( ptr, value, offset )            \
+{                                                       \
+    GInt32  iLong = CPL_LSBWORD32( value );             \
+    memcpy( (ptr) + (offset), &iLong, 4 );              \
+}
 
-    VSIFSeekL( fp, 0, SEEK_SET );
-    VSIFWriteL( abyHeader, 1, RMF_HEADER_SIZE, fp );
+#define RMF_WRITE_ULONG( ptr,value, offset )            \
+{                                                       \
+    GUInt32 iULong = CPL_LSBWORD32( value );            \
+    memcpy( (ptr) + (offset), &iULong, 4 );             \
+}
+
+#define RMF_WRITE_DOUBLE( ptr,value, offset )           \
+{                                                       \
+    double  dfDouble = (value);                         \
+    CPL_LSBPTR64( &dfDouble );                          \
+    memcpy( (ptr) + (offset), &dfDouble, 8 );           \
+}
+
+/* -------------------------------------------------------------------- */
+/*  Write out the main header.                                          */
+/* -------------------------------------------------------------------- */
+    {
+        GByte   abyHeader[RMF_HEADER_SIZE];
+
+        memset( abyHeader, 0, sizeof(abyHeader) );
+
+        memcpy( abyHeader, sHeader.szSignature, RMF_SIGNATURE_SIZE );
+        RMF_WRITE_ULONG( abyHeader, sHeader.iVersion, 4 );
+        // Длина
+        RMF_WRITE_ULONG( abyHeader, sHeader.nOvrOffset, 12 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.iUserID, 16 );
+        memcpy( abyHeader + 20, sHeader.byName, RMF_NAME_SIZE );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nBitDepth, 52 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nHeight, 56 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nWidth, 60 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nXTiles, 64 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nYTiles, 68 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nTileHeight, 72 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nTileWidth, 76 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nLastTileHeight, 80 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nLastTileWidth, 84 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nROIOffset, 88 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nROISize, 92 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nClrTblOffset, 96 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nClrTblSize, 100 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nTileTblOffset, 104 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nTileTblSize, 108 );
+        RMF_WRITE_LONG( abyHeader, sHeader.iMapType, 124 );
+        RMF_WRITE_LONG( abyHeader, sHeader.iProjection, 128 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfScale, 136 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfResolution, 144 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfPixelSize, 152 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfLLY, 160 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfLLX, 168 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfStdP1, 176 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfStdP2, 184 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfCenterLong, 192 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfCenterLat, 200 );
+        *(abyHeader + 208) = sHeader.iCompression;
+        *(abyHeader + 209) = sHeader.iMaskType;
+        *(abyHeader + 210) = sHeader.iMaskStep;
+        *(abyHeader + 211) = sHeader.iFrameFlag;
+        RMF_WRITE_ULONG( abyHeader, sHeader.nFlagsTblOffset, 212 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nFlagsTblSize, 216 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nFileSize0, 220 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nFileSize1, 224 );
+        *(abyHeader + 228) = sHeader.iUnknown;
+        *(abyHeader + 244) = sHeader.iGeorefFlag;
+        *(abyHeader + 245) = sHeader.iInverse;
+        memcpy( abyHeader + 248, sHeader.abyInvisibleColors,
+                sizeof(sHeader.abyInvisibleColors) );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.adfElevMinMax[0], 280 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.adfElevMinMax[1], 288 );
+        RMF_WRITE_DOUBLE( abyHeader, sHeader.dfNoData, 296 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.iElevationUnit, 304 );
+        *(abyHeader + 308) = sHeader.iElevationType;
+        RMF_WRITE_ULONG( abyHeader, sHeader.nExtHdrOffset, 312 );
+        RMF_WRITE_ULONG( abyHeader, sHeader.nExtHdrSize, 316 );
+
+        VSIFSeekL( fp, 0, SEEK_SET );
+        VSIFWriteL( abyHeader, 1, sizeof(abyHeader), fp );
+    }
+
+/* -------------------------------------------------------------------- */
+/*  Write out the extended header.                                      */
+/* -------------------------------------------------------------------- */
+
+    if ( sHeader.nExtHdrOffset && sHeader.nExtHdrSize )
+    {
+        GByte   *pabyExtHeader = (GByte *)CPLCalloc( sHeader.nExtHdrSize, 1 );
+
+        RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nEllipsoid, 24 );
+        RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nDatum, 32 );
+        RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nZone, 36 );
+
+        VSIFSeekL( fp, sHeader.nExtHdrOffset, SEEK_SET );
+        VSIFWriteL( pabyExtHeader, 1, sHeader.nExtHdrSize, fp );
+    }
+
+#undef RMF_WRITE_DOUBLE
+#undef RMF_WRITE_ULONG
+#undef RMF_WRITE_LONG
 
 /* -------------------------------------------------------------------- */
 /*  Write out the color table.                                          */
 /* -------------------------------------------------------------------- */
+
     if ( sHeader.nClrTblOffset && sHeader.nClrTblSize )
     {
         VSIFSeekL( fp, sHeader.nClrTblOffset, SEEK_SET );
@@ -824,6 +855,9 @@ CPLErr RMFDataset::WriteHeader()
 /* -------------------------------------------------------------------- */
 /*  Write out the block table, swap if needed.                          */
 /* -------------------------------------------------------------------- */
+    
+    VSIFSeekL( fp, sHeader.nTileTblOffset, SEEK_SET );
+
 #ifdef CPL_MSB
     GUInt32 i;
     GUInt32 *paiTilesSwapped = (GUInt32 *)CPLMalloc( sHeader.nTileTblSize );
@@ -845,10 +879,6 @@ CPLErr RMFDataset::WriteHeader()
 
     return CE_None;
 }
-
-#undef RMF_WRITE_DOUBLE
-#undef RMF_WRITE_ULONG
-#undef RMF_WRITE_LONG
 
 /************************************************************************/
 /*                             FlushCache()                             */
@@ -898,7 +928,7 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if (!Identify(poOpenInfo))
+    if ( !Identify(poOpenInfo) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -918,76 +948,103 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*  Read the file header.                                               */
-/* -------------------------------------------------------------------- */
-#define RMF_READ_ULONG(value, offset)                               \
-    (value) = CPL_LSBWORD32(*(GUInt32*)(poDS->abyHeader + (offset)))
+#define RMF_READ_ULONG(ptr, value, offset)                              \
+    (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)))
 
-#define RMF_READ_LONG(value, offset)                                \
-    (value) = CPL_LSBWORD32(*(GInt32*)(poDS->abyHeader + (offset)))
+#define RMF_READ_LONG(ptr, value, offset)                               \
+    (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)))
 
-#define RMF_READ_DOUBLE(value, offset)                              \
-{                                                                   \
-    (value) = *(double*)(poDS->abyHeader + (offset));               \
-    CPL_LSBPTR64(&(value));                                         \
+#define RMF_READ_DOUBLE(ptr, value, offset)                             \
+{                                                                       \
+    (value) = *(double*)((ptr) + (offset));                             \
+    CPL_LSBPTR64(&(value));                                             \
 }
 
-    VSIFSeekL( poDS->fp, 0, SEEK_SET );
-    VSIFReadL( poDS->abyHeader, 1, RMF_HEADER_SIZE, poDS->fp );
+/* -------------------------------------------------------------------- */
+/*  Read the main header.                                               */
+/* -------------------------------------------------------------------- */
 
-    memcpy( poDS->sHeader.szSignature, poDS->abyHeader, RMF_SIGNATURE_SIZE );
-    poDS->sHeader.szSignature[3] = '\0'; // Paranoid
-    RMF_READ_ULONG( poDS->sHeader.iVersion, 4 );
-    RMF_READ_ULONG( poDS->sHeader.nSize, 8 );
-    RMF_READ_ULONG( poDS->sHeader.nOvrOffset, 12 );
-    RMF_READ_ULONG( poDS->sHeader.iUserID, 16 );
-    memcpy( poDS->sHeader.byName, poDS->abyHeader + 20, RMF_NAME_SIZE );
-    poDS->sHeader.byName[31] = '\0';
-    RMF_READ_ULONG( poDS->sHeader.nBitDepth, 52 );
-    RMF_READ_ULONG( poDS->sHeader.nHeight, 56 );
-    RMF_READ_ULONG( poDS->sHeader.nWidth, 60 );
-    RMF_READ_ULONG( poDS->sHeader.nXTiles, 64 );
-    RMF_READ_ULONG( poDS->sHeader.nYTiles, 68 );
-    RMF_READ_ULONG( poDS->sHeader.nTileHeight, 72 );
-    RMF_READ_ULONG( poDS->sHeader.nTileWidth, 76 );
-    RMF_READ_ULONG( poDS->sHeader.nLastTileHeight, 80 );
-    RMF_READ_ULONG( poDS->sHeader.nLastTileWidth, 84 );
-    RMF_READ_ULONG( poDS->sHeader.nROIOffset, 88 );
-    RMF_READ_ULONG( poDS->sHeader.nROISize, 92 );
-    RMF_READ_ULONG( poDS->sHeader.nClrTblOffset, 96 );
-    RMF_READ_ULONG( poDS->sHeader.nClrTblSize, 100 );
-    RMF_READ_ULONG( poDS->sHeader.nTileTblOffset, 104 );
-    RMF_READ_ULONG( poDS->sHeader.nTileTblSize, 108 );
-    RMF_READ_LONG( poDS->sHeader.iMapType, 124 );
-    RMF_READ_LONG( poDS->sHeader.iProjection, 128 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfScale, 136 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfResolution, 144 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfPixelSize, 152 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfLLY, 160 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfLLX, 168 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfStdP1, 176 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfStdP2, 184 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfCenterLong, 192 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfCenterLat, 200 );
-    poDS->sHeader.iCompression = *(poDS->abyHeader + 208);
-    poDS->sHeader.iMaskType = *(poDS->abyHeader + 209);
-    poDS->sHeader.iMaskStep = *(poDS->abyHeader + 210);
-    poDS->sHeader.iFrameFlag = *(poDS->abyHeader + 211);
-    RMF_READ_ULONG( poDS->sHeader.nFlagsTblOffset, 212 );
-    RMF_READ_ULONG( poDS->sHeader.nFlagsTblSize, 216 );
-    RMF_READ_ULONG( poDS->sHeader.nFileSize0, 220 );
-    RMF_READ_ULONG( poDS->sHeader.nFileSize1, 224 );
-    poDS->sHeader.iUnknown = *(poDS->abyHeader + 228);
-    poDS->sHeader.iGeorefFlag = *(poDS->abyHeader + 244);
-    poDS->sHeader.iInverse = *(poDS->abyHeader + 245);
-    memcpy( poDS->sHeader.abyInvisibleColors,
-            poDS->abyHeader + 248, RMF_INVISIBLE_COLORS_SIZE );
-    RMF_READ_DOUBLE( poDS->sHeader.adfElevMinMax[0], 280 );
-    RMF_READ_DOUBLE( poDS->sHeader.adfElevMinMax[1], 288 );
-    RMF_READ_DOUBLE( poDS->sHeader.dfNoData, 296 );
-    RMF_READ_ULONG( poDS->sHeader.iElevationUnit, 304 );
-    RMF_READ_ULONG( poDS->sHeader.iElevationType, 308 );
+    {
+        GByte   abyHeader[RMF_HEADER_SIZE];
+
+        VSIFSeekL( poDS->fp, 0, SEEK_SET );
+        VSIFReadL( abyHeader, 1, sizeof(abyHeader), poDS->fp );
+
+        memcpy( poDS->sHeader.szSignature, abyHeader, RMF_SIGNATURE_SIZE );
+        poDS->sHeader.szSignature[3] = '\0'; // Paranoid
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.iVersion, 4 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nSize, 8 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nOvrOffset, 12 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.iUserID, 16 );
+        memcpy( poDS->sHeader.byName, abyHeader + 20,
+                sizeof(poDS->sHeader.byName) );
+        poDS->sHeader.byName[sizeof(poDS->sHeader.byName) - 1] = '\0';
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nBitDepth, 52 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nHeight, 56 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nWidth, 60 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nXTiles, 64 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nYTiles, 68 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nTileHeight, 72 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nTileWidth, 76 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nLastTileHeight, 80 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nLastTileWidth, 84 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nROIOffset, 88 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nROISize, 92 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nClrTblOffset, 96 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nClrTblSize, 100 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nTileTblOffset, 104 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nTileTblSize, 108 );
+        RMF_READ_LONG( abyHeader, poDS->sHeader.iMapType, 124 );
+        RMF_READ_LONG( abyHeader, poDS->sHeader.iProjection, 128 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfScale, 136 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfResolution, 144 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfPixelSize, 152 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfLLY, 160 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfLLX, 168 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfStdP1, 176 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfStdP2, 184 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfCenterLong, 192 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfCenterLat, 200 );
+        poDS->sHeader.iCompression = *(abyHeader + 208);
+        poDS->sHeader.iMaskType = *(abyHeader + 209);
+        poDS->sHeader.iMaskStep = *(abyHeader + 210);
+        poDS->sHeader.iFrameFlag = *(abyHeader + 211);
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nFlagsTblOffset, 212 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nFlagsTblSize, 216 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nFileSize0, 220 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nFileSize1, 224 );
+        poDS->sHeader.iUnknown = *(abyHeader + 228);
+        poDS->sHeader.iGeorefFlag = *(abyHeader + 244);
+        poDS->sHeader.iInverse = *(abyHeader + 245);
+        memcpy( poDS->sHeader.abyInvisibleColors,
+                abyHeader + 248, sizeof(poDS->sHeader.abyInvisibleColors) );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[0], 280 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[1], 288 );
+        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfNoData, 296 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.iElevationUnit, 304 );
+        poDS->sHeader.iElevationType = *(abyHeader + 308);
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrOffset, 312 );
+        RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrSize, 316 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*  Read the extended header.                                           */
+/* -------------------------------------------------------------------- */
+
+    if ( poDS->sHeader.nExtHdrOffset && poDS->sHeader.nExtHdrSize )
+    {
+        GByte *pabyExtHeader =
+            (GByte *)CPLCalloc( poDS->sHeader.nExtHdrSize, 1 );
+
+        VSIFSeekL( poDS->fp, poDS->sHeader.nExtHdrOffset, SEEK_SET );
+        VSIFReadL( pabyExtHeader, 1, poDS->sHeader.nExtHdrSize, poDS->fp );
+
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
+        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
+
+        CPLFree( pabyExtHeader );
+    }
 
 #undef RMF_READ_DOUBLE
 #undef RMF_READ_LONG
@@ -1188,9 +1245,8 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         padfPrjParams[5] = 0.0;
         padfPrjParams[6] = 0.0;
 
-        // XXX: Ellipsoid and datum are not specified in RMF file, but they
-        // are always Krassovsky/Pulkovo, 1942.
-        oSRS.importFromPanorama( nProj, 1, 1, padfPrjParams );
+        oSRS.importFromPanorama( nProj, poDS->sExtHeader.nDatum,
+                                 poDS->sExtHeader.nEllipsoid, padfPrjParams );
         if ( poDS->pszProjection )
             CPLFree( poDS->pszProjection );
         oSRS.exportToWkt( &poDS->pszProjection );
@@ -1295,7 +1351,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.iVersion = 0x0200;
     poDS->sHeader.nOvrOffset = 0x00;
     poDS->sHeader.iUserID = 0x00;
-    memset( poDS->sHeader.byName, 0, RMF_NAME_SIZE );
+    memset( poDS->sHeader.byName, 0, sizeof(poDS->sHeader.byName) );
     poDS->sHeader.nBitDepth = GDALGetDataTypeSize( eType ) * nBands;
     poDS->sHeader.nHeight = nYSize;
     poDS->sHeader.nWidth = nXSize;
@@ -1324,7 +1380,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     
     poDS->sHeader.nROIOffset = 0x00;
     poDS->sHeader.nROISize = 0x00;
+
     nCurPtr += RMF_HEADER_SIZE;
+
+    // Extended header
+    poDS->sHeader.nExtHdrOffset = nCurPtr;
+    poDS->sHeader.nExtHdrSize = RMF_EXT_HEADER_SIZE;
+    nCurPtr += poDS->sHeader.nExtHdrSize;
 
     // Color table
     if ( poDS->eRMFType == RMFT_RSW && nBands == 1 )
@@ -1354,8 +1416,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.nTileTblOffset = nCurPtr;
     poDS->sHeader.nTileTblSize =
         poDS->sHeader.nXTiles * poDS->sHeader.nYTiles * 4 * 2;
-    poDS->paiTiles = (GUInt32 *)CPLMalloc( poDS->sHeader.nTileTblSize );
-    memset( poDS->paiTiles, 0, poDS->sHeader.nTileTblSize );
+    poDS->paiTiles = (GUInt32 *)CPLCalloc( poDS->sHeader.nTileTblSize, 1 );
     nCurPtr += poDS->sHeader.nTileTblSize;
     nTileSize = poDS->sHeader.nTileWidth * poDS->sHeader.nTileHeight
         * GDALGetDataTypeSize( eType ) / 8;
@@ -1377,7 +1438,8 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.iUnknown = 0;
     poDS->sHeader.iGeorefFlag = 0;
     poDS->sHeader.iInverse = 0;
-    memset( poDS->sHeader.abyInvisibleColors, 0, RMF_INVISIBLE_COLORS_SIZE );
+    memset( poDS->sHeader.abyInvisibleColors, 0,
+            sizeof(poDS->sHeader.abyInvisibleColors) );
     poDS->sHeader.adfElevMinMax[0] = 0.0;
     poDS->sHeader.adfElevMinMax[1] = 0.0;
     poDS->sHeader.dfNoData = 0.0;
