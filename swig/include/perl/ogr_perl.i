@@ -421,7 +421,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $schema{GeometryType} = $self->GeomType();
 	    $schema{Fields} = [];
 	    for my $i (0..$self->GetFieldCount-1) {
-		push @{$schema{Fields}}, $self->GetFieldDefn($i);
+		push @{$schema{Fields}}, $self->GetFieldDefn($i)->Schema;
 	    }
 	    return \%schema;
 	}
@@ -450,6 +450,21 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $self->SetStyleString($_[0]) if @_;
 	    return unless defined wantarray;
 	    $self->GetStyleString;
+	}
+	sub Schema {
+	    my $self = shift;
+	    if (@_) {
+		my %schema = @_;
+		# the Name and GeometryType cannot be set
+		for my $fd (@{$schema{Fields}}) {
+		    if (ref($fd) eq 'HASH') {
+			$fd = Geo::OGR::FieldDefn->create(%$fd);
+		    }
+		    CreateField($self, $fd, $schema{ApproxOK});
+		}
+	    }
+	    return unless defined wantarray;
+	    return $self->GetDefnRef->Schema;
 	}
 	sub Row {
 	    my $self = shift;
