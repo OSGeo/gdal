@@ -269,10 +269,16 @@ static const sEnumerationElement runwaySurfaceType[] =
     { 3, "Turf/grass" },
     { 4, "Dirt" },
     { 5, "Gravel" },
+    { 6, "Asphalt" /* helipad V810 */},
+    { 7, "Concrete" /* helipad  V810 */},
+    { 8, "Turf/grass" /* helipad V810 */},
+    { 9, "Dirt" /* helipad V810 */},
+    { 10, "Asphalt" /* taxiway  V810 */ },
+    { 11, "Concrete" /* taxiway V810  */ },
     { 12, "Dry lakebed" },
     { 13, "Water" },
-    { 14, "Snow/ice" },
-    { 15, "Transparent" }
+    { 14, "Snow/ice" /* V850 */ },
+    { 15, "Transparent" /* V850 */ }
 };
 
 static const sEnumerationElement runwayShoulderType[] =
@@ -309,6 +315,18 @@ static const sEnumerationElement approachLightingType[] =
     { 12, "RAIL" }
 };
 
+static const sEnumerationElement approachLightingTypeV810[] =
+{
+    { 1, "None" },
+    { 2, "SSALS" },
+    { 3, "SALSF" },
+    { 4, "ALSF-I" },
+    { 5, "ALSF-II" },
+    { 6, "ODALS" },
+    { 7, "Calvert" },
+    { 8, "Calvert ISL Cat II and III" },
+};
+
 static const sEnumerationElement runwayREILType[] =
 {
     { 0, "None" },
@@ -316,12 +334,21 @@ static const sEnumerationElement runwayREILType[] =
     { 2, "Unidirectional" }
 };
 
+static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] = 
+{
+    { 1, "None" },
+    { 2, "VASI" },
+    { 3, "PAPI Right" },
+    { 4, "Space Shuttle PAPI" }
+};
+
 DEFINE_XPLANE_ENUMERATION(RunwaySurfaceEnumeration, runwaySurfaceType);
 DEFINE_XPLANE_ENUMERATION(RunwayShoulderEnumeration, runwayShoulderType);
 DEFINE_XPLANE_ENUMERATION(RunwayMarkingEnumeration, runwayMarkingType);
 DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumeration, approachLightingType);
+DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumerationV810, approachLightingTypeV810);
 DEFINE_XPLANE_ENUMERATION(RunwayREILEnumeration, runwayREILType);
-
+DEFINE_XPLANE_ENUMERATION(RunwayVisualApproachPathIndicatorEnumerationV810, runwayVisualApproachPathIndicatorTypeV810);
 
 class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
 {
@@ -472,6 +499,28 @@ class OGRXPlaneHelipadPolygonLayer : public OGRXPlaneLayer
                                    const char* pszShoulderType,
                                    double dfSmoothness,
                                    int bYellowEdgeLights);
+};
+
+
+/************************************************************************/
+/*                    OGRXPlaneTaxiwayRectangleLayer                    */
+/************************************************************************/
+
+
+class OGRXPlaneTaxiwayRectangleLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneTaxiwayRectangleLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   double dfLat,
+                                   double dfLon,
+                                   double dfTrueHeading,
+                                   double dfLength,
+                                   double dfWidth,
+                                   const char* pszSurfaceType,
+                                   double dfSmoothness,
+                                   int bBlueEdgeLights);
 };
 
 /************************************************************************/
