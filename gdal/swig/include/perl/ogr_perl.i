@@ -292,9 +292,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub Schema {
 	    my $self = shift;
-	    my %schema;
 	    if (@_) {
-		%schema = @_;
+		my %schema = @_;
 		# the Name and GeometryType cannot be set
 		for my $fd (@{$schema{Fields}}) {
 		    if (ref($fd) eq 'HASH') {
@@ -304,9 +303,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		}
 	    }
 	    return unless defined wantarray;
-	    my $defn = $self->GetLayerDefn->Schema;
-	    $schema{Name} = $self->GetName();
-	    return \%schema;
+	    return $self->GetLayerDefn->Schema;
 	}
 	sub Row {
 	    my $self = shift;
