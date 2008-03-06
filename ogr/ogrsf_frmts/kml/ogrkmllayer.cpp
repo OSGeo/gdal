@@ -65,6 +65,9 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     poFeatureDefn_->AddFieldDefn( &oFieldDesc );
 
     bWriter_ = bWriterIn;
+    nWroteFeatureCount_ = 0;
+
+    pszName_ = CPLStrdup(pszName);
 }
 
 /************************************************************************/
@@ -78,6 +81,7 @@ OGRKMLLayer::~OGRKMLLayer()
 
     if( NULL != poSRS_ )
         poSRS_->Release();
+    CPLFree( pszName_ );
 }
 
 /************************************************************************/
@@ -278,12 +282,67 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
     FILE *fp = poDS_->GetOutputFP();
     CPLAssert( NULL != fp );
 
+    // If we haven't writen any features yet, output the layer's schema
+    if (0 == nWroteFeatureCount_)
+    {
+        VSIFPrintf( fp, "<schema name=\"%s\" parent=\"Placemark\">\n", pszName_  );
+        OGRFeatureDefn *featureDefinition = GetLayerDefn();
+        for (int j=0; j < featureDefinition->GetFieldCount(); j++)
+        {
+            OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);			
+            const char* pszKMLType = NULL;
+            const char* pszKMLEltName = NULL;
+            // Match the OGR type to the GDAL type
+            switch (fieldDefinition->GetType())
+            {
+            case OFTInteger:
+                pszKMLType = "int";
+                pszKMLEltName = "SimpleField";
+                break;
+            case OFTIntegerList:
+                pszKMLType = "int";
+                pszKMLEltName = "SimpleArrayField";
+                break;
+            case OFTReal:
+                pszKMLType = "float";
+                pszKMLEltName = "SimpleField";
+                break;
+            case OFTRealList:
+                pszKMLType = "float";
+                pszKMLEltName = "SimpleArrayField";
+                break;
+            case OFTString:
+                pszKMLType = "string";
+                pszKMLEltName = "SimpleField";
+                break;
+            case OFTStringList:
+                pszKMLType = "string";
+                pszKMLEltName = "SimpleArrayField";
+                break;
+            case OFTBinary:
+                pszKMLType = "bool";
+                pszKMLEltName = "SimpleField";
+                break;
+            //TODO: KML doesn't handle these data types yet...
+            case OFTDate:
+                break;
+            case OFTTime:
+                break;
+            case OFTDateTime:
+                break;
+            }
+            VSIFPrintf( fp, "\t<%s name=\"%s\" type=\"%s\"></%s>\n", 
+                    pszKMLEltName, fieldDefinition->GetNameRef() ,pszKMLType, pszKMLEltName );
+        }
+        VSIFPrintf( fp, "</schema>\n" );
+    }
+
     VSIFPrintf( fp, "  <Placemark>\n" );
 
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextKMLId_++ );
 
-    // First find and write the name element
+    // Find and write the name element
     if (NULL != poDS_->GetNameField())
     {
         for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
@@ -299,13 +358,11 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 
                 char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
 
-                VSIFPrintf( fp, "      <name>%s</name>\n", pszEscaped);
-                CPLFree( pszEscaped );   
-            }    
+                VSIFPrintf( fp, "\t<name>%s</name>\n", pszEscaped);
+                CPLFree( pszEscaped );
+            }
         }
     }
-        
-    VSIFPrintf( fp, "      <description>");
 
     if (NULL != poDS_->GetDescriptionField())
     {
@@ -322,26 +379,24 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 
                 char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
 
-                VSIFPrintf( fp, "%s", pszEscaped);
-                CPLFree( pszEscaped );   
-            }    
+                VSIFPrintf( fp, "\t<description>%s</description>\n", pszEscaped);
+                CPLFree( pszEscaped );
+            }
         }
     }
-    
+
     int bHasFoundOtherField = FALSE;
 
-    // Write all "set" fields that aren't being used for the name element
+    // Write all fields as SchemaData
     for( int iField = 0; iField < poFeatureDefn_->GetFieldCount(); iField++ )
-    {        
+    {
         OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-        if( poFeature->IsFieldSet( iField ) && 
-            (NULL == poDS_->GetNameField() || !EQUAL(poField->GetNameRef(), poDS_->GetNameField())) &&
-            (NULL == poDS_->GetDescriptionField() || !EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField())))
+        if( poFeature->IsFieldSet( iField ))
         {
             if (!bHasFoundOtherField)
-            {
-                VSIFPrintf( fp, "\n<![CDATA[\n" );
+            {                
+                VSIFPrintf( fp, "\t<ExtendedData><SchemaData schemaURL=\"%s\">\n", pszName_ );
                 bHasFoundOtherField = TRUE;
             }
             const char *pszRaw = poFeature->GetFieldAsString( iField );
@@ -351,19 +406,18 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 
             char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
 
-            VSIFPrintf( fp, "      <b>%s:</b> <i>%s</i><br />\n", 
+            VSIFPrintf( fp, "\t\t<SimpleData name=\"%s\">%s</SimpleData>\n", 
                         poField->GetNameRef(), pszEscaped);
+
             CPLFree( pszEscaped );
         }
     }
 
     if (bHasFoundOtherField)
     {
-        VSIFPrintf( fp, "]]>" );
+        VSIFPrintf( fp, "\t</SchemaData></ExtendedData>\n" );
     }
 
-    VSIFPrintf( fp, "</description>\n" );
-	
     // Write out Geometry - for now it isn't indented properly.
     if( poFeature->GetGeometryRef() != NULL )
     {
@@ -394,7 +448,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
     }
 
     VSIFPrintf( fp, "  </Placemark>\n" );
-
+    nWroteFeatureCount_++;
     return OGRERR_NONE;
 }
 
