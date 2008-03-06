@@ -288,7 +288,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     nSchemaInsertLocation_ = VSIFTell( fpOutput_ );
     
-    VSIFPrintf( fpOutput_, "<kml xmlns=\"http://earth.google.com/kml/2.0\">\n<Document>" );
+    VSIFPrintf( fpOutput_, "<kml xmlns=\"http://earth.google.com/kml/2.2\">\n<Document>" );
 
     return TRUE;
 }
