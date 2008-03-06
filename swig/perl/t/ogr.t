@@ -55,7 +55,7 @@ if (0) {
 	$f->SetGeometry($g);
 	my $fd = $f->GetDefnRef;
 	my $s = $fd->Schema;
-	my $s2 = $s->{Fields}[0]->Schema;
+	my $s2 = $s->{Fields}[0];
 	ok($s->{GeometryType} eq 'Unknown', 'Feature defn schema 0');
 	ok($s2->{Name} eq 'Foo', 'Feature defn schema 1');
 	ok($s2->{Type} eq 'String', 'Feature defn schema 2');
