@@ -30,6 +30,9 @@
 
 #include "gdal_priv.h"
 
+#define RMF_HEADER_SIZE         320
+#define RMF_EXT_HEADER_SIZE     320
+
 #define RMF_COMPRESSION_NONE    0
 #define RMF_COMPRESSION_LZW     1
 
@@ -97,7 +100,20 @@ typedef struct
     double      dfNoData;
     GUInt32     iElevationUnit;
     GByte       iElevationType;
+    GUInt32     nExtHdrOffset;
+    GUInt32     nExtHdrSize;
 } RMFHeader;
+
+/************************************************************************/
+/*                            RMFExtHeader                              */
+/************************************************************************/
+
+typedef struct
+{
+    GInt32      nEllipsoid;
+    GInt32      nDatum;
+    GInt32      nZone;
+} RMFExtHeader;
 
 /************************************************************************/
 /*                              RMFDataset                              */
@@ -107,9 +123,8 @@ class RMFDataset : public GDALDataset
 {
     friend class RMFRasterBand;
 
-#define RMF_HEADER_SIZE 320
-    GByte           abyHeader[RMF_HEADER_SIZE];
     RMFHeader       sHeader;
+    RMFExtHeader    sExtHeader;
     RMFType         eRMFType;
     GUInt32         nXTiles;
     GUInt32         nYTiles;
