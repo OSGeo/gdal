@@ -449,7 +449,8 @@ int OGRXPlaneDataSource::ParseNavDatFile( const char * pszFilename )
                 }
                 else
                 {
-                    CPLDebug("XPlane", "Unexpected DME subtype : %s", papszTokens[nTokens-1]);
+                    CPLDebug("XPlane", "Line %d : Unexpected DME subtype : %s",
+                             nLineNumber, papszTokens[nTokens-1]);
                 }
 
                 READ_STRING_UNTIL_END(osNavaidName, 8);
@@ -557,6 +558,7 @@ int OGRXPlaneDataSource::ParseAptDatFile( const char * pszFilename )
     OGRXPlaneWaterRunwayThresholdLayer* poWaterRunwayThresholdLayer = new OGRXPlaneWaterRunwayThresholdLayer();
     OGRXPlaneHelipadLayer* poHelipadLayer = new OGRXPlaneHelipadLayer();
     OGRXPlaneHelipadPolygonLayer* poHelipadPolygonLayer = new OGRXPlaneHelipadPolygonLayer();
+    OGRXPlaneTaxiwayRectangleLayer* poTaxiwayRectangleLayer = new OGRXPlaneTaxiwayRectangleLayer();
     OGRXPlaneATCFreqLayer* poATCFreqLayer = new OGRXPlaneATCFreqLayer();
     OGRXPlaneStartupLocationLayer* poStartupLocationLayer = new OGRXPlaneStartupLocationLayer();
     OGRXPlaneAPTLightBeaconLayer* poAPTLightBeaconLayer = new OGRXPlaneAPTLightBeaconLayer();
@@ -571,6 +573,7 @@ int OGRXPlaneDataSource::ParseAptDatFile( const char * pszFilename )
     RegisterLayer(poWaterRunwayThresholdLayer);
     RegisterLayer(poHelipadLayer);
     RegisterLayer(poHelipadPolygonLayer);
+    RegisterLayer(poTaxiwayRectangleLayer);
     RegisterLayer(poATCFreqLayer);
     RegisterLayer(poStartupLocationLayer);
     RegisterLayer(poAPTLightBeaconLayer);
@@ -638,7 +641,16 @@ int OGRXPlaneDataSource::ParseAptDatFile( const char * pszFilename )
         }
         else if (nType == APT_RUNWAY_TAXIWAY_V_810)
         {
-            /*
+            double dfLat, dfLon, dfTrueHeading, dfLength, dfWidth;
+            double dfDisplacedThresholdLength1, dfDisplacedThresholdLength2;
+            double dfStopwayLength1, dfStopwayLength2;
+            const char* pszRwyNum;
+            int eVisualApproachLightingCode1, eRunwayLightingCode1, eApproachLightingCode1;
+            int eVisualApproachLightingCode2, eRunwayLightingCode2, eApproachLightingCode2;
+            int eSurfaceCode, eShoulderCode, eMarkings;
+            double dfSmoothness;
+            double dfVisualGlidePathAngle1, dfVisualGlidePathAngle2;
+            int bHasDistanceRemainingSigns;
             ASSERT_MIN_COL(15);
 
             dfLat = READ_DOUBLE_WITH_BOUNDS(1, "latitude", -90., 90.);
@@ -648,19 +660,162 @@ int OGRXPlaneDataSource::ParseAptDatFile( const char * pszFilename )
             dfLength = READ_DOUBLE(5, "length");
             dfLength *= FEET_TO_METER;
             dfDisplacedThresholdLength1 = atoi(papszTokens[6]) * FEET_TO_METER;
-            if (strchr(papszTokens[6])
-                dfDisplacedThresholdLength2 = atoi(strchr(papszTokens[6]) + 1) * FEET_TO_METER;
+            if (strchr(papszTokens[6], '.') != NULL)
+                dfDisplacedThresholdLength2 = atoi(strchr(papszTokens[6], '.') + 1) * FEET_TO_METER;
             dfStopwayLength1 = atoi(papszTokens[7]) * FEET_TO_METER;
-            if (strchr(papszTokens[7])
-                dfStopwayLength2 = atoi(strchr(papszTokens[7]) + 1) * FEET_TO_METER;
+            if (strchr(papszTokens[7], '.') != NULL)
+                dfStopwayLength2 = atoi(strchr(papszTokens[7], '.') + 1) * FEET_TO_METER;
             dfWidth = READ_DOUBLE(8, "width");
             dfWidth *= FEET_TO_METER;
-            if (strlen(papszTokens[9] == 6)
+            if (strlen(papszTokens[9]) == 6)
             {
-                eVisualApproachLighting1 = papszTokens[9][0] - '0';
-                // TODO
+                eVisualApproachLightingCode1 = papszTokens[9][0] - '0';
+                eRunwayLightingCode1 = papszTokens[9][1] - '0';
+                eApproachLightingCode1 = papszTokens[9][2] - '0';
+                eVisualApproachLightingCode2 = papszTokens[9][3] - '0';
+                eRunwayLightingCode2 = papszTokens[9][4] - '0';
+                eApproachLightingCode2 = papszTokens[9][5] - '0';
             }
-            */
+            eSurfaceCode = atoi(papszTokens[10]);
+            eShoulderCode = atoi(papszTokens[11]);
+            eMarkings = atoi(papszTokens[12]);
+            dfSmoothness = READ_DOUBLE_WITH_BOUNDS(13, "runway smoothness", 0., 1.);
+            bHasDistanceRemainingSigns = atoi(papszTokens[14]);
+            if (nTokens == 16)
+            {
+                dfVisualGlidePathAngle1 = atoi(papszTokens[15]) / 100.;
+                if (strchr(papszTokens[15], '.') != NULL)
+                    dfVisualGlidePathAngle2 = atoi(strchr(papszTokens[15], '.') + 1) / 100.;
+            }
+
+            if (strcmp(pszRwyNum, "xxx") == 000)
+            {
+                /* Taxiway */
+                poTaxiwayRectangleLayer->AddFeature(osAptICAO, dfLat, dfLon,
+                                        dfTrueHeading, dfLength, dfWidth,
+                                        RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                        dfSmoothness, eRunwayLightingCode1 == 1);
+            }
+            else if (pszRwyNum[0] >= '0' && pszRwyNum[0] <= '9' && strlen(pszRwyNum) >= 2)
+            {
+                /* Runway */
+                double dfLat1, dfLon1;
+                double dfLat2, dfLon2;
+                CPLString osRwyNum1;
+                CPLString osRwyNum2;
+                OGRFeature* poFeature;
+                int bReil1, bReil2;
+
+                int num1 = atoi(pszRwyNum);
+                int num2 = (num1 < 18) ? num1 + 18 : num1 - 18;
+                if (pszRwyNum[2] == '0' || pszRwyNum[2] == 'x')
+                {
+                    osRwyNum1.Printf("%02d", num1);
+                    osRwyNum2.Printf("%02d", num2);
+                }
+                else
+                {
+                    osRwyNum1 = pszRwyNum;
+                    osRwyNum2.Printf("%02d%c", num2,
+                                     (osRwyNum1[2] == 'L') ? 'R' :
+                                     (osRwyNum1[2] == 'R') ? 'L' : osRwyNum1[2]);
+                }
+
+                OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, dfTrueHeading + 180, &dfLat1, &dfLon1);
+                OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, dfTrueHeading, &dfLat2, &dfLon2);
+
+                bReil1 = (eRunwayLightingCode1 >= 3 && eRunwayLightingCode1 <= 5) ;
+                bReil2 = (eRunwayLightingCode2 >= 3 && eRunwayLightingCode2 <= 5) ;
+
+                poFeature =
+                    poRunwayThresholdLayer->AddFeature  
+                       (osAptICAO, osRwyNum1,
+                        dfLat1, dfLon1, dfWidth,
+                        RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                        RunwayShoulderEnumeration.GetText(eShoulderCode),
+                        dfSmoothness,
+                        (eRunwayLightingCode1 == 4 || eRunwayLightingCode1 == 5) /* bHasCenterLineLights */,
+                        (eRunwayLightingCode1 >= 2 && eRunwayLightingCode1 <= 5) /* bHasMIRL*/,
+                        bHasDistanceRemainingSigns,
+                        dfDisplacedThresholdLength1, dfStopwayLength1,
+                        RunwayMarkingEnumeration.GetText(eMarkings),
+                        RunwayApproachLightingEnumerationV810.GetText(eApproachLightingCode1),
+                        (eRunwayLightingCode1 == 5) /* bHasTouchdownLights */,
+                        (bReil1 && bReil2) ? "Omni-directional" :
+                        (bReil1 && !bReil2) ? "Unidirectional" : "None" /* eReil */);
+                poRunwayThresholdLayer->SetRunwayLengthAndHeading(poFeature, dfLength, dfTrueHeading);
+
+                poFeature =
+                    poRunwayThresholdLayer->AddFeature  
+                       (osAptICAO, osRwyNum2,
+                        dfLat2, dfLon2, dfWidth,
+                        RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                        RunwayShoulderEnumeration.GetText(eShoulderCode),
+                        dfSmoothness,
+                        (eRunwayLightingCode2 == 4 || eRunwayLightingCode2 == 5) /* bHasCenterLineLights */,
+                        (eRunwayLightingCode2 >= 2 && eRunwayLightingCode2 <= 5) /* bHasMIRL*/,
+                        bHasDistanceRemainingSigns,
+                        dfDisplacedThresholdLength2, dfStopwayLength2,
+                        RunwayMarkingEnumeration.GetText(eMarkings),
+                        RunwayApproachLightingEnumerationV810.GetText(eApproachLightingCode2),
+                        (eRunwayLightingCode2 == 5) /* : bHasTouchdownLights */,
+                        (bReil1 && bReil2) ? "Omni-directional" :
+                        (!bReil1 && bReil2) ? "Unidirectional" : "None" /* eReil */);
+                poRunwayThresholdLayer->SetRunwayLengthAndHeading(poFeature, dfLength,
+                        (dfTrueHeading < 180) ? dfTrueHeading + 180 : dfTrueHeading - 180);
+
+                poRunwayLayer->AddFeature(osAptICAO, osRwyNum1, osRwyNum2,
+                                      dfLat1, dfLon1, dfLat2, dfLon2,
+                                      dfWidth,
+                                      RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                      RunwayShoulderEnumeration.GetText(eShoulderCode),
+                                      dfSmoothness,
+                                      (eRunwayLightingCode1 == 4 || eRunwayLightingCode1 == 5),
+                                      (eRunwayLightingCode1 >= 2 && eRunwayLightingCode1 <= 5),
+                                       bHasDistanceRemainingSigns);
+
+                if (eApproachLightingCode1)
+                {
+                    poVASI_PAPI_WIGWAG_Layer->AddFeature(osAptICAO, osRwyNum1,
+                            RunwayVisualApproachPathIndicatorEnumerationV810.GetText(eApproachLightingCode1),
+                            dfLat1, dfLon1, dfTrueHeading, dfVisualGlidePathAngle1);
+                }
+
+                if (eApproachLightingCode2)
+                {
+                    poVASI_PAPI_WIGWAG_Layer->AddFeature(osAptICAO, osRwyNum2,
+                            RunwayVisualApproachPathIndicatorEnumerationV810.GetText(eApproachLightingCode2),
+                            dfLat2, dfLon2,
+                            (dfTrueHeading < 180) ? dfTrueHeading + 180 : dfTrueHeading- 180,
+                            dfVisualGlidePathAngle2);
+                }
+            }
+            else if (pszRwyNum[0] == 'H')
+            {
+                /* Helipad */
+                CPLString osHelipadName = pszRwyNum;
+                if (strlen(pszRwyNum) == 3 && pszRwyNum[2] == 'x')
+                    osHelipadName[2] = 0;
+
+                poHelipadLayer->AddFeature(osAptICAO, osHelipadName, dfLat, dfLon,
+                                        dfTrueHeading, dfLength, dfWidth,
+                                        RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                        RunwayMarkingEnumeration.GetText(eMarkings),
+                                        RunwayShoulderEnumeration.GetText(eShoulderCode),
+                                        dfSmoothness, eRunwayLightingCode1 == 2);
+
+                poHelipadPolygonLayer->AddFeature(osAptICAO, osHelipadName, dfLat, dfLon,
+                                        dfTrueHeading, dfLength, dfWidth,
+                                        RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                        RunwayMarkingEnumeration.GetText(eMarkings),
+                                        RunwayShoulderEnumeration.GetText(eShoulderCode),
+                                        dfSmoothness, eRunwayLightingCode1 == 2);
+            }
+            else
+            {
+                CPLDebug("XPlane", "Line %d : Unexpected runway number : %s",
+                         nLineNumber, pszRwyNum);
+            }
         }
         else if (nType == APT_RUNWAY)
         {
