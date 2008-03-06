@@ -336,7 +336,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    %row = ();
 	    my $s = $d->Schema;
 	    for my $field (@{$s->{Fields}}) {
-		my $n = $field->Name;
+		my $n = $field->{Name};
 		$row{$n} = $f->GetField($n);
 	    }
 	    $row{FID} = $f->GetFID;
@@ -364,7 +364,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    if (@_) {
 		for my $field (@{$s->{Fields}}) {
 		    my $v = shift;
-		    my $n = $field->Name;
+		    my $n = $field->{Name};
 		    defined $v ? $f->SetField($n, $v) : $f->UnsetField($n);
 		}
 		$changed = 1;
@@ -492,7 +492,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    %row = ();
 	    my $s = $self->GetDefnRef->Schema;
 	    for my $field (@{$s->{Fields}}) {
-		my $n = $field->Name;
+		my $n = $field->{Name};
 		$row{$n} = $self->GetField($n);
 	    }
 	    $row{FID} = $self->GetFID;
@@ -517,7 +517,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    if (@_) {
 		for my $field (@{$s->{Fields}}) {
 		    my $v = shift;
-		    my $n = $field->Name;
+		    my $n = $field->{Name};
 		    defined $v ? $self->SetField($n, $v) : $self->UnsetField($n);
 		}
 	    }
