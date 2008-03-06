@@ -1239,7 +1239,7 @@ OGRFeature*
     double dfAfterLat, dfAfterLon;
     double adfLat[4], adfLon[4];
 
-    OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, - dfTrueHeading, &dfBeforeLat, &dfBeforeLon);
+    OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, dfTrueHeading + 180, &dfBeforeLat, &dfBeforeLon);
     OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, dfTrueHeading, &dfAfterLat, &dfAfterLon);
 
     OGRXPlane_ExtendPosition(dfBeforeLat, dfBeforeLon, dfWidth / 2, dfTrueHeading - 90, &adfLat[0], &adfLon[0]);
@@ -1267,6 +1267,96 @@ OGRFeature*
     poFeature->SetField( nCount++, pszShoulderType );
     poFeature->SetField( nCount++, dfSmoothness );
     poFeature->SetField( nCount++, bYellowEdgeLights );
+
+    RegisterFeature(poFeature);
+
+    return poFeature;
+}
+
+
+/************************************************************************/
+/*                 OGRXPlaneTaxiwayRectangleLayer                         */
+/************************************************************************/
+
+
+OGRXPlaneTaxiwayRectangleLayer::OGRXPlaneTaxiwayRectangleLayer() : OGRXPlaneLayer("TaxiwayRectangle")
+{
+    poFeatureDefn->SetGeomType( wkbPolygon );
+
+    OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
+    oFieldAptICAO.SetWidth( 4 );
+    poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
+
+    OGRFieldDefn oFieldTrueHeading("true_heading_deg", OFTReal );
+    oFieldTrueHeading.SetWidth( 6 );
+    oFieldTrueHeading.SetPrecision( 2 );
+    poFeatureDefn->AddFieldDefn( &oFieldTrueHeading );
+
+    OGRFieldDefn oFieldLength("length_m", OFTReal );
+    oFieldLength.SetWidth( 5 );
+    poFeatureDefn->AddFieldDefn( &oFieldLength );
+
+    OGRFieldDefn oFieldWidth("width_m", OFTReal );
+    oFieldWidth.SetWidth( 3 );
+    poFeatureDefn->AddFieldDefn( &oFieldWidth );
+
+    OGRFieldDefn oFieldSurface("surface", OFTString );
+    poFeatureDefn->AddFieldDefn( &oFieldSurface );
+
+    OGRFieldDefn oFieldSmoothness("smoothness", OFTReal );
+    oFieldSmoothness.SetWidth( 4 );
+    oFieldSmoothness.SetPrecision( 2 );
+    poFeatureDefn->AddFieldDefn( &oFieldSmoothness );
+
+    OGRFieldDefn oFieldBlueEdgeLighting("edge_lighting", OFTInteger );
+    oFieldBlueEdgeLighting.SetWidth( 1 );
+    poFeatureDefn->AddFieldDefn( &oFieldBlueEdgeLighting );
+
+}
+
+OGRFeature*
+     OGRXPlaneTaxiwayRectangleLayer::AddFeature(const char* pszAptICAO,
+                                                double dfLat,
+                                                double dfLon,
+                                                double dfTrueHeading,
+                                                double dfLength,
+                                                double dfWidth,
+                                                const char* pszSurfaceType,
+                                                double dfSmoothness,
+                                                int bBlueEdgeLights)
+{
+    int nCount = 0;
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+
+    double dfBeforeLat, dfBeforeLon;
+    double dfAfterLat, dfAfterLon;
+    double adfLat[4], adfLon[4];
+
+    OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, dfTrueHeading + 180, &dfBeforeLat, &dfBeforeLon);
+    OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2, dfTrueHeading, &dfAfterLat, &dfAfterLon);
+
+    OGRXPlane_ExtendPosition(dfBeforeLat, dfBeforeLon, dfWidth / 2, dfTrueHeading - 90, &adfLat[0], &adfLon[0]);
+    OGRXPlane_ExtendPosition(dfAfterLat, dfAfterLon, dfWidth / 2, dfTrueHeading - 90, &adfLat[1], &adfLon[1]);
+    OGRXPlane_ExtendPosition(dfAfterLat, dfAfterLon, dfWidth / 2, dfTrueHeading + 90, &adfLat[2], &adfLon[2]);
+    OGRXPlane_ExtendPosition(dfBeforeLat, dfBeforeLon, dfWidth / 2, dfTrueHeading + 90, &adfLat[3], &adfLon[3]);
+
+    OGRLinearRing* linearRing = new OGRLinearRing();
+    linearRing->setNumPoints(5);
+    int i;
+    for(i=0;i<4;i++)
+        linearRing->setPoint(i, adfLon[i], adfLat[i]);
+    linearRing->setPoint(4, adfLon[0], adfLat[0]);
+    OGRPolygon* polygon = new OGRPolygon();
+     polygon->addRingDirectly( linearRing );
+    poFeature->SetGeometryDirectly( polygon );
+
+    poFeature->SetField( nCount++, pszAptICAO );
+    poFeature->SetField( nCount++, dfTrueHeading );
+    poFeature->SetField( nCount++, dfLength );
+    poFeature->SetField( nCount++, dfWidth );
+    poFeature->SetField( nCount++, pszSurfaceType );
+    poFeature->SetField( nCount++, dfSmoothness );
+    poFeature->SetField( nCount++, bBlueEdgeLights );
 
     RegisterFeature(poFeature);
 
