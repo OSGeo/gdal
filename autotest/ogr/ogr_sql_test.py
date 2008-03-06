@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -406,6 +407,33 @@ def ogr_sql_17():
         return 'fail'
 
 
+###############################################################################
+# Test extended character set
+
+def ogr_sql_18():
+
+    name = u'data/d\303\251parts.shp'
+
+    ds = ogr.Open( name.encode('latin-1') )
+    if ds is None:
+        return 'fail'
+    
+    sql = u'select * from D\303\251parts'
+    sql_lyr = ds.ExecuteSQL( sql.encode('latin-1') )
+    if sql_lyr is None:
+        ds = None
+        return 'fail'
+
+    # XXX - Ticket #2221:
+    # Field name returned consists of incorrectly encoding characters
+    # so its not possible to compare it against fld_name value
+    #fld_name = u'nomd\303\251part'
+    #fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(1)
+
+    ds.ReleaseResultSet( sql_lyr )
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 
@@ -435,6 +463,7 @@ gdaltest_list = [
     ogr_sql_15,
     ogr_sql_16,
     ogr_sql_17,
+    ogr_sql_18,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
