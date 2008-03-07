@@ -324,11 +324,11 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
                 pszKMLEltName = "SimpleField";
                 break;
             //TODO: KML doesn't handle these data types yet...
-            case OFTDate:
-                break;
-            case OFTTime:
-                break;
+            case OFTDate:                
+            case OFTTime:                
             case OFTDateTime:
+				pszKMLType = "string";
+                pszKMLEltName = "SimpleField";                
                 break;
             }
             VSIFPrintf( fp, "\t<%s name=\"%s\" type=\"%s\"></%s>\n", 
