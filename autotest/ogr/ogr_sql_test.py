@@ -412,7 +412,7 @@ def ogr_sql_17():
 
 def ogr_sql_18():
 
-    name = u'data/d\303\251parts.shp'
+    name = u'data/departs.vrt'
 
     ds = ogr.Open( name.encode('latin-1') )
     if ds is None:
