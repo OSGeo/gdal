@@ -59,6 +59,7 @@ class OGRXPlaneReader
                                          double dfLowerBound, double dfUpperBound);
         int         readDoubleWithBoundsAndConversion(double* pdfValue, int iToken, const char* pszTokenDesc,
                                                       double dfFactor, double dfLowerBound, double dfUpperBound);
+        int         readLatLon(double* pdfLat, double* pdfLon, int iToken);
         CPLString   readStringUntilEnd(int iFirstToken);
 };
 
