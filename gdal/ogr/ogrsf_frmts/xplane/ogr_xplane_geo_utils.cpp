@@ -49,6 +49,9 @@ double OGRXPlane_Safe_acos(double x)
     return acos(x);
 }
 
+/************************************************************************/
+/*                         OGRXPlane_Distance()                         */
+/************************************************************************/
 
 double OGRXPlane_Distance(double LatA_deg, double LonA_deg,
                           double LatB_deg, double LonB_deg)
@@ -68,6 +71,9 @@ double OGRXPlane_Distance(double LatA_deg, double LonA_deg,
     return OGRXPlane_Safe_acos(cos_angle) * RAD2METER;
 }
 
+/************************************************************************/
+/*                           OGRXPlane_Track()                          */
+/************************************************************************/
 
 double OGRXPlane_Track(double LatA_deg, double LonA_deg,
                        double LatB_deg, double LonB_deg)
@@ -112,6 +118,10 @@ double OGRXPlane_Track(double LatA_deg, double LonA_deg,
     }
 }
 
+/************************************************************************/
+/*                       OGRXPlane_ExtendPosition()                     */
+/************************************************************************/
+
 int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
                              double dfDistance, double dfHeading,
                              double* pdfLatB_deg, double* pdfLonB_deg)
@@ -134,11 +144,13 @@ int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
     cos_complement_LatA = sin(dfLatA_rad);
     sin_complement_LatA = cos(dfLatA_rad);
 
-    cos_complement_latB = cos_Distance * cos_complement_LatA + sin_Distance * sin_complement_LatA * cos_Heading;
+    cos_complement_latB = cos_Distance * cos_complement_LatA +
+                          sin_Distance * sin_complement_LatA * cos_Heading;
 
     complement_latB  = OGRXPlane_Safe_acos(cos_complement_latB);
 
-    Cos_dG = (cos_Distance - cos_complement_latB * cos_complement_LatA) / (sin(complement_latB) * sin_complement_LatA);
+    Cos_dG = (cos_Distance - cos_complement_latB * cos_complement_LatA) /
+                    (sin(complement_latB) * sin_complement_LatA);
     *pdfLatB_deg = 90 - complement_latB * RAD2DEG;
 
     dG_deg  = OGRXPlane_Safe_acos(Cos_dG) * RAD2DEG;
