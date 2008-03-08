@@ -322,6 +322,42 @@ class OGRXPlaneTaxiwayRectangleLayer : public OGRXPlaneLayer
                                    int bBlueEdgeLights);
 };
 
+
+/************************************************************************/
+/*                          OGRXPlanePavementLayer                      */
+/************************************************************************/
+
+
+class OGRXPlanePavementLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlanePavementLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszPavementName,
+                                   const char* pszSurfaceType,
+                                   double dfSmoothness,
+                                   double dfTextureHeading,
+                                   OGRPolygon* poPolygon);
+};
+
+/************************************************************************/
+/*                       OGRXPlaneAPTBoundaryLayer                      */
+/************************************************************************/
+
+
+class OGRXPlaneAPTBoundaryLayer : public OGRXPlaneLayer
+{
+  public:
+                        OGRXPlaneAPTBoundaryLayer();
+
+    OGRFeature*         AddFeature(const char* pszAptICAO,
+                                   const char* pszBoundaryName,
+                                   OGRPolygon* poPolygon);
+};
+
+
+
 /************************************************************************/
 /*                         OGRXPlaneATCFreqLayer                         */
 /************************************************************************/
@@ -496,6 +532,8 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         OGRXPlaneHelipadLayer* poHelipadLayer;
         OGRXPlaneHelipadPolygonLayer* poHelipadPolygonLayer;
         OGRXPlaneTaxiwayRectangleLayer* poTaxiwayRectangleLayer;
+        OGRXPlanePavementLayer* poPavementLayer;
+        OGRXPlaneAPTBoundaryLayer* poAPTBoundaryLayer;
         OGRXPlaneATCFreqLayer* poATCFreqLayer;
         OGRXPlaneStartupLocationLayer* poStartupLocationLayer;
         OGRXPlaneAPTLightBeaconLayer* poAPTLightBeaconLayer;
@@ -522,7 +560,6 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         void    ParseRunwayRecord();
         void    ParseWaterRunwayRecord();
         void    ParseHelipadRecord();
-        void    ParsePavementHeader();
         void    ParseTowerRecord();
         void    ParseATCRecord(int nType);
         void    ParseStartupLocationRecord();
@@ -530,6 +567,10 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         void    ParseWindsockRecord();
         void    ParseTaxiwaySignRecord();
         void    ParseVasiPapiWigWagRecord();
+
+        int     ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsValid);
+        int     ParsePavement();
+        int     ParseAPTBoundary();
 
     public:
                 OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource );
