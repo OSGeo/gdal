@@ -146,8 +146,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
             dfDMEBias = 0, dfSlope = 0;
     char* pszNavaidId;
 
-    RET_IF_FAIL(readDoubleWithBounds(&dfLat, 1, "latitude", -90., 90.));
-    RET_IF_FAIL(readDoubleWithBounds(&dfLon, 2, "longitude", -180., 180.));
+    RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
 
     /* feet to meter */
     RET_IF_FAIL(readDoubleWithBoundsAndConversion(&dfElevation, 3, "elevation", FEET_TO_METER, -1000., 10000.));
