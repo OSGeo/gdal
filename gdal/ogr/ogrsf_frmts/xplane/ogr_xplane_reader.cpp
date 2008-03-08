@@ -99,6 +99,17 @@ int OGRXPlaneReader::readDoubleWithBounds(
 }
 
 /***********************************************************************/
+/*                             readLatLon()                            */
+/***********************************************************************/
+
+int OGRXPlaneReader::readLatLon(double* pdfLat, double* pdfLon, int iToken)
+{
+    int bRet = readDoubleWithBounds(pdfLat, iToken, "latitude", -90., 90.);
+    bRet    &= readDoubleWithBounds(pdfLon, iToken + 1, "longitude", -180., 180.);
+    return bRet;
+}
+
+/***********************************************************************/
 /*                        readStringUntilEnd()                         */
 /***********************************************************************/
 
