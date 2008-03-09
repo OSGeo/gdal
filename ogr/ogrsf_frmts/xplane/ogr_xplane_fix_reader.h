@@ -1,8 +1,8 @@
 /******************************************************************************
- * $Id: ogrxplanedriver.cpp
+ * $Id: ogr_xplane_fix_reader.cpp
  *
- * Project:  X-Plane aeronautical data reader
- * Purpose:  Implements OGRXPlaneDriver.
+ * Project:  X-Plane fix.dat file reader header
+ * Purpose:  Definition of classes for X-Plane fix.dat file reader
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
@@ -27,60 +27,46 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef _OGR_XPLANE_FIX_READER_H_INCLUDED
+#define _OGR_XPLANE_FIX_READER_H_INCLUDED
+
 #include "ogr_xplane.h"
-#include "cpl_conv.h"
+#include "ogr_xplane_reader.h"
 
 /************************************************************************/
-/*                              GetName()                               */
+/*                           OGRXPlaneFIXLayer                          */
 /************************************************************************/
 
-const char *OGRXPlaneDriver::GetName()
 
+class OGRXPlaneFIXLayer : public OGRXPlaneLayer
 {
-    return "XPlane";
-}
+  public:
+                        OGRXPlaneFIXLayer();
+    OGRFeature*         AddFeature(const char* pszFixName,
+                                   double dfLat,
+                                   double dfLon);
+};
 
 /************************************************************************/
-/*                                Open()                                */
+/*                           OGRXPlaneFixReader                         */
 /************************************************************************/
 
-OGRDataSource *OGRXPlaneDriver::Open( const char * pszFilename, int bUpdate )
-
+class OGRXPlaneFixReader : public OGRXPlaneReader
 {
-    if ( bUpdate )
-    {
-        return FALSE;
-    }
+    private:
+        OGRXPlaneFIXLayer*       poFIXLayer;
 
-    OGRXPlaneDataSource   *poDS = new OGRXPlaneDataSource();
+    private:
+                                 OGRXPlaneFixReader();
+        void                     ParseRecord();
 
-    int bReadWholeFile = CSLTestBoolean(CPLGetConfigOption("OGR_XPLANE_READ_WHOLE_FILE", "TRUE"));
+    protected:
+        virtual void             Read();
 
-    if( !poDS->Open( pszFilename, bReadWholeFile ) )
-    {
-        delete poDS;
-        poDS = NULL;
-    }
+    public:
+                                 OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource );
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
+        virtual int              IsRecognizedVersion( const char* pszVersionString);
+};
 
-    return poDS;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRXPlaneDriver::TestCapability( const char * pszCap )
-{
-    return FALSE;
-}
-
-/************************************************************************/
-/*                           RegisterOGRXPlane()                        */
-/************************************************************************/
-
-void RegisterOGRXPlane()
-
-{
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRXPlaneDriver );
-}
-
+#endif
