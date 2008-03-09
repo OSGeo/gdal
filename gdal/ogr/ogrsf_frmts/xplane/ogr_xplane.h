@@ -32,6 +32,8 @@
 
 #include "ogrsf_frmts.h"
 
+class OGRXPlaneReader;
+
 /************************************************************************/
 /*                             OGRXPlaneLayer                           */
 /************************************************************************/
@@ -44,13 +46,18 @@ class OGRXPlaneLayer : public OGRLayer
     OGRFeature**       papoFeatures;
 
   protected:
+    OGRXPlaneReader*   poReader;
     OGRFeatureDefn*    poFeatureDefn;
                        OGRXPlaneLayer(const char* pszLayerName);
 
     void               RegisterFeature(OGRFeature* poFeature);
 
   public:
-                        ~OGRXPlaneLayer();
+    virtual                   ~OGRXPlaneLayer();
+
+    void                      SetReader(OGRXPlaneReader* poReader);
+    int                       IsEmpty() { return nFID == 0; }
+    void                      AutoAdjustColumnsWidth();
 
     virtual void              ResetReading();
     virtual OGRFeature *      GetNextFeature();
@@ -73,13 +80,16 @@ class OGRXPlaneDataSource : public OGRDataSource
     OGRXPlaneLayer**    papoLayers;
     int                 nLayers;
 
-    int                 ParseNavDatFile( const char * pszFilename );
+    OGRXPlaneReader*    poReader;
+    int                 bReadWholeFile;
+
+    void                Reset();
 
   public:
                         OGRXPlaneDataSource();
                         ~OGRXPlaneDataSource();
 
-    int                 Open( const char * pszFilename );
+    int                 Open( const char * pszFilename, int bReadWholeFile = TRUE );
 
     void                RegisterLayer( OGRXPlaneLayer* poLayer );
 

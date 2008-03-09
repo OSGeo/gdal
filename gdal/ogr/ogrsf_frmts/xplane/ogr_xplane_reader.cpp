@@ -31,6 +31,122 @@
 
 
 /***********************************************************************/
+/*                       OGRXPlaneReader()                             */
+/***********************************************************************/
+
+OGRXPlaneReader::OGRXPlaneReader()
+{
+    papszTokens = NULL;
+    fp = NULL;
+    pszFilename = NULL;
+    bEOF = FALSE;
+    nLineNumber = 0;
+}
+
+/***********************************************************************/
+/*                         ~OGRXPlaneReader()                          */
+/***********************************************************************/
+
+OGRXPlaneReader::~OGRXPlaneReader()
+{
+    CPLFree(pszFilename);
+    pszFilename = NULL;
+
+    CSLDestroy(papszTokens);
+    papszTokens = NULL;
+
+    if (fp != NULL)
+        VSIFClose(fp);
+    fp = NULL;
+}
+
+/************************************************************************/
+/*                         StartParsing()                               */
+/************************************************************************/
+
+int OGRXPlaneReader::StartParsing( const char * pszFilename )
+{
+    fp = VSIFOpen( pszFilename, "rt" );
+    if (fp == NULL)
+        return FALSE;
+
+    const char* pszLine = CPLReadLine(fp);
+    if (!pszLine || (strcmp(pszLine, "I") != 0 &&
+                     strcmp(pszLine, "A") != 0))
+    {
+        VSIFClose(fp);
+        fp = NULL;
+        return FALSE;
+    }
+
+    pszLine = CPLReadLine(fp);
+    if (!pszLine || IsRecognizedVersion(pszLine) == FALSE)
+    {
+        VSIFClose(fp);
+        fp = NULL;
+        return FALSE;
+    }
+
+    CPLFree(this->pszFilename);
+    this->pszFilename = CPLStrdup(pszFilename);
+
+    nLineNumber = 2;
+    CPLDebug("XPlane", "Version/Copyright : %s", pszLine);
+
+    Rewind();
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                               Rewind()                               */
+/************************************************************************/
+
+void OGRXPlaneReader::Rewind()
+{
+    if (fp != NULL)
+    {
+        VSIRewind(fp);
+        CPLReadLine(fp);
+        CPLReadLine(fp);
+
+        nLineNumber = 2;
+
+        CSLDestroy(papszTokens);
+        papszTokens = NULL;
+
+        bEOF = FALSE;
+    }
+}
+
+/************************************************************************/
+/*                         GetNextFeature()                             */
+/************************************************************************/
+
+int OGRXPlaneReader::GetNextFeature()
+{
+    if (fp == NULL || bEOF == TRUE || poInterestLayer == NULL)
+        return FALSE;
+
+    Read();
+    return TRUE;
+}
+
+/************************************************************************/
+/*                          ReadWholeFile()                             */
+/************************************************************************/
+
+int OGRXPlaneReader::ReadWholeFile()
+{
+    if (fp == NULL || bEOF == TRUE || nLineNumber != 2 || poInterestLayer != NULL)
+        return FALSE;
+
+    Read();
+    return TRUE;
+}
+
+
+/***********************************************************************/
 /*                          assertMinCol()                             */
 /***********************************************************************/
 
@@ -99,17 +215,6 @@ int OGRXPlaneReader::readDoubleWithBounds(
 }
 
 /***********************************************************************/
-/*                             readLatLon()                            */
-/***********************************************************************/
-
-int OGRXPlaneReader::readLatLon(double* pdfLat, double* pdfLon, int iToken)
-{
-    int bRet = readDoubleWithBounds(pdfLat, iToken, "latitude", -90., 90.);
-    bRet    &= readDoubleWithBounds(pdfLon, iToken + 1, "longitude", -180., 180.);
-    return bRet;
-}
-
-/***********************************************************************/
 /*                        readStringUntilEnd()                         */
 /***********************************************************************/
 
@@ -129,6 +234,34 @@ CPLString OGRXPlaneReader::readStringUntilEnd(int iFirstTokenIndice)
     }
     return osResult;
 }
+
+
+/***********************************************************************/
+/*                             readLatLon()                            */
+/***********************************************************************/
+
+int OGRXPlaneReader::readLatLon(double* pdfLat, double* pdfLon, int iToken)
+{
+    int bRet = readDoubleWithBounds(pdfLat, iToken, "latitude", -90., 90.);
+    bRet    &= readDoubleWithBounds(pdfLon, iToken + 1, "longitude", -180., 180.);
+    return bRet;
+}
+
+/***********************************************************************/
+/*                             readTrueHeading()                       */
+/***********************************************************************/
+
+int OGRXPlaneReader::readTrueHeading(double* pdfTrueHeading, int iToken, const char* pszTokenDesc)
+{
+    int bRet = readDoubleWithBounds(pdfTrueHeading, iToken, pszTokenDesc, -180., 360.);
+    if (bRet)
+    {
+        if (*pdfTrueHeading < 0.)
+            *pdfTrueHeading += 180.;
+    }
+    return bRet;
+}
+
 
 
 /***********************************************************************/
