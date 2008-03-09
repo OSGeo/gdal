@@ -196,20 +196,25 @@ enum
 class OGRXPlaneNavReader : public OGRXPlaneReader
 {
     private:
-        OGRXPlaneILSLayer* poILSLayer;
-        OGRXPlaneVORLayer* poVORLayer;
-        OGRXPlaneNDBLayer* poNDBLayer;
-        OGRXPlaneGSLayer* poGSLayer ;
+        OGRXPlaneILSLayer*    poILSLayer;
+        OGRXPlaneVORLayer*    poVORLayer;
+        OGRXPlaneNDBLayer*    poNDBLayer;
+        OGRXPlaneGSLayer*     poGSLayer ;
         OGRXPlaneMarkerLayer* poMarkerLayer;
-        OGRXPlaneDMELayer* poDMELayer;
+        OGRXPlaneDMELayer*    poDMELayer;
         OGRXPlaneDMEILSLayer* poDMEILSLayer;
 
-        void    ParseRecord(int nType);
+    private:
+                                 OGRXPlaneNavReader();
+        void                     ParseRecord(int nType);
+
+    protected:
+        virtual void             Read();
 
     public:
-                OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource );
-
-        int     ParseFile(const char* pszFilename);
+                                 OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource );
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
+        virtual int              IsRecognizedVersion( const char* pszVersionString);
 };
 
 #endif

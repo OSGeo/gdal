@@ -38,6 +38,9 @@
 
 #define RET_IF_FAIL(x)      if (!(x)) return;
 
+#define SET_IF_INTEREST_LAYER(x)        poReader->x = ((OGRXPlaneLayer*)x == poLayer) ? x : NULL
+
+class OGRXPlaneLayer;
 class OGRXPlaneDataSource;
 
 /************************************************************************/
@@ -47,20 +50,37 @@ class OGRXPlaneDataSource;
 class OGRXPlaneReader
 {
     protected:
-        int nLineNumber;
-        char** papszTokens;
-        int nTokens;
-        FILE* fp;
+        int             nLineNumber;
+        char**          papszTokens;
+        int             nTokens;
+        FILE*           fp;
+        char*           pszFilename;
+        int             bEOF;
+        OGRXPlaneLayer* poInterestLayer;
+
+                                 OGRXPlaneReader();
 
     public:
+        virtual                  ~OGRXPlaneReader();
+
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) = 0;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) = 0;
+        virtual int              StartParsing( const char * pszFilename );
+        virtual void             Read() = 0;
+        virtual int              ReadWholeFile();
+        virtual int              GetNextFeature();
+        virtual void             Rewind();
+
         int         assertMinCol(int nMinColNum);
         int         readDouble(double* pdfValue, int iToken, const char* pszTokenDesc);
         int         readDoubleWithBounds(double* pdfValue, int iToken, const char* pszTokenDesc,
                                          double dfLowerBound, double dfUpperBound);
         int         readDoubleWithBoundsAndConversion(double* pdfValue, int iToken, const char* pszTokenDesc,
                                                       double dfFactor, double dfLowerBound, double dfUpperBound);
-        int         readLatLon(double* pdfLat, double* pdfLon, int iToken);
         CPLString   readStringUntilEnd(int iFirstToken);
+
+        int         readLatLon(double* pdfLat, double* pdfLon, int iToken);
+        int         readTrueHeading(double* pdfTrueHeading, int iToken, const char* pszTokenDesc = "true heading");
 };
 
 /************************************************************************/
@@ -96,15 +116,27 @@ static OGRXPlaneEnumeration enumerationName( #enumerationName, enumerationValues
 
 
 /***********************************************************************/
-/*                      OGRXPlaneParseAptFile                          */
+/*                 OGRXPlaneCreateAptFileReader                        */
 /***********************************************************************/
 
-int OGRXPlaneParseAptFile( OGRXPlaneDataSource* poDataSource, const char* pszFilename);
+OGRXPlaneReader* OGRXPlaneCreateAptFileReader( OGRXPlaneDataSource* poDataSource );
 
 /***********************************************************************/
-/*                      OGRXPlaneParseNavFile                          */
+/*                 OGRXPlaneCreateNavFileReader                        */
 /***********************************************************************/
 
-int OGRXPlaneParseNavFile( OGRXPlaneDataSource* poDataSource, const char* pszFilename);
+OGRXPlaneReader* OGRXPlaneCreateNavFileReader( OGRXPlaneDataSource* poDataSource );
+
+/***********************************************************************/
+/*                 OGRXPlaneCreateAwyFileReader                        */
+/***********************************************************************/
+
+OGRXPlaneReader* OGRXPlaneCreateAwyFileReader( OGRXPlaneDataSource* poDataSource );
+
+/***********************************************************************/
+/*                 OGRXPlaneCreateFixFileReader                        */
+/***********************************************************************/
+
+OGRXPlaneReader* OGRXPlaneCreateFixFileReader( OGRXPlaneDataSource* poDataSource );
 
 #endif
