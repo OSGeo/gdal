@@ -40,19 +40,40 @@ OGRXPlaneDataSource::OGRXPlaneDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    poReader = NULL;
+    bReadWholeFile = TRUE;
 }
 
 /************************************************************************/
-/*                         ~OGRXPlaneDataSource()                          */
+/*                         ~OGRXPlaneDataSource()                       */
 /************************************************************************/
 
 OGRXPlaneDataSource::~OGRXPlaneDataSource()
 
 {
+    Reset();
+}
+
+/************************************************************************/
+/*                              Reset()                                 */
+/************************************************************************/
+
+void OGRXPlaneDataSource::Reset()
+{
+    if ( poReader != NULL)
+    {
+        delete poReader;
+        poReader = NULL;
+    }
+
     CPLFree( pszName );
+    pszName = NULL;
+
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+    papoLayers = NULL;
+    nLayers = 0;
 }
 
 /************************************************************************/
@@ -83,28 +104,58 @@ void OGRXPlaneDataSource::RegisterLayer(OGRXPlaneLayer* poLayer)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRXPlaneDataSource::Open( const char * pszFilename )
+int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFile )
 
 {
+    Reset();
+
+    this->bReadWholeFile = bReadWholeFile;
+
     const char* pszShortFilename = CPLGetFilename(pszFilename);
     if (EQUAL(pszShortFilename, "nav.dat"))
     {
-        int bRet = OGRXPlaneParseNavFile(this, pszFilename);
-        if (bRet)
-            pszName = CPLStrdup(pszFilename);
-        return bRet;
+        poReader = OGRXPlaneCreateNavFileReader(this);
     }
     else if (EQUAL(pszShortFilename, "apt.dat"))
     {
-        int bRet = OGRXPlaneParseAptFile(this, pszFilename);
-        if (bRet)
-            pszName = CPLStrdup(pszFilename);
-        return bRet;
+        poReader = OGRXPlaneCreateAptFileReader(this);
+    }
+    else if (EQUAL(pszShortFilename, "fix.dat"))
+    {
+        poReader = OGRXPlaneCreateFixFileReader(this);
+    }
+    else if (EQUAL(pszShortFilename, "awy.dat"))
+    {
+        poReader = OGRXPlaneCreateAwyFileReader(this);
+    }
+
+    int bRet;
+    if (poReader && poReader->StartParsing(pszFilename) == FALSE)
+    {
+        delete poReader;
+        poReader = NULL;
+    }
+    if (poReader)
+    {
+        pszName = CPLStrdup(pszFilename);
+
+        if (bReadWholeFile)
+        {
+            poReader->ReadWholeFile();
+            for( int i = 0; i < nLayers; i++ )
+                papoLayers[i]->AutoAdjustColumnsWidth();
+        }
+        else
+        {
+            for( int i = 0; i < nLayers; i++ )
+                papoLayers[i]->SetReader(poReader->CloneForLayer(papoLayers[i]));
+        }
+        bRet = TRUE;
     }
     else
-    {
-        return FALSE;
-    }
+        bRet = FALSE;
+
+    return bRet;
 }
 
 /************************************************************************/
