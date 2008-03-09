@@ -20,6 +20,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil.obj \
 		cpl_vsi_mem.obj \
                 cpl_http.obj \
+                cpl_hash_set.obj \
 		$(ODBC_OBJ) 
 
 LIB	=	cpl.lib
