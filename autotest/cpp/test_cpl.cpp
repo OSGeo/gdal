@@ -30,6 +30,7 @@
 #include <tut.h>
 #include <string>
 #include "cpl_list.h"
+#include "cpl_hash_set.h"
 #include "cpl_string.h"
 
 namespace tut
@@ -153,6 +154,58 @@ namespace tut
                         apszTestStrings[i].expectedResult,
                         CPLGetValueType(apszTestStrings[i].testString));
         }
+    }
+    
+    
+    // Test cpl_hash_set API
+    template<>
+    template<>
+    void object::test<3>()
+    {
+        CPLHashSet* set = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
+        ensure(CPLHashSetInsert(set, CPLStrdup("hello")) == TRUE);
+        ensure(CPLHashSetInsert(set, CPLStrdup("good morning")) == TRUE);
+        ensure(CPLHashSetInsert(set, CPLStrdup("bye bye")) == TRUE);
+        ensure(CPLHashSetSize(set) == 3);
+        ensure(CPLHashSetInsert(set, CPLStrdup("bye bye")) == FALSE);
+        ensure(CPLHashSetSize(set) == 3);
+        ensure(CPLHashSetRemove(set, "bye bye") == TRUE);
+        ensure(CPLHashSetSize(set) == 2);
+        ensure(CPLHashSetRemove(set, "good afternoon") == FALSE);
+        ensure(CPLHashSetSize(set) == 2);
+        CPLHashSetDestroy(set);
+    }
+
+    // Test cpl_hash_set API
+    template<>
+    template<>
+    void object::test<4>()
+    {
+        CPLHashSet* set = CPLHashSetNew(NULL, NULL, NULL);
+        for(int i=0;i<1000;i++)
+        {
+            ensure(CPLHashSetInsert(set, (void*)i) == TRUE);
+        }
+        ensure(CPLHashSetSize(set) == 1000);
+
+        for(int i=0;i<1000;i++)
+        {
+            ensure(CPLHashSetInsert(set, (void*)i) == FALSE);
+        }
+        ensure(CPLHashSetSize(set) == 1000);
+
+        for(int i=0;i<1000;i++)
+        {
+            ensure(CPLHashSetFind(set, (const void*)i) == TRUE);
+        }
+
+        for(int i=0;i<1000;i++)
+        {
+            ensure(CPLHashSetRemove(set, (void*)i) == TRUE);
+        }
+        ensure(CPLHashSetSize(set) == 0);
+
+        CPLHashSetDestroy(set);
     }
 
 } // namespace tut
