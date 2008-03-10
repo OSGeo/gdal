@@ -308,10 +308,10 @@ static unsigned int HastAirwayIntersectionFeatureFunc(const void* _feature)
 }
 
 /************************************************************************/
-/*               FreeirwayIntersectionFeatureFunc                      */
+/*               FreeAirwayIntersectionFeatureFunc                      */
 /************************************************************************/
 
-static void FreeirwayIntersectionFeatureFunc(void* _feature)
+static void FreeAirwayIntersectionFeatureFunc(void* _feature)
 {
     delete (OGRFeature*)_feature;
 }
@@ -328,7 +328,8 @@ OGRXPlaneAirwayIntersectionLayer::OGRXPlaneAirwayIntersectionLayer() : OGRXPlane
     poFeatureDefn->AddFieldDefn( &oFieldName );
 
     poSet = CPLHashSetNew(HastAirwayIntersectionFeatureFunc,
-                          EqualAirwayIntersectionFeatureFunc, NULL);
+                          EqualAirwayIntersectionFeatureFunc,
+                          FreeAirwayIntersectionFeatureFunc);
 }
 
 /************************************************************************/
@@ -378,7 +379,7 @@ void OGRXPlaneAirwayIntersectionLayer::ResetReading()
         CPLHashSetDestroy(poSet);
         poSet = CPLHashSetNew(HastAirwayIntersectionFeatureFunc,
                               EqualAirwayIntersectionFeatureFunc,
-                              FreeirwayIntersectionFeatureFunc);
+                              FreeAirwayIntersectionFeatureFunc);
     }
 
     OGRXPlaneLayer::ResetReading();
