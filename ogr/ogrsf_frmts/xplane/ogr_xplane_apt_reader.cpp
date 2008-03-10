@@ -766,11 +766,11 @@ void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
 int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsValid)
 {
     double dfLat, dfLon;
-    double dfFirstLat, dfFirstLon;
-    double dfLastLat, dfLastLon;
+    double dfFirstLat = 0., dfFirstLon = 0.;
+    double dfLastLat = 0., dfLastLon = 0.;
     double dfLatBezier, dfLonBezier;
-    double dfFirstLatBezier, dfFirstLonBezier;
-    double dfLastLatBezier, dfLastLonBezier;
+    double dfFirstLatBezier = 0., dfFirstLonBezier = 0.;
+    double dfLastLatBezier = 0., dfLastLonBezier = 0.;
     int bIsFirst = TRUE;
     int bFirstIsBezier = TRUE;
     int bLastIsValid = FALSE;
@@ -1018,11 +1018,11 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
 int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring, int* pbIsValid)
 {
     double dfLat, dfLon;
-    double dfFirstLat, dfFirstLon;
-    double dfLastLat, dfLastLon;
+    double dfFirstLat = 0., dfFirstLon = 0.;
+    double dfLastLat = 0., dfLastLon = 0.;
     double dfLatBezier, dfLonBezier;
-    double dfFirstLatBezier, dfFirstLonBezier;
-    double dfLastLatBezier, dfLastLonBezier;
+    double dfFirstLatBezier = 0., dfFirstLonBezier = 0.;
+    double dfLastLatBezier = 0., dfLastLonBezier = 0.;
     int bIsFirst = TRUE;
     int bFirstIsBezier = TRUE;
     int bLastIsValid = FALSE;
