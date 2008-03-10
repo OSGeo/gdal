@@ -340,6 +340,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
         CPLString osNavaidName;
 
         RET_IF_FAIL(readDouble(&dfDMEBias, 6, "DME bias"));
+        dfDMEBias *= NM_TO_KM;
 
         if (EQUAL(papszTokens[nTokens-1], "DME-ILS"))
         {
@@ -570,7 +571,7 @@ OGRXPlaneNDBLayer::OGRXPlaneNDBLayer() : OGRXPlaneLayer("NDB")
     oFieldElev.SetPrecision( 2 );
     poFeatureDefn->AddFieldDefn( &oFieldElev );
 
-    OGRFieldDefn oFieldFreq("freq_mhz", OFTReal );
+    OGRFieldDefn oFieldFreq("freq_khz", OFTReal );
     oFieldFreq.SetWidth( 7 );
     oFieldFreq.SetPrecision( 3 );
     poFeatureDefn->AddFieldDefn( &oFieldFreq );
@@ -783,7 +784,7 @@ OGRXPlaneDMEILSLayer::OGRXPlaneDMEILSLayer() : OGRXPlaneLayer("DMEILS")
     oFieldRange.SetPrecision( 3 );
     poFeatureDefn->AddFieldDefn( &oFieldRange );
 
-    OGRFieldDefn oFieldBias("bias", OFTReal );
+    OGRFieldDefn oFieldBias("bias_km", OFTReal );
     oFieldBias.SetWidth( 6 );
     oFieldBias.SetPrecision( 2 );
     poFeatureDefn->AddFieldDefn( &oFieldBias );
@@ -855,7 +856,7 @@ OGRXPlaneDMELayer::OGRXPlaneDMELayer() : OGRXPlaneLayer("DME")
     oFieldRange.SetPrecision( 3 );
     poFeatureDefn->AddFieldDefn( &oFieldRange );
 
-    OGRFieldDefn oFieldBias("bias", OFTReal );
+    OGRFieldDefn oFieldBias("bias_km", OFTReal );
     oFieldBias.SetWidth( 6 );
     oFieldBias.SetPrecision( 2 );
     poFeatureDefn->AddFieldDefn( &oFieldBias );
