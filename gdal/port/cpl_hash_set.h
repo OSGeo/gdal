@@ -60,7 +60,7 @@ typedef int          (*CPLHashSetIterEltFunc)(void* elt, void* user_data);
 
 /* Functions */
 
-CPLHashSet*  CPL_DLL CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
+CPLHashSet CPL_DLL * CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
                                    CPLHashSetEqualFunc fnEqualFunc,
                                    CPLHashSetFreeEltFunc fnFreeEltFunc);
 
