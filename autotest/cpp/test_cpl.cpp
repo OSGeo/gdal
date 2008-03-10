@@ -176,30 +176,42 @@ namespace tut
         CPLHashSetDestroy(set);
     }
 
+    int sumValues(void* elt, void* user_data)
+    {
+        int* pnSum = (int*)user_data;
+        *pnSum += (int)elt;
+        return TRUE;
+    }
+
     // Test cpl_hash_set API
     template<>
     template<>
     void object::test<4>()
     {
+#define HASH_SET_SIZE   1000
         CPLHashSet* set = CPLHashSetNew(NULL, NULL, NULL);
-        for(int i=0;i<1000;i++)
+        for(int i=0;i<HASH_SET_SIZE;i++)
         {
             ensure(CPLHashSetInsert(set, (void*)i) == TRUE);
         }
-        ensure(CPLHashSetSize(set) == 1000);
+        ensure(CPLHashSetSize(set) == HASH_SET_SIZE);
 
-        for(int i=0;i<1000;i++)
+        for(int i=0;i<HASH_SET_SIZE;i++)
         {
             ensure(CPLHashSetInsert(set, (void*)i) == FALSE);
         }
-        ensure(CPLHashSetSize(set) == 1000);
+        ensure(CPLHashSetSize(set) == HASH_SET_SIZE);
 
-        for(int i=0;i<1000;i++)
+        for(int i=0;i<HASH_SET_SIZE;i++)
         {
             ensure(CPLHashSetFind(set, (const void*)i) == TRUE);
         }
 
-        for(int i=0;i<1000;i++)
+        int sum = 0;
+        CPLHashSetForeach(set, sumValues, &sum);
+        ensure(sum == (HASH_SET_SIZE-1) * HASH_SET_SIZE / 2);
+
+        for(int i=0;i<HASH_SET_SIZE;i++)
         {
             ensure(CPLHashSetRemove(set, (void*)i) == TRUE);
         }
