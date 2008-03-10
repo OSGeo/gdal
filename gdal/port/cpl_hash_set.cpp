@@ -61,8 +61,14 @@ static const int anPrimes[] =
  * Creates a new hash set
  * 
  * The hash function must return a hash value for the elements to insert.
+ * If fnHashFunc is NULL, CPLHashSetHashPointer will be used.
+ *
  * The equal function must return if two elements are equal.
- * The free function is used to free elements inserted in the hash set.
+ * If fnEqualFunc is NULL, CPLHashSetEqualPointer will be used.
+ *
+ * The free function is used to free elements inserted in the hash set,
+ * when the hash set is destroyed, when elements are removed or replaced.
+ * If fnFreeEltFunc is NULL, elements inserted into the hash set will not be freed.
  *
  * @param fnHashFunc hash function. May be NULL.
  * @param fnEqualFunc equal function. May be NULL.
@@ -106,6 +112,7 @@ CPLHashSet* CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
 
 int CPLHashSetSize(const CPLHashSet* set)
 {
+    CPLAssert(set != NULL);
     return set->nSize;
 }
 
@@ -114,13 +121,17 @@ int CPLHashSetSize(const CPLHashSet* set)
 /************************************************************************/
 
 /**
- * Destroys an allocated hash set
+ * Destroys an allocated hash set.
+ *
+ * This function also frees the elements if a free function was
+ * provided at the creation of the hash set.
  * 
  * @param set the hash set
  */
 
 void CPLHashSetDestroy(CPLHashSet* set)
 {
+    CPLAssert(set != NULL);
     for(int i=0;i<set->nAllocatedSize;i++)
     {
         if (set->fnFreeEltFunc)
@@ -136,6 +147,47 @@ void CPLHashSetDestroy(CPLHashSet* set)
     }
     CPLFree(set->tabList);
     CPLFree(set);
+}
+
+/************************************************************************/
+/*                       CPLHashSetForeach()                            */
+/************************************************************************/
+
+
+/**
+ * Walk through the hash set and runs the provided function on all the
+ * elements
+ *
+ * This function is provided the user_data argument of CPLHashSetForeach.
+ * It must return TRUE to go on the walk through the hash set, or FALSE to
+ * make it stop.
+ *
+ * Note : the structure of the hash set must *NOT* be modified during the
+ * walk.
+ * 
+ * @param set the hash set.
+ * @param fnIterFunc the function called on each element.
+ * @param user_data the user data provided to the function.
+ */
+
+void  CPLHashSetForeach(CPLHashSet* set,
+                        CPLHashSetIterEltFunc fnIterFunc,
+                        void* user_data)
+{
+    CPLAssert(set != NULL);
+    if (!fnIterFunc) return;
+
+    for(int i=0;i<set->nAllocatedSize;i++)
+    {
+        CPLList* cur = set->tabList[i];
+        while(cur)
+        {
+            if (fnIterFunc(cur->pData, user_data) == FALSE)
+                return;
+
+            cur = cur->psNext;
+        }
+    }
 }
 
 /************************************************************************/
@@ -194,9 +246,10 @@ static void** CPLHashSetFindPtr(CPLHashSet* set, const void* elt)
 /************************************************************************/
 
 /**
- * Inserts an element in a hash set.
+ * Inserts an element into a hash set.
+ *
  * If the element was already inserted in the hash set, the previous
- * element is replaced by the new element. If a free function was provided
+ * element is replaced by the new element. If a free function was provided,
  * it is used to free the previously inserted element
  * 
  * @param set the hash set
@@ -207,6 +260,7 @@ static void** CPLHashSetFindPtr(CPLHashSet* set, const void* elt)
 
 int CPLHashSetInsert(CPLHashSet* set, void* elt)
 {
+    CPLAssert(set != NULL);
     void** pElt = CPLHashSetFindPtr(set, elt);
     if (pElt)
     {
@@ -249,6 +303,7 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
 
 int CPLHashSetFind(CPLHashSet* set, const void* elt)
 {
+    CPLAssert(set != NULL);
     void** pElt = CPLHashSetFindPtr(set, elt);
     return pElt != NULL;
 }
@@ -268,6 +323,7 @@ int CPLHashSetFind(CPLHashSet* set, const void* elt)
 
 int CPLHashSetRemove(CPLHashSet* set, const void* elt)
 {
+    CPLAssert(set != NULL);
     if (set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2)
     {
         set->nIndiceAllocatedSize--;
@@ -355,7 +411,7 @@ int CPLHashSetEqualPointer(const void* elt1, const void* elt2)
 /**
  * Hash function for a zero-terminated string
  * 
- * @param pszStr the string to hash
+ * @param pszStr the string to hash. May be NULL.
  *
  * @return the hash value of the string
  */
@@ -382,8 +438,8 @@ unsigned int CPLHashSetHashStr(const void *elt)
 /**
  * Equality function for strings
  * 
- * @param elt1 the first string to compare
- * @param elt2 the second string to compare
+ * @param elt1 the first string to compare. May be NULL.
+ * @param elt2 the second string to compare. May be NULL.
  *
  * @return TRUE if the strings are equal
  */
