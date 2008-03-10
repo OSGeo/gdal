@@ -44,6 +44,7 @@ class OGRXPlaneLayer : public OGRLayer
     int                nFID;
     int                nCurrentID;
     OGRFeature**       papoFeatures;
+    OGRSpatialReference *poSRS;
 
   protected:
     OGRXPlaneReader*   poReader;
@@ -63,6 +64,7 @@ class OGRXPlaneLayer : public OGRLayer
     virtual OGRFeature *      GetNextFeature();
     virtual OGRFeature *      GetFeature( long nFID );
     virtual int               GetFeatureCount( int bForce = TRUE );
+    virtual OGRSpatialReference * GetSpatialRef() { return poSRS; }
 
     virtual OGRFeatureDefn *  GetLayerDefn() { return poFeatureDefn; }
     virtual int               TestCapability( const char * pszCap );

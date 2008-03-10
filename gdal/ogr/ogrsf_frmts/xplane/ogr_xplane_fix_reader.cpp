@@ -157,6 +157,7 @@ OGRXPlaneFIXLayer::OGRXPlaneFIXLayer() : OGRXPlaneLayer("FIX")
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldName("fix_name", OFTString );
+    oFieldName.SetPrecision(5);
     poFeatureDefn->AddFieldDefn( &oFieldName );
 }
 

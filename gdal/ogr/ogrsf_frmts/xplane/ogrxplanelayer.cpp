@@ -45,6 +45,9 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName )
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     poFeatureDefn->Reference();
 
+    poSRS = new OGRSpatialReference();
+    poSRS->SetWellKnownGeogCS("WGS84");
+
     poReader = NULL;
 }
 
@@ -57,6 +60,8 @@ OGRXPlaneLayer::~OGRXPlaneLayer()
 
 {
     poFeatureDefn->Release();
+
+    poSRS->Release();
 
     for(int i=0;i<nFID;i++)
     {
@@ -254,6 +259,10 @@ int  OGRXPlaneLayer::TestCapability( const char * pszCap )
 void OGRXPlaneLayer::RegisterFeature( OGRFeature* poFeature )
 {
     CPLAssert (poFeature != NULL);
+
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if (poGeom)
+        poGeom->assignSpatialReference( poSRS );
 
     papoFeatures = (OGRFeature**) CPLRealloc(papoFeatures, (nFID + 1) * sizeof(OGRFeature*));
     papoFeatures[nFID] = poFeature;
