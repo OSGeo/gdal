@@ -121,6 +121,9 @@ void OGRRegisterAll()
 #ifdef SDE_ENABLED
     RegisterOGRSDE();
 #endif
+#ifdef XPLANE_ENABLED
+    RegisterOGRXPlane();
+#endif
 #ifdef AVCBIN_ENABLED
     RegisterOGRAVCBin();
 #endif
