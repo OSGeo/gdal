@@ -38,38 +38,53 @@
  *
  * Hash set implementation.
  *
+ * An hash set is a data structure that holds elements that are unique
+ * according to a comparison function. Operations on the hash set, such as
+ * insertion, removal or lookup, are supposed to be fast if an efficient
+ * "hash" function is provided.
  */
 
 CPL_C_START
+
+/* Types */
 
 typedef struct _CPLHashSet CPLHashSet;
 
 typedef unsigned int (*CPLHashSetHashFunc)(const void* elt);
 
-typedef int (*CPLHashSetEqualFunc)(const void* elt1, const void* elt2);
+typedef int          (*CPLHashSetEqualFunc)(const void* elt1, const void* elt2);
 
-typedef void (*CPLHashSetFreeEltFunc)(void* elt);
+typedef void         (*CPLHashSetFreeEltFunc)(void* elt);
 
-CPLHashSet* CPLHashSetNew(CPLHashSetHashFunc fnHashFunc, CPLHashSetEqualFunc fnEqualFunc,
-                          CPLHashSetFreeEltFunc fnFreeEltFunc);
+typedef int          (*CPLHashSetIterEltFunc)(void* elt, void* user_data);
 
-int CPLHashSetSize(const CPLHashSet* set);
+/* Functions */
 
-void CPLHashSetDestroy(CPLHashSet* set);
+CPLHashSet*  CPL_DLL CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
+                                   CPLHashSetEqualFunc fnEqualFunc,
+                                   CPLHashSetFreeEltFunc fnFreeEltFunc);
 
-int CPLHashSetInsert(CPLHashSet* set, void* elt);
+void         CPL_DLL CPLHashSetDestroy(CPLHashSet* set);
 
-int CPLHashSetFind(CPLHashSet* set, const void* elt);
+int          CPL_DLL CPLHashSetSize(const CPLHashSet* set);
 
-int CPLHashSetRemove(CPLHashSet* set, const void* elt);
+void         CPL_DLL CPLHashSetForeach(CPLHashSet* set,
+                                       CPLHashSetIterEltFunc fnIterFunc,
+                                       void* user_data);
 
-unsigned int CPLHashSetHashPointer(const void* elt);
+int          CPL_DLL CPLHashSetInsert(CPLHashSet* set, void* elt);
 
-int CPLHashSetEqualPointer(const void* elt1, const void* elt2);
+int          CPL_DLL CPLHashSetFind(CPLHashSet* set, const void* elt);
 
-unsigned int CPLHashSetHashStr(const void * pszStr);
+int          CPL_DLL CPLHashSetRemove(CPLHashSet* set, const void* elt);
 
-int CPLHashSetEqualStr(const void* pszStr1, const void* pszStr2);
+unsigned int CPL_DLL CPLHashSetHashPointer(const void* elt);
+
+int          CPL_DLL CPLHashSetEqualPointer(const void* elt1, const void* elt2);
+
+unsigned int CPL_DLL CPLHashSetHashStr(const void * pszStr);
+
+int          CPL_DLL CPLHashSetEqualStr(const void* pszStr1, const void* pszStr2);
 
 CPL_C_END
 
