@@ -321,7 +321,7 @@ ponto flutuando para o inteiro RasterIO arredonda para baixo, e ao converter de
 para fora dos limites de valores v&aacute;lidos para o tipo de sa&iacute;da, ser&aacute; escolhido o mais
 pr&oacute;ximo valor poss&iacute;vel. 
 Isto implica, por exemplo, que os dados 16bit lidos em um buffer de GDT_Byte 
-converter&atilde;o todos os valores maiores de 255 para 255, os <b>dados n&atilde;o &eacute; escalado!</b>
+converter&atilde;o todos os valores maiores de 255 para 255, os <b>dados n&atilde;o est&atilde;o escalados!</b>
 
 Os valores nBufXSize e nBufYSize descrevem o tamanho do buffer. Ao carregar dados na 
 resolu&ccedil;&atilde;o completa os valores seria o mesmo que o tamanho da janela. Entretanto, para carregar 
