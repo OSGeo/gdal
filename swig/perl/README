@@ -22,13 +22,13 @@ To install this module type the following:
    make test
    make install
 
-In MinGW it is 
+In MinGW it is (uses the make.bat)
 
    perl Makefile.PL
-   dmake
-   dmake test
+   make
+   make test
    make clean
-   dmake install
+   make install
 
 You may need to edit the Makefile.PL to add the path to the GDAL DLL.
 

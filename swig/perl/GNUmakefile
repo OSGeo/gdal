@@ -6,7 +6,10 @@ include ../SWIGmake.base
 all:
 
 clean:
-	$(MAKE) -f Makefile clean
+	$(MAKE) -f Makefile_Geo__GDAL clean
+	$(MAKE) -f Makefile_Geo__GDAL__Const clean
+	$(MAKE) -f Makefile_Geo__OGR clean
+	$(MAKE) -f Makefile_Geo__OSR clean
 
 veryclean: clean
 	-rm -f ${WRAPPERS} lib/Geo/*.pm lib/Geo/GDAL/*.pm
@@ -20,17 +23,25 @@ generate: ${WRAPPERS}
 	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
 	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
 
-Makefile:
+Makefile_Geo__GDAL:
 	perl Makefile.PL
 
-build: Makefile
-	$(MAKE) -f Makefile
+build: Makefile_Geo__GDAL
+	$(MAKE) -f Makefile_Geo__GDAL
+	$(MAKE) -f Makefile_Geo__GDAL__Const
+	$(MAKE) -f Makefile_Geo__OGR
+	$(MAKE) -f Makefile_Geo__OSR
 
 install: build
-	$(MAKE) -f Makefile install
+	$(MAKE) -f Makefile_Geo__GDAL install
+	$(MAKE) -f Makefile_Geo__GDAL__Const install
+	$(MAKE) -f Makefile_Geo__OGR install
+	$(MAKE) -f Makefile_Geo__OSR install
 
 test: build
-	$(MAKE) -f Makefile test
+	$(MAKE) -f Makefile_Geo__GDAL test
 
 dist: build
-	$(MAKE) -f Makefile dist
+	$(MAKE) -f Makefile_Geo__GDAL dist
+
+doc:
