@@ -694,6 +694,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$self = Geo::OGRc::new_Geometry(undef, undef, $wkb, undef);
 	    } elsif (defined $gml) {
 		$self = Geo::OGRc::new_Geometry(undef, undef, undef, $gml);
+	    } else {
+		croak "missing GeometryType, WKT, WKB, or GML parameter in Geo::OGR::Geometry::create";
 	    }
 	    bless $self, $pkg if defined $self;
 	    $self->Points($points) if $points;
