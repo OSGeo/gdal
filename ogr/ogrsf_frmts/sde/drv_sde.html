@@ -13,7 +13,10 @@ relational databases.  The OGR ArcSDE driver depends on being built with the
 ESRI provided ArcSDE client libraries. <p>
 
 ArcSDE instances are accessed with a datasource name of the following
-form.  The server, instance, username and password fields are required. The instance is the port number of the SDE server, which generally defaults to 5151.  If the layer parameter is specified then the SDE driver is able to skip reading the summary metadata for each layer; skipping this step can be a significant time savings. <p>
+form.  The server, instance, username and password fields are required. The instance 
+is the port number of the SDE server, which generally defaults to 5151.  
+If the layer parameter is specified then the SDE driver is able to skip reading 
+the summary metadata for each layer; skipping this step can be a significant time savings. <p>
 
 <pre>
   SDE:server,instance,database,username,password,layer
@@ -29,6 +32,48 @@ The driver has been tested with ArcSDE 9.x, and should work with newer
 versions, as well as ArcSDE 8.2 or 8.3.  Both 2D and 3D geometries are
 supported.  Curve geometries are approximated as line strings (actually 
 still TODO).<p>
+    
+ArcSDE is generally sensitive to case-specific, fully-qualified tablenames.  
+While you may be able to use short names for some operations, others (notably deleting) 
+will require a fully-qualified name.  Because of this fact, it is generally best 
+to <b>always</b> use fully-qualified table names. <p>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+    <li>
+        <b>OVERWRITE</b>: This can be set to allow an existing layer to be
+        overwritten during the layer creation process. If set, and the value
+        is not "NO", the layer will first be deleted prior to creating a new
+        layer of the same name as an existing layer. Set to "NO" explicitly,
+        or do not include the option to treat attempts to create new layers
+        which collide with existing layers of the same name as an error.
+        Off by default.
+    </li>
+    <li>
+        <b>GEOMETRY_NAME</b>: By default OGR creates new layers with the
+        geometry (feature) column named `SHAPE'. If you wish to use a different
+        name, it can be supplied with the GEOMETRY_NAME layer creation option.
+    </li>
+    <li>
+        <b>SDE_FID</b>: Can be set to override the default name of the feature
+        ID column. The default is "OBJECTID".
+    </li>
+    <li>
+        <b>SDE_KEYWORD</b>: The DBTUNE keyword with which to create the layer.
+        Defaults to "DEFAULTS".
+    </li>
+    <li>
+        <b>SDE_DESCRIPTION</b>: The text description of the layer.  Defaults to
+        Created by GDAL/OGR 1.6
+    </li>
+    <li>
+        <b>SDE_MULTIVERSION</b>: If this creation option is set and its value is
+        not "FALSE", multi-versioning will be enabled for the layer at creation
+        time.
+    </li>
+</ul>
+
 
 <h3>Environment variables</h3>
 

@@ -4,6 +4,8 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSDEDriver class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Copyright (c) 2008, Shawn Gervais <project10@project10.net> 
+ * Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
@@ -48,7 +50,7 @@ OGRSDEDriver::~OGRSDEDriver()
 const char *OGRSDEDriver::GetName()
 
 {
-    return "SDE";
+    return "ArcSDE";
 }
 
 /************************************************************************/
@@ -61,16 +63,9 @@ OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
 {
     OGRSDEDataSource     *poDS;
 
-    if( bUpdate )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "SDE Driver doesn't support update." );
-        return NULL;
-    }
-    
     poDS = new OGRSDEDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
         return NULL;
@@ -80,12 +75,42 @@ OGRDataSource *OGRSDEDriver::Open( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+OGRDataSource *OGRSDEDriver::CreateDataSource( const char * pszName,
+                                               char **papszOptions)
+    
+{
+    OGRSDEDataSource     *poDS;
+
+    poDS = new OGRSDEDataSource();
+
+    if( !poDS->Open( pszName, TRUE ) )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined,
+          "ArcSDE driver doesn't currently support database or service "
+          "creation.  Please create the service before using.");
+        return NULL;
+    }
+    else
+        return poDS;
+}
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRSDEDriver::TestCapability( const char * pszCap )
 
 {
+    if( EQUAL(pszCap, ODsCCreateLayer) )
+        return TRUE;
+    if( EQUAL(pszCap, ODsCDeleteLayer) )
+        return true;
+    if( EQUAL(pszCap, ODrCCreateDataSource) )
+        return TRUE;
+      
     return FALSE;
 }
 
