@@ -4,17 +4,27 @@ $ext = $^O eq 'MSWin32' ? '.dll' : ''; # works with MinGW but probably not with 
 
 $libs = $ENV{'PREFIX'} ? "-L$ENV{'PREFIX'}/lib " : '';
 
-$libs .= "-LC:/msys/1.0/local/lib -lgdal$ext";
+$libs .= "-L../../.libs -L../..";
+$libs .= " -LC:/msys/1.0/local/lib -lgdal$ext";
 
 $libs .= ' -lstdc++' if $^O eq 'cygwin';
 
-$inc = '-IC:/msys/1.0/local/include';
+$inc = '-I../../gcore -I../../alg -I../../ogr -I../../port';
+$inc .= ' -IC:/msys/1.0/local/include';
 
-$obj = 'gdal_wrap.o gdalconst_wrap.o ogr_wrap.o osr_wrap.o';
+%object = ( 'Geo::GDAL' => 'gdal_wrap.o',
+	    'Geo::GDAL::Const' => 'gdalconst_wrap.o',
+	    'Geo::OGR' => 'ogr_wrap.o',
+	    'Geo::OSR' => 'osr_wrap.o' );
 
-WriteMakefile( NAME => 'Geo::GDAL',
-	       VERSION_FROM => 'lib/Geo/GDAL.pm',
-	       LIBS => $libs,
-	       INC => $inc,
-	       OBJECT => $obj,
-	       );
+for my $module (keys %object) {
+    my $add = $module;
+    $add =~ s/:/_/g;
+    WriteMakefile( NAME => $module,
+		   VERSION_FROM => 'lib/Geo/GDAL.pm',
+		   MAKEFILE => 'Makefile_'.$add,
+		   LIBS => $libs,
+		   INC => $inc,
+		   OBJECT => $object{$module}
+		   );
+}
