@@ -1,10 +1,15 @@
+Doxyfile
 GNUmakefile
 MANIFEST
 README
 lib/Geo/GDAL/Const.pm
+lib/Geo/GDAL/Const.dox
 lib/Geo/GDAL.pm
+lib/Geo/GDAL.dox
 lib/Geo/OGR.pm
+lib/Geo/OGR.dox
 lib/Geo/OSR.pm
+lib/Geo/OSR.dox
 t/gdal.t
 t/ogr.t
 Makefile.PL
@@ -13,4 +18,9 @@ gdalconst_wrap.c
 gdal_wrap.cpp
 ogr_wrap.cpp
 osr_wrap.cpp
+cr.dox
+cv.dox
+index.dox
+rr.dox
+rv.dox
 META.yml                                 Module meta-data (added by MakeMaker)
