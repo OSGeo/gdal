@@ -29,6 +29,5 @@ if "%1" == "test" goto end
 del *.c
 del *.cpp
 del *.old
-rd lib /S /Q
 
 :end
