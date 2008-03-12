@@ -33,8 +33,8 @@
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
 #include "gdal_pam.h"
-#include "gdal_rat.h"
 #include "gdal_alg.h"
+#include "gdal_rat.h"
 
 CPL_CVSID( "$Id$" );
 
@@ -661,8 +661,6 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
     /*      Automatic Generated Color Table                                 */
     /* -------------------------------------------------------------------- */
 
-#ifndef GDAL_RST_PLUGIN
-
     if( poDS->papszCategories != NULL && 
       ( poDS->poColorTable->GetColorEntryCount() == 0 ) )
     {
@@ -683,8 +681,6 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
         poDS->poColorTable->CreateColorRamp( 
             0, &sFromColor, ( nEntryCount - 1 ), &sToColor );
     }
-
-#endif // GDAL_RST_PLUGIN
 
     /* -------------------------------------------------------------------- */
     /*      Check for external overviews.                                   */
