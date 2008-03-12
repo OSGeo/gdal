@@ -2,6 +2,7 @@ dmake -f Makefile_Geo__GDAL %1
 
 if "%1" == "test" goto clean
 if "%1" == "install" goto end
+if "%1" == "dist" goto end
 
 dmake -f Makefile_Geo__GDAL__Const %1
 dmake -f Makefile_Geo__OGR %1
