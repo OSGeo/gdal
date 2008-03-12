@@ -31,6 +31,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifndef SKIP_INLINE
 %{
 void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
   /* If the error class is CE_Fatal, we want to have a message issued
@@ -51,6 +52,7 @@ void DontUseExceptions() {
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
 %}
+#endif
 
 %include exception.i
 
