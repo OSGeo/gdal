@@ -195,17 +195,19 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub Drivers {
 	my @drivers;
-	for my $i (0..GetDriverCount()-1) {
-	    push @drivers, _GetDriver($i);
+	for my $i (0..GetGDALDriverCount()-1) {
+	    push @drivers, GetGDALDriver($i);
 	}
 	return @drivers;
     }
     sub GetDriver {
 	my $driver = shift;
-	return _GetDriver($driver) if $driver =~ /^\d/;
-	return GetDriverByName($driver);
+	return GetGDALDriver($driver) if $driver =~ /^\d/;
+	return GetGDALDriverByName($driver);
     }
     *Driver = *GetDriver;
+    *GetDriverCount = *GetGDALDriverCount;
+    *GetDriverByName = *GetGDALDriverByName;
     sub Open {
 	my @p = @_;
 	$p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
