@@ -71,7 +71,7 @@ OGRSDELayer::~OGRSDELayer()
 {
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
-        CPLDebug( "SDE", "%d features read on layer '%s'.",
+        CPLDebug( "OGR_SDE", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead, 
                   poFeatureDefn->GetName() );
     }
@@ -855,18 +855,18 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
         pszWhere = CPLSPrintf( "%s = %ld", osFIDColumnName.c_str(),
                                            poFeature->GetFID() );
         
-//        nSDEErr = SE_stream_update_table( hStream, poFeatureDefn->GetName(),
-//                                          nSpecialCols + nAttributeCols,
-//                                          (const char **)papszInsertCols,
-//                                          pszWhere );
-        LONG *fid;
-        fid = (LONG*) CPLMalloc(1*sizeof(LONG));
-        *fid = poFeature->GetFID();
-        nSDEErr = SE_stream_update_row( hStream, poFeatureDefn->GetName(),
-                                        fid,
-                                        nSpecialCols + nAttributeCols,
-                                       (const char **)papszInsertCols
-                                        );
+        nSDEErr = SE_stream_update_table( hStream, poFeatureDefn->GetName(),
+                                          nSpecialCols + nAttributeCols,
+                                          (const char **)papszInsertCols,
+                                          pszWhere );
+//        LONG *fid;
+//        fid = (LONG*) CPLMalloc(1*sizeof(LONG));
+//        *fid = poFeature->GetFID();
+//        nSDEErr = SE_stream_update_row( hStream, poFeatureDefn->GetName(),
+//                                        fid,
+//                                        nSpecialCols + nAttributeCols,
+//                                       (const char **)papszInsertCols
+//                                        );
         pszMethod = "SE_stream_update_table";
     }
         
@@ -2011,7 +2011,6 @@ OGRErr OGRSDELayer::ResetStream()
             return OGRERR_FAILURE;
         }
         if (poDS->IsOpenForUpdate() && poDS->UseVersionEdits()) {
-            printf("Setting edit state to %d, which is GetNextState()\n", poDS->GetNextState());
             nSDEErr = SE_stream_set_state(  hStream, 
                                             poDS->GetNextState(), 
                                             SE_NULL_STATE_ID, 
@@ -2022,7 +2021,6 @@ OGRErr OGRSDELayer::ResetStream()
             }
         }
         else {
-            printf("Setting read state to %d, which is GetState()\n", poDS->GetState());
             nSDEErr = SE_stream_set_state(  hStream, 
                                             poDS->GetState(), 
                                             poDS->GetState(), 
@@ -2042,7 +2040,6 @@ OGRErr OGRSDELayer::ResetStream()
             return OGRERR_FAILURE;
         }
         if (poDS->IsOpenForUpdate() && poDS->UseVersionEdits()) {
-            printf("Resetting edit state to %d, which is GetNextState()\n", poDS->GetNextState());
             nSDEErr = SE_stream_set_state(  hStream, 
                                             poDS->GetNextState(), 
                                             SE_NULL_STATE_ID, 
@@ -2053,7 +2050,6 @@ OGRErr OGRSDELayer::ResetStream()
             }
         }
         else {
-            printf("Resetting read state to %d, which is State()\n", poDS->GetState());
             nSDEErr = SE_stream_set_state(  hStream, 
                                             poDS->GetState(), 
                                             poDS->GetState(), 
