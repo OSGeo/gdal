@@ -357,7 +357,7 @@ public:
   }
   
   OGRDriverShadow * GetDriver() {
-    return (OGRLayerShadow *) OGR_DS_GetDriver( self );
+    return (OGRDriverShadow *) OGR_DS_GetDriver( self );
   }
 
   const char * GetName() {
