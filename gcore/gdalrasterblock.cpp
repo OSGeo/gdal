@@ -166,7 +166,9 @@ int GDALRasterBlock::FlushCacheBlock()
         poBand = poTarget->GetBand();
     }
 
-    return (poBand->FlushBlock( nXOff, nYOff ) == CE_None);
+    poBand->FlushBlock( nXOff, nYOff );
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -354,7 +356,6 @@ CPLErr GDALRasterBlock::Internalize()
     void        *pNewData;
     int         nSizeInBytes;
     int         nCurCacheMax = GDALGetCacheMax();
-    CPLErr      eErr = CE_None;
 
     //FIXME? : risk of overflow in multiplication
     nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
@@ -383,11 +384,7 @@ CPLErr GDALRasterBlock::Internalize()
     {
         int nOldCacheUsed = nCacheUsed;
 
-        if (!GDALFlushCacheBlock())
-        {
-            eErr = CE_Failure;
-            break;
-        }
+        GDALFlushCacheBlock();
 
         if( nCacheUsed == nOldCacheUsed )
             break;
@@ -399,7 +396,7 @@ CPLErr GDALRasterBlock::Internalize()
     Touch();
     DropLock();
 
-    return( eErr );
+    return( CE_None );
 }
 
 /************************************************************************/
