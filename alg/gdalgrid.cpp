@@ -58,7 +58,7 @@ CPL_CVSID("$Id$");
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
  *      <li> \f$r\f$ is a distance from the grid node to point \f$i\f$,
  *      <li> \f$p\f$ is a weighting power,
- *      <li> \f$n\f$ is a number of points.
+ *      <li> \f$n\f$ is a number of points in search ellipse.
  *  </ul>
  *
  *  In this method the weighting factor \f$w\f$ is
@@ -255,7 +255,7 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
  *  <ul>
  *      <li> \f$Z\f$ is a resulting value at the grid node,
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
- *      <li> \f$n\f$ is a number of points.
+ *      <li> \f$n\f$ is a number of points in search ellipse.
  *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
@@ -441,6 +441,342 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
 }
 
 /************************************************************************/
+/*                      GDALGridDataMetricMinimum()                     */
+/************************************************************************/
+
+/**
+ * Minimum data value (data metric).
+ *
+ * Minimum value found in grid node search ellipse. If there are no points
+ * found, the specified NODATA value will be returned.
+ *
+ * \f[
+ *      Z=\min{(Z_1,Z_2,\ldots,Z_n)}
+ * \f]
+ *
+ *  where 
+ *  <ul>
+ *      <li> \f$Z\f$ is a resulting value at the grid node,
+ *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+ *      <li> \f$n\f$ is a number of points in search ellipse.
+ *  </ul>
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridDataMetricsOptions object. 
+ * @param nPoints Number of elements in input arrays.
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
+                           const double *pdfX, const double *pdfY,
+                           const double *pdfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue )
+{
+    // TODO: For optimization purposes pre-computed parameters should be moved
+    // out of this routine to the calling function.
+
+    // Pre-compute search ellipse parameters
+    double  dfRadius1 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
+    double  dfRadius2 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2;
+    double  dfR12;
+
+    dfRadius1 *= dfRadius1;
+    dfRadius2 *= dfRadius2;
+    dfR12 = dfRadius1 * dfRadius2;
+
+    // Compute coefficients for coordinate system rotation.
+    double      dfCoeff1 = 0.0, dfCoeff2 = 0.0;
+    const double dfAngle =
+        TO_RADIANS * ((GDALGridNearestNeighborOptions *)poOptions)->dfAngle;
+    const bool  bRotated = ( dfAngle == 0.0 ) ? false : true;
+    if ( bRotated )
+    {
+        dfCoeff1 = cos(dfAngle);
+        dfCoeff2 = sin(dfAngle);
+    }
+
+    double      dfMinimumValue;
+    GUInt32     i = 0, n = 0;
+
+    while ( i < nPoints )
+    {
+        double  dfRX = pdfX[i] - dfXPoint;
+        double  dfRY = pdfY[i] - dfYPoint;
+
+        if ( bRotated )
+        {
+            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+            dfRX = dfRXRotated;
+            dfRY = dfRYRotated;
+        }
+
+        // Is this point located inside the search ellipse?
+        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        {
+            if ( n )
+            {
+                if ( dfMinimumValue > pdfZ[i] )
+                    dfMinimumValue = pdfZ[i];
+            }
+            else
+                dfMinimumValue = pdfZ[i];
+            n++;
+        }
+
+        i++;
+    }
+
+    if ( n < ((GDALGridMovingAverageOptions *)poOptions)->nMinPoints
+         || n == 0 )
+    {
+        (*pdfValue) =
+            ((GDALGridMovingAverageOptions *)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = dfMinimumValue;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      GDALGridDataMetricMaximum()                     */
+/************************************************************************/
+
+/**
+ * Maximum data value (data metric).
+ *
+ * Maximum value found in grid node search ellipse. If there are no points
+ * found, the specified NODATA value will be returned.
+ *
+ * \f[
+ *      Z=\max{(Z_1,Z_2,\ldots,Z_n)}
+ * \f]
+ *
+ *  where 
+ *  <ul>
+ *      <li> \f$Z\f$ is a resulting value at the grid node,
+ *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+ *      <li> \f$n\f$ is a number of points in search ellipse.
+ *  </ul>
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridDataMetricsOptions object. 
+ * @param nPoints Number of elements in input arrays.
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
+                           const double *pdfX, const double *pdfY,
+                           const double *pdfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue )
+{
+    // TODO: For optimization purposes pre-computed parameters should be moved
+    // out of this routine to the calling function.
+
+    // Pre-compute search ellipse parameters
+    double  dfRadius1 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
+    double  dfRadius2 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2;
+    double  dfR12;
+
+    dfRadius1 *= dfRadius1;
+    dfRadius2 *= dfRadius2;
+    dfR12 = dfRadius1 * dfRadius2;
+
+    // Compute coefficients for coordinate system rotation.
+    double      dfCoeff1 = 0.0, dfCoeff2 = 0.0;
+    const double    dfAngle =
+        TO_RADIANS * ((GDALGridNearestNeighborOptions *)poOptions)->dfAngle;
+    const bool  bRotated = ( dfAngle == 0.0 ) ? false : true;
+    if ( bRotated )
+    {
+        dfCoeff1 = cos(dfAngle);
+        dfCoeff2 = sin(dfAngle);
+    }
+
+    double      dfMaximumValue;
+    GUInt32     i = 0, n = 0;
+
+    while ( i < nPoints )
+    {
+        double  dfRX = pdfX[i] - dfXPoint;
+        double  dfRY = pdfY[i] - dfYPoint;
+
+        if ( bRotated )
+        {
+            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+            dfRX = dfRXRotated;
+            dfRY = dfRYRotated;
+        }
+
+        // Is this point located inside the search ellipse?
+        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        {
+            if ( n )
+            {
+                if ( dfMaximumValue < pdfZ[i] )
+                    dfMaximumValue = pdfZ[i];
+            }
+            else
+                dfMaximumValue = pdfZ[i];
+            n++;
+        }
+
+        i++;
+    }
+
+    if ( n < ((GDALGridMovingAverageOptions *)poOptions)->nMinPoints
+         || n == 0 )
+    {
+        (*pdfValue) =
+            ((GDALGridMovingAverageOptions *)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = dfMaximumValue;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GDALGridDataMetricRange()                      */
+/************************************************************************/
+
+/**
+ * Data range (data metric).
+ *
+ * A difference between the minimum and maximum values found in grid node
+ * search ellipse. If there are no points found, the specified NODATA
+ * value will be returned.
+ *
+ * \f[
+ *      Z=\max{(Z_1,Z_2,\ldots,Z_n)}-\min{(Z_1,Z_2,\ldots,Z_n)}
+ * \f]
+ *
+ *  where 
+ *  <ul>
+ *      <li> \f$Z\f$ is a resulting value at the grid node,
+ *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+ *      <li> \f$n\f$ is a number of points in search ellipse.
+ *  </ul>
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridDataMetricsOptions object. 
+ * @param nPoints Number of elements in input arrays.
+ * @param pdfX Input array of X coordinates. 
+ * @param pdfY Input array of Y coordinates. 
+ * @param pdfZ Input array of Z values. 
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
+                         const double *pdfX, const double *pdfY,
+                         const double *pdfZ,
+                         double dfXPoint, double dfYPoint, double *pdfValue )
+{
+    // TODO: For optimization purposes pre-computed parameters should be moved
+    // out of this routine to the calling function.
+
+    // Pre-compute search ellipse parameters
+    double  dfRadius1 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
+    double  dfRadius2 =
+        ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2;
+    double  dfR12;
+
+    dfRadius1 *= dfRadius1;
+    dfRadius2 *= dfRadius2;
+    dfR12 = dfRadius1 * dfRadius2;
+
+    // Compute coefficients for coordinate system rotation.
+    double      dfCoeff1 = 0.0, dfCoeff2 = 0.0;
+    const double    dfAngle =
+        TO_RADIANS * ((GDALGridNearestNeighborOptions *)poOptions)->dfAngle;
+    const bool  bRotated = ( dfAngle == 0.0 ) ? false : true;
+    if ( bRotated )
+    {
+        dfCoeff1 = cos(dfAngle);
+        dfCoeff2 = sin(dfAngle);
+    }
+
+    double      dfMaximumValue, dfMinimumValue;
+    GUInt32     i = 0, n = 0;
+
+    while ( i < nPoints )
+    {
+        double  dfRX = pdfX[i] - dfXPoint;
+        double  dfRY = pdfY[i] - dfYPoint;
+
+        if ( bRotated )
+        {
+            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+            dfRX = dfRXRotated;
+            dfRY = dfRYRotated;
+        }
+
+        // Is this point located inside the search ellipse?
+        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        {
+            if ( n )
+            {
+                if ( dfMinimumValue > pdfZ[i] )
+                    dfMinimumValue = pdfZ[i];
+                if ( dfMaximumValue < pdfZ[i] )
+                    dfMaximumValue = pdfZ[i];
+            }
+            else
+                dfMinimumValue = dfMaximumValue = pdfZ[i];
+            n++;
+        }
+
+        i++;
+    }
+
+    if ( n < ((GDALGridMovingAverageOptions *)poOptions)->nMinPoints
+         || n == 0 )
+    {
+        (*pdfValue) =
+            ((GDALGridMovingAverageOptions *)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = dfMaximumValue - dfMinimumValue;
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                            GDALGridCreate()                          */
 /************************************************************************/
 
@@ -514,6 +850,18 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
         case GGA_NearestNeighbor:
             pfnGDALGridMethod = GDALGridNearestNeighbor;
+            break;
+
+        case GGA_MetricMinimum:
+            pfnGDALGridMethod = GDALGridDataMetricMinimum;
+            break;
+
+        case GGA_MetricMaximum:
+            pfnGDALGridMethod = GDALGridDataMetricMaximum;
+            break;
+
+        case GGA_MetricRange:
+            pfnGDALGridMethod = GDALGridDataMetricRange;
             break;
 
         default:

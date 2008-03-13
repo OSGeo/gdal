@@ -62,6 +62,18 @@ CPLErr
 GDALGridNearestNeighbor( const void *, GUInt32,
                          const double *, const double *, const double *,
                          double, double, double * );
+CPLErr
+GDALGridDataMetricMinimum( const void *, GUInt32,
+                           const double *, const double *, const double *,
+                           double, double, double * );
+CPLErr
+GDALGridDataMetricMaximum( const void *, GUInt32,
+                           const double *, const double *, const double *,
+                           double, double, double * );
+CPLErr
+GDALGridDataMetricRange( const void *, GUInt32,
+                         const double *, const double *, const double *,
+                         double, double, double * );
 CPL_C_END
 
 #endif /* GDALGRID_H_INCLUDED */
