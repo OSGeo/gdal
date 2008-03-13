@@ -28,14 +28,13 @@
 
 %init %{
 
-  /*UseExceptions();*/
+  /*UseExceptions(); is set by GDAL module */
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
   
 %}
 
-#define SKIP_INLINE
 %include cpl_exceptions.i
 
 %rename (GetDriverCount) OGRGetDriverCount;
