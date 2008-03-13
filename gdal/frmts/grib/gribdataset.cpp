@@ -288,7 +288,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
     if (ReadSECT0 (mds, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0) {
         free (buff);
         char * errMsg = errSprintf(NULL);
-        if( errMsg != NULL )
+        if( errMsg != NULL && strstr(errMsg,"Ran out of file") == NULL )
             CPLDebug( "GRIB", "%s", errMsg );
         free(errMsg);
         return NULL;
