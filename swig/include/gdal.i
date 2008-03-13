@@ -506,31 +506,19 @@ char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 // GetDriverList
 
 %inline %{
-#if defined(SWIGPERL)
-int GetGDALDriverCount() {
-#else
 int GetDriverCount() {
-#endif
   return GDALGetDriverCount();
 }
 %}
 
 %inline %{
-#if defined(SWIGPERL)
-GDALDriverShadow* GetGDALDriverByName( char const *name ) {
-#else
 GDALDriverShadow* GetDriverByName( char const *name ) {
-#endif
   return (GDALDriverShadow*) GDALGetDriverByName( name );
 }
 %}
 
 %inline %{
-#if defined(SWIGPERL)
-GDALDriverShadow* GetGDALDriver( int i ) {
-#else
 GDALDriverShadow* GetDriver( int i ) {
-#endif
   return (GDALDriverShadow*) GDALGetDriver( i );
 }
 %}
