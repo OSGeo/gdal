@@ -41,6 +41,9 @@ CPL_CVSID("$Id$");
 static const char szAlgNameInvDist[] = "invdist";
 static const char szAlgNameAverage[] = "average";
 static const char szAlgNameNearest[] = "nearest";
+static const char szAlgNameMinimum[] = "minimum";
+static const char szAlgNameMaximum[] = "maximum";
+static const char szAlgNameRange[] = "range";
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -68,6 +71,12 @@ static void Usage()
         "        average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
         "    Nearest neighbor\n"
         "        nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0\n"
+        "    Various data metrics\n"
+        "        <metric name>:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
+        "        possible metrics are:\n"
+        "            minimum\n"
+        "            maximum\n"
+        "            range\n"
         "\n");
     exit( 1 );
 }
@@ -116,6 +125,39 @@ void PrintAlgorithmAndOptions(GDALGridAlgorithm eAlgorithm, void *pOptions)
                 ((GDALGridNearestNeighborOptions *)pOptions)->dfAngle,
                 ((GDALGridNearestNeighborOptions *)pOptions)->dfNoDataValue);
             break;
+        case GGA_MetricMinimum:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameMinimum );
+            printf( "Options are "
+                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                    ":nodata=%f\"\n",
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
+                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_MetricMaximum:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameMaximum );
+            printf( "Options are "
+                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                    ":nodata=%f\"\n",
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
+                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_MetricRange:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameRange );
+            printf( "Options are "
+                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                    ":nodata=%f\"\n",
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
+                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
+                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
         default:
             printf( "Algorithm unknown.\n" );
             break;
@@ -145,6 +187,12 @@ static CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
         *peAlgorithm = GGA_MovingAverage;
     else if ( EQUAL(papszParms[0], szAlgNameNearest) )
         *peAlgorithm = GGA_NearestNeighbor;
+    else if ( EQUAL(papszParms[0], szAlgNameMinimum) )
+        *peAlgorithm = GGA_MetricMinimum;
+    else if ( EQUAL(papszParms[0], szAlgNameMaximum) )
+        *peAlgorithm = GGA_MetricMaximum;
+    else if ( EQUAL(papszParms[0], szAlgNameRange) )
+        *peAlgorithm = GGA_MetricRange;
     else
     {
         fprintf( stderr, "Unsupported gridding method \"%s\".\n",
@@ -243,7 +291,35 @@ static CPLErr ParseAlgorithmAndOptions( const char *pszAlgoritm,
             ((GDALGridNearestNeighborOptions *)*ppOptions)->
                 dfNoDataValue = (pszValue) ? atof(pszValue) : 0.0;
             break;
-    }
+
+        case GGA_MetricMinimum:
+        case GGA_MetricMaximum:
+        case GGA_MetricRange:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridDataMetricsOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfRadius1 = (pszValue) ? atof(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfRadius2 = (pszValue) ? atof(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfAngle = (pszValue) ? atof(pszValue) : 0.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                nMinPoints = (pszValue) ? atol(pszValue) : 0;
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridDataMetricsOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? atof(pszValue) : 0.0;
+            break;
+
+   }
 
     CSLDestroy( papszParms );
     return CE_None;
