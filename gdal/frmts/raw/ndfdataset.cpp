@@ -246,32 +246,37 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 0; iBand < nBands; iBand++ )
     {
         char szKey[100];
-        const char *pszFilename;
+        CPLString osFilename;
 
         sprintf( szKey, "BAND%d_FILENAME", iBand+1 );
-        pszFilename = poDS->Get(szKey,NULL);
+        osFilename = poDS->Get(szKey,"");
 
         // NDF1 file do not include the band filenames.
-        if( pszFilename == NULL )
+        if( osFilename.size() == 0 )
         {
             char szBandExtension[15];
             sprintf( szBandExtension, "I%d", iBand+1 );
-            pszFilename = CPLResetExtension( poOpenInfo->pszFilename, 
-                                             szBandExtension );
+            osFilename = CPLResetExtension( poOpenInfo->pszFilename, 
+                                            szBandExtension );
+        }
+        else
+        {      
+            CPLString osBasePath = CPLGetPath(poOpenInfo->pszFilename);
+            osFilename = CPLFormFilename( osBasePath, osFilename, NULL);
         }
 
-        FILE *fpRaw = VSIFOpenL( pszFilename, "rb" );
+        FILE *fpRaw = VSIFOpenL( osFilename, "rb" );
         if( fpRaw == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to open band file: %s", 
-                      pszFilename );
+                      osFilename.c_str() );
             delete poDS;
             return NULL;
         }
         poDS->papszExtraFiles = 
             CSLAddString( poDS->papszExtraFiles, 
-                          pszFilename );
+                          osFilename );
 
         RawRasterBand *poBand = 
             new RawRasterBand( poDS, iBand+1, fpRaw, 0, 1, poDS->nRasterXSize,
