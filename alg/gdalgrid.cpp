@@ -55,9 +55,10 @@ CPL_CVSID("$Id$");
  *
  *  where 
  *  <ul>
- *      <li> \f$r\f$ is a distance from the grid node to point \f$i\f$,
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
- *      <li> \f$p\f$ is a weighting power.
+ *      <li> \f$r\f$ is a distance from the grid node to point \f$i\f$,
+ *      <li> \f$p\f$ is a weighting power,
+ *      <li> \f$n\f$ is a number of points.
  *  </ul>
  *
  *  In this method the weighting factor \f$w\f$ is
@@ -243,6 +244,19 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
  * center of ellipse located at the grid node. Also the minimum number of data
  * points to average can be set, if there are not enough points in window, the
  * grid node considered empty and will be filled with specified NODATA value.
+ *
+ * Mathematically it can be expressed with the formula:
+ *
+ * \f[
+ *      Z=\frac{\sum_{i=1}^n{Z_i}}{n}
+ * \f]
+ *
+ *  where 
+ *  <ul>
+ *      <li> \f$Z\f$ is a resulting value at the grid node,
+ *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+ *      <li> \f$n\f$ is a number of points.
+ *  </ul>
  *
  * @param poOptions Algorithm parameters. This should point to
  * GDALGridMovingAverageOptions object. 
