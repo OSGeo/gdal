@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.22 2007/07/19 13:11:59 dron Exp $ */
+/* $Id: tif_aux.c,v 1.23 2008/01/01 15:41:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -69,7 +69,7 @@ TIFFDefaultTransferFunction(TIFFDirectory* td)
 	if (td->td_bitspersample >= sizeof(tmsize_t) * 8 - 2)
 		return 0;
 
-	n = 1<<td->td_bitspersample;
+	n = ((tmsize_t)1)<<td->td_bitspersample;
 	nbytes = n * sizeof (uint16);
 	if (!(tf[0] = (uint16 *)_TIFFmalloc(nbytes)))
 		return 0;
