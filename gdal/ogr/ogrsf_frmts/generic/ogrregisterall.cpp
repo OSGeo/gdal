@@ -118,6 +118,9 @@ void OGRRegisterAll()
 #ifdef OCI_ENABLED
     RegisterOGROCI();
 #endif
+#ifdef INGRES_ENABLED
+    RegisterOGRIngres();
+#endif
 #ifdef SDE_ENABLED
     RegisterOGRSDE();
 #endif

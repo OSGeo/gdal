@@ -19,6 +19,7 @@ SUBDIRS-$(HAVE_OCI)		+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
 SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_SDE)     += sde
+SUBDIRS-$(HAVE_INGRES)  += ingres
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 
