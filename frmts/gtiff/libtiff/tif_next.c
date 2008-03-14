@@ -1,4 +1,4 @@
-/* $Id: tif_next.c,v 1.11 2007/04/10 02:56:33 joris Exp $ */
+/* $Id: tif_next.c,v 1.12 2008/01/01 15:41:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -111,7 +111,7 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 			 */
 			op = row;
 			for (;;) {
-				grey = (n>>6) & 0x3;
+				grey = (uint32)((n>>6) & 0x3);
 				n &= 0x3f;
 				/*
 				 * Ensure the run does not exceed the scanline
