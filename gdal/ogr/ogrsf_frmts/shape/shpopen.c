@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.57 2007/12/06 07:00:25 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.59 2008/03/14 05:25:31 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.59  2008/03/14 05:25:31  fwarmerdam
+ * Correct crash on buggy geometries (gdal #2218)
+ *
+ * Revision 1.58  2008/01/08 23:28:26  bram
+ * on line 2095, use a float instead of a double to avoid a compiler warning
+ *
  * Revision 1.57  2007/12/06 07:00:25  fwarmerdam
  * dbfopen now using SAHooks for fileio
  *
@@ -225,7 +231,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.57 2007/12/06 07:00:25 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.59 2008/03/14 05:25:31 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -1494,7 +1500,9 @@ SHPObject SHPAPI_CALL1(*)
 SHPReadObject( SHPHandle psSHP, int hEntity )
 
 {
+    int                  nEntitySize, nRequiredSize;
     SHPObject		*psShape;
+    char                 pszErrorMsg[128];
 
 /* -------------------------------------------------------------------- */
 /*      Validate the record/entity number.                              */
@@ -1505,13 +1513,16 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
 /*      Ensure our record buffer is large enough.                       */
 /* -------------------------------------------------------------------- */
-    if( psSHP->panRecSize[hEntity]+8 > psSHP->nBufSize )
+    nEntitySize = psSHP->panRecSize[hEntity]+8;
+    if( nEntitySize > psSHP->nBufSize )
     {
-	psSHP->nBufSize = psSHP->panRecSize[hEntity]+8;
-	psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,psSHP->nBufSize);
+	psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
         if (psSHP->pabyRec == NULL)
         {
             char szError[200];
+
+            /* Reallocate previous successfull size for following features */
+            psSHP->pabyRec = malloc(psSHP->nBufSize);
 
             sprintf( szError, 
                      "Not enough memory to allocate requested memory (nBufSize=%d). "
@@ -1519,13 +1530,22 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psSHP->sHooks.Error( szError );
             return NULL;
         }
+
+        /* Only set new buffer size after successfull alloc */
+	psSHP->nBufSize = nEntitySize;
+    }
+
+    /* In case we were not able to reallocate the buffer on a previous step */
+    if (psSHP->pabyRec == NULL)
+    {
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
     if( psSHP->sHooks.FSeek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 ) != 0 
-        || psSHP->sHooks.FRead( psSHP->pabyRec, psSHP->panRecSize[hEntity]+8, 1, 
+        || psSHP->sHooks.FRead( psSHP->pabyRec, nEntitySize, 1, 
                   psSHP->fpSHP ) != 1 )
     {
         /*
@@ -1544,7 +1564,16 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
     psShape->nShapeId = hEntity;
     psShape->bMeasureIsUsed = FALSE;
 
+    if ( 8 + 4 > nEntitySize )
+    {
+        snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : nEntitySize = %d",
+                    hEntity, nEntitySize); 
+        psSHP->sHooks.Error( pszErrorMsg );
+        SHPDestroyObject(psShape);
+        return NULL;
+    }
     memcpy( &psShape->nSHPType, psSHP->pabyRec + 8, 4 );
+
     if( bBigEndian ) SwapWord( 4, &(psShape->nSHPType) );
 
 /* ==================================================================== */
@@ -1560,6 +1589,14 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	int32		nPoints, nParts;
 	int    		i, nOffset;
 
+        if ( 40 + 8 + 4 > nEntitySize )
+        {
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : nEntitySize = %d",
+                     hEntity, nEntitySize); 
+            psSHP->sHooks.Error( pszErrorMsg );
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
 /* -------------------------------------------------------------------- */
 /*	Get the X/Y bounds.						*/
 /* -------------------------------------------------------------------- */
@@ -1583,12 +1620,35 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	if( bBigEndian ) SwapWord( 4, &nPoints );
 	if( bBigEndian ) SwapWord( 4, &nParts );
 
-        if (nPoints < 0 || nParts < 0)
+        if (nPoints < 0 || nParts < 0 ||
+            nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000)
         {
-#ifdef USE_CPL
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "nPoints=%d, nParts=%d : bad value(s). Probably broken SHP file", nPoints, nParts );
-#endif
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d.",
+                        hEntity, nPoints, nParts);
+            psSHP->sHooks.Error( pszErrorMsg );
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
+        
+        /* With the previous checks on nPoints and nParts, */
+        /* we should not overflow here and after */
+        /* since 50 M * (16 + 8 + 8) = 1 600 MB */
+        nRequiredSize = 44 + 8 + 4 * nParts + 16 * nPoints;
+        if ( psShape->nSHPType == SHPT_POLYGONZ
+            || psShape->nSHPType == SHPT_ARCZ
+            || psShape->nSHPType == SHPT_MULTIPATCH )
+        {
+            nRequiredSize += 16 + 8 * nPoints;
+        }
+        if( psShape->nSHPType == SHPT_MULTIPATCH )
+        {
+            nRequiredSize += 4 * nParts;
+        }
+        if (nRequiredSize > nEntitySize)
+        {
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d, nEntitySize=%d.",
+                        hEntity, nPoints, nParts, nEntitySize);
+            psSHP->sHooks.Error( pszErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
         }
@@ -1610,11 +1670,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->panPartStart == NULL ||
             psShape->panPartType == NULL)
         {
-#ifdef USE_CPL
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d). "
-                     "Probably broken SHP file", nPoints, nParts );
-#endif
+            snprintf(pszErrorMsg, 128,
+                     "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
+                     "Probably broken SHP file", hEntity, nPoints, nParts );
+            psSHP->sHooks.Error( pszErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
         }
@@ -1629,6 +1688,25 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	for( i = 0; i < nParts; i++ )
 	{
 	    if( bBigEndian ) SwapWord( 4, psShape->panPartStart+i );
+
+            /* We check that the offset is inside the vertex array */
+            if (psShape->panPartStart[i] < 0 ||
+                psShape->panPartStart[i] >= psShape->nVertices)
+            {
+                snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : panPartStart[%d] = %d, nVertices = %d",
+                         hEntity, i, psShape->panPartStart[i], psShape->nVertices); 
+                psSHP->sHooks.Error( pszErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
+            if (i > 0 && psShape->panPartStart[i] <= psShape->panPartStart[i-1])
+            {
+                snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : panPartStart[%d] = %d, panPartStart[%d] = %d",
+                         hEntity, i, psShape->panPartStart[i], i - 1, psShape->panPartStart[i - 1]); 
+                psSHP->sHooks.Error( pszErrorMsg );
+                SHPDestroyObject(psShape);
+                return NULL;
+            }
 	}
 
 	nOffset = 44 + 8 + 4*nParts;
@@ -1695,7 +1773,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-        if( psSHP->panRecSize[hEntity]+8 >= nOffset + 16 + 8*nPoints )
+        if( nEntitySize >= nOffset + 16 + 8*nPoints )
         {
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
@@ -1723,15 +1801,37 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	int32		nPoints;
 	int    		i, nOffset;
 
+        if ( 44 + 4 > nEntitySize )
+        {
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : nEntitySize = %d",
+                     hEntity, nEntitySize); 
+            psSHP->sHooks.Error( pszErrorMsg );
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
 	memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
+
 	if( bBigEndian ) SwapWord( 4, &nPoints );
 
-        if (nPoints < 0)
+        if (nPoints < 0 || nPoints > 50 * 1000 * 1000)
         {
-#ifdef USE_CPL
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "nPoints=%d : bad value. Probably broken SHP file", nPoints );
-#endif
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : nPoints = %d",
+                     hEntity, nPoints); 
+            psSHP->sHooks.Error( pszErrorMsg );
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
+
+        nRequiredSize = 48 + nPoints * 16;
+        if( psShape->nSHPType == SHPT_MULTIPOINTZ )
+        {
+            nRequiredSize += 16 + nPoints * 8;
+        }
+        if (nRequiredSize > nEntitySize)
+        {
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : nPoints = %d, nEntitySize = %d",
+                     hEntity, nPoints, nEntitySize); 
+            psSHP->sHooks.Error( pszErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
         }
@@ -1747,11 +1847,10 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->padfZ == NULL ||
             psShape->padfM == NULL)
         {
-#ifdef USE_CPL
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Not enough memory to allocate requested memory (nPoints=%d). "
-                     "Probably broken SHP file", nPoints );
-#endif
+            snprintf(pszErrorMsg, 128,
+                     "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
+                     "Probably broken SHP file", hEntity, nPoints );
+            psSHP->sHooks.Error( pszErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
         }
@@ -1807,7 +1906,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-        if( psSHP->panRecSize[hEntity]+8 >= nOffset + 16 + 8*nPoints )
+        if( nEntitySize >= nOffset + 16 + 8*nPoints )
         {
             memcpy( &(psShape->dfMMin), psSHP->pabyRec + nOffset, 8 );
             memcpy( &(psShape->dfMMax), psSHP->pabyRec + nOffset + 8, 8 );
@@ -1840,6 +1939,14 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         psShape->padfZ = (double *) calloc(1,sizeof(double));
         psShape->padfM = (double *) calloc(1,sizeof(double));
 
+        if (20 + 8 + (( psShape->nSHPType == SHPT_POINTZ ) ? 8 : 0)> nEntitySize)
+        {
+            snprintf(pszErrorMsg, 128, "Corrupted .shp file : shape %d : nEntitySize = %d",
+                     hEntity, nEntitySize); 
+            psSHP->sHooks.Error( pszErrorMsg );
+            SHPDestroyObject(psShape);
+            return NULL;
+        }
 	memcpy( psShape->padfX, psSHP->pabyRec + 12, 8 );
 	memcpy( psShape->padfY, psSHP->pabyRec + 20, 8 );
 
@@ -1866,7 +1973,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /*      big enough, but really it will only occur for the Z shapes      */
 /*      (options), and the M shapes.                                    */
 /* -------------------------------------------------------------------- */
-        if( psSHP->panRecSize[hEntity]+8 >= nOffset + 8 )
+        if( nEntitySize >= nOffset + 8 )
         {
             memcpy( psShape->padfM, psSHP->pabyRec + nOffset, 8 );
         
@@ -2092,7 +2199,7 @@ SHPRewindObject( SHPHandle hSHP, SHPObject * psObject )
                     /* Rule #2:
                     * Test if edge-ray intersection is on the right from the test point (dfTestY,dfTestY)
                     */
-                    float const intersect = 
+                    double const intersect = 
                         ( psObject->padfX[iEdge+nVertStart]
                           + ( dfTestY - psObject->padfY[iEdge+nVertStart] ) 
                           / ( psObject->padfY[iNext+nVertStart] - psObject->padfY[iEdge+nVertStart] )
