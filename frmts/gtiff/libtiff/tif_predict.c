@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.28 2007/11/02 19:43:55 fwarmerdam Exp $ */
+/* $Id: tif_predict.c,v 1.29 2008/01/01 15:41:22 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -222,7 +222,7 @@ PredictorSetupEncode(TIFF* tif)
 
 #define REPEAT4(n, op)		\
     switch (n) {		\
-    default: { int i; for (i = n-4; i > 0; i--) { op; } } \
+    default: { tmsize_t i; for (i = n-4; i > 0; i--) { op; } } \
     case 4:  op;		\
     case 3:  op;		\
     case 2:  op;		\

@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.31 2007/11/23 20:49:43 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.32 2007/12/31 21:52:16 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -623,6 +623,8 @@ TIFFGrowStrips(TIFF* tif, uint32 delta, const char* module)
 	_TIFFmemset(td->td_stripbytecount + td->td_nstrips,
 		    0, delta*sizeof (uint64));
 	td->td_nstrips += delta;
+        tif->tif_flags |= TIFF_DIRTYDIRECT;
+
 	return (1);
 }
 
@@ -635,6 +637,7 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
 	static const char module[] = "TIFFAppendToStrip";
 	TIFFDirectory *td = &tif->tif_dir;
 	uint64 m;
+        int64 old_byte_count = -1;
 
 	if (td->td_stripoffset[strip] == 0 || tif->tif_curoff == 0) {
             assert(td->td_nstrips > 0);
@@ -645,7 +648,7 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
             {
                 /* 
                  * There is already tile data on disk, and the new tile
-                 * data we have to will fit in the same space.  The only 
+                 * data we have will fit in the same space.  The only 
                  * aspect of this that is risky is that there could be
                  * more data to append to this strip before we are done
                  * depending on how we are getting called.
@@ -664,6 +667,7 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
                  * write this strip.
                  */
                 td->td_stripoffset[strip] = TIFFSeekFile(tif, 0, SEEK_END);
+                tif->tif_flags |= TIFF_DIRTYSTRIP;
             }
 
             tif->tif_curoff = td->td_stripoffset[strip];
@@ -671,6 +675,7 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
             /*
              * We are starting a fresh strip/tile, so set the size to zero.
              */
+            old_byte_count = td->td_stripbytecount[strip];
             td->td_stripbytecount[strip] = 0;
 	}
 
@@ -689,6 +694,10 @@ TIFFAppendToStrip(TIFF* tif, uint32 strip, uint8* data, tmsize_t cc)
 	}
 	tif->tif_curoff = m;
 	td->td_stripbytecount[strip] += cc;
+
+        if( (int64) td->td_stripbytecount[strip] != old_byte_count )
+            tif->tif_flags |= TIFF_DIRTYSTRIP;
+            
 	return (1);
 }
 
