@@ -823,8 +823,9 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             if( hCT != NULL )
             {
                 hCT = GDALCloneColorTable( hCT );
-                printf( "Copying color table from %s to new file.\n", 
-                        papszSrcFiles[iSrc] );
+                if( !bQuiet )
+                    printf( "Copying color table from %s to new file.\n", 
+                            papszSrcFiles[iSrc] );
             }
         }
 
