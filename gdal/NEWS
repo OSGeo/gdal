@@ -1,6 +1,71 @@
-= GDAL/OGR 1.5.0 = 
+= GDAL/OGR 1.5.1 = 
 
-'''These are preliminary release notes, the 1.5.0 release has not yet occured.'''
+ * #1769 (PNG): Improved handling of corrupt PNG files. 
+ * #2104 (RS2): Support 8bit Radarsat 2 datasets. 
+ * #1672: Ignore NaN when computing raster min/max
+ * #2111 (gdaltindex): Fix cross heap problem on win32. 
+ * #2107 (AAIGRID): consider nodata when establishing pixel type.
+ * #2115 (GTifF): Fix writing 1 bit TIFF files. 
+ * #1929: Improved LDFLAGS support on Unix builds. 
+ * #2116 (ADRG): Various improvements to ADRG driver.
+ * #2118 (ECW): Fix NULL pointer crash in ECWDataset::Open()
+ * #2119 (Terragen): overflow in implicit constant conversion
+ * #2120 (OCI): Correct memory leaks in Oracle driver.
+ * #2122 (SWIG): Correct handling of null progress func in C#
+ * #2121 (gdalenhance): Various fixes. 
+ * #2125 (GMT): Fix quoting problems in GMT output. 
+ * #2134 (Geoconcept): Improve coordinate system support, various fixes.
+ * #2132 (Golden Surfer 7): Fix georeferencing problems.
+ * #2172 (Golden Surfer 7): Fix bigendian GS7 support.
+ * #2160 (SRS): PROJ.4 translation of OSGB36 datum broken
+ * #1217 (Shape): Polygon with 4 nested rings not broken up properly
+ * #1794 (AAIGRID): yllcorner georeferencing bug
+ * #2166 (HDF5): Remove debugging printf. 
+ * #2131 (GMLJP2): GMLJP2 Honours EPSG Preferred Geographic Axis Ordering
+ * #2167 (HFA): Add missing HFA creation options to driver metadata.
+ * #2170 (GMLJP2): Fix GMLJP2 memory leaks.
+ * #2176 (ISIS3): Support # comments in ISIS3 Labels.
+ * #2177 (Shape): Shapelib errors should not be fatal.
+ * #2179: Fix ILWIS building with gcc 4.3 
+ * #2158: GDALOpen() slow on directories with many files. 
+ * #2182 (SWIG): GNUmakefile should use configured python interpreter for build
+ * #2185 (SWIG): NULL passed to Driver.CreateCopy() causes crash.
+ * #2184 (MySQL): TestCapability("CreateField") corrected.
+ * #2183 (GTiff): Better handling of ENVI created GeoTIFF files coordinate sys. 
+ * #2187 (Python): fix layer __getitem__ bug
+ * #2189 (GTiff): Writing YCbCr JPEG Compressed TIFFs fixed.
+ * #2190 (PNM): Fix false PNM file recognition.
+ * #2196 (NetCDF): Fix crash on large attributes.
+ * #2201 (Interlis): Fix crash on Interlis 1 files
+ * #2144 (HFA): Fix Xform generation for rotated/skewed geotransforms. 
+ * #2178 (BT, ): Fix off-by-half-pixel issues for pixel as point formats.
+ * #2216: Improve VC++ built libs/includes to be MingW usable. 
+ * #2215 (GML): Improve GML geometry detection / case sensitivity.
+ * #2219 (PAux): Handle improved spelling of AuxiliaryTarget. 
+ * #2222 (Python): Add GetSubDatasets() method.
+ * #2225 (HDF4): Improved NRL projected products georeferencing support.
+ * #2227 (ENVI): Fix ENVI State Plane Handling
+ * #2231: Fix GDALReprojectImage() error handling for null dest srs. 
+ * #2229 (VRT): Fix OGR VRT driver thread safety issue (shared opens).
+ * #2240 (VRT): Fix error handling for 2GCP VRT Warped datasset.
+ * #2224 (GSAG): Various golden surfer ascii fixes.
+ * #2202 (OCI): Support Oracle databases without spatial types.
+ * #2245 (AAIGRID): Fix crash when .prj not created.
+ * #2242 (gdalwarp): Fix cross-heap crash bug.
+ * #2249 (NITF): Fix problem with paletted images (new in 1.5)
+ * #2255 (JP2KAK): Fix /vsimem file IO for JP2KAK driver.
+ * #2257 (GTiff): BigTIFF not enabled by default with internal libtiff on win32.
+ * #2199: Support IO using buffers larger than 2GB. 
+ * #2259: Try to always set driver on OGRDataSources. 
+ * #2258: --with-ogpython=<path to python> no longer works
+ * #2268 (INGR): Fix alignment crash on Sparc.
+ * #2274 (NDF): Fix crash with non-local NDF 2 files.
+ * #1863 (gdalwarp): Fix quiet mode.
+ * #2263 (gdal_translate): Fix cross heap VRTDataset "new" crash.
+ * #2218 (Shape): Improve error recover with corrupt shapefiles. 
+ * #2005 (GTiff): Fix problems with TIFFs with many blocks. 
+
+= GDAL/OGR 1.5.0 = 
 
 == GDAL/OGR 1.5.0 - General Changes ==
 
