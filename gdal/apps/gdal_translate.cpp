@@ -632,7 +632,7 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Make a virtual clone.                                           */
 /* -------------------------------------------------------------------- */
-    poVDS = new VRTDataset( nOXSize, nOYSize );
+    poVDS = (VRTDataset *) VRTCreate( nOXSize, nOYSize );
 
     if( nGCPCount == 0 )
     {
