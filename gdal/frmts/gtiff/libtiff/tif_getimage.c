@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.68 2007/08/10 10:19:57 joris Exp $ */
+/* $Id: tif_getimage.c,v 1.69 2008/01/01 15:41:49 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -801,7 +801,7 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	TIFF* tif = img->tif;
 	tileContigRoutine put = img->put.contig;
 	uint32 row, y, nrow, nrowsub, rowstoread;
-	uint32 pos;
+	tmsize_t pos;
 	unsigned char* buf;
 	uint32 rowsperstrip;
 	uint16 subsamplinghor,subsamplingver;
@@ -886,7 +886,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	unsigned char *buf;
 	unsigned char *p0, *p1, *p2, *pa;
 	uint32 row, y, nrow, rowstoread;
-	uint32 pos;
+	tmsize_t pos;
 	tmsize_t scanline;
 	uint32 rowsperstrip, offset_row;
 	uint32 imagewidth = img->width;
@@ -2559,7 +2559,7 @@ BuildMapUaToAa(TIFFRGBAImage* img)
 	img->UaToAa=_TIFFmalloc(65536);
 	if (img->UaToAa==NULL)
 	{
-		TIFFErrorExt(img->tif,module,"Out of memory");
+		TIFFErrorExt(img->tif->tif_clientdata,module,"Out of memory");
 		return(0);
 	}
 	m=img->UaToAa;
@@ -2581,7 +2581,7 @@ BuildMapBitdepth16To8(TIFFRGBAImage* img)
 	img->Bitdepth16To8=_TIFFmalloc(65536);
 	if (img->Bitdepth16To8==NULL)
 	{
-		TIFFErrorExt(img->tif,module,"Out of memory");
+		TIFFErrorExt(img->tif->tif_clientdata,module,"Out of memory");
 		return(0);
 	}
 	m=img->Bitdepth16To8;
