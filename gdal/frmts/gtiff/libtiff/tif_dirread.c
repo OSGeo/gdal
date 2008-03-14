@@ -723,10 +723,12 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArray(TIFF* tif, TIFFDirEntry* d
 		*value=0;
 		return(TIFFReadDirEntryErrOk);
 	}
+#ifdef notdef
 	if ((uint64)(4*1024*1024/typesize)<direntry->tdir_count)
 		return(TIFFReadDirEntryErrSizesan);
 	if ((uint64)(4*1024*1024/desttypesize)<direntry->tdir_count)
 		return(TIFFReadDirEntryErrSizesan);
+#endif
 	*count=(uint32)direntry->tdir_count;
 	datasize=(*count)*typesize;
 	assert((tmsize_t)datasize>0);
