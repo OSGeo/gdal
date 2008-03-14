@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.136 2007/11/23 20:49:43 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.139 2008/03/14 05:58:40 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -655,7 +655,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDouble(TIFF* tif, TIFFDirEntry* 
 				err=TIFFReadDirEntryCheckedLong8(tif,direntry,&m);
 				if (err!=TIFFReadDirEntryErrOk)
 					return(err);
-				*value=(double)(TIFF_INT64_T)m;
+				*value=(double)m;
 				return(TIFFReadDirEntryErrOk);
 			}
 		case TIFF_SLONG8:
@@ -723,10 +723,12 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArray(TIFF* tif, TIFFDirEntry* d
 		*value=0;
 		return(TIFFReadDirEntryErrOk);
 	}
+#ifdef notdef
 	if ((uint64)(4*1024*1024/typesize)<direntry->tdir_count)
 		return(TIFFReadDirEntryErrSizesan);
 	if ((uint64)(4*1024*1024/desttypesize)<direntry->tdir_count)
 		return(TIFFReadDirEntryErrSizesan);
+#endif
 	*count=(uint32)direntry->tdir_count;
 	datasize=(*count)*typesize;
 	assert((tmsize_t)datasize>0);
@@ -2265,7 +2267,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloatArray(TIFF* tif, TIFFDirEnt
 				{
 					if (tif->tif_flags&TIFF_SWAB)
 						TIFFSwabLong8(ma);
-					*mb++=(float)(TIFF_INT64_T)(*ma++);
+					*mb++=(float)(*ma++);
 				}
 			}
 			break;
@@ -2499,7 +2501,7 @@ TIFFReadDirEntryDoubleArray(TIFF* tif, TIFFDirEntry* direntry, double** value)
 				{
 					if (tif->tif_flags&TIFF_SWAB)
 						TIFFSwabLong8(ma);
-					*mb++=(double)(TIFF_INT64_T)(*ma++);
+					*mb++=(double)(*ma++);
 				}
 			}
 			break;
@@ -3875,6 +3877,12 @@ TIFFReadDirectory(TIFF* tif)
 	    ((tif->tif_flags&(TIFF_STRIPCHOP|TIFF_ISTILED))==TIFF_STRIPCHOP))
 		ChopUpSingleUncompressedStrip(tif);
 
+        /*
+         * Clear the dirty directory flag. 
+         */
+	tif->tif_flags &= ~TIFF_DIRTYDIRECT;
+	tif->tif_flags &= ~TIFF_DIRTYSTRIP;
+
 	/*
 	 * Reinitialize i/o since we are starting on a new directory.
 	 */
@@ -4661,18 +4669,15 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount==2);
 				assert(fip->field_passcount==0);
 				if (dp->tdir_count!=2)
-					assert(0);
-				else
+					return(0);
+				err=TIFFReadDirEntryShortArray(tif,dp,&data);
+				if (err==TIFFReadDirEntryErrOk)
 				{
-					err=TIFFReadDirEntryShortArray(tif,dp,&data);
-					if (err==TIFFReadDirEntryErrOk)
-					{
-						int m;
-						m=TIFFSetField(tif,dp->tdir_tag,data[0],data[1]);
-						_TIFFfree(data);
-						if (!m)
-							return(0);
-					}
+					int m;
+					m=TIFFSetField(tif,dp->tdir_tag,data[0],data[1]);
+					_TIFFfree(data);
+					if (!m)
+						return(0);
 				}
 			}
 			break;
