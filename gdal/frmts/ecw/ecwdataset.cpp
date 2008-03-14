@@ -1385,14 +1385,17 @@ void ECWDataset::ECW2WKTProjection()
 
 /* -------------------------------------------------------------------- */
 /*      Capture Geotransform.                                           */
+/*                                                                      */
+/*      We will try to ignore the provided file information if it is    */
+/*      origin (0,0) and pixel size (1,1).  I think sometimes I have    */
+/*      also seen pixel increments of 0 on invalid datasets.            */
 /* -------------------------------------------------------------------- */
-
     if( psFileInfo->fOriginX != 0.0 
         || psFileInfo->fOriginY != 0.0 
-        && (psFileInfo->fCellIncrementX != 0.0 && 
-            psFileInfo->fCellIncrementX != 1.0)
-        && (psFileInfo->fCellIncrementY != 0.0 && 
-            psFileInfo->fCellIncrementY != 1.0) )
+        || (psFileInfo->fCellIncrementX != 0.0 
+            && psFileInfo->fCellIncrementX != 1.0)
+        || (psFileInfo->fCellIncrementY != 0.0 
+            && psFileInfo->fCellIncrementY != 1.0) )
     {
         bGeoTransformValid = TRUE;
         
