@@ -287,7 +287,7 @@ static int EqualAirwayIntersectionFeatureFunc(const void* _feature1, const void*
 /*                      OGRXPlaneAirwayHashDouble()                     */
 /************************************************************************/
 
-static unsigned int OGRXPlaneAirwayHashDouble(double* pdfVal)
+static unsigned long OGRXPlaneAirwayHashDouble(double* pdfVal)
 {
     unsigned int* pnValue = (unsigned int*)pdfVal;
     return pnValue[0] ^ pnValue[1];
@@ -297,11 +297,11 @@ static unsigned int OGRXPlaneAirwayHashDouble(double* pdfVal)
 /*               HastAirwayIntersectionFeatureFunc                      */
 /************************************************************************/
 
-static unsigned int HastAirwayIntersectionFeatureFunc(const void* _feature)
+static unsigned long HastAirwayIntersectionFeatureFunc(const void* _feature)
 {
     OGRFeature* feature = (OGRFeature*)_feature;
     OGRPoint* point = (OGRPoint*) feature->GetGeometryRef();
-    unsigned int hash = CPLHashSetHashStr((unsigned char*)feature->GetFieldAsString(0));
+    unsigned long hash = CPLHashSetHashStr((unsigned char*)feature->GetFieldAsString(0));
     double x = point->getX();
     double y = point->getY();
     return hash ^ OGRXPlaneAirwayHashDouble(&x) ^ OGRXPlaneAirwayHashDouble(&y);
