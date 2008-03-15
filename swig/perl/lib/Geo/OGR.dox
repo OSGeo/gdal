@@ -843,7 +843,7 @@
 
 ## @cmethod Geo::OGR::Geometry create(%params)
 # @param %params A named parameter, possible are: GeometryType, WKT,
-# WKB, GML, and Points (as in method Geo::OGR::Geometry::Points).
+# WKB, GML, GeoJSON, and Points (as in method Geo::OGR::Geometry::Points).
 # @return a new Geo::OGR::Geometry object
 
 ## @method FlattenTo2D()
