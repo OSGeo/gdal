@@ -13,7 +13,7 @@ default:	$(O_OBJ)
 clean:
 	rm -f *.o $(O_OBJ) test_geo_utils
 
-$(O_OBJ):	ogr_xplane.h ogr_xplane_apt_reader.h ogr_xplane_geo_utils.h \
+$(O_OBJ):	ogr_xplane.h ogr_xplane_reader.h ogr_xplane_geo_utils.h \
 		ogr_xplane_apt_reader.h ogr_xplane_nav_reader.h \
 		ogr_xplane_fix_reader.h ogr_xplane_awy_reader.h
 
