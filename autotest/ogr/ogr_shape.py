@@ -690,6 +690,38 @@ def ogr_shape_20():
     return 'success'
 
 ###############################################################################
+# Test robutness towards broken/unfriendly shapefiles
+
+def ogr_shape_21():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+
+    files = [ 'data/buggypoint.shp',
+              'data/buggymultipoint.shp',
+              'data/buggymultiline.shp',
+              'data/buggymultipoly.shp',
+              'data/buggymultipoly2.shp' ]
+    for file in files:
+
+        ds = ogr.Open(file)
+        lyr = ds.GetLayer(0)
+        lyr.ResetReading()
+        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        feat = lyr.GetNextFeature()
+        gdal.PopErrorHandler()
+
+        if feat.GetGeometryRef() is not None:
+            return 'fail'
+
+        feat.Destroy()
+        lyr = None
+        ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -726,6 +758,7 @@ gdaltest_list = [
     ogr_shape_18,
     ogr_shape_19,
     ogr_shape_20,
+    ogr_shape_21,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
