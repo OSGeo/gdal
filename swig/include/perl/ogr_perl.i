@@ -671,15 +671,17 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub create { # alternative constructor since swig created new can't be overridden(?)
 	    my $pkg = shift;
-	    my($type, $wkt, $wkb, $gml, $points);
+	    my($type, $wkt, $wkb, $gml, $json, $srs, $points);
 	    if (@_ == 1) {
 		$type = shift;
 	    } else {
 		my %param = @_;
 		$type = ($param{type} or $param{Type} or $param{GeometryType});
+		$srs = ($param{srs} or $param{SRS});
 		$wkt = ($param{wkt} or $param{WKT});
 		$wkb = ($param{wkb} or $param{WKB});
 		$gml = ($param{gml} or $param{GML});
+		$json = ($param{geojson} or $param{GeoJSON});
 		$points = $param{Points};
 	    }
 	    $type = $TYPE_STRING2INT{$type} if defined $type and exists $TYPE_STRING2INT{$type};
@@ -689,13 +691,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
 		$self = Geo::OGRc::new_Geometry($type);
 	    } elsif (defined $wkt) {
-		$self = Geo::OGRc::new_Geometry(undef, $wkt, undef, undef);
+		$self = Geo::OGRc::CreateGeometryFromWkt($wkt, $srs);
 	    } elsif (defined $wkb) {
-		$self = Geo::OGRc::new_Geometry(undef, undef, $wkb, undef);
+		$self = Geo::OGRc::CreateGeometryFromWkb($wkb, $srs);
 	    } elsif (defined $gml) {
-		$self = Geo::OGRc::new_Geometry(undef, undef, undef, $gml);
+		$self = Geo::OGRc::CreateGeometryFromGML($gml);
+	    } elsif (defined $json) {
+		$self = Geo::OGRc::CreateGeometryFromJson($json);
 	    } else {
-		croak "missing GeometryType, WKT, WKB, or GML parameter in Geo::OGR::Geometry::create";
+		croak "missing GeometryType, WKT, WKB, GML, or GeoJSON parameter in Geo::OGR::Geometry::create";
 	    }
 	    bless $self, $pkg if defined $self;
 	    $self->Points($points) if $points;
@@ -724,8 +728,20 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub Point {
 	    my $self = shift;
-	    my $i = shift;
-	    SetPoint($self, $i, @_) if @_;
+	    my $i;
+	    if (@_) {
+		my $t = $self->GetGeometryType;
+		if ($t == $Geo::OGR::wkbPoint) {
+		    shift if @_ > 2;
+		    $i = 0;
+		} elsif ($t == $Geo::OGR::wkbPoint25D) {
+		    shift if @_ > 3;
+		    $i = 0;
+		} else {
+		    my $i = shift;
+		}
+		SetPoint($self, $i, @_);
+	    }
 	    return GetPoint($self, $i) if defined wantarray;
 	}
 	sub Points {
