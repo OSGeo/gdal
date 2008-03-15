@@ -1235,7 +1235,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         OGRSpatialReference oSRS;
         GInt32  nProj =
             (poDS->sHeader.iProjection) ? poDS->sHeader.iProjection : 1L;
-        double  padfPrjParams[6];
+        double  padfPrjParams[7];
 
         padfPrjParams[0] = poDS->sHeader.dfStdP1;
         padfPrjParams[1] = poDS->sHeader.dfStdP2;
