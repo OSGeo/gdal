@@ -35,14 +35,23 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 		'Memory' => 1,
 		);
 
-if (0) {
-   my $l;	
-   { 
-       my $ds = Geo::OGR::DataSource::Open('/data');
-       $l = $ds->GetLayerByIndex();
-   }
-   $l->GetSpatialFilter();
-   exit;
+{
+    my $g = Geo::OGR::Geometry->create(wkt => "point(1 2)");
+    $g->Point(2,3);
+    my @p = $g->Point;
+    ok($p[0] == 2, "Point");
+    eval {
+	$g = Geo::OGR::Geometry->create(wkb => "abc");
+    };
+    ok ($@ =~ /Not enough data/, "create from WKb: $@");
+    eval {
+	$g = Geo::OGR::Geometry->create(gml => "abc");
+    };
+    ok ($@ =~ /Unrecognised geom/, "create from GML: $@");
+    eval {
+	$g = Geo::OGR::Geometry->create(GeoJSON => "abc");
+    };
+    ok ($@ =~ /GeoJSON parsing error/, "create from GeoJSON: $@");
 }
 
 {
