@@ -1607,7 +1607,7 @@ OGRFeature* OGRXPlaneRunwayThresholdLayer::
 {
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    CPLAssert(poFeature->SetFrom(poNonDisplacedThresholdFeature, FALSE) == OGRERR_NONE);
+    poFeature->SetFrom(poNonDisplacedThresholdFeature, FALSE);
 
     double dfDisplacedThresholdLength = poFeature->GetFieldAsDouble("displaced_threshold_m");
     double dfTrueHeading = poFeature->GetFieldAsDouble("true_heading_deg");
