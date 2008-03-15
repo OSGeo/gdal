@@ -50,7 +50,7 @@ CPL_C_START
 
 typedef struct _CPLHashSet CPLHashSet;
 
-typedef unsigned int (*CPLHashSetHashFunc)(const void* elt);
+typedef unsigned long (*CPLHashSetHashFunc)(const void* elt);
 
 typedef int          (*CPLHashSetEqualFunc)(const void* elt1, const void* elt2);
 
@@ -78,11 +78,11 @@ int          CPL_DLL CPLHashSetFind(CPLHashSet* set, const void* elt);
 
 int          CPL_DLL CPLHashSetRemove(CPLHashSet* set, const void* elt);
 
-unsigned int CPL_DLL CPLHashSetHashPointer(const void* elt);
+unsigned long CPL_DLL CPLHashSetHashPointer(const void* elt);
 
 int          CPL_DLL CPLHashSetEqualPointer(const void* elt1, const void* elt2);
 
-unsigned int CPL_DLL CPLHashSetHashStr(const void * pszStr);
+unsigned long CPL_DLL CPLHashSetHashStr(const void * pszStr);
 
 int          CPL_DLL CPLHashSetEqualStr(const void* pszStr1, const void* pszStr2);
 
