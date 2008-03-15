@@ -208,7 +208,7 @@ static void CPLHashSetRehash(CPLHashSet* set)
         CPLList* cur = set->tabList[i];
         while(cur)
         {
-            unsigned int nNewHashVal = set->fnHashFunc(cur->pData) % nNewAllocatedSize;
+            unsigned long nNewHashVal = set->fnHashFunc(cur->pData) % nNewAllocatedSize;
 #ifdef HASH_DEBUG
             if (newTabList[nNewHashVal])
                 set->nCollisions ++;
@@ -230,7 +230,7 @@ static void CPLHashSetRehash(CPLHashSet* set)
 
 static void** CPLHashSetFindPtr(CPLHashSet* set, const void* elt)
 {
-    unsigned int nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
     CPLList* cur = set->tabList[nHashVal];
     while(cur)
     {
@@ -277,7 +277,7 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
         CPLHashSetRehash(set);
     }
 
-    unsigned int nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
 #ifdef HASH_DEBUG
     if (set->tabList[nHashVal])
         set->nCollisions ++;
@@ -373,17 +373,9 @@ int CPLHashSetRemove(CPLHashSet* set, const void* elt)
  * @return the hash value of the pointer
  */
 
-unsigned int CPLHashSetHashPointer(const void* elt)
+unsigned long CPLHashSetHashPointer(const void* elt)
 {
-    if (sizeof(void*) == 8)
-    {
-        unsigned int* pnValue = (unsigned int*)&elt;
-        return pnValue[0] ^ pnValue[1];
-    }
-    else
-    {
-        return (int)elt;
-    }
+    return (unsigned long)elt;
 }
 
 /************************************************************************/
@@ -416,10 +408,10 @@ int CPLHashSetEqualPointer(const void* elt1, const void* elt2)
  * @return the hash value of the string
  */
 
-unsigned int CPLHashSetHashStr(const void *elt)
+unsigned long CPLHashSetHashStr(const void *elt)
 {
     unsigned char* pszStr = (unsigned char*)elt;
-    unsigned int hash = 0;
+    unsigned long hash = 0;
     int c;
 
     if (pszStr == NULL)
