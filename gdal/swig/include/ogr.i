@@ -1069,9 +1069,11 @@ public:
 #ifndef SWIGJAVA
 #ifdef SWIGCSHARP
 %apply (void *buffer_ptr) {char *wkb_buf};
+#else
+%apply (int nLen, char *pBuf) {(int wkb, char *wkb_buf)};
 #endif
   %feature("kwargs") OGRGeometryShadow;
-  OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb= 0, char *wkb_buf = 0, char *gml = 0 ) {
+  OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb = 0, char *wkb_buf = 0, char *gml = 0 ) {
     if (type != wkbUnknown ) {
       return (OGRGeometryShadow*) OGR_G_CreateGeometry( type );
     }
@@ -1089,6 +1091,8 @@ public:
   }  
 #ifdef SWIGCSHARP
 %clear (char *wkb_buf);
+#else
+%clear (int wkb, char *wkb_buf);
 #endif
 #endif
 
