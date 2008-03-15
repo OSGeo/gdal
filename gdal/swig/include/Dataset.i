@@ -39,14 +39,23 @@ CPLErr DSReadRaster_internal( GDALDatasetShadow *obj,
                             int *buf_size, char **buf,
                             int band_list, int *pband_list )
 {
-  *buf_size = buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
-  *buf = (char*) malloc( *buf_size );
-
-  CPLErr result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
-                                (void*) *buf, buf_xsize, buf_ysize, buf_type,
-                                band_list, pband_list, 0, 0, 0 );
-  if ( result != CE_None ) {
-    free( *buf );
+  CPLErr result;
+  *buf_size = (size_t)buf_xsize * buf_ysize * (GDALGetDataTypeSize( buf_type ) / 8) * band_list;
+  *buf = (char*) VSIMalloc3( buf_xsize, buf_ysize, (GDALGetDataTypeSize( buf_type ) / 8) * band_list );
+  if (*buf)
+  {
+    result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
+                                    (void*) *buf, buf_xsize, buf_ysize, buf_type,
+                                    band_list, pband_list, 0, 0, 0 );
+    if ( result != CE_None ) {
+        free( *buf );
+        *buf = 0;
+        *buf_size = 0;
+    }
+  }
+  else
+  {
+    result = CE_Failure;
     *buf = 0;
     *buf_size = 0;
   }
