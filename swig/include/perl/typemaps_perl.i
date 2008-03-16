@@ -261,11 +261,16 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-    if (!SvPOK($input))
-	SWIG_croak("expected binary data as input");
-    STRLEN len = SvCUR($input);
-    $2 = SvPV_nolen($input);
-    $1 = len;
+    if (SvOK($input)) {
+	if (!SvPOK($input))
+	    SWIG_croak("expected binary data as input");
+	STRLEN len = SvCUR($input);
+	$2 = SvPV_nolen($input);
+	$1 = len;
+    } else {
+	$2 = NULL;
+	$1 = 0;
+    }
 }
 
 /*
