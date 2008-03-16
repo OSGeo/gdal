@@ -139,6 +139,8 @@ class GTiffDataset : public GDALPamDataset
 
     GDALMultiDomainMetadata oGTiffMDMD;
 
+    CPLString   osProfile;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -164,6 +166,11 @@ class GTiffDataset : public GDALPamDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+    static GDALDataset *CreateCopy( const char * pszFilename, 
+                                    GDALDataset *poSrcDS, 
+                                    int bStrict, char ** papszOptions, 
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData );
     virtual void    FlushCache( void );
 
     virtual CPLErr  SetMetadata( char **, const char * = "" );
@@ -175,8 +182,12 @@ class GTiffDataset : public GDALPamDataset
     virtual void   *GetInternalHandle( const char * );
 
     // only needed by createcopy and close code.
-    static void	    WriteMetadata( GDALDataset *, TIFF *, int );
+    static void	    WriteMetadata( GDALDataset *, TIFF *, int, const char * );
     static void	    WriteNoDataValue( TIFF *, double );
+
+    static TIFF *   CreateLL( const char * pszFilename,
+                              int nXSize, int nYSize, int nBands,
+                              GDALDataType eType, char **papszParmList );
 };
 
 /************************************************************************/
@@ -1775,6 +1786,8 @@ GTiffDataset::GTiffDataset()
 
     nGCPCount = 0;
     pasGCPList = NULL;
+
+    osProfile = "GDALGeoTIFF";
 }
 
 /************************************************************************/
@@ -1805,7 +1818,7 @@ GTiffDataset::~GTiffDataset()
     if( GetAccess() == GA_Update && bBase )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE );
+            WriteMetadata( this, hTIFF, TRUE, osProfile );
         
         if( bNewDataset || bGeoTIFFInfoChanged )
             WriteGeoTIFFInfo();
@@ -2015,7 +2028,7 @@ void GTiffDataset::Crystalize()
     if( !bCrystalized )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE );
+            WriteMetadata( this, hTIFF, TRUE, osProfile );
 
         bCrystalized = TRUE;
 
@@ -2377,7 +2390,6 @@ void GTiffDataset::WriteGeoTIFFInfo()
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
         || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
     {
-
 /* -------------------------------------------------------------------- */
 /*      Write the transform.  If we have a normal north-up image we     */
 /*      use the tiepoint plus pixelscale otherwise we use a matrix.     */
@@ -2390,8 +2402,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    adfPixelScale[0] = adfGeoTransform[1];
 	    adfPixelScale[1] = fabs(adfGeoTransform[5]);
 	    adfPixelScale[2] = 0.0;
-	    
-	    TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+
+            if( !EQUAL(osProfile,"BASELINE") )
+                TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
 	    
 	    adfTiePoints[0] = 0.0;
 	    adfTiePoints[1] = 0.0;
@@ -2400,7 +2413,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    adfTiePoints[4] = adfGeoTransform[3];
 	    adfTiePoints[5] = 0.0;
 	    
-	    TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+            if( !EQUAL(osProfile,"BASELINE") )
+                TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
 	}
 	else
 	{
@@ -2416,7 +2430,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    adfMatrix[7] = adfGeoTransform[3];
 	    adfMatrix[15] = 1.0;
 	    
-	    TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
+            if( !EQUAL(osProfile,"BASELINE") )
+                TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
 	}
 /* -------------------------------------------------------------------- */
 /*      Are we maintaining a .tfw file?                                 */
@@ -2459,15 +2474,17 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	    padfTiePoints[iGCP*6+5] = pasGCPList[iGCP].dfGCPZ;
 	}
 
-	TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 
-		      6 * GetGCPCount(), padfTiePoints );
+        if( !EQUAL(osProfile,"BASELINE") )
+            TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 
+                          6 * GetGCPCount(), padfTiePoints );
 	CPLFree( padfTiePoints );
     }
 
 /* -------------------------------------------------------------------- */
 /*	Write out projection definition.				*/
 /* -------------------------------------------------------------------- */
-    if( pszProjection != NULL && !EQUAL( pszProjection, "" ) )
+    if( pszProjection != NULL && !EQUAL( pszProjection, "" )
+        && !EQUAL(osProfile,"BASELINE") )
     {
         GTIF	*psGTIF;
 
@@ -2550,7 +2567,7 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 
 static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                              CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail, 
-                             int nBand )
+                             int nBand, const char *pszProfile )
 
 {
     int iDomain;
@@ -2619,7 +2636,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /************************************************************************/
 
 void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
-                                  int bSrcIsGeoTIFF )
+                                  int bSrcIsGeoTIFF,
+                                  const char *pszProfile )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2631,7 +2649,7 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
     if( bSrcIsGeoTIFF )
     {
         WriteMDMetadata( &(((GTiffDataset *)poSrcDS)->oGTiffMDMD), 
-                         hTIFF, &psRoot, &psTail, 0 );
+                         hTIFF, &psRoot, &psTail, 0, pszProfile );
     }
     else
     {
@@ -2642,7 +2660,7 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             GDALMultiDomainMetadata oMDMD;
             oMDMD.SetMetadata( papszMD );
 
-            WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, 0 );
+            WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, 0, pszProfile );
         }
     }
 
@@ -2658,7 +2676,7 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         if( bSrcIsGeoTIFF )
         {
             WriteMDMetadata( &(((GTiffRasterBand *)poBand)->oGTiffMDMD), 
-                             hTIFF, &psRoot, &psTail, nBand );
+                             hTIFF, &psRoot, &psTail, nBand, pszProfile );
         }
         else
         {
@@ -2669,7 +2687,8 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
                 GDALMultiDomainMetadata oMDMD;
                 oMDMD.SetMetadata( papszMD );
                 
-                WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, nBand );
+                WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, nBand,
+                                 pszProfile );
             }
         }
 
@@ -2695,17 +2714,21 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 /* -------------------------------------------------------------------- */
     if( psRoot != NULL )
     {
-        char *pszXML_MD = CPLSerializeXMLTree( psRoot );
-        if( strlen(pszXML_MD) > 32000 )
+        if( EQUAL(pszProfile,"GDALGeoTIFF") )
         {
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Lost metadata writing to GeoTIFF ... too large to fit in tag." );
+            char *pszXML_MD = CPLSerializeXMLTree( psRoot );
+            if( strlen(pszXML_MD) > 32000 )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "Lost metadata writing to GeoTIFF ... too large to fit in tag." );
+            }
+            else
+            {
+                TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, pszXML_MD );
+            }
+            CPLFree( pszXML_MD );
         }
-        else
-        {
-            TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, pszXML_MD );
-        }
-        CPLFree( pszXML_MD );
+
         CPLDestroyXMLNode( psRoot );
     }
 }
@@ -3596,7 +3619,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
 
     bMetadataChanged = FALSE;
-	
+
+/* -------------------------------------------------------------------- */
+/*      Check for NODATA                                                */
+/* -------------------------------------------------------------------- */
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
     {
         bNoDataSet = TRUE;
@@ -3711,10 +3737,10 @@ static int GTiffGetJpegQuality(char** papszOptions)
 /*      options and a configuration.                                    */
 /************************************************************************/
 
-TIFF *GTiffCreate( const char * pszFilename,
-                   int nXSize, int nYSize, int nBands,
-                   GDALDataType eType,
-                   char **papszParmList )
+TIFF *GTiffDataset::CreateLL( const char * pszFilename,
+                              int nXSize, int nYSize, int nBands,
+                              GDALDataType eType,
+                              char **papszParmList )
 
 {
     TIFF		*hTIFF;
@@ -4088,8 +4114,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the underlying TIFF file.                                */
 /* -------------------------------------------------------------------- */
-    hTIFF = GTiffCreate( pszFilename, nXSize, nYSize, nBands, 
-                         eType, papszParmList );
+    hTIFF = CreateLL( pszFilename, nXSize, nYSize, nBands, 
+                      eType, papszParmList );
 
     if( hTIFF == NULL )
         return NULL;
@@ -4132,6 +4158,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
         ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
         * ((nXSize + poDS->nBlockXSize - 1) / poDS->nBlockXSize);
 
+    if( CSLFetchNameValue( papszParmList, "PROFILE" ) != NULL )
+        poDS->osProfile = CSLFetchNameValue( papszParmList, "PROFILE" );
+
 /* -------------------------------------------------------------------- */
 /*      Do we need a TFW file?                                          */
 /* -------------------------------------------------------------------- */
@@ -4159,10 +4188,10 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*                             CreateCopy()                             */
 /************************************************************************/
 
-static GDALDataset *
-GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                 int bStrict, char ** papszOptions, 
-                 GDALProgressFunc pfnProgress, void * pProgressData )
+GDALDataset *
+GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                          int bStrict, char ** papszOptions, 
+                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
     TIFF	*hTIFF;
@@ -4264,8 +4293,8 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
-    hTIFF = GTiffCreate( pszFilename, nXSize, nYSize, nBands, 
-                         eType, papszCreateOptions );
+    hTIFF = CreateLL( pszFilename, nXSize, nYSize, nBands, 
+                      eType, papszCreateOptions );
 
     CSLDestroy( papszCreateOptions );
 
@@ -4403,8 +4432,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Transfer some TIFF specific metadata, if available.  Should     */
 /*      we push this into .pam if we are avoiding GDAL tags?            */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszProfile,"GDALGeoTIFF") )
-        GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE );
+    GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE, pszProfile );
 
 /* -------------------------------------------------------------------- */
 /* 	Write NoData value, if exist.                                   */
@@ -4575,6 +4603,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+    poDS->osProfile = pszProfile;
     if( EQUAL(pszProfile,"GDALGeoTIFF") )
     {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
@@ -5081,7 +5110,7 @@ void GDALRegister_GTiff()
 
         poDriver->pfnOpen = GTiffDataset::Open;
         poDriver->pfnCreate = GTiffDataset::Create;
-        poDriver->pfnCreateCopy = GTiffCreateCopy;
+        poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;
         poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
         poDriver->pfnIdentify = GTiffDataset::Identify;
 
