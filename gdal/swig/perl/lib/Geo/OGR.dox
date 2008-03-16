@@ -947,7 +947,8 @@
 
 ## @method @Point($index, $x, $y, $z)
 # Get or set the point
-# @param index
+# @param index The index of the point. Optional (ignored if given) for
+# Point and Point25D geometries.
 # @param x [optional]
 # @param y [optional]
 # @param z [optional]
