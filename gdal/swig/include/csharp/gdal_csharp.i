@@ -90,12 +90,12 @@
 
 %define %ds_rasterio_functions(GDALTYPE,CSTYPE)
  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, 
-     int bandCount, int pixelSpace, int lineSpace, int bandSpace) {
+     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
       CPLErr retval;
       IntPtr ptr = Marshal.AllocHGlobal(buf_xSize * buf_ySize * Marshal.SizeOf(buffer[0]));
       try {
           retval = ReadRaster(xOff, yOff, xSize, ySize, ptr, buf_xSize, buf_ySize, GDALTYPE, 
-                               bandCount, pixelSpace, lineSpace, bandSpace);
+                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
           Marshal.Copy(ptr, buffer, 0, buf_xSize * buf_ySize);
       } finally {
           Marshal.FreeHGlobal(ptr);
@@ -104,13 +104,13 @@
       return retval;
   }
   public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int pixelSpace, int lineSpace, int bandSpace) {
+     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
       CPLErr retval;
       IntPtr ptr = Marshal.AllocHGlobal(buf_xSize * buf_ySize * Marshal.SizeOf(buffer[0]));
       try {
           Marshal.Copy(buffer, 0, ptr, buf_xSize * buf_ySize);
           retval = WriteRaster(xOff, yOff, xSize, ySize, ptr, buf_xSize, buf_ySize, GDALTYPE,
-                               bandCount, pixelSpace, lineSpace, bandSpace);
+                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
       } finally {
           Marshal.FreeHGlobal(ptr);
       }
