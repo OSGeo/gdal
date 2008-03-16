@@ -405,6 +405,76 @@ def tiff_write_14():
     return tst.testCreateCopy( vsimem = 1 )
 
 
+###############################################################################
+# Test that we can restrict metadata and georeferencing in the output
+# file using the PROFILE creation option with CreateCopy()
+
+def tiff_write_15():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open('data/byte.vrt')
+    
+    ds = drv.CreateCopy( 'tmp/tw_15.tif', ds_in, options=['PROFILE=BASELINE'] )
+
+    ds_in = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/tw_15.tif' )
+    if ds.GetGeoTransform() != (0.0,1.0,0.0,0.0,0.0,1.0):
+        gdaltest.post_reason( 'Got wrong geotransform, profile ignored?' )
+        return 'fail'
+
+    md = ds.GetMetadata()
+    if md.has_key('test'):
+        gdaltest.post_reason( 'Metadata written to BASELINE file.' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_15.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test that we can restrict metadata and georeferencing in the output
+# file using the PROFILE creation option with Create()
+
+def tiff_write_16():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open('data/byte.vrt')
+    
+    ds = drv.Create( 'tmp/tw_16.tif', 20, 20, gdal.GDT_Byte,
+                     options=['PROFILE=BASELINE'] )
+    
+    ds.SetMetadata( {'test':'testvalue'} )
+
+    ds.SetGeoTransform( (10,5,0,30,0,-5) )
+
+    data = ds_in.ReadRaster( 0, 0, 20, 20 )
+    ds.WriteRaster( 0, 0, 20, 20, data )
+    
+    ds_in = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/tw_16.tif' )
+    if ds.GetGeoTransform() != (0.0,1.0,0.0,0.0,0.0,1.0):
+        gdaltest.post_reason( 'Got wrong geotransform, profile ignored?' )
+        return 'fail'
+
+    md = ds.GetMetadata()
+    if md.has_key('test'):
+        gdaltest.post_reason( 'Metadata written to BASELINE file.' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_16.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -425,6 +495,8 @@ gdaltest_list = [
     tiff_write_12,
     tiff_write_13,
     tiff_write_14,
+    tiff_write_15,
+    tiff_write_16,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
