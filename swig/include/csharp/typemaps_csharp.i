@@ -283,6 +283,20 @@ OPTIONAL_POD(int,i);
 }
 
 /*
+ * Typemap for int argin[ANY]. 
+ */
+
+%typemap(imtype) (int argin[ANY])  "int[]"
+%typemap(cstype) (int argin[ANY]) "int[]"
+%typemap(csin) (int argin[ANY])  "$csinput"
+
+%typemap(in) (int argin[ANY])
+{
+  /* %typemap(in) (int argin[ANY]) */
+  $1 = ($1_ltype)$input;
+}
+
+/*
  * Typemap for double inout[ANY]. 
  */
 
