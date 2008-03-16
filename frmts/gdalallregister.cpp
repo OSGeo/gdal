@@ -380,6 +380,10 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_adrg
     GDALRegister_ADRG();
 #endif
+
+#ifdef FRMT_blx
+    GDALRegister_BLX();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
