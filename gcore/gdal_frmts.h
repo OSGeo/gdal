@@ -127,6 +127,7 @@ void CPL_DLL GDALRegister_COSAR(void);
 void CPL_DLL GDALRegister_TSX(void);
 void CPL_DLL GDALRegister_ADRG(void);
 void CPL_DLL GDALRegister_COASP(void);
+void CPL_DLL GDALRegister_BLX(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
