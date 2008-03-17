@@ -443,12 +443,10 @@ double doubleSWAP(double df)
 
 static double get_double(blxcontext_t *ctx, unsigned char **data) {
     double result;
-    
-    if((is_big_endian() && ctx->endian == BIGENDIAN) ||
-       (!is_big_endian() && ctx->endian == LITTLEENDIAN))
-	result = *((double *)*data);
-    else
-	result = doubleSWAP(*((double *)*data));
+    memcpy(&result, *data, sizeof(double));
+    if((is_big_endian() && ctx->endian == LITTLEENDIAN) ||
+       (!is_big_endian() && ctx->endian == BIGENDIAN))
+	result = doubleSWAP(result);
 
     *data+=sizeof(double);
 
@@ -459,7 +457,7 @@ static void put_double(blxcontext_t *ctx, double data, unsigned char **bufptr) {
     if((is_big_endian() && ctx->endian == LITTLEENDIAN) ||
        (!is_big_endian() && ctx->endian == BIGENDIAN))
 	data = doubleSWAP(data);
-    *((double *)*bufptr) = data;
+    memcpy(*bufptr, &data, sizeof(double));
     *bufptr+=sizeof(double);
 }
 
