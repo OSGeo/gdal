@@ -821,10 +821,10 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                     char *pszTmp =
                         SPrintArray( GDT_UInt32, paiRank, nFields, "," );
 
-                    CPLDebug( "HDF4", "Number of data fields in swath %ld: %d",
-                              i, nFields );
-                    CPLDebug( "HDF4", "List of data fields in swath %ld: %s",
-                              i, pszFieldList );
+                    CPLDebug( "HDF4", "Number of data fields in swath %d: %d",
+                              (int) i, nFields );
+                    CPLDebug( "HDF4", "List of data fields in swath %d: %s",
+                              (int) i, pszFieldList );
                     CPLDebug( "HDF4", "Data fields ranks: %s", pszTmp );
 
                     CPLFree( pszTmp );
@@ -924,10 +924,10 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 GDinqfields( hGD, pszFieldList, paiRank, paiNumType );
 
 #if DEBUG
-                CPLDebug( "HDF4", "Number of fields in grid %ld: %d",
-                          i, nFields );
-                CPLDebug( "HDF4", "List of fields in grid %ld: %s",
-                          i, pszFieldList );
+                CPLDebug( "HDF4", "Number of fields in grid %d: %d",
+                          (int) i, nFields );
+                CPLDebug( "HDF4", "List of fields in grid %d: %s",
+                          (int) i, pszFieldList );
                 CPLDebug( "HDF4", "Fields ranks: %s",
                           SPrintArray( GDT_UInt32, paiRank, nFields, "," ) );
 #endif
