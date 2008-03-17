@@ -577,8 +577,15 @@ GDALDriverShadow *IdentifyDriver( const char *pszDatasource,
 %apply (char **options) {char **};
 %inline %{
   char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
-    GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
-    return papszArgv;
+    int nResArgCount;
+
+    nResArgCount = 
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+
+    if( nResArgCount <= 0 )
+        return NULL;
+    else
+        return papszArgv;
   }
 %}
 %clear char **;
