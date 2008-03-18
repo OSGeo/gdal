@@ -4,6 +4,7 @@
  * Project:  ENVI .hdr Driver
  * Purpose:  Implementation of ENVI .hdr labelled raw raster support.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Maintainer: Chris Padwick (cpadwick at ittvis.com)
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
