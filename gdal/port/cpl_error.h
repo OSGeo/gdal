@@ -54,7 +54,7 @@ typedef enum
     CE_Fatal = 4
 } CPLErr;
 
-void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
+void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
 void CPL_DLL CPLErrorV(CPLErr, int, const char *, va_list );
 void CPL_DLL CPL_STDCALL CPLErrorReset( void );
 int CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
