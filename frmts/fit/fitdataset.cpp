@@ -383,7 +383,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             default:
                 CPLError(CE_Failure, CPLE_NotSupported, 
                          "FITRasterBand::IReadBlock unsupported "
-                         "bytesPerComponent % %lu", bytesPerComponent);
+                         "bytesPerComponent %lu", bytesPerComponent);
             } // switch
 
         } // scan left/right first
@@ -461,7 +461,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             default:
                 CPLError(CE_Failure, CPLE_NotSupported, 
                          "FITRasterBand::IReadBlock unsupported "
-                         "bytesPerComponent % %lu", bytesPerComponent);
+                         "bytesPerComponent %lu", bytesPerComponent);
             } // switch
 
         } // scan up/down first
@@ -561,8 +561,7 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
     switch(poFIT_DS->info->cm) {
     case 1: // iflNegative - inverted luminance (min value is white)
         CPLError( CE_Warning, CPLE_NotSupported, 
-                  "FIT - color model Negative not supported - ignoring model",
-                  poFIT_DS->info->cm);
+                  "FIT - color model Negative not supported - ignoring model");
             return GCI_Undefined;
 
     case 2: // iflLuminance - luminance
@@ -603,9 +602,8 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
 
     case 4: // iflRGBPalette - color mapped values
         CPLError( CE_Warning, CPLE_NotSupported, 
-                  "FIT - color model RGBPalette not supported - "
-                  "ignoring model",
-                  poFIT_DS->info->cm);
+                  "FIT - color model  RGBPalette not supported - "
+                  "ignoring model");
             return GCI_Undefined;
 
     case 5: // iflRGBA - full color with transparency (alpha channel)
@@ -740,8 +738,7 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
 
     case 12: // iflYCC PhotoCD color model (Luminance, Chrominance)
         CPLError( CE_Warning, CPLE_NotSupported, 
-                  "FIT - color model YCC not supported - ignoring model",
-                  poFIT_DS->info->cm);
+                  "FIT - color model YCC not supported - ignoring model");
             return GCI_Undefined;
 
     case 13: // iflLuminanceAlpha - Luminance plus alpha
@@ -951,7 +948,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         // unrecognized header version
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "FIT - unsupported header version %.2s\n",
-                  &head->version);
+                  (const char*) &head->version);
         return NULL;
     }
 

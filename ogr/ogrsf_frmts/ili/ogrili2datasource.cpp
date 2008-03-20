@@ -192,7 +192,7 @@ int OGRILI2DataSource::Create( const char *pszFilename,
     if( pszModelFilename == NULL )
     {
         CPLError( CE_Warning, CPLE_OpenFailed, 
-                  "Model file '%s' (%s) not found.", 
+                  "Model file '%s' (%s) not found : %s.", 
                   pszModelFilename, pszFilename, VSIStrerror( errno ) );
         CSLDestroy(filenames);
         return FALSE;
@@ -209,7 +209,7 @@ int OGRILI2DataSource::Create( const char *pszFilename,
     IOM_BASKET model=iom_compileIli(1,iliFiles);
     if(!model){
         CPLError( CE_Warning, CPLE_OpenFailed, 
-                    "iom_compileIli .", 
+                    "iom_compileIli %s, %s.", 
                     pszName, VSIStrerror( errno ) );
                 iom_end();
         CSLDestroy(filenames);

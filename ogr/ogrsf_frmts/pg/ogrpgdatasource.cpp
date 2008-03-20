@@ -121,7 +121,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s does not conform to PostgreSQL naming convention,"
-                      " PG:*\n" );
+                      " PG:*\n", pszNewName );
         return FALSE;
     }
 

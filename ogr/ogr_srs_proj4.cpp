@@ -1050,8 +1050,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         *ppszProj4 = CPLStrdup("");
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "No translation an empty SRS to PROJ.4 format is known.", 
-                  pszProjection );
+                  "No translation an empty SRS to PROJ.4 format is known.");
         return OGRERR_UNSUPPORTED_SRS;
     }
 

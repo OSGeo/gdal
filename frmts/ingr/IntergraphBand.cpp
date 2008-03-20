@@ -335,7 +335,7 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     {
         memset( pImage, 0, nBlockBufSize );
         CPLError( CE_Failure, CPLE_FileIO, 
-            "Can't read (%s) tile with X offset %d and Y offset %d.\n%s", 
+            "Can't read (%s) tile with X offset %d and Y offset %d.\n", 
             ((IntergraphDataset*)poDS)->pszFilename, nBlockXOff, nBlockYOff );
         return CE_Failure;
     }

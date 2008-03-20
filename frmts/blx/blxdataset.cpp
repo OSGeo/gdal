@@ -266,9 +266,7 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( (nXSize % 128 != 0) || (nYSize % 128 != 0) ) {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "BLX driver doesn't support dimensions that are not a multiple of 128.\n",
-                  GDALGetDataTypeName( 
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+                  "BLX driver doesn't support dimensions that are not a multiple of 128.\n");
 
         return NULL;
     }
