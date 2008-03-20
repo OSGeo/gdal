@@ -261,16 +261,16 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "XML parsing of GPX file failed : %s at line %d, column %d",
                         XML_ErrorString(XML_GetErrorCode(oParser)),
-                        XML_GetCurrentLineNumber(oParser),
-                        XML_GetCurrentColumnNumber(oParser));
+                        (int)XML_GetCurrentLineNumber(oParser),
+                        (int)XML_GetCurrentColumnNumber(oParser));
             }
             else
             {
                 CPLDebug("GPX",
                         "XML parsing of file failed : %s at line %d, column %d",
                         XML_ErrorString(XML_GetErrorCode(oParser)),
-                        XML_GetCurrentLineNumber(oParser),
-                        XML_GetCurrentColumnNumber(oParser));
+                        (int)XML_GetCurrentLineNumber(oParser),
+                        (int)XML_GetCurrentColumnNumber(oParser));
             }
             break;
         }
