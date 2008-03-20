@@ -161,7 +161,7 @@ void OGROGDILayer::ResetReading()
     if( ECSERROR( psResult ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Access to layer '%s' Failed: \n",
+                  "Access to layer '%s' Failed: %s\n",
                   m_pszOGDILayerName, psResult->message );
         return;
     }

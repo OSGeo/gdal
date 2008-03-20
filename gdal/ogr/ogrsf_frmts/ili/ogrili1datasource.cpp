@@ -224,7 +224,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     model=iom_compileIli(1,iliFiles);
     if(!model){
         CPLError( CE_Warning, CPLE_OpenFailed,
-                  "iom_compileIli .",
+                  "iom_compileIli %s, %s.",
                   pszName, VSIStrerror( errno ) );
         iom_end();
         return FALSE;

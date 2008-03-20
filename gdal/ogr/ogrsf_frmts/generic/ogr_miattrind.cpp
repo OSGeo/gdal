@@ -406,7 +406,7 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "It seems we already have an index for field %d/%s\n"
                       "of layer %s.", 
-                      poFldDefn->GetNameRef(),
+                      iField, poFldDefn->GetNameRef(),
                       poLayer->GetLayerDefn()->GetName() );
             return OGRERR_FAILURE;
         }
