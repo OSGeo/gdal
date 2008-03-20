@@ -177,8 +177,8 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( &(poDS->sHeader), 1024, 1, poDS->fp ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Attempt to read 1024 byte header filed on file:\n", 
-                  "%s\n", poOpenInfo->pszFilename );
+                  "Attempt to read 1024 byte header filed on file %s\n",
+                  poOpenInfo->pszFilename );
         return NULL;
     }
 

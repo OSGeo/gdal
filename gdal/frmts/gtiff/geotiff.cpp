@@ -3016,7 +3016,7 @@ GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
             {
                 XTIFFClose( hTIFF );
                 CPLError( CE_Failure, CPLE_OpenFailed, 
-                          "Requested directory %d not found.", nOffset );
+                          "Requested directory %lu not found.", (long unsigned int)nOffset );
                 return NULL;
             }
             nOffset--;
