@@ -979,8 +979,8 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GPX file failed : %s at line %d, column %d",
                      XML_ErrorString(XML_GetErrorCode(oParser)),
-                     XML_GetCurrentLineNumber(oParser),
-                     XML_GetCurrentColumnNumber(oParser));
+                     (int)XML_GetCurrentLineNumber(oParser),
+                     (int)XML_GetCurrentColumnNumber(oParser));
             break;
         }
     } while (!nDone && nFeatureTabLength == 0);
@@ -1486,8 +1486,8 @@ void OGRGPXLayer::LoadExtensionsSchema()
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GPX file failed : %s at line %d, column %d",
                      XML_ErrorString(XML_GetErrorCode(extensionSchemaParser)),
-                     XML_GetCurrentLineNumber(extensionSchemaParser),
-                     XML_GetCurrentColumnNumber(extensionSchemaParser));
+                     (int)XML_GetCurrentLineNumber(extensionSchemaParser),
+                     (int)XML_GetCurrentColumnNumber(extensionSchemaParser));
             break;
         }
     } while (!nDone);
