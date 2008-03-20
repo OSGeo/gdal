@@ -254,7 +254,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to create layer %s, but file %s already exists.",
-                  pszFilename );
+                  pszLayerName, pszFilename );
         return NULL;
     }
 

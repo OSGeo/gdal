@@ -1470,7 +1470,7 @@ int WCSDataset::ExtractGridInfo()
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to find required Identifier name for Range Field.",
+                      "Unable to find required Identifier name %s for Range Field.",
                       osCRS.c_str() );
             return FALSE;
         }

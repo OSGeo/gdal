@@ -1719,7 +1719,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Out of memory allocating space for %d byte buffer in\n"
                   "CPLParseXMLFile(%.500s).", 
-                  nLen+1, pszFilename );
+                  (int)nLen+1, pszFilename );
         VSIFCloseL( fp );
         return NULL;
     }
@@ -1727,7 +1727,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "VSIFRead() result short of expected %d bytes from %.500s.", 
-                  nLen, pszFilename );
+                  (int)nLen, pszFilename );
         pszDoc[0] = '\0';
     }
     VSIFCloseL( fp );
