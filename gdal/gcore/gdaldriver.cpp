@@ -639,7 +639,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
     {
         if( CPLGetLastErrorNo() == 0 )
             CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Unable to open %s to obtain file list." );
+                      "Unable to open %s to obtain file list.", pszFilename );
 
         return CE_Failure;
     }
@@ -741,7 +741,7 @@ CPLErr GDALDriver::Rename( const char * pszNewName, const char *pszOldName )
     {
         if( CPLGetLastErrorNo() == 0 )
             CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Unable to open %s to obtain file list." );
+                      "Unable to open %s to obtain file list.", pszOldName );
 
         return CE_Failure;
     }
@@ -848,7 +848,7 @@ CPLErr GDALDriver::CopyFiles( const char * pszNewName, const char *pszOldName )
     {
         if( CPLGetLastErrorNo() == 0 )
             CPLError( CE_Failure, CPLE_OpenFailed, 
-                      "Unable to open %s to obtain file list." );
+                      "Unable to open %s to obtain file list.", pszOldName );
 
         return CE_Failure;
     }

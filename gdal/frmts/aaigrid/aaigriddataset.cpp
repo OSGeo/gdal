@@ -177,8 +177,8 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poODS->Seek( panLineOffset[nBlockYOff] ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't seek to offset %ld in input file to read data.",
-                  panLineOffset[nBlockYOff] );
+                  "Can't seek to offset %lu in input file to read data.",
+                  (long unsigned int)panLineOffset[nBlockYOff] );
         return CE_Failure;
     }
 

@@ -560,7 +560,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %s with write permission.\n%s", 
-                  VSIStrerror( errno ) );
+                  poOpenInfo->pszFilename, VSIStrerror( errno ) );
         delete poDS;
         return NULL;
     }

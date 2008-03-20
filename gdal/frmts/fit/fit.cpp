@@ -171,7 +171,7 @@ int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
         CPLError(CE_Failure, CPLE_NotSupported, 
                  "FIT write - unsupported combination (band 1 = %s) "
                  "- ignoring color model",
-                 GDALGetColorInterpretationName(colorInterp), nBands);
+                 GDALGetColorInterpretationName(colorInterp));
         return 0;
 
     default:

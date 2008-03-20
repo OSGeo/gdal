@@ -887,7 +887,7 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
-                          nXPoint, nYPoint );
+                          (long unsigned int)nXPoint, (long unsigned int)nYPoint );
                 return CE_Failure;
             }
 

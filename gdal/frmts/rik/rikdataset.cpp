@@ -892,7 +892,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             header.iOptions != 0x0D )  // ZLIB
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Unknown map options.\n",
+                      "File %s. Unknown map options.\n",
                       poOpenInfo->pszFilename );
             return NULL;
         }
@@ -925,7 +925,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !offsets )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to allocate offset table.\n",
+                  "File %s. Unable to allocate offset table.\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -968,7 +968,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFEof( poOpenInfo->fp ) )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Read past end of file.\n",
+                  "File %s. Read past end of file.\n",
                   poOpenInfo->pszFilename );
         return NULL;
     }
@@ -1000,7 +1000,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( !y )
                 {
                     CPLError( CE_Failure, CPLE_OpenFailed,
-                              "File too short.\n",
+                              "File %s too short.\n",
                               poOpenInfo->pszFilename );
                     return NULL;
                 }
@@ -1013,7 +1013,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( !y )
                 {
                     CPLError( CE_Failure, CPLE_OpenFailed,
-                              "Corrupt offset table.\n",
+                              "File %s. Corrupt offset table.\n",
                               poOpenInfo->pszFilename );
                     return NULL;
                 }

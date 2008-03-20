@@ -443,7 +443,7 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
     if( NULL == pszGeoData_ )
     {
         CPLError( CE_Failure, CPLE_ObjectNull,
-                  "GeoJSON", "GeoJSON data buffer empty" );
+                  "GeoJSON data buffer empty" );
         return NULL;
     }
 

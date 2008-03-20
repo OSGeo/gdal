@@ -1073,7 +1073,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "IO error writing %s.\n%s", 
-                  VSIStrerror( errno ) );
+                  pszFilename, VSIStrerror( errno ) );
         VSIFClose( fp );
         return NULL;
     }
@@ -1088,7 +1088,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "IO error writing %s.\n%s", 
-                  VSIStrerror( errno ) );
+                  pszFilename, VSIStrerror( errno ) );
         VSIFClose( fp );
         return NULL;
     }
