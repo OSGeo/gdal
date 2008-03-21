@@ -698,7 +698,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     RIKHeader header;
     double metersPerPixel;
 
-    char *headerType = "RIK3";
+    const char *headerType = "RIK3";
 
     if( rik3header )
     {
@@ -1033,7 +1033,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
               lastoffset );
 #endif
 
-    char *compression = "RLE";
+    const char *compression = "RLE";
 
     if( header.iOptions == 0x00 ||
         header.iOptions == 0x40 )
