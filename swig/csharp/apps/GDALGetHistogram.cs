@@ -94,6 +94,12 @@ class GDALGetHistogram {
                 Console.WriteLine("Band " + iBand + ":");
                 int[] histData = new int[256]; 
                 Band band = ds.GetRasterBand(iBand);
+                double pdfMin, pdfMax, pdfMean, pdfStdDev;
+                band.GetStatistics(0, 1, out pdfMin, out pdfMax, out pdfMean, out pdfStdDev);
+                Console.WriteLine("Min=" + pdfMin);
+                Console.WriteLine("Max=" + pdfMax);
+                Console.WriteLine("Mean=" + pdfMean);
+                Console.WriteLine("StdDev=" + pdfStdDev);
                 band.GetHistogram(-0.5, 255.5, 255, histData, 0, 1,
                            new Gdal.GDALProgressFuncDelegate(ProgressFunc), "");
                 for (int i = 0; i < 255; i++)
