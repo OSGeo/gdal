@@ -310,6 +310,20 @@ OPTIONAL_POD(int,i);
   $1 = ($1_ltype)$input;
 }
 
+/*
+ * Typemap for int inout[ANY]. 
+ */
+
+%typemap(imtype) (int inout[ANY])  "int[]"
+%typemap(cstype) (int inout[ANY]) "int[]"
+%typemap(csin) (int inout[ANY])  "$csinput"
+
+%typemap(in) (int inout[ANY])
+{
+  /* %typemap(in) (int inout[ANY]) */
+  $1 = ($1_ltype)$input;
+}
+
 %typemap(argout) (double inout[ANY])
 {
   /* %typemap(argout) (double inout[ANY]) */
