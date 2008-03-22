@@ -259,6 +259,7 @@ public:
   }
 
  
+#ifndef SWIGCSHARP
   CPLErr GetHistogram( double dfMin=-0.5,
                      double dfMax=255.5,
                      int nBuckets=255,
@@ -282,8 +283,27 @@ public:
                                 callback_data);
     return err;
   }
-
-
+#else
+%apply (int inout[ANY]) {int *panHistogram};
+    CPLErr GetHistogram( double dfMin=-0.5,
+                     double dfMax=255.5,
+                     int nBuckets=255, int *panHistogram = NULL,
+                     int bIncludeOutOfRange = 0,
+                     int bApproxOk = 1,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data=NULL ) {
+       return GDALGetRasterHistogram(  self, 
+                                dfMin,
+                                dfMax,
+                                nBuckets,
+                                panHistogram,
+                                bIncludeOutOfRange,
+                                bApproxOk,
+                                callback, 
+                                callback_data);
+    }
+    %clear int *panHistogram;
+#endif /* SWIGCSHARP */
 /* NEEDED */
 /* ReadAsArray */
 /* WriteArray */
