@@ -100,7 +100,7 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
 /************************************************************************/
 
 OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
-                                                  char ** /* papszOptions */ )
+                                                  char **papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -118,19 +118,57 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create the datasource.                                          */
+/*      Create the database file.                                       */
 /* -------------------------------------------------------------------- */
-    OGRSQLiteDataSource     *poDS;
+    sqlite3             *hDB;
+    int rc;
 
-    poDS = new OGRSQLiteDataSource();
-
-    if( !poDS->Open( pszName ) )
+    hDB = NULL;
+    rc = sqlite3_open( pszName, &hDB );
+    if( rc != SQLITE_OK )
     {
-        delete poDS;
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "sqlite3_open(%s) failed: %s", 
+                  pszName, sqlite3_errmsg( hDB ) );
         return NULL;
     }
 
-    return poDS;
+/* -------------------------------------------------------------------- */
+/*      Create the geometry_columns metadata table.                     */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "METADATA", TRUE ) )
+    {
+        CPLString osCommand;
+        char *pszErrMsg = NULL;
+
+        osCommand = 
+            "CREATE TABLE geometry_columns ("
+            "f_table_catalog VARCHAR, "
+            "f_table_schema VARCHAR, "
+            "f_table_name VARCHAR, "
+            "f_geometry_column VARCHAR, "
+            "f_geometry_format VARCHAR, "
+            "type VARCHAR, "
+            "coord_dimension INTEGER, "
+            "srid INTEGER )";
+
+        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to create table geometry_columns: %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return NULL;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Close the DB file so we can reopen it normally.                 */
+/* -------------------------------------------------------------------- */
+    sqlite3_close( hDB );
+
+    return Open( pszName, TRUE );
 }
 
 /************************************************************************/
