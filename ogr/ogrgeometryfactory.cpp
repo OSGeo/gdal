@@ -1146,3 +1146,323 @@ int OGRGeometryFactory::haveGEOS()
 #endif
 }
 
+/************************************************************************/
+/*                           createFromFgf()                            */
+/************************************************************************/
+
+/**
+ * Create a geometry object of the appropriate type from it's FGF (FDO 
+ * Geometry Format) binary representation.
+ *
+ * Also note that this is a static method, and that there
+ * is no need to instantiate an OGRGeometryFactory object.  
+ *
+ * The C function OGR_G_CreateFromFgf() is the same as this method.
+ *
+ * @param pabyData pointer to the input BLOB data.
+ * @param poSR pointer to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param ppoReturn the newly created geometry object will be assigned to the
+ *                  indicated pointer on return.  This will be NULL in case
+ *                  of failure.
+ * @param nBytes the number of bytes available in pabyData.
+ * @param pnBytesConsumed if not NULL, it will be set to the number of bytes 
+ * consumed (at most nBytes).
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
+
+OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
+                                          OGRSpatialReference * poSR,
+                                          OGRGeometry **ppoReturn,
+                                          int nBytes,
+                                          int *pnBytesConsumed )
+
+{
+    OGRErr       eErr = OGRERR_NONE;
+    OGRGeometry *poGeom = NULL;
+    GInt32       nGType, nGDim;
+    int          nTupleSize = 0;
+    int          iOrdinal = 0;
+    
+    (void) iOrdinal;
+
+    *ppoReturn = NULL;
+
+    if( nBytes < 4 )
+        return OGRERR_NOT_ENOUGH_DATA;
+
+/* -------------------------------------------------------------------- */
+/*      Decode the geometry type.                                       */
+/* -------------------------------------------------------------------- */
+    memcpy( &nGType, pabyData + 0, 4 );
+    CPL_LSBPTR32( &nGType );
+
+    if( nGType < 0 || nGType > 13 )
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+/* -------------------------------------------------------------------- */
+/*      Decode the dimentionality if appropriate.                       */
+/* -------------------------------------------------------------------- */
+    switch( nGType )
+    {
+      case 1: // Point
+      case 2: // LineString
+      case 3: // Polygon
+        
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nGDim, pabyData + 4, 4 );
+        CPL_LSBPTR32( &nGDim );
+        
+        if( nGDim < 0 || nGDim > 3 )
+            return OGRERR_CORRUPT_DATA;
+
+        nTupleSize = 2;
+        if( nGDim & 0x01 ) // Z
+            nTupleSize++;
+        if( nGDim & 0x02 ) // M
+            nTupleSize++;
+
+        break;
+
+      default:
+        break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      None                                                            */
+/* -------------------------------------------------------------------- */
+    if( nGType == 0 ) 
+    {
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 4;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Point                                                           */
+/* -------------------------------------------------------------------- */
+    else if( nGType == 1 )
+    {
+        double  adfTuple[4];
+
+        if( nBytes < nTupleSize * 8 + 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( adfTuple, pabyData + 8, nTupleSize*8 );
+#ifdef CPL_MSB
+        for( iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
+            CPL_SWAP64PTR( adfTuple + iOrdinal );
+#endif
+        if( nTupleSize > 2 )
+            poGeom = new OGRPoint( adfTuple[0], adfTuple[1], adfTuple[2] );
+        else
+            poGeom = new OGRPoint( adfTuple[0], adfTuple[1] );
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 8 + nTupleSize * 8;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      LineString                                                      */
+/* -------------------------------------------------------------------- */
+    else if( nGType == 2 )
+    {
+        double adfTuple[4];
+        GInt32 nPointCount;
+        int    iPoint;
+        OGRLineString *poLS;
+
+        if( nBytes < 12 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nPointCount, pabyData + 8, 4 );
+        CPL_LSBPTR32( &nPointCount );
+        
+        if( nBytes < nTupleSize * 8 * nPointCount + 12 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        poGeom = poLS = new OGRLineString();
+        poLS->setNumPoints( nPointCount );
+
+        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        {
+            memcpy( adfTuple, pabyData + 12 + 8*nTupleSize*iPoint, 
+                    nTupleSize*8 );
+#ifdef CPL_MSB
+            for( iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
+                CPL_SWAP64PTR( adfTuple + iOrdinal );
+#endif
+            if( nTupleSize > 2 )
+                poLS->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+            else
+                poLS->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = 12 + nTupleSize * 8 * nPointCount;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon                                                         */
+/* -------------------------------------------------------------------- */
+    else if( nGType == 3 )
+    {
+        double adfTuple[4];
+        GInt32 nPointCount;
+        GInt32 nRingCount;
+        int    iPoint, iRing;
+        OGRLinearRing *poLR;
+        OGRPolygon *poPoly;
+        int    nNextByte;
+
+        if( nBytes < 12 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nRingCount, pabyData + 8, 4 );
+        CPL_LSBPTR32( &nRingCount );
+
+        nNextByte = 12;
+        
+        poGeom = poPoly = new OGRPolygon();
+
+        for( iRing = 0; iRing < nRingCount; iRing++ )
+        {
+            if( nBytes - nNextByte < 4 )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            memcpy( &nPointCount, pabyData + nNextByte, 4 );
+            CPL_LSBPTR32( &nPointCount );
+
+            nNextByte += 4;
+
+            if( nBytes - nNextByte < nTupleSize * 8 * nPointCount )
+                return OGRERR_NOT_ENOUGH_DATA;
+
+            poLR = new OGRLinearRing();
+            poLR->setNumPoints( nPointCount );
+            
+            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+            {
+                memcpy( adfTuple, pabyData + nNextByte, nTupleSize*8 );
+                nNextByte += nTupleSize * 8;
+
+#ifdef CPL_MSB
+                for( iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
+                    CPL_SWAP64PTR( adfTuple + iOrdinal );
+#endif
+                if( nTupleSize > 2 )
+                    poLR->setPoint( iPoint, adfTuple[0], adfTuple[1], adfTuple[2] );
+                else
+                    poLR->setPoint( iPoint, adfTuple[0], adfTuple[1] );
+            }
+
+            poPoly->addRingDirectly( poLR );
+        }
+
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nNextByte;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      GeometryCollections of various kinds.                           */
+/* -------------------------------------------------------------------- */
+    else if( nGType == 4         // MultiPoint
+             || nGType == 5      // MultiLineString
+             || nGType == 6      // MultiPolygon
+             || nGType == 7 )    // MultiGeometry
+    {
+        OGRGeometryCollection *poGC;
+        GInt32 nGeomCount;
+        int iGeom, nBytesUsed;
+
+        if( nGType == 4 )
+            poGC = new OGRMultiPoint();
+        else if( nGType == 5 )
+            poGC = new OGRMultiLineString();
+        else if( nGType == 6 )
+            poGC = new OGRMultiPolygon();
+        else if( nGType == 7 )
+            poGC = new OGRGeometryCollection();
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nGeomCount, pabyData + 4, 4 );
+        CPL_LSBPTR32( &nGeomCount );
+
+        nBytesUsed = 8;
+
+        for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        {
+            int nThisGeomSize;
+            OGRGeometry *poThisGeom = NULL;
+         
+            eErr = createFromFgf( pabyData + nBytesUsed, poSR, &poThisGeom,
+                                  nBytes - nBytesUsed, &nThisGeomSize);
+            if( eErr != OGRERR_NONE )
+            {
+                delete poGC;
+                return eErr;
+            }
+
+            nBytesUsed += nThisGeomSize;
+            eErr = poGC->addGeometryDirectly( poThisGeom );
+            if( eErr != OGRERR_NONE )
+            {
+                delete poGC;
+                return eErr;
+            }
+        }
+
+        poGeom = poGC;
+        if( pnBytesConsumed )
+            *pnBytesConsumed = nBytesUsed;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Currently unsupported geometry.                                 */
+/*                                                                      */
+/*      We need to add 10/11/12/13 curve types in some fashion.         */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Assign spatial reference system.                                */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE )
+    {
+        if( poGeom != NULL && poSR )
+            poGeom->assignSpatialReference( poSR );
+        *ppoReturn = poGeom;
+    }
+    else
+    {
+        delete poGeom;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        OGR_G_CreateFromFgf()                         */
+/************************************************************************/
+
+OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData, 
+                                    OGRSpatialReferenceH hSRS,
+                                    OGRGeometryH *phGeometry, 
+                                    int nBytes, int *pnBytesConsumed )
+
+{
+    return OGRGeometryFactory::createFromFgf( pabyData, 
+                                              (OGRSpatialReference *) hSRS,
+                                              (OGRGeometry **) phGeometry,
+                                              nBytes, pnBytesConsumed );
+}
+
