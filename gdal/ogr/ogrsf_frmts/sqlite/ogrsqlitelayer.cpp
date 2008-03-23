@@ -330,6 +330,16 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                     NULL, &poGeometry, nBytes ) == OGRERR_NONE )
                 poFeature->SetGeometryDirectly( poGeometry );
         }
+        else if( EQUAL(osGeomFormat,"FGF") )
+        {
+            const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
+            OGRGeometry *poGeometry = NULL;
+
+            if( OGRGeometryFactory::createFromFgf( 
+                    (GByte*)sqlite3_column_blob( hStmt, iGeomCol ),
+                    NULL, &poGeometry, nBytes, NULL ) == OGRERR_NONE )
+                poFeature->SetGeometryDirectly( poGeometry );
+        }
     }
 
 /* -------------------------------------------------------------------- */

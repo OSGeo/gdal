@@ -597,6 +597,8 @@ class CPL_DLL OGRGeometryFactory
                                  OGRGeometry **, int = -1 );
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
+    static OGRErr createFromFgf( unsigned char *, OGRSpatialReference *,
+                                 OGRGeometry **, int = -1, int * = NULL );
     static OGRGeometry *createFromGML( const char * );
     static OGRGeometry *createFromGEOS( GEOSGeom );
 
