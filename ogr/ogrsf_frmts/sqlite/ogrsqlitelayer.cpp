@@ -43,7 +43,6 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 {
     poDS = NULL;
 
-    pszGeomColumn = NULL;
     pszFIDColumn = NULL;
 
     hStmt = NULL;
@@ -75,9 +74,6 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
         sqlite3_finalize( hStmt );
         hStmt = NULL;
     }
-
-    if( pszGeomColumn != NULL )
-        CPLFree( pszGeomColumn );
 
     if( poFeatureDefn != NULL )
     {
@@ -115,20 +111,46 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         OGRFieldDefn    oField( sqlite3_column_name( hStmt, iCol ), 
                                 OFTString );
 
+        // In some cases, particularly when there is a real name for
+        // the primary key/_rowid_ column we will end up getting the
+        // primary key column appearing twice.  Ignore any repeated names.
+        if( poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
+            continue;
+
         //oField.SetWidth( MAX(0,poStmt->GetColSize( iCol )) );
 
-        if( pszGeomColumn != NULL 
-            && EQUAL(oField.GetNameRef(),pszGeomColumn) )
+        if( osGeomColumn.size()
+            && EQUAL(oField.GetNameRef(),osGeomColumn) )
             continue;
 
-        // The geometry is for internal use, not a real column.
-        if( EQUAL(oField.GetNameRef(),"wkt_geometry") )
+        // Recognise some common geometry column names.
+        if( (EQUAL(oField.GetNameRef(),"wkt_geometry") 
+             || EQUAL(oField.GetNameRef(),"geometry"))
+            && osGeomColumn.size() == 0 )
         {
-            if( pszGeomColumn == NULL )
-                pszGeomColumn = CPLStrdup( oField.GetNameRef() );
+            if( sqlite3_column_type( hStmt, iCol ) == SQLITE_BLOB )
+            {
+                osGeomColumn = oField.GetNameRef();
+                osGeomFormat = "WKB";
+                continue;
+            }
+            else if( sqlite3_column_type( hStmt, iCol ) == SQLITE_TEXT )
+            {
+                osGeomColumn = oField.GetNameRef();
+                osGeomFormat = "WKT";
+                continue;
+            }
+        }
+#ifdef notdef
+        // SpatialLite / Gaia
+        if( EQUAL(oField.GetNameRef(),"GaiaGeometry") 
+            && osGeomColumn.size() == 0 )
+        {
+            osGeomColumn = oField.GetNameRef();
+            osGeomFormat = "WKB";
             continue;
         }
-
+#endif
         // The rowid is for internal use, not a real column.
         if( EQUAL(oField.GetNameRef(),"_rowid_") )
             continue;
@@ -163,7 +185,7 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 /*      If we have no geometry source, we know our geometry type is     */
 /*      none.                                                           */
 /* -------------------------------------------------------------------- */
-    if( pszGeomColumn == NULL )
+    if( osGeomColumn.size() == 0 )
         poFeatureDefn->SetGeomType( wkbNone );
 
     return CE_None;
@@ -268,14 +290,14 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Process Geometry if we have a column.                           */
 /* -------------------------------------------------------------------- */
-    if( pszGeomColumn != NULL )
+    if( osGeomColumn.size() )
     {
         int iGeomCol;
 
         for( iGeomCol = 0; iGeomCol < sqlite3_column_count(hStmt); iGeomCol++ )
         {
             if( EQUAL(sqlite3_column_name(hStmt,iGeomCol),
-                      pszGeomColumn) )
+                      osGeomColumn) )
                 break;
         }
 
@@ -283,18 +305,31 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Unable to find Geometry column '%s'.", 
-                      pszGeomColumn );
+                      osGeomColumn.c_str() );
             return NULL;
         }
 
-        char *pszWKTCopy, *pszWKT = NULL;
-        OGRGeometry *poGeometry = NULL;
+        if( EQUAL(osGeomFormat,"WKT") )
+        {
+            char *pszWKTCopy, *pszWKT = NULL;
+            OGRGeometry *poGeometry = NULL;
 
-        pszWKT = (char *) sqlite3_column_text( hStmt, iGeomCol );
-        pszWKTCopy = pszWKT;
-        if( OGRGeometryFactory::createFromWkt( &pszWKTCopy, NULL, 
-                                               &poGeometry ) == OGRERR_NONE )
-            poFeature->SetGeometryDirectly( poGeometry );
+            pszWKT = (char *) sqlite3_column_text( hStmt, iGeomCol );
+            pszWKTCopy = pszWKT;
+            if( OGRGeometryFactory::createFromWkt( 
+                    &pszWKTCopy, NULL, &poGeometry ) == OGRERR_NONE )
+                poFeature->SetGeometryDirectly( poGeometry );
+        }
+        else if( EQUAL(osGeomFormat,"WKB") )
+        {
+            const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
+            OGRGeometry *poGeometry = NULL;
+
+            if( OGRGeometryFactory::createFromWkb( 
+                    (GByte*)sqlite3_column_blob( hStmt, iGeomCol ),
+                    NULL, &poGeometry, nBytes ) == OGRERR_NONE )
+                poFeature->SetGeometryDirectly( poGeometry );
+        }
     }
 
 /* -------------------------------------------------------------------- */

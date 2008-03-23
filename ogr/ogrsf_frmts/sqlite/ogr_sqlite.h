@@ -55,7 +55,9 @@ class OGRSQLiteLayer : public OGRLayer
 
     OGRSQLiteDataSource *poDS;
 
-    char                *pszGeomColumn;
+    CPLString           osGeomColumn;
+    CPLString           osGeomFormat;
+
     char                *pszFIDColumn;
 
     int                *panFieldOrdinals;
@@ -109,7 +111,9 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual sqlite3_stmt        *GetStatement();
 
     CPLErr              Initialize( const char *pszTableName, 
-                                    const char *pszGeomCol );
+                                    const char *pszGeomCol,
+                                    OGRwkbGeometryType eGeomType,
+                                    const char *pszGeomFormat );
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -172,6 +176,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
+
+    int                 bHaveGeometryColumns; 
     
     virtual void        DeleteLayer( const char *pszLayer );
 
@@ -181,7 +187,9 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 Open( const char * );
     int                 OpenTable( const char *pszTableName, 
-                                   const char *pszGeomCol );
+                                   const char *pszGeomCol = NULL,
+                                   OGRwkbGeometryType eGeomType = wkbUnknown,
+                                   const char *pszGeomFormat = NULL );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
