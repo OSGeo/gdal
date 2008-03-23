@@ -102,71 +102,100 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "sqlite3_open(%s) failed: %d", 
+                  "sqlite3_open(%s) failed: %s", 
                   pszNewName, sqlite3_errmsg( hDB ) );
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have a GEOMETRY_COLUMN tables, initialize on the basis    */
+/*      If we have a GEOMETRY_COLUMNS tables, initialize on the basis   */
 /*      of that.                                                        */
 /* -------------------------------------------------------------------- */
     char **papszResult;
     int nRowCount, iRow, nColCount;
     char *pszErrMsg;
 
-#ifdef notdef
     rc = sqlite3_get_table( 
         hDB,
-        "SELECT f_table_name, f_geometry_column, geometry_type"
+        "SELECT f_table_name, f_geometry_column, type, coord_dimension, f_geometry_format"
         " FROM geometry_columns",
         &papszResult, &nRowCount, &nColCount, &pszErrMsg );
 
     if( rc == SQLITE_OK )
     {
+        bHaveGeometryColumns = TRUE;
+
         for( iRow = 0; iRow < nRowCount; iRow++ )
         {
-            char **papszRow = papszResult + iRow * 3 + 3;
+            char **papszRow = papszResult + iRow * 5 + 5;
+            OGRwkbGeometryType eGeomType = wkbUnknown;
 
-            OpenTable( papszRow[0], papszRow[1] );
+            if( EQUAL(papszRow[2],"POINT") )
+                eGeomType = wkbPoint;
+            else if( EQUAL(papszRow[2],"LINESTRING") )
+                eGeomType = wkbLineString;
+            else if( EQUAL(papszRow[2],"POLYGON") )
+                eGeomType = wkbPolygon;
+            else if( EQUAL(papszRow[2],"MULTIPOINT") )
+                eGeomType = wkbMultiPoint;
+            else if( EQUAL(papszRow[2],"MULTILINESTRING") )
+                eGeomType = wkbMultiLineString;
+            else if( EQUAL(papszRow[2],"MULTIPOLYGON") )
+                eGeomType = wkbMultiPolygon;
+            else if( EQUAL(papszRow[2],"MULTIPOLYGON") )
+                eGeomType = wkbMultiPolygon;
+            else if( EQUAL(papszRow[2],"GEOMETRYCOLLECTION") )
+                eGeomType = wkbGeometryCollection;
+            else if( EQUAL(papszRow[2],"GEOMETRY") )
+                eGeomType = wkbUnknown;
+            else
+            {
+                CPLDebug( "SQLITE", "Unrecognised geometry type '%s'.", 
+                          papszRow[2] );
+            }
+
+            if( atoi(papszRow[3]) > 2 )
+                eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
+
+            OpenTable( papszRow[0], papszRow[1], eGeomType, papszRow[4] );
         }
 
         sqlite3_free_table(papszResult);
 
         return TRUE;
     }
-    else
-        sqlite3_free( pszErrMsg );
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise our final resort is to return all tables and views    */
 /*      as non-spatial tables.                                          */
 /* -------------------------------------------------------------------- */
-    rc = sqlite3_get_table( hDB,
-                           "SELECT name FROM sqlite_master "
-                           "WHERE type IN ('table','view') "
-                           "UNION ALL "
-                           "SELECT name FROM sqlite_temp_master "
-                           "WHERE type IN ('table','view') "
-                           "ORDER BY 1",
-                            &papszResult, &nRowCount, &nColCount, &pszErrMsg );
-
-    if( rc != SQLITE_OK )
+    else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to fetch list of tables: %s", 
-                  pszErrMsg );
         sqlite3_free( pszErrMsg );
-        return FALSE;
-    }
+        rc = sqlite3_get_table( hDB,
+                                "SELECT name FROM sqlite_master "
+                                "WHERE type IN ('table','view') "
+                                "UNION ALL "
+                                "SELECT name FROM sqlite_temp_master "
+                                "WHERE type IN ('table','view') "
+                                "ORDER BY 1",
+                                &papszResult, &nRowCount, 
+                                &nColCount, &pszErrMsg );
 
-    for( iRow = 0; iRow < nRowCount; iRow++ )
-    {
-        OpenTable( papszResult[iRow+1], NULL );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to fetch list of tables: %s", 
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return FALSE;
+        }
+        
+        for( iRow = 0; iRow < nRowCount; iRow++ )
+            OpenTable( papszResult[iRow+1] );
+        
+        sqlite3_free_table(papszResult);
     }
-    
-    sqlite3_free_table(papszResult);
 
     return TRUE;
 }
@@ -176,7 +205,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 /************************************************************************/
 
 int OGRSQLiteDataSource::OpenTable( const char *pszNewName, 
-                                  const char *pszGeomCol )
+                                    const char *pszGeomCol,
+                                    OGRwkbGeometryType eGeomType,
+                                    const char *pszGeomFormat )
 
 {
 /* -------------------------------------------------------------------- */
@@ -186,7 +217,8 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    if( poLayer->Initialize( pszNewName, pszGeomCol ) )
+    if( poLayer->Initialize( pszNewName, pszGeomCol, 
+                             eGeomType, pszGeomFormat ) )
     {
         delete poLayer;
         return FALSE;
@@ -317,13 +349,26 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                                   char ** papszOptions )
 
 {
-    char                szCommand[1024];
     char                *pszLayerName;
+    const char          *pszGeomFormat;
 
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
+    
+    pszGeomFormat = CSLFetchNameValue( papszOptions, "FORMAT" );
+    if( pszGeomFormat == NULL )
+        pszGeomFormat = "WKT";
+
+    if( !EQUAL(pszGeomFormat,"WKT") 
+        && !EQUAL(pszGeomFormat,"WKB") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "FORMAT=%s not recognised or supported.", 
+                  pszGeomFormat );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -371,24 +416,37 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     int rc;
     char *pszErrMsg;
     const char *pszGeomCol = NULL;
+    CPLString osCommand;
 
     if( eType == wkbNone )
-        sprintf( szCommand, 
-                 "CREATE TABLE '%s' ( OGC_FID INTEGER PRIMARY KEY )", 
-                 pszLayerName );
+        osCommand.Printf( 
+            "CREATE TABLE '%s' ( OGC_FID INTEGER PRIMARY KEY )", 
+            pszLayerName );
     else
     {
-        sprintf( szCommand, 
-                 "CREATE TABLE '%s' ( "
-                 "  OGC_FID INTEGER PRIMARY KEY,"
-                 "  WKT_GEOMETRY VARCHAR )", 
-                 pszLayerName );
-        pszGeomCol = "WKT_GEOMETRY";
+        if( EQUAL(pszGeomFormat,"WKT") )
+        {
+            pszGeomCol = "WKT_GEOMETRY";
+            osCommand.Printf(
+                "CREATE TABLE '%s' ( "
+                "  OGC_FID INTEGER PRIMARY KEY,"
+                "  %s VARCHAR )", 
+                pszLayerName, pszGeomCol );
+        }
+        else
+        {
+            pszGeomCol = "GEOMETRY";
+            osCommand.Printf(
+                "CREATE TABLE '%s' ( "
+                "  OGC_FID INTEGER PRIMARY KEY,"
+                "  %s BLOB )", 
+                pszLayerName, pszGeomCol );
+        }
     }
 
-    CPLDebug( "OGR_SQLITE", "exec(%s)", szCommand );
+    CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
 
-    rc = sqlite3_exec( hDB, szCommand, NULL, NULL, &pszErrMsg );
+    rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -403,23 +461,27 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      "geometric layers", capturing the WKT projection, and           */
 /*      perhaps some other housekeeping.                                */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( bHavePostGIS )
+    if( bHaveGeometryColumns )
     {
         const char *pszGeometryType;
+        int nCoordDim;
 
         /* Sometimes there is an old cruft entry in the geometry_columns
          * table if things were not properly cleaned up before.  We make
          * an effort to clean out such cruft.
          */
-        sprintf( szCommand, 
-                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
-                 pszLayerName );
+        osCommand.Printf(
+            "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
+            pszLayerName );
                  
-        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
-        hResult = PQexec(hPGConn, szCommand);
-        PQclear( hResult );
-
+        CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
+        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            sqlite3_free( pszErrMsg );
+            return FALSE;
+        }
+        
         switch( wkbFlatten(eType) )
         {
           case wkbPoint:
@@ -456,31 +518,30 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
         }
 
-        sprintf( szCommand, 
-                 "select AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
-                 pszDBName, pszLayerName, nSRSId, pszGeometryType, 3 );
+        if( eType == wkbFlatten(eType) )
+            nCoordDim = 2;
+        else
+            nCoordDim = 3;
 
-        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
-        hResult = PQexec(hPGConn, szCommand);
-
-        if( !hResult 
-            || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+        osCommand.Printf(
+            "INSERT INTO geometry_columns "
+            "(f_table_name, f_geometry_column, f_geometry_format, type, "
+            "coord_dimension, srid) VALUES "
+            "('%s','%s','%s','%s', %d, %d)", 
+            pszLayerName, pszGeomCol, pszGeomFormat, pszGeometryType, 
+            nCoordDim, -1 );
+        
+        CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
+        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "AddGeometryColumn failed for layer %s, layer creation has failed.",
-                      pszLayerName );
-            
-            CPLFree( pszLayerName );
-
-            PQclear( hResult );
-
-            hResult = PQexec(hPGConn, "ROLLBACK");
-            PQclear( hResult );
-
-            return NULL;
+                      "Unable to add %s table to geometry_columns:\n%s",
+                      pszLayerName, pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return FALSE;
         }
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -489,7 +550,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    poLayer->Initialize( pszLayerName, pszGeomCol );
+    poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
 
@@ -580,7 +641,26 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
         return;
     }
 
-    /* We may need to drop the column from GEOMETRY_COLUMNS in the future. */
+/* -------------------------------------------------------------------- */
+/*      Drop from geometry_columns table.                               */
+/* -------------------------------------------------------------------- */
+    if( bHaveGeometryColumns )
+    {
+        CPLString osCommand;
+
+        osCommand.Printf( 
+            "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
+            pszLayerName );
+        
+        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Removal from geometry_columns failed.\n%s: %s", 
+                      osCommand.c_str(), pszErrMsg );
+            sqlite3_free( pszErrMsg );
+        }
+    }
 }
 
 /************************************************************************/

@@ -70,16 +70,19 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 /************************************************************************/
 
 CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName, 
-                                        const char *pszGeomCol )
+                                        const char *pszGeomCol,
+                                        OGRwkbGeometryType eGeomType,
+                                        const char *pszGeomFormat )
 
 {
     sqlite3 *hDB = poDS->GetDB();
 
-    CPLFree( pszGeomColumn );
     if( pszGeomCol == NULL )
-        pszGeomColumn = NULL;
+        osGeomColumn = "";
     else
-        pszGeomColumn = CPLStrdup( pszGeomCol );
+        osGeomColumn = pszGeomCol;
+
+    osGeomFormat = pszGeomFormat;
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
@@ -123,17 +126,13 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     if( eErr != CE_None )
         return eErr;
 
-#ifdef notdef
-    if( poFeatureDefn->GetFieldCount() == 0 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No column definitions found for table '%s', layer not usable.", 
-                  pszTableName );
-        return CE_Failure;
-    }
-#endif
-
     sqlite3_finalize( hColStmt );
+
+/* -------------------------------------------------------------------- */
+/*      Set the geometry type if we know it.                            */
+/* -------------------------------------------------------------------- */
+    if( eGeomType != wkbUnknown )
+        poFeatureDefn->SetGeomType( eGeomType );
 
     return CE_None;
 }
@@ -174,37 +173,33 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 
 {
     int rc;
-    char *pszSQL;
+    CPLString osSQL;
 
     ClearStatement();
 
     iNextShapeId = 0;
 
     if( pszQuery != NULL )
-        pszSQL = CPLStrdup( 
-            CPLSPrintf( "SELECT _rowid_, * FROM '%s' WHERE %s", 
-                        poFeatureDefn->GetName(), 
-                        pszQuery ) );
+        osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE %s", 
+                      poFeatureDefn->GetName(), 
+                      pszQuery );
     else
-        pszSQL = CPLStrdup( CPLSPrintf( "SELECT _rowid_, * FROM '%s'", 
-				        poFeatureDefn->GetName() ) );
+        osSQL.Printf("SELECT _rowid_, * FROM '%s'", 
+                     poFeatureDefn->GetName() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
 	    	          &hStmt, NULL );
 
-    CPLDebug( "OGR_SQLITE", "prepare(%s) -> %p", pszSQL, hStmt );
     if( rc == SQLITE_OK )
     {
-        CPLFree( pszSQL );
     	return OGRERR_NONE;
     }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "sqlite3_prepare(%s):\n  %s", 
-                  pszSQL, sqlite3_errmsg(poDS->GetDB()) );
+                  osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
-        CPLFree( pszSQL );
         return OGRERR_FAILURE;
     }
 }
@@ -237,21 +232,20 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Setup explicit query statement to fetch the record we want.     */
 /* -------------------------------------------------------------------- */
-    const char *pszSQL;
+    CPLString osSQL;
     int rc;
 
     ClearStatement();
 
     iNextShapeId = nFeatureId;
 
-    pszSQL =
-        CPLSPrintf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %d", 
-                    poFeatureDefn->GetName(), 
-                    pszFIDColumn, nFeatureId );
+    osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %d", 
+                  poFeatureDefn->GetName(), 
+                  pszFIDColumn, (int) nFeatureId );
 
-    CPLDebug( "OGR_SQLITE", "exec(%s)", pszSQL );
+    CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    rc = sqlite3_prepare( poDS->GetDB(), pszSQL, strlen(pszSQL), 
+    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(), 
 	    	          &hStmt, NULL );
 
 /* -------------------------------------------------------------------- */
@@ -321,7 +315,7 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != NULL && pszGeomColumn != NULL )
+    if( m_poFilterGeom != NULL && osGeomColumn.size() != 0 )
         return OGRSQLiteLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */
@@ -470,8 +464,17 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( poFeatureDefn->GetGeomType() != wkbNone )
     {
-        strcat( pszOldFieldList, ", WKT_GEOMETRY" );
-        strcat( pszNewFieldList, ", WKT_GEOMETRY VARCHAR" );
+        strcat( pszOldFieldList, "," );
+        strcat( pszNewFieldList, "," );
+
+        strcat( pszOldFieldList, osGeomColumn );
+        strcat( pszNewFieldList, osGeomColumn );
+
+        if( EQUAL(osGeomFormat,"WKB") )
+            strcat( pszNewFieldList, " BLOB" );
+        else
+            strcat( pszNewFieldList, " VARCHAR" );
+
         iNextOrdinal++;
     }
 
@@ -661,7 +664,7 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to delete old feature with FID %d failed.\n%s", 
-                  poFeature->GetFID(), pszErrMsg );
+                  (int) poFeature->GetFID(), pszErrMsg );
         return OGRERR_FAILURE;
     }
     
@@ -678,8 +681,9 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
 {
-    std::string    oCommand;
-    std::string    oValues;
+    sqlite3 *hDB = poDS->GetDB();
+    CPLString      osCommand;
+    CPLString      osValues;
     int            bNeedComma = FALSE;
 
     ResetReading();
@@ -687,7 +691,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    oCommand += CPLSPrintf( "INSERT INTO '%s' (", poFeatureDefn->GetName() );
+    osCommand += CPLSPrintf( "INSERT INTO '%s' (", poFeatureDefn->GetName() );
 
 /* -------------------------------------------------------------------- */
 /*      Add FID if we have a cleartext FID column.                      */
@@ -695,32 +699,27 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     if( pszFIDColumn != NULL // && !EQUAL(pszFIDColumn,"OGC_FID") 
         && poFeature->GetFID() != OGRNullFID )
     {
-        oCommand += pszFIDColumn;
+        osCommand += pszFIDColumn;
 
-        oValues += CPLSPrintf( "%d", poFeature->GetFID() );
+        osValues += CPLSPrintf( "%d", poFeature->GetFID() );
         bNeedComma = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Add geometry.                                                   */
 /* -------------------------------------------------------------------- */
-    if( pszGeomColumn != NULL && poFeature->GetGeometryRef() != NULL )
+    if( osGeomColumn.size() != 0 && poFeature->GetGeometryRef() != NULL )
     {
-        char *pszWKT = NULL;
 
         if( bNeedComma )
         {
-            oCommand += ",";
-            oValues += ",";
+            osCommand += ",";
+            osValues += ",";
         }
 
-        oCommand += pszGeomColumn;
+        osCommand += osGeomColumn;
 
-        poFeature->GetGeometryRef()->exportToWkt( &pszWKT );
-        oValues += "'";
-        oValues += pszWKT;
-        oValues += "'";
-        CPLFree( pszWKT );
+        osValues += "?";
 
         bNeedComma = TRUE;
     }
@@ -739,22 +738,22 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
         if( bNeedComma )
         {
-            oCommand += ",";
-            oValues += ",";
+            osCommand += ",";
+            osValues += ",";
         }
 
-        oCommand += "'";
-        oCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-        oCommand += "'";
+        osCommand += "'";
+        osCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+        osCommand += "'";
 
         if( poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTBinary  )
         {
             int binaryCount = 0;
             GByte* binaryData = poFeature->GetFieldAsBinary( iField, &binaryCount );
             char* pszHexValue = CPLBinaryToHex( binaryCount, binaryData );
-            oValues += "X'";
-            oValues += pszHexValue;
-            oValues += "'";
+            osValues += "X'";
+            osValues += pszHexValue;
+            osValues += "'";
             CPLFree( pszHexValue );
         }
         else
@@ -765,17 +764,17 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             {
                 char *pszEscapedValue = 
                     CPLEscapeString( pszRawValue, -1, CPLES_SQL );
-                oValues += "'";
-                oValues += pszEscapedValue;
-                oValues += "'";
+                osValues += "'";
+                osValues += pszEscapedValue;
+                osValues += "'";
 
                 CPLFree( pszEscapedValue );
             }
             else
             {
-                oValues += "'";
-                oValues += pszRawValue;
-                oValues += "'";
+                osValues += "'";
+                osValues += pszRawValue;
+                osValues += "'";
             }
         }
 
@@ -785,44 +784,88 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Merge final command.                                            */
 /* -------------------------------------------------------------------- */
-    oCommand += ") VALUES (";
-    oCommand += oValues;
-    oCommand += ")";
+    osCommand += ") VALUES (";
+    osCommand += osValues;
+    osCommand += ")";
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the statement.                                          */
+/* -------------------------------------------------------------------- */
+    int rc;
+    sqlite3_stmt *hInsertStmt;
+
+//    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+
+    rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "sqlite3_prepare(%s):\n  %s", 
+                  osCommand.c_str(), sqlite3_errmsg(hDB) );
+
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Bind the geometry                                               */
+/* -------------------------------------------------------------------- */
+    if( osGeomColumn.size() != 0 )
+    {
+        OGRGeometry *poGeom = poFeature->GetGeometryRef();
+        if( poGeom == NULL )
+        {
+            /* no binding */
+            rc = SQLITE_OK;
+        }
+        else if( EQUAL(osGeomFormat,"WKT") )
+        {
+            char *pszWKT = NULL;
+            poGeom->exportToWkt( &pszWKT );
+            rc = sqlite3_bind_text( hInsertStmt, 1, pszWKT, -1, CPLFree );
+        }
+        else if( EQUAL( osGeomFormat, "WKB" ) )
+        {
+            int nWKBLen = poGeom->WkbSize();
+            GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
+
+            poGeom->exportToWkb( wkbNDR, pabyWKB );
+            rc = sqlite3_bind_blob( hInsertStmt, 1, pabyWKB, nWKBLen, CPLFree );
+        }
+
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "sqlite3_bind_blob/text() failed:\n  %s", 
+                      sqlite3_errmsg(hDB) );
+            
+            return OGRERR_FAILURE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
-    int rc;
-    char *pszErrMsg = NULL;
+    rc = sqlite3_step( hInsertStmt );
 
-    CPLDebug( "OGR_SQLITE", "exec(%s)", oCommand.c_str() );
-
-    rc = sqlite3_exec( poDS->GetDB(), oCommand.c_str(), 
-                       NULL, NULL, &pszErrMsg );
-
-    if( rc != SQLITE_OK )
+    if( rc != SQLITE_OK && rc != SQLITE_DONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "CreateFeature() failed: %s",
-                  pszErrMsg );
-        sqlite3_free( pszErrMsg );
+                  "sqlite3_step() failed:\n  %s", 
+                  sqlite3_errmsg(hDB) );
         return OGRERR_FAILURE;
     }
 
-    const sqlite_int64 nFID = sqlite3_last_insert_rowid( poDS->GetDB() );
+/* -------------------------------------------------------------------- */
+/*      Capture the FID/rowid.                                          */
+/* -------------------------------------------------------------------- */
+    const sqlite_int64 nFID = sqlite3_last_insert_rowid( hDB );
     if(nFID > 0)
     {
         poFeature->SetFID( nFID );
     }
 
-
-/* -------------------------------------------------------------------- */
-/*      We likely ought to consider fetching the rowid/fid and          */
-/*      putting it back in the feature.                                 */
-/* -------------------------------------------------------------------- */
-    // todo 
+    sqlite3_finalize( hInsertStmt );
 
     return OGRERR_NONE;
 }
-
 
