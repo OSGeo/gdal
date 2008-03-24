@@ -45,13 +45,61 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     };
     ok ($@ =~ /Not enough data/, "create from WKb: $@");
     eval {
-	$g = Geo::OGR::Geometry->create(gml => "abc");
+	$g = Geo::OGR::Geometry->create(gml => "<gml:Point><gml:coordinates>1,1</gml:coordinates></gml:Point>");
     };
-    ok ($@ =~ /Unrecognised geom/, "create from GML: $@");
+    ok ($@ eq '', "create from GML: $@");
     eval {
 	$g = Geo::OGR::Geometry->create(GeoJSON => "abc");
     };
     ok ($@ =~ /GeoJSON parsing error/, "create from GeoJSON: $@");
+}
+
+{
+    # test list valued fields
+    my $d = Geo::OGR::FeatureDefn->new;
+    $d->Schema(Fields=>[
+			{ Name => 'ilist',
+			  Type => 'IntegerList',
+		      },
+			{ Name => 'rlist',
+			  Type => 'RealList',
+		      },
+			{ Name => 'slist',
+			  Type => 'StringList',
+		      },
+			{ Name => 'date',
+			  Type => 'Date',
+		      },
+			{ Name => 'time',
+			  Type => 'Time',
+		      },
+			{ Name => 'datetime',
+			  Type => 'DateTime',
+		      },
+			]
+	       );
+    my $f = Geo::OGR::Feature->new($d);
+    
+    $f->Row( ilist => [1,2,3],
+	     rlist => [1.1,2.2,3.3],
+	     slist => ['a','b','c'],
+	     date => [2008,3,23],
+	     time => [12,55,15],
+	     datetime => [2008,3,23,12,55,20],
+	     );
+    my @test;
+    @test = $f->GetField('ilist');
+    ok(is_deeply(\@test, [1,2,3]), 'integer list');
+    @test = $f->GetField('rlist');
+    ok(is_deeply(\@test, [1.1,2.2,3.3]), 'double list');
+    @test = $f->GetField('slist');
+    ok(is_deeply(\@test, ['a','b','c']), 'string list');
+    @test = $f->GetField('date');
+    ok(is_deeply(\@test, [2008,3,23]), 'date');
+    @test = $f->GetField('time');
+    ok(is_deeply(\@test, [12,55,15,0]), 'time');
+    @test = $f->Field('datetime');
+    ok(is_deeply(\@test, [2008,3,23,12,55,20,0]), 'datetime');
 }
 
 {
@@ -235,7 +283,7 @@ sub ogr_tests {
 	push @tested_drivers,$name;
 
 	my @field_types = (qw/Integer IntegerList Real RealList String 
-			   StringList WideString WideStringList Binary/);
+			   StringList Binary/);
 	
 	if ($name eq 'ESRI Shapefile') {
 	    @field_types = (qw/Integer Real String Integer/);
