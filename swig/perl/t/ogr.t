@@ -389,7 +389,7 @@ sub ogr_tests {
 		}
 		
 		$layer->CreateFeature($feature);
-		$layer->SyncToDisk;
+		#$layer->SyncToDisk;
 		
 	    }
 	    
