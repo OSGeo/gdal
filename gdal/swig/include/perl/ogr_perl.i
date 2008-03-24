@@ -62,27 +62,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 %extend OGRFeatureShadow {
 
-  const char* GetField(int id) {
-      if (!OGR_F_IsFieldSet(self, id))
-	  return NULL;
-      return (const char *) OGR_F_GetFieldAsString(self, id);
-  }
-
-  const char* GetField(const char* name) {
-    if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetField");
-    else {
-        int i = OGR_F_GetFieldIndex(self, name);
-        if (i == -1)
-            CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        else {
-            if (!OGR_F_IsFieldSet(self, i))
-		return NULL;
-	    return (const char *) OGR_F_GetFieldAsString(self, i);
-	}
-    }
-    return NULL;
-  }
+  %rename (_UnsetField) UnsetField;
+  %rename (_SetField) SetField;
 
 }
 
@@ -337,7 +318,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $s = $d->Schema;
 	    for my $field (@{$s->{Fields}}) {
 		my $n = $field->{Name};
-		$row{$n} = $f->GetField($n);
+		if ($f->FieldIsList($n)) {
+		    $row{$n} = [$f->GetField($n)];
+		} else {
+		    $row{$n} = $f->GetField($n);
+		}
 	    }
 	    $row{FID} = $f->GetFID;
 	    $row{Geometry} = $f->GetGeometry;
@@ -374,7 +359,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my @ret = ($f->GetFID, $f->GetGeometry);
 	    my $i = 0;
 	    for my $field (@{$s->{Fields}}) {
-		push @ret, $f->GetField($i++);
+		if ($f->FieldIsList($i)) {
+		    push @ret, [$f->GetField($i++)];
+		} else {
+		    push @ret, $f->GetField($i++);
+		}
 	    }
 	    return @ret;
 	}
@@ -439,6 +428,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::Feature;
 	use strict;
 	use vars qw /%GEOMETRIES/;
+	use Carp;
 	sub FID {
 	    my $self = shift;
 	    $self->SetFID($_[0]) if @_;
@@ -493,7 +483,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $s = $self->GetDefnRef->Schema;
 	    for my $field (@{$s->{Fields}}) {
 		my $n = $field->{Name};
-		$row{$n} = $self->GetField($n);
+		if (FieldIsList($self, $n)) {
+		    $row{$n} = [$self->GetField($n)];
+		} else {
+		    $row{$n} = $self->GetField($n);
+		}
 	    }
 	    $row{FID} = $self->GetFID;
 	    $row{Geometry} = $self->GetGeometry;
@@ -525,13 +519,138 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my @ret = ($self->GetFID, $self->GetGeometry);
 	    my $i = 0;
 	    for my $field (@{$s->{Fields}}) {
-		push @ret, $self->GetField($i++);
+		if (FieldIsList($self, $i)) {
+		    push @ret, [$self->GetField($i++)];
+		} else {
+		    push @ret, $self->GetField($i++);
+		}
 	    }
 	    return @ret;
 	}
 	sub GetFieldType {
 	    my($self, $field) = @_;
-	    return $Geo::OGR::Geometry::TYPE_INT2STRING{_GetFieldType($self, $field)};
+	    return $Geo::OGR::FieldDefn::TYPE_INT2STRING{_GetFieldType($self, $field)};
+	}
+	sub FieldIsList {
+	    my($self, $field) = @_;
+	    my $count = GetFieldCount($self);
+	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
+	    croak("no such field: $_[1]") if $field < 0 or $field >= $count;
+	    my $type = _GetFieldType($self, $field);
+	    return 1 if ($type == $Geo::OGR::OFTIntegerList or
+			 $type == $Geo::OGR::OFTRealList or
+			 $type == $Geo::OGR::OFTStringList or
+			 $type == $Geo::OGR::OFTDate or
+			 $type == $Geo::OGR::OFTTime or
+			 $type == $Geo::OGR::OFTDateTime);
+	    return 0;
+	}
+	sub GetField {
+	    my($self, $field) = @_;
+	    my $count = GetFieldCount($self);
+	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
+	    croak("no such field: $_[1]") if $field < 0 or $field >= $count;
+	    return undef unless IsFieldSet($self, $field);
+	    my $type = _GetFieldType($self, $field);
+	    if ($type == $Geo::OGR::OFTInteger) {
+		return GetFieldAsInteger($self, $field);
+	    }
+	    if ($type == $Geo::OGR::OFTReal) {
+		return GetFieldAsDouble($self, $field);
+	    }
+	    if ($type == $Geo::OGR::OFTString) {
+		return GetFieldAsString($self, $field);
+	    }
+	    if ($type == $Geo::OGR::OFTIntegerList) {
+		my $ret = GetFieldAsIntegerList($self, $field);
+		return @$ret;
+	    } 
+	    if ($type == $Geo::OGR::OFTRealList) {
+		my $ret = GetFieldAsDoubleList($self, $field);
+		return @$ret;
+	    }
+	    if ($type == $Geo::OGR::OFTStringList) {
+		my $ret = GetFieldAsStringList($self, $field);
+		return @$ret;
+	    }
+	    if ($type == $Geo::OGR::OFTBinary) {
+		return GetFieldAsString($self, $field);
+	    }
+	    if ($type == $Geo::OGR::OFTDate) {
+		my @ret = GetFieldAsDateTime($self, $field);
+		# year, month, day, hour, minute, second, timezone
+		return @ret[0..2];
+	    }
+	    if ($type == $Geo::OGR::OFTTime) {
+		my @ret = GetFieldAsDateTime($self, $field);
+		return @ret[3..6];
+	    }
+	    if ($type == $Geo::OGR::OFTDateTime) {
+		return GetFieldAsDateTime($self, $field);
+	    }
+	    carp "unknown/unsupported field type: $type";
+	}
+	sub UnsetField {
+	    my($self, $field) = @_;
+	    my $type = _GetFieldType($self, $field);
+	    my $count = GetFieldCount($self);
+	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
+	    croak("no such field: $_[1]") if $field < 0 or $field >= $count;
+	    _UnsetField($self, $field);
+	}
+	sub SetField {
+	    my $self = shift;
+	    my $field = $_[0];
+	    my $count = GetFieldCount($self);
+	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
+	    croak("no such field: $_[0]") if $field < 0 or $field >= $count;
+	    shift;
+	    if (@_ == 0 or !defined($_[0])) {
+		_UnsetField($self, $field);
+		return;
+	    }
+	    my $list = ref($_[0]) ? $_[0] : [@_];
+	    my $type = _GetFieldType($self, $field);
+	    if ($type == $Geo::OGR::OFTInteger or 
+		$type == $Geo::OGR::OFTReal or 
+		$type == $Geo::OGR::OFTString or
+		$type == $Geo::OGR::OFTBinary) 
+	    {
+		_SetField($self, $field, $_[0]);
+	    } 
+	    elsif ($type == $Geo::OGR::OFTIntegerList) {
+		SetFieldIntegerList($self, $field, $list);
+	    } 
+	    elsif ($type == $Geo::OGR::OFTRealList) {
+		SetFieldDoubleList($self, $field, $list);
+	    } 
+	    elsif ($type == $Geo::OGR::OFTStringList) {
+		SetFieldStringList($self, $field, $list);
+	    } 
+	    elsif ($type == $Geo::OGR::OFTDate) {
+		# year, month, day, hour, minute, second, timezone
+		for my $i (0..6) {
+		    $list->[$i] = 0 unless defined $list->[$i];
+		}
+		_SetField($self, $field, @$list[0..6]);
+	    } 
+	    elsif ($type == $Geo::OGR::OFTTime) {
+		$list->[3] = 0 unless defined $list->[3];
+		_SetField($self, $field, 0, 0, 0, @$list[0..3]);
+	    } 
+	    elsif ($type == $Geo::OGR::OFTDateTime) {
+		$list->[6] = 0 unless defined $list->[6];
+		_SetField($self, $field, @$list[0..6]);
+	    } 
+	    else {
+		carp "unknown/unsupported field type: $type";
+	    }
+	}
+	sub Field {
+	    my $self = shift;
+	    my $field = shift;
+	    $self->SetField($field, @_) if @_;
+	    $self->GetField($field);
 	}
 	sub Geometry {
 	    my $self = shift;
@@ -545,7 +664,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub GetGeometry {
 	    my $self = shift;
 	    my $geom = GetGeometryRef($self);
-	    $GEOMETRIES{tied(%$geom)} = $self;
+	    $GEOMETRIES{tied(%$geom)} = $self if $geom;
 	    return $geom;
 	}
 
