@@ -182,7 +182,8 @@ class GTiffDataset : public GDALPamDataset
     virtual void   *GetInternalHandle( const char * );
 
     // only needed by createcopy and close code.
-    static void	    WriteMetadata( GDALDataset *, TIFF *, int, const char * );
+    static void	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
+                                   const char * );
     static void	    WriteNoDataValue( TIFF *, double );
 
     static TIFF *   CreateLL( const char * pszFilename,
@@ -1818,7 +1819,7 @@ GTiffDataset::~GTiffDataset()
     if( GetAccess() == GA_Update && bBase )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile );
+            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription() );
         
         if( bNewDataset || bGeoTIFFInfoChanged )
             WriteGeoTIFFInfo();
@@ -2028,7 +2029,7 @@ void GTiffDataset::Crystalize()
     if( !bCrystalized )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile );
+            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription() );
 
         bCrystalized = TRUE;
 
@@ -2582,6 +2583,9 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         char **papszMD = poMDMD->GetMetadata( papszDomainList[iDomain] );
         int iItem;
 
+        if( EQUAL(papszDomainList[iDomain], "RPC") )
+            continue; // handled elsewhere
+
 /* -------------------------------------------------------------------- */
 /*      Process each item in this domain.                               */
 /* -------------------------------------------------------------------- */
@@ -2637,7 +2641,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 
 void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
                                   int bSrcIsGeoTIFF,
-                                  const char *pszProfile )
+                                  const char *pszProfile,
+                                  const char *pszTIFFFilename )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2662,6 +2667,24 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 
             WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, 0, pszProfile );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle RPC data written to an RPB file.                         */
+/* -------------------------------------------------------------------- */
+    char **papszRPCMD = poSrcDS->GetMetadata("RPC");
+    if( papszRPCMD != NULL )
+    {
+        GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle metadata data written to an IMD file.                    */
+/* -------------------------------------------------------------------- */
+    char **papszIMDMD = poSrcDS->GetMetadata("IMD");
+    if( papszIMDMD != NULL )
+    {
+        GDALWriteIMDFile( pszTIFFFilename, papszIMDMD );
     }
 
 /* -------------------------------------------------------------------- */
@@ -3621,6 +3644,30 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     bMetadataChanged = FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Check for RPC metadata in an RPB file.                          */
+/* -------------------------------------------------------------------- */
+    char **papszRPCMD = GDALLoadRPBFile( GetDescription(), NULL );
+
+    if( papszRPCMD != NULL )
+    {
+        oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
+        CSLDestroy( papszRPCMD );
+        bMetadataChanged = FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for RPC metadata in an RPB file.                          */
+/* -------------------------------------------------------------------- */
+    char **papszIMDMD = GDALLoadIMDFile( GetDescription(), NULL );
+
+    if( papszIMDMD != NULL )
+    {
+        oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
+        CSLDestroy( papszIMDMD );
+        bMetadataChanged = FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for NODATA                                                */
 /* -------------------------------------------------------------------- */
     if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
@@ -4432,7 +4479,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Transfer some TIFF specific metadata, if available.  Should     */
 /*      we push this into .pam if we are avoiding GDAL tags?            */
 /* -------------------------------------------------------------------- */
-    GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE, pszProfile );
+    GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE, pszProfile,
+                                 pszFilename );
 
 /* -------------------------------------------------------------------- */
 /* 	Write NoData value, if exist.                                   */
