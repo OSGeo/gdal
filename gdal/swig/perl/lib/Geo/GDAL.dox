@@ -231,12 +231,12 @@
 
 ## @fn Geo::GDAL::Dataset Open($name, $access='ReadOnly')
 # @param name
-# @param access
+# @param access either 'ReadOnly' or 'Update'
 # @return a new Geo::GDAL::Dataset object
 
 ## @fn Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
 # @param name
-# @param access either ReadOnly or Update
+# @param access either 'ReadOnly' or 'Update'
 # @return a new Geo::GDAL::Dataset object
 
 ## @fn $GetDataTypeName($GDALDataType)
@@ -342,25 +342,25 @@
 ## @method $CreationDataTypes()
 # @return
 
-## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
+## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \%options = undef)
 # @brief Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
 # @param ysize
 # @param bands
-# @param type
-# @param options
+# @param type one of Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64
+# @param options an anonymous hash of driver specific parameters
 # @return a new Geo::GDAL::Dataset object
 
 ## @method Geo::GDAL::Dataset CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
 # @brief An alias to the "CreateDataset" method.
 
-## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \@options = undef)
+## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \%options = undef)
 # @brief Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
 # @param name
 # @param src a Geo::GDAL::Dataset object
 # @param strict
-# @param options
+# @param options an anonymous hash of driver specific parameters
 # @return a new Geo::GDAL::Dataset object 
 
 ## @method Geo::GDAL::Dataset CreateCopy($name, $src, $strict = 1, \@options = undef)
@@ -455,19 +455,25 @@
 
 ## @method $Projection($projection)
 # Get or set the projection.
-# @param projection [optional]
-# @return the projection
+# @param projection [optional] as WKT
+# @return the projection as WKT
 
 ## @method $GetProjection()
-# @return the projection
+# @return the projection as WKT
 
 ## @method $GetProjectionRef()
-# @return a string
+# @return the projection as WKT
 
 ## @method $SetProjection($proj)
-# @param proj a string
+# @param proj projection as WKT
 
 ## @method @GeoTransform(@geo_transform)
+# Transformation from pixel coordinates (x,y) to projection
+# coordinates (Xp, Yp)
+# \code
+# Xp = geo_transform[0] + x*geo_transform[1] + y*geo_transform[2]
+# Yp = geo_transform[3] + x*geo_transform[4] + y*geo_transform[5]
+# \endcode
 # @param geo_transform [optional]
 
 ## @method \@GetGeoTransform()
@@ -556,6 +562,10 @@
 # @return ($BlockXSize, $BlockYSize)
 
 ## @method ColorInterpretation($color_interpretation)
+# Color interpretation is currently one of Undefined GrayIndex
+# PaletteIndex RedBand GreenBand BlueBand AlphaBand HueBand
+# SaturationBand LightnessBand CyanBand MagentaBand YellowBand
+# BlackBand
 # @param color_interpretation [optional] new color interpretation
 # @return color interpretation
 
@@ -615,7 +625,8 @@
 ## @method Fill($real_fill, $imag_fill = 0.0)
 
 ## @method WriteTile($data, $xoff = 0, $yoff = 0)
-# @param data a two-dimensional Perl array
+# @param data a two-dimensional Perl array (a pixel at x,y, when up
+# left pixel is 0,0 is $data->[$x][$y])
 # @param xoff
 # @param yoff
 
