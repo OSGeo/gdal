@@ -497,6 +497,14 @@ int CPL_DLL CPL_STDCALL GDALLoadTabFile( const char *, double *, char **,
                                          int *, GDAL_GCP ** );
 int CPL_DLL CPL_STDCALL GDALReadTabFile( const char *, double *, char **,
                                          int *, GDAL_GCP ** );
+char CPL_DLL ** CPL_STDCALL GDALLoadRPBFile( const char *pszFilename, 
+                                             char **papszSiblingFiles );
+CPLErr CPL_DLL CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, 
+                                             char **papszMD );
+char CPL_DLL ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename, 
+                                             char **papszSiblingFiles );
+CPLErr CPL_DLL CPL_STDCALL GDALWriteIMDFile( const char *pszFilename, 
+                                             char **papszMD );
 
 const char CPL_DLL * CPL_STDCALL GDALDecToDMS( double, const char *, int );
 double CPL_DLL CPL_STDCALL GDALPackedDMSToDec( double );

@@ -14,7 +14,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o \
 	cpl_strtod.o cpl_path.o cpl_csv.o cpl_findfile.o cpl_minixml.o \
 	cpl_multiproc.o cpl_list.o cpl_getexecpath.o cplstring.o \
 	cpl_vsil_win32.o cpl_vsisimple.o cpl_vsil.o cpl_vsi_mem.o \
-	cpl_vsil_unix_stdio_64.o cpl_http.o cpl_hash_set.o
+	cpl_vsil_unix_stdio_64.o cpl_http.o cpl_hash_set.o cplkeywordparser.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
