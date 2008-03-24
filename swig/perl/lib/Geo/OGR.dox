@@ -605,7 +605,7 @@
 # @param param the index or the name of the field
 # @return a new Geo::OGR::FieldDefn object
 
-## @method $GetField($field)
+## @method @GetField($field)
 # @param field the index or the name of the field
 # @return the value of the field
 
@@ -632,9 +632,12 @@
 ## @method UnsetField($field)
 # @param field the index or the name of the field
 
-## @method SetField($field, $value)
+## @method SetField($field, @value)
 # @param field the index or the name of the field
-# @param value
+# @param value is a string, integer, double, a list (year, month,
+# day), a list (hour, minute, second, tzflag), a list (year, month,
+# day, hour, minute, second, tzflag), or a list of integers, doubles,
+# or strings.
 
 ## @method SetFrom($other, $forgiving = 1)
 # @param other a Geo::OGR::Feature object
@@ -762,12 +765,14 @@
 # @return the name in non-void context
 
 ## @method $Type($type)
-# @param type [optional] one of field types
+# @param type [optional] one of field types: Integer, IntegerList, Real,
+# RealList, String, StringList, WideString, WideStringList, Binary, Date,
+# Time, or DateTime (wide strings are not really supported yet)
 # @return one of field types in non-void context
 
 ## @method $Justify($justify)
 # Get and/or set the justification
-# @param justify [optional] as string
+# @param justify [optional] as string: Undefined, Left, or Right
 # @return one of Undefined Left Right in non-void context
 
 ## @method $Width($width)
