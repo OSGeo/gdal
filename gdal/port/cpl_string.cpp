@@ -1050,6 +1050,43 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
     return NULL;
 }
 
+/************************************************************************/
+/*                            CPLFindName()                             */
+/************************************************************************/
+
+/**
+ * Find StringList entry with given key name.
+ *
+ * @param papszStrList the string list to search.
+ * @param pszKey the key value to look for (case insensitive).
+ *
+ * @return -1 on failure or the list index of the first occurance 
+ * matching the given key.
+ */
+
+int CSLFindName(char **papszStrList, const char *pszName)
+{
+    size_t nLen;
+    int    iIndex = 0;
+
+    if (papszStrList == NULL || pszName == NULL)
+        return -1;
+
+    nLen = strlen(pszName);
+    while(*papszStrList != NULL)
+    {
+        if (EQUALN(*papszStrList, pszName, nLen)
+            && ( (*papszStrList)[nLen] == '=' || 
+                 (*papszStrList)[nLen] == ':' ) )
+        {
+            return iIndex;
+        }
+        iIndex++;
+        papszStrList++;
+    }
+    return -1;
+}
+
 /**********************************************************************
  *                       CPLParseNameValue()
  **********************************************************************/
