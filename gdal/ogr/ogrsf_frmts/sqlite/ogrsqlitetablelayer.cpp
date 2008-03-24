@@ -796,7 +796,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 
 //    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
 
-    rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
+    rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
