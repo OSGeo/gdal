@@ -129,6 +129,18 @@
  *
  */
 
+%fragment("CreateArrayFromIntArray","header") %{
+static SV *
+CreateArrayFromIntArray( int *first, unsigned int size ) {
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  for( unsigned int i=0; i<size; i++ ) {
+    av_store(av,i,newSViv(*first));
+    ++first;
+  }
+  return newRV_noinc((SV*)av);
+}
+%}
+
 %fragment("CreateArrayFromDoubleArray","header") %{
 static SV *
 CreateArrayFromDoubleArray( double *first, unsigned int size ) {
@@ -140,6 +152,56 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
   return newRV_noinc((SV*)av);
 }
 %}
+
+%fragment("CreateArrayFromStringArray","header") %{
+static SV *
+CreateArrayFromStringArray( char **first ) {
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  for( unsigned int i = 0; *first != NULL; i++ ) {
+    av_store(av,i,newSVpv(*first, strlen(*first)));
+    ++first;
+  }
+  return newRV_noinc((SV*)av);
+}
+%}
+
+%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const int **pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromIntArray") (int *nLen, const int **pList)
+{
+  /* %typemap(argout) (int *nLen, const int **pList) */
+  $result = CreateArrayFromIntArray( *($2), *($1) );
+  argvi++;
+}
+
+%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const double **pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromDoubleArray") (int *nLen, const double **pList)
+{
+  /* %typemap(argout) (int *nLen, const double **pList) */
+  $result = CreateArrayFromDoubleArray( *($2), *($1) );
+  argvi++;
+}
+
+%typemap(in,numinputs=0) (char ***pList) (char **pList)
+{
+  /* %typemap(in,numinputs=0) (char ***pList) */
+  $1 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromStringArray") (char ***pList)
+{
+  /* %typemap(argout) (char ***pList) */
+  $result = CreateArrayFromStringArray( *($1) );
+  argvi++;
+}
 
 %typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
@@ -223,6 +285,24 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
     /* %typemap(freearg) (int nList, double* pList) */
     if ($2)
 	free((void*) $2);
+}
+
+%typemap(in) (char **pList)
+{
+    /* %typemap(in) (char **pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+	SWIG_croak("expected a reference to an array");
+    AV *av = (AV*)(SvRV($input));
+    for (int i = 0; i < av_len(av)+1; i++) {
+	char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+	$1 = CSLAddString( $1, pszItem );
+    }
+}
+%typemap(freearg) (char **pList)
+{
+    /* %typemap(freearg) (char **pList) */
+    if ($1)
+	CSLDestroy( $1 );
 }
 
 %typemap(in,numinputs=1) (int defined, double value)
@@ -439,13 +519,27 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
 %typemap(in) char **options
 {
     /* %typemap(in) char **options */
-    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-	SWIG_croak("expected a reference to an array");
-    AV *av = (AV*)(SvRV($input));
-    for (int i = 0; i < av_len(av)+1; i++) {
-	char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
-	$1 = CSLAddString( $1, pszItem );
-    }
+    if (SvROK($input)) {
+	if (SvTYPE(SvRV($input))==SVt_PVAV) {
+	    AV *av = (AV*)(SvRV($input));
+	    for (int i = 0; i < av_len(av)+1; i++) {
+		char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+		$1 = CSLAddString( $1, pszItem );
+	    }
+	} else if (SvTYPE(SvRV($input))==SVt_PVHV) {
+	    HV *hv = (HV*)SvRV($input);
+	    SV *sv;
+	    char *key;
+	    I32 klen;
+	    $1 = NULL;
+	    hv_iterinit(hv);
+	    while(sv = hv_iternextsv(hv,&key,&klen)) {
+		$1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
+	    }
+	} else
+	    SWIG_croak("'options' is not a reference to an array or hash");
+    } else
+	SWIG_croak("'options' is not a reference");   
 }
 %typemap(freearg) char **options
 {
