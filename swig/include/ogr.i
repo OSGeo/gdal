@@ -642,6 +642,7 @@ public:
     return (const char *) OGR_F_GetFieldAsString(self, id);
   }
 
+#ifndef SWIGPERL
   const char* GetFieldAsString(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -650,6 +651,7 @@ public:
 	  return (const char *) OGR_F_GetFieldAsString(self, i);
       return NULL;
   }
+#endif
   /* ------------------------------------------- */
 
   /* ---- GetFieldAsInteger -------------------- */
@@ -658,6 +660,7 @@ public:
     return OGR_F_GetFieldAsInteger(self, id);
   }
 
+#ifndef SWIGPERL
   int GetFieldAsInteger(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -666,6 +669,7 @@ public:
 	  return OGR_F_GetFieldAsInteger(self, i);
       return 0;
   }
+#endif
   /* ------------------------------------------- */  
 
   /* ---- GetFieldAsDouble --------------------- */
@@ -674,6 +678,7 @@ public:
     return OGR_F_GetFieldAsDouble(self, id);
   }
 
+#ifndef SWIGPERL
   double GetFieldAsDouble(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -682,9 +687,30 @@ public:
 	  return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
+#endif
   /* ------------------------------------------- */  
 
+  %apply (int *OUTPUT) {(int *)};
+  void GetFieldAsDateTime(int id, int *pnYear, int *pnMonth, int *pnDay,
+			  int *pnHour, int *pnMinute, int *pnSecond,
+			  int *pnTZFlag) {
+      OGR_F_GetFieldAsDateTime(self, id, pnYear, pnMonth, pnDay,
+			       pnHour, pnMinute, pnSecond,
+			       pnTZFlag);
+  }
+  %clear (int *);
 
+  void GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
+      *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
+  }
+
+  void GetFieldAsDoubleList(int id, int *nLen, const double **pList) {
+      *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
+  }
+
+  void GetFieldAsStringList(int id, char ***pList) {
+      *pList = OGR_F_GetFieldAsStringList(self, id);
+  }
   
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
@@ -721,7 +747,7 @@ public:
     OGR_F_UnsetField(self, id);
   }
 
-
+#ifndef SWIGPERL
   void UnsetField(const char* name) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -729,6 +755,7 @@ public:
       else
 	  OGR_F_UnsetField(self, i);
   }
+#endif
 
   /* ---- SetField ----------------------------- */
   
@@ -737,6 +764,7 @@ public:
     OGR_F_SetFieldString(self, id, value);
   }
 
+#ifndef SWIGPERL
   void SetField(const char* name, const char* value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -744,12 +772,14 @@ public:
       else
 	  OGR_F_SetFieldString(self, i, value);
   }
+#endif
   %clear (const char* value );
   
   void SetField(int id, int value) {
     OGR_F_SetFieldInteger(self, id, value);
   }
   
+#ifndef SWIGPERL
   void SetField(const char* name, int value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -757,11 +787,13 @@ public:
       else
 	  OGR_F_SetFieldInteger(self, i, value);
   }
+#endif
   
   void SetField(int id, double value) {
     OGR_F_SetFieldDouble(self, id, value);
   }
   
+#ifndef SWIGPERL
   void SetField(const char* name, double value) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
@@ -769,6 +801,7 @@ public:
       else
 	  OGR_F_SetFieldDouble(self, i, value);
   }
+#endif
   
   void SetField( int id, int year, int month, int day,
                              int hour, int minute, int second, 
@@ -777,7 +810,8 @@ public:
                              hour, minute, second, 
                              tzflag);
   }
-  
+
+#ifndef SWIGPERL  
   void SetField(const char* name, int year, int month, int day,
                              int hour, int minute, int second, 
                              int tzflag ) {
@@ -788,6 +822,19 @@ public:
 	  OGR_F_SetFieldDateTime(self, i, year, month, day,
 				 hour, minute, second, 
 				 tzflag);
+  }
+#endif
+
+  void SetFieldIntegerList(int id, int nList, int *pList) {
+      OGR_F_SetFieldIntegerList(self, id, nList, pList);
+  }
+
+  void SetFieldDoubleList(int id, int nList, double *pList) {
+      OGR_F_SetFieldDoubleList(self, id, nList, pList);
+  }
+
+  void SetFieldStringList(int id, char **pList) {
+      OGR_F_SetFieldStringList(self, id, pList);
   }
 
   /* ------------------------------------------- */  
