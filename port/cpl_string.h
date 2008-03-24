@@ -88,6 +88,7 @@ char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
 int CPL_DLL CSLFindString( char **, const char * );
 int CPL_DLL CSLPartialFindString( char **papszHaystack, 
 	const char * pszNeedle );
+int CPL_DLL CSLFindName(char **papszStrList, const char *pszName);
 int CPL_DLL CSLTestBoolean( const char *pszValue );
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey, 
                              int bDefault );
