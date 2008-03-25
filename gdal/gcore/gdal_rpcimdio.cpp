@@ -55,8 +55,8 @@ static const char *apszRPBMap[] = {
     "SAMP_DEN_COEFF", "IMAGE.sampDenCoef",
     NULL,             NULL };
 
-char **GDALLoadRPBFile( const char *pszFilename,
-                        char **papszSiblingFiles )
+char **CPL_STDCALL GDALLoadRPBFile( const char *pszFilename,
+                                    char **papszSiblingFiles )
 
 {
 /* -------------------------------------------------------------------- */
@@ -159,7 +159,7 @@ char **GDALLoadRPBFile( const char *pszFilename,
 /*                          GDALWriteRPBFile()                          */
 /************************************************************************/
 
-CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
+CPLErr CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 
 {
     CPLString osRPBFilename = CPLResetExtension( pszFilename, "RPB" );
@@ -369,8 +369,8 @@ static int GDAL_IMD_AA2R( char ***ppapszIMD )
 /*                          GDALLoadIMDFile()                           */
 /************************************************************************/
 
-char **GDALLoadIMDFile( const char *pszFilename,
-                        char **papszSiblingFiles )
+char ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename,
+                                     char **papszSiblingFiles )
 
 {
 /* -------------------------------------------------------------------- */
@@ -465,7 +465,7 @@ static void GDALWriteIMDMultiLine( FILE *fp, const char *pszValue )
 /*                          GDALWriteIMDFile()                          */
 /************************************************************************/
 
-CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
+CPLErr CPL_STDCALL GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 
 {
     CPLString osRPBFilename = CPLResetExtension( pszFilename, "IMD" );
