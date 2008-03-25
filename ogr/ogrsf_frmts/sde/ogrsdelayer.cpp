@@ -1213,8 +1213,6 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
             }
         }
         
-        CPLAssert( iCurPoint-1 == nPoints );
-        
         nSDEErr = SE_shape_generate_polygon( nPoints, 1, NULL, pasPoints,
                                              panfZcoords, NULL, *phShape );
         
