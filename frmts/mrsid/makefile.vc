@@ -1,6 +1,8 @@
 
 OBJ	=	mrsiddataset.obj mrsidstream.obj
 
+PLUGIN_DLL =	gdal_MrSID.dll
+
 EXTRAFLAGS = 	$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
 
 GDAL_ROOT	=	..\..
@@ -13,15 +15,19 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
 
 
-plugin:	gdal_MrSID.dll
+plugin:	$(PLUGIN_DLL)
 
-gdal_MrSID.dll:	$(OBJ)
-	link /dll /out:gdal_MrSID.dll $(OBJ) \
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll /out:$(PLUGIN_DLL) $(OBJ) \
 		$(GDAL_ROOT)/gdal_i.lib $(MRSID_LIB) $(GEOTIFF_LIB)
-	if exist gdal_MrSID.dll.manifest mt -manifest gdal_MrSID.dll.manifest -outputresource:gdal_MrSID.dll;2
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
-
-
+plugin-install:
+	-mkdir $(BINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(BINDIR)
 
