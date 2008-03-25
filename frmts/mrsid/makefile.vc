@@ -28,6 +28,6 @@ $(PLUGIN_DLL):	$(OBJ)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 plugin-install:
-	-mkdir $(BINDIR)
-	$(INSTALL) $(PLUGIN_DLL) $(BINDIR)
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
 
