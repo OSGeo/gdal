@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gdal_misc.cpp 13527 2008-01-14 09:07:44Z dron $
+ * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Functions for reading RPC and IMD formats, and normalizing.
@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "cplkeywordparser.h"
 
-CPL_CVSID("$Id: gdal_misc.cpp 13527 2008-01-14 09:07:44Z dron $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          GDALLoadRPBFile()                           */
