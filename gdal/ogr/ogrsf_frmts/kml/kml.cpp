@@ -166,14 +166,6 @@ void KML::checkValidity()
                         (int)XML_GetCurrentLineNumber(oParser),
                         (int)XML_GetCurrentColumnNumber(oParser));
             }
-            else
-            {
-                CPLDebug("KML",
-                        "XML parsing of file failed : %s at line %d, column %d",
-                        XML_ErrorString(XML_GetErrorCode(oParser)),
-                        (int)XML_GetCurrentLineNumber(oParser),
-                        (int)XML_GetCurrentColumnNumber(oParser));
-            }
 
             XML_ParserFree(oParser);
             VSIRewindL(pKMLFile_);
@@ -368,7 +360,9 @@ bool KML::isValid()
 {
     checkValidity();
 
-    CPLDebug("KML", "Valid: %d Version: %s", validity == KML_VALIDITY_VALID, sVersion_.c_str());
+    if( validity == KML_VALIDITY_VALID )
+        CPLDebug("KML", "Valid: %d Version: %s", 
+                 validity == KML_VALIDITY_VALID, sVersion_.c_str());
 
     return validity == KML_VALIDITY_VALID;
 }
