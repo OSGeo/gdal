@@ -264,14 +264,6 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
                         (int)XML_GetCurrentLineNumber(oParser),
                         (int)XML_GetCurrentColumnNumber(oParser));
             }
-            else
-            {
-                CPLDebug("GPX",
-                        "XML parsing of file failed : %s at line %d, column %d",
-                        XML_ErrorString(XML_GetErrorCode(oParser)),
-                        (int)XML_GetCurrentLineNumber(oParser),
-                        (int)XML_GetCurrentColumnNumber(oParser));
-            }
             break;
         }
         if (validity == GPX_VALIDITY_INVALID)
