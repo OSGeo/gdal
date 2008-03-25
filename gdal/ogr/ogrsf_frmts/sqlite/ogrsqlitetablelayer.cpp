@@ -82,7 +82,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     else
         osGeomColumn = pszGeomCol;
 
-    osGeomFormat = pszGeomFormat;
+    if( pszGeomFormat )
+        osGeomFormat = pszGeomFormat;
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
