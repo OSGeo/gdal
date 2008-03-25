@@ -560,7 +560,7 @@ void GDALDriverManager::AutoLoadDrivers()
         {
             char szPluginDir[sizeof(szExecPath)+50];
             strcpy( szPluginDir, CPLGetDirname( szExecPath ) );
-            strcat( szPluginDir, "\\gdalplugins\\" );
+            strcat( szPluginDir, "\\gdalplugins" );
             papszSearchPath = CSLAddString( papszSearchPath, szPluginDir );
         }
         else
