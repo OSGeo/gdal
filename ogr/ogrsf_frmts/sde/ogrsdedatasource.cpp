@@ -462,6 +462,9 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
     LONG nSDEErr;
+    char** paszTables;
+    LONG nCount;
+    char pszVersionName[SE_MAX_VERSION_LEN];
     
     nSDEErr = SE_layer_delete( hConnection, osLayerName.c_str(), osGeometryName.c_str());
     if( nSDEErr != SE_SUCCESS )
@@ -469,7 +472,39 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
         IssueSDEError( nSDEErr, "SE_layer_delete" );
         return OGRERR_FAILURE;
     }
+
+    nSDEErr = SE_registration_get_dependent_tables(hConnection, osLayerName.c_str(), &paszTables, &nCount);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_registration_get_dependent_tables" );
+        return OGRERR_FAILURE;
+    }
+
+    for (int i=0; i<nCount; i++) {
+        CPLDebug("OGR_SDE", "Dependent multiversion table: %s", paszTables[i]);
+    }
     
+    // if we still have dependent tables after deleting the layer, it is because the 
+    // table is multiversion.  We need to smash the table to single version before 
+    // deleting its registration.  If the user deletes the table from this version, 
+    // all other versions are gone too.
+    if (nCount) {
+        nSDEErr = SE_versioninfo_get_name(hVersion, pszVersionName);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_registration_make_single_version" );
+            return OGRERR_FAILURE;
+        }        
+        nSDEErr = SE_registration_make_single_version(hConnection, pszVersionName, osLayerName.c_str());
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_registration_make_single_version" );
+            return OGRERR_FAILURE;
+        }
+    }
+
+    SE_registration_free_dependent_tables(paszTables, &nCount);
+
     nSDEErr = SE_registration_delete( hConnection, osLayerName.c_str() );
     if( nSDEErr != SE_SUCCESS )
     {
