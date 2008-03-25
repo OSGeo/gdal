@@ -517,10 +517,11 @@ void GDALDriverManager::AutoSkipDrivers()
  * failing that to call GDALRegisterMe().
  *
  * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH
- * environment variable it set, it is taken to be a list of directories
- * to search separated by colons on unix, or semi-colons on Windows.  Otherwise
- * the /usr/local/lib/gdalplugins directory, and (if known) the lib/gdalplugins
- * subdirectory of the gdal home directory are searched. 
+ * environment variable it set, it is taken to be a list of directories to
+ * search separated by colons on UNIX, or semi-colons on Windows.  Otherwise
+ * the /usr/local/lib/gdalplugins directory, and (if known) the
+ * lib/gdalplugins subdirectory of the gdal home directory are searched on
+ * UNIX and $(BINDIR)\gdalplugins on Windows.
  */
 
 void GDALDriverManager::AutoLoadDrivers()
