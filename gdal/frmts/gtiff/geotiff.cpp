@@ -3646,25 +3646,31 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Check for RPC metadata in an RPB file.                          */
 /* -------------------------------------------------------------------- */
-    char **papszRPCMD = GDALLoadRPBFile( GetDescription(), NULL );
-
-    if( papszRPCMD != NULL )
+    if( bBaseIn )
     {
-        oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
-        CSLDestroy( papszRPCMD );
-        bMetadataChanged = FALSE;
+        char **papszRPCMD = GDALLoadRPBFile( GetDescription(), NULL );
+        
+        if( papszRPCMD != NULL )
+        {
+            oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
+            CSLDestroy( papszRPCMD );
+            bMetadataChanged = FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Check for RPC metadata in an RPB file.                          */
 /* -------------------------------------------------------------------- */
-    char **papszIMDMD = GDALLoadIMDFile( GetDescription(), NULL );
-
-    if( papszIMDMD != NULL )
+    if( bBaseIn )
     {
-        oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
-        CSLDestroy( papszIMDMD );
-        bMetadataChanged = FALSE;
+        char **papszIMDMD = GDALLoadIMDFile( GetDescription(), NULL );
+
+        if( papszIMDMD != NULL )
+        {
+            oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
+            CSLDestroy( papszIMDMD );
+            bMetadataChanged = FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
