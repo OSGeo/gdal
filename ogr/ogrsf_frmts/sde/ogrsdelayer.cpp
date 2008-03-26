@@ -277,6 +277,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
     }
 
     SE_table_free_descriptions( asColumnDefs );
+    SE_reginfo_free( hRegInfo );
 
     return TRUE;
 }
@@ -859,14 +860,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
                                           nSpecialCols + nAttributeCols,
                                           (const char **)papszInsertCols,
                                           pszWhere );
-//        LONG *fid;
-//        fid = (LONG*) CPLMalloc(1*sizeof(LONG));
-//        *fid = poFeature->GetFID();
-//        nSDEErr = SE_stream_update_row( hStream, poFeatureDefn->GetName(),
-//                                        fid,
-//                                        nSpecialCols + nAttributeCols,
-//                                       (const char **)papszInsertCols
-//                                        );
+
         pszMethod = "SE_stream_update_table";
     }
         
@@ -918,7 +912,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
             
             CSLDestroy( papszInsertCols );
             CPLFree( paiColToDefMap );
-            
+            SE_shape_free( hShape );
             return OGRERR_FAILURE;
         }
     }
@@ -1020,7 +1014,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
 
     CSLDestroy( papszInsertCols );
     CPLFree( paiColToDefMap );
-    
+    SE_shape_free(hShape);
     return OGRERR_NONE;
 }
 
