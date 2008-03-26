@@ -1,21 +1,31 @@
 
-OBJ	=	fitsdataset.obj
+OBJ		=	fitsdataset.obj
 
-EXTRAFLAGS = 	-I$(FITS_INC_DIR) -DFRMT_fits 
+PLUGIN_DLL 	=	gdal_FITS.dll
+
+EXTRAFLAGS 	= 	-I$(FITS_INC_DIR) 
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	xcopy /D  /Y *.obj ..\o
+	$(INSTALL) *.obj ..\o
 
 clean:
 	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
 
-plugin:	gdal_FITS.dll
+plugin:	$(PLUGIN_DLL)
 
-gdal_FITS.dll: $(OBJ)
-	link /dll /out:gdal_FITS.dll $(OBJ) \
-		$(GDALLIB) $(FITS_LIB)
-	if exist gdal_FITS.dll.manifest mt -manifest gdal_FITS.dll.manifest -outputresource:gdal_FITS.dll;2
+$(PLUGIN_DLL): $(OBJ)
+	link /dll /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(FITS_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+
