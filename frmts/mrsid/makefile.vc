@@ -1,16 +1,16 @@
 
-OBJ	=	mrsiddataset.obj mrsidstream.obj
+OBJ		=	mrsiddataset.obj mrsidstream.obj
 
-PLUGIN_DLL =	gdal_MrSID.dll
+PLUGIN_DLL 	=	gdal_MrSID.dll
 
-EXTRAFLAGS = 	$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
+EXTRAFLAGS 	= 	$(MRSID_INCLUDE) -I..\gtiff\libgeotiff $(MRSID_FLAGS)
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	xcopy /D  /Y *.obj ..\o
+	$(INSTALL) *.obj ..\o
 
 clean:
 	-del *.obj
@@ -18,7 +18,6 @@ clean:
 	-del *.exp
 	-del *.lib
 	-del *.manifest
-
 
 plugin:	$(PLUGIN_DLL)
 
