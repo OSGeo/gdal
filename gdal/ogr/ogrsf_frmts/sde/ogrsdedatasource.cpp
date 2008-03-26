@@ -864,6 +864,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     }
 
     SE_reginfo_free( hRegInfo );
+    SE_coordref_free( hCoordRef );
     
     
 /* -------------------------------------------------------------------- */
