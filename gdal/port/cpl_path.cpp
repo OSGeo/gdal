@@ -377,17 +377,20 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 /* -------------------------------------------------------------------- */
     strncpy( pszStaticResult, pszPath, CPL_PATH_BUF_SIZE );
     pszStaticResult[CPL_PATH_BUF_SIZE - 1] = '\0';
-    for( i = strlen(pszStaticResult) - 1; i > 0; i-- )
+    if (*pszStaticResult)
     {
-        if( pszStaticResult[i] == '.' )
+        for( i = strlen(pszStaticResult) - 1; i > 0; i-- )
         {
-            pszStaticResult[i] = '\0';
-            break;
-        }
+            if( pszStaticResult[i] == '.' )
+            {
+                pszStaticResult[i] = '\0';
+                break;
+            }
 
-        if( pszStaticResult[i] == '/' || pszStaticResult[i] == '\\' 
-            || pszStaticResult[i] == ':' )
-            break;
+            if( pszStaticResult[i] == '/' || pszStaticResult[i] == '\\' 
+                || pszStaticResult[i] == ':' )
+                break;
+        }
     }
 
 /* -------------------------------------------------------------------- */
