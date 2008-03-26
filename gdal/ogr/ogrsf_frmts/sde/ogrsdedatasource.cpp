@@ -579,7 +579,12 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     const char         *pszGeometryName;
     const char         *pszDbtuneKeyword;
     const char         *pszLayerDescription;
-    
+
+    pszExpectedFIDName = (char*) CPLMalloc(sizeof(char) * SE_MAX_COLUMN_LEN);
+    pszGeometryName = (char*) CPLMalloc(sizeof(char) * SE_MAX_COLUMN_LEN);
+    pszDbtuneKeyword = (char*) CPLMalloc(sizeof(char) * SE_MAX_CONFIG_KEYWORD_LEN);
+    pszLayerDescription = (char*) CPLMalloc(sizeof(char) * 1024);
+
     pszGeometryName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "SHAPE";
@@ -896,6 +901,11 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
         CPLRealloc( papoLayers,  sizeof(OGRSDELayer *) * (nLayers+1) );
     
     papoLayers[nLayers++] = poLayer;
+
+    CPLFree( (char*) pszExpectedFIDName );
+    CPLFree( (char*) pszGeometryName );
+    CPLFree( (char*) pszDbtuneKeyword );
+    CPLFree( (char*) pszLayerDescription );
 
     return poLayer;
 }
