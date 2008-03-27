@@ -1303,7 +1303,6 @@ else
       MRSID_LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
     fi
 
-    LIBS="$MRSID_LIBS $LIBS" 
   else
     HAVE_MRSID=no
     AC_MSG_RESULT([not found.])
@@ -1311,9 +1310,9 @@ else
   fi
 fi
 
-AC_SUBST(HAVE_MRSID,$HAVE_MRSID)
 AC_SUBST(MRSID_INCLUDE,$MRSID_INCLUDE)
 AC_SUBST(MRSID_FLAGS,$MRSID_FLAGS)
+AC_SUBST(MRSID_LIBS,$MRSID_LIBS)
 
 if test "$HAVE_MRSID" != "no" ; then
   CPPFLAGS="-D_REENTRANT $CPPFLAGS"
