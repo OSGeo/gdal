@@ -43,15 +43,15 @@ typedef enum			// Types of dataset:
 
 typedef enum			// Types of data products:
 {
-    GDAL_HDF4,			// HDF written by GDAL
-    EOS_GRID,                   // HDF-EOS Grid
-    EOS_SWATH,                  // HDF-EOS Swath
-    EOS_SWATH_GEOL,             // HDF-EOS Swath Geolocation Array
-    SEAWIFS_L1A,		// SeaWiFS Level-1A Data
-    SEAWIFS_L2,			// SeaWiFS Level-2 Data
-    SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
-    HYPERION_L1,                // Hyperion L1 Data Product
-    UNKNOWN
+    H4ST_GDAL,		        // HDF written by GDAL
+    H4ST_EOS_GRID,              // HDF-EOS Grid
+    H4ST_EOS_SWATH,             // HDF-EOS Swath
+    H4ST_EOS_SWATH_GEOL,        // HDF-EOS Swath Geolocation Array
+    H4ST_SEAWIFS_L1A,		// SeaWiFS Level-1A Data
+    H4ST_SEAWIFS_L2,		// SeaWiFS Level-2 Data
+    H4ST_SEAWIFS_L3,		// SeaWiFS Level-3 Standard Mapped Image
+    H4ST_HYPERION_L1,           // Hyperion L1 Data Product
+    H4ST_UNKNOWN
 } HDF4SubdatasetType;
 
 /************************************************************************/

@@ -345,7 +345,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       {
           switch ( poGDS->iSubdatasetType )
           {
-            case EOS_GRID:
+            case H4ST_EOS_GRID:
             {
                 int32   hGD;
 
@@ -399,8 +399,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
             break;
                     
-            case EOS_SWATH:
-            case EOS_SWATH_GEOL:
+            case H4ST_EOS_SWATH:
+            case H4ST_EOS_SWATH_GEOL:
             {
                 int32   hSW;
 
@@ -727,11 +727,11 @@ HDF4ImageDataset::~HDF4ImageDataset()
             case HDF4_EOS:
                 switch ( iSubdatasetType )
                 {
-                    case EOS_SWATH:
-                    case EOS_SWATH_GEOL:
+                    case H4ST_EOS_SWATH:
+                    case H4ST_EOS_SWATH_GEOL:
                         SWclose( hHDF4 );
                         break;
-                    case EOS_GRID:
+                    case H4ST_EOS_GRID:
                         GDclose( hHDF4 );
                     default:
                         break;
@@ -1424,7 +1424,7 @@ void HDF4ImageDataset::GetSwatAttrs( int32 hSW )
         pszAttrList = (char *)CPLMalloc( nStrBufSize + 1 );
         SWinqattrs( hSW, pszAttrList, &nStrBufSize );
 
-#if DEBUG
+#ifdef DEBUG
         CPLDebug( "HDF4Image", "List of attributes in swath %s: %s",
                   pszFieldName, pszAttrList );
 #endif
@@ -1535,7 +1535,7 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
 
         pszAttrList = (char *)CPLMalloc( nStrBufSize + 1 );
         GDinqattrs( hGD, pszAttrList, &nStrBufSize );
-#if DEBUG
+#ifdef DEBUG
         CPLDebug( "HDF4Image", "List of attributes in grid %s: %s",
                   pszFieldName, pszAttrList );
 #endif
@@ -1768,13 +1768,13 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                   pszSubdatasetName );
     }
 
-#if DEBUG
+#ifdef DEBUG
     else
     {
         char    *pszTmp;
         CPLDebug( "HDF4Image",
-                  "Number of geolocation fields in swath %s: %d",
-                  pszSubdatasetName, nDataFields );
+                  "Number of geolocation fields in swath %s: %ld",
+                  pszSubdatasetName, (long)nDataFields );
         CPLDebug( "HDF4Image",
                   "List of geolocation fields in swath %s: %s",
                   pszSubdatasetName, pszGeoList );
@@ -1790,70 +1790,78 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                                             CSLT_HONOURSTRINGS );
     // Read geolocation data
     nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
-    pszDimMaps = (char *)CPLMalloc( nStrBufSize + 1 );
-    paiOffset = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
-    memset( paiOffset, 0, nDimMaps * sizeof(int32) );
-    paiIncrement = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
-    memset( paiIncrement, 0, nDimMaps * sizeof(int32) );
-
-    *pszDimMaps = '\0';
-    if ( nDimMaps == 0 
-         || nDimMaps != SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement) )
+    if ( nDimMaps <= 0 )
     {
-        CPLDebug( "HDF4Image",
-                  "Can't get the list of geolocation maps in swath %s",
+        CPLDebug( "HDF4Image", "No geolocation maps in swath %s",
                   pszSubdatasetName );
     }
-
-#if DEBUG
     else
     {
-        char    *pszTmp;
-            
-        CPLDebug( "HDF4Image",
-                  "List of geolocation maps in swath %s: %s",
-                  pszSubdatasetName, pszDimMaps );
-        pszTmp = SPrintArray( GDT_Int32, paiOffset,
-                              nDimMaps, "," );
-        CPLDebug( "HDF4Image",
-                  "Geolocation map offsets: %s", pszTmp );
-        CPLFree( pszTmp );
-        pszTmp = SPrintArray( GDT_Int32, paiIncrement,
-                              nDimMaps, "," );
-        CPLDebug( "HDF4Image",
-                  "Geolocation map increments: %s", pszTmp );
-        CPLFree( pszTmp );
-    }
+        pszDimMaps = (char *)CPLMalloc( nStrBufSize + 1 );
+        paiOffset = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
+        memset( paiOffset, 0, nDimMaps * sizeof(int32) );
+        paiIncrement = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
+        memset( paiIncrement, 0, nDimMaps * sizeof(int32) );
+
+
+        *pszDimMaps = '\0';
+        if ( nDimMaps != SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement) )
+        {
+            CPLDebug( "HDF4Image",
+                      "Can't get the list of geolocation maps in swath %s",
+                      pszSubdatasetName );
+        }
+
+#ifdef DEBUG
+        else
+        {
+            char    *pszTmp;
+                
+            CPLDebug( "HDF4Image",
+                      "List of geolocation maps in swath %s: %s",
+                      pszSubdatasetName, pszDimMaps );
+            pszTmp = SPrintArray( GDT_Int32, paiOffset,
+                                  nDimMaps, "," );
+            CPLDebug( "HDF4Image",
+                      "Geolocation map offsets: %s", pszTmp );
+            CPLFree( pszTmp );
+            pszTmp = SPrintArray( GDT_Int32, paiIncrement,
+                                  nDimMaps, "," );
+            CPLDebug( "HDF4Image",
+                      "Geolocation map increments: %s", pszTmp );
+            CPLFree( pszTmp );
+        }
 #endif
 
-    char **papszDimMap;
+        char **papszDimMap;
 
-    papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
-                                      CSLT_HONOURSTRINGS );
-    CPLFree( pszDimMaps );
-    pszDimMaps = NULL;
+        papszDimMap = CSLTokenizeString2( pszDimMaps, ",",
+                                          CSLT_HONOURSTRINGS );
+        CPLFree( pszDimMaps );
+        pszDimMaps = NULL;
 
-    for ( i = 0; i < CSLCount(papszDimMap); i++ )
-    {
-        if ( strstr(papszDimMap[i], papszDimList[iXDim]) )
+        for ( i = 0; i < CSLCount(papszDimMap); i++ )
         {
-            strncpy( szPixel, papszDimList[iXDim], 8192 );
-            strncpy( szXGeo, papszDimMap[i], 8192 );
-            char *pszTemp = strchr( szXGeo, '/' );
-            if ( pszTemp )
-                *pszTemp = '\0';
+            if ( strstr(papszDimMap[i], papszDimList[iXDim]) )
+            {
+                strncpy( szPixel, papszDimList[iXDim], 8192 );
+                strncpy( szXGeo, papszDimMap[i], 8192 );
+                char *pszTemp = strchr( szXGeo, '/' );
+                if ( pszTemp )
+                    *pszTemp = '\0';
+            }
+            else if ( strstr(papszDimMap[i], papszDimList[iYDim]) )
+            {
+                strncpy( szLine, papszDimList[iYDim], 8192 );
+                strncpy( szYGeo, papszDimMap[i], 8192 );
+                char *pszTemp = strchr( szYGeo, '/' );
+                if ( pszTemp )
+                    *pszTemp = '\0';
+            }
         }
-        else if ( strstr(papszDimMap[i], papszDimList[iYDim]) )
-        {
-            strncpy( szLine, papszDimList[iYDim], 8192 );
-            strncpy( szYGeo, papszDimMap[i], 8192 );
-            char *pszTemp = strchr( szYGeo, '/' );
-            if ( pszTemp )
-                *pszTemp = '\0';
-        }
+        CSLDestroy( papszDimMap );
+        papszDimMap = NULL;
     }
-    CSLDestroy( papszDimMap );
-    papszDimMap = NULL;
 
     for ( i = 0; i < CSLCount(papszGeolocations); i++ )
     {
@@ -1864,7 +1872,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         papszGeoDimList = CSLTokenizeString2( szGeoDimList,
                                               ",", CSLT_HONOURSTRINGS );
 
-#if DEBUG
+#ifdef DEBUG
         CPLDebug( "HDF4Image",
                   "List of dimensions in geolocation field %s: %s",
                   papszGeolocations[i], szGeoDimList );
@@ -2045,7 +2053,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                 CSLFetchNameValue( papszLocalMetadata,
                                    pszEllipsoidLine );
 
-#if DEBUG
+#ifdef DEBUG
             CPLDebug( "HDF4Image",
                       "Projection %s=%s, parameters %s=%s, "
                       "zone %s=%s",
@@ -2184,7 +2192,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                                         (void *)((char *)pLatticeY
                                                  + iGeoOff*iLatticeDataSize))+0.5;
                 }
-                else
+                else if ( paiOffset && paiIncrement )
                 {
                     pasGCPList[iGCP].dfGCPPixel =
                         paiOffset[iPixelDim] +
@@ -2223,15 +2231,18 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         SetMetadataItem( "Y_DATASET", osWrk, "GEOLOCATION" );
         SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
 
-        osWrk.Printf( "%d", paiOffset[iPixelDim] );
-        SetMetadataItem( "PIXEL_OFFSET", osWrk, "GEOLOCATION" );
-        osWrk.Printf( "%d", paiIncrement[iPixelDim] );
-        SetMetadataItem( "PIXEL_STEP", osWrk, "GEOLOCATION" );
+        if ( paiOffset && paiIncrement )
+        {
+            osWrk.Printf( "%ld", (long)paiOffset[iPixelDim] );
+            SetMetadataItem( "PIXEL_OFFSET", osWrk, "GEOLOCATION" );
+            osWrk.Printf( "%ld", (long)paiIncrement[iPixelDim] );
+            SetMetadataItem( "PIXEL_STEP", osWrk, "GEOLOCATION" );
 
-        osWrk.Printf( "%d", paiOffset[iLineDim] );
-        SetMetadataItem( "LINE_OFFSET", osWrk, "GEOLOCATION" );
-        osWrk.Printf( "%d", paiIncrement[iLineDim] );
-        SetMetadataItem( "LINE_STEP", osWrk, "GEOLOCATION" );
+            osWrk.Printf( "%ld", (long)paiOffset[iLineDim] );
+            SetMetadataItem( "LINE_OFFSET", osWrk, "GEOLOCATION" );
+            osWrk.Printf( "%ld", (long)paiIncrement[iLineDim] );
+            SetMetadataItem( "LINE_STEP", osWrk, "GEOLOCATION" );
+        }
     }
                     
 /* -------------------------------------------------------------------- */
@@ -2305,19 +2316,19 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->iDatasetType = HDF4_UNKNOWN;
     
     if( EQUAL( papszSubdatasetName[1], "GDAL_HDF4" ) )
-        poDS->iSubdatasetType = GDAL_HDF4;
+        poDS->iSubdatasetType = H4ST_GDAL;
     else if( EQUAL( papszSubdatasetName[1], "EOS_GRID" ) )
-        poDS->iSubdatasetType = EOS_GRID;
+        poDS->iSubdatasetType = H4ST_EOS_GRID;
     else if( EQUAL( papszSubdatasetName[1], "EOS_SWATH" ) )
-        poDS->iSubdatasetType = EOS_SWATH;
+        poDS->iSubdatasetType = H4ST_EOS_SWATH;
     else if( EQUAL( papszSubdatasetName[1], "EOS_SWATH_GEOL" ) )
-        poDS->iSubdatasetType = EOS_SWATH_GEOL;
+        poDS->iSubdatasetType = H4ST_EOS_SWATH_GEOL;
     else if( EQUAL( papszSubdatasetName[1], "SEAWIFS_L3" ) )
-        poDS->iSubdatasetType= SEAWIFS_L3;
+        poDS->iSubdatasetType= H4ST_SEAWIFS_L3;
     else if( EQUAL( papszSubdatasetName[1], "HYPERION_L1" ) )
-        poDS->iSubdatasetType= HYPERION_L1;
+        poDS->iSubdatasetType= H4ST_HYPERION_L1;
     else
-        poDS->iSubdatasetType = UNKNOWN;
+        poDS->iSubdatasetType = H4ST_UNKNOWN;
 
     // Is our file still here?
     if ( !Hishdf( poDS->pszFilename ) )
@@ -2371,8 +2382,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  HDF-EOS Swath.                                                      */
 /* -------------------------------------------------------------------- */
-            case EOS_SWATH:
-            case EOS_SWATH_GEOL:
+            case H4ST_EOS_SWATH:
+            case H4ST_EOS_SWATH_GEOL:
             {
                 int32   hSW, nStrBufSize;
                 char    *pszDimList = NULL;
@@ -2410,14 +2421,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 pszDimList = (char *)CPLMalloc( nStrBufSize + 1 );
                 SWfieldinfo( hSW, poDS->pszFieldName, &poDS->iRank,
                              poDS->aiDimSizes, &poDS->iNumType, pszDimList );
-#if DEBUG
+#ifdef DEBUG
                 CPLDebug( "HDF4Image",
                           "List of dimensions in swath %s: %s",
                           poDS->pszFieldName, pszDimList );
 #endif
                 poDS->GetImageDimensions( pszDimList );
 
-#if DEBUG
+#ifdef DEBUG
                 CPLDebug( "HDF4Image",
                           "X dimension is %d, Y dimension is %d",
                           poDS->iXDim, poDS->iYDim );
@@ -2426,7 +2437,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Fetch metadata.                                                     */
 /* -------------------------------------------------------------------- */
-                if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
+                if( poDS->iSubdatasetType == H4ST_EOS_SWATH ) /* Not H4ST_EOS_SWATH_GEOL */
                     poDS->GetSwatAttrs( hSW );
 
 /* -------------------------------------------------------------------- */
@@ -2457,7 +2468,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Handle Geolocation processing.                                  */
 /* -------------------------------------------------------------------- */
-                if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
+                if( poDS->iSubdatasetType == H4ST_EOS_SWATH ) /* Not H4ST_SWATH_GEOL */
                 {
                     char **papszDimList =
                         CSLTokenizeString2( pszDimList, ",",
@@ -2481,7 +2492,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      HDF-EOS Grid.                                                   */
 /* -------------------------------------------------------------------- */
-            case EOS_GRID:
+            case H4ST_EOS_GRID:
             {
                 int32   hGD, iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
                 int32   nXSize, nYSize;
@@ -2503,7 +2514,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 GDfieldinfo( hGD, poDS->pszFieldName, &poDS->iRank,
                              poDS->aiDimSizes, &poDS->iNumType, szDimList );
-#if DEBUG
+#ifdef DEBUG
                 CPLDebug( "HDF4Image",
                           "List of dimensions in grid %s: %s",
                           poDS->pszFieldName, szDimList);
@@ -2516,12 +2527,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 if ( GDprojinfo( hGD, &iProjCode, &iZoneCode,
                                  &iSphereCode, adfProjParms) >= 0 )
                 {
-#if DEBUG
+#ifdef DEBUG
                     CPLDebug( "HDF4Image",
                               "Grid projection: "
-                              "projection code: %d, zone code %d, "
-                              "sphere code %d",
-                              iProjCode, iZoneCode, iSphereCode );
+                              "projection code: %ld, zone code %ld, "
+                              "sphere code %ld",
+                              (long)iProjCode, (long)iZoneCode,
+                              (long)iSphereCode );
 #endif
                     poDS->oSRS.importFromUSGS( iProjCode, iZoneCode,
                                                adfProjParms, iSphereCode );
@@ -2537,15 +2549,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 if ( GDgridinfo( hGD, &nXSize, &nYSize,
                                  adfUpLeft, adfLowRight ) >= 0 )
                 {
-#if DEBUG
+#ifdef DEBUG
                     CPLDebug( "HDF4Image",
                               "Grid geolocation: "
                               "top left X %f, top left Y %f, "
                               "low right X %f, low right Y %f, "
-                              "cols %d, rows %d",
+                              "cols %ld, rows %ld",
                               adfUpLeft[0], adfUpLeft[1],
                               adfLowRight[0], adfLowRight[1],
-                              nXSize, nYSize );
+                              (long)nXSize, (long)nYSize );
 #endif
                     if ( iProjCode )
                     {
@@ -2663,10 +2675,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef DEBUG
           CPLDebug( "HDF4Image",
-                    "aiDimSizes[0]=%d, aiDimSizes[1]=%d, "
-                    "aiDimSizes[2]=%d, aiDimSizes[3]=%d",
-                    poDS->aiDimSizes[0], poDS->aiDimSizes[1],
-                    poDS->aiDimSizes[2], poDS->aiDimSizes[3] );
+                    "aiDimSizes[0]=%ld, aiDimSizes[1]=%ld, "
+                    "aiDimSizes[2]=%ld, aiDimSizes[3]=%ld",
+                    (long)poDS->aiDimSizes[0], (long)poDS->aiDimSizes[1],
+                    (long)poDS->aiDimSizes[2], (long)poDS->aiDimSizes[3] );
 #endif
 
           switch( poDS->iRank )
@@ -2803,7 +2815,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
     poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
 
-    if ( poDS->iSubdatasetType == HYPERION_L1 )
+    if ( poDS->iSubdatasetType == H4ST_HYPERION_L1 )
     {
         // XXX: Hyperion SDSs has Height x Bands x Width dimensions scheme
         if ( poDS->iRank > 2 )
@@ -2847,7 +2859,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  HDF, created by GDAL.                                               */
 /* -------------------------------------------------------------------- */
-      case GDAL_HDF4:
+      case H4ST_GDAL:
       {
           const char  *pszValue;
 
@@ -2895,7 +2907,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      SeaWiFS Level 3 Standard Mapped Image Products.                 */
 /*      Organized similar to MODIS Level 3 products.                    */
 /* -------------------------------------------------------------------- */
-      case SEAWIFS_L3:
+      case H4ST_SEAWIFS_L3:
       {
           CPLDebug( "HDF4Image", "Input dataset interpreted as SEAWIFS_L3" );
 
@@ -2946,7 +2958,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Generic SDS							*/
 /* -------------------------------------------------------------------- */
-      case UNKNOWN:
+      case H4ST_UNKNOWN:
       {
 
           // This is a coastwatch convention.
@@ -3020,7 +3032,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Hyperion Level 1.                                               */
 /* -------------------------------------------------------------------- */
-      case HYPERION_L1:
+      case H4ST_HYPERION_L1:
       {
           CPLDebug( "HDF4Image", "Input dataset interpreted as HYPERION_L1" );
       }
@@ -3167,8 +3179,8 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     if ( iSDS < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't create SDS with rank %d for file %s",
-                  poDS->iRank, pszFilename );
+                  "Can't create SDS with rank %ld for file %s",
+                  (long)poDS->iRank, pszFilename );
         return NULL;
     }
 
@@ -3176,7 +3188,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
     poDS->iDatasetType = HDF4_SDS;
-    poDS->iSubdatasetType = GDAL_HDF4;
+    poDS->iSubdatasetType = H4ST_GDAL;
     poDS->nBands = nBands;
 
 /* -------------------------------------------------------------------- */
