@@ -28,7 +28,8 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
-LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB)
+LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
+		$(MRSID_LIBS)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -165,6 +166,7 @@ JASPER_FLAGS	= @JASPER_FLAGS@
 #
 MRSID_FLAGS	= @MRSID_FLAGS@
 MRSID_INCLUDE	= @MRSID_INCLUDE@
+MRSID_LIBS	= @MRSID_LIBS@
 
 #
 # Xerces C++ XML Parser for GML.
@@ -292,8 +294,6 @@ endif
 PROJ_INCLUDE	=	@PROJ_INCLUDE@
 
 PAM_SETTING     =       @PAM_SETTING@
-
-#GDAL_LIBS	=	$(GDAL_LIB)
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS	:= $(GDAL_LIB) $(OCI_LIB) $(GDAL_LIBS)
