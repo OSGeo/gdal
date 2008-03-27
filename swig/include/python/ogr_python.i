@@ -87,6 +87,20 @@ ds[0:4] would return a list of the first four layers."""
             return self.GetLayerByIndex(iLayer)
         else:
             raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
+
+    def DeleteLayer(self, value):
+        """Deletes the layer given an index or layer name"""
+        import types
+        if isinstance(value, types.StringTypes):
+            for i in range(self.GetLayerCount()):
+                name = self.GetLayer(i).GetName()
+                if name == value:
+                    return _ogr.DataSource_DeleteLayer(self, i)
+            raise ValueError, "Layer %s not found to delete" % value
+        elif isinstance(value, types.IntType):
+            return _ogr.DataSource_DeleteLayer(self, value)
+        else:
+            raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
   }
 }
 
