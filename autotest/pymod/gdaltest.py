@@ -29,7 +29,11 @@
 
 import sys
 import os
-import gdal, osr
+try:
+    from osgeo import gdal
+    from osgeo import osr
+except ImportError:
+    import gdal, osr
 
 cur_name = 'default'
 

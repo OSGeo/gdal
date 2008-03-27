@@ -29,7 +29,10 @@ import sys
 
 sys.path.append( '../pymod' )
 
-import ogr as ogr
+try:
+    from osgeo import ogr
+except ImportError:
+    import ogr as ogr
 import gdaltest
 
 geos_flag = None
