@@ -875,9 +875,9 @@ HAVE_JASPER
 JASPER_FLAGS
 ECW_SETTING
 KAKDIR
-HAVE_MRSID
 MRSID_INCLUDE
 MRSID_FLAGS
+MRSID_LIBS
 OPT_GDAL_FORMATS
 OGR_ENABLED
 MYSQL_CONFIG
@@ -23245,7 +23245,6 @@ echo "${ECHO_T}disabled" >&6; }
       MRSID_LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
     fi
 
-    LIBS="$MRSID_LIBS $LIBS"
   else
     HAVE_MRSID=no
     { echo "$as_me:$LINENO: result: not found." >&5
@@ -23256,11 +23255,11 @@ echo "$as_me: error:   MrSID requested, but components not found." >&2;}
   fi
 fi
 
-HAVE_MRSID=$HAVE_MRSID
-
 MRSID_INCLUDE=$MRSID_INCLUDE
 
 MRSID_FLAGS=$MRSID_FLAGS
+
+MRSID_LIBS=$MRSID_LIBS
 
 
 if test "$HAVE_MRSID" != "no" ; then
@@ -28130,9 +28129,9 @@ HAVE_JASPER!$HAVE_JASPER$ac_delim
 JASPER_FLAGS!$JASPER_FLAGS$ac_delim
 ECW_SETTING!$ECW_SETTING$ac_delim
 KAKDIR!$KAKDIR$ac_delim
-HAVE_MRSID!$HAVE_MRSID$ac_delim
 MRSID_INCLUDE!$MRSID_INCLUDE$ac_delim
 MRSID_FLAGS!$MRSID_FLAGS$ac_delim
+MRSID_LIBS!$MRSID_LIBS$ac_delim
 OPT_GDAL_FORMATS!$OPT_GDAL_FORMATS$ac_delim
 OGR_ENABLED!$OGR_ENABLED$ac_delim
 MYSQL_CONFIG!$MYSQL_CONFIG$ac_delim
