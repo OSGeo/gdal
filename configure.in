@@ -959,25 +959,16 @@ if test "$with_hdf4" = "no" ; then
 
   echo "hdf4 support disabled."
 
-elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
-
-  AC_CHECK_LIB(mfhdf,SDreaddata,HAVE_HDF4=yes,HAVE_HDF4=no,-ldf)
-
-  if test "$HAVE_HDF4" = "yes" ; then   
-    LIBS="-lmfhdf -ldf $LIBS"
-  fi
-
-dnl Some Linux distros install hdf include files here. 
-  if test "$HAVE_HDF4" = "yes" -a -r /usr/include/hdf/hdf.h ; then
-    HDF4_INCLUDE="-I/usr/include/hdf"
-  fi
-
 else
 
-  if test -d $with_hdf4/lib ; then
-    HDF_LIB_DIR=$with_hdf4/lib
+  if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
+    HDF_LIB_DIR=""
   else
-    HDF_LIB_DIR=$with_hdf4
+    if test -d $with_hdf4/lib ; then
+      HDF_LIB_DIR=$with_hdf4/lib
+    else
+      HDF_LIB_DIR=$with_hdf4
+    fi
   fi
 
   ORIG_LIBS="$LIBS"
@@ -1000,20 +991,23 @@ dnl Not found... again, with -lsz.
     AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf -lsz",HDF_LIB_NAME=missing,-ldf -lsz -ljpeg -lz)
   fi
 
-  if test "$HDF_LIB_NAME" = "missing" ; then
-    AC_MSG_ERROR([HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found])
+  if test "$HDF_LIB_NAME" = "missing" -a "$with_hdf4" != "" ; then
+    AC_MSG_ERROR([HDF4 support requested with arg "$with_hdf4", but neither hdf4 nor mfhdf lib found])
   fi
 
   LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
 
-  if test -r "$with_hdf4/hdf/hdf.h" ; then
+dnl Now search for headers
+  if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
+    HDF4_INCLUDE="-I/usr/include/hdf"
+  elif test -r "$with_hdf4/hdf/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/hdf"
   elif test -r "$with_hdf4/include/hdf/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/include/hdf"
   elif test -r "$with_hdf4/include/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/include"
   elif test -r "$with_hdf4/hdf.h" ; then
-    HDF4_INCLUDE="-I$wHDF4_INCLUDEith_hdf4"
+    HDF4_INCLUDE="-I$with_hdf4"
   fi
 
   HAVE_HDF4=yes
