@@ -137,7 +137,7 @@ void OGRSDEDataSource::IssueSDEError( int nErrorCode,
     if( pszFunction == NULL )
         pszFunction = "SDE";
        
-    if (bDSUpdate && bDSUseVersionEdits) {
+    if (bDSUpdate && bDSUseVersionEdits && !bDSVersionLocked) {
         // try to clean up our state/transaction mess if we can
         nSDEErr = SE_state_delete(hConnection, nNextState);
         if (nSDEErr && nSDEErr != SE_STATE_INUSE) {
@@ -369,14 +369,38 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
     } 
     
     nSDEErr = SE_versioninfo_get_state_id(hVersion, &nState);
-
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_versioninfo_get_state_id" );
         return FALSE;
     }
+
+
     
     if (bDSUpdate && bDSUseVersionEdits) {
+        LONG nLockCount;
+        SE_VERSION_LOCK* pahLocks;
+        nSDEErr = SE_version_get_locks(hConnection, pszVersionName, &nLockCount, &pahLocks);
+    
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_versioninfo_get_state_id" );
+            return FALSE;
+        }
+    
+        if (nLockCount > 0) 
+        {
+            // This version is already locked for edit.  We can't edit this 
+            // version right now until the lock is released.  All we can do is issue
+            // an error.
+
+            SE_version_free_locks(pahLocks, nLockCount);
+            bDSVersionLocked = TRUE;
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "The %s version is already locked and open for edit", pszVersionName);            
+            return FALSE;
+        }
+
         // So we're in update mode.  We need to get the state id 
         // of the active version, create a child state of it to 
         // push our edits onto, and close the state and move the 
