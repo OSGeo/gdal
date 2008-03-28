@@ -55,13 +55,14 @@ sde_db = 'sde'
 sde_user = 'sde'
 sde_password = 'sde'
 
+gdaltest.sde_dr = None
+try:
+    gdaltest.sde_dr = ogr.GetDriverByName( 'SDE' )
+except:
+    pass
 def ogr_sde_1():
     "Test basic opening of a database"
-    gdaltest.sde_dr = None
-    try:
-        gdaltest.sde_dr = ogr.GetDriverByName( 'SDE' )
-    except:
-        return 'skip'
+
 
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -81,12 +82,13 @@ def ogr_sde_2():
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer( 'tpoly' )
+    lyr = ds.CreateLayer( 'tpoly' ,geom_type=ogr.wkbPolygon )
 
     ogrtest.quick_create_layer_def( lyr,
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString) ] )
+                                      ('PRFEDEA', ogr.OFTString),
+                                      ('WHEN', ogr.OFTDate) ] )
     
     #######################################################
     # Copy in poly.shp
@@ -111,6 +113,47 @@ def ogr_sde_2():
 
     dst_feat.Destroy()
     return 'success'
+    
+
+def ogr_sde_3():
+    "Test basic version locking"
+    if gdaltest.sde_dr is None:
+        return 'skip'
+        
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    ds = ogr.Open(base, update=1)
+
+    ds2 = ogr.Open(base, update=1)
+    if ds2 is not None:
+        gdaltest.post_reason('A locked version was able to be opened')
+        return 'fail'
+        
+    ds.Destroy()
+
+    return 'success'
+
+
+def ogr_sde_4():
+    "Test basic version creation"
+
+
+    if gdaltest.sde_dr is None:
+        return 'skip'
+    version_name = 'TESTING'
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
+
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
+    ds = ogr.Open(base, update=1)
+    ds.Destroy()
+    
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
+    ds = ogr.Open(base, update=1)
+    ds.Destroy()
+
+
+    return 'success'
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -125,6 +168,9 @@ def ogr_sde_cleanup():
 gdaltest_list = [ 
     ogr_sde_1,
     ogr_sde_2,
+    ogr_sde_3,
+    ogr_sde_4,
+
     ogr_sde_cleanup ]
 
 if __name__ == '__main__':
