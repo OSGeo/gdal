@@ -160,6 +160,7 @@ class OGRSDEDataSource : public OGRDataSource
     
     int                 bDSUpdate;
     int                 bDSUseVersionEdits;
+    int                 bDSVersionLocked;
     
     SE_CONNECTION       hConnection;
     LONG                nState;
