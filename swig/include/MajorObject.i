@@ -84,10 +84,17 @@ public:
 /*
  * GetMetadataItem
  */
+  const char *GetMetadataItem( const char *pszName, const char *pszDomain = "" ) {
+    return GDALGetMetadataItem( self, pszName, pszDomain);
+  }
 
 /*
  * SetMetadataItem
  */
+  CPLErr SetMetadataItem( const char * pszName, const char * pszValue,
+                                            const char * pszDomain = "" ) {
+    return GDALSetMetadataItem( self, pszName, pszValue, pszDomain);
+  }
 
 } /* %extend */
 };
