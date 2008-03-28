@@ -306,8 +306,22 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     }
     else if ( CSLCount( papszTokens ) == 8 && *papszTokens[7] != '\0' )
     {
-        CPLDebug("OGR_SDE", "Setting version to %s", papszTokens[7]);
-        nSDEErr = SetVersionState(papszTokens[7]);
+        // For user-specified version names, the input is not fully qualified
+        // We have to append the connection's username to the version name for 
+        // SDE to be able to find it.
+        char username[SE_MAX_OWNER_LEN];
+        nSDEErr = SE_connection_get_user_name(hConnection, username);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_connection_get_user_name" );
+            return FALSE;
+        }
+
+        const char* pszVersionName= CPLSPrintf( "%s.%s", username, papszTokens[7]);
+
+        
+        CPLDebug("OGR_SDE", "Setting version to %s", pszVersionName);
+        nSDEErr = SetVersionState(pszVersionName);
         if (!nSDEErr)
         {
             // We've already set the error
@@ -359,12 +373,25 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     const char* pszOverwriteVersion =  CPLGetConfigOption( "SDE_VERSIONOVERWRITE", "FALSE" );
     if( EQUAL(pszOverwriteVersion, "TRUE") ) {
         nSDEErr = SE_version_delete(hConnection, pszChildVersion);
-        if( nSDEErr != SE_SUCCESS )
+        
+        // if the version didn't exist in the first place, just continue on.
+        if( nSDEErr != SE_SUCCESS && nSDEErr != SE_VERSION_NOEXIST)
         {
             IssueSDEError( nSDEErr, "SE_version_delete" );
             return FALSE;
         }
     }
+
+    // Attempt to use the child version if it is there.
+    nSDEErr = SE_version_get_info(hConnection, pszChildVersion, hChildVersion);
+    if( nSDEErr != SE_SUCCESS)
+    {   
+        if (nSDEErr != SE_VERSION_NOEXIST) {
+            IssueSDEError( nSDEErr, "SE_version_get_info child" );
+            return FALSE;
+        } 
+    } else { return TRUE; }
+
     
     nSDEErr = SE_version_get_info(hConnection, pszParentVersion, hParentVersion);
     if( nSDEErr != SE_SUCCESS )
@@ -383,7 +410,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
             return FALSE;
             
         } else {
-            IssueSDEError( nSDEErr, "SE_version_get_info" );
+            IssueSDEError( nSDEErr, "SE_version_get_info parent" );
             return FALSE;
         }
     } 
