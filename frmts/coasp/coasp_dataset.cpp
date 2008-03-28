@@ -3,12 +3,12 @@
  *
  * Project:  DRDC Configurable Airborne SAR Processor (COASP) data reader
  * Purpose:  Support in GDAL for the DRDC COASP format data, both Metadata
- * 	     and complex imagery.
+ *	     and complex imagery.
  * Author:   Philippe Vachon <philippe@cowpig.ca>
  * Notes:    I have seen a grand total of 2 COASP scenes (3 sets of headers).
- * 	     This is based on my best observations, some educated guesses and
- * 	     such. So if you have a scene that doesn't work, send it to me
- * 	     please and I will make it work... with violence.
+ *	     This is based on my best observations, some educated guesses and
+ *	     such. So if you have a scene that doesn't work, send it to me
+ *	     please and I will make it work... with violence.
  *
  ******************************************************************************
  * Copyright (c) 2007, Philippe Vachon
@@ -74,7 +74,7 @@ public:
 	COASPMetadataItem *GetNextItem();
 	COASPMetadataItem *GetItem(int nItem);
 	int GotoMetadataItem(int nItemNumber);
-	int GotoMetadataItem(char *pszName);
+	int GotoMetadataItem(const char *pszName);
 	int GetCurrentItem() { return nCurrentItem; }
 };
 
@@ -105,7 +105,7 @@ class COASPMetadataGeorefGridItem : public COASPMetadataItem
 public:
 	COASPMetadataGeorefGridItem(int nId, int nPixels, int nLines, 
 		double ndLat, double ndLong);
-	char *GetItemName() { return "georef_grid"; }
+	const char *GetItemName() { return "georef_grid"; }
 	GDAL_GCP *GetItemValue();
 	int GetType() { return TYPE_GEOREF; }
 };
@@ -222,7 +222,7 @@ int COASPMetadataReader::GotoMetadataItem(int nItemNumber)
 }
 
 /* Goto the first metadata item with a particular name */
-int COASPMetadataReader::GotoMetadataItem(char *pszName)
+int COASPMetadataReader::GotoMetadataItem(const char *pszName)
 {
 	nCurrentItem = CSLPartialFindString(papszMetadata, pszName);
 	return nCurrentItem;
@@ -393,7 +393,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	const char *pszFilename;
 	char *pszBaseName = VSIStrdup(CPLGetBasename(poDS->pszFileName));
 	char *pszDir = VSIStrdup(CPLGetPath(poDS->pszFileName));
-	char *pszExt = "rc";
+	const char *pszExt = "rc";
 	int nNull = strlen(pszBaseName) - 1;
 	char *pszBase = (char *)CPLMalloc(nNull);
 	strncpy(pszBase, pszBaseName, nNull);
