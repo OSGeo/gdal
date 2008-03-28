@@ -61,8 +61,8 @@ class DIMAPDataset : public GDALPamDataset
     double        adfGeoTransform[6];
 
   public:
-    		DIMAPDataset();
-    	        ~DIMAPDataset();
+		DIMAPDataset();
+	        ~DIMAPDataset();
     
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
@@ -370,7 +370,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Translate other metadata of interest.                           */
 /* -------------------------------------------------------------------- */
-    static char *apszMetadataTranslation[] = 
+    static const char *apszMetadataTranslation[] = 
         {
             "Production", "", 
             "Production.Facility", "FACILITY_", 
