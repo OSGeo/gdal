@@ -158,13 +158,29 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*      Establish a reference point for calcualating an affine          */
 /*      geotransform approximate transformation.                        */
 /* -------------------------------------------------------------------- */
-    double adfGTFromLL[6], dfRefPixel, dfRefLine;
+    double adfGTFromLL[6], dfRefPixel = -1.0, dfRefLine = -1.0;
+    double dfRefLong, dfRefLat;
 
-    double dfRefLong = (psRPCInfo->dfMIN_LONG + psRPCInfo->dfMAX_LONG) * 0.5;
-    double dfRefLat  = (psRPCInfo->dfMIN_LAT  + psRPCInfo->dfMAX_LAT ) * 0.5;
+    if( psRPCInfo->dfMIN_LONG != -180 || psRPCInfo->dfMAX_LONG != 180 )
+    {
+        dfRefLong = (psRPCInfo->dfMIN_LONG + psRPCInfo->dfMAX_LONG) * 0.5;
+        dfRefLat  = (psRPCInfo->dfMIN_LAT  + psRPCInfo->dfMAX_LAT ) * 0.5;
 
-    RPCTransformPoint( psRPCInfo, dfRefLong, dfRefLat, 0.0, 
-                       &dfRefPixel, &dfRefLine );
+        RPCTransformPoint( psRPCInfo, dfRefLong, dfRefLat, 0.0, 
+                           &dfRefPixel, &dfRefLine );
+    }
+
+    // Try with scale and offset if we don't can't use bounds or
+    // the results seem daft. 
+    if( dfRefPixel < 0.0 || dfRefLine < 0.0
+        || dfRefPixel > 100000 || dfRefLine > 100000 )
+    {
+        dfRefLong = psRPCInfo->dfLONG_OFF;
+        dfRefLat  = psRPCInfo->dfLAT_OFF;
+
+        RPCTransformPoint( psRPCInfo, dfRefLong, dfRefLat, 0.0, 
+                           &dfRefPixel, &dfRefLine );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transform nearby locations to establish affine direction        */
@@ -203,6 +219,74 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
 }
 
 /************************************************************************/
+/*                      RPCInverseTransformPoint()                      */
+/************************************************************************/
+
+static void 
+RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
+                          double dfPixel, double dfLine, double dfHeight, 
+                          double *pdfLong, double *pdfLat )
+
+{
+    double dfResultX, dfResultY;
+    int    iIter;
+    GDALRPCInfo *psRPC = &(psTransform->sRPC);
+
+/* -------------------------------------------------------------------- */
+/*      Compute an initial approximation based on linear                */
+/*      interpolation from our reference point.                         */
+/* -------------------------------------------------------------------- */
+    dfResultX = psTransform->adfPLToLatLongGeoTransform[0]
+        + psTransform->adfPLToLatLongGeoTransform[1] * dfPixel
+        + psTransform->adfPLToLatLongGeoTransform[2] * dfLine;
+
+    dfResultY = psTransform->adfPLToLatLongGeoTransform[3]
+        + psTransform->adfPLToLatLongGeoTransform[4] * dfPixel
+        + psTransform->adfPLToLatLongGeoTransform[5] * dfLine;
+
+/* -------------------------------------------------------------------- */
+/*      Now iterate, trying to find a closer LL location that will      */
+/*      back transform to the indicated pixel and line.                 */
+/* -------------------------------------------------------------------- */
+    double dfPixelDeltaX, dfPixelDeltaY;
+
+    for( iIter = 0; iIter < 10; iIter++ )
+    {
+        double dfBackPixel, dfBackLine;
+
+        RPCTransformPoint( psRPC, dfResultX, dfResultY, dfHeight, 
+                           &dfBackPixel, &dfBackLine );
+
+        dfPixelDeltaX = dfBackPixel - dfPixel;
+        dfPixelDeltaY = dfBackLine - dfLine;
+
+        dfResultX = dfResultX 
+            - dfPixelDeltaX * psTransform->adfPLToLatLongGeoTransform[1]
+            - dfPixelDeltaY * psTransform->adfPLToLatLongGeoTransform[2];
+        dfResultY = dfResultY 
+            - dfPixelDeltaX * psTransform->adfPLToLatLongGeoTransform[4]
+            - dfPixelDeltaY * psTransform->adfPLToLatLongGeoTransform[5];
+
+        if( ABS(dfPixelDeltaX) < 0.5 && ABS(dfPixelDeltaY) < 0.5 )
+        {
+            iIter = -1;
+            //CPLDebug( "RPC", "Converged!" );
+            break;
+        }
+
+    }
+
+    if( iIter != -1 )
+        CPLDebug( "RPC", "Iterations %d: Got: %g,%g  Offset=%g,%g", 
+                  iIter, 
+                  dfResultX, dfResultY,
+                  dfPixelDeltaX, dfPixelDeltaY );
+    
+    *pdfLong = dfResultX;
+    *pdfLat = dfResultY;
+}
+
+/************************************************************************/
 /*                          GDALRPCTransform()                          */
 /************************************************************************/
 
@@ -238,22 +322,16 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
     }
 
 /* -------------------------------------------------------------------- */
-/*      The more complicated issue is how to reverse this.  For now     */
-/*      we use a dead simple linear approximation.  In the case of      */
-/*      image warping, this direction is only used to pick bound for    */
-/*      the newly created output file anyways.                          */
+/*      Compute the inverse (pixel/line/height to lat/long).  This      */
+/*      function uses an iterative method from an initial linear        */
+/*      approximation.                                                  */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPointCount; i++ )
     {
         double dfResultX, dfResultY;
 
-        dfResultX = psTransform->adfPLToLatLongGeoTransform[0]
-            + psTransform->adfPLToLatLongGeoTransform[1] * padfX[i]
-            + psTransform->adfPLToLatLongGeoTransform[2] * padfY[i];
-
-        dfResultY = psTransform->adfPLToLatLongGeoTransform[3]
-            + psTransform->adfPLToLatLongGeoTransform[4] * padfX[i]
-            + psTransform->adfPLToLatLongGeoTransform[5] * padfY[i];
+        RPCInverseTransformPoint( psTransform, padfX[i], padfY[i], padfZ[i],
+                                  &dfResultX, &dfResultY );
 
         padfX[i] = dfResultX;
         padfY[i] = dfResultY;
