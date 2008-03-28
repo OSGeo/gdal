@@ -62,6 +62,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
 {
     int         i;
     LONG        nSDEErr;
+    char       pszVersionName[SE_MAX_VERSION_LEN];
     
     
     // Commit our transactions if we were opened for update
@@ -74,6 +75,16 @@ OGRSDEDataSource::~OGRSDEDataSource()
         {
             IssueSDEError( nSDEErr, "SE_state_close" );
         }
+        nSDEErr = SE_versioninfo_get_name(hVersion, pszVersionName);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_versioninfo_get_name" );
+        }  
+        nSDEErr = SE_version_free_lock(hConnection, pszVersionName);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_version_free_lock" );
+        }  
         nSDEErr = SE_version_change_state(hConnection, hVersion, nNextState);
         if( nSDEErr != SE_SUCCESS )
         {
@@ -121,6 +132,7 @@ void OGRSDEDataSource::IssueSDEError( int nErrorCode,
 {
     char szErrorMsg[SE_MAX_MESSAGE_LENGTH+1];
     LONG nSDEErr;
+    char pszVersionName[SE_MAX_VERSION_LEN];
     
     if( pszFunction == NULL )
         pszFunction = "SDE";
@@ -134,6 +146,22 @@ void OGRSDEDataSource::IssueSDEError( int nErrorCode,
                       "SE_state_delete could not complete in IssueSDEError %d/%s", 
                       nErrorCode, szErrorMsg );
         }
+        nSDEErr = SE_versioninfo_get_name(hVersion, pszVersionName);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            SE_error_get_string( nSDEErr, szErrorMsg );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "SE_versioninfo_get_name could not complete in IssueSDEError %d/%s", 
+                      nErrorCode, szErrorMsg );
+        }  
+        nSDEErr = SE_version_free_lock(hConnection, pszVersionName);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            SE_error_get_string( nSDEErr, szErrorMsg );
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "SE_version_free_lock could not complete in IssueSDEError %d/%s", 
+                      nErrorCode, szErrorMsg );
+        }  
         nSDEErr = SE_connection_rollback_transaction(hConnection);
         if (nSDEErr) {
             SE_error_get_string( nSDEErr, szErrorMsg );
@@ -175,7 +203,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     CPLDebug( "OGR_SDE", "Open(\"%s\") revealed %d tokens.", pszNewName,
               CSLCount( papszTokens ) );
 
-    if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 7 )
+    if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 8 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "SDE connect string had wrong number of arguments.\n"
@@ -244,6 +272,33 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         EnumerateSpatialTables();
     }
 
+/* -------------------------------------------------------------------- */
+/*      Create a new version from the parent version if we were given   */
+/*      both the child and parent version values                        */
+/* -------------------------------------------------------------------- */
+//
+//    if ( CSLCount( papszTokens ) == 8 && *papszTokens[6] != '\0' )
+//    {
+//        CPLDebug("OGR_SDE", "Creating child version %s from parent version  %s", papszTokens[7],papszTokens[6]);
+//        nSDEErr = SetVersionState(papszTokens[6]);
+//        if (!nSDEErr)
+//        {
+//            // We've already set the error
+//            return FALSE;
+//        }        
+//    }
+//    else
+//    {
+//        CPLDebug("OGR_SDE", "Setting version to SDE.DEFAULT");
+//        nSDEErr = SetVersionState("SDE.DEFAULT");
+//        if (!nSDEErr)
+//        {
+//            // We've already set the error
+//            return FALSE;
+//        }        
+//
+//    }
+    
 /* -------------------------------------------------------------------- */
 /*      Fetch the specified version or use SDE.DEFAULT if none is       */
 /*      specified.                                                      */
@@ -331,6 +386,17 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_connection_start_transaction" );
+            return FALSE;
+        } 
+        
+        // Lock the version we're editing on so no one can change the state 
+        // of it underneath us.  SHARED_LOCK is the same lock mode that ArcGIS uses,
+        // and it means the state of the version cannot be moved until until we 
+        // release the lock and move it.
+        nSDEErr = SE_version_lock(hConnection, pszVersionName, SE_VERSION_SHARED_LOCK);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            IssueSDEError( nSDEErr, "SE_version_lock" );
             return FALSE;
         } 
         nSDEErr = SE_stateinfo_create(&hCurrentStateInfo);
@@ -492,7 +558,7 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
         nSDEErr = SE_versioninfo_get_name(hVersion, pszVersionName);
         if( nSDEErr != SE_SUCCESS )
         {
-            IssueSDEError( nSDEErr, "SE_registration_make_single_version" );
+            IssueSDEError( nSDEErr, "SE_versioninfo_get_name" );
             return OGRERR_FAILURE;
         }        
         nSDEErr = SE_registration_make_single_version(hConnection, pszVersionName, osLayerName.c_str());
