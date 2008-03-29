@@ -126,6 +126,8 @@ typedef struct {
 
     double      dfPixErrThreshold;
 
+    double      dfHeightOffset;
+
 } GDALRPCTransformInfo;
 
 /************************************************************************/
@@ -133,7 +135,8 @@ typedef struct {
 /************************************************************************/
 
 void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed, 
-                                double dfPixErrThreshold )
+                                double dfPixErrThreshold,
+                                char **papszOptions )
 
 {
     GDALRPCTransformInfo *psTransform;
@@ -147,6 +150,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     memcpy( &(psTransform->sRPC), psRPCInfo, sizeof(GDALRPCInfo) );
     psTransform->bReversed = bReversed;
     psTransform->dfPixErrThreshold = dfPixErrThreshold;
+    psTransform->dfHeightOffset = 0.0;
 
     strcpy( psTransform->sTI.szSignature, "GTI" );
     psTransform->sTI.pszClassName = "GDALRPCTransformer";
@@ -154,6 +158,14 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     psTransform->sTI.pfnCleanup = GDALDestroyRPCTransformer;
     psTransform->sTI.pfnSerialize = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Do we have a "average height" that we want to consider all      */
+/*      elevations to be relative to?                                   */
+/* -------------------------------------------------------------------- */
+    const char *pszHeight = CSLFetchNameValue( papszOptions, "RPC_HEIGHT" );
+    if( pszHeight != NULL )
+        psTransform->dfHeightOffset = CPLAtof(pszHeight);
+        
 /* -------------------------------------------------------------------- */
 /*      Establish a reference point for calcualating an affine          */
 /*      geotransform approximate transformation.                        */
@@ -267,7 +279,8 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
             - dfPixelDeltaX * psTransform->adfPLToLatLongGeoTransform[4]
             - dfPixelDeltaY * psTransform->adfPLToLatLongGeoTransform[5];
 
-        if( ABS(dfPixelDeltaX) < 0.5 && ABS(dfPixelDeltaY) < 0.5 )
+        if( ABS(dfPixelDeltaX) < psTransform->dfPixErrThreshold
+            && ABS(dfPixelDeltaY) < psTransform->dfPixErrThreshold )
         {
             iIter = -1;
             //CPLDebug( "RPC", "Converged!" );
@@ -313,7 +326,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
     {
         for( i = 0; i < nPointCount; i++ )
         {
-            RPCTransformPoint( psRPC, padfX[i], padfY[i], padfZ[i], 
+            RPCTransformPoint( psRPC, padfX[i], padfY[i], 
+                               padfZ[i] + psTransform->dfHeightOffset, 
                                padfX + i, padfY + i );
             panSuccess[i] = TRUE;
         }
@@ -330,7 +344,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
     {
         double dfResultX, dfResultY;
 
-        RPCInverseTransformPoint( psTransform, padfX[i], padfY[i], padfZ[i],
+        RPCInverseTransformPoint( psTransform, padfX[i], padfY[i], 
+                                  padfZ[i] + psTransform->dfHeightOffset,
                                   &dfResultX, &dfResultY );
 
         padfX[i] = dfResultX;
