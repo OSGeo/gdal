@@ -365,6 +365,14 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     poDstDS->SetMetadata( poSrcDS->GetMetadata() );
 
 /* -------------------------------------------------------------------- */
+/*      Copy transportable special domain metadata (RPCs).  It would    */
+/*      be nice to copy geolocation, but is is pretty fragile.          */
+/* -------------------------------------------------------------------- */
+    char **papszMD = poSrcDS->GetMetadata( "RPC" );
+    if( papszMD )
+        poDstDS->SetMetadata( papszMD, "RPC" );
+
+/* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; 
