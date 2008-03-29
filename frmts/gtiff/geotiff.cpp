@@ -57,6 +57,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
 
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
+#define TIFFTAG_RPCCOEFFICIENT 50844
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
@@ -106,8 +107,6 @@ class GTiffDataset : public GDALPamDataset
     double	adfGeoTransform[6];
     int		bGeoTransformValid;
 
-    char	*pszTFWFilename;
-
     int		bNewDataset;            /* product of Create() */
     int         bTreatAsRGBA;
     int         bCrystalized;
@@ -118,7 +117,6 @@ class GTiffDataset : public GDALPamDataset
 
     void	WriteGeoTIFFInfo();
     int		SetDirectory( toff_t nDirOffset = 0 );
-    void        SetupTFW(const char *pszBasename);
 
     int		nOverviewCount;
     GTiffDataset **papoOverviewDS;
@@ -140,6 +138,10 @@ class GTiffDataset : public GDALPamDataset
     GDALMultiDomainMetadata oGTiffMDMD;
 
     CPLString   osProfile;
+    char      **papszCreationOptions;
+
+    static void WriteRPCTag( TIFF *, char ** );
+    void        ReadRPCTag();
 
   public:
                  GTiffDataset();
@@ -183,7 +185,7 @@ class GTiffDataset : public GDALPamDataset
 
     // only needed by createcopy and close code.
     static void	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
-                                   const char * );
+                                   const char *, char ** );
     static void	    WriteNoDataValue( TIFF *, double );
 
     static TIFF *   CreateLL( const char * pszFilename,
@@ -1775,8 +1777,6 @@ GTiffDataset::GTiffDataset()
     papoOverviewDS = NULL;
     nDirOffset = 0;
 
-    pszTFWFilename = NULL;
-
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -1789,6 +1789,8 @@ GTiffDataset::GTiffDataset()
     pasGCPList = NULL;
 
     osProfile = "GDALGeoTIFF";
+
+    papszCreationOptions = NULL;
 }
 
 /************************************************************************/
@@ -1819,7 +1821,8 @@ GTiffDataset::~GTiffDataset()
     if( GetAccess() == GA_Update && bBase )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription() );
+            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription(),
+                           papszCreationOptions );
         
         if( bNewDataset || bGeoTIFFInfoChanged )
             WriteGeoTIFFInfo();
@@ -1848,9 +1851,9 @@ GTiffDataset::~GTiffDataset()
         CPLFree( pasGCPList );
     }
 
-    if( pszTFWFilename != NULL )
-        CPLFree( pszTFWFilename );
     CPLFree( pszProjection );
+
+    CSLDestroy( papszCreationOptions );
 }
 
 /************************************************************************/
@@ -2029,7 +2032,8 @@ void GTiffDataset::Crystalize()
     if( !bCrystalized )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription() );
+            WriteMetadata( this, hTIFF, TRUE, osProfile, GetDescription(),
+                           papszCreationOptions );
 
         bCrystalized = TRUE;
 
@@ -2434,27 +2438,13 @@ void GTiffDataset::WriteGeoTIFFInfo()
             if( !EQUAL(osProfile,"BASELINE") )
                 TIFFSetField( hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
 	}
-/* -------------------------------------------------------------------- */
-/*      Are we maintaining a .tfw file?                                 */
-/* -------------------------------------------------------------------- */
-	if( pszTFWFilename != NULL )
-	{
-	    FILE	*fp;
 
-	    fp = VSIFOpen( pszTFWFilename, "wt" );
-	    
-	    fprintf( fp, "%.10f\n", adfGeoTransform[1] );
-	    fprintf( fp, "%.10f\n", adfGeoTransform[4] );
-	    fprintf( fp, "%.10f\n", adfGeoTransform[2] );
-	    fprintf( fp, "%.10f\n", adfGeoTransform[5] );
-	    fprintf( fp, "%.10f\n", adfGeoTransform[0] 
-		     + 0.5 * adfGeoTransform[1]
-		     + 0.5 * adfGeoTransform[2] );
-	    fprintf( fp, "%.10f\n", adfGeoTransform[3]
-		     + 0.5 * adfGeoTransform[4]
-		     + 0.5 * adfGeoTransform[5] );
-	    VSIFClose( fp );
-	}
+        // Do we need a world file?
+        if( CSLFetchBoolean( papszCreationOptions, "TFW", FALSE ) 
+            || CSLFetchBoolean( papszCreationOptions, "WORLDFILE", FALSE ) )
+        {
+            GDALWriteWorldFile( GetDescription(), "tfw", adfGeoTransform );
+        }
     }
     else if( GetGCPCount() > 0 )
     {
@@ -2642,7 +2632,8 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
                                   int bSrcIsGeoTIFF,
                                   const char *pszProfile,
-                                  const char *pszTIFFFilename )
+                                  const char *pszTIFFFilename,
+                                  char **papszCreationOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2675,7 +2666,14 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
     char **papszRPCMD = poSrcDS->GetMetadata("RPC");
     if( papszRPCMD != NULL )
     {
-        GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
+        if( EQUAL(pszProfile,"GDALGeoTIFF") )
+            WriteRPCTag( hTIFF, papszRPCMD );
+
+        if( !EQUAL(pszProfile,"GDALGeoTIFF") 
+            || CSLFetchBoolean( papszCreationOptions, "RPB", FALSE ) )
+        {
+            GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2754,6 +2752,146 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 
         CPLDestroyXMLNode( psRoot );
     }
+}
+
+/************************************************************************/
+/*                            WriteRPCTag()                             */
+/*                                                                      */
+/*      Format a TAG according to:                                      */
+/*                                                                      */
+/*      http://geotiff.maptools.org/rpc_prop.html                       */
+/************************************************************************/
+
+/* static */
+void GTiffDataset::WriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
+
+{
+    double adfRPCTag[92];
+    GDALRPCInfo sRPC;
+
+    if( !GDALExtractRPCInfo( papszRPCMD, &sRPC ) )
+        return;
+
+    adfRPCTag[0] = -1.0;  // Error Bias 
+    adfRPCTag[1] = -1.0;  // Error Random
+
+    adfRPCTag[2] = sRPC.dfLINE_OFF;
+    adfRPCTag[3] = sRPC.dfSAMP_OFF;
+    adfRPCTag[4] = sRPC.dfLAT_OFF;
+    adfRPCTag[5] = sRPC.dfLONG_OFF;
+    adfRPCTag[6] = sRPC.dfHEIGHT_OFF;
+    adfRPCTag[7] = sRPC.dfLINE_SCALE;
+    adfRPCTag[8] = sRPC.dfSAMP_SCALE;
+    adfRPCTag[9] = sRPC.dfLAT_SCALE;
+    adfRPCTag[10] = sRPC.dfLONG_SCALE;
+    adfRPCTag[11] = sRPC.dfHEIGHT_SCALE;
+
+    memcpy( adfRPCTag + 12, sRPC.adfLINE_NUM_COEFF, sizeof(double) * 20 );
+    memcpy( adfRPCTag + 32, sRPC.adfLINE_DEN_COEFF, sizeof(double) * 20 );
+    memcpy( adfRPCTag + 52, sRPC.adfSAMP_NUM_COEFF, sizeof(double) * 20 );
+    memcpy( adfRPCTag + 72, sRPC.adfSAMP_DEN_COEFF, sizeof(double) * 20 );
+
+    TIFFSetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, 92, adfRPCTag );
+}
+
+/************************************************************************/
+/*                             ReadRPCTag()                             */
+/*                                                                      */
+/*      Format a TAG according to:                                      */
+/*                                                                      */
+/*      http://geotiff.maptools.org/rpc_prop.html                       */
+/************************************************************************/
+
+void GTiffDataset::ReadRPCTag()
+
+{
+    double *padfRPCTag;
+    char **papszMD = NULL;
+    CPLString osField;
+    CPLString osMultiField;
+    int i;
+    uint16 nCount;
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, &nCount, &padfRPCTag ) 
+        || nCount != 92 )
+        return;
+
+    osField.Printf( "%.15g", padfRPCTag[2] );
+    papszMD = CSLSetNameValue( papszMD, "LINE_OFF", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[3] );
+    papszMD = CSLSetNameValue( papszMD, "SAMP_OFF", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[4] );
+    papszMD = CSLSetNameValue( papszMD, "LAT_OFF", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[5] );
+    papszMD = CSLSetNameValue( papszMD, "LONG_OFF", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[6] );
+    papszMD = CSLSetNameValue( papszMD, "HEIGHT_OFF", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[7] );
+    papszMD = CSLSetNameValue( papszMD, "LINE_SCALE", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[8] );
+    papszMD = CSLSetNameValue( papszMD, "SAMP_SCALE", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[9] );
+    papszMD = CSLSetNameValue( papszMD, "LAT_SCALE", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[10] );
+    papszMD = CSLSetNameValue( papszMD, "LONG_SCALE", osField );
+
+    osField.Printf( "%.15g", padfRPCTag[11] );
+    papszMD = CSLSetNameValue( papszMD, "HEIGHT_SCALE", osField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", padfRPCTag[12+i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "LINE_NUM_COEFF", osMultiField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", padfRPCTag[32+i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "LINE_DEN_COEFF", osMultiField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", padfRPCTag[52+i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "SAMP_NUM_COEFF", osMultiField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", padfRPCTag[72+i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "SAMP_DEN_COEFF", osMultiField );
+
+    oGTiffMDMD.SetMetadata( papszMD, "RPC" );
+    CSLDestroy( papszMD );
 }
 
 /************************************************************************/
@@ -3656,6 +3794,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
             CSLDestroy( papszRPCMD );
             bMetadataChanged = FALSE;
         }
+        else
+            ReadRPCTag();
     }
 
 /* -------------------------------------------------------------------- */
@@ -3725,25 +3865,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
 
     return( CE_None );
-}
-
-/************************************************************************/
-/*                              SetupTFW()                              */
-/************************************************************************/
-
-void GTiffDataset::SetupTFW( const char *pszTIFFilename )
-
-{
-    char	*pszPath;
-    char	*pszBasename;
-    
-    pszPath = CPLStrdup( CPLGetPath(pszTIFFilename) );
-    pszBasename = CPLStrdup( CPLGetBasename(pszTIFFilename) );
-
-    pszTFWFilename = CPLStrdup( CPLFormFilename(pszPath,pszBasename,"tfw") );
-    
-    CPLFree( pszPath );
-    CPLFree( pszBasename );
 }
 
 static int GTiffGetZLevel(char** papszOptions)
@@ -4215,12 +4336,11 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
         poDS->osProfile = CSLFetchNameValue( papszParmList, "PROFILE" );
 
 /* -------------------------------------------------------------------- */
-/*      Do we need a TFW file?                                          */
+/*      Preserve creation options for consulting later (for instance    */
+/*      to decide if a TFW file should be written).                     */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszParmList, "TFW", FALSE ) 
-        || CSLFetchBoolean( papszParmList, "WORLDFILE", FALSE ) )
-        poDS->SetupTFW( pszFilename );
-
+    poDS->papszCreationOptions = CSLDuplicate( papszParmList );
+    
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -4486,7 +4606,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      we push this into .pam if we are avoiding GDAL tags?            */
 /* -------------------------------------------------------------------- */
     GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE, pszProfile,
-                                 pszFilename );
+                                 pszFilename, papszOptions );
 
 /* -------------------------------------------------------------------- */
 /* 	Write NoData value, if exist.                                   */
@@ -4988,7 +5108,9 @@ static void GTiffTagExtender(TIFF *tif)
         { TIFFTAG_GDAL_METADATA,    -1,-1, TIFF_ASCII,	FIELD_CUSTOM,
           TRUE,	FALSE,	"GDALMetadata" },
         { TIFFTAG_GDAL_NODATA,	    -1,-1, TIFF_ASCII,	FIELD_CUSTOM,
-          TRUE,	FALSE,	"GDALNoDataValue" }
+          TRUE,	FALSE,	"GDALNoDataValue" },
+        { TIFFTAG_RPCCOEFFICIENT,   -1,-1, TIFF_DOUBLE,	FIELD_CUSTOM,
+          TRUE,	TRUE,	"RPCCoefficient" }
     };
 
     if (_ParentExtender) 
@@ -5120,6 +5242,7 @@ void GDALRegister_GTiff()
 "   </Option>"
 "   <Option name='TILED' type='boolean' description='Switch to tiled format'/>"
 "   <Option name='TFW' type='boolean' description='Write out world file'/>"
+"   <Option name='RPB' type='boolean' description='Write out .RPB (RPC) file'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile/Strip Height'/>"
 "   <Option name='PHOTOMETRIC' type='string-select'>"
