@@ -2087,7 +2087,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 {
     char szFullKey[200];
 
-    sprintf( szFullKey, "RPC_%s", pszKey );
+    sprintf( szFullKey, "%s", pszKey );
 
     const char *pszValue = CSLFetchNameValue( papszMD, szFullKey );
     int i;
@@ -2095,7 +2095,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
     for( i = 0; i < nCount; i++ )
         padfTarget[i] = dfDefault;
 
-    if( pszKey == NULL )
+    if( pszValue == NULL )
         return FALSE;
 
     if( nCount == 1 )
@@ -2128,13 +2128,13 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
 
 {
-    if( CSLFetchNameValue( papszMD, "RPC_LINE_NUM_COEFF" ) == NULL )
+    if( CSLFetchNameValue( papszMD, "LINE_NUM_COEFF" ) == NULL )
         return FALSE;
 
-    if( CSLFetchNameValue( papszMD, "RPC_LINE_NUM_COEFF" ) == NULL 
-        || CSLFetchNameValue( papszMD, "RPC_LINE_DEN_COEFF" ) == NULL 
-        || CSLFetchNameValue( papszMD, "RPC_SAMP_NUM_COEFF" ) == NULL 
-        || CSLFetchNameValue( papszMD, "RPC_SAMP_DEN_COEFF" ) == NULL )
+    if( CSLFetchNameValue( papszMD, "LINE_NUM_COEFF" ) == NULL 
+        || CSLFetchNameValue( papszMD, "LINE_DEN_COEFF" ) == NULL 
+        || CSLFetchNameValue( papszMD, "SAMP_NUM_COEFF" ) == NULL 
+        || CSLFetchNameValue( papszMD, "SAMP_DEN_COEFF" ) == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                  "Some required RPC metadata missing in GDALExtractRPCInfo()");
