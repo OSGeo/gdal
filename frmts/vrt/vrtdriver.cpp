@@ -224,6 +224,19 @@ VRTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poVRTDS->SetMetadata( poSrcDS->GetMetadata() );
 
 /* -------------------------------------------------------------------- */
+/*      Copy any special domains that should be transportable.          */
+/* -------------------------------------------------------------------- */
+    char **papszMD;
+
+    papszMD = poSrcDS->GetMetadata( "RPC" );
+    if( papszMD )
+        poVRTDS->SetMetadata( papszMD, "RPC" );
+
+    papszMD = poSrcDS->GetMetadata( "IMD" );
+    if( papszMD )
+        poVRTDS->SetMetadata( papszMD, "IMD" );
+
+/* -------------------------------------------------------------------- */
 /*      GCPs                                                            */
 /* -------------------------------------------------------------------- */
     if( poSrcDS->GetGCPCount() > 0 )

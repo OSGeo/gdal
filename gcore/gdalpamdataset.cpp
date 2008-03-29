@@ -860,6 +860,15 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
                 SetMetadata( poSrcDS->GetMetadata() );
             }
         }
+        if( poSrcDS->GetMetadata("RPC") != NULL )
+        {
+            if( !bOnlyIfMissing 
+                || CSLCount(GetMetadata("RPC")) 
+                   != CSLCount(poSrcDS->GetMetadata("RPC")) )
+            {
+                SetMetadata( poSrcDS->GetMetadata("RPC"), "RPC" );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

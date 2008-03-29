@@ -713,9 +713,31 @@ static int ProxyMain( int argc, char ** argv )
         CPLFree( pasGCPs );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Transfer generally applicable metadata.                         */
+/* -------------------------------------------------------------------- */
     poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
     AttachMetadata( (GDALDatasetH) poVDS, papszMetadataOptions );
 
+/* -------------------------------------------------------------------- */
+/*      Transfer metadata that remains valid if the spatial             */
+/*      arrangement of the data is unaltered.                           */
+/* -------------------------------------------------------------------- */
+    if( anSrcWin[0] == 0 && anSrcWin[1] == 0 
+        && anSrcWin[2] == GDALGetRasterXSize(hDataset)
+        && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
+        && pszOXSize == NULL && pszOYSize == NULL )
+    {
+        char **papszMD;
+
+        papszMD = ((GDALDataset*)hDataset)->GetMetadata("RPC");
+        if( papszMD != NULL )
+            poVDS->SetMetadata( papszMD, "RPC" );
+    }
+
+/* ==================================================================== */
+/*      Process all bands.                                              */
+/* ==================================================================== */
     for( i = 0; i < nBandCount; i++ )
     {
         VRTSourcedRasterBand   *poVRTBand;
