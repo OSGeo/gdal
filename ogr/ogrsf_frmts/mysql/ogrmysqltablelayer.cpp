@@ -394,12 +394,9 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRMySQLTableLayer::BuildWhere()
 
 {
-    char        szWHERE[4096];
-    
     CPLFree( pszWHERE );
-    pszWHERE = NULL;
-
-    szWHERE[0] = '\0';
+    pszWHERE = (char*)CPLMalloc(500 + ((pszQuery) ? strlen(pszQuery) : 0));
+    pszWHERE[0] = '\0';
 
     if( m_poFilterGeom != NULL && pszGeomColumn )
     {
@@ -418,7 +415,7 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MaxY,
                 sEnvelope.MinX, sEnvelope.MinY);
 
-        sprintf( szWHERE,
+        sprintf( pszWHERE,
                  "WHERE MBRIntersects(GeomFromText('%s'), %s)",
                  szEnvelope,
                  pszGeomColumn);
@@ -427,13 +424,11 @@ void OGRMySQLTableLayer::BuildWhere()
 
     if( pszQuery != NULL )
     {
-        if( strlen(szWHERE) == 0 )
-            sprintf( szWHERE, "WHERE %s ", pszQuery  );
+        if( strlen(pszWHERE) == 0 )
+            sprintf( pszWHERE, "WHERE %s ", pszQuery  );
         else
-            sprintf( szWHERE+strlen(szWHERE), "&& %s ", pszQuery );
+            sprintf( pszWHERE+strlen(pszWHERE), "&& %s ", pszQuery );
     }
-
-    pszWHERE = CPLStrdup(szWHERE);
 }
 
 /************************************************************************/
