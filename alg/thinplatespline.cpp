@@ -73,8 +73,8 @@ void VizGeorefSpline2D::grow_points()
         index = (int *) VSIMalloc( sizeof(int) * new_max );
         for( i = 0; i < VIZGEOREF_MAX_VARS; i++ )
         {
-            rhs[i] = (double *) VSIMalloc( sizeof(double) * new_max );
-            coef[i] = (double *) VSIMalloc( sizeof(double) * new_max );
+            rhs[i] = (double *) VSICalloc( sizeof(double), new_max );
+            coef[i] = (double *) VSICalloc( sizeof(double), new_max );
         }
     }
     else
