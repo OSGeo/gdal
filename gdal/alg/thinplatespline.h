@@ -78,9 +78,9 @@ class VizGeorefSpline2D
 
     ~VizGeorefSpline2D(){
         if ( _AA )
-            delete _AA;
+            CPLFree(_AA);
         if ( _Ainv )
-            delete _Ainv;
+            CPLFree(_Ainv);
 
         CPLFree( x );
         CPLFree( y );
@@ -128,12 +128,12 @@ class VizGeorefSpline2D
             type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
             if ( _AA )
             {
-                delete _AA;
+                CPLFree(_AA);
                 _AA = NULL;
             }
             if ( _Ainv )
             {
-                delete _Ainv;
+                CPLFree(_Ainv);
                 _Ainv = NULL;
             }
             return _nof_points;
