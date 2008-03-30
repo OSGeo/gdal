@@ -189,6 +189,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
                       pszTableIn );
         }
 
+        OGRPGClearResult( hResult );
         /* Zero tuples means no PK is defined, perfectly valid case. */
     }
     else
