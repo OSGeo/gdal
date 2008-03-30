@@ -77,9 +77,13 @@ def ogr_mysql_2():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    gdaltest.shp_ds = shp_ds
+    shp_lyr = shp_ds.GetLayer(0)
+
     ######################################################
     # Create Layer
-    gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer( 'tpoly',
+    gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer( 'tpoly', srs = shp_lyr.GetSpatialRef(),
                                                   options = [ 'DIM=3' ] )
 
     ######################################################
@@ -95,10 +99,6 @@ def ogr_mysql_2():
 
     dst_feat = ogr.Feature( feature_def = gdaltest.mysql_lyr.GetLayerDefn() )
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
-    gdaltest.shp_ds = shp_ds
-    shp_lyr = shp_ds.GetLayer(0)
-    
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
     
@@ -112,7 +112,15 @@ def ogr_mysql_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-        
+
+    if gdaltest.mysql_lyr.GetFeatureCount() != shp_lyr.GetFeatureCount():
+        gdaltest.post_reason( 'not matching feature count' )
+        return 'failure'
+
+    if not gdaltest.mysql_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()):
+        gdaltest.post_reason( 'not matching spatial ref' )
+        return 'failure'
+
     return 'success'
 
 ###############################################################################
