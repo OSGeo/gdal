@@ -70,7 +70,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
     
     
     // Commit our transactions if we were opened for update
-    if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID ) && !bDSVersionLocked ) {
+    if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID )  ) {
         CPLDebug("OGR_SDE", "Moving states from %d to %d", nState, nNextState);
 
         SE_connection_commit_transaction(hConnection);
@@ -395,7 +395,11 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
             IssueSDEError( nSDEErr, "SE_version_get_info child" );
             return FALSE;
         } 
-    } else { return TRUE; }
+    } else { 
+        SE_versioninfo_free(hParentVersion);
+        SE_versioninfo_free(hChildVersion);
+        return TRUE; 
+    }
 
     
     nSDEErr = SE_version_get_info(hConnection, pszParentVersion, hParentVersion);
