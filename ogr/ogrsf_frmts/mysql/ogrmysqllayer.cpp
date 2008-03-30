@@ -202,8 +202,10 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
                 panLengths[iField] - 4 );
 
             if( poGeometry != NULL )
+            {
+                poGeometry->assignSpatialReference( poSRS );
                 poFeature->SetGeometryDirectly( poGeometry );
-
+            }
             continue;
         }
 
