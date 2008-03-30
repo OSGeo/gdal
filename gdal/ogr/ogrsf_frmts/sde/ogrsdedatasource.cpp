@@ -234,6 +234,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_connection_create" );
+        CSLDestroy( papszTokens );
         return FALSE;
     }
     
@@ -260,6 +261,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 
     if( nSDEErr != SE_SUCCESS) {
         IssueSDEError( nSDEErr, NULL );
+        CSLDestroy( papszTokens );
         return FALSE;
     }
 
@@ -290,6 +292,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         if (!nSDEErr)
         {
             // We've already set the error
+            CSLDestroy( papszTokens );
             return FALSE;
         }        
     }
@@ -306,6 +309,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         if (!nSDEErr)
         {
             // We've already set the error
+            CSLDestroy( papszTokens );
             return FALSE;
         }        
     }
@@ -319,6 +323,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_connection_get_user_name" );
+            CSLDestroy( papszTokens );
             return FALSE;
         }
 
@@ -330,6 +335,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         if (!nSDEErr)
         {
             // We've already set the error
+            CSLDestroy( papszTokens );
             return FALSE;
         }        
         
@@ -342,6 +348,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         if (!nSDEErr)
         {
             // We've already set the error
+            CSLDestroy( papszTokens );
             return FALSE;
         }        
 
