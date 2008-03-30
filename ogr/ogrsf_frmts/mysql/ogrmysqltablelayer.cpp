@@ -1084,9 +1084,9 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
     if( papszRow != NULL && papszRow[0] != NULL )
         nCount = atoi(papszRow[0]);
 
-    if( hResultSet != NULL )
-        mysql_free_result( hResultSet );
- 		hResultSet = NULL;
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;
     
     return nCount;
 }
