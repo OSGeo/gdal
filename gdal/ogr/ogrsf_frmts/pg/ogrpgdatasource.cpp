@@ -512,7 +512,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if ( pszTableName != NULL )
     {
       int length = pszTableName-pszLayerNameIn;
-      pszSchemaName = (char*)CPLMalloc(length);
+      pszSchemaName = (char*)CPLMalloc(length+1);
       strncpy(pszSchemaName, pszLayerNameIn, length);
       pszSchemaName[length] = '\0';
       ++pszTableName; //skip "."
