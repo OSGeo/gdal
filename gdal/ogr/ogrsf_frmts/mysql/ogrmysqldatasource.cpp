@@ -566,6 +566,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         if( hResult != NULL )
             mysql_free_result( hResult );
         hResult = NULL;
+        CPLFree(pszWKT);
         return nSRSId;
     }
 
@@ -589,13 +590,14 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( papszRow != NULL && papszRow[0] != NULL )
     {
         nSRSId = atoi(papszRow[0]) + 1;
-        if( hResult != NULL )
-            mysql_free_result( hResult );
-        hResult = NULL;
     }
     else
         nSRSId = 1;
-    
+
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
@@ -611,7 +613,9 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;
-           
+
+    CPLFree(pszWKT);
+
     return nSRSId;
 }
 
