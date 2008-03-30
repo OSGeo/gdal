@@ -66,7 +66,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
     
     
     // Commit our transactions if we were opened for update
-    if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID)) {
+    if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID ) && !bDSVersionLocked ) {
         CPLDebug("OGR_SDE", "Moving states from %d to %d", nState, nNextState);
 
         SE_connection_commit_transaction(hConnection);
@@ -93,10 +93,11 @@ OGRSDEDataSource::~OGRSDEDataSource()
         nSDEErr = SE_state_trim_tree(hConnection, nState, nNextState);
         if( nSDEErr != SE_SUCCESS && nSDEErr != SE_STATE_INUSE && nSDEErr != SE_STATE_USED_BY_VERSION)
         {
-            bDSVersionLocked = TRUE;
+
             IssueSDEError( nSDEErr, "SE_state_trim_tree" );
         }
-      
+
+        bDSVersionLocked = TRUE;      
 
     }
 
@@ -169,7 +170,7 @@ void OGRSDEDataSource::IssueSDEError( int nErrorCode,
                       nErrorCode, szErrorMsg );
         }
     }
-
+    bDSVersionLocked = TRUE;
     SE_error_get_string( nErrorCode, szErrorMsg );
 
     CPLError( CE_Failure, CPLE_AppDefined, 
