@@ -307,6 +307,19 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Report RPCs                                                     */
+/* -------------------------------------------------------------------- */
+    papszMetadata = GDALGetMetadata( hDataset, "RPC" );
+    if( CSLCount(papszMetadata) > 0 )
+    {
+        printf( "RPC Metadata:\n" );
+        for( i = 0; papszMetadata[i] != NULL; i++ )
+        {
+            printf( "  %s\n", papszMetadata[i] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Setup projected to lat/long transform if appropriate.           */
 /* -------------------------------------------------------------------- */
     if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
