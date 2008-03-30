@@ -482,21 +482,23 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
 
     if( papszRow != NULL && papszRow[0] != NULL )
     {
-        pszWKT =papszRow[0];
+        pszWKT = CPLStrdup(papszRow[0]);
     }
 
-    // make sure to attempt to free results of successful queries
-    hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
-	hResult = NULL;
-		
-     poSRS = new OGRSpatialReference();
-     if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-     {
-         delete poSRS;
-         poSRS = NULL;
-     }
+    hResult = NULL;
+
+    poSRS = new OGRSpatialReference();
+    char* pszWKTOri = pszWKT;
+    if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        delete poSRS;
+        CPLFree(pszWKTOri);
+        poSRS = NULL;
+    }
+
+    CPLFree(pszWKTOri);
 
 /* -------------------------------------------------------------------- */
 /*      Add to the cache.                                               */
