@@ -216,9 +216,11 @@ int main( int argc, char ** argv )
                                              TRUE, 1000.0, nOrder );
     }
 
+    CPLFree( pszSourceSRS );
+    CPLFree( pszTargetSRS );
+
     if( hTransformArg == NULL )
     {
-        CPLFree( pszTargetSRS );
         exit( 1 );
     }
 
@@ -237,7 +239,10 @@ int main( int argc, char ** argv )
         int bSuccess = TRUE;
 
         if( CSLCount(papszTokens) < 2 )
+        {
+            CSLDestroy(papszTokens);
             continue;
+        }
 
         dfX = atof(papszTokens[0]);
         dfY = atof(papszTokens[1]);
@@ -253,5 +258,39 @@ int main( int argc, char ** argv )
         {
             printf( "transformation failed.\n" );
         }
+
+        CSLDestroy(papszTokens);
     }
+
+    if( nGCPCount != 0 && nOrder == -1 )
+    {
+        GDALDestroyTPSTransformer(hTransformArg);
+    }
+    else if( nGCPCount != 0 )
+    {
+        GDALDestroyGCPTransformer(hTransformArg);
+    }
+    else
+    {
+        GDALDestroyGenImgProjTransformer(hTransformArg);
+    }
+
+    if (nGCPCount)
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPs );
+        CPLFree( pasGCPs );
+    }
+
+    if (hSrcDS)
+        GDALClose(hSrcDS);
+
+    if (hDstDS)
+        GDALClose(hDstDS);
+
+    GDALDumpOpenDatasets( stderr );
+    GDALDestroyDriverManager();
+
+    CSLDestroy( argv );
+
+    return 0;
 }
