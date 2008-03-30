@@ -42,7 +42,8 @@ static void Usage()
 {
     printf( 
         "Usage: gdaltransform [--help-general]\n"
-        "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps]\n"
+        "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-rpc]\n"
+        "    [-to \"NAME=VALUE\"]\n"
         "    [-gcp pixel line easting northing [elevation]]*\n" 
         "    [srcfile [dstfile]]\n" 
         "\n" );
@@ -86,14 +87,13 @@ int main( int argc, char ** argv )
 {
     const char         *pszSrcFilename = NULL;
     const char         *pszDstFilename = NULL;
-    char               *pszTargetSRS = NULL;
-    char               *pszSourceSRS = NULL;
     int                 nOrder = 0;
     void               *hTransformArg;
     GDALTransformerFunc pfnTransformer = NULL;
     int                 nGCPCount = 0;
     GDAL_GCP            *pasGCPs = NULL;
     int                 bInverse = FALSE;
+    char              **papszTO = NULL;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -109,23 +109,37 @@ int main( int argc, char ** argv )
     {
         if( EQUAL(argv[i],"-t_srs") && i < argc-1 )
         {
-            pszTargetSRS = SanitizeSRS(argv[++i]);
+            char *pszSRS = SanitizeSRS(argv[++i]);
+            papszTO = CSLSetNameValue( papszTO, "DST_SRS", pszSRS );
+            CPLFree( pszSRS );
         }
         else if( EQUAL(argv[i],"-s_srs") && i < argc-1 )
         {
-            pszSourceSRS = SanitizeSRS(argv[++i]);
+            char *pszSRS = SanitizeSRS(argv[++i]);
+            papszTO = CSLSetNameValue( papszTO, "SRC_SRS", pszSRS );
+            CPLFree( pszSRS );
         }
         else if( EQUAL(argv[i],"-order") && i < argc-1 )
         {
             nOrder = atoi(argv[++i]);
+            papszTO = CSLSetNameValue( papszTO, "MAX_GCP_ORDER", argv[i] );
         }
         else if( EQUAL(argv[i],"-tps") )
         {
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "GCP_TPS" );
             nOrder = -1;
+        }
+        else if( EQUAL(argv[i],"-rpc") )
+        {
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "RPC" );
         }
         else if( EQUAL(argv[i],"-i") )
         {
             bInverse = TRUE;
+        }
+        else if( EQUAL(argv[i],"-to") && i < argc-1 )
+        {
+            papszTO = CSLAddString( papszTO, argv[++i] );
         }
         else if( EQUAL(argv[i],"-gcp") && i < argc - 4 )
         {
@@ -211,9 +225,7 @@ int main( int argc, char ** argv )
     {
         pfnTransformer = GDALGenImgProjTransform;
         hTransformArg = 
-            GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
-                                             hDstDS, pszTargetSRS, 
-                                             TRUE, 1000.0, nOrder );
+            GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
     }
 
     CPLFree( pszSourceSRS );
@@ -250,7 +262,8 @@ int main( int argc, char ** argv )
             dfZ = atof(papszTokens[2]);
 
         if( pfnTransformer( hTransformArg, bInverse, 1, 
-                            &dfX, &dfY, &dfZ, &bSuccess ) )
+                            &dfX, &dfY, &dfZ, &bSuccess )
+            && bSuccess )
         {
             printf( "%.15g %.15g %.15g\n", dfX, dfY, dfZ );
         }
