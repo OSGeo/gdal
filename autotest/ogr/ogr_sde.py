@@ -82,7 +82,8 @@ def ogr_sde_2():
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer( 'tpoly' ,geom_type=ogr.wkbPolygon )
+    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, options = [ 'OVERWRITE=YES' ] )
+#    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)
 
     ogrtest.quick_create_layer_def( lyr,
                                     [ ('AREA', ogr.OFTReal),
@@ -154,6 +155,51 @@ def ogr_sde_4():
 
 
     return 'success'
+
+def ogr_sde_5():
+    "Test versioned editing"
+    version_name = 'TESTING'
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
+
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
+    ds = ogr.Open(base, update=1)
+    print "Layer Count: ", ds.GetLayerCount()
+    
+    for i in range(ds.GetLayerCount()):
+        print ds.GetLayer(i).GetName()
+    l1 = ds.GetLayerByName('SDE.TPOLY')
+
+    f1 = l1.GetNextFeature()
+    f1.SetField("PRFEDEA",'SDE.TESTING')
+    l1.SetFeature(f1)
+    
+    ds.Destroy()
+
+    default = 'DEFAULT'
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
+
+    default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, default)
+    ds2 = ogr.Open(base, update=1)
+
+    l2 = ds.GetLayerByName('SDE.TPOLY')
+
+    f2 = l2.GetNextFeature()
+    f2.SetField("PRFEDEA",'SDE.DEFAULT')
+    l2.SetFeature(f2)
+
+    ds = ogr.Open(base)
+    l1 = ds.GetLayerByName('SDE.TPOLY')
+    f1 = l1.GetNextFeature()
+    print f1.GetFID(), f1.GetField("PRFEDEA")
+    ds.Destroy()
+
+    ds = ogr.Open(default)
+    l1 = ds.GetLayerByName('SDE.TPOLY')
+    f1 = l1.GetNextFeature()
+    print f1.GetFID(), f1.GetField("PRFEDEA")
+    ds.Destroy()
+
+        
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -170,8 +216,9 @@ gdaltest_list = [
     ogr_sde_2,
     ogr_sde_3,
     ogr_sde_4,
-
-    ogr_sde_cleanup ]
+    ogr_sde_5,
+    ogr_sde_cleanup 
+]
 
 if __name__ == '__main__':
 
