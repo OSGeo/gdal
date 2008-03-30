@@ -47,6 +47,10 @@ OGRSDEDataSource::OGRSDEDataSource()
     papoLayers = NULL;
     nLayers = 0;
 
+    bDSVersionLocked = FALSE;
+    bDSUpdate = FALSE;
+    bDSUseVersionEdits = FALSE;
+    
     nState = SE_DEFAULT_STATE_ID;
     nNextState = -2;
     hConnection = NULL;
