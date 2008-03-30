@@ -34,12 +34,11 @@
 
 CPL_CVSID("$Id$");
 
-static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT );
+//static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT );
 
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
-                      const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS, int nOrder, 
+                      const char *pszFormat, char **papszTO,
                       char **papszCreateOptions, GDALDataType eDT );
 
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
@@ -63,7 +62,8 @@ static void Usage()
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]* srcfile* dstfile\n"
+        "    [-of format] [-co \"NAME=VALUE\"]* [-to \"NAME=VALUE\"]\n"
+        "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
         "    near (default), bilinear, cubic, cubicspline, lanczos.\n" );
@@ -107,11 +107,9 @@ int main( int argc, char ** argv )
 {
     GDALDatasetH	hDstDS;
     const char         *pszFormat = "GTiff";
-    char               *pszTargetSRS = NULL;
-    char               *pszSourceSRS = NULL;
     char              **papszSrcFiles = NULL;
     char               *pszDstFilename = NULL;
-    int                 bCreateOutput = FALSE, i, nOrder = 0;
+    int                 bCreateOutput = FALSE, i;
     void               *hTransformArg, *hGenImgProjArg=NULL, *hApproxArg=NULL;
     char               **papszWarpOptions = NULL;
     double             dfErrorThreshold = 0.125;
@@ -123,6 +121,7 @@ int main( int argc, char ** argv )
     const char          *pszSrcNodata = NULL;
     const char          *pszDstNodata = NULL;
     int                 bMulti = FALSE;
+    char                **papszTO = NULL;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -168,19 +167,31 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-t_srs") && i < argc-1 )
         {
-            pszTargetSRS = SanitizeSRS(argv[++i]);
+            char *pszSRS = SanitizeSRS(argv[++i]);
+            papszTO = CSLSetNameValue( papszTO, "DST_SRS", pszSRS );
+            CPLFree( pszSRS );
         }
         else if( EQUAL(argv[i],"-s_srs") && i < argc-1 )
         {
-            pszSourceSRS = SanitizeSRS(argv[++i]);
+            char *pszSRS = SanitizeSRS(argv[++i]);
+            papszTO = CSLSetNameValue( papszTO, "SRC_SRS", pszSRS );
+            CPLFree( pszSRS );
         }
         else if( EQUAL(argv[i],"-order") && i < argc-1 )
         {
-            nOrder = atoi(argv[++i]);
+            papszTO = CSLSetNameValue( papszTO, "MAX_GCP_ORDER", argv[++i] );
         }
         else if( EQUAL(argv[i],"-tps") )
         {
-            nOrder = -1;
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "TPS" );
+        }
+        else if( EQUAL(argv[i],"-rpc") )
+        {
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "RPC" );
+        }
+        else if( EQUAL(argv[i],"-to") && i < argc-1 )
+        {
+            papszTO = CSLAddString( papszTO, argv[++i] );
         }
         else if( EQUAL(argv[i],"-et") && i < argc-1 )
         {
@@ -349,8 +360,8 @@ int main( int argc, char ** argv )
     if( hDstDS == NULL )
     {
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
-                                       pszSourceSRS, pszTargetSRS, nOrder,
-                                       papszCreateOptions, eOutputType );
+                                       papszTO, papszCreateOptions, 
+                                       eOutputType );
         bCreateOutput = TRUE;
 
         if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL 
@@ -374,9 +385,6 @@ int main( int argc, char ** argv )
     if( hDstDS == NULL )
         exit( 1 );
 
-    if( pszTargetSRS == NULL )
-        pszTargetSRS = CPLStrdup( GDALGetProjectionRef(hDstDS) );
-
 /* -------------------------------------------------------------------- */
 /*      Loop over all source files, processing each in turn.            */
 /* -------------------------------------------------------------------- */
@@ -384,12 +392,8 @@ int main( int argc, char ** argv )
 
     for( iSrc = 0; papszSrcFiles[iSrc] != NULL; iSrc++ )
     {
-        CPLString osThisSourceSRS;
         GDALDatasetH hSrcDS;
        
-        if( pszSourceSRS != NULL )
-            osThisSourceSRS = pszSourceSRS;
-
 /* -------------------------------------------------------------------- */
 /*      Open this file.                                                 */
 /* -------------------------------------------------------------------- */
@@ -400,27 +404,6 @@ int main( int argc, char ** argv )
 
         if( !bQuiet )
             printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
-
-        if( strlen(osThisSourceSRS) == 0 )
-        {
-            if( GDALGetProjectionRef( hSrcDS ) != NULL 
-                && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
-                osThisSourceSRS = GDALGetProjectionRef( hSrcDS );
-            
-            else if( GDALGetGCPProjection( hSrcDS ) != NULL
-                     && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
-                     && GDALGetGCPCount( hSrcDS ) > 1 )
-                osThisSourceSRS = GDALGetGCPProjection( hSrcDS );
-            else
-                osThisSourceSRS = "";
-
-            if( pszTargetSRS != NULL && strlen(pszTargetSRS) > 0 
-                && strlen(osThisSourceSRS) == 0 )
-            {
-                fprintf( stderr, "A target coordinate system was specified, but there is no source coordinate\nsystem.  Consider using -s_srs option to provide a source coordinate system.\nOperation terminated.\n" );
-                exit( 1 );
-            }
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a source alpha band?                                 */
@@ -437,24 +420,11 @@ int main( int argc, char ** argv )
         }
 
 /* -------------------------------------------------------------------- */
-/*      If the source coordinate system is geographic, try and          */
-/*      insert a CENTER_LONG extension parameter on the GEOGCS to       */
-/*      handle wrapping better.                                         */
-/* -------------------------------------------------------------------- */
-        if( EQUALN(osThisSourceSRS.c_str(),"GEOGCS[",7) )
-        {
-            osThisSourceSRS = 
-                InsertCenterLong( hSrcDS, osThisSourceSRS );
-        }
-
-/* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
         hTransformArg = hGenImgProjArg = 
-            GDALCreateGenImgProjTransformer( hSrcDS, osThisSourceSRS, 
-                                             hDstDS, pszTargetSRS, 
-                                             TRUE, 1000.0, nOrder );
+            GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
         
         if( hTransformArg == NULL )
             exit( 1 );
@@ -716,12 +686,11 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     GDALClose( hDstDS );
     
-    CPLFree( pszSourceSRS );
-    CPLFree( pszTargetSRS );
     CPLFree( pszDstFilename );
     CSLDestroy( argv );
     CSLDestroy( papszSrcFiles );
     CSLDestroy( papszWarpOptions );
+    CSLDestroy( papszTO );
 
     GDALDumpOpenDatasets( stderr );
 
@@ -739,8 +708,7 @@ int main( int argc, char ** argv )
 
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
-                      const char *pszFormat, const char *pszSourceSRS, 
-                      const char *pszTargetSRS, int nOrder,
+                      const char *pszFormat, char **papszTO, 
                       char **papszCreateOptions, GDALDataType eDT )
 
 
@@ -797,13 +765,14 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /*      Loop over all input files to collect extents.                   */
 /* -------------------------------------------------------------------- */
     int     iSrc;
-    char    *pszThisTargetSRS =
-        ( pszTargetSRS ) ? CPLStrdup( pszTargetSRS ) : NULL;
+    char    *pszThisTargetSRS = (char*)CSLFetchNameValue( papszTO, "DST_SRS" );
+    if( pszThisTargetSRS != NULL )
+        pszThisTargetSRS = CPLStrdup( pszThisTargetSRS );
 
     for( iSrc = 0; papszSrcFiles[iSrc] != NULL; iSrc++ )
     {
         GDALDatasetH hSrcDS;
-        const char *pszThisSourceSRS = pszSourceSRS;
+        const char *pszThisSourceSRS = CSLFetchNameValue(papszTO,"SRC_SRS");
 
         hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
         if( hSrcDS == NULL )
@@ -834,14 +803,20 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
         if( pszThisSourceSRS == NULL )
         {
+            const char *pszMethod = CSLFetchNameValue( papszTO, "METHOD" );
+
             if( GDALGetProjectionRef( hSrcDS ) != NULL 
-                && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
+                && strlen(GDALGetProjectionRef( hSrcDS )) > 0
+                && (pszMethod == NULL || EQUAL(pszMethod,"GEOTRANSFORM")) )
                 pszThisSourceSRS = GDALGetProjectionRef( hSrcDS );
             
             else if( GDALGetGCPProjection( hSrcDS ) != NULL
                      && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
-                     && GDALGetGCPCount( hSrcDS ) > 1 )
+                     && GDALGetGCPCount( hSrcDS ) > 1 
+                     && (pszMethod == NULL || EQUALN(pszMethod,"GCP_",4)) )
                 pszThisSourceSRS = GDALGetGCPProjection( hSrcDS );
+            else if( pszMethod != NULL && EQUAL(pszMethod,"RPC") )
+                pszThisSourceSRS = SRS_WKT_WGS84;
             else
                 pszThisSourceSRS = "";
         }
@@ -854,9 +829,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
         hTransformArg = 
-            GDALCreateGenImgProjTransformer( hSrcDS, pszThisSourceSRS, 
-                                             NULL, pszThisTargetSRS, 
-                                             TRUE, 1000.0, nOrder );
+            GDALCreateGenImgProjTransformer2( hSrcDS, NULL, papszTO );
         
         if( hTransformArg == NULL )
         {
@@ -1100,6 +1073,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /*      the center longitude of the dataset for wrapping purposes.      */
 /************************************************************************/
 
+#ifdef notdef
+
 static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
 
 {								        
@@ -1172,3 +1147,4 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
 
     return osWKT;
 }
+#endif
