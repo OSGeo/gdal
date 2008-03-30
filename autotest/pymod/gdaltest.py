@@ -28,6 +28,7 @@
 ###############################################################################
 
 import sys
+import string
 import os
 try:
     from osgeo import gdal
@@ -773,4 +774,60 @@ def equal_srs_from_wkt( expected_wkt, got_wkt ):
         
         post_reason( 'SRS differs from expected.' )
         return 0
+
     
+###############################################################################
+# Compare two sets of RPC metadata, and establish if they are essentially
+# equivelent or not. 
+
+def rpcs_equal( md1, md2 ):
+
+    simple_fields = [ 'LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF',
+                      'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE',
+                      'LONG_SCALE', 'HEIGHT_SCALE' ]
+    coef_fields = [ 'LINE_NUM_COEFF', 'LINE_DEN_COEFF',
+                    'SAMP_NUM_COEFF', 'SAMP_DEN_COEFF' ]
+
+    for sf in simple_fields:
+
+        try:
+            if not approx_equal(float(md1[sf]),float(md2[sf])):
+                post_reason( '%s values differ.' % sf )
+                print md1[sf]
+                print md2[sf]
+                return 0
+        except:
+            post_reason( '%s value missing or corrupt.' % sf )
+            print md1
+            print md2
+            return 0
+
+    for cf in coef_fields:
+
+        try:
+            list1 = string.split(md1[cf])
+            list2 = string.split(md2[cf])
+
+        except:
+            post_reason( '%s value missing or corrupt.' % cf )
+            print md1[cf]
+            print md2[cf]
+            return 0
+
+        if len(list1) != 20:
+            post_reason( '%s value list length wrong(1)' % cf )
+            print list1
+            return 0
+
+        if len(list2) != 20:
+            post_reason( '%s value list length wrong(2)' % cf )
+            print list2
+            return 0
+
+        for i in range(20):
+            if not approx_equal(float(list1[i]),float(list2[i])):
+                post_reason( '%s[%d] values differ.' % (cf,i) )
+                print list1[i], list2[i]
+                return 0
+
+    return 1
