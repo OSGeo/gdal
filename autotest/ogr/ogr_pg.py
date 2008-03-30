@@ -718,7 +718,8 @@ def ogr_pg_20():
     gdaltest.pg_ds.ExecuteSQL( "CREATE TABLE testgeom (ogc_fid integer)" )
 
     # XXX - mloskot - if 'public' is omitted, then OGRPGDataSource::DeleteLayer fails, line 438
-    gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testgeom','wkb_geometry',-1,'GEOMETRY',4)" )
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testgeom','wkb_geometry',-1,'GEOMETRY',4)" )
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
     for i in range(len(geometries)):
         gdaltest.pg_ds.ExecuteSQL( "INSERT INTO testgeom (ogc_fid,wkb_geometry) \
                                     VALUES (%d,GeomFromEWKT('%s'))" % ( i, geometries[i][0])  )
@@ -785,6 +786,7 @@ def ogr_pg_21():
         feat = layer.GetNextFeature()
 
     feat = None
+    gdaltest.pg_ds.ReleaseResultSet(layer)
     layer = None
 
     return 'success'
