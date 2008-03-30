@@ -1799,7 +1799,7 @@ static int GWKCubicSplineResample( GDALWarpKernel *poWK, int iBand,
         return FALSE;
     }
 
-    if( dfAccumulatorWeight < 0.999 )
+    if( dfAccumulatorWeight < 0.999 || dfAccumulatorWeight > 1.001 )
     {
         *pdfReal = dfAccumulatorReal / dfAccumulatorWeight;
         *pdfImag = dfAccumulatorImag / dfAccumulatorWeight;
@@ -1996,7 +1996,7 @@ static int GWKLanczosResample( GDALWarpKernel *poWK, int iBand,
         return FALSE;
     }
 
-    if( dfAccumulatorWeight < 0.999 )
+    if( dfAccumulatorWeight < 0.999 || dfAccumulatorWeight > 1.001 )
     {
         *pdfReal = dfAccumulatorReal / dfAccumulatorWeight;
         *pdfImag = dfAccumulatorImag / dfAccumulatorWeight;
