@@ -506,6 +506,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
         CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
     panSRID[nKnownSRID] = nId;
     papoSRS[nKnownSRID] = poSRS;
+    nKnownSRID ++;
 
     return poSRS;
 }
