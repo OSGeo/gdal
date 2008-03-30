@@ -2001,3 +2001,25 @@ void GDALDestroyTransformer( void *pTransformArg )
         psInfo->pfnCleanup( pTransformArg );
 }
 
+/************************************************************************/
+/*                         GDALUseTransformer()                         */
+/************************************************************************/
+
+int GDALUseTransformer( void *pTransformArg,
+                        int bDstToSrc, int nPointCount, 
+                        double *x, double *y, double *z, 
+                        int *panSuccess )
+{
+    GDALTransformerInfo *psInfo = (GDALTransformerInfo *) pTransformArg;
+
+    if( psInfo == NULL || !EQUAL(psInfo->szSignature,"GTI") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to use non-GTI transformer." );
+        return FALSE;
+    }
+    else
+        return psInfo->pfnTransform( pTransformArg, bDstToSrc, nPointCount, 
+                                     x, y, z, panSuccess );
+}
+
