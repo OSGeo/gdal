@@ -158,6 +158,9 @@ def ogr_sde_4():
 
 def ogr_sde_5():
     "Test versioned editing"
+
+    if gdaltest.sde_dr is None:
+        return 'skip'
     version_name = 'TESTING'
     gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
 
