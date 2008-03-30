@@ -71,7 +71,7 @@ OGRSDEDataSource::~OGRSDEDataSource()
     
     // Commit our transactions if we were opened for update
     if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID )  ) {
-        CPLDebug("OGR_SDE", "Moving states from %d to %d", nState, nNextState);
+        CPLDebug("OGR_SDE", "Moving states from %ld to %ld", nState, nNextState);
 
         SE_connection_commit_transaction(hConnection);
         nSDEErr = SE_state_close(hConnection, nNextState);
@@ -599,7 +599,7 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "The editing state for this version is currently open.  "
                           "It must be closed for edits before it can be opened by OGR for update. ");
-                return NULL;            
+                return FALSE;            
         }
         nSDEErr = SE_stateinfo_create(&hNextStateInfo);
         if( nSDEErr != SE_SUCCESS )
@@ -1199,7 +1199,7 @@ void OGRSDEDataSource::EnumerateSpatialTables()
         return;
     }
 
-    CPLDebug( "OGR_SDE", "SDE::EnumerateSpatialTables() found %d tables.", nTableListCount );
+    CPLDebug( "OGR_SDE", "SDE::EnumerateSpatialTables() found %ld tables.", nTableListCount );
 
 /* -------------------------------------------------------------------- */
 /*      Process the tables, turning any appropriate ones into layers.   */
