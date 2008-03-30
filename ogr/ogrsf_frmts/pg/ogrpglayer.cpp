@@ -236,7 +236,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL,
                                                    &poGeometry );
             if( poGeometry != NULL )
+            {
+                poGeometry->assignSpatialReference( poSRS );
                 poFeature->SetGeometryDirectly( poGeometry );
+            }
 
             continue;
         }
@@ -246,20 +249,29 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
         {
+            OGRGeometry *poGeometry = NULL;
+
             if( bWkbAsOid )
             {
-                poFeature->SetGeometryDirectly(
+                poGeometry =
                     OIDToGeometry( (Oid) atoi(
-                        PQgetvalue( hCursorResult,
-                                    iRecord, iField ) ) ) );
-            }
-            else
-            {
-                poFeature->SetGeometryDirectly(
-                    BYTEAToGeometry(
                         PQgetvalue( hCursorResult,
                                     iRecord, iField ) ) );
             }
+            else
+            {
+                poGeometry =
+                    BYTEAToGeometry(
+                        PQgetvalue( hCursorResult,
+                                    iRecord, iField ) );
+            }
+
+            if( poGeometry != NULL )
+            {
+                poGeometry->assignSpatialReference( poSRS );
+                poFeature->SetGeometryDirectly( poGeometry );
+            }
+
             continue;
         }
         /* Handle binary cursor result */
@@ -272,7 +284,13 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
             OGRGeometry * poGeom = NULL;
             OGRGeometryFactory::createFromWkb(pabyWkb,NULL,&poGeom);
-            poFeature->SetGeometryDirectly( poGeom );
+
+            if( poGeom != NULL )
+            {
+                poGeom->assignSpatialReference( poSRS );
+                poFeature->SetGeometryDirectly( poGeom );
+            }
+
             continue;
         }
 
