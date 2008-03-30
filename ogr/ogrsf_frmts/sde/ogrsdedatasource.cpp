@@ -479,6 +479,10 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
         return FALSE;
     }
     
+    SE_versioninfo_free(hParentVersion);
+    SE_versioninfo_free(hChildVersion);
+    SE_versioninfo_free(hDummyVersion);
+    
     return TRUE;
 }
 
