@@ -204,28 +204,23 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                       psInfo->adfToGeoX, psInfo->adfToGeoY,
                                       psInfo->adfFromGeoX, psInfo->adfFromGeoY,
                                       nReqOrder );
+
+    CPLFree( padfGeoX );
+    CPLFree( padfGeoY );
+    CPLFree( padfRasterX );
+    CPLFree( padfRasterY );
+    CPLFree( panStatus );
+
     if (nCRSresult != 1)
     {
         CPLError( CE_Failure, CPLE_AppDefined, CRS_error_message[-nCRSresult]);
-        goto CleanupAfterError;
+        GDALDestroyGCPTransformer( psInfo );
+        return NULL;
     }
-    CPLFree( padfGeoX );
-    CPLFree( padfGeoY );
-    CPLFree( padfRasterX );
-    CPLFree( padfRasterY );
-    CPLFree( panStatus );
-    
-    return psInfo;
-
-  CleanupAfterError:
-    CPLFree( padfGeoX );
-    CPLFree( padfGeoY );
-    CPLFree( padfRasterX );
-    CPLFree( padfRasterY );
-    CPLFree( panStatus );
-    
-    CPLFree( psInfo );
-    return NULL;
+    else
+    {
+        return psInfo;
+    }
 }
 
 /************************************************************************/
