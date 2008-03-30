@@ -228,8 +228,7 @@ int main( int argc, char ** argv )
             GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
     }
 
-    CPLFree( pszSourceSRS );
-    CPLFree( pszTargetSRS );
+    CSLDestroy( papszTO );
 
     if( hTransformArg == NULL )
     {
