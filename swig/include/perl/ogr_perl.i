@@ -799,6 +799,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$srs = ($param{srs} or $param{SRS});
 		$wkt = ($param{wkt} or $param{WKT});
 		$wkb = ($param{wkb} or $param{WKB});
+		my $hex = ($param{hexwkb} or $param{HEXWKB});
+		if ($hex) {
+		    $wkb = '';
+		    for (my $i = 0; $i < length($hex); $i+=2) {
+			$wkb .= chr(hex(substr($hex,$i,2)));
+		    }
+		}
 		$gml = ($param{gml} or $param{GML});
 		$json = ($param{geojson} or $param{GeoJSON});
 		$points = $param{Points};

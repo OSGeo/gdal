@@ -41,11 +41,15 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     my @p = $g->Point;
     ok($p[0] == 2, "Point");
     eval {
-	$g = Geo::OGR::Geometry->create(wkb => "abc");
+	my $wkb = "0102000000050000005555555524F3484100000000A0F05941555555552".
+	    "4F34841000000E09CF05941000000C02EF34841ABAAAAAA97F05941ABAAAA2A39F3".
+	    "4841000000E09CF05941ABAAAA2A39F3484100000000A0F05941";
+	$g = Geo::OGR::Geometry->create(hexwkb => $wkb);
     };
-    ok ($@ =~ /Not enough data/, "create from WKb: $@");
+    ok ($@ eq '', "create from WKb: $@");
     eval {
-	$g = Geo::OGR::Geometry->create(gml => "<gml:Point><gml:coordinates>1,1</gml:coordinates></gml:Point>");
+	my $gml = "<gml:Point><gml:coordinates>1,1</gml:coordinates></gml:Point>";
+	$g = Geo::OGR::Geometry->create(gml => $gml);
     };
     ok ($@ eq '', "create from GML: $@");
     eval {
