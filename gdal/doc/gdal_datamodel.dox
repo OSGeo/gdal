@@ -215,6 +215,34 @@ as having specific semantics in the IMAGE_STRUCTURE domain.
 <li> PIXELTYPE: This may appear on a GDT_Byte band (or the corresponding dataset) and have the value SIGNEDBYTE to indicate the unsigned byte values between 128 and 255 should be interpreted as being values between -128 and -1 for applications that recognise the SIGNEDBYTE type.
 </ul>
 
+\subsubsection gdal_datamodel_rpc RPC Domain
+
+The RPC metadata domain holds metadata describing the Rational Polynomial 
+Coefficient geometry model for the image if present.  This geometry model
+can be used to between pixel/line and georeferenced locations.  The items 
+defining the model are:
+
+<ul>
+<li>  ERR_BIAS: Error - Bias. The RMS bias error in meters per horizontal axis of all points in the image (-1.0 if unknown)
+<li>  ERR_RAND: Error - Random. RMS random error in meters per horizontal axis of each point in the image (-1.0 if unknown)
+<li>  LINE_OFF: Line Offset
+<li>  SAMP_OFF: Sample Offset
+<li>  LAT_OFF: Geodetic Latitude Offset
+<li>  LONG_OFF: Geodetic Longitude Offset
+<li>  HEIGHT_OFF: Geodetic Height Offset
+<li>  LINE_SCALE: Line Scale
+<li>  SAMP_SCALE: Sample Scale
+<li>  LAT_SCALE: Geodetic Latitude Scale
+<li>  LONG_SCALE: Geodetic Longitude Scale
+<li>  HEIGHT_SCALE: Geodetic Height Scale
+<li>  LINE_NUM_COEFF (1-20): Line Numerator Coefficients. Twenty coefficients for the polynomial in the Numerator of the rn equation. (space separated)
+<li>  LINE_DEN_COEFF (1-20): Line Denominator Coefficients. Twenty coefficients for the polynomial in the Denominator of the rn equation. (space separated)
+<li>  SAMP_NUM_COEFF (1-20): Sample Numerator Coefficients. Twenty coefficients for the polynomial in the Numerator of the cn equation. (space separated)
+<li> SAMP_DEN_COEFF (1-20): Sample Denominator Coefficients. Twenty coefficients for the polynomial in the Denominator of the cn equation. (space separated)
+</ul>
+
+These fields are directly derived from the document prospective GeoTIFF RPC document (http://geotiff.maptools.org/rpc_prop.html) which in turn is closely modelled on the NITF RPC00B definition.
+
 \subsubsection gdal_datamodel_xml xml: Domains
 
 Any domain name prefixed with "xml:" is not normal name/value metadata. 
