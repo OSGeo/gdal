@@ -111,15 +111,16 @@ default:	o\gdalallregister.obj subdirs
 
 list:
 	echo $(DIRLIST)
+	echo $(PLUGINDIRLIST)
 
 subdirs:
-	for %d in ( $(DIRLIST) ) do \
+	-for %d in ( $(DIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc \
 		&& cd ..
 
 plugindirs:
-	for %d in ( $(PLUGINDIRLIST) ) do \
+	-for %d in ( $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc plugin \
 		&& cd ..
@@ -130,11 +131,11 @@ o\gdalallregister.obj:	gdalallregister.cpp ..\nmake.opt
 
 clean:
 	-del o\*.obj *.obj
-	for %d in ( $(DIRLIST) ) do \
+	-for %d in ( $(DIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd ..
-	for %d in ( $(PLUGINDIRLIST) ) do \
+	-for %d in ( $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd ..
@@ -142,7 +143,7 @@ clean:
 	$(MAKE) /f makefile.vc clean
 
 plugins-install:
-	for %d in ( $(PLUGINDIRLIST) ) do \
+	-for %d in ( $(PLUGINDIRLIST) ) do \
 		cd %d \
 		&& $(MAKE) /f makefile.vc plugin-install \
 		&& cd ..
