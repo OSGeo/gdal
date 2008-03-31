@@ -57,12 +57,13 @@ static void Usage()
 {
     printf( 
         "Usage: gdalwarp [--help-general] [--formats]\n"
-        "    [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-et err_threshold]\n"
+        "    [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
+        "    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]* [-to \"NAME=VALUE\"]\n"
+        "    [-of format] [-co \"NAME=VALUE\"]*\n"
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
@@ -188,6 +189,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-rpc") )
         {
             papszTO = CSLSetNameValue( papszTO, "METHOD", "RPC" );
+        }
+        else if( EQUAL(argv[i],"-geoloc") )
+        {
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "GEOLOC_ARRAY" );
         }
         else if( EQUAL(argv[i],"-to") && i < argc-1 )
         {

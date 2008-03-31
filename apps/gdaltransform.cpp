@@ -42,8 +42,8 @@ static void Usage()
 {
     printf( 
         "Usage: gdaltransform [--help-general]\n"
-        "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-rpc]\n"
-        "    [-to \"NAME=VALUE\"]\n"
+        "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
+        "    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]\n"
         "    [-gcp pixel line easting northing [elevation]]*\n" 
         "    [srcfile [dstfile]]\n" 
         "\n" );
@@ -132,6 +132,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-rpc") )
         {
             papszTO = CSLSetNameValue( papszTO, "METHOD", "RPC" );
+        }
+        else if( EQUAL(argv[i],"-geoloc") )
+        {
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "GEOLOC_ARRAY" );
         }
         else if( EQUAL(argv[i],"-i") )
         {
