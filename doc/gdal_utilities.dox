@@ -425,13 +425,15 @@ Usage:
 \endhtmlonly
 
 \verbatim
-gdalwarp 
-    [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-et err_threshold]
+gdalwarp [--help-general] [--formats]
+    [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
+    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
     [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
-    [-of format] [-co "NAME=VALUE"]* srcfile* dstfile
+    [-of format] [-co "NAME=VALUE"]*
+    srcfile* dstfile
 \endverbatim
 
 \section wdescription DESCRIPTION
@@ -454,11 +456,15 @@ The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
 (ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
 containing well known text.</dd>
+<dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
+to pass to GDALCreateGenImgProjTransformer2(). </dd>
 <dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping
 (1 to 3). The default is to select a polynomial order based on the number of
 GCPs.</dd>
-<dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer based on
-available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
+<dt> <b>-tps</b>:</dt><dd>Force use of thin plate spline transformer based on
+available GCPs.</dd>
+<dt> <b>-rpc</b>:</dt> <dd>Force use of RPCs.</dd>
+<dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
 <dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for
 transformation approximation (in pixel units - defaults to 0.125).</dd>
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced
@@ -826,9 +832,10 @@ transforms coordinates
 
 \verbatim
 gdaltransform [--help-general]
-	[i] [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps]
-	[-gcp pixel line easting northing [elevation]]*
-	[srcfile [dstfile]]
+    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
+    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]
+    [-gcp pixel line easting northing [elevation]]*
+    [srcfile [dstfile]]
 \endverbatim
 
 \section fdescription DESCRIPTION
@@ -847,12 +854,17 @@ The coordinate systems that can be passed are anything supported by the
 OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
 (ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file
 containing well known text.</dd>
+<dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> set a transformer option suitable
+to pass to GDALCreateGenImgProjTransformer2(). </dd>
 <dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping
 (1 to 3). The default is to select a polynomial order based on the number of
 GCPs.</dd>
-<dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer based on
-available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
+<dt> <b>-tps</b>:</dt><dd>Force use of thin plate spline transformer based on
+available GCPs.</dd>
+<dt> <b>-rpc</b>:</dt> <dd>Force use of RPCs.</dd>
+<dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
 <dt> <b>-i</b></dt><dd>Inverse transformation: from destination to source.</dd>
+<dt> <b>-gcp</b><em>pixel line easting northing [elevation]</em></dt><dd>Provide a GCP to be used for transformation (generally three or more are required)</dd>
 <dt> <em>srcfile</em>:</dt><dd> File with source projection definition or GCP's. If
     not given, source projection is read from the command-line -s_srs or -gcp parameters </dd>
 <dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>
@@ -866,13 +878,41 @@ transformations offered by gdalwarp are handled, including gcp-based ones.
 Note that input and output must always be in decimal form.  There is currently
 no support for DMS input or output.
 
-\section fexample EXAMPLE
+If an input image file is provided, input is in pixel/line coordinates on that
+image.  If an output file is provided, output is in pixel/line coordinates
+on that image.  
+
+\section fexample Reprojection Example
+
+Simple reprojection from one projected coordinate system to another:
 
 \verbatim
-gdaltransform -s_srs epsg:28992 -t_srs epsg:31370
+gdaltransform -s_srs EPSG:28992 -t_srs EPSG:31370
 177502 311865
-244510.77404604 166154.532871342 -1046.79270555763
+\endverbatim
 
+Produces the following output in meters in the "Belge 1972 / Belgian Lambert 
+72" projection:
+
+\verbatim
+244510.77404604 166154.532871342 -1046.79270555763
+\endverbatim
+
+\section gexample Image RPC Example
+
+The following command requests an RPC based transformation using the RPC
+model associated with the named file.  Because the -i (inverse) flag is
+used, the transformation is from output georeferenced (WGS84) coordinates 
+back to image coordinates. 
+
+\verbatim
+gdaltransform -i -rpc 06OCT20025052-P2AS-005553965230_01_P001.TIF
+125.67206 39.85307 50                    
+\endverbatim
+
+Produces this output measured in pixels and lines on the image:
+\verbatim
+3499.49282422381 2910.83892848414 50
 \endverbatim
 
 \if man
