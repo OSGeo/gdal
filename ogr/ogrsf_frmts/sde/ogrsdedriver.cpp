@@ -121,6 +121,8 @@ int OGRSDEDriver::TestCapability( const char * pszCap )
 void RegisterOGRSDE()
 
 {
+    if (! GDAL_CHECK_VERSION("OGR SDE"))
+        return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSDEDriver );
 }
 
