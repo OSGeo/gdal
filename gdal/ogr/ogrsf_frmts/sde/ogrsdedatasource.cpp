@@ -273,10 +273,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     {
         OpenSpatialTable( papszTokens[5] );
     }
-    else
-    {
-        EnumerateSpatialTables();
-    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Create a new version from the parent version if we were given   */
@@ -286,6 +283,8 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     if ( CSLCount( papszTokens ) == 8 && *papszTokens[7] != '\0' )
     {
         CPLDebug("OGR_SDE", "Creating child version %s from parent version  %s", papszTokens[7],papszTokens[6]);
+        CPLDebug("OGR_SDE", "Opening layer %s", papszTokens[5]);
+        OpenSpatialTable( papszTokens[5] );
         bDSVersionLocked = TRUE;
         nSDEErr = CreateVersion(papszTokens[6],papszTokens[7]);
         bDSVersionLocked = FALSE;
@@ -305,6 +304,8 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     if ( CSLCount( papszTokens ) == 7 && *papszTokens[6] != '\0' )
     {
         CPLDebug("OGR_SDE", "Setting version to %s", papszTokens[6]);
+        CPLDebug("OGR_SDE", "Opening layer %s", papszTokens[5]);
+        OpenSpatialTable( papszTokens[5] );
         nSDEErr = SetVersionState(papszTokens[6]);
         if (!nSDEErr)
         {
@@ -331,6 +332,8 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 
         
         CPLDebug("OGR_SDE", "Setting version to %s", pszVersionName);
+        CPLDebug("OGR_SDE", "Opening layer %s", papszTokens[5]);
+        OpenSpatialTable( papszTokens[5] );
         nSDEErr = SetVersionState(pszVersionName);
         if (!nSDEErr)
         {
@@ -345,6 +348,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     {
         CPLDebug("OGR_SDE", "Setting version to SDE.DEFAULT");
         nSDEErr = SetVersionState("SDE.DEFAULT");
+        EnumerateSpatialTables();
         if (!nSDEErr)
         {
             // We've already set the error
@@ -383,7 +387,7 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
     }
 
     const char* pszOverwriteVersion =  CPLGetConfigOption( "SDE_VERSIONOVERWRITE", "FALSE" );
-    if( EQUAL(pszOverwriteVersion, "TRUE") ) {
+    if( EQUAL(pszOverwriteVersion, "TRUE") && bDSUpdate ) {
         nSDEErr = SE_version_delete(hConnection, pszChildVersion);
         
         // if the version didn't exist in the first place, just continue on.
@@ -408,6 +412,12 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
         return TRUE; 
     }
 
+    if (!bDSUpdate) {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The version %s does not exist and cannot be created because the datasource is not in update mode", 
+                  pszChildVersion);
+        return FALSE;
+    }
     
     nSDEErr = SE_version_get_info(hConnection, pszParentVersion, hParentVersion);
     if( nSDEErr != SE_SUCCESS )
