@@ -41,14 +41,14 @@ CPL_CVSID("$Id$");
 static const char *apszRPBMap[] = {
     "LINE_OFF",       "IMAGE.lineOffset",
     "SAMP_OFF",       "IMAGE.sampOffset",
-    "HEIGHT_OFF",     "IMAGE.heightOffset",
     "LAT_OFF",        "IMAGE.latOffset",
     "LONG_OFF",       "IMAGE.longOffset",
+    "HEIGHT_OFF",     "IMAGE.heightOffset",
     "LINE_SCALE",     "IMAGE.lineScale",
     "SAMP_SCALE",     "IMAGE.sampScale",
-    "HEIGHT_SCALE",   "IMAGE.heightScale",
     "LAT_SCALE",      "IMAGE.latScale",
     "LONG_SCALE",     "IMAGE.longScale",
+    "HEIGHT_SCALE",   "IMAGE.heightScale",
     "LINE_NUM_COEFF", "IMAGE.lineNumCoef",
     "LINE_DEN_COEFF", "IMAGE.lineDenCoef",
     "SAMP_NUM_COEFF", "IMAGE.sampNumCoef",
@@ -185,6 +185,8 @@ CPLErr CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, char **papszMD )
     VSIFPrintfL( fp, "%s", "bandId = \"P\";\n" );
     VSIFPrintfL( fp, "%s", "SpecId = \"RPC00B\";\n" );
     VSIFPrintfL( fp, "%s", "BEGIN_GROUP = IMAGE\n" );
+    VSIFPrintfL( fp, "%s", "\terrBias = 0.0;\n" );
+    VSIFPrintfL( fp, "%s", "\terrRand = 0.0;\n" );
 
 /* -------------------------------------------------------------------- */
 /*      Write RPC values from our RPC metadata.                         */
