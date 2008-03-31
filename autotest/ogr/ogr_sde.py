@@ -81,8 +81,13 @@ def ogr_sde_2():
     if gdaltest.sde_dr is None:
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    gdaltest.shp_ds = shp_ds
+    shp_lyr = shp_ds.GetLayer(0)
+    
     ds = ogr.Open(base, update=1)
-    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, options = [ 'OVERWRITE=YES' ] )
+    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=shp_lyr.GetSpatialRef(),options = [ 'OVERWRITE=YES' ] )
 #    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon)
 
     ogrtest.quick_create_layer_def( lyr,
@@ -96,9 +101,7 @@ def ogr_sde_2():
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
-    gdaltest.shp_ds = shp_ds
-    shp_lyr = shp_ds.GetLayer(0)
+
     
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
