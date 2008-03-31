@@ -2123,6 +2123,10 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 
 /************************************************************************/
 /*                         GDALExtractRPCInfo()                         */
+/*                                                                      */
+/*      Extract RPC info from metadata, and apply to an RPCInfo         */
+/*      structure.  The inverse of this function is RPCInfoToMD() in    */
+/*      alg/gdal_rpc.cpp (should it be needed).                         */
 /************************************************************************/
 
 int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
