@@ -166,42 +166,60 @@ def ogr_sde_5():
 
     base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, version_name)
     ds = ogr.Open(base, update=1)
-    print "Layer Count: ", ds.GetLayerCount()
-    
-    for i in range(ds.GetLayerCount()):
-        print ds.GetLayer(i).GetName()
+
     l1 = ds.GetLayerByName('SDE.TPOLY')
 
-    f1 = l1.GetNextFeature()
+    f1 = l1.GetFeature(1)
     f1.SetField("PRFEDEA",'SDE.TESTING')
     l1.SetFeature(f1)
     
     ds.Destroy()
-
+    del ds
+    
     default = 'DEFAULT'
-    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'TRUE' )
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
 
     default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, default)
-    ds2 = ogr.Open(base, update=1)
+#    print default
+    ds2 = ogr.Open(default, update=1)
 
-    l2 = ds.GetLayerByName('SDE.TPOLY')
+    l2 = ds2.GetLayerByName('SDE.TPOLY')
 
-    f2 = l2.GetNextFeature()
+    f2 = l2.GetFeature(1)
     f2.SetField("PRFEDEA",'SDE.DEFAULT')
     l2.SetFeature(f2)
+    ds2.Destroy()
+    del ds2
+    
+    ds3 = ogr.Open(base)
+    l3 = ds3.GetLayerByName('SDE.TPOLY')
+    f3 = l3.GetFeature(1)
+    if f3.GetField("PRFEDEA") != "SDE.TESTING":
+        gdaltest.postreason('versioned editing failed for child version SDE.TESTING')
+        return 'fail'
+        
+#    f3 = l3.GetNextFeature()
+#    while f3:
+#        print 'SDE.TESTING\'s values: ', f3.GetFID(), f3.GetField("PRFEDEA")
+#        f3 = l3.GetNextFeature()
 
-    ds = ogr.Open(base)
-    l1 = ds.GetLayerByName('SDE.TPOLY')
-    f1 = l1.GetNextFeature()
-    print f1.GetFID(), f1.GetField("PRFEDEA")
-    ds.Destroy()
+    ds3.Destroy()
+    del ds3
 
-    ds = ogr.Open(default)
-    l1 = ds.GetLayerByName('SDE.TPOLY')
-    f1 = l1.GetNextFeature()
-    print f1.GetFID(), f1.GetField("PRFEDEA")
-    ds.Destroy()
+    ds4 = ogr.Open(default)
+    l4 = ds4.GetLayerByName('SDE.TPOLY')
+    f4 = l4.GetFeature(1)
+    if f4.GetField("PRFEDEA") != "SDE.DEFAULT":
+        gdaltest.postreason('versioned editing failed for parent version SDE.DEFAULT')
+        return 'fail'
 
+#    f4 = l4.GetNextFeature()
+#    while f4:
+#        print 'SDE.DEFAULT\'s values: ', f4.GetFID(), f4.GetField("PRFEDEA")
+#        f4 = l4.GetNextFeature()
+    ds4.Destroy()
+    del ds4
+    return 'success'
         
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
@@ -215,12 +233,12 @@ def ogr_sde_cleanup():
     return 'success'
 
 gdaltest_list = [ 
-    ogr_sde_1,
+#    ogr_sde_1,
     ogr_sde_2,
-    ogr_sde_3,
-    ogr_sde_4,
+#    ogr_sde_3,
+#    ogr_sde_4,
     ogr_sde_5,
-    ogr_sde_cleanup 
+#    ogr_sde_cleanup 
 ]
 
 if __name__ == '__main__':
