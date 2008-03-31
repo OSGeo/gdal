@@ -1391,74 +1391,74 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         int  i;
 
         sprintf( szValue, "%.16g", sRPCInfo.LINE_OFF );
-        poDS->SetMetadataItem( "RPC_LINE_OFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "LINE_OFF", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.LINE_SCALE );
-        poDS->SetMetadataItem( "RPC_LINE_SCALE", szValue, "RPC" );
+        poDS->SetMetadataItem( "LINE_SCALE", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.SAMP_OFF );
-        poDS->SetMetadataItem( "RPC_SAMP_OFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "SAMP_OFF", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.SAMP_SCALE );
-        poDS->SetMetadataItem( "RPC_SAMP_SCALE", szValue, "RPC" );
+        poDS->SetMetadataItem( "SAMP_SCALE", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.LONG_OFF );
-        poDS->SetMetadataItem( "RPC_LONG_OFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "LONG_OFF", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.LONG_SCALE );
-        poDS->SetMetadataItem( "RPC_LONG_SCALE", szValue, "RPC" );
+        poDS->SetMetadataItem( "LONG_SCALE", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.LAT_OFF );
-        poDS->SetMetadataItem( "RPC_LAT_OFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "LAT_OFF", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.LAT_SCALE );
-        poDS->SetMetadataItem( "RPC_LAT_SCALE", szValue, "RPC" );
+        poDS->SetMetadataItem( "LAT_SCALE", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.HEIGHT_OFF );
-        poDS->SetMetadataItem( "RPC_HEIGHT_OFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "HEIGHT_OFF", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", sRPCInfo.HEIGHT_SCALE );
-        poDS->SetMetadataItem( "RPC_HEIGHT_SCALE", szValue, "RPC" );
+        poDS->SetMetadataItem( "HEIGHT_SCALE", szValue, "RPC" );
 
         szValue[0] = '\0'; 
         for( i = 0; i < 20; i++ )
             sprintf( szValue+strlen(szValue), "%.16g ",  
                      sRPCInfo.LINE_NUM_COEFF[i] );
-        poDS->SetMetadataItem( "RPC_LINE_NUM_COEFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "LINE_NUM_COEFF", szValue, "RPC" );
 
         szValue[0] = '\0'; 
         for( i = 0; i < 20; i++ )
             sprintf( szValue+strlen(szValue), "%.16g ",  
                      sRPCInfo.LINE_DEN_COEFF[i] );
-        poDS->SetMetadataItem( "RPC_LINE_DEN_COEFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "LINE_DEN_COEFF", szValue, "RPC" );
         
         szValue[0] = '\0'; 
         for( i = 0; i < 20; i++ )
             sprintf( szValue+strlen(szValue), "%.16g ",  
                      sRPCInfo.SAMP_NUM_COEFF[i] );
-        poDS->SetMetadataItem( "RPC_SAMP_NUM_COEFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "SAMP_NUM_COEFF", szValue, "RPC" );
         
         szValue[0] = '\0'; 
         for( i = 0; i < 20; i++ )
             sprintf( szValue+strlen(szValue), "%.16g ",  
                      sRPCInfo.SAMP_DEN_COEFF[i] );
-        poDS->SetMetadataItem( "RPC_SAMP_DEN_COEFF", szValue, "RPC" );
+        poDS->SetMetadataItem( "SAMP_DEN_COEFF", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", 
                  sRPCInfo.LONG_OFF - ( sRPCInfo.LONG_SCALE / 2.0 ) );
-        poDS->SetMetadataItem( "RPC_MIN_LONG", szValue, "RPC" );
+        poDS->SetMetadataItem( "MIN_LONG", szValue, "RPC" );
 
         sprintf( szValue, "%.16g",
                  sRPCInfo.LONG_OFF + ( sRPCInfo.LONG_SCALE / 2.0 ) );
-        poDS->SetMetadataItem( "RPC_MAX_LONG", szValue, "RPC" );
+        poDS->SetMetadataItem( "MAX_LONG", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", 
                  sRPCInfo.LAT_OFF - ( sRPCInfo.LAT_SCALE / 2.0 ) );
-        poDS->SetMetadataItem( "RPC_MIN_LAT", szValue, "RPC" );
+        poDS->SetMetadataItem( "MIN_LAT", szValue, "RPC" );
 
         sprintf( szValue, "%.16g", 
                  sRPCInfo.LAT_OFF + ( sRPCInfo.LAT_SCALE / 2.0 ) );
-        poDS->SetMetadataItem( "RPC_MAX_LAT", szValue, "RPC" );
+        poDS->SetMetadataItem( "MAX_LAT", szValue, "RPC" );
     }
 
 /* -------------------------------------------------------------------- */
