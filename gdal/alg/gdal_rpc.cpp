@@ -30,8 +30,116 @@
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
+#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
+
+CPL_C_START
+CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg );
+void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree );
+CPL_C_END
+
+/************************************************************************/
+/*                            RPCInfoToMD()                             */
+/*                                                                      */
+/*      Turn an RPCInfo structure back into it's metadata format.       */
+/************************************************************************/
+
+static char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
+
+{
+    char **papszMD = NULL;
+    CPLString osField, osMultiField;
+    int i;
+
+    osField.Printf( "%.15g", psRPCInfo->dfLINE_OFF );
+    papszMD = CSLSetNameValue( papszMD, "LINE_OFF", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfSAMP_OFF );
+    papszMD = CSLSetNameValue( papszMD, "SAMP_OFF", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfLAT_OFF );
+    papszMD = CSLSetNameValue( papszMD, "LAT_OFF", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfLONG_OFF );
+    papszMD = CSLSetNameValue( papszMD, "LONG_OFF", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfHEIGHT_OFF );
+    papszMD = CSLSetNameValue( papszMD, "HEIGHT_OFF", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfLINE_SCALE );
+    papszMD = CSLSetNameValue( papszMD, "LINE_SCALE", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfSAMP_SCALE );
+    papszMD = CSLSetNameValue( papszMD, "SAMP_SCALE", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfLAT_SCALE );
+    papszMD = CSLSetNameValue( papszMD, "LAT_SCALE", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfLONG_SCALE );
+    papszMD = CSLSetNameValue( papszMD, "LONG_SCALE", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfHEIGHT_SCALE );
+    papszMD = CSLSetNameValue( papszMD, "HEIGHT_SCALE", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfMIN_LONG );
+    papszMD = CSLSetNameValue( papszMD, "MIN_LONG", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfMIN_LAT );
+    papszMD = CSLSetNameValue( papszMD, "MIN_LAT", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfMAX_LONG );
+    papszMD = CSLSetNameValue( papszMD, "MAX_LONG", osField );
+
+    osField.Printf( "%.15g", psRPCInfo->dfMAX_LAT );
+    papszMD = CSLSetNameValue( papszMD, "MAX_LAT", osField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", psRPCInfo->adfLINE_NUM_COEFF[i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "LINE_NUM_COEFF", osMultiField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", psRPCInfo->adfLINE_DEN_COEFF[i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "LINE_DEN_COEFF", osMultiField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", psRPCInfo->adfSAMP_NUM_COEFF[i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "SAMP_NUM_COEFF", osMultiField );
+
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", psRPCInfo->adfSAMP_DEN_COEFF[i] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    papszMD = CSLSetNameValue( papszMD, "SAMP_DEN_COEFF", osMultiField );
+
+    return papszMD;
+}
 
 /************************************************************************/
 /*                          RPCComputeTerms()                           */
@@ -134,6 +242,14 @@ typedef struct {
 /*                      GDALCreateRPCTransformer()                      */
 /************************************************************************/
 
+/**
+ * Create an RPC based transformer. 
+ *
+ * 
+ *
+ * @return transformer callback data (deallocate with GDALDestroyTransformer()).
+ */
+
 void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed, 
                                 double dfPixErrThreshold,
                                 char **papszOptions )
@@ -156,7 +272,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     psTransform->sTI.pszClassName = "GDALRPCTransformer";
     psTransform->sTI.pfnTransform = GDALRPCTransform;
     psTransform->sTI.pfnCleanup = GDALDestroyRPCTransformer;
-    psTransform->sTI.pfnSerialize = NULL;
+    psTransform->sTI.pfnSerialize = GDALSerializeRPCTransformer;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a "average height" that we want to consider all      */
@@ -355,4 +471,141 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                    GDALSerializeRPCTransformer()                     */
+/************************************************************************/
+
+CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
+
+{
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeRPCTransformer", NULL );
+
+    CPLXMLNode *psTree;
+    GDALRPCTransformInfo *psInfo = 
+        (GDALRPCTransformInfo *)(pTransformArg);
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "RPCTransformer" );
+
+/* -------------------------------------------------------------------- */
+/*      Serialize bReversed.                                            */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( 
+        psTree, "Reversed", 
+        CPLString().Printf( "%d", psInfo->bReversed ) );
+                                 
+/* -------------------------------------------------------------------- */
+/*      Serialize Height Offset.                                        */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( 
+        psTree, "HeightOffset", 
+        CPLString().Printf( "%.15g", psInfo->dfHeightOffset ) );
+                                 
+/* -------------------------------------------------------------------- */
+/*      Serialize pixel error threshold.                                */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( 
+        psTree, "PixErrThreshold", 
+        CPLString().Printf( "%.15g", psInfo->dfPixErrThreshold ) );
+                                 
+/* -------------------------------------------------------------------- */
+/*      RPC metadata.                                                   */
+/* -------------------------------------------------------------------- */
+    char **papszMD = RPCInfoToMD( &(psInfo->sRPC) );
+    CPLXMLNode *psMD= CPLCreateXMLNode( psTree, CXT_Element, 
+                                        "Metadata" );
+
+    for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
+    {
+        const char *pszRawValue;
+        char *pszKey;
+        CPLXMLNode *psMDI;
+                
+        pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
+                
+        psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
+        CPLSetXMLValue( psMDI, "#key", pszKey );
+        CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
+                
+        CPLFree( pszKey );
+    }
+
+    CSLDestroy( papszMD );
+
+    return psTree;
+}
+
+/************************************************************************/
+/*                   GDALDeserializeRPCTransformer()                    */
+/************************************************************************/
+
+void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
+
+{
+    void *pResult;
+    char **papszOptions = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Collect metadata.                                               */
+/* -------------------------------------------------------------------- */
+    char **papszMD = NULL;
+    CPLXMLNode *psMDI, *psMetadata;
+    GDALRPCInfo sRPC;
+
+    psMetadata = CPLGetXMLNode( psTree, "Metadata" );
+
+    if( psMetadata->eType != CXT_Element
+        || !EQUAL(psMetadata->pszValue,"Metadata") )
+        return NULL;
+    
+    for( psMDI = psMetadata->psChild; psMDI != NULL; 
+         psMDI = psMDI->psNext )
+    {
+        if( !EQUAL(psMDI->pszValue,"MDI") 
+            || psMDI->eType != CXT_Element 
+            || psMDI->psChild == NULL 
+            || psMDI->psChild->psNext == NULL 
+            || psMDI->psChild->eType != CXT_Attribute
+            || psMDI->psChild->psChild == NULL )
+            continue;
+        
+        papszMD = 
+            CSLSetNameValue( papszMD, 
+                             psMDI->psChild->psChild->pszValue, 
+                             psMDI->psChild->psNext->pszValue );
+    }
+
+    if( !GDALExtractRPCInfo( papszMD, &sRPC ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to reconstitute RPC transformer." );
+        return NULL;
+    }
+
+    CSLDestroy( papszMD );
+
+/* -------------------------------------------------------------------- */
+/*      Get other flags.                                                */
+/* -------------------------------------------------------------------- */
+    double dfPixErrThreshold;
+    int bReversed;
+
+    bReversed = atoi(CPLGetXMLValue(psTree,"Reversed","0"));
+
+    dfPixErrThreshold = 
+        CPLAtof(CPLGetXMLValue(psTree,"PixErrThreshold","0.25"));
+
+    papszOptions = CSLSetNameValue( papszOptions, "RPC_HEIGHT",
+                                    CPLGetXMLValue(psTree,"HeightOffset","0"));
+
+/* -------------------------------------------------------------------- */
+/*      Generate transformation.                                        */
+/* -------------------------------------------------------------------- */
+    pResult = GDALCreateRPCTransformer( &sRPC, bReversed, dfPixErrThreshold,
+                                        papszOptions );
+    
+    CSLDestroy( papszOptions );
+
+    return pResult;
 }
