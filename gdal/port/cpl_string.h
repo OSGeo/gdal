@@ -74,6 +74,8 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
 #define CSLT_ALLOWEMPTYTOKENS   0x0002
 #define CSLT_PRESERVEQUOTES     0x0004
 #define CSLT_PRESERVEESCAPES    0x0008
+#define CSLT_STRIPLEADSPACES    0x0010
+#define CSLT_STRIPENDSPACES     0x0020
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname);
