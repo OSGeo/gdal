@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
+// $Id:$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general CPL features.
@@ -23,10 +23,7 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log$
-//
-///////////////////////////////////////////////////////////////////////////////
+
 #include <tut.h>
 #include <string>
 #include "cpl_list.h"
@@ -220,4 +217,138 @@ namespace tut
         CPLHashSetDestroy(set);
     }
 
+    // Test cpl_string API
+    template<>
+    template<>
+    void object::test<5>()
+    {
+        // CSLTokenizeString2();
+        char    **papszStringList;
+
+        papszStringList = CSLTokenizeString2("one two three", " ", 0);
+        ensure(CSLCount(papszStringList) == 3);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "three"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one two, three;four,five; six", " ;,", 0);
+        ensure(CSLCount(papszStringList) == 6);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "three"));
+        ensure(EQUAL(papszStringList[3], "four"));
+        ensure(EQUAL(papszStringList[4], "five"));
+        ensure(EQUAL(papszStringList[5], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one two,,,five,six", " ,",
+                                             CSLT_ALLOWEMPTYTOKENS);
+        ensure(CSLCount(papszStringList) == 6);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], ""));
+        ensure(EQUAL(papszStringList[3], ""));
+        ensure(EQUAL(papszStringList[4], "five"));
+        ensure(EQUAL(papszStringList[5], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
+                                             CSLT_HONOURSTRINGS);
+        ensure(CSLCount(papszStringList) == 5);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "three,four ,"));
+        ensure(EQUAL(papszStringList[3], "five"));
+        ensure(EQUAL(papszStringList[4], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
+                                             CSLT_PRESERVEQUOTES);
+        ensure(CSLCount(papszStringList) == 7);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "\"three"));
+        ensure(EQUAL(papszStringList[3], "four"));
+        ensure(EQUAL(papszStringList[4], "\""));
+        ensure(EQUAL(papszStringList[5], "five"));
+        ensure(EQUAL(papszStringList[6], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
+                                             CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES);
+        ensure(CSLCount(papszStringList) == 5);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "\"three,four ,\""));
+        ensure(EQUAL(papszStringList[3], "five"));
+        ensure(EQUAL(papszStringList[4], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
+                                             " ,", CSLT_PRESERVEESCAPES);
+        ensure(CSLCount(papszStringList) == 7);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "\\two"));
+        ensure(EQUAL(papszStringList[2], "\"three"));
+        ensure(EQUAL(papszStringList[3], "\\four"));
+        ensure(EQUAL(papszStringList[4], "\""));
+        ensure(EQUAL(papszStringList[5], "five"));
+        ensure(EQUAL(papszStringList[6], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
+                                             " ,",
+                                             CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES);
+        ensure(CSLCount(papszStringList) == 7);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "\\two"));
+        ensure(EQUAL(papszStringList[2], "\"three"));
+        ensure(EQUAL(papszStringList[3], "\\four"));
+        ensure(EQUAL(papszStringList[4], "\""));
+        ensure(EQUAL(papszStringList[5], "five"));
+        ensure(EQUAL(papszStringList[6], "six"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",", 0);
+        ensure(CSLCount(papszStringList) == 5);
+        ensure(EQUAL(papszStringList[0], "one "));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], " three"));
+        ensure(EQUAL(papszStringList[3], " four "));
+        ensure(EQUAL(papszStringList[4], "five  "));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
+                                             CSLT_STRIPLEADSPACES);
+        ensure(CSLCount(papszStringList) == 5);
+        ensure(EQUAL(papszStringList[0], "one "));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "three"));
+        ensure(EQUAL(papszStringList[3], "four "));
+        ensure(EQUAL(papszStringList[4], "five  "));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
+                                             CSLT_STRIPENDSPACES);
+        ensure(CSLCount(papszStringList) == 5);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], " three"));
+        ensure(EQUAL(papszStringList[3], " four"));
+        ensure(EQUAL(papszStringList[4], "five"));
+        CSLDestroy(papszStringList);
+
+        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
+                                             CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+        ensure(CSLCount(papszStringList) == 5);
+        ensure(EQUAL(papszStringList[0], "one"));
+        ensure(EQUAL(papszStringList[1], "two"));
+        ensure(EQUAL(papszStringList[2], "three"));
+        ensure(EQUAL(papszStringList[3], "four"));
+        ensure(EQUAL(papszStringList[4], "five"));
+        CSLDestroy(papszStringList);
+    }
+
 } // namespace tut
+
