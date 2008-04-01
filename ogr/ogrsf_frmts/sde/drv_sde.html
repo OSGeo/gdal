@@ -18,8 +18,26 @@ is the port number of the SDE server, which generally defaults to 5151.
 If the layer parameter is specified then the SDE driver is able to skip reading 
 the summary metadata for each layer; skipping this step can be a significant time savings. <p>
 
+<b>Note</b>: Only GDAL 1.6+ supports querying against versions and write 
+operations.  Older versions only support querying against the base (SDE.DEFAULT) version 
+and no writing operations. <p>
+    
 <pre>
-  SDE:server,instance,database,username,password,layer
+  SDE:server,instance,database,username,password[,layer]
+</pre>
+
+To specify a version to query against, you *must* specify a layer as well. 
+The SDE.DEFAULT version will be used when no version name is specified. <p>
+<pre>
+  SDE:server,instance,database,username,password,layer,[version]
+</pre>
+
+You can also request to create a new version if it does not already exist.  
+If the child version already exists, it will be used unless the SDE_VERSIONOVERWRITE 
+environment variable is set to "TRUE".  In that case, the version will be deleted 
+and recreated.  <p>
+<pre>
+  SDE:server,instance,database,username,password,layer,[parentversion],[childversion]
 </pre>
 
 The OGR ArcSDE driver does not support reading CAD data (treated as BLOB
@@ -65,12 +83,14 @@ to <b>always</b> use fully-qualified table names. <p>
     </li>
     <li>
         <b>SDE_DESCRIPTION</b>: The text description of the layer.  Defaults to
-        Created by GDAL/OGR 1.6
+        "Created by GDAL/OGR 1.6"  (Also used as the version description when 
+        creating a new child version from a parent version.)
     </li>
     <li>
-        <b>SDE_MULTIVERSION</b>: If this creation option is set and its value is
-        not "FALSE", multi-versioning will be enabled for the layer at creation
-        time.
+        <b>SDE_MULTIVERSION</b>: If this creation option is set is set to 
+        "FALSE", multi-versioning will be disabled for the layer at creation
+        time.  By default, multiversion tables are created when layers are created 
+        on an SDE datasource.
     </li>
 </ul>
 
@@ -87,6 +107,17 @@ to <b>always</b> use fully-qualified table names. <p>
     "SPATIAL_FIRST" to use the spatial filter.  By default, it uses the 
     spatial filter first.
 </li>
+<li>
+    <b>SDE_VERSIONOVERWRITE</b>: If set to "TRUE", the specified child
+    version will be deleted before being recreated.  Note that this action 
+    does nothing to reconsile any edits that existed on that version before 
+    doing so and essentially throws them away.
+</li>
+
 </ul>
+
+<h3>Examples</h3>
+
+See the <a href="http://trac.osgeo.org/gdal/browser/trunk/autotest/ogr/ogr_sde.py">ogr_sde.py</a> test script for some example connection strings and usage of the driver.<p>
 </body>
 </html>
