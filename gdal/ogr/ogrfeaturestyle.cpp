@@ -1322,7 +1322,9 @@ GBool OGRStyleTool::Parse(const OGRStyleParamId *pasStyle,
     for ( i = 0; i < nElements; i++ )
     {
         char    **papszStylePair =
-            CSLTokenizeString2( papszToken2[i], ":", CSLT_HONOURSTRINGS );
+            CSLTokenizeString2( papszToken2[i], ":", CSLT_HONOURSTRINGS
+                                                     | CSLT_STRIPLEADSPACES
+                                                     | CSLT_STRIPENDSPACES );
         int     j, nTokens = CSLCount(papszStylePair);
 
         if ( nTokens < 1 || nTokens > 2 )
