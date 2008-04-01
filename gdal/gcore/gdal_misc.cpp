@@ -1059,8 +1059,6 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 /*      support for MapInfo .tab-files.                                 */
 /************************************************************************/
 
-#define MAX_GCP 256
- 
 int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename, 
                                  double *padfGeoTransform, char **ppszWKT, 
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
