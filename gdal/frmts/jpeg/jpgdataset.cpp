@@ -1172,7 +1172,7 @@ int JPGDataset::GetGCPCount()
 const char *JPGDataset::GetGCPProjection()
 
 {
-    if( nGCPCount > 0 )
+    if( pszProjection && nGCPCount > 0 )
         return pszProjection;
     else
         return "";
@@ -1350,7 +1350,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPGDataset 	*poDS;
+    JPGDataset	*poDS;
 
     poDS = new JPGDataset();
     poDS->nQLevel = nQLevel;
