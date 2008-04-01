@@ -687,14 +687,18 @@ char ** CSLTokenizeStringComplex( const char * pszString,
  * 
  * The available parsing options are:
  * 
- * - CSLT_ALLOWEMPTYTOKENS: Allow the return of empty tokens when two 
+ * - CSLT_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
  * delimiters in a row occur with no other text between them.  If not set, 
- * empty tokens will be discarded.
+ * empty tokens will be discarded;
+ * - CSLT_STRIPLEADSPACES: strip leading space characters from the token (as
+ * reported by isspace());
+ * - CSLT_STRIPENDSPACES: strip ending space characters from the token (as
+ * reported by isspace());
  * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should 
- * not be broken into multiple tokens.  
- * - CSLT_PRESERVEQUOTES: String quotes are carried into the tokens when this
- * is set, otherwise they are removed. 
- * - CSLT_PRESERVEESCAPES: If set backslash escapes (for backslash itself, 
+ * not be broken into multiple tokens; 
+ * - CSLT_PRESERVEQUOTES: string quotes are carried into the tokens when this
+ * is set, otherwise they are removed;
+ * - CSLT_PRESERVEESCAPES: if set backslash escapes (for backslash itself, 
  * and for literal double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  *
@@ -735,6 +739,8 @@ char ** CSLTokenizeString2( const char * pszString,
     int         nTokenMax, nTokenLen;
     int         bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
     int         bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS);
+    int         bStripLeadSpaces = (nCSLTFlags & CSLT_STRIPLEADSPACES);
+    int         bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES);
 
     pszToken = (char *) CPLCalloc(10,1);
     nTokenMax = 10;
@@ -742,6 +748,7 @@ char ** CSLTokenizeString2( const char * pszString,
     while( pszString != NULL && *pszString != '\0' )
     {
         int     bInString = FALSE;
+        int     bStartString = TRUE;
 
         nTokenLen = 0;
         
@@ -779,31 +786,37 @@ char ** CSLTokenizeString2( const char * pszString,
                 }
             }
 
-            /* Within string constants we allow for escaped quotes, but
-               in processing them we will unescape the quotes */
-            if( bInString && pszString[0] == '\\' && pszString[1] == '"' )
+            /*
+             * Within string constants we allow for escaped quotes, but in
+             * processing them we will unescape the quotes and \\ sequence
+             * reduces to \
+             */
+            if( bInString && pszString[0] == '\\' )
             {
-                if( nCSLTFlags & CSLT_PRESERVEESCAPES )
+                if ( pszString[1] == '"' || pszString[1] == '\\' )
                 {
-                    pszToken[nTokenLen] = *pszString;
-                    nTokenLen++;
-                }
+                    if( nCSLTFlags & CSLT_PRESERVEESCAPES )
+                    {
+                        pszToken[nTokenLen] = *pszString;
+                        nTokenLen++;
+                    }
 
-                pszString++;
+                    pszString++;
+                }
             }
 
-            /* Within string constants a \\ sequence reduces to \ */
-            else if( bInString 
-                     && pszString[0] == '\\' && pszString[1] == '\\' )
-            {
-                if( nCSLTFlags & CSLT_PRESERVEESCAPES )
-                {
-                    pszToken[nTokenLen] = *pszString;
-                    nTokenLen++;
-                }
-                pszString++;
-            }
+            /*
+             * Strip spaces at the token start if requested.
+             */
+            if ( !bInString && bStripLeadSpaces
+                 && bStartString && isspace((unsigned char)*pszString) )
+                continue;
 
+            bStartString = FALSE;
+
+            /*
+             * Extend token buffer if we are running close to its end.
+             */
             if( nTokenLen >= nTokenMax-3 )
             {
                 nTokenMax = nTokenMax * 2 + 10;
@@ -812,6 +825,15 @@ char ** CSLTokenizeString2( const char * pszString,
 
             pszToken[nTokenLen] = *pszString;
             nTokenLen++;
+        }
+
+        /*
+         * Strip spaces at the token end if requested.
+         */
+        if ( !bInString && bStripEndSpaces )
+        {
+            while ( nTokenLen && isspace((unsigned char)pszToken[nTokenLen - 1]) )
+                nTokenLen--;
         }
 
         pszToken[nTokenLen] = '\0';
