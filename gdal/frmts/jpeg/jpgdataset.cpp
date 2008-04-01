@@ -69,8 +69,11 @@ class JPGDataset : public GDALPamDataset
     struct jpeg_error_mgr sJErr;
     jmp_buf setjmp_buffer;
 
+    char   *pszProjection;
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
+    int	   nGCPCount;
+    GDAL_GCP *pasGCPList;
 
     FILE   *fpImage;
     int    nSubfileOffset;
@@ -119,6 +122,11 @@ class JPGDataset : public GDALPamDataset
                                    int, int *, int, int, int );
 
     virtual CPLErr GetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 };
@@ -830,6 +838,8 @@ JPGDataset::JPGDataset()
     nExifOffset     = -1;
     nInterOffset    = -1;
     nGPSOffset      = -1;
+
+    pszProjection = NULL;
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -837,6 +847,9 @@ JPGDataset::JPGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    nGCPCount = 0;
+    pasGCPList = NULL;
+
     bHasDoneJpegStartDecompress = FALSE;
 
     poMaskBand = NULL;
@@ -864,6 +877,15 @@ JPGDataset::~JPGDataset()
         CPLFree( pabyScanline );
     if( papszMetadata != NULL )
       CSLDestroy( papszMetadata );
+
+    if ( pszProjection )
+        CPLFree( pszProjection );
+
+    if ( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
 
     CPLFree( pabyBitMask );
     CPLFree( pabyCMask );
@@ -1131,6 +1153,39 @@ CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
     }
     else 
         return GDALPamDataset::GetGeoTransform( padfTransform );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int JPGDataset::GetGCPCount()
+
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char *JPGDataset::GetGCPProjection()
+
+{
+    if( nGCPCount > 0 )
+        return pszProjection;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                               GetGCPs()                              */
+/************************************************************************/
+
+const GDAL_GCP *JPGDataset::GetGCPs()
+
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
@@ -1458,6 +1513,17 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
                            poDS->adfGeoTransform )
         || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                               poDS->adfGeoTransform );
+
+    if( !poDS->bGeoTransformValid )
+    {
+        int bTabFileOK =
+            GDALReadTabFile( poOpenInfo->pszFilename, poDS->adfGeoTransform,
+                             &poDS->pszProjection,
+                             &poDS->nGCPCount, &poDS->pasGCPList );
+
+        if( bTabFileOK && poDS->nGCPCount == 0 )
+            poDS->bGeoTransformValid = TRUE;
+    }
 
     return poDS;
 }
@@ -1926,7 +1992,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
     {
-    	double      adfGeoTransform[6];
+	double      adfGeoTransform[6];
 	
 	poSrcDS->GetGeoTransform( adfGeoTransform );
 	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
