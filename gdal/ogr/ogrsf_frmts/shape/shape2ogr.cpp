@@ -1257,7 +1257,10 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           break;
 
           default:
-            CPLAssert( FALSE );
+          {
+              /* Ignore fields of other types */
+              break;
+          }
         }
     }
 
