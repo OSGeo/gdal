@@ -986,7 +986,10 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           break;
 
           default:
-            CPLAssert( FALSE );
+          {
+              /* Ignore fields of other types */
+              break;
+          }
         }
     }
 
