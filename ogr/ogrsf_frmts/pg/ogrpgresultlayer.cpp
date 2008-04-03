@@ -33,27 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-/* These are the OIDs for some builtin types, as returned by PQftype(). */
-/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
-
-#define BOOLOID                 16
-#define BYTEAOID                17
-#define CHAROID                 18
-#define NAMEOID                 19
-#define INT8OID                 20
-#define INT2OID                 21
-#define INT2VECTOROID   22
-#define INT4OID                 23
-#define REGPROCOID              24
-#define TEXTOID                 25
-#define OIDOID                  26
-#define TIDOID          27
-#define XIDOID 28
-#define CIDOID 29
-#define OIDVECTOROID    30
-#define FLOAT4OID 700
-#define FLOAT8OID 701
-
 
 /************************************************************************/
 /*                          OGRPGResultLayer()                          */
@@ -139,23 +118,73 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
             continue;
         }
 
-        if( nTypeOID == CHAROID || nTypeOID == TEXTOID )
+        if( nTypeOID == BYTEAOID )
+        {
+            oField.SetType( OFTBinary );
+        }
+        else if( nTypeOID == CHAROID ||
+                 nTypeOID == TEXTOID ||
+                 nTypeOID == VARCHAROID )
         {
             oField.SetType( OFTString );
             oField.SetWidth( PQfsize(hResult, iRawField) );
         }
-        else if( nTypeOID == INT8OID 
-                 || nTypeOID == INT2OID
-                 || nTypeOID == INT4OID )
+        else if( nTypeOID == BOOLOID )
+        {
+            oField.SetType( OFTInteger );
+            oField.SetWidth( 1 );
+        }
+        else if (nTypeOID == INT2OID )
+        {
+            oField.SetType( OFTInteger );
+            oField.SetWidth( 5 );
+        }
+        else if (nTypeOID == INT4OID )
         {
             oField.SetType( OFTInteger );
         }
-        else if( nTypeOID == FLOAT4OID || nTypeOID == FLOAT8OID )
+        else if ( nTypeOID == INT8OID )
+        {
+            /* FIXME: OFTInteger can not handle 64bit integers */
+            oField.SetType( OFTInteger );
+        }
+        else if( nTypeOID == FLOAT4OID ||
+                 nTypeOID == FLOAT8OID ||
+                 nTypeOID == NUMERICOID )
         {
             oField.SetType( OFTReal );
         }
+        else if ( nTypeOID == INT4ARRAYOID )
+        {
+            oField.SetType ( OFTIntegerList );
+        }
+        else if ( nTypeOID == FLOAT4ARRAYOID ||
+                  nTypeOID == FLOAT8ARRAYOID )
+        {
+            oField.SetType ( OFTRealList );
+        }
+        else if ( nTypeOID == TEXTARRAYOID ||
+                  nTypeOID == BPCHARARRAYOID ||
+                  nTypeOID == VARCHARARRAYOID )
+        {
+            oField.SetType ( OFTStringList );
+        }
+        else if ( nTypeOID == DATEOID )
+        {
+            oField.SetType( OFTDate );
+        }
+        else if ( nTypeOID == TIMEOID )
+        {
+            oField.SetType( OFTTime );
+        }
+        else if ( nTypeOID == TIMESTAMPOID ||
+                  nTypeOID == TIMESTAMPTZOID )
+        {
+            oField.SetType( OFTDateTime );
+        }
         else /* unknown type */
         {
+            CPLDebug("PG", "Unhandled OID (%d) for column %d. Defaulting to String.", nTypeOID, iRawField);
             oField.SetType( OFTString );
         }
         
