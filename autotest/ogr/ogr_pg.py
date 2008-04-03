@@ -856,6 +856,333 @@ def ogr_pg_22():
     return 'success'
 
 ###############################################################################
+# Create table with all data types
+
+def ogr_pg_23():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest' )
+    gdal.PopErrorHandler()
+
+    ######################################################
+    # Create Table
+    lyr = gdaltest.pg_ds.CreateLayer( 'datatypetest' )
+
+    ######################################################
+    # Setup Schema
+    # ogrtest.quick_create_layer_def( lyr, None )
+
+    ######################################################
+    # add some custom date fields.
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_numeric5 numeric(5)' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_numeric5_3 numeric(5,3)' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bool bool' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int2 int2' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4 int4' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int8 int8' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4 float4' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8 float8' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_char char' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchar character varying' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_text text' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_bytea bytea' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_time time' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_date date' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_timestamp timestamp without time zone' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_timestamptz timestamp with time zone' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_chararray char(1)[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_textarray text[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchararray character varying[]' )
+
+    ######################################################
+    # Create a populated records.
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', GeomFromEWKT('POINT(10 20)') )" )
+
+    return 'success'
+
+###############################################################################
+
+def test_val_test_23(feat):
+    if feat.my_numeric5 != 12345 or \
+    feat.my_numeric5_3 != 0.123 or \
+    feat.my_bool != 1 or \
+    feat.my_int2 != 12345 or \
+    feat.my_int4 != 12345678 or \
+    abs(feat.my_float4 - 0.123) > 1e-8 or \
+    feat.my_float8 != 0.12345678 or \
+    feat.my_char != 'a' or \
+    feat.my_varchar != 'ab' or \
+    feat.my_text != 'abc' or \
+    feat.my_bytea != '78797A' or \
+    feat.my_time != '12:34:56' or \
+    feat.my_date != '2000/01/01' or \
+    feat.my_timestamp != '2000/01/01  0:00:00' or \
+    feat.my_timestamptz != '2000/01/01  0:00:00+00' or \
+    feat.my_chararray != '(2:a,b)' or \
+    feat.my_textarray != '(2:aa,bb)' or \
+    feat.my_varchararray != '(2:cc,dd)':
+#    feat.my_int8 != 1234567901234
+        gdaltest.post_reason( 'Wrong values' )
+        feat.DumpReadable()
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    wkt = geom.ExportToWkt()
+    if wkt != 'POINT (10 20)':
+        gdaltest.post_reason( 'Wrong WKT :' + wkt )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test with PG: connection
+
+def ogr_pg_24():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+
+    ds.ExecuteSQL( 'set timezone to "UTC"' )
+
+    lyr = ds.GetLayerByName( 'datatypetest' )
+
+    feat = lyr.GetNextFeature()
+    if test_val_test_23(feat) != 'success':
+        return 'fail'
+
+    feat = None
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test with PG: connection and SELECT query
+
+def ogr_pg_25():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'set timezone to "UTC"; select * from datatypetest' )
+
+    feat = sql_lyr.GetNextFeature()
+    if test_val_test_23(feat) != 'success':
+        return 'fail'
+
+    gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
+
+    feat = None
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test with PGB: connection
+
+def ogr_pg_26():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PGB:dbname=autotest', update = 1 )
+
+    ds.ExecuteSQL( 'set timezone to "UTC"' )
+
+    lyr = ds.GetLayerByName( 'datatypetest' )
+
+    feat = lyr.GetNextFeature()
+    if test_val_test_23(feat) != 'success':
+        return 'fail'
+
+    feat = None
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'set timezone to "UTC"; select * from datatypetest' )
+
+    feat = sql_lyr.GetNextFeature()
+    if test_val_test_23(feat) != 'success':
+        return 'fail'
+
+    gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
+
+    feat = None
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test with PGB: connection and SELECT query
+
+def ogr_pg_27():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PGB:dbname=autotest', update = 1 )
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'set timezone to "UTC"; select * from datatypetest' )
+
+    feat = sql_lyr.GetNextFeature()
+    if test_val_test_23(feat) != 'success':
+        return 'fail'
+
+    gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
+
+    feat = None
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Duplicate all data types
+
+def ogr_pg_28():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
+    gdal.PopErrorHandler()
+
+    ds.ExecuteSQL( 'set timezone to "UTC"' )
+
+    src_lyr = ds.GetLayerByName( 'datatypetest' )
+
+    dst_lyr = ds.CreateLayer( 'datatypetest2' )
+
+    src_lyr.ResetReading()
+
+    for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
+        field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
+        dst_lyr.CreateField( field_defn )
+
+    dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
+
+    feat = src_lyr.GetNextFeature()
+    dst_feat.SetFrom( feat )
+    if dst_lyr.CreateFeature( dst_feat ) != 0:
+        gdaltest.post_reason('CreateFeature failed.')
+        return 'fail'
+
+    dst_feat.Destroy()
+
+    src_lyr = None
+    dst_lyr = None
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test with PG: connection
+
+def ogr_pg_29():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+
+    ds.ExecuteSQL( 'set timezone to "UTC"' )
+
+    lyr = ds.GetLayerByName( 'datatypetest2' )
+
+    # my_timestamp has now a time zone...
+    feat = lyr.GetNextFeature()
+    if feat.my_numeric5 != 12345 or \
+    feat.my_numeric5_3 != 0.123 or \
+    feat.my_bool != 1 or \
+    feat.my_int2 != 12345 or \
+    feat.my_int4 != 12345678 or \
+    abs(feat.my_float4 - 0.123) > 1e-8 or \
+    feat.my_float8 != 0.12345678 or \
+    feat.my_char != 'a' or \
+    feat.my_varchar != 'ab' or \
+    feat.my_text != 'abc' or \
+    feat.my_bytea != '78797A' or \
+    feat.my_time != '12:34:56' or \
+    feat.my_date != '2000/01/01' or \
+    feat.my_timestamp != '2000/01/01  0:00:00+00' or \
+    feat.my_timestamptz != '2000/01/01  0:00:00+00' or \
+    feat.my_chararray != '(2:a,b)' or \
+    feat.my_textarray != '(2:aa,bb)' or \
+    feat.my_varchararray != '(2:cc,dd)':
+#    feat.my_int8 != 1234567901234
+        gdaltest.post_reason( 'Wrong values' )
+        feat.DumpReadable()
+        return 'fail'
+
+    geom = feat.GetGeometryRef()
+    wkt = geom.ExportToWkt()
+    if wkt != 'POINT (10 20)':
+        gdaltest.post_reason( 'Wrong WKT :' + wkt )
+        return 'fail'
+
+    feat = None
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Duplicate all data types in PG_USE_COPY mode
+
+def ogr_pg_30():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
+
+    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
+    gdal.PopErrorHandler()
+
+    ds.ExecuteSQL( 'set timezone to "UTC"' )
+
+    src_lyr = ds.GetLayerByName( 'datatypetest' )
+
+    dst_lyr = ds.CreateLayer( 'datatypetest2' )
+
+    src_lyr.ResetReading()
+
+    for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
+        field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
+        dst_lyr.CreateField( field_defn )
+
+    dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
+
+    feat = src_lyr.GetNextFeature()
+    dst_feat.SetFrom( feat )
+    if dst_lyr.CreateFeature( dst_feat ) != 0:
+        gdaltest.post_reason('CreateFeature failed.')
+        return 'fail'
+
+    dst_feat.Destroy()
+
+    ds.Destroy()
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_pg_cleanup():
@@ -867,6 +1194,8 @@ def ogr_pg_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testgeom' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
@@ -903,6 +1232,15 @@ gdaltest_list = [
     ogr_pg_20,
     ogr_pg_21,
     ogr_pg_22,
+    ogr_pg_23,
+    ogr_pg_24,
+    ogr_pg_25,
+    ogr_pg_26,
+    ogr_pg_27,
+    ogr_pg_28,
+    ogr_pg_29,
+    ogr_pg_30,
+    ogr_pg_29,
     ogr_pg_cleanup ]
 
 if __name__ == '__main__':
