@@ -1005,16 +1005,6 @@ def ogr_pg_26():
 
     feat = None
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'set timezone to "UTC"; select * from datatypetest' )
-
-    feat = sql_lyr.GetNextFeature()
-    if test_val_test_23(feat) != 'success':
-        return 'fail'
-
-    gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
-
-    feat = None
-
     ds.Destroy()
 
     return 'success'
