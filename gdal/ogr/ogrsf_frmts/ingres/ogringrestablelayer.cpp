@@ -492,7 +492,101 @@ OGRErr OGRIngresTableLayer::DeleteFeature( long nFID )
 #endif
 
 /************************************************************************/
-/*                       CreateFeature()                                */
+/*                      PrepareOldStyleGeometry()                       */
+/*                                                                      */
+/*      Prepare an ASCII representation of an old style geometry in     */
+/*      a form suitable to include in an INSERT command.                */
+/************************************************************************/
+
+OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry( 
+    OGRGeometry *poGeom, CPLString &osRetGeomText )
+
+{
+    osRetGeomText = "";
+
+    if( poGeom == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Point                                                           */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(osIngresGeomType,"POINT")
+        && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+    {
+        OGRPoint *poPoint = (OGRPoint *) poGeom;
+
+        osRetGeomText.Printf( "(%g,%g)", poPoint->getX(), poPoint->getY() );
+        return OGRERR_NONE;
+    }
+
+    if( EQUAL(osIngresGeomType,"IPOINT")
+        && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+    {
+        OGRPoint *poPoint = (OGRPoint *) poGeom;
+
+        osRetGeomText.Printf( "(%d,%d)", 
+                              (int) floor(poPoint->getX()), 
+                              (int) floor(poPoint->getY()) );
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Line                                                            */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+    {
+        OGRLineString *poLS = (OGRLineString *) poGeom;
+        int i;
+
+        if( EQUAL(osIngresGeomType,"LSEG") 
+            || EQUAL(osIngresGeomType,"ILSEG") 
+            && poLS->getNumPoints() != 2 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to place %d vertex linestring in %s field.", 
+                      poLS->getNumPoints(), 
+                      osIngresGeomType.c_str() );
+            return OGRERR_FAILURE;
+        }
+
+        else ,,,if( EQUAL(osIngresGeomType,"LSEG") 
+            || EQUAL(osIngresGeomType,"ILSEG") 
+            && poLS->getNumPoints() != 2 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to place %d vertex linestring in %s field.", 
+                      poLS->getNumPoints(), 
+                      osIngresGeomType.c_str() );
+            return OGRERR_FAILURE;
+        }
+
+        for( i = 0; i < poLS->getNumPoints(); i++ )
+        {
+            CPLString osPoint;
+            
+            if( EQUALN(osIngresGeomType,"I",1) )
+                osPoint.Printf( "(%d,%d)",
+                                (int) floor(poLS->getX(i)), 
+                                (int) floor(poLS->getY(i)) );
+            else
+                osPoint.Printf( "(%g,%g)", 
+                                poLS->getX(i), poLS->getY(i) );
+
+            if( i < poLS->getNumPoints()-1 )
+                osPoint += ",";
+
+            osRetGeomText += osPoint;
+        }
+        osRetGeomText += ")";
+
+        return OGRERR_NONE;
+    }
+
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
 /************************************************************************/
 
 OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
@@ -539,34 +633,23 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 
     // Set the geometry 
     bNeedComma = FALSE;
-#ifdef notdef
     bNeedComma = poFeature->GetGeometryRef() != NULL;
     if( poFeature->GetGeometryRef() != NULL)
     {
-        char    *pszWKT = NULL;
+        CPLString osGeomText;
 
-        if( poFeature->GetGeometryRef() != NULL )
+        if( PrepareOldStyleGeometry( poFeature->GetGeometryRef(), 
+                                     osGeomText ) == OGRERR_NONE )
         {
-            OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
-            
-            poGeom->closeRings();
-            poGeom->flattenTo2D();
-            poGeom->exportToWkt( &pszWKT );
-        }
-
-        if( pszWKT != NULL )
-        {
-
-            osCommand += 
-                CPLString().Printf(
-                    "GeometryFromText('%s',%d) ", pszWKT, nSRSId );
-
-            OGRFree( pszWKT );
+            osCommand += "'";
+            osCommand += osGeomText;
+            osCommand += "'";
         }
         else
-            osCommand += "''";
+        {
+            osCommand += "''"; /* is this sort of empty geometry legal? */
+        }
     }
-#endif
 
     // Set the FID 
     if( poFeature->GetFID() != OGRNullFID && osFIDColumn.size() )
