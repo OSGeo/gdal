@@ -141,6 +141,8 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
+
+    OGRErr              PrepareOldStyleGeometry( OGRGeometry*, CPLString& );
     
   public:
                         OGRIngresTableLayer( OGRIngresDataSource *,
