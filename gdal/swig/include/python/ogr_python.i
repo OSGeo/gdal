@@ -16,6 +16,15 @@
 %}
 
 
+/*%{
+    
+#if PY_MINOR_VERSION >= 4 
+#include "datetime.h" 
+#define USE_PYTHONDATETIME 1
+#endif
+%}
+*/
+
 %include "ogr_layer_docs.i"
 %include "ogr_datasource_docs.i"
 %include "ogr_driver_docs.i"
@@ -213,6 +222,8 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
+        if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
+            return self.GetFieldAsDate(fld_index)
         # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
     
@@ -255,7 +266,9 @@ layer[0:4] would return a list of the first four features."""
                 raise ImportError("Unable to import simplejson, needed for ExportToJson. (%s)" % error)
             output = simplejson.dumps(output)
         
-        return output    
+        return output
+
+
 }
 
 }
