@@ -34,6 +34,40 @@
 #include "libpq-fe.h"
 #include "cpl_string.h"
 
+
+/* These are the OIDs for some builtin types, as returned by PQftype(). */
+/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
+
+#define BOOLOID                 16
+#define BYTEAOID                17
+#define CHAROID                 18
+#define NAMEOID                 19
+#define INT8OID                 20
+#define INT2OID                 21
+#define INT2VECTOROID           22
+#define INT4OID                 23
+#define REGPROCOID              24
+#define TEXTOID                 25
+#define OIDOID                  26
+#define TIDOID                  27
+#define XIDOID                  28
+#define CIDOID                  29
+#define OIDVECTOROID            30
+#define FLOAT4OID               700
+#define FLOAT8OID               701
+#define INT4ARRAYOID            1007
+#define TEXTARRAYOID            1009
+#define BPCHARARRAYOID          1014
+#define VARCHARARRAYOID         1015
+#define FLOAT4ARRAYOID          1021
+#define FLOAT8ARRAYOID          1022
+#define VARCHAROID		1043
+#define DATEOID			1082
+#define TIMEOID			1083
+#define TIMESTAMPOID	        1114
+#define TIMESTAMPTZOID	        1184
+#define NUMERICOID              1700
+
 /************************************************************************/
 /*                            OGRPGLayer                                */
 /************************************************************************/
@@ -53,10 +87,13 @@ class OGRPGLayer : public OGRLayer
 
     int                 iNextShapeId;
 
-    char               *GeometryToBYTEA( OGRGeometry * );
-    OGRGeometry        *BYTEAToGeometry( const char * );
-    OGRGeometry        *HEXToGeometry( const char * );
-    char               *GeometryToHex( OGRGeometry * poGeometry, int nSRSId );
+    static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
+    static char        *GeometryToBYTEA( OGRGeometry * );
+    static GByte       *BYTEAToGByteArray( const char *pszBytea, int* pnLength );
+    static OGRGeometry *BYTEAToGeometry( const char * );
+    static OGRGeometry *HEXToGeometry( const char * );
+    static OGRGeometry *EWKBToGeometry( GByte* pabyWKB, int nLength );
+    static char        *GeometryToHex( OGRGeometry * poGeometry, int nSRSId );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 
@@ -134,6 +171,9 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bUseCopy;
     int                 bCopyActive;
 
+    static CPLString    EscapeString(PGconn              *hPGConn,
+                                     const char* pszStrValue, int nMaxLength,
+                                     const char* pszFieldName);
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
     char                *BuildCopyFields(void);
