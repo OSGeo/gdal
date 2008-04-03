@@ -58,6 +58,7 @@ static void Usage()
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"
         "    [-a_srs srs_def]\n"
+        "    [-spat xmin ymin xmax ymax]\n"
         "    [-l layername]* [-where expression] [-sql select_statement]\n"
         "    [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]\n"
         "    [-a algorithm[:parameter1=value1]*]"
@@ -402,6 +403,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                 dfXMin - dfDeltaX / 2, dfYMax + dfDeltaY / 2,
                 dfXMax + dfDeltaX / 2, dfYMin - dfDeltaY / 2 );
         printf( "Grid cell size = (%f %f).\n", dfDeltaX, dfDeltaY );
+        printf( "Source point count = %lu.\n", (unsigned long)adfX.size() );
         PrintAlgorithmAndOptions( eAlgorithm, pOptions );
         printf("\n");
     }
@@ -469,6 +471,7 @@ int main( int argc, char ** argv )
     int             bQuiet = FALSE;
     GDALProgressFunc pfnProgress = GDALTermProgress;
     int             i;
+    OGRGeometryH    hSpatialFilter = NULL;
 
     GDALAllRegister();
     OGRRegisterAll();
@@ -554,6 +557,25 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-sql") && i < argc-1 )
         {
             pszSQL = argv[++i];
+        }
+
+        else if( EQUAL(argv[i],"-spat") 
+                 && argv[i+1] != NULL 
+                 && argv[i+2] != NULL 
+                 && argv[i+3] != NULL 
+                 && argv[i+4] != NULL )
+        {
+            OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+
+            OGR_G_AddPoint_2D( hRing, atof(argv[i+1]), atof(argv[i+2]) );
+            OGR_G_AddPoint_2D( hRing, atof(argv[i+1]), atof(argv[i+4]) );
+            OGR_G_AddPoint_2D( hRing, atof(argv[i+3]), atof(argv[i+4]) );
+            OGR_G_AddPoint_2D( hRing, atof(argv[i+3]), atof(argv[i+2]) );
+            OGR_G_AddPoint_2D( hRing, atof(argv[i+1]), atof(argv[i+2]) );
+
+            hSpatialFilter = OGR_G_CreateGeometry( wkbPolygon );
+            OGR_G_AddGeometry( hSpatialFilter, hRing );
+            i += 4;
         }
 
         else if( EQUAL(argv[i],"-a_srs") && i < argc-1 )
@@ -705,7 +727,7 @@ int main( int argc, char ** argv )
     {
         OGRLayerH hLayer;
 
-        hLayer = OGR_DS_ExecuteSQL( hSrcDS, pszSQL, NULL, NULL ); 
+        hLayer = OGR_DS_ExecuteSQL( hSrcDS, pszSQL, hSpatialFilter, NULL ); 
         if( hLayer != NULL )
         {
             // Custom layer will be rasterized in the first band.
@@ -734,6 +756,9 @@ int main( int argc, char ** argv )
             if( OGR_L_SetAttributeFilter( hLayer, pszWHERE ) != OGRERR_NONE )
                 break;
         }
+
+        if( hSpatialFilter != NULL )
+          OGR_L_SetSpatialFilter( hLayer, hSpatialFilter );
 
         // Fetch the first meaningful SRS definition
         if ( !pszOutputSRS )
