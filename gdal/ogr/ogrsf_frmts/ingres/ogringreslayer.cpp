@@ -225,7 +225,12 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
         nVertCount++;
         pszNext++;
         nDepth--;
+
+        while( *pszNext == ' ' )
+            pszNext++;
     }
+
+    CPLAssert( nDepth == 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Handle Box/IBox.                                                */

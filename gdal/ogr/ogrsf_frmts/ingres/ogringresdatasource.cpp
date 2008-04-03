@@ -643,7 +643,7 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
                               char ** papszOptions )
 
 {
-//    const char          *pszGeometryType = NULL;
+    const char          *pszGeometryType = NULL;
     const char		*pszGeomColumnName;
     const char 		*pszExpectedFIDName; 
 	
@@ -706,28 +706,37 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     CPLDebug("INGRES","FID Column Name %s.", pszExpectedFIDName);
 
 /* -------------------------------------------------------------------- */
+/*      What sort of geometry column do we want to create?              */
+/* -------------------------------------------------------------------- */
+    pszGeometryType = CSLFetchNameValue( papszOptions, "GEOMETRY_TYPE" );
+
+    if( pszGeometryType != NULL )
+        /* user selected type */;
+    
+    else if( wkbFlatten(eType) == wkbPoint )
+        pszGeometryType = "POINT";
+
+/* -------------------------------------------------------------------- */
 /*      Form table creation command.                                    */
 /* -------------------------------------------------------------------- */
     CPLString osCommand;
 
-#ifdef notdef
-    if( wkbFlatten(eType) == wkbNone )
+    if( pszGeometryType == NULL )
     {
-#endif
         osCommand.Printf( "CREATE TABLE %s ( "
                           "   %s INTEGER )",
                           pszLayerName, pszExpectedFIDName );
-#ifdef notdef
     }
     else
     {
-        sprintf( szCommand,
-                 "CREATE TABLE %s ( "
-                 "   %s INT UNIQUE NOT NULL AUTO_INCREMENT, "
-                 "   %s GEOMETRY NOT NULL )",
-                 pszLayerName, pszExpectedFIDName, pszGeomColumnName );
+        osCommand.Printf( "CREATE TABLE %s ("
+                          " %s INTEGER,"
+                          " %s %s )",
+                          pszLayerName, 
+                          pszExpectedFIDName, 
+                          pszGeomColumnName, 
+                          pszGeometryType );
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Execute the create table command.                               */
