@@ -11,3 +11,5 @@ default:	$(O_OBJ)
 
 clean:
 	rm -f *.o $(O_OBJ)
+
+$(O_OBJ):	ogr_pg.h
