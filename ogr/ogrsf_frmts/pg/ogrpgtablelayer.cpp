@@ -367,8 +367,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         {
             oField.SetType( OFTIntegerList );
         }
-        else if( EQUAL(pszFormatType, "float[]")
-                 || EQUAL(pszFormatType, "double precision[]") )
+        else if( EQUAL(pszFormatType, "float[]") ||
+                 EQUAL(pszFormatType, "real[]") ||
+                 EQUAL(pszFormatType, "double precision[]") )
         {
             oField.SetType( OFTRealList );
         }
@@ -816,9 +817,9 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 /*                             EscapeString( )                          */
 /************************************************************************/
 
-CPLString OGRPGTableLayer::EscapeString(PGconn *hPGConn,
-                                        const char* pszStrValue, int nMaxLength,
-                                        const char* pszFieldName)
+static CPLString OGRPGEscapeString(PGconn *hPGConn,
+                                   const char* pszStrValue, int nMaxLength,
+                                   const char* pszFieldName)
 {
     CPLString osCommand;
 
@@ -835,10 +836,27 @@ CPLString OGRPGTableLayer::EscapeString(PGconn *hPGConn,
     }
 
     char* pszDestStr = (char*)CPLMalloc(2 * nSrcLen + 1);
+
+#if !defined(PG_PRE74)
     int nError;
     PQescapeStringConn (hPGConn, pszDestStr, pszStrValue, nSrcLen, &nError);
     if (nError == 0)
         osCommand += pszDestStr;
+#else
+    for( int iChar = 0; iChar < nSrcLen; iChar++ )
+    {
+        if( pszStrValue[iChar] == '\\'
+            || pszStrValue[iChar] == '\'' )
+        {
+            osCommand += '\\';
+            osCommand += pszStrValue[iChar];
+        }
+        else
+        {
+            osCommand += pszStrValue[iChar];
+        }
+    }
+#endif
     CPLFree(pszDestStr);
 
     osCommand += "'";
@@ -848,15 +866,16 @@ CPLString OGRPGTableLayer::EscapeString(PGconn *hPGConn,
 
 
 /************************************************************************/
-/*                       OGRPGMakeStringList( )                         */
+/*                       OGRPGEscapeStringList( )                         */
 /************************************************************************/
 
-static CPLString OGRPGMakeStringList(char** papszItems, int bForInsert)
+static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
+                                       char** papszItems, int bForInsert)
 {
     int bFirstItem = TRUE;
     CPLString osStr;
     if (bForInsert)
-        osStr += "E'{";
+        osStr += "ARRAY[";
     else
         osStr += "{";
     while(*papszItems)
@@ -869,27 +888,22 @@ static CPLString OGRPGMakeStringList(char** papszItems, int bForInsert)
         char* pszStr = *papszItems;
         if (*pszStr != '\0')
         {
-            osStr += '"';
-
-            while(*pszStr)
+            if (bForInsert)
+                osStr += OGRPGEscapeString(hPGConn, pszStr, -1, "");
+            else
             {
-                if (bForInsert)
-                {
-                    if ( *pszStr == '\'' )
-                        osStr += "\\";
-                    else if ( *pszStr == '\\' || *pszStr == '"' )
-                        osStr += "\\\\";
-                }
-                else
+                osStr += '"';
+
+                while(*pszStr)
                 {
                     if (*pszStr == '"' )
                         osStr += "\\";
+                    osStr += *pszStr;
+                    pszStr++;
                 }
-                osStr += *pszStr;
-                pszStr++;
-            }
 
-            osStr += '"';
+                osStr += '"';
+            }
         }
         else
             osStr += "NULL";
@@ -899,7 +913,7 @@ static CPLString OGRPGMakeStringList(char** papszItems, int bForInsert)
         papszItems++;
     }
     if (bForInsert)
-        osStr += "}'";
+        osStr += "]";
     else
         osStr += "}";
     return osStr;
@@ -1065,7 +1079,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             char *pszNeedToFree = NULL;
 
             pszNeedToFree = (char *) CPLMalloc(nCount * 13 + 10);
-            strcpy( pszNeedToFree, "{" );
+            strcpy( pszNeedToFree, "'{" );
             for( j = 0; j < nCount; j++ )
             {
                 if( j != 0 )
@@ -1074,7 +1088,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 nOff += strlen(pszNeedToFree+nOff);
                 sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
             }
-            strcat( pszNeedToFree+nOff, "}" );
+            strcat( pszNeedToFree+nOff, "}'" );
 
             osCommand += pszNeedToFree;
             CPLFree(pszNeedToFree);
@@ -1090,7 +1104,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             char *pszNeedToFree = NULL;
 
             pszNeedToFree = (char *) CPLMalloc(nCount * 40 + 10);
-            strcpy( pszNeedToFree, "{" );
+            strcpy( pszNeedToFree, "'{" );
             for( j = 0; j < nCount; j++ )
             {
                 if( j != 0 )
@@ -1099,7 +1113,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 nOff += strlen(pszNeedToFree+nOff);
                 sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
             }
-            strcat( pszNeedToFree+nOff, "}" );
+            strcat( pszNeedToFree+nOff, "}'" );
 
             osCommand += pszNeedToFree;
             CPLFree(pszNeedToFree);
@@ -1112,7 +1126,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         {
             char **papszItems = poFeature->GetFieldAsStringList(i);
 
-            osCommand += OGRPGMakeStringList(papszItems, TRUE);
+            osCommand += OGRPGEscapeStringList(hPGConn, papszItems, TRUE);
 
             continue;
         }
@@ -1147,9 +1161,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
             && !bIsDateNull )
         {
-            osCommand += EscapeString(hPGConn, pszStrValue,
-                                      poFeatureDefn->GetFieldDefn(i)->GetWidth(),
-                                      poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+            osCommand += OGRPGEscapeString(hPGConn, pszStrValue,
+                                           poFeatureDefn->GetFieldDefn(i)->GetWidth(),
+                                           poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
         }
         else
         {
@@ -1312,7 +1326,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
             CPLString osStr;
             char **papszItems = poFeature->GetFieldAsStringList(i);
 
-            pszStrValue = pszNeedToFree = CPLStrdup(OGRPGMakeStringList(papszItems, FALSE));
+            pszStrValue = pszNeedToFree = CPLStrdup(OGRPGEscapeStringList(hPGConn, papszItems, FALSE));
         }
 
         // Binary formatting
