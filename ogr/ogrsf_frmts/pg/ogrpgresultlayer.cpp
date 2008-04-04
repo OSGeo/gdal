@@ -124,6 +124,7 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
         }
         else if( nTypeOID == CHAROID ||
                  nTypeOID == TEXTOID ||
+                 nTypeOID == BPCHAROID ||
                  nTypeOID == VARCHAROID )
         {
             oField.SetType( OFTString );

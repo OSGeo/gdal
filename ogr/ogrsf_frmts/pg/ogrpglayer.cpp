@@ -101,6 +101,8 @@ OGRPGLayer::OGRPGLayer()
     iNextShapeId = 0;
     nResultOffset = 0;
 
+    nCoordDimension = 2; // initialize in case PostGIS is not available
+
     poSRS = NULL;
     nSRSId = -2; // we haven't even queried the database for it yet.
 
@@ -380,7 +382,7 @@ void OGRPGj2date(int jd, int *year, int *month, int *day)
 
 static
 void
-OGRPGdt2time(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
+OGRPGdt2timeInt8(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
 {
 	GIntBig		time;
 
@@ -393,6 +395,22 @@ OGRPGdt2time(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
 	*sec = (int)time / USECS_PER_SEC;
 	*fsec = time - *sec * USECS_PER_SEC;
 }	/* dt2time() */
+
+static
+void
+OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
+{
+	double	time;
+
+	time = jd;
+
+	*hour = (int) (time / 3600.);
+	time -= (*hour) * 3600.;
+	*min = (int) (time / 60.);
+	time -=  (*min) * 60.;
+	*sec = (int)time;
+	*fsec = time - *sec;
+}
 
 /************************************************************************/
 /*                        OGRPGTimeStamp2DMYHMS()                       */
@@ -431,7 +449,7 @@ int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
 		return -1;
 
 	OGRPGj2date((int) date, year, month, day);
-	OGRPGdt2time(time, hour, min, sec, &fsec);
+	OGRPGdt2timeInt8(time, hour, min, sec, &fsec);
 
         return 0;
 }
@@ -617,7 +635,12 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             else
 #endif /* notdef PG_PRE74 */
             {
-                poFeature->SetFID( atoi(PQgetvalue(hCursorResult,iRecord,iField)));
+                char* pabyData = PQgetvalue(hCursorResult,iRecord,iField);
+                /* ogr_pg_20 may crash if PostGIS is unavailable and we don't test pabyData */
+                if (pabyData)
+                    poFeature->SetFID( atoi(pabyData) );
+                else
+                    continue;
             }
         }
 
@@ -629,11 +652,11 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         {
             if ( poDS->bUseBinaryCursor &&
                  (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn) ||
-                 EQUAL(PQfname(hCursorResult,iField),"AsEWKB")) )
+                  EQUAL(PQfname(hCursorResult,iField),"AsEWKB")) )
             {
-                /* Handle EWKB binary cursor result */
-                GByte * pabyWkb = (GByte *)PQgetvalue( hCursorResult,
-                                                    iRecord, iField);
+                /* Handle HEX result or EWKB binary cursor result */
+                char * pabyData = PQgetvalue( hCursorResult,
+                                                        iRecord, iField);
 
                 int nLength = PQgetlength(hCursorResult, iRecord, iField);
 
@@ -641,7 +664,15 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 if (nLength == 0)
                     continue;
 
-                OGRGeometry * poGeom = EWKBToGeometry(pabyWkb, nLength);
+                OGRGeometry * poGeom;
+                if( EQUALN(pabyData,"00",2) || EQUALN(pabyData,"01",2) )
+                {
+                    poGeom = HEXToGeometry(pabyData);
+                }
+                else
+                {
+                    poGeom = EWKBToGeometry((GByte*)pabyData, nLength);
+                }
 
                 if( poGeom != NULL )
                 {
@@ -839,10 +870,13 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                         }
                         else
                         {
+                            float fVal;
                             CPLAssert( nSize == sizeof(float) );
 
-                            memcpy( &padfList[i], pData, nSize );
-                            CPL_MSBPTR32(&padfList[i]);
+                            memcpy( &fVal, pData, nSize );
+                            CPL_MSBPTR32(&fVal);
+
+                            padfList[i] = fVal;
                         }
 
                         pData += nSize;
@@ -951,17 +985,27 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 }
                 else if ( nTypeOID == TIMEOID )
                 {
-                    unsigned int nVal[2];
-                    GIntBig llVal;
                     int nHour, nMinute, nSecond;
                     char szTime[32];
                     double dfsec;
                     CPLAssert(PQgetlength(hCursorResult, iRecord, iField) == 8);
-                    memcpy( nVal, PQgetvalue( hCursorResult, iRecord, iField ), 8 );
-                    CPL_MSBPTR32(&nVal[0]);
-                    CPL_MSBPTR32(&nVal[1]);
-                    llVal = (GIntBig) ((((GUIntBig)nVal[0]) << 32) | nVal[1]);
-                    OGRPGdt2time(llVal, &nHour, &nMinute, &nSecond, &dfsec);
+                    if (poDS->bBinaryTimeFormatIsInt8)
+                    {
+                        unsigned int nVal[2];
+                        GIntBig llVal;
+                        memcpy( nVal, PQgetvalue( hCursorResult, iRecord, iField ), 8 );
+                        CPL_MSBPTR32(&nVal[0]);
+                        CPL_MSBPTR32(&nVal[1]);
+                        llVal = (GIntBig) ((((GUIntBig)nVal[0]) << 32) | nVal[1]);
+                        OGRPGdt2timeInt8(llVal, &nHour, &nMinute, &nSecond, &dfsec);
+                    }
+                    else
+                    {
+                        double dfVal;
+                        memcpy( &dfVal, PQgetvalue( hCursorResult, iRecord, iField ), 8 );
+                        CPL_MSBPTR64(&dfVal);
+                        OGRPGdt2timeFloat8(dfVal, &nHour, &nMinute, &nSecond, &dfsec);
+                    }
                     sprintf(szTime, "%02d:%02d:%02d", nHour, nMinute, nSecond);
                     poFeature->SetField( iOGRField, szTime);
                 }
