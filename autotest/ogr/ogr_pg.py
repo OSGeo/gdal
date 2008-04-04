@@ -896,10 +896,13 @@ def ogr_pg_23():
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_chararray char(1)[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_textarray text[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchararray character varying[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4array int4[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4array float4[]' )
+    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8array float8[]' )
 
     ######################################################
     # Create a populated records.
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', GeomFromEWKT('POINT(10 20)') )" )
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', GeomFromEWKT('POINT(10 20)') )" )
 
     return 'success'
 
@@ -923,13 +926,20 @@ def test_val_test_23(feat):
     feat.my_timestamptz != '2000/01/01  0:00:00+00' or \
     feat.my_chararray != '(2:a,b)' or \
     feat.my_textarray != '(2:aa,bb)' or \
-    feat.my_varchararray != '(2:cc,dd)':
+    feat.my_varchararray != '(2:cc,dd)' or \
+    feat.my_int4array != '(2:100,200)' :
+#    feat.my_float4array != '(2:100.1,200.1)'
+#    feat.my_float4array != '(2:100.12,200.12)'
 #    feat.my_int8 != 1234567901234
         gdaltest.post_reason( 'Wrong values' )
         feat.DumpReadable()
         return 'fail'
 
     geom = feat.GetGeometryRef()
+    if geom is None:
+        gdaltest.post_reason( 'geom is none' )
+        return 'fail'
+
     wkt = geom.ExportToWkt()
     if wkt != 'POINT (10 20)':
         gdaltest.post_reason( 'Wrong WKT :' + wkt )
@@ -971,13 +981,15 @@ def ogr_pg_25():
 
     ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'set timezone to "UTC"; select * from datatypetest' )
+    ds.ExecuteSQL( 'set timezone to "UTC"' )
+
+    sql_lyr = ds.ExecuteSQL( 'select * from datatypetest' )
 
     feat = sql_lyr.GetNextFeature()
     if test_val_test_23(feat) != 'success':
         return 'fail'
 
-    gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
+    ds.ReleaseResultSet( sql_lyr )
 
     feat = None
 
@@ -1019,13 +1031,15 @@ def ogr_pg_27():
 
     ds = ogr.Open( 'PGB:dbname=autotest', update = 1 )
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'set timezone to "UTC"; select * from datatypetest' )
+    ds.ExecuteSQL( 'set timezone to "UTC"')
+
+    sql_lyr = ds.ExecuteSQL( 'select * from datatypetest' )
 
     feat = sql_lyr.GetNextFeature()
     if test_val_test_23(feat) != 'success':
         return 'fail'
 
-    gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
+    ds.ReleaseResultSet( sql_lyr )
 
     feat = None
 
@@ -1062,6 +1076,9 @@ def ogr_pg_28():
     dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
 
     feat = src_lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
     dst_feat.SetFrom( feat )
     if dst_lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
@@ -1158,6 +1175,9 @@ def ogr_pg_30():
     dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
 
     feat = src_lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
     dst_feat.SetFrom( feat )
     if dst_lyr.CreateFeature( dst_feat ) != 0:
         gdaltest.post_reason('CreateFeature failed.')
@@ -1175,11 +1195,12 @@ def ogr_pg_30():
 ###############################################################################
 # 
 
-def ogr_pg_cleanup():
+def ogr_pg_table_cleanup():
 
     if gdaltest.pg_ds is None:
         return 'skip'
 
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
@@ -1191,6 +1212,17 @@ def ogr_pg_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
     # Drop 'AutoTest-schema' (here, double qoutes are required)
     gdaltest.pg_ds.ExecuteSQL( 'DROP SCHEMA \"AutoTest-schema\" CASCADE')
+    gdal.PopErrorHandler()
+
+    return 'success'
+
+def ogr_pg_cleanup():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ogr_pg_table_cleanup();
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
@@ -1201,6 +1233,7 @@ def ogr_pg_cleanup():
 
 gdaltest_list = [ 
     ogr_pg_1,
+    ogr_pg_table_cleanup,
     ogr_pg_2,
     ogr_pg_19,
     ogr_pg_3,
