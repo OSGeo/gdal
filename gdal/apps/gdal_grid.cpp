@@ -409,6 +409,14 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     }
 
     GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, nBand );
+
+    if (adfX.size() == 0)
+    {
+        // FIXME: Shoulda' set to nodata value instead
+        GDALFillRaster( hBand, 0.0 , 0.0 );
+        return;
+    }
+
     GUInt32 nXOffset, nYOffset;
     int     nBlockXSize, nBlockYSize;
 
