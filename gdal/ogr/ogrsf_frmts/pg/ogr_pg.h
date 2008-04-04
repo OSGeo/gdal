@@ -61,6 +61,7 @@
 #define VARCHARARRAYOID         1015
 #define FLOAT4ARRAYOID          1021
 #define FLOAT8ARRAYOID          1022
+#define BPCHAROID		1042
 #define VARCHAROID		1043
 #define DATEOID			1082
 #define TIMEOID			1083
@@ -171,9 +172,6 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bUseCopy;
     int                 bCopyActive;
 
-    static CPLString    EscapeString(PGconn              *hPGConn,
-                                     const char* pszStrValue, int nMaxLength,
-                                     const char* pszFieldName);
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
     char                *BuildCopyFields(void);
@@ -287,6 +285,7 @@ class OGRPGDataSource : public OGRDataSource
     PGver               sPostGISVersion;
 
     int                 bUseBinaryCursor;
+    int                 bBinaryTimeFormatIsInt8;
 
   public:
                         OGRPGDataSource();

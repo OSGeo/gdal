@@ -51,6 +51,7 @@ OGRPGDataSource::OGRPGDataSource()
     bHavePostGIS = FALSE;
     bUseBinaryCursor = FALSE;
     nSoftTransactionLevel = 0;
+    bBinaryTimeFormatIsInt8 = FALSE;
 
     nKnownSRID = 0;
     panSRID = NULL;
@@ -186,12 +187,72 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     CPLDebug( "OGR_PG", "DBName=\"%s\"", pszDBName );
 
 /* -------------------------------------------------------------------- */
+/*      Test if time binary format is int8 or float8                    */
+/* -------------------------------------------------------------------- */
+    PGresult    *hResult = NULL;
+
+#if !defined(PG_PRE74)
+    if (bUseBinaryCursor)
+    {
+        SoftStartTransaction();
+
+        hResult = PQexec(hPGConn, "DECLARE gettimebinaryformat BINARY CURSOR FOR SELECT CAST ('00:00:01' AS time)");
+
+        if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+        {
+            OGRPGClearResult( hResult );
+
+            hResult = PQexec(hPGConn, "FETCH ALL IN gettimebinaryformat" );
+
+            if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK  && PQntuples(hResult) == 1 )
+            {
+                if ( PQfformat( hResult, 0 ) == 1 ) // Binary data representation
+                {
+                    CPLAssert(PQgetlength(hResult, 0, 0) == 8);
+                    double dVal;
+                    unsigned int nVal[2];
+                    memcpy( nVal, PQgetvalue( hResult, 0, 0 ), 8 );
+                    CPL_MSBPTR32(&nVal[0]);
+                    CPL_MSBPTR32(&nVal[1]);
+                    memcpy( &dVal, PQgetvalue( hResult, 0, 0 ), 8 );
+                    CPL_MSBPTR64(&dVal);
+                    if (nVal[0] == 0 && nVal[1] == 1000000)
+                    {
+                        bBinaryTimeFormatIsInt8 = TRUE;
+                        CPLDebug( "OGR_PG", "Time binary format is int8");
+                    }
+                    else if (dVal == 1.)
+                    {
+                        bBinaryTimeFormatIsInt8 = FALSE;
+                        CPLDebug( "OGR_PG", "Time binary format is float8");
+                    }
+                    else
+                    {
+                        bBinaryTimeFormatIsInt8 = FALSE;
+                        CPLDebug( "OGR_PG", "Time binary format is unknown");
+                    }
+                }
+            }
+        }
+
+        OGRPGClearResult( hResult );
+
+        hResult = PQexec(hPGConn, "CLOSE gettimebinaryformat");
+        OGRPGClearResult( hResult );
+
+        SoftCommit();
+    }
+    else
+    {
+        OGRPGClearResult( hResult );
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
 /*      Test to see if this database instance has support for the       */
 /*      PostGIS Geometry type.  If so, disable sequential scanning      */
 /*      so we will get the value of the gist indexes.                   */
 /* -------------------------------------------------------------------- */
-    PGresult    *hResult = NULL;
-
     hResult = PQexec(hPGConn, "BEGIN");
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
