@@ -1192,6 +1192,23 @@ def ogr_pg_30():
 
 
 ###############################################################################
+# Test the tables= connection string option
+
+def ogr_pg_31():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' tables=tpoly,tpolycopy', update = 1 )
+
+    if ds is None or ds.GetLayerCount() != 2:
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1263,6 +1280,7 @@ gdaltest_list = [
     ogr_pg_29,
     ogr_pg_30,
     ogr_pg_29,
+    ogr_pg_31,
     ogr_pg_cleanup ]
 
 if __name__ == '__main__':
