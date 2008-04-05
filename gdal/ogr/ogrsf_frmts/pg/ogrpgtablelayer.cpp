@@ -138,25 +138,15 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
     if( pszSchemaNameIn )
         osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
 
-    /* XXX - mloskot: This version works well but it uses features available in PostgresQL 8.1+
-     *                like ANY() for type of int2vector. Ticket #1889
-     */
-    /*
-    osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
-              "t.typname = ANY(ARRAY['int2','int4','serial']) AS isfid "
-              "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
-              "WHERE a.attnum > 0 AND a.attrelid = c.oid "
-              "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
-              "AND c.oid = i.indrelid AND i.indisprimary = 't' "
-              "AND t.typname !~ '^geom' AND c.relname = '%s' "
-              "AND a.attnum = ANY (i.indkey) "
-              "%s"
-              "ORDER BY a.attnum",
-              pszTableIn, osSchemaClause.c_str() );
-    */
+    const char* pszTypnameEqualsAnyClause;
+    if (poDS->sPostgreSQLVersion.nMajor == 7 && poDS->sPostgreSQLVersion.nMinor <= 3)
+        pszTypnameEqualsAnyClause = "ANY(SELECT '{int2, int4, serial}')";
+    else
+        pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','serial'])";
 
+    /* See #1889 for why we don't use 'AND a.attnum = ANY(i.indkey)' */
     osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
-              "t.typname = ANY(ARRAY['int2','int4','serial']) AS isfid "
+              "t.typname = %s AS isfid "
               "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
               "WHERE a.attnum > 0 AND a.attrelid = c.oid "
               "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
@@ -166,7 +156,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
               "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
               "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
               "OR i.indkey[9]=a.attnum) %s ORDER BY a.attnum",
-              pszTableIn, osSchemaClause.c_str() );
+              pszTypnameEqualsAnyClause, pszTableIn, osSchemaClause.c_str() );
      
     hResult = PQexec(hPGConn, osCommand.c_str() );
 
@@ -1218,18 +1208,22 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRGeometry *poGeometry = (OGRGeometry *) poFeature->GetGeometryRef();
     
     char *pszGeom = NULL;
-    if ( NULL != poGeometry )
+    if ( NULL != poGeometry && (bHasWkb || bHasPostGISGeometry))
     {
         poGeometry->closeRings();
         poGeometry->setCoordinateDimension( nCoordDimension );
 
-        pszGeom = GeometryToHex( poGeometry, nSRSId );
+        if (bHasWkb)
+            pszGeom = GeometryToBYTEA( poGeometry );
+        else
+            pszGeom = GeometryToHex( poGeometry, nSRSId );
+
         nCommandBufSize = nCommandBufSize + strlen(pszGeom);
     }
 
     char *pszCommand = (char *) CPLMalloc(nCommandBufSize);
 
-    if ( poGeometry )
+    if ( pszGeom )
     {
         sprintf( pszCommand, "%s", pszGeom);
         CPLFree( pszGeom );
