@@ -533,6 +533,33 @@ def ogr_mysql_19():
 
     return 'success'
 
+###############################################################################
+# Test using reserved keywords as column names and table names
+
+def ogr_mysql_20():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+
+    layer = gdaltest.mysql_ds.CreateLayer('select')
+    ogrtest.quick_create_layer_def( layer,
+                                    [ ('desc', ogr.OFTString) ,
+                                      ('select', ogr.OFTString) ] )
+    dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
+
+    dst_feat.SetField( 'desc', 'desc' )
+    dst_feat.SetField( 'select', 'select' )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('POINT(0 1)') )
+    layer.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    layer = gdaltest.mysql_ds.GetLayerByName('select')
+    layer.ResetReading()
+    feat = layer.GetNextFeature()
+    if feat.desc == 'desc' and feat.select == 'select':
+        return 'success'
+    else:
+        return 'fail'
 
 ###############################################################################
 # 
@@ -543,6 +570,7 @@ def ogr_mysql_cleanup():
         return 'skip'
 
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tpoly' )
+    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE `select`' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE geometry_columns' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE spatial_ref_sys' )
 
@@ -572,6 +600,7 @@ gdaltest_list = [
     ogr_mysql_17,
 # Fails but it is probably OK
 #    ogr_mysql_18,
+    ogr_mysql_20,
     ogr_mysql_cleanup
     ]
 
