@@ -19,6 +19,11 @@ any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
 
+The set of tables to be scanned can be overridden by specifying
+<i>tables=[schema.]table[,[schema2.]table2,...]</i> within the connection string.
+If the parameter is found, the driver skips enumeration of the tables as
+described in the next paragraph.<p>
+
 If the <i>geometry_columns</i> table exists, then all listed tables and
 named views will be treated as OGR layers.  Otherwise all regular user tables
 will be treated as layers.<p>
@@ -128,6 +133,8 @@ COPY is less robust than INSERT, but signficantly faster.</li><p>
 
 <h3>Example</h3>
 
+<ul>
+<li>
 Simple translation of a shapefile into PostgreSQL.  The table 'abc' will
 be created with the features from abc.shp and attributes from abc.dbf. 
 The database instance (warmerda) must already exist, and the table abc must
@@ -137,6 +144,7 @@ not already exist. <p>
 % ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
 </pre>
 
+<li>
 <p>
 This second example loads a political boundaries layer from VPF (via the
 <a href="drv_ogdi.html">OGDI driver</a>), and renames the layer from the
@@ -148,7 +156,9 @@ of the desired name exists it is overwritten.<p>
         gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
         -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
 </pre>
+</li>
 
+<li>
 <p>
 In this example we merge tiger line data from two different directories of
 tiger files into one table.  Note that the second invocation uses -append
@@ -160,7 +170,9 @@ and no OVERWRITE=yes. <p>
 % ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
      CompleteChain
 </pre>
+</li>
 
+<li>
 <p>
 This example shows using ogrinfo to evaluate an SQL query statement 
 within PostgreSQL.  More sophisticated PostGIS specific queries may also be
@@ -169,13 +181,27 @@ used via the -sql commandline switch to ogrinfo.<p>
 <pre>
 ogrinfo -ro PG:dbname=warmerda -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 </pre>
+</li>
 
+<li>
 <p>
 This example shows using ogrinfo to list PostgreSQL/PostGIS layers on a different host.<p>
 
 <pre>
 ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
 </pre>
+</li>
+
+<li>
+<p>
+This example shows using ogrinfo to list only the layers specified by the <i>tables=</i> options.<p>
+
+<pre>
+ogrinfo -ro PG:'dbname=warmerda tables=table1,table2'
+</pre>
+</li>
+
+</ul>
 
 <h3>See Also</h3>
 
