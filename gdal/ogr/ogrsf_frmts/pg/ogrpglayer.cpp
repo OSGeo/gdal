@@ -1601,6 +1601,7 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry )
     }
 
     pszTextBuf = GByteArrayToBYTEA( pabyWKB, nWkbSize );
+    CPLFree(pabyWKB);
 
     return pszTextBuf;
 }
