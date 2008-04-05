@@ -51,6 +51,7 @@ import gdal
 def ogr_pg_1():
 
     gdaltest.pg_ds = None
+    gdaltest.pg_connection_string='dbname=autotest'
 
     try:
         dods_dr = ogr.GetDriverByName( 'PostgreSQL' )
@@ -58,7 +59,7 @@ def ogr_pg_1():
         return 'skip'
     
     try:
-        gdaltest.pg_ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+        gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     except:
         gdaltest.pg_ds = None
 
@@ -508,7 +509,7 @@ def ogr_pg_14():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
     ds.ExecuteSQL( 'set timezone to "UTC"' )
 
@@ -728,7 +729,7 @@ def ogr_pg_20():
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
     try:
-        gdaltest.pg_ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+        gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     except:
         gdaltest.pg_ds = None
         gdaltest.post_reason( 'can not re-open datasource' )
@@ -955,7 +956,7 @@ def ogr_pg_24():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
     ds.ExecuteSQL( 'set timezone to "UTC"' )
 
@@ -979,7 +980,7 @@ def ogr_pg_25():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
     ds.ExecuteSQL( 'set timezone to "UTC"' )
 
@@ -1005,7 +1006,7 @@ def ogr_pg_26():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PGB:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
 
     ds.ExecuteSQL( 'set timezone to "UTC"' )
 
@@ -1029,7 +1030,7 @@ def ogr_pg_27():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PGB:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
 
     ds.ExecuteSQL( 'set timezone to "UTC"')
 
@@ -1055,7 +1056,7 @@ def ogr_pg_28():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
@@ -1101,7 +1102,7 @@ def ogr_pg_29():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
     ds.ExecuteSQL( 'set timezone to "UTC"' )
 
@@ -1154,7 +1155,7 @@ def ogr_pg_30():
 
     gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
 
-    ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
@@ -1221,7 +1222,7 @@ def ogr_pg_cleanup():
     if gdaltest.pg_ds is None:
         return 'skip'
 
-    gdaltest.pg_ds = ogr.Open( 'PG:dbname=autotest', update = 1 )
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     ogr_pg_table_cleanup();
 
     gdaltest.pg_ds.Destroy()
