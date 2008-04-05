@@ -97,6 +97,61 @@ OGRPGDataSource::~OGRPGDataSource()
     CPLFree( papoSRS );
 }
 
+/************************************************************************/
+/*                      OGRPGDecodeVersionString()                      */
+/************************************************************************/
+
+void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, char* pszVer)
+{
+    GUInt32 iLen;
+    char* ptr;
+    char szNum[25];
+    char szVer[10];
+
+    ptr = pszVer;
+    // get Version string
+    if ( *ptr == ' ' ) *ptr++;
+    while (*ptr && *ptr != ' ') ptr++;
+    iLen = ptr-pszVer;
+    if ( iLen > sizeof(szVer) - 1 ) iLen = sizeof(szVer) - 1;
+    strncpy(szVer,pszVer,iLen);
+    szVer[iLen] = '\0';
+
+    ptr = pszVer = szVer;
+
+    // get Major number
+    while (*ptr && *ptr != '.') ptr++;
+    iLen = ptr-pszVer;
+    if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+    strncpy(szNum,pszVer,iLen);
+    szNum[iLen] = '\0';
+    psVersion->nMajor = atoi(szNum);
+
+    pszVer = ++ptr;
+
+    // get Minor number
+    while (*ptr && *ptr != '.') ptr++;
+    iLen = ptr-pszVer;
+    if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+    strncpy(szNum,pszVer,iLen);
+    szNum[iLen] = '\0';
+    psVersion->nMinor = atoi(szNum);
+
+
+    if ( *ptr )
+    {
+        pszVer = ++ptr;
+
+        // get Release number
+        while (*ptr && *ptr != '.') ptr++;
+        iLen = ptr-pszVer;
+        if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+        strncpy(szNum,pszVer,iLen);
+        szNum[iLen] = '\0';
+        psVersion->nRelease = atoi(szNum);
+    }
+
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -186,11 +241,35 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     CPLDebug( "OGR_PG", "DBName=\"%s\"", pszDBName );
 
+
 /* -------------------------------------------------------------------- */
-/*      Test if time binary format is int8 or float8                    */
+/*      Find out PostgreSQL version                                     */
 /* -------------------------------------------------------------------- */
     PGresult    *hResult = NULL;
 
+    sPostgreSQLVersion.nMajor = -1;
+    sPostgreSQLVersion.nMinor = -1;
+    sPostgreSQLVersion.nRelease = -1;
+
+    hResult = PQexec(hPGConn, "SELECT version()" );
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+        && PQntuples(hResult) > 0 )
+    {
+        char * pszVer = PQgetvalue(hResult,0,0);
+
+        CPLDebug("OGR_PG","PostgreSQL version string : '%s'", pszVer);
+
+        if (EQUALN(pszVer, "PostgreSQL ", 11))
+        {
+            OGRPGDecodeVersionString(&sPostgreSQLVersion, pszVer + 11);
+        }
+    }
+    OGRPGClearResult(hResult);
+    CPLAssert(NULL == hResult); /* Test if safe PQclear has not been broken */
+
+/* -------------------------------------------------------------------- */
+/*      Test if time binary format is int8 or float8                    */
+/* -------------------------------------------------------------------- */
 #if !defined(PG_PRE74)
     if (bUseBinaryCursor)
     {
@@ -242,10 +321,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         SoftCommit();
     }
-    else
-    {
-        OGRPGClearResult( hResult );
-    }
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -276,8 +351,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     OGRPGClearResult( hResult );
-    CPLAssert(NULL == hResult); /* Test if safe PQclear has not been broken */
 
+/* -------------------------------------------------------------------- */
+/*      Find out PostGIS version                                        */
+/* -------------------------------------------------------------------- */
     // find out postgis version.
     sPostGISVersion.nMajor = -1;
     sPostGISVersion.nMinor = -1;
@@ -290,56 +367,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             && PQntuples(hResult) > 0 )
         {
             char * pszVer = PQgetvalue(hResult,0,0);
-            char * ptr = pszVer;
-            char szVer[10];
-            char szNum[25];
-            GUInt32 iLen;
 
-            // get Version string
-            if ( *ptr == ' ' ) *ptr++;
-            while (*ptr && *ptr != ' ') ptr++;
-            iLen = ptr-pszVer;
-            if ( iLen > sizeof(szVer) - 1 ) iLen = sizeof(szVer) - 1;
-            strncpy(szVer,pszVer,iLen);
-            szVer[iLen] = '\0';
-            CPLDebug("OGR_PG","PostSIS version string: '%s' -> '%s'",pszVer,szVer);
+            CPLDebug("OGR_PG","PostGIS version string : '%s'", pszVer);
 
-            pszVer = ptr = szVer;
+            OGRPGDecodeVersionString(&sPostGISVersion, pszVer);
 
-            // get Major number
-            while (*ptr && *ptr != '.') ptr++;
-            iLen = ptr-pszVer;
-            if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
-            strncpy(szNum,pszVer,iLen);
-            szNum[iLen] = '\0';
-            sPostGISVersion.nMajor = atoi(szNum);
-
-            pszVer = ++ptr;
-
-            // get Minor number
-            while (*ptr && *ptr != '.') ptr++;
-            iLen = ptr-pszVer;
-            if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
-            strncpy(szNum,pszVer,iLen);
-            szNum[iLen] = '\0';
-            sPostGISVersion.nMinor = atoi(szNum);
-
-
-            if ( *ptr )
-            {
-                pszVer = ++ptr;
-
-                // get Release number
-                while (*ptr && *ptr != '.') ptr++;
-                iLen = ptr-pszVer;
-                if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
-                strncpy(szNum,pszVer,iLen);
-                szNum[iLen] = '\0';
-                sPostGISVersion.nRelease = atoi(szNum);
-            }
-
-            CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s",
-                    PQgetvalue(hResult,0,0) );
         }
         OGRPGClearResult(hResult);
 
