@@ -1487,7 +1487,7 @@ int WCSDataset::ExtractGridInfo()
          || EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Bands"))
         && CPLGetXMLNode(psAxis,"AvailableKeys") != NULL )
     {
-        osBandIdentifier = "Band";
+        osBandIdentifier = CPLGetXMLValue(psAxis,"Identifier","");
         
         // verify keys are ascending starting at 1
         CPLXMLNode *psValues = CPLGetXMLNode(psAxis,"AvailableKeys");
