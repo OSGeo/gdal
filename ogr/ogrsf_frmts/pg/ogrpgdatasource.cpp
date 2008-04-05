@@ -181,12 +181,91 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         return FALSE;
     }
 
+    pszName = CPLStrdup( pszNewName );
+
+/* -------------------------------------------------------------------- */
+/*      Determine if the connection string contains an optional         */
+/*      TABLES portion. If so, parse it out. The expected               */
+/*      connection string in this case will be, e.g.:                   */
+/*                                                                      */
+/*        'PG:dbname=warmerda user=warmerda tables=s1.t1,[s2.t2,...]    */
+/*              - where sN is schema and tN is table name               */
+/*      We must also strip this information from the connection         */
+/*      string; PQconnectdb() does not like unknown directives          */
+/* -------------------------------------------------------------------- */
+    char              **papszTableNames=NULL;
+    char              **papszSchemaNames=NULL;
+
+    char             *pszTableStart;
+    pszTableStart = strstr(pszName, "tables=");
+    if (pszTableStart == NULL)
+        pszTableStart = strstr(pszName, "TABLES=");
+
+    if( pszTableStart != NULL )
+    {
+        char          **papszTableList;
+        char           *pszTableSpec;
+        const char     *pszEnd = NULL;
+        int             i;
+
+        pszTableSpec = CPLStrdup( pszTableStart + 7 );
+
+        for( i = 0; pszTableStart[i] != '\0'; i++ )
+        {
+            if( pszTableStart[i] == ' ' )
+            {
+                pszEnd = pszTableStart + i;
+                break;
+            }
+        }
+
+        if( pszEnd == NULL )
+            pszEnd = pszName + strlen(pszName);
+
+        // Remove TABLES=xxxxx from pszName string
+        memmove( pszTableStart, pszEnd, strlen(pszEnd) + 1 );
+
+        pszTableSpec[pszEnd - pszTableStart - 7] = '\0';
+        papszTableList = CSLTokenizeString2( pszTableSpec, ",", 0 );
+
+        for( i = 0; i < CSLCount(papszTableList); i++ )
+        {
+            char      **papszQualifiedParts;
+
+            // Get schema and table name
+            papszQualifiedParts = CSLTokenizeString2( papszTableList[i],
+                                                      ".", 0 );
+
+            if( CSLCount( papszQualifiedParts ) == 2 )
+            {
+                papszSchemaNames = CSLAddString( papszSchemaNames, 
+                                                papszQualifiedParts[0] );
+                papszTableNames = CSLAddString( papszTableNames,
+                                                papszQualifiedParts[1] );
+            }
+            else if( CSLCount( papszQualifiedParts ) == 1 )
+            {
+                papszSchemaNames = CSLAddString( papszSchemaNames, "public");
+                papszTableNames = CSLAddString( papszTableNames,
+                                                papszQualifiedParts[0] );
+            }
+
+            CSLDestroy(papszQualifiedParts);
+        }
+
+        CSLDestroy(papszTableList);
+        CPLFree(pszTableSpec);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    hPGConn = PQconnectdb( pszNewName + (bUseBinaryCursor ? 4 : 3) );
+    hPGConn = PQconnectdb( pszName + (bUseBinaryCursor ? 4 : 3) );
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
+        CPLFree(pszName);
+        pszName = NULL;
+
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PQconnectdb failed.\n%s",
                   PQerrorMessage(hPGConn) );
@@ -194,8 +273,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         hPGConn = NULL;
         return FALSE;
     }
-
-    pszName = CPLStrdup( pszNewName );
 
     bDSUpdate = bUpdate;
 
@@ -403,79 +480,80 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
-/*      Get a list of available tables.                                 */
+/*      Get a list of available tables if they have not been            */
+/*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
 
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+    if (papszTableNames == NULL)
     {
+        hResult = PQexec(hPGConn, "BEGIN");
+
+        if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+        {
+            OGRPGClearResult( hResult );
+
+            if ( bHavePostGIS )
+                hResult = PQexec(hPGConn,
+                                "DECLARE mycursor CURSOR for "
+                                "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n, geometry_columns g "
+                                "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                                "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
+            else
+                hResult = PQexec(hPGConn,
+                                "DECLARE mycursor CURSOR for "
+                                "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n "
+                                "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid)" );
+        }
+
+        if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+        {
+            OGRPGClearResult( hResult );
+            hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
+        }
+
+        if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+        {
+            OGRPGClearResult( hResult );
+
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", PQerrorMessage(hPGConn) );
+            return FALSE;
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Parse the returned table list                                   */
+    /* -------------------------------------------------------------------- */
+        for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
+        {
+            const char *pszTable = PQgetvalue(hResult, iRecord, 0);
+
+            if( EQUAL(pszTable,"spatial_ref_sys")
+                || EQUAL(pszTable,"geometry_columns") )
+                continue;
+
+            papszTableNames = CSLAddString(papszTableNames,
+                                        PQgetvalue(hResult, iRecord, 0));
+            papszSchemaNames = CSLAddString(papszSchemaNames,
+                                        PQgetvalue(hResult, iRecord, 1));
+
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
         OGRPGClearResult( hResult );
 
-        if ( bHavePostGIS )
-            hResult = PQexec(hPGConn,
-                             "DECLARE mycursor CURSOR for "
-                             "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n, geometry_columns g "
-                             "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
-                             "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
-        else
-            hResult = PQexec(hPGConn,
-                             "DECLARE mycursor CURSOR for "
-                             "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n "
-                             "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid)" );
-    }
-
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
-    {
-        OGRPGClearResult( hResult );
-        hResult = PQexec(hPGConn, "FETCH ALL in mycursor" );
-    }
-
-    if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
-    {
+        hResult = PQexec(hPGConn, "CLOSE mycursor");
         OGRPGClearResult( hResult );
 
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", PQerrorMessage(hPGConn) );
-        return FALSE;
+        hResult = PQexec(hPGConn, "COMMIT");
+        OGRPGClearResult( hResult );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Parse the returned table list                                   */
-/* -------------------------------------------------------------------- */
-    char        **papszTableNames=NULL;
-    char        **papszSchemaNames=NULL;
-    int           iRecord;
-
-    for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
-    {
-        const char *pszTable = PQgetvalue(hResult, iRecord, 0);
-
-        if( EQUAL(pszTable,"spatial_ref_sys")
-            || EQUAL(pszTable,"geometry_columns") )
-            continue;
-
-        papszTableNames = CSLAddString(papszTableNames,
-                                       PQgetvalue(hResult, iRecord, 0));
-        papszSchemaNames = CSLAddString(papszSchemaNames,
-                                       PQgetvalue(hResult, iRecord, 1));
-
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    OGRPGClearResult( hResult );
-
-    hResult = PQexec(hPGConn, "CLOSE mycursor");
-    OGRPGClearResult( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    OGRPGClearResult( hResult );
 
 /* -------------------------------------------------------------------- */
 /*      Register the available tables.                                  */
 /* -------------------------------------------------------------------- */
-    for( iRecord = 0;
+    for( int iRecord = 0;
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
