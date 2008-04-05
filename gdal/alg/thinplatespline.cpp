@@ -521,7 +521,7 @@ int matrixInvert( int N, double input[], double output[] )
         ftemp = temp[ k*2*N + k ];
         if ( ftemp == 0.0f ) // matrix cannot be inverted
         {
-            delete temp;
+            delete[] temp;
             return false;
         }
 		
