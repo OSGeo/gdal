@@ -1474,7 +1474,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             }
             else
             {
-                sprintf( pszOutput, "%%%02X", pszInput[iIn] );
+                sprintf( pszOutput+iOut, "%%%02X", pszInput[iIn] );
                 iOut += 3;
             }
         }
