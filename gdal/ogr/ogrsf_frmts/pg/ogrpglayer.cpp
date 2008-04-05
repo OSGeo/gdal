@@ -729,20 +729,28 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         else if( EQUAL(PQfname(hCursorResult,iField),"WKB_GEOMETRY") )
         {
             OGRGeometry *poGeometry = NULL;
+            char * pabyData = PQgetvalue( hCursorResult, iRecord, iField);
 
             if( bWkbAsOid )
             {
                 poGeometry =
-                    OIDToGeometry( (Oid) atoi(
-                        PQgetvalue( hCursorResult,
-                                    iRecord, iField ) ) );
+                    OIDToGeometry( (Oid) atoi(pabyData) );
             }
             else
             {
-                poGeometry =
-                    BYTEAToGeometry(
-                        PQgetvalue( hCursorResult,
-                                    iRecord, iField ) );
+                if (poDS->bUseBinaryCursor
+#if !defined(PG_PRE74)
+                    && PQfformat( hCursorResult, iField ) == 1 
+#endif
+                   )
+                {
+                    int nLength = PQgetlength(hCursorResult, iRecord, iField);
+                    poGeometry = EWKBToGeometry((GByte*)pabyData, nLength);
+                }
+                if (poGeometry == NULL)
+                {
+                    poGeometry = BYTEAToGeometry( pabyData );
+                }
             }
 
             if( poGeometry != NULL )
