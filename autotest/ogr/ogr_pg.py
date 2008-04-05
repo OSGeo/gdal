@@ -63,10 +63,22 @@ def ogr_pg_1():
     except:
         gdaltest.pg_ds = None
 
-    if gdaltest.pg_ds is not None:
-        return 'success'
-    else:
+    if gdaltest.pg_ds is None:
         return 'skip'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
+    gdaltest.pg_has_postgis = sql_lyr is not None
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    gdal.PopErrorHandler()
+
+    if gdaltest.pg_has_postgis:
+        print 'PostGIS available !'
+    else:
+        gdaltest.pg_has_postgis = False
+        print 'PostGIS NOT available !'
+
+    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -641,7 +653,7 @@ def ogr_pg_17():
 
 def ogr_pg_18():
 
-    if gdaltest.pg_ds is None:
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
 
     count = gdaltest.pg_ds.GetLayerCount()
@@ -688,7 +700,7 @@ def ogr_pg_19():
 
 def ogr_pg_20():
 
-    if gdaltest.pg_ds is None:
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
 
     #
@@ -764,7 +776,7 @@ def ogr_pg_20():
 
 def ogr_pg_21():
 
-    if gdaltest.pg_ds is None:
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
 
     layer = gdaltest.pg_ds.ExecuteSQL( "SELECT wkb_geometry FROM testgeom" )
@@ -903,7 +915,14 @@ def ogr_pg_23():
 
     ######################################################
     # Create a populated records.
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', GeomFromEWKT('POINT(10 20)') )" )
+
+    #gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', GeomFromEWKT('POINT(10 20)') )" )
+    if gdaltest.pg_has_postgis:
+        geom_str = "GeomFromEWKT('POINT(10 20)')"
+    else:
+        geom_str = "'\\\\001\\\\001\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000$@\\\\000\\\\000\\\\000\\\\000\\\\000\\\\0004@'"
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_char, my_varchar, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 'a', 'ab', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', " + geom_str + " )" )
+
 
     return 'success'
 
