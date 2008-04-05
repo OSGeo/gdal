@@ -516,13 +516,13 @@ def ogr_pg_14():
     lyr = ds.GetLayerByName( 'datetest' )
 
     feat = lyr.GetNextFeature()
-    if feat.ogrdatetime != '2005/10/12 15:41:33+00' \
-       or feat.ogrdate != '2005/10/12' \
-       or feat.ogrtime != '10:41:33' \
-       or feat.tsz != '2005/10/12 15:41:33+00' \
-       or feat.ts != '2005/10/12 10:41:33' \
-       or feat.dt != '2005/10/12' \
-       or feat.tm != '10:41:33':
+    if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 15:41:33+00' \
+       or feat.GetFieldAsString('ogrdate') != '2005/10/12' \
+       or feat.GetFieldAsString('ogrtime') != '10:41:33' \
+       or feat.GetFieldAsString('tsz') != '2005/10/12 15:41:33+00' \
+       or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
+       or feat.GetFieldAsString('dt') != '2005/10/12' \
+       or feat.GetFieldAsString('tm') != '10:41:33':
         gdaltest.post_reason( 'UTC value wrong' )
         feat.DumpReadable()
         return 'fail'
@@ -533,11 +533,11 @@ def ogr_pg_14():
     
     feat = lyr.GetNextFeature()
 
-    if feat.ogrdatetime != '2005/10/12 13:11:33-0230' \
-       or feat.tsz != '2005/10/12 13:11:33-0230' \
-       or feat.ts != '2005/10/12 10:41:33' \
-       or feat.dt != '2005/10/12' \
-       or feat.tm != '10:41:33':
+    if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 13:11:33-0230' \
+       or feat.GetFieldAsString('tsz') != '2005/10/12 13:11:33-0230' \
+       or feat.GetFieldAsString('ts') != '2005/10/12 10:41:33' \
+       or feat.GetFieldAsString('dt') != '2005/10/12' \
+       or feat.GetFieldAsString('tm') != '10:41:33':
         gdaltest.post_reason( 'Newfoundland value wrong' )
         feat.DumpReadable()
         return 'fail'
@@ -547,8 +547,8 @@ def ogr_pg_14():
     lyr.ResetReading()
     
     feat = lyr.GetNextFeature()
-    if feat.ogrdatetime != '2005/10/12 20:41:33+05' \
-       or feat.tsz != '2005/10/12 20:41:33+05':
+    if feat.GetFieldAsString('ogrdatetime') != '2005/10/12 20:41:33+05' \
+       or feat.GetFieldAsString('tsz') != '2005/10/12 20:41:33+05':
         gdaltest.post_reason( '+5 value wrong' )
         feat.DumpReadable()
         return 'fail'
@@ -921,10 +921,10 @@ def test_val_test_23(feat):
     feat.my_varchar != 'ab' or \
     feat.my_text != 'abc' or \
     feat.my_bytea != '78797A' or \
-    feat.my_time != '12:34:56' or \
-    feat.my_date != '2000/01/01' or \
-    feat.my_timestamp != '2000/01/01  0:00:00' or \
-    feat.my_timestamptz != '2000/01/01  0:00:00+00' or \
+    feat.GetFieldAsString('my_time') != '12:34:56' or \
+    feat.GetFieldAsString('my_date') != '2000/01/01' or \
+    (feat.GetFieldAsString('my_timestamp') != '2000/01/01  0:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01  0:00:00+00') or \
+    feat.GetFieldAsString('my_timestamptz') != '2000/01/01  0:00:00+00' or \
     feat.my_chararray != '(2:a,b)' or \
     feat.my_textarray != '(2:aa,bb)' or \
     feat.my_varchararray != '(2:cc,dd)' or \
@@ -1110,27 +1110,7 @@ def ogr_pg_29():
 
     # my_timestamp has now a time zone...
     feat = lyr.GetNextFeature()
-    if feat.my_numeric5 != 12345 or \
-    feat.my_numeric5_3 != 0.123 or \
-    feat.my_bool != 1 or \
-    feat.my_int2 != 12345 or \
-    feat.my_int4 != 12345678 or \
-    abs(feat.my_float4 - 0.123) > 1e-8 or \
-    feat.my_float8 != 0.12345678 or \
-    feat.my_char != 'a' or \
-    feat.my_varchar != 'ab' or \
-    feat.my_text != 'abc' or \
-    feat.my_bytea != '78797A' or \
-    feat.my_time != '12:34:56' or \
-    feat.my_date != '2000/01/01' or \
-    feat.my_timestamp != '2000/01/01  0:00:00+00' or \
-    feat.my_timestamptz != '2000/01/01  0:00:00+00' or \
-    feat.my_chararray != '(2:a,b)' or \
-    feat.my_textarray != '(2:aa,bb)' or \
-    feat.my_varchararray != '(2:cc,dd)':
-#    feat.my_int8 != 1234567901234
-        gdaltest.post_reason( 'Wrong values' )
-        feat.DumpReadable()
+    if test_val_test_23(feat) != 'success':
         return 'fail'
 
     geom = feat.GetGeometryRef()
