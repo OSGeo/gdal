@@ -281,7 +281,10 @@ class OGRPGDataSource : public OGRDataSource
 
     OGRPGTableLayer     *poLayerInCopyMode;
 
+    void                OGRPGDecodeVersionString(PGver* psVersion, char* pszVer);
+
   public:
+    PGver               sPostgreSQLVersion;
     PGver               sPostGISVersion;
 
     int                 bUseBinaryCursor;
