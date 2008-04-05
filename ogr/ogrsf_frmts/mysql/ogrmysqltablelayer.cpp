@@ -109,7 +109,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the schema of the table.          */
 /* -------------------------------------------------------------------- */
-    sprintf( szCommand, "DESCRIBE %s", pszTable );
+    sprintf( szCommand, "DESCRIBE `%s`", pszTable );
     pszGeomColumnTable = CPLStrdup(pszTable);
     if( mysql_query( poDS->GetConn(), szCommand ) )
     {
@@ -416,7 +416,7 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MinY);
 
         sprintf( pszWHERE,
-                 "WHERE MBRIntersects(GeomFromText('%s'), %s)",
+                 "WHERE MBRIntersects(GeomFromText('%s'), `%s`)",
                  szEnvelope,
                  pszGeomColumn);
 
@@ -450,7 +450,7 @@ void OGRMySQLTableLayer::BuildFullQueryStatement()
         CPLMalloc(strlen(pszFields)+strlen(pszWHERE)
                   +strlen(poFeatureDefn->GetName()) + 40);
     sprintf( pszQueryStatement,
-             "SELECT %s FROM %s %s", 
+             "SELECT %s FROM `%s` %s", 
              pszFields, poFeatureDefn->GetName(), pszWHERE );
     
     CPLFree( pszFields );
@@ -490,13 +490,13 @@ char *OGRMySQLTableLayer::BuildFields()
         
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
+        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 6;
 
     pszFieldList = (char *) CPLMalloc(nSize);
     pszFieldList[0] = '\0';
 
     if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
-        sprintf( pszFieldList, "%s", pszFIDColumn );
+        sprintf( pszFieldList, "`%s`", pszFIDColumn );
 
     if( pszGeomColumn )
     {
@@ -509,7 +509,7 @@ char *OGRMySQLTableLayer::BuildFields()
         /*      and the rest being the WKB.                             */
 		/* ------------------------------------------------------------ */            
         sprintf( pszFieldList+strlen(pszFieldList), 
-                 "%s %s", pszGeomColumn, pszGeomColumn );
+                 "`%s` `%s`", pszGeomColumn, pszGeomColumn );
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -519,7 +519,9 @@ char *OGRMySQLTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
+        strcat( pszFieldList, "`");
         strcat( pszFieldList, pszName );
+        strcat( pszFieldList, "`");
     }
 
     CPLAssert( (int) strlen(pszFieldList) < nSize );
@@ -632,7 +634,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Form the statement to drop the record.                          */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "DELETE FROM %s WHERE %s = %ld",
+    osCommand.Printf( "DELETE FROM `%s` WHERE `%s` = %ld",
                       poFeatureDefn->GetName(), pszFIDColumn, nFID );
                       
 /* -------------------------------------------------------------------- */
@@ -668,11 +670,11 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "INSERT INTO %s (", poFeatureDefn->GetName() );
+    osCommand.Printf( "INSERT INTO `%s` (", poFeatureDefn->GetName() );
 
     if( poFeature->GetGeometryRef() != NULL )
     {
-        osCommand = osCommand + pszGeomColumn + " ";
+        osCommand = osCommand + "`" + pszGeomColumn + "` ";
         bNeedComma = TRUE;
     }
 
@@ -681,7 +683,7 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         if( bNeedComma )
             osCommand += ", ";
         
-        osCommand = osCommand + pszFIDColumn + " ";
+        osCommand = osCommand + "`" + pszFIDColumn + "` ";
         bNeedComma = TRUE;
     }
 
@@ -695,8 +697,8 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         else
             osCommand += ", ";
 
-        osCommand = osCommand 
-             + poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        osCommand = osCommand + "`"
+             + poFeatureDefn->GetFieldDefn(i)->GetNameRef() + "`";
     }
 
     osCommand += ") VALUES (";
@@ -939,7 +941,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     }
 
     sprintf( szCommand,
-             "ALTER TABLE %s ADD COLUMN %s %s",
+             "ALTER TABLE `%s` ADD COLUMN `%s` %s",
              poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
 
     if( mysql_query(poDS->GetConn(), szCommand ) )
@@ -983,7 +985,7 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
     char        *pszCommand = (char *) CPLMalloc(strlen(pszFieldList)+2000);
 
     sprintf( pszCommand, 
-             "SELECT %s FROM %s WHERE %s = %ld", 
+             "SELECT %s FROM `%s` WHERE `%s` = %ld", 
              pszFieldList, poFeatureDefn->GetName(), pszFIDColumn, 
              nFeatureId );
     CPLFree( pszFieldList );
@@ -1059,7 +1061,7 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
     MYSQL_RES    *hResult;
     const char         *pszCommand;
 
-    pszCommand = CPLSPrintf( "SELECT COUNT(*) FROM %s %s", 
+    pszCommand = CPLSPrintf( "SELECT COUNT(*) FROM `%s` %s", 
                              poFeatureDefn->GetName(), pszWHERE );
 
     if( mysql_query( poDS->GetConn(), pszCommand ) )
@@ -1116,7 +1118,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 	CPLString   osCommand;
 	GBool       bExtentSet = FALSE;
 
-	osCommand.Printf( "SELECT Envelope(%s) FROM %s;", pszGeomColumn, pszGeomColumnTable);
+	osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
 
 	if (mysql_query(poDS->GetConn(), osCommand) == 0)
 	{
