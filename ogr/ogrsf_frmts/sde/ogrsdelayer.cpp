@@ -2142,6 +2142,10 @@ OGRErr OGRSDELayer::GetExtent (OGREnvelope *psExtent, int bForce)
 {
     if( !NeedLayerInfo() )
         return OGRERR_FAILURE;
+    
+    if (bForce) {
+        return OGRLayer::GetExtent( psExtent, bForce );
+    }        
 
     SE_ENVELOPE  sEnvelope;
     int nSDEErr;
