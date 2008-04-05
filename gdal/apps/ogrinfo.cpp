@@ -267,6 +267,8 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     delete poDS;
+    if (poSpatialFilter)
+        delete poSpatialFilter;
 
     delete OGRSFDriverRegistrar::GetRegistrar();
     OSRCleanup();
