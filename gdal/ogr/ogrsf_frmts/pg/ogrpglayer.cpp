@@ -189,7 +189,7 @@ OGRFeature *OGRPGLayer::GetNextFeature()
 
         if( (m_poFilterGeom == NULL
             || bHasPostGISGeometry
-            || !FilterGeometry( poFeature->GetGeometryRef() ) )
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
