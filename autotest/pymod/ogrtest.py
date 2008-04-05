@@ -53,7 +53,11 @@ def check_features_against_list( layer, field_name, value_list ):
             gdaltest.post_reason( 'Got only %d features, not the expected %d features.' % (i, len(value_list)) )
             return 0
 
-        if feat.GetField( field_index ) != value_list[i]:
+        if isinstance(value_list[i],type('str')):
+            isok = (feat.GetFieldAsString( field_index ) != value_list[i])
+        else:
+            isok = (feat.GetField( field_index ) != value_list[i])
+        if isok:
             gdaltest.post_reason( 'field %s feature %d did not match expected value %s, got %s.' % (field_name, i, str(value_list[i]), str(feat.GetField(field_index)) ) )
             feat.Destroy()
             return 0
