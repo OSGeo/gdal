@@ -800,7 +800,7 @@ int OGRMySQLDataSource::DeleteLayer( int iLayer)
     char        		szCommand[1024];
 
     sprintf( szCommand,
-             "DROP TABLE %s ",
+             "DROP TABLE `%s` ",
              osLayerName.c_str() );
 
     if( !mysql_query(GetConn(), szCommand ) )
@@ -891,14 +891,14 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     if( wkbFlatten(eType) == wkbNone )
     {
         sprintf( szCommand,
-                 "CREATE TABLE %s ( "
+                 "CREATE TABLE `%s` ( "
                  "   %s INT UNIQUE NOT NULL AUTO_INCREMENT )",
                  pszLayerName, pszExpectedFIDName );
     }
     else
     {
         sprintf( szCommand,
-                 "CREATE TABLE %s ( "
+                 "CREATE TABLE `%s` ( "
                  "   %s INT UNIQUE NOT NULL AUTO_INCREMENT, "
                  "   %s GEOMETRY NOT NULL )",
                  pszLayerName, pszExpectedFIDName, pszGeomColumnName );
@@ -1065,7 +1065,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     if( eType != wkbNone && (pszSI == NULL || CSLTestBoolean(pszSI)) )
     {
         sprintf( szCommand,
-                 "ALTER TABLE %s ADD SPATIAL INDEX(%s) ",
+                 "ALTER TABLE `%s` ADD SPATIAL INDEX(`%s`) ",
                  pszLayerName,
                  pszGeomColumnName);
 
