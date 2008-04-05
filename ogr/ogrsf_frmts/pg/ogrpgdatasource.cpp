@@ -262,6 +262,13 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if (EQUALN(pszVer, "PostgreSQL ", 11))
         {
             OGRPGDecodeVersionString(&sPostgreSQLVersion, pszVer + 11);
+            if (sPostgreSQLVersion.nMajor == 7 && sPostgreSQLVersion.nMinor < 4)
+            {
+                /* We don't support BINARY CURSOR for PostgreSQL < 7.4. */
+                /* The binary protocol for arrays seems to be different from later versions */
+                CPLDebug("OGR_PG","BINARY cursor will finally NOT be used because version < 7.4");
+                bUseBinaryCursor = FALSE;
+            }
         }
     }
     OGRPGClearResult(hResult);
