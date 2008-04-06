@@ -1194,6 +1194,8 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
             return nSRSId;
         }
+
+        OGRPGClearResult( hResult );
     }
 
 /* -------------------------------------------------------------------- */
