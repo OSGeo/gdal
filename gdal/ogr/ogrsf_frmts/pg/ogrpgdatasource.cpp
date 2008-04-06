@@ -918,6 +918,41 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         }
 
         OGRPGClearResult( hResult );
+
+/* -------------------------------------------------------------------- */
+/*      Create the spatial index.                                       */
+/*                                                                      */
+/*      We're doing this before we add geometry and record to the table */
+/*      so this may not be exactly the best way to do it.               */
+/* -------------------------------------------------------------------- */
+        const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+        if( pszSI == NULL || CSLTestBoolean(pszSI) )
+        {
+            sprintf( szCommand, "CREATE INDEX %s_geom_idx ON \"%s\".\"%s\" USING GIST (\"%s\")",
+                    pszTableName, pszSchemaName, pszTableName, pszGFldName);
+
+            CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+            hResult = PQexec(hPGConn, szCommand);
+
+            if( !hResult
+                || PQresultStatus(hResult) != PGRES_COMMAND_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "'%s' failed for layer %s, layer creation has failed.",
+                        szCommand, pszLayerName );
+
+                CPLFree( pszLayerName );
+                CPLFree( pszSchemaName );
+
+                OGRPGClearResult( hResult );
+
+                hResult = PQexec(hPGConn, "ROLLBACK");
+                OGRPGClearResult( hResult );
+
+                return NULL;
+            }
+            OGRPGClearResult( hResult );
+        }
     }
 
 /* -------------------------------------------------------------------- */
