@@ -1245,6 +1245,8 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     bTableMissing =
         hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
 
+    OGRPGClearResult( hResult );
+
     hResult = PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
