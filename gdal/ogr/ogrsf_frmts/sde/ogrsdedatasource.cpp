@@ -47,7 +47,7 @@ OGRSDEDataSource::OGRSDEDataSource()
     papoLayers = NULL;
     nLayers = 0;
 
-    bDSVersionLocked = FALSE;
+    bDSVersionLocked = TRUE;
     bDSUpdate = FALSE;
     bDSUseVersionEdits = FALSE;
     
@@ -285,7 +285,6 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         CPLDebug("OGR_SDE", "Creating child version %s from parent version  %s", papszTokens[7],papszTokens[6]);
         CPLDebug("OGR_SDE", "Opening layer %s", papszTokens[5]);
         OpenSpatialTable( papszTokens[5] );
-        bDSVersionLocked = TRUE;
         nSDEErr = CreateVersion(papszTokens[6],papszTokens[7]);
         bDSVersionLocked = FALSE;
         if (!nSDEErr)
