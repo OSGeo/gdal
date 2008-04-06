@@ -1159,9 +1159,42 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     char                szCommand[10000];
     char                *pszWKT = NULL;
     int                 nSRSId = -1;
+    const char*         pszAuthorityName;
 
     if( poSRS == NULL )
         return -1;
+
+    pszAuthorityName = poSRS->GetAuthorityName(NULL);
+
+/* -------------------------------------------------------------------- */
+/*      Check whether the EPSG authority code is already mapped to a    */
+/*      SRS ID.                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
+    {
+        int             nAuthorityCode;
+
+        /* For the root authority name 'EPSG', the authority code
+         * should always be integral
+         */
+        nAuthorityCode = atoi( poSRS->GetAuthorityCode(NULL) );
+
+        sprintf( szCommand, "SELECT srid FROM spatial_ref_sys WHERE "
+                            "auth_name = '%s' AND auth_srid = %d",
+                            pszAuthorityName,
+                            nAuthorityCode );
+        hResult = PQexec(hPGConn, szCommand);
+
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+            && PQntuples(hResult) > 0 )
+        {
+            nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+
+            OGRPGClearResult( hResult );
+
+            return nSRSId;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to WKT.                                           */
@@ -1256,10 +1289,25 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return -1;
     }
 
-    sprintf( szCommand,
-             "INSERT INTO spatial_ref_sys (srid,srtext,proj4text) VALUES (%d,'%s','%s')",
-             nSRSId, pszWKT, pszProj4 );
-	
+    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG") )
+    {
+        int             nAuthorityCode;
+
+        nAuthorityCode = atoi( poSRS->GetAuthorityCode(NULL) );
+
+        sprintf( szCommand,
+                 "INSERT INTO spatial_ref_sys (srid,srtext,proj4text,auth_name,auth_srid) "
+                 "VALUES (%d, '%s', '%s', '%s', %d)",
+                 nSRSId, pszWKT, pszProj4, pszAuthorityName,
+                 nAuthorityCode );
+    }
+    else
+    {
+        sprintf( szCommand,
+                 "INSERT INTO spatial_ref_sys (srid,srtext,proj4text) VALUES (%d,'%s','%s')",
+                 nSRSId, pszWKT, pszProj4 );
+    }
+
     // Free everything that was allocated.
     CPLFree( pszProj4 );
     CPLFree( pszWKT);
