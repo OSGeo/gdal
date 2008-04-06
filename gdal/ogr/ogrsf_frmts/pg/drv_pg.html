@@ -120,7 +120,9 @@ on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
 omitted it defaults to wkb_geometry.<p>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
-Using the same layer name in different schemas ist supported, but not in the public schema and others.<p>
+Using the same layer name in different schemas is supported, but not in the public schema and others.<p>
+<li> <b>SPATIAL_INDEX</b>: Set to ON by default. Creates a spatial index on the geometry column
+to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
 </ul>
 
 <h3>Environment variables</h3>
