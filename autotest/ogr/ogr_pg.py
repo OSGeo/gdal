@@ -1209,6 +1209,44 @@ def ogr_pg_31():
     return 'success'
 
 ###############################################################################
+# Test approximate srtext (#2123)
+
+def ogr_pg_32():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys");
+
+    ######################################################
+    # Create Layer with EPSG:4326
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext', srs = srs);
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    feat = sql_lyr.GetNextFeature()
+    if  feat.count != 1:
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    ######################################################
+    # Create second layer with very approximative EPSG:4326
+
+    srs = osr.SpatialReference('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs);
+
+    # Must still be 1
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    feat = sql_lyr.GetNextFeature()
+    if  feat.count != 1:
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1223,6 +1261,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testgeom' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testsrtext2' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly2' )
@@ -1281,6 +1321,7 @@ gdaltest_list = [
     ogr_pg_30,
     ogr_pg_29,
     ogr_pg_31,
+    ogr_pg_32,
     ogr_pg_cleanup ]
 
 if __name__ == '__main__':
