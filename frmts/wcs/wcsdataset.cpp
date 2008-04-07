@@ -645,6 +645,24 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 
         bSelectingBands = TRUE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      URL encode strings that could have questionable characters.     */
+/* -------------------------------------------------------------------- */
+    CPLString osCoverage, osFormat;
+    char *pszEncoded; 
+
+    osCoverage = CPLGetXMLValue( psService, "CoverageName", "" );
+
+    pszEncoded = CPLEscapeString( osCoverage, -1, CPLES_URL );
+    osCoverage = pszEncoded;
+    CPLFree( pszEncoded );
+    
+    osFormat = CPLGetXMLValue( psService, "PreferredFormat", "" );
+
+    pszEncoded = CPLEscapeString( osFormat, -1, CPLES_URL );
+    osFormat = pszEncoded;
+    CPLFree( pszEncoded );
     
 /* -------------------------------------------------------------------- */
 /*      Construct a "simple" GetCoverage request (WCS 1.0).		*/
@@ -657,8 +675,8 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
             "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
             CPLGetXMLValue( psService, "ServiceURL", "" ),
-            CPLGetXMLValue( psService, "CoverageName", "" ),
-            CPLGetXMLValue( psService, "PreferredFormat", "" ),
+            osCoverage.c_str(),
+            osFormat.c_str(),
             dfMinX, dfMinY, dfMaxX, dfMaxY,
             nBufXSize, nBufYSize, 
             osCRS.c_str(),
@@ -727,8 +745,8 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
             "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s%s",
             CPLGetXMLValue( psService, "ServiceURL", "" ),
             CPLGetXMLValue( psService, "Version", "" ),
-            CPLGetXMLValue( psService, "CoverageName", "" ),
-            CPLGetXMLValue( psService, "PreferredFormat", "" ),
+            osCoverage.c_str(),
+            osFormat.c_str(),
             dfMinX, dfMinY, dfMaxX, dfMaxY,
             osCRS.c_str(),
             osRangeSubset.c_str(),
@@ -1561,12 +1579,14 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      check based on the Content-type, but this seems quite           */
 /*      undependable, even from MapServer!                              */
 /* -------------------------------------------------------------------- */
-    if( strstr((const char *)psResult->pabyData, "<ServiceException") 
-        || strstr((const char *)psResult->pabyData, "<ExceptionReport") )
+    if( strstr((const char *)psResult->pabyData, "ServiceException") 
+        || strstr((const char *)psResult->pabyData, "ExceptionReport") )
     {
         CPLXMLNode *psTree = CPLParseXMLString( (const char *) 
                                                 psResult->pabyData );
         const char *pszMsg = NULL;
+
+        CPLStripXMLNamespace( psTree, NULL, TRUE );
 
         // VERSION 1.0.0
         if( psTree != NULL )
