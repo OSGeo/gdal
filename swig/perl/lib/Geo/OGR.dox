@@ -65,11 +65,7 @@
 # @return a new Geo::OGR::Driver object
 
 ## @fn Geo::OGR::Driver Driver($driver)
-# @param driver the index or the name of the driver
-# @return a new Geo::OGR::Driver object
-
-## @fn Geo::OGR::Driver GetDriver($driver)
-# @brief An alias for the "Driver" method.
+# Create a driver object for an internal OGR driver object. Alternative name: GetDriver.
 # @param driver the index or the name of the driver
 # @return a new Geo::OGR::Driver object
 
@@ -240,46 +236,26 @@
 # scalar (access as $driver->{name})
 
 ## @method Geo::OGR::DataSource Create($name, \@options = undef )
-# @param name the data source name
-# @param options a list of driver specific options
-# @return a new Geo::OGR::DataSource object
-
-## @method Geo::OGR::DataSource CreateDataSource($name, \@options = undef )
-# @brief An alias to the "Create" method.
+# Create an OGR data source object. Alternative name: CreateDataSource.
 # @param name the data source name
 # @param options a list of driver specific options
 # @return a new Geo::OGR::DataSource object
 
 ## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
-# @param ds the Geo::OGR::DataSource object to be copied
-# @param name
-# @param options
-# @return a new Geo::OGR::DataSource object
-
-## @method Geo::OGR::DataSource CopyDataSource($ds, $name, \@options = undef)
-# @brief An alias to the "Copy" method.
+# Copy an OGR data source object. Alternative name: CopyDataSource.
 # @param ds the Geo::OGR::DataSource object to be copied
 # @param name
 # @param options
 # @return a new Geo::OGR::DataSource object
 
 ## @method Geo::OGR::DataSource Open($name, $update = 0)
-# @param name
-# @param update
-# @return a new Geo::OGR::DataSource object
-
-## @method Geo::OGR::DataSource OpenDataSource($name, $update = 0)
-# @brief An alias to the "Open" method.
+# Open an OGR data source object. Alternative name: OpenDataSource.
 # @param name
 # @param update
 # @return a new Geo::OGR::DataSource object
 
 ## @method Delete($name)
-# @param name
-# @return integer
-
-## @method DeleteDataSource($name)
-# @brief An alias to the "Delete" method.
+# Delete an OGR data source object. Alternative name: DeleteDataSource.
 # @param name
 # @return integer
 
@@ -712,13 +688,13 @@
 ## @method AddFieldDefn($defn)
 # @param defn a Geo::OGR::FieldDefn object
 
-## @method $GeomType($geometry_type)
-# Get or set the geometry type
+## @method $GeometryType($geometry_type)
+# Get or set the geometry type. Alternative name: GeomType.
 # @param geometry_type [optional] one of geometry types
 # @return the geometry types
 
 ## @method $GetGeomType()
-# @deprecated use Geo::OGR::FeatureDefn::GeomType, which returns a string
+# @deprecated use Geo::OGR::FeatureDefn::GeometryType, which returns a string
 # @return geometry type as integer
 
 ## @method SetGeomType($type)
@@ -867,17 +843,21 @@
 ## @method $GetDimension()
 # @return 0, 1, or 2
 
-## @method $ExportToWkt()
+## @method $AsText()
+# This geometric object in Well-known text. Alternative name: ExportToWkt.
 # @return a WKT string
 
-## @method $ExportToWkb($byte_order = 'XDR')
+## @method $AsBinary($byte_order = 'XDR')
+# This geometric object as a Well-known binary string. Alternative name: ExportToWkb.
 # @param byte_order XDR or NDR
 # @return a WKB binary string
 
 ## @method $ExportToGML()
+# This geometric object as a GML string. Alternative name: AsGML.
 # @return a GML string
 
 ## @method $ExportToKML()
+# This geometric object as a KML string. Alternative name: AsKML.
 # @return KML string
 
 ## @method AddPoint($x, $y, $z)
