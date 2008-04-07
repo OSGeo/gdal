@@ -762,7 +762,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                 "&GridOffsets=%.15g,%.15g",
                 osCRS.c_str(), 
                 osCRS.c_str(), 
-                dfMinX+dfXStep, dfMaxY+dfYStep,
+                dfMinX, dfMaxY,
                 dfXStep, dfYStep );
         }
     }
