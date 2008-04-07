@@ -289,6 +289,12 @@
 # @param wkt well known text
 # @return a new Geo::OSR::SpatialReference object
 
+## @cmethod Geo::OSR::SpatialReference create(%params)
+# Create a new spatial reference object using named parameters. This
+# constructor recognizes the following named parameters: WKT, Text,
+# Proj4, ESRI, EPSG, PCI, USGS, XML.
+# @return a new Geo::OSR::SpatialReference object
+
 ## @method $IsSame($rhs)
 # @param rhs a Geo::OSR::SpatialReference object
 # @return boolean
@@ -428,7 +434,9 @@
 
 ## @method ImportFromXML($xml_string)
 
-## @method $ExportToWkt()
+## @method $AsText()
+# Return a well known text representation of this spatial reference
+# system.  An alternative name: ExportToWkt.
 # @return WKT string
 
 ## @method $ExportToPrettyWkt($simplify = 0)
