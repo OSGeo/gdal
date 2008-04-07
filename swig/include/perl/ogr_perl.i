@@ -954,6 +954,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    $bo = $BYTE_ORDER_STRING2INT{$bo} if defined $bo and exists $BYTE_ORDER_STRING2INT{$bo};
 	    return _ExportToWkb($self, $bo);
 	}
+	*AsText = *ExportToWkt;
+	*AsBinary = *ExportToWkb;
+	*AsGML = *ExportToGML;
+	*AsKML = *ExportToKML;
     }
     sub GeometryType {
 	my($type_or_name) = @_;
