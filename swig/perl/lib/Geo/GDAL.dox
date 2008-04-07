@@ -161,11 +161,7 @@
 # @return
 
 ## @fn Geo::GDAL::Driver Driver($driver)
-# @param driver The name or number of the driver.
-# @return a new Geo::GDAL::Driver object
-
-## @fn Geo::GDAL::Driver GetDriver($driver)
-# @brief An alias for the "Driver" method.
+# Create a driver object for the internal GDAL driver. Alternative name: GetDriver.
 # @param driver The name or number of the driver.
 # @return a new Geo::GDAL::Driver object
 
@@ -343,6 +339,7 @@
 # @return
 
 ## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \%options = undef)
+# Create a GDAL dataset. Alternative name: CreateDataset.
 # @brief Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
@@ -352,19 +349,14 @@
 # @param options an anonymous hash of driver specific parameters
 # @return a new Geo::GDAL::Dataset object
 
-## @method Geo::GDAL::Dataset CreateDataset($name, $xsize, $ysize, $bands =1, $type = 'Byte', \@options = undef)
-# @brief An alias to the "CreateDataset" method.
-
 ## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \%options = undef)
+# Copy a GDAL dataset. Alternative name: CopyDataset.
 # @brief Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
 # @param name
 # @param src a Geo::GDAL::Dataset object
 # @param strict
 # @param options an anonymous hash of driver specific parameters
 # @return a new Geo::GDAL::Dataset object 
-
-## @method Geo::GDAL::Dataset CreateCopy($name, $src, $strict = 1, \@options = undef)
-# @brief An alias to the "Copy" method.
 
 ## @method Delete($name)
 # @param name
@@ -444,11 +436,9 @@
 # @return a new Geo::GDAL::Driver object
 
 ## @method Geo::GDAL::Band Band($index)
+# Create a band object for the band within the dataset. Alternative name: GetRasterBand.
 # @param index 1...RasterCount
 # @return a new Geo::GDAL::Band object
-
-## @method $GetRasterBand($index)
-# An alisa to Band
 
 ## @method @Bands()
 # @return a list of new Geo::GDAL::Band objects

@@ -159,9 +159,9 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     my $i = 0;
     while (my $f = $layer->GetNextFeature) {
 	my @a = $f->Tuple;
-	$a[1] = $a[1]->ExportToWkt;
+	$a[1] = $a[1]->AsText;
 	my $h = $f->Row;
-	$h->{Geometry} = $h->{Geometry}->ExportToWkt;
+	$h->{Geometry} = $h->{Geometry}->AsText;
 	if ($i == 0) {
 	    my @t = (0,'POINT (1 2)',13,undef,undef);
 	    ok(is_deeply(\@a, \@t), "layer create test 1");
