@@ -19807,7 +19807,7 @@ else
   DEFINE_PG_PRE74=-DPG_PRE74
 fi
 
-    if test "$DEFINE_PG_PRE74" = "" ; then
+    if test "$DEFINE_PG_PRE74" != "" ; then
       echo "The PostgreSQL client version is before 7.4. You will not be able to use binary cursors."
     fi
 
