@@ -701,7 +701,6 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     if (!pszExpectedFIDName)
         pszExpectedFIDName="OGR_FID";
 
-
     CPLDebug("INGRES","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("INGRES","FID Column Name %s.", pszExpectedFIDName);
 
@@ -715,6 +714,12 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     
     else if( wkbFlatten(eType) == wkbPoint )
         pszGeometryType = "POINT";
+
+    else if( wkbFlatten(eType) == wkbLineString)
+        pszGeometryType = "LONG LINE";
+
+    else if( wkbFlatten(eType) == wkbPolygon )
+        pszGeometryType = "LONG POLYGON";
 
 /* -------------------------------------------------------------------- */
 /*      Form table creation command.                                    */

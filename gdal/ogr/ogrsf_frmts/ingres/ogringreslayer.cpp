@@ -297,6 +297,11 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
         for( iVert = 0; iVert < nVertCount; iVert++ )
             poLine->setPoint( iVert, padfXY[iVert*2+0], padfXY[iVert*2+1] );
 
+        // INGRES polygons are implicitly closed, but OGR expects explicit
+        if( poLine->getX(nVertCount-1) != poLine->getX(0)
+            || poLine->getY(nVertCount-1) != poLine->getY(0) )
+            poLine->addPoint( poLine->getX(0), poLine->getY(0) );
+
         OGRPolygon *poPolygon = new OGRPolygon();
         poPolygon->addRingDirectly( poLine );
         poGeom = poPolygon;
