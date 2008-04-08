@@ -323,7 +323,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't seek to offset %ld to read grid row %d.",
-                  panLineOffset[nBlockYOff], nBlockYOff );
+                  (long) panLineOffset[nBlockYOff], nBlockYOff );
         return CE_Failure;
     }
 
@@ -357,7 +357,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	VSIFree( szLineBuf );
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Can't read grid row %d at offset %ld.\n",
-		  nBlockYOff, panLineOffset[nBlockYOff] );
+		  nBlockYOff, (long) panLineOffset[nBlockYOff] );
 	return CE_Failure;
     }
     szLineBuf[nCharsRead] = '\0';
@@ -386,7 +386,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		    CPLError( CE_Failure, CPLE_FileIO,
 			      "Unable to seek in grid row %d "
 			      "(offset %ld, seek %d).\n",
-			      nBlockYOff, VSIFTellL(poGDS->fp),
+			      nBlockYOff, 
+                              (long) VSIFTellL(poGDS->fp),
 			      -1 );
 
 		    return CE_Failure;
@@ -417,7 +418,9 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    {
 		CPLError( CE_Warning, CPLE_FileIO,
 			  "Unexpected ASCII null-character in grid row %d at "
-			  "offset %ld.\n", nBlockYOff, szStart - szLineBuf );
+			  "offset %ld.\n", 
+                          nBlockYOff, 
+                          (long) (szStart - szLineBuf) );
 
 		while( *szStart == '\0' &&
                        static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
@@ -434,7 +437,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
 			  "Can't read portion of grid row %d at offset %ld.",
-			  nBlockYOff, panLineOffset[nBlockYOff] );
+			  nBlockYOff, (long) panLineOffset[nBlockYOff] );
 		return CE_Failure;
 	    }
 	    szLineBuf[nCharsRead] = '\0';
@@ -460,7 +463,9 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    {
 		CPLError( CE_Warning, CPLE_FileIO,
 			  "Unexpected ASCII null-character in grid row %d at "
-			  "offset %ld.\n", nBlockYOff, szStart - szLineBuf );
+			  "offset %ld.\n", 
+                          nBlockYOff, 
+                          (long) (szStart - szLineBuf) );
 
 		while( *szEnd == '\0' &&
 		       static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
@@ -475,8 +480,9 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
 			  "Unable to seek in grid row %d (offset %ld, seek %d)"
-			  ".\n", nBlockYOff, VSIFTellL(poGDS->fp),
-			  szStart - szEnd );
+			  ".\n", nBlockYOff, 
+                          (long) VSIFTellL(poGDS->fp),
+			  (int) (szStart - szEnd) );
 
 		return CE_Failure;
 	    }
@@ -489,7 +495,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 		VSIFree( szLineBuf );
 		CPLError( CE_Failure, CPLE_FileIO,
 			  "Can't read portion of grid row %d at offset %ld.",
-			  nBlockYOff, panLineOffset[nBlockYOff] );
+			  nBlockYOff, (long) panLineOffset[nBlockYOff] );
 		return CE_Failure;
 	    }
 	    else if( nCharsRead > static_cast<size_t>(szEnd - szStart) )

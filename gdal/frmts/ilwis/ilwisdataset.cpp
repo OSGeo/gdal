@@ -1553,22 +1553,22 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 void ILWISRasterBand::SetValue(void *pImage, int i, double rV) {
     switch ( eDataType ) {
     case GDT_Byte:
-      ((GByte *)pImage)[i] = rV;
+      ((GByte *)pImage)[i] = (GByte) rV;
       break;
     case GDT_UInt16:
-      ((GUInt16 *) pImage)[i] = rV;
+      ((GUInt16 *) pImage)[i] = (GUInt16) rV;
       break;
     case GDT_Int16:
-      ((GInt16 *) pImage)[i] = rV;
+      ((GInt16 *) pImage)[i] = (GInt16) rV;
       break;
     case GDT_UInt32:
-      ((GUInt32 *) pImage)[i] = rV;
+      ((GUInt32 *) pImage)[i] = (GUInt32) rV;
       break;
     case GDT_Int32:
-      ((GInt32 *) pImage)[i] = rV;
+      ((GInt32 *) pImage)[i] = (GInt32) rV;
       break;
     case GDT_Float32:
-      ((float *) pImage)[i] = rV;
+      ((float *) pImage)[i] = (float) rV;
       break;
     case GDT_Float64:
       ((double *) pImage)[i] = rV;
@@ -1685,7 +1685,8 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 if ((( GByte * )pData)[iCol] == 0)
                 {
                     double rV = GetValue(pImage, iCol);
-                    (( GByte * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+                    (( GByte * )pData)[iCol] = (GByte) 
+                        (psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV);
                 }
             break;
           case stInt:
@@ -1693,7 +1694,8 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 if ((( GInt16 * )pData)[iCol] == shUNDEF)
                 {
                     double rV = GetValue(pImage, iCol);
-                    (( GInt16 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+                    (( GInt16 * )pData)[iCol] = (GInt16) 
+                        (psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV);
                 }
             break;
           case stLong:
@@ -1701,7 +1703,8 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 if ((( GInt32 * )pData)[iCol] == iUNDEF)
                 {
                     double rV = GetValue(pImage, iCol);
-                    (( GInt32 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+                    (( GInt32 * )pData)[iCol] = (GInt32) 
+                        (psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV);
                 }
             break;
           case stFloat:
@@ -1726,21 +1729,24 @@ CPLErr ILWISRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             for (iCol = 0; iCol < nXSize; iCol++ )
             {
                 double rV = GetValue(pImage, iCol);
-                (( GByte * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+                (( GByte * )pData)[iCol] = (GByte) 
+                    (psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV);
             }
             break;
           case stInt:
             for (iCol = 0; iCol < nXSize; iCol++ )
             {
                 double rV = GetValue(pImage, iCol);
-                (( GInt16 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+                (( GInt16 * )pData)[iCol] = (GInt16) 
+                    (psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV);
             }
             break;
           case stLong:
             for (iCol = 0; iCol < nXSize; iCol++ )
             {
                 double rV = GetValue(pImage, iCol);
-                (( GInt32 * )pData)[iCol] = psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV;
+                ((GInt32 *)pData)[iCol] = (GInt32)
+                    (psInfo.bUseValueRange ? psInfo.vr.iRaw(rV) : rV);
             }
             break;
           case stFloat:
