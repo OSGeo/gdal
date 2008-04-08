@@ -15,7 +15,7 @@
 #define HAVE_VSNPRINTF 1
 #define HAVE_SNPRINTF 1
 #if (_MSC_VER < 1500)
-#define vsnprintf _vsnprintf
+#  define vsnprintf _vsnprintf
 #endif
 #define snprintf _snprintf
 
@@ -24,9 +24,9 @@
 /* We only redefine the following for MSVC since it actually breaks
    an MinGW build using GDAL otherwise. */
 #ifdef _MSC_VER
-#define copysign _copysign
-#define copysignf _copysign
-#define copysignl _copysign
+#  define copysign _copysign
+#  define copysignf _copysign
+#  define copysignl _copysign
 #endif
 
 #define HAVE_GETCWD 1
@@ -109,6 +109,14 @@
 #endif
 
 #define lfind _lfind
+
+#if (_MSC_VER < 1500)
+#  define VSI_STAT64 _stat
+#  define VSI_STAT64_T _stat
+#else
+#  define VSI_STAT64 _stat64
+#  define VSI_STAT64_T __stat64
+#endif
 
 #pragma warning(disable: 4786)
 

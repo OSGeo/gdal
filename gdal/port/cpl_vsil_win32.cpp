@@ -38,8 +38,8 @@ CPL_CVSID("$Id$");
 
 
 #if !defined(WIN32CE)
-#  include <sys/stat.h>
 #  include <sys/types.h>
+#  include <sys/stat.h>
 #  include <io.h>
 #  include <fcntl.h>
 #  include <direct.h>
@@ -396,7 +396,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
                                      VSIStatBufL * pStatBuf )
 
 {
-    return( stat( pszFilename, pStatBuf ) );
+    return( VSI_STAT64( pszFilename, pStatBuf ) );
 }
 
 /************************************************************************/
