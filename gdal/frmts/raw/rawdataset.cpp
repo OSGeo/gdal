@@ -548,10 +548,11 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                               nXSize * nYSize * nBandDataSize, pData ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to read %d bytes at %d.",
+                          "Failed to read %d bytes at %lu.",
                           nXSize * nYSize * nBandDataSize,
-                          nImgOffset
-                          + (vsi_l_offset)nYOff * nLineOffset + nXOff );
+                          (unsigned long)
+                          (nImgOffset + (vsi_l_offset)nYOff * nLineOffset
+                           + nXOff) );
             }
         }
 
@@ -579,12 +580,12 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   nBytesToRW, pabyData ) != CE_None )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
-                              "Failed to read %d bytes at %d.",
+                              "Failed to read %d bytes at %lu.",
                               nBytesToRW,
-                              nImgOffset
+                              (unsigned long)(nImgOffset
                               + ((vsi_l_offset)nYOff
                               + (int)(iLine * dfSrcYInc)) * nLineOffset
-                              + nXOff * nPixelOffset );
+                              + nXOff * nPixelOffset) );
                 }
 
 /* -------------------------------------------------------------------- */
@@ -661,8 +662,9 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                       SEEK_SET) == -1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to seek to %d to write data.\n",
-                          nImgOffset + (vsi_l_offset)nYOff * nLineOffset + nXOff );
+                          "Failed to seek to %lu to write data.\n",
+                          (unsigned long)(nImgOffset + (vsi_l_offset)nYOff
+                                          * nLineOffset + nXOff) );
         
                 return CE_Failure;
             }
@@ -780,7 +782,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( Seek( nBlockOff, SEEK_SET) == -1 )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
-                              "Failed to seek to %d to read.\n", nBlockOff );
+                              "Failed to seek to %ld to read.\n",
+                              (long)nBlockOff );
 
                     return CE_Failure;
                 }
