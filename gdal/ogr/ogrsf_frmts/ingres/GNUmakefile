@@ -1,8 +1,4 @@
 
-
-II_SYSTEM =	/opt/Ingres/IngresII
-INGRES_INC = 	-I$(II_SYSTEM)/ingres/files
-
 include ../../../GDALmake.opt
 
 OBJ	=	ogringresdriver.o ogringresstatement.o ogringresdatasource.o \
