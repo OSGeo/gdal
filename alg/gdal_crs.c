@@ -563,7 +563,6 @@ CRS_georef (
     default:
 
       return(MPARMERR);
-      break;
     }
 
   return(MSUCCESS);
