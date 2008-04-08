@@ -1414,6 +1414,38 @@ AC_SUBST(MYSQL_INC,$MYSQL_INC)
 AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl INGRES support.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(ingres,[  --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)],,)
+
+AC_MSG_CHECKING([for Ingres])
+
+if test "$with_ingres" = "no" ; then
+  HAVE_INGRES=no
+  II_SYSTEM=
+  INGRES_LIB=
+  INGRES_INC=
+  AC_MSG_RESULT([no])
+elif test "$with_ingres" = "yes" ; then
+  AC_MSG_ERROR([--with-ingres requires a path argument ($II_SYSTEM)])
+else
+  HAVE_INGRES=yes
+  II_SYSTEM=$with_ingres
+  INGRES_LIB="-L$II_SYSTEM/ingres/lib \
+	$II_SYSTEM/ingres/lib/iiclsadt.o \
+	$II_SYSTEM/ingres/lib/iiuseradt.o \
+	-liiapi.1 -ladf.1 -lgcf.1 -lulf.1 -lscf.1 -lpsf.1 -lopf.1 -lrdf.1 \
+	-lcuf.1 -lqsf.1 -lgwf.1 -ldmf.1 -lsxf.1 -lqef.1 -lrqf.1 -ltpf.1"
+  INGRES_INC=-I$II_SYSTEM/ingres/files
+fi
+
+AC_SUBST(HAVE_INGRES,$HAVE_INGRES)
+AC_SUBST(II_SYSTEM,$II_SYSTEM)
+AC_SUBST(INGRES_LIB,$INGRES_LIB)
+AC_SUBST(INGRES_INC,$INGRES_INC)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for Xerces C++ Parser support.
 dnl ---------------------------------------------------------------------------
 
@@ -2151,6 +2183,7 @@ LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
+LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])

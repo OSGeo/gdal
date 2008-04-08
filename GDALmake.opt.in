@@ -29,7 +29,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
-		$(MRSID_LIBS)
+		$(MRSID_LIBS) $(INGRES_LIB)
 
 PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_LIBS = @PYTHON_LIBS@
@@ -107,6 +107,14 @@ MACOSX_FRAMEWORK = @MACOSX_FRAMEWORK@
 #
 HAVE_OGR_PG     = @HAVE_PG@
 PG_INC	=	@PG_INC@
+
+#
+# INGRES
+#
+II_SYSTEM = @II_SYSTEM@
+HAVE_INGRES = @HAVE_INGRES@
+INGRES_LIB = @INGRES_LIB@
+INGRES_INC = @INGRES_INC@
 
 #
 # MySQL support.
