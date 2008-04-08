@@ -884,6 +884,10 @@ MYSQL_CONFIG
 HAVE_MYSQL
 MYSQL_INC
 MYSQL_LIB
+HAVE_INGRES
+II_SYSTEM
+INGRES_LIB
+INGRES_INC
 XERCES_CFLAGS
 XERCES_LDFLAGS
 XERCES_VERSION
@@ -1589,6 +1593,7 @@ Optional Packages:
   --without-grib        Disable GRIB format
   --without-ogr         Don't build OGR into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
+  --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
   --with-xerces=[ARG]     use Xerces C++ Parser from given prefix (ARG=path);
                           check standard prefixes (ARG=yes); disable (ARG=no)
   --with-xerces-inc=[DIR] path to Xerces C++ Parser headers
@@ -5823,13 +5828,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5826: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5831: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5829: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5834: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5832: output\"" >&5)
+  (eval echo "\"\$as_me:5837: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6926,7 +6931,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6929 "configure"' > conftest.$ac_ext
+  echo '#line 6934 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8617,11 +8622,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8620: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8625: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8624: \$? = $ac_status" >&5
+   echo "$as_me:8629: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8939,11 +8944,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8942: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8947: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8946: \$? = $ac_status" >&5
+   echo "$as_me:8951: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9044,11 +9049,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9047: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9052: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9051: \$? = $ac_status" >&5
+   echo "$as_me:9056: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9099,11 +9104,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9102: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9107: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9106: \$? = $ac_status" >&5
+   echo "$as_me:9111: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11859,7 +11864,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11862 "configure"
+#line 11867 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11959,7 +11964,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11962 "configure"
+#line 11967 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13987,11 +13992,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13990: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13995: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13994: \$? = $ac_status" >&5
+   echo "$as_me:13999: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14086,11 +14091,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14089: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14094: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14093: \$? = $ac_status" >&5
+   echo "$as_me:14098: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14138,11 +14143,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14141: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14146: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14145: \$? = $ac_status" >&5
+   echo "$as_me:14150: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21987,90 +21992,16 @@ if test "$with_hdf4" = "no" ; then
 
   echo "hdf4 support disabled."
 
-elif test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
-
-  { echo "$as_me:$LINENO: checking for SDreaddata in -lmfhdf" >&5
-echo $ECHO_N "checking for SDreaddata in -lmfhdf... $ECHO_C" >&6; }
-if test "${ac_cv_lib_mfhdf_SDreaddata+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmfhdf -ldf $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char SDreaddata ();
-int
-main ()
-{
-return SDreaddata ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_mfhdf_SDreaddata=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_mfhdf_SDreaddata=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_mfhdf_SDreaddata" >&5
-echo "${ECHO_T}$ac_cv_lib_mfhdf_SDreaddata" >&6; }
-if test $ac_cv_lib_mfhdf_SDreaddata = yes; then
-  HAVE_HDF4=yes
-else
-  HAVE_HDF4=no
-fi
-
-
-  if test "$HAVE_HDF4" = "yes" ; then
-    LIBS="-lmfhdf -ldf $LIBS"
-  fi
-
-  if test "$HAVE_HDF4" = "yes" -a -r /usr/include/hdf/hdf.h ; then
-    HDF4_INCLUDE="-I/usr/include/hdf"
-  fi
-
 else
 
-  if test -d $with_hdf4/lib ; then
-    HDF_LIB_DIR=$with_hdf4/lib
+  if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
+    HDF_LIB_DIR=""
   else
-    HDF_LIB_DIR=$with_hdf4
+    if test -d $with_hdf4/lib ; then
+      HDF_LIB_DIR=$with_hdf4/lib
+    else
+      HDF_LIB_DIR=$with_hdf4
+    fi
   fi
 
   ORIG_LIBS="$LIBS"
@@ -22355,22 +22286,24 @@ fi
 
   fi
 
-  if test "$HDF_LIB_NAME" = "missing" ; then
-    { { echo "$as_me:$LINENO: error: HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found" >&5
-echo "$as_me: error: HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found" >&2;}
+  if test "$HDF_LIB_NAME" = "missing" -a "$with_hdf4" != "" ; then
+    { { echo "$as_me:$LINENO: error: HDF4 support requested with arg \"$with_hdf4\", but neither hdf4 nor mfhdf lib found" >&5
+echo "$as_me: error: HDF4 support requested with arg \"$with_hdf4\", but neither hdf4 nor mfhdf lib found" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
   LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
 
-  if test -r "$with_hdf4/hdf/hdf.h" ; then
+  if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
+    HDF4_INCLUDE="-I/usr/include/hdf"
+  elif test -r "$with_hdf4/hdf/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/hdf"
   elif test -r "$with_hdf4/include/hdf/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/include/hdf"
   elif test -r "$with_hdf4/include/hdf.h" ; then
     HDF4_INCLUDE="-I$with_hdf4/include"
   elif test -r "$with_hdf4/hdf.h" ; then
-    HDF4_INCLUDE="-I$wHDF4_INCLUDEith_hdf4"
+    HDF4_INCLUDE="-I$with_hdf4"
   fi
 
   HAVE_HDF4=yes
@@ -23431,6 +23364,48 @@ HAVE_MYSQL=$HAVE_MYSQL
 MYSQL_INC=$MYSQL_INC
 
 MYSQL_LIB=$MYSQL_LIB
+
+
+
+
+# Check whether --with-ingres was given.
+if test "${with_ingres+set}" = set; then
+  withval=$with_ingres;
+fi
+
+
+{ echo "$as_me:$LINENO: checking for Ingres" >&5
+echo $ECHO_N "checking for Ingres... $ECHO_C" >&6; }
+
+if test "$with_ingres" = "no" ; then
+  HAVE_INGRES=no
+  II_SYSTEM=
+  INGRES_LIB=
+  INGRES_INC=
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+elif test "$with_ingres" = "yes" ; then
+  { { echo "$as_me:$LINENO: error: --with-ingres requires a path argument ($II_SYSTEM)" >&5
+echo "$as_me: error: --with-ingres requires a path argument ($II_SYSTEM)" >&2;}
+   { (exit 1); exit 1; }; }
+else
+  HAVE_INGRES=yes
+  II_SYSTEM=$with_ingres
+  INGRES_LIB="-L$II_SYSTEM/ingres/lib \
+	$II_SYSTEM/ingres/lib/iiclsadt.o \
+	$II_SYSTEM/ingres/lib/iiuseradt.o \
+	-liiapi.1 -ladf.1 -lgcf.1 -lulf.1 -lscf.1 -lpsf.1 -lopf.1 -lrdf.1 \
+	-lcuf.1 -lqsf.1 -lgwf.1 -ldmf.1 -lsxf.1 -lqef.1 -lrqf.1 -ltpf.1"
+  INGRES_INC=-I$II_SYSTEM/ingres/files
+fi
+
+HAVE_INGRES=$HAVE_INGRES
+
+II_SYSTEM=$II_SYSTEM
+
+INGRES_LIB=$INGRES_LIB
+
+INGRES_INC=$INGRES_INC
 
 
 
@@ -28138,6 +28113,10 @@ MYSQL_CONFIG!$MYSQL_CONFIG$ac_delim
 HAVE_MYSQL!$HAVE_MYSQL$ac_delim
 MYSQL_INC!$MYSQL_INC$ac_delim
 MYSQL_LIB!$MYSQL_LIB$ac_delim
+HAVE_INGRES!$HAVE_INGRES$ac_delim
+II_SYSTEM!$II_SYSTEM$ac_delim
+INGRES_LIB!$INGRES_LIB$ac_delim
+INGRES_INC!$INGRES_INC$ac_delim
 XERCES_CFLAGS!$XERCES_CFLAGS$ac_delim
 XERCES_LDFLAGS!$XERCES_LDFLAGS$ac_delim
 XERCES_VERSION!$XERCES_VERSION$ac_delim
@@ -28206,10 +28185,6 @@ PYTHON_LINK!$PYTHON_LINK$ac_delim
 PY_LD_SHARED!$PY_LD_SHARED$ac_delim
 PY_SO_EXT!$PY_SO_EXT$ac_delim
 PYTHON_DEV!$PYTHON_DEV$ac_delim
-HAVE_NUMPY!$HAVE_NUMPY$ac_delim
-NUMPY_FLAG!$NUMPY_FLAG$ac_delim
-HAVE_OGPYTHON!$HAVE_OGPYTHON$ac_delim
-LIBOBJS!$LIBOBJS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -28251,10 +28226,14 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+HAVE_NUMPY!$HAVE_NUMPY$ac_delim
+NUMPY_FLAG!$NUMPY_FLAG$ac_delim
+HAVE_OGPYTHON!$HAVE_OGPYTHON$ac_delim
+LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 1; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 5; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -29501,6 +29480,9 @@ echo "  PostgreSQL support:        ${HAVE_PG}"
 
 
 echo "  MySQL support:             ${HAVE_MYSQL}"
+
+
+echo "  Ingres support:            ${HAVE_INGRES}"
 
 
 echo "  Xerces-C support:          ${HAVE_XERCES}"
