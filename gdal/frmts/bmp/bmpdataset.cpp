@@ -338,7 +338,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Can't seek to offset %ld in input file to read data.",
-                      iScanOffset );
+                      (long) iScanOffset );
             return CE_Failure;
         }
     }
@@ -353,7 +353,8 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't read from offset %ld in input file.", iScanOffset );
+                      "Can't read from offset %ld in input file.", 
+                      (long) iScanOffset );
             return CE_Failure;
         }
     }
@@ -532,7 +533,7 @@ CPLErr BMPRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't seek to offset %ld in output file to write data.\n%s",
-                  iScanOffset, VSIStrerror( errno ) );
+                  (long) iScanOffset, VSIStrerror( errno ) );
         return CE_Failure;
     }
 
@@ -704,7 +705,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     CPLDebug( "BMP", "RLE compression detected." );
     CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
                " size of uncompressed buffer %ld bytes.",
-               iComprSize, iUncomprSize );
+               (long) iComprSize, (long) iUncomprSize );
 #endif
 
     VSIFSeekL( poDS->fp, poDS->sFileHeader.iOffBits, SEEK_SET );
