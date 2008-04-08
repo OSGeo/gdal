@@ -827,25 +827,21 @@ static CPLString OGRPGEscapeString(PGconn *hPGConn,
 
     char* pszDestStr = (char*)CPLMalloc(2 * nSrcLen + 1);
 
-#if !defined(PG_PRE74)
+    /* -------------------------------------------------------------------- */
+    /*  PQescapeStringConn was introduced in PostgreSQL security releases   */
+    /*  8.1.4, 8.0.8, 7.4.13, 7.3.15                                        */
+    /*  PG_HAS_PQESCAPESTRINGCONN is added by a test in 'configure'         */
+    /*  so it is not set by default when building OGR for Win32             */
+    /* -------------------------------------------------------------------- */
+#if defined(PG_HAS_PQESCAPESTRINGCONN)
     int nError;
     PQescapeStringConn (hPGConn, pszDestStr, pszStrValue, nSrcLen, &nError);
     if (nError == 0)
         osCommand += pszDestStr;
+    else
+      CPLError(CE_Warning, CPLE_AppDefined, "Could not escape: %s", pszStrValue);
 #else
-    for( int iChar = 0; iChar < nSrcLen; iChar++ )
-    {
-        if( pszStrValue[iChar] == '\\'
-            || pszStrValue[iChar] == '\'' )
-        {
-            osCommand += '\\';
-            osCommand += pszStrValue[iChar];
-        }
-        else
-        {
-            osCommand += pszStrValue[iChar];
-        }
-    }
+    PQescapeString(pszDestStr, pszStrValue, nSrcLen);
 #endif
     CPLFree(pszDestStr);
 
