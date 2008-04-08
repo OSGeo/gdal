@@ -548,10 +548,17 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
                       osIngresGeomType.c_str() );
             return OGRERR_FAILURE;
         }
-
-        else ,,,if( EQUAL(osIngresGeomType,"LSEG") 
-            || EQUAL(osIngresGeomType,"ILSEG") 
-            && poLS->getNumPoints() != 2 )
+        else if( EQUAL(osIngresGeomType,"LINESTRING") 
+                 && poLS->getNumPoints() > 124 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to place %d vertex linestring in %s field.", 
+                      poLS->getNumPoints(), 
+                      osIngresGeomType.c_str() );
+            return OGRERR_FAILURE;
+        }
+        else if( EQUAL(osIngresGeomType,"ILINESTRING") 
+                 && poLS->getNumPoints() > 248 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to place %d vertex linestring in %s field.", 
@@ -560,7 +567,79 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
             return OGRERR_FAILURE;
         }
 
+
+        osRetGeomText = "(";
         for( i = 0; i < poLS->getNumPoints(); i++ )
+        {
+            CPLString osPoint;
+            
+            if( EQUALN(osIngresGeomType,"I",1) )
+                osPoint.Printf( "(%d,%d)",
+                                (int) floor(poLS->getX(i)), 
+                                (int) floor(poLS->getY(i)) );
+            else
+                osPoint.Printf( "(%g,%g)", 
+                                poLS->getX(i), poLS->getY(i) );
+
+            if( i < poLS->getNumPoints()-1 )
+                osPoint += ",";
+
+            osRetGeomText += osPoint;
+        }
+        osRetGeomText += ")";
+
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polygon                                                         */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    {
+        OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+        OGRLinearRing *poLS = poPoly->getExteriorRing();
+        int i, nPoints;
+
+        if( poLS == NULL )
+            return OGRERR_FAILURE;
+
+        if( poPoly->getNumInteriorRings() > 0 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "%d inner rings discarded from polygon being converted\n"
+                      "to old ingres spatial data type '%s'.",
+                      poPoly->getNumInteriorRings(),
+                      osIngresGeomType.c_str() );
+        }
+
+        if( EQUAL(osIngresGeomType,"POLYGON") 
+            && poLS->getNumPoints() > 124 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to place %d vertex linestring in %s field.", 
+                      poLS->getNumPoints(), 
+                      osIngresGeomType.c_str() );
+            return OGRERR_FAILURE;
+        }
+        else if( EQUAL(osIngresGeomType,"IPOLYGON") 
+                 && poLS->getNumPoints() > 248 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to place %d vertex linestring in %s field.", 
+                      poLS->getNumPoints(), 
+                      osIngresGeomType.c_str() );
+            return OGRERR_FAILURE;
+        }
+
+        // INGRES geometries use *implied* closure of rings.
+        nPoints = poLS->getNumPoints();
+        if( poLS->getX(0) == poLS->getX(nPoints-1)
+            && poLS->getY(0) == poLS->getY(nPoints-1) 
+            && nPoints > 1 )
+            nPoints--;
+
+        osRetGeomText = "(";
+        for( i = 0; i < nPoints; i++ )
         {
             CPLString osPoint;
             
@@ -633,10 +712,11 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 
     // Set the geometry 
     bNeedComma = FALSE;
-    bNeedComma = poFeature->GetGeometryRef() != NULL;
-    if( poFeature->GetGeometryRef() != NULL)
+    if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
     {
         CPLString osGeomText;
+
+        bNeedComma = TRUE;
 
         if( PrepareOldStyleGeometry( poFeature->GetGeometryRef(), 
                                      osGeomText ) == OGRERR_NONE )
@@ -647,7 +727,7 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            osCommand += "''"; /* is this sort of empty geometry legal? */
+            osCommand += "NULL"; /* is this sort of empty geometry legal? */
         }
     }
 

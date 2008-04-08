@@ -1,0 +1,27 @@
+Created a user database named "warmerda"
+
+
+---
+
+
+Geometry data type mapping
+
+
+INGRES			WKT
+------			---
+
+point	      <->	point
+ipoint	      ->	point	     (integer)
+box	      ->	polygon
+ibox	      ->	polygon
+lseg	      ->	linestring   (only 2 points)
+ilseg	      ->	linestring
+line	      ->	linestring   (max 124 points)
+iline	      ->	linestring
+long line     <->	linestring
+polygon	      ->	polygon	     (max 124 points, no inner rings)
+ipolygon      ->	polygon
+long polygon  ->	polygon	     (no inner rings)
+circle	      ->	polygon	     (approximated)
+icircle	      ->	polygon
+
