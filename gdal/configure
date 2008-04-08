@@ -21986,7 +21986,7 @@ if test "${with_hdf4+set}" = set; then
 fi
 
 
-if test "$with_hdf4" = "no" ; then
+if test "$with_hdf4" = "no" -o "x$with_hdf4" = "x" ; then
 
   HAVE_HDF4=no
 
@@ -23377,7 +23377,7 @@ fi
 { echo "$as_me:$LINENO: checking for Ingres" >&5
 echo $ECHO_N "checking for Ingres... $ECHO_C" >&6; }
 
-if test "$with_ingres" = "no" ; then
+if test "$with_ingres" = "no" -o "x$with_ingres" = "x" ; then
   HAVE_INGRES=no
   II_SYSTEM=
   INGRES_LIB=

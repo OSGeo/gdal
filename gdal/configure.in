@@ -953,7 +953,7 @@ HDF4_INCLUDE=""
 
 AC_ARG_WITH(hdf4,[  --with-hdf4[=ARG]       Include HDF4 support (ARG=path)],,)
 
-if test "$with_hdf4" = "no" ; then
+if test "$with_hdf4" = "no" -o "x$with_hdf4" = "x" ; then
 
   HAVE_HDF4=no
 
@@ -1421,7 +1421,7 @@ AC_ARG_WITH(ingres,[  --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)],,)
 
 AC_MSG_CHECKING([for Ingres])
 
-if test "$with_ingres" = "no" ; then
+if test "$with_ingres" = "no" -o "x$with_ingres" = "x" ; then
   HAVE_INGRES=no
   II_SYSTEM=
   INGRES_LIB=
