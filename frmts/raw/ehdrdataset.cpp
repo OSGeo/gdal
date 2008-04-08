@@ -213,8 +213,8 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         || VSIFReadL( pabyBuffer, 1, nLineBytes, GetFP() ) != nLineBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes at offset %d.\n%s",
-                  nLineBytes, nLineStart, 
+                  "Failed to read %u bytes at offset %lu.\n%s",
+                  nLineBytes, (unsigned long)nLineStart, 
                   VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -277,8 +277,8 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( VSIFSeekL( GetFP(), nLineStart, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes at offset %d.\n%s",
-                  nLineBytes, nLineStart, 
+                  "Failed to read %u bytes at offset %lu.\n%s",
+                  nLineBytes, (unsigned long)nLineStart, 
                   VSIStrerror( errno ) );
         return CE_Failure;
     }
@@ -315,8 +315,8 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         || VSIFWriteL( pabyBuffer, 1, nLineBytes, GetFP() ) != nLineBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to write %d bytes at offset %d.\n%s",
-                  nLineBytes, nLineStart, 
+                  "Failed to write %u bytes at offset %lu.\n%s",
+                  nLineBytes, (unsigned long)nLineStart, 
                   VSIStrerror( errno ) );
         return CE_Failure;
     }
