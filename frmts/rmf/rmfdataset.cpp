@@ -122,7 +122,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                 "Can't seek to offset %ld in input file to read data.\n%s\n",
-                      poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
+                (long) poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
             return CE_Failure;
         }
     }
@@ -145,7 +145,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Can't read from offset %ld in input file.\n%s\n",
-                          poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
+                          (long) poGDS->paiTiles[2 * nTile], 
+                          VSIStrerror( errno ) );
                 // XXX: Do not fail here, just return empty block and continue
                 // reading.
                 return CE_None;
@@ -193,7 +194,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Can't read from offset %ld in input file.\n%s\n",
-                          poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
+                          (long) poGDS->paiTiles[2 * nTile], 
+                          VSIStrerror( errno ) );
                 // XXX: Do not fail here, just return empty block and continue
                 // reading.
                 CPLFree( pabyTile );
@@ -379,7 +381,8 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                 "Can't seek to offset %ld in output file to write data.\n%s",
-                poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
+                      (long) poGDS->paiTiles[2 * nTile], 
+                      VSIStrerror( errno ) );
             return CE_Failure;
         }
     }
@@ -389,7 +392,8 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                 "Can't seek to offset %ld in output file to write data.\n%s",
-                poGDS->paiTiles[2 * nTile], VSIStrerror( errno ) );
+                      (long) poGDS->paiTiles[2 * nTile], 
+                      VSIStrerror( errno ) );
             return CE_Failure;
         }
         poGDS->paiTiles[2 * nTile] = VSIFTellL( poGDS->fp );
