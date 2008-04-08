@@ -19804,10 +19804,83 @@ _ACEOF
   LIBS="-lpq $LIBS"
 
 else
-  PG_EXTRA_DEC=-DPG_PRE74
+  DEFINE_PG_PRE74=-DPG_PRE74
 fi
 
-    PG_INC="${PG_INC} ${PG_EXTRA_DEC}"
+    if test "$DEFINE_PG_PRE74" = "" ; then
+      echo "The PostgreSQL client version is before 7.4. You will not be able to use binary cursors."
+    fi
+
+    { echo "$as_me:$LINENO: checking for PQescapeStringConn in -lpq" >&5
+echo $ECHO_N "checking for PQescapeStringConn in -lpq... $ECHO_C" >&6; }
+if test "${ac_cv_lib_pq_PQescapeStringConn+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpq  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PQescapeStringConn ();
+int
+main ()
+{
+return PQescapeStringConn ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_pq_PQescapeStringConn=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_pq_PQescapeStringConn=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_pq_PQescapeStringConn" >&5
+echo "${ECHO_T}$ac_cv_lib_pq_PQescapeStringConn" >&6; }
+if test $ac_cv_lib_pq_PQescapeStringConn = yes; then
+  DEFINE_PG_HAS_PQESCAPESTRINGCONN=-DPG_HAS_PQESCAPESTRINGCONN
+fi
+
+    if test "$DEFINE_PG_HAS_PQESCAPESTRINGCONN" = "" ; then
+      echo "falling back to using PQescapeString. You should upgrade at least to security releases 8.1.4, 8.0.8, 7.4.13, 7.3.15."
+    fi
+
+    PG_INC="${PG_INC} ${DEFINE_PG_PRE74} ${DEFINE_PG_HAS_PQESCAPESTRINGCONN}"
   fi
 
 fi
