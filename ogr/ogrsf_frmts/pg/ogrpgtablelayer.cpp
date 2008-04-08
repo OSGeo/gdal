@@ -842,6 +842,7 @@ static CPLString OGRPGEscapeString(PGconn *hPGConn,
       CPLError(CE_Warning, CPLE_AppDefined, "Could not escape: %s", pszStrValue);
 #else
     PQescapeString(pszDestStr, pszStrValue, nSrcLen);
+    osCommand += pszDestStr;
 #endif
     CPLFree(pszDestStr);
 
