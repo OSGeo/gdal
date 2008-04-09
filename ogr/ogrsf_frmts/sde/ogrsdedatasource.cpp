@@ -1381,6 +1381,14 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
     
     poESRISRS = poSRS->Clone();
     
+    if (poSRS->IsLocal()) {
+        CPLDebug("OGR_SDE", "Coordinate reference was local, using UNKNOWN for ESRI SRS description");
+        if( SE_coordref_set_by_description( *psCoordRef, "UNKNOWN") != SE_SUCCESS )
+            return OGRERR_FAILURE;
+        CPLFree(pszWkt);
+        return OGRERR_NONE;
+    }
+    
     if( poESRISRS->morphToESRI() != OGRERR_NONE )
     {
         SE_coordref_free( *psCoordRef );
