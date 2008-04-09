@@ -94,7 +94,7 @@ def ogr_sde_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDate) ] )
+                                      ('WHEN', ogr.OFTDateTime) ] )
     
     #######################################################
     # Copy in poly.shp
@@ -189,7 +189,10 @@ def ogr_sde_5():
     l2 = ds2.GetLayerByName('SDE.TPOLY')
 
     f2 = l2.GetFeature(1)
+    
     f2.SetField("PRFEDEA",'SDE.DEFAULT')
+    f2.SetField("WHEN", 2008, 03, 19, 16, 15, 00, 0)
+
     l2.SetFeature(f2)
     ds2.Destroy()
     del ds2
@@ -198,13 +201,9 @@ def ogr_sde_5():
     l3 = ds3.GetLayerByName('SDE.TPOLY')
     f3 = l3.GetFeature(1)
     if f3.GetField("PRFEDEA") != "SDE.TESTING":
-        gdaltest.postreason('versioned editing failed for child version SDE.TESTING')
+        gdaltest.post_reason('versioned editing failed for child version SDE.TESTING')
         return 'fail'
-        
-#    f3 = l3.GetNextFeature()
-#    while f3:
-#        print 'SDE.TESTING\'s values: ', f3.GetFID(), f3.GetField("PRFEDEA")
-#        f3 = l3.GetNextFeature()
+
 
     ds3.Destroy()
     del ds3
@@ -213,17 +212,78 @@ def ogr_sde_5():
     l4 = ds4.GetLayerByName('SDE.TPOLY')
     f4 = l4.GetFeature(1)
     if f4.GetField("PRFEDEA") != "SDE.DEFAULT":
-        gdaltest.postreason('versioned editing failed for parent version SDE.DEFAULT')
+        gdaltest.post_reason('versioned editing failed for parent version SDE.DEFAULT')
         return 'fail'
 
-#    f4 = l4.GetNextFeature()
-#    while f4:
-#        print 'SDE.DEFAULT\'s values: ', f4.GetFID(), f4.GetField("PRFEDEA")
-#        f4 = l4.GetNextFeature()
+
+    idx = f4.GetFieldIndex('WHEN')
+    df = f4.GetField(idx)
+    if df != '2008/03/19 16:15:00':
+        gdaltest.post_reason("datetime handling did not work -- expected '2008/03/19 16:15:00' got '%s' "% df)
     ds4.Destroy()
     del ds4
     return 'success'
+
+def ogr_sde_6():
+    "Extent fetching"
+
+    if gdaltest.sde_dr is None:
+        return 'skip'
+
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    ds = ogr.Open(base, update=1)
+
+    l1 = ds.GetLayerByName('SDE.TPOLY')
+    extent = l1.GetExtent(force=0)
+    if extent != (0.0, 2147483645.0, 0.0, 2147483645.0):
+        gdaltest.post_reason("unforced extent did not equal expected value")
         
+
+    extent = l1.GetExtent(force=1)
+    if extent !=     (478316.0, 481645.0, 4762881.0, 4765611.0):
+        gdaltest.post_reason("forced extent did not equal expected value")
+    return 'success'
+
+def ogr_sde_7():
+    "Bad layer test"
+
+    if gdaltest.sde_dr is None:
+        return 'skip'
+
+    base = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    ds = ogr.Open(base, update=1)
+
+    l1 = ds.GetLayerByName('SDE.TPOLY2')
+    if l1:
+        gdaltest.post_reason("we got a layer when we shouldn't have")
+
+    ds.Destroy()
+
+    default = 'DEFAULT'
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+
+    default = 'SDE:%s,%s,%s,%s,%s,SDE.TPOLY,SDE.DEFAULT,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password, default)
+    ds = ogr.Open(default, update=1)
+
+    l1 = ds.GetLayerByName('SDE.TPOLY2')
+    if l1:
+        gdaltest.post_reason("we got a layer when we shouldn't have")
+    ds.Destroy()
+
+    default = 'DEFAULT'
+    gdal.SetConfigOption( 'SDE_VERSIONOVERWRITE', 'FALSE' )
+
+    default = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+    ds = ogr.Open(default)
+
+    l1 = ds.GetLayerByName('SDE.TPOLY2')
+    if l1:
+        gdaltest.post_reason("we got a layer when we shouldn't have")
+    ds.Destroy()
+
+
+    return 'success'
+    
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -236,12 +296,15 @@ def ogr_sde_cleanup():
     return 'success'
 
 gdaltest_list = [ 
-#    ogr_sde_1,
+    ogr_sde_1,
     ogr_sde_2,
-#    ogr_sde_3,
-#    ogr_sde_4,
+    ogr_sde_3,
+    ogr_sde_4,
     ogr_sde_5,
-#    ogr_sde_cleanup 
+    ogr_sde_6,
+    ogr_sde_7,
+    
+    ogr_sde_cleanup 
 ]
 
 if __name__ == '__main__':
