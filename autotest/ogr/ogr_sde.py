@@ -283,6 +283,26 @@ def ogr_sde_7():
 
 
     return 'success'
+
+def ogr_sde_8():
+    "Test spatial references"
+    if gdaltest.sde_dr is None:
+        return 'skip'
+    base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
+
+    shp_ds = ogr.Open( 'data/poly.shp' )
+    gdaltest.shp_ds = shp_ds
+    shp_lyr = shp_ds.GetLayer(0)
+    
+    ref = osr.SpatialReference()
+    ref.ImportFromWkt('LOCAL_CS["IMAGE"]')
+    
+    ds = ogr.Open(base, update=1)
+    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
+    ref.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
+
+    return 'success'
     
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
@@ -296,13 +316,14 @@ def ogr_sde_cleanup():
     return 'success'
 
 gdaltest_list = [ 
-    ogr_sde_1,
-    ogr_sde_2,
-    ogr_sde_3,
-    ogr_sde_4,
-    ogr_sde_5,
-    ogr_sde_6,
-    ogr_sde_7,
+#    ogr_sde_1,
+#    ogr_sde_2,
+#    ogr_sde_3,
+#    ogr_sde_4,
+#    ogr_sde_5,
+#    ogr_sde_6,
+#    ogr_sde_7,
+    ogr_sde_8,
     
     ogr_sde_cleanup 
 ]
