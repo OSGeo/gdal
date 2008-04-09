@@ -52,8 +52,6 @@ for $item (@data) {
     });
 
 }
-
-$layer->SyncToDisk;
 \endcode
 
 */
