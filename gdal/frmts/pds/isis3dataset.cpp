@@ -143,7 +143,7 @@ CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to read %d bytes for tile %d,%d.",
-                  nBlockSize, nXBlock, nYBlock );
+                  (int) nBlockSize, nXBlock, nYBlock );
         return CE_Failure;
     }
 
@@ -494,11 +494,11 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     /***********   Grab SEMI-MAJOR ************/
     semi_major = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.EquatorialRadius")) * 1000.0;
+        atof(poDS->GetKeyword( "IsisCube.Mapping.EquatorialRadius"));
 
     /***********   Grab semi-minor ************/
     semi_minor = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.PolarRadius")) * 1000.0;
+        atof(poDS->GetKeyword( "IsisCube.Mapping.PolarRadius"));
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
