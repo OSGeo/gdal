@@ -962,7 +962,7 @@ HDF4_INCLUDE=""
 
 AC_ARG_WITH(hdf4,[  --with-hdf4[=ARG]       Include HDF4 support (ARG=path)],,)
 
-if test "$with_hdf4" = "no" -o "x$with_hdf4" = "x" ; then
+if test x"$with_hdf4" = x"no" ; then
 
   HAVE_HDF4=no
 
@@ -970,13 +970,13 @@ if test "$with_hdf4" = "no" -o "x$with_hdf4" = "x" ; then
 
 else
 
-  if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" ; then
+  if test x"$with_hdf4" = x"yes" -o x"$with_hdf4" = x"" ; then
     HDF_LIB_DIR=""
   else
     if test -d $with_hdf4/lib ; then
-      HDF_LIB_DIR=$with_hdf4/lib
+      HDF_LIB_DIR="$with_hdf4/lib"
     else
-      HDF_LIB_DIR=$with_hdf4
+      HDF_LIB_DIR="$with_hdf4"
     fi
   fi
 
@@ -985,6 +985,7 @@ else
 
   AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf",HDF_LIB_NAME=missing,-ldf)
   if test "$HDF_LIB_NAME" = "missing" ; then
+    unset ac_cv_lib_mfhdf_SDreaddata
     AC_CHECK_LIB(hdf4,SDreaddata,HDF_LIB_NAME=-lhdf4,HDF_LIB_NAME=missing,)
   fi
 
@@ -1000,26 +1001,36 @@ dnl Not found... again, with -lsz.
     AC_CHECK_LIB(mfhdf,SDreaddata,HDF_LIB_NAME="-lmfhdf -ldf -lsz",HDF_LIB_NAME=missing,-ldf -lsz -ljpeg -lz)
   fi
 
-  if test "$HDF_LIB_NAME" = "missing" -a "$with_hdf4" != "" ; then
-    AC_MSG_ERROR([HDF4 support requested with arg "$with_hdf4", but neither hdf4 nor mfhdf lib found])
+  if test "$HDF_LIB_NAME" != "missing" ; then
+
+    LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
+
+  dnl Now search for headers
+    if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
+      HDF4_INCLUDE="-I/usr/include/hdf"
+    elif test -r "$with_hdf4/hdf/hdf.h" ; then
+      HDF4_INCLUDE="-I$with_hdf4/hdf"
+    elif test -r "$with_hdf4/include/hdf/hdf.h" ; then
+      HDF4_INCLUDE="-I$with_hdf4/include/hdf"
+    elif test -r "$with_hdf4/include/hdf.h" ; then
+      HDF4_INCLUDE="-I$with_hdf4/include"
+    elif test -r "$with_hdf4/hdf.h" ; then
+      HDF4_INCLUDE="-I$with_hdf4"
+    fi
+
+    HAVE_HDF4=yes
+
+  else
+
+    if x"$with_hdf4" != x"" ; then
+      AC_MSG_ERROR([HDF4 support requested with arg "$with_hdf4", but neither hdf4 nor mfhdf lib found])
+    else
+      LIBS="$ORIG_LIBS"
+      HAVE_HDF4=no
+    fi
+
   fi
 
-  LIBS="-L$HDF_LIB_DIR $HDF_LIB_NAME $ORIG_LIBS"
-
-dnl Now search for headers
-  if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
-    HDF4_INCLUDE="-I/usr/include/hdf"
-  elif test -r "$with_hdf4/hdf/hdf.h" ; then
-    HDF4_INCLUDE="-I$with_hdf4/hdf"
-  elif test -r "$with_hdf4/include/hdf/hdf.h" ; then
-    HDF4_INCLUDE="-I$with_hdf4/include/hdf"
-  elif test -r "$with_hdf4/include/hdf.h" ; then
-    HDF4_INCLUDE="-I$with_hdf4/include"
-  elif test -r "$with_hdf4/hdf.h" ; then
-    HDF4_INCLUDE="-I$with_hdf4"
-  fi
-
-  HAVE_HDF4=yes
 fi
 
 AC_SUBST(HAVE_HDF4,$HAVE_HDF4)
