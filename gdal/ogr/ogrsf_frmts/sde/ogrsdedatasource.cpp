@@ -791,6 +791,33 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
     return OGRERR_NONE;
 }
 
+
+/************************************************************************/
+/*                            CleanupLayerCreation()                    */
+/************************************************************************/
+void OGRSDEDataSource::CleanupLayerCreation(const char* pszLayerName)
+{
+    
+    LONG nSDEErr;
+
+
+    nSDEErr = SE_registration_delete( hConnection, pszLayerName );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_registration_delete" );
+    }
+    
+    nSDEErr = SE_table_delete( hConnection, pszLayerName);
+    
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_table_delete" );
+    }
+    
+    CPLDebug( "OGR_SDE", "CleanupLayerCreation(%s) successful", pszLayerName );
+
+}
+
 /************************************************************************/
 /*                            CreateLayer()                             */
 /************************************************************************/
@@ -901,6 +928,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
                   "Cannot create layer %s: Unable to convert "
                   "OGRSpatialReference to SDE SE_COORDREF.",
                   pszLayerName );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
 
@@ -917,6 +945,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_layerinfo_create" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -953,6 +982,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
                    pszLayerName, eType );
         
         SE_layerinfo_free( hLayerInfo );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -961,6 +991,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_shape_types" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -972,6 +1003,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_spatial_column" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -981,6 +1013,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_creation_keyword" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -999,6 +1032,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
         {
             SE_layerinfo_free( hLayerInfo );
             IssueSDEError( nSDEErr, "SE_coordref_get_xy_envelope" );
+            CleanupLayerCreation(pszLayerName);
             return NULL;
         }
     }
@@ -1008,6 +1042,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_envelope" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
 
@@ -1017,6 +1052,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_description" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1030,6 +1066,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_grid_sizes" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1040,6 +1077,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_layerinfo_free( hLayerInfo );
         IssueSDEError( nSDEErr, "SE_layerinfo_set_coordref" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1056,6 +1094,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_layer_create" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
 
@@ -1069,6 +1108,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_reginfo_create" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1078,6 +1118,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_reginfo_free( hRegInfo );
         IssueSDEError( nSDEErr, "SE_registration_get_info" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1086,6 +1127,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_reginfo_free( hRegInfo );
         IssueSDEError( nSDEErr, "SE_reginfo_set_creation_keyword" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
 
@@ -1095,6 +1137,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_reginfo_free( hRegInfo );
         IssueSDEError( nSDEErr, "SE_reginfo_set_rowid_column" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1110,6 +1153,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
         {
             SE_reginfo_free( hRegInfo );
             IssueSDEError( nSDEErr, "SE_reginfo_set_multiversion" );
+            CleanupLayerCreation(pszLayerName);
             return NULL;
         }
     }
@@ -1119,6 +1163,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_reginfo_free( hRegInfo );
         IssueSDEError( nSDEErr, "SE_registration_alter" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
     
@@ -1127,6 +1172,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
     {
         SE_reginfo_free( hRegInfo );
         IssueSDEError( nSDEErr, "SE_reginfo_get_table_name" );
+        CleanupLayerCreation(pszLayerName);
         return NULL;
     }
 
@@ -1147,6 +1193,7 @@ OGRSDEDataSource::CreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot initialize newly created layer \"%s\"",
                   pszLayerName );
+        CleanupLayerCreation(pszLayerName);
         delete poLayer;
         return NULL;
     }
