@@ -2,11 +2,14 @@
 
 \section index_version Version
 
-These pages document the forthcoming version 1.5 API, which is still
-under construction. The documentation for the version 1.4 is available
-<a href="http://map.hut.fi/doc/Geo-GDAL-1.4/html/index.html">here</a>.
+These pages document the development version of the GDAL Perl API,
+which is extended from the released versions APIs.
 
-The version 1.5 Perl API will be backwards compatible with 1.4.
+<a href="http://map.hut.fi/doc/Geo-GDAL-1.4/html/index.html">The
+documentation for the version 1.4 API.</a>
+
+<a href="http://map.hut.fi/doc/Geo-GDAL-1.5/html/index.html">The
+documentation for the version 1.5 API.</a>
 
 \section index_intro Introduction
 
@@ -25,28 +28,51 @@ illustrated like this:
 
 SomeMethod(arg1, arg2 = 4);
 
-arg1 is a required argument and an example or a variable with
-illustrative name is given.
+arg1 is a required argument.
 
 arg2 may be left out and if left out, will get the value 4 (in this
 case).
 
-An argument can also be optional, i.e., not given at all, in which
-case there is no default value.
+Only the last argument or arguments can be optional.
 
-Only the last argument or arguments can be left out.
-
-In some cases a method can be called in two or more ways, e.g.
+In some cases a method can be called in a traditional way and with
+named arguments (i.e. with a hash):
 
 \code
 $object->method(1, 2, 3);
 $object->method(number=>1, param=>2, other=>3);
+$object->method({number=>1, param=>2, other=>3});
 \endcode
 
-In these cases the method is documented separately for each calling
-syntax.
+Note especially the difference between the second and the third
+versions. In some cases the named arguments must be given in an
+anonymous hash.
 
-Most of the methods may throw an error, which can be caught by putting
+In some cases a method may behave differently depending on the
+parameters that it gets:
+
+\code
+$object->method($hashref); # a method called with a reference to a hash
+$object->method($arrayref); # a method called with a reference to an array
+\endcode
+
+In some cases a method may examine the context in which it is called,
+and behave differently:
+
+\code
+$object->method();
+$return = $object->method(); # method called in scalar context
+@return = $object->method(); # method called in list context
+\endcode
+
+Many of the methods may throw an error, which can be caught by putting
 the call into eval{}; and then examining the contents of $@.
+
+\section index_footer Note
+
+This documentation is generated from files within the GDAL
+distribution (directory swig/perl) with a tweaked version of <a
+href="http://www.bigsister.ch/doxygenfilter/">Perl Doxygen Filter</a>
+with Doxygen.
 
 */
