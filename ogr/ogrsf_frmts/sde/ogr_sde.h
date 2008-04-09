@@ -205,6 +205,7 @@ class OGRSDEDataSource : public OGRDataSource
     void                EnumerateSpatialTables();
     void                OpenSpatialTable( const char* pszTableName );
     void                CreateLayerFromRegInfo(SE_REGINFO& reginfo);
+    void                CleanupLayerCreation(const char* pszLayerName);
     int                 SetVersionState( const char* pszVersionName );
     int                 CreateVersion( const char* pszParentVersion, const char* pszChildVersion);
 };
