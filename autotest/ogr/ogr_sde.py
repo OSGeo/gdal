@@ -301,7 +301,32 @@ def ogr_sde_8():
     lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
     ref.ImportFromEPSG(4326)
     lyr = ds.CreateLayer( 'SDE.TPOLY' ,geom_type=ogr.wkbPolygon, srs=ref,options = [ 'OVERWRITE=YES' ] )
+    ogrtest.quick_create_layer_def( lyr,
+                                    [ ('AREA', ogr.OFTReal),
+                                      ('EAS_ID', ogr.OFTInteger),
+                                      ('PRFEDEA', ogr.OFTString),
+                                      ('WHEN', ogr.OFTDateTime) ] )
+    
+    #######################################################
+    # Copy in poly.shp
 
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+
+
+    
+    feat = shp_lyr.GetNextFeature()
+    gdaltest.poly_feat = []
+    
+    while feat is not None:
+
+        gdaltest.poly_feat.append( feat )
+
+        dst_feat.SetFrom( feat )
+        lyr.CreateFeature( dst_feat )
+
+        feat = shp_lyr.GetNextFeature()
+
+    dst_feat.Destroy()
     return 'success'
     
 def ogr_sde_cleanup():
@@ -316,13 +341,13 @@ def ogr_sde_cleanup():
     return 'success'
 
 gdaltest_list = [ 
-#    ogr_sde_1,
-#    ogr_sde_2,
-#    ogr_sde_3,
-#    ogr_sde_4,
-#    ogr_sde_5,
-#    ogr_sde_6,
-#    ogr_sde_7,
+    ogr_sde_1,
+    ogr_sde_2,
+    ogr_sde_3,
+    ogr_sde_4,
+    ogr_sde_5,
+    ogr_sde_6,
+    ogr_sde_7,
     ogr_sde_8,
     
     ogr_sde_cleanup 
