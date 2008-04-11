@@ -54,6 +54,8 @@ public:
     GByte             *pabyWrkBuffer;
     char              **papszFields;
 
+    int               bDebug;
+
     OGRIngresStatement( II_PTR hConn );
     ~OGRIngresStatement();
 
