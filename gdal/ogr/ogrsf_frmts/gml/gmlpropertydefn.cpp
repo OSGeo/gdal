@@ -80,9 +80,12 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
 /*      make the field type more specific, or more general.             */
 /************************************************************************/
 
-void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
+void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue,
+                                            const char *pszOldValue )
 
 {
+    (void) pszOldValue; // not used yet. 
+
 /* -------------------------------------------------------------------- */
 /*      If it is a zero length string, just return.  We can't deduce    */
 /*      much from this.                                                 */
