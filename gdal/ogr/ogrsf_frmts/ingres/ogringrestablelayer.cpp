@@ -292,7 +292,7 @@ void OGRIngresTableLayer::BuildWhere()
     }
 #endif
 
-    if( osQuery != NULL )
+    if( osQuery.size() > 0 )
     {
         if( osWHERE.size() == 0 )
             osWHERE = "WHERE " + osQuery;
