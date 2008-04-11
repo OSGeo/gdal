@@ -54,14 +54,20 @@ def transformer_1():
 
     (success,pnt) = tr.TransformPoint( 0, 20, 10 )
 
-    if not success or pnt[0] != 441920 or pnt[1] != 3750720 or pnt[2] != 0:
+    if not success \
+       or abs(pnt[0]- 441920) > 0.00000001 \
+       or abs(pnt[1]-3750720) > 0.00000001 \
+       or pnt[2] != 0.0:
         print success, pnt
         gdaltest.post_reason( 'got wrong forward transform result.' )
         return 'fail'
 
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
-    if not success or pnt[0] != 20 or pnt[1] != 10 or pnt[2] != 0:
+    if not success \
+       or abs(pnt[0]-20) > 0.00000001 \
+       or abs(pnt[1]-10) > 0.00000001 \
+       or pnt[2] != 0.0:
         print success, pnt
         gdaltest.post_reason( 'got wrong reverse transform result.' )
         return 'fail'
