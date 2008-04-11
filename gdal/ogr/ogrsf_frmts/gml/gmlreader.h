@@ -38,7 +38,10 @@ typedef enum {
     GMLPT_String = 1,
     GMLPT_Integer = 2,
     GMLPT_Real = 3,
-    GMLPT_Complex = 4
+    GMLPT_Complex = 4,
+    GMLPT_StringList = 5,
+    GMLPT_IntegerList = 6, 
+    GMLPT_RealList = 7
 } GMLPropertyType;
 
 /************************************************************************/
@@ -65,7 +68,8 @@ public:
     void        SetSrcElement( const char *pszSrcElement );
     const char *GetSrcElement() { return m_pszSrcElement; }
 
-    void        AnalysePropertyValue( const char * );
+    void        AnalysePropertyValue( const char *pszValue, 
+                                      const char *pszOldValue = NULL );
 };
 
 /************************************************************************/
