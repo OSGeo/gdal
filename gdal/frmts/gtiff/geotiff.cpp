@@ -157,6 +157,8 @@ class GTiffDataset : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs();
     CPLErr         SetGCPs( int, const GDAL_GCP *, const char * );
 
+    virtual char **GetFileList(void);
+
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *, 
                                     GDALProgressFunc, void * );
 
@@ -5030,6 +5032,45 @@ void *GTiffDataset::GetInternalHandle( const char * /* pszHandleName */ )
 
 {
     return hTIFF;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **GTiffDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+    VSIStatBufL sStatBuf;
+
+/* -------------------------------------------------------------------- */
+/*      Check for .imd file.                                            */
+/* -------------------------------------------------------------------- */
+    CPLString osTarget = CPLResetExtension( GetDescription(), "IMD" );
+    if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osTarget );
+    else
+    {
+        osTarget = CPLResetExtension( GetDescription(), "imd" );
+        if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+            papszFileList = CSLAddString( papszFileList, osTarget );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Check for .rpb file.                                            */
+/* -------------------------------------------------------------------- */
+    osTarget = CPLResetExtension( GetDescription(), "RPB" );
+    if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+        papszFileList = CSLAddString( papszFileList, osTarget );
+    else
+    {
+        osTarget = CPLResetExtension( GetDescription(), "rpb" );
+        if( VSIStatL( osTarget, &sStatBuf ) == 0 )
+            papszFileList = CSLAddString( papszFileList, osTarget );
+    }
+
+    return papszFileList;
 }
 
 /************************************************************************/
