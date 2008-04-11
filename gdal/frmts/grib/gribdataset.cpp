@@ -85,7 +85,7 @@ class GRIBRasterBand : public GDALPamRasterBand
     friend class GRIBDataset;
     
 public:
-    GRIBRasterBand( GRIBDataset*, int, sInt4, int, char* );
+    GRIBRasterBand( GRIBDataset*, int, inventoryType* );
     virtual ~GRIBRasterBand();
     virtual CPLErr IReadBlock( int, int, void * );
     virtual const char *GetDescription() const;
@@ -103,20 +103,31 @@ private:
 /*                           GRIBRasterBand()                            */
 /************************************************************************/
 
-GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand, sInt4 start, int subgNum, char *longFstLevel )
-  : m_Grib_Data(NULL)
-  , m_Grib_MetaData(NULL)
+GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand, 
+                                inventoryType *psInv )
+  : m_Grib_Data(NULL), m_Grib_MetaData(NULL)
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    this->start = start;
-    this->subgNum = subgNum;
-    this->longFstLevel = CPLStrdup(longFstLevel);
+    this->start = psInv->start;
+    this->subgNum = psInv->subgNum;
+    this->longFstLevel = CPLStrdup(psInv->longFstLevel);
 
     eDataType = GDT_Float64; // let user do -ot Float32 if needed for saving space, GRIB contains Float64 (though not fully utilized most of the time)
 
     nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
+
+    SetMetadataItem( "GRIB_UNIT", psInv->unitName );
+    SetMetadataItem( "GRIB_COMMENT", psInv->comment );
+    SetMetadataItem( "GRIB_ELEMENT", psInv->element );
+    SetMetadataItem( "GRIB_SHORT_NAME", psInv->shortFstLevel );
+    SetMetadataItem( "GRIB_REF_TIME", 
+                     CPLString().Printf("%12.0f sec UTC", psInv->refTime ) );
+    SetMetadataItem( "GRIB_VALID_TIME", 
+                     CPLString().Printf("%12.0f sec UTC", psInv->validTime ) );
+    SetMetadataItem( "GRIB_FORECAST_SECONDS", 
+                     CPLString().Printf("%.0f sec", psInv->foreSec ) );
 }
 
 /************************************************************************/
@@ -361,13 +372,13 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             poDS->SetGribMetaData(metaData); // set the DataSet's x,y size, georeference and projection from the first GRIB band
-            GRIBRasterBand* gribBand = new GRIBRasterBand( poDS, bandNr, Inv[i].start, Inv[i].subgNum, Inv[i].longFstLevel);
+            GRIBRasterBand* gribBand = new GRIBRasterBand( poDS, bandNr, Inv+i);
             gribBand->m_Grib_Data = data;
             gribBand->m_Grib_MetaData = metaData;
             poDS->SetBand( bandNr, gribBand);
         }
         else
-            poDS->SetBand( bandNr, new GRIBRasterBand( poDS, bandNr, Inv[i].start, Inv[i].subgNum, Inv[i].longFstLevel));
+            poDS->SetBand( bandNr, new GRIBRasterBand( poDS, bandNr, Inv+i ));
         GRIB2InventoryFree (Inv + i);
     }
     free (Inv);
@@ -390,7 +401,10 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
     nRasterXSize = meta->gds.Nx;
     nRasterYSize = meta->gds.Ny;
 
-    OGRSpatialReference oSRS; // the projection of the image
+/* -------------------------------------------------------------------- */
+/*      Image projection.                                               */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
 
     switch(meta->gds.projType)
     {
@@ -427,6 +441,9 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         break;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Earth model                                                     */
+/* -------------------------------------------------------------------- */
     double a = meta->gds.majEarth * 1000.0; // in meters
     double b = meta->gds.minEarth * 1000.0;
     if( a == 0 && b == 0 )
