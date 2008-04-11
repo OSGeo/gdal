@@ -515,7 +515,7 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
     {
         OGRPoint *poPoint = (OGRPoint *) poGeom;
 
-        osRetGeomText.Printf( "(%g,%g)", poPoint->getX(), poPoint->getY() );
+        osRetGeomText.Printf( "(%.15g,%.15g)", poPoint->getX(), poPoint->getY() );
         return OGRERR_NONE;
     }
 
@@ -536,6 +536,7 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
     if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
         OGRLineString *poLS = (OGRLineString *) poGeom;
+        CPLString osLastPoint;
         int i;
 
         if( EQUAL(osIngresGeomType,"LSEG") 
@@ -567,24 +568,39 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
             return OGRERR_FAILURE;
         }
 
-
         osRetGeomText = "(";
         for( i = 0; i < poLS->getNumPoints(); i++ )
         {
             CPLString osPoint;
+
+            if( i > 0 
+                && poLS->getX(i) == poLS->getX(i-1)
+                && poLS->getY(i) == poLS->getY(i-1) )
+            {
+                CPLDebug( "INGRES", "Dropping duplicate point in linestring.");
+                continue;
+            }
             
             if( EQUALN(osIngresGeomType,"I",1) )
                 osPoint.Printf( "(%d,%d)",
                                 (int) floor(poLS->getX(i)), 
                                 (int) floor(poLS->getY(i)) );
             else
-                osPoint.Printf( "(%g,%g)", 
+                osPoint.Printf( "(%.15g,%.15g)", 
                                 poLS->getX(i), poLS->getY(i) );
 
-            if( i < poLS->getNumPoints()-1 )
-                osPoint += ",";
+            if( osPoint == osLastPoint )
+            {
+                CPLDebug( "INGRES",
+                          "Dropping duplicate point in linestring(2).");
+                continue;
+            }
+            osLastPoint = osPoint;
 
-            osRetGeomText += osPoint;
+            if( osRetGeomText.size() > 1 )
+                osRetGeomText += "," + osPoint;
+            else
+                osRetGeomText += osPoint;
         }
         osRetGeomText += ")";
 
@@ -643,18 +659,26 @@ OGRErr OGRIngresTableLayer::PrepareOldStyleGeometry(
         {
             CPLString osPoint;
             
+            if( i > 0 
+                && poLS->getX(i) == poLS->getX(i-1)
+                && poLS->getY(i) == poLS->getY(i-1) )
+            {
+                CPLDebug( "INGRES", "Dropping duplicate point in linestring.");
+                continue;
+            }
+            
             if( EQUALN(osIngresGeomType,"I",1) )
                 osPoint.Printf( "(%d,%d)",
                                 (int) floor(poLS->getX(i)), 
                                 (int) floor(poLS->getY(i)) );
             else
-                osPoint.Printf( "(%g,%g)", 
+                osPoint.Printf( "(%.15g,%.15g)", 
                                 poLS->getX(i), poLS->getY(i) );
 
-            if( i < poLS->getNumPoints()-1 )
-                osPoint += ",";
-
-            osRetGeomText += osPoint;
+            if( osRetGeomText.size() > 1 )
+                osRetGeomText += "," + osPoint;
+            else
+                osRetGeomText += osPoint;
         }
         osRetGeomText += ")";
 
@@ -774,10 +798,9 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
                     break;
                 }
 
-                if( pszStrValue[iChar] == '\\'
-                    || pszStrValue[iChar] == '\'' )
+                if( pszStrValue[iChar] == '\'' )
                 {
-                    osCommand += '\\';
+                    osCommand += '\'';
                     osCommand += pszStrValue[iChar];
                 }
                 else
@@ -811,6 +834,8 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 /*      Execute it.                                                     */
 /* -------------------------------------------------------------------- */
     OGRIngresStatement oStmt( poDS->GetConn() );
+
+    oStmt.bDebug = FALSE; 
 
     if( !oStmt.ExecuteSQL( osCommand ) )
         return OGRERR_FAILURE;
