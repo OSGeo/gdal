@@ -218,6 +218,14 @@ class MajorObject(_object):
         """
         return _gdal.MajorObject_SetMetadata(*args)
 
+    def GetMetadataItem(*args):
+        """GetMetadataItem(self, char pszName, char pszDomain="") -> char"""
+        return _gdal.MajorObject_GetMetadataItem(*args)
+
+    def SetMetadataItem(*args):
+        """SetMetadataItem(self, char pszName, char pszValue, char pszDomain="") -> CPLErr"""
+        return _gdal.MajorObject_SetMetadataItem(*args)
+
     def GetMetadata( self, domain = '' ):
       if domain[:4] == 'xml:':
         return self.GetMetadata_List( domain )
@@ -956,6 +964,37 @@ ComputeMedianCutPCT = _gdal.ComputeMedianCutPCT
 DitherRGB2PCT = _gdal.DitherRGB2PCT
 ReprojectImage = _gdal.ReprojectImage
 AutoCreateWarpedVRT = _gdal.AutoCreateWarpedVRT
+class Transformer(_object):
+    """Proxy of C++ Transformer class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Transformer, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Transformer, name)
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
+        """__init__(self, Dataset src, Dataset dst, char options) -> Transformer"""
+        this = _gdal.new_Transformer(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_Transformer
+    __del__ = lambda self : None;
+    def TransformPoint(*args):
+        """
+        TransformPoint(self, int bDstToSrc, double inout) -> int
+        TransformPoint(self, double argout, int bDstToSrc, double x, double y, double z=0.0) -> int
+        """
+        return _gdal.Transformer_TransformPoint(*args)
+
+    def TransformPoints(*args):
+        """
+        TransformPoints(self, int bDstToSrc, int nCount, double x, double y, double z, 
+            int panSuccess) -> int
+        """
+        return _gdal.Transformer_TransformPoints(*args)
+
+Transformer_swigregister = _gdal.Transformer_swigregister
+Transformer_swigregister(Transformer)
+
 VersionInfo = _gdal.VersionInfo
 AllRegister = _gdal.AllRegister
 GetCacheMax = _gdal.GetCacheMax
