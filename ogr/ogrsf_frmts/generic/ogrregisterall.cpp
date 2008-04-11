@@ -75,6 +75,9 @@ void OGRRegisterAll()
 #ifdef CSV_ENABLED
     RegisterOGRCSV();
 #endif
+#ifdef NAS_ENABLED
+    RegisterOGRNAS();
+#endif
 #ifdef GML_ENABLED
     RegisterOGRGML();
 #endif
@@ -90,6 +93,7 @@ void OGRRegisterAll()
 #ifdef ILI_ENABLED
     RegisterOGRILI1();
     RegisterOGRILI2();
+    RegisterOGRNAS();
 #endif
 #ifdef GMT_ENABLED
     RegisterOGRGMT();
