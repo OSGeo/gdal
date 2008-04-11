@@ -475,6 +475,116 @@ def tiff_write_16():
 
     return 'success'
 
+###############################################################################
+# Test writing a TIFF with an RPC tag. 
+
+def tiff_write_17():
+
+    # Translate RPC controlled data to GeoTIFF.
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open('data/rpc.vrt')
+    rpc_md = ds_in.GetMetadata('RPC')
+    
+    ds = drv.CreateCopy( 'tmp/tw_17.tif', ds_in )
+    
+    ds_in = None
+    ds = None
+
+    # Ensure there is no .aux.xml file which might hold the RPC.
+    try:
+        os.remove( 'tmp/tm_17.tif.aux.xml' )
+    except:
+        pass
+
+    # confirm there is no .rpb file created by default.
+    try:
+        open('tmp/tm_17.RPB').read()
+        gdaltest.post_reason( 'unexpectedly found .RPB file' )
+        return 'fail'
+    except:
+        pass
+
+    # Open the dataset, and confirm the RPC data is still intact.
+    ds = gdal.Open( 'tmp/tw_17.tif' )
+    if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'),rpc_md):
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_17.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test writing a TIFF with an RPB file and IMD file.
+
+def tiff_write_18():
+
+    # Translate RPC controlled data to GeoTIFF.
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open('data/rpc.vrt')
+    rpc_md = ds_in.GetMetadata('RPC')
+    
+    ds = drv.CreateCopy( 'tmp/tw_18.tif', ds_in,
+                         options = [ 'PROFILE=BASELINE' ] )
+    
+    ds_in = None
+    ds = None
+
+    # Ensure there is no .aux.xml file which might hold the RPC.
+    try:
+        os.remove( 'tmp/tm_18.tif.aux.xml' )
+    except:
+        pass
+
+    # confirm there is an .rpb and .imd file.
+    try:
+        open('tmp/tw_18.RPB').read()
+        open('tmp/tw_18.IMD').read()
+    except:
+        gdaltest.post_reason( 'missing .RPB or .IMD file.' )
+        return 'fail'
+
+    # Open the dataset, and confirm the RPC/IMD data is still intact.
+    ds = gdal.Open( 'tmp/tw_18.tif' )
+
+    if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'),rpc_md):
+        return 'fail'
+
+    imd_md = ds.GetMetadata('IMD')
+    if imd_md['version'] != '"R"' \
+       or imd_md['numColumns'] != '30324' \
+       or imd_md['IMAGE_1.sunEl'] != '39.7':
+        gdaltest.post_reason( 'IMD contents wrong?' )
+        print imd_md
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_18.tif' )
+
+    # Confirm IMD and RPC files are cleaned up.  If not likely the
+    # file list functionality is not working properly.
+    try:
+        open('tmp/tw_18.RPB').read()
+        gdaltest.post_reason( 'RPB did not get cleaned up.' )
+        return 'fail'
+    except:
+        pass
+    
+    try:
+        open('tmp/tw_18.IMD').read()
+        gdaltest.post_reason( 'IMD did not get cleaned up.' )
+        return 'fail'
+    except:
+        pass
+    
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -497,6 +607,8 @@ gdaltest_list = [
     tiff_write_14,
     tiff_write_15,
     tiff_write_16,
+    tiff_write_17,
+    tiff_write_18,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
