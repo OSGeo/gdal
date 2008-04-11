@@ -864,7 +864,7 @@ available GCPs.</dd>
 <dt> <b>-rpc</b>:</dt> <dd>Force use of RPCs.</dd>
 <dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
 <dt> <b>-i</b></dt><dd>Inverse transformation: from destination to source.</dd>
-<dt> <b>-gcp</b><em>pixel line easting northing [elevation]</em></dt><dd>Provide a GCP to be used for transformation (generally three or more are required)</dd>
+<dt> <b>-gcp</b><em>pixel line easting northing [elevation]</em>:</dt> <dd>Provide a GCP to be used for transformation (generally three or more are required)</dd>
 <dt> <em>srcfile</em>:</dt><dd> File with source projection definition or GCP's. If
     not given, source projection is read from the command-line -s_srs or -gcp parameters </dd>
 <dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>
