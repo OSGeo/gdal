@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+/************************************************************************/
+/*                            TermProgress()                            */
+/************************************************************************/
+
 #ifndef SWIGCSHARP
 %rename (TermProgress_nocb) GDALTermProgress_nocb;
 %feature( "kwargs" ) GDALTermProgress_nocb;
@@ -44,6 +48,9 @@ int GDALTermProgress( double, const char *, void * );
 #endif
 
 
+/************************************************************************/
+/*                        ComputeMedianCutPCT()                         */
+/************************************************************************/
 %feature( "kwargs" ) ComputeMedianCutPCT;
 %inline %{
 int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
@@ -69,7 +76,9 @@ int  ComputeMedianCutPCT ( GDALRasterBandShadow *red,
 }
 %} 
 
-
+/************************************************************************/
+/*                           DitherRGB2PCT()                            */
+/************************************************************************/
 %feature( "kwargs" ) DitherRGB2PCT;
 %inline %{
 int  DitherRGB2PCT ( GDALRasterBandShadow *red,
@@ -120,6 +129,11 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
     return err;
 }
 %} 
+
+/************************************************************************/
+/*                        AutoCreateWarpedVRT()                         */
+/************************************************************************/
+
 %newobject AutoCreateWarpedVRT;
 %inline %{
 GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
@@ -139,3 +153,76 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   
 }
 %}
+
+/************************************************************************/
+/*                             Transformer                              */
+/************************************************************************/
+
+%rename (Transformer) GDALTransformerInfoShadow;
+class GDALTransformerInfoShadow {
+private:
+  GDALTransformerInfoShadow();
+public:
+%extend {
+
+  GDALTransformerInfoShadow( GDALDatasetShadow *src, GDALDatasetShadow *dst,
+                             char **options ) {
+    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*) 
+       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst, 
+                                         options );
+    return obj;
+  }
+
+  ~GDALTransformerInfoShadow() {
+    GDALDestroyTransformer( self );
+  }
+
+// Need to apply argin typemap second so the numinputs=1 version gets applied
+// instead of the numinputs=0 version from argout.
+%apply (double argout[ANY]) {(double inout[3])};
+%apply (double argin[ANY]) {(double inout[3])};
+  int TransformPoint( int bDstToSrc, double inout[3] ) {
+    int nRet, nSuccess = TRUE;
+
+    nRet = GDALUseTransformer( self, bDstToSrc, 
+                               1, &inout[0], &inout[1], &inout[2], 
+                               &nSuccess );
+
+    return nRet && nSuccess;
+  }
+%clear (double inout[3]);
+
+  int TransformPoint( double argout[3], int bDstToSrc, 
+                      double x, double y, double z = 0.0 ) {
+    int nRet, nSuccess = TRUE;
+    
+    argout[0] = x;
+    argout[1] = y;
+    argout[2] = z;
+    nRet = GDALUseTransformer( self, bDstToSrc, 
+                               1, &argout[0], &argout[1], &argout[2], 
+                               &nSuccess );
+
+    return nRet && nSuccess;
+  }
+  
+#ifdef SWIGCSHARP
+  %apply (double *inout) {(double*)};
+  %apply (double *inout) {(int*)};
+#endif
+  int TransformPoints( int bDstToSrc, 
+                       int nCount, double *x, double *y, double *z,
+                       int *panSuccess ) {
+    int nRet;
+
+    nRet = GDALUseTransformer( self, bDstToSrc, nCount, x, y, z, panSuccess );
+
+    return nRet;
+  }
+#ifdef SWIGCSHARP
+  %clear (double*);
+  %clear (int*);
+#endif
+
+} /*extend */
+};
