@@ -1480,6 +1480,17 @@ AC_SUBST([HAVE_XERCES], $HAVE_XERCES)
 AC_SUBST([XERCES_INCLUDE], $XERCES_CFLAGS)
   
 dnl ---------------------------------------------------------------------------
+dnl Enable NAS if we have Xerces, and a nas directory.
+dnl ---------------------------------------------------------------------------
+
+if test "$HAVE_XERCES" = "yes" -a -d ogr/ogrsf_frmts/nas ; then
+  HAVE_NAS=yes
+else
+  HAVE_NAS=no
+fi
+AC_SUBST([HAVE_NAS], $HAVE_NAS)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for Expat configuration.
 dnl ---------------------------------------------------------------------------
 
@@ -2205,6 +2216,7 @@ LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
+LOC_MSG([  NAS support:               ${HAVE_NAS}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])
