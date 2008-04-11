@@ -182,6 +182,11 @@ MRSID_LIBS	= @MRSID_LIBS@
 HAVE_XERCES	= @HAVE_XERCES@
 XERCES_INCLUDE	= @XERCES_INCLUDE@
 
+# 
+# Enable NAS format
+#
+HAVE_NAS	= @HAVE_NAS@
+
 #
 # Expat XML Parser for KML
 #
