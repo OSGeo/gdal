@@ -589,6 +589,20 @@ class DataSource(_object):
         else:
             raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
 
+    def DeleteLayer(self, value):
+        """Deletes the layer given an index or layer name"""
+        import types
+        if isinstance(value, types.StringTypes):
+            for i in range(self.GetLayerCount()):
+                name = self.GetLayer(i).GetName()
+                if name == value:
+                    return _ogr.DataSource_DeleteLayer(self, i)
+            raise ValueError, "Layer %s not found to delete" % value
+        elif isinstance(value, types.IntType):
+            return _ogr.DataSource_DeleteLayer(self, value)
+        else:
+            raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
+
 DataSource_swigregister = _ogr.DataSource_swigregister
 DataSource_swigregister(DataSource)
 
@@ -1557,6 +1571,136 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldAsDouble(*args)
 
+    def GetFieldAsDateTime(*args):
+        """
+        GetFieldAsDateTime(self, int id, int pnYear, int pnMonth, int pnDay, int pnHour, 
+            int pnMinute, int pnSecond, int pnTZFlag)
+
+        int
+        OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int *pnYear,
+        int *pnMonth, int *pnDay, int *pnHour, int *pnMinute, int *pnSecond,
+        int *pnTZFlag)
+
+        Fetch field value as date and time.
+
+        Currently this method only works for OFTDate, OFTTime and OFTDateTime
+        fields.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsDateTime().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        int:  pnYear (including century)
+
+        int:  pnMonth (1-12)
+
+        int:  pnDay (1-31)
+
+        int:  pnHour (0-23)
+
+        int:  pnMinute (0-59)
+
+        int:  pnSecond (0-59)
+
+        int:  pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for
+        details)
+
+        TRUE on success or FALSE on failure. 
+        """
+        return _ogr.Feature_GetFieldAsDateTime(*args)
+
+    def GetFieldAsIntegerList(*args):
+        """
+        GetFieldAsIntegerList(self, int id, int nLen, int pList)
+
+        const int*
+        OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int
+        *pnCount)
+
+        Fetch field value as a list of integers.
+
+        Currently this function only works for OFTIntegerList fields.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsIntegerList().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        pnCount:  an integer to put the list count (number of integers) into.
+
+        the field value. This list is internal, and should not be modified, or
+        freed. It's lifetime may be very brief. If *pnCount is zero on return
+        the returned pointer may be NULL or non-NULL. 
+        """
+        return _ogr.Feature_GetFieldAsIntegerList(*args)
+
+    def GetFieldAsDoubleList(*args):
+        """
+        GetFieldAsDoubleList(self, int id, int nLen, double pList)
+
+        const double*
+        OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int
+        *pnCount)
+
+        Fetch field value as a list of doubles.
+
+        Currently this function only works for OFTRealList fields.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsDoubleList().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        pnCount:  an integer to put the list count (number of doubles) into.
+
+        the field value. This list is internal, and should not be modified, or
+        freed. It's lifetime may be very brief. If *pnCount is zero on return
+        the returned pointer may be NULL or non-NULL. 
+        """
+        return _ogr.Feature_GetFieldAsDoubleList(*args)
+
+    def GetFieldAsStringList(*args):
+        """
+        GetFieldAsStringList(self, int id, char pList)
+
+        char**
+        OGR_F_GetFieldAsStringList(OGRFeatureH hFeat, int iField)
+
+        Fetch field value as a list of strings.
+
+        Currently this method only works for OFTStringList fields.
+
+        This function is the same as the C++ method
+        OGRFeature::GetFieldAsStringList().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        the field value. This list is internal, and should not be modified, or
+        freed. It's lifetime may be very brief. 
+        """
+        return _ogr.Feature_GetFieldAsStringList(*args)
+
     def IsFieldSet(*args):
         """
         IsFieldSet(self, int id) -> bool
@@ -1713,6 +1857,85 @@ class Feature(_object):
         """
         return _ogr.Feature_SetField(*args)
 
+    def SetFieldIntegerList(*args):
+        """
+        SetFieldIntegerList(self, int id, int nList)
+
+        void
+        OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
+        int *panValues)
+
+        Set field to list of integers value.
+
+        This function currently on has an effect of OFTIntegerList fields.
+
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to set, from 0 to GetFieldCount()-1.
+
+        nCount:  the number of values in the list being assigned.
+
+        panValues:  the values to assign. 
+        """
+        return _ogr.Feature_SetFieldIntegerList(*args)
+
+    def SetFieldDoubleList(*args):
+        """
+        SetFieldDoubleList(self, int id, int nList, double pList)
+
+        void
+        OGR_F_SetFieldDoubleList(OGRFeatureH hFeat, int iField, int nCount,
+        double *padfValues)
+
+        Set field to list of doubles value.
+
+        This function currently on has an effect of OFTRealList fields.
+
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to set, from 0 to GetFieldCount()-1.
+
+        nCount:  the number of values in the list being assigned.
+
+        padfValues:  the values to assign. 
+        """
+        return _ogr.Feature_SetFieldDoubleList(*args)
+
+    def SetFieldStringList(*args):
+        """
+        SetFieldStringList(self, int id, char pList)
+
+        void
+        OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField, char
+        **papszValues)
+
+        Set field to list of strings value.
+
+        This function currently on has an effect of OFTStringList fields.
+
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to set, from 0 to GetFieldCount()-1.
+
+        papszValues:  the values to assign. 
+        """
+        return _ogr.Feature_SetFieldStringList(*args)
+
     def SetFrom(*args, **kwargs):
         """
         SetFrom(self, Feature other, int forgiving=1) -> OGRErr
@@ -1841,6 +2064,8 @@ class Feature(_object):
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
+        if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
+            return self.GetFieldAsDate(fld_index)
         
         return self.GetFieldAsString(fld_index)
 
@@ -1883,7 +2108,9 @@ class Feature(_object):
                 raise ImportError("Unable to import simplejson, needed for ExportToJson. (%s)" % error)
             output = simplejson.dumps(output)
         
-        return output    
+        return output
+
+
 
 Feature_swigregister = _ogr.Feature_swigregister
 Feature_swigregister(Feature)
@@ -2374,7 +2601,7 @@ class Geometry(_object):
     def __init__(self, *args, **kwargs): 
         """
         __init__(self, OGRwkbGeometryType type=wkbUnknown, char wkt=0, int wkb=0, 
-            char wkb_buf=0, char gml=0) -> Geometry
+            char gml=0) -> Geometry
         """
         this = _ogr.new_Geometry(*args, **kwargs)
         try: self.this.append(this)

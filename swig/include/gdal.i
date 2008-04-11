@@ -64,6 +64,7 @@ typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
 typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
+typedef void GDALTransformerInfoShadow;
 
 typedef int FALSE_IS_ERR;
 
