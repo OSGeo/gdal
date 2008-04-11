@@ -4780,7 +4780,7 @@ void GDALRegister_GTiff()
 "   <Option name='BLOCKYSIZE' type='int' description='Tile/Strip Height'/>"
 "   <Option name='PHOTOMETRIC' type='string-select'>"
 "       <Value>MINISBLACK</Value>"
-"       <Value>MINISWHITE</value>"
+"       <Value>MINISWHITE</Value>"
 "       <Value>RGB</Value>"
 "       <Value>CMYK</Value>"
 "       <Value>YCBCR</Value>"
@@ -4790,7 +4790,7 @@ void GDALRegister_GTiff()
 "   </Option>"
 "   <Option name='PROFILE' type='string-select'>"
 "       <Value>GDALGeoTIFF</Value>"
-"       <Value>GeoTIFF</value>"
+"       <Value>GeoTIFF</Value>"
 "       <Value>BASELINE</Value>"
 "   </Option>"
 "</CreationOptionList>" );
