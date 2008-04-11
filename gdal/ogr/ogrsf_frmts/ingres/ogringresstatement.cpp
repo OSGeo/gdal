@@ -49,6 +49,7 @@ OGRIngresStatement::OGRIngresStatement( II_PTR hConn )
 
     memset( &getDescrParm, 0, sizeof(getDescrParm) );
     memset( &queryInfo, 0, sizeof(queryInfo) );
+    bDebug = TRUE;
 }
 
 /************************************************************************/
@@ -123,7 +124,9 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     queryParm.qy_tranHandle = NULL;
     queryParm.qy_stmtHandle = NULL;
 
-    CPLDebug( "INGRES", "IIapi_query(%s)", pszStatement );
+    if( bDebug )
+        CPLDebug( "INGRES", "IIapi_query(%s)", pszStatement );
+
     IIapi_query( &queryParm );
   
 /* -------------------------------------------------------------------- */
@@ -167,13 +170,17 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     {
         if( getDescrParm.gd_genParm.gp_errorHandle )
         {
+            if( !bDebug )
+                CPLDebug( "INGRES", "IIapi_query(%s)", pszStatement );
+
             ReportError( &(getDescrParm.gd_genParm), "IIapi_getDescriptor()" );
             return FALSE;
         }
         else
         {
-            CPLDebug( "INGRES", "Got gp_status = %d from getDescriptor.",
-                      getDescrParm.gd_genParm.gp_status );
+            if( bDebug )
+                CPLDebug( "INGRES", "Got gp_status = %d from getDescriptor.",
+                          getDescrParm.gd_genParm.gp_status );
         }
     }
 
