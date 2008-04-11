@@ -93,7 +93,6 @@ void OGRRegisterAll()
 #ifdef ILI_ENABLED
     RegisterOGRILI1();
     RegisterOGRILI2();
-    RegisterOGRNAS();
 #endif
 #ifdef GMT_ENABLED
     RegisterOGRGMT();
