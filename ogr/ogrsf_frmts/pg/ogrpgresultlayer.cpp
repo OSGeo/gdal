@@ -232,5 +232,49 @@ void OGRPGResultLayer::ResetReading()
 int OGRPGResultLayer::GetFeatureCount( int bForce )
 
 {
-    return nFeatureCount;
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+        return nFeatureCount;
+    else
+        return OGRLayer::GetFeatureCount(bForce);
+}
+
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRPGResultLayer::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,OLCFastFeatureCount) )
+        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+    else
+        return FALSE;
+}
+
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRPGResultLayer::GetNextFeature()
+
+{
+
+    for( ; TRUE; )
+    {
+        OGRFeature      *poFeature;
+
+        poFeature = GetNextRawFeature();
+        if( poFeature == NULL )
+            return NULL;
+
+        if( (m_poFilterGeom == NULL
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
+            && (m_poAttrQuery == NULL
+                || m_poAttrQuery->Evaluate( poFeature )) )
+            return poFeature;
+
+        delete poFeature;
+    }
 }

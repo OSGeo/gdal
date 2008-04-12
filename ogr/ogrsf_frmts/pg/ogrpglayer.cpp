@@ -172,33 +172,6 @@ void OGRPGLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
-/************************************************************************/
-
-OGRFeature *OGRPGLayer::GetNextFeature()
-
-{
-
-    for( ; TRUE; )
-    {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
-
-        if( (m_poFilterGeom == NULL
-            || bHasPostGISGeometry
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
-            return poFeature;
-
-        delete poFeature;
-    }
-}
-
-/************************************************************************/
 /*                    OGRPGGetStrFromBinaryNumeric()                    */
 /************************************************************************/
 
@@ -1672,32 +1645,6 @@ Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
     CPLFree( pabyWKB );
 
     return oid;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRPGLayer::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,OLCRandomRead) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL || bHasPostGISGeometry;
-
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return TRUE;
-
-    else if( EQUAL(pszCap,OLCTransactions) )
-        return TRUE;
-
-	else if( EQUAL(pszCap,OLCFastGetExtent) )
-		return bHasPostGISGeometry;
-
-    else
-        return FALSE;
 }
 
 /************************************************************************/
