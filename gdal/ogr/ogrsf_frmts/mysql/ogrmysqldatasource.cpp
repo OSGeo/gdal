@@ -837,6 +837,12 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     int                 nDimension = 3; // MySQL only supports 2d currently
 
 
+/* -------------------------------------------------------------------- */
+/*      Make sure there isn't an active transaction already.            */
+/* -------------------------------------------------------------------- */
+    InterruptLongResult();
+
+
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
