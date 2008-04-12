@@ -871,12 +871,12 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
             }
             else
             {
-                CPLFree( pszLayerName );
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
                           pszLayerName );
+                CPLFree( pszLayerName );
                 return NULL;
             }
         }
