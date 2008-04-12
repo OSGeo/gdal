@@ -124,8 +124,6 @@ class OGRPGLayer : public OGRLayer
 
     virtual void        ResetReading();
 
-    virtual OGRFeature *GetNextFeature();
-
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      StartTransaction();
@@ -133,8 +131,6 @@ class OGRPGLayer : public OGRLayer
     virtual OGRErr      RollbackTransaction();
 
     virtual OGRSpatialReference *GetSpatialRef();
-
-    virtual int         TestCapability( const char * );
 
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
@@ -184,6 +180,7 @@ public:
 
     virtual OGRFeature *GetFeature( long nFeatureId );
     virtual void        ResetReading();
+    virtual OGRFeature *GetNextFeature();
     virtual int         GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -236,12 +233,14 @@ class OGRPGResultLayer : public OGRPGLayer
                                           PGresult *hInitialResult );
     virtual             ~OGRPGResultLayer();
 
-    void                SetSpatialFilter( OGRGeometry * ) {}
-
     OGRFeatureDefn     *ReadResultDefinition();
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
+
+    virtual int         TestCapability( const char * );
+
+    virtual OGRFeature *GetNextFeature();
 };
 
 /************************************************************************/
