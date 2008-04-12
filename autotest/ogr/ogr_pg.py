@@ -73,7 +73,11 @@ def ogr_pg_1():
     gdal.PopErrorHandler()
 
     if gdaltest.pg_has_postgis:
-        print 'PostGIS available !'
+        if gdal.GetConfigOption('PG_USE_POSTGIS', 'YES') == 'YES':
+            print 'PostGIS available !'
+        else:
+            gdaltest.pg_has_postgis = False
+            print 'PostGIS available but will NOT be used because of PG_USE_POSTGIS=NO !'
     else:
         gdaltest.pg_has_postgis = False
         print 'PostGIS NOT available !'
@@ -1327,7 +1331,7 @@ def ogr_pg_cleanup():
 
 # NOTE: The ogr_pg_19 intentionally executed after ogr_pg_2
 
-gdaltest_list = [ 
+gdaltest_list_internal = [ 
     ogr_pg_1,
     ogr_pg_table_cleanup,
     ogr_pg_2,
@@ -1363,6 +1367,22 @@ gdaltest_list = [
     ogr_pg_31,
     ogr_pg_32,
     ogr_pg_cleanup ]
+
+
+###############################################################################
+# Run gdaltest_list_internal with PostGIS enabled and then with PostGIS disabled
+
+def ogr_pg_with_and_without_postgis():
+    gdaltest.run_tests( gdaltest_list_internal )
+    if gdaltest.pg_has_postgis:
+        gdal.SetConfigOption("PG_USE_POSTGIS", "NO")
+        gdaltest.run_tests( gdaltest_list_internal )
+        gdal.SetConfigOption("PG_USE_POSTGIS", "YES")
+    return 'success'
+
+gdaltest_list = [
+    ogr_pg_with_and_without_postgis
+]
 
 if __name__ == '__main__':
 
