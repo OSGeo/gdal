@@ -1473,12 +1473,6 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
-    if( poSpatialFilter != NULL )
-    {
-        CPLDebug( "OGR_PG",
-          "Spatial filter ignored for now in OGRPGDataSource::ExecuteSQL()" );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for OGRSQL dialect.                  */
 /* -------------------------------------------------------------------- */
@@ -1534,6 +1528,9 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         OGRPGResultLayer *poLayer = NULL;
 
         poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
+
+        if( poSpatialFilter != NULL )
+            poLayer->SetSpatialFilter( poSpatialFilter );
 
         return poLayer;
     }
