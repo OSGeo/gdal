@@ -301,35 +301,6 @@ OGRFeature *OGRMySQLLayer::GetFeature( long nFeatureId )
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRMySQLLayer::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,OLCRandomRead) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return TRUE;
-
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return TRUE;
-
-    else if( EQUAL(pszCap,OLCTransactions) )
-        return FALSE;
-
-	else if( EQUAL(pszCap,OLCFastGetExtent) )
-		return FALSE;
-
-    else
-        return FALSE;
-}
-
-
-
-    
-/************************************************************************/
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 

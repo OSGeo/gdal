@@ -88,8 +88,6 @@ class OGRMySQLLayer : public OGRLayer
 
     virtual OGRSpatialReference *GetSpatialRef();
 
-    virtual int         TestCapability( const char * );
-
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
 
@@ -175,6 +173,8 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
+
+    virtual int         TestCapability( const char * );
 };
 
 /************************************************************************/
