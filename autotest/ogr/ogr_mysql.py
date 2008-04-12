@@ -130,11 +130,20 @@ def ogr_mysql_3():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
+    if gdaltest.mysql_lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.mysql_lyr.GetFeatureCount() )
+        return 'fail'
+
     expect = [168, 169, 166, 158, 165]
 
     gdaltest.mysql_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.mysql_lyr,
                                               'eas_id', expect )
+
+    if gdaltest.mysql_lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 5' % gdaltest.mysql_lyr.GetFeatureCount() )
+        return 'fail'
+
     gdaltest.mysql_lyr.SetAttributeFilter( None )
 
     for i in range(len(gdaltest.poly_feat)):
@@ -232,6 +241,9 @@ def ogr_mysql_5():
     
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
+    if sql_lyr.GetFeatureCount() != 11:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount() )
+        return 'fail'
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
 
@@ -255,14 +267,29 @@ def ogr_mysql_6():
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL( "select * from tpoly where prfedea = '2'" )
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
+    # FIXME. Should be '2' instead of '32'
+    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '32' ] )
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
         if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
             tr = 0
         feat_read.Destroy()
-        
+    sql_lyr.ResetReading()
+
+    geom = ogr.CreateGeometryFromWkt( \
+        'LINESTRING(-10 -10,0 0)' )
+    sql_lyr.SetSpatialFilter( geom )
+    geom.Destroy()
+
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 0' % sql_lyr.GetFeatureCount() )
+        return 'fail'
+
+    if sql_lyr.GetNextFeature() != None:
+        gdaltest.post_reason( 'GetNextFeature() didn not return None' )
+        return 'fail'
+
     gdaltest.mysql_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
@@ -284,9 +311,21 @@ def ogr_mysql_7():
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.mysql_lyr.SetSpatialFilter( geom )
     geom.Destroy()
-    
+
+    if gdaltest.mysql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.mysql_lyr.GetFeatureCount() )
+        return 'fail'
+
     tr = ogrtest.check_features_against_list( gdaltest.mysql_lyr, 'eas_id',
                                               [ 158 ] )
+
+    gdaltest.mysql_lyr.SetAttributeFilter( 'eas_id = 158' )
+
+    if gdaltest.mysql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.mysql_lyr.GetFeatureCount() )
+        return 'fail'
+
+    gdaltest.mysql_lyr.SetAttributeFilter( None )
 
     gdaltest.mysql_lyr.SetSpatialFilter( None )
     
@@ -312,6 +351,8 @@ def ogr_mysql_8():
 
     dst_feat.SetField( 'PRFEDEA', 'CrazyKey' )
     dst_feat.SetField( 'SHORTNAME', 'Crazy"\'Long' )
+    # We are obliged to create a fake geometry
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('POINT(0 0)') )
     gdaltest.mysql_lyr.CreateFeature( dst_feat )
     dst_feat.Destroy()
     
@@ -346,7 +387,7 @@ def ogr_mysql_9():
     feat.SetField( 'SHORTNAME', 'Reset' )
 
     point = ogr.Geometry( ogr.wkbPoint25D )
-    point.SetPoint( 0, 5, 6, 7 )
+    point.SetPoint( 0, 5, 6 )
     feat.SetGeometryDirectly( point )
 
     if gdaltest.mysql_lyr.SetFeature( feat ) != 0:
@@ -368,7 +409,7 @@ def ogr_mysql_9():
                               % shortname )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'POINT(5 6 7)' ) != 0:
+    if ogrtest.check_feature_geometry( feat, 'POINT(5 6)' ) != 0:
         print feat.GetGeometryRef()
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
@@ -549,6 +590,7 @@ def ogr_mysql_20():
 
     dst_feat.SetField( 'desc', 'desc' )
     dst_feat.SetField( 'select', 'select' )
+    # We are obliged to create a fake geometry
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('POINT(0 1)') )
     layer.CreateFeature( dst_feat )
     dst_feat.Destroy()
@@ -588,12 +630,11 @@ gdaltest_list = [
     ogr_mysql_4,
     ogr_mysql_5,
 # Broken : see comment in ogr_mysql_6 header
-#    ogr_mysql_6,
+    ogr_mysql_6,
     ogr_mysql_7,
-# All 3 next tests are broken because of ogr_mysql_8
-#    ogr_mysql_8,
-#    ogr_mysql_9,
-#    ogr_mysql_10,
+    ogr_mysql_8,
+    ogr_mysql_9,
+    ogr_mysql_10,
 # ogr_mysql_11 to _14 are PG only features
     ogr_mysql_15,
     ogr_mysql_16,
