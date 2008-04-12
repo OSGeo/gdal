@@ -321,7 +321,6 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", CE_Failure );
-    VALIDATE_POINTER1( hGeom, "OGR_F_SetGeometryDirectly", CE_Failure );
 
     return ((OGRFeature *) hFeat)->SetGeometryDirectly((OGRGeometry *) hGeom);
 }
@@ -388,7 +387,6 @@ OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", CE_Failure );
-    VALIDATE_POINTER1( hGeom, "OGR_F_SetGeometry", CE_Failure );
 
     return ((OGRFeature *) hFeat)->SetGeometry((OGRGeometry *) hGeom);
 }
