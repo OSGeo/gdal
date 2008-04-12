@@ -604,6 +604,58 @@ def ogr_mysql_20():
         return 'fail'
 
 ###############################################################################
+# Test inserting NULL geometries into a table with a spatial index -> must FAIL
+
+def ogr_mysql_21():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type = ogr.wkbPoint)
+    ogrtest.quick_create_layer_def( layer, [ ('name', ogr.OFTString) ] )
+    dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
+    dst_feat.SetField( 'name', 'name' )
+
+    # The insertion MUST fail
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    layer.CreateFeature( dst_feat )
+    gdal.PopErrorHandler()
+
+    dst_feat.Destroy()
+
+    layer.ResetReading()
+    feat = layer.GetNextFeature()
+    if feat is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test inserting NULL geometries into a table without a spatial index
+
+def ogr_mysql_22():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type = ogr.wkbPoint,
+                                          options = [ 'SPATIAL_INDEX=NO' ] )
+    ogrtest.quick_create_layer_def( layer, [ ('name', ogr.OFTString) ] )
+    dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
+    dst_feat.SetField( 'name', 'name' )
+
+    layer.CreateFeature( dst_feat )
+
+    dst_feat.Destroy()
+
+    layer.ResetReading()
+    feat = layer.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mysql_cleanup():
@@ -613,6 +665,8 @@ def ogr_mysql_cleanup():
 
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tpoly' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE `select`' )
+    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithspatialindex' )
+    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithoutspatialindex' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE geometry_columns' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE spatial_ref_sys' )
 
@@ -642,6 +696,8 @@ gdaltest_list = [
 # Fails but it is probably OK
 #    ogr_mysql_18,
     ogr_mysql_20,
+    ogr_mysql_21,
+    ogr_mysql_22,
     ogr_mysql_cleanup
     ]
 
