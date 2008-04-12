@@ -137,11 +137,20 @@ def ogr_pg_3():
     if gdaltest.pg_ds is None:
         return 'skip'
 
+    if gdaltest.pg_lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.pg_lyr.GetFeatureCount() )
+        return 'fail'
+
     expect = [168, 169, 166, 158, 165]
 
     gdaltest.pg_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.pg_lyr,
                                               'eas_id', expect )
+
+    if gdaltest.pg_lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 5' % gdaltest.pg_lyr.GetFeatureCount() )
+        return 'fail'
+
     gdaltest.pg_lyr.SetAttributeFilter( None )
 
     for i in range(len(gdaltest.poly_feat)):
@@ -217,9 +226,12 @@ def ogr_pg_5():
         return 'skip'
 
     expect = [ None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158 ]
-    
+
     sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
+    if sql_lyr.GetFeatureCount() != 11:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount() )
+        return 'fail'
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
 
@@ -247,7 +259,23 @@ def ogr_pg_6():
         if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
             tr = 0
         feat_read.Destroy()
-        
+
+
+    sql_lyr.ResetReading()
+
+    geom = ogr.CreateGeometryFromWkt( \
+        'LINESTRING(-10 -10,0 0)' )
+    sql_lyr.SetSpatialFilter( geom )
+    geom.Destroy()
+
+    if sql_lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 0' % sql_lyr.GetFeatureCount() )
+        return 'fail'
+
+    if sql_lyr.GetNextFeature() != None:
+        gdaltest.post_reason( 'GetNextFeature() didn not return None' )
+        return 'fail'
+
     gdaltest.pg_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
@@ -269,9 +297,21 @@ def ogr_pg_7():
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.pg_lyr.SetSpatialFilter( geom )
     geom.Destroy()
-    
+
+    if gdaltest.pg_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.pg_lyr.GetFeatureCount() )
+        return 'fail'
+
     tr = ogrtest.check_features_against_list( gdaltest.pg_lyr, 'eas_id',
                                               [ 158 ] )
+
+    gdaltest.pg_lyr.SetAttributeFilter( 'eas_id = 158' )
+
+    if gdaltest.pg_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.pg_lyr.GetFeatureCount() )
+        return 'fail'
+
+    gdaltest.pg_lyr.SetAttributeFilter( None )
 
     gdaltest.pg_lyr.SetSpatialFilter( None )
     
