@@ -1094,10 +1094,9 @@ Sets the driver that the dataset was created or opened with.
  TRUE then some implementations will actually scan the entire layer once
  to compute the MBR of all the features in the layer.
 
- The returned extent does not take the spatial filter into account.  If
- a spatial filter was previously set then it should be ignored but some
- implementations may be unable to do that, so it is safer to call 
- GetExtent() without setting a spatial filter.
+ Depending on the drivers, the returned extent may or may not take the
+ spatial filter into account.  So it is safer to call GetExtent() without
+ setting a spatial filter.
 
  Layers without any geometry may return OGRERR_FAILURE just indicating that
  no meaningful extents could be collected.
@@ -1125,10 +1124,9 @@ Sets the driver that the dataset was created or opened with.
  TRUE then some implementations will actually scan the entire layer once
  to compute the MBR of all the features in the layer.
 
- The returned extent does not take the spatial filter into account.  If
- a spatial filter was previously set then it should be ignored but some
- implementations may be unable to do that, so it is safer to call 
- OGR_L_GetExtent() without setting a spatial filter.
+ Depending on the drivers, the returned extent may or may not take the
+ spatial filter into account.  So it is safer to call OGR_L_GetExtent() without
+ setting a spatial filter.
 
  Layers without any geometry may return OGRERR_FAILURE just indicating that
  no meaningful extents could be collected.
