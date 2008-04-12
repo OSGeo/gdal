@@ -303,3 +303,14 @@ int OGRMySQLResultLayer::GetFeatureCount( int bForce )
     // ... not till MySQL grows up (HB)
     return OGRMySQLLayer::GetFeatureCount( bForce );
 }
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRMySQLResultLayer::TestCapability( const char * pszCap )
+
+{
+    return FALSE;
+}
+

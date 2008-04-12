@@ -563,6 +563,12 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+        return TRUE;
+
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
 
@@ -575,8 +581,8 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCSequentialWrite) )
         return bUpdateAccess;
 
-    else 
-        return OGRMySQLLayer::TestCapability( pszCap );
+    else
+        return FALSE;
 }
 
 /************************************************************************/
