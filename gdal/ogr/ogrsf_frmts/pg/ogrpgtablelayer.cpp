@@ -565,6 +565,34 @@ void OGRPGTableLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRPGTableLayer::GetNextFeature()
+
+{
+    for( ; TRUE; )
+    {
+        OGRFeature      *poFeature;
+
+        poFeature = GetNextRawFeature();
+        if( poFeature == NULL )
+            return NULL;
+
+        /* We just have to look if there is a geometry filter */
+        /* If there's a PostGIS geometry column, the spatial filter */
+        /* is already taken into account in the select request */
+        /* The attribute filter is always taken into account by the select request */
+        if( m_poFilterGeom == NULL
+            || bHasPostGISGeometry
+            || FilterGeometry( poFeature->GetGeometryRef() )  )
+            return poFeature;
+
+        delete poFeature;
+    }
+}
+
+/************************************************************************/
 /*                            BuildFields()                             */
 /*                                                                      */
 /*      Build list of fields to fetch, performing any required          */
@@ -1448,7 +1476,23 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
             return bHasFid;
     }
 
-    return OGRPGLayer::TestCapability( pszCap );
+    if( EQUAL(pszCap,OLCRandomRead) )
+        return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+        return m_poFilterGeom == NULL || bHasPostGISGeometry;
+
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCTransactions) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastGetExtent) )
+            return bHasPostGISGeometry;
+
+    else
+        return FALSE;
 }
 
 /************************************************************************/
