@@ -424,7 +424,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-        && PQntuples(hResult) > 0 )
+        && PQntuples(hResult) > 0  && CSLTestBoolean(CPLGetConfigOption("PG_USE_POSTGIS", "YES")))
     {
         bHavePostGIS = TRUE;
         nGeometryOID = atoi(PQgetvalue(hResult,0,0));
@@ -439,7 +439,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Find out PostGIS version                                        */
 /* -------------------------------------------------------------------- */
-    // find out postgis version.
+
     sPostGISVersion.nMajor = -1;
     sPostGISVersion.nMinor = -1;
     sPostGISVersion.nRelease = -1;
