@@ -197,6 +197,44 @@ or not relative to the .vrt file (value is 0).  The default is 0.
     </SimpleSource>
 \endcode
 
+<li> <b>ComplexSource</b>: The ComplexSource is derived from the
+SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and 
+DestRect elements, but it provides support to rescale and offset
+the range of the source values. Certain regions of the source
+can be masked by specifying the NODATA value.
+
+The ComplexSource supports adding a custom lookup table to transform 
+the source values to the destination. The LUT can be specified using
+the following form:
+
+\code
+    <LUT>[src value 1]:[dest value 1],[src value 2]:[dest value 2],...</LUT>
+\endcode
+
+The intermediary values are calculated using a linear interpolation
+between the bounding destination values of the corresponting range.
+
+When transforming the source values the operations are executed
+in the following order:
+
+  1. Nodata masking
+  2. Applying the scale ratio
+  3. Applying the scale offset
+  4. Table lookup
+
+\code
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <ScaleOffset>0<ScaleOffset>
+      <ScaleRatio>1</ScaleRatio>
+      <LUT>0:0,2345.12:64,56789.5:128,2364753.02:255</LUT>
+      <NODATA>0</NODATA>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+    </SimpleSource>
+\endcode
+
 <li> <b>KernelFilteredSource</b>: This is a pixel source derived from the
 Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and 
 DestRect elements, but it also passes the data through a simple filtering 
