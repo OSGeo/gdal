@@ -750,7 +750,7 @@ void ENVIDataset::WriteProjectionInfo()
                     osLocation.c_str(), 
                     osCommaDatum.c_str(), osOptionalUnits.c_str() );
 
-        VSIFPrintf( fp, "projection info = {7, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g%s, Stereographic (ellipsoid)}\n",
+        VSIFPrintf( fp, "projection info = {7, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %.16g, %s, Stereographic (ellipsoid)}\n",
                     dfA, dfB, 
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                     oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
