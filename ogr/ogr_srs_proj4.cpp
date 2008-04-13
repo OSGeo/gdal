@@ -1773,10 +1773,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         if( poTOWGS84->GetChildCount() > 2
             && (poTOWGS84->GetChildCount() < 6 
-                || EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
+                || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
                 && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
                 && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
-                && EQUAL(poTOWGS84->GetChild(6)->GetValue(),"")) )
+                && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
         {
             sprintf( szTOWGS84, "+towgs84=%s,%s,%s",
                      poTOWGS84->GetChild(0)->GetValue(),

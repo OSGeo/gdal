@@ -746,8 +746,8 @@ void ISIS2Dataset::CleanString( CPLString &osInput )
 
 {
    if(  ( osInput.size() < 2 ) ||
-        (osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'') )
+        ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);
