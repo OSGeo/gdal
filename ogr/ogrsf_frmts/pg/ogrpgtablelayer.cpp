@@ -169,7 +169,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
             if( osValue == "t" )
             {
                 osPrimaryKey.Printf( "%s", PQgetvalue(hResult,0,0) );
-                CPLDebug( "OGR_PG", "Primary key name (FID): %s", osPrimaryKey.c_str() );
+                CPLDebug( "PG", "Primary key name (FID): %s", osPrimaryKey.c_str() );
             }
         }
         else if ( PQntuples( hResult ) > 1 )
@@ -282,7 +282,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
         {
             bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
-            CPLDebug("OGR_PG","Using column '%s' as FID for table '%s'", pszFIDColumn, pszTableIn );
+            CPLDebug("PG","Using column '%s' as FID for table '%s'", pszFIDColumn, pszTableIn );
             continue;
         }
         else if( EQUAL(pszType,"geometry") )
@@ -450,7 +450,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
             if( nCoordDimension == 3 && nGeomType != wkbUnknown )
                 nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
 
-            CPLDebug("OGR_PG","Layer '%s' geometry type: %s:%s, Dim=%d",
+            CPLDebug("PG","Layer '%s' geometry type: %s:%s, Dim=%d",
                      pszTableIn, pszType, OGRGeometryTypeToName(nGeomType),
                      nCoordDimension );
 
@@ -742,7 +742,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    CPLDebug( "OGR_PG", "PQexec(%s)\n", osCommand.c_str() );
+    CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
 
     hResult = PQexec(hPGConn, osCommand);
 
@@ -1195,7 +1195,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", osCommand.c_str() );
+        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "INSERT command for new feature failed.\n%s\nCommand: %s",
@@ -1432,12 +1432,12 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     switch (copyResult)
     {
     case 0:
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+        CPLDebug( "PG", "PQexec(%s)\n", pszCommand );
         CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
         result = OGRERR_FAILURE;
         break;
     case -1:
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+        CPLDebug( "PG", "PQexec(%s)\n", pszCommand );
         CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
         break;
@@ -1447,7 +1447,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     if (copyResult == EOF)
     {
-      CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+      CPLDebug( "PG", "PQexec(%s)\n", pszCommand );
       CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
       result = OGRERR_FAILURE;
     }  
@@ -1739,7 +1739,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
         "%s",
         pszSqlTableName, osWHERE.c_str() );
 
-    CPLDebug( "OGR_PG", "PQexec(%s)\n",
+    CPLDebug( "PG", "PQexec(%s)\n",
               osCommand.c_str() );
 
     hResult = PQexec(hPGConn, osCommand);
@@ -1749,7 +1749,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else
-        CPLDebug( "OGR_PG", "%s; failed.", osCommand.c_str() );
+        CPLDebug( "PG", "%s; failed.", osCommand.c_str() );
     OGRPGClearResult( hResult );
 
     hResult = PQexec(hPGConn, "CLOSE countCursor");
@@ -1847,7 +1847,7 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
         if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
         {
             OGRPGClearResult( hResult );
-            CPLDebug("OGR_PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
+            CPLDebug("PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
             return OGRPGLayer::GetExtent( psExtent, bForce );
         }
 
@@ -1917,7 +1917,7 @@ OGRErr OGRPGTableLayer::StartCopy()
     CPLFree( pszFields );
 
     PGconn *hPGConn = poDS->GetPGConn();
-    CPLDebug( "OGR_PG", "%s", pszCommand );
+    CPLDebug( "PG", "%s", pszCommand );
     PGresult *hResult = PQexec(hPGConn, pszCommand);
 
     if ( !hResult || (PQresultStatus(hResult) != PGRES_COPY_IN))
@@ -1950,7 +1950,7 @@ OGRErr OGRPGTableLayer::EndCopy()
     OGRErr result = OGRERR_NONE;
 
     PGconn *hPGConn = poDS->GetPGConn();
-    CPLDebug( "OGR_PG", "PQputCopyEnd()" );
+    CPLDebug( "PG", "PQputCopyEnd()" );
 
     bCopyActive = FALSE;
 
