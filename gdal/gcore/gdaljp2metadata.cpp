@@ -233,8 +233,8 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
             nMSIGSize = oBox.GetDataLength();
             pabyMSIGData = oBox.ReadBoxData();
 
-            if( nMSIGSize < memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 
-                || nMSIGSize < 70 )
+            if( nMSIGSize < 70 
+                || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
             {
                 CPLFree( pabyMSIGData );
                 pabyMSIGData = NULL;
