@@ -759,7 +759,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
         if( psField->Date.Second > 59 )
             return FALSE;
 
-        while( *pszInput >= '0' && *pszInput <= '9' 
+        while( (*pszInput >= '0' && *pszInput <= '9')
                || *pszInput == '.' )
             pszInput++;
 
