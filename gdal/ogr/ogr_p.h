@@ -79,7 +79,7 @@ CPL_C_END
 #define SPF_OGR_GEOM_WKT 3
 #define SPECIAL_FIELD_COUNT 4
 
-extern char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
-extern swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
+extern const char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
+extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
 #endif /* ndef _OGR_P_H_INCLUDED */

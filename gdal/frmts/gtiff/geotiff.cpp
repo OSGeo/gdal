@@ -5147,11 +5147,11 @@ static void GTiffTagExtender(TIFF *tif)
 {
     static const TIFFFieldInfo xtiffFieldInfo[] = {
         { TIFFTAG_GDAL_METADATA,    -1,-1, TIFF_ASCII,	FIELD_CUSTOM,
-          TRUE,	FALSE,	"GDALMetadata" },
+          TRUE,	FALSE,	(char*) "GDALMetadata" },
         { TIFFTAG_GDAL_NODATA,	    -1,-1, TIFF_ASCII,	FIELD_CUSTOM,
-          TRUE,	FALSE,	"GDALNoDataValue" },
+          TRUE,	FALSE,	(char*) "GDALNoDataValue" },
         { TIFFTAG_RPCCOEFFICIENT,   -1,-1, TIFF_DOUBLE,	FIELD_CUSTOM,
-          TRUE,	TRUE,	"RPCCoefficient" }
+          TRUE,	TRUE,	(char*) "RPCCoefficient" }
     };
 
     if (_ParentExtender) 

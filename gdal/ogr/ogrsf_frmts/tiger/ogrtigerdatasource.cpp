@@ -118,7 +118,7 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
 /*                         TigerVersionString()                         */
 /************************************************************************/
 
-char * TigerVersionString( TigerVersion nVersion )
+const char * TigerVersionString( TigerVersion nVersion )
 {
 
   if (nVersion == TIGER_1990_Precensus) { return "TIGER_1990_Precensus"; }

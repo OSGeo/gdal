@@ -311,11 +311,11 @@ const GDALWMSDataWindow *GDALWMSDataset::WMSGetDataWindow() const {
     return &m_data_window;
 }
 
-const int GDALWMSDataset::WMSGetBlockSizeX() const {
+int GDALWMSDataset::WMSGetBlockSizeX() const {
     return m_block_size_x;
 }
 
-const int GDALWMSDataset::WMSGetBlockSizeY() const {
+int GDALWMSDataset::WMSGetBlockSizeY() const {
     return m_block_size_y;
 }
 
