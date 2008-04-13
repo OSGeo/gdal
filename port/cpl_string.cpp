@@ -944,7 +944,7 @@ const char *CPLSPrintf(const char *fmt, ...)
  *
  * Returns the modified StringList.
  **********************************************************************/
-char **CSLAppendPrintf(char **papszStrList, char *fmt, ...)
+char **CSLAppendPrintf(char **papszStrList, const char *fmt, ...)
 {
     CPLString osWork;
     va_list args;
