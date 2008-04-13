@@ -169,7 +169,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     if( EQUALN(pszNewName,"PGB:",4) )
     {
         bUseBinaryCursor = TRUE;
-        CPLDebug("OGR_PG","BINARY cursor is used for geometry fetching");
+        CPLDebug("PG","BINARY cursor is used for geometry fetching");
     }
     else
     if( !EQUALN(pszNewName,"PG:",3) )
@@ -316,7 +316,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     else
         pszDBName = CPLStrdup( "unknown_dbname" );
 
-    CPLDebug( "OGR_PG", "DBName=\"%s\"", pszDBName );
+    CPLDebug( "PG", "DBName=\"%s\"", pszDBName );
 
 
 /* -------------------------------------------------------------------- */
@@ -334,7 +334,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     {
         char * pszVer = PQgetvalue(hResult,0,0);
 
-        CPLDebug("OGR_PG","PostgreSQL version string : '%s'", pszVer);
+        CPLDebug("PG","PostgreSQL version string : '%s'", pszVer);
 
         if (EQUALN(pszVer, "PostgreSQL ", 11))
         {
@@ -343,7 +343,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 /* We don't support BINARY CURSOR for PostgreSQL < 7.4. */
                 /* The binary protocol for arrays seems to be different from later versions */
-                CPLDebug("OGR_PG","BINARY cursor will finally NOT be used because version < 7.4");
+                CPLDebug("PG","BINARY cursor will finally NOT be used because version < 7.4");
                 bUseBinaryCursor = FALSE;
             }
         }
@@ -382,17 +382,17 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                     if (nVal[0] == 0 && nVal[1] == 1000000)
                     {
                         bBinaryTimeFormatIsInt8 = TRUE;
-                        CPLDebug( "OGR_PG", "Time binary format is int8");
+                        CPLDebug( "PG", "Time binary format is int8");
                     }
                     else if (dVal == 1.)
                     {
                         bBinaryTimeFormatIsInt8 = FALSE;
-                        CPLDebug( "OGR_PG", "Time binary format is float8");
+                        CPLDebug( "PG", "Time binary format is float8");
                     }
                     else
                     {
                         bBinaryTimeFormatIsInt8 = FALSE;
-                        CPLDebug( "OGR_PG", "Time binary format is unknown");
+                        CPLDebug( "PG", "Time binary format is unknown");
                     }
                 }
             }
@@ -452,7 +452,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         {
             char * pszVer = PQgetvalue(hResult,0,0);
 
-            CPLDebug("OGR_PG","PostGIS version string : '%s'", pszVer);
+            CPLDebug("PG","PostGIS version string : '%s'", pszVer);
 
             OGRPGDecodeVersionString(&sPostGISVersion, pszVer);
 
@@ -465,7 +465,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             // Turning off sequential scans for PostGIS < 0.8
             hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
             
-            CPLDebug( "OGR_PG", "SET ENABLE_SEQSCAN=OFF" );
+            CPLDebug( "PG", "SET ENABLE_SEQSCAN=OFF" );
         }
         else
         {
@@ -615,7 +615,7 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     CPLString osTableName = papoLayers[iLayer]->GetTableName();
     CPLString osSchemaName = papoLayers[iLayer]->GetSchemaName();
 
-    CPLDebug( "OGR_PG", "DeleteLayer(%s)", osLayerName.c_str() );
+    CPLDebug( "PG", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
@@ -637,14 +637,14 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
                  "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' and f_table_schema='%s' order by f_geometry_column limit 1))",
                  osSchemaName.c_str(), osTableName.c_str(), osTableName.c_str(), osSchemaName.c_str() );
 
-        CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
+        CPLDebug( "PG", "PGexec(%s)", szCommand );
 
         hResult = PQexec( hPGConn, szCommand );
         OGRPGClearResult( hResult );
     }
 
     sprintf( szCommand, "DROP TABLE \"%s\".\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
-    CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
+    CPLDebug( "PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     OGRPGClearResult( hResult );
 
@@ -808,7 +808,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  pszSchemaName, pszTableName, pszTableName );
     }
 
-    CPLDebug( "OGR_PG", "PQexec( %s )", szCommand );
+    CPLDebug( "PG", "PQexec( %s )", szCommand );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -851,7 +851,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  "DELETE FROM geometry_columns WHERE f_table_name = '%s' AND f_table_schema = '%s'",
                  pszTableName, pszSchemaName );
 
-        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        CPLDebug( "PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
         OGRPGClearResult( hResult );
 
@@ -896,7 +896,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                  pszSchemaName, pszTableName, pszGFldName, nSRSId, pszGeometryType,
                  nDimension );
 
-        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        CPLDebug( "PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
 
         if( !hResult
@@ -931,7 +931,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
             sprintf( szCommand, "CREATE INDEX %s_geom_idx ON \"%s\".\"%s\" USING GIST (\"%s\")",
                     pszTableName, pszSchemaName, pszTableName, pszGFldName);
 
-            CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+            CPLDebug( "PG", "PQexec(%s)", szCommand );
             hResult = PQexec(hPGConn, szCommand);
 
             if( !hResult
@@ -1343,14 +1343,14 @@ OGRErr OGRPGDataSource::SoftStartTransaction()
         PGresult    *hResult = NULL;
         PGconn      *hPGConn = GetPGConn();
 
-        //CPLDebug( "OGR_PG", "BEGIN Transaction" );
+        //CPLDebug( "PG", "BEGIN Transaction" );
         hResult = PQexec(hPGConn, "BEGIN");
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
             OGRPGClearResult( hResult );
 
-            CPLDebug( "OGR_PG", "BEGIN Transaction failed:\n%s",
+            CPLDebug( "PG", "BEGIN Transaction failed:\n%s",
                       PQerrorMessage( hPGConn ) );
             return OGRERR_FAILURE;
         }
@@ -1375,7 +1375,7 @@ OGRErr OGRPGDataSource::SoftCommit()
 
     if( nSoftTransactionLevel <= 0 )
     {
-        CPLDebug( "OGR_PG", "SoftCommit() with no transaction active." );
+        CPLDebug( "PG", "SoftCommit() with no transaction active." );
         return OGRERR_FAILURE;
     }
 
@@ -1386,14 +1386,14 @@ OGRErr OGRPGDataSource::SoftCommit()
         PGresult    *hResult = NULL;
         PGconn      *hPGConn = GetPGConn();
 
-        //CPLDebug( "OGR_PG", "COMMIT Transaction" );
+        //CPLDebug( "PG", "COMMIT Transaction" );
         hResult = PQexec(hPGConn, "COMMIT");
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
             OGRPGClearResult( hResult );
 
-            CPLDebug( "OGR_PG", "COMMIT Transaction failed:\n%s",
+            CPLDebug( "PG", "COMMIT Transaction failed:\n%s",
                       PQerrorMessage( hPGConn ) );
             return OGRERR_FAILURE;
         }
@@ -1416,7 +1416,7 @@ OGRErr OGRPGDataSource::SoftRollback()
 {
     if( nSoftTransactionLevel <= 0 )
     {
-        CPLDebug( "OGR_PG", "SoftRollback() with no transaction active." );
+        CPLDebug( "PG", "SoftRollback() with no transaction active." );
         return OGRERR_FAILURE;
     }
 
@@ -1512,9 +1512,9 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     if( SoftStartTransaction() == OGRERR_NONE  )
     {
-        CPLDebug( "OGR_PG", "PQexec(%s)", pszSQLCommand );
+        CPLDebug( "PG", "PQexec(%s)", pszSQLCommand );
         hResult = PQexec(hPGConn, pszSQLCommand );
-        CPLDebug( "OGR_PG", "Command Results Tuples = %d", PQntuples(hResult) );
+        CPLDebug( "PG", "Command Results Tuples = %d", PQntuples(hResult) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1579,7 +1579,7 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
             pszSafeName[i] = '_';
     }
 
-    CPLDebug("OGR_PG","LaunderName( %s ) result: %s", pszSrcName, pszSafeName);
+    CPLDebug("PG","LaunderName( %s ) result: %s", pszSrcName, pszSafeName);
 
     return pszSafeName;
 }
