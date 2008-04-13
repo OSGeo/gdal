@@ -2321,7 +2321,7 @@ class FeatureDefn(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_FeatureDefn( self )
       self.thisown = 0
 
 
@@ -2567,7 +2567,7 @@ class FieldDefn(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_FieldDefn( self )
       self.thisown = 0
 
 FieldDefn_swigregister = _ogr.FieldDefn_swigregister
