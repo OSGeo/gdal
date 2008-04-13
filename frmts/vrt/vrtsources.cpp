@@ -716,10 +716,18 @@ VRTComplexSource::VRTComplexSource()
     
     bNoDataSet = FALSE;
     dfNoDataValue = 0.0;
+
+    padfLUTInputs = NULL;
+    padfLUTOutputs = NULL;
+    nLUTItemCount = 0;
 }
 
 VRTComplexSource::~VRTComplexSource()
 {
+    if (padfLUTInputs)
+        VSIFree( padfLUTInputs );
+    if (padfLUTOutputs)
+        VSIFree( padfLUTOutputs );
 }
 
 /************************************************************************/
@@ -749,6 +757,16 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
                         CPLSPrintf("%g", dfScaleOff) );
         CPLSetXMLValue( psSrc, "ScaleRatio", 
                         CPLSPrintf("%g", dfScaleRatio) );
+    }
+
+    if ( nLUTItemCount )
+    {
+        char *pszLUT = CPLStrdup(CPLSPrintf("%g:%g", padfLUTInputs[0], padfLUTOutputs[0]));
+        int i;
+        for ( i = 1; i < nLUTItemCount; i++ )
+            strcat( pszLUT, CPLSPrintf(",%g:%g", padfLUTInputs[i], padfLUTOutputs[i]) );
+        CPLSetXMLValue( psSrc, "LUT", pszLUT );
+        CPLFree( pszLUT );
     }
 
     return psSrc;
@@ -787,7 +805,82 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         dfNoDataValue = atof(CPLGetXMLValue(psSrc, "NODATA", "0"));
     }
 
+    if( CPLGetXMLValue(psSrc, "LUT", NULL) != NULL )
+    {
+        int nIndex;
+        char **papszValues = CSLTokenizeString2(CPLGetXMLValue(psSrc, "LUT", ""), ",:", CSLT_ALLOWEMPTYTOKENS);
+
+        if (nLUTItemCount)
+        {
+            if (padfLUTInputs)
+            {
+                VSIFree( padfLUTInputs );
+                padfLUTInputs = NULL;
+            }
+            if (padfLUTOutputs)
+            {
+                VSIFree( padfLUTOutputs );
+                padfLUTOutputs = NULL;
+            }
+            nLUTItemCount = 0;
+        }
+
+        nLUTItemCount = CSLCount(papszValues) / 2;
+
+        padfLUTInputs = (double *) VSIMalloc2(nLUTItemCount, sizeof(double));
+        if ( !padfLUTInputs )
+        {
+            CSLDestroy(papszValues);
+            nLUTItemCount = 0;
+            return CE_Failure;
+        }
+
+        padfLUTOutputs = (double *) VSIMalloc2(nLUTItemCount, sizeof(double));
+        if ( !padfLUTOutputs )
+        {
+            CSLDestroy(papszValues);
+            VSIFree( padfLUTInputs );
+            padfLUTInputs = NULL;
+            nLUTItemCount = 0;
+            return CE_Failure;
+        }
+        
+        for ( nIndex = 0; nIndex < nLUTItemCount; nIndex++ )
+        {
+            padfLUTInputs[nIndex] = atof( papszValues[nIndex * 2] );
+            padfLUTOutputs[nIndex] = atof( papszValues[nIndex * 2 + 1] );
+        }
+        
+        CSLDestroy(papszValues);
+    }
+
     return CE_None;
+}
+
+/************************************************************************/
+/*                              LookupValue()                           */
+/************************************************************************/
+
+double
+VRTComplexSource::LookupValue( double dfInput )
+{
+    int i;
+    for ( i = 0; i < nLUTItemCount; i++ )
+    {
+        if (dfInput > padfLUTInputs[i])
+            continue;
+        if (i == 0)
+            return padfLUTOutputs[0];
+        
+        if (padfLUTInputs[i-1] == padfLUTInputs[i])
+            return padfLUTOutputs[i];
+
+        return ((dfInput - padfLUTInputs[i-1]) * padfLUTOutputs[i] + 
+            (padfLUTInputs[i] - dfInput) * padfLUTOutputs[i-1]) 
+                                   / (padfLUTInputs[i] - padfLUTInputs[i-1]);
+    }
+    
+    return padfLUTOutputs[nLUTItemCount - 1];
 }
 
 /************************************************************************/
@@ -847,6 +940,9 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
             if( bDoScaling )
                 fResult = (float) (fResult * dfScaleRatio + dfScaleOff);
+
+            if (nLUTItemCount)
+                fResult = (float) LookupValue( fResult );
 
             GByte *pDstLocation;
 
