@@ -3314,11 +3314,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /*      Should we treat this via the RGBA interface?                    */
 /* -------------------------------------------------------------------- */
     if( !bTreatAsBitmap && !(nBitsPerSample > 8) 
-        && nPhotometric == PHOTOMETRIC_CIELAB ||
-        nPhotometric == PHOTOMETRIC_LOGL ||
-        nPhotometric == PHOTOMETRIC_LOGLUV ||
-        ( nPhotometric == PHOTOMETRIC_YCBCR 
-          && nCompression != COMPRESSION_JPEG ) )
+        && (nPhotometric == PHOTOMETRIC_CIELAB ||
+            nPhotometric == PHOTOMETRIC_LOGL ||
+            nPhotometric == PHOTOMETRIC_LOGLUV ||
+            ( nPhotometric == PHOTOMETRIC_YCBCR 
+              && nCompression != COMPRESSION_JPEG )) )
     {
         char	szMessage[1024];
 
