@@ -89,7 +89,7 @@ size_t CPL_DLL  VSIFRead( void *, size_t, size_t, FILE * );
 size_t CPL_DLL  VSIFWrite( const void *, size_t, size_t, FILE * );
 char CPL_DLL   *VSIFGets( char *, int, FILE * );
 int CPL_DLL     VSIFPuts( const char *, FILE * );
-int CPL_DLL     VSIFPrintf( FILE *, const char *, ... );
+int CPL_DLL     VSIFPrintf( FILE *, const char *, ... ) CPL_PRINT_FUNC_FORMAT(2, 3);
 
 int CPL_DLL     VSIFGetc( FILE * );
 int CPL_DLL     VSIFPutc( int, FILE * );
