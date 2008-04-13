@@ -743,6 +743,32 @@ def ogr_pg_19():
     return 'success'
 
 ###############################################################################
+# Test reading a SQL result layer extent
+
+def ogr_pg_19_2():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( 'select * from tpoly' )
+
+    extent = sql_lyr.GetExtent()
+    expect = ( 478315.53125, 481645.3125, 4762880.5, 4765610.5 )
+
+    minx = abs(extent[0] - expect[0])
+    maxx = abs(extent[1] - expect[1])
+    miny = abs(extent[2] - expect[2])
+    maxy = abs(extent[3] - expect[3])
+
+    if max(minx, maxx, miny, maxy) > 0.0001:
+        gdaltest.post_reason( 'Extents do not match' )
+        return 'fail'
+
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 # Test reading 4-dim geometry in EWKT format
 
 def ogr_pg_20():
@@ -1338,6 +1364,7 @@ gdaltest_list_internal = [
     ogr_pg_table_cleanup,
     ogr_pg_2,
     ogr_pg_19,
+    ogr_pg_19_2,
     ogr_pg_3,
     ogr_pg_4,
     ogr_pg_5,
