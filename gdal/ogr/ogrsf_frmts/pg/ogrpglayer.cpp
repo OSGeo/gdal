@@ -1081,7 +1081,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     memcpy( &sDscale, pabyData, sizeof(short));
                     pabyData += sizeof(short);
                     CPL_MSBPTR16(&sDscale);
-                    CPLAssert(PQgetlength(hCursorResult, iRecord, iField) == (int)(4 + sLen) * sizeof(short));
+                    CPLAssert(PQgetlength(hCursorResult, iRecord, iField) == (int)((4 + sLen) * sizeof(short)));
 
                     NumericVar var;
                     var.ndigits = sLen;
