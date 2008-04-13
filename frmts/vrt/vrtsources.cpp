@@ -761,12 +761,11 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if ( nLUTItemCount )
     {
-        char *pszLUT = CPLStrdup(CPLSPrintf("%g:%g", padfLUTInputs[0], padfLUTOutputs[0]));
+        CPLString pszLUT = CPLString().Printf("%g:%g", padfLUTInputs[0], padfLUTOutputs[0]);
         int i;
         for ( i = 1; i < nLUTItemCount; i++ )
-            strcat( pszLUT, CPLSPrintf(",%g:%g", padfLUTInputs[i], padfLUTOutputs[i]) );
+            pszLUT += CPLString().Printf(",%g:%g", padfLUTInputs[i], padfLUTOutputs[i]);
         CPLSetXMLValue( psSrc, "LUT", pszLUT );
-        CPLFree( pszLUT );
     }
 
     return psSrc;
