@@ -54,10 +54,13 @@ def ogr_pg_1():
     gdaltest.pg_connection_string='dbname=autotest'
 
     try:
-        dods_dr = ogr.GetDriverByName( 'PostgreSQL' )
+        gdaltest.pg_dr = ogr.GetDriverByName( 'PostgreSQL' )
     except:
         return 'skip'
-    
+
+    if gdaltest.pg_dr is None:
+        return 'skip'
+
     try:
         gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     except:
@@ -1332,7 +1335,6 @@ def ogr_pg_cleanup():
 # NOTE: The ogr_pg_19 intentionally executed after ogr_pg_2
 
 gdaltest_list_internal = [ 
-    ogr_pg_1,
     ogr_pg_table_cleanup,
     ogr_pg_2,
     ogr_pg_19,
@@ -1373,11 +1375,19 @@ gdaltest_list_internal = [
 # Run gdaltest_list_internal with PostGIS enabled and then with PostGIS disabled
 
 def ogr_pg_with_and_without_postgis():
+
+    gdaltest.run_tests( [ ogr_pg_1 ] )
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
     gdaltest.run_tests( gdaltest_list_internal )
+
     if gdaltest.pg_has_postgis:
         gdal.SetConfigOption("PG_USE_POSTGIS", "NO")
+        gdaltest.run_tests( [ ogr_pg_1 ] )
         gdaltest.run_tests( gdaltest_list_internal )
         gdal.SetConfigOption("PG_USE_POSTGIS", "YES")
+
     return 'success'
 
 gdaltest_list = [
