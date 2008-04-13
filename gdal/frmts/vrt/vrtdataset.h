@@ -483,11 +483,14 @@ public:
                              int nPixelSpace, int nLineSpace );
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr XMLInit( CPLXMLNode *, const char * );
+    double  LookupValue( double dfInput );
 
     int            bDoScaling;
     double         dfScaleOff;
     double         dfScaleRatio;
-
+    double         *padfLUTInputs;
+    double         *padfLUTOutputs;
+    int            nLUTItemCount;
 };
 
 /************************************************************************/
