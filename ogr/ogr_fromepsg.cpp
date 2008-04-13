@@ -1745,7 +1745,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 /*      Do we have a GEOGCS node, but no authority?  If so, try         */
 /*      guessing it.                                                    */
 /* -------------------------------------------------------------------- */
-    if( IsProjected() || IsGeographic() 
+    if( (IsProjected() || IsGeographic()) 
         && GetAuthorityCode( "GEOGCS" ) == NULL )
     {
         int nGCS = GetEPSGGeogCS();
@@ -1812,4 +1812,46 @@ OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
     VALIDATE_POINTER1( hSRS, "OSRAutoIdentifyEPSG", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->AutoIdentifyEPSG();
+}
+
+/************************************************************************/
+/*                        EPSGTreatsAsLatLong()                         */
+/************************************************************************/
+
+/**
+ * This method returns TRUE if EPSG feels this geographic coordinate
+ * system should be treated as having lat/long coordinate ordering.
+ *
+ * Currently this returns TRUE for all geographic coordinate systems
+ * with an EPSG code set, and AXIS values set defining it as lat, long.
+ * Note that coordinate systems with an EPSG code and no axis settings
+ * will be assumed to not be lat/long.  
+ *
+ * FALSE will be returned for all coordinate systems that are not geographic,
+ * or that do not have an EPSG code set. 
+ *
+ * @return TRUE or FALSE. 
+ */ 
+
+int OGRSpatialReference::EPSGTreatsAsLatLong()
+
+{
+    if( !IsGeographic() )
+        return FALSE;
+
+    const char *pszAuth = GetAuthorityName( "GEOGCS" );
+
+    if( pszAuth == NULL || !EQUAL(pszAuth,"EPSG") )
+        return FALSE;
+
+    OGR_SRSNode *poFirstAxis = GetAttrNode( "GEOGCS|AXIS" );
+
+    if( poFirstAxis == NULL )
+        return TRUE;
+
+    if( poFirstAxis->GetChildCount() >= 2 
+        && EQUAL(poFirstAxis->GetChild(1)->GetValue(),"NORTH") )
+        return TRUE;
+
+    return FALSE;
 }
