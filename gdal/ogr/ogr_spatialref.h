@@ -189,6 +189,15 @@ class CPL_DLL OGRSpatialReference
     OGRErr      FixupOrdering();
     OGRErr      Fixup();
 
+    int         EPSGTreatsAsLatLong();
+    const char *GetAxis( const char *pszTargetKey, int iAxis, 
+                         OGRAxisOrientation *peOrientation );
+    OGRErr      SetAxes( const char *pszTargetKey, 
+                         const char *pszXAxisName, 
+                         OGRAxisOrientation eXAxisOrientation,
+                         const char *pszYAxisName, 
+                         OGRAxisOrientation eYAxisOrientation );
+
     // Machinary for accessing parse nodes
     OGR_SRSNode *GetRoot() { return poRoot; }
     const OGR_SRSNode *GetRoot() const { return poRoot; }
