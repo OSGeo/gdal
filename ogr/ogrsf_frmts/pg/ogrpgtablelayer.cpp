@@ -1483,13 +1483,13 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
         return m_poFilterGeom == NULL || bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return TRUE;
+        return bHasPostGISGeometry;
 
     else if( EQUAL(pszCap,OLCTransactions) )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
-            return bHasPostGISGeometry;
+        return bHasPostGISGeometry;
 
     else
         return FALSE;
@@ -1701,21 +1701,12 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
-/*                                                                      */
-/*      If a spatial filter is in effect, we turn control over to       */
-/*      the generic counter.  Otherwise we return the total count.      */
-/*      Eventually we should consider implementing a more efficient     */
-/*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
 int OGRPGTableLayer::GetFeatureCount( int bForce )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Use a more brute force mechanism if we have a spatial query     */
-/*      in play.                                                        */
-/* -------------------------------------------------------------------- */
-    if( m_poFilterGeom != NULL && !bHasPostGISGeometry )
+    if( TestCapability(OLCFastFeatureCount) == FALSE )
         return OGRPGLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */
@@ -1729,33 +1720,18 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
     CPLString           osCommand;
     int                 nCount = 0;
 
-    poDS->FlushSoftTransaction();
-    hResult = PQexec(hPGConn, "BEGIN");
-    OGRPGClearResult( hResult );
-
     osCommand.Printf(
-        "DECLARE countCursor CURSOR for "
-        "SELECT count(*) FROM %s "
-        "%s",
+        "SELECT count(*) FROM %s %s",
         pszSqlTableName, osWHERE.c_str() );
 
     CPLDebug( "PG", "PQexec(%s)\n",
               osCommand.c_str() );
 
     hResult = PQexec(hPGConn, osCommand);
-    OGRPGClearResult( hResult );
-
-    hResult = PQexec(hPGConn, "FETCH ALL in countCursor");
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else
         CPLDebug( "PG", "%s; failed.", osCommand.c_str() );
-    OGRPGClearResult( hResult );
-
-    hResult = PQexec(hPGConn, "CLOSE countCursor");
-    OGRPGClearResult( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
     return nCount;
@@ -1831,66 +1807,15 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
 OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if ( psExtent == NULL )
-        return OGRERR_FAILURE;
+    CPLString   osCommand;
 
-    if ( bHasPostGISGeometry )
+    if ( TestCapability(OLCFastGetExtent) )
     {
-        PGconn      *hPGConn = poDS->GetPGConn();
-        PGresult    *hResult = NULL;
-        CPLString   osCommand;
-
         osCommand.Printf( "SELECT Extent(\"%s\") FROM %s", 
                           pszGeomColumn, pszSqlTableName );
-
-        hResult = PQexec( hPGConn, osCommand );
-        if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
-        {
-            OGRPGClearResult( hResult );
-            CPLDebug("PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
-            return OGRPGLayer::GetExtent( psExtent, bForce );
-        }
-
-        char * pszBox = PQgetvalue(hResult,0,0);
-        char * ptr = pszBox;
-        char szVals[64*6+6];
-
-        while ( *ptr != '(' && ptr ) ptr++; ptr++;
-
-        strncpy(szVals,ptr,strstr(ptr,")") - ptr);
-        szVals[strstr(ptr,")") - ptr] = '\0';
-
-        char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
-        int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
-
-        if ( CSLCount(papszTokens) != nTokenCnt )
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "Bad extent representation: '%s'", pszBox);
-            CSLDestroy(papszTokens);
-
-            OGRPGClearResult( hResult );
-            return OGRERR_FAILURE;
-        }
-
-        // Take X,Y coords
-        // For PostGis ver >= 1.0.0 -> Tokens: X1 Y1 X2 Y2 (nTokenCnt = 4)
-        // For PostGIS ver < 1.0.0 -> Tokens: X1 Y1 Z1 X2 Y2 Z2 (nTokenCnt = 6)
-        // =>   X2 index calculated as nTokenCnt/2
-        //      Y2 index caluclated as nTokenCnt/2+1
-        
-        psExtent->MinX = CPLAtof( papszTokens[0] );
-        psExtent->MinY = CPLAtof( papszTokens[1] );
-        psExtent->MaxX = CPLAtof( papszTokens[nTokenCnt/2] );
-        psExtent->MaxY = CPLAtof( papszTokens[nTokenCnt/2+1] );
-
-        CSLDestroy(papszTokens);
-        OGRPGClearResult( hResult );
-
-        return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent( psExtent, bForce );
+    return RunGetExtentRequest(psExtent, bForce, osCommand);
 }
 
 /************************************************************************/

@@ -1512,9 +1512,26 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     if( SoftStartTransaction() == OGRERR_NONE  )
     {
-        CPLDebug( "PG", "PQexec(%s)", pszSQLCommand );
-        hResult = PQexec(hPGConn, pszSQLCommand );
-        CPLDebug( "PG", "Command Results Tuples = %d", PQntuples(hResult) );
+        if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE)
+        {
+            CPLDebug( "PG", "PQexec(%s)", pszSQLCommand );
+            hResult = PQexec(hPGConn, pszSQLCommand );
+            CPLDebug( "PG", "Command Results Tuples = %d", PQntuples(hResult) );
+        }
+        else
+        {
+            CPLString osCommand;
+            osCommand.Printf( "DECLARE %s CURSOR for %s",
+                                "executeSQLCursor", pszSQLCommand );
+
+            CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
+
+            hResult = PQexec(hPGConn, osCommand );
+            OGRPGClearResult( hResult );
+
+            osCommand.Printf( "FETCH 0 in %s", "executeSQLCursor" );
+            hResult = PQexec(hPGConn, osCommand );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1523,11 +1540,13 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-        && PQntuples(hResult) > 0 )
+        && (EQUALN(pszSQLCommand, "SELECT", 6) || PQntuples(hResult) > 0) )
     {
         OGRPGResultLayer *poLayer = NULL;
 
         poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
+
+        OGRPGClearResult( hResult );
 
         if( poSpatialFilter != NULL )
             poLayer->SetSpatialFilter( poSpatialFilter );
