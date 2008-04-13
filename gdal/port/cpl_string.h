@@ -95,8 +95,8 @@ int CPL_DLL CSLTestBoolean( const char *pszValue );
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey, 
                              int bDefault );
 
-const char CPL_DLL *CPLSPrintf(const char *fmt, ...);
-char CPL_DLL **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
+const char CPL_DLL *CPLSPrintf(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
+char CPL_DLL **CSLAppendPrintf(char **papszStrList, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args );
 
 const char CPL_DLL *
