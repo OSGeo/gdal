@@ -342,6 +342,7 @@ void CPL_DLL RegisterOGRGPX();
 void CPL_DLL RegisterOGRGeoconcept();
 void CPL_DLL RegisterOGRIngres();
 void CPL_DLL RegisterOGRXPlane();
+void CPL_DLL RegisterOGRNAS();
 
 CPL_C_END
 
