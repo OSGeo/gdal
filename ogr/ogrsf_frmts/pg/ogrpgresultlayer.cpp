@@ -30,6 +30,7 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
+#include "ogrpgutility.h"
 
 CPL_CVSID("$Id$");
 
@@ -50,14 +51,47 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
 
     /* Eventually we may need to make these a unique name */
     pszCursorName = "OGRPGResultLayerReader";
-    hCursorResult = hInitialResultIn;
-    hInitialResult = hInitialResultIn;
+
+    osWHERE = "";
 
     BuildFullQueryStatement();
 
-    nFeatureCount = PQntuples(hInitialResultIn);
+    poFeatureDefn = ReadResultDefinition(hInitialResultIn);
 
-    poFeatureDefn = ReadResultDefinition();
+    /* We have to get the SRID of the geometry column, so to be able */
+    /* to do spatial filtering */
+    if (bHasPostGISGeometry)
+    {
+        CPLString osGetSRID;
+        osGetSRID += "SELECT getsrid(\"";
+        osGetSRID += pszGeomColumn;
+        osGetSRID += "\") FROM (";
+        osGetSRID += pszRawStatement;
+        osGetSRID += ") AS ogrpggetsrid LIMIT 1";
+
+        CPLDebug("PG", "PQexec(%s)\n", osGetSRID.c_str());
+
+        PGresult* hSRSIdResult = PQexec(poDS->GetPGConn(), osGetSRID );
+
+        if( hSRSIdResult && PQresultStatus(hSRSIdResult) == PGRES_TUPLES_OK)
+        {
+            if ( PQntuples(hSRSIdResult) > 0 )
+                nSRSId = atoi(PQgetvalue(hSRSIdResult, 0, 0));
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                        "%s", PQerrorMessage(poDS->GetPGConn()) );
+        }
+
+        OGRPGClearResult(hSRSIdResult);
+    }
+
+    /* Now set the cursor that will fetch the first rows */
+    /* This is usefull when used in situations like */
+    /* ds->ReleaseResultSet(ds->ExecuteSQL("SELECT AddGeometryColumn(....)")) */
+    /* when people don't actually try to get elements */
+    SetInitialQueryCursor();
 }
 
 /************************************************************************/
@@ -76,10 +110,10 @@ OGRPGResultLayer::~OGRPGResultLayer()
 /*      Build a schema from the current resultset.                      */
 /************************************************************************/
 
-OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
+OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 
 {
-    PGresult            *hResult = hInitialResult;
+    PGresult            *hResult = hInitialResultIn;
 
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
@@ -89,7 +123,7 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
 
     poDefn->Reference();
 
-    for( iRawField = 0; iRawField < PQnfields(hInitialResult); iRawField++ )
+    for( iRawField = 0; iRawField < PQnfields(hResult); iRawField++ )
     {
         OGRFieldDefn    oField( PQfname(hResult,iRawField), OFTString);
         Oid             nTypeOID;
@@ -181,6 +215,11 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
         else if ( nTypeOID == TIMESTAMPOID ||
                   nTypeOID == TIMESTAMPTZOID )
         {
+            /* We can't deserialize properly timestamp with time zone */
+            /* with binary cursors */
+            if (nTypeOID == TIMESTAMPTZOID)
+                bCanUseBinaryCursor = FALSE;
+
             oField.SetType( OFTDateTime );
         }
         else /* unknown type */
@@ -208,11 +247,13 @@ void OGRPGResultLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
 
-    /* Eventually we should consider trying to "insert" the spatial component
-       of the query if possible within a SELECT, but for now we just use
-       the raw query directly. */
+    pszQueryStatement = (char*) CPLMalloc(strlen(pszRawStatement) + strlen(osWHERE) + 40);
 
-    pszQueryStatement = CPLStrdup(pszRawStatement);
+    if (strlen(osWHERE) == 0)
+        strcpy(pszQueryStatement, pszRawStatement);
+    else
+        sprintf(pszQueryStatement, "SELECT * FROM (%s) AS ogrpgsubquery %s",
+                pszRawStatement, osWHERE.c_str());
 }
 
 /************************************************************************/
@@ -232,10 +273,29 @@ void OGRPGResultLayer::ResetReading()
 int OGRPGResultLayer::GetFeatureCount( int bForce )
 
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
-        return nFeatureCount;
+    if( TestCapability(OLCFastFeatureCount) == FALSE )
+        return OGRPGLayer::GetFeatureCount( bForce );
+
+    PGconn              *hPGConn = poDS->GetPGConn();
+    PGresult            *hResult = NULL;
+    CPLString           osCommand;
+    int                 nCount = 0;
+
+    osCommand.Printf(
+        "SELECT count(*) FROM (%s) AS ogrpgcount",
+        pszQueryStatement );
+
+    CPLDebug( "PG", "PQexec(%s)\n",
+              osCommand.c_str() );
+
+    hResult = PQexec(hPGConn, osCommand);
+    if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
+        nCount = atoi(PQgetvalue(hResult,0,0));
     else
-        return OGRLayer::GetFeatureCount(bForce);
+        CPLDebug( "PG", "%s; failed.", osCommand.c_str() );
+    OGRPGClearResult( hResult );
+
+    return nCount;
 }
 
 
@@ -247,7 +307,12 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return (m_poFilterGeom == NULL || 
+                (bHasPostGISGeometry && nSRSId != -2)) && m_poAttrQuery == NULL;
+
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) || EQUAL(pszCap,OLCFastGetExtent) )
+        return (bHasPostGISGeometry && nSRSId != -2) && m_poAttrQuery == NULL;
+
     else
         return FALSE;
 }
@@ -270,6 +335,7 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
             return NULL;
 
         if( (m_poFilterGeom == NULL
+            || (bHasPostGISGeometry && nSRSId != -2)
             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
@@ -277,4 +343,59 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
 
         delete poFeature;
     }
+}
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+
+{
+    if( InstallFilter( poGeomIn ) )
+    {
+        if (bHasPostGISGeometry && nSRSId != -2)
+        {
+            if( m_poFilterGeom != NULL)
+            {
+                OGREnvelope  sEnvelope;
+
+                m_poFilterGeom->getEnvelope( &sEnvelope );
+                osWHERE.Printf("WHERE %s && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
+                            pszGeomColumn,
+                            sEnvelope.MinX, sEnvelope.MinY,
+                            sEnvelope.MaxX, sEnvelope.MaxY,
+                            nSRSId );
+            }
+            else
+            {
+                osWHERE = "";
+            }
+
+            BuildFullQueryStatement();
+        }
+
+        ResetReading();
+    }
+
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/*                                                                      */
+/*      For PostGIS use internal Extend(geometry) function              */
+/*      in other cases we use standard OGRLayer::GetExtent()            */ /************************************************************************/
+
+OGRErr OGRPGResultLayer::GetExtent( OGREnvelope *psExtent, int bForce )
+{
+    CPLString   osCommand;
+
+    if ( TestCapability(OLCFastGetExtent) )
+    {
+        /* Do not take the spatial filter into account */
+        osCommand.Printf( "SELECT Extent(\"%s\") FROM (%s) AS ogrpgextent", 
+                         pszGeomColumn, pszRawStatement );
+    }
+
+    return RunGetExtentRequest(psExtent, bForce, osCommand);
 }
