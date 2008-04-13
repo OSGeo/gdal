@@ -309,7 +309,7 @@ layer[0:4] would return a list of the first four features."""
 %pythoncode {
   def Destroy(self):
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-    self.__del__()
+    _ogr.delete_FeatureDefn( self )
     self.thisown = 0
 
 }
@@ -319,7 +319,7 @@ layer[0:4] would return a list of the first four features."""
 %pythoncode {
   def Destroy(self):
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-    self.__del__()
+    _ogr.delete_FieldDefn( self )
     self.thisown = 0
 }
 }
