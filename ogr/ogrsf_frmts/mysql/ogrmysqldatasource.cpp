@@ -133,7 +133,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
     int nPort = 0, i;
     char **papszTableNames=NULL;
     std::string oHost, oPassword, oUser, oDB;
-    char *apszArgv[2] = { "org", NULL };
+    char *apszArgv[2] = { (char*) "org", NULL };
     char **papszArgv = apszArgv;
     int  nArgc = 1;
     const char *client_groups[] = {"client", "ogr", NULL };

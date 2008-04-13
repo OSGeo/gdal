@@ -52,7 +52,7 @@ class BSBDataset : public GDALPamDataset
 {
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    char        *pszGCPProjection;
+    const char  *pszGCPProjection;
 
     double      adfGeoTransform[6];
     int         bGeoTransformSet;

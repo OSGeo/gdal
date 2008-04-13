@@ -62,7 +62,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "DGN_LINK_FORMAT=%s, but only FIRST, LIST or STRING supported.",
                   pszLinkFormat );
-        pszLinkFormat = "FIRST";
+        pszLinkFormat = (char *) "FIRST";
         eLinkFieldType = OFTInteger;
     }
     pszLinkFormat = CPLStrdup(pszLinkFormat);
