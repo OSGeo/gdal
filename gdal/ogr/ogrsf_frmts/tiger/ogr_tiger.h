@@ -77,7 +77,7 @@ typedef enum {
 } TigerVersion;
 
 TigerVersion TigerClassifyVersion( int );
-char * TigerVersionString( TigerVersion );
+const char * TigerVersionString( TigerVersion );
 
 /*****************************************************************************/
 /* The TigerFieldInfo and TigerRecordInfo structures hold information about  */

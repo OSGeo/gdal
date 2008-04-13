@@ -74,11 +74,11 @@
 
 
 typedef struct {
-    char *netCDFSRS;
-    char *SRS; }
+    const char *netCDFSRS;
+    const char *SRS; }
 oNetcdfSRS;
 
-oNetcdfSRS poNetcdfSRS[] = {
+static const oNetcdfSRS poNetcdfSRS[] = {
     {"albers_conical_equal_area", SRS_PT_ALBERS_CONIC_EQUAL_AREA },
     {"azimuthal_equidistant", SRS_PT_AZIMUTHAL_EQUIDISTANT },
     {"cassini_soldner", SRS_PT_CASSINI_SOLDNER },

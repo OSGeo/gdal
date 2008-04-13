@@ -799,7 +799,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 
     for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
     {
-        sFieldList.names[sFieldList.count] = SpecialFieldNames[iField];
+        sFieldList.names[sFieldList.count] = (char*) SpecialFieldNames[iField];
         sFieldList.types[sFieldList.count] = SpecialFieldTypes[iField];
         sFieldList.table_ids[sFieldList.count] = 0;
         sFieldList.ids[sFieldList.count] = nFIDIndex + iField;

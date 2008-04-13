@@ -74,7 +74,7 @@ typedef int
 
 typedef struct {
     char szSignature[4];
-    char *pszClassName;
+    const char *pszClassName;
     GDALTransformerFunc pfnTransform;
     void (*pfnCleanup)( void * );
     CPLXMLNode *(*pfnSerialize)( void * );

@@ -207,8 +207,8 @@ protected:
 
 public:
     const GDALWMSDataWindow *WMSGetDataWindow() const;
-    const int WMSGetBlockSizeX() const;
-    const int WMSGetBlockSizeY() const;
+    int WMSGetBlockSizeX() const;
+    int WMSGetBlockSizeY() const;
 
 protected:
     GDALWMSDataWindow m_data_window;
