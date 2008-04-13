@@ -111,6 +111,8 @@ OGRPGLayer::OGRPGLayer()
     hCursorResult = NULL;
     bCursorActive = FALSE;
 
+    bCanUseBinaryCursor = TRUE;
+
     poFeatureDefn = NULL;
 }
 
@@ -1168,6 +1170,41 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
     return poFeature;
 }
 
+
+/************************************************************************/
+/*                     SetInitialQueryCursor()                          */
+/************************************************************************/
+
+void OGRPGLayer::SetInitialQueryCursor()
+{
+    PGconn      *hPGConn = poDS->GetPGConn();
+    CPLString   osCommand;
+
+    CPLAssert( pszQueryStatement != NULL );
+
+    poDS->FlushSoftTransaction();
+    poDS->SoftStartTransaction();
+
+    if ( poDS->bUseBinaryCursor && bCanUseBinaryCursor )
+        osCommand.Printf( "DECLARE %s BINARY CURSOR for %s",
+                            pszCursorName, pszQueryStatement );
+    else
+        osCommand.Printf( "DECLARE %s CURSOR for %s",
+                            pszCursorName, pszQueryStatement );
+
+    CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
+
+    hCursorResult = PQexec(hPGConn, osCommand );
+    OGRPGClearResult( hCursorResult );
+
+    osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
+    hCursorResult = PQexec(hPGConn, osCommand );
+
+    bCursorActive = TRUE;
+
+    nResultOffset = 0;
+}
+
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
@@ -1183,29 +1220,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( iNextShapeId == 0 && hCursorResult == NULL )
     {
-        CPLAssert( pszQueryStatement != NULL );
-
-        poDS->FlushSoftTransaction();
-        poDS->SoftStartTransaction();
-
-        if ( poDS->bUseBinaryCursor )
-            osCommand.Printf( "DECLARE %s BINARY CURSOR for %s",
-                              pszCursorName, pszQueryStatement );
-        else
-            osCommand.Printf( "DECLARE %s CURSOR for %s",
-                              pszCursorName, pszQueryStatement );
-
-        CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
-
-        hCursorResult = PQexec(hPGConn, osCommand );
-        OGRPGClearResult( hCursorResult );
-
-        osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
-        hCursorResult = PQexec(hPGConn, osCommand );
-
-        bCursorActive = TRUE;
-
-        nResultOffset = 0;
+        SetInitialQueryCursor();
     }
 
 /* -------------------------------------------------------------------- */
@@ -1720,4 +1735,71 @@ const char *OGRPGLayer::GetGeometryColumn()
         return pszGeomColumn;
     else
         return "";
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
+                                        CPLString osCommand)
+{
+    if ( psExtent == NULL )
+        return OGRERR_FAILURE;
+
+    if ( TestCapability(OLCFastGetExtent) )
+    {
+        PGconn      *hPGConn = poDS->GetPGConn();
+        PGresult    *hResult = NULL;
+
+        CPLDebug( "PG", "PQexec(%s)\n", osCommand.c_str() );
+
+        hResult = PQexec( hPGConn, osCommand );
+        if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
+        {
+            OGRPGClearResult( hResult );
+            CPLDebug("PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
+            return OGRPGLayer::GetExtent( psExtent, bForce );
+        }
+
+        char * pszBox = PQgetvalue(hResult,0,0);
+        char * ptr = pszBox;
+        char szVals[64*6+6];
+
+        while ( *ptr != '(' && ptr ) ptr++; ptr++;
+
+        strncpy(szVals,ptr,strstr(ptr,")") - ptr);
+        szVals[strstr(ptr,")") - ptr] = '\0';
+
+        char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
+        int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
+
+        if ( CSLCount(papszTokens) != nTokenCnt )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Bad extent representation: '%s'", pszBox);
+            CSLDestroy(papszTokens);
+
+            OGRPGClearResult( hResult );
+            return OGRERR_FAILURE;
+        }
+
+        // Take X,Y coords
+        // For PostGis ver >= 1.0.0 -> Tokens: X1 Y1 X2 Y2 (nTokenCnt = 4)
+        // For PostGIS ver < 1.0.0 -> Tokens: X1 Y1 Z1 X2 Y2 Z2 (nTokenCnt = 6)
+        // =>   X2 index calculated as nTokenCnt/2
+        //      Y2 index caluclated as nTokenCnt/2+1
+        
+        psExtent->MinX = CPLAtof( papszTokens[0] );
+        psExtent->MinY = CPLAtof( papszTokens[1] );
+        psExtent->MaxX = CPLAtof( papszTokens[nTokenCnt/2] );
+        psExtent->MaxY = CPLAtof( papszTokens[nTokenCnt/2+1] );
+
+        CSLDestroy(papszTokens);
+        OGRPGClearResult( hResult );
+
+        return OGRERR_NONE;
+    }
+
+    return OGRLayer::GetExtent( psExtent, bForce );
 }

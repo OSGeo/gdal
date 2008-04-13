@@ -116,7 +116,14 @@ class OGRPGLayer : public OGRLayer
     int                 bHasFid;
     char                *pszFIDColumn;
 
+    int                 bCanUseBinaryCursor;
+
     int                 ParsePGDate( const char *, OGRField * );
+
+    void                SetInitialQueryCursor();
+
+    OGRErr              RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
+                                             CPLString osCommand);
 
   public:
                         OGRPGLayer();
@@ -198,7 +205,7 @@ public:
 
     virtual int         TestCapability( const char * );
 
-	virtual OGRErr		GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
     const char*         GetTableName() { return pszTableName; }
     const char*         GetSchemaName() { return pszSchemaName; }
@@ -223,9 +230,9 @@ class OGRPGResultLayer : public OGRPGLayer
 
     char                *pszRawStatement;
 
-    PGresult            *hInitialResult;
+    CPLString           osWHERE;
 
-    int                 nFeatureCount;
+    OGRFeatureDefn     *ReadResultDefinition(PGresult *hInitialResultIn);
 
   public:
                         OGRPGResultLayer( OGRPGDataSource *,
@@ -233,10 +240,12 @@ class OGRPGResultLayer : public OGRPGLayer
                                           PGresult *hInitialResult );
     virtual             ~OGRPGResultLayer();
 
-    OGRFeatureDefn     *ReadResultDefinition();
-
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
     virtual int         TestCapability( const char * );
 
