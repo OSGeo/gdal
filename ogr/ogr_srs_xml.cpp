@@ -497,7 +497,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poPMNode = poGeogCS->GetNode( "PRIMEM" );
     CPLXMLNode *psPM;
-    char *pszPMName = "Greenwich";
+    char *pszPMName = (char* ) "Greenwich";
     double dfPMOffset = poSRS->GetPrimeMeridian( &pszPMName );
 
     psPM = CPLCreateXMLNode( 

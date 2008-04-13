@@ -192,7 +192,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
 
     if (nType == NAVAID_NDB)
     {
-        char* pszSubType = "";
+        const char* pszSubType = "";
         CPLString osNavaidName;
         if (EQUAL(papszTokens[nTokens-1], "NDB") ||
             EQUAL(papszTokens[nTokens-1], "LOM") ||
@@ -215,7 +215,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     }
     else if (nType == NAVAID_VOR)
     {
-        char* pszSubType = "";
+        const char* pszSubType = "";
         CPLString osNavaidName;
 
         RET_IF_FAIL(readDoubleWithBounds(&dfSlavedVariation, 6, "slaved variation", -180., 180.));
@@ -241,7 +241,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     }
     else if (nType == NAVAID_LOC_ILS || nType == NAVAID_LOC_STANDALONE)
     {
-        char* pszAptICAO, * pszRwyNum, * pszSubType;
+        const char* pszAptICAO, * pszRwyNum, * pszSubType;
 
         RET_IF_FAIL(readDoubleWithBounds(&dfTrueHeading, 6, "true heading", 0., 360.));
 
@@ -274,7 +274,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     }
     else if (nType == NAVAID_GS)
     {
-        char* pszAptICAO, * pszRwyNum, * pszSubType;
+        const char* pszAptICAO, * pszRwyNum, * pszSubType;
 
         RET_IF_FAIL(readDouble(&dfVal, 6, "slope & heading"));
         dfSlope = (int)(dfVal / 1000) / 100.;
@@ -308,7 +308,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     }
     else if (nType == NAVAID_OM || nType == NAVAID_MM || nType == NAVAID_IM)
     {
-        char* pszAptICAO, * pszRwyNum, * pszSubType;
+        const char* pszAptICAO, * pszRwyNum, * pszSubType;
 
         RET_IF_FAIL(readDoubleWithBounds(&dfTrueHeading, 6, "true heading", 0., 360.));
 
@@ -336,7 +336,7 @@ void    OGRXPlaneNavReader::ParseRecord(int nType)
     }
     else if (nType == NAVAID_DME_COLOC || nType == NAVAID_DME_STANDALONE)
     {
-        char* pszSubType = "";
+        const char* pszSubType = "";
         CPLString osNavaidName;
 
         RET_IF_FAIL(readDouble(&dfDMEBias, 6, "DME bias"));

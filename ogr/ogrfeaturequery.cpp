@@ -39,9 +39,9 @@ CPL_CVSID("$Id$");
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
 
-char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
+const char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
     = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT"};
-swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
+const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
     = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING};
 
 /************************************************************************/
@@ -122,7 +122,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     iField = 0;
     while (iField < SPECIAL_FIELD_COUNT)
     {
-        papszFieldNames[poDefn->GetFieldCount() + iField] = SpecialFieldNames[iField];
+        papszFieldNames[poDefn->GetFieldCount() + iField] = (char *) SpecialFieldNames[iField];
         paeFieldTypes[poDefn->GetFieldCount() + iField] = SpecialFieldTypes[iField];
         ++iField;
     }

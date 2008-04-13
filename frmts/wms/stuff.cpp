@@ -32,7 +32,7 @@
 CPLString MD5String(const char *s) {
     unsigned char hash[16];
     char hhash[33];
-    char *tohex = "0123456789abcdef";
+    const char *tohex = "0123456789abcdef";
     struct cvs_MD5Context context;
     cvs_MD5Init(&context);
     cvs_MD5Update(&context, reinterpret_cast<unsigned char const *>(s), strlen(s));
