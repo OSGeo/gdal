@@ -1195,7 +1195,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
             osCommand.Printf( "DECLARE %s CURSOR for %s",
                               pszCursorName, pszQueryStatement );
 
-        CPLDebug( "OGR_PG", "PQexec(%s)", osCommand.c_str() );
+        CPLDebug( "PG", "PQexec(%s)", osCommand.c_str() );
 
         hCursorResult = PQexec(hPGConn, osCommand );
         OGRPGClearResult( hCursorResult );
@@ -1214,7 +1214,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     if( hCursorResult == NULL
         || PQresultStatus(hCursorResult) != PGRES_TUPLES_OK )
     {
-        CPLDebug( "OGR_PG", "PQclear() on an error condition");
+        CPLDebug( "PG", "PQclear() on an error condition");
 
         OGRPGClearResult( hCursorResult );
 
@@ -1637,7 +1637,7 @@ Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
 
     if( nBytesWritten != nWkbSize )
     {
-        CPLDebug( "OGR_PG",
+        CPLDebug( "PG",
                   "Only wrote %d bytes of %d intended for (fd=%d,oid=%d).\n",
                   nBytesWritten, nWkbSize, fd, oid );
     }
