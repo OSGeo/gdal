@@ -1389,6 +1389,21 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for EPSGA authority numbers.                               */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszName, "EPSGA:",6) )
+    {
+        eErr = oSRS2.importFromEPSGA( atoi(pszName+6) );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+
+        if( !oSRS2.IsGeographic() )
+            return OGRERR_FAILURE;
+
+        return CopyGeogCSFrom( &oSRS2 );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for simple names.                                         */
 /* -------------------------------------------------------------------- */
     char         *pszWKT = NULL;
@@ -1397,13 +1412,13 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
         pszWKT = SRS_WKT_WGS84;
 
     else if( EQUAL(pszName, "WGS72") )
-        pszWKT = (char* ) "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",\"7043\"]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",\"6322\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4322\"]]";
+        pszWKT = (char* ) "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",\"7043\"]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",\"6322\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4322\"]]";
 
     else if( EQUAL(pszName, "NAD27") || EQUAL(pszName, "CRS27") )
-        pszWKT = (char* ) "GEOGCS[\"NAD27\",DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke 1866\",6378206.4,294.978698213898,AUTHORITY[\"EPSG\",\"7008\"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY[\"EPSG\",\"6267\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4267\"]]";
+        pszWKT = (char* ) "GEOGCS[\"NAD27\",DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke 1866\",6378206.4,294.978698213898,AUTHORITY[\"EPSG\",\"7008\"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY[\"EPSG\",\"6267\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4267\"]]";
         
     else if( EQUAL(pszName, "NAD83") || EQUAL(pszName,"CRS83") )
-        pszWKT = (char* ) "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4269\"]]";
+        pszWKT = (char* ) "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4269\"]]";
 
     else
         return OGRERR_FAILURE;
@@ -1522,6 +1537,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * <ol>
  * <li> Well Known Text definition - passed on to importFromWkt().
  * <li> "EPSG:n" - number passed on to importFromEPSG(). 
+ * <li> "EPSGA:n" - number passed on to importFromEPSGA(). 
  * <li> "AUTO:proj_id,unit_id,lon0,lat0" - WMS auto projections.
  * <li> "urn:ogc:def:crs:EPSG::n" - ogc urns
  * <li> PROJ.4 definitions - passed on to importFromProj4().
@@ -1578,6 +1594,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
     if( EQUALN(pszDefinition,"EPSG:",5) )
         return importFromEPSG( atoi(pszDefinition+5) );
+
+    if( EQUALN(pszDefinition,"EPSGA:",6) )
+        return importFromEPSGA( atoi(pszDefinition+6) );
 
     if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16) 
         || EQUALN(pszDefinition,"urn:x-ogc:def:crs:",18) )
@@ -1859,10 +1878,11 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
     const char *pszCode = pszCur;
 
 /* -------------------------------------------------------------------- */
-/*      Is this an EPSG code?                                           */
+/*      Is this an EPSG code? Note that we import it with EPSG          */
+/*      preferred axis ordering for geographic coordinate systems!      */
 /* -------------------------------------------------------------------- */
     if( EQUALN(pszAuthority,"EPSG:",5) )
-        return importFromEPSG( atoi(pszCode) );
+        return importFromEPSGA( atoi(pszCode) );
 
 /* -------------------------------------------------------------------- */
 /*      Is this an IAU code?  Lets try for the IAU2000 dictionary.      */
@@ -5558,3 +5578,220 @@ void OSRCleanup( void )
     CleanupESRIDatumMappingTable();
     CSVDeaccess( NULL );
 }
+
+/************************************************************************/
+/*                              GetAxis()                               */
+/************************************************************************/
+
+/**
+ * Fetch the orientation of one axis.
+ *
+ * Fetches the the request axis (iAxis - zero based) from the
+ * indicated portion of the coordinate system (pszTargetKey) which
+ * should be either "GEOGCS" or "PROJCS". 
+ *
+ * No CPLError is issued on routine failures (such as not finding the AXIS).
+ *
+ * This method is equivelent to the C function OSRGetAxis().
+ *
+ * @param pszTargetKey the coordinate system part to query ("PROJCS" or "GEOGCS").
+ * @param iAxis the axis to query (0 for first, 1 for second). 
+ * @param peOrientation location into which to place the fetch orientation, may be NULL.
+ *
+ * @return the name of the axis or NULL on failure.
+ */
+
+const char *
+OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis, 
+                              OGRAxisOrientation *peOrientation )
+
+{
+    if( peOrientation != NULL )
+        *peOrientation = OAO_Other;
+
+/* -------------------------------------------------------------------- */
+/*      Find the target node.                                           */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode  *poNode;
+
+    if( pszTargetKey == NULL )
+        poNode = poRoot;
+    else
+        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find desired child AXIS.                                        */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poAxis;
+    int iChild, nChildCount = poNode->GetChildCount();
+
+    for( iChild = 0; iChild < nChildCount; iChild++ )
+    {
+        poAxis = poNode->GetChild( iChild );
+
+        if( !EQUAL(poAxis->GetValue(),"AXIS") )
+            continue;
+
+        if( iAxis > 0 )
+        {
+            iAxis--;
+            continue;
+        }
+    }
+
+    if( poAxis == NULL )
+        return NULL;
+
+    if( poAxis->GetChildCount() < 2 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Extract name and orientation if possible.                       */
+/* -------------------------------------------------------------------- */
+    if( peOrientation != NULL )
+    {
+        const char *pszOrientation = poAxis->GetChild(1)->GetValue();
+
+        if( EQUAL(pszOrientation,"NORTH") )
+            *peOrientation = OAO_North;
+        else if( EQUAL(pszOrientation,"EAST") )
+            *peOrientation = OAO_East;
+        else if( EQUAL(pszOrientation,"SOUTH") )
+            *peOrientation = OAO_South;
+        else if( EQUAL(pszOrientation,"WEST") )
+            *peOrientation = OAO_West;
+        else
+        {
+            CPLDebug( "OSR", "Unrecognised orientation value '%s'.",
+                      pszOrientation );
+        }
+    }
+
+    return poAxis->GetChild(0)->GetValue();
+}
+
+/************************************************************************/
+/*                             OSRGetAxis()                             */
+/************************************************************************/
+
+const char *OSRGetAxis( OGRSpatialReferenceH hSRS,
+                        const char *pszTargetKey, int iAxis, 
+                        OGRAxisOrientation *peOrientation )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetAxis", NULL );
+
+    return ((OGRSpatialReference *) hSRS)->GetAxis( pszTargetKey, iAxis,
+                                                    peOrientation );
+}
+
+/************************************************************************/
+/*                         OSRAxisEnumToName()                          */
+/************************************************************************/
+
+const char *OSRAxisEnumToName( OGRAxisOrientation eOrientation )
+
+{
+    if( eOrientation == OAO_North )
+        return "NORTH";
+    if( eOrientation == OAO_East )
+        return "EAST";
+    if( eOrientation == OAO_South )
+        return "SOUTH";
+    if( eOrientation == OAO_West )
+        return "WEST";
+
+    return "UNKNOWN";
+}
+
+/************************************************************************/
+/*                              SetAxes()                               */
+/************************************************************************/
+
+/**
+ * Set the axes for a coordinate system.
+ *
+ * Set the names, and orientations of the axes for either a projected 
+ * (PROJCS) or geographic (GEOGCS) coordinate system.  
+ *
+ * This method is equivelent to the C function OSRSetAxes().
+ *
+ * @param pszTargetKey either "PROJCS" or "GEOGCS", must already exist in SRS.
+ * @param pszXAxisName name of first axis, normally "Long" or "Easting". 
+ * @param eXAxisOrientation normally OAO_East.
+ * @param pszYAxisName name of second axis, normally "Lat" or "Northing". 
+ * @param eYAxisOrientation normally OAO_North. 
+ * 
+ * @return OGRERR_NONE on success or an error code.
+ */
+
+OGRErr 
+OGRSpatialReference::SetAxes( const char *pszTargetKey, 
+                              const char *pszXAxisName, 
+                              OGRAxisOrientation eXAxisOrientation,
+                              const char *pszYAxisName, 
+                              OGRAxisOrientation eYAxisOrientation )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the target node.                                           */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode  *poNode;
+
+    if( pszTargetKey == NULL )
+        poNode = poRoot;
+    else
+        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Strip any existing AXIS children.                               */
+/* -------------------------------------------------------------------- */
+    while( poNode->FindChild( "AXIS" ) >= 0 )
+        poNode->DestroyChild( poNode->FindChild( "AXIS" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Insert desired axes                                             */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poAxis = new OGR_SRSNode( "AXIS" );
+
+    poAxis->AddChild( new OGR_SRSNode( pszXAxisName ) );
+    poAxis->AddChild( new OGR_SRSNode( OSRAxisEnumToName(eXAxisOrientation) ));
+
+    poNode->AddChild( poAxis );
+    
+    poAxis = new OGR_SRSNode( "AXIS" );
+
+    poAxis->AddChild( new OGR_SRSNode( pszYAxisName ) );
+    poAxis->AddChild( new OGR_SRSNode( OSRAxisEnumToName(eYAxisOrientation) ));
+
+    poNode->AddChild( poAxis );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             OSRSetAxes()                             */
+/************************************************************************/
+
+OGRErr OSRSetAxes( OGRSpatialReferenceH hSRS,
+                   const char *pszTargetKey, 
+                   const char *pszXAxisName, 
+                   OGRAxisOrientation eXAxisOrientation,
+                   const char *pszYAxisName, 
+                   OGRAxisOrientation eYAxisOrientation )
+{
+    VALIDATE_POINTER1( hSRS, "OSRSetAxes", OGRERR_FAILURE );
+
+    return ((OGRSpatialReference *) hSRS)->SetAxes( pszTargetKey,
+                                                    pszXAxisName, 
+                                                    eXAxisOrientation,
+                                                    pszYAxisName, 
+                                                    eYAxisOrientation );
+}
+
