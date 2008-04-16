@@ -596,6 +596,10 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
         else
         {
             iResult = iMiddle;
+            // if a key is not unique, select the first instance of it.
+            while( iResult > 0 
+                   && psTable->panLineIndex[iResult-1] == nKeyValue )
+                iResult--;
             break;
         }
     }
@@ -669,6 +673,43 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
     }
     
     return( papszFields );
+}
+
+/************************************************************************/
+/*                           CSVGetNextLine()                           */
+/*                                                                      */
+/*      Fetch the next line of a CSV file based on a passed in          */
+/*      filename.  Returns NULL at end of file, or if file is not       */
+/*      really established.                                             */
+/************************************************************************/
+
+char **CSVGetNextLine( const char *pszFilename )
+
+{
+    CSVTable *psTable;
+
+/* -------------------------------------------------------------------- */
+/*      Get access to the table.                                        */
+/* -------------------------------------------------------------------- */
+    CPLAssert( pszFilename != NULL );
+
+    psTable = CSVAccess( pszFilename );
+    if( psTable == NULL )
+        return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Do we have a next line available?  This only works for          */
+/*      ingested tables I believe.                                      */
+/* -------------------------------------------------------------------- */
+    if( psTable->iLastLine+1 >= psTable->nLineCount )
+        return NULL;
+
+    psTable->iLastLine++;
+    CSLDestroy( psTable->papszRecFields );
+    psTable->papszRecFields = 
+        CSVSplitLine( psTable->papszLines[psTable->iLastLine] );
+
+    return psTable->papszRecFields;
 }
 
 /************************************************************************/
