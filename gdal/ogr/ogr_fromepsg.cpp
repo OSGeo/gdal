@@ -533,7 +533,8 @@ EPSGGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 static int
 EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
                 int * pnDatum, char **ppszDatumName,
-                int * pnPM, int *pnEllipsoid, int *pnUOMAngle )
+                int * pnPM, int *pnEllipsoid, int *pnUOMAngle,
+                int * pnCoordSysCode )
 
 {
     char        szSearchKey[24];
@@ -624,6 +625,18 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
                                    szSearchKey, CC_Integer,
                                    "DATUM_NAME" ));
     
+/* -------------------------------------------------------------------- */
+/*      Get the CoordSysCode                                            */
+/* -------------------------------------------------------------------- */
+    int nCSC;
+
+    nCSC = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", 
+                             szSearchKey, CC_Integer,
+                             "COORD_SYS_CODE" ) );
+    
+    if( pnCoordSysCode != NULL )
+        *pnCoordSysCode = nCSC;
+
     return( TRUE );
 }
 
@@ -858,7 +871,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 static int 
 EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                 int *pnUOMLengthCode, int *pnUOMAngleCode,
-                int *pnGeogCS, int *pnTRFCode )
+                int *pnGeogCS, int *pnTRFCode, int *pnCoordSysCode )
 
 {
     char        **papszRecord;
@@ -974,7 +987,167 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
             *pnTRFCode = 0;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Get the CoordSysCode                                            */
+/* -------------------------------------------------------------------- */
+    int nCSC;
+
+    nCSC = atoi(CSVGetField( pszFilename, "COORD_REF_SYS_CODE", 
+                             szSearchKey, CC_Integer,
+                             "COORD_SYS_CODE" ) );
+    
+    if( pnCoordSysCode != NULL )
+        *pnCoordSysCode = nCSC;
+
     return TRUE;
+}
+
+/************************************************************************/
+/*                          SetEPSGAxisInfo()                           */
+/************************************************************************/
+
+static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS, 
+                               const char *pszTargetKey,
+                               int nCoordSysCode )
+
+{
+#ifdef notdef
+/* -------------------------------------------------------------------- */
+/*      Special cases for well known and common values.  We short       */
+/*      circuit these to save time doing file lookups.                  */
+/* -------------------------------------------------------------------- */
+    // Conventional and common Easting/Northing values.
+    if( nCoordSysCode >= 4400 && nCoordSysCode <= 4410 )
+    {
+        return 
+            poSRS->SetAxes( pszTargetKey, 
+                            "Easting", OAO_East, 
+                            "Northing", OAO_North );
+    }
+
+    // Conventional and common Easting/Northing values.
+    if( nCoordSysCode >= 6400 && nCoordSysCode <= 6423 )
+    {
+        return 
+            poSRS->SetAxes( pszTargetKey, 
+                            "Latitude", OAO_North, 
+                            "Longitude", OAO_East );
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Get the definition from the coordinate_axis.csv file.           */
+/* -------------------------------------------------------------------- */
+    char        **papszRecord;
+    char        **papszAxis1=NULL, **papszAxis2=NULL;
+    char        szSearchKey[24];
+    const char *pszFilename;
+
+    pszFilename = CSVFilename( "coordinate_axis.csv" );
+    sprintf( szSearchKey, "%d", nCoordSysCode );
+    papszRecord = CSVScanFileByName( pszFilename, "COORD_SYS_CODE",
+                                     szSearchKey, CC_Integer );
+
+    if( papszRecord != NULL )
+    {
+        papszAxis1 = CSLDuplicate( papszRecord );
+        papszRecord = CSVGetNextLine( pszFilename );
+        if( CSLCount(papszRecord) > 0 
+            && EQUAL(papszRecord[0],papszAxis1[0]) )
+            papszAxis2 = CSLDuplicate( papszRecord );
+    }
+
+    if( papszAxis2 == NULL )
+    {
+        CSLDestroy( papszAxis1 );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to find entries for COORD_SYS_CODE %d in coordinate_axis.csv", 
+                  nCoordSysCode );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Confirm the records are complete, and work out which columns    */
+/*      are which.                                                      */
+/* -------------------------------------------------------------------- */
+    int   iAxisOrientationField, iAxisAbbrevField, iAxisOrderField;
+
+    iAxisOrientationField = 
+        CSVGetFileFieldId( pszFilename, "coord_axis_orientation" );
+    iAxisAbbrevField = 
+        CSVGetFileFieldId( pszFilename, "coord_axis_abbreviation" );
+    iAxisOrderField = 
+        CSVGetFileFieldId( pszFilename, "coord_axis_order" );
+
+    if( CSLCount(papszAxis1) < iAxisOrderField+1 
+        || CSLCount(papszAxis2) < iAxisOrderField+1 )
+    {
+        CSLDestroy( papszAxis1 );
+        CSLDestroy( papszAxis2 );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Axis records appear incomplete for COORD_SYS_CODE %d in coordinate_axis.csv", 
+                  nCoordSysCode );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we need to switch the axes around?                           */
+/* -------------------------------------------------------------------- */
+    if( atoi(papszAxis2[iAxisOrderField]) < atoi(papszAxis2[iAxisOrderField]) )
+    {
+        papszRecord = papszAxis1;
+        papszAxis1 = papszAxis2;
+        papszAxis2 = papszRecord;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out axis enumeration values.                               */
+/* -------------------------------------------------------------------- */
+    OGRAxisOrientation eOAxis1 = OAO_Other, eOAxis2 = OAO_Other;
+    int iAO;
+
+    for( iAO = 0; iAO <= 6; iAO++ )
+    {
+        if( EQUAL(papszAxis1[iAxisOrientationField],
+                  OSRAxisEnumToName((OGRAxisOrientation) iAO)) )
+            eOAxis1 = (OGRAxisOrientation) iAO;
+        if( EQUAL(papszAxis2[iAxisOrientationField],
+                  OSRAxisEnumToName((OGRAxisOrientation) iAO)) )
+            eOAxis2 = (OGRAxisOrientation) iAO;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the axis name.  We try to expand the abbreviation      */
+/*      to a longer name.                                               */
+/* -------------------------------------------------------------------- */
+    const char *apszAxisName[2];
+    apszAxisName[0] = papszAxis1[iAxisAbbrevField];
+    apszAxisName[1] = papszAxis2[iAxisAbbrevField];
+
+    for( iAO = 0; iAO < 2; iAO++ )
+    {
+        if( EQUAL(apszAxisName[iAO],"N") )
+            apszAxisName[iAO] = "Northing";
+        else if( EQUAL(apszAxisName[iAO],"E") )
+            apszAxisName[iAO] = "Easting";
+        else if( EQUAL(apszAxisName[iAO],"S") )
+            apszAxisName[iAO] = "Southing";
+        else if( EQUAL(apszAxisName[iAO],"W") )
+            apszAxisName[iAO] = "Westing";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the axes.                                                   */
+/* -------------------------------------------------------------------- */
+    OGRErr eResult;
+    eResult = poSRS->SetAxes( pszTargetKey, 
+                              apszAxisName[0], eOAxis1,
+                              apszAxisName[1], eOAxis2 );
+
+    CSLDestroy( papszAxis1 );
+    CSLDestroy( papszAxis2 );
+    
+    return eResult;
 }
 
 /************************************************************************/
@@ -982,13 +1155,12 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /*                                                                      */
 /*      FLAWS:                                                          */
 /*       o Units are all hardcoded.                                     */
-/*       o Axis hardcoded.                                              */
 /************************************************************************/
 
 static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
 {
-    int  nDatumCode, nPMCode, nUOMAngle, nEllipsoidCode;
+    int  nDatumCode, nPMCode, nUOMAngle, nEllipsoidCode, nCSC;
     char *pszGeogCSName = NULL, *pszDatumName = NULL, *pszEllipsoidName = NULL;
     char *pszPMName = NULL, *pszAngleName = NULL;
     double dfPMOffset, dfSemiMajor, dfInvFlattening, adfBursaTransform[7];
@@ -996,7 +1168,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
     if( !EPSGGetGCSInfo( nGeogCS, &pszGeogCSName,
                          &nDatumCode, &pszDatumName, 
-                         &nPMCode, &nEllipsoidCode, &nUOMAngle ) )
+                         &nPMCode, &nEllipsoidCode, &nUOMAngle, &nCSC ) )
         return OGRERR_UNSUPPORTED_SRS;
 
     if( !EPSGGetPMInfo( nPMCode, &pszPMName, &dfPMOffset ) )
@@ -1054,6 +1226,12 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     CPLFree( pszEllipsoidName );
     CPLFree( pszGeogCSName );
     CPLFree( pszPMName );
+
+/* -------------------------------------------------------------------- */
+/*      Set axes                                                        */
+/* -------------------------------------------------------------------- */
+    if( nCSC > 0 )
+        SetEPSGAxisInfo( poSRS, "GEOGCS", nCSC );
 
     return OGRERR_NONE;
 }
@@ -1144,14 +1322,14 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 
 {
     int         nGCSCode, nUOMAngleCode, nUOMLength, nTRFCode, nProjMethod=0;
-    int         anParmIds[7];
+    int         anParmIds[7], nCSC = 0;
     char        *pszPCSName = NULL, *pszUOMLengthName = NULL;
     double      adfProjParms[7], dfInMeters, dfFromGreenwich;
     OGRErr      nErr;
     OGR_SRSNode *poNode;
 
     if( !EPSGGetPCSInfo( nPCSCode, &pszPCSName, &nUOMLength, &nUOMAngleCode,
-                         &nGCSCode, &nTRFCode ) )
+                         &nGCSCode, &nTRFCode, &nCSC ) )
         return OGRERR_UNSUPPORTED_SRS;
 
     poSRS->SetNode( "PROJCS", pszPCSName );
@@ -1342,6 +1520,12 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /* -------------------------------------------------------------------- */
     poSRS->SetAuthority( "PROJCS", "EPSG", nPCSCode );
 
+/* -------------------------------------------------------------------- */
+/*      Set axes                                                        */
+/* -------------------------------------------------------------------- */
+    if( nCSC > 0 )
+        SetEPSGAxisInfo( poSRS, "PROJCS", nCSC );
+
     return OGRERR_NONE;
 }
 
@@ -1352,9 +1536,24 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /**
  * Initialize SRS based on EPSG GCS or PCS code.
  *
- * This code uses the GeoTIFF cpl_csv services to access the EPSG CSV 
- * data.  If frmts/gtiff/libgeotiff isn't linked in, linking will fail. 
- * If EPSG tables can't be found at runtime, the method will fail.
+ * This method will initialize the spatial reference based on the
+ * passed in EPSG GCS or PCS code.  The coordinate system definitions
+ * are normally read from the EPSG derived support files such as 
+ * pcs.csv, gcs.csv, pcs.override.csv, gcs.override.csv and falling 
+ * back to search for a PROJ.4 epsg init file or a definition in epsg.wkt. 
+ *
+ * These support files are normally searched for in /usr/local/share/gdal
+ * or in the directory identified by the GDAL_DATA configuration option.
+ * See CPLFindFile() for details.
+ * 
+ * This method is relatively expensive, and generally involves quite a bit
+ * of text file scanning.  Reasonable efforts should be made to avoid calling
+ * it many times for the same coordinate system. 
+ * 
+ * This method is similar to importFromEPSGA() except that EPSG preferred 
+ * axis ordering will *not* be applied for geographic coordinate systems.
+ * EPSG normally defines geographic coordinate systems to use lat/long 
+ * contrary to typical GIS use). 
  *
  * This method is the same as the C function OSRImportFromEPSG().
  *
@@ -1364,6 +1563,58 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
  */
 
 OGRErr OGRSpatialReference::importFromEPSG( int nCode )
+
+{
+    OGRErr eErr = importFromEPSGA( nCode );
+
+    // Strip any GCS axis settings found.
+    if( eErr == OGRERR_NONE )
+    {
+        OGR_SRSNode *poGEOGCS = GetAttrNode( "GEOGCS" );
+
+        if( poGEOGCS != NULL )
+            poGEOGCS->StripNodes( "AXIS" );
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                         OSRImportFromEPSG()                          */
+/************************************************************************/
+
+OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSG", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );
+}
+
+/************************************************************************/
+/*                          importFromEPSGA()                           */
+/************************************************************************/
+
+/**
+ * Initialize SRS based on EPSG GCS or PCS code.
+ *
+ * This method will initialize the spatial reference based on the
+ * passed in EPSG GCS or PCS code.  
+ * 
+ * This method is similar to importFromEPSGA() except that EPSG preferred 
+ * axis ordering *will* be applied for geographic coordinate systems.
+ * EPSG normally defines geographic coordinate systems to use lat/long 
+ * contrary to typical GIS use).  See OGRSpatialReference::importFromEPSG() 
+ * for more details on operation of this method.
+ *
+ * This method is the same as the C function OSRImportFromEPSGA().
+ *
+ * @param nCode a GCS or PCS code from the horizontal coordinate system table.
+ * 
+ * @return OGRERR_NONE on success, or an error code on failure.
+ */
+
+OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
 {
     OGRErr  eErr;
@@ -1397,7 +1648,7 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 /* -------------------------------------------------------------------- */
 /*      Is this a GeogCS code?   this is inadequate as a criteria       */
 /* -------------------------------------------------------------------- */
-    if( EPSGGetGCSInfo( nCode, NULL, NULL, NULL, NULL, NULL, NULL ) )
+    if( EPSGGetGCSInfo( nCode, NULL, NULL, NULL, NULL, NULL, NULL, NULL ) )
         eErr = SetEPSGGeogCS( this, nCode );
     else
         eErr = SetEPSGProjCS( this, nCode );
@@ -1468,15 +1719,15 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 }
 
 /************************************************************************/
-/*                         OSRImportFromEPSG()                          */
+/*                         OSRImportFromEPSGA()                         */
 /************************************************************************/
 
-OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
+OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSG", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSGA", CE_Failure );
 
-    return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );
+    return ((OGRSpatialReference *) hSRS)->importFromEPSGA( nCode );
 }
 
 /************************************************************************/

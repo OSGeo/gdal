@@ -55,6 +55,8 @@ typedef enum {
     OAO_Down=6
 } OGRAxisOrientation;
     
+const char CPL_DLL *OSRAxisEnumToName( OGRAxisOrientation eOrientation );
+
 /* -------------------------------------------------------------------- */
 /*      Datum types (corresponds to CS_DatumType).                      */
 /* -------------------------------------------------------------------- */
@@ -261,6 +263,7 @@ OGRErr CPL_DLL OSRFixup( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRStripCTParms( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH, int );
+OGRErr CPL_DLL CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRImportFromProj4( OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromESRI( OGRSpatialReferenceH, char **);
@@ -367,6 +370,9 @@ OGRErr CPL_DLL OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                           const char *pszOverrideUnitName,
                                           double dfOverrideUnit );
 OGRErr CPL_DLL OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS );
+const char CPL_DLL *OSRGetAxis( OGRSpatialReferenceH hSRS,
+                                const char *pszTargetKey, int iAxis, 
+                                OGRAxisOrientation *peOrientation );
 
 /** Albers Conic Equal Area */
 OGRErr CPL_DLL OSRSetACEA( OGRSpatialReferenceH hSRS, double dfStdP1, double dfStdP2,

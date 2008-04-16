@@ -168,6 +168,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromWkt( char ** );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
+    OGRErr      importFromEPSGA( int );
     OGRErr      importFromESRI( char ** );
     OGRErr      importFromPCI( const char *, const char * = NULL,
                                double * = NULL );
