@@ -410,6 +410,18 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCSequentialWrite) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCCreateField) )
+        return bUpdateAccess;
+
+    else if( EQUAL(pszCap,OLCRandomWrite) )
+        return bUpdateAccess && osFIDColumn.size() != 0;
+
+    else if( EQUAL(pszCap,OLCDeleteFeature) )
+        return bUpdateAccess && osFIDColumn.size() != 0;
+
     else 
         return OGRIngresLayer::TestCapability( pszCap );
 }
@@ -422,7 +434,6 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
 /*      new one with the provided feature id.                           */
 /************************************************************************/
 
-#ifdef notdef
 OGRErr OGRIngresTableLayer::SetFeature( OGRFeature *poFeature )
 
 {
@@ -449,17 +460,16 @@ OGRErr OGRIngresTableLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRIngresTableLayer::DeleteFeature( long nFID )
 
 {
-    INGRES_RES           *hResult=NULL;
     CPLString           osCommand;
 
 /* -------------------------------------------------------------------- */
 /*      We can only delete features if we have a well defined FID       */
 /*      column to target.                                               */
 /* -------------------------------------------------------------------- */
-    if( !bHasFid )
+    if( osFIDColumn.size() == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature(%d) failed.  Unable to delete features "
+                  "DeleteFeature(%ld) failed.  Unable to delete features "
                   "in tables without\n a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
@@ -470,26 +480,18 @@ OGRErr OGRIngresTableLayer::DeleteFeature( long nFID )
 /*      Form the statement to drop the record.                          */
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "DELETE FROM %s WHERE %s = %ld",
-                      poFeatureDefn->GetName(), pszFIDColumn, nFID );
+                      poFeatureDefn->GetName(), osFIDColumn.c_str(), nFID );
                       
 /* -------------------------------------------------------------------- */
 /*      Execute the delete.                                             */
 /* -------------------------------------------------------------------- */
-    poDS->InterruptLongResult();
-    if( ingres_query(poDS->GetConn(), osCommand.c_str() ) ){   
-        poDS->ReportError(  osCommand.c_str() );
-        return OGRERR_FAILURE;   
-    }
-
-    // make sure to attempt to free results of successful queries
-    hResult = ingres_store_result( poDS->GetConn() );
-    if( hResult != NULL )
-        ingres_free_result( hResult );
-    hResult = NULL;
+    OGRIngresStatement oStmt( poDS->GetConn() );
     
-    return OGRERR_NONE;
+    if( !oStmt.ExecuteSQL( osCommand ) )
+        return OGRERR_FAILURE;
+    else
+        return OGRERR_NONE;
 }
-#endif
 
 /************************************************************************/
 /*                      PrepareOldStyleGeometry()                       */
@@ -703,6 +705,10 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "INSERT INTO %s (", poFeatureDefn->GetName() );
 
+
+/* -------------------------------------------------------------------- */
+/*      Accumulate fields to be inserted.                               */
+/* -------------------------------------------------------------------- */
     if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
     {
         osCommand = osCommand + osGeomColumn + " ";
@@ -734,28 +740,43 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 
     osCommand += ") VALUES (";
 
+/* -------------------------------------------------------------------- */
+/*      Insert the geometry (as a place holder)                         */
+/* -------------------------------------------------------------------- */
+    CPLString osGeomText;
+
     // Set the geometry 
     bNeedComma = FALSE;
     if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
     {
-        CPLString osGeomText;
-
         bNeedComma = TRUE;
 
         if( PrepareOldStyleGeometry( poFeature->GetGeometryRef(), 
                                      osGeomText ) == OGRERR_NONE )
         {
-            osCommand += "'";
-            osCommand += osGeomText;
-            osCommand += "'";
+            if( CSLTestBoolean( 
+                     CPLGetConfigOption( "INGRES_INSERT_SUB", "NO") ) )
+            {
+                osCommand += " ~V";
+            }
+            else
+            {
+                osCommand += "'";
+                osCommand += osGeomText;
+                osCommand += "'";
+                osGeomText = "";
+            }
         }
         else
         {
+            osGeomText = "";
             osCommand += "NULL"; /* is this sort of empty geometry legal? */
         }
     }
 
-    // Set the FID 
+/* -------------------------------------------------------------------- */
+/*      Set the FID                                                     */
+/* -------------------------------------------------------------------- */
     if( poFeature->GetFID() != OGRNullFID && osFIDColumn.size() )
     {
         if( bNeedComma )
@@ -764,6 +785,9 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Copy in the attribute values.                                   */
+/* -------------------------------------------------------------------- */
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
@@ -837,6 +861,10 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 
     oStmt.bDebug = FALSE; 
 
+    if( osGeomText.size() > 0 )
+        oStmt.addInputParameter( IIAPI_LVCH_TYPE, osGeomText.size(), 
+                                 (GByte *) osGeomText.c_str() );
+
     if( !oStmt.ExecuteSQL( osCommand ) )
         return OGRERR_FAILURE;
     
@@ -856,6 +884,8 @@ OGRErr OGRIngresTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     OGRIngresStatement  oStatement( poDS->GetConn() );
     char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
+
+    ResetReading();
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into friendly          */
