@@ -250,8 +250,6 @@ def ogr_ingres_7():
         gdaltest.post_reason( 'failed to read target feature!' )
         return 'fail'
 
-    gdaltest.ingres_lyr.ResetReading()
-
     gdaltest.ingres_fid = feat_read.GetFID()
     
     feat_read.SetField( 'new_string', 'test1' )
