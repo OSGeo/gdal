@@ -131,7 +131,7 @@ class GTiffDataset : public GDALPamDataset
     int         bNoDataChanged;
     double      dfNoDataValue;
 
-    int 	bMetadataChanged;
+    int	        bMetadataChanged;
 
     void        ApplyPamInfo();
 
@@ -1937,6 +1937,13 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
     else
         nBlockBufSize = TIFFStripSize( hTIFF );
 
+    if ( !nBlockBufSize )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Bogus block size; unable to allocate a buffer.");
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer for this strip.                     */
 /* -------------------------------------------------------------------- */
@@ -3506,6 +3513,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 bGeoTransformValid = 
                     GDALReadWorldFile( GetDescription(), "wld", adfGeoTransform );
             }
+
             if( !bGeoTransformValid )
             {
                 int bTabFileOK = 
