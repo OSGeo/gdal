@@ -483,6 +483,8 @@ OGRFeature *OGRIngresLayer::GetNextRawFeature()
     {
         CPLAssert( osQueryStatement.size() != 0 );
 
+        poDS->EstablishActiveLayer( this );
+
         poResultSet = new OGRIngresStatement( poDS->GetConn() );
 
         if( !poResultSet->ExecuteSQL( osQueryStatement ) )

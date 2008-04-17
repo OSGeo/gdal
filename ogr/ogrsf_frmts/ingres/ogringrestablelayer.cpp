@@ -96,6 +96,8 @@ OGRErr  OGRIngresTableLayer::Initialize(const char * pszTableName)
 OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 
 {
+    poDS->EstablishActiveLayer( NULL );
+
 /* -------------------------------------------------------------------- */
 /*      Fire off commands to get back the schema of the table.          */
 /* -------------------------------------------------------------------- */
@@ -485,6 +487,7 @@ OGRErr OGRIngresTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Execute the delete.                                             */
 /* -------------------------------------------------------------------- */
+    poDS->EstablishActiveLayer( NULL );
     OGRIngresStatement oStmt( poDS->GetConn() );
     
     if( !oStmt.ExecuteSQL( osCommand ) )
@@ -857,6 +860,7 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Execute it.                                                     */
 /* -------------------------------------------------------------------- */
+    poDS->EstablishActiveLayer( NULL );
     OGRIngresStatement oStmt( poDS->GetConn() );
 
     oStmt.bDebug = FALSE; 
@@ -880,6 +884,8 @@ OGRErr OGRIngresTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                                          int bApproxOK )
 
 {
+    poDS->EstablishActiveLayer( NULL );
+
     CPLString           osCommand;
     OGRIngresStatement  oStatement( poDS->GetConn() );
     char                szFieldType[256];

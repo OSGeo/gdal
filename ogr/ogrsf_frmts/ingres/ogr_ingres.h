@@ -237,6 +237,8 @@ class OGRIngresDataSource : public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
+    OGRIngresLayer     *poActiveLayer; /* this layer has active transaction */
+
   public:
                         OGRIngresDataSource();
                         ~OGRIngresDataSource();
@@ -273,6 +275,8 @@ class OGRIngresDataSource : public OGRDataSource
     // nonstandard
 
     char               *LaunderName( const char * );
+
+    void                EstablishActiveLayer( OGRIngresLayer * );
 };
 
 /************************************************************************/
