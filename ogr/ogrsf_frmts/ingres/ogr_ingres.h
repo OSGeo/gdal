@@ -56,8 +56,15 @@ public:
 
     int               bDebug;
 
+    int               bHaveParm;
+    IIAPI_DT_ID       eParmType;
+    int               nParmLen;
+    GByte            *pabyParmData;
+
     OGRIngresStatement( II_PTR hConn );
     ~OGRIngresStatement();
+
+    void addInputParameter( IIAPI_DT_ID eDType, int nLength, GByte *pabyData );
 
     int ExecuteSQL( const char * );
     
@@ -67,6 +74,7 @@ public:
 
     int    IsColumnLong(int iCol);
     void   ClearDynamicColumns();
+    int    SendParms();
 };
 
 /************************************************************************/
@@ -163,10 +171,8 @@ class OGRIngresTableLayer : public OGRIngresLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-#ifdef notdef
     virtual OGRErr      DeleteFeature( long nFID );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
-#endif
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
