@@ -49,6 +49,7 @@ OGRIngresDataSource::OGRIngresDataSource()
     nKnownSRID = 0;
     panSRID = NULL;
     papoSRS = NULL;
+    poActiveLayer = NULL;
 }
 
 /************************************************************************/
@@ -540,6 +541,8 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
+    EstablishActiveLayer( NULL );
+
     OGRIngresStatement *poStatement = new OGRIngresStatement( hConn );
 
     if( !poStatement->ExecuteSQL( pszSQLCommand ) )
@@ -556,6 +559,7 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
     OGRIngresResultLayer *poLayer = NULL;
 
     poLayer = new OGRIngresResultLayer( this, pszSQLCommand, poStatement );
+    EstablishActiveLayer( poLayer );
         
     return poLayer;
 }
@@ -567,6 +571,9 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 void OGRIngresDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
+    if( poActiveLayer == poLayer )
+        poActiveLayer = NULL;
+
     delete poLayer;
 }
 
@@ -917,3 +924,18 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
 
     return poLayer;
 }
+
+/************************************************************************/
+/*                        EstablishActiveLayer()                        */
+/************************************************************************/
+
+void OGRIngresDataSource::EstablishActiveLayer( OGRIngresLayer *poNewLayer )
+
+{
+    if( poActiveLayer != poNewLayer && poActiveLayer != NULL )
+        poActiveLayer->ResetReading();
+
+    poActiveLayer = poNewLayer;
+}
+
+
