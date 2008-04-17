@@ -352,7 +352,9 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
 /*      Handle FID.                                                     */
 /* -------------------------------------------------------------------- */
         if( osFIDColumn.size() 
-            && EQUAL(psFDesc->ds_columnName,osFIDColumn) )
+            && EQUAL(psFDesc->ds_columnName,osFIDColumn) 
+            && psFDesc->ds_dataType == IIAPI_INT_TYPE 
+            && psDV->dv_length == 4 )
         {
             if( papszRow[iField] == NULL )
             {
@@ -361,7 +363,9 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
                 return NULL;
             }
 
-            //poFeature->SetFID( atoi(papszRow[iField]) );
+            GInt32 nValue;
+            memcpy( &nValue, papszRow[iField], 4 );
+            poFeature->SetFID( nValue );
         }
 
 /* -------------------------------------------------------------------- */

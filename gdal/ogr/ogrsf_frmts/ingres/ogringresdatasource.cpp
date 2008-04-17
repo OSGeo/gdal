@@ -734,8 +734,18 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
     }
     else
     {
+        // Quietly try to create a sequence if it does not already exist.
+        {
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+            OGRIngresStatement oAI( hConn );
+            oAI.ExecuteSQL( "CREATE SEQUENCE ogr_auto_increment_seq "
+                            "START WITH 1");
+            CPLPopErrorHandler();
+            CPLErrorReset();
+        }
+
         osCommand.Printf( "CREATE TABLE %s ("
-                          " %s INTEGER,"
+                          " %s INTEGER NOT NULL PRIMARY KEY WITH DEFAULT NEXT VALUE FOR ogr_auto_increment_seq,"
                           " %s %s )",
                           pszLayerName, 
                           pszExpectedFIDName, 

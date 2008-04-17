@@ -50,6 +50,12 @@ OGRIngresStatement::OGRIngresStatement( II_PTR hConn )
     memset( &getDescrParm, 0, sizeof(getDescrParm) );
     memset( &queryInfo, 0, sizeof(queryInfo) );
     bDebug = TRUE;
+
+    bHaveParm = FALSE;
+    nParmLen = 0;
+    pabyParmData = NULL;
+
+//    CPLDebug( "INGRES", "Create Statement %p", this );
 }
 
 /************************************************************************/
@@ -98,6 +104,8 @@ OGRIngresStatement::~OGRIngresStatement()
     CPLFree( papszFields );
     CPLFree( pabyWrkBuffer );
     CPLFree( pasDataBuffer );
+    CPLFree( pabyParmData );
+//    CPLDebug( "INGRES", "Destroy Statement %p", this );
 }
 
 /************************************************************************/
@@ -120,7 +128,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     queryParm.qy_connHandle = hConn;
     queryParm.qy_queryType = IIAPI_QT_QUERY;
     queryParm.qy_queryText = (II_CHAR *) pszStatement;
-    queryParm.qy_parameters = FALSE;
+    queryParm.qy_parameters = bHaveParm;
     queryParm.qy_tranHandle = NULL;
     queryParm.qy_stmtHandle = NULL;
 
@@ -150,6 +158,15 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     {
         CPLDebug( "INGRES", "No resulting statement." );
         return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have parameters to send?                                  */
+/* -------------------------------------------------------------------- */
+    if( bHaveParm )
+    {
+        if( !SendParms() )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -188,6 +205,8 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
 /*      Get query info.                                                 */
 /* -------------------------------------------------------------------- */
 #ifdef notdef
+    // For reasons I don't understand, calling getQueryInfo seems to screw
+    // up access to query results, so this is disabled.
     queryInfo.gq_stmtHandle = hStmt;
 
     IIapi_getQueryInfo( &queryInfo );
@@ -195,7 +214,8 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
     while( queryInfo.gq_genParm.gp_completed == FALSE )
         IIapi_wait( &waitParm );
 
-    CPLDebug( "INGRES", "gq_flags=%x, gq_mask=%x, gq_rowCount=%d, gq_rowStatus=%d, rowPosition=%d", 
+    CPLDebug( "INGRES", 
+              "gq_flags=%x, gq_mask=%x, gq_rowCount=%d, gq_rowStatus=%d, rowPosition=%d", 
               queryInfo.gq_flags, 
               queryInfo.gq_mask, 
               queryInfo.gq_rowCount, 
@@ -508,3 +528,109 @@ void OGRIngresStatement::ReportError( IIAPI_GENPARM *genParm,
     CPLError( eType, CPLE_AppDefined, "%s", osErrorMessage.c_str() );
 }
 
+/************************************************************************/
+/*                             SendParms()                              */
+/************************************************************************/
+
+int OGRIngresStatement::SendParms()
+
+{
+    IIAPI_SETDESCRPARM		setDescrParm;
+    IIAPI_PUTPARMPARM		putParmParm;
+    IIAPI_DESCRIPTOR    	DescrBuffer;
+    IIAPI_DATAVALUE    		DataBuffer;
+    IIAPI_WAITPARM	        waitParm = { -1 };
+
+/* -------------------------------------------------------------------- */
+/*      Describe the parameter.                                         */
+/* -------------------------------------------------------------------- */
+    setDescrParm.sd_genParm.gp_callback = NULL;
+    setDescrParm.sd_genParm.gp_closure = NULL;
+    setDescrParm.sd_stmtHandle = hStmt;
+    setDescrParm.sd_descriptorCount = 1;
+    setDescrParm.sd_descriptor = ( IIAPI_DESCRIPTOR * )( &DescrBuffer );
+ 
+    setDescrParm.sd_descriptor[0].ds_dataType = eParmType;
+    setDescrParm.sd_descriptor[0].ds_nullable = FALSE;
+    setDescrParm.sd_descriptor[0].ds_length = nParmLen+2;
+    setDescrParm.sd_descriptor[0].ds_precision = 0;
+    setDescrParm.sd_descriptor[0].ds_scale = 0;
+    setDescrParm.sd_descriptor[0].ds_columnType = IIAPI_COL_QPARM;
+    setDescrParm.sd_descriptor[0].ds_columnName = NULL;
+
+    IIapi_setDescriptor( &setDescrParm );
+	
+    while( setDescrParm.sd_genParm.gp_completed == FALSE )
+	IIapi_wait( &waitParm );
+
+    if( setDescrParm.sd_genParm.gp_status != IIAPI_ST_SUCCESS )
+    {
+        ReportError( &(setDescrParm.sd_genParm), "SendParm()" );
+
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Send the parameter                                              */
+/* -------------------------------------------------------------------- */
+    GByte  abyChunk[2000];
+    int    nBytesSent = 0;
+
+    putParmParm.pp_genParm.gp_callback = NULL;
+    putParmParm.pp_genParm.gp_closure = NULL;
+    putParmParm.pp_stmtHandle = hStmt;
+    putParmParm.pp_parmCount = 1;
+
+    while( nBytesSent < nParmLen )
+    {
+        GInt16 nLen = (int) MIN((int)sizeof(abyChunk)-2,nParmLen-nBytesSent);
+
+        // presuming we want machine local order...
+        memcpy( abyChunk, &nLen, sizeof(nLen) );
+        memcpy( abyChunk+2, pabyParmData + nBytesSent, nLen );
+        nBytesSent += nLen;
+
+        putParmParm.pp_parmData = &DataBuffer;
+        putParmParm.pp_parmData[0].dv_null = FALSE;
+        putParmParm.pp_parmData[0].dv_length = nLen+2;
+        putParmParm.pp_parmData[0].dv_value = abyChunk;
+
+	putParmParm.pp_moreSegments = nBytesSent < nParmLen;
+
+	IIapi_putParms( &putParmParm );
+
+	while( putParmParm.pp_genParm.gp_completed == FALSE )
+	    IIapi_wait( &waitParm );
+
+	if ( putParmParm.pp_genParm.gp_status != IIAPI_ST_SUCCESS )
+        {
+            ReportError( &(putParmParm.pp_genParm), "SendParm()" );
+            
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         addInputParameter()                          */
+/*                                                                      */
+/*      Add data to be treated as an input parameter for the SQL        */
+/*      query.  For now we internally only support one parameter,       */
+/*      but we might change that in the future.                         */
+/************************************************************************/
+
+void OGRIngresStatement::addInputParameter( 
+    IIAPI_DT_ID eDType, int nLength, GByte *pabyData )
+
+{
+    CPLAssert( !bHaveParm );
+    CPLAssert( eDType == IIAPI_LVCH_TYPE ); // support only long varchar now
+
+    bHaveParm = TRUE;
+    nParmLen = nLength;
+    eParmType = eDType;
+    pabyParmData = (GByte *) CPLCalloc(1,nLength+1);
+    memcpy( pabyParmData, pabyData, nLength);
+}
