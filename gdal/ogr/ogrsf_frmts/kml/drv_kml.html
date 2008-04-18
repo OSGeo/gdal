@@ -8,10 +8,11 @@
 <h1>KML - Keyhole Markup Language</h1>
 
 <p>Keyhole Markup Language (KML) is an XML-based language for managing the display of 3D geospatial data. 
-KML has been submitted as an OGC standard candidate as of this writing, and is supported in one way or another
+KML has been accepted as an OGC standard, and is supported in one way or another
 on the major GeoBrowsers. 
 Note that KML by specification uses only a single projection, EPSG:4326. All OGR KML output will be 
-presented in EPSG:4326.</p>
+presented in EPSG:4326. As such OGR will create layers in the correct coordinate system and transform 
+any geometries.</p>
 
 <p>At this time, only vector layers are handled by the KML driver. <em>(there are additional scripts
 supplied with the GDAL project that can build other kinds of output)</em></p>
