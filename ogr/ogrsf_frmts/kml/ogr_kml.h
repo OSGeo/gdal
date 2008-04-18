@@ -76,6 +76,8 @@ public:
 private:
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
+	OGRCoordinateTransformation *poCT_;
+	
     OGRFeatureDefn* poFeatureDefn_;
 
     int iNextKMLId_;
@@ -122,6 +124,9 @@ public:
     KML* GetKMLFile() { return poKMLFile_; };
 #endif
 
+	bool IsFirstCTError() { return !bIssuedCTError_; }
+	void IssuedFirstCTError() { bIssuedCTError_ = true; }
+
 private:
 
 #ifdef HAVE_EXPAT
@@ -132,7 +137,6 @@ private:
 
     OGRKMLLayer** papoLayers_;
     int nLayers_;
-
 
     //The name of the field to use for the KML name element
     char* pszNameField_;
@@ -148,6 +152,9 @@ private:
 
     OGREnvelope oEnvelope_;
     int nSchemaInsertLocation_;
+	
+	//Have we issued a coordinate transformation already for this datasource
+	bool bIssuedCTError_;		
 };
 
 /************************************************************************/
