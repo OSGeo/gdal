@@ -44,11 +44,34 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRSpatialReference *poSRSIn, int bWriterIn,
                           OGRwkbGeometryType eReqType,
                           OGRKMLDataSource *poDSIn )
-{
-    poSRS_ = NULL;
-    if( poSRSIn != NULL )
-        poSRS_ = poSRSIn->Clone();        
-    
+{    	
+	/* KML should be created as WGS84. */
+	poSRS_ = new OGRSpatialReference(NULL);   
+	poSRS_->SetWellKnownGeogCS( "WGS84" );
+	poCT_ = OGRCreateCoordinateTransformation( poSRSIn, poSRS_ );
+    if( poCT_ == NULL && poDSIn->IsFirstCTError() )
+	{
+		/* If we can't create a transformation, issue a warning - but continue the transformation*/
+		char *pszWKT = NULL;
+		
+		printf("Failed to create coordinate transformation between the\n"
+			   "following coordinate systems.  This may be because they\n"
+			   "are not transformable, or because projection services\n"
+			   "(PROJ.4 DLL/.so) could not be loaded.\n" 
+			   "KML geometries may not render correctly.\n"
+			   "This message will not be issued any more. \n");
+		
+		poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
+		printf( "Source:\n%s\n", pszWKT );
+		CPLFree( pszWKT );
+		
+		poSRS_->exportToPrettyWkt( &pszWKT, FALSE );
+		printf( "Target:\n%s\n", pszWKT );
+		CPLFree( pszWKT );
+
+		poDSIn->IssuedFirstCTError(); 
+	}
+
     iNextKMLId_ = 0;
     nTotalKMLCount_ = -1;
     
@@ -81,6 +104,10 @@ OGRKMLLayer::~OGRKMLLayer()
 
     if( NULL != poSRS_ )
         poSRS_->Release();
+	
+	if( NULL != poCT_ )
+		delete poCT_;
+	
     CPLFree( pszName_ );
 }
 
@@ -422,8 +449,11 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
     if( poFeature->GetGeometryRef() != NULL )
     {
         char* pszGeometry = NULL;
-        OGREnvelope sGeomBounds;
-
+        OGREnvelope sGeomBounds;		
+				
+		if (NULL != poCT_)
+			poFeature->GetGeometryRef()->transform( poCT_ );		
+		
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
         pszGeometry = 

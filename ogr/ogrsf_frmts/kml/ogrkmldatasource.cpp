@@ -50,6 +50,8 @@ OGRKMLDataSource::OGRKMLDataSource()
     fpOutput_ = NULL;
 
     papszCreateOptions_ = NULL;
+	
+	bIssuedCTError_ = false;
 
 #ifdef HAVE_EXPAT
     poKMLFile_ = NULL;
