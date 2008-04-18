@@ -25,10 +25,30 @@ support via one of the GDAL JPEG2000 drivers.  The JasPer library generally
 provides the best jpeg2000 support for the GRIB driver.<p>
 
 GRIB files may a be represented in GDAL as having many bands, with some sets 
-of bands representing a time sequence.  GRIB metadata is used to set band
-descriptions that may be helpful in deducing what each band is - for instance
-<tt>100000[Pa] ISBL="Isobaric surface"</tt> or <tt>2743[m] GPML="Specific altitude above mean sea level"</tt>.  GRIB bands are represented as Float64 (double 
-precision floating point) regardless of the actual values.<p>
+of bands representing a time sequence.  GRIB bands are represented as Float64 
+(double precision floating point) regardless of the actual values. GRIB 
+metadata is captured as per-band metadata and used to set band descriptions, 
+similar to this:
+<pre>    
+  Description = 100000[Pa] ISBL="Isobaric surface"
+    GRIB_UNIT=[gpm]
+    GRIB_COMMENT=Geopotential height [gpm]
+    GRIB_ELEMENT=HGT
+    GRIB_SHORT_NAME=100000-ISBL
+    GRIB_REF_TIME=  1201100400 sec UTC
+    GRIB_VALID_TIME=  1201104000 sec UTC
+    GRIB_FORECAST_SECONDS=3600 sec
+</pre>
+
+GRIB2 files may also include an extract of the product definition template 
+number (octet 8-9), and the product definition template values (octet 10+)
+as metadata like this:
+
+<pre>
+    GRIB_PDS_PDTN=0
+    GRIB_PDS_TEMPLATE_NUMBERS=3 5 2 0 105 0 0 0 1 0 0 0 1 100 0 0 1 134 160 255 0 0 0 0 0
+</pre>
+
 
 See Also:<p>
 
