@@ -2512,14 +2512,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_delete_1SpatialReference(JNIEnv
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (char *)OSRSpatialReferenceShadow___str__(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2528,7 +2527,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1_1_1str_1_
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSame(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSame(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
@@ -2536,8 +2535,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSame(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = *(OSRSpatialReferenceShadow **)&jarg2; 
   result = (int)OSRSpatialReferenceShadow_IsSame(arg1,arg2);
@@ -2546,7 +2543,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSame(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSameGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSameGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
@@ -2554,8 +2551,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSameGeogCS(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = *(OSRSpatialReferenceShadow **)&jarg2; 
   result = (int)OSRSpatialReferenceShadow_IsSameGeogCS(arg1,arg2);
@@ -2564,14 +2559,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsSameGeogCS(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsGeographic(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsGeographic(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (int)OSRSpatialReferenceShadow_IsGeographic(arg1);
   jresult = (jint)result; 
@@ -2579,14 +2573,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsGeographic(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsProjected(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsProjected(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (int)OSRSpatialReferenceShadow_IsProjected(arg1);
   jresult = (jint)result; 
@@ -2594,14 +2587,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsProjected(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsLocal(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsLocal(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (int)OSRSpatialReferenceShadow_IsLocal(arg1);
   jresult = (jint)result; 
@@ -2609,7 +2601,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1IsLocal(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAuthority(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jint jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAuthority(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3, jint jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2619,7 +2611,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAuthority(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2652,7 +2643,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAuthority(
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAttrValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAttrValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3) {
   jstring jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2661,7 +2652,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAttrVal
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2676,7 +2666,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAttrVal
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAttrValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAttrValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2685,7 +2675,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAttrValue(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2717,7 +2706,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAttrValue(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAngularUnits(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAngularUnits(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2726,7 +2715,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAngularUni
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2753,14 +2741,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAngularUni
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAngularUnits(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAngularUnits(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (double)OSRSpatialReferenceShadow_GetAngularUnits(arg1);
   jresult = (jdouble)result; 
@@ -2768,7 +2755,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAngular
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLinearUnits(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLinearUnits(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2777,7 +2764,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLinearUnit
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2804,14 +2790,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLinearUnit
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetLinearUnits(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetLinearUnits(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (double)OSRSpatialReferenceShadow_GetLinearUnits(arg1);
   jresult = (jdouble)result; 
@@ -2819,14 +2804,13 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetLinearU
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetLinearUnitsName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetLinearUnitsName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (char *)OSRSpatialReferenceShadow_GetLinearUnitsName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2834,7 +2818,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetLinearU
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthorityCode(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthorityCode(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jstring jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2842,7 +2826,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthori
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2856,7 +2839,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthori
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthorityName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthorityName(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jstring jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2864,7 +2847,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthori
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2878,7 +2860,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetAuthori
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetUTM(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetUTM(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   int arg2 ;
@@ -2887,7 +2869,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetUTM(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -2909,7 +2890,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetUTM(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStatePlane(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jstring jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStatePlane(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jstring jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   int arg2 ;
@@ -2920,7 +2901,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStatePlane
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -2949,14 +2929,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStatePlane
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1AutoIdentifyEPSG(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1AutoIdentifyEPSG(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_AutoIdentifyEPSG(arg1);
   {
@@ -2976,7 +2955,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1AutoIdentifyE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjection(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjection(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2984,7 +2963,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjection
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3010,7 +2988,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjection
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3019,7 +2997,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjParm(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3046,7 +3023,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjParm(J
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   jdouble jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3055,7 +3032,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetProjPar
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3070,7 +3046,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetProjPar
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNormProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNormProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3079,7 +3055,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNormProjPa
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3106,7 +3081,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNormProjPa
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetNormProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetNormProjParm(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   jdouble jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3115,7 +3090,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetNormPro
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3130,7 +3104,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetNormPro
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetACEA(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetACEA(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3143,7 +3117,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetACEA(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3169,7 +3142,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetACEA(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAE(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAE(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3180,7 +3153,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAE(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3204,7 +3176,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetAE(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetBonne(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetBonne(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3215,7 +3187,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetBonne(JNIE
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3239,7 +3210,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetBonne(JNIE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCEA(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCEA(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3250,7 +3221,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCEA(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3274,7 +3244,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCEA(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3285,7 +3255,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCS(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3309,7 +3278,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetCS(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEC(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEC(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3322,7 +3291,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEC(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3348,7 +3316,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEC(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertIV(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertIV(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3358,7 +3326,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertIV(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3381,7 +3348,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertIV(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertVI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertVI(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3391,7 +3358,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertVI(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3414,7 +3380,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEckertVI(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEquirectangular(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEquirectangular(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3425,7 +3391,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEquirectan
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3449,7 +3414,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetEquirectan
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGS(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3459,7 +3424,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGS(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3482,7 +3446,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGS(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGH(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGH(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3492,7 +3456,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGH(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3515,7 +3478,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGH(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGEOS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGEOS(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3526,7 +3489,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGEOS(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3550,7 +3512,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGEOS(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGnomonic(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGnomonic(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3561,7 +3523,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGnomonic(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3585,7 +3546,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGnomonic(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3599,7 +3560,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3626,7 +3586,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM2PNO(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jdouble jarg9) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM2PNO(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8, jdouble jarg9) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3641,7 +3601,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM2PNO(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3669,7 +3628,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetHOM2PNO(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetKrovak(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetKrovak(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3683,7 +3642,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetKrovak(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3710,7 +3668,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetKrovak(JNI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLAEA(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLAEA(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3721,7 +3679,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLAEA(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3745,7 +3702,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLAEA(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3758,7 +3715,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3784,7 +3740,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC1SP(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC1SP(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3796,7 +3752,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC1SP(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3821,7 +3776,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCC1SP(JNI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCCB(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCCB(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3834,7 +3789,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCCB(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3860,7 +3814,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLCCB(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMC(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMC(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3871,7 +3825,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMC(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3895,7 +3848,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMC(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMercator(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMercator(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3907,7 +3860,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMercator(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3932,7 +3884,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMercator(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMollweide(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMollweide(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3942,7 +3894,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMollweide(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -3965,7 +3916,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetMollweide(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNZMG(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNZMG(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -3976,7 +3927,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNZMG(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4000,7 +3950,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetNZMG(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOS(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4012,7 +3962,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOS(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4037,7 +3986,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOS(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOrthographic(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOrthographic(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4048,7 +3997,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOrthograph
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4072,7 +4020,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetOrthograph
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPolyconic(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPolyconic(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4083,7 +4031,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPolyconic(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4107,7 +4054,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPolyconic(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPS(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4119,7 +4066,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPS(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4144,7 +4090,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetPS(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetRobinson(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetRobinson(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4154,7 +4100,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetRobinson(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4177,7 +4122,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetRobinson(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSinusoidal(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSinusoidal(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4187,7 +4132,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSinusoidal
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4210,7 +4154,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSinusoidal
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStereographic(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStereographic(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4222,7 +4166,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStereograp
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4247,7 +4190,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetStereograp
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSOC(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSOC(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4258,7 +4201,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSOC(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4282,7 +4224,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetSOC(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTM(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTM(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4294,7 +4236,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTM(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4319,7 +4260,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTM(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMVariant(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMVariant(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4332,7 +4273,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMVariant(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4363,7 +4303,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMVariant(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMG(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMG(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4374,7 +4314,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMG(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4398,7 +4337,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMG(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMSO(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMSO(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4410,7 +4349,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMSO(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4435,7 +4373,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTMSO(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetVDG(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetVDG(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4445,7 +4383,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetVDG(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4468,7 +4405,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetVDG(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetWellKnownGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetWellKnownGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4476,7 +4413,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetWellKnownG
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4502,7 +4438,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetWellKnownG
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetFromUserInput(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetFromUserInput(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4510,7 +4446,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetFromUserIn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4536,7 +4471,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetFromUserIn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CopyGeogCSFrom(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CopyGeogCSFrom(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
@@ -4544,8 +4479,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CopyGeogCSFro
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = *(OSRSpatialReferenceShadow **)&jarg2; 
   result = (OGRErr)OSRSpatialReferenceShadow_CopyGeogCSFrom(arg1,arg2);
@@ -4566,7 +4499,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CopyGeogCSFro
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTOWGS84(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTOWGS84(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5, jdouble jarg6, jdouble jarg7, jdouble jarg8) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double arg2 ;
@@ -4580,7 +4513,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTOWGS84(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4607,7 +4539,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetTOWGS84(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetTOWGS84(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetTOWGS84(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   double *arg2 ;
@@ -4616,7 +4548,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetTOWGS84(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 7) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -4643,7 +4574,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1GetTOWGS84(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLocalCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLocalCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4651,7 +4582,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLocalCS(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4677,7 +4607,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetLocalCS(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jstring jarg4, jdouble jarg5, jdouble jarg6, jstring jarg7, jdouble jarg8, jstring jarg9, jdouble jarg10) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3, jstring jarg4, jdouble jarg5, jdouble jarg6, jstring jarg7, jdouble jarg8, jstring jarg9, jdouble jarg10) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4693,7 +4623,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGeogCS(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4747,7 +4676,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetGeogCS(JNI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) "unnamed" ;
@@ -4755,7 +4684,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjCS(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4781,7 +4709,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1SetProjCS(JNI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -4790,7 +4718,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromWkt
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) (char **ignorechange) */
@@ -4819,7 +4746,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromWkt
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromProj4(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromProj4(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4827,7 +4754,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromPro
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4853,7 +4779,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromPro
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUrl(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUrl(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4861,7 +4787,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUrl
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4887,7 +4812,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUrl
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromESRI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromESRI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -4895,7 +4820,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromESR
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) char **options */
@@ -4945,7 +4869,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromESR
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromEPSG(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromEPSG(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   int arg2 ;
@@ -4953,7 +4877,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromEPS
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromEPSG(arg1,arg2);
@@ -4974,7 +4897,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromEPS
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromPCI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jdoubleArray jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromPCI(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3, jdoubleArray jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4985,7 +4908,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromPCI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -5030,7 +4952,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromPCI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUSGS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jdoubleArray jarg4, jint jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUSGS(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jdoubleArray jarg4, jint jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   long arg2 ;
@@ -5042,7 +4964,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUSG
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = (long)jarg2; 
   arg3 = (long)jarg3; 
@@ -5078,7 +4999,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromUSG
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromXML(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromXML(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -5086,7 +5007,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromXML
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -5112,7 +5032,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ImportFromXML
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -5121,7 +5041,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToWkt(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) (char **argout2) */
@@ -5161,7 +5080,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToWkt(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPrettyWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2, jint jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPrettyWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2, jint jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -5171,7 +5090,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPrett
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) (char **argout2) */
@@ -5212,7 +5130,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPrett
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToProj4(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToProj4(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -5221,7 +5139,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToProj4
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) (char **argout2) */
@@ -5261,7 +5178,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToProj4
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPCI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2, jobjectArray jarg3, jdoubleArray jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPCI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2, jobjectArray jarg3, jdoubleArray jarg4) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -5274,7 +5191,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPCI(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) (char **argout2) */
@@ -5346,7 +5262,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToPCI(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToUSGS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jintArray jarg2, jintArray jarg3, jdoubleArray jarg4, jintArray jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToUSGS(JNIEnv *jenv, jclass jcls, jlong jarg1, jintArray jarg2, jintArray jarg3, jdoubleArray jarg4, jintArray jarg5) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   long *arg2 = (long *) 0 ;
@@ -5361,7 +5277,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToUSGS(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     if (!jarg2) {
@@ -5441,7 +5356,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToUSGS(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToXML(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToXML(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2, jstring jarg3) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -5451,7 +5366,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToXML(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   {
     /* %typemap(in) (char **argout2) */
@@ -5497,14 +5411,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1ExportToXML(J
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CloneGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CloneGeogCS(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OSRSpatialReferenceShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OSRSpatialReferenceShadow *)OSRSpatialReferenceShadow_CloneGeogCS(arg1);
   *(OSRSpatialReferenceShadow **)&jresult = result; 
@@ -5512,14 +5425,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1CloneGeogCS(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1Validate(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1Validate(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_Validate(arg1);
   {
@@ -5539,14 +5451,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1Validate(JNIE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1StripCTParms(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1StripCTParms(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_StripCTParms(arg1);
   {
@@ -5566,14 +5477,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1StripCTParms(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1FixupOrdering(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1FixupOrdering(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_FixupOrdering(arg1);
   {
@@ -5593,14 +5503,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1FixupOrdering
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1Fixup(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1Fixup(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_Fixup(arg1);
   {
@@ -5620,14 +5529,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1Fixup(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1MorphToESRI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1MorphToESRI(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_MorphToESRI(arg1);
   {
@@ -5647,14 +5555,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1MorphToESRI(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1MorphFromESRI(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1MorphFromESRI(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   result = (OGRErr)OSRSpatialReferenceShadow_MorphFromESRI(arg1);
   {
@@ -5674,7 +5581,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_osr_osrJNI_SpatialReference_1MorphFromESRI
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_osr_osrJNI_new_1CoordinateTransformation(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_osr_osrJNI_new_1CoordinateTransformation(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jlong jresult = 0 ;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
@@ -5682,8 +5589,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_osr_osrJNI_new_1CoordinateTransformation(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OSRSpatialReferenceShadow **)&jarg1; 
   arg2 = *(OSRSpatialReferenceShadow **)&jarg2; 
   result = (OSRCoordinateTransformationShadow *)new_OSRCoordinateTransformationShadow(arg1,arg2);
@@ -5703,14 +5608,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_delete_1CoordinateTransformatio
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1TransformPoint_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1TransformPoint_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2) {
   OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
   double *arg2 ;
   jboolean isCopy2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRCoordinateTransformationShadow **)&jarg1; 
   {
     /* %typemap(in) (double argin[ANY]) */
@@ -5729,7 +5633,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1Trans
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1TransformPoint_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1TransformPoint_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
   double *arg2 ;
   double arg3 ;
@@ -5739,7 +5643,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1Trans
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRCoordinateTransformationShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 3) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -5755,7 +5658,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1Trans
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1TransformPoints(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3, jlong jarg4, jlong jarg5) {
+SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1TransformPoints(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jlong jarg3, jlong jarg4, jlong jarg5) {
   OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
   int arg2 ;
   double *arg3 = (double *) 0 ;
@@ -5764,7 +5667,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_osr_osrJNI_CoordinateTransformation_1Trans
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OSRCoordinateTransformationShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = *(double **)&jarg3; 
