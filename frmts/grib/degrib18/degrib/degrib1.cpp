@@ -24,6 +24,7 @@
 #include "degrib1.h"
 #include "metaname.h"
 #include "clock.h"
+#include "cpl_error.h"
 
 /* default missing data value (see: bitmap GRIB1: sect3 and sect4) */
 /* UNDEFINED is default, UNDEFINED_PRIM is desired choice. */
@@ -243,10 +244,10 @@ static GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
          break;
    }
    if ((pdsMeta->mstrVersion > 3) || (pdsMeta->cat > 127)) {
-      printf ("Undefined parameter table (center %d-%d table %d).\n"
-              "Please email arthur.taylor@noaa.gov about adding this table.\n"
-              "to his 'degrib1.c' and 'grib1tab.c' files.",
-              center, subcenter, pdsMeta->mstrVersion);
+       CPLDebug (
+           "GRIB",
+           "Undefined parameter table (center %d-%d table %d).",
+           center, subcenter, pdsMeta->mstrVersion);
    }
    return &parm_table_undefined[0];
 }
@@ -473,6 +474,11 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
       /* The 12 is because we have increased pds by 12. (but 25 is in
        * reference of 1..25, so we need another -1) */
       year = *pds + ((pds[25 - 13] - 1) * 100);
+
+      /* It seems like some old files (such as spring/I000176.grb)
+         do not have a century byte, and assum 19xx. */
+//      if( (year < 1900 || year > 2100) && *pds >= 0 && *pds < 100 )
+//          year = *pds + 1900;
    }
 
    if (ParseTime (&(pdsMeta->refTime), year, pds[1], pds[2], pds[3], pds[4],
