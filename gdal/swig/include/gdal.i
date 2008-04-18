@@ -258,7 +258,7 @@ typedef enum {
 // GDALColorEntry
 //
 //************************************************************************
-#ifndef SWIGPERL
+#if !defined(SWIGPERL) && !defined(SWIGJAVA)
 %rename (ColorEntry) GDALColorEntry;
 typedef struct
 {
@@ -444,7 +444,9 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // Define the ColorTable object.
 //
 //************************************************************************
+#if !defined(SWIGJAVA)
 %include "ColorTable.i"
+#endif
 
 //************************************************************************
 //
