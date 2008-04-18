@@ -6,21 +6,36 @@
  * Purpose:  Java port of gdalinfo application
  * Author:   Benjamin Collins, The MITRE Corporation
  *
+ * ****************************************************************************
+ * Copyright (c) 1998, Frank Warmerdam
+ * Copyright (c) 2006, The MITRE Corporation
  *
- * $Log$
- * Revision 1.1  2006/02/02 21:04:35  collinsb
- * Expand support for SWIG Java bindings
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
  *
- *
-*/
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
 import org.gdal.gdal.Band;
-import org.gdal.gdal.ColorTable;
+//import org.gdal.gdal.ColorTable;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.GCP;
@@ -237,7 +252,7 @@ public class gdalinfo {
 			for (iBand = 0; iBand < hDataset.getRasterCount(); iBand++) {
 				Double[] pass1 = new Double[1], pass2 = new Double[1];
 				double[] adfCMinMax = new double[2];
-				ColorTable hTable;
+//				ColorTable hTable;
 
 				hBand = hDataset.GetRasterBand(iBand + 1);
 
@@ -345,6 +360,8 @@ public class gdalinfo {
 						}
 				 }
 
+/** ColorTable not supported in GDAL 1.5 and 1.6. 
+
 				if (hBand.GetRasterColorInterpretation() == gdalconstConstants.GCI_PaletteIndex
 						&& (hTable = hBand.GetRasterColorTable()) != null) {
 					int count;
@@ -359,18 +376,12 @@ public class gdalinfo {
 								+ hTable.GetColorEntry(count));
 					}
 				}
+**/
 			}
 
 			hDataset.delete();
 
-			//CSLDestroy( argv );
-
-			//GDALDumpOpenDatasets( stderr );
-
 			//gdal.DestroyDriverManager();
-
-			//CPLDumpSharedList( null );
-			//CPLCleanupTLS();
 
 			System.exit(0);
 		}
