@@ -128,6 +128,67 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDS, int nBand,
                      CPLString().Printf("%12.0f sec UTC", psInv->validTime ) );
     SetMetadataItem( "GRIB_FORECAST_SECONDS", 
                      CPLString().Printf("%.0f sec", psInv->foreSec ) );
+
+/* -------------------------------------------------------------------- */
+/*      Collect section 4 octet information ... we read the file        */
+/*      ourselves since the GRIB API does not appear to preserve all    */
+/*      this for us.                                                    */
+/* -------------------------------------------------------------------- */
+    GIntBig nOffset = VSIFTellL( poDS->fp );
+    GByte abyHead[5];
+    GUInt32 nSectSize;
+
+    VSIFSeekL( poDS->fp, psInv->start+16, SEEK_SET );
+    VSIFReadL( abyHead, 5, 1, poDS->fp );
+
+    while( abyHead[4] != 4 )
+    {
+        memcpy( &nSectSize, abyHead, 4 );
+        CPL_MSBPTR32( &nSectSize );
+
+        if( VSIFSeekL( poDS->fp, nSectSize-5, SEEK_CUR ) != 0
+            || VSIFReadL( abyHead, 5, 1, poDS->fp ) != 1 )
+            break;
+    }
+        
+    if( abyHead[4] == 4 )
+    {
+        GUInt16 nCoordCount;
+        GUInt16 nPDTN;
+        CPLString osOctet;
+        int i;
+        GByte *pabyBody;
+
+        memcpy( &nSectSize, abyHead, 4 );
+        CPL_MSBPTR32( &nSectSize );
+
+        pabyBody = (GByte *) CPLMalloc(nSectSize-5);
+        VSIFReadL( pabyBody, 1, nSectSize-5, poDS->fp );
+
+        memcpy( &nCoordCount, pabyBody + 5 - 5, 2 );
+        CPL_MSBPTR16( &nCoordCount );
+
+        memcpy( &nPDTN, pabyBody + 7 - 5, 2 );
+        CPL_MSBPTR16( &nPDTN );
+
+        SetMetadataItem( "GRIB_PDS_PDTN",
+                         CPLString().Printf( "%d", nPDTN ) );
+
+        for( i = 9; i < (int) nSectSize; i++ )
+        {
+            char szByte[10];
+
+            if( i == 9 )
+                sprintf( szByte, "%d", pabyBody[i-5] );
+            else
+                sprintf( szByte, " %d", pabyBody[i-5] );
+            osOctet += szByte;
+        }
+        
+        SetMetadataItem( "GRIB_PDS_TEMPLATE_NUMBERS", osOctet );
+    }
+
+    VSIFSeekL( poDS->fp, nOffset, SEEK_SET );
 }
 
 /************************************************************************/
