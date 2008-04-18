@@ -9,7 +9,7 @@ BINDING = java
 include ../SWIGmake.base
 
 SHORT_NAME = $(subst _wrap,,$*)
-SWIGARGS += -outdir "org/gdal/$(SHORT_NAME)" -package "org.gdal.$(SHORT_NAME)"
+SWIGARGS += -nopgcpp -outdir "org/gdal/$(SHORT_NAME)" -package "org.gdal.$(SHORT_NAME)"
 
 EXTRA_DIST = org
 
@@ -34,7 +34,7 @@ veryclean: clean
 generate: makedir ${WRAPPERS}
   
 build: generate ${JAVA_MODULES}
-	cp ./.libs/*.so ./
+	-cp ./.libs/*.so ./
 	ant
 
 install: generate

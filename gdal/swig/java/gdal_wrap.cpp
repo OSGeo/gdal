@@ -1886,14 +1886,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_CPLHexToBinary(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetDescription(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetDescription(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALMajorObjectShadow **)&jarg1; 
   result = (char *)GDALMajorObjectShadow_GetDescription(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -1901,13 +1900,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetDescriptio
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetDescription(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetDescription(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALMajorObjectShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -1919,7 +1917,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetDescription(J
 }
 
 
-SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1Dict(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1Dict(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jobject jresult = 0 ;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) "" ;
@@ -1927,7 +1925,6 @@ SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALMajorObjectShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -1965,7 +1962,7 @@ SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1
 }
 
 
-SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1List(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1List(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jobject jresult = 0 ;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) "" ;
@@ -1973,7 +1970,6 @@ SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALMajorObjectShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2003,7 +1999,7 @@ SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1GetMetadata_1
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg2, jstring jarg3) {
   jint jresult = 0 ;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -2012,7 +2008,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1S
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALMajorObjectShadow **)&jarg1; 
   {
     /* %typemap(in) char **dict */
@@ -2057,7 +2052,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1S
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3) {
   jint jresult = 0 ;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2066,7 +2061,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1S
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALMajorObjectShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2086,14 +2080,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_MajorObject_1SetMetadata_1_1S
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1ShortName_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1ShortName_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   result = (char *)GDALDriverShadow_ShortName_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2101,14 +2094,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1ShortName_1get(JNI
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1LongName_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1LongName_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   result = (char *)GDALDriverShadow_LongName_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2116,14 +2108,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1LongName_1get(JNIE
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1HelpTopic_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1HelpTopic_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   result = (char *)GDALDriverShadow_HelpTopic_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2131,7 +2122,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1HelpTopic_1get(JNI
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Create(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jobject jarg7) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Create(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jobject jarg7) {
   jlong jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2144,7 +2135,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Create(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2192,7 +2182,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Create(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1CreateCopy(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jlong jarg3, jobject jarg3_, jint jarg4, jobject jarg5, jlong jarg6, jobject jarg7) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1CreateCopy(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jlong jarg3, jint jarg4, jobject jarg5, jlong jarg6, jobject jarg7) {
   jlong jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2206,8 +2196,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1CreateCopy(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg3_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2263,7 +2251,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1CreateCopy(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Delete(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Delete(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2271,7 +2259,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Delete(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2285,7 +2272,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Delete(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Rename(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Rename(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3) {
   jint jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2294,7 +2281,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Rename(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2314,14 +2300,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Rename(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Register(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Register(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   result = (int)GDALDriverShadow_Register(arg1);
   jresult = (jint)result; 
@@ -2329,24 +2314,22 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Register(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Deregister(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Driver_1Deregister(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDriverShadow **)&jarg1; 
   GDALDriverShadow_Deregister(arg1);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPX_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPX_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPX_set(arg1,arg2);
@@ -2354,14 +2337,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPX_1set(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPX_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPX_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPX_get(arg1);
   jresult = (jdouble)result; 
@@ -2369,13 +2351,12 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPX_1get(JNIEnv *jen
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPY_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPY_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPY_set(arg1,arg2);
@@ -2383,14 +2364,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPY_1set(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPY_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPY_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPY_get(arg1);
   jresult = (jdouble)result; 
@@ -2398,13 +2378,12 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPY_1get(JNIEnv *jen
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPZ_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPZ_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPZ_set(arg1,arg2);
@@ -2412,14 +2391,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPZ_1set(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPZ_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPZ_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPZ_get(arg1);
   jresult = (jdouble)result; 
@@ -2427,13 +2405,12 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPZ_1get(JNIEnv *jen
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPPixel_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPPixel_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPPixel_set(arg1,arg2);
@@ -2441,14 +2418,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPPixel_1set(JNIEnv *je
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPPixel_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPPixel_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPPixel_get(arg1);
   jresult = (jdouble)result; 
@@ -2456,13 +2432,12 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPPixel_1get(JNIEnv 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPLine_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPLine_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPLine_set(arg1,arg2);
@@ -2470,14 +2445,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPLine_1set(JNIEnv *jen
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPLine_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPLine_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPLine_get(arg1);
   jresult = (jdouble)result; 
@@ -2485,13 +2459,12 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1GCPLine_1get(JNIEnv *
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Info_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Info_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2504,14 +2477,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Info_1set(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Info_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Info_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (char *)GDAL_GCP_Info_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2519,13 +2491,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Info_1get(JNIEnv *jen
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Id_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Id_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2538,14 +2509,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Id_1set(JNIEnv *jenv, jc
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Id_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GCP_1Id_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (char *)GDAL_GCP_Id_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2600,14 +2570,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_delete_1GCP(JNIEnv *jenv, jcl
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPX_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPX_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPX_get(arg1);
   jresult = (jdouble)result; 
@@ -2615,27 +2584,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPX_1get(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPX_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPX_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPX_set(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPY_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPY_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPY_get(arg1);
   jresult = (jdouble)result; 
@@ -2643,27 +2610,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPY_1get(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPY_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPY_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPY_set(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPZ_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPZ_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPZ_get(arg1);
   jresult = (jdouble)result; 
@@ -2671,27 +2636,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPZ_1get(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPZ_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPZ_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPZ_set(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPPixel_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPPixel_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPPixel_get(arg1);
   jresult = (jdouble)result; 
@@ -2699,27 +2662,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPPixel_1get(J
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPPixel_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPPixel_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPPixel_set(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPLine_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPLine_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_GCPLine_get(arg1);
   jresult = (jdouble)result; 
@@ -2727,27 +2688,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPLine_1get(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPLine_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1GCPLine_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_GCPLine_set(arg1,arg2);
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Info_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Info_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (char *)GDAL_GCP_Info_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2755,13 +2714,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Info_1get(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Info_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Info_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2773,14 +2731,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Info_1set(JNIEnv *
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Id_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Id_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (char *)GDAL_GCP_Id_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2788,13 +2745,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Id_1get(JNIEnv 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Id_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Id_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2806,14 +2762,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1Id_1set(JNIEnv *je
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPX(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPX(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_get_GCPX(arg1);
   jresult = (jdouble)result; 
@@ -2821,27 +2776,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPX(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPX(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPX(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_set_GCPX(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPY(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPY(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_get_GCPY(arg1);
   jresult = (jdouble)result; 
@@ -2849,27 +2802,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPY(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPY(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPY(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_set_GCPY(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPZ(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPZ(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_get_GCPZ(arg1);
   jresult = (jdouble)result; 
@@ -2877,27 +2828,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPZ(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPZ(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPZ(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_set_GCPZ(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPPixel(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPPixel(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_get_GCPPixel(arg1);
   jresult = (jdouble)result; 
@@ -2905,27 +2854,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPPixel(J
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPPixel(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPPixel(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_set_GCPPixel(arg1,arg2);
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPLine(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPLine(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (double)GDAL_GCP_get_GCPLine(arg1);
   jresult = (jdouble)result; 
@@ -2933,27 +2880,25 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1GCPLine(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPLine(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1GCPLine(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   double arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = (double)jarg2; 
   GDAL_GCP_set_GCPLine(arg1,arg2);
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1Info(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1Info(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (char *)GDAL_GCP_get_Info(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2961,13 +2906,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1Info(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1Info(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1Info(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2979,14 +2923,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1Info(JNIEnv *
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1Id(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1Id(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   result = (char *)GDAL_GCP_get_Id(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2994,13 +2937,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1get_1Id(JNIEnv 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1Id(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1Id(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDAL_GCP **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3012,7 +2954,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_GDAL_1GCP_1set_1Id(JNIEnv *je
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_GCPsToGeoTransform(JNIEnv *jenv, jclass jcls, jint jarg1, jlong jarg2, jobject jarg2_, jdoubleArray jarg3, jint jarg4) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_GCPsToGeoTransform(JNIEnv *jenv, jclass jcls, jint jarg1, jlong jarg2, jdoubleArray jarg3, jint jarg4) {
   jlong jresult = 0 ;
   int arg1 ;
   GDAL_GCP *arg2 = (GDAL_GCP *) 0 ;
@@ -3023,7 +2965,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_GCPsToGeoTransform(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg2_;
   arg1 = (int)jarg1; 
   arg2 = *(GDAL_GCP **)&jarg2; 
   if (jarg3 && jenv->GetArrayLength(jarg3) != 6) {
@@ -3046,14 +2987,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_GCPsToGeoTransform(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterXSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterXSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (int)GDALDatasetShadow_RasterXSize_get(arg1);
   jresult = (jint)result; 
@@ -3061,14 +3001,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterXSize_1get(JNI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterYSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterYSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (int)GDALDatasetShadow_RasterYSize_get(arg1);
   jresult = (jint)result; 
@@ -3076,14 +3015,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterYSize_1get(JNI
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterCount_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1RasterCount_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (int)GDALDatasetShadow_RasterCount_get(arg1);
   jresult = (jint)result; 
@@ -3102,14 +3040,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_delete_1Dataset(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetDriver(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetDriver(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   GDALDriverShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (GDALDriverShadow *)GDALDatasetShadow_GetDriver(arg1);
   *(GDALDriverShadow **)&jresult = result; 
@@ -3117,7 +3054,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetDriver(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetRasterBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetRasterBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int arg2 ;
@@ -3125,7 +3062,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetRasterBand(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (GDALRasterBandShadow *)GDALDatasetShadow_GetRasterBand(arg1,arg2);
@@ -3134,14 +3070,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetRasterBand(JNIEn
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetProjection(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetProjection(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (char *)GDALDatasetShadow_GetProjection(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -3149,14 +3084,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetProjection(JNI
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetProjectionRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetProjectionRef(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (char *)GDALDatasetShadow_GetProjectionRef(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -3164,7 +3098,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetProjectionRef(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetProjection(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetProjection(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3172,7 +3106,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetProjection(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3186,14 +3119,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetProjection(JNIEnv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGeoTransform(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGeoTransform(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2) {
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   double *arg2 ;
   jdouble *jarr2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 6) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -3206,7 +3138,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGeoTransform(JNIE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGeoTransform(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGeoTransform(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   double *arg2 ;
@@ -3215,7 +3147,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGeoTransform(JNIE
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   {
     /* %typemap(in) (double argin[ANY]) */
@@ -3236,7 +3167,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGeoTransform(JNIE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1BuildOverviews(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jintArray jarg3, jlong jarg5, jobject jarg6) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1BuildOverviews(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jintArray jarg3, jlong jarg5, jobject jarg6) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *arg2 = (char *) "NEAREST" ;
@@ -3249,7 +3180,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1BuildOverviews(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3288,14 +3218,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1BuildOverviews(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (int)GDALDatasetShadow_GetGCPCount(arg1);
   jresult = (jint)result; 
@@ -3303,14 +3232,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPCount(JNIEnv *
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPProjection(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPProjection(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   result = (char *)GDALDatasetShadow_GetGCPProjection(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -3318,7 +3246,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPProjection(
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPs(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPs(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg2) {
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int *arg2 = (int *) 0 ;
   GDAL_GCP **arg3 = (GDAL_GCP **) 0 ;
@@ -3327,7 +3255,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPs(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   {
     /* %typemap(in,numinputs=1) (int *nGCPs2, GDAL_GCP const **pGCPs2 ) */
@@ -3360,7 +3287,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1GetGCPs(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGCPs(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3, jobject jarg3_, jstring jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGCPs(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jlong jarg3, jstring jarg4) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int arg2 ;
@@ -3370,8 +3297,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGCPs(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg3_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = *(GDAL_GCP **)&jarg3; 
@@ -3387,18 +3312,17 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1SetGCPs(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1FlushCache(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1FlushCache(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   GDALDatasetShadow_FlushCache(arg1);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1AddBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jobject jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1AddBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jobject jarg3) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   GDALDataType arg2 = (GDALDataType) GDT_Byte ;
@@ -3407,7 +3331,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1AddBand(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = (GDALDataType)jarg2; 
   {
@@ -3446,7 +3369,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1AddBand(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1CreateMaskBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1CreateMaskBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int arg2 ;
@@ -3454,7 +3377,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1CreateMaskBand(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (CPLErr)GDALDatasetShadow_CreateMaskBand(arg1,arg2);
@@ -3463,7 +3385,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1CreateMaskBand(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1WriteRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jcharArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10, jintArray jarg11) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1WriteRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jcharArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10, jintArray jarg11) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int arg2 ;
@@ -3482,7 +3404,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1WriteRaster(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -3547,7 +3468,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1WriteRaster(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1ReadRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jobjectArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10, jintArray jarg11) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1ReadRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jobjectArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10, jintArray jarg11) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int arg2 ;
@@ -3567,7 +3488,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1ReadRaster(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -3635,14 +3555,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Dataset_1ReadRaster(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1XSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1XSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (int)GDALRasterBandShadow_XSize_get(arg1);
   jresult = (jint)result; 
@@ -3650,14 +3569,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1XSize_1get(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1YSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1YSize_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (int)GDALRasterBandShadow_YSize_get(arg1);
   jresult = (jint)result; 
@@ -3665,14 +3583,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1YSize_1get(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1DataType_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1DataType_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALDataType result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (GDALDataType)GDALRasterBandShadow_DataType_get(arg1);
   jresult = (jint)result; 
@@ -3680,7 +3597,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1DataType_1get(JNIEnv *j
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetBlockSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jintArray jarg2, jintArray jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetBlockSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jintArray jarg2, jintArray jarg3) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int *arg2 = (int *) 0 ;
   int *arg3 = (int *) 0 ;
@@ -3689,7 +3606,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetBlockSize(JNIEnv *je
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     if (!jarg2) {
@@ -3727,14 +3643,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetBlockSize(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterColorInterpretation(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterColorInterpretation(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALColorInterp result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (GDALColorInterp)GDALRasterBandShadow_GetRasterColorInterpretation(arg1);
   jresult = (jint)result; 
@@ -3742,7 +3657,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterColorInterpret
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorInterpretation(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorInterpretation(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALColorInterp arg2 ;
@@ -3750,7 +3665,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorInterpret
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (GDALColorInterp)jarg2; 
   result = (CPLErr)GDALRasterBandShadow_SetRasterColorInterpretation(arg1,arg2);
@@ -3759,7 +3673,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorInterpret
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetNoDataValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetNoDataValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 = (double *) 0 ;
   int *arg3 = (int *) 0 ;
@@ -3768,7 +3682,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetNoDataValue(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     /* %typemap(in,numinputs=0) (double *val, int*hasval) */
@@ -3794,7 +3707,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetNoDataValue(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetNoDataValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetNoDataValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double arg2 ;
@@ -3802,7 +3715,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetNoDataValue(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   result = (CPLErr)GDALRasterBandShadow_SetNoDataValue(arg1,arg2);
@@ -3811,14 +3723,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetNoDataValue(JNIEnv *
 }
 
 
-SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterCategoryNames(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterCategoryNames(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jobject jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   char **result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (char **)GDALRasterBandShadow_GetRasterCategoryNames(arg1);
   {
@@ -3842,7 +3753,7 @@ SWIGEXPORT jobject JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterCategoryNam
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterCategoryNames(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterCategoryNames(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg2) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -3850,7 +3761,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterCategoryNames(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     /* %typemap(in) char **options */
@@ -3888,7 +3798,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterCategoryNames(
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMinimum(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMinimum(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 = (double *) 0 ;
   int *arg3 = (int *) 0 ;
@@ -3897,7 +3807,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMinimum(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     /* %typemap(in,numinputs=0) (double *val, int*hasval) */
@@ -3923,7 +3832,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMinimum(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaximum(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaximum(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 = (double *) 0 ;
   int *arg3 = (int *) 0 ;
@@ -3932,7 +3841,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaximum(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     /* %typemap(in,numinputs=0) (double *val, int*hasval) */
@@ -3958,7 +3866,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaximum(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOffset(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOffset(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 = (double *) 0 ;
   int *arg3 = (int *) 0 ;
@@ -3967,7 +3875,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOffset(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     /* %typemap(in,numinputs=0) (double *val, int*hasval) */
@@ -3993,7 +3900,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOffset(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetScale(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetScale(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 = (double *) 0 ;
   int *arg3 = (int *) 0 ;
@@ -4002,7 +3909,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetScale(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   {
     /* %typemap(in,numinputs=0) (double *val, int*hasval) */
@@ -4028,7 +3934,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetScale(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetStatistics(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jdoubleArray jarg4, jdoubleArray jarg5, jdoubleArray jarg6, jdoubleArray jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetStatistics(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jdoubleArray jarg4, jdoubleArray jarg5, jdoubleArray jarg6, jdoubleArray jarg7) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4045,7 +3951,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetStatistics(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4119,7 +4024,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetStatistics(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetStatistics(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetStatistics(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double arg2 ;
@@ -4130,7 +4035,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetStatistics(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4142,14 +4046,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetStatistics(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverviewCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverviewCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (int)GDALRasterBandShadow_GetOverviewCount(arg1);
   jresult = (jint)result; 
@@ -4157,7 +4060,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverviewCount(JNIEnv
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverview(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverview(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4165,7 +4068,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverview(JNIEnv *je
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (GDALRasterBandShadow *)GDALRasterBandShadow_GetOverview(arg1,arg2);
@@ -4174,7 +4076,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetOverview(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Checksum(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jintArray jarg4, jintArray jarg5) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Checksum(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jintArray jarg4, jintArray jarg5) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 = (int) 0 ;
@@ -4185,7 +4087,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Checksum(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4209,7 +4110,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Checksum(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeRasterMinMax(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2, jint jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeRasterMinMax(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2, jint jarg3) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 ;
   int arg3 = (int) 0 ;
@@ -4217,7 +4118,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeRasterMinMax(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 2) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -4231,7 +4131,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeRasterMinMax(JNI
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeBandStats(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2, jint jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeBandStats(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2, jint jarg3) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 ;
   int arg3 = (int) 1 ;
@@ -4239,7 +4139,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeBandStats(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 2) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -4253,7 +4152,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ComputeBandStats(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Fill(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Fill(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double arg2 ;
@@ -4262,7 +4161,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Fill(JNIEnv *jenv, jcla
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4272,7 +4170,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1Fill(JNIEnv *jenv, jcla
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jobjectArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jobjectArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4290,7 +4188,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4343,7 +4240,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jcharArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jcharArray jarg6, jintArray jarg8, jintArray jarg9, jintArray jarg10) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4360,7 +4257,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster(JNIEnv *jen
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4410,25 +4306,23 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster(JNIEnv *jen
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1FlushCache(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_Band_1FlushCache(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   GDALRasterBandShadow_FlushCache(arg1);
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterColorTable(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterColorTable(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALColorTableShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (GDALColorTableShadow *)GDALRasterBandShadow_GetRasterColorTable(arg1);
   *(GDALColorTableShadow **)&jresult = result; 
@@ -4436,7 +4330,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetRasterColorTable(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorTable(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorTable(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALColorTableShadow *arg2 = (GDALColorTableShadow *) 0 ;
@@ -4444,7 +4338,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorTable(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = *(GDALColorTableShadow **)&jarg2; 
   result = (int)GDALRasterBandShadow_SetRasterColorTable(arg1,arg2);
@@ -4453,14 +4346,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetRasterColorTable(JNI
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetDefaultRAT(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetDefaultRAT(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALRasterAttributeTableShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (GDALRasterAttributeTableShadow *)GDALRasterBandShadow_GetDefaultRAT(arg1);
   *(GDALRasterAttributeTableShadow **)&jresult = result; 
@@ -4468,7 +4360,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetDefaultRAT(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetDefaultRAT(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetDefaultRAT(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALRasterAttributeTableShadow *arg2 = (GDALRasterAttributeTableShadow *) 0 ;
@@ -4476,8 +4368,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetDefaultRAT(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = *(GDALRasterAttributeTableShadow **)&jarg2; 
   result = (int)GDALRasterBandShadow_SetDefaultRAT(arg1,arg2);
@@ -4486,14 +4376,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1SetDefaultRAT(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaskBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaskBand(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALRasterBandShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (GDALRasterBandShadow *)GDALRasterBandShadow_GetMaskBand(arg1);
   *(GDALRasterBandShadow **)&jresult = result; 
@@ -4501,14 +4390,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaskBand(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaskFlags(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaskFlags(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   result = (int)GDALRasterBandShadow_GetMaskFlags(arg1);
   jresult = (jint)result; 
@@ -4516,7 +4404,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1GetMaskFlags(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1CreateMaskBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1CreateMaskBand(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4524,7 +4412,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1CreateMaskBand(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (CPLErr)GDALRasterBandShadow_CreateMaskBand(arg1,arg2);
@@ -4533,7 +4420,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1CreateMaskBand(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster_1Direct(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jobject jarg9) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster_1Direct(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jobject jarg9) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4548,7 +4435,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster_1Direct(JNIE
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4567,7 +4453,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1ReadRaster_1Direct(JNIE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster_1Direct(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jobject jarg9) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster_1Direct(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jobject jarg9) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
@@ -4582,7 +4468,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_Band_1WriteRaster_1Direct(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4624,14 +4509,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_delete_1RasterAttributeTable(
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   GDALRasterAttributeTableShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   result = (GDALRasterAttributeTableShadow *)GDALRasterAttributeTableShadow_Clone(arg1);
   *(GDALRasterAttributeTableShadow **)&jresult = result; 
@@ -4639,14 +4523,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1Clone(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColumnCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColumnCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   result = (int)GDALRasterAttributeTableShadow_GetColumnCount(arg1);
   jresult = (jint)result; 
@@ -4654,7 +4537,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColu
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetNameOfCol(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetNameOfCol(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jstring jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
@@ -4662,7 +4545,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (char *)GDALRasterAttributeTableShadow_GetNameOfCol(arg1,arg2);
@@ -4671,7 +4553,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetUsageOfCol(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetUsageOfCol(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
@@ -4679,7 +4561,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetUsag
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (GDALRATFieldUsage)GDALRasterAttributeTableShadow_GetUsageOfCol(arg1,arg2);
@@ -4688,7 +4569,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetUsag
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetTypeOfCol(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetTypeOfCol(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
@@ -4696,7 +4577,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetType
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (GDALRATFieldType)GDALRasterAttributeTableShadow_GetTypeOfCol(arg1,arg2);
@@ -4705,7 +4585,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetType
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColOfUsage(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColOfUsage(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   GDALRATFieldUsage arg2 ;
@@ -4713,7 +4593,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColO
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (GDALRATFieldUsage)jarg2; 
   result = (int)GDALRasterAttributeTableShadow_GetColOfUsage(arg1,arg2);
@@ -4722,14 +4601,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetColO
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetRowCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetRowCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   result = (int)GDALRasterAttributeTableShadow_GetRowCount(arg1);
   jresult = (jint)result; 
@@ -4737,7 +4615,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetRowC
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValueAsString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValueAsString(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3) {
   jstring jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
@@ -4746,7 +4624,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetV
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4756,7 +4633,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetV
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValueAsInt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValueAsInt(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
@@ -4765,7 +4642,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValu
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4775,7 +4651,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValu
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValueAsDouble(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetValueAsDouble(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3) {
   jdouble jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
@@ -4784,7 +4660,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetV
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4794,7 +4669,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetV
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValueAsString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jstring jarg4) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValueAsString(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jstring jarg4) {
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
   int arg3 ;
@@ -4802,7 +4677,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValu
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4818,7 +4692,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValu
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValueAsInt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValueAsInt(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4) {
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
   int arg3 ;
@@ -4826,7 +4700,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValu
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4835,7 +4708,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValu
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValueAsDouble(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jdouble jarg4) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValueAsDouble(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jdouble jarg4) {
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
   int arg3 ;
@@ -4843,7 +4716,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValu
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -4852,20 +4724,19 @@ SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetValu
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetRowCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1SetRowCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   int arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   GDALRasterAttributeTableShadow_SetRowCount(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1CreateColumn(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jint jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1CreateColumn(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3, jint jarg4) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4875,7 +4746,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1CreateC
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4891,7 +4761,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1CreateC
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetRowOfValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetRowOfValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2) {
   jint jresult = 0 ;
   GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
   double arg2 ;
@@ -4899,7 +4769,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_RasterAttributeTable_1GetRowO
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALRasterAttributeTableShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   result = (int)GDALRasterAttributeTableShadow_GetRowOfValue(arg1,arg2);
@@ -4946,7 +4815,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_TermProgress_1get(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ComputeMedianCutPCT(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jobject jarg3_, jint jarg4, jlong jarg5, jlong jarg6, jobject jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ComputeMedianCutPCT(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jint jarg4, jlong jarg5, jlong jarg6, jobject jarg7) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALRasterBandShadow *arg2 = (GDALRasterBandShadow *) 0 ;
@@ -4960,9 +4829,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ComputeMedianCutPCT(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
-  (void)jarg3_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = *(GDALRasterBandShadow **)&jarg2; 
   arg3 = *(GDALRasterBandShadow **)&jarg3; 
@@ -4984,7 +4850,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ComputeMedianCutPCT(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_DitherRGB2PCT(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jobject jarg3_, jlong jarg4, jobject jarg4_, jlong jarg5, jlong jarg6, jobject jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_DitherRGB2PCT(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jlong jarg3, jlong jarg4, jlong jarg5, jlong jarg6, jobject jarg7) {
   jint jresult = 0 ;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   GDALRasterBandShadow *arg2 = (GDALRasterBandShadow *) 0 ;
@@ -4998,10 +4864,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_DitherRGB2PCT(JNIEnv *jenv, j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
-  (void)jarg3_;
-  (void)jarg4_;
   arg1 = *(GDALRasterBandShadow **)&jarg1; 
   arg2 = *(GDALRasterBandShadow **)&jarg2; 
   arg3 = *(GDALRasterBandShadow **)&jarg3; 
@@ -5023,7 +4885,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_DitherRGB2PCT(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ReprojectImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jstring jarg3, jstring jarg4, jint jarg5, jdouble jarg6, jdouble jarg7) {
+SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ReprojectImage(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jstring jarg4, jint jarg5, jdouble jarg6, jdouble jarg7) {
   jint jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
@@ -5036,8 +4898,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ReprojectImage(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = *(GDALDatasetShadow **)&jarg2; 
   arg3 = 0;
@@ -5061,7 +4921,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_gdal_gdalJNI_ReprojectImage(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_AutoCreateWarpedVRT(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jint jarg4, jdouble jarg5) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_AutoCreateWarpedVRT(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3, jint jarg4, jdouble jarg5) {
   jlong jresult = 0 ;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -5072,7 +4932,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_gdal_gdalJNI_AutoCreateWarpedVRT(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(GDALDatasetShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {

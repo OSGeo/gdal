@@ -2248,14 +2248,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_ODrCDeleteDataSource_1get(JN
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1name_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1name_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   result = (char *)OGRDriverShadow_name_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2263,7 +2262,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1name_1get(JNIEnv *je
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CreateDataSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jobject jarg3) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CreateDataSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jobject jarg3) {
   jlong jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2272,7 +2271,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CreateDataSource(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2316,7 +2314,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CreateDataSource(JNIEn
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CopyDataSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jstring jarg3, jobject jarg4) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CopyDataSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jobject jarg4) {
   jlong jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   OGRDataSourceShadow *arg2 = (OGRDataSourceShadow *) 0 ;
@@ -2326,8 +2324,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CopyDataSource(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   arg2 = *(OGRDataSourceShadow **)&jarg2; 
   arg3 = 0;
@@ -2372,7 +2368,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1CopyDataSource(JNIEnv 
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1Open(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1Open(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3) {
   jlong jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2381,7 +2377,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1Open(JNIEnv *jenv, jcl
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2396,7 +2391,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1Open(JNIEnv *jenv, jcl
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1DeleteDataSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1DeleteDataSource(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2404,7 +2399,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1DeleteDataSource(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2418,7 +2412,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1DeleteDataSource(JNIEnv
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1TestCapability(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1TestCapability(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jboolean jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2426,7 +2420,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1TestCapability(JNIE
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2440,14 +2433,13 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1TestCapability(JNIE
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDriverShadow **)&jarg1; 
   result = (char *)OGRDriverShadow_GetName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2455,14 +2447,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Driver_1GetName(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1name_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1name_1get(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   result = (char *)OGRDataSourceShadow_name_get(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2481,14 +2472,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_delete_1DataSource(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetRefCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetRefCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   result = (int)OGRDataSourceShadow_GetRefCount(arg1);
   jresult = (jint)result; 
@@ -2496,14 +2486,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetRefCount(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetSummaryRefCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetSummaryRefCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
   jresult = (jint)result; 
@@ -2511,14 +2500,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetSummaryRefCount(
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
   jresult = (jint)result; 
@@ -2526,14 +2514,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerCount(JNIEn
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetDriver(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetDriver(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   OGRDriverShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   result = (OGRDriverShadow *)OGRDataSourceShadow_GetDriver(arg1);
   *(OGRDriverShadow **)&jresult = result; 
@@ -2541,14 +2528,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetDriver(JNIEnv *
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   result = (char *)OGRDataSourceShadow_GetName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2556,7 +2542,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetName(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1DeleteLayer(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1DeleteLayer(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   int arg2 ;
@@ -2564,7 +2550,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1DeleteLayer(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
@@ -2585,7 +2570,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1DeleteLayer(JNIEnv 
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CreateLayer(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jlong jarg3, jobject jarg3_, jint jarg4, jobject jarg5) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CreateLayer(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jlong jarg3, jint jarg4, jobject jarg5) {
   jlong jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2596,8 +2581,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CreateLayer(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg3_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2643,7 +2626,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CreateLayer(JNIEnv
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CopyLayer(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jstring jarg3, jobject jarg4) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CopyLayer(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jstring jarg3, jobject jarg4) {
   jlong jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -2653,8 +2636,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CopyLayer(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = *(OGRLayerShadow **)&jarg2; 
   arg3 = 0;
@@ -2699,7 +2680,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1CopyLayer(JNIEnv *
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   int arg2 = (int) 0 ;
@@ -2707,7 +2688,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByIndex(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByIndex(arg1,arg2);
@@ -2716,7 +2696,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByIndex(JN
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByName(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jlong jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2724,7 +2704,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByName(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2738,7 +2717,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1GetLayerByName(JNI
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1TestCapability(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1TestCapability(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jboolean jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2746,7 +2725,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1TestCapability(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2760,7 +2738,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1TestCapability(
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1ExecuteSQL(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jlong jarg3, jobject jarg3_, jstring jarg4) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1ExecuteSQL(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jlong jarg3, jstring jarg4) {
   jlong jresult = 0 ;
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2770,8 +2748,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1ExecuteSQL(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg3_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2792,28 +2768,25 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1ExecuteSQL(JNIEnv 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1ReleaseResultSet(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_DataSource_1ReleaseResultSet(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRDataSourceShadow **)&jarg1; 
   arg2 = *(OGRLayerShadow **)&jarg2; 
   OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetRefCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetRefCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (int)OGRLayerShadow_GetRefCount(arg1);
   jresult = (jint)result; 
@@ -2821,21 +2794,19 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetRefCount(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetSpatialFilter(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetSpatialFilter(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   OGRLayerShadow_SetSpatialFilter(arg1,arg2);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetSpatialFilterRect(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetSpatialFilterRect(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   double arg2 ;
   double arg3 ;
@@ -2844,7 +2815,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetSpatialFilterRect(JNI
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -2854,14 +2824,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetSpatialFilterRect(JNI
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetSpatialFilter(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetSpatialFilter(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
   *(OGRGeometryShadow **)&jresult = result; 
@@ -2869,7 +2838,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetSpatialFilter(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetAttributeFilter(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetAttributeFilter(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -2877,7 +2846,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetAttributeFilter(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -2903,25 +2871,23 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetAttributeFilter(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1ResetReading(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1ResetReading(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   OGRLayerShadow_ResetReading(arg1);
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (char *)OGRLayerShadow_GetName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2929,14 +2895,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetName(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetGeometryColumn(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetGeometryColumn(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (char *)OGRLayerShadow_GetGeometryColumn(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2944,14 +2909,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetGeometryColumn(JNI
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFIDColumn(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFIDColumn(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (char *)OGRLayerShadow_GetFIDColumn(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -2959,7 +2923,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFIDColumn(JNIEnv *
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   long arg2 ;
@@ -2967,7 +2931,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeature(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = (long)jarg2; 
   result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
@@ -2976,14 +2939,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeature(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetNextFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetNextFeature(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRFeatureShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
   *(OGRFeatureShadow **)&jresult = result; 
@@ -2991,7 +2953,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetNextFeature(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetNextByIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetNextByIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   long arg2 ;
@@ -2999,7 +2961,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetNextByIndex(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = (long)jarg2; 
   result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
@@ -3020,7 +2981,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetNextByIndex(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
@@ -3028,8 +2989,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetFeature(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = *(OGRFeatureShadow **)&jarg2; 
   result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
@@ -3050,7 +3009,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SetFeature(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
@@ -3058,8 +3017,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateFeature(JNIEnv *je
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = *(OGRFeatureShadow **)&jarg2; 
   result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
@@ -3080,7 +3037,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateFeature(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1DeleteFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1DeleteFeature(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   long arg2 ;
@@ -3088,7 +3045,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1DeleteFeature(JNIEnv *je
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = (long)jarg2; 
   result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
@@ -3109,14 +3065,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1DeleteFeature(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SyncToDisk(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SyncToDisk(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
   {
@@ -3136,14 +3091,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1SyncToDisk(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetLayerDefn(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetLayerDefn(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRFeatureDefnShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
   *(OGRFeatureDefnShadow **)&jresult = result; 
@@ -3151,7 +3105,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetLayerDefn(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeatureCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeatureCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   int arg2 = (int) 1 ;
@@ -3159,7 +3113,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeatureCount(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (int)OGRLayerShadow_GetFeatureCount(arg1,arg2);
@@ -3168,7 +3121,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeatureCount(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetExtent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2, jint jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetExtent(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2, jint jarg3) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   double *arg2 ;
@@ -3178,7 +3131,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetExtent(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 4) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -3206,7 +3158,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetExtent(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1TestCapability(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1TestCapability(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jboolean jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3214,7 +3166,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1TestCapability(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3228,7 +3179,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1TestCapability(JNIEn
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateField(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateField(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRFieldDefnShadow *arg2 = (OGRFieldDefnShadow *) 0 ;
@@ -3237,8 +3188,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateField(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   arg2 = *(OGRFieldDefnShadow **)&jarg2; 
   arg3 = (int)jarg3; 
@@ -3260,14 +3209,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CreateField(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1StartTransaction(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1StartTransaction(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
   {
@@ -3287,14 +3235,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1StartTransaction(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CommitTransaction(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CommitTransaction(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
   {
@@ -3314,14 +3261,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1CommitTransaction(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1RollbackTransaction(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1RollbackTransaction(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRErr result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
   {
@@ -3341,14 +3287,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1RollbackTransaction(JNIE
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetSpatialRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetSpatialRef(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OSRSpatialReferenceShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
   *(OSRSpatialReferenceShadow **)&jresult = result; 
@@ -3356,14 +3301,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetSpatialRef(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeaturesRead(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Layer_1GetFeaturesRead(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   GIntBig result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRLayerShadow **)&jarg1; 
   result = OGRLayerShadow_GetFeaturesRead(arg1);
   *(GIntBig **)&jresult = new GIntBig((GIntBig &)result); 
@@ -3382,14 +3326,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_delete_1Feature(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_new_1Feature(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_new_1Feature(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   OGRFeatureShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
   *(OGRFeatureShadow **)&jresult = result; 
@@ -3397,14 +3340,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_new_1Feature(JNIEnv *jenv, jcl
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetDefnRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetDefnRef(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRFeatureDefnShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
   *(OGRFeatureDefnShadow **)&jresult = result; 
@@ -3412,7 +3354,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetDefnRef(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometry(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometry(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -3420,8 +3362,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometry(JNIEnv *je
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
@@ -3442,7 +3382,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometry(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometryDirectly(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometryDirectly(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -3450,8 +3390,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometryDirectly(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
@@ -3472,14 +3410,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetGeometryDirectly(JN
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetGeometryRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetGeometryRef(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
   *(OGRGeometryShadow **)&jresult = result; 
@@ -3487,14 +3424,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetGeometryRef(JNIEnv
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRFeatureShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
   *(OGRFeatureShadow **)&jresult = result; 
@@ -3502,7 +3438,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Clone(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Equal(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Equal(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
@@ -3510,8 +3446,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Equal(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = *(OGRFeatureShadow **)&jarg2; 
   result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
@@ -3520,14 +3454,13 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1Equal(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   result = (int)OGRFeatureShadow_GetFieldCount(arg1);
   jresult = (jint)result; 
@@ -3535,7 +3468,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldCount(JNIEnv *
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -3543,7 +3476,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SW
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
@@ -3552,7 +3484,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SW
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jlong jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3560,7 +3492,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SW
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3574,7 +3505,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldDefnRef_1_1SW
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jstring jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -3582,7 +3513,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
@@ -3591,7 +3521,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jstring jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3599,7 +3529,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3613,7 +3542,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsString_1_
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -3621,7 +3550,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1S
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
@@ -3630,7 +3558,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1S
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3638,7 +3566,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1S
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3652,7 +3579,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsInteger_1_1S
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jdouble jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -3660,7 +3587,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
@@ -3669,7 +3595,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jdouble jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3677,7 +3603,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3691,7 +3616,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldAsDouble_1_
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jboolean jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -3699,7 +3624,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
@@ -3708,7 +3632,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jboolean jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3716,7 +3640,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3730,7 +3653,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1IsFieldSet_1_1SWIG
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3738,7 +3661,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldIndex(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3752,14 +3674,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldIndex(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFID(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFID(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   result = (int)OGRFeatureShadow_GetFID(arg1);
   jresult = (jint)result; 
@@ -3767,7 +3688,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFID(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFID(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFID(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -3775,7 +3696,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFID(JNIEnv *jenv, j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
@@ -3796,37 +3716,34 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFID(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1DumpReadable(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1DumpReadable(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   OGRFeatureShadow_DumpReadable(arg1);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1UnsetField_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1UnsetField_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1UnsetField_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1UnsetField_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3838,14 +3755,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1UnsetField_1_1SWIG_11(
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jstring jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jstring jarg3) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
   char *arg3 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   {
@@ -3860,14 +3776,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_10(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jstring jarg3) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   char *arg3 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3887,14 +3802,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_11(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
   int arg3 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -3902,14 +3816,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_12(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   int arg3 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3922,14 +3835,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_13(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_14(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jdouble jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_14(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jdouble jarg3) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
   double arg3 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (double)jarg3; 
@@ -3937,14 +3849,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_14(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_15(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jdouble jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_15(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jdouble jarg3) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   double arg3 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -3957,7 +3868,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_15(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_16(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jint jarg9) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_16(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jint jarg9) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
   int arg3 ;
@@ -3970,7 +3881,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_16(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (int)jarg3; 
@@ -3984,7 +3894,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_16(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_17(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jint jarg9) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_17(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2, jint jarg3, jint jarg4, jint jarg5, jint jarg6, jint jarg7, jint jarg8, jint jarg9) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   int arg3 ;
@@ -3997,7 +3907,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_17(JN
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4016,7 +3925,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetField_1_1SWIG_17(JN
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFrom(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFrom(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2, jint jarg3) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
@@ -4025,8 +3934,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFrom(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = *(OGRFeatureShadow **)&jarg2; 
   arg3 = (int)jarg3; 
@@ -4048,14 +3955,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetFrom(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetStyleString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetStyleString(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   result = (char *)OGRFeatureShadow_GetStyleString(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4063,13 +3969,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetStyleString(JNIE
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetStyleString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetStyleString(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4081,7 +3986,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1SetStyleString(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   int arg2 ;
@@ -4089,7 +3994,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_1
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
@@ -4098,7 +4002,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_1
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4106,7 +4010,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Feature_1GetFieldType_1_1SWIG_1
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4150,14 +4053,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_new_1FeatureDefn(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   result = (char *)OGRFeatureDefnShadow_GetName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4165,14 +4067,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetName(JNIEnv 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
   jresult = (jint)result; 
@@ -4180,7 +4081,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldCount(JNIE
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldDefn(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldDefn(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   int arg2 ;
@@ -4188,7 +4089,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldDefn(JNIE
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
@@ -4197,7 +4097,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldDefn(JNIE
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jint jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -4205,7 +4105,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldIndex(JNIE
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4219,28 +4118,25 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetFieldIndex(JNIE
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1AddFieldDefn(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1AddFieldDefn(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   OGRFieldDefnShadow *arg2 = (OGRFieldDefnShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   arg2 = *(OGRFieldDefnShadow **)&jarg2; 
   OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetGeomType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetGeomType(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   OGRwkbGeometryType result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
   jresult = (jint)result; 
@@ -4248,27 +4144,25 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetGeomType(JNIEnv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1SetGeomType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1SetGeomType(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   OGRwkbGeometryType arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   arg2 = (OGRwkbGeometryType)jarg2; 
   OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetReferenceCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FeatureDefn_1GetReferenceCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFeatureDefnShadow **)&jarg1; 
   result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
   jresult = (jint)result; 
@@ -4308,14 +4202,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_new_1FieldDefn(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   result = (char *)OGRFieldDefnShadow_GetName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4323,14 +4216,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetName(JNIEnv *j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetNameRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetNameRef(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4338,13 +4230,12 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetNameRef(JNIEnv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetName(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4356,14 +4247,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetName(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldType(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   OGRFieldType result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
   jresult = (jint)result; 
@@ -4371,27 +4261,25 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldType(JNIEnv 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetType(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   OGRFieldType arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   arg2 = (OGRFieldType)jarg2; 
   OGRFieldDefnShadow_SetType(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetJustify(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetJustify(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   OGRJustification result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
   jresult = (jint)result; 
@@ -4399,27 +4287,25 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetJustify(JNIEnv *j
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetJustify(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetJustify(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   OGRJustification arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   arg2 = (OGRJustification)jarg2; 
   OGRFieldDefnShadow_SetJustify(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetWidth(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetWidth(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   result = (int)OGRFieldDefnShadow_GetWidth(arg1);
   jresult = (jint)result; 
@@ -4427,27 +4313,25 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetWidth(JNIEnv *jen
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetWidth(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetWidth(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   int arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   OGRFieldDefnShadow_SetWidth(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetPrecision(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetPrecision(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
   jresult = (jint)result; 
@@ -4455,20 +4339,19 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetPrecision(JNIEnv 
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetPrecision(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1SetPrecision(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   int arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   OGRFieldDefnShadow_SetPrecision(arg1,arg2);
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldTypeName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldTypeName(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jstring jresult = 0 ;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   OGRFieldType arg2 ;
@@ -4476,7 +4359,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldTypeName(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRFieldDefnShadow **)&jarg1; 
   arg2 = (OGRFieldType)jarg2; 
   result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
@@ -4485,7 +4367,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_FieldDefn_1GetFieldTypeName(
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkb(JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg3, jobject jarg3_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkb(JNIEnv *jenv, jclass jcls, jbyteArray jarg1, jlong jarg3) {
   jlong jresult = 0 ;
   int arg1 ;
   unsigned char *arg2 = (unsigned char *) 0 ;
@@ -4495,7 +4377,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkb(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg3_;
   {
     /* %typemap(in) (int nLen, char *pBuf ) */
     arg1 = jenv->GetArrayLength(jarg1);
@@ -4520,7 +4401,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkb(JNIEnv *
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkt(JNIEnv *jenv, jclass jcls, jstring jarg1, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkt(JNIEnv *jenv, jclass jcls, jstring jarg1, jlong jarg2) {
   jlong jresult = 0 ;
   char **arg1 = (char **) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) NULL ;
@@ -4529,7 +4410,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_CreateGeometryFromWkt(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg2_;
   {
     /* %typemap(in) (char **ignorechange) */
     val1 = (char *)jenv->GetStringUTFChars(jarg1, 0);
@@ -4595,7 +4475,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_delete_1Geometry(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkt(JNIEnv *jenv, jclass jcls, jlong jarg1, jobjectArray jarg2) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   char **arg2 = (char **) 0 ;
@@ -4604,7 +4484,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkt(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   {
     /* %typemap(in) (char **argout2) */
@@ -4644,14 +4523,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkt(JNIEnv *j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToGML(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToGML(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (char *)OGRGeometryShadow_ExportToGML(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4659,7 +4537,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToGML(JNIEnv
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToKML(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToKML(JNIEnv *jenv, jclass jcls, jlong jarg1, jstring jarg2) {
   jstring jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   char *arg2 = (char *) NULL ;
@@ -4667,7 +4545,6 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToKML(JNIEnv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -4681,14 +4558,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToKML(JNIEnv
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToJson(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToJson(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (char *)OGRGeometryShadow_ExportToJson(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4696,7 +4572,7 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToJson(JNIEn
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3, jdouble jarg4) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   double arg2 ;
   double arg3 ;
@@ -4704,7 +4580,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4713,14 +4588,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint_12D(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jdouble jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint_12D(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jdouble jarg3) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   double arg2 ;
   double arg3 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (double)jarg3; 
@@ -4728,7 +4602,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddPoint_12D(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometryDirectly(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometryDirectly(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -4736,8 +4610,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometryDirectly(J
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
@@ -4758,7 +4630,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometryDirectly(J
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometry(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometry(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -4766,8 +4638,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometry(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
@@ -4788,14 +4658,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AddGeometry(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
   *(OGRGeometryShadow **)&jresult = result; 
@@ -4803,14 +4672,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Clone(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryType(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRwkbGeometryType result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
   jresult = (jint)result; 
@@ -4818,14 +4686,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryType(JNIEn
 }
 
 
-SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryName(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jstring jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   char *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
   if(result) jresult = jenv->NewStringUTF((const char *)result);
@@ -4833,14 +4700,13 @@ SWIGEXPORT jstring JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryName(JN
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetArea(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetArea(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jdouble jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   double result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (double)OGRGeometryShadow_GetArea(arg1);
   jresult = (jdouble)result; 
@@ -4848,14 +4714,13 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetArea(JNIEnv *je
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPointCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPointCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (int)OGRGeometryShadow_GetPointCount(arg1);
   jresult = (jint)result; 
@@ -4863,7 +4728,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPointCount(JNIEnv 
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetX(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetX(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jdouble jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 = (int) 0 ;
@@ -4871,7 +4736,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetX(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (double)OGRGeometryShadow_GetX(arg1,arg2);
@@ -4880,7 +4744,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetX(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetY(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetY(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jdouble jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 = (int) 0 ;
@@ -4888,7 +4752,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetY(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (double)OGRGeometryShadow_GetY(arg1,arg2);
@@ -4897,7 +4760,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetY(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetZ(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetZ(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jdouble jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 = (int) 0 ;
@@ -4905,7 +4768,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetZ(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
@@ -4914,7 +4776,7 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetZ(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jdoubleArray jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jdoubleArray jarg3) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 = (int) 0 ;
   double *arg3 = (double *) (double *)NULL ;
@@ -4922,7 +4784,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   if (jarg3 && jenv->GetArrayLength(jarg3) != 3) {
@@ -4936,7 +4797,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint_12D(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jdoubleArray jarg3) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint_12D(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jdoubleArray jarg3) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 = (int) 0 ;
   double *arg3 = (double *) (double *)NULL ;
@@ -4944,7 +4805,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint_12D(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   if (jarg3 && jenv->GetArrayLength(jarg3) != 2) {
@@ -4958,14 +4818,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetPoint_12D(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryCount(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
   jresult = (jint)result; 
@@ -4973,7 +4832,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryCount(JNIE
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jdouble jarg3, jdouble jarg4, jdouble jarg5) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 ;
   double arg3 ;
@@ -4982,7 +4841,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint(JNIEnv *jenv
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (double)jarg3; 
@@ -4992,7 +4850,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint(JNIEnv *jenv
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint_12D(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jdouble jarg3, jdouble jarg4) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint_12D(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2, jdouble jarg3, jdouble jarg4) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 ;
   double arg3 ;
@@ -5000,7 +4858,6 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint_12D(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   arg3 = (double)jarg3; 
@@ -5009,7 +4866,7 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetPoint_12D(JNIEnv *
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryRef(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 ;
@@ -5017,7 +4874,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryRef(JNIEn
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
@@ -5026,14 +4882,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetGeometryRef(JNIEn
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetBoundary(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetBoundary(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
   *(OGRGeometryShadow **)&jresult = result; 
@@ -5041,14 +4896,13 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetBoundary(JNIEnv *
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ConvexHull(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ConvexHull(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
   *(OGRGeometryShadow **)&jresult = result; 
@@ -5056,7 +4910,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ConvexHull(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Buffer(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdouble jarg2, jint jarg3) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Buffer(JNIEnv *jenv, jclass jcls, jlong jarg1, jdouble jarg2, jint jarg3) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   double arg2 ;
@@ -5065,7 +4919,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Buffer(JNIEnv *jenv,
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (double)jarg2; 
   arg3 = (int)jarg3; 
@@ -5075,7 +4928,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Buffer(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersection(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersection(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5083,8 +4936,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersection(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
@@ -5093,7 +4944,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersection(JNIEnv 
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Union(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Union(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5101,8 +4952,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Union(JNIEnv *jenv, 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
@@ -5111,7 +4960,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Union(JNIEnv *jenv, 
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Difference(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Difference(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5119,8 +4968,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Difference(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
@@ -5129,7 +4976,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Difference(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SymmetricDifference(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SymmetricDifference(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5137,8 +4984,6 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SymmetricDifference(
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
@@ -5147,7 +4992,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SymmetricDifference(
 }
 
 
-SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Distance(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Distance(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jdouble jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5155,8 +5000,6 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Distance(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (double)OGRGeometryShadow_Distance(arg1,arg2);
@@ -5165,25 +5008,23 @@ SWIGEXPORT jdouble JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Distance(JNIEnv *j
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Empty(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Empty(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   OGRGeometryShadow_Empty(arg1);
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsEmpty(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsEmpty(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (bool)OGRGeometryShadow_IsEmpty(arg1);
   jresult = (jboolean)result; 
@@ -5191,14 +5032,13 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsEmpty(JNIEnv *j
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsValid(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsValid(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (bool)OGRGeometryShadow_IsValid(arg1);
   jresult = (jboolean)result; 
@@ -5206,14 +5046,13 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsValid(JNIEnv *j
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsSimple(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsSimple(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (bool)OGRGeometryShadow_IsSimple(arg1);
   jresult = (jboolean)result; 
@@ -5221,14 +5060,13 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsSimple(JNIEnv *
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsRing(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsRing(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (bool)OGRGeometryShadow_IsRing(arg1);
   jresult = (jboolean)result; 
@@ -5236,7 +5074,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1IsRing(JNIEnv *je
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersect(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersect(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5244,8 +5082,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersect(JNIEnv 
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
@@ -5254,7 +5090,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Intersect(JNIEnv 
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Equal(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Equal(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5262,8 +5098,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Equal(JNIEnv *jen
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
@@ -5272,7 +5106,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Equal(JNIEnv *jen
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Disjoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Disjoint(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5280,8 +5114,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Disjoint(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
@@ -5290,7 +5122,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Disjoint(JNIEnv *
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Touches(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Touches(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5298,8 +5130,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Touches(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
@@ -5308,7 +5138,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Touches(JNIEnv *j
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Crosses(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Crosses(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5316,8 +5146,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Crosses(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
@@ -5326,7 +5154,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Crosses(JNIEnv *j
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Within(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Within(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5334,8 +5162,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Within(JNIEnv *je
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Within(arg1,arg2);
@@ -5344,7 +5170,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Within(JNIEnv *je
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Contains(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Contains(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5352,8 +5178,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Contains(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
@@ -5362,7 +5186,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Contains(JNIEnv *
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Overlaps(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Overlaps(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jboolean jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
@@ -5370,8 +5194,6 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Overlaps(JNIEnv *
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OGRGeometryShadow **)&jarg2; 
   result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
@@ -5380,7 +5202,7 @@ SWIGEXPORT jboolean JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Overlaps(JNIEnv *
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1TransformTo(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1TransformTo(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
@@ -5388,8 +5210,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1TransformTo(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OSRSpatialReferenceShadow **)&jarg2; 
   result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
@@ -5410,7 +5230,7 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1TransformTo(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Transform(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Transform(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OSRCoordinateTransformationShadow *arg2 = (OSRCoordinateTransformationShadow *) 0 ;
@@ -5418,8 +5238,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Transform(JNIEnv *jen
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OSRCoordinateTransformationShadow **)&jarg2; 
   result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
@@ -5440,14 +5258,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Transform(JNIEnv *jen
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetSpatialReference(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetSpatialReference(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OSRSpatialReferenceShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
   *(OSRSpatialReferenceShadow **)&jresult = result; 
@@ -5455,50 +5272,45 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetSpatialReference(
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AssignSpatialReference(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1AssignSpatialReference(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OSRSpatialReferenceShadow *arg2 = (OSRSpatialReferenceShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = *(OSRSpatialReferenceShadow **)&jarg2; 
   OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1CloseRings(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1CloseRings(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   OGRGeometryShadow_CloseRings(arg1);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1FlattenTo2D(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1FlattenTo2D(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   OGRGeometryShadow_FlattenTo2D(arg1);
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetEnvelope(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jdoubleArray jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetEnvelope(JNIEnv *jenv, jclass jcls, jlong jarg1, jdoubleArray jarg2) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   double *arg2 ;
   jdouble *jarr2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   if (jarg2 && jenv->GetArrayLength(jarg2) != 4) {
     SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "incorrect array size");
@@ -5511,14 +5323,13 @@ SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetEnvelope(JNIEnv *j
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1WkbSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1WkbSize(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (int)OGRGeometryShadow_WkbSize(arg1);
   jresult = (jint)result; 
@@ -5526,14 +5337,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1WkbSize(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetCoordinateDimension(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetCoordinateDimension(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
   jresult = (jint)result; 
@@ -5541,27 +5351,25 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetCoordinateDimensio
 }
 
 
-SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetCoordinateDimension(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+SWIGEXPORT void JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1SetCoordinateDimension(JNIEnv *jenv, jclass jcls, jlong jarg1, jint jarg2) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   arg2 = (int)jarg2; 
   OGRGeometryShadow_SetCoordinateDimension(arg1,arg2);
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetDimension(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1GetDimension(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int result;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (int)OGRGeometryShadow_GetDimension(arg1);
   jresult = (jint)result; 
@@ -5617,7 +5425,7 @@ SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_new_1Geometry(JNIEnv *jenv, jc
 }
 
 
-SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkb(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jint jarg4) {
+SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkb(JNIEnv *jenv, jclass jcls, jlong jarg1, jbyteArray jarg2, jint jarg4) {
   jint jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   int arg2 ;
@@ -5628,7 +5436,6 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkb(JNIEnv *j
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   {
     /* %typemap(in) (int nLen, char *pBuf ) */
@@ -5666,14 +5473,13 @@ SWIGEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1ExportToWkb(JNIEnv *j
 }
 
 
-SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Centroid(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_org_gdal_ogr_ogrJNI_Geometry_1Centroid(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(OGRGeometryShadow **)&jarg1; 
   result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
   *(OGRGeometryShadow **)&jresult = result; 
