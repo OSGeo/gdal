@@ -45,7 +45,6 @@ OGRGeometryCollection::OGRGeometryCollection()
 {
     nGeomCount = 0;
     papoGeoms = NULL;
-    nCoordinateDimension = 2;
 }
 
 /************************************************************************/
@@ -56,7 +55,6 @@ OGRGeometryCollection::~OGRGeometryCollection()
 
 {
     empty();
-    nCoordinateDimension = 2;
 }
 
 /************************************************************************/
@@ -77,6 +75,7 @@ void OGRGeometryCollection::empty()
 
     nGeomCount = 0;
     papoGeoms = NULL;
+    nCoordDimension = 2;
 }
 
 
@@ -133,7 +132,7 @@ void OGRGeometryCollection::flattenTo2D()
     for( int i = 0; i < nGeomCount; i++ )
         papoGeoms[i]->flattenTo2D();
 
-    nCoordinateDimension = 2;
+    nCoordDimension = 2;
 }
 
 /************************************************************************/
@@ -277,7 +276,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
     nGeomCount++;
 
     if( poNewGeom->getCoordinateDimension() == 3 )
-        nCoordinateDimension = 3;
+        nCoordDimension = 3;
 
     return OGRERR_NONE;
 }
@@ -399,16 +398,9 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
 #endif    
 
 /* -------------------------------------------------------------------- */
-/*      Do we already have some existing geometry objects?              */
+/*      Clear existing Geoms.                                           */
 /* -------------------------------------------------------------------- */
-    if( nGeomCount != 0 )
-    {
-        for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
-            delete papoGeoms[iGeom];
-
-        OGRFree( papoGeoms );
-        papoGeoms = NULL;
-    }
+    empty();
     
 /* -------------------------------------------------------------------- */
 /*      Get the geometry count.                                         */
@@ -423,8 +415,6 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
     nDataOffset = 9;
     if( nSize != -1 )
         nSize -= nDataOffset;
-
-    nCoordinateDimension = 0; // unknown
 
 /* -------------------------------------------------------------------- */
 /*      Get the Geoms.                                                  */
@@ -442,6 +432,9 @@ OGRErr OGRGeometryCollection::importFromWkb( unsigned char * pabyData,
             nGeomCount = iGeom;
             return eErr;
         }
+
+        if (papoGeoms[iGeom]->getCoordinateDimension() == 3)
+            nCoordDimension = 3;
 
         if( nSize != -1 )
             nSize -= papoGeoms[iGeom]->WkbSize();
@@ -522,19 +515,11 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
-    int         iGeom;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing Geoms.                                           */
 /* -------------------------------------------------------------------- */
-    if( nGeomCount > 0 )
-    {
-        for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
-            delete papoGeoms[iGeom];
-        
-        nGeomCount = 0;
-        CPLFree( papoGeoms );
-    }
+    empty();
 
 /* -------------------------------------------------------------------- */
 /*      Read and verify the type keyword, and ensure it matches the     */
