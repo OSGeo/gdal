@@ -57,9 +57,28 @@ def rpftoc_2():
     gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'NO' )
     return res
 
+###############################################################################
+# Test reading the metadata
+
+def rpftoc_3():
+    ds = gdal.Open('data/A.TOC')
+    md = ds.GetMetadata('SUBDATASETS')
+    if not md.has_key('SUBDATASET_1_NAME') or md['SUBDATASET_1_NAME'] != 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC':
+        gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
+        return 'fail'
+
+    ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC')
+    md = ds.GetMetadata()
+    if not md.has_key('FILENAME_0') or (md['FILENAME_0'] != 'data/RPFTOC01.ON2' and md['FILENAME_0'] != 'data\\RPFTOC01.ON2'):
+        gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rpftoc_1,
-    rpftoc_2 ]
+    rpftoc_2,
+    rpftoc_3 ]
 
 if __name__ == '__main__':
 
