@@ -459,8 +459,6 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     int         nGeomCount;
     OGRGeometry **papoGeoms;
 
-    int         nCoordinateDimension;
-    
   public:
                 OGRGeometryCollection();
     virtual     ~OGRGeometryCollection();
