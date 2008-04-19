@@ -466,11 +466,13 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
             break;
 
           case wkbLineString:
+          case wkbMultiLineString:
             nShapeType = SHPT_ARC;
             eRequestedGeomType = wkbLineString;
             break;
 
           case wkbLineString25D:
+          case wkbMultiLineString25D:
             nShapeType = SHPT_ARCZ;
             eRequestedGeomType = wkbLineString25D;
             break;
