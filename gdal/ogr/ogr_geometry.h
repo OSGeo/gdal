@@ -456,6 +456,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     int         nGeomCount;
     OGRGeometry **papoGeoms;
 
+    /* This field is deprecated and will be removed in GDAL 1.6.0 */
     int         nCoordinateDimension;
     
   public:
