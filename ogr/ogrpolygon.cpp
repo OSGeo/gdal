@@ -634,6 +634,16 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
     OGRErr      eErr;
 
 /* -------------------------------------------------------------------- */
+/*      If we have no valid exterior ring, return POLYGON EMPTY.        */
+/* -------------------------------------------------------------------- */
+    if (getExteriorRing() == NULL ||
+        getExteriorRing()->IsEmpty())
+    {
+        *ppszDstText = CPLStrdup("POLYGON EMPTY");
+        return OGRERR_NONE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
 /* -------------------------------------------------------------------- */
     papszRings = (char **) CPLCalloc(sizeof(char *),nRingCount);
@@ -656,16 +666,6 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 
         nNonEmptyRings++;
     }
-    
-/* -------------------------------------------------------------------- */
-/*      If we have no valid rings, return POLYGON EMPTY.                */
-/* -------------------------------------------------------------------- */
-    if( nNonEmptyRings == 0 )
-    {
-        CPLFree( papszRings );
-        *ppszDstText = CPLStrdup("POLYGON EMPTY");
-        return OGRERR_NONE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate exactly the right amount of space for the              */
@@ -684,7 +684,10 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
     for( iRing = 0; iRing < nRingCount; iRing++ )
     {                                                           
         if( papszRings[iRing] == NULL )
+        {
+            CPLDebug( "OGR", "OGRPolygon::exportToWkt() - skipping empty ring.");
             continue;
+        }
 
         if( iRing > 0 )
             strcat( *ppszDstText, "," );
@@ -1019,8 +1022,8 @@ void OGRPolygon::setCoordinateDimension( int nNewDimension )
 
 OGRBoolean OGRPolygon::IsEmpty(  ) const
 {
-    if (nRingCount == 0)
-        return TRUE;
-    else
-        return OGRGeometry::IsEmpty();
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+        if (papoRings[iRing]->IsEmpty() == FALSE)
+            return FALSE;
+    return TRUE;
 }

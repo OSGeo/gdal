@@ -84,7 +84,7 @@ class CPL_DLL OGRGeometry
     // standard IGeometry
     virtual int getDimension() const = 0;
     virtual int getCoordinateDimension() const;
-    virtual OGRBoolean  IsEmpty() const; 
+    virtual OGRBoolean  IsEmpty() const = 0; 
     virtual OGRBoolean  IsValid() const;
     virtual OGRBoolean  IsSimple() const;
     virtual OGRBoolean  IsRing() const;
@@ -180,6 +180,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
+    virtual OGRBoolean  IsEmpty() const;
 
     // IPoint
     double      getX() const { return x; } 
@@ -200,8 +201,6 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
-
-    virtual OGRBoolean  IsEmpty() const;
 };
 
 /************************************************************************/
@@ -260,6 +259,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
+    virtual OGRBoolean  IsEmpty() const;
 
     // ICurve methods
     virtual double get_Length() const;
@@ -404,6 +404,7 @@ class CPL_DLL OGRPolygon : public OGRSurface
     virtual void empty();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
+    virtual OGRBoolean  IsEmpty() const;
     
     // ISurface Interface
     virtual double      get_Area() const;
@@ -439,8 +440,6 @@ class CPL_DLL OGRPolygon : public OGRSurface
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
     virtual void closeRings();
-
-    virtual OGRBoolean  IsEmpty() const;
 };
 
 /************************************************************************/
@@ -470,7 +469,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual void empty();
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
-    
+    virtual OGRBoolean  IsEmpty() const;
+
     // IWks Interface
     virtual int WkbSize() const;
     virtual OGRErr importFromWkb( unsigned char *, int = -1 );

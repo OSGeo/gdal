@@ -840,3 +840,15 @@ double OGRGeometryCollection::get_Area() const
 
     return dfArea;
 }
+
+/************************************************************************/
+/*                               IsEmpty()                              */
+/************************************************************************/
+
+OGRBoolean OGRGeometryCollection::IsEmpty(  ) const
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        if (papoGeoms[iGeom]->IsEmpty() == FALSE)
+            return FALSE;
+    return TRUE;
+}
