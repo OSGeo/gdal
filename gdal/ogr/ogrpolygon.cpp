@@ -1022,5 +1022,5 @@ OGRBoolean OGRPolygon::IsEmpty(  ) const
     if (nRingCount == 0)
         return TRUE;
     else
-        return OGRPolygon::IsEmpty();
+        return OGRGeometry::IsEmpty();
 }
