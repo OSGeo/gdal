@@ -287,13 +287,15 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 
     strcpy( pszAppendPoint, "MULTILINESTRING (" );
 
+    int bMustWriteComma = FALSE;
     for( iLine = 0; iLine < getNumGeometries(); iLine++ )
     {                                                           
         if( papszLines[iLine] == NULL )
             continue;
 
-        if( iLine > 0 )
+        if( bMustWriteComma )
             strcat( pszAppendPoint, "," );
+        bMustWriteComma = TRUE;
         
         strcat( pszAppendPoint, papszLines[iLine] + 11 );
         pszAppendPoint += strlen(pszAppendPoint);

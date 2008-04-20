@@ -564,38 +564,6 @@ void OGR_G_SetCoordinateDimension( OGRGeometryH hGeom, int nNewDimension)
     ((OGRGeometry *) hGeom)->setCoordinateDimension( nNewDimension );
 }
 
-
-/**
- * \fn OGRBoolean OGRGeometry::IsEmpty() const;
- *
- * Returns TRUE (non-zero) if the object has no points.  Normally this
- * returns FALSE except between when an object is instantiated and points
- * have been assigned.
- *
- * This method relates to the SFCOM IGeometry::IsEmpty() method.
- *
- * NOTE: This method is hardcoded to return FALSE at this time.
- *
- * @return TRUE if object is empty, otherwise FALSE.
- */
-
-/**
- * \fn OGRBoolean OGRGeometry::IsSimple() const;
- *
- * Returns TRUE if the geometry is simple.
- * 
- * Returns TRUE if the geometry has no anomalous geometric points, such
- * as self intersection or self tangency. The description of each
- * instantiable geometric class will include the specific conditions that
- * cause an instance of that class to be classified as not simple.
- *
- * This method relates to the SFCOM IGeometry::IsSimple() method.
- *
- * NOTE: This method is hardcoded to return TRUE at this time.
- *
- * @return TRUE if object is simple, otherwise FALSE.
- */
-
 /**
  * \fn int OGRGeometry::Equals( OGRGeometry *poOtherGeom ) const;
  *
@@ -1087,49 +1055,29 @@ void OGR_G_Empty( OGRGeometryH hGeom )
     ((OGRGeometry *) hGeom)->empty();
 }
 
+/**
+ * \fn OGRBoolean OGRGeometry::IsEmpty() const;
+ *
+ * Returns TRUE (non-zero) if the object has no points.  Normally this
+ * returns FALSE except between when an object is instantiated and points
+ * have been assigned.
+ *
+ * This method relates to the SFCOM IGeometry::IsEmpty() method.
+ *
+ * @return TRUE if object is empty, otherwise FALSE.
+ */
+
 /************************************************************************/
-/*                              IsEmpty()                               */
+/*                         OGR_G_IsEmpty()                              */
 /************************************************************************/
 
 /**
  * Test if the geometry is empty
  *
- * This method is the same as the C function OGR_G_IsEmpty().
- *
- * This method is built on the GEOS library, check it for the definition
- * of the geometry operation.
- * If OGR is built without the GEOS library, this method will always return 
- * FALSE. 
- *
+ * This method is the same as the CPP method OGRGeometry::IsEmpty().
  *
  * @return TRUE if the geometry has no points, otherwise FALSE.  
  */
-
-OGRBoolean
-OGRGeometry::IsEmpty(  ) const
-
-{
-#ifndef HAVE_GEOS
-
-    return FALSE;
-
-#else
-
-    OGRBoolean bResult = FALSE;
-    GEOSGeom hThisGeosGeom = NULL;
-    
-    hThisGeosGeom = exportToGEOS();
-
-    if( hThisGeosGeom != NULL  )
-    {
-        bResult = GEOSisEmpty( hThisGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-    }
-
-    return bResult;
-
-#endif /* HAVE_GEOS */
-}
 
 int OGR_G_IsEmpty( OGRGeometryH hGeom )
 
@@ -1230,6 +1178,22 @@ OGRGeometry::IsSimple(  ) const
 
 #endif /* HAVE_GEOS */
 }
+
+
+/**
+ * Returns TRUE if the geometry is simple.
+ * 
+ * Returns TRUE if the geometry has no anomalous geometric points, such
+ * as self intersection or self tangency. The description of each
+ * instantiable geometric class will include the specific conditions that
+ * cause an instance of that class to be classified as not simple.
+ *
+ * This method relates to the SFCOM IGeometry::IsSimple() method.
+ *
+ * NOTE: This method is hardcoded to return TRUE at this time.
+ *
+ * @return TRUE if object is simple, otherwise FALSE.
+ */
 
 int OGR_G_IsSimple( OGRGeometryH hGeom )
 
