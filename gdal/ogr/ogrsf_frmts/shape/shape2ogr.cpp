@@ -315,9 +315,9 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 
 {
 /* ==================================================================== */
-/*      Write "shape" with no geometry.                                 */
+/*      Write "shape" with no geometry or with empty geometry           */
 /* ==================================================================== */
-    if( poGeom == NULL )
+    if( poGeom == NULL || poGeom->IsEmpty() )
     {
         SHPObject       *psShape;
 
@@ -383,17 +383,26 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         padfY = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
         padfZ = (double *) CPLCalloc(sizeof(double),poMP->getNumGeometries());
 
+        int iDstPoints = 0;
         for( iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
         {
             OGRPoint    *poPoint = (OGRPoint *) poMP->getGeometryRef(iPoint);
-            
-            padfX[iPoint] = poPoint->getX();
-            padfY[iPoint] = poPoint->getY();
-            padfZ[iPoint] = poPoint->getZ();
+
+            /* Ignore POINT EMPTY */
+            if (poPoint->IsEmpty() == FALSE)
+            {
+                padfX[iDstPoints] = poPoint->getX();
+                padfY[iDstPoints] = poPoint->getY();
+                padfZ[iDstPoints] = poPoint->getZ();
+                iDstPoints ++;
+            }
+            else
+                CPLDebug( "OGR", 
+                              "Ignore POINT EMPTY inside MULTIPOINT in shapefile writer." );
         }
 
         psShape = SHPCreateSimpleObject( hSHP->nShapeType,
-                                         poMP->getNumGeometries(),
+                                         iDstPoints,
                                          padfX, padfY, padfZ );
         SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
@@ -415,17 +424,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         double          *padfX, *padfY, *padfZ;
         int             iPoint;
         SHPObject       *psShape;
-
-        if( poGeom->getGeometryType() != wkbLineString
-            && poGeom->getGeometryType() != wkbLineString25D )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to write non-linestring (%s) geometry to "
-                      "ARC type shapefile.",
-                      poGeom->getGeometryName() );
-
-            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-        }
 
         padfX = (double *) CPLMalloc(sizeof(double)*poArc->getNumPoints());
         padfY = (double *) CPLMalloc(sizeof(double)*poArc->getNumPoints());
@@ -460,6 +458,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         int             iGeom, iPoint, nPointCount = 0;
         SHPObject       *psShape;
         int             *panRingStart;
+        int             nParts = 0;
 
         poML = (OGRMultiLineString *) 
             OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
@@ -484,7 +483,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                 poML->getGeometryRef(iGeom);
             int nNewPoints = poArc->getNumPoints();
 
-            panRingStart[iGeom] = nPointCount;
+            /* Ignore LINESTRING EMPTY */
+            if (nNewPoints == 0)
+                continue;
+            else
+                CPLDebug( "OGR", 
+                              "Ignore LINESTRING EMPTY inside MULTILINESTRING in shapefile writer." );
+
+            panRingStart[nParts ++] = nPointCount;
 
             padfX = (double *) 
                 CPLRealloc( padfX, sizeof(double)*(nNewPoints+nPointCount) );
@@ -501,11 +507,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                 nPointCount++;
             }
         }
-        
+
+        CPLAssert(nParts != 0);
+
         psShape = SHPCreateObject( hSHP->nShapeType, iShape, 
-                                   poML->getNumGeometries(), 
-                                   panRingStart, NULL,
-                                   nPointCount, padfX, padfY, padfZ, NULL);
+                                    nParts, 
+                                    panRingStart, NULL,
+                                    nPointCount, padfX, padfY, padfZ, NULL);
         SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
@@ -536,7 +544,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         {
             poPoly =  (OGRPolygon *) poGeom;
 
-            if( poPoly->getExteriorRing() == NULL )
+            if( poPoly->getExteriorRing() == NULL ||
+                poPoly->getExteriorRing()->IsEmpty() )
             {
                 CPLDebug( "OGR", 
                           "Ignore POLYGON EMPTY in shapefile writer." );
@@ -544,14 +553,22 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             }
             else
             {
-                nRings = poPoly->getNumInteriorRings()+1;
-                papoRings = (OGRLinearRing **) CPLMalloc(sizeof(void*)*nRings);
-                for( iRing = 0; iRing < nRings; iRing++ )
+                int nSrcRings = poPoly->getNumInteriorRings()+1;
+                nRings = 0;
+                papoRings = (OGRLinearRing **) CPLMalloc(sizeof(void*)*nSrcRings);
+                for( iRing = 0; iRing < nSrcRings; iRing++ )
                 {
                     if( iRing == 0 )
-                        papoRings[iRing] = poPoly->getExteriorRing();
+                        papoRings[nRings] = poPoly->getExteriorRing();
                     else
-                        papoRings[iRing] = poPoly->getInteriorRing( iRing-1 );
+                        papoRings[nRings] = poPoly->getInteriorRing( iRing-1 );
+
+                    /* Ignore LINEARRING EMPTY */
+                    if (papoRings[nRings]->getNumPoints() != 0)
+                        nRings ++;
+                    else
+                        CPLDebug( "OGR", 
+                                "Ignore LINEARRING EMPTY inside POLYGON in shapefile writer." );
                 }
             }
         }
@@ -578,10 +595,12 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                     return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
 
-                if( poPoly->getExteriorRing() == NULL )
+                /* Ignore POLYGON EMPTY */
+                if( poPoly->getExteriorRing() == NULL ||
+                    poPoly->getExteriorRing()->IsEmpty() )
                 {
                     CPLDebug( "OGR", 
-                              "Ignore POLYGON EMPTY in shapefile writer." );
+                              "Ignore POLYGON EMPTY inside MULTIPOLYGON in shapefile writer." );
                     continue;
                 }
 
@@ -592,12 +611,18 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                      iRing++ )
                 {
                     if( iRing == 0 )
-                        papoRings[nRings+iRing] = poPoly->getExteriorRing();
+                        papoRings[nRings] = poPoly->getExteriorRing();
                     else
-                        papoRings[nRings+iRing] = 
+                        papoRings[nRings] = 
                             poPoly->getInteriorRing( iRing-1 );
+
+                    /* Ignore LINEARRING EMPTY */
+                    if (papoRings[nRings]->getNumPoints() != 0)
+                        nRings ++;
+                    else
+                        CPLDebug( "OGR", 
+                              "Ignore LINEARRING EMPTY inside POLYGON in shapefile writer." );
                 }
-                nRings += poPoly->getNumInteriorRings()+1;
             }
         }
         else 
