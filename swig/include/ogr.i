@@ -1460,6 +1460,9 @@ void OGRRegisterAll();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
+        CPLDebug( "SWIG", 
+		  "OGROpen() succeeded, but an error is posted, so we destroy"
+		  " the datasource and fail at swig level." );
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
