@@ -1011,7 +1011,6 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
                                int nCoordSysCode )
 
 {
-#ifdef notdef
 /* -------------------------------------------------------------------- */
 /*      Special cases for well known and common values.  We short       */
 /*      circuit these to save time doing file lookups.                  */
@@ -1033,7 +1032,6 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
                             "Latitude", OAO_North, 
                             "Longitude", OAO_East );
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Get the definition from the coordinate_axis.csv file.           */
@@ -1231,7 +1229,10 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 /*      Set axes                                                        */
 /* -------------------------------------------------------------------- */
     if( nCSC > 0 )
+    {
         SetEPSGAxisInfo( poSRS, "GEOGCS", nCSC );
+        CPLErrorReset();
+    }
 
     return OGRERR_NONE;
 }
@@ -1524,7 +1525,10 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /*      Set axes                                                        */
 /* -------------------------------------------------------------------- */
     if( nCSC > 0 )
+    {
         SetEPSGAxisInfo( poSRS, "PROJCS", nCSC );
+        CPLErrorReset();
+    }
 
     return OGRERR_NONE;
 }
