@@ -1246,3 +1246,12 @@ OGRErr OGRLineString::transform( OGRCoordinateTransformation *poCT )
     }
 #endif
 }
+
+/************************************************************************/
+/*                               IsEmpty()                              */
+/************************************************************************/
+
+OGRBoolean OGRLineString::IsEmpty(  ) const
+{
+    return (nPointCount == 0);
+}
