@@ -314,13 +314,15 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
     strcpy( *ppszDstText, "MULTIPOLYGON (" );
 
+    int bMustWriteComma = FALSE;
     for( iLine = 0; iLine < getNumGeometries(); iLine++ )
     {                                                           
         if( papszLines[iLine] == NULL )
             continue;
 
-        if( iLine > 0 )
+        if( bMustWriteComma )
             strcat( *ppszDstText, "," );
+        bMustWriteComma = TRUE;
         
         strcat( *ppszDstText, papszLines[iLine] + 8 );
         VSIFree( papszLines[iLine] );
