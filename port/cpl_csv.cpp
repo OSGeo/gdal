@@ -56,6 +56,8 @@ typedef struct ctb {
 
     int         iLastLine;
 
+    int         bNonUniqueKey;
+
     /* Cache for whole file */
     int         nLineCount;
     char        **papszLines;
@@ -129,6 +131,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 
     psTable->fp = fp;
     psTable->pszFilename = CPLStrdup( pszFilename );
+    psTable->bNonUniqueKey = FALSE; /* as far as we know now */
     psTable->psNext = *ppsCSVTableList;
     
     *ppsCSVTableList = psTable;
@@ -599,7 +602,10 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
             // if a key is not unique, select the first instance of it.
             while( iResult > 0 
                    && psTable->panLineIndex[iResult-1] == nKeyValue )
+            {
+                psTable->bNonUniqueKey = TRUE; 
                 iResult--;
+            }
             break;
         }
     }
@@ -698,6 +704,12 @@ char **CSVGetNextLine( const char *pszFilename )
         return NULL;
     
 /* -------------------------------------------------------------------- */
+/*      If we use CSVGetNextLine() we can pretty much assume we have    */
+/*      a non-unique key.                                               */
+/* -------------------------------------------------------------------- */
+    psTable->bNonUniqueKey = TRUE; 
+
+/* -------------------------------------------------------------------- */
 /*      Do we have a next line available?  This only works for          */
 /*      ingested tables I believe.                                      */
 /* -------------------------------------------------------------------- */
@@ -745,7 +757,8 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 /* -------------------------------------------------------------------- */
     if( iKeyField >= 0
         && iKeyField < CSLCount(psTable->papszRecFields)
-        && CSVCompare(pszValue,psTable->papszRecFields[iKeyField],eCriteria) )
+        && CSVCompare(pszValue,psTable->papszRecFields[iKeyField],eCriteria)
+        && !psTable->bNonUniqueKey )
     {
         return psTable->papszRecFields;
     }
