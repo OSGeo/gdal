@@ -94,6 +94,11 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     char        szHeader[1000];
     std::string osBasename, osModelFilename;
 
+    if (strlen(pszNewName) == 0)
+    {
+        return FALSE;
+    }
+
     char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
 
     osBasename = filenames[0];
