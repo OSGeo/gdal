@@ -683,7 +683,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 {
     OGRwkbByteOrder     eByteOrder;
     
-    if( nSize < 21 && nSize != -1 )
+    if( nSize < 9 && nSize != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
