@@ -162,6 +162,15 @@ def ogr_basic_5():
 
     return 'success'
 
+
+###############################################################################
+# Test opening a dataset with an empty string and a non existing dataset
+def ogr_basic_6():
+
+    ogr.Open( '' )
+    ogr.Open( 'non_existing' )
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -178,6 +187,7 @@ gdaltest_list = [
     ogr_basic_3,
     ogr_basic_4,
     ogr_basic_5,
+    ogr_basic_6,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
