@@ -721,6 +721,321 @@ def ogr_shape_21():
 
     return 'success'
 
+
+###############################################################################
+# Test writing and reading all handled data types
+
+def ogr_shape_22():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    #######################################################
+    # Create memory Layer
+    gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp', update = 1)
+    gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( 'datatypes' )
+
+    #######################################################
+    # Setup Schema
+    ogrtest.quick_create_layer_def( gdaltest.shape_lyr,
+                                    [ ('REAL', ogr.OFTReal),
+                                      ('INTEGER', ogr.OFTInteger),
+                                      ('STRING', ogr.OFTString),
+                                      ('DATE', ogr.OFTDate) ] )
+
+    #######################################################
+    # Create a feature
+    dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+    dst_feat.SetField( 'REAL', 1.2 )
+    dst_feat.SetField( 'INTEGER', 3 )
+    dst_feat.SetField( 'STRING', 'aString' )
+    dst_feat.SetField( 'DATE', '2005/10/12' )
+    gdaltest.shape_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    gdaltest.shape_ds.Destroy()
+
+    #######################################################
+    # Read back the feature
+    gdaltest.shape_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp', update = 1)
+    gdaltest.shape_lyr = gdaltest.shape_ds.GetLayerByName( 'datatypes' )
+    feat_read = gdaltest.shape_lyr.GetNextFeature()
+    if feat_read.GetField('REAL') != 1.2 or \
+       feat_read.integer != 3 or \
+       feat_read.GetField('STRING') != 'aString' or \
+       feat_read.GetFieldAsString('DATE') != '2005/10/12':
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Function used internaly by ogr_shape_23
+
+def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, isEmpty):
+
+    #######################################################
+    # Create a layer
+    if wkbType == ogr.wkbUnknown:
+        gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( layer_name )
+    else:
+        gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( layer_name, geom_type = wkbType )
+
+    #######################################################
+    # Write a geometry
+    dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+    gdaltest.shape_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    #######################################################
+    # Write an invalid geometry for this layer type
+    dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(invalid_wkt))
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdaltest.shape_lyr.CreateFeature( dst_feat )
+    gdal.PopErrorHandler()
+    dst_feat.Destroy()
+
+
+    #######################################################
+    # Check feature
+
+    gdaltest.shape_lyr.SyncToDisk()
+    tmp_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp')
+    read_lyr = tmp_ds.GetLayerByName( layer_name )
+    if read_lyr.GetFeatureCount() != 1:
+        return 'fail'
+    feat_read = read_lyr.GetNextFeature()
+    tmp_ds.Destroy()
+
+    if isEmpty and feat_read.GetGeometryRef() == None:
+        return 'success'
+
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt(wkt),
+                                max_error = 0.000000001 ) != 0:
+        print feat_read.GetGeometryRef().ExportToWkt()
+        return 'fail'
+
+    return 'success'
+
+
+def ogr_shape_23_write_geom(layer_name, geom, expected_geom, wkbType):
+
+    #######################################################
+    # Create a layer
+    if wkbType == ogr.wkbUnknown:
+        gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( layer_name )
+    else:
+        gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( layer_name, geom_type = wkbType )
+
+    #######################################################
+    # Write a geometry
+    dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(geom)
+    gdaltest.shape_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    #######################################################
+    # Check feature
+
+    gdaltest.shape_lyr.SyncToDisk()
+    tmp_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp')
+    read_lyr = tmp_ds.GetLayerByName( layer_name )
+    if read_lyr.GetFeatureCount() != 1:
+        return 'fail'
+    feat_read = read_lyr.GetNextFeature()
+    tmp_ds.Destroy()
+
+    if expected_geom is None:
+        if feat_read.GetGeometryRef() is not None:
+            print feat_read.GetGeometryRef().ExportToWkt()
+            return 'fail'
+        else:
+            return 'success'
+
+    if ogrtest.check_feature_geometry(feat_read,expected_geom,
+                                max_error = 0.000000001 ) != 0:
+        print feat_read.GetGeometryRef().ExportToWkt()
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test writing and reading all handled geometry types
+
+def ogr_shape_23():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    test_geom_array = [
+        ('points', 'POINT(0 1)', 'LINESTRING(0 1)', ogr.wkbPoint),
+        ('points25D', 'POINT(0 1 2)', 'LINESTRING(0 1)', ogr.wkbPoint25D),
+        ('multipoints', 'MULTIPOINT(0 1,2 3)', 'POINT (0 1)', ogr.wkbMultiPoint),
+        ('multipoints25D', 'MULTIPOINT(0 1 2,3 4 5)', 'POINT (0 1)', ogr.wkbMultiPoint25D),
+        ('linestrings', 'LINESTRING(0 1,2 3,4 5,0 1)', 'POINT (0 1)', ogr.wkbLineString),
+        ('linestrings25D', 'LINESTRING(0 1 2,3 4 5,6 7 8,0 1 2)', 'POINT (0 1)', ogr.wkbLineString25D),
+        ('multilinestrings', 'MULTILINESTRING((0 1,2 3,4 5,0 1), (0 1,2 3,4 5,0 1))', 'POINT (0 1)', ogr.wkbMultiLineString),
+        ('multilinestrings25D', 'MULTILINESTRING((0 1 2,3 4 5,6 7 8,0 1 2),(0 1 2,3 4 5,6 7 8,0 1 2))', 'POINT (0 1)', ogr.wkbMultiLineString25D),
+        ('polygons', 'POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5))', 'POINT (0 1)', ogr.wkbPolygon),
+        ('polygons25D', 'POLYGON((0 1 2,3 4 5,6 7 8,0 1 2))', 'POINT (0 1)', ogr.wkbPolygon25D),
+        ('multipolygons', 'MULTIPOLYGON(((0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))', 'POINT (0 1)', ogr.wkbMultiPolygon),
+        ('multipolygons25D', 'MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))', 'POINT (0 1)', ogr.wkbMultiPolygon25D),
+    ]
+
+    test_empty_geom_array = [
+        ('emptypoints', 'POINT EMPTY', 'LINESTRING(0 1)', ogr.wkbPoint),
+        ('emptymultipoints', 'MULTIPOINT EMPTY', 'POINT(0 1)', ogr.wkbMultiPoint),
+        ('emptylinestrings', 'LINESTRING EMPTY', 'POINT(0 1)', ogr.wkbLineString),
+        ('emptymultilinestrings', 'MULTILINESTRING EMPTY', 'POINT(0 1)', ogr.wkbMultiLineString),
+        ('emptypolygons', 'POLYGON EMPTY', 'POINT(0 1)', ogr.wkbPolygon),
+        ('emptymultipolygons', 'MULTIPOLYGON EMPTY', 'POINT(0 1)', ogr.wkbMultiPolygon),
+    ]
+
+    #######################################################
+    # Write a feature in a new layer (geometry type unset at layer creation)
+
+    for item in test_geom_array:
+        if ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], ogr.wkbUnknown, 0) != 'success':
+            gdaltest.post_reason( 'Test for layer %s failed' % item[0] )
+            return 'fail'
+    for item in test_empty_geom_array:
+        if ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], ogr.wkbUnknown, 1) != 'success':
+            gdaltest.post_reason( 'Test for layer %s failed' % item[0] )
+            return 'fail'
+
+    #######################################################
+    # Same test but use the wkb type when creating the layer
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    shape_drv.DeleteDataSource( 'tmp' )
+    gdaltest.shape_ds = shape_drv.CreateDataSource( 'tmp' )
+
+    for item in test_geom_array:
+        if ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], item[3], 0) != 'success':
+            gdaltest.post_reason( '(2) Test for layer %s failed' % item[0] )
+            return 'fail'
+    for item in test_empty_geom_array:
+        if ogr_shape_23_write_valid_and_invalid(item[0], item[1], item[2], item[3], 1) != 'success':
+            gdaltest.post_reason( '(2) Test for layer %s failed' % item[0] )
+            return 'fail'
+
+    #######################################################
+    # Test writing of a geometrycollection
+    layer_name = 'geometrycollections'
+    gdaltest.shape_lyr = gdaltest.shape_ds.CreateLayer( layer_name, geom_type = ogr.wkbMultiPolygon )
+
+    # This geometry collection is not compatible with a multipolygon layer
+    geom = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT (0 0))')
+    dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(geom)
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdaltest.shape_lyr.CreateFeature( dst_feat )
+    gdal.PopErrorHandler()
+    dst_feat.Destroy()
+
+    # This geometry will be dealt as a multipolygon
+    wkt = 'GEOMETRYCOLLECTION(POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),POLYGON((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry(geom)
+    gdaltest.shape_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    gdaltest.shape_lyr.SyncToDisk()
+    tmp_ds = ogr.GetDriverByName('ESRI Shapefile').Open('tmp')
+    read_lyr = tmp_ds.GetLayerByName( layer_name )
+    feat_read = read_lyr.GetNextFeature()
+    tmp_ds.Destroy()
+
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))'),
+                                max_error = 0.000000001 ) != 0:
+        print feat_read.GetGeometryRef().ExportToWkt()
+        return 'fail'
+
+
+    #######################################################
+    # Test writing of a multipoint with an empty point inside
+    layer_name = 'strangemultipoints'
+    wkt = 'MULTIPOINT(0 1)'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbPoint ))
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    #######################################################
+    # Test writing of a multilinestring with an empty linestring inside
+    layer_name = 'strangemultilinestrings'
+    wkt = 'MULTILINESTRING((0 1,2 3,4 5,0 1), (0 1,2 3,4 5,0 1))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbLineString ))
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    #######################################################
+    # Test writing of a polygon with an empty external ring
+    layer_name = 'polygonwithemptyexternalring'
+    geom = ogr.CreateGeometryFromWkt('POLYGON EMPTY')
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
+    ring = ogr.Geometry( type = ogr.wkbLinearRing )
+    ring.AddPoint_2D( 0, 0)
+    ring.AddPoint_2D( 10, 0)
+    ring.AddPoint_2D( 10, 10)
+    ring.AddPoint_2D( 0, 10)
+    ring.AddPoint_2D( 0, 0)
+    geom.AddGeometry(ring)
+
+    if ogr_shape_23_write_geom(layer_name, geom, None, ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    #######################################################
+    # Test writing of a polygon with an empty external ring
+    layer_name = 'polygonwithemptyinternalring'
+    wkt = 'POLYGON((100 0,100 10,110 10,100 0))';
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    #######################################################
+    # Test writing of a multipolygon with an empty polygon and a polygon with an empty external ring
+    layer_name = 'strangemultipolygons'
+    wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0)), ((100 0,100 10,110 10,100 0)))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
+    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))');
+    poly.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
+    geom.AddGeometry(poly)
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    #######################################################
+    # Test writing of a geometry collection
+    layer_name = 'strangemultipolygons'
+    wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0)), ((100 0,100 10,110 10,100 0)))'
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
+    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))');
+    poly.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
+    geom.AddGeometry(poly)
+
+    if ogr_shape_23_write_geom(layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown) != 'success':
+        gdaltest.post_reason( 'Test for layer %s failed' % layer_name )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -759,6 +1074,8 @@ gdaltest_list = [
     ogr_shape_19,
     ogr_shape_20,
     ogr_shape_21,
+    ogr_shape_22,
+    ogr_shape_23,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
