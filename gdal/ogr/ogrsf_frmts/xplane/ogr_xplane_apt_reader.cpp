@@ -754,6 +754,97 @@ void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
     }
 }
 
+static OGRGeometry* OGRXPlaneAptReaderSplitPolygon(OGRPolygon& polygon)
+{
+    OGRPolygon** papoPolygons = new OGRPolygon* [1 + polygon.getNumInteriorRings()];
+
+    papoPolygons[0] = new OGRPolygon();
+    papoPolygons[0]->addRing(polygon.getExteriorRing());
+    for(int i=0;i<polygon.getNumInteriorRings();i++)
+    {
+        papoPolygons[i+1] = new OGRPolygon();
+        papoPolygons[i+1]->addRing(polygon.getInteriorRing(i));
+    }
+
+    int bIsValid;
+    OGRGeometry* poGeom;
+    poGeom = OGRGeometryFactory::organizePolygons((OGRGeometry**)papoPolygons,
+                                                  1 + polygon.getNumInteriorRings(),
+                                                  &bIsValid);
+
+    delete[] papoPolygons;
+
+    return poGeom;
+}
+
+/************************************************************************/
+/*                           FixPolygonTopology()                       */
+/************************************************************************/
+
+/*
+Intended to fix several topological problems, like when a point of an interior ring
+is on the edge of the external ring, or other topological anomalies.
+*/
+
+OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
+{
+    OGRLinearRing* poExternalRing = polygon.getExteriorRing();
+    for(int i=0;i<polygon.getNumInteriorRings();i++)
+    {
+        OGRLinearRing* poInternalRing = polygon.getInteriorRing(i);
+        int nOutside = 0;
+        int jOutside = -1;
+        for(int j=0;j<poInternalRing->getNumPoints();j++)
+        {
+            OGRPoint pt;
+            poInternalRing->getPoint(j, &pt);
+            if (poExternalRing->isPointInRing(&pt) == FALSE)
+            {
+                nOutside++;
+                jOutside = j;
+            }
+        }
+
+        if (nOutside == 1)
+        {
+            int j = jOutside;
+            OGRPoint pt;
+            poInternalRing->getPoint(j, &pt);
+            OGRPoint newPt;
+            int bSuccess = FALSE;
+            for(int k=-1;k<=1 && !bSuccess;k+=2)
+            {
+                for(int l=-1;l<=1 && !bSuccess;l+=2)
+                {
+                    newPt.setX(pt.getX() + k * 1e-7);
+                    newPt.setY(pt.getY() + l * 1e-7);
+                    if (poExternalRing->isPointInRing(&newPt))
+                    {
+                        poInternalRing->setPoint(j, &newPt);
+                        bSuccess = TRUE;
+                    }
+                }
+            }
+            if (!bSuccess)
+            {
+                CPLDebug("XPLANE",
+                            "Didn't manage to fix polygon topology at line %d", nLineNumber);
+
+                /* Invalid topology. Will split into several pieces */
+                return OGRXPlaneAptReaderSplitPolygon(polygon);
+            }
+        }
+        else
+        {
+            /* Two parts. Or other strange cases */
+            return OGRXPlaneAptReaderSplitPolygon(polygon);
+        }
+    }
+
+    /* The geometry is right */
+    return polygon.clone();
+}
+
 /************************************************************************/
 /*                         ParsePolygonalGeometry()                     */
 /************************************************************************/
@@ -763,7 +854,7 @@ void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
 
 #define RET_FALSE_IF_FAIL(x)      if (!(x)) return FALSE;
 
-int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsValid)
+int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 {
     double dfLat, dfLon;
     double dfFirstLat = 0., dfFirstLon = 0.;
@@ -777,8 +868,11 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsVal
     int bLastIsBezier = FALSE;
     int bLastPartIsClosed = FALSE;
     const char* pszLine;
+    OGRPolygon polygon;
 
     OGRLinearRing linearRing;
+
+    *ppoGeom = NULL;
 
     while((pszLine = CPLReadLine(fp)) != NULL)
     {
@@ -797,7 +891,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsVal
             }
             else
             {
-                *pbIsValid = TRUE;
+                *ppoGeom = FixPolygonTopology(polygon);
             }
 
             return TRUE;
@@ -913,7 +1007,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsVal
             }
             else
             {
-                *pbIsValid = TRUE;
+                *ppoGeom = FixPolygonTopology(polygon);
             }
 
             return TRUE;
@@ -967,16 +1061,31 @@ void OGRXPlaneAptReader::ParsePavement()
     CSLDestroy(papszTokens);
     papszTokens = NULL;
 
-    OGRPolygon polygon;
-    int bIsValid = FALSE;
-    bResumeLine = ParsePolygonalGeometry(polygon, &bIsValid);
-    if (bIsValid && poPavementLayer)
+    OGRGeometry* poGeom;
+    bResumeLine = ParsePolygonalGeometry(&poGeom);
+    if (poGeom != NULL && poPavementLayer)
     {
-        poPavementLayer->AddFeature(osAptICAO, osPavementName,
-                                    RunwaySurfaceEnumeration.GetText(eSurfaceCode),
-                                    dfSmoothness, dfTextureHeading,
-                                    &polygon);
+        if (poGeom->getGeometryType() == wkbPolygon)
+        {
+            poPavementLayer->AddFeature(osAptICAO, osPavementName,
+                                        RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                        dfSmoothness, dfTextureHeading,
+                                        (OGRPolygon*)poGeom);
+        }
+        else
+        {
+            OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*)poGeom;
+            for(int i=0;i<poGeomCollection->getNumGeometries();i++)
+            {
+                poPavementLayer->AddFeature(osAptICAO, osPavementName,
+                                            RunwaySurfaceEnumeration.GetText(eSurfaceCode),
+                                            dfSmoothness, dfTextureHeading,
+                                            (OGRPolygon*)poGeomCollection->getGeometryRef(i));
+            }
+        }
     }
+    if (poGeom != NULL)
+        delete poGeom;
 }
 
 /************************************************************************/
@@ -997,14 +1106,27 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
     CSLDestroy(papszTokens);
     papszTokens = NULL;
 
-    OGRPolygon polygon;
-    int bIsValid = FALSE;
-    bResumeLine = ParsePolygonalGeometry(polygon, &bIsValid);
-    if (bIsValid && poAPTBoundaryLayer)
+    OGRGeometry* poGeom;
+    bResumeLine = ParsePolygonalGeometry(&poGeom);
+    if (poGeom != NULL && poAPTBoundaryLayer)
     {
-        poAPTBoundaryLayer->AddFeature(osAptICAO, osBoundaryName,
-                                       &polygon);
+        if (poGeom->getGeometryType() == wkbPolygon)
+        {
+             poAPTBoundaryLayer->AddFeature(osAptICAO, osBoundaryName,
+                                        (OGRPolygon*)poGeom);
+        }
+        else
+        {
+            OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*)poGeom;
+            for(int i=0;i<poGeomCollection->getNumGeometries();i++)
+            {
+                 poAPTBoundaryLayer->AddFeature(osAptICAO, osBoundaryName,
+                                            (OGRPolygon*)poGeomCollection->getGeometryRef(i));
+            }
+        }
     }
+    if (poGeom != NULL)
+        delete poGeom;
 }
 
 
