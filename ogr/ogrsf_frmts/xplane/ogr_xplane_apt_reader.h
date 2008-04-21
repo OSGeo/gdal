@@ -612,7 +612,8 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         void    ParseTaxiwaySignRecord();
         void    ParseVasiPapiWigWagRecord();
 
-        int     ParsePolygonalGeometry(OGRPolygon& polygon, int* pbIsValid);
+        OGRGeometry* FixPolygonTopology(OGRPolygon& polygon);
+        int     ParsePolygonalGeometry(OGRGeometry** ppoGeom);
         int     ParseLinearGeometry(OGRMultiLineString& multilinestring, int* pbIsValid);
 
         void    AddBezierCurve (OGRLineString& lineString,
