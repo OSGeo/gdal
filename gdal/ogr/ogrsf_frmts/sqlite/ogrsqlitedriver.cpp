@@ -143,15 +143,12 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 
         osCommand = 
             "CREATE TABLE geometry_columns ("
-            "f_table_catalog VARCHAR, "
-            "f_table_schema VARCHAR, "
-            "f_table_name VARCHAR, "
-            "f_geometry_column VARCHAR, "
-            "f_geometry_format VARCHAR, "
-            "type VARCHAR, "
-            "coord_dimension INTEGER, "
-            "srid INTEGER )";
-
+            "     f_table_name VARCHAR, "
+            "     f_geometry_column VARCHAR, "
+            "     geometry_type INTEGER, "
+            "     coord_dimension INTEGER, "
+            "     srid INTEGER,"
+            "     geometry_format VARCHAR )";
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {

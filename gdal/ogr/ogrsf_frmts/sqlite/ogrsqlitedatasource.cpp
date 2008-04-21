@@ -117,7 +117,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
     rc = sqlite3_get_table( 
         hDB,
-        "SELECT f_table_name, f_geometry_column, type, coord_dimension, f_geometry_format"
+        "SELECT f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format"
         " FROM geometry_columns",
         &papszResult, &nRowCount, &nColCount, &pszErrMsg );
 
@@ -130,29 +130,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
             char **papszRow = papszResult + iRow * 5 + 5;
             OGRwkbGeometryType eGeomType = wkbUnknown;
 
-            if( EQUAL(papszRow[2],"POINT") )
-                eGeomType = wkbPoint;
-            else if( EQUAL(papszRow[2],"LINESTRING") )
-                eGeomType = wkbLineString;
-            else if( EQUAL(papszRow[2],"POLYGON") )
-                eGeomType = wkbPolygon;
-            else if( EQUAL(papszRow[2],"MULTIPOINT") )
-                eGeomType = wkbMultiPoint;
-            else if( EQUAL(papszRow[2],"MULTILINESTRING") )
-                eGeomType = wkbMultiLineString;
-            else if( EQUAL(papszRow[2],"MULTIPOLYGON") )
-                eGeomType = wkbMultiPolygon;
-            else if( EQUAL(papszRow[2],"MULTIPOLYGON") )
-                eGeomType = wkbMultiPolygon;
-            else if( EQUAL(papszRow[2],"GEOMETRYCOLLECTION") )
-                eGeomType = wkbGeometryCollection;
-            else if( EQUAL(papszRow[2],"GEOMETRY") )
-                eGeomType = wkbUnknown;
-            else
-            {
-                CPLDebug( "SQLITE", "Unrecognised geometry type '%s'.", 
-                          papszRow[2] );
-            }
+            eGeomType = (OGRwkbGeometryType) atoi(papszRow[2]);
 
             if( atoi(papszRow[3]) > 2 )
                 eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
@@ -463,7 +441,6 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     if( bHaveGeometryColumns )
     {
-        const char *pszGeometryType;
         int nCoordDim;
 
         /* Sometimes there is an old cruft entry in the geometry_columns
@@ -482,42 +459,6 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             return FALSE;
         }
         
-        switch( wkbFlatten(eType) )
-        {
-          case wkbPoint:
-            pszGeometryType = "POINT";
-            break;
-
-          case wkbLineString:
-            pszGeometryType = "LINESTRING";
-            break;
-
-          case wkbPolygon:
-            pszGeometryType = "POLYGON";
-            break;
-
-          case wkbMultiPoint:
-            pszGeometryType = "MULTIPOINT";
-            break;
-
-          case wkbMultiLineString:
-            pszGeometryType = "MULTILINESTRING";
-            break;
-
-          case wkbMultiPolygon:
-            pszGeometryType = "MULTIPOLYGON";
-            break;
-
-          case wkbGeometryCollection:
-            pszGeometryType = "GEOMETRYCOLLECTION";
-            break;
-
-          default:
-            pszGeometryType = "GEOMETRY";
-            break;
-
-        }
-
         if( eType == wkbFlatten(eType) )
             nCoordDim = 2;
         else
@@ -525,10 +466,10 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
         osCommand.Printf(
             "INSERT INTO geometry_columns "
-            "(f_table_name, f_geometry_column, f_geometry_format, type, "
+            "(f_table_name, f_geometry_column, geometry_format, geometry_type, "
             "coord_dimension, srid) VALUES "
-            "('%s','%s','%s','%s', %d, %d)", 
-            pszLayerName, pszGeomCol, pszGeomFormat, pszGeometryType, 
+            "('%s','%s','%s', %d, %d, %d)", 
+            pszLayerName, pszGeomCol, pszGeomFormat, (int) wkbFlatten(eType), 
             nCoordDim, -1 );
         
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
