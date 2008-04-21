@@ -117,7 +117,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
     rc = sqlite3_get_table( 
         hDB,
-        "SELECT f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format"
+        "SELECT f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format, srid"
         " FROM geometry_columns",
         &papszResult, &nRowCount, &nColCount, &pszErrMsg );
 
@@ -127,15 +127,20 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 
         for( iRow = 0; iRow < nRowCount; iRow++ )
         {
-            char **papszRow = papszResult + iRow * 5 + 5;
+            char **papszRow = papszResult + iRow * 6 + 6;
             OGRwkbGeometryType eGeomType = wkbUnknown;
+            int nSRID = 0;
 
             eGeomType = (OGRwkbGeometryType) atoi(papszRow[2]);
 
             if( atoi(papszRow[3]) > 2 )
                 eGeomType = (OGRwkbGeometryType) (((int)eGeomType) | wkb25DBit);
 
-            OpenTable( papszRow[0], papszRow[1], eGeomType, papszRow[4] );
+            if( papszRow[5] != NULL )
+                nSRID = atoi(papszRow[5]);
+
+            OpenTable( papszRow[0], papszRow[1], eGeomType, papszRow[4],
+                       FetchSRS( nSRID ) );
         }
 
         sqlite3_free_table(papszResult);
@@ -185,7 +190,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName )
 int OGRSQLiteDataSource::OpenTable( const char *pszNewName, 
                                     const char *pszGeomCol,
                                     OGRwkbGeometryType eGeomType,
-                                    const char *pszGeomFormat )
+                                    const char *pszGeomFormat,
+                                    OGRSpatialReference *poSRS )
 
 {
 /* -------------------------------------------------------------------- */
@@ -196,7 +202,8 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
     poLayer = new OGRSQLiteTableLayer( this );
 
     if( poLayer->Initialize( pszNewName, pszGeomCol, 
-                             eGeomType, pszGeomFormat ) )
+                             eGeomType, pszGeomFormat,
+                             poSRS ) )
     {
         delete poLayer;
         return FALSE;
@@ -337,7 +344,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     
     pszGeomFormat = CSLFetchNameValue( papszOptions, "FORMAT" );
     if( pszGeomFormat == NULL )
-        pszGeomFormat = "WKT";
+        pszGeomFormat = "WKB";
 
     if( !EQUAL(pszGeomFormat,"WKT") 
         && !EQUAL(pszGeomFormat,"WKB") )
@@ -380,12 +387,10 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      Try to get the SRS Id of this spatial reference system,         */
 /*      adding tot the srs table if needed.                             */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
     int nSRSId = -1;
 
     if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
@@ -470,7 +475,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             "coord_dimension, srid) VALUES "
             "('%s','%s','%s', %d, %d, %d)", 
             pszLayerName, pszGeomCol, pszGeomFormat, (int) wkbFlatten(eType), 
-            nCoordDim, -1 );
+            nCoordDim, nSRSId );
         
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
@@ -491,7 +496,8 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat );
+    poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat, 
+                         FetchSRS(nSRSId) );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
 
@@ -558,7 +564,7 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OGR_PG", "DeleteLayer(%s)", pszLayerName );
+    CPLDebug( "OGR_SQLITE", "DeleteLayer(%s)", pszLayerName );
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
@@ -728,3 +734,216 @@ OGRErr OGRSQLiteDataSource::FlushSoftTransaction()
 
     return SoftCommit();
 }
+
+/************************************************************************/
+/*                             FetchSRSId()                             */
+/*                                                                      */
+/*      Fetch the id corresponding to an SRS, and if not found, add     */
+/*      it to the table.                                                */
+/************************************************************************/
+
+int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
+
+{
+    char                *pszWKT = NULL;
+    int                 nSRSId = -1;
+    const char*         pszAuthorityName;
+    CPLString           osCommand;
+    char *pszErrMsg;
+    int   rc;
+    char **papszResult;
+    int nRowCount, nColCount;
+
+    if( poSRS == NULL )
+        return -1;
+
+    pszAuthorityName = poSRS->GetAuthorityName(NULL);
+
+/* -------------------------------------------------------------------- */
+/*      Check whether the EPSG authority code is already mapped to a    */
+/*      SRS ID.                                                         */
+/* -------------------------------------------------------------------- */
+    if( pszAuthorityName != NULL && strlen(pszAuthorityName) > 0 )
+    {
+        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE "
+                          "auth_name = '%s' AND auth_srid = '%s'",
+                          pszAuthorityName,
+                          poSRS->GetAuthorityCode(NULL) );
+
+        rc = sqlite3_get_table( hDB, osCommand, &papszResult, 
+                                &nRowCount, &nColCount, &pszErrMsg );
+        if( rc != SQLITE_OK )
+            sqlite3_free( pszErrMsg );
+        else if( nRowCount == 1 )
+        {
+            nSRSId = atoi(papszResult[1]);
+            sqlite3_free_table(papszResult);
+            return nSRSId;
+        }
+        sqlite3_free_table(papszResult);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate SRS to WKT.                                           */
+/* -------------------------------------------------------------------- */
+    CPLString osWKT;
+
+    if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
+        return -1;
+
+    osWKT = pszWKT;
+    CPLFree( pszWKT );
+    pszWKT = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Try to find based on the WKT match.                             */
+/* -------------------------------------------------------------------- */
+    osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
+                      osWKT.c_str());
+    
+    rc = sqlite3_get_table( hDB, osCommand, 
+                            &papszResult, &nRowCount, &nColCount, &pszErrMsg );
+    if( rc != SQLITE_OK )
+        sqlite3_free( pszErrMsg );
+    else if( nRowCount == 1 )
+    {
+        nSRSId = atoi(papszResult[1]);
+        sqlite3_free_table(papszResult);
+        return nSRSId;
+    }
+    sqlite3_free_table(papszResult);
+    
+/* -------------------------------------------------------------------- */
+/*      If the command actually failed, then the metadata table is      */
+/*      likely missing, so we give up.                                  */
+/* -------------------------------------------------------------------- */
+    if( rc != SQLITE_OK )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Get the current maximum srid in the srs table.                  */
+/* -------------------------------------------------------------------- */
+    rc = sqlite3_get_table( hDB, "SELECT MAX(srid) FROM spatial_ref_sys", 
+                            &papszResult, &nRowCount, &nColCount, &pszErrMsg );
+    
+    if( rc != SQLITE_OK || nRowCount < 1 )
+    {
+        sqlite3_free( pszErrMsg );
+        return -1;
+    }
+
+    if( papszResult[1] )
+        nSRSId = atoi(papszResult[1]);
+    else
+        nSRSId = 50000;
+    sqlite3_free_table(papszResult);
+
+/* -------------------------------------------------------------------- */
+/*      Try adding the SRS to the SRS table.                            */
+/* -------------------------------------------------------------------- */
+    if( pszAuthorityName != NULL )
+    {
+        osCommand.Printf(
+            "INSERT INTO spatial_ref_sys (srid,srtext,auth_name,auth_srid) "
+            "                     VALUES (%d, '%s', '%s', '%s')",
+            nSRSId, osWKT.c_str(), 
+            pszAuthorityName, poSRS->GetAuthorityCode(NULL) );
+    }
+    else
+    {
+        osCommand.Printf(
+            "INSERT INTO spatial_ref_sys (srid,srtext) "
+            "                     VALUES (%d, '%s')",
+            nSRSId, osWKT.c_str() );
+    }
+
+    rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to insert SRID (%s): %s",
+                  osCommand.c_str(), pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return FALSE;
+    }
+
+    return nSRSId;
+}
+
+/************************************************************************/
+/*                              FetchSRS()                              */
+/*                                                                      */
+/*      Return a SRS corresponding to a particular id.  Note that       */
+/*      reference counting should be honoured on the returned           */
+/*      OGRSpatialReference, as handles may be cached.                  */
+/************************************************************************/
+
+OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
+
+{
+    if( nId <= 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      First, we look through our SRID cache, is it there?             */
+/* -------------------------------------------------------------------- */
+    int  i;
+
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        if( panSRID[i] == nId )
+            return papoSRS[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try looking up in spatial_ref_sys table.                        */
+/* -------------------------------------------------------------------- */
+    char *pszErrMsg;
+    int   rc;
+    char **papszResult;
+    int nRowCount, nColCount;
+    CPLString osCommand;
+    OGRSpatialReference *poSRS = NULL;
+
+    osCommand.Printf( "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+                      nId );
+    rc = sqlite3_get_table( hDB, osCommand, 
+                            &papszResult, &nRowCount, &nColCount, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s: %s", osCommand.c_str(), pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return NULL;
+    }
+    else if( nRowCount < 1 )
+        return NULL;
+
+    CPLString osWKT = papszResult[1];
+    sqlite3_free_table(papszResult);
+
+/* -------------------------------------------------------------------- */
+/*      Translate into a spatial reference.                             */
+/* -------------------------------------------------------------------- */
+    char *pszWKT = (char *) osWKT.c_str();
+
+    poSRS = new OGRSpatialReference();
+    if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        delete poSRS;
+        poSRS = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add to the cache.                                               */
+/* -------------------------------------------------------------------- */
+    panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
+    papoSRS = (OGRSpatialReference **)
+        CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
+    panSRID[nKnownSRID] = nId;
+    papoSRS[nKnownSRID] = poSRS;
+    nKnownSRID++;
+
+    return poSRS;
+}
+
