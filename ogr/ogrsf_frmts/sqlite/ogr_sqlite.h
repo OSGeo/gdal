@@ -113,7 +113,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     CPLErr              Initialize( const char *pszTableName, 
                                     const char *pszGeomCol,
                                     OGRwkbGeometryType eGeomType,
-                                    const char *pszGeomFormat );
+                                    const char *pszGeomFormat,
+                                    OGRSpatialReference *poSRS );
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -189,7 +190,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol = NULL,
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
-                                   const char *pszGeomFormat = NULL );
+                                   const char *pszGeomFormat = NULL,
+                                   OGRSpatialReference *poSRS = NULL );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
@@ -216,6 +218,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     sqlite3            *GetDB() { return hDB; }
 
     char               *LaunderName( const char * );
+    int                 FetchSRSId( OGRSpatialReference * poSRS );
+    OGRSpatialReference*FetchSRS( int nSRID );
 };
 
 /************************************************************************/

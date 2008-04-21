@@ -11,11 +11,17 @@
 database files.  SQLite is a "light weight" single file based RDBMS engine
 with fairly complete SQL semantics and respectible performance.</p>
 
-<p>Each table is treated as a layer.  Layers with a WKT_GEOMETRY
-field will be treated as spatial tables, and the WKT_GEOMETRY column will be
-read as Well Known Text geometry.</p>
+<p>The driver looks for a geometry_columns table layed out as defined
+loosely according to OGC Simple Features standards, particularly as defined
+in <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>.  If
+found it is used to map tables to layers.</P>
 
-<p>Currently the SQLite driver has no support for coordinate systems.<p>
+<p>If geometry_columns is not found, each table is treated as a layer.  Layers 
+with a WKT_GEOMETRY field will be treated as spatial tables, and the 
+WKT_GEOMETRY column will be read as Well Known Text geometry.</p>
+
+<p>If geometry_columns is found, it will be used to lookup spatial reference
+systems in the spatial_ref_sys table.</P>
 
 <p>The SQLite database is essentially typeless, but the SQLite driver will
 attempt to classify attributes field as text, integer or floating point
@@ -29,7 +35,7 @@ to operate only on SQLite files on a physical disk of the local system.</p>
 <p>SQLite is an optionally compiled in driver.  It is not compiled in by default.</p>
 
 <p>While the SQLite driver supports reading spatial data from records, there is
-not support for spatial indexing, so spatial queries will tend to be slow.
+no support for spatial indexing, so spatial queries will tend to be slow.
 Attributes queries may be fast, especially if indexes are built for 
 appropriate attribute columns using the "CREATE INDEX <indexname> 
 ON <tablename> ( <columnname> )" SQL command.</p>
@@ -46,12 +52,35 @@ method, as name of the SQL dialect.</p>
 tables to existing ones.  Note that a new database file cannot be
 created over an existing file.</p>
 
+<h3>Database Creation Options</h3>
+
+<ul>
+<li> <b>METADATA=yes/no</b>: This can be used to avoid creating the 
+geometry_columns and spatial_ref_sys tables in a new database.  By default
+these metadata tables are created when a new database is created.
+</ul>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+<li> <b>FORMAT=WKB/WKT</b>: Controls the format used for the geometry column.
+By default WKB (Well Known Binary) is used.  This is generally more space
+and processing efficient, but harder to inspect or use in simple applications
+than WKT (Well Known Text).
+
+<li> <b>LAUNDER=yes/no</b>: Controls whether layer and field names will be 
+laundered for easier use in SQLite.  Laundered names will be convered to lower 
+case and some special characters will be changed to underscores. 
+</ul>
+
+
 <h2>Other Notes</h2>
 <ul>
 <li>Development of the OGR SQLite driver was supported by 
 <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
 <a href="http://www.gomoos.org/">GoMOOS</a>.</li>
 <li><a href="http://www.sqlite.org/">http://www.sqlite.org</a>: Main SQLite page.</li>
+<li> <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>: FDO Provider for SQLite</li>
 </ul>
 
 </body>
