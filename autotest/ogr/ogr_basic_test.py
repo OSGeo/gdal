@@ -167,8 +167,19 @@ def ogr_basic_5():
 # Test opening a dataset with an empty string and a non existing dataset
 def ogr_basic_6():
 
-    ogr.Open( '' )
-    ogr.Open( 'non_existing' )
+    # Put inside try/except for OG python bindings
+    try:
+        if ogr.Open( '' ) is not None:
+            return 'fail'
+    except:
+        pass
+
+    try:
+        if ogr.Open( 'non_existing' ) is not None:
+            return 'fail'
+    except:
+        pass
+
     return 'success'
 
 ###############################################################################
