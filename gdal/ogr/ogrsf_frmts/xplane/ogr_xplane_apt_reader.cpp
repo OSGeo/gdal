@@ -1047,6 +1047,11 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
                 CPLDebug("XPlane", "Line %d : Unexpected token when reading a linear feature : %d",
                         nLineNumber, nType);
             }
+            else if (multilinestring.getNumGeometries() == 0)
+            {
+                CPLDebug("XPlane", "Line %d : Linear geometry is invalid or empty",
+                         nLineNumber);
+            }
             else
             {
                 *pbIsValid = TRUE;
@@ -1105,7 +1110,15 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
             if (nType == APT_NODE_CLOSE )
                 lineString.closeRings();
 
-            multilinestring.addGeometry(&lineString);
+            if (lineString.getNumPoints() < 2)
+            {
+                CPLDebug("XPlane", "Line %d : A linestring has less than 2 points",
+                         nLineNumber);
+            }
+            else
+            {
+                multilinestring.addGeometry(&lineString);
+            }
             lineString.empty();
 
             bLastPartIsClosedOrEnded = TRUE;
@@ -1152,7 +1165,15 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
                 }
             }
 
-            multilinestring.addGeometry(&lineString);
+            if (lineString.getNumPoints() < 2)
+            {
+                CPLDebug("XPlane", "Line %d : A linestring has less than 2 points",
+                         nLineNumber);
+            }
+            else
+            {
+                multilinestring.addGeometry(&lineString);
+            }
             lineString.empty();
 
             bLastPartIsClosedOrEnded = TRUE;
@@ -1164,6 +1185,11 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
             {
                 CPLDebug("XPlane", "Line %d : Unexpected token when reading a linear feature : %d",
                         nLineNumber, nType);
+            }
+            else if (multilinestring.getNumGeometries() == 0)
+            {
+                CPLDebug("XPlane", "Line %d : Linear geometry is invalid or empty",
+                         nLineNumber);
             }
             else
             {
