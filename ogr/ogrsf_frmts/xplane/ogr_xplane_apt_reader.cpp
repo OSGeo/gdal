@@ -1373,7 +1373,7 @@ void OGRXPlaneAptReader::ParseTaxiwaySignRecord()
     double dfLat, dfLon;
     double dfTrueHeading;
     int nSize;
-    const char* pszText;
+    CPLString osText;
 
     RET_IF_FAIL(assertMinCol(7));
 
@@ -1381,10 +1381,10 @@ void OGRXPlaneAptReader::ParseTaxiwaySignRecord()
     RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 3, "heading"));
     /* papszTokens[4] : ignored. Taxiway sign style */
     nSize = atoi(papszTokens[5]);
-    pszText = papszTokens[6];
+    osText = readStringUntilEnd(6);
 
     if (poTaxiwaySignLayer)
-        poTaxiwaySignLayer->AddFeature(osAptICAO, pszText, dfLat, dfLon,
+        poTaxiwaySignLayer->AddFeature(osAptICAO, osText, dfLat, dfLon,
                                         dfTrueHeading, nSize);
 }
 
