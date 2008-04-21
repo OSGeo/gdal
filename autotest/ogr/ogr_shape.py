@@ -761,7 +761,7 @@ def ogr_shape_22():
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayerByName( 'datatypes' )
     feat_read = gdaltest.shape_lyr.GetNextFeature()
     if feat_read.GetField('REAL') != 1.2 or \
-       feat_read.integer != 3 or \
+       feat_read.GetField('INTEGER') != 3 or \
        feat_read.GetField('STRING') != 'aString' or \
        feat_read.GetFieldAsString('DATE') != '2005/10/12':
         return 'fail'
