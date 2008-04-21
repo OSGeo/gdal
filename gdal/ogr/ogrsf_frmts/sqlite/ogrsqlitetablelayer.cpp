@@ -72,7 +72,8 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName, 
                                         const char *pszGeomCol,
                                         OGRwkbGeometryType eGeomType,
-                                        const char *pszGeomFormat )
+                                        const char *pszGeomFormat,
+                                        OGRSpatialReference *poSRS )
 
 {
     sqlite3 *hDB = poDS->GetDB();
@@ -87,6 +88,11 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
+
+    this->poSRS = poSRS;
+
+    if( poSRS )
+        poSRS->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
@@ -361,34 +367,6 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 OGRSpatialReference *OGRSQLiteTableLayer::GetSpatialRef()
 
 {
-#ifdef notdef
-    if( nSRSId == -2 )
-    {
-        PGconn          *hPGConn = poDS->GetPGConn();
-        PGresult        *hResult;
-        char            szCommand[1024];
-
-        nSRSId = -1;
-
-        poDS->SoftStartTransaction();
-
-        sprintf( szCommand, 
-                 "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 poFeatureDefn->GetName() );
-        hResult = PQexec(hPGConn, szCommand );
-
-        if( hResult 
-            && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-            && PQntuples(hResult) == 1 )
-        {
-            nSRSId = atoi(PQgetvalue(hResult,0,0));
-        }
-
-        poDS->SoftCommit();
-    }
-#endif
-
     return OGRSQLiteLayer::GetSpatialRef();
 }
 
@@ -583,6 +561,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                                        pszOldFieldList ),
                            NULL, NULL, &pszErrMsg );
 
+    CPLFree( pszOldFieldList );
+    CPLFree( pszNewFieldList );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup backup table.                                           */
@@ -651,7 +631,7 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
     const char *pszSQL;
 
     pszSQL = 
-        CPLSPrintf( "DELETE FROM '%s' WHERE \"%s\" = %d", 
+        CPLSPrintf( "DELETE FROM '%s' WHERE \"%s\" = %ld", 
                     poFeatureDefn->GetName(), 
                     pszFIDColumn,
                     poFeature->GetFID() );
@@ -702,7 +682,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     {
         osCommand += pszFIDColumn;
 
-        osValues += CPLSPrintf( "%d", poFeature->GetFID() );
+        osValues += CPLSPrintf( "%ld", poFeature->GetFID() );
         bNeedComma = TRUE;
     }
 

@@ -158,6 +158,22 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
             sqlite3_free( pszErrMsg );
             return NULL;
         }
+
+        osCommand = 
+            "CREATE TABLE spatial_ref_sys        ("
+            "     srid INTEGER UNIQUE,"
+            "     auth_name TEXT,"
+            "     auth_srid TEXT,"
+            "     srtext TEXT)";
+        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to create table spatial_ref_sys: %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
