@@ -225,11 +225,25 @@ CPLString OGRXPlaneReader::readStringUntilEnd(int iFirstTokenIndice)
     {
         int i;
         int nIDsToSum = nTokens - iFirstTokenIndice;
-        osResult = papszTokens[iFirstTokenIndice];
+        const unsigned char* pszStr = (const unsigned char*)papszTokens[iFirstTokenIndice];
+        for(int j=0;pszStr[j];j++)
+        {
+            if (pszStr[j] >= 32 && pszStr[j] <= 127)
+                osResult += pszStr[j];
+            else
+                CPLDebug("XPlane", "Line %d : string with non ASCII characters", nLineNumber);
+        }
         for(i=1;i<nIDsToSum;i++)
         {
             osResult += " ";
-            osResult += papszTokens[iFirstTokenIndice + i];
+            pszStr = (const unsigned char*)papszTokens[iFirstTokenIndice + i];
+            for(int j=0;pszStr[j];j++)
+            {
+                if (pszStr[j] >= 32 && pszStr[j] <= 127)
+                    osResult += pszStr[j];
+                else
+                    CPLDebug("XPlane", "Line %d : string with non ASCII characters", nLineNumber);
+            }
         }
     }
     return osResult;
