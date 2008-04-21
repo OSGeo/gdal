@@ -31,6 +31,19 @@ Data is reported as being expressed in WGS84 datum (latitude, longitude), altoug
 is not very clear on that subject.</p>
 
 
+<h2>Examples</h2>
+
+Converting all the layers contained in 'apt.dat' in a set of shapefiles :
+<pre>
+% ogr2ogr apt_shapes apt.dat
+</pre>
+
+<p>
+Converting all the layers contained in 'apt.dat' into a PostreSQL database :
+<pre>
+% PG_USE_COPY=yes ogr2ogr -overwrite -f PostgreSQL PG:"dbname=apt" apt.dat
+</pre>
+
 <h2>See Also</h2>
 
 <ul>
