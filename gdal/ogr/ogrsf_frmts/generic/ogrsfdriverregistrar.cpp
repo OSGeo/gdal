@@ -647,16 +647,27 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
  *
  * This function will automatically load drivers from shared libraries.  It
  * searches the "driver path" for .so (or .dll) files that start with the
- * prefix "gdal_X.so".  It then tries to load them and then tries to call
- * a function within them called GDALRegister_X() where the 'X' is the same 
+ * prefix "ogr_X.so".  It then tries to load them and then tries to call
+ * a function within them called RegisterOGRX() where the 'X' is the same 
  * as the remainder of the shared library basename, or failing that to 
  * call GDALRegisterMe().  
  *
- * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH
- * environment variable it set, it is taken to be a list of directories
- * to search separated by colons on unix, or semi-colons on Windows.  Otherwise
- * the /usr/local/lib/gdalplugins directory, and (if known) the lib/gdalplugins
- * subdirectory of the gdal home directory are searched. 
+ * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH 
+ * environment variable it set, it is taken to be a list of directories to 
+ * search separated by colons on unix, or semi-colons on Windows.  
+ *
+ * If that is not set the following defaults are used:
+ *
+ * <ul>
+ * <li> Linux/Unix: <prefix>/lib/gdalplugins is searched or 
+ * /usr/local/lib/gdalplugins if the install prefix is not known.
+ * <li> MacOSX: <prefix>/PlugIns is searched, or /usr/local/lib/gdalplugins if
+ * the install prefix is not known.  Also, the framework directory
+ * /Library/Application Support/GDAL/PlugIns is searched.
+ * <li> Win32: <prefix>/lib/gdalplugins if the prefix is known (normally it 
+ * is not), otherwise the gdalplugins subdirectory of the directory containing
+ * the currently running executable is used. 
+ * </ul>
  */
 
 void OGRSFDriverRegistrar::AutoLoadDrivers()
