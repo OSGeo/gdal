@@ -469,13 +469,22 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         else
             nCoordDim = 3;
 
-        osCommand.Printf(
-            "INSERT INTO geometry_columns "
-            "(f_table_name, f_geometry_column, geometry_format, geometry_type, "
-            "coord_dimension, srid) VALUES "
-            "('%s','%s','%s', %d, %d, %d)", 
-            pszLayerName, pszGeomCol, pszGeomFormat, (int) wkbFlatten(eType), 
-            nCoordDim, nSRSId );
+        if( nSRSId > 0 )
+            osCommand.Printf(
+                "INSERT INTO geometry_columns "
+                "(f_table_name, f_geometry_column, geometry_format, geometry_type, "
+                "coord_dimension, srid) VALUES "
+                "('%s','%s','%s', %d, %d, %d)", 
+                pszLayerName, pszGeomCol, pszGeomFormat, (int) wkbFlatten(eType), 
+                nCoordDim, nSRSId );
+        else
+            osCommand.Printf(
+                "INSERT INTO geometry_columns "
+                "(f_table_name, f_geometry_column, geometry_format, geometry_type, "
+                "coord_dimension) VALUES "
+                "('%s','%s','%s', %d, %d)", 
+                pszLayerName, pszGeomCol, pszGeomFormat, (int) wkbFlatten(eType), 
+                nCoordDim );
         
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
