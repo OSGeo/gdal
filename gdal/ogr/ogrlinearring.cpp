@@ -446,9 +446,6 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
         return 0;
     }
 
-    CPLDebug( "OGR", "OGRLinearRing::isPointInRing(): passed point: (%.8f,%.8f)",
-              poPoint->getX(), poPoint->getY() );
-
     const int iNumPoints = getNumPoints();
 
     // Simple validation
@@ -464,7 +461,6 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
     if ( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
          && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
     {
-        CPLDebug( "OGR", "OGRLinearRing::isPointInRing(): passed point is out of extent of ring" );
         return 0;
     }
 
