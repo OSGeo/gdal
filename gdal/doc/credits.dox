@@ -214,7 +214,7 @@ improvements to libtiff (RGBA Strip/Tile access), and the Arc/Info Binary Grid
 driver.
 <p>
 
-<li> <b><a href="http://www.geospaceinc.com/">Geospace Inc/a></b>, 
+<li> <b><a href="http://www.geospaceinc.com/">Geospace Inc</a></b>, 
 Supported the development of write functionality for the OGR ArcSDE driver. <p>
 
 <li> <b><a href="http://www.geotango.com/">GeoTango</a></b>: Supported 
