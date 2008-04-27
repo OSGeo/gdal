@@ -35,5 +35,5 @@ clean:
 plugin:	gdal_TERRALIB.dll
 
 gdal_TERRALIB.dll: $(OBJ)
-	link /nologo /dll /debug /out:gdal_TERRALIB.dll /NODEFAULTLIB:MSVCRT $(OBJ) $(GDALLIB) \
+	link /nologo /dll $(LDEBUG) /out:gdal_TERRALIB.dll /NODEFAULTLIB:MSVCRT $(OBJ) $(GDALLIB) \
 	$(TERRALIB_LIB) $(TERRALIB_DIR)\terralibw\MySQL\libmysql.lib

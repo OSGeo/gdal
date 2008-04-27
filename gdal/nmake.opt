@@ -76,14 +76,23 @@ JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 # Compilation flags
 !IFNDEF OPTFLAGS
 !IF $(MSVC_VER) >= 1400
-# Uncomment the first for an optimized build or the second for a debug build.
+!IFNDEF DEBUG
 OPTFLAGS=	/nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
-#OPTFLAGS=	/nologo /MDd /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG /D_DEBUG /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
 !ELSE
-# Uncomment the first for an optimized build or the second for a debug build.
-OPTFLAGS=	/nologo /MD /EHsc /GR /Ox /DNDEBUG
-#OPTFLAGS=	/nologo /MDd /EHsc /GR /Zi /DDEBUG /D_DEBUG /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
+OPTFLAGS=	/nologo /MD /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
 !ENDIF
+!ELSE
+!IFNDEF DEBUG
+OPTFLAGS=	/nologo /MD /EHsc /GR /Ox /DNDEBUG
+!ELSE
+OPTFLAGS=	/nologo /MD /EHsc /GR /Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb
+!ENDIF
+!ENDIF  #MSVC_VER
+!ENDIF  # OPTFLAGS
+
+# Linker debug options
+!IFDEF DEBUG
+LDEBUG= /debug
 !ENDIF
 
 # Uncomment the following if you are building for 64-bit windows
@@ -327,8 +336,7 @@ MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib
 !ENDIF
 
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
-#LINKER_FLAGS = /debug
-LINKER_FLAGS = $(MSVC_VLD_LIB)
+LINKER_FLAGS = $(MSVC_VLD_LIB) $(LDEBUG)
 
 
 CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS) $(MSVC_VLD_FLAGS)

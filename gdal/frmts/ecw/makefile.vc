@@ -33,7 +33,7 @@ ecw_example1.exe:	ecw_example1.c
 plugin:	$(PLUGIN_DLL)
 
 $(PLUGIN_DLL): $(OBJ)
-	link /dll /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(ECWLIB)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(ECWLIB)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 plugin-install:
