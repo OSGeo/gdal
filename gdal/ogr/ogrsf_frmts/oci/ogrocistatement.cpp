@@ -329,6 +329,10 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
             nBufWidth = 22;
         else if( oField.GetType() == OFTReal )
             nBufWidth = 36;
+        else if ( oField.GetType() == OFTDateTime )
+            nBufWidth = 40;
+        else if ( oField.GetType() == OFTDate )
+            nBufWidth = 20;
 
         papszCurColumn[nOGRField] = (char *) CPLMalloc(nBufWidth+2);
         CPLAssert( ((long) papszCurColumn[nOGRField]) % 2 == 0 );

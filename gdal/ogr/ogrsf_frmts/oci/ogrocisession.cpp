@@ -191,6 +191,16 @@ int OGROCISession::EstablishSession( const char *pszUserid,
     this->pszPassword = CPLStrdup(pszPassword);
     this->pszDatabase = CPLStrdup(pszDatabase);
 
+/* -------------------------------------------------------------------- */
+/*      Setting upt the OGR compatible time formating rules.            */
+/* -------------------------------------------------------------------- */
+    OGROCIStatement     oSetNLSTimeFormat( this );
+    if( oSetNLSTimeFormat.Execute( "ALTER SESSION SET NLS_DATE_FORMAT='YYYY/MM/DD' \
+        NLS_TIME_FORMAT='HH24:MI:SS' NLS_TIME_TZ_FORMAT='HH24:MI:SS TZHTZM' \
+        NLS_TIMESTAMP_FORMAT='YYYY/MM/DD HH24:MI:SS' \
+        NLS_TIMESTAMP_TZ_FORMAT='YYYY/MM/DD HH24:MI:SS TZHTZM'" ) != CE_None )
+        return OGRERR_FAILURE;
+
     return TRUE;
 }
 
@@ -356,9 +366,16 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
         }
         break;
 
+        case SQLT_DAT:
         case SQLT_DATE:
-            poOGRDefn->SetType( OFTString );
-            poOGRDefn->SetWidth( 24 );
+            poOGRDefn->SetType( OFTDate );
+            break;
+        case SQLT_TIMESTAMP:
+        case SQLT_TIMESTAMP_TZ:
+        case SQLT_TIMESTAMP_LTZ:
+        case SQLT_TIME:
+        case SQLT_TIME_TZ:
+            poOGRDefn->SetType( OFTDateTime );
             break;
 
         case SQLT_RID:
