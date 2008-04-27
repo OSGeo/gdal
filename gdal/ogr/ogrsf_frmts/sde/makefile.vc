@@ -11,5 +11,5 @@ clean:
 	-del *.obj *.pdb
 
 ogr_SDE.dll:	$(OBJ)
-	link /dll /out:ogr_SDE.dll $(OBJ) \
+	link /dll $(LDEBUG) /out:ogr_SDE.dll $(OBJ) \
 		$(GDALLIB) $(SDE_LIB)
