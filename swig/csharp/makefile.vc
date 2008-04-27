@@ -47,19 +47,19 @@ gdal_csharp:
     $(CSC) /debug:full /target:library /out:gdal_csharp.dll gdal\*.cs AssemblyInfo.cs
     $(CSC) /debug:full /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
     $(CSC) /debug:full /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
-    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:ogr_wrap.dll $(LINKER_FLAGS)
 	if exist ogr_wrap.dll.manifest mt -manifest ogr_wrap.dll.manifest -outputresource:ogr_wrap.dll;2
-    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_wrap.dll $(LINKER_FLAGS)
 	if exist gdal_wrap.dll.manifest mt -manifest gdal_wrap.dll.manifest -outputresource:gdal_wrap.dll;2
-    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdalconst_wrap.dll $(LINKER_FLAGS)
 	if exist gdalconst_wrap.dll.manifest mt -manifest gdalconst_wrap.dll.manifest -outputresource:gdalconst_wrap.dll;2
-    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
+    link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:osr_wrap.dll $(LINKER_FLAGS)
 	if exist osr_wrap.dll.manifest mt -manifest osr_wrap.dll.manifest -outputresource:osr_wrap.dll;2

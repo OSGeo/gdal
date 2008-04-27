@@ -27,6 +27,6 @@ clean:
 plugin:	gdal_GRIB.dll
 
 gdal_GRIB.dll: default
-	link /dll /out:gdal_GRIB.dll \
+	link /dll $(LDEBUG) /out:gdal_GRIB.dll \
 		$(OBJ) degrib18\degrib\*.obj degrib18\g2clib-1.0.4\*.obj \
 		$(GDAL_ROOT)/gdal_i.lib $(LINK_PNG) ..\zlib\*.obj
