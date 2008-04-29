@@ -848,9 +848,15 @@ static CPLString OGRPGEscapeString(PGconn *hPGConn,
     if (nMaxLength > 0 && nSrcLen > nMaxLength)
     {
         CPLDebug( "PG",
-                        "Truncated %s field value, it was too long.",
-                        pszFieldName );
+                  "Truncated %s field value, it was too long.",
+                  pszFieldName );
         nSrcLen = nMaxLength;
+        
+        while( nSrcLen > 0 && ((unsigned char *) pszStrValue)[nSrcLen-1] > 127 )
+        {
+            CPLDebug( "PG", "Backup to start of multi-byte character." );
+            nSrcLen--;
+        }
     }
 
     char* pszDestStr = (char*)CPLMalloc(2 * nSrcLen + 1);
@@ -867,7 +873,12 @@ static CPLString OGRPGEscapeString(PGconn *hPGConn,
     if (nError == 0)
         osCommand += pszDestStr;
     else
-      CPLError(CE_Warning, CPLE_AppDefined, "Could not escape: %s", pszStrValue);
+        CPLError(CE_Warning, CPLE_AppDefined, 
+                 "PQescapeString(): %s\n"
+                 "  input: '%s'\n"
+                 "    got: '%s'\n",
+                 PQerrorMessage( hPGConn ),
+                 pszStrValue, pszDestStr );
 #else
     PQescapeString(pszDestStr, pszStrValue, nSrcLen);
     osCommand += pszDestStr;
