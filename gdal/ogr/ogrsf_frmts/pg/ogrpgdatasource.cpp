@@ -280,7 +280,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Set the encoding						*/
 /* -------------------------------------------------------------------- */
 #ifdef notdef
-    char* encoding = "LATIN1";
+    const char* encoding = "LATIN1";
     if (PQsetClientEncoding(hPGConn, encoding) == -1)
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -1598,7 +1598,9 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
             pszSafeName[i] = '_';
     }
 
-    CPLDebug("PG","LaunderName( %s ) result: %s", pszSrcName, pszSafeName);
+    if( strcmp(pszSrcName,pszSafeName) != 0 )
+        CPLDebug("PG","LaunderName('%s') -> '%s'", 
+                 pszSrcName, pszSafeName);
 
     return pszSafeName;
 }
