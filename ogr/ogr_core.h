@@ -209,8 +209,7 @@ typedef enum
   /** List of doubles */                        OFTRealList = 3,
   /** String of ASCII chars */                  OFTString = 4,
   /** Array of strings */                       OFTStringList = 5,
-  /** Double byte string (unsupported) */       OFTWideString = 6,
-  /** List of wide strings (unsupported) */     OFTWideStringList = 7,
+  /*                                               6 & 7 unused */
   /** Raw Binary data */                        OFTBinary = 8,
   /** Date */                                   OFTDate = 9,
   /** Time */                                   OFTTime = 10,
@@ -243,7 +242,6 @@ typedef union {
     int         Integer;
     double      Real;
     char       *String;
-    /* wchar    *WideString; */
     
     struct {
         int     nCount;
@@ -259,13 +257,6 @@ typedef union {
         int     nCount;
         char    **paList;
     } StringList;
-
-    /*
-    union {
-        int   nCount;
-        wchar *paList;
-    } WideStringList;
-    */
 
     struct {
         int     nCount;
@@ -305,6 +296,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
+#define OLCStringsAsUTF8       "StringsAsUTF8"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
