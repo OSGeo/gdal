@@ -81,8 +81,8 @@ void *CPLCalloc( size_t nCount, size_t nSize )
     if( pReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLCalloc(): Out of memory allocating %d bytes.\n",
-                  nSize * nCount );
+                  "CPLCalloc(): Out of memory allocating %ld bytes.\n",
+                  (long) (nSize * nCount) );
     }
 
     return pReturn;
@@ -120,8 +120,8 @@ void *CPLMalloc( size_t nSize )
     if( nSize < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLMalloc(%d): Silly size requested.\n",
-                  nSize );
+                  "CPLMalloc(%ld): Silly size requested.\n",
+                  (long) nSize );
         return NULL;
     }
     
@@ -129,8 +129,8 @@ void *CPLMalloc( size_t nSize )
     if( pReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLMalloc(): Out of memory allocating %d bytes.\n",
-                  nSize );
+                  "CPLMalloc(): Out of memory allocating %ld bytes.\n",
+                  (long) nSize );
     }
 
     return pReturn;
@@ -174,8 +174,8 @@ void * CPLRealloc( void * pData, size_t nNewSize )
     if( nNewSize < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLRealloc(%d): Silly size requested.\n",
-                  nNewSize );
+                  "CPLRealloc(%ld): Silly size requested.\n",
+                  (long) nNewSize );
         return NULL;
     }
     
@@ -187,8 +187,8 @@ void * CPLRealloc( void * pData, size_t nNewSize )
     if( pReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLRealloc(): Out of memory allocating %d bytes.\n",
-                  nNewSize );
+                  "CPLRealloc(): Out of memory allocating %ld bytes.\n",
+                  (long)nNewSize );
     }
 
     return pReturn;
@@ -229,8 +229,8 @@ char *CPLStrdup( const char * pszString )
     if( pszReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLStrdup(): Out of memory allocating %d bytes.\n",
-                  strlen(pszString) );
+                  "CPLStrdup(): Out of memory allocating %ld bytes.\n",
+                  (long) strlen(pszString) );
         
     }
     
@@ -1325,7 +1325,7 @@ void CPLVerifyConfiguration()
     if( sizeof(GInt32) != 4 )
         CPLError( CE_Fatal, CPLE_AppDefined, 
                   "sizeof(GInt32) == %d ... yow!\n", 
-                  sizeof(GInt32) );
+                  (int) sizeof(GInt32) );
 
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
