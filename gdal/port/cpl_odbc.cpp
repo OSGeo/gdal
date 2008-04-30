@@ -463,6 +463,8 @@ int CPLODBCStatement::CollectResultsInfo()
         szName[nNameLength] = '\0';  // Paranoid
         m_papszColTypeNames[iCol] = CPLStrdup((const char*)szName);
 
+//        CPLDebug( "ODBC", "%s %s %d", m_papszColNames[iCol], 
+//                  szName, m_panColType[iCol] );
     }
 
     return TRUE;
@@ -695,12 +697,12 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        char szWrkData[512];
+        char szWrkData[513];
         _SQLLEN cbDataLen;
         SQLSMALLINT nFetchType = GetTypeMapping( m_panColType[iCol] );
 
-        // For now we will fetch data in binary and string formats only
-        if ( nFetchType != SQL_C_BINARY )
+        // Handle values other than WCHAR and BINARY as CHAR.
+        if( nFetchType != SQL_C_BINARY && nFetchType != SQL_C_WCHAR )
             nFetchType = SQL_C_CHAR;
 
         szWrkData[0] = '\0';
@@ -733,7 +735,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                 cbDataLen = (_SQLLEN)(sizeof(szWrkData)-1);
                 if (nFetchType == SQL_C_CHAR) 
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)) 
-                        --cbDataLen;  // trimming the extra terminators: bug 990
+                        --cbDataLen; // trimming the extra terminators: bug 990
             }
 			
             m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+1);
@@ -774,19 +776,21 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
                 m_papszColValues[iCol] = (char *) 
                     CPLRealloc( m_papszColValues[iCol], 
-                                m_panColValueLengths[iCol] + nChunkLen + 1 );
+                                m_panColValueLengths[iCol] + nChunkLen + 2 );
                 memcpy( m_papszColValues[iCol] + m_panColValueLengths[iCol], 
                         szWrkData, nChunkLen );
                 m_panColValueLengths[iCol] += nChunkLen;
                 m_papszColValues[iCol][m_panColValueLengths[iCol]] = '\0';
+                m_papszColValues[iCol][m_panColValueLengths[iCol]+1] = '\0';
             }
         }
         else
         {
             m_panColValueLengths[iCol] = cbDataLen;
-            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+1);
+            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
+            m_papszColValues[iCol][cbDataLen+1] = '\0';
         }
 
         // Trim white space off end, if there is any.
@@ -797,6 +801,21 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
             while ( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
                 pszTarget[--iEnd] = '\0';
+        }
+
+        // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
+        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != NULL 
+            && m_panColValueLengths[iCol] > 0 )
+        {
+            wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
+            int  nMaxChars = m_panColValueLengths[iCol]+1;
+            size_t nOutChars;
+
+            m_papszColValues[iCol] = 
+                CPLRecodeFromWChar( pwszSrc, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+            m_panColValueLengths[iCol] = strlen(m_papszColValues[iCol]);
+
+            CPLFree( pwszSrc );
         }
     }
 
@@ -1509,10 +1528,12 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_CHAR:
         case SQL_VARCHAR:
         case SQL_LONGVARCHAR:
+            return SQL_C_CHAR;
+
         case SQL_WCHAR:
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
-            return SQL_C_CHAR;
+            return SQL_C_WCHAR;
 
         case SQL_DECIMAL:
         case SQL_NUMERIC:
