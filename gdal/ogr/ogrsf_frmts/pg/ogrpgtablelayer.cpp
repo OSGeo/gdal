@@ -1502,6 +1502,9 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return bHasPostGISGeometry;
 
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+
     else
         return FALSE;
 }
