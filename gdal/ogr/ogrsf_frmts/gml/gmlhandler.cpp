@@ -242,11 +242,22 @@ void GMLHandler::characters(const XMLCh* const chars_in,
 
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;
+
+        char *pszTranslated = tr_strdup(chars);
         
-        m_pszCurField = (char *) 
-            CPLRealloc( m_pszCurField, 
-                        nCurFieldLength+tr_strlen(chars)+1 );
-        tr_strcpy( m_pszCurField + nCurFieldLength, chars );
+        if( m_pszCurField == NULL )
+        {
+            m_pszCurField = pszTranslated;
+            nCurFieldLength = strlen(m_pszCurField);
+        }
+        else
+        {
+            m_pszCurField = (char *) 
+                CPLRealloc( m_pszCurField, 
+                            nCurFieldLength+strlen(pszTranslated)+1 );
+            strcpy( m_pszCurField + nCurFieldLength, pszTranslated );
+            CPLFree( pszTranslated );
+        }
     }
     else if( m_pszGeometry != NULL )
     {
@@ -254,11 +265,11 @@ void GMLHandler::characters(const XMLCh* const chars_in,
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;
         
-        int nCharsLen = tr_strlen( chars );
+        int nCharsLen = tr_strlen(chars);
 
-        if( m_nGeomLen + nCharsLen + 4 > m_nGeomAlloc )
+        if( m_nGeomLen + nCharsLen*4 + 4 > m_nGeomAlloc )
         {
-            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nCharsLen + 1000);
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nCharsLen*4 + 1000);
             m_pszGeometry = (char *) 
                 CPLRealloc( m_pszGeometry, m_nGeomAlloc);
         }
