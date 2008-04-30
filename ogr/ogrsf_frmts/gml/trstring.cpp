@@ -32,6 +32,8 @@
 
 #include "gmlreaderp.h"
 #include "cpl_vsi.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                             tr_strcmp()                              */
@@ -68,9 +70,44 @@ void tr_strcpy( XMLCh *panXMLString, const char *pszCString )
 void tr_strcpy( char *pszCString, const XMLCh *panXMLString )
 
 {
+    int bSimpleASCII = TRUE;
+    const XMLCh *panXMLStringOriginal = panXMLString;
+    char *pszCStringOriginal = pszCString;
+
     while( *panXMLString != 0 )
+    {
+        if( *panXMLString > 127 )
+            bSimpleASCII = FALSE;
+
         *(pszCString++) = (char) *(panXMLString++);
+    }
     *pszCString = 0;
+
+    if( bSimpleASCII )
+        return;
+
+    panXMLString = panXMLStringOriginal;
+    pszCString = pszCStringOriginal;
+
+/* -------------------------------------------------------------------- */
+/*      The simple translation was wrong, because the source is not     */
+/*      all simple ASCII characters.  Redo using the more expensive     */
+/*      recoding API.                                                   */
+/* -------------------------------------------------------------------- */
+    int i;
+    wchar_t *pwszSource = (wchar_t *) CPLCalloc(sizeof(wchar_t),
+                                                strlen(pszCString)+1 );
+    for( i = 0; panXMLString[i] != 0; i++ )
+        pwszSource[i] = panXMLString[i];
+    pwszSource[i] = 0;
+    
+    char *pszResult = CPLRecodeFromWChar( pwszSource, 
+                                          CPL_ENC_UTF16, CPL_ENC_UTF8 );
+    
+    strcpy( pszCString, pszResult );
+
+    CPLFree( pwszSource );
+    CPLFree( pszResult );
 }
 
 /************************************************************************/
