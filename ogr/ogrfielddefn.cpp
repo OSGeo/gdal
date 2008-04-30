@@ -334,9 +334,6 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
       case OFTString:
         return "String";
 
-      case OFTWideString:
-        return "WideString";
-
       case OFTIntegerList:
         return "IntegerList";
 
@@ -345,9 +342,6 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 
       case OFTStringList:
         return "StringList";
-
-      case OFTWideStringList:
-        return "WideStringList";
 
       case OFTBinary:
         return "Binary";
