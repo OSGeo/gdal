@@ -137,6 +137,27 @@ typedef enum
 
 CPLValueType CPL_DLL CPLGetValueType(const char* pszValue);
 
+/* -------------------------------------------------------------------- */
+/*      RFC 23 character set conversion/recoding API (cpl_recode.cpp).  */
+/* -------------------------------------------------------------------- */
+#define CPL_ENC_LOCALE     ""
+#define CPL_ENC_UTF8       "UTF-8"
+#define CPL_ENC_UTF16      "UTF-16"
+#define CPL_ENC_UCS2       "UCS-2"
+#define CPL_ENC_UCS4       "UCS-4"
+#define CPL_ENC_ASCII      "ASCII"
+#define CPL_ENC_ISO8859_1  "ISO-8859-1"
+
+char CPL_DLL *CPLRecode( const char *pszSource, 
+                         const char *pszSrcEncoding, 
+                         const char *pszDstEncoding );
+char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource, 
+                                  const char *pszSrcEncoding, 
+                                  const char *pszDstEncoding );
+wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
+                                   const char *pszSrcEncoding, 
+                                   const char *pszDstEncoding );
+
 CPL_C_END
 
 /************************************************************************/
