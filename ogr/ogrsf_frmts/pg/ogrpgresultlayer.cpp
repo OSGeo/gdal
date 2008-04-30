@@ -313,6 +313,9 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastSpatialFilter) || EQUAL(pszCap,OLCFastGetExtent) )
         return (bHasPostGISGeometry && nSRSId != -2) && m_poAttrQuery == NULL;
 
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+
     else
         return FALSE;
 }

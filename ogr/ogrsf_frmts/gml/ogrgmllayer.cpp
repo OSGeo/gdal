@@ -338,6 +338,9 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
         return poFClass->GetFeatureCount() != -1;
     }
 
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
+
     else 
         return FALSE;
 }
