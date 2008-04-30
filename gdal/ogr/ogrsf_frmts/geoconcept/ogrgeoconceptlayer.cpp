@@ -596,8 +596,6 @@ OGRErr OGRGeoconceptLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         case OFTIntegerList    :
         case OFTRealList       :
         case OFTStringList     :
-        case OFTWideString     :
-        case OFTWideStringList :
         case OFTBinary         :
         default                :
           CPLError( CE_Failure, CPLE_NotSupported,
