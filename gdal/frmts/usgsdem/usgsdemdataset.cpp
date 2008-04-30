@@ -636,6 +636,8 @@ void GDALRegister_USGSDEM()
 "   <Option name='PRODUCER' type='string' description='Producer Agency (up to 60 characters)'/>"
 "   <Option name='OriginCode' type='string' description='Origin code (up to 4 characters, YT for Yukon)'/>"
 "   <Option name='ProcessCode' type='string' description='Processing Code (8=ANUDEM, 9=FME, A=TopoGrid)'/>"
+"   <Option name='NTS' type='string' description='NTS Mapsheet name, used to derive TOPLEFT.'/>"
+"   <Option name='INTERNALNAME' type='string' description='Dataset name written into file header.'/>"
 "</CreationOptionList>" );
         
         poDriver->pfnOpen = USGSDEMDataset::Open;
