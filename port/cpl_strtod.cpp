@@ -145,6 +145,8 @@
 */
 
 /* includes needed by this file */
+#include <locale.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <float.h>
@@ -623,24 +625,34 @@ double CPLAtofM( const char *nptr )
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
-  double ld;
-  char *nan_arg = 0;
+    struct lconv *poLconv = localeconv();
+    char        *pszNumber = CPLStrdup( nptr );
+    double      dfValue;
 
-  switch (_Stold(nptr, endptr, &ld, &nan_arg, point))
+    if ( poLconv && poLconv->decimal_point )
     {
-    case FP_NORMAL:
-    default:
-      return ld;
-    case FP_ZERO:
-      return 0.0;
-    case FP_NAN:
-      ld = copysign (nan (nan_arg), ld);
-      if (nan_arg != 0)
-	free (nan_arg);
-      return ld;
-    case FP_INFINITE:
-      return ld < 0.0L ? -HUGE_VAL : HUGE_VAL;
+        int     i = 0;
+        char    byPoint = poLconv->decimal_point[0];
+
+        while ( pszNumber[i] )
+        {
+            if ( pszNumber[i] == byPoint )
+            {
+                pszNumber[i] = point;
+                break;
+            }
+            i++;
+        }
     }
+
+    dfValue = strtod( pszNumber, endptr );
+
+    if ( endptr )
+        *endptr = (char *)nptr + (*endptr - pszNumber);
+
+    CPLFree( pszNumber );
+
+    return dfValue;
 }
 
 /************************************************************************/
