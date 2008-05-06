@@ -3549,6 +3549,28 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 /*                      GDALComputeRasterMinMax()                       */
 /************************************************************************/
 
+/**
+ * Compute the min/max values for a band.
+ * 
+ * If approximate is OK, then the band's GetMinimum()/GetMaximum() will
+ * be trusted.  If it doesn't work, a subsample of blocks will be read to
+ * get an approximate min/max.  If the band has a nodata value it will
+ * be excluded from the minimum and maximum.
+ *
+ * If bApprox is FALSE, then all pixels will be read and used to compute
+ * an exact range.
+ *
+ * This method is the same as the method GDALRasterBand::ComputeRasterMinMax().
+ * 
+ * @param hBand the band to operate on.
+ * @param bApproxOK TRUE if an approximate (faster) answer is OK, otherwise
+ * FALSE.
+ * @param adfMinMax the array in which the minimum (adfMinMax[0]) and the
+ * maximum (adfMinMax[1]) are returned.
+ *
+ * @return CE_None on success or CE_Failure on failure.
+ */
+
 void CPL_STDCALL 
 GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK, 
                          double adfMinMax[2] )
