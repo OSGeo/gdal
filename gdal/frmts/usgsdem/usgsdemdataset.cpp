@@ -322,7 +322,7 @@ int USGSDEMDataset::LoadFromFile(FILE *InDem)
         VSIFSeek(InDem, 1024, 0); 	// New Format
         fscanf(InDem, "%d", &i);
         fscanf(InDem, "%d", &j);
-        if ((i!=1)||(j!=1))			// File OK?
+        if ((i!=1)||(j!=1 && j != 0))	// File OK?
         {
             VSIFSeek(InDem, 893, 0); 	// Undocumented Format (39109h1.dem)
             fscanf(InDem, "%d", &i);
@@ -540,7 +540,8 @@ int USGSDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
         && !EQUALN((const char *) poOpenInfo->pabyHeader+156, "     3",6) )
         return FALSE;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) )
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     1",6) 
+        && !EQUALN((const char *) poOpenInfo->pabyHeader+150, "     4",6))
         return FALSE;
 
     return TRUE;
