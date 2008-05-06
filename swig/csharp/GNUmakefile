@@ -74,6 +74,7 @@ samples:
 	$(CSC) /r:osr_csharp.dll /out:OSRTransform.exe apps/OSRTransform.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps/GDALRead.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps/GDALReadDirect.cs
+	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALAdjustContrast.exe apps/GDALAdjustContrast.cs
 	$(CSC) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALDatasetRasterIO.exe apps/GDALDatasetRasterIO.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALWrite.exe apps/GDALWrite.cs
 	$(CSC) /r:gdal_csharp.dll /out:GDALColorTable.exe apps/GDALColorTable.cs
