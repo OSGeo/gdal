@@ -4,7 +4,7 @@
   <VRTRasterBand dataType="Int16" band="1">
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
-      <SourceFilename>./data/int16.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">int16.tif</SourceFilename>
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>

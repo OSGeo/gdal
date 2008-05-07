@@ -4,7 +4,7 @@
   <VRTRasterBand dataType="Float32" band="1">
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
-      <SourceFilename>./data/float32.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">float32.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
