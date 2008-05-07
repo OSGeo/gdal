@@ -4,7 +4,7 @@
   <VRTRasterBand dataType="Byte" band="1">
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
-      <SourceFilename>./data/utmsmall.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">utmsmall.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="100" ySize="100"/>
       <DstRect xOff="0" yOff="0" xSize="100" ySize="100"/>

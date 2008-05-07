@@ -8,7 +8,7 @@
     <ColorInterp>Gray</ColorInterp>
     <NodataValue>107</NodataValue>
     <SimpleSource>
-      <SourceFilename>./data/byte.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
