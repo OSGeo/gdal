@@ -324,7 +324,9 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         OCIDefine *hDefn = NULL;
 
         if( oField.GetWidth() > 0 )
-            nBufWidth = oField.GetWidth() + 2;
+            /* extra space needed for the decimal separator the string 
+            terminator and the negative sign (Tamas Szekeres)*/
+            nBufWidth = oField.GetWidth() + 3;
         else if( oField.GetType() == OFTInteger )
             nBufWidth = 22;
         else if( oField.GetType() == OFTReal )
