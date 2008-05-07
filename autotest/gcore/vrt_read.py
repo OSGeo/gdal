@@ -53,7 +53,8 @@ init_list = [ \
     ('cint32.vrt', 1, 5028, None),
     ('cfloat32.vrt', 1, 5028, None),
     ('cfloat64.vrt', 1, 5028, None),
-    ('msubwinbyte.vrt', 2, 2869, None)]
+    ('msubwinbyte.vrt', 2, 2869, None),
+    ('utmsmall.vrt', 1, 50054, None)]
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
