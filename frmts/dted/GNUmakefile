@@ -13,6 +13,5 @@ clean:
 
 install-obj:	$(O_OBJ)
 
-dted_test:	dted_test.o $(OBJ)
-	$(CXX) -o dted_test dted_test.o dted_api.o dted_create.o dted_ptstream.o \
-		 -lgdal -lm 
+dted_test$(EXE):	dted_test.o
+	$(LD) $(LDFLAGS) dted_test.o $(CONFIG_LIBS) -o dted_test$(EXE)
