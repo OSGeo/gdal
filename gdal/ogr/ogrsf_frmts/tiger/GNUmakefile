@@ -39,5 +39,5 @@ default:	$(O_OBJ)
 clean:
 	rm -f *.o $(O_OBJ)
 
-tigerinfo:	tigerinfo.o $(OBJ)
-	$(CXX) $(LNK_FLAGS) tigerinfo.o $(LIBS) -o tigerinfo
+tigerinfo$(EXE):	tigerinfo.o
+	$(LD) $(LDFLAGS) tigerinfo.o $(CONFIG_LIBS) -o tigerinfo$(EXE)
