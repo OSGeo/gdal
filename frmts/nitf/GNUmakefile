@@ -21,9 +21,9 @@ endif
 default:	$(OBJ)
 
 clean:
-	rm -f *.o $(O_OBJ)
+	rm -f *.o $(O_OBJ) nitfdump$(EXE)
 
-nitfdump:	nitfdump.o $(NITFLIB_OBJ)
-	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(CONFIG_LIBS) -o nitfdump
+nitfdump$(EXE):	nitfdump.o
+	$(LD) $(LDFLAGS) nitfdump.o $(CONFIG_LIBS) -o nitfdump$(EXE)
 
 install-obj:	$(O_OBJ)

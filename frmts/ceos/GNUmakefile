@@ -11,7 +11,7 @@ default:	$(OBJ)
 clean:
 	rm -f *.o $(O_OBJ)
 
-ceostest:	ceostest.o ceosopen.o
-	$(CXX) ceostest.o ceosopen.o ../../port/*.o $(LIBS) -o ceostest
+ceostest$(EXE):	ceostest.o
+	$(LD) $(LDFLAGS) ceostest.o $(CONFIG_LIBS) -o ceostest$(EXE)
 
 install-obj:	$(O_OBJ)

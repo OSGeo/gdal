@@ -9,14 +9,13 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr/ogrsf_frmts/avc
 default:	$(OBJ)
 
 clean:
-	rm -f *.o aitest $(OBJ) $(O_OBJ)
+	rm -f *.o aitest$(EXE) $(OBJ) $(O_OBJ)
 
-aitest:	aitest.o $(AIGOBJ)
-	$(CXX) aitest.o $(AIGOBJ) ../../port/*.o $(CONFIG_LIBS) -o aitest
+aitest$(EXE):	aitest.o
+	$(LD) $(LDFLAGS) aitest.o $(CONFIG_LIBS) -o aitest$(EXE)
 
-aigrid2tif:	aigrid2tif.o $(AIGOBJ)
-	$(CXX) aigrid2tif.o $(AIGOBJ) ../../port/*.o $(LIBS) -ltiff \
-		-o aigrid2tif
+aigrid2tif$(EXE):	aigrid2tif.o
+	$(LD) $(LDFLAGS) aigrid2tif.o $(CONFIG_LIBS) -o aigrid2tif$(EXE)
 
 install-obj:	$(O_OBJ)
 
