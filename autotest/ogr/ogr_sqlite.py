@@ -121,11 +121,20 @@ def ogr_sqlite_3():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    if gdaltest.sl_lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.sl_lyr.GetFeatureCount() )
+        return 'fail'
+
     expect = [168, 169, 166, 158, 165]
 
     gdaltest.sl_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.sl_lyr,
                                               'eas_id', expect )
+
+    if gdaltest.sl_lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 5' % gdaltest.sl_lyr.GetFeatureCount() )
+        return 'fail'
+
     gdaltest.sl_lyr.SetAttributeFilter( None )
 
     for i in range(len(gdaltest.poly_feat)):
@@ -214,6 +223,10 @@ def ogr_sqlite_5():
     
     sql_lyr = gdaltest.sl_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
+    if sql_lyr.GetFeatureCount() != 11:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount() )
+        return 'fail'
+
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
 
     gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
@@ -262,9 +275,21 @@ def ogr_sqlite_7():
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.sl_lyr.SetSpatialFilter( geom )
     geom.Destroy()
-    
+
+    if gdaltest.sl_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.sl_lyr.GetFeatureCount() )
+        return 'fail'
+
     tr = ogrtest.check_features_against_list( gdaltest.sl_lyr, 'eas_id',
                                               [ 158 ] )
+
+    gdaltest.sl_lyr.SetAttributeFilter( 'eas_id = 158' )
+
+    if gdaltest.sl_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.sl_lyr.GetFeatureCount() )
+        return 'fail'
+
+    gdaltest.sl_lyr.SetAttributeFilter( None )
 
     gdaltest.sl_lyr.SetSpatialFilter( None )
     
@@ -489,6 +514,11 @@ def ogr_sqlite_12():
         return 'fail'
     feat_read.Destroy()
 
+    feat_read = sql_lyr.GetFeature(0)
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
     gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
 
     return 'success'
@@ -533,6 +563,63 @@ def ogr_sqlite_13():
 
 
 ###############################################################################
+# Test all column types
+
+def ogr_sqlite_14():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'testtypes' )
+    ogrtest.quick_create_layer_def( gdaltest.sl_lyr,
+                                    [ ('INTEGER', ogr.OFTInteger),
+                                      ('FLOAT', ogr.OFTReal),
+                                      ('STRING', ogr.OFTString),
+                                      ('BLOB', ogr.OFTBinary),
+                                      ('BLOB2', ogr.OFTBinary) ] )
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+
+    dst_feat.SetField('INTEGER', 1)
+    dst_feat.SetField('FLOAT', 1.2)
+    dst_feat.SetField('STRING', 'myString\'a')
+
+    gdaltest.sl_lyr.CreateFeature( dst_feat )
+
+    dst_feat.Destroy()
+
+    # Set the BLOB attribute via SQL UPDATE instructions as there's no binding
+    # for OGR_F_SetFieldBinary
+    gdaltest.sl_ds.ExecuteSQL("UPDATE testtypes SET BLOB = x'0001FF' WHERE OGC_FID = 1")
+
+    ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('testtypes')
+
+    # Duplicate the first record
+    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    dst_feat.SetFrom(feat_read)
+    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    # Check the 2 records
+    gdaltest.sl_lyr.ResetReading()
+    for i in range(2):
+        feat_read = gdaltest.sl_lyr.GetNextFeature()
+        if feat_read.GetField('INTEGER') != 1 or \
+           feat_read.GetField('FLOAT') != 1.2 or \
+           feat_read.GetField('STRING') != 'myString\'a' or \
+           feat_read.GetFieldAsString('BLOB') != '0001FF':
+            return 'fail'
+
+    gdaltest.sl_lyr.ResetReading()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -545,6 +632,7 @@ def ogr_sqlite_cleanup():
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkt' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer_approx' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:testtypes' )
 
     gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = None
@@ -570,6 +658,7 @@ gdaltest_list = [
     ogr_sqlite_11,
     ogr_sqlite_12,
     ogr_sqlite_13,
+    ogr_sqlite_14,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
