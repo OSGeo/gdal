@@ -502,6 +502,11 @@ def ogr_sqlite_13():
         return 'skip'
 
     ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+
+    ######################################################
     # Create Layer with EPSG:4326
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4326 )
