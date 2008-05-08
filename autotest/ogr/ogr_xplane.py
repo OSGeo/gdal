@@ -48,23 +48,23 @@ def ogr_xplane_apt_dat():
     if gdaltest.xplane_apt_ds is None:
         return 'fail'
 
-    layers = [ ( 'APT'                  , 6 ),
-               ( 'RunwayPolygon'        , 12 ),
-               ( 'RunwayThreshold'      , 27 ),
-               ( 'WaterRunwayPolygon'   , 1 ),
-               ( 'WaterRunwayThreshold' , 2 ),
-               ( 'Helipad'              , 1 ), 
-               ( 'HelipadPolygon'       , 1 ),
-               ( 'TaxiwayRectangle'     , 437 ),
-               ( 'Pavement'             , 11 ),
-               ( 'APTBoundary'          , 1 ),
-               ( 'APTLinearFeature'     , 45 ),
-               ( 'ATCFreq'              , 42 ),
-               ( 'StartupLocation'      , 110 ),
-               ( 'APTLightBeacon'       , 3 ),
-               ( 'APTWindsock'          , 25 ),
-               ( 'TaxiwaySign'          , 17 ),
-               ( 'VASI_PAPI_WIGWAG'     , 24 )
+    layers = [ ( 'APT'                  , 7,   [ ('apt_icao', 'E46') ] ),
+               ( 'RunwayPolygon'        , 15,  [ ('apt_icao', 'E46') ] ),
+               ( 'RunwayThreshold'      , 34,  [ ('apt_icao', 'E46') ] ),
+               ( 'WaterRunwayPolygon'   , 1,   [ ('apt_icao', 'I38') ] ),
+               ( 'WaterRunwayThreshold' , 2,   [ ('apt_icao', 'I38') ] ),
+               ( 'Helipad'              , 2,   [ ('apt_icao', 'CYXX') ] ), 
+               ( 'HelipadPolygon'       , 2,   [ ('apt_icao', 'CYXX') ]  ),
+               ( 'TaxiwayRectangle'     , 437, [ ('apt_icao', 'LFPG') ] ),
+               ( 'Pavement'             , 11,  [ ('apt_icao', 'CYXX') ] ),
+               ( 'APTBoundary'          , 1,   [ ('apt_icao', 'VTX2') ] ),
+               ( 'APTLinearFeature'     , 45,  [ ('apt_icao', 'CYXX') ] ),
+               ( 'ATCFreq'              , 42,  [ ('apt_icao', 'CYXX') ] ),
+               ( 'StartupLocation'      , 110, [ ('apt_icao', 'CYXX') ] ),
+               ( 'APTLightBeacon'       , 3,   [ ('apt_icao', 'CYXX') ] ),
+               ( 'APTWindsock'          , 25,  [ ('apt_icao', 'E46') ] ),
+               ( 'TaxiwaySign'          , 17,  [ ('apt_icao', 'CYXX') ] ),
+               ( 'VASI_PAPI_WIGWAG'     , 30,  [ ('apt_icao', 'CYXX') ] )
              ]
 
     for layer in layers:
@@ -72,6 +72,13 @@ def ogr_xplane_apt_dat():
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
+        feat_read = lyr.GetNextFeature()
+        for item in layer[2]:
+            if feat_read.GetField(item[0]) != item[1]:
+                print layer[0]
+                print item[0]
+                print feat_read.GetField(item[0])
+                return 'fail'
 
     return 'success'
 
@@ -86,13 +93,13 @@ def ogr_xplane_nav_dat():
     if gdaltest.xplane_nav_ds is None:
         return 'fail'
 
-    layers = [ ( 'ILS'                  , 6 ),
-               ( 'VOR'                  , 3 ),
-               ( 'NDB'                  , 4 ),
-               ( 'GS'                   , 1 ),
-               ( 'Marker'               , 3 ),
-               ( 'DME'                  , 6 ),
-               ( 'DMEILS'               , 1 )
+    layers = [ ( 'ILS'                  , 6, [ ('navaid_id', 'IMQS') ] ),
+               ( 'VOR'                  , 3, [ ('navaid_id', 'AAL') ] ),
+               ( 'NDB'                  , 4, [ ('navaid_id', 'APH') ] ),
+               ( 'GS'                   , 1, [ ('navaid_id', 'IMQS') ] ),
+               ( 'Marker'               , 3, [ ('apt_icao', '40N') ] ),
+               ( 'DME'                  , 6, [ ('navaid_id', 'AAL') ] ),
+               ( 'DMEILS'               , 1, [ ('navaid_id', 'IWG') ] )
              ]
 
     for layer in layers:
@@ -100,6 +107,13 @@ def ogr_xplane_nav_dat():
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
+        feat_read = lyr.GetNextFeature()
+        for item in layer[2]:
+            if feat_read.GetField(item[0]) != item[1]:
+                print layer[0]
+                print item[0]
+                print feat_read.GetField(item[0])
+                return 'fail'
 
     return 'success'
 
@@ -114,8 +128,8 @@ def ogr_xplane_awy_dat():
     if gdaltest.xplane_awy_ds is None:
         return 'fail'
 
-    layers = [ ( 'AirwaySegment'        , 11 ),
-               ( 'AirwayIntersection'   , 14 )
+    layers = [ ( 'AirwaySegment'        , 11, [ ('segment_name', 'R464') ] ),
+               ( 'AirwayIntersection'   , 14, [ ('name', '00MKK') ] )
              ]
 
     for layer in layers:
@@ -123,6 +137,13 @@ def ogr_xplane_awy_dat():
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
+        feat_read = lyr.GetNextFeature()
+        for item in layer[2]:
+            if feat_read.GetField(item[0]) != item[1]:
+                print layer[0]
+                print item[0]
+                print feat_read.GetField(item[0])
+                return 'fail'
 
     return 'success'
 
@@ -136,7 +157,7 @@ def ogr_xplane_fix_dat():
     if gdaltest.xplane_fix_ds is None:
         return 'fail'
 
-    layers = [ ( 'FIX'                  , 1 )
+    layers = [ ( 'FIX'                  , 1, [ ('fix_name', '00MKK') ] )
              ]
 
     for layer in layers:
@@ -144,6 +165,13 @@ def ogr_xplane_fix_dat():
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
+        feat_read = lyr.GetNextFeature()
+        for item in layer[2]:
+            if feat_read.GetField(item[0]) != item[1]:
+                print layer[0]
+                print item[0]
+                print feat_read.GetField(item[0])
+                return 'fail'
 
     return 'success'
 
