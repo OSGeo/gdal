@@ -117,6 +117,9 @@ AC_DEFUN([AX_LIB_EXPAT],
         saved_LDFLAGS="$LDFLAGS"
         LDFLAGS="$LDFLAGS $expat_lib_flags"
 
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS -lexpat"
+        
         dnl
         dnl Check Expat headers
         dnl
@@ -176,6 +179,7 @@ p = NULL;
 
         CPPFLAGS="$saved_CPPFLAGS"
         LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
     AC_MSG_CHECKING([for Expat XML Parser])
