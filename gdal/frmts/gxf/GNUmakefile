@@ -16,8 +16,8 @@ default:	$(OBJ)
 clean:
 	rm -f *.o
 
-gxftest:	gxftest.o $(GXFOBJ)
-	$(CXX) gxftest.o $(GXFOBJ) ../../port/*.o $(LIBS) -o gxftest
+gxftest$(EXE):	gxftest.o
+	$(LD) $(LDFLAGS) gxftest.o $(GXFOBJ) ../../port/*.o $(LIBS) -o gxftest$(EXE)
 
 install-obj:	$(O_OBJ)
 
