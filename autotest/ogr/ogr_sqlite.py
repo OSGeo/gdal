@@ -419,6 +419,120 @@ def ogr_sqlite_10():
     return 'success'
     
 ###############################################################################
+# Test FORMAT=WKB creation option
+
+def ogr_sqlite_11():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ######################################################
+    # Create Layer with WKB geometry
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomwkb', options = [ 'FORMAT=WKB' ] )
+
+    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
+    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry( geom )
+    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkb')
+
+    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    gdaltest.sl_lyr.ResetReading()
+
+    return 'success'
+
+###############################################################################
+# Test FORMAT=WKT creation option
+
+def ogr_sqlite_12():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ######################################################
+    # Create Layer with WKB geometry
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomwkt', options = [ 'FORMAT=WKT' ] )
+
+    geom = ogr.CreateGeometryFromWkt( 'POINT(0 1)' )
+    dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+    dst_feat.SetGeometry( geom )
+    gdaltest.sl_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkt')
+
+    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    gdaltest.sl_lyr.ResetReading()
+
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomwkt" )
+
+    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
+        return 'fail'
+    feat_read.Destroy()
+
+    gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
+
+    return 'success'
+
+###############################################################################
+# Test SRID support
+
+def ogr_sqlite_13():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ######################################################
+    # Create Layer with EPSG:4326
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer', srs = srs )
+
+    ######################################################
+    # Reopen DB
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('wgs84layer')
+
+    if not gdaltest.sl_lyr.GetSpatialRef().IsSame(srs):
+        gdaltest.post_reason('SRS is not the one expected.')
+        return 'fail'
+
+    ######################################################
+    # Create second layer with very approximative EPSG:4326
+    srs = osr.SpatialReference('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
+    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer_approx', srs = srs )
+
+    # Must still be 1
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys");
+    feat = sql_lyr.GetNextFeature()
+    if  feat.GetFieldAsInteger('count') != 1:
+        return 'fail'
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -427,6 +541,10 @@ def ogr_sqlite_cleanup():
         return 'skip'
 
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkb' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:geomwkt' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer' )
+    gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:wgs84layer_approx' )
 
     gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = None
@@ -449,6 +567,9 @@ gdaltest_list = [
     ogr_sqlite_8,
     ogr_sqlite_9,
     ogr_sqlite_10,
+    ogr_sqlite_11,
+    ogr_sqlite_12,
+    ogr_sqlite_13,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
