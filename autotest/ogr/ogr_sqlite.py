@@ -484,7 +484,7 @@ def ogr_sqlite_12():
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL( "select * from geomwkt" )
 
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
+    feat_read = sql_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
         return 'fail'
     feat_read.Destroy()
@@ -500,11 +500,6 @@ def ogr_sqlite_13():
 
     if gdaltest.sl_ds is None:
         return 'skip'
-
-    ######################################################
-    # Reopen DB
-    gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
 
     ######################################################
     # Create Layer with EPSG:4326
