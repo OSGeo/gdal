@@ -209,7 +209,8 @@ typedef enum
   /** List of doubles */                        OFTRealList = 3,
   /** String of ASCII chars */                  OFTString = 4,
   /** Array of strings */                       OFTStringList = 5,
-  /*                                               6 & 7 unused */
+  /** deprecated */                             OFTWideString = 6,
+  /** deprecated */                             OFTWideStringList = 7,
   /** Raw Binary data */                        OFTBinary = 8,
   /** Date */                                   OFTDate = 9,
   /** Time */                                   OFTTime = 10,
