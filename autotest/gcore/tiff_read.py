@@ -62,12 +62,31 @@ init_list = [ \
     ('contig_tiled.tif', 2, 15234, None),
     ('contig_strip.tif', 2, 15234, None)]
 
+###############################################################################
+# Test absolute/offset && index directory access
+
+def tiff_read_off():
+
+    # Test absolute/offset directory access 
+    ds = gdal.Open('GTIFF_DIR:off:408:data/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        return 'fail'
+
+    # Test index directory access
+    ds = gdal.Open('GTIFF_DIR:1:data/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        return 'fail'
+
+    return 'success'
+
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
 	print( 'GTiff tests skipped' )
 	sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
+gdaltest_list.append( (tiff_read_off) )
 
 if __name__ == '__main__':
 
