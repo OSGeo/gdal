@@ -585,6 +585,34 @@ def tiff_write_18():
     
     return 'success'
 
+###############################################################################
+# Test the write of a pixel-interleaved image with NBITS = 7
+
+def tiff_write_19():
+
+    src_ds = gdal.Open( 'data/contig_strip.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/contig_strip_7.tif', src_ds,
+                                           options = [ 'NBITS=7', 'INTERLEAVE=PIXEL' ] )
+
+    new_ds = None
+
+    # hopefully it's closed now!
+
+    new_ds = gdal.Open( 'tmp/contig_strip_7.tif' )
+    if new_ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum() or \
+       new_ds.GetRasterBand(2).Checksum() != src_ds.GetRasterBand(2).Checksum() or \
+       new_ds.GetRasterBand(3).Checksum() != src_ds.GetRasterBand(3).Checksum() :
+        gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
+        return 'false'
+
+    new_ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/contig_strip_7.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -609,6 +637,7 @@ gdaltest_list = [
     tiff_write_16,
     tiff_write_17,
     tiff_write_18,
+    tiff_write_19,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
