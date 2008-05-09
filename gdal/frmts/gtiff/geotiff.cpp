@@ -5304,6 +5304,7 @@ void GDALRegister_GTiff()
 "       <Value>ICCLAB</Value>"
 "       <Value>ITULAB</Value>"
 "   </Option>"
+ "  <Option name='ALPHA' type='boolean' description='Mark first extrasample as being alpha'/>"
 "   <Option name='PROFILE' type='string-select' default='GDALGeoTIFF'>"
 "       <Value>GDALGeoTIFF</Value>"
 "       <Value>GeoTIFF</Value>"
