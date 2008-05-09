@@ -40,8 +40,10 @@ gdaltest_list = []
 
 init_list = [ \
     ('byte.tif', 1, 4672, None),
+    ('int10.tif', 1, 4672, None),
     ('int16.tif', 1, 4672, None),
     ('uint16.tif', 1, 4672, None),
+    ('int24.tif', 1, 4672, None),
     ('int32.tif', 1, 4672, None),
     ('uint32.tif', 1, 4672, None),
     ('float16.tif', 1, 4672, None),
