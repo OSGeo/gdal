@@ -655,7 +655,6 @@ OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
             case OFTIntegerList:
             case OFTRealList:
             case OFTStringList:
-            case OFTWideStringList:
                 // FIXME Prepare array of values field
                 //cv->ConvertFrom( poFeature->GetFieldAsStringList( i ) );
                 //break;
@@ -664,7 +663,6 @@ OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
                 // FIXME Prepare binary field
 
             case OFTString:
-            case OFTWideString:
             case OFTDate:
             case OFTTime:
             case OFTDateTime:
@@ -821,7 +819,6 @@ OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
             case OFTIntegerList:
             case OFTRealList:
             case OFTStringList:
-            case OFTWideStringList:
                 // FIXME Prepare array of values field
                 //cv->ConvertFrom( poFeature->GetFieldAsStringList( i ) );
                 //break;
@@ -830,7 +827,6 @@ OGRErr OGRIDBTableLayer::SetFeature( OGRFeature *poFeature )
                 // FIXME Prepare binary field
 
             case OFTString:
-            case OFTWideString:
             case OFTDate:
             case OFTTime:
             case OFTDateTime:
@@ -984,7 +980,6 @@ OGRErr OGRIDBTableLayer::CreateFeature( OGRFeature *poFeature )
             case OFTIntegerList:
             case OFTRealList:
             case OFTStringList:
-            case OFTWideStringList:
                 // FIXME Prepare array of values field
                 //cv->ConvertFrom( poFeature->GetFieldAsStringList( i ) );
                 //break;
@@ -993,7 +988,6 @@ OGRErr OGRIDBTableLayer::CreateFeature( OGRFeature *poFeature )
                 // FIXME Prepare binary field
 
             case OFTString:
-            case OFTWideString:
             case OFTDate:
             case OFTTime:
             case OFTDateTime:
