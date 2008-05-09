@@ -984,6 +984,49 @@ def tiff_write_31():
 
     return 'success'
 
+###############################################################################
+# Create a rotated image
+
+def tiff_write_32():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open('data/byte.vrt')
+
+    # Test creation
+    ds = drv.Create( 'tmp/byte_rotated.tif', 20, 20, gdal.GDT_Byte )
+
+    gt = (10,3.53553390593,3.53553390593,30,3.53553390593,-3.53553390593)
+    ds.SetGeoTransform( gt )
+
+    data = ds_in.ReadRaster( 0, 0, 20, 20 )
+    ds.WriteRaster( 0, 0, 20, 20, data )
+
+    ds_in = None
+
+    # Test copy
+    new_ds = drv.CreateCopy( 'tmp/byte_rotated_copy.tif', ds )
+    new_ds = None
+
+    # Check copy
+    ds = gdal.Open( 'tmp/byte_rotated_copy.tif' )
+    new_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(new_gt[i]-gt[i]) > 1e-5:
+            print
+            print 'old = ', gt
+            print 'new = ', new_gt
+            gdaltest.post_reason( 'Geotransform differs.' )
+            return 'fail'
+
+    ds = None
+    new_ds = None
+
+    drv.Delete( 'tmp/byte_rotated.tif' )
+    drv.Delete( 'tmp/byte_rotated_copy.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1021,6 +1064,7 @@ gdaltest_list = [
     tiff_write_29,
     tiff_write_30,
     tiff_write_31,
+    tiff_write_32,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
