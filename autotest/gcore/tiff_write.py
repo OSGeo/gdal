@@ -613,6 +613,51 @@ def tiff_write_19():
 
     return 'success'
 
+###############################################################################
+# Test write and read of some TIFF tags
+
+def tiff_write_20():
+
+    new_ds = gdaltest.tiff_drv.Create( 'tmp/tags.tif', 1, 1, 1)
+
+    values = [ ('TIFFTAG_DOCUMENTNAME'    , 'document_name'),
+               ('TIFFTAG_IMAGEDESCRIPTION', 'image_description'),
+               ('TIFFTAG_SOFTWARE'        , 'software'),
+               ('TIFFTAG_DATETIME'        , 'datetime'),
+               ('TIFFTAG_ARTIST'          , 'artitst'),
+               ('TIFFTAG_HOSTCOMPUTER'    , 'host_computer'),
+               ('TIFFTAG_COPYRIGHT'       , 'copyright'),
+               ('TIFFTAG_XRESOLUTION'     , '100'),
+               ('TIFFTAG_YRESOLUTION'     , '101'),
+               ('TIFFTAG_RESOLUTIONUNIT'  , '2 (pixels/inch)'),
+             ]
+
+    dict = {}
+    for item in values:
+        dict[item[0]] = item[1]
+    new_ds.SetMetadata(dict)
+
+    new_ds = None
+
+    # hopefully it's closed now!
+
+    new_ds = gdal.Open( 'tmp/tags.tif' )
+    md = new_ds.GetMetadata()
+    for item in values:
+        if not md.has_key(item[0]):
+            gdaltest.post_reason( 'Couldnt find tag %s' %(item[0]))
+            return 'fail'
+
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason( 'For tag %s, got %s, expected %s' %(item[0], md[item[0]], item[1]))
+            return 'fail'
+
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tags.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -638,6 +683,7 @@ gdaltest_list = [
     tiff_write_17,
     tiff_write_18,
     tiff_write_19,
+    tiff_write_20,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
