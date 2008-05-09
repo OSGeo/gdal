@@ -520,6 +520,15 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     if(tmpImage.imagic != 474)
         return NULL;
 
+    if (tmpImage.type != 0 && tmpImage.type != 1)
+        return NULL;
+
+    if (tmpImage.bpc != 1 && tmpImage.bpc != 2)
+        return NULL;
+
+    if (tmpImage.dim != 1 && tmpImage.dim != 2 && tmpImage.dim != 3)
+        return NULL;
+
     if(tmpImage.bpc != 1)
     {
         CPLError(CE_Failure, CPLE_NotSupported, 
