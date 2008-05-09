@@ -919,6 +919,71 @@ def tiff_write_29():
 
     return 'success'
 
+
+###############################################################################
+# Create a BigTIFF image with BigTIFF=YES
+
+def tiff_write_30():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 1, 1, 1, options = ['BigTIFF=YES'] )
+    ds = None
+
+    ds = gdal.Open( 'tmp/bigtiff.tif' )
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    fileobj = open( 'tmp/bigtiff.tif', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
+
+    # Check BigTIFF signature
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Create a BigTIFF image implicitely (more than 4Gb)
+
+def tiff_write_31():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if string.find(md['DMD_CREATIONOPTIONLIST'],'BigTIFF') == -1:
+        return 'skip'
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 100000, 100000, 1 )
+    ds = None
+
+    ds = gdal.Open( 'tmp/bigtiff.tif' )
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    fileobj = open( 'tmp/bigtiff.tif', mode='rb')
+    binvalues = array.array('b')
+    binvalues.read(fileobj, 4)
+    fileobj.close()
+
+    gdaltest.tiff_drv.Delete( 'tmp/bigtiff.tif' )
+
+    # Check BigTIFF signature
+    if ((binvalues[2] != 0x2B or binvalues[3] != 0) \
+        and (binvalues[3] != 0x2B or binvalues[2] != 0)):
+        return 'fail'
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -954,6 +1019,8 @@ gdaltest_list = [
     tiff_write_27,
     tiff_write_28,
     tiff_write_29,
+    tiff_write_30,
+    tiff_write_31,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
