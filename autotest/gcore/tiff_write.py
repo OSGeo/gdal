@@ -652,9 +652,141 @@ def tiff_write_20():
             gdaltest.post_reason( 'For tag %s, got %s, expected %s' %(item[0], md[item[0]], item[1]))
             return 'fail'
 
+    new_ds = None
     src_ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/tags.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_ASSOCALPHA
+
+def tiff_write_21():
+
+    src_ds = gdal.Open( 'data/stefan_full_rgba.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/stefan_full_rgba.tif', src_ds )
+
+    new_ds = None
+
+    new_ds = gdal.Open( 'tmp/stefan_full_rgba.tif' )
+    if new_ds.RasterCount != 4:
+        return 'fail'
+    for i in range(4):
+        if new_ds.GetRasterBand(i+1).GetRasterColorInterpretation() != src_ds.GetRasterBand(i+1).GetRasterColorInterpretation():
+            return 'fail'
+        if new_ds.GetRasterBand(i+1).Checksum() != src_ds.GetRasterBand(i+1).Checksum():
+            return 'fail'
+
+    new_ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/stefan_full_rgba.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNSPECIFIED
+
+def tiff_write_22():
+
+    src_ds = gdal.Open( 'data/stefan_full_rgba_photometric_rgb.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/stefan_full_rgba_photometric_rgb.tif', src_ds, options = [ 'PHOTOMETRIC=RGB' ] )
+
+    new_ds = None
+
+    new_ds = gdal.Open( 'tmp/stefan_full_rgba_photometric_rgb.tif' )
+    if new_ds.RasterCount != 4:
+        return 'fail'
+    for i in range(4):
+        if new_ds.GetRasterBand(i+1).GetRasterColorInterpretation() != src_ds.GetRasterBand(i+1).GetRasterColorInterpretation():
+            return 'fail'
+        if new_ds.GetRasterBand(i+1).Checksum() != src_ds.GetRasterBand(i+1).Checksum():
+            return 'fail'
+
+    new_ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/stefan_full_rgba_photometric_rgb.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test grey+alpha images with ALPHA=YES
+
+def tiff_write_23():
+
+    src_ds = gdal.Open( 'data/stefan_full_greyalpha.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/stefan_full_greyalpha.tif', src_ds, options = [ 'ALPHA=YES' ] )
+
+    new_ds = None
+
+    new_ds = gdal.Open( 'tmp/stefan_full_greyalpha.tif' )
+    if new_ds.RasterCount != 2:
+        return 'fail'
+    for i in range(2):
+        if new_ds.GetRasterBand(i+1).GetRasterColorInterpretation() != src_ds.GetRasterBand(i+1).GetRasterColorInterpretation():
+            return 'fail'
+        if new_ds.GetRasterBand(i+1).Checksum() != src_ds.GetRasterBand(i+1).Checksum():
+            return 'fail'
+
+    new_ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/stefan_full_greyalpha.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test grey+alpha images without ALPHA=YES
+
+def tiff_write_24():
+
+    src_ds = gdal.Open( 'data/stefan_full_greyalpha.tif' )
+
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/stefan_full_greyunspecified.tif', src_ds )
+
+    new_ds = None
+
+    new_ds = gdal.Open( 'tmp/stefan_full_greyunspecified.tif' )
+    if new_ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_Undefined:
+        return 'fail'
+
+    new_ds = None
+    src_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/stefan_full_greyunspecified.tif' )
+
+    return 'success'
+
+###############################################################################
+# Read a CIELAB image to test the RGBA image TIFF interface
+
+def tiff_write_25():
+
+    src_ds = gdal.Open( 'data/cielab.tif' )
+    if src_ds.RasterCount != 4:
+        return 'fail'
+    if src_ds.GetRasterBand(1).Checksum() != 6:
+        return 'fail'
+    if src_ds.GetRasterBand(2).Checksum() != 3:
+        return 'fail'
+    if src_ds.GetRasterBand(3).Checksum() != 0:
+        return 'fail'
+    if src_ds.GetRasterBand(4).Checksum() != 3:
+        return 'fail'
+    if src_ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
+        return 'fail'
+    if src_ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
+        return 'fail'
+    if src_ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
+        return 'fail'
+    if src_ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        return 'fail'
+    src_ds = None
 
     return 'success'
 
@@ -684,6 +816,11 @@ gdaltest_list = [
     tiff_write_18,
     tiff_write_19,
     tiff_write_20,
+    tiff_write_21,
+    tiff_write_22,
+    tiff_write_23,
+    tiff_write_24,
+    tiff_write_25,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
