@@ -223,6 +223,20 @@ def tiff_write_5():
 
     gdaltest.tiff_drv.Delete( 'tmp/test_5.tif' )
 
+    # Test SetGCPs on a new GTiff 
+    new_ds = gdaltest.tiff_drv.Create(  'tmp/test_5.tif', 10, 10, 1)
+    new_ds.SetGCPs(gcps, src_ds.GetGCPProjection() )
+    new_ds = None
+
+    new_ds = gdal.Open('tmp/test_5.tif')
+    gcps = new_ds.GetGCPs()
+    if len(gcps) != 4:
+        gdaltest.post_reason( 'GCP count wrong.' )
+        return 'false'
+    new_ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/test_5.tif' )
+
     return 'success'
 
 ###############################################################################
