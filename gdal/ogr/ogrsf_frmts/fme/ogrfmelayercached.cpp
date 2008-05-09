@@ -366,10 +366,6 @@ CPLXMLNode *OGRFMELayerCached::SerializeToXML()
             pszType = "String";
         else if( poFieldDef->GetType() == OFTStringList )
             pszType = "StringList";
-        else if( poFieldDef->GetType() == OFTWideString )
-            pszType = "WideString";
-        else if( poFieldDef->GetType() == OFTWideStringList )
-            pszType = "WideStringList";
         else if( poFieldDef->GetType() == OFTBinary )
             pszType = "Binary";
         else
@@ -465,10 +461,6 @@ int OGRFMELayerCached::InitializeFromXML( CPLXMLNode *psLayer )
             eType = OFTReal;
         else if( EQUAL(pszType,"RealList") )
             eType = OFTRealList;
-        else if( EQUAL(pszType,"WideString") )
-            eType = OFTWideString;
-        else if( EQUAL(pszType,"WideStringList") )
-            eType = OFTWideStringList;
         else if( EQUAL(pszType,"Binary") )
             eType = OFTBinary;
         else
