@@ -790,6 +790,79 @@ def tiff_write_25():
 
     return 'success'
 
+
+###############################################################################
+# Test color table in a 8 bit image
+
+def tiff_write_26():
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ct8.tif', 1, 1, 1, gdal.GDT_Byte)
+
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+
+    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/ct8.tif' )
+
+    ct = ds.GetRasterBand( 1 ).GetRasterColorTable()
+    if ct.GetCount() != 256 or \
+       ct.GetColorEntry(0) != (255,255,255,255) or \
+       ct.GetColorEntry(1) != (255,255,0,255) or \
+       ct.GetColorEntry(2) != (255,0,255,255) or \
+       ct.GetColorEntry(3) != (0,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( 'tmp/ct8.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test color table in a 16 bit image
+
+def tiff_write_27():
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/ct16.tif', 1, 1, 1, gdal.GDT_UInt16)
+
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+
+    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/ct16.tif' )
+    new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/ct16_copy.tif', ds )
+    new_ds = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/ct16_copy.tif' )
+
+    ct = ds.GetRasterBand( 1 ).GetRasterColorTable()
+    if ct.GetCount() != 65536 or \
+       ct.GetColorEntry(0) != (255,255,255,255) or \
+       ct.GetColorEntry(1) != (255,255,0,255) or \
+       ct.GetColorEntry(2) != (255,0,255,255) or \
+       ct.GetColorEntry(3) != (0,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/ct16.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ct16_copy.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -821,6 +894,8 @@ gdaltest_list = [
     tiff_write_23,
     tiff_write_24,
     tiff_write_25,
+    tiff_write_26,
+    tiff_write_27,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
