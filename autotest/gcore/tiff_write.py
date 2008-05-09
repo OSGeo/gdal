@@ -863,6 +863,62 @@ def tiff_write_27():
 
     return 'success'
 
+###############################################################################
+# Test SetRasterColorInterpretation on a 2 channel image
+
+def tiff_write_28():
+
+    ds = gdaltest.tiff_drv.Create( 'tmp/greyalpha.tif', 1, 1, 2)
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_Undefined:
+        return 'fail'
+
+    ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/greyalpha.tif' )
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/greyalpha.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test SetRasterColorInterpretation on a 4 channel image
+
+def tiff_write_29():
+
+    # When creating a 4 channel image with PHOTOMETRIC=RGB, 
+    # TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNSPECIFIED
+    ds = gdaltest.tiff_drv.Create( 'tmp/rgba.tif', 1, 1, 4, options = ['PHOTOMETRIC=RGB'])
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_Undefined:
+        return 'fail'
+
+    ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/rgba.tif' )
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/rgba.tif' )
+
+    return 'success'
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -896,6 +952,8 @@ gdaltest_list = [
     tiff_write_25,
     tiff_write_26,
     tiff_write_27,
+    tiff_write_28,
+    tiff_write_29,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
