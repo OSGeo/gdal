@@ -392,7 +392,7 @@ void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
  * @return the base type for all geometry related to this definition.
  */
 
-OGRwkbGeometryType OGR_FD_GetGeomType( OGRFieldDefnH hDefn )
+OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH hDefn )
 
 {
     return ((OGRFeatureDefn *) hDefn)->GetGeomType();
