@@ -100,7 +100,6 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
                                               OGRGeoJSONDataSource* poDS )
 {
     CPLAssert( NULL == poLayer_ );
-    bool bSuccess = false;
 
     if( NULL == poGJObject_ )
     {
@@ -1145,7 +1144,6 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
 
     if( json_type_array == json_object_get_type( poObjGeoms ) )
     {
-        GeoJSONObject::Type objType = GeoJSONObject::eUnknown;
         const int nGeoms = json_object_array_length( poObjGeoms );
         if( nGeoms > 0 )
         {
