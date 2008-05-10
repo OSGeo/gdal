@@ -30,6 +30,7 @@
 import sys
 import string
 import os
+import urllib2
 try:
     from osgeo import gdal
     from osgeo import osr
@@ -49,7 +50,6 @@ reason = None
 # Process commandline arguments for stuff like --debug, --locale, --config
 
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
-
 
 ###############################################################################
 
@@ -831,3 +831,43 @@ def rpcs_equal( md1, md2 ):
                 return 0
 
     return 1
+
+
+###############################################################################
+# Download file at url 'url' and put it as 'filename' in 'tmp/cache/'
+#
+# If 'filename' already exits in 'tmp/cache/', it is not downloaded
+# If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
+# If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
+
+def download_file(url, filename):
+    try:
+        os.stat( 'tmp/cache/' + filename )
+        return True
+    except:
+        if os.environ.has_key('GDAL_DOWNLOAD_TEST_DATA'):
+            val = None
+            try:
+                handle = urllib2.urlopen(url)
+                print 'Downloading %s...' % (url)
+                val = handle.read()
+            except urllib2.HTTPError, e:
+                print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
+                return False
+            except:
+                print 'HTTP service for %s is down.' %(url)
+                return False
+
+            try:
+                os.stat( 'tmp/cache' )
+            except:
+                os.mkdir('tmp/cache')
+
+            try:
+                open( 'tmp/cache/' + filename, 'wb').write(val)
+                return True
+            except:
+                print 'Cannot write %s' % (filename)
+                return False
+        else:
+            return False
