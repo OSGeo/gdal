@@ -630,7 +630,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
     if( !bHasFid )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature(%d) failed.  Unable to delete features "
+                  "DeleteFeature(%ld) failed.  Unable to delete features "
                   "in tables without\n a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
