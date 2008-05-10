@@ -683,7 +683,7 @@ OGRFeature *    OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long 
             if (!isValidGeometry)
             {
                 CPLError(CE_Warning, CPLE_AppDefined, 
-                        "Geometry of polygon of fid %d starting at line %d cannot be translated to Simple Geometry. "
+                        "Geometry of polygon of fid %ld starting at line %d cannot be translated to Simple Geometry. "
                         "All polygons will be contained in a multipolygon.\n",
                         fid,
                         offsetAndLineFeaturesTable[fid].line + 1);

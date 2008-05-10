@@ -258,7 +258,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextGMLId++ );
 
-    VSIFPrintf( fp, "    <ogr:%s fid=\"F%d\">\n", 
+    VSIFPrintf( fp, "    <ogr:%s fid=\"F%ld\">\n", 
                 poFeatureDefn->GetName(),
                 poFeature->GetFID() );
 
