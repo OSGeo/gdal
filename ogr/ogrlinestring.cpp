@@ -1000,7 +1000,7 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
                       "OGRLineString::exportToWkt() ... buffer overflow.\n"
                       "nMaxString=%d, strlen(*ppszDstText) = %d, i=%d\n"
                       "*ppszDstText = %s", 
-                      nMaxString, strlen(*ppszDstText), i, *ppszDstText );
+                      nMaxString, (int) strlen(*ppszDstText), i, *ppszDstText );
 
             VSIFree( *ppszDstText );
             *ppszDstText = NULL;

@@ -592,7 +592,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                 else if ( iDatum != 8 )
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "Wrong datum for State Plane projection %d. "
-                              "Should be 0 or 8.", iDatum );
+                              "Should be 0 or 8.", (int) iDatum );
                 
                 SetStatePlane( iZone, bNAD83 );
             }
@@ -865,7 +865,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to lookup datum code %d, likely due to missing GDAL gcs.csv\n"
                           " file.  Falling back to use WGS84.", 
-                          iDatum );
+                          (int) iDatum );
                 SetWellKnownGeogCS("WGS84" );
             }
         }
@@ -874,7 +874,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Wrong datum code %d. Supported datums 0--%d only.\n"
                       "Setting WGS84 as a fallback.",
-                      iDatum, NUMBER_OF_ELLIPSOIDS );
+                      (int) iDatum, NUMBER_OF_ELLIPSOIDS );
             SetWellKnownGeogCS( "WGS84" );
         }
 
