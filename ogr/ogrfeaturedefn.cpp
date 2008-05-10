@@ -306,7 +306,7 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
 OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
 
 {
-    return ((OGRFeatureDefn *) hDefn)->GetFieldDefn( iField );
+    return (OGRFieldDefnH) ((OGRFeatureDefn *) hDefn)->GetFieldDefn( iField );
 }
 
 /************************************************************************/

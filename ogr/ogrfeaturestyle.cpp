@@ -149,7 +149,7 @@ OGRStyleMgr::OGRStyleMgr(OGRStyleTable *poDataSetStyleTable)
  * @return an handle to the new style manager object.
  */
 
-OGRFeatureH OGR_SM_Create( void *hStyleTable )
+OGRStyleMgrH OGR_SM_Create( void *hStyleTable )
 
 {
     return (OGRStyleMgrH) new OGRStyleMgr( NULL );
