@@ -559,7 +559,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to lookup ellipsoid code %d, likely due to"
                           " missing GDAL gcs.csv\n"
-                          " file.  Falling back to use WGS84.", iEllips );
+                          " file.  Falling back to use WGS84.", (int) iEllips );
                 SetWellKnownGeogCS( "WGS84" );
             }
 
@@ -572,7 +572,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Wrong datum code %d. Supported datums are 1--%d only.\n"
                       "Setting WGS84 as a fallback.",
-                      iDatum, NUMBER_OF_DATUMS - 1 );
+                      (int) iDatum, NUMBER_OF_DATUMS - 1 );
             SetWellKnownGeogCS( "WGS84" );
         }
     }
