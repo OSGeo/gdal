@@ -145,32 +145,32 @@ void KMLNode::print(unsigned int what)
         {
             if(psExtent_ != NULL)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) (%f|%f|%f|%f) <--- Layer #%d", 
-                    indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                    pvpoChildren_->size(), pvsContent_->size(), pvoAttributes_->size(), 
-                    psExtent_->dfX1, psExtent_->dfX2, psExtent_->dfY1, psExtent_->dfY2, nLayerNumber_);
+                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
+                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(), 
+                         psExtent_->dfX1, psExtent_->dfX2, psExtent_->dfY1, psExtent_->dfY2, nLayerNumber_);
             else
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) <--- Layer #%d", 
-                    indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                    pvpoChildren_->size(), pvsContent_->size(), pvoAttributes_->size(), nLayerNumber_);
+                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
+                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(), nLayerNumber_);
         }
         else
         {
             if(psExtent_ != NULL)
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d) (%f|%f|%f|%f)", 
-                    indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                    pvpoChildren_->size(), pvsContent_->size(), pvoAttributes_->size(),
-                    psExtent_->dfX1, psExtent_->dfX2, psExtent_->dfY1, psExtent_->dfY2);
+                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
+                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size(),
+                         psExtent_->dfX1, psExtent_->dfX2, psExtent_->dfY1, psExtent_->dfY2);
             else
                 CPLDebug("KML", "%s%s (nLevel: %d Type: %s poParent: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
-                    indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
-                    pvpoChildren_->size(), pvsContent_->size(), pvoAttributes_->size());
+                         indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(), 
+                         (int) pvpoChildren_->size(), (int) pvsContent_->size(), (int) pvoAttributes_->size());
         }
     }
     else
     {
         CPLDebug("KML", "%s%s (nLevel: %d Type: %s pvpoChildren_: %d pvsContent_: %d pvoAttributes_: %d)", 
-            indent.c_str(), sName_.c_str(), nLevel_, Nodetype2String(eType_).c_str(), pvpoChildren_->size(), 
-            pvsContent_->size(), pvoAttributes_->size());
+                 indent.c_str(), sName_.c_str(), (int) nLevel_, Nodetype2String(eType_).c_str(), (int) pvpoChildren_->size(), 
+                 (int) pvsContent_->size(), (int) pvoAttributes_->size());
     }
 
     if(what == 1 || what == 3)
