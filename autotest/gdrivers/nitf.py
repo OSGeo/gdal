@@ -343,6 +343,185 @@ def nitf_17():
     return tst.testOpen()
 
 ###############################################################################
+# Test NITF file without image segment
+
+def nitf_18():
+
+    # Shut up the warning about missing image segment
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0006A.NTF
+    ds = gdal.Open("data/U_0006A.NTF")
+    gdal.PopErrorHandler()
+
+    if ds.RasterCount != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test BILEVEL (C1) decompression
+
+def nitf_19():
+
+    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_0/U_1050A.NTF
+    tst = gdaltest.GDALTest( 'NITF', 'U_1050A.NTF', 1, 65024 )
+
+    return tst.testOpen()
+
+
+###############################################################################
+# Test NITF file consiting only of an header
+
+def nitf_20():
+
+    # Shut up the warning about file either corrupt or empty
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0002A.NTF
+    ds = gdal.Open("data/U_0002A.NTF")
+    gdal.PopErrorHandler()
+
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
+
+def nitf_online_1():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 'NITF21_CGM_ANNO_Uncompressed_unmasked.ntf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 1, 13123, filename_absolute = 1 )
+
+    # Shut up the warning about missing image segment
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ret = tst.testOpen()
+    gdal.PopErrorHandler()
+
+    return ret
+
+###############################################################################
+# Test NITF file with multiple images
+
+def nitf_online_2():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf', 'U_0001a.ntf'):
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/cache/U_0001a.ntf' )
+
+    md = ds.GetMetadata('SUBDATASETS')
+    if not md.has_key('SUBDATASET_1_NAME'):
+        gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test ARIDPCM (C2) image
+
+def nitf_online_3():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf', 'U_0001a.ntf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'NITF_IM:3:tmp/cache/U_0001a.ntf', 1, 23463, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# Test Vector Quantization (VQ) (C4) file
+
+def nitf_online_4():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/cadrg/001zc013.on1', '001zc013.on1'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/001zc013.on1', 1, 53960, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# Test Vector Quantization (VQ) (M4) file
+
+def nitf_online_5():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/cadrg/overview.ovr', 'overview.ovr'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/overview.ovr', 1, 60699, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+###############################################################################
+# Test a JPEG compressed, single blocked 2048x2048 mono image
+
+def nitf_online_6():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4001b.ntf', 'U_4001b.ntf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/U_4001b.ntf', 1, 60030, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+
+###############################################################################
+# Test all combinations of IMODE (S,P,B,R) for an image with 6 bands whose 3 are RGB
+
+def nitf_online_7():
+
+    files = [ 'ns3228b.nsf', 'i_3228c.ntf', 'ns3228d.nsf', 'i_3228e.ntf' ]
+    for file in files:
+        if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/' + file, file):
+            return 'skip'
+
+        ds = gdal.Open('tmp/cache/' + file)
+        if ds.RasterCount != 6:
+            return 'fail'
+
+        checksums = [ 48385, 48385, 40551, 54223, 48385, 33094 ]
+        colorInterpretations = [ gdal.GCI_Undefined, gdal.GCI_Undefined, gdal.GCI_RedBand, gdal.GCI_BlueBand, gdal.GCI_Undefined, gdal.GCI_GreenBand ]
+
+        for i in range(6):
+            if ds.GetRasterBand(i+1).Checksum() != checksums[i]:
+                return 'fail'
+            if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != colorInterpretations[i]:
+                return 'fail'
+        ds = None
+
+    return 'success'
+
+###############################################################################
+# Test JPEG-compressed multi-block mono-band image with a data mask subheader (IC=M3, IMODE=B)
+
+def nitf_online_8():
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3301j.nsf', 'ns3301j.nsf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/ns3301j.nsf', 1, 56861, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+
+###############################################################################
+# Test JPEG-compressed multi-block mono-band image without a data mask subheader (IC=C3, IMODE=B)
+
+def nitf_online_9():
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3304a.nsf', 'ns3304a.nsf'):
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/ns3304a.nsf', 1, 32419, filename_absolute = 1 )
+
+    return tst.testOpen()
+
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -381,6 +560,18 @@ gdaltest_list = [
     nitf_15,
     nitf_16,
     nitf_17,
+    nitf_18,
+    nitf_19,
+    nitf_20,
+    nitf_online_1,
+    nitf_online_2,
+    nitf_online_3,
+    nitf_online_4,
+    nitf_online_5,
+    nitf_online_6,
+    nitf_online_7,
+    nitf_online_8,
+    nitf_online_9,
     nitf_cleanup ]
 
 if __name__ == '__main__':
