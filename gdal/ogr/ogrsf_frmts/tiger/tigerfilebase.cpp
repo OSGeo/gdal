@@ -223,7 +223,7 @@ void TigerFileBase::EstablishFeatureCount()
         CPLError( CE_Warning, CPLE_FileIO,
                   "TigerFileBase::EstablishFeatureCount(): "
                   "File length %d doesn't divide by record length %d.\n",
-                  nFileSize, nRecordLength );
+                  (int) nFileSize, (int) nRecordLength );
     }
 
     nFeatures = nFileSize / nRecordLength;

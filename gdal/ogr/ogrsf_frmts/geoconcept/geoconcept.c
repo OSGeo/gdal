@@ -4772,7 +4772,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     {
       /* long integer which GeoConcept may use as a key for the object it will create. */
       /* If set to '-1', it will be ignored.                                           */
-      if( VSIFPrintf(h,"%s%d%s", quotes, id, quotes)<=0 )
+      if( VSIFPrintf(h,"%s%ld%s", quotes, id, quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return WRITEERROR_GCIO;
