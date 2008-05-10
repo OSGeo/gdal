@@ -2353,8 +2353,8 @@ const char *swq_select_finish_summarize( swq_select *select_info )
 
 {
     int (FORCE_CDECL *compare_func)(const void *, const void*);
-    int count;
-    char **distinct_list;
+    int count = 0;
+    char **distinct_list = NULL;
 
     if( select_info->query_mode != SWQM_DISTINCT_LIST 
         || select_info->order_specs == 0 )
@@ -2366,6 +2366,9 @@ const char *swq_select_finish_summarize( swq_select *select_info )
     if( select_info->order_defs[0].field_index != 
         select_info->column_defs[0].field_index )
         return "Only selected DISTINCT field can be used for ORDER BY.";
+
+    if( select_info->column_summary == NULL )
+        return NULL;
 
     if( select_info->column_defs[0].field_type == SWQ_INTEGER )
         compare_func = swq_compare_int;
