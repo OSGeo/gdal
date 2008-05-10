@@ -452,7 +452,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", NULL );
 
-    return ((OGRFeature *) hFeat)->GetGeometryRef();
+    return (OGRGeometryH) ((OGRFeature *) hFeat)->GetGeometryRef();
 }
 
 /************************************************************************/

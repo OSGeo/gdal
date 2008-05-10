@@ -362,7 +362,7 @@ OGRErr OGRGeoconceptLayer::CreateFeature( OGRFeature* poFeature )
             OGRGeometry* poGeomPart=
                 isSingle? poGeom:((OGRGeometryCollection*)poGeom)->getGeometryRef(iGeom);
             nextField= WriteFeatureGeometry_GCIO(_gcFeature,
-                                                 poGeomPart);
+                                                 (OGRGeometryH)poGeomPart);
           }
           else
           {

@@ -1436,7 +1436,7 @@ char *OGRGeometry::exportToJson() const
 #ifndef _WIN32_WCE
 #ifdef OGR_ENABLED
     OGRGeometry* poGeometry = const_cast<OGRGeometry*>(this);
-    return OGR_G_ExportToJson( static_cast<OGRGeometryH>(poGeometry) );
+    return OGR_G_ExportToJson( (OGRGeometryH) (poGeometry) );
 #else
     CPLError( CE_Failure, CPLE_AppDefined,
               "OGRGeometry::exportToJson() not supported in builds without OGR drivers." );
