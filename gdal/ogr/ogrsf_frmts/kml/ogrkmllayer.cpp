@@ -462,7 +462,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
         pszGeometry = 
-            OGR_G_ExportToKML( static_cast<OGRGeometryH>( poFeature->GetGeometryRef() ),
+            OGR_G_ExportToKML( (OGRGeometryH)( poFeature->GetGeometryRef() ),
                                poDS_->GetAltitudeMode());
         
         VSIFPrintf( fp, "      %s\n", pszGeometry );
