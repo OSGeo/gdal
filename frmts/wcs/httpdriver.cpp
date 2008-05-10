@@ -119,7 +119,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
         else
         {
             poDS =  (GDALDataset *) 
-                GDALOpen( osResultFilename, GA_ReadOnly );
+                GDALOpen( osTempFilename, GA_ReadOnly );
             VSIUnlink( osTempFilename ); /* this may not work on windows */
         }
     }
