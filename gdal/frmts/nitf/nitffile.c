@@ -83,6 +83,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file %s is not an NITF file.", 
                   pszFilename );
+        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -95,6 +96,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to read FSDWNG field from NITF file.  File is either corrupt\n"
                   "or empty." );
+        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -112,6 +114,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to read header length from NITF file.  File is either corrupt\n"
                   "or empty." );
+        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -125,6 +128,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "NITF Header Length (%d) seems to be corrupt.",
                   nHeaderLen );
+        VSIFCloseL(fp);
         return NULL;
     }
 
