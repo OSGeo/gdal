@@ -169,6 +169,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
             case SWQ_OTHER:
               break;
             case SWQ_INTEGER:
+            case SWQ_BOOLEAN:
               oFDefn.SetType( OFTInteger );
               break;
             case SWQ_FLOAT:
