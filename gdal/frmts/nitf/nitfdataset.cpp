@@ -308,7 +308,7 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Special case for JPEG blocks.                                   */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(psImage->szIC,"C3") )
+    if( EQUAL(psImage->szIC,"C3") || EQUAL(psImage->szIC,"M3") )
     {
         CPLErr eErr = poGDS->ReadJPEGBlock( nBlockXOff, nBlockYOff );
         int nBlockBandSize = psImage->nBlockWidth*psImage->nBlockHeight;
@@ -2505,9 +2505,39 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
     if( panJPEGBlockOffset == NULL )
     {
-        eErr = ScanJPEGBlocks();
-        if( eErr != CE_None )
-            return eErr;
+        if (EQUAL(psImage->szIC,"M3"))
+        {
+/* -------------------------------------------------------------------- */
+/*      When a data mask subheader is present, we don't need to scan    */
+/*      the whole file. We just use the psImage->panBlockStart table    */
+/* -------------------------------------------------------------------- */
+            panJPEGBlockOffset = (int *) 
+                CPLCalloc(sizeof(int),
+                        psImage->nBlocksPerRow*psImage->nBlocksPerColumn);
+            int i;
+            for (i=0;i< psImage->nBlocksPerRow*psImage->nBlocksPerColumn;i++)
+            {
+                panJPEGBlockOffset[i] = psImage->panBlockStart[i];
+                if (panJPEGBlockOffset[i] != -1)
+                {
+                    GUInt32 nOffset = panJPEGBlockOffset[i];
+                    nQLevel = ScanJPEGQLevel(&nOffset);
+                    /* The beginning of the JPEG stream should be the offset */
+                    /* from the panBlockStart table */
+                    CPLAssert(nOffset == (GUInt32)panJPEGBlockOffset[i]);
+                }
+            }
+        }
+        else /* 'C3' case */
+        {
+/* -------------------------------------------------------------------- */
+/*      Scan through the whole image data stream identifying all        */
+/*      block boundaries.                                               */
+/* -------------------------------------------------------------------- */
+            eErr = ScanJPEGBlocks();
+            if( eErr != CE_None )
+                return eErr;
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -2521,6 +2551,7 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
                       psImage->nBlockWidth * psImage->nBlockHeight);
     }
 
+
 /* -------------------------------------------------------------------- */
 /*      Read JPEG Chunk.                                                */
 /* -------------------------------------------------------------------- */
@@ -2528,6 +2559,12 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     int iBlock = iBlockX + iBlockY * psImage->nBlocksPerRow;
     GDALDataset *poDS;
     int anBands[3] = { 1, 2, 3 };
+
+    if (panJPEGBlockOffset[iBlock] == -1)
+    {
+        memset(pabyJPEGBlock, 0, psImage->nBlockWidth*psImage->nBlockHeight);
+        return CE_None;
+    }
 
     osFilename.Printf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
                        nQLevel,
