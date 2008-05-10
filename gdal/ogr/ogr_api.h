@@ -173,9 +173,15 @@ int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
 /*      Feature related (ogr_feature.h)                                 */
 /* -------------------------------------------------------------------- */
 
+#ifdef DEBUG
+typedef struct OGRFieldDefnHS   *OGRFieldDefnH;
+typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
+typedef struct OGRFeatureHS     *OGRFeatureH;
+#else
 typedef void *OGRFieldDefnH;
 typedef void *OGRFeatureDefnH;
 typedef void *OGRFeatureH;
+#endif
 
 /* OGRFieldDefn */
 
@@ -267,9 +273,15 @@ void   CPL_DLL OGR_F_SetStyleStringDirectly( OGRFeatureH, char * );
 /*      ogrsf_frmts.h                                                   */
 /* -------------------------------------------------------------------- */
 
+#ifdef DEBUG
+typedef struct OGRLayerHS      *OGRLayerH;
+typedef struct OGRDataSourceHS *OGRDataSourceH;
+typedef struct OGRDriverHS     *OGRSFDriverH;
+#else
 typedef void *OGRLayerH;
 typedef void *OGRDataSourceH;
 typedef void *OGRSFDriverH;
+#endif
 
 /* OGRLayer */
 
