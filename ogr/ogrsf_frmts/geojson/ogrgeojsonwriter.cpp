@@ -411,7 +411,7 @@ char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
 {
     VALIDATE_POINTER1( hGeometry, "OGR_G_ExportToJson", NULL );
 
-    OGRGeometry* poGeometry = static_cast<OGRGeometry*>(hGeometry);
+    OGRGeometry* poGeometry = (OGRGeometry*) (hGeometry);
 
     json_object* poObj = NULL;
     poObj = OGRGeoJSONWriteGeometry( poGeometry );

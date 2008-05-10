@@ -1197,7 +1197,7 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
         /* Release JSON tree. */
         json_object_put( poObj );
 
-        return poGeometry;
+        return (OGRGeometryH)poGeometry;
     }
 
     /* Translation failed */

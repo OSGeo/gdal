@@ -374,7 +374,7 @@ CPLXMLNode* OGR_G_ExportEnvelopeToKMLTree( OGRGeometryH hGeometry )
     char* pszY = NULL;
 
     memset( &sEnvelope, 0, sizeof(sEnvelope) );
-    (static_cast<OGRGeometry*>(hGeometry))->getEnvelope( &sEnvelope );
+    ((OGRGeometry*)(hGeometry))->getEnvelope( &sEnvelope );
 
     if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 
         && sEnvelope.MaxX == 0 && sEnvelope.MaxY == 0 )
