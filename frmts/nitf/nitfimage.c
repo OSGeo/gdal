@@ -1035,7 +1035,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 /*      Special case for 1 bit data.  NITFRasterBand::IReadBlock()      */
 /*      already knows how to promote to byte.                           */
 /* -------------------------------------------------------------------- */
-    if (EQUAL(psImage->szIC, "NC") && psImage->nBitsPerSample == 1)
+    if ((EQUAL(psImage->szIC, "NC") || EQUAL(psImage->szIC, "NM")) && psImage->nBitsPerSample == 1)
     {
         if (nBlockX != 0 || nBlockY != 0)
         {
