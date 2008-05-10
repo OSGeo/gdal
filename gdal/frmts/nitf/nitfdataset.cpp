@@ -1270,7 +1270,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we have PRJPSB and MAPLOB TREs to get better                 */
 /*      georeferencing from?                                            */
 /* -------------------------------------------------------------------- */
-    poDS->CheckGeoSDEInfo();
+    if (psImage)
+        poDS->CheckGeoSDEInfo();
 
 /* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
