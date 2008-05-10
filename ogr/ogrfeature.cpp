@@ -261,7 +261,7 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetDefnRef", NULL );
 
-    return ((OGRFeature *) hFeat)->GetDefnRef();
+    return (OGRFeatureDefnH) ((OGRFeature *) hFeat)->GetDefnRef();
 }
 
 /************************************************************************/

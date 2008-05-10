@@ -1245,7 +1245,7 @@ CPLErr OGRContourWriter( double dfLevel,
     OGRGeometryH hGeom;
     int iPoint;
 
-    hFeat = OGR_F_Create( OGR_L_GetLayerDefn( poInfo->hLayer ) );
+    hFeat = OGR_F_Create( OGR_L_GetLayerDefn( (OGRLayerH) poInfo->hLayer ) );
 
     if( poInfo->nIDField != -1 )
         OGR_F_SetFieldInteger( hFeat, poInfo->nIDField, poInfo->nNextID++ );
@@ -1269,7 +1269,7 @@ CPLErr OGRContourWriter( double dfLevel,
 
     OGR_F_SetGeometryDirectly( hFeat, hGeom );
 
-    OGR_L_CreateFeature( poInfo->hLayer, hFeat );
+    OGR_L_CreateFeature( (OGRLayerH) poInfo->hLayer, hFeat );
     OGR_F_Destroy( hFeat );
 
     return CE_None;
