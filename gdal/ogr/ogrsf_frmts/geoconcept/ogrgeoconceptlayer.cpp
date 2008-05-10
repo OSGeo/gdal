@@ -127,7 +127,7 @@ OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
           }
         }
       }
-      SetSubTypeFeatureDefn_GCIO(_gcFeature, _poFeatureDefn);
+      SetSubTypeFeatureDefn_GCIO(_gcFeature, (OGRFeatureDefnH) _poFeatureDefn);
       _poFeatureDefn->Reference();
     }
 
