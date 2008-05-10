@@ -393,7 +393,7 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
         || (hDBF != NULL && nFID >= hDBF->nRecords) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete shape with feature id (%d) which does "
+                  "Attempt to delete shape with feature id (%ld) which does "
                   "not exist.", nFID );
         return OGRERR_FAILURE;
     }
@@ -410,7 +410,7 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
     if( DBFIsRecordDeleted( hDBF, nFID ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete shape with feature id (%d), but it is marked deleted already.",
+                  "Attempt to delete shape with feature id (%ld), but it is marked deleted already.",
                   nFID );
         return OGRERR_FAILURE;
     }
