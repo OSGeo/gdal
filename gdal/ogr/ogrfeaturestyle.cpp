@@ -570,7 +570,7 @@ OGRStyleToolH OGR_SM_GetPart(OGRStyleMgrH hSM, int nPartId,
 {
     VALIDATE_POINTER1( hSM, "OGR_SM_InitStyleString", NULL );
 
-    return ((OGRStyleMgr *) hSM)->GetPart(nPartId, pszStyleString);
+    return (OGRStyleToolH) ((OGRStyleMgr *) hSM)->GetPart(nPartId, pszStyleString);
 }
 
 
@@ -645,13 +645,13 @@ OGRStyleToolH OGR_ST_Create( OGRSTClassId eClassId )
     switch( eClassId )
     {
       case OGRSTCPen:
-        return new OGRStylePen();
+        return (OGRStyleToolH) new OGRStylePen();
       case OGRSTCBrush:
-        return new OGRStyleBrush();
+        return (OGRStyleToolH) new OGRStyleBrush();
       case OGRSTCSymbol:
-        return new OGRStyleSymbol();
+        return (OGRStyleToolH) new OGRStyleSymbol();
       case OGRSTCLabel:
-        return new OGRStyleLabel();
+        return (OGRStyleToolH) new OGRStyleLabel();
       default:
         return NULL;
     }
