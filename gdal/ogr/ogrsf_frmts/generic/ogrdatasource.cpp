@@ -232,7 +232,7 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in OGR_DS_CreateLayer");
         return 0;
     }
-    return ((OGRDataSource *)hDS)->CreateLayer( 
+    return (OGRLayerH) ((OGRDataSource *)hDS)->CreateLayer( 
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
 }
 
@@ -299,7 +299,7 @@ OGRLayer *OGRDataSource::CopyLayer( OGRLayer *poSrcLayer,
         {
             delete poFeature;
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to translate feature %d from layer %s.\n",
+                      "Unable to translate feature %ld from layer %s.\n",
                       poFeature->GetFID(), poSrcDefn->GetName() );
             return poDstLayer;
         }
@@ -333,8 +333,9 @@ OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
     VALIDATE_POINTER1( hDS, "OGR_DS_CopyLayer", NULL );
     VALIDATE_POINTER1( hSrcLayer, "OGR_DS_CopyLayer", NULL );
 
-    return ((OGRDataSource *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
-                                               pszNewName, papszOptions );
+    return (OGRLayerH) 
+        ((OGRDataSource *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
+                                            pszNewName, papszOptions );
 }
 
 /************************************************************************/

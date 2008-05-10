@@ -66,7 +66,7 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_CreateDataSource", NULL );
 
-    OGRSFDriver* poDriver = static_cast<OGRSFDriver *>(hDriver);
+    OGRSFDriver* poDriver = (OGRSFDriver *) hDriver;
     CPLAssert( NULL != poDriver );
 
     OGRDataSource* poDS = NULL;
@@ -83,7 +83,7 @@ OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
         CPLDebug( "OGR", "CreateDataSource operation failed. NULL pointer returned." );
     }
 
-    return poDS;
+    return (OGRDataSourceH) poDS;
 }
 
 /************************************************************************/
@@ -141,7 +141,7 @@ OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName,
     if( poDS != NULL && poDS->GetDriver() == NULL )
         poDS->SetDriver( (OGRSFDriver *)hDriver );
 
-    return poDS;
+    return (OGRDataSourceH) poDS;
 }
 
 /************************************************************************/
@@ -209,7 +209,8 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
     VALIDATE_POINTER1( hDriver, "OGR_Dr_CopyDataSource", NULL );
     VALIDATE_POINTER1( hSrcDS, "OGR_Dr_CopyDataSource", NULL );
 
-    return ((OGRSFDriver *) hDriver)->CopyDataSource( 
-        (OGRDataSource *) hSrcDS, pszNewName, papszOptions );
+    return (OGRDataSourceH)
+        ((OGRSFDriver *) hDriver)->CopyDataSource( 
+            (OGRDataSource *) hSrcDS, pszNewName, papszOptions );
 }
 

@@ -242,8 +242,9 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
     VALIDATE_POINTER1( pszName, "OGROpen", NULL );
 
     if (poRegistrar)
-        return poRegistrar->Open( pszName, bUpdate, 
-                                  (OGRSFDriver **) pahDriverList );
+        return (OGRDataSourceH) 
+            poRegistrar->Open( pszName, bUpdate, 
+                               (OGRSFDriver **) pahDriverList );
 
     return NULL;
 }
@@ -367,8 +368,9 @@ OGRDataSourceH OGROpenShared( const char *pszName, int bUpdate,
     VALIDATE_POINTER1( pszName, "OGROpenShared", NULL );
 
     OGRSFDriverRegistrar::GetRegistrar();
-    return poRegistrar->OpenShared( pszName, bUpdate, 
-                                    (OGRSFDriver **) pahDriverList );
+    return (OGRDataSourceH)
+        poRegistrar->OpenShared( pszName, bUpdate, 
+                                 (OGRSFDriver **) pahDriverList );
 }
 
 /************************************************************************/
