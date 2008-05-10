@@ -187,7 +187,6 @@ json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint )
     json_object* poObj = NULL;
 
     /* Generate "coordinates" object for 2D or 3D dimension. */
-    json_object* poObjCoords = NULL;
     if( 3 == poPoint->getCoordinateDimension() )
     {
         poObj = OGRGeoJSONWriteCoords( poPoint->getX(),
