@@ -46,13 +46,22 @@ CPL_C_START
 /* -------------------------------------------------------------------- */
 /*      Geometry related functions (ogr_geometry.h)                     */
 /* -------------------------------------------------------------------- */
+#ifdef DEBUG
+typedef struct OGRGeometryHS *OGRGeometryH;
+#else
 typedef void *OGRGeometryH;
+#endif
 
 #ifndef _DEFINED_OGRSpatialReferenceH
 #define _DEFINED_OGRSpatialReferenceH
 
+#ifdef DEBUG
+typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
+typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
+#else
 typedef void *OGRSpatialReferenceH;                               
 typedef void *OGRCoordinateTransformationH;
+#endif
 
 #endif
 
@@ -369,9 +378,13 @@ void CPL_DLL OGRCleanupAll(void);
 /*      ogrsf_featurestyle.h                                            */
 /* -------------------------------------------------------------------- */
 
+#ifdef DEBUG
+typedef struct OGRStyleMgrHS *OGRStyleMgrH;
+typedef struct OGRStyleToolHS *OGRStyleToolH;
+#else
 typedef void *OGRStyleMgrH;
 typedef void *OGRStyleToolH;
-
+#endif
 
 /* OGRStyleMgr */
 
