@@ -357,6 +357,11 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
 				pszKMLType = "string";
                 pszKMLEltName = "SimpleField";                
                 break;
+
+              default:
+                pszKMLType = "string";
+                pszKMLEltName = "SimpleField";
+                break;
             }
             VSIFPrintf( fp, "\t<%s name=\"%s\" type=\"%s\"></%s>\n", 
                     pszKMLEltName, fieldDefinition->GetNameRef() ,pszKMLType, pszKMLEltName );
