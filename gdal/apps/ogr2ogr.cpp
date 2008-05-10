@@ -756,7 +756,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 poDstLayer->CommitTransaction();
             
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to translate feature %d from layer %s.\n",
+                      "Unable to translate feature %ld from layer %s.\n",
                       poFeature->GetFID(), poFDefn->GetName() );
             
             OGRFeature::DestroyFeature( poFeature );
