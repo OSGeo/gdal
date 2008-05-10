@@ -235,6 +235,7 @@ def nitf_10():
 
 def nitf_11():
 
+    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034c.ntf
     tst = gdaltest.GDALTest( 'NITF', 'i_3034c.ntf', 1, 170 )
     return tst.testOpen()
 
@@ -322,6 +323,26 @@ def nitf_15():
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
+# Checks a 1-bit mono with mask table having (0x00) black as transparent with white arrow.
+
+def nitf_16():
+
+    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3034d.nsf
+    tst = gdaltest.GDALTest( 'NITF', 'ns3034d.nsf', 1, 170 )
+    return tst.testOpen()
+
+
+###############################################################################
+# Checks a 1-bit RGB/LUT (green arrow) with a mask table (pad pixels having value of 0x00)
+# and a transparent pixel value of 1 being mapped to green by the LUT
+
+def nitf_17():
+
+    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034f.ntf
+    tst = gdaltest.GDALTest( 'NITF', 'i_3034f.ntf', 1, 170 )
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -358,6 +379,8 @@ gdaltest_list = [
     nitf_13,
     nitf_14,
     nitf_15,
+    nitf_16,
+    nitf_17,
     nitf_cleanup ]
 
 if __name__ == '__main__':
