@@ -2855,7 +2855,11 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(papszFullOptions,"IREP") == NULL )
     {
-        if( poSrcDS->GetRasterCount() == 3 && eType == GDT_Byte )
+        if ( ((poSrcDS->GetRasterCount() == 3 && bJPEG) ||
+              (poSrcDS->GetRasterCount() >= 3 && !bJPEG)) && eType == GDT_Byte &&
+             poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
+             poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
+             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand)
         {
             if( bJPEG )
                 papszFullOptions = 
