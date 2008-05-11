@@ -434,6 +434,47 @@ def nitf_21():
 
 
 ###############################################################################
+# Write/Read test of simple int32 reference data. 
+
+def nitf_22():
+
+    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/int32.tif', 1, 4672 )
+    return tst.testCreateCopy()
+
+###############################################################################
+# Write/Read test of simple float32 reference data. 
+
+def nitf_23():
+
+    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/float32.tif', 1, 4672 )
+    return tst.testCreateCopy()
+
+###############################################################################
+# Write/Read test of simple float64 reference data. 
+
+def nitf_24():
+
+    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/float64.tif', 1, 4672 )
+    return tst.testCreateCopy()
+
+###############################################################################
+# Write/Read test of simple uint16 reference data. 
+
+def nitf_25():
+
+    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint16.tif', 1, 4672 )
+    return tst.testCreateCopy()
+
+###############################################################################
+# Write/Read test of simple uint32 reference data. 
+
+def nitf_26():
+
+    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint32.tif', 1, 4672 )
+    return tst.testCreateCopy()
+
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -660,6 +701,11 @@ gdaltest_list = [
     nitf_19,
     nitf_20,
     nitf_21,
+    nitf_22,
+    nitf_23,
+    nitf_24,
+    nitf_25,
+    nitf_26,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
