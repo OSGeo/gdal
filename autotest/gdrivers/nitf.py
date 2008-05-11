@@ -523,6 +523,10 @@ def nitf_28():
     try:
         jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
     except:
+        jp2ecw_drv = None
+        return 'skip'
+
+    if jp2ecw_drv is None:
         return 'skip'
 
     if nitf_create([ 'ICORDS=G', 'IC=C8' ]) != 'success':
