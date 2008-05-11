@@ -248,11 +248,17 @@ def nitf_12():
 
     mdTRE = ds.GetMetadata( 'TRE' )
 
-    blockA = ds.GetMetadataItem( 'BLOCKA', 'TRE' )
+    try: # NG bindings
+        blockA = ds.GetMetadataItem( 'BLOCKA', 'TRE' )
+    except:
+        blockA = mdTRE['BLOCKA']
 
     mdCGM = ds.GetMetadata( 'CGM' )
 
-    segmentCount = ds.GetMetadataItem( 'SEGMENT_COUNT', 'CGM' )
+    try: # NG bindings
+        segmentCount = ds.GetMetadataItem( 'SEGMENT_COUNT', 'CGM' )
+    except:
+        segmentCount = mdCGM['SEGMENT_COUNT']
 
     ds = None
 
@@ -418,7 +424,10 @@ def nitf_21():
 
     mdTEXT = ds.GetMetadata( 'TEXT' )
 
-    data0 = ds.GetMetadataItem( 'DATA_0', 'TEXT' )
+    try: # NG bindings
+        data0 = ds.GetMetadataItem( 'DATA_0', 'TEXT' )
+    except:
+        data0 = mdTEXT['DATA_0']
 
     ds = None
 
