@@ -2896,46 +2896,48 @@ NITFDataset::NITFCreateCopy(
     OGRSpatialReference oSRS, oSRS_WGS84;
     char *pszWKT = (char *) poSrcDS->GetProjectionRef();
 
-    if( pszWKT != NULL )
+    if( pszWKT != NULL && pszWKT[0] != '\0' )
+    {
         oSRS.importFromWkt( &pszWKT );
 
-    /* NITF is only WGS84 */
-    oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
-    if ( oSRS.IsSameGeogCS(&oSRS_WGS84) == FALSE)
-    {
-        CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "NITF only supports WGS84 geographic and UTM projections.\n");
-        if (bStrict)
-            return NULL;
-    }
+        /* NITF is only WGS84 */
+        oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
+        if ( oSRS.IsSameGeogCS(&oSRS_WGS84) == FALSE)
+        {
+            CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                    "NITF only supports WGS84 geographic and UTM projections.\n");
+            if (bStrict)
+                return NULL;
+        }
 
-    if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
-        && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-        papszFullOptions = 
-            CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
-        bWriteGeoTransform = TRUE;
-    }
-
-    else if( oSRS.GetUTMZone( &bNorth ) > 0 
-        && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-        if( bNorth )
+        if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
+            && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        {
             papszFullOptions = 
-                CSLSetNameValue( papszFullOptions, "ICORDS", "N" );
+                CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
+            bWriteGeoTransform = TRUE;
+        }
+
+        else if( oSRS.GetUTMZone( &bNorth ) > 0 
+            && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        {
+            if( bNorth )
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, "ICORDS", "N" );
+            else
+                papszFullOptions = 
+                    CSLSetNameValue( papszFullOptions, "ICORDS", "S" );
+
+            nZone = oSRS.GetUTMZone( NULL );
+            bWriteGeoTransform = TRUE;
+        }
         else
-            papszFullOptions = 
-                CSLSetNameValue( papszFullOptions, "ICORDS", "S" );
-
-        nZone = oSRS.GetUTMZone( NULL );
-        bWriteGeoTransform = TRUE;
-    }
-    else
-    {
-        CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "NITF only supports WGS84 geographic and UTM projections.\n");
-        if (bStrict)
-            return NULL;
+        {
+            CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                    "NITF only supports WGS84 geographic and UTM projections.\n");
+            if (bStrict)
+                return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
