@@ -62,13 +62,21 @@ def nitf_3():
     tst = gdaltest.GDALTest( 'NITF', 'rgbsmall.tif', 3, 21349 )
     return tst.testCreateCopy()
 
+
 ###############################################################################
 # Test direction creation of an NITF file.
 
-def nitf_4():
+def nitf_create(creation_options):
+
     drv = gdal.GetDriverByName( 'NITF' )
-    ds = drv.Create( 'tmp/test_4.ntf', 200, 100, 3, gdal.GDT_Byte,
-                     [ 'ICORDS=G' ] )
+
+    try:
+        os.remove( 'tmp/test_create.ntf' )
+    except:
+        pass
+
+    ds = drv.Create( 'tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
+                     creation_options )
     ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
 
     list = range(200) + range(20,220) + range(30,230)
@@ -88,27 +96,35 @@ def nitf_4():
     return 'success'
 
 ###############################################################################
-# Verify previous file
+# Test direction creation of an non-compressed NITF file.
 
-def nitf_5():
-    ds = gdal.Open( 'tmp/test_4.ntf' )
+def nitf_4():
+
+    return nitf_create([ 'ICORDS=G' ])
+
+
+###############################################################################
+# Verify created file
+
+def nitf_check_created_file(checksum1, checksum2, checksum3):
+    ds = gdal.Open( 'tmp/test_create.ntf' )
     
     chksum = ds.GetRasterBand(1).Checksum()
-    chksum_expect = 32498
+    chksum_expect = checksum1
     if chksum != chksum_expect:
 	gdaltest.post_reason( 'Did not get expected chksum for band 1' )
 	print chksum, chksum_expect
 	return 'fail'
 
     chksum = ds.GetRasterBand(2).Checksum()
-    chksum_expect = 42602
+    chksum_expect = checksum2
     if chksum != chksum_expect:
 	gdaltest.post_reason( 'Did not get expected chksum for band 2' )
 	print chksum, chksum_expect
 	return 'fail'
 
     chksum = ds.GetRasterBand(3).Checksum()
-    chksum_expect = 38982
+    chksum_expect = checksum3
     if chksum != chksum_expect:
 	gdaltest.post_reason( 'Did not get expected chksum for band 3' )
 	print chksum, chksum_expect
@@ -140,6 +156,13 @@ def nitf_5():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Verify file created by nitf_4()
+
+def nitf_5():
+
+    return nitf_check_created_file(32498, 42602, 38982)
 	
 ###############################################################################
 # Read existing NITF file.  Verifies the new adjusted IGEOLO interp.
@@ -482,6 +505,65 @@ def nitf_26():
     tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint32.tif', 1, 4672 )
     return tst.testCreateCopy()
 
+###############################################################################
+# Test Create() with IC=NC compression, and multi-blocks
+
+def nitf_27():
+
+    if nitf_create([ 'ICORDS=G', 'IC=NC', 'BLOCKXSIZE=10', 'BLOCKYSIZE=10' ]) != 'success':
+        return 'fail'
+
+    return nitf_check_created_file(32498, 42602, 38982)
+
+
+###############################################################################
+# Test Create() with IC=C8 compression
+
+def nitf_28():
+    try:
+        jp2ecw_drv = gdal.GetDriverByName( 'JP2ECW' )
+    except:
+        return 'skip'
+
+    if nitf_create([ 'ICORDS=G', 'IC=C8' ]) != 'success':
+        return 'fail'
+
+    return nitf_check_created_file(32398, 42502, 38882)
+
+###############################################################################
+# Test Create() with a LUT
+
+def nitf_29():
+
+    drv = gdal.GetDriverByName( 'NITF' )
+
+    ds = drv.Create( 'tmp/test_29.ntf', 1, 1, 1, gdal.GDT_Byte,
+                     [ 'IREP=RGB/LUT', 'LUT_SIZE=128' ] )
+
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+
+    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/test_29.ntf' )
+
+    ct = ds.GetRasterBand( 1 ).GetRasterColorTable()
+    if ct.GetCount() != 129 or \
+       ct.GetColorEntry(0) != (255,255,255,255) or \
+       ct.GetColorEntry(1) != (255,255,0,255) or \
+       ct.GetColorEntry(2) != (255,0,255,255) or \
+       ct.GetColorEntry(3) != (0,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -672,7 +754,7 @@ def nitf_online_10():
 
 def nitf_cleanup():
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/test_4.ntf' )
+        gdal.GetDriverByName('NITF').Delete( 'tmp/test_create.ntf' )
     except:
         pass
 
@@ -683,6 +765,11 @@ def nitf_cleanup():
 
     try:
         gdal.GetDriverByName('NITF').Delete( 'tmp/test_13.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/test_29.ntf' )
     except:
         pass
 
@@ -715,6 +802,9 @@ gdaltest_list = [
     nitf_24,
     nitf_25,
     nitf_26,
+    nitf_27,
+    nitf_28,
+    nitf_29,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
