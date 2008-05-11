@@ -561,6 +561,21 @@ def nitf_29():
         gdaltest.post_reason( 'Wrong color table entry.' )
         return 'fail'
 
+    new_ds = drv.CreateCopy( 'tmp/test_29_copy.ntf', ds )
+    new_ds = None
+    ds = None
+
+    ds = gdal.Open( 'tmp/test_29_copy.ntf' )
+
+    ct = ds.GetRasterBand( 1 ).GetRasterColorTable()
+    if ct.GetCount() != 130 or \
+       ct.GetColorEntry(0) != (255,255,255,255) or \
+       ct.GetColorEntry(1) != (255,255,0,255) or \
+       ct.GetColorEntry(2) != (255,0,255,255) or \
+       ct.GetColorEntry(3) != (0,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+
     ds = None
 
     return 'success'
@@ -770,6 +785,11 @@ def nitf_cleanup():
 
     try:
         gdal.GetDriverByName('NITF').Delete( 'tmp/test_29.ntf' )
+    except:
+        pass
+
+    try:
+        gdal.GetDriverByName('NITF').Delete( 'tmp/test_29_copy.ntf' )
     except:
         pass
 
