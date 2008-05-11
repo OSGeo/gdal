@@ -240,18 +240,38 @@ def nitf_11():
     return tst.testOpen()
 
 ###############################################################################
-# Verify that TRE access via the metadata domain works.
+# Verify that TRE and CGM access via the metadata domain works.
 
 def nitf_12():
 
     ds = gdal.Open( 'data/fake_nsif.ntf' )
 
-    md = ds.GetMetadata( 'TRE' )
+    mdTRE = ds.GetMetadata( 'TRE' )
+
+    blockA = ds.GetMetadataItem( 'BLOCKA', 'TRE' )
+
+    mdCGM = ds.GetMetadata( 'CGM' )
+
+    segmentCount = ds.GetMetadataItem( 'SEGMENT_COUNT', 'CGM' )
 
     ds = None
 
-    if md['BLOCKA'] != '010000001000000000                +41.319331+020.078400+41.317083+020.126072+41.281634+020.122570+41.283881+020.074924     ':
-        gdaltest.post_reason( 'did not find expected BLOCKA metadata.' )
+    expectedBlockA = '010000001000000000                +41.319331+020.078400+41.317083+020.126072+41.281634+020.122570+41.283881+020.074924     '
+
+    if mdTRE['BLOCKA'] != expectedBlockA:
+        gdaltest.post_reason( 'did not find expected BLOCKA from metadata.' )
+        return 'fail'
+
+    if blockA != expectedBlockA:
+        gdaltest.post_reason( 'did not find expected BLOCKA from metadata item.' )
+        return 'fail'
+
+    if mdCGM['SEGMENT_COUNT'] != '0':
+        gdaltest.post_reason( 'did not find expected SEGMENT_COUNT from metadata.' )
+        return 'fail'
+
+    if segmentCount != '0':
+        gdaltest.post_reason( 'did not find expected SEGMENT_COUNT from metadata item.' )
         return 'fail'
 
     return 'success'
@@ -384,6 +404,34 @@ def nitf_20():
         return 'fail'
 
     return 'success'
+
+
+###############################################################################
+# Verify that TEXT access via the metadata domain works.
+
+def nitf_21():
+
+    # Shut up the warning about missing image segment
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds = gdal.Open( 'data/ns3114a.nsf' )
+    gdal.PopErrorHandler()
+
+    mdTEXT = ds.GetMetadata( 'TEXT' )
+
+    data0 = ds.GetMetadataItem( 'DATA_0', 'TEXT' )
+
+    ds = None
+
+    if mdTEXT['DATA_0'] != 'A':
+        gdaltest.post_reason( 'did not find expected DATA_0 from metadata.' )
+        return 'fail'
+
+    if data0 != 'A':
+        gdaltest.post_reason( 'did not find expected DATA_0 from metadata item.' )
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -522,6 +570,54 @@ def nitf_online_9():
 
 
 ###############################################################################
+# Verify that CGM access on a file with 8 CGM segments
+
+def nitf_online_10():
+
+
+    if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3119b.nsf', 'ns3119b.nsf'):
+        return 'skip'
+
+    # Shut up the warning about missing image segment
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ds = gdal.Open( 'tmp/cache/ns3119b.nsf' )
+    gdal.PopErrorHandler()
+
+    mdCGM = ds.GetMetadata( 'CGM' )
+
+    ds = None
+
+    if mdCGM['SEGMENT_COUNT'] != '8':
+        gdaltest.post_reason( 'wrong SEGMENT_COUNT.' )
+        return 'fail'
+
+    tab = [
+        ('SEGMENT_0_SLOC_ROW', '00000'),
+        ('SEGMENT_0_SLOC_COL', '00000'),
+        ('SEGMENT_1_SLOC_ROW', '00000'),
+        ('SEGMENT_1_SLOC_COL', '00684'),
+        ('SEGMENT_2_SLOC_ROW', '00000'),
+        ('SEGMENT_2_SLOC_COL', '01364'),
+        ('SEGMENT_3_SLOC_ROW', '00270'),
+        ('SEGMENT_3_SLOC_COL', '00000'),
+        ('SEGMENT_4_SLOC_ROW', '00270'),
+        ('SEGMENT_4_SLOC_COL', '00684'),
+        ('SEGMENT_5_SLOC_ROW', '00270'),
+        ('SEGMENT_5_SLOC_COL', '01364'),
+        ('SEGMENT_6_SLOC_ROW', '00540'),
+        ('SEGMENT_6_SLOC_COL', '00000'),
+        ('SEGMENT_7_SLOC_ROW', '00540'),
+        ('SEGMENT_7_SLOC_COL', '01364')
+        ]
+
+    for item in tab:
+        if mdCGM[item[0]] != item[1]:
+            gdaltest.post_reason( 'wrong value for %s.' % item[0] )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -563,6 +659,7 @@ gdaltest_list = [
     nitf_18,
     nitf_19,
     nitf_20,
+    nitf_21,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
@@ -572,6 +669,7 @@ gdaltest_list = [
     nitf_online_7,
     nitf_online_8,
     nitf_online_9,
+    nitf_online_10,
     nitf_cleanup ]
 
 if __name__ == '__main__':
