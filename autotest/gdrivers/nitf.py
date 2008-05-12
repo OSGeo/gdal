@@ -769,6 +769,39 @@ def nitf_online_10():
     return 'success'
 
 ###############################################################################
+# 5 text files
+
+def nitf_online_11():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_1122a.ntf', 'U_1122a.ntf'):
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/cache/U_1122a.ntf' )
+
+    mdTEXT = ds.GetMetadata( 'TEXT' )
+
+    ds = None
+
+    if mdTEXT['DATA_0'] != 'This is test text file 01.\r\n':
+        gdaltest.post_reason( 'did not find expected DATA_0 from metadata.' )
+        return 'fail'
+    if mdTEXT['DATA_1'] != 'This is test text file 02.\r\n':
+        gdaltest.post_reason( 'did not find expected DATA_1 from metadata.' )
+        return 'fail'
+    if mdTEXT['DATA_2'] != 'This is test text file 03.\r\n':
+        gdaltest.post_reason( 'did not find expected DATA_2 from metadata.' )
+        return 'fail'
+    if mdTEXT['DATA_3'] != 'This is test text file 04.\r\n':
+        gdaltest.post_reason( 'did not find expected DATA_3 from metadata.' )
+        return 'fail'
+    if mdTEXT['DATA_4'] != 'This is test text file 05.\r\n':
+        gdaltest.post_reason( 'did not find expected DATA_4 from metadata.' )
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup.
 
 def nitf_cleanup():
@@ -839,6 +872,7 @@ gdaltest_list = [
     nitf_online_8,
     nitf_online_9,
     nitf_online_10,
+    nitf_online_11,
     nitf_cleanup ]
 
 if __name__ == '__main__':
