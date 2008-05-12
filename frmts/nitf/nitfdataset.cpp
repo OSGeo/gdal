@@ -2170,11 +2170,12 @@ void NITFDataset::InitializeTextMetadata()
             continue;
 
 /* -------------------------------------------------------------------- */
-/*      Load the raw CGM data itself.                                   */
+/*      Load the raw TEXT data itself.                                  */
 /* -------------------------------------------------------------------- */
         char *pabyTextData;
 
-        pabyTextData = (char *) CPLCalloc(1,psSegment->nSegmentSize);
+        /* Allocate one extra byte for the NULL terminating character */
+        pabyTextData = (char *) CPLCalloc(1,psSegment->nSegmentSize+1);
         if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
                        SEEK_SET ) != 0 
             || VSIFReadL( pabyTextData, 1, psSegment->nSegmentSize, 
