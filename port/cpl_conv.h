@@ -81,6 +81,8 @@ double CPL_DLL CPLAtof(const char *);
 double CPL_DLL CPLAtofDelim(const char *, char);
 double CPL_DLL CPLStrtod(const char *, char **);
 double CPL_DLL CPLStrtodDelim(const char *, char **, char);
+float CPL_DLL CPLStrtof(const char *, char **);
+float CPL_DLL CPLStrtofDelim(const char *, char **, char);
 
 /* -------------------------------------------------------------------- */
 /*      Convert number to string.  This function is locale agnostic     */
