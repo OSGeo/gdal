@@ -1092,8 +1092,8 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if ( VSIFReadL( poDS->paiTiles, 1,
-                    poDS->sHeader.nTileTblSize, poDS->fp ) < 0 )
+    if ( VSIFReadL( poDS->paiTiles, 1, poDS->sHeader.nTileTblSize,
+                    poDS->fp ) < poDS->sHeader.nTileTblSize )
     {
         CPLDebug( "RMF", "Can't read tiles offsets/sizes table." );
         delete poDS;
