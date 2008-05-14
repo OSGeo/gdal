@@ -53,7 +53,7 @@ enum {          // Spacecrafts:
     NOAA15,     // NOAA-15(K)
     NOAA16,     // NOAA-16(L)
     NOAA17,     // NOAA-17(M)
-    NOAA18,     // NOAA-18(M)
+    NOAA18,     // NOAA-18(N)
     METOP2      // METOP-2(A)
 };
 
