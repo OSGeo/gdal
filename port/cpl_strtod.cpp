@@ -167,7 +167,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 /* -------------------------------------------------------------------- */
 /*  We are implementing a simple method here: copy the input string     */
 /*  into the temporary buffer, replace the specified decimal delimiter  */
-/*  with the one, taken from locale settings and use standard atof()    */
+/*  with the one, taken from locale settings and use standard strtod()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
 
@@ -232,4 +232,101 @@ double CPLStrtod(const char *nptr, char **endptr)
     return CPLStrtodDelim(nptr, endptr, '.');
 }
 
+/************************************************************************/
+/*                          CPLStrtofDelim()                            */
+/************************************************************************/
+
+/**
+ * Converts ASCII string to floating point number using specified delimiter.
+ *
+ * This function converts the initial portion of the string pointed to
+ * by nptr to single floating point representation. This function does the
+ * same as standard strtof(3), but does not take locale in account. Instead of
+ * locale defined decimal delimiter you can specify your own one. Also see
+ * notes for CPLAtof() function.
+ *
+ * @param nptr Pointer to string to convert.
+ * @param endptr If is not NULL, a pointer to the character after the last
+ * character used in the conversion is stored in the location referenced
+ * by endptr.
+ * @param point Decimal delimiter.
+ *
+ * @return Converted value, if any.
+ */
+float CPLStrtofDelim(const char *nptr, char **endptr, char point)
+{
+#if defined(HAVE_STRTOF)
+/* -------------------------------------------------------------------- */
+/*  We are implementing a simple method here: copy the input string     */
+/*  into the temporary buffer, replace the specified decimal delimiter  */
+/*  with the one, taken from locale settings and use standard strtof()  */
+/*  on that buffer.                                                     */
+/* -------------------------------------------------------------------- */
+
+    struct lconv *poLconv = localeconv();
+    char        *pszNumber = CPLStrdup( nptr );
+    double      dfValue;
+    int         nError;
+
+    if ( poLconv
+         && poLconv->decimal_point
+         && strlen(poLconv->decimal_point) > 0 )
+    {
+        int     i = 0;
+        char    byPoint = poLconv->decimal_point[0];
+
+        while ( pszNumber[i] )
+        {
+            if ( pszNumber[i] == point )
+            {
+                pszNumber[i] = byPoint;
+                break;
+            }
+            i++;
+        }
+    }
+
+    dfValue = strtof( pszNumber, endptr );
+    nError = errno;
+
+    if ( endptr )
+        *endptr = (char *)nptr + (*endptr - pszNumber);
+
+    CPLFree( pszNumber );
+
+    errno = nError;
+    return dfValue;
+
+#else
+
+    return (float)CPLStrtodDelim(nptr, endptr, point);
+
+#endif /* HAVE_STRTOF */
+}
+
+/************************************************************************/
+/*                             CPLStrtof()                              */
+/************************************************************************/
+
+/**
+ * Converts ASCII string to floating point number.
+ *
+ * This function converts the initial portion of the string pointed to
+ * by nptr to single floating point representation. This function does the
+ * same as standard strtof(3), but does not take locale in account. That
+ * means, the decimal delimiter is always '.' (decimal point). Use
+ * CPLStrtofDelim() function if you want to specify custom delimiter. Also
+ * see notes for CPLAtof() function.
+ *
+ * @param nptr Pointer to string to convert.
+ * @param endptr If is not NULL, a pointer to the character after the last
+ * character used in the conversion is stored in the location referenced
+ * by endptr.
+ *
+ * @return Converted value, if any.
+ */
+float CPLStrtof(const char *nptr, char **endptr)
+{
+    return CPLStrtofDelim(nptr, endptr, '.');
+}
 /* END OF FILE */
