@@ -41,6 +41,7 @@ from osgeo import gdal
 ###############################################################################
 # Verify that we always getting the same image when warping
 
+# Upsampling
 def warp_1():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -51,15 +52,115 @@ def warp_1():
 
     return tst.testOpen()
 
+def warp_2():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_blinear.vrt', 1, 28772 )
+
+    return tst.testOpen()
+
+def warp_3():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_cubic.vrt', 1, 23824 )
+
+    return tst.testOpen()
+
+def warp_4():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_cubicspline.vrt', 1, 26946 )
+
+    return tst.testOpen()
+
+def warp_5():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_lanczos.vrt', 1, 25603 )
+
+    return tst.testOpen()
+
+# Downsampling
+def warp_6():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_near.vrt', 1, 4770 )
+
+    return tst.testOpen()
+
+def warp_7():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_blinear.vrt', 1, 4755 )
+
+    return tst.testOpen()
+
+def warp_8():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_cubic.vrt', 1, 4717 )
+
+    return tst.testOpen()
+
+def warp_9():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_cubicspline.vrt', 1, 4847 )
+
+    return tst.testOpen()
+
+def warp_10():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_lanczos.vrt', 1, 4758 )
+
+    return tst.testOpen()
+
 
 ###############################################################################
 
 gdaltest_list = [
-    warp_1 ]
+    warp_1,
+    warp_2,
+    warp_3,
+    warp_4,
+    warp_5,
+    warp_6,
+    warp_7,
+    warp_8,
+    warp_9,
+    warp_10 ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'warpnumpy_rw' )
+    gdaltest.setup_run( 'warp' )
 
     gdaltest.run_tests( gdaltest_list )
 
