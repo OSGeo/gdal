@@ -19,16 +19,6 @@
 #endif
 #define snprintf _snprintf
 
-#define HAVE_COPYSIGN
-
-/* We only redefine the following for MSVC since it actually breaks
-   an MinGW build using GDAL otherwise. */
-#ifdef _MSC_VER
-#  define copysign _copysign
-#  define copysignf _copysign
-#  define copysignl _copysign
-#endif
-
 #define HAVE_GETCWD 1
 #define getcwd _getcwd
 
