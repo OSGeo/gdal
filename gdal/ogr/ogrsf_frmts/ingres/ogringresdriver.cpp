@@ -52,6 +52,19 @@ const char *OGRIngresDriver::GetName()
 }
 
 /************************************************************************/
+/*                          ParseWrappedName()                          */
+/************************************************************************/
+
+char **OGRIngresDriver::ParseWrappedName( const char *pszEncodedName )
+
+{
+    if( pszEncodedName[0] != '@' )
+        return NULL;
+
+    return CSLTokenizeStringComplex( pszEncodedName+1, ",", TRUE, FALSE );
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -59,20 +72,25 @@ OGRDataSource *OGRIngresDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRIngresDataSource     *poDS;
+    OGRIngresDataSource     *poDS = NULL;
+    char **papszOptions = ParseWrappedName( pszFilename );
+    const char *pszDriver;
 
-    if( !EQUALN(pszFilename,"INGRES:",7) )
-        return NULL;
-
-    poDS = new OGRIngresDataSource();
-
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    pszDriver = CSLFetchNameValue( papszOptions, "driver" );
+    if( pszDriver != NULL && EQUAL(pszDriver,"ingres") )
     {
-        delete poDS;
-        return NULL;
+        poDS = new OGRIngresDataSource();
+
+        if( !poDS->Open( pszFilename, papszOptions, TRUE ) )
+        {
+            delete poDS;
+            poDS = NULL;
+        }
     }
-    else
-        return poDS;
+
+    CSLDestroy( papszOptions );
+    
+    return poDS;
 }
 
 
@@ -85,18 +103,27 @@ OGRDataSource *OGRIngresDriver::CreateDataSource( const char * pszName,
 
 {
     OGRIngresDataSource     *poDS;
+    char **papszOpenOptions;
+    const char *pszDriver;
 
-    poDS = new OGRIngresDataSource();
+    papszOpenOptions = ParseWrappedName( pszName );
 
+    pszDriver = CSLFetchNameValue( papszOpenOptions, "driver" );
 
-    if( !poDS->Open( pszName, TRUE ) )
+    if( pszDriver != NULL && EQUAL(pszDriver,"ingres") )
     {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Ingres driver doesn't currently support database creation.\n"
-                  "Please create database before using." );
-        return NULL;
+        poDS = new OGRIngresDataSource();
+        if( !poDS->Open( pszName, papszOpenOptions, TRUE ) )
+        {
+            delete poDS;
+            poDS = NULL;
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Ingres driver doesn't currently support database creation.\n"
+                      "Please create database before using." );
+        }
     }
+
+    CSLDestroy( papszOpenOptions );
 
     return poDS;
 }
