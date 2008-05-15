@@ -1,0 +1,128 @@
+<html>
+<head>
+<title>INGRES</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>INGRES</h1>
+
+This driver implements read and write access for spatial data in 
+<a href="http://www.ingres.com/">INGRES</a> database tables.  This 
+functionality was introduced in GDAL/OGR 1.6.0.  <p>
+
+When opening a database, it's name should be specified in the form
+"@driver=ingres,dbname=<i>dbname</i>[,options]" where the options can 
+include comma seperated
+items like "username=*userid*", "password=*password*", "timeout=*timeout*",
+"tables=table1/table2".  The driver and dbname values are required, while
+the rest are optional.  If username and password are not provided an attempt
+is made to authenticate as the current user.<p>
+
+Examples:
+<pre>
+  @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
+
+  @driver=ingres,dbname=mapping
+</pre>
+
+If the tables list is not provided, an attempt is made to enumerate all 
+non-system tables as layers, otherwise only the listed tables are represented
+as layers.  This option is primarily useful when a database has a lot of 
+tables, and scanning all their schemas would take a significant amount of 
+time. <p>
+
+If an integer field exists in a table that is named "ogr_fid" it will be
+used as the FID, otherwise FIDs will be assigned sequentially.  This can
+result in different FIDs being assigned to a given record/feature depending
+on the spatial and attribute query filters in effect at a given time.<p>
+
+<p>By default, SQL statements are passed directly to the INGRES database 
+engine.  It's also possible to request the driver to handle SQL commands 
+with <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, 
+by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() 
+method, as name of the SQL dialect.</p>
+
+Currently the INGRES driver supports only "old style" INGRES spatial data
+types such as POLYGON, POINT, LINE, LONG POLYGON, LONG LINE, etc.  It is
+anticipated in the future a newer OGC compliant set of spatial types will
+also be supported.<p>
+ 
+<h2>Caveats</h2>
+<ul>
+<li> The spatial types CIRCLE and ICIRCLE are not currently supported for 
+reading. <p>
+
+<li> No fast spatial index is used when reading, so spatial filters are
+implemented by reading and parsing all records, and then discarding those
+that do not satisfy the spatial filter.<p>
+
+<li> There is currently no support for coordinate systems.<p>
+
+</ul>
+
+<h2>Creation Issues</h2>
+
+The INGRES driver does not support creation of new datasets (a database
+within INGRES), but it does allow creation of new layers (tables) within an
+existing database instance.<P>
+
+<ul>
+
+<li>    
+The INGRES driver makes no allowances for character encodings at this time.<p>
+
+<li>
+The INGRES driver is not transactional at this time.<p>
+    
+<li> The spatial types BOX and IBOX are not supported for creating, and when
+read are represented as polygons.<p>
+
+<li> The non-LONG types (such as LINE, ILINE, and POLYGON) only support a 
+limited number of vertices.  Attempts to create objects with more than the 
+maximum possible vertices for these types will fail.  <p>
+
+<li> The old ingres spatial types are very particular about geometry 
+validation, and attempts to insert (create) features with invalid geometries
+will fail.  Reasons for invalidity include self-intersection of linestrings,
+and self-intersections for polygons. <p>
+
+</ul>
+
+<h3>Layer Creation Options</h3>
+
+<ul>
+    <li>
+        <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the 
+        desired name to be destroyed before creating the requested layer.
+    </li>
+    <li>
+        <b>LAUNDER</b>: This may be "YES" to force new fields created on this 
+        layer to have their field names "laundered" into a form more 
+        compatible with MySQL.  This converts to lower case and converts 
+        some special characters like "-" and "#" to "_".  If "NO" exact names 
+        are preserved.  The default value is "YES".
+    </li>
+    <li>
+        <b>PRECISION</b>: This may be "TRUE" to attempt to preserve field 
+        widths and precisions for the creation and reading of MySQL layers.
+        The default value is "TRUE".
+    </li>
+    <li>
+        <b>GEOMETRY_NAME</b>: This option specifies the name of the 
+        geometry column.  The default value is "SHAPE".
+    </li>
+    <li>
+        <b>INGRES_FID</b>: This option specifies the name of the FID column.
+        The default value is "OGR_FID"
+    </li>
+    <li>
+        <b>GEOMETRY_TYPE</b>: Specifies the object type for the geometry
+        column.  It may be one of POINT, LSEG, LINE, LONG LINE, POLYGON, or 
+        LONG POLYGON.  By default POINT, LONG LINE or LONG POLYGON are used
+        depending on the layer type. 
+    </li>
+</ul>
+
+</body>
+</html>

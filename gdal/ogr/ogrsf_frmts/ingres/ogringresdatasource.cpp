@@ -86,26 +86,34 @@ OGRIngresDataSource::~OGRIngresDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRIngresDataSource::Open( const char * pszNewName, int bUpdate )
+int OGRIngresDataSource::Open( const char *pszFullName, 
+                               char **papszOptions, int bUpdate )
 
 
 {
     CPLAssert( nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
-/*      Verify Ingres prefix.                                            */
+/*      Verify we have a dbname, this parameter is required.            */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszNewName,"INGRES:",7) )
+    const char *pszDBName = CSLFetchNameValue(papszOptions,"dbname");
+
+    if( pszDBName == NULL )
     {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "No DBNAME item provided in INGRES datasource name." );
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      For now we assume the whole argument is the "dbname".           */
+/*      Do we have a table list?                                        */
 /* -------------------------------------------------------------------- */
-    const char *pszDBName = pszNewName + 7;
     char **papszTableNames = NULL;
+    const char *pszTables = CSLFetchNameValue(papszOptions,"tables");
 
+    if( pszTables != NULL )
+        papszTableNames = CSLTokenizeStringComplex(pszTables,"/",TRUE,FALSE);
+    
 /* -------------------------------------------------------------------- */
 /*      Initialize the Ingres API. Should we only do this once per      */
 /*      program run?  Really we should also try to terminate the api    */
@@ -128,9 +136,14 @@ int OGRIngresDataSource::Open( const char * pszNewName, int bUpdate )
     connParm.co_target = (II_CHAR *) pszDBName;
     connParm.co_connHandle = NULL;
     connParm.co_tranHandle = NULL;
-    connParm.co_username = NULL;
-    connParm.co_password = NULL;
+    connParm.co_username = 
+        (II_CHAR*) CSLFetchNameValue(papszOptions,"username");
+    connParm.co_password = 
+        (II_CHAR*)CSLFetchNameValue(papszOptions,"password");
     connParm.co_timeout = -1;
+
+    if( CSLFetchNameValue(papszOptions,"timeout") != NULL )
+        connParm.co_timeout = atoi(CSLFetchNameValue(papszOptions,"timeout"));
 
     IIapi_connect( &connParm );
        
@@ -147,7 +160,7 @@ int OGRIngresDataSource::Open( const char * pszNewName, int bUpdate )
         return FALSE;
     }
 
-    pszName = CPLStrdup( pszNewName );
+    pszName = CPLStrdup( pszFullName );
     
     bDSUpdate = bUpdate;
 
