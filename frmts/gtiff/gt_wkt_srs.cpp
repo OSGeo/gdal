@@ -225,10 +225,10 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         char	*pszUnitsName = NULL;
         char    szPCSName[300];
         int     nKeyCount = 0;
-        int     nVersion;
+        int     anVersion[3];
 
         if( hGTIF != NULL )
-            GTIFDirectoryInfo( hGTIF, &nVersion, &nKeyCount );
+            GTIFDirectoryInfo( hGTIF, anVersion, &nKeyCount );
 
         if( nKeyCount > 0 ) // Use LOCAL_CS if we have any geokeys at all.
         {
