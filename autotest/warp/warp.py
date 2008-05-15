@@ -36,7 +36,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal
+import gdal
 
 ###############################################################################
 # Verify that we always getting the same image when warping
