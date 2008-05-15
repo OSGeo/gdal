@@ -252,7 +252,8 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *, int bUpdate );
+    int                 Open( const char *pszFullName, 
+                              char **papszOptions, int bUpdate );
     int                 OpenTable( const char *, int bUpdate );
 
     const char          *GetName() { return pszName; }
@@ -285,6 +286,8 @@ class OGRIngresDataSource : public OGRDataSource
 
 class OGRIngresDriver : public OGRSFDriver
 {
+    char         **ParseWrappedName( const char * );
+
   public:
                 ~OGRIngresDriver();
                 
