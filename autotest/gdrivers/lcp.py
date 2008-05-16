@@ -48,6 +48,25 @@ def lcp_1():
         gdaltest.post_reason('wrong number of bands')
         return 'fail'
 
+    metadata = [ ('LATITUDE', '49'),
+                 ('LINEAR_UNIT', 'Meters'),
+                 ('DESCRIPTION', 'This is a test LCP file created with FARSITE 4.1.054, using data downloaded from the USGS \r\nNational Map for LANDFIRE (2008-05-06). Data were reprojected to UTM zone 12 on NAD83 \r\nusing gdalwarp (GDAL 1.4.2).\r\n') ]
+    md = ds.GetMetadata()
+    for item in metadata:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
+            return 'fail'
+
+    check_gt = (285807.932887174887583,30,0,5379230.386217921040952,0,-30)
+    new_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(new_gt[i]-check_gt[i]) > 1e-5:
+            print
+            print 'old = ', check_gt
+            print 'new = ', new_gt
+            gdaltest.post_reason( 'Geotransform differs.' )
+            return 'fail'
+
     dataPerBand = [ ( 18645, [  ('ELEVATION_UNIT', '0' ),
                                 ('ELEVATION_UNIT_NAME', 'Meters' ),
                                 ('ELEVATION_MIN', '67109928' ),
@@ -123,6 +142,25 @@ def lcp_2():
     if ds.RasterCount != 8:
         gdal.post_reason('wrong number of bands')
         return 'fail'
+
+    metadata = [ ('LATITUDE', '48'),
+                 ('LINEAR_UNIT', 'Meters'),
+                 ('DESCRIPTION', '') ]
+    md = ds.GetMetadata()
+    for item in metadata:
+        if md[item[0]] != item[1]:
+            gdaltest.post_reason('wrong metadataitem for dataset. md[\'%s\']=\'%s\', expected \'%s\'' % (item[0], md[item[0]], item[1]))
+            return 'fail'
+
+    check_gt = (-1328145,30,0,2961735,0,-30)
+    new_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(new_gt[i]-check_gt[i]) > 1e-5:
+            print
+            print 'old = ', check_gt
+            print 'new = ', new_gt
+            gdaltest.post_reason( 'Geotransform differs.' )
+            return 'fail'
 
     dataPerBand = [ ( 28381, [  ('ELEVATION_UNIT', '0' ),
                                 ('ELEVATION_UNIT_NAME', 'Meters' ),
