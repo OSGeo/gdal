@@ -222,7 +222,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( eDataType == GDT_Float32 )
                 ((float *) pImage)[iPixel] = (float) atof(szToken);
             else
-                ((GInt16 *) pImage)[iPixel] = (GInt16) atoi(szToken);
+                ((GInt32 *) pImage)[iPixel] = (GInt32) atoi(szToken);
         }
         
         iPixel++;
@@ -379,7 +379,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     int i = 0;
     int j = 0;
     char **papszTokens = NULL;
-    GDALDataType eDataType = GDT_Int16;
+
+    /* Default data type */
+    GDALDataType eDataType = GDT_Int32;
 
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
@@ -482,6 +484,10 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->bNoDataSet = TRUE;
         poDS->dfNoDataValue = atof(pszNoData);
+        if( strchr( pszNoData, '.' ) != NULL )
+        {
+            eDataType = GDT_Float32;
+        }
     }
     
     CSLDestroy( papszTokens );
@@ -533,15 +539,12 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Use bigger data type. */
     if( poDS->bNoDataSet
-        && ( SHRT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > SHRT_MAX) )
+        && ( INT_MIN > poDS->dfNoDataValue || poDS->dfNoDataValue > INT_MAX) )
     {
         eDataType = GDT_Float32; 
     }
     else
     {
-        /* Default value type. */
-        eDataType = GDT_Int16;
-
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;
         GByte* pabyChunk = (GByte *) CPLCalloc( nChunkSize + 1, sizeof(GByte) );
@@ -943,7 +946,7 @@ void GDALRegister_AAIGrid()
                                    "frmt_various.html#AAIGrid" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 Float32" );
+                                   "Byte UInt16 Int16 Int32 Float32" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
