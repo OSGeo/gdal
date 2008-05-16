@@ -429,6 +429,14 @@ char * strdup (char *instr);
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
+/** Return a Int16 from the 2 bytes ordered in LSB order at address x */
+#define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | ((*(GByte*)((x)+1)) << 8))
+
+/** Return a Int32 from the 4 bytes ordered in LSB order at address x */
+#define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | ((*(GByte*)((x)+1)) << 8) | \
+                              ((*(GByte*)((x)+2)) << 16) | ((*(GByte*)((x)+1)) << 24))
+
+
 /***********************************************************************
  * Define CPL_CVSID() macro.  It can be disabled during a build by
  * defining DISABLE_CPLID in the compiler options.
