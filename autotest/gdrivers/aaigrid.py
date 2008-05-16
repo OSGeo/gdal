@@ -148,6 +148,24 @@ def aaigrid_6():
     return 'success'
 
 ###############################################################################
+# Verify data type determination from type of nodata 
+
+def aaigrid_6bis():
+
+    ds = gdal.Open( 'data/nodata_int.asc' )
+
+    b = ds.GetRasterBand(1)
+    if b.GetNoDataValue() != -99999:
+        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        return 'fail'
+
+    if b.DataType != gdal.GDT_Int32:
+        gdaltest.post_reason( 'Data type is not Int32!' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Verify writing files with non-square pixels.
 
 def aaigrid_7():
@@ -175,6 +193,7 @@ gdaltest_list = [
     aaigrid_4,
     aaigrid_5,
     aaigrid_6,
+    aaigrid_6bis,
     aaigrid_7,
     aaigrid_8 ]
   
