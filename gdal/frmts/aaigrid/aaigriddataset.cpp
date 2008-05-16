@@ -766,27 +766,37 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    double      *padfScanline;
+    int         *panScanline = NULL;
+    double      *padfScanline = NULL;
+    int         bReadAsInt;
     int         iLine, iPixel;
     CPLErr      eErr = CE_None;
     
+    bReadAsInt = ( poBand->GetRasterDataType() == GDT_Byte 
+                || poBand->GetRasterDataType() == GDT_Int16
+                || poBand->GetRasterDataType() == GDT_UInt16
+                || poBand->GetRasterDataType() == GDT_Int32 );
+
     // Write scanlines to output file
-    padfScanline = (double *) CPLMalloc( nXSize *
-                                GDALGetDataTypeSize(GDT_CFloat64) / 8 );
+    if (bReadAsInt)
+        panScanline = (int *) CPLMalloc( nXSize *
+                                GDALGetDataTypeSize(GDT_Int32) / 8 );
+    else
+        padfScanline = (double *) CPLMalloc( nXSize *
+                                    GDALGetDataTypeSize(GDT_Float64) / 8 );
+
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
         eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                              padfScanline, nXSize, 1, GDT_CFloat64,
-                              sizeof(double), sizeof(double) * nXSize );
+                                 (bReadAsInt) ? (void*)panScanline : (void*)padfScanline,
+                                 nXSize, 1, (bReadAsInt) ? GDT_Int32 : GDT_Float64,
+                                 0, 0 );
 
-        if( poBand->GetRasterDataType() == GDT_Byte 
-            || poBand->GetRasterDataType() == GDT_Int16
-            || poBand->GetRasterDataType() == GDT_UInt16
-            || poBand->GetRasterDataType() == GDT_Int32 )
+        if( bReadAsInt )
         {
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
             {
-                sprintf( szHeader, " %d", (int) padfScanline[iPixel] );
+                sprintf( szHeader, " %d", panScanline[iPixel] );
                 if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1 )
                 {
                     eErr = CE_Failure;
@@ -821,6 +831,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+    CPLFree( panScanline );
     CPLFree( padfScanline );
     VSIFCloseL( fpImage );
 
