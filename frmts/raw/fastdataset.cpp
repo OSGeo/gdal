@@ -123,6 +123,7 @@ class FASTDataset : public GDALPamDataset
     CPLErr 	GetGeoTransform( double * );
     const char	*GetProjectionRef();
     FILE	*FOpenChannel( char *, int );
+    void        TryEuromapChannelNameConvention();
 };
 
 /************************************************************************/
@@ -332,6 +333,138 @@ FILE *FASTDataset::FOpenChannel( char *pszBandname, int iBand )
 }
 
 /************************************************************************/
+/*                TryEuromapChannelNameConvention()                     */
+/************************************************************************/
+
+void FASTDataset::TryEuromapChannelNameConvention()
+{
+    /* Filename convention explained in http://www.euromap.de/download/em_names.pdf */
+
+    char chLastLetterHeader = pszFilename[strlen(pszFilename)-1];
+    if (EQUAL(GetMetadataItem("SENSOR"), "PAN"))
+    {
+        /* Converting upper-case to lower case */
+        if (chLastLetterHeader >= 'A' && chLastLetterHeader <= 'M')
+            chLastLetterHeader += 'a' - 'A';
+
+        if (chLastLetterHeader >= 'a' && chLastLetterHeader <= 'j')
+        {
+            char chLastLetterData = chLastLetterHeader - 'a' + '0';
+            char* pszChannelFilename = CPLStrdup(pszFilename);
+            pszChannelFilename[strlen(pszChannelFilename)-1] = chLastLetterData;
+            fpChannels[0] = VSIFOpenL( pszChannelFilename, "rb" );
+            if (fpChannels[0])
+                nBands++;
+            else
+                CPLDebug("FAST", "Could not find %s", pszChannelFilename);
+            CPLFree(pszChannelFilename);
+        }
+        else if (chLastLetterHeader >= 'k' && chLastLetterHeader <= 'm')
+        {
+            char chLastLetterData = chLastLetterHeader - 'k' + 'n';
+            char* pszChannelFilename = CPLStrdup(pszFilename);
+            pszChannelFilename[strlen(pszChannelFilename)-1] = chLastLetterData;
+            fpChannels[0] = VSIFOpenL( pszChannelFilename, "rb" );
+            if (fpChannels[0])
+                nBands++;
+            else
+            {
+                /* Trying upper-case */
+                pszChannelFilename[strlen(pszChannelFilename)-1] = chLastLetterData - 'a' + 'A';
+                fpChannels[0] = VSIFOpenL( pszChannelFilename, "rb" );
+                if (fpChannels[0])
+                    nBands++;
+                else
+                    CPLDebug("FAST", "Could not find %s", pszChannelFilename);
+            }
+            CPLFree(pszChannelFilename);
+        }
+        else
+        {
+            CPLDebug("FAST", "Unknown last letter (%c) for a IRS PAN Euromap FAST dataset", chLastLetterHeader);
+        }
+    }
+    else if (EQUAL(GetMetadataItem("SENSOR"), "LISS3"))
+    {
+        const char apchLISSFilenames[7][5] = {
+            { '0', '2', '3', '4', '5' },
+            { '6', '7', '8', '9', 'a' },
+            { 'b', 'c', 'd', 'e', 'f' },
+            { 'g', 'h', 'i', 'j', 'k' },
+            { 'l', 'm', 'n', 'o', 'p' },
+            { 'q', 'r', 's', 't', 'u' },
+            { 'v', 'w', 'x', 'y', 'z' } };
+        int i;
+        for (i = 0; i < 7 ; i++)
+        {
+            if (chLastLetterHeader == apchLISSFilenames[i][0] ||
+                (apchLISSFilenames[i][0] >= 'a' && apchLISSFilenames[i][0] <= 'z' &&
+                    (apchLISSFilenames[i][0] - chLastLetterHeader == 0 ||
+                    apchLISSFilenames[i][0] - chLastLetterHeader == 32)))
+            {
+                for (int j = 0; j < 4; j ++)
+                {
+                    char* pszChannelFilename = CPLStrdup(pszFilename);
+                    pszChannelFilename[strlen(pszChannelFilename)-1] = apchLISSFilenames[i][j+1];
+                    fpChannels[nBands] = VSIFOpenL( pszChannelFilename, "rb" );
+                    if (fpChannels[nBands])
+                        nBands++;
+                    else if (apchLISSFilenames[i][j+1] >= 'a' && apchLISSFilenames[i][j+1] <= 'z')
+                    {
+                        /* Trying upper-case */
+                        pszChannelFilename[strlen(pszChannelFilename)-1] = apchLISSFilenames[i][j+1] - 'a' + 'A';
+                        fpChannels[nBands] = VSIFOpenL( pszChannelFilename, "rb" );
+                        if (fpChannels[nBands])
+                            nBands++;
+                        else
+                        {
+                            CPLDebug("FAST", "Could not find %s", pszChannelFilename);
+                        }
+                    }
+                    else
+                    {
+                        CPLDebug("FAST", "Could not find %s", pszChannelFilename);
+                    }
+                    CPLFree(pszChannelFilename);
+                }
+                break;
+            }
+        }
+        if (i == 7)
+        {
+            CPLDebug("FAST", "Unknown last letter (%c) for a IRS LISS3 Euromap FAST dataset", chLastLetterHeader);
+        }
+    }
+    else if (EQUAL(GetMetadataItem("SENSOR"), "WIFS"))
+    {
+        if (chLastLetterHeader == '0')
+        {
+            for (int j = 0; j < 2; j ++)
+            {
+                char* pszChannelFilename = CPLStrdup(pszFilename);
+                pszChannelFilename[strlen(pszChannelFilename)-1] = '1' + j;
+                fpChannels[nBands] = VSIFOpenL( pszChannelFilename, "rb" );
+                if (fpChannels[nBands])
+                    nBands++;
+                else
+                {
+                    CPLDebug("FAST", "Could not find %s", pszChannelFilename);
+                }
+                CPLFree(pszChannelFilename);
+            }
+        }
+        else
+        {
+            CPLDebug("FAST", "Unknown last letter (%c) for a IRS WIFS Euromap FAST dataset", chLastLetterHeader);
+        }
+    }
+    else
+    {
+        CPLAssert(0);
+    }
+}
+
+/************************************************************************/
 /*                          GetValue()                                  */
 /************************************************************************/
 
@@ -502,34 +635,61 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     // Read filenames
     pszTemp = pszHeader;
     poDS->nBands = 0;
-    for ( i = 0; i < 6; i++ )
+    
+    if (strstr( pszHeader, FILENAME ) == NULL)
     {
-        char *pszFilename = NULL ;
-
-        if ( pszTemp )
-            pszTemp = strstr( pszTemp, FILENAME );
-        if ( pszTemp )
+        if (strstr(pszHeader, "GENERATING AGENCY =EUROMAP"))
         {
-            // Skip the parameter name
-            pszTemp += strlen(FILENAME);
-            // Skip whitespaces and equal signs
-            while ( *pszTemp == ' ' )
-                pszTemp++;
-            while ( *pszTemp == '=' )
-                pszTemp++;
-            pszFilename = CPLScanString( pszTemp, FILENAME_SIZE, TRUE, FALSE );
+            /* If we don't find the FILENAME field, let's try with the Euromap */
+            /* PAN / LISS3 / WIFS IRS filename convention */
+            if ((EQUAL(poDS->GetMetadataItem("SATELLITE"), "IRS 1C") ||
+                 EQUAL(poDS->GetMetadataItem("SATELLITE"), "IRS 1D")) &&
+                (EQUAL(poDS->GetMetadataItem("SENSOR"), "PAN") ||
+                 EQUAL(poDS->GetMetadataItem("SENSOR"), "LISS3") ||
+                 EQUAL(poDS->GetMetadataItem("SENSOR"), "WIFS")))
+            {
+                poDS->TryEuromapChannelNameConvention();
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported SATELLITE/SENSOR combination = (%s/%s)",
+                         poDS->GetMetadataItem("SATELLITE"), poDS->GetMetadataItem("SENSOR"));
+            }
         }
-        else
-            pszTemp = NULL;
-        if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
-            poDS->nBands++;
-        if ( pszFilename )
-            CPLFree( pszFilename );
+    }
+    else
+    {
+        for ( i = 0; i < 6; i++ )
+        {
+            char *pszFilename = NULL ;
+    
+            if ( pszTemp )
+                pszTemp = strstr( pszTemp, FILENAME );
+            if ( pszTemp )
+            {
+                // Skip the parameter name
+                pszTemp += strlen(FILENAME);
+                // Skip whitespaces and equal signs
+                while ( *pszTemp == ' ' )
+                    pszTemp++;
+                while ( *pszTemp == '=' )
+                    pszTemp++;
+                pszFilename = CPLScanString( pszTemp, FILENAME_SIZE, TRUE, FALSE );
+            }
+            else
+                pszTemp = NULL;
+            if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+                poDS->nBands++;
+            if ( pszFilename )
+                CPLFree( pszFilename );
+        }
     }
 
     if ( !poDS->nBands )
     {
-	CPLDebug( "FAST", "Failed to find and open band data files." );
+	CPLError( CE_Failure, CPLE_NotSupported,
+                  "Failed to find and open band data files." );
 	delete poDS;
 	return NULL;
     }
