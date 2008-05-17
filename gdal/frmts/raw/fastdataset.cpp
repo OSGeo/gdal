@@ -776,6 +776,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(pasGCPList[2].pszId);
         CPLFree(pasGCPList[3].pszId);
 
+        /* Let's order the GCP in TL, TR, BR, BL order to benefit from the */
+        /* GDALGCPsToGeoTransform optimization */ 
         pasGCPList[0].pszId = CPLStrdup("UPPER_LEFT");
         pasGCPList[0].dfGCPX = dfULX;
         pasGCPList[0].dfGCPY = dfULY;
@@ -788,17 +790,17 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pasGCPList[1].dfGCPZ = 0.0;
         pasGCPList[1].dfGCPPixel = poDS->nRasterXSize-0.5;
         pasGCPList[1].dfGCPLine = 0.5;
-        pasGCPList[2].pszId = CPLStrdup("LOWER_LEFT");
-        pasGCPList[2].dfGCPX = dfLLX;
-        pasGCPList[2].dfGCPY = dfLLY;
+        pasGCPList[2].pszId = CPLStrdup("LOWER_RIGHT");
+        pasGCPList[2].dfGCPX = dfLRX;
+        pasGCPList[2].dfGCPY = dfLRY;
         pasGCPList[2].dfGCPZ = 0.0;
-        pasGCPList[2].dfGCPPixel = 0.5;
+        pasGCPList[2].dfGCPPixel = poDS->nRasterXSize-0.5;
         pasGCPList[2].dfGCPLine = poDS->nRasterYSize-0.5;
-        pasGCPList[3].pszId = CPLStrdup("LOWER_RIGHT");
-        pasGCPList[3].dfGCPX = dfLRX;
-        pasGCPList[3].dfGCPY = dfLRY;
+        pasGCPList[3].pszId = CPLStrdup("LOWER_LEFT");
+        pasGCPList[3].dfGCPX = dfLLX;
+        pasGCPList[3].dfGCPY = dfLLY;
         pasGCPList[3].dfGCPZ = 0.0;
-        pasGCPList[3].dfGCPPixel = poDS->nRasterXSize-0.5;
+        pasGCPList[3].dfGCPPixel = 0.5;
         pasGCPList[3].dfGCPLine = poDS->nRasterYSize-0.5;
 
         // Calculate transformation matrix, if accurate
