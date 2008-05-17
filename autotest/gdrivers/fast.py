@@ -175,6 +175,92 @@ def fast_5():
     
     return tst.testOpen( check_gt = gt, check_prj = proj )
 
+
+###############################################################################
+# Test Euromap LISS3 dataset
+
+def fast_6():
+
+    if gdaltest.fast_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'fast', 'n0o0y867.0fl', 1, 0, 0, 0, 2741, 1 )
+
+    # Expected parameters of the geotransform
+    gt = (14640936.89174916, 1.008817518246492, 24.9876841746236,
+          664274.3912497687, 24.98828832116786, -0.9907878581173808)
+
+    # Expected definition of the projection
+    proj = """LOCAL_CS["GCTP projection number 22",
+    UNIT["Meter",1]]"""
+
+    return tst.testOpen( check_gt = gt, check_prj = proj )
+
+
+###############################################################################
+# Test Euromap PAN dataset
+
+def fast_7():
+
+    if gdaltest.fast_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'fast', 'h0o0y867.1ah', 1, 0, 0, 0, 5815, 1 )
+
+    # Expected parameters of the geotransform
+    gt = (676565.09, 5, 0, 5348341.5, 0, -5)
+
+    # Expected definition of the projection
+    proj = """PROJCS["UTM Zone 32, Northern Hemisphere",
+    GEOGCS["Unknown datum based upon the WGS 84 ellipsoid",
+        DATUM["Not specified (based on WGS 84 spheroid)",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",9],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["Meter",1]]"""
+
+    return tst.testOpen( check_gt = gt, check_prj = proj )
+
+###############################################################################
+# Test Euromap WIFS dataset
+
+def fast_8():
+
+    if gdaltest.fast_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'fast', 'w0y13a4t.010', 1, 0, 0, 0, 4748, 1 )
+
+    # Expected parameters of the geotransform
+    gt = (-336965.0150603952, 176.0817495260164, -37.35662873563219,
+          484122.7765089957, -37.35622603749736, -176.081791954023)
+
+    # Expected definition of the projection
+    proj = """PROJCS["unnamed",
+    GEOGCS["Unknown datum based upon the International 1924 ellipsoid",
+        DATUM["Not specified (based on International 1924 spheroid)",
+            SPHEROID["International 1924",6378388,297,
+                AUTHORITY["EPSG","7022"]]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",0.01226284398259954],
+    PARAMETER["standard_parallel_2",0.01148889489285224],
+    PARAMETER["latitude_of_origin",0.01186423708227336],
+    PARAMETER["central_meridian",0.004531526863152247],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["Meter",1]]"""
+
+    return tst.testOpen( check_gt = gt, check_prj = proj )
+
 ###############################################################################
 #
 
@@ -183,7 +269,10 @@ gdaltest_list = [
     fast_2,
     fast_3,
     fast_4,
-    fast_5 ]
+    fast_5,
+    fast_6,
+    fast_7,
+    fast_8 ]
 
 if __name__ == '__main__':
 
