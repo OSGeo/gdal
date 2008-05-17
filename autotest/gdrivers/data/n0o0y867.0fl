@@ -1,0 +1,59 @@
+PRODUCT ID =98243u00-01 LOCATION =024/0340004       ACQUISITION DATE =19981108 
+SATELLITE =IRS 1D     SENSOR =LISS3      SENSOR MODE =       LOOK ANGLE =  0.00
+                        LOCATION =                  ACQUISITION DATE =         
+SATELLITE =           SENSOR =           SENSOR MODE =       LOOK ANGLE =      
+                        LOCATION =                  ACQUISITION DATE =         
+SATELLITE =           SENSOR =           SENSOR MODE =       LOOK ANGLE =      
+                        LOCATION =                  ACQUISITION DATE =         
+SATELLITE =           SENSOR =           SENSOR MODE =       LOOK ANGLE =      
+PRODUCT TYPE =ORBIT ORIENTED     PRODUCT SIZE =QUADRANT                        
+TYPE OF PROCESSING =SYSTEMATIC  RESAMPLING =CC                                 
+VOLUME #/# IN SET =01/01 PIXELS PER LINE = 2741 LINES PER BAND = 2933/ 2933    
+START LINE # =    1 BLOCKING FACTOR = 1 RECORD LENGTH = 2741 PIXEL SIZE = 25.00
+OUTPUT BITS PER PIXEL = 8 ACQUIRED BITS PER PIXEL = 7                          
+BANDS PRESENT =2345                            PRODUCT CODE =QUSCB02AZ         
+VERSION NO =IRS1DDPSV3R1        ACQUISITION TIME =10:32:21:823                 
+GENERATING COUNTRY =GERMANY        GENERATING AGENCY =EUROMAP                  
+GENERATING FACILITY =CHALD                                                     
+                                                                               
+                                                                               
+REV            CBIASES AND GAINS IN THE BAND ORDER AS ON THIS TAPE                             
+       0.000000000000000       14.800518000000000                              
+       0.000000000000000       15.664403000000000                              
+       0.000000000000000       16.452330000000000                              
+       0.000000000000000        2.438135000000000                              
+       0.000000000000000        0.000000000000000                              
+       0.000000000000000        0.000000000000000                              
+       0.000000000000000        0.000000000000000                              
+       0.000000000000000        0.000000000000000                              
+                                                                               
+SENSOR GAIN STATE =   3   3   3   2                                            
+SENSOR STATE =GOOD                                                             
+                                                                               
+                                                                               
+                                                                               
+                                                                               
+                                                                               
+                                                                               
+                                                                               
+               
+GEOMETRIC DATA MAP PROJECTION =SOM  ELLIPSOID =INTERNATL_1909     DATUM =      
+USGS PROJECTION PARAMETERS =  6378388.000000000000000  6356911.946000000500000 
+       0.000000000000000       15.559494018554688        0.000000000000000     
+       0.000000000000000        0.000000000000000        0.000000000000000     
+    -169.025643269999990        0.000000000000000       -1.694393269999978     
+       0.000000000000000        0.000000000000000        0.000000000000000     
+       0.000000000000000                                                       
+UL = 0112759.8914E 484121.4325N  14640949.897    664286.388                    
+UR = 0122220.1753E 483303.1920N  14643714.058    732754.313                    
+LR = 0120849.4264E 475432.1714N  14716977.944    729849.305                    
+LL = 0111507.6857E 480244.1867N  14714213.782    661381.413                    
+CENTER = 0115243.2450E 481723.0902N  14679096.935    702319.923  1370  1466    
+OFFSET =   680 ORIENTATION ANGLE =-15.56                                       
+SUN ELEVATION ANGLE =55.3 SUN AZIMUTH ANGLE =160.2                             
+                                                                               
+                                                                               
+                                                                               
+                                                                               
+                                                                               
+               
