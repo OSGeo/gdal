@@ -1708,8 +1708,6 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int	iPixel;
         int     iPixelByteSkip, iBandByteOffset, iX, iY, nBytesPerLine;
 
-        CPLDebug( "GTiff", "Special byte order insensitive 24bit case" );
-
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
             iPixelByteSkip = (poGDS->nBands * poGDS->nBitsPerSample) / 8;
