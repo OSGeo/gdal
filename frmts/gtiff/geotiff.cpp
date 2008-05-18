@@ -1740,7 +1740,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     | ((GUInt32)*(pabyImage + 1) << 8)
                     | (GUInt32)*(pabyImage + 2);
 #endif
-                pabyImage += 3;
+                pabyImage += iPixelByteSkip;
             }
         }
     }
