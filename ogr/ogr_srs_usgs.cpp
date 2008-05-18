@@ -312,6 +312,11 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
                                                            iDatum );
 }
 
+static double OGRSpatialReferenceUSGSUnpackNoOp(double dfVal)
+{
+    return dfVal;
+}
+
 /************************************************************************/
 /*                          importFromUSGS()                            */
 /************************************************************************/
@@ -323,9 +328,11 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
  * software. GCTP operates on angles in packed DMS format (see
  * CPLDecToPackedDMS() function for details), so all angle values (latitudes,
  * longitudes, azimuths, etc.) specified in the padfPrjParams array should
- * be in the packed DMS format.
+ * be in the packed DMS format, unless bAnglesInPackedDMSFormat is set to FALSE.
  *
  * This function is the equivalent of the C function OSRImportFromUSGS().
+ * Note that the bAnglesInPackedDMSFormat parameter is only present in the C++
+ * method. The C function assumes bAnglesInPackedFormat = TRUE.
  *
  * @param iProjSys Input projection system code, used in GCTP.
  *
@@ -477,7 +484,7 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
  * fields are set to zero too.
  * </pre>
  *
- * @param iDatum Output spheroid.<p>
+ * @param iDatum Input spheroid.<p>
  *
  * If the datum code is negative, the first two values in the parameter array
  * (parm) are used to define the values as follows:
@@ -543,11 +550,17 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
 
 OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                             double *padfPrjParams,
-                                            long iDatum )
+                                            long iDatum, int bAnglesInPackedDMSFormat )
 
 {
     if( !padfPrjParams )
         return OGRERR_CORRUPT_DATA;
+
+    double (*pfnUnpackAnglesFn)(double);
+    if (bAnglesInPackedDMSFormat)
+        pfnUnpackAnglesFn = CPLPackedDMSToDec;
+    else
+        pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackNoOp;
 
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection code.                    */
@@ -567,9 +580,9 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                         iZone = (long) padfPrjParams[2];
                     else if (padfPrjParams[0] != 0.0 && padfPrjParams[1] != 0.0)
                     {
-                        iZone = (long)(((CPLPackedDMSToDec(padfPrjParams[0])
+                        iZone = (long)(((pfnUnpackAnglesFn(padfPrjParams[0])
                                          + 180.0) / 6.0) + 1.0);
-                        if ( CPLPackedDMSToDec(padfPrjParams[0]) < 0 )
+                        if ( pfnUnpackAnglesFn(padfPrjParams[0]) < 0 )
                             bNorth = FALSE;
                     }
                 }
@@ -599,146 +612,146 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case ALBERS:
-            SetACEA( CPLPackedDMSToDec(padfPrjParams[2]),
-                     CPLPackedDMSToDec(padfPrjParams[3]),
-                     CPLPackedDMSToDec(padfPrjParams[5]),
-                     CPLPackedDMSToDec(padfPrjParams[4]),
+            SetACEA( pfnUnpackAnglesFn(padfPrjParams[2]),
+                     pfnUnpackAnglesFn(padfPrjParams[3]),
+                     pfnUnpackAnglesFn(padfPrjParams[5]),
+                     pfnUnpackAnglesFn(padfPrjParams[4]),
                      padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case LAMCC:
-            SetLCC( CPLPackedDMSToDec(padfPrjParams[2]),
-                    CPLPackedDMSToDec(padfPrjParams[3]),
-                    CPLPackedDMSToDec(padfPrjParams[5]),
-                    CPLPackedDMSToDec(padfPrjParams[4]),
+            SetLCC( pfnUnpackAnglesFn(padfPrjParams[2]),
+                    pfnUnpackAnglesFn(padfPrjParams[3]),
+                    pfnUnpackAnglesFn(padfPrjParams[5]),
+                    pfnUnpackAnglesFn(padfPrjParams[4]),
                     padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case MERCAT:
-            SetMercator( CPLPackedDMSToDec(padfPrjParams[5]),
-                         CPLPackedDMSToDec(padfPrjParams[4]),
+            SetMercator( pfnUnpackAnglesFn(padfPrjParams[5]),
+                         pfnUnpackAnglesFn(padfPrjParams[4]),
                          1.0,
                          padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case PS:
-            SetPS( CPLPackedDMSToDec(padfPrjParams[5]),
-                   CPLPackedDMSToDec(padfPrjParams[4]),
+            SetPS( pfnUnpackAnglesFn(padfPrjParams[5]),
+                   pfnUnpackAnglesFn(padfPrjParams[4]),
                    1.0,
                    padfPrjParams[6], padfPrjParams[7] );
 
             break;
 
         case POLYC:
-            SetPolyconic( CPLPackedDMSToDec(padfPrjParams[5]),
-                          CPLPackedDMSToDec(padfPrjParams[4]),
+            SetPolyconic( pfnUnpackAnglesFn(padfPrjParams[5]),
+                          pfnUnpackAnglesFn(padfPrjParams[4]),
                           padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case EQUIDC:
             if ( padfPrjParams[8] )
             {
-                SetEC( CPLPackedDMSToDec(padfPrjParams[2]),
-                       CPLPackedDMSToDec(padfPrjParams[3]),
-                       CPLPackedDMSToDec(padfPrjParams[5]),
-                       CPLPackedDMSToDec(padfPrjParams[4]),
+                SetEC( pfnUnpackAnglesFn(padfPrjParams[2]),
+                       pfnUnpackAnglesFn(padfPrjParams[3]),
+                       pfnUnpackAnglesFn(padfPrjParams[5]),
+                       pfnUnpackAnglesFn(padfPrjParams[4]),
                        padfPrjParams[6], padfPrjParams[7] );
             }
             else
             {
-                SetEC( CPLPackedDMSToDec(padfPrjParams[2]),
-                       CPLPackedDMSToDec(padfPrjParams[2]),
-                       CPLPackedDMSToDec(padfPrjParams[5]),
-                       CPLPackedDMSToDec(padfPrjParams[4]),
+                SetEC( pfnUnpackAnglesFn(padfPrjParams[2]),
+                       pfnUnpackAnglesFn(padfPrjParams[2]),
+                       pfnUnpackAnglesFn(padfPrjParams[5]),
+                       pfnUnpackAnglesFn(padfPrjParams[4]),
                        padfPrjParams[6], padfPrjParams[7] );
             }
             break;
 
         case TM:
-            SetTM( CPLPackedDMSToDec(padfPrjParams[5]),
-                   CPLPackedDMSToDec(padfPrjParams[4]),
+            SetTM( pfnUnpackAnglesFn(padfPrjParams[5]),
+                   pfnUnpackAnglesFn(padfPrjParams[4]),
                    padfPrjParams[2],
                    padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case STEREO:
-            SetStereographic( CPLPackedDMSToDec(padfPrjParams[5]),
-                              CPLPackedDMSToDec(padfPrjParams[4]),
+            SetStereographic( pfnUnpackAnglesFn(padfPrjParams[5]),
+                              pfnUnpackAnglesFn(padfPrjParams[4]),
                               1.0,
                               padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case LAMAZ:
-            SetLAEA( CPLPackedDMSToDec(padfPrjParams[5]),
-                     CPLPackedDMSToDec(padfPrjParams[4]),
+            SetLAEA( pfnUnpackAnglesFn(padfPrjParams[5]),
+                     pfnUnpackAnglesFn(padfPrjParams[4]),
                      padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case AZMEQD:
-            SetAE( CPLPackedDMSToDec(padfPrjParams[5]),
-                   CPLPackedDMSToDec(padfPrjParams[4]),
+            SetAE( pfnUnpackAnglesFn(padfPrjParams[5]),
+                   pfnUnpackAnglesFn(padfPrjParams[4]),
                    padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case GNOMON:
-            SetGnomonic( CPLPackedDMSToDec(padfPrjParams[5]),
-                         CPLPackedDMSToDec(padfPrjParams[4]),
+            SetGnomonic( pfnUnpackAnglesFn(padfPrjParams[5]),
+                         pfnUnpackAnglesFn(padfPrjParams[4]),
                          padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case ORTHO:
-            SetOrthographic( CPLPackedDMSToDec(padfPrjParams[5]),
-                             CPLPackedDMSToDec(padfPrjParams[4]),
+            SetOrthographic( pfnUnpackAnglesFn(padfPrjParams[5]),
+                             pfnUnpackAnglesFn(padfPrjParams[4]),
                              padfPrjParams[6], padfPrjParams[7] );
             break;
 
         // FIXME: GVNSP --- General Vertical Near-Side Perspective skipped
 
         case SNSOID:
-            SetSinusoidal( CPLPackedDMSToDec(padfPrjParams[4]),
+            SetSinusoidal( pfnUnpackAnglesFn(padfPrjParams[4]),
                            padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case EQRECT:
-            SetEquirectangular( CPLPackedDMSToDec(padfPrjParams[5]),
-                                CPLPackedDMSToDec(padfPrjParams[4]),
+            SetEquirectangular( pfnUnpackAnglesFn(padfPrjParams[5]),
+                                pfnUnpackAnglesFn(padfPrjParams[4]),
                                 padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case MILLER:
-            SetMC( CPLPackedDMSToDec(padfPrjParams[5]),
-                   CPLPackedDMSToDec(padfPrjParams[4]),
+            SetMC( pfnUnpackAnglesFn(padfPrjParams[5]),
+                   pfnUnpackAnglesFn(padfPrjParams[4]),
                    padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case VGRINT:
-            SetVDG( CPLPackedDMSToDec(padfPrjParams[4]),
+            SetVDG( pfnUnpackAnglesFn(padfPrjParams[4]),
                     padfPrjParams[6], padfPrjParams[7] );
             break;
 
         case HOM:
             if ( padfPrjParams[12] )
             {
-                SetHOM( CPLPackedDMSToDec(padfPrjParams[5]),
-                        CPLPackedDMSToDec(padfPrjParams[4]),
-                        CPLPackedDMSToDec(padfPrjParams[3]),
+                SetHOM( pfnUnpackAnglesFn(padfPrjParams[5]),
+                        pfnUnpackAnglesFn(padfPrjParams[4]),
+                        pfnUnpackAnglesFn(padfPrjParams[3]),
                         0.0, padfPrjParams[2],
                         padfPrjParams[6],  padfPrjParams[7] );
             }
             else
             {
-                SetHOM2PNO( CPLPackedDMSToDec(padfPrjParams[5]),
-                            CPLPackedDMSToDec(padfPrjParams[9]),
-                            CPLPackedDMSToDec(padfPrjParams[8]),
-                            CPLPackedDMSToDec(padfPrjParams[11]),
-                            CPLPackedDMSToDec(padfPrjParams[10]),
+                SetHOM2PNO( pfnUnpackAnglesFn(padfPrjParams[5]),
+                            pfnUnpackAnglesFn(padfPrjParams[9]),
+                            pfnUnpackAnglesFn(padfPrjParams[8]),
+                            pfnUnpackAnglesFn(padfPrjParams[11]),
+                            pfnUnpackAnglesFn(padfPrjParams[10]),
                             padfPrjParams[2],
                             padfPrjParams[6],  padfPrjParams[7] );
             }
             break;
 
         case ROBIN:
-            SetRobinson( CPLPackedDMSToDec(padfPrjParams[4]),
+            SetRobinson( pfnUnpackAnglesFn(padfPrjParams[4]),
                          padfPrjParams[6], padfPrjParams[7] );
             break;
 
@@ -749,7 +762,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
         // FIXME: GOODE --- Interrupted Goode skipped
 
         case MOLL:
-            SetMollweide( CPLPackedDMSToDec(padfPrjParams[4]),
+            SetMollweide( pfnUnpackAnglesFn(padfPrjParams[4]),
                           padfPrjParams[6], padfPrjParams[7] );
             break;
 
