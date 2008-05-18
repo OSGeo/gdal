@@ -53,6 +53,9 @@ CPL_C_END
 #define SENSOR_NAME             "SENSOR"
 #define SENSOR_NAME_SIZE        10
 
+#define BANDS_PRESENT           "BANDS PRESENT"
+#define BANDS_PRESENT_SIZE      32
+
 #define FILENAME                "FILENAME"
 #define FILENAME_SIZE           29
 
@@ -122,8 +125,8 @@ class FASTDataset : public GDALPamDataset
 
     CPLErr 	GetGeoTransform( double * );
     const char	*GetProjectionRef();
-    FILE	*FOpenChannel( char *, int );
-    void        TryEuromapChannelNameConvention();
+    FILE	*FOpenChannel( const char *, int iBand, int iFASTBand );
+    void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
 };
 
 /************************************************************************/
@@ -231,7 +234,7 @@ const char *FASTDataset::GetProjectionRef()
 /*                             FOpenChannel()                           */
 /************************************************************************/
 
-FILE *FASTDataset::FOpenChannel( char *pszBandname, int iBand )
+FILE *FASTDataset::FOpenChannel( const char *pszBandname, int iBand, int iFASTBand )
 {
     const char	*pszChannelFilename = NULL;
     char	*pszPrefix = CPLStrdup( CPLGetBasename( pszFilename ) );
@@ -249,7 +252,7 @@ FILE *FASTDataset::FOpenChannel( char *pszBandname, int iBand )
                 {
                     pszChannelFilename =
                         CPLFormFilename( pszDirname,
-                                CPLSPrintf( "%s.b%02d", pszPrefix, iBand + 1 ),
+                                CPLSPrintf( "%s.b%02d", pszPrefix, iFASTBand ),
                                 NULL );
                     fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
                 }
@@ -260,67 +263,67 @@ FILE *FASTDataset::FOpenChannel( char *pszBandname, int iBand )
 	case IRS:
 	default:
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "%s.%d", pszPrefix, iBand + 1 ), pszSuffix );
+                CPLSPrintf( "%s.%d", pszPrefix, iFASTBand ), pszSuffix );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "IMAGERY%d", iBand + 1 ), pszSuffix );
+                CPLSPrintf( "IMAGERY%d", iFASTBand ), pszSuffix );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "imagery%d", iBand + 1 ), pszSuffix );
+                CPLSPrintf( "imagery%d", iFASTBand ), pszSuffix );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "IMAGERY%d.DAT", iBand + 1 ), NULL );
+                CPLSPrintf( "IMAGERY%d.DAT", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "imagery%d.dat", iBand + 1 ), NULL );
+                CPLSPrintf( "imagery%d.dat", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "IMAGERY%d.dat", iBand + 1 ), NULL );
+                CPLSPrintf( "IMAGERY%d.dat", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "imagery%d.DAT", iBand + 1 ), NULL );
+                CPLSPrintf( "imagery%d.DAT", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "BAND%d", iBand + 1 ), pszSuffix );
+                CPLSPrintf( "BAND%d", iFASTBand ), pszSuffix );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "band%d", iBand + 1 ), pszSuffix );
+                CPLSPrintf( "band%d", iFASTBand ), pszSuffix );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "BAND%d.DAT", iBand + 1 ), NULL );
+                CPLSPrintf( "BAND%d.DAT", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "band%d.dat", iBand + 1 ), NULL );
+                CPLSPrintf( "band%d.dat", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "BAND%d.dat", iBand + 1 ), NULL );
+                CPLSPrintf( "BAND%d.dat", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             if ( fpChannels[iBand] )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "band%d.DAT", iBand + 1 ), NULL );
+                CPLSPrintf( "band%d.DAT", iFASTBand ), NULL );
             fpChannels[iBand] = VSIFOpenL( pszChannelFilename, "rb" );
             break;
     }
@@ -333,10 +336,10 @@ FILE *FASTDataset::FOpenChannel( char *pszBandname, int iBand )
 }
 
 /************************************************************************/
-/*                TryEuromapChannelNameConvention()                     */
+/*                TryEuromap_IRS_1C_1D_ChannelNameConvention()                     */
 /************************************************************************/
 
-void FASTDataset::TryEuromapChannelNameConvention()
+void FASTDataset::TryEuromap_IRS_1C_1D_ChannelNameConvention()
 {
     /* Filename convention explained in http://www.euromap.de/download/em_names.pdf */
 
@@ -648,7 +651,42 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                  EQUAL(poDS->GetMetadataItem("SENSOR"), "LISS3") ||
                  EQUAL(poDS->GetMetadataItem("SENSOR"), "WIFS")))
             {
-                poDS->TryEuromapChannelNameConvention();
+                poDS->TryEuromap_IRS_1C_1D_ChannelNameConvention();
+            }
+            else if (EQUAL(poDS->GetMetadataItem("SATELLITE"), "CARTOSAT-1") &&
+                     (EQUAL(poDS->GetMetadataItem("SENSOR"), "FORE") ||
+                      EQUAL(poDS->GetMetadataItem("SENSOR"), "AFT")))
+            {
+                /* See http://www.euromap.de/download/p5fast_20050301.pdf, appendix F */
+                CPLString     osSuffix = CPLGetExtension( poDS->pszFilename );
+                const char    *papszBasenames[] = { "BANDF", "bandf", "BANDA", "banda" };
+                for ( i=0;i<4;i++)
+                {
+                    CPLString osChannelFilename = CPLFormFilename( poDS->pszDirname, papszBasenames[i], osSuffix );
+                    poDS->fpChannels[0] = VSIFOpenL( osChannelFilename, "rb" );
+                    if ( poDS->fpChannels[0] )
+                    {
+                        poDS->nBands = 1;
+                        break;
+                    }
+                }
+            }
+            else if (EQUAL(poDS->GetMetadataItem("SATELLITE"), "IRS P6"))
+            {
+                /* If BANDS_PRESENT="2345", the file bands are "BAND2.DAT", "BAND3.DAT", etc. */
+                pszTemp = GetValue( pszHeader, BANDS_PRESENT, BANDS_PRESENT_SIZE, TRUE );
+                if (pszTemp)
+                {
+                    for( i=0; pszTemp[i] != '\0'; i++)
+                    {
+                        if (pszTemp[i] >= '2' && pszTemp[i] <= '5')
+                        {
+                            if (poDS->FOpenChannel(poDS->pszFilename, poDS->nBands, pszTemp[i] - '0'))
+                                poDS->nBands++;
+                        }
+                    }
+                    CPLFree( pszTemp );
+                }
             }
         }
     }
@@ -677,7 +715,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
                 pszTemp = NULL;
-            if ( poDS->FOpenChannel( pszFilename, poDS->nBands ) )
+            if ( poDS->FOpenChannel( pszFilename, poDS->nBands, poDS->nBands + 1 ) )
                 poDS->nBands++;
             if ( pszFilename )
                 CPLFree( pszFilename );
@@ -730,6 +768,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             default:
                 poDS->eDataType = GDT_Byte;
                 break;
+            case 10: /* For a strange reason, some Euromap products declare 10 bits output, but are 16 bits */
             case 16:
                 poDS->eDataType = GDT_UInt16;
                 break;
