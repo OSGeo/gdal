@@ -1629,10 +1629,17 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             for( i = 0; i < nBlockPixels; i++ )
             {
+#ifdef CPL_MSB
+                ((GUInt32 *) pImage)[i] =
+                    TripleToFloat( ((GUInt32)*(pabyImage + 0) << 16)
+                                   | ((GUInt32)*(pabyImage + 1) << 8)
+                                   | (GUInt32)*(pabyImage + 2) );
+#else
                 ((GUInt32 *) pImage)[i] =
                     TripleToFloat( ((GUInt32)*(pabyImage + 2) << 16)
                                    | ((GUInt32)*(pabyImage + 1) << 8)
                                    | (GUInt32)*pabyImage );
+#endif
                 pabyImage += iSkipBytes;
             }
         }
@@ -1688,6 +1695,54 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         | (poGDS->pabyBlockBuf[iByte+1]);
                 }
                 iBitOffset += iPixelBitSkip;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case for 24bit data which is pre-byteswapped since      */
+/*      the size falls on a byte boundary ... ugg (#2361).              */
+/* -------------------------------------------------------------------- */
+    else if( poGDS->nBitsPerSample == 24 )
+    {
+        int	iPixel;
+        int     iPixelByteSkip, iBandByteOffset, iX, iY, nBytesPerLine;
+
+        CPLDebug( "GTiff", "Special byte order insensitive 24bit case" );
+
+        if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+        {
+            iPixelByteSkip = (poGDS->nBands * poGDS->nBitsPerSample) / 8;
+            iBandByteOffset = ((nBand-1) * poGDS->nBitsPerSample) / 8;
+        }
+        else
+        {
+            iPixelByteSkip = poGDS->nBitsPerSample / 8;
+            iBandByteOffset = 0;
+        }
+
+        nBytesPerLine = nBlockXSize * iPixelByteSkip;
+
+        iPixel = 0;
+        for( iY = 0; iY < nBlockYSize; iY++ )
+        {
+            GByte *pabyImage = 
+                poGDS->pabyBlockBuf + iBandByteOffset + iY * nBytesPerLine;
+
+            for( iX = 0; iX < nBlockXSize; iX++ )
+            {
+#ifdef CPL_MSB
+                ((GUInt32 *) pImage)[iPixel++] = 
+                    ((GUInt32)*(pabyImage + 2) << 16)
+                    | ((GUInt32)*(pabyImage + 1) << 8)
+                    | (GUInt32)*(pabyImage + 0);
+#else
+                ((GUInt32 *) pImage)[iPixel++] = 
+                    ((GUInt32)*(pabyImage + 0) << 16)
+                    | ((GUInt32)*(pabyImage + 1) << 8)
+                    | (GUInt32)*(pabyImage + 2);
+#endif
+                pabyImage += 3;
             }
         }
     }
