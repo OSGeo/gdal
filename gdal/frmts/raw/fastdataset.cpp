@@ -650,15 +650,13 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 poDS->TryEuromapChannelNameConvention();
             }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unsupported SATELLITE/SENSOR combination = (%s/%s)",
-                         poDS->GetMetadataItem("SATELLITE"), poDS->GetMetadataItem("SENSOR"));
-            }
         }
     }
-    else
+    
+    /* If the previous lookup for band files didn't success, fallback to the */
+    /* standard way of finding them, either by the FILENAME field, either with */
+    /* the usual patterns like bandX.dat, etc... */
+    if ( !poDS->nBands )
     {
         for ( i = 0; i < 6; i++ )
         {
