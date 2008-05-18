@@ -884,6 +884,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         int transform_ok=FALSE;
         GDAL_GCP *pasGCPList;
+        int bAnglesInPackedDMSFormat;
 
         // Strip out zone number from the easting values, if either
         if ( dfULX >= 1000000.0 )
@@ -895,9 +896,16 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         if ( dfLRX >= 1000000.0 )
             dfLRX -= (double)iZone * 1000000.0;
 
+        // In EOSAT FAST Rev C, the angles are in decimal degrees
+        // otherwise they are in packed DMS format.
+        if (strstr(pszHeader, "REV            C") != NULL)
+            bAnglesInPackedDMSFormat = FALSE;
+        else
+            bAnglesInPackedDMSFormat = TRUE;
+
         // Create projection definition
         OGRErr eErr =
-            oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum );
+            oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum, bAnglesInPackedDMSFormat );
         if ( eErr != OGRERR_NONE )
             CPLDebug("FAST", "Import projection from USGS failed: %d", eErr);
         oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
