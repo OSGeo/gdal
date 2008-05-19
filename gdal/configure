@@ -26645,6 +26645,11 @@ if test "$datadir" = '${prefix}/share' ; then
   datadir='${prefix}/share/gdal'
 fi
 
+if test "$datadir" = '${datarootdir}' \
+     -a "$datarootdir" = '${prefix}/share' ; then
+  datarootdir='${prefix}/share/gdal'
+fi
+
 
 if test "$prefix" = "NONE" ; then
   GDAL_PREFIX=/usr/local
