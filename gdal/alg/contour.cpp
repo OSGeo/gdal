@@ -239,7 +239,14 @@ GDALContourGenerator::GDALContourGenerator( int nWidthIn, int nHeightIn,
 GDALContourGenerator::~GDALContourGenerator()
 
 {
-    
+    int i;
+
+    for( i = 0; i < nLevelCount; i++ )
+        delete papoLevels[i];
+    CPLFree( papoLevels );
+
+    CPLFree( padfLastLine );
+    CPLFree( padfThisLine );
 }
 
 /************************************************************************/

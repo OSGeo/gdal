@@ -30,6 +30,7 @@
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
@@ -226,6 +227,10 @@ int main( int argc, char ** argv )
 
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );
+
+    CSLDestroy( argv );
+    GDALDestroyDriverManager();
+    OGRCleanupAll();
 
     return 0;
 }
