@@ -201,6 +201,25 @@ def ogr_gml_4():
 
     return 'success'
 
+
+###############################################################################
+# Test of read GML file that triggeered bug #2349
+
+def ogr_gml_5():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gml_ds = ogr.Open( 'data/ticket_2349_test_1.gml' )
+
+    lyr = gml_ds.GetLayerByName('MyPolyline')
+
+    lyr.SetAttributeFilter( 'height > 300' )
+
+    lyr.GetNextFeature()
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -213,6 +232,7 @@ gdaltest_list = [
     ogr_gml_2,
     ogr_gml_3,
     ogr_gml_4,
+    ogr_gml_5,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
