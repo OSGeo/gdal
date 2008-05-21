@@ -124,7 +124,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             delete poGMLFeature;
 
         if( poGeom != NULL )
+        {
             delete poGeom;
+            poGeom = NULL;
+        }
 
         poGMLFeature = poDS->GetReader()->NextFeature();
         if( poGMLFeature == NULL )
