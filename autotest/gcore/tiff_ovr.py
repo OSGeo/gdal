@@ -220,6 +220,36 @@ def tiff_ovr_5():
 
     return 'success'
     
+###############################################################################
+# Same as tiff_ovr_5 but with USE_RDD=YES to force external overview
+
+def tiff_ovr_6():
+
+    shutil.copyfile( 'data/nodata_byte.tif', 'tmp/ovr6.tif' )
+    
+    oldOption = gdal.GetConfigOption('USE_RRD', 'NO')
+    gdal.SetConfigOption('USE_RRD', 'YES')
+    
+    wrk_ds = gdal.Open('tmp/ovr6.tif',gdal.GA_Update)
+    wrk_ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+    
+    gdal.SetConfigOption('USE_RRD', oldOption)
+    
+    try:
+        os.stat('tmp/ovr6.aux')
+    except:
+        gdaltest.post_reason( 'no external overview.' )
+        return 'fail'
+    
+    cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 1130
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -228,6 +258,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/mfloat32.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr4.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr5.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr6.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -238,6 +269,7 @@ gdaltest_list = [
     tiff_ovr_3,
     tiff_ovr_4,
     tiff_ovr_5,
+    tiff_ovr_6,
     tiff_ovr_cleanup ]
 
 if __name__ == '__main__':
