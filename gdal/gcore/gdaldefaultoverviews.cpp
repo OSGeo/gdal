@@ -515,9 +515,12 @@ GDALDefaultOverviews::BuildOverviews(
 
             if( poBand != NULL )
                 poOverDS = poBand->GetDataset();
-            
-            poOverDS->oOvManager.poBaseDS = poDS;
-            poOverDS->oOvManager.poDS = poOverDS;
+
+            if (poOverDS != NULL)
+            {
+                poOverDS->oOvManager.poBaseDS = poDS;
+                poOverDS->oOvManager.poDS = poOverDS;
+            }
         }
     }
 
