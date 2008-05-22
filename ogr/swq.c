@@ -1124,6 +1124,12 @@ const char *swq_select_preparse( const char *select_statement,
 
     *select_info_ret = NULL;
 
+    if (select_statement == NULL || select_statement[0] == '\0')
+    {
+        strcpy( swq_get_errbuf(), "Empty SQL request string" );
+        return swq_get_errbuf();
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get first token. Ensure it is SELECT.                           */
 /* -------------------------------------------------------------------- */
