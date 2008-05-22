@@ -31,6 +31,7 @@ import sys
 
 sys.path.append( '../pymod' )
 
+import gdal
 import gdaltest
 import ogr
 import ogrtest
@@ -436,6 +437,22 @@ def ogr_sql_18():
     return 'success'
 
 ###############################################################################
+# Test empty request string
+
+def ogr_sql_19():
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    sql_lyr = gdaltest.ds.ExecuteSQL( '' )
+    gdal.PopErrorHandler()
+
+    if sql_lyr is not None:
+        return 'fail'
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    return 'success'
+
+###############################################################################
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -464,6 +481,7 @@ gdaltest_list = [
     ogr_sql_16,
     ogr_sql_17,
     ogr_sql_18,
+    ogr_sql_19,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
