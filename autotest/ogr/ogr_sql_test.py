@@ -448,8 +448,6 @@ def ogr_sql_19():
     if sql_lyr is not None:
         return 'fail'
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
-
     return 'success'
 
 ###############################################################################
