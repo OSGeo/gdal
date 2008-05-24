@@ -34,9 +34,96 @@
 #include "tiffio.h"
 #include "xtiffio.h"
 #include "geotiff.h"
-#include "tif_ovrcache.h"
+#include "gt_overview.h"
 
 CPL_CVSID("$Id$");
+
+#define TIFFTAG_GDAL_METADATA  42112
+
+/************************************************************************/
+/*                         TIFF_WriteOverview()                         */
+/*                                                                      */
+/*      Create a new directory, without any image data for an overview. */
+/*      Returns offset of newly created overview directory, but the     */
+/*      current directory is reset to be the one in used when this      */
+/*      function is called.                                             */
+/************************************************************************/
+
+toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
+                           int nBitsPerPixel, int nPlanarConfig, int nSamples, 
+                           int nBlockXSize, int nBlockYSize,
+                           int bTiled, int nCompressFlag, int nPhotometric,
+                           int nSampleFormat, 
+                           unsigned short *panRed,
+                           unsigned short *panGreen,
+                           unsigned short *panBlue,
+                           int bUseSubIFDs,
+                           const char *pszMetadata )
+
+{
+    toff_t	nBaseDirOffset;
+    toff_t	nOffset;
+
+    nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
+
+    TIFFFreeDirectory( hTIFF );
+    TIFFCreateDirectory( hTIFF );
+    
+/* -------------------------------------------------------------------- */
+/*      Setup TIFF fields.                                              */
+/* -------------------------------------------------------------------- */
+    TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
+    TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
+    if( nSamples == 1 )
+        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+    else
+        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, nPlanarConfig );
+
+    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, nBitsPerPixel );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nSamples );
+    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompressFlag );
+    TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, nPhotometric );
+    TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, nSampleFormat );
+
+    if( bTiled )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
+        TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
+    }
+    else
+        TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
+
+    TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE );
+    
+/* -------------------------------------------------------------------- */
+/*	Write color table if one is present.				*/
+/* -------------------------------------------------------------------- */
+    if( panRed != NULL )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_COLORMAP, panRed, panGreen, panBlue );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write metadata if we have some.                                 */
+/* -------------------------------------------------------------------- */
+    if( pszMetadata && strlen(pszMetadata) > 0 )
+        TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, pszMetadata );
+
+/* -------------------------------------------------------------------- */
+/*      Write directory, and return byte offset.                        */
+/* -------------------------------------------------------------------- */
+    if( TIFFWriteCheck( hTIFF, bTiled, "TIFFBuildOverviews" ) == 0 )
+        return 0;
+
+    TIFFWriteDirectory( hTIFF );
+    TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
+
+    nOffset = TIFFCurrentDirOffset( hTIFF );
+
+    TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
+
+    return nOffset;
+}
 
 /************************************************************************/
 /*                     GTIFFBuildOverviewMetadata()                     */
@@ -303,9 +390,9 @@ GTIFFBuildOverviews( const char * pszFilename,
 
             if( poCT->GetColorEntryAsRGB( iColor, &sRGB ) )
             {
-                panRed[iColor] = (unsigned short) (256 * sRGB.c1);
-                panGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-                panBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+                panRed[iColor] = (unsigned short) (257 * sRGB.c1);
+                panGreen[iColor] = (unsigned short) (257 * sRGB.c2);
+                panBlue[iColor] = (unsigned short) (257 * sRGB.c3);
             }
         }
     }
