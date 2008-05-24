@@ -840,7 +840,7 @@ def rpcs_equal( md1, md2 ):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename):
+def download_file(url, filename, download_size = -1):
     try:
         os.stat( 'tmp/cache/' + filename )
         return True
@@ -850,7 +850,10 @@ def download_file(url, filename):
             try:
                 handle = urllib2.urlopen(url)
                 print 'Downloading %s...' % (url)
-                val = handle.read()
+                if download_size == -1:
+                    val = handle.read()
+                else:
+                    val = handle.read(download_size)
             except urllib2.HTTPError, e:
                 print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
                 return False
