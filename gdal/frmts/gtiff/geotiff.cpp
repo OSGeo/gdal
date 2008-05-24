@@ -35,10 +35,10 @@
 #include "geotiff.h"
 #include "geo_normalize.h"
 #include "geovalues.h"
-#include "tif_ovrcache.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "cpl_minixml.h"
+#include "gt_overview.h"
 
 CPL_CVSID("$Id$");
 
@@ -50,10 +50,6 @@ GUInt32 HalfToFloat( GUInt16 );
 GUInt32 TripleToFloat( GUInt32 );
 void    GTiffOneTimeInit();
 CPL_C_END
-
-void GTIFFBuildOverviewMetadata( const char *pszResampling,
-                                 GDALDataset *poBaseDS, 
-                                 CPLString &osMetadata );
 
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
