@@ -1289,7 +1289,9 @@ geometry, otherwise you have no choice and should specify a field name
 containing Z value).</dd>
 
 <dt> <b>-a</b> <i>[algorithm[:parameter1=value1][:parameter2=value2]...]</i>:
-</dt><dd> Set the interpolation algorithm name and (optionally) its parameters. See \ref gdal_grid_algorithms section for discussion of available options.</dd>
+</dt><dd> Set the interpolation algorithm or data metric name and (optionally)
+its parameters. See \ref gdal_grid_algorithms and \ref gdal_grid_metrics
+sections for further discussion of available options.</dd>
 
 <dt> <b>-l</b> <em>layername</em>: </dt><dd> Indicates the layer(s) from the
 datasource that will be used for input features.  May be specified multiple
@@ -1324,6 +1326,7 @@ The GDAL supported output file.</dd>
 There are number of interpolation algorithms to choose from.
 
 <dl>
+
 <dt><i>invdist</i>:</dt> <dd>Inverse distance to a power. This is default
 algorithm. It has following parameters:</dd>
 
@@ -1387,6 +1390,46 @@ Default is 0.0.</dd>
 <dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
 0.0).</dd>
 </dl>
+
+</dl>
+
+\section gdal_grid_metrics DATA METRICS
+
+Besides the interpolation functionality \ref gdal_grid can be used to compute
+some data metrics using the specified window and output grid geometry. These
+metrics are:
+
+<dl>
+
+<dt><i>minimum</i>:</dt> <dd>Minimum value found in grid node search
+ellipse.</dd>
+
+<dt><i>maximum</i>:</dt> <dd>Maximum value found in grid node search
+ellipse.</dd>
+
+<dt><i>range</i>:</dt> <dd>A difference between the minimum and maximum values
+found in grid node search ellipse.</dd>
+
+</dl>
+
+All the metrics have the same set of options:
+
+<dl>
+
+<dt><i>radius1</i>:</dt> <dd>The first radius (X axis if rotation angle is 0)
+of search ellipse. Set this parameter to zero to use whole point array.
+Default is 0.0.</dd>
+<dt><i>radius2</i>:</dt> <dd>The second radius (Y axis if rotation angle is 0)
+of search ellipse. Set this parameter to zero to use whole point array.
+Default is 0.0.</dd>
+<dt><i>angle</i>:</dt> <dd>Angle of search ellipse rotation in degrees
+(counter clockwise, default 0.0).</dd>
+<dt><i>min_points</i>:</dt> <dd>Minimum number of data points to use. If less
+amount of points found the grid node considered empty and will be filled with
+NODATA marker. This is only used if search ellipse is set (both radiuses are
+non-zero). Default is 0.</dd>
+<dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
+0.0).</dd>
 
 </dl>
 
