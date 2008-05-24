@@ -197,6 +197,7 @@ class L1BDataset : public GDALPamDataset
     void        FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int *iLocInd);
     void        FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader, int *intLocInd);
     void        ProcessDatasetHeader();
+    int         ComputeFileOffsets();
     
   public:
                 L1BDataset();
@@ -634,7 +635,7 @@ void L1BDataset::ProcessRecordHeaders()
         int iGCP;
         int nGCPsOnThisLine = nGCPCount - nOrigGCPs;
         int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
-        int nGCPStep = (nGCPsOnThisLine - 1) / (nDesiredGCPsPerLine-1);
+        int nGCPStep = (nDesiredGCPsPerLine > 1) ? (nGCPsOnThisLine - 1) / (nDesiredGCPsPerLine-1) : 1;
 
         if( nGCPStep == 0 )
             nGCPStep = 1;
@@ -683,6 +684,296 @@ void L1BDataset::ProcessDatasetHeader()
 }
 
 /************************************************************************/
+/*                        ComputeFileOffsets()                          */
+/************************************************************************/
+
+int L1BDataset::ComputeFileOffsets()
+{
+    switch( eProductType )
+    {
+        case HRPT:
+        case LAC:
+        case FRAC:
+            nRasterXSize = 2048;
+            nBufferSize = 20484;
+            iGCPStart = 25;
+            iGCPStep = 40;
+            nGCPsPerLine = 51;
+            if (eSpacecraftID <= NOAA14)
+            {
+                if (iDataFormat == PACKED10BIT)
+                {
+                    nRecordSize = 14800;
+                    nRecordDataEnd = 14104;
+                }
+                else if (iDataFormat == UNPACKED16BIT)
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 4544;
+                        nRecordDataEnd = 4544;
+                        break;
+                        case 2:
+                        nRecordSize = 8640;
+                        nRecordDataEnd = 8640;
+                        break;
+                        case 3:
+                        nRecordSize = 12736;
+                        nRecordDataEnd = 12736;
+                        break;
+                        case 4:
+                        nRecordSize = 16832;
+                        nRecordDataEnd = 16832;
+                        break;
+                        case 5:
+                        nRecordSize = 20928;
+                        nRecordDataEnd = 20928;
+                        break;
+                    }
+                }
+                else // UNPACKED8BIT
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 2496;
+                        nRecordDataEnd = 2496;
+                        break;
+                        case 2:
+                        nRecordSize = 4544;
+                        nRecordDataEnd = 4544;
+                        break;
+                        case 3:
+                        nRecordSize = 6592;
+                        nRecordDataEnd = 6592;
+                        break;
+                        case 4:
+                        nRecordSize = 8640;
+                        nRecordDataEnd = 8640;
+                        break;
+                        case 5:
+                        nRecordSize = 10688;
+                        nRecordDataEnd = 10688;
+                        break;
+                    }
+                }
+                nDataStartOffset = nRecordSize + 122;
+                nRecordDataStart = 448;
+                iGCPCodeOffset = 52;
+                iGCPOffset = 104;
+            }
+            else if ( eSpacecraftID <= METOP2 )
+            {
+                if (iDataFormat == PACKED10BIT)
+                {
+                    nRecordSize = 15872;
+                    nRecordDataEnd = 14920;
+                }
+                else if (iDataFormat == UNPACKED16BIT)
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 6144;
+                        nRecordDataEnd = 5360;
+                        break;
+                        case 2:
+                        nRecordSize = 10240;
+                        nRecordDataEnd = 9456;
+                        break;
+                        case 3:
+                        nRecordSize = 14336;
+                        nRecordDataEnd = 13552;
+                        break;
+                        case 4:
+                        nRecordSize = 18432;
+                        nRecordDataEnd = 17648;
+                        break;
+                        case 5:
+                        nRecordSize = 22528;
+                        nRecordDataEnd = 21744;
+                        break;
+                    }
+                }
+                else // UNPACKED8BIT
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 4096;
+                        nRecordDataEnd = 3312;
+                        break;
+                        case 2:
+                        nRecordSize = 6144;
+                        nRecordDataEnd = 5360;
+                        break;
+                        case 3:
+                        nRecordSize = 8192;
+                        nRecordDataEnd = 7408;
+                        break;
+                        case 4:
+                        nRecordSize = 10240;
+                        nRecordDataEnd = 9456;
+                        break;
+                        case 5:
+                        nRecordSize = 12288;
+                        nRecordDataEnd = 11504;
+                        break;
+                    }
+                }
+                nDataStartOffset = nRecordSize + 512;
+                nRecordDataStart = 1264;
+                iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
+                iGCPOffset = 640;
+            }
+            else
+                return 0;
+        break;
+        case GAC:
+            nRasterXSize = 409;
+            nBufferSize = 4092;
+            iGCPStart = 5; // FIXME: depends of scan direction
+            iGCPStep = 8;
+            nGCPsPerLine = 51;
+            if (eSpacecraftID <= NOAA14)
+            {
+                if (iDataFormat == PACKED10BIT)
+                {
+                    nRecordSize = 3220;
+                    nRecordDataEnd = 3176;
+                }
+                else if (iDataFormat == UNPACKED16BIT)
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 1268;
+                        nRecordDataEnd = 1266;
+                        break;
+                        case 2:
+                        nRecordSize = 2084;
+                        nRecordDataEnd = 2084;
+                        break;
+                        case 3:
+                        nRecordSize = 2904;
+                        nRecordDataEnd = 2902;
+                        break;
+                        case 4:
+                        nRecordSize = 3720;
+                        nRecordDataEnd = 3720;
+                        break;
+                        case 5:
+                        nRecordSize = 4540;
+                        nRecordDataEnd = 4538;
+                        break;
+                    }
+                else // UNPACKED8BIT
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 860;
+                        nRecordDataEnd = 858;
+                        break;
+                        case 2:
+                        nRecordSize = 1268;
+                        nRecordDataEnd = 1266;
+                        break;
+                        case 3:
+                        nRecordSize = 1676;
+                        nRecordDataEnd = 1676;
+                        break;
+                        case 4:
+                        nRecordSize = 2084;
+                        nRecordDataEnd = 2084;
+                        break;
+                        case 5:
+                        nRecordSize = 2496;
+                        nRecordDataEnd = 2494;
+                        break;
+                    }
+                }
+                nDataStartOffset = nRecordSize * 2 + 122;
+                nRecordDataStart = 448;
+                iGCPCodeOffset = 52;
+                iGCPOffset = 104;
+            }
+            else if ( eSpacecraftID <= METOP2 )
+            {
+                if (iDataFormat == PACKED10BIT)
+                {
+                    nRecordSize = 4608;
+                    nRecordDataEnd = 3992;
+                }
+                else if (iDataFormat == UNPACKED16BIT)
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 2360;
+                        nRecordDataEnd = 2082;
+                        break;
+                        case 2:
+                        nRecordSize = 3176;
+                        nRecordDataEnd = 2900;
+                        break;
+                        case 3:
+                        nRecordSize = 3992;
+                        nRecordDataEnd = 3718;
+                        break;
+                        case 4:
+                        nRecordSize = 4816;
+                        nRecordDataEnd = 4536;
+                        break;
+                        case 5:
+                        nRecordSize = 5632;
+                        nRecordDataEnd = 5354;
+                        break;
+                    }
+                }
+                else // UNPACKED8BIT
+                {
+                    switch(nBands)
+                    {
+                        case 1:
+                        nRecordSize = 1952;
+                        nRecordDataEnd = 1673;
+                        break;
+                        case 2:
+                        nRecordSize = 2360;
+                        nRecordDataEnd = 2082;
+                        break;
+                        case 3:
+                        nRecordSize = 2768;
+                        nRecordDataEnd = 2491;
+                        break;
+                        case 4:
+                        nRecordSize = 3176;
+                        nRecordDataEnd = 2900;
+                        break;
+                        case 5:
+                        nRecordSize = 3584;
+                        nRecordDataEnd = 3309;
+                        break;
+                    }
+                }
+                nDataStartOffset = nRecordSize + 512;
+                nRecordDataStart = 1264;
+                iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
+                iGCPOffset = 640;
+            }
+            else
+                return 0;
+        break;
+        default:
+            return 0;
+    }
+
+    return 1;
+}
+
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -721,6 +1012,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     L1BDataset  *poDS;
     VSIStatBuf  sStat;
     const char  *pszFilename = poOpenInfo->pszFilename;
+    int         bGuessDataFormat = FALSE;
 
     poDS = new L1BDataset();
 
@@ -852,13 +1144,22 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Determine data format (10-bit packed or 8/16-bit unpacked)
-    if ( EQUALN((const char *)pabyTBMHeader + 117, "10", 2) ||
-         EQUALN((const char *)pabyTBMHeader + 117, "  ", 2) )
+    if ( EQUALN((const char *)pabyTBMHeader + 117, "10", 2) )
         poDS->iDataFormat = PACKED10BIT;
     else if ( EQUALN((const char *)pabyTBMHeader + 117, "16", 2) )
         poDS->iDataFormat = UNPACKED16BIT;
     else if ( EQUALN((const char *)pabyTBMHeader + 117, "08", 2) )
         poDS->iDataFormat = UNPACKED8BIT;
+    else if ( EQUALN((const char *)pabyTBMHeader + 117, "  ", 2) ||
+              pabyTBMHeader[117] == '\0' )
+        /* Empty string can be found in the following samples : 
+            http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/franh.1b (10 bit)
+            http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/frang.1b (10 bit)
+            http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/calfilel.1b (16 bit)
+            http://www2.ncdc.noaa.gov/docs/podug/data/avhrr/rapnzg.1b (16 bit)
+            ftp://ftp.sat.dundee.ac.uk/misc/testdata/noaa12/hrptnoaa1b.dat (10 bit)
+        */
+        bGuessDataFormat = TRUE;
     else
     {
 #ifdef DEBUG
@@ -868,288 +1169,77 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         goto bad;
     }
 
-    switch( poDS->eProductType )
+    CPLStat(pszFilename, &sStat);
+
+    if (bGuessDataFormat)
     {
-        case HRPT:
-        case LAC:
-        case FRAC:
-            poDS->nRasterXSize = 2048;
-            poDS->nBufferSize = 20484;
-            poDS->iGCPStart = 25;
-            poDS->iGCPStep = 40;
-            poDS->nGCPsPerLine = 51;
-            if (poDS->eSpacecraftID <= NOAA14)
-            {
-                if (poDS->iDataFormat == PACKED10BIT)
-                {
-                    poDS->nRecordSize = 14800;
-                    poDS->nRecordDataEnd = 14104;
-                }
-                else if (poDS->iDataFormat == UNPACKED16BIT)
-                {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 4544;
-                        poDS->nRecordDataEnd = 4544;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 8640;
-                        poDS->nRecordDataEnd = 8640;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 12736;
-                        poDS->nRecordDataEnd = 12736;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 16832;
-                        poDS->nRecordDataEnd = 16832;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 20928;
-                        poDS->nRecordDataEnd = 20928;
-                        break;
-                    }
-                }
-                else // UNPACKED8BIT
-                {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 2496;
-                        poDS->nRecordDataEnd = 2496;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 4544;
-                        poDS->nRecordDataEnd = 4544;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 6592;
-                        poDS->nRecordDataEnd = 6592;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 8640;
-                        poDS->nRecordDataEnd = 8640;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 10688;
-                        poDS->nRecordDataEnd = 10688;
-                        break;
-                    }
-                }
-                poDS->nDataStartOffset = poDS->nRecordSize + 122;
-                poDS->nRecordDataStart = 448;
-                poDS->iGCPCodeOffset = 52;
-                poDS->iGCPOffset = 104;
-            }
-            else if ( poDS->eSpacecraftID <= METOP2 )
-            {
-                if (poDS->iDataFormat == PACKED10BIT)
-                {
-                    poDS->nRecordSize = 15872;
-                    poDS->nRecordDataEnd = 14920;
-                }
-                else if (poDS->iDataFormat == UNPACKED16BIT)
-                {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 6144;
-                        poDS->nRecordDataEnd = 5360;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 10240;
-                        poDS->nRecordDataEnd = 9456;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 14336;
-                        poDS->nRecordDataEnd = 13552;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 18432;
-                        poDS->nRecordDataEnd = 17648;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 22528;
-                        poDS->nRecordDataEnd = 21744;
-                        break;
-                    }
-                }
-                else // UNPACKED8BIT
-                {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 4096;
-                        poDS->nRecordDataEnd = 3312;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 6144;
-                        poDS->nRecordDataEnd = 5360;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 8192;
-                        poDS->nRecordDataEnd = 7408;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 10240;
-                        poDS->nRecordDataEnd = 9456;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 12288;
-                        poDS->nRecordDataEnd = 11504;
-                        break;
-                    }
-                }
-                poDS->nDataStartOffset = poDS->nRecordSize + 512;
-                poDS->nRecordDataStart = 1264;
-                poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
-                poDS->iGCPOffset = 640;
-            }
-            else
+        int nTempYSize;
+        GUInt16 nScanlineNumber;
+        int j;
+
+        /* If the data format is unspecified, try each one of the 3 known data formats */
+        /* It is considered valid when the spacing between the first 5 scanline numbers */
+        /* is a constant */
+
+        for(j=0;j<3;j++)
+        {
+            poDS->iDataFormat = PACKED10BIT + j;
+            if (!poDS->ComputeFileOffsets())
                 goto bad;
-        break;
-        case GAC:
-            poDS->nRasterXSize = 409;
-            poDS->nBufferSize = 4092;
-            poDS->iGCPStart = 5; // FIXME: depends of scan direction
-            poDS->iGCPStep = 8;
-            poDS->nGCPsPerLine = 51;
-            if (poDS->eSpacecraftID <= NOAA14)
+
+            nTempYSize = (sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
+            if (nTempYSize < 5)
+                continue;
+
+            int nLastScanlineNumber = 0;
+            int nDiffLine = 0;
+            for (i=0;i<5;i++)
             {
-                if (poDS->iDataFormat == PACKED10BIT)
+                nScanlineNumber = 0;
+
+                VSIFSeekL(poDS->fp, poDS->nDataStartOffset + i * poDS->nRecordSize, SEEK_SET);
+                VSIFReadL(&nScanlineNumber, 1, 2, poDS->fp);
+#ifdef CPL_LSB
+                CPL_SWAP16PTR( &nScanlineNumber );
+#endif
+                if (i == 1)
                 {
-                    poDS->nRecordSize = 3220;
-                    poDS->nRecordDataEnd = 3176;
+                    nDiffLine = nScanlineNumber - nLastScanlineNumber;
+                    if (nDiffLine == 0)
+                        break;
                 }
-                else if (poDS->iDataFormat == UNPACKED16BIT)
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 1268;
-                        poDS->nRecordDataEnd = 1266;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 2084;
-                        poDS->nRecordDataEnd = 2084;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 2904;
-                        poDS->nRecordDataEnd = 2902;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 3720;
-                        poDS->nRecordDataEnd = 3720;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 4540;
-                        poDS->nRecordDataEnd = 4538;
-                        break;
-                    }
-                else // UNPACKED8BIT
+                else if (i > 1)
                 {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 860;
-                        poDS->nRecordDataEnd = 858;
+                    if (nDiffLine != nScanlineNumber - nLastScanlineNumber)
                         break;
-                        case 2:
-                        poDS->nRecordSize = 1268;
-                        poDS->nRecordDataEnd = 1266;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 1676;
-                        poDS->nRecordDataEnd = 1676;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 2084;
-                        poDS->nRecordDataEnd = 2084;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 2496;
-                        poDS->nRecordDataEnd = 2494;
-                        break;
-                    }
                 }
-                poDS->nDataStartOffset = poDS->nRecordSize * 2 + 122;
-                poDS->nRecordDataStart = 448;
-                poDS->iGCPCodeOffset = 52;
-                poDS->iGCPOffset = 104;
+
+                nLastScanlineNumber = nScanlineNumber;
             }
-            else if ( poDS->eSpacecraftID <= METOP2 )
+
+            if (i == 5)
             {
-                if (poDS->iDataFormat == PACKED10BIT)
-                {
-                    poDS->nRecordSize = 4608;
-                    poDS->nRecordDataEnd = 3992;
-                }
-                else if (poDS->iDataFormat == UNPACKED16BIT)
-                {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 2360;
-                        poDS->nRecordDataEnd = 2082;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 3176;
-                        poDS->nRecordDataEnd = 2900;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 3992;
-                        poDS->nRecordDataEnd = 3718;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 4816;
-                        poDS->nRecordDataEnd = 4536;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 5632;
-                        poDS->nRecordDataEnd = 5354;
-                        break;
-                    }
-                }
-                else // UNPACKED8BIT
-                {
-                    switch(poDS->nBands)
-                    {
-                        case 1:
-                        poDS->nRecordSize = 1952;
-                        poDS->nRecordDataEnd = 1673;
-                        break;
-                        case 2:
-                        poDS->nRecordSize = 2360;
-                        poDS->nRecordDataEnd = 2082;
-                        break;
-                        case 3:
-                        poDS->nRecordSize = 2768;
-                        poDS->nRecordDataEnd = 2491;
-                        break;
-                        case 4:
-                        poDS->nRecordSize = 3176;
-                        poDS->nRecordDataEnd = 2900;
-                        break;
-                        case 5:
-                        poDS->nRecordSize = 3584;
-                        poDS->nRecordDataEnd = 3309;
-                        break;
-                    }
-                }
-                poDS->nDataStartOffset = poDS->nRecordSize + 512;
-                poDS->nRecordDataStart = 1264;
-                poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
-                poDS->iGCPOffset = 640;
+                CPLDebug("L1B", "Guessed data format : %s",
+                         (poDS->iDataFormat == PACKED10BIT) ? "10" :
+                         (poDS->iDataFormat == UNPACKED8BIT) ? "08" : "16");
+                break;
             }
-            else
-                goto bad;
-        break;
-        default:
+        }
+
+        if (j == 3)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not guess data format of L1B product");
+            goto bad;
+        }
+    }
+    else
+    {
+        if (!poDS->ComputeFileOffsets())
             goto bad;
     }
+
     // Compute number of lines dinamycally, so we can read partially
     // downloaded files
-    CPLStat(pszFilename, &sStat);
     poDS->nRasterYSize =
         (sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
 
