@@ -48,7 +48,7 @@ Creation Options:<p>
 
 <ul>
 
-<li> <b>PRODUCT=CDED50K</b>: When selected, the output file will be forced to 
+<li> <b>PRODUCT=DEFAULT/CDED50K</b>: When CDED50K is specified, the output file will be forced to 
 adhere to CDED 50K product specifications.  The output will always be 1201x1201
 and generally a 15 minute by 15 minute tile (though wider in longitude in
 far north areas). <p>
@@ -63,24 +63,32 @@ kernel used for resampling the data to the target grid.  Only has an effect
 when particular products like CDED50K are being produced.  Defaults to 
 Bilinear.<p>
 
+<li> <b>DEMLevelCode=integer</b> DEM Level (1, 2 or 3 if set)<p>
+
+<li> <b>DataSpecVersion=integer</b> :Data and Specification version/revision (eg. 1020)<p>
+
 <li> <b>PRODUCER=text</b>: Up to 60 characters to be put into the producer
-field of the generated file.<p>
+field of the generated file .<p>
 
 <li> <b>OriginCode=text</b>: Up to 4 characters to be put into the origin
-code field of the generated file.<p>
+code field of the generated file (YT for Yukon).<p>
 
 <li> <b>ProcessCode=code</b>: One character to be put into the process 
-code field of the generated file.<p>
+code field of the generated file (8=ANUDEM, 9=FME, A=TopoGrid).<p>
 
 <li> <b>TEMPLATE=filename</b>: For any output file, a template file can be
 specified.  A number of fields (including the Data Producer) will be copied
-from the template file if provided, and are otherwise left blank. 
+from the template file if provided, and are otherwise left blank.<p>
 
 <li> <b>ZRESOLUTION=float</b>: DEM's store elevation information as
 positive integers, and these integers are scaled using the "z resolution."
 By default, this resolution is written as 1.0.  However, you may specify a
 different resolution here, if you would like your integers to be scaled
-into floating point numbers. 
+into floating point numbers.<p>
+
+<li> <b>NTS=name</b>: NTS Mapsheet name, used to derive TOPLEFT.<p>
+
+<li> <b>INTERNALNAME=name'</b>: Dataset name written into file header.<p>
 
 </ul>
 
