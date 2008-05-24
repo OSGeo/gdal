@@ -1262,37 +1262,58 @@ the OGR datasource. Input data will be interpolated to fill grid nodes with
 values, you can choose from various interpolation methods. 
 
 <dl>
+
 <dt> <b>-ot</b> <i>type</i>:</dt><dd> For the output bands to be of the
 indicated data type.</dd>
+
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
 is GeoTIFF (GTiff).  Use the short format name.</dd>
+
 <dt> <b>-txe</b> <em>xmin xmax</em>:</dt><dd> Set georeferenced
 X extents of output file to be created.</dd>
+
 <dt> <b>-tye</b> <em>ymin ymax</em>:</dt><dd> Set georeferenced
 Y extents of output file to be created.</dd>
+
 <dt> <b>-outsize</b> <i>xsize ysize</i>:</dt><dd> Set the size of the
 output file in pixels and lines.</dd>
+
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
 complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+
+<dt> <b>-zfield</b> <i>field_name</i>:</dt><dd> Identifies an attribute field
+on the features to be used to get a Z value from. This value overrides Z value
+read from feature geometry record (naturally, if you have a Z value in
+geometry, otherwise you have no choice and should specify a field name
+containing Z value).</dd>
+
 <dt> <b>-a</b> <i>[algorithm[:parameter1=value1][:parameter2=value2]...]</i>:
 </dt><dd> Set the interpolation algorithm name and (optionally) its parameters. See \ref gdal_grid_algorithms section for discussion of available options.</dd>
-<dt> <b>-l</b> <em>layername</em>: </dt><dd> 
-Indicates the layer(s) from the datasource that will be used for input 
-features.  May be specified multiple times, but at least one layer name or a -sql option must be specified.</dd>
+
+<dt> <b>-l</b> <em>layername</em>: </dt><dd> Indicates the layer(s) from the
+datasource that will be used for input features.  May be specified multiple
+times, but at least one layer name or a <b>-sql</b> option must be
+specified.</dd>
+
 <dt> <b>-where</b> <em>expression</em>: </dt><dd> 
 An optional SQL WHERE style query expression to be applied to select features 
-to burn in from the input layer(s). </dd>
+to process from the input layer(s). </dd>
+
 <dt> <b>-sql</b> <em>select_statement</em>: </dt><dd> 
 An SQL statement to be evaluated against the datasource to produce a
-virtual layer of features to be burned in.</dd>
+virtual layer of features to be processed.</dd>
+
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.</dd>
+
 <dt> <b>-quiet</b>:</dt><dd> Suppress progress monitor and other non-error
 output.</dd>
+
 <dt> <em>src_datasource</em>: </dt><dd> 
 Any OGR supported readable datasource.</dd>
+
 <dt> <em>dst_filename</em>: </dt><dd> 
 The GDAL supported output file.</dd>
 
@@ -1403,11 +1424,12 @@ content:
 </OGRVRTDataSource>
 \endverbatim
 
-Now you can use <i>dem.vrt</i> with all OGR programs (start with \ref ogrinfo
-to test that everything works fine). The datasource will contain single layer
-called <i>"dem"</i> filled with point features constructed from values in CSV
-file. Using this technique you can handle CSV files with more than three
-columns, switch columns, etc.
+This description specifies so called 2.5D geometry with three coordinates X, Y
+and Z. Z value will be used for interpolation. Now you can use <i>dem.vrt</i>
+with all OGR programs (start with \ref ogrinfo to test that everything works
+fine). The datasource will contain single layer called <i>"dem"</i> filled
+with point features constructed from values in CSV file. Using this technique
+you can handle CSV files with more than three columns, switch columns, etc.
 
 If your CSV file does not contain column headers then it can be handled in the
 following way:
@@ -1423,9 +1445,19 @@ details on CSV format supported by GDAL/OGR.
 
 The following would create raster TIFF file from VRT datasource described in
 \ref gdal_grid_csv section using the inverse distance to a power method.
+Values to interpolate will be read from Z value of geometry record.
 
 \verbatim
 gdal_grid -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
+\endverbatim
+
+The next command does the same thing as the previos one, but reads values to
+interpolate from the attribute field specified with <b>-zfield</b> option
+instead of geometry record. So in this case X and Y coordinates are being
+taken from geometry and Z is being taken from the <i>"Elevation"</i> field.
+
+\verbatim
+gdal_grid -zfield "Elevation" -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
 \endverbatim
 
 \if man
