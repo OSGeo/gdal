@@ -57,8 +57,8 @@ static void Usage()
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"
-        "    [-a_srs srs_def]\n"
-        "    [-spat xmin ymin xmax ymax]\n"
+        "    [-zfield field_name]\n"
+        "    [-a_srs srs_def] [-spat xmin ymin xmax ymax]\n"
         "    [-l layername]* [-where expression] [-sql select_statement]\n"
         "    [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]\n"
         "    [-a algorithm[:parameter1=value1]*]"
@@ -338,11 +338,30 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                           int bIsXExtentSet, int bIsYExtentSet,
                           double dfXMin, double dfXMax,
                           double dfYMin, double dfYMax,
+                          const char *pszBurnAttribute,
                           GDALDataType eType,
                           GDALGridAlgorithm eAlgorithm, void *pOptions,
                           int bQuiet, GDALProgressFunc pfnProgress )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Get field index, and check.                                     */
+/* -------------------------------------------------------------------- */
+    int iBurnField = -1;
+
+    if ( pszBurnAttribute )
+    {
+        iBurnField = OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hSrcLayer ),
+                                           pszBurnAttribute );
+        if( iBurnField == -1 )
+        {
+            printf( "Failed to find field %s on layer %s, skipping.\n",
+                    pszBurnAttribute, 
+                    OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
+            return;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Collect the geometries from this layer, and build list of       */
 /*      values to be interpolated.                                      */
@@ -364,7 +383,10 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         {
             adfX.push_back( OGR_G_GetX( hGeom, 0 ) );
             adfY.push_back( OGR_G_GetY( hGeom, 0 ) );
-            adfZ.push_back( OGR_G_GetZ( hGeom, 0 ) );
+            if ( iBurnField < 0 )
+                adfZ.push_back( OGR_G_GetZ( hGeom, 0 ) );
+            else
+                adfZ.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
         }
 
         
@@ -467,6 +489,7 @@ int main( int argc, char ** argv )
     GDALDriverH     hDriver;
     const char      *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     char            **papszLayers = NULL;
+    const char      *pszBurnAttribute = NULL;
     const char      *pszWHERE = NULL, *pszSQL = NULL;
     GDALDataType    eOutputType = GDT_Float64;
     char            **papszCreateOptions = NULL;
@@ -551,6 +574,11 @@ int main( int argc, char ** argv )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
         }   
+
+        else if( EQUAL(argv[i],"-zfield") && i < argc-1 )
+        {
+            pszBurnAttribute = argv[++i];
+        }
 
         else if( EQUAL(argv[i],"-where") && i < argc-1 )
         {
@@ -741,8 +769,9 @@ int main( int argc, char ** argv )
             // Custom layer will be rasterized in the first band.
             ProcessLayer( hLayer, hDstDS, nXSize, nYSize, 1,
                           bIsXExtentSet, bIsYExtentSet,
-                          dfXMin, dfXMax, dfYMin, dfYMax, eOutputType,
-                          eAlgorithm, pOptions, bQuiet, pfnProgress );
+                          dfXMin, dfXMax, dfYMin, dfYMax, pszBurnAttribute,
+                          eOutputType, eAlgorithm, pOptions,
+                          bQuiet, pfnProgress );
         }
     }
 
@@ -779,8 +808,9 @@ int main( int argc, char ** argv )
         ProcessLayer( hLayer, hDstDS, nXSize, nYSize,
                       i + 1 + nBands - nLayerCount,
                       bIsXExtentSet, bIsYExtentSet,
-                      dfXMin, dfXMax, dfYMin, dfYMax, eOutputType,
-                      eAlgorithm, pOptions, bQuiet, pfnProgress );
+                      dfXMin, dfXMax, dfYMin, dfYMax, pszBurnAttribute,
+                      eOutputType, eAlgorithm, pOptions,
+                      bQuiet, pfnProgress );
     }
 
 /* -------------------------------------------------------------------- */
