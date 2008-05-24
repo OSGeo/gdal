@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
-		tif_ovrcache.o tif_overview.o tif_float.o tifvsi.o
+		tif_float.o tifvsi.o
 
 SUBLIBS 	=
 
