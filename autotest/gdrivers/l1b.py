@@ -79,6 +79,7 @@ l1b_list = [ ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754
              ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'franh.1b', 56702, 100000, 220), # 10 bit guess
              ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'calfirel.1b', 55071, 30000, 220), # 16 bit guess
              ('http://www2.ncdc.noaa.gov/docs/podug/data/avhrr', 'rapnzg.1b', 58084, 30000, 220), # 16 bit guess
+             ('ftp://ftp.sat.dundee.ac.uk/misc/testdata/new_noaa/new_klm_format', 'noaa18.n1b', 50229, 50000, 220),
              ('ftp://ftp.sat.dundee.ac.uk/misc/testdata/metop', 'noaa1b', 62411, 150000, 220)
            ]
 
