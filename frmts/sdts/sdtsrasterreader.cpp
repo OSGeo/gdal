@@ -346,6 +346,7 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 {
     DDFRecord   *poRecord;
     int         nBytesPerValue;
+    int         iTry;
     
     CPLAssert( nXOffset == 0 );
 
@@ -359,29 +360,43 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
     else
         nBytesPerValue = 4;
 
-/* -------------------------------------------------------------------- */
-/*      Read through till we find the desired record.                   */
-/* -------------------------------------------------------------------- */
-    CPLErrorReset();
-    while( (poRecord = oDDFModule.ReadRecord()) != NULL )
+    for(iTry=0;iTry<2;iTry++)
     {
-        if( poRecord->GetIntSubfield( "CELL", 0, "ROWI", 0 )
-            == nYOffset + nYStart )
+    /* -------------------------------------------------------------------- */
+    /*      Read through till we find the desired record.                   */
+    /* -------------------------------------------------------------------- */
+        CPLErrorReset();
+        while( (poRecord = oDDFModule.ReadRecord()) != NULL )
+        {
+            if( poRecord->GetIntSubfield( "CELL", 0, "ROWI", 0 )
+                == nYOffset + nYStart )
+            {
+                break;
+            }
+        }
+
+        if( CPLGetLastErrorType() == CE_Failure )
+            return FALSE;
+
+    /* -------------------------------------------------------------------- */
+    /*      If we didn't get what we needed just start over.                */
+    /* -------------------------------------------------------------------- */
+        if( poRecord == NULL )
+        {
+            if (iTry == 0)
+                oDDFModule.Rewind();
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Cannot read scanline %d.  Raster access failed.\n",
+                          nYOffset );
+                return FALSE;
+            }
+        }
+        else
         {
             break;
         }
-    }
-
-    if( CPLGetLastErrorType() == CE_Failure )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      If we didn't get what we needed just start over.                */
-/* -------------------------------------------------------------------- */
-    if( poRecord == NULL )
-    {
-        oDDFModule.Rewind();
-        return GetBlock( nXOffset, nYOffset, pData );
     }
 
 /* -------------------------------------------------------------------- */
