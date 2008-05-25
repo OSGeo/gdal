@@ -3,7 +3,7 @@
 # $Id: l1b.py 14456 2008-05-12 08:04:37Z rouault $
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test read/write functionality for NITF driver.
+# Purpose:  Test read/write functionality for L1B driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
 # 
 ###############################################################################
