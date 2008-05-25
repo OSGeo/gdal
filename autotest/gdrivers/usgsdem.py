@@ -184,6 +184,31 @@ def usgsdem_7():
     return 'success'
 
 ###############################################################################
+# Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/39109h1.dem
+# Undocumented format
+
+def usgsdem_8():
+
+    tst = gdaltest.GDALTest( 'USGSDEM', '39109h1_truncated.dem', 1, 39443 )
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS('NAD27')
+    srs.SetUTM(12)
+    return tst.testOpen( check_prj = srs.ExportToWkt(),
+                         check_gt = ( 660055.0, 10.0, 0.0, 4429465.0, 0.0, -10.0 ) )
+
+###############################################################################
+# Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/4619old.dem
+# Old format
+
+def usgsdem_9():
+
+    tst = gdaltest.GDALTest( 'USGSDEM', '4619old_truncated.dem', 1, 10659 )
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS('NAD27')
+    return tst.testOpen( check_prj = srs.ExportToWkt(),
+                         check_gt = ( 18.99958333, 0.0008333, 0.0, 47.000416667, 0.0, -0.0008333 ) )
+
+###############################################################################
 # Cleanup
 
 def usgsdem_cleanup():
@@ -213,6 +238,8 @@ gdaltest_list = [
     usgsdem_5,
     usgsdem_6,
     usgsdem_7,
+    usgsdem_8,
+    usgsdem_9,
     usgsdem_cleanup ]
 
 if __name__ == '__main__':
