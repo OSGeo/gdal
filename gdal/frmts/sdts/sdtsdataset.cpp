@@ -230,6 +230,43 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
         poDS->pszProjection = CPLStrdup("");
 
+
+/* -------------------------------------------------------------------- */
+/*      Get metadata from the IDEN file.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszIDENFilePath = poTransfer->GetCATD()->GetModuleFilePath("IDEN");
+    if (pszIDENFilePath)
+    {
+        DDFModule   oIDENFile;
+        if( oIDENFile.Open( pszIDENFilePath ) )
+        {
+            DDFRecord* poRecord;
+
+            while( (poRecord = oIDENFile.ReadRecord()) != NULL )
+            {
+
+                if( poRecord->GetStringSubfield( "IDEN", 0, "MODN", 0 ) == NULL )
+                    continue;
+
+                static const char* fields[][2] = { { "TITL", "TITLE" },
+                                                   { "DAID", "DATASET_ID" },
+                                                   { "DAST", "DATA_STRUCTURE" },
+                                                   { "MPDT", "MAP_DATE" },
+                                                   { "DCDT", "DATASET_CREATION_DATE" } };
+
+                for (i = 0; i < (int)sizeof(fields) / (int)sizeof(fields[0]) ; i++)
+                {
+                    const char* pszFieldValue =
+                            poRecord->GetStringSubfield( "IDEN", 0, fields[i][0], 0 );
+                    if ( pszFieldValue )
+                        poDS->SetMetadataItem(fields[i][1], pszFieldValue);
+                }
+
+                break;
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
