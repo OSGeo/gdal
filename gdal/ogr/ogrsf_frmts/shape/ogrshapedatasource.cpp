@@ -481,7 +481,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Geometry type of `%s' not supported in shapefiles.\n"
                   "Type can be overridden with a layer creation option\n"
-                  "of SHPT=POINT/ARC/POLYGON/MULTIPOINT.\n",
+                  "of SHPT=POINT/ARC/POLYGON/MULTIPOINT/POINTZ/ARCZ/POLYGONZ/MULTIPOINTZ.\n",
                   OGRGeometryTypeToName(eType) );
         return NULL;
     }
