@@ -17,11 +17,15 @@ it is also possible to use one of the files (.shp, .shx or .dbf) in a
 shapefile set as the dataset name, and then it will be treated as a dataset
 with one layer.<p>
 
-Currently the shapefile driver always returns polygons, rather than
-multipolygons, even for polygons with multiple outer rings.  This is a
-violation of the OGR (and Simple Features) data model, and will be corrected
-at some point in the future.  The new ESRI measure values are discarded
-if encountered. <p>
+Note that when reading a Shapefile of type SHPT_ARC, the corresponding layer
+will be reported as of type wkbLineString, but depending on the number of
+parts of each geometry, the actual type of the geometry for each feature
+can be either OGRLineString or OGRMultiLineString.
+The same applies for SHPT_POLYGON shapefiles, reported as layers of type
+wkbPolygon, but depending on the number of parts of each geometry, the
+actual type can be either OGRPolygon or OGRMultiPolygon.<p>
+
+The new ESRI measure values are discarded if encountered.<p>
 
 If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
 it will be read and used to associate a projection with features.<p>
@@ -86,8 +90,9 @@ attributes suffer a number of limitations:<P>
 be silently truncated.  This may result in non-unique column names, which 
 will definitely cause problems later. <p>
 
-<li> Only Integer, Real and String field types are supported.  The various
-list, and binary field types cannot be created.<p>
+<li> Only Integer, Real, String and Date (not DateTime, just year/month/day)
+field types are supported.  The various list, and binary field types cannot
+be created.<p>
 
 <li> The field width and precision are directly used to establish storage 
 size in the .dbf file.  This means that strings longer than the field
