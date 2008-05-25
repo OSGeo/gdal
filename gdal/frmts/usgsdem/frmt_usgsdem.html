@@ -63,7 +63,7 @@ kernel used for resampling the data to the target grid.  Only has an effect
 when particular products like CDED50K are being produced.  Defaults to 
 Bilinear.<p>
 
-<li> <b>DEMLevelCode=integer</b> DEM Level (1, 2 or 3 if set)<p>
+<li> <b>DEMLevelCode=integer</b> DEM Level (1, 2 or 3 if set). Defaults to 1.<p>
 
 <li> <b>DataSpecVersion=integer</b> :Data and Specification version/revision (eg. 1020)<p>
 
@@ -86,9 +86,11 @@ By default, this resolution is written as 1.0.  However, you may specify a
 different resolution here, if you would like your integers to be scaled
 into floating point numbers.<p>
 
-<li> <b>NTS=name</b>: NTS Mapsheet name, used to derive TOPLEFT.<p>
+<li> <b>NTS=name</b>: NTS Mapsheet name, used to derive TOPLEFT.  Only has an effect
+when particular products like CDED50K are being produced.<p>
 
-<li> <b>INTERNALNAME=name'</b>: Dataset name written into file header.<p>
+<li> <b>INTERNALNAME=name</b>: Dataset name written into file header. Only has an effect
+when particular products like CDED50K are being produced.<p>
 
 </ul>
 

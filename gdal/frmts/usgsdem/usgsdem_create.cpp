@@ -1412,6 +1412,13 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     sWInfo.utmzone = 0;
     strncpy( sWInfo.horizdatum, "", 1 );
 
+    if ( sWInfo.nXSize <= 1 || sWInfo.nYSize <= 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Source dataset dimensions must be at least 2x2." );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Work out corner coordinates.                                    */
 /* -------------------------------------------------------------------- */
