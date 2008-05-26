@@ -384,7 +384,7 @@ In C:
 #include "cpl_string.h"
 ...
     const char *pszFormat = "GTiff";
-    GDALDriver hDriver = GDALGetDriverByName( pszFormat );
+    GDALDriverH hDriver = GDALGetDriverByName( pszFormat );
     char **papszMetadata;
 
     if( hDriver == NULL )
