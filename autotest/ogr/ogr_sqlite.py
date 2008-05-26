@@ -549,7 +549,8 @@ def ogr_sqlite_13():
 
     ######################################################
     # Create second layer with very approximative EPSG:4326
-    srs = osr.SpatialReference('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer_approx', srs = srs )
 
     # Must still be 1
