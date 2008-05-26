@@ -1011,15 +1011,15 @@ def test_val_test_23(feat):
     feat.my_char != 'a' or \
     feat.my_varchar != 'ab' or \
     feat.my_text != 'abc' or \
-    feat.my_bytea != '78797A' or \
+    feat.GetFieldAsString('my_bytea') != '78797A' or \
     feat.GetFieldAsString('my_time') != '12:34:56' or \
     feat.GetFieldAsString('my_date') != '2000/01/01' or \
     (feat.GetFieldAsString('my_timestamp') != '2000/01/01  0:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01  0:00:00+00') or \
     feat.GetFieldAsString('my_timestamptz') != '2000/01/01  0:00:00+00' or \
-    feat.my_chararray != '(2:a,b)' or \
-    feat.my_textarray != '(2:aa,bb)' or \
-    feat.my_varchararray != '(2:cc,dd)' or \
-    feat.my_int4array != '(2:100,200)' :
+    feat.GetFieldAsString('my_chararray') != '(2:a,b)' or \
+    feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
+    feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \
+    feat.GetFieldAsString('my_int4array') != '(2:100,200)' :
 #    feat.my_float4array != '(2:100.1,200.1)'
 #    feat.my_float4array != '(2:100.12,200.12)'
 #    feat.my_int8 != 1234567901234
@@ -1307,7 +1307,8 @@ def ogr_pg_32():
     ######################################################
     # Create second layer with very approximative EPSG:4326
 
-    srs = osr.SpatialReference('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs);
 
     # Must still be 1
