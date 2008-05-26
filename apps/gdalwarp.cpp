@@ -184,7 +184,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-tps") )
         {
-            papszTO = CSLSetNameValue( papszTO, "METHOD", "TPS" );
+            papszTO = CSLSetNameValue( papszTO, "METHOD", "GCP_TPS" );
         }
         else if( EQUAL(argv[i],"-rpc") )
         {
