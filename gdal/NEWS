@@ -1,3 +1,41 @@
+= GDAL/OGR 1.5.2 =
+
+ * #2386 (OGR): Fix ExecuteSQL() with empty query.
+ * #2349 (GML): Fix memory bug in GetNextFeature() when using attribute filter.
+ * #2145 (GDAL): Fix segfault when building overviews with USE_RRD YES.
+ * #2382 (GDAL): Fix INST_DATA setting (/share/gdal instead of /share)
+ * #2369 (AAIGRID): Fix buffer type in CreateCopy()
+ * #2372 (GTIff): Fix buffer overflow in GTIFGetOGISDefn()
+ * #2366 (NITF): Fix one byte buffer overflow for TEXT data
+ * #2358 (OGR SQL): Fix segfault processing select on layer with no attributes
+ * #2363 (HTTP): Fix logic to read file via /tmp
+ * #2362 (NITF): Fix crash on NITF file with no image segment
+ * #2123 (PG): Use auth_srid for matching against spatial_ref_sys
+ * #2289 (SGI): Avoid reconising SRTMHGT files as SGI files
+ * #2050 (MingW): Fix for Expat detection on MinGW
+ * #2350 (OCI): Fix buffer size problem when reading back negative numbers
+ * #2348 (USGSDEM): Support broken file format variation
+ * #2339 (ODBC): Win32 only support for multi-byte text
+ * #2335 (Interlis): Fix crash in open with empty datasource name
+ * #2334 (OGR): Fix OGRGeometryCollection::getCoordinateDimension()
+ * #2231 (Java): Removed ColorTable from Java Bindings
+ * #2317 (GeoJson): Fix min/max build problem on some platforms
+ * #2323 (OGR): NULL is valid argument to SetGeometry/SetGeometryDirectly
+ * #2135 (NITF): Fix improper reporting of lat/long coordinates in some cases
+ * #2322 (GTiff): Fix formating of driver capabilities XML to be valid
+ * #2321 (ISIS3): Fix earth model meter/kilometer mixup
+ * #2318 (CPL): Normalize /vsimem paths so they work smoothly on windows
+ * #2314 (CPL): Fix bug with url encoding in CPLEscapeString()
+ * #2309 (Shape): Fix crash dealing with unknown field types in debug mode
+ * #2303 (PG): Fix buffer overwrite in PG driver
+ * #1951 (Warp): Fix Lanczos Resample Anomolies near nodata values 
+ * #2301 (Warp): Fix memory allocator/deallocator mismatch for TPS 
+ * #2300 (Warp): Fix TPS initialization bug causing occational TPS failures
+ * #2291 (CPL): Fix memory corruption in CPLResetExtension() with empty path
+ * #2288 (GDAL): Path fix on win32 for GDALDriverManager::AutoLoadDrivers
+ * #2277 (RMF): fix crash with coordinate system import
+ * #1935 (ECW): Be more careful deciding what geotransform to ignore
+
 = GDAL/OGR 1.5.1 = 
 
  * #1769 (PNG): Improved handling of corrupt PNG files. 
