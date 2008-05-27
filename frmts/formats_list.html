@@ -94,6 +94,13 @@
 </td><td> --
 </td></tr>
 
+<tr><td> Convair PolGASP data
+</td><td> CPG
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
 <tr><td> <a href="frmt_various.html#DIMAP">Spot DIMAP (metadata.dim)</a>
 </td><td> DIMAP
 </td><td> No
@@ -101,8 +108,8 @@
 </td><td> --
 </td></tr>
 
-<tr><td> <a href="frmt_various.html#DOQ1">First Generation USGS DOQ (.doq)</a>
-</td><td> DOQ1
+<tr><td> ELAS DIPEx
+</td><td> DIPEx
 </td><td> No
 </td><td> Yes
 </td><td> --
@@ -110,6 +117,13 @@
 
 <tr><td> <a href="frmt_dods.html">DODS / OPeNDAP</a>
 </td><td> DODS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#DOQ1">First Generation USGS DOQ (.doq)</a>
+</td><td> DOQ1
 </td><td> No
 </td><td> Yes
 </td><td> --
@@ -157,18 +171,18 @@
 </td><td> No limits
 </td></tr>
 
-<tr><td> <a href="frmt_various.html#Envisat">Envisat Image Product (.n1)</a>
-</td><td> Envisat
-</td><td> No
-</td><td> No
-</td><td> --
-</td></tr>
-
 <tr><td> <a href="frmt_ers.html">ERMapper (.ers)</a>
 </td><td> ERS
 </td><td> Yes
 </td><td> Yes
 </td><td> 
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#Envisat">Envisat Image Product (.n1)</a>
+</td><td> ESAT
+</td><td> No
+</td><td> No
+</td><td> --
 </td></tr>
 
 <tr><td> <a href="frmt_fast.html">EOSAT FAST Format</a>
@@ -178,11 +192,32 @@
 </td><td> --
 </td></tr>
 
+<tr><td> FIT
+</td><td> FIT
+</td><td> Yes
+</td><td> No
+</td><td> --
+</td></tr>
+
 <tr><td> <a href="frmt_various.html#FITS">FITS (.fits)</a>
 </td><td> FITS
 </td><td> Yes
 </td><td> No
-</td><td>
+</td><td> --
+</td></tr>
+
+<tr><td> Fuji BAS Scanner Image
+</td><td> FujiBAS
+</td><td> No
+</td><td> No
+</td><td> --
+</td></tr>
+
+<tr><td> Generic Binary (.hdr Labelled)
+</td><td> GENBIN
+</td><td> No
+</td><td> No
+</td><td> --
 </td></tr>
 
 <tr><td> <a href="frmt_various.html#GFF">GSat File Format</a>
@@ -269,32 +304,11 @@
 </td><td> 2GiB
 </td></tr>
 
-<tr><td> <a href="frmt_intergraphraster.html">Intergraph Raster</a>
-</td><td> INGR
-</td><td> Yes
-</td><td> Yes
-</td><td> 2GiB
-</td></tr>
-
 <tr><td> <a href="frmt_hfa.html">Erdas Imagine (.img)</a>
 </td><td> HFA
 </td><td> Yes
 </td><td> Yes
 </td><td> No limits<sup><a href="#footnote2">2</a></sup>
-</td></tr>
-
-<tr><td> <a href="frmt_mff2.html">Vexcel MFF2</a>
-</td><td> HKV
-</td><td> Yes
-</td><td> Yes
-</td><td> No limits
-</td></tr>
-
-<tr><td> <a href="frmt_Idrisi.html">Idrisi Raster</a>
-</td><td> RST
-</td><td> Yes
-</td><td> Yes
-</td><td> No limits
 </td></tr>
 
 <tr><td> <a href="frmt_various.html#IDA">Image Display and Analysis (WinDisp)</a>
@@ -307,6 +321,27 @@
 <tr><td> <a href="frmt_various.html#ILWIS">ILWIS Raster Map (.mpr,.mpl)</a>
 </td><td> ILWIS
 </td><td> Yes
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_intergraphraster.html">Intergraph Raster</a>
+</td><td> INGR
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GiB
+</td></tr>
+
+<tr><td> USGS Astrogeology ISIS cube (Version 2)
+</td><td> ISIS2
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> USGS Astrogeology ISIS cube (Version 3)
+</td><td> ISIS3
+</td><td> No
 </td><td> Yes
 </td><td> --
 </td></tr>
@@ -402,6 +437,13 @@
 </td><td> No limits
 </td></tr>
 
+<tr><td> <a href="frmt_mff2.html">Vexcel MFF2</a>
+</td><td> MFF2 (HKV)
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
 <tr><td> <a href="frmt_mrsid.html">Multi-resolution Seamless Image Database</a>
 </td><td> MrSID
 </td><td> No
@@ -416,8 +458,8 @@
 </td><td> 
 </td></tr>
 
-<tr><td> <a href="frmt_various.html#NDF">NDF</a>
-</td><td> NLAPS Data Format
+<tr><td> <a href="frmt_various.html#NDF">NLAPS Data Format</a>
+</td><td> NDF
 </td><td> No
 </td><td> Yes
 </td><td> No limits
@@ -458,17 +500,24 @@
 </td><td> No limits
 </td></tr>
 
-<tr><td> <a href="frmt_various.html#PNG">Portable Network Graphics (.png)</a>
-</td><td> PNG
-</td><td> Yes
-</td><td> No
-</td><td>
-</td></tr>
-
 <tr><td> <a href="frmt_various.html#PCRaster">PCRaster (.map)</a>
 </td><td> PCRaster
 </td><td> Yes
 </td><td> Yes
+</td><td>
+</td></tr>
+
+<tr><td> NASA Planetary Data System
+</td><td> PDS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#PNG">Portable Network Graphics (.png)</a>
+</td><td> PNG
+</td><td> Yes
+</td><td> No
 </td><td>
 </td></tr>
 
@@ -486,18 +535,11 @@
 </td><td> 4GB
 </td></tr>
 
-<tr><td> <a href="frmt_rs2.html">RadarSat2 XML (product.xml)</a>
-</td><td> RS2
-</td><td> No
+<tr><td> <a href="frmt_rmf.html">Raster Matrix Format (*.rsw, .mtw)</a>
+</td><td> RMF
+</td><td> Yes
 </td><td> Yes
 </td><td> 4GB
-</td></tr>
-
-<tr><td> <a href="frmt_sde.html">ArcSDE Raster</a>
-</td><td> SDE
-</td><td> No
-</td><td> Yes
-</td><td> --
 </td></tr>
 
 <tr><td> <a href="frmt_various.html#RPFTOC">Raster Product Format/RPF (a.toc)</a>
@@ -507,22 +549,36 @@
 </td><td> --
 </td></tr>
 
-<tr><td> <a href="frmt_various.html#SDTS">USGS SDTS DEM (*CATD.DDF)</a>
-</td><td> SDTS
+<tr><td> <a href="frmt_rs2.html">RadarSat2 XML (product.xml)</a>
+</td><td> RS2
+</td><td> No
+</td><td> Yes
+</td><td> 4GB
+</td></tr>
+
+<tr><td> <a href="frmt_Idrisi.html">Idrisi Raster</a>
+</td><td> RST
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#SAR_CEOS">SAR CEOS</a>
+</td><td> SAR_CEOS
 </td><td> No
 </td><td> Yes
 </td><td> --
 </td></tr>
 
-<tr><td> <a href="frmt_rmf.html">Raster Matrix Format (*.rsw, .mtw)</a>
-</td><td> RMF
+<tr><td> <a href="frmt_sde.html">ArcSDE Raster</a>
+</td><td> SDE
+</td><td> No
 </td><td> Yes
-</td><td> Yes
-</td><td> 4GB
+</td><td> --
 </td></tr>
 
-<tr><td> <a href="frmt_various.html#SAR_CEOS">SAR CEOS</a>
-</td><td> SAR_CEOS
+<tr><td> <a href="frmt_various.html#SDTS">USGS SDTS DEM (*CATD.DDF)</a>
+</td><td> SDTS
 </td><td> No
 </td><td> Yes
 </td><td> --
@@ -542,13 +598,6 @@
 </td><td> --
 </td></tr>
 
-<tr><td> <a href="frmt_usgsdem.html">USGS ASCII DEM (.dem)</a>
-</td><td> USGSDEM
-</td><td> No
-</td><td> Yes
-</td><td> --
-</td></tr>
-
 <tr><td> <a href="frmt_terragen.html">Terragen Heightfield (.ter)</a>
 </td><td> TERRAGEN
 </td><td> Yes
@@ -560,6 +609,13 @@
 </td><td> TSX
 </td><td> Yes
 </td><td> No
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_usgsdem.html">USGS ASCII DEM (.dem)</a>
+</td><td> USGSDEM
+</td><td> No
+</td><td> Yes
 </td><td> --
 </td></tr>
 
