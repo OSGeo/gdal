@@ -43,7 +43,7 @@ def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None:
+    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -52,7 +52,7 @@ def basic_test_2():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None:
+    if ds is None and gdal.GetLastErrorMsg() == '`non_existing_ds\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -61,7 +61,7 @@ def basic_test_3():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None:
+    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -70,7 +70,7 @@ def basic_test_4():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_Update)
     gdal.PopErrorHandler()
-    if ds is None:
+    if ds is None and gdal.GetLastErrorMsg() == '`\' does not exist in the file system,\nand is not recognised as a supported dataset name.\n':
         return 'success'
     else:
         return 'fail'
@@ -79,7 +79,7 @@ def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None:
+    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognised as a supported file format.\n':
         return 'success'
     else:
         return 'fail'
