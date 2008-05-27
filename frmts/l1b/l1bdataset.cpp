@@ -90,8 +90,8 @@ enum {          // Data processing centers:
 };
 
 enum {          // AVHRR Earth location indication
-        ASCEND,
-        DESCEND
+    ASCEND,
+    DESCEND
 };
 
 /************************************************************************/
@@ -477,6 +477,12 @@ void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
 {
     int         nGoodGCPs, iGCPPos, j;
     double      dfPixel;
+
+    // LAC and HRPT GCPs are tied to the center of pixel,
+    // GAC ones are slightly displaced.
+    double      dfDelta = (eProductType == GAC) ? 0.9 : 0.5;
+    dfPixel = (eLocationIndicator == DESCEND) ?
+        iGCPStart + dfDelta : (nRasterXSize - (iGCPStart + dfDelta));
     
     nGoodGCPs = (*((GByte *)piRecordHeader + iGCPCodeOffset) <= nGCPsPerLine) ?
             *((GByte *)piRecordHeader + iGCPCodeOffset) : nGCPsPerLine;
@@ -486,9 +492,6 @@ void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
               iGCPCodeOffset, nGCPsPerLine, nGoodGCPs );
 #endif
 
-    // GCPs are located at center of pixel, so we will add a half pixel offset
-    dfPixel = (eLocationIndicator == DESCEND) ?
-        iGCPStart + 0.5 : (GetRasterXSize() - (iGCPStart + 0.5));
     j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
     iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs;
     while ( j < iGCPPos )
@@ -529,9 +532,12 @@ void L1BDataset::FetchNOAA15GCPs( GDAL_GCP *pasGCPList,
     int         j, iGCPPos;
     double      dfPixel;
 
-    // GCPs are located at center of pixel, so we will add a half pixel offset
+    // LAC and HRPT GCPs are tied to the center of pixel,
+    // GAC ones are slightly displaced.
+    double      dfDelta = (eProductType == GAC) ? 0.9 : 0.5;
     dfPixel = (eLocationIndicator == DESCEND) ?
-        iGCPStart + 0.5 : (GetRasterXSize() - (iGCPStart + 0.5));
+        iGCPStart + dfDelta : (nRasterXSize - (iGCPStart + dfDelta));
+
     j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
     iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGCPsPerLine;
     while ( j < iGCPPos )
@@ -636,14 +642,16 @@ void L1BDataset::ProcessRecordHeaders()
         int nGCPsOnThisLine = nGCPCount - nOrigGCPs;
         int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
         int nGCPStep = (nDesiredGCPsPerLine > 1) ? (nGCPsOnThisLine - 1) / (nDesiredGCPsPerLine-1) : 1;
+        int iSrcGCP = nOrigGCPs;
+        int iDstGCP = nOrigGCPs;
 
         if( nGCPStep == 0 )
             nGCPStep = 1;
 
         for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
         {
-            int iSrcGCP = nOrigGCPs + iGCP * nGCPStep;
-            int iDstGCP = nOrigGCPs + iGCP;
+            iSrcGCP += iGCP * nGCPStep;
+            iDstGCP += iGCP;
 
             pasGCPList[iDstGCP].dfGCPX = pasGCPList[iSrcGCP].dfGCPX;
             pasGCPList[iDstGCP].dfGCPY = pasGCPList[iSrcGCP].dfGCPY;
