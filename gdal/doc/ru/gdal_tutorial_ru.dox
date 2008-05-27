@@ -613,11 +613,11 @@ CreateCopy(), показывает, что CreateCopy() должен завер�
     dst_ds.GetRasterBand(1).WriteArray( raster )
 \endcode
 
-+\htmlonly
-+<p>
-+$Id:$
-+</p>
-+\endhtmlonly
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
 
 */
 
