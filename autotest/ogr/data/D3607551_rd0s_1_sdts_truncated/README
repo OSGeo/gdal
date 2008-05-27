@@ -1,0 +1,17 @@
+Dataset originally downloaded at wget http://thor-f5.er.usgs.gov/sdts/datasets/tvp/dlg3/24K/martin_point/D3607551_rd0s_1_sdts.tar.gz
+
+This is an extract to make it small.
+
+The following files have been removed as unncesseray for the OGR SDTS driver :
+ 3961  TR01CATS.DDF
+ 4709  TR01DDSH.DDF
+ 1177  TR01DQAA.DDF
+  983  TR01DQCG.DDF
+ 3637  TR01DQHL.DDF
+ 2369  TR01DQLC.DDF
+ 2202  TR01DQPA.DDF
+ 1629  TR01STAT.DDF
+
+And the following files have been truncated to be smaller : (original size below)
+ 41420 TR01LE01.DDF
+ 11684 TR01NO01.DDF
