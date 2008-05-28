@@ -695,6 +695,12 @@ In situations where it wouldn't give a good result, you can try to set the RPFTO
 environment variable to TRUE before opening the subdataset. This will cause the driver to expose
 the subdataset as a RGBA dataset, instead of a paletted one.</p>
 
+<p>It is possible to build external overviews for a subdataset. The overview for the first subdataset
+will be named A.TOC.1.ovr for example, for the second dataset it will be A.TOC.2.ovr, etc.
+Note that you must re-open the subdataset with the same setting of RPFTOC_FORCE_RGBA as the one you
+have used when you have created it. Do not use any method other than NEAREST resampling when building
+overviews on a paletted subdataset (RPFTOC_FORCE_RGBA unset)</p>
+
 <p>A gdalinfo on one of this subdataset will return the various NITF metadata, as well
 as the list of the NITF tiles of the subdataset.</p>
 
