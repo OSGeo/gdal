@@ -217,10 +217,10 @@ as having specific semantics in the IMAGE_STRUCTURE domain.
 
 \subsubsection gdal_datamodel_rpc RPC Domain
 
-The RPC metadata domain holds metadata describing the Rational Polynomial 
-Coefficient geometry model for the image if present.  This geometry model
-can be used to between pixel/line and georeferenced locations.  The items 
-defining the model are:
+The RPC metadata domain holds metadata describing the Rational Polynomial
+Coefficient geometry model for the image if present.  This geometry model can
+be used to transform between pixel/line and georeferenced locations.  The
+items defining the model are:
 
 <ul>
 <li>  ERR_BIAS: Error - Bias. The RMS bias error in meters per horizontal axis of all points in the image (-1.0 if unknown)
