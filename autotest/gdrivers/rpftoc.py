@@ -33,6 +33,7 @@ import sys
 import gdal
 import array
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -75,10 +76,44 @@ def rpftoc_3():
 
     return 'success'
 
+###############################################################################
+# Add an overview
+
+def rpftoc_4():
+    gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'YES' )
+
+    shutil.copyfile( 'data/A.TOC', 'tmp/A.TOC' )
+    shutil.copyfile( 'data/RPFTOC01.ON2', 'tmp/RPFTOC01.ON2' )
+
+    ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
+    err = ds.BuildOverviews( overviewlist = [2, 4] )
+
+    if err != 0:
+        gdaltest.post_reason('BuildOverviews reports an error' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('Overview missing on target file.')
+        return 'fail'
+
+    ds = gdal.Open('NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC')
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('Overview missing on target file after re-open.')
+        return 'fail'
+
+    gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'NO' )
+
+    os.unlink('tmp/A.TOC')
+    os.unlink('tmp/A.TOC.1.ovr')
+    os.unlink('tmp/RPFTOC01.ON2')
+
+    return 'success'
+
 gdaltest_list = [
     rpftoc_1,
     rpftoc_2,
-    rpftoc_3 ]
+    rpftoc_3,
+    rpftoc_4 ]
 
 if __name__ == '__main__':
 
