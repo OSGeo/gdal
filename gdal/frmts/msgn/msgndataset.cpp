@@ -521,7 +521,7 @@ void GDALRegister_MSGN()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "EUMETSAT Archive native (.nat)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#MSGN" );
+                                   "frmt_msgn.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nat" );
 
         poDriver->pfnOpen = MSGNDataset::Open;
