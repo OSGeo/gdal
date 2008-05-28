@@ -78,7 +78,7 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
 {
     VALIDATE_POINTER0( hDriver, "GDALDestroyDriver" );
 
-    return delete ((GDALDriver *) hDriver);
+    delete ((GDALDriver *) hDriver);
 }
 
 /************************************************************************/
