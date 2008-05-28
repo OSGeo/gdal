@@ -82,6 +82,8 @@ def hfa_write_4bit():
         print cs
         return 'fail'
 
+    ds = None
+
     drv.Delete( 'tmp/4bit.img' )
 
     return 'success'

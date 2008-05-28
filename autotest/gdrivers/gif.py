@@ -141,10 +141,10 @@ def gif_6():
         gdaltest.post_reason( 'Got unexpected nodata value.' )
         return 'false'
 
-    gdaltest.gif_drv.Delete( 'tmp/nodata_byte.gif' )
-    
     bnd = None
     new_ds = None
+
+    gdaltest.gif_drv.Delete( 'tmp/nodata_byte.gif' )
 
     return 'success'
 

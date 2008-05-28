@@ -101,15 +101,12 @@ def rpftoc_4():
         gdaltest.post_reason('Overview missing on target file after re-open.')
         return 'fail'
 
+    ds = None
+
     gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'NO' )
 
     os.unlink('tmp/A.TOC')
-    try:
-        os.unlink('tmp/A.TOC.1.ovr')
-    except OSError, e:
-        print e
-    except:
-        pass
+    os.unlink('tmp/A.TOC.1.ovr')
     os.unlink('tmp/RPFTOC01.ON2')
 
     return 'success'
