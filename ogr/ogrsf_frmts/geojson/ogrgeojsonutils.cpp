@@ -134,20 +134,21 @@ const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
     
     OGRwkbGeometryType eType = poGeometry->getGeometryType();
 
-    if( wkbPoint == eType )
+    if( wkbPoint == eType || wkbPoint25D == eType )
         return "Point";
-    else if( wkbLineString == eType )
+    else if( wkbLineString == eType || wkbLineString25D == eType )
         return "LineString";
-    else if( wkbPolygon == eType )
+    else if( wkbPolygon == eType || wkbPolygon25D == eType )
         return "Polygon";
-    else if( wkbMultiPoint == eType )
+    else if( wkbMultiPoint == eType || wkbMultiPoint25D == eType )
         return "MultiPoint";
-    else if( wkbMultiLineString == eType )
+    else if( wkbMultiLineString == eType || wkbMultiLineString25D == eType )
         return "MultiLineString";
-    else if( wkbMultiPolygon == eType )
+    else if( wkbMultiPolygon == eType || wkbMultiPolygon25D == eType )
         return "MultiPolygon";
-    else if( wkbGeometryCollection == eType )
+    else if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
         return "GeometryCollection";
     else
         return "Unknown";
 }
+
