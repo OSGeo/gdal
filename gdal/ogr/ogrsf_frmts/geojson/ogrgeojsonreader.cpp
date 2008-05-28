@@ -1203,3 +1203,4 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
     /* Translation failed */
     return NULL;
 }
+
