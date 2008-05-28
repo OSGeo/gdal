@@ -68,7 +68,8 @@ GDALDriver::~GDALDriver()
  * Destroy a GDALDriver.
  * 
  * This is roughly equivelent to deleting the driver, but is guaranteed
- * to take place in the GDAL heap.
+ * to take place in the GDAL heap.  It is important this that function
+ * not be called on a driver that is registered with the GDALDriverManager.
  * 
  * @param hDriver the driver to destroy.
  */
