@@ -61,6 +61,27 @@ GDALDriver::~GDALDriver()
 }
 
 /************************************************************************/
+/*                         GDALDestroyDriver()                          */
+/************************************************************************/
+
+/**
+ * Destroy a GDALDriver.
+ * 
+ * This is roughly equivelent to deleting the driver, but is guaranteed
+ * to take place in the GDAL heap.
+ * 
+ * @param hDriver the driver to destroy.
+ */
+
+void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
+
+{
+    VALIDATE_POINTER0( hDriver, "GDALDestroyDriver" );
+
+    return delete ((GDALDriver *) hDriver);
+}
+
+/************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
 
