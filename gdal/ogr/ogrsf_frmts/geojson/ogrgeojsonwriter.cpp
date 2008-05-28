@@ -144,24 +144,24 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry )
     json_object* poObjGeom = NULL;
 
     OGRwkbGeometryType eType = poGeometry->getGeometryType();
-    if( wkbGeometryCollection == eType )
+    if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
     {
         poObjGeom = OGRGeoJSONWriteGeometryCollection( static_cast<OGRGeometryCollection*>(poGeometry) );
         json_object_object_add( poObj, "geometries", poObjGeom);
     }
     else
     {
-        if( wkbPoint == eType )
+        if( wkbPoint == eType || wkbPoint25D == eType )
             poObjGeom = OGRGeoJSONWritePoint( static_cast<OGRPoint*>(poGeometry) );
-        else if( wkbLineString == eType )
+        else if( wkbLineString == eType || wkbLineString25D == eType )
             poObjGeom = OGRGeoJSONWriteLineString( static_cast<OGRLineString*>(poGeometry) );
-        else if( wkbPolygon == eType )
+        else if( wkbPolygon == eType || wkbPolygon25D == eType )
             poObjGeom = OGRGeoJSONWritePolygon( static_cast<OGRPolygon*>(poGeometry) );
-        else if( wkbMultiPoint == eType )
+        else if( wkbMultiPoint == eType || wkbMultiPoint25D == eType )
             poObjGeom = OGRGeoJSONWriteMultiPoint( static_cast<OGRMultiPoint*>(poGeometry) );
-        else if( wkbMultiLineString == eType )
+        else if( wkbMultiLineString == eType || wkbMultiLineString25D == eType )
             poObjGeom = OGRGeoJSONWriteMultiLineString( static_cast<OGRMultiLineString*>(poGeometry) );
-        else if( wkbMultiPolygon == eType )
+        else if( wkbMultiPolygon == eType || wkbMultiPolygon25D == eType )
             poObjGeom = OGRGeoJSONWriteMultiPolygon( static_cast<OGRMultiPolygon*>(poGeometry) );
         else
         {
@@ -429,3 +429,4 @@ char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
     /* Translation failed */
     return NULL;
 }
+
