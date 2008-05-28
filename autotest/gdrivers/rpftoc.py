@@ -104,7 +104,12 @@ def rpftoc_4():
     gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'NO' )
 
     os.unlink('tmp/A.TOC')
-    os.unlink('tmp/A.TOC.1.ovr')
+    try:
+        os.unlink('tmp/A.TOC.1.ovr')
+    except OSError, e:
+        print e
+    except:
+        pass
     os.unlink('tmp/RPFTOC01.ON2')
 
     return 'success'
