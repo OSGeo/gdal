@@ -17,9 +17,9 @@ Translator Andrey Kiselev <dron@ak4719.spb.edu>
 Как библиотека GDAL предоставляет вызывающему приложению
 \link gdal_datamodel_ru.html единую обобщённую модель данных\endlink для всех
 поддерживаемых форматов файлов данных. Помимо этого в состав GDAL входит
-\link gdal_utilities.html набор утилит\endlink, вызываемых из командной строки,
-для перобразования и обработки данных. Описание выпуска GDAL/OGR 1.5.1
-(март 2008) можно найти на странице
+\link gdal_utilities.html набор вспомогательных программ\endlink, вызываемых
+из командной строки, для перобразования и обработки данных. Описание выпуска
+GDAL/OGR 1.5.1 (март 2008) можно найти на странице
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.5.1-News">новостей</a>.
 
 Связанная с GDAL библиотека
@@ -41,7 +41,7 @@ Translator Andrey Kiselev <dron@ak4719.spb.edu>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">
 Загрузить</a> --- Готовые исполняемые файлы.
 <li> <a href="formats_list.html">Поддерживаемые форматы</a>.
-<li> <a href="gdal_utilities.html">Вспомогательные утилиты GDAL</a>.
+<li> <a href="gdal_utilities.html">Вспомогательные программы GDAL</a>.
 <li> <a href="http://trac.osgeo.org/gdal/wiki/FAQ">GDAL FAQ</a>.
 <li> <a href="gdal_datamodel_ru.html">Модель данных GDAL</a>.
 <li> <a href="http://trac.osgeo.org/gdal/wiki/GovernanceAndCommunity">

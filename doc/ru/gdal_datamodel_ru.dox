@@ -1,7 +1,7 @@
 #ifndef DOXYGEN_SKIP
 /*
 $Id$
-Translation corresponds to gdal_datamodel.dox,v 1.4 2005/10/26
+Translation corresponds to gdal_datamodel.dox 14550 2008-05-28 10:55:15Z
 Translator Andrey Kiselev <dron@remotesensing.org>
 */
 #endif /* DOXYGEN_SKIP */
@@ -118,11 +118,11 @@ typedef struct
 
 Обычно набор данных содержит либо аффинное преобразование, либо контрольные точки, либо ничего. В редких случаях может присутствовать и то, и другое, тогда не определено, какой из способов имеет преимущество.
 
-\subsection gdal_datamodel_ru_dataset_metadata Метаданные
+\subsection gdal_datamodel_ru_dataset_metadata База метаданных
 
 Метаданные --- это вспомогательные данные, хранящиеся в виде пар ключ/значение.
 Их состав определяется форматом хранения данных и приложением. Ключи должны
-быть "хорошими" лексемами (без пробельных и специальных символов). Значения
+быть "правильными" лексемами (без пробельных и специальных символов). Значения
 могут иметь любую длину и содержать любые символы, за исключением нулевого
 символа ASCII.  
 
@@ -130,39 +130,43 @@ typedef struct
 большими блоками данных. Однако работа с метаданными, превышающими в размере
 100KiB скорее всего приведёт к снижению производительности. 
 
-Некоторые форматы данных содержат собственные метаданные, в то время как
-драйверы для других форматов могут отображать поля, специфичные для данного
-формата, в записи метаданных. Например, драйвер TIFF возвращает содержимое
-некоторых информационных тегов в виде метаданных, включая поле дата/время,
-которое будет выглядеть как:
+Некоторые форматы данных содержат собственную базу метаданных, драйверы других
+форматов могут отображать поля, специфичные для данного формата, в записи базы
+метаданных. Например, драйвер TIFF возвращает содержимое некоторых
+информационных тегов в виде метаданных, включая поле дата/время, которое
+будет выглядеть как:
 
 <pre>
 TIFFTAG_DATETIME=1999:05:11 11:29:56
 </pre>
 
 Метаданные выделены в именованные группы, называемые доменами. Базовый домен
-не имеет имени (NULL или ""). Существует несколько специфичных доменов для
-специальных целей. Заметим, что в настоящий момент не существует способа
-перечислить все домены, доступные для данного объекта, однако приложение может
-проверить доступность любого домена, который оно умеет обрабатывать.
+не имеет имени (NULL или ""). Существует несколько специальных доменов,
+служащих определённым целям. Заметим, что в настоящий момент не существует
+способа перечислить все домены, доступные для данного объекта, однако
+приложение может проверить доступность любого домена, который оно умеет
+обрабатывать.
 
 Следующие записи метаданных имеют чётко определённую семантику в базовом
 домене:
 
 <ul>
-<li> AREA_OR_POINT: May be either "Area" (the default) or "Point".  Indicates 
-whether a pixel value should be assumed to represent a sampling over the 
-region of the pixel or a point sample at the center of the pixel.  This is not 
-intended to influence interpretation of georeferencing which remains area 
-oriented.
-<li> NODATA_VALUES: The value is a list of space separated pixel values matching
-the number of bands in the dataset that can be collectively used to identify
-pixels that are nodata in the dataset.  With this style of nodata a pixel
-is considered nodata in all bands if and only if all bands match the 
-corresponding value in the NODATA_VALUES tuple.  This metadata is not widely
-honoured by GDAL drivers, algorithms or utilities at this time. 
-<li> MATRIX_REPRESENTATION: This value, used for Polarimetric SAR datasets, contains the matrix representation that this data is provided in. The following are acceptable values:
-    <ul>
+<li> AREA_OR_POINT: Принимает значение "Area" (по умолчанию) или "Point".
+Показывает, что значение пиксела либо соответствует среднему значению данной
+величины по всей области, занимаемой пикселем, либо представляет точечное
+значение в центре пиксела. Это не влияет на интерпретацию географической
+привзяки, которая остаётся связанной с границами пиксела.
+<li> NODATA_VALUES: Список разделённых пробелами значений обозначающих признак
+на отсутствия данных. Число пикселей в списке соответствует числу каналов в
+наборе данных. При таком способе указания отсутствия данных пиксель считается
+пустым тогда итолько тогда, когда если во всех каналах его значение совпадает
+соответствующему полю в списке NODATA_VALUES. Эта запись пока не очень широко
+используется драйверами, алгоритмами и вспомогательными программами GDAL. 
+<li> MATRIX_REPRESENTATION: Показывает, в каком виде представлены матричные
+данные. Используется для наборов данных поляризационных радиолокаторов с
+синтезированной апертурой (Polarimetric SAR). Может принимать следующие
+значения:
+<ul>
     <li>SCATTERING
     <li>SYMMETRIZED_SCATTERING
     <li>COVARIANCE
@@ -172,15 +176,23 @@ honoured by GDAL drivers, algorithms or utilities at this time.
     <li>KENNAUGH
     <li>SYMMETRIZED_KENNAUGH
     </ul>
-<li> POLARMETRIC_INTERP: This metadata item is defined for Raster Bands for polarimetric SAR data. This indicates which entry in the specified matrix representation of the data this band represents. For a dataset provided as a scattering matrix, for example, acceptable values for this metadata item are HH, HV, VH, VV. When the dataset is a covariance matrix, for example, this metadata item will be one of Covariance_11, Covariance_22, Covariance_33, Covariance_12, Covariance_13, Covariance_23 (since the matrix itself is a hermitian matrix, that is all the data that is required to describe the matrix).
+<li> POLARMETRIC_INTERP: Эта запись определена для растровых каналов данных
+поляризационного радиолокатора с синтезированной апертурой (Polarimetric SAR).
+Показывает, какую позицию в заданном матричном представлении данных занимает
+данный канал. Например, для набора данных, представленных как матрица
+разброса, эта запись может принимать значения HH, HV, VH, VV. Если набор
+данных является матрицей ковариаций, эта запись будет принимать одно из
+значений: Covariance_11, Covariance_22, Covariance_33, Covariance_12,
+Covariance_13, Covariance_23 (поскольку сама матрица Эрмитова, то этих данных
+достаточно для её задания).
 </ul>
 
-\subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
+\subsubsection gdal_datamodel_ru_subdatasets Домен вложенных наборов данных (SUBDATASETS)
 
-The SUBDATASETS domain holds a list of child datasets.  Normally this is
-used to provide pointers to a list of images stored within a single multi
-image file (such as HDF or NITF).  For instance, an NITF with four images
-might have the following subdataset list. 
+Домен SUBDATASETS содержит список дочерних наборов данных. Обычно он
+используется для получения указателей на изображения, хранящиеся все вместе в
+едином файле (таком, как HDF или NITF). Например, файл формата NITF с четырьмя
+изображениями может иметь следующий список вложенных наборов данных: 
 
 <pre>
   SUBDATASET_1_NAME=NITF_IM:0:multi_1b.ntf
@@ -195,63 +207,85 @@ might have the following subdataset list.
   SUBDATASET_5_DESC=Image 5 of multi_1b.ntf
 </pre>
 
-The value of the _NAME is the string that can be passed to GDALOpen() to 
-access the file.  The _DESC value is intended to be a more user friendly
-string that can be displayed to the user in a selector. 
+Значение записи _NAME --- строка, которая может быть передана в функцию
+GDALOpen() для получения доступа к изображению. Запись _DESC предназначена
+для описания изображения в виде читаемой человеком строки и может быть
+показана пользователю для облегчения выбора.
 
-\subsubsection gdal_datamodel_image_structure IMAGE_STRUCTURE Domain
+\subsubsection gdal_datamodel_ru_image_structure Домен структуры изображения (IMAGE_STRUCTURE)
 
-Metadata in the default domain is intended to be related to the 
-image, and not particularly related to the way the image is stored on
-disk.  That is, it is suitable for copying with the dataset when it is
-copied to a new format.  Some information of interest is closely tied
-to a particular file format and storage mechanism.  In order to prevent
-this getting copied along with datasets it is placed in a special domain
-called IMAGE_STRUCTURE that should not normally be copied to new formats. 
+Метаданные в базовом домене содержат информацию, связанную с изображением,
+однако не содержат данных о том, как это изображение хранится на диске. Таким
+образом, эти метаданные могут быть спокойно скопированы вместе с остальным
+набором данными в новый формат. Тем не менее, некоторая важная информация
+тесно связана с конкретным форматом и способом хранения данных. Во избежание
+перенесения этой информации при копировании данных, она помещена в специальный
+домен, называемый IMAGE_STRUCTURE, который не должен слепо копироваться в
+другие форматы.
 
-Currently the following items are defined by 
+В настоящий момент спецификацией 
 <a href="http://trac.osgeo.org/gdal/rfc14_imagestructure">RFC 14</a> 
-as having specific semantics in the IMAGE_STRUCTURE domain. 
+определены следующие специальные записи в домене IMAGE_STRUCTURE.
 
 <ul>
-<li> COMPRESSION:     The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there. 
-<li> NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_Byte.
-<li> INTERLEAVE: This only applies on datasets, and the value should be one of PIXEL, LINE or BAND. It can be used as a data access hint.
-<li> PIXELTYPE: This may appear on a GDT_Byte band (or the corresponding dataset) and have the value SIGNEDBYTE to indicate the unsigned byte values between 128 and 255 should be interpreted as being values between -128 and -1 for applications that recognise the SIGNEDBYTE type.
+<li> COMPRESSION: Алгоритм сжатия, используемый для данного набора данных или
+канала. Не существует определённого каталога имён алгоритмов сжатия, однако
+если данный формат поддерживает параметр создания COMPRESSION, точно такой же
+список возможных значений должен быть использован и здесь. 
+<li> NBITS: Число бит на значение пиксела в канале или во всех каналах данного
+набора данных. Обычно присутствует только в случаях нестандартного числа бит
+для этого типа данных, например, если 1-битовый файл TIFF представлен в GDAL в
+виде GDT_Byte.
+<li> INTERLEAVE: Применимо только к наборам данных и может принимать значения
+PIXEL, LINE или BAND. Может быть использовано в качестве подсказки для
+наиболее эффективного способа доступа к данным.
+<li> PIXELTYPE: Может использоваться для каналов GDT_Byte (или соответсвующих
+наборов данных) и принимать значение SIGNEDBYTE, указывающее на то, что
+положительные значения от 128 до 255 должны интерпретироваться как
+отрицательные от -128 до -1 для приложений, умеющих обрабатывать байты со
+знаком.
 </ul>
 
-\subsubsection gdal_datamodel_rpc RPC Domain
+\subsubsection gdal_datamodel_ru_rpc Домен RPC
 
-The RPC metadata domain holds metadata describing the Rational Polynomial 
-Coefficient geometry model for the image if present.  This geometry model
-can be used to between pixel/line and georeferenced locations.  The items 
-defining the model are:
+Домен RPC содержит метаданные, описывающие геометрическую модель изображения в
+виде полиномов с рациональными коэффициентами (Rational Polynomial
+Coefficient). Эта геометрическая модель может быть использована для пересчёта
+между координатами строка/столбец и географическими координатами. Модель
+определяется следующими записями:
 
 <ul>
-<li>  ERR_BIAS: Error - Bias. The RMS bias error in meters per horizontal axis of all points in the image (-1.0 if unknown)
-<li>  ERR_RAND: Error - Random. RMS random error in meters per horizontal axis of each point in the image (-1.0 if unknown)
-<li>  LINE_OFF: Line Offset
-<li>  SAMP_OFF: Sample Offset
-<li>  LAT_OFF: Geodetic Latitude Offset
-<li>  LONG_OFF: Geodetic Longitude Offset
-<li>  HEIGHT_OFF: Geodetic Height Offset
-<li>  LINE_SCALE: Line Scale
-<li>  SAMP_SCALE: Sample Scale
-<li>  LAT_SCALE: Geodetic Latitude Scale
-<li>  LONG_SCALE: Geodetic Longitude Scale
-<li>  HEIGHT_SCALE: Geodetic Height Scale
-<li>  LINE_NUM_COEFF (1-20): Line Numerator Coefficients. Twenty coefficients for the polynomial in the Numerator of the rn equation. (space separated)
-<li>  LINE_DEN_COEFF (1-20): Line Denominator Coefficients. Twenty coefficients for the polynomial in the Denominator of the rn equation. (space separated)
-<li>  SAMP_NUM_COEFF (1-20): Sample Numerator Coefficients. Twenty coefficients for the polynomial in the Numerator of the cn equation. (space separated)
-<li> SAMP_DEN_COEFF (1-20): Sample Denominator Coefficients. Twenty coefficients for the polynomial in the Denominator of the cn equation. (space separated)
+<li>  ERR_BIAS: Ошибка - уклон. Уклон среднеквадратичной ошибки в метрах по горизонтальной оси для всех точек изображения (-1.0 если неизвестно).
+<li>  ERR_RAND: Ошибка - случайная. Среднеквадратичная случайная ошибка в метрах по горизонтальной оси для каждой точки изображения (-1.0 если неизвестно).
+<li>  LINE_OFF: Смещение строки.
+<li>  SAMP_OFF: Смещение пиксела.
+<li>  LAT_OFF: Смещение геодезической широты.
+<li>  LONG_OFF: Смещение геодезической долготы.
+<li>  HEIGHT_OFF: Смещение геодезической высоты.
+<li>  LINE_SCALE: Масштаб строки.
+<li>  SAMP_SCALE: Масштаб пиксела.
+<li>  LAT_SCALE: Масштаб геодезической широты.
+<li>  LONG_SCALE: Масштаб геодезической долготы.
+<li>  HEIGHT_SCALE: Масштаб геодезической высоты.
+<li>  LINE_NUM_COEFF (1-20): Числители коэффициентов строк. Двадцать
+коэффициентов полинома в числителе уравнения rn (разделены пробелами).
+<li>  LINE_DEN_COEFF (1-20): Знаменатели коэффициентов строк. Двадцать
+коэффициентов полинома в знаменателе уравнения rn (разделены пробелами).
+<li>  SAMP_NUM_COEFF (1-20): Числители коэффициентов пикселей. Двадцать
+коэффициентов полинома в числителе уравнения cn (разделены пробелами).
+<li> SAMP_DEN_COEFF (1-20): Знаменатели коэффициентов пикселей. Двадцать
+коэффициентов полинома в знаменателе уравнения cn (разделены пробелами).
 </ul>
 
-These fields are directly derived from the document prospective GeoTIFF RPC document (http://geotiff.maptools.org/rpc_prop.html) which in turn is closely modelled on the NITF RPC00B definition.
+Эти поля напрямую взяты из документа, предлагающего поддержку RPC в GeoTIFF
+(http://geotiff.maptools.org/rpc_prop.html), который в свою очередь следует
+определению NITF RPC00B.
 
-\subsubsection gdal_datamodel_xml xml: Domains
+\subsubsection gdal_datamodel_ru_xml Домены "xml:"
 
-Any domain name prefixed with "xml:" is not normal name/value metadata. 
-It is a single XML document stored in one big string.
+Любой домен, чьё имя имеет префикс "xml:", является не обычной базой
+метаданных вида имя/значение, а единым документом XML представленным одной
+большой строкой.
 
 \section gdal_datamodel_ru_rasterband Растровый канал
 
