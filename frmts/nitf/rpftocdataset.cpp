@@ -196,7 +196,8 @@ class RPFTOCSubDataset : public VRTDataset
     }
 
     
-    static GDALDataset* CreateDataSetFromTocEntry(RPFTocEntry* entry, int isRGBA);
+    static GDALDataset* CreateDataSetFromTocEntry(const char* pszTOCFileName, int nEntry,
+                                                  const RPFTocEntry* entry, int isRGBA);
 };
         
 /************************************************************************/
@@ -804,11 +805,12 @@ char **RPFTOCDataset::GetMetadata( const char *pszDomain )
 #define ASSERT_CREATE_VRT(x) do { if (!(x)) { CPLError(CE_Failure, CPLE_AppDefined, "For %s, assert '" #x "' failed", entry->frameEntries[i].fullFilePath); if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); return NULL;} } while(0)
 
 /* Builds a RPFTOCSubDataset from the set of files of the toc entry */
-GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int isRGBA)
+GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* pszTOCFileName, int nEntry,
+                                                         const RPFTocEntry* entry, int isRGBA)
 {
     int i, j;
     GDALDriver *poDriver;
-    GDALDataset *poVirtualDS;
+    RPFTOCSubDataset *poVirtualDS;
     int sizeX, sizeY;
     int nBlockXSize = 0, nBlockYSize = 0;
     double geoTransf[6];
@@ -987,6 +989,13 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(RPFTocEntry* entry, int
         ds->Dereference();
     }
 
+
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
+    poVirtualDS->oOvManager.Initialize( poVirtualDS,
+                                        CPLString().Printf("%s.%d", pszTOCFileName, nEntry + 1));
+
     return poVirtualDS;
 }
 
@@ -1081,7 +1090,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
             {
                 if (EQUAL(entryName, MakeTOCEntryName(&toc->entries[i])))
                 {
-                    GDALDataset* ds = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i], isRGBA);
+                    GDALDataset* ds = RPFTOCSubDataset::CreateDataSetFromTocEntry(pszFilename, i, &toc->entries[i], isRGBA);
                     if (ds)
                     {
                         if (psFile)
@@ -1132,7 +1141,7 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         {
             if (!toc->entries[i].isOverviewOrLegend)
             {
-                GDALDataset* tmpDS = RPFTOCSubDataset::CreateDataSetFromTocEntry(&toc->entries[i], isRGBA);
+                GDALDataset* tmpDS = RPFTOCSubDataset::CreateDataSetFromTocEntry(pszFilename, i, &toc->entries[i], isRGBA);
                 if (tmpDS)
                 {
                     tmpDS->GetGeoTransform(adfGeoTransform);
