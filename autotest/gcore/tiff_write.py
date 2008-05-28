@@ -833,6 +833,8 @@ def tiff_write_26():
         gdaltest.post_reason( 'Wrong color table entry.' )
         return 'fail'
 
+    ds = None
+
     gdaltest.tiff_drv.Delete( 'tmp/ct8.tif' )
 
     return 'success'
