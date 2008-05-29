@@ -122,6 +122,9 @@ int OGRGeoJSONDataSource::Open( const char* pszName )
     if( NULL == poLayer )
     {
         Clear();
+        
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to read GeoJSON data" );
         return FALSE;
     }
 
@@ -377,7 +380,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
     CPLErrorReset();
 
     CPLHTTPResult* pResult = NULL;
-    char* papsOptions[] = { "HEADERS=Accept: text/plain Accept: application/json", NULL };
+    char* papsOptions[] = { (char*) "HEADERS=Accept: text/plain Accept: application/json", NULL };
 
     pResult = CPLHTTPFetch( pszSource, papsOptions );
 
@@ -443,7 +446,7 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
     if( NULL == pszGeoData_ )
     {
         CPLError( CE_Failure, CPLE_ObjectNull,
-                  "GeoJSON", "GeoJSON data buffer empty" );
+                  "GeoJSON data buffer empty" );
         return NULL;
     }
 
@@ -479,3 +482,4 @@ OGRGeoJSONLayer* OGRGeoJSONDataSource::LoadLayer()
 
     return poLayer;
 }
+

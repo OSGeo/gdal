@@ -374,7 +374,6 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
 
 void OGRGeoJSONLayer::DetectGeometryType()
 {
-    OGRwkbGeometryType lyrType = wkbUnknown;
     OGRwkbGeometryType featType = wkbUnknown;
     OGRGeometry* poGeometry = NULL;
     FeaturesSeq::const_iterator it = seqFeatures_.begin();
