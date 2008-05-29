@@ -241,6 +241,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     char aBuf[BUFSIZ];
     int nDone;
     unsigned int nLen;
+    int nCount = 0;
     
     /* Begin to parse the file and look for the <gpx> element */
     /* It *MUST* be the first element of an XML file */
@@ -278,6 +279,14 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
             if (bUseExtensions)
                 break;
             else if (nElementsRead > 200)
+                break;
+        }
+        else
+        {
+            /* After reading 50 * BUFSIZE bytes, and not finding whether the file */
+            /* is GPX or not, we give up and fail silently */
+            nCount ++;
+            if (nCount == 50)
                 break;
         }
     } while (!nDone && nLen > 0 );

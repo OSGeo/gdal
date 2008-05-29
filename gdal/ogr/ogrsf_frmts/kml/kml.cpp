@@ -146,6 +146,7 @@ void KML::checkValidity()
     XML_Parser oParser = XML_ParserCreate(NULL);
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, startElementValidate, NULL);
+    int nCount = 0;
 
     /* Parses the file until we find the first element */
     do
@@ -172,7 +173,10 @@ void KML::checkValidity()
             return;
         }
 
-    } while (!nDone && nLen > 0 && validity == KML_VALIDITY_UNKNOWN);
+        nCount ++;
+        /* After reading 50 * BUFSIZE bytes, and not finding whether the file */
+        /* is KML or not, we give up and fail silently */
+    } while (!nDone && nLen > 0 && validity == KML_VALIDITY_UNKNOWN && nCount < 50);
 
     XML_ParserFree(oParser);
     VSIRewindL(pKMLFile_);
