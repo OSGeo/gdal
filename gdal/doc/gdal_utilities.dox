@@ -1150,10 +1150,15 @@ to stdout.
 *******************************************************************************
 /*! \page gdal_retile gdal_retile.py
 
-gdal_retile - gdal_retily.py retiles a set of tiles and/or build tiled pyramid
-levels
+gdal_retile  - gdal_retily.py retiles a set of tiles and/or build tiled pyramid levels
 
-\section gdal_retile_synopsis SYNOPSIS
+\if man
+\section msynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
 
 \verbatim
 
@@ -1161,22 +1166,22 @@ gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeig
                [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
                       CInt16/CInt32/CFloat32/CFloat64}]'
                [ -tileIndex tileIndexName [-tileIndexField tileIndexFieldName]]
+               [ -csv fileName [-csvDelim delimiter]]
                [-s_srs srs_def]  [-pyramidOnly]
                [-r {near/bilinear/cubic/cubicspline}]
                -levels numberoflevels
                -targetDir TileDirectory input_files
 
 \endverbatim
+\if man
+\section mdescription DESCRIPTION
+\endif
 
-\section gdal_retile_description DESCRIPTION
+This utility will retile a set of input tile(s). All the input tile(s) must
+be georeferenced in the same coordinate system and have a matching number of bands.
+Optionally pyramid levels are generated. It  is  possible to generate  shape file(s) for the tiled output.
 
-This utility will retile a set of input tile(s). All the input tile(s) must be
-georeferenced in the same coordinate system and have a matching number of
-bands. Optionally pyramid levels are generated. It  is  possible to generate
-shape file(s) for the tiled output.
-
-If your number of input tiles exhausts the command line buffer, use the
-general --optfile option
+If your number of input tiles exhausts the command line buffer, use the general --optfile option
 
 
 <dl>
@@ -1185,45 +1190,51 @@ The Directory where the tile result is created. Pyramids are stored
 in  subdirs  numbered  from  1. Created tile names have a numbering
 schema and contain the name of the source tiles(s)
 </dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> 
-Output format, defaults to GeoTIFF (GTiff). 
+<dt> <b>-of</b> <i>format</i>:</dt><dd>
+Output format, defaults to GeoTIFF (GTiff).
 </dd>
-<dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd> 
+<dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd>
 Creation option for output file.  Multiple options can be specified.
 </dd>
-<dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
+<dt> <b>-ot</b> <i>datatype</i>:</dt><dd>
 Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
 </dd>
-<dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used
-for the output file.  If not specified, 256 x 256 is the default
+<dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
+output file.  If not specified, 256 x 256 is the default
 </dd>
-<dt> <b>-levels</b> <i>numberOfLevels</i>:</dt><dd> 
+<dt> <b>-levels</b> <i>numberOfLevels</i>:</dt><dd>
 Number of pyramids levels to build.
 </dd>
-<dt> <b>-v</b>:</dt><dd> 
+<dt> <b>-v</b>:</dt><dd>
 Generate verbose output of tile operations as they are done.
 </dd>
-<dt> <b>-pyramidOnly</b>:</dt><dd> 
+<dt> <b>-pyramidOnly</b>:</dt><dd>
 No retiling, build only the pyramids
 </dd>
-<dt> <b>-r</b> <i>algorithm</i>:</dt><dd> 
+<dt> <b>-r</b> <i>algorithm</i>:</dt><dd>
 Resampling algorithm, default is near
 </dd>
-<dt> <b>-s_srs</b> <i>srs_def</i>:</dt><dd> Source spatial reference to use.
-The coordinate systems  that  can  be passed  are  anything  supported by the
-OGRSpatialReference.SetFro‐mUserInput()  call, which  includes  EPSG  PCS
-and   GCSes   (ie.EPSG:4296),  PROJ.4  declarations (as above), or the name of
-a .prf file containing well known text.
-If  no  srs_def  is  given,  the srs_def  of the source tiles is used (if
-there is any).
-The srs_def will be propageted to created tiles (if possible) and  to  the
-optional shape file(s).
+<dt> <b>-s_srs</b> <i>srs_def</i>:</dt><dd>
+Source spatial reference to use. The coordinate systems  that  can  be
+passed  are  anything  supported by the OGRSpatialReference.SetFro‐mUserInput()  call,
+which  includes  EPSG  PCS  and   GCSes   (ie.EPSG:4296),  PROJ.4  declarations (as above),
+or the name of a .prf file containing well known text.
+If  no  srs_def  is  given,  the srs_def  of the source tiles is used (if there is any).
+The srs_def will be propageted to created tiles (if possible) and  to  the  optional
+shape file(s)
 </dd>
-<dt> <b>-tileIndex</b> <i>tileIndexName</i>:</dt><dd> 
+<dt> <b>-tileIndex</b> <i>tileIndexName</i>:</dt><dd>
 The name of shape file containing the result tile(s) index
 </dd>
-<dt> <b>-tileIndexField</b> <i>tileIndexFieldName</i>:</dt><dd> 
+<dt> <b>-tileIndexField</b> <i>tileIndexFieldName</i>:</dt><dd>
 The name of the attribute containing the tile name
+</dd>
+<dt> <b>-csv</b> <i>csvFileName</i>:</dt><dd>
+The name of the csv file containing the tile(s) georeferencing information.
+The file contains 5 columns: tilename,minx,maxx,miny,maxy
+</dd>
+<dt> <b>-csvDelim</b> <i>column delimiter</i>:</dt><dd>
+The column delimter used in the csv file, default value is a semicolon ";"
 </dd>
 </dl>
 
@@ -1231,7 +1242,7 @@ NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.
 
 \if man
-\section gdal_retile_author AUTHORS
+\section mauthor AUTHORS
 Christian Mueller <christian.mueller@nvoe.at>
 \endif
 */
