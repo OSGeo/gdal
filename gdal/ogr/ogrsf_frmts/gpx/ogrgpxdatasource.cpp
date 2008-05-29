@@ -332,10 +332,6 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
             CPLError(CE_Failure, CPLE_NotSupported,
                     "OGR/GPX driver has not been built with read support. Expat library required");
         }
-        else
-        {
-            CPLDebug("GPX", "OGR/GPX driver has not been built with read support. Expat library required");
-        }
         VSIFCloseL(fp);
     }
     return FALSE;
