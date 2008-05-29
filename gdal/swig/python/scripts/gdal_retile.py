@@ -26,6 +26,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+
 try:
     from osgeo import gdal
     from osgeo import ogr
@@ -338,6 +339,11 @@ def tileImage(minfo, ti ):
         shapeName=getTargetDir()+TileIndexName
         copyTileIndexToDisk(OGRDS,shapeName)
 
+    if CsvFileName is not None:
+        csvName=getTargetDir()+CsvFileName
+        copyTileIndexToCSV(OGRDS,csvName)
+
+
     return OGRDS
 
 def copyTileIndexToDisk(OGRDS, fileName):
@@ -352,6 +358,26 @@ def copyTileIndexToDisk(OGRDS, fileName):
       newFeature.SetField(0,basename)
       SHAPEDS.GetLayer().CreateFeature(newFeature)
     closeTileIndex(SHAPEDS)
+
+def copyTileIndexToCSV(OGRDS, fileName):
+    csvfile = open(fileName, 'w')
+    OGRDS.GetLayer().ResetReading()
+    while True:
+      feature = OGRDS.GetLayer().GetNextFeature()
+      if feature is None:
+          break
+      basename = os.path.basename(feature.GetField(0))
+      csvfile.write(basename);
+      geom = feature.GetGeometryRef()
+      coords = geom.GetEnvelope();
+
+      for i in range(len(coords)):
+          csvfile.write(CsvDelimiter)
+          csvfile.write("%f" % coords[i])
+      csvfile.write("\n");
+
+    csvfile.close()
+
 
 
 def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,OGRDS):
@@ -587,6 +613,11 @@ def buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo, level):
         shapeName=getTargetDir(level)+TileIndexName
         copyTileIndexToDisk(OGRDS,shapeName)
 
+    if CsvFileName is not None:
+        csvName=getTargetDir(level)+CsvFileName
+        copyTileIndexToCSV(OGRDS,csvName)
+
+
     return OGRDS
 
 def getTileName(minfo,ti,xIndex,yIndex,level = -1):
@@ -622,6 +653,7 @@ def Usage():
      print '        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/'
      print '               CInt16/CInt32/CFloat32/CFloat64}]'
      print '        [ -tileIndex tileIndexName [-tileIndexField fieldName]]'
+     print '        [ -csv fileName [-csvDelim delimiter]]'
      print '        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels'
      print '        [-r {near/bilinear/cubic/cubicspline}]'
      print '        -targetDir TileDirectory input_files'
@@ -648,6 +680,9 @@ def main(args):
     global MemDriver
     global TileIndexFieldName
     global TileIndexName
+    global CsvDelimiter
+    global CsvFileName
+
     global TileIndexDriverTyp
     global Source_SRS
     global TargetDir
@@ -738,7 +773,15 @@ def main(args):
         elif arg == '-tileIndexField':
             i+=1
             TileIndexFieldName=argv[i]
-
+        elif arg == '-csv':
+            i+=1
+            CsvFileName=argv[i]
+            parts=os.path.splitext(CsvFileName)
+            if len(parts[1])==0:
+                CsvFileName+=".csv"
+        elif arg == '-csvDelim':
+            i+=1
+            CsvDelimiter=argv[i]
         elif arg[:1] == '-':
             print 'Unrecognised command option: ', arg
             Usage()
@@ -836,6 +879,8 @@ def initGlobals():
     global TileIndexFieldName
     global TileIndexName
     global TileIndexDriverTyp
+    global CsvDelimiter
+    global CsvFileName
     global Source_SRS
     global TargetDir
     global ResamplingMethod
@@ -855,6 +900,9 @@ def initGlobals():
     TileIndexFieldName='location'
     TileIndexName=None
     TileIndexDriverTyp="Memory"
+    CsvDelimiter=";"
+    CsvFileName=None
+
     Source_SRS=None
     TargetDir=None
     ResamplingMethod=GRA_NearestNeighbour
@@ -876,6 +924,8 @@ MemDriver=None
 TileIndexFieldName='location'
 TileIndexName=None
 TileIndexDriverTyp="Memory"
+CsvDelimiter=";"
+CsvFileName=None
 Source_SRS=None
 TargetDir=None
 ResamplingMethod=GRA_NearestNeighbour
