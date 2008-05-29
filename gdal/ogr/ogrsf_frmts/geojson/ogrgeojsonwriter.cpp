@@ -47,7 +47,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
                             json_object_new_string("Feature") );
 
 /* -------------------------------------------------------------------- */
-/*      Write feature attributes to GeoJSOn "properties" object.        */
+/*      Write feature attributes to GeoJSON "properties" object.        */
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
 
@@ -55,16 +55,18 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature )
     json_object_object_add( poObj, "properties", poObjProps );
 
 /* -------------------------------------------------------------------- */
-/*      Write feature geometry to GeoJSOn "geometry" object.            */
+/*      Write feature geometry to GeoJSON "geometry" object.            */
+/*      Null geometries are allowed, according to the GeoJSON Spec.     */
 /* -------------------------------------------------------------------- */
     json_object* poObjGeom = NULL;
 
     OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-    CPLAssert( NULL != poGeometry );
-
-    poObjGeom = OGRGeoJSONWriteGeometry( poGeometry );
-    CPLAssert( NULL != poObjGeom );
-
+    if ( NULL != poGeometry )
+    {
+        poObjGeom = OGRGeoJSONWriteGeometry( poGeometry );
+        CPLAssert( NULL != poObjGeom );
+    }
+    
     json_object_object_add( poObj, "geometry", poObjGeom );
 
     return poObj;
@@ -142,24 +144,24 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry )
     json_object* poObjGeom = NULL;
 
     OGRwkbGeometryType eType = poGeometry->getGeometryType();
-    if( wkbGeometryCollection == eType )
+    if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
     {
         poObjGeom = OGRGeoJSONWriteGeometryCollection( static_cast<OGRGeometryCollection*>(poGeometry) );
         json_object_object_add( poObj, "geometries", poObjGeom);
     }
     else
     {
-        if( wkbPoint == eType )
+        if( wkbPoint == eType || wkbPoint25D == eType )
             poObjGeom = OGRGeoJSONWritePoint( static_cast<OGRPoint*>(poGeometry) );
-        else if( wkbLineString == eType )
+        else if( wkbLineString == eType || wkbLineString25D == eType )
             poObjGeom = OGRGeoJSONWriteLineString( static_cast<OGRLineString*>(poGeometry) );
-        else if( wkbPolygon == eType )
+        else if( wkbPolygon == eType || wkbPolygon25D == eType )
             poObjGeom = OGRGeoJSONWritePolygon( static_cast<OGRPolygon*>(poGeometry) );
-        else if( wkbMultiPoint == eType )
+        else if( wkbMultiPoint == eType || wkbMultiPoint25D == eType )
             poObjGeom = OGRGeoJSONWriteMultiPoint( static_cast<OGRMultiPoint*>(poGeometry) );
-        else if( wkbMultiLineString == eType )
+        else if( wkbMultiLineString == eType || wkbMultiLineString25D == eType )
             poObjGeom = OGRGeoJSONWriteMultiLineString( static_cast<OGRMultiLineString*>(poGeometry) );
-        else if( wkbMultiPolygon == eType )
+        else if( wkbMultiPolygon == eType || wkbMultiPolygon25D == eType )
             poObjGeom = OGRGeoJSONWriteMultiPolygon( static_cast<OGRMultiPolygon*>(poGeometry) );
         else
         {
@@ -185,7 +187,6 @@ json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint )
     json_object* poObj = NULL;
 
     /* Generate "coordinates" object for 2D or 3D dimension. */
-    json_object* poObjCoords = NULL;
     if( 3 == poPoint->getCoordinateDimension() )
     {
         poObj = OGRGeoJSONWriteCoords( poPoint->getX(),
@@ -410,7 +411,7 @@ char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
 {
     VALIDATE_POINTER1( hGeometry, "OGR_G_ExportToJson", NULL );
 
-    OGRGeometry* poGeometry = static_cast<OGRGeometry*>(hGeometry);
+    OGRGeometry* poGeometry = (OGRGeometry*) (hGeometry);
 
     json_object* poObj = NULL;
     poObj = OGRGeoJSONWriteGeometry( poGeometry );
@@ -428,3 +429,4 @@ char* OGR_G_ExportToJson( OGRGeometryH hGeometry )
     /* Translation failed */
     return NULL;
 }
+
