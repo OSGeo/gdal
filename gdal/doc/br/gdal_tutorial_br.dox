@@ -62,7 +62,7 @@ Em Python:
 
 Note que se GDALOpen() retornar NULL significa que ocorreu uma falhada, e 
 que as mensagens de erro dever&atilde;o ter sido emitidas atrav&eacute;s de CPLError(). 
-Se você quiser controlar como os erros est&atilde;o relatados revise a  
+Se vocÃª quiser controlar como os erros est&atilde;o relatados revise a  
 a documenta&ccedil;&atilde;o do usu&aacute;rio de fun&ccedil;&atilde;o CPLError(). 
 Em geral, todo o GDAL usa CPLError() para o relat&oacute;rio de erro. 
 Note tamb&eacute;m que o pszFilename n&atilde;o necessita 
