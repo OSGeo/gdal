@@ -1,5 +1,6 @@
 = GDAL/OGR 1.5.2 =
 
+ * #2036 (CPL): Fix precision issues with CPLAtof() functions. 
  * #2386 (OGR): Fix ExecuteSQL() with empty query.
  * #2349 (GML): Fix memory bug in GetNextFeature() when using attribute filter.
  * #2145 (GDAL): Fix segfault when building overviews with USE_RRD YES.
@@ -35,6 +36,7 @@
  * #2288 (GDAL): Path fix on win32 for GDALDriverManager::AutoLoadDrivers
  * #2277 (RMF): fix crash with coordinate system import
  * #1935 (ECW): Be more careful deciding what geotransform to ignore
+ * #???? (GeoJSON): Support reading/writing 2.5D geometries.
 
 = GDAL/OGR 1.5.1 = 
 
