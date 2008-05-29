@@ -100,7 +100,6 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
                                               OGRGeoJSONDataSource* poDS )
 {
     CPLAssert( NULL == poLayer_ );
-    bool bSuccess = false;
 
     if( NULL == poGJObject_ )
     {
@@ -117,6 +116,8 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Layer schema generation failed." );
+
+        delete poLayer_;
         return NULL;
     }
 
@@ -154,6 +155,7 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
         {
             CPLDebug( "GeoJSON",
                       "Translation of single feature failed." );
+
             delete poLayer_;
             return NULL;
         }
@@ -169,7 +171,11 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
     }
     else
     {
-        CPLAssert( !"SHOULD NEVER GET HERE" );
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Unrecognized GeoJSON structure." );
+
+        delete poLayer_;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1145,7 +1151,6 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
 
     if( json_type_array == json_object_get_type( poObjGeoms ) )
     {
-        GeoJSONObject::Type objType = GeoJSONObject::eUnknown;
         const int nGeoms = json_object_array_length( poObjGeoms );
         if( nGeoms > 0 )
         {
@@ -1199,9 +1204,10 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
         /* Release JSON tree. */
         json_object_put( poObj );
 
-        return poGeometry;
+        return (OGRGeometryH)poGeometry;
     }
 
     /* Translation failed */
     return NULL;
 }
+
