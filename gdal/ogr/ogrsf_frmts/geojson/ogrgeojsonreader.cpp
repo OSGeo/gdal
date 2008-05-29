@@ -116,6 +116,8 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Layer schema generation failed." );
+
+        delete poLayer_;
         return NULL;
     }
 
@@ -153,6 +155,7 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
         {
             CPLDebug( "GeoJSON",
                       "Translation of single feature failed." );
+
             delete poLayer_;
             return NULL;
         }
@@ -168,7 +171,11 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
     }
     else
     {
-        CPLAssert( !"SHOULD NEVER GET HERE" );
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Unrecognized GeoJSON structure." );
+
+        delete poLayer_;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
