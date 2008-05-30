@@ -1,0 +1,189 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page grid_tutorial GDAL Grid Tutorial
+
+\section grid_tutorial_intro Introduction to Gridding
+
+Gridding is a process of creating a regular grid (or call it a raster image)
+from the scattered data. Typically you have a set of arbitrary scattered over
+the region of survey measurements and you would like to convert them into the
+regular grid for further processing and combining with other grids.
+
+\image html gridding.png "Scattered data gridding"
+\image latex grid/gridding.eps "Scattered data gridding"
+
+This problem can be solved using data interpolation or approximation
+algorithms. But you are not limited by interpolation here. Sometimes you don't
+need to interpolate your data but rather compute some statistics or data
+metrics over the region. Statistics is valuable itself or could be used for
+better choosing the interpolation algorithm and parameters. 
+
+That is what GDAL Grid API is about. It helps you to interpolate your data
+(see \ref grid_tutorial_interpolation) or compute data metrics (see \ref
+grid_tutorial_metrics).
+
+There are two ways of using this interface. Programmatically it is available
+through the \ref GDALGridCreate C function; for end users there is a \ref
+gdal_grid utility. The rest of this document discusses details on algorithms
+and their parameters implemented in GDAL Grid API.
+
+\section grid_tutorial_interpolation Interpolation of the Scattered Data
+
+\subsection grid_tutorial_interpolation_invdist Inverse Distance to a Power
+
+The Inverse Distance to a Power gridding method is a weighted average
+interpolator. You should supply the input arrays with the scattered data
+values including coordinates of every data point and output grid geometry. The
+function will compute interpolated value for the given position in output
+grid.
+
+For every grid node the resulting value \f$Z\f$ will be calculated using
+formula:
+
+\f[
+     Z=\frac{\sum_{i=1}^n{\frac{Z_i}{r_i^p}}}{\sum_{i=1}^n{\frac{1}{r_i^p}}}
+\f]
+
+where 
+<ul>
+    <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+    <li> \f$r\f$ is a distance from the grid node to point \f$i\f$,
+    <li> \f$p\f$ is a weighting power,
+    <li> \f$n\f$ is a number of points in \ref grid_tutorial_ellipse "search
+    ellipse".
+</ul>
+
+In this method the weighting factor \f$w\f$ is
+
+\f[
+    w=\frac{1}{r^p}
+\f]
+
+See \ref GDALGridInverseDistanceToAPowerOptions for the list of \ref
+GDALGridCreate parameters and \ref gdal_grid_algorithms_invdist for the list
+of \ref gdal_grid options.
+
+\subsection grid_tutorial_interpolation_average Moving Average
+
+The Moving Average is a simple data averaging algorithm. It uses a moving
+window of elliptic form to search values and averages all data points within
+the window. \ref grid_tutorial_ellipse "Search ellipse" can be rotated by
+specified angle, the center of ellipse located at the grid node. Also the
+minimum number of data points to average can be set, if there are not enough
+points in window, the grid node considered empty and will be filled with
+specified NODATA value.
+
+Mathematically it can be expressed with the formula:
+
+\f[
+     Z=\frac{\sum_{i=1}^n{Z_i}}{n}
+\f]
+
+where 
+<ul>
+    <li> \f$Z\f$ is a resulting value at the grid node,
+    <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+    <li> \f$n\f$ is a number of points in search \ref grid_tutorial_ellipse "search ellipse".
+</ul>
+
+See \ref GDALGridMovingAverageOptions for the list of \ref GDALGridCreate
+parameters and \ref gdal_grid_algorithms_average for the list of \ref
+gdal_grid options.
+
+\subsection grid_tutorial_interpolation_nearest Nearest Neighbor
+
+The Nearest Neighbor method doesn't perform any interpolation or smoothing, it
+just takes the value of nearest point found in grid node search ellipse and
+returns it as a result. If there are no points found, the specified NODATA
+value will be returned.
+
+See \ref GDALGridNearestNeighborOptions for the list of \ref GDALGridCreate
+parameters and \ref gdal_grid_algorithms_nearest for the list of \ref
+gdal_grid options.
+
+\section grid_tutorial_metrics Data Metrics Computation
+
+All the metrics have the same set controlling options. See the
+\ref GDALGridDataMetricsOptions.
+
+\subsection grid_tutorial_metrics_min Minimum Data Value
+
+Minimum value found in grid node \ref grid_tutorial_ellipse "search ellipse".
+If there are no points found, the specified NODATA value will be returned.
+
+\f[
+     Z=\min{(Z_1,Z_2,\ldots,Z_n)}
+\f]
+
+where 
+<ul>
+    <li> \f$Z\f$ is a resulting value at the grid node,
+    <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+    <li> \f$n\f$ is a number of points in \ref grid_tutorial_ellipse "search
+    ellipse".
+</ul>
+
+\subsection grid_tutorial_metrics_max Maximum Data Value
+
+Maximum value found in grid node \ref grid_tutorial_ellipse "search ellipse".
+If there are no points found, the specified NODATA value will be returned.
+
+\f[
+     Z=\max{(Z_1,Z_2,\ldots,Z_n)}
+\f]
+
+where 
+<ul>
+    <li> \f$Z\f$ is a resulting value at the grid node,
+    <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+    <li> \f$n\f$ is a number of points in \ref grid_tutorial_ellipse "search
+    ellipse".
+</ul>
+
+\subsection grid_tutorial_metrics_range Data Range
+
+A difference between the minimum and maximum values found in grid node \ref
+grid_tutorial_ellipse "search ellipse". If there are no points found, the
+specified NODATA value will be returned.
+
+\f[
+     Z=\max{(Z_1,Z_2,\ldots,Z_n)}-\min{(Z_1,Z_2,\ldots,Z_n)}
+\f]
+
+where 
+<ul>
+    <li> \f$Z\f$ is a resulting value at the grid node,
+    <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+    <li> \f$n\f$ is a number of points in \ref grid_tutorial_ellipse "search
+    ellipse".
+</ul>
+
+\section grid_tutorial_ellipse Search Ellipse
+
+Search window in gridding algorithms specified in the form of rotated ellipse. It is described by the three parameters:
+
+<ul>
+    <li> \f$radius_1\f$ is the first radius (\f$x\f$ axis if rotation angle is
+    0),
+    <li> \f$radius_2\f$ is the second radius (\f$y\f$ axis if rotation angle
+    is 0),
+    <li> \f$angle\f$ is a search ellipse rotation angle (rotated counter
+    clockwise).
+</ul>
+
+\image html ellipse.png "Search ellipse"
+\image latex grid/ellipse.eps "Search ellipse"
+
+Only points located inside the search ellipse (including its border line) will
+be used for computation.
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/
