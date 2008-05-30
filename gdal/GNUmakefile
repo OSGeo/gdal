@@ -140,6 +140,7 @@ docs:
 	doxygen Doxyfile
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
+	cp doc/grid/*.png html
 	cp frmts/*.html frmts/*/frmt_*.html html
 
 man:
