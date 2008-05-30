@@ -1336,10 +1336,10 @@ The GDAL supported output file.</dd>
 
 There are number of interpolation algorithms to choose from.
 
-<dl>
+\subsection gdal_grid_algorithms_invdist invdist
 
-<dt><i>invdist</i>:</dt> <dd>Inverse distance to a power. This is default
-algorithm. It has following parameters:</dd>
+Inverse distance to a power. This is default algorithm. It has following
+parameters:
 
 <dl>
 <dt><i>power</i>:</dt> <dd>Weighting power (default 2.0).</dd>
@@ -1364,8 +1364,9 @@ non-zero). Default is 0.</dd>
 0.0).</dd>
 </dl>
 
-<dt><i>average</i>:</dt> <dd>Moving average algorithm. It has following
-parameters:</dd>
+\subsection gdal_grid_algorithms_average average
+
+Moving average algorithm. It has following parameters:
 
 <dl>
 <dt><i>radius1</i>:</dt> <dd>The first radius (X axis if rotation angle is 0)
@@ -1386,8 +1387,9 @@ NODATA marker. Default is 0.</dd>
 Note, that it is essential to set search ellipse for moving average method. It
 is a window that will be averaged when computing grid nodes values.
 
-<dt><i>nearest</i>:</dt> <dd>Moving average algorithm. It has following
-parameters:</dd>
+\subsection gdal_grid_algorithms_nearest nearest
+
+Nearest neighbor algorithm. It has following parameters:
 
 <dl>
 <dt><i>radius1</i>:</dt> <dd>The first radius (X axis if rotation angle is 0)
@@ -1400,8 +1402,6 @@ Default is 0.0.</dd>
 (counter clockwise, default 0.0).</dd>
 <dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
 0.0).</dd>
-</dl>
-
 </dl>
 
 \section gdal_grid_metrics DATA METRICS
