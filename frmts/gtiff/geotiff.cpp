@@ -5346,7 +5346,7 @@ void GDALRegister_GTiff()
     if( GDALGetDriverByName( "GTiff" ) == NULL )
     {
         GDALDriver	*poDriver;
-        char szCreateOptions[2048];
+        char szCreateOptions[3072];
         char szOptionalCompressItems[500];
 
         poDriver = new GDALDriver();
