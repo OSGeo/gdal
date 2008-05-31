@@ -237,6 +237,34 @@ def ogr_geom_boundary_polygon():
     
     return 'success'
 
+def ogr_geom_build_from_edges():
+
+    from osgeo import osr
+    from osgeo import ogr
+    ogr.UseExceptions()
+
+    nad83 = osr.SpatialReference()
+    nad83.SetFromUserInput('NAD83')
+
+    link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
+
+    f = open("data/build_from_edges.txt","rb")
+    try:
+        for line in f:
+          geom = ogr.CreateGeometryFromWkt( line )
+          #print "geom is",geom
+          link_coll.AddGeometry( geom )
+    finally:
+        f.close()
+
+    poly = ogr.BuildPolygonFromEdges( link_coll )
+    try:
+        poly = ogr.BuildPolygonFromEdges( link_coll )
+    except:
+        return 'fail'
+
+    ogr.DontUseExceptions()
+    return 'success'
 ###############################################################################
 # cleanup
 
@@ -252,6 +280,7 @@ gdaltest_list = [
     ogr_geom_boundary_multipoint,
     ogr_geom_boundary_linestring,
     ogr_geom_boundary_polygon,
+    ogr_geom_build_from_edges,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
