@@ -187,6 +187,21 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
         }
     }
 
+    // Handle value lists like:     Name   = {Red, Red}
+    else if( *pszHeaderNext == '{' )
+    {
+        CPLString osWord;
+
+        while( ReadWord( osWord ) )
+        {
+            SkipWhite();
+
+            osValue += osWord;
+            if( osWord[strlen(osWord)-1] == '}' )
+                break;
+        }
+    }
+
     else // Handle more normal "single word" values. 
     {
         if( !ReadWord( osValue ) )
