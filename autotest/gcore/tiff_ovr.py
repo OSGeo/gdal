@@ -263,7 +263,7 @@ def tiff_ovr_cleanup():
 
     return 'success'
 
-gdaltest_list = [
+gdaltest_list_internal = [
     tiff_ovr_1,
     tiff_ovr_2,
     tiff_ovr_3,
@@ -271,6 +271,23 @@ gdaltest_list = [
     tiff_ovr_5,
     tiff_ovr_6,
     tiff_ovr_cleanup ]
+
+def tiff_ovr_invert_endianness():
+    gdaltest.tiff_endianness = gdal.GetConfigOption( 'GDAL_TIFF_ENDIANNESS', "NATIVE" )
+    gdal.SetConfigOption( 'GDAL_TIFF_ENDIANNESS', 'INVERTED' )
+    return 'success'
+
+def tiff_ovr_restore_endianness():
+    gdal.SetConfigOption( 'GDAL_TIFF_ENDIANNESS', gdaltest.tiff_endianness )
+    return 'success'
+
+gdaltest_list = []
+for item in gdaltest_list_internal:
+    gdaltest_list.append(item)
+gdaltest_list.append(tiff_ovr_invert_endianness)
+for item in gdaltest_list_internal:
+    gdaltest_list.append(item)
+gdaltest_list.append(tiff_ovr_restore_endianness)
 
 if __name__ == '__main__':
 
