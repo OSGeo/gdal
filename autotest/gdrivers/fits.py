@@ -38,20 +38,29 @@ import gdaltest
 
 ###############################################################################
 # 
+def fits_init():
+    try:
+        gdaltest.fitsDriver = gdal.GetDriverByName('FITS')
+    except:
+        gdaltest.fitsDriver = None
+
+    if gdaltest.fitsDriver is None:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+# 
 class TestFITS:
     def __init__( self, fileName ):
         self.fileName = fileName
-        try:
-            self.fitsDriver = gdal.GetDriverByName('FITS')
-        except:
-            self.fitsDriver = None
 
     def test( self ):
-        if self.fitsDriver is None:
+        if gdaltest.fitsDriver is None:
             return 'skip'
 
         ds = gdal.Open('../gcore/data/' + self.fileName + '.tif')
-        self.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options = [ 'PAGESIZE=2,2' ] )
+        gdaltest.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options = [ 'PAGESIZE=2,2' ] )
 
         ds2 = gdal.Open('tmp/' + self.fileName + '.fits')
         if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
@@ -61,11 +70,55 @@ class TestFITS:
             return 'fail'
 
         ds2 = None
-        self.fitsDriver.Delete('tmp/' + self.fileName + '.fits')
+        gdaltest.fitsDriver.Delete('tmp/' + self.fileName + '.fits')
         return 'success'
 
+###############################################################################
+# 
+def fits_metadata():
+    if gdaltest.fitsDriver is None:
+        return 'skip'
 
-gdaltest_list = [ ]
+    ds = gdal.Open('../gcore/data/byte.tif')
+    ds2 = gdaltest.fitsDriver.CreateCopy('tmp/byte.fits', ds )
+    md = { 'TEST' : 'test_value' }
+    ds2.SetMetadata(md)
+    ds2 = None
+    try:
+        os.unlink('tmp/byte.fits.aux.xml')
+    except:
+        pass
+
+    ds2 = gdal.Open('tmp/byte.fits')
+    md = ds2.GetMetadata()
+    ds2 = None
+
+    if md['TEST'] != 'test_value':
+        return 'fail'
+
+    ds2 = gdal.Open('tmp/byte.fits', gdal.GA_Update)
+    md = { 'TEST2' : 'test_value2' }
+    ds2.SetMetadata(md)
+    ds2 = None
+    try:
+        os.unlink('tmp/byte.fits.aux.xml')
+    except:
+        pass
+
+    ds2 = gdal.Open('tmp/byte.fits')
+    md = ds2.GetMetadata()
+    ds2 = None
+
+    if md['TEST2'] != 'test_value2':
+        return 'fail'
+
+    gdaltest.fitsDriver.Delete('tmp/byte.fits' )
+
+    return 'success'
+
+###############################################################################
+#
+gdaltest_list = [ fits_init ]
 
 fits_list = [ 'byte', 'int16', 'int32', 'float32', 'float64' ]
 
@@ -73,6 +126,7 @@ for item in fits_list:
     ut = TestFITS( item )
     gdaltest_list.append( (ut.test, item) )
 
+gdaltest_list.append(fits_metadata)
 
 if __name__ == '__main__':
 
