@@ -257,10 +257,10 @@ def ogr_geom_build_from_edges():
     finally:
         f.close()
 
-    poly = ogr.BuildPolygonFromEdges( link_coll )
     try:
         poly = ogr.BuildPolygonFromEdges( link_coll )
     except:
+        ogr.DontUseExceptions()
         return 'fail'
 
     ogr.DontUseExceptions()
