@@ -57,6 +57,13 @@ CPL_C_END
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
+enum
+{
+    ENDIANNESS_NATIVE,
+    ENDIANNESS_LITTLE,
+    ENDIANNESS_BIG
+};
+
 /************************************************************************/
 /* ==================================================================== */
 /*				GTiffDataset				*/
@@ -4117,9 +4124,47 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check if the user wishes a particular endianness                */
+/* -------------------------------------------------------------------- */
+
+    int eEndianness = ENDIANNESS_NATIVE;
+    pszValue = CSLFetchNameValue(papszParmList, "ENDIANNESS");
+    if ( pszValue == NULL )
+        pszValue = CPLGetConfigOption( "GDAL_TIFF_ENDIANNESS", NULL );
+    if ( pszValue != NULL )
+    {
+        if (EQUAL(pszValue, "LITTLE"))
+            eEndianness = ENDIANNESS_LITTLE;
+        else if (EQUAL(pszValue, "BIG"))
+            eEndianness = ENDIANNESS_BIG;
+        else if (EQUAL(pszValue, "INVERTED"))
+        {
+#ifdef CPL_LSB
+            eEndianness = ENDIANNESS_BIG;
+#else
+            eEndianness = ENDIANNESS_LITTLE;
+#endif
+        }
+        else if (!EQUAL(pszValue, "NATIVE"))
+        {
+            CPLError( CE_Warning, CPLE_NotSupported,
+                      "ENDIANNESS=%s not supported. Defaulting to NATIVE", pszValue );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    hTIFF = VSI_TIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+" );
+
+    char szOpeningFlag[5];
+    strcpy(szOpeningFlag, "w+");
+    if (bCreateBigTIFF)
+        strcat(szOpeningFlag, "8");
+    if (eEndianness == ENDIANNESS_BIG)
+        strcat(szOpeningFlag, "b");
+    else if (eEndianness == ENDIANNESS_LITTLE)
+        strcat(szOpeningFlag, "l");
+    hTIFF = VSI_TIFFOpen( pszFilename, szOpeningFlag );
     if( hTIFF == NULL )
     {
         if( CPLGetLastErrorNo() == 0 )
@@ -5366,6 +5411,12 @@ void GDALRegister_GTiff()
 #ifdef BIGTIFF_SUPPORT
 "   <Option name='BIGTIFF' type='boolean' description='Force creation of BigTIFF file'/>"
 #endif
+"   <Option name='ENDIANNESS' type='string-select' default='NATIVE' description='Force endianness of created file. For DEBUG purpose mostly'>"
+"       <Value>NATIVE</Value>"
+"       <Value>INVERTED</Value>"
+"       <Value>LITTLE</Value>"
+"       <Value>BIG</Value>"
+"   </Option>"
 "</CreationOptionList>" );
                  
 /* -------------------------------------------------------------------- */
