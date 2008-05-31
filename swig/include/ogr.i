@@ -1099,6 +1099,30 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
  
 %}
 
+%newobject BuildPolygonFromEdges;
+%feature( "kwargs" ) BuildPolygonFromEdges;
+%inline %{
+  OGRGeometryShadow* BuildPolygonFromEdges( OGRGeometryShadow*  hLineCollection,  
+                                            int bBestEffort = 0, 
+                                            int bAutoClose = 0, 
+                                            double dfTolerance=0) {
+  
+  OGRGeometryH hPolygon = NULL;
+  
+  OGRErr eErr;
+
+  hPolygon = OGRBuildPolygonFromEdges( hLineCollection, bBestEffort, 
+                                       bAutoClose, dfTolerance, &eErr );
+
+  if (eErr != OGRERR_NONE ) {
+    CPLError(CE_Failure, eErr, "%s", OGRErrMessages(eErr));
+    return NULL;
+  }
+
+  return hPolygon;
+  }
+%}
+
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
