@@ -82,9 +82,31 @@ def pds_2():
 
     return 'success'
 
+###############################################################################
+# Read a truncated and modified version of ftp://pdsimage2.wr.usgs.gov/cdroms/messenger/MSGRMDS_1001/DATA/2004_232/EN0001426030M.IMG
+# 16bits image
+
+def pds_3():
+
+    # Shut down warning about missing projection
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+
+    tst = gdaltest.GDALTest( 'PDS', 'EN0001426030M_truncated.IMG', 1, 1367 )
+    if tst.testOpen( ) != 'success':
+        return 'fail'
+
+    ds = gdal.Open('data/EN0001426030M_truncated.IMG')
+    if ds.GetRasterBand(1).GetNoDataValue() != -32768:
+        return 'fail'
+
+    gdal.PopErrorHandler()
+
+    return 'success'
+
 gdaltest_list = [
     pds_1,
-    pds_2 ]
+    pds_2,
+    pds_3 ]
 
 if __name__ == '__main__':
 
