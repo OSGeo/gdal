@@ -3393,6 +3393,27 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
   }
  
 
+
+  OGRGeometryShadow* BuildPolygonFromEdges( OGRGeometryShadow*  hLineCollection,  
+                                            int bBestEffort = 0, 
+                                            int bAutoClose = 0, 
+                                            double dfTolerance=0) {
+  
+  OGRGeometryH hPolygon = NULL;
+  
+  OGRErr eErr;
+
+  hPolygon = OGRBuildPolygonFromEdges( hLineCollection, bBestEffort, 
+                                       bAutoClose, dfTolerance, &eErr );
+
+  if (eErr != OGRERR_NONE ) {
+    CPLError(CE_Failure, eErr, "%s", OGRErrMessages(eErr));
+    return NULL;
+  }
+
+  return hPolygon;
+  }
+
 SWIGINTERN void delete_OGRGeometryShadow(OGRGeometryShadow *self){
     OGR_G_DestroyGeometry( self );
   }
@@ -3616,6 +3637,9 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
+        CPLDebug( "SWIG", 
+		  "OGROpen() succeeded, but an error is posted, so we destroy"
+		  " the datasource and fail at swig level." );
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
@@ -9587,6 +9611,72 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_BuildPolygonFromEdges(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int arg2 = (int) 0 ;
+  int arg3 = (int) 0 ;
+  double arg4 = (double) 0 ;
+  OGRGeometryShadow *result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "hLineCollection",(char *) "bBestEffort",(char *) "bAutoClose",(char *) "dfTolerance", NULL 
+  };
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOO:BuildPolygonFromEdges",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "BuildPolygonFromEdges" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "BuildPolygonFromEdges" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+  }
+  if (obj2) {
+    ecode3 = SWIG_AsVal_int(obj2, &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "BuildPolygonFromEdges" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+  }
+  if (obj3) {
+    ecode4 = SWIG_AsVal_double(obj3, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "BuildPolygonFromEdges" "', argument " "4"" of type '" "double""'");
+    } 
+    arg4 = static_cast< double >(val4);
+  }
+  {
+    result = (OGRGeometryShadow *)BuildPolygonFromEdges(arg1,arg2,arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_delete_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -12374,6 +12464,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CreateGeometryFromWkt", (PyCFunction) _wrap_CreateGeometryFromWkt, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"CreateGeometryFromGML", _wrap_CreateGeometryFromGML, METH_VARARGS, NULL},
 	 { (char *)"CreateGeometryFromJson", _wrap_CreateGeometryFromJson, METH_VARARGS, NULL},
+	 { (char *)"BuildPolygonFromEdges", (PyCFunction) _wrap_BuildPolygonFromEdges, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"delete_Geometry", _wrap_delete_Geometry, METH_VARARGS, NULL},
 	 { (char *)"new_Geometry", (PyCFunction) _wrap_new_Geometry, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt, METH_VARARGS, NULL},
