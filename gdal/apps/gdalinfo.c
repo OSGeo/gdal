@@ -474,6 +474,27 @@ int main( int argc, char ** argv )
                     printf( "*" );
             }
             printf( "\n" );
+
+            if ( bComputeChecksum)
+            {
+                printf( "  Overviews checksum: " );
+                for( iOverview = 0; 
+                    iOverview < GDALGetOverviewCount(hBand);
+                    iOverview++ )
+                {
+                    GDALRasterBandH	hOverview;
+
+                    if( iOverview != 0 )
+                        printf( ", " );
+
+                    hOverview = GDALGetOverview( hBand, iOverview );
+                    printf( "%d",
+                            GDALChecksumImage(hOverview, 0, 0,
+                                      GDALGetRasterBandXSize(hOverview),
+                                      GDALGetRasterBandYSize(hOverview)));
+                }
+                printf( "\n" );
+            }
         }
 
         if( GDALHasArbitraryOverviews( hBand ) )
