@@ -148,8 +148,8 @@ class GTiffDataset : public GDALPamDataset
 
     void*        pabyTempWriteBuffer;
     int          nTempWriteBufferSize;
-    tmsize_t     WriteEncodedTile(uint32 tile, void* data, int bPreserveDataBuffer);
-    tmsize_t     WriteEncodedStrip(uint32 strip, void* data, int bPreserveDataBuffer);
+    int          WriteEncodedTile(uint32 tile, void* data, int bPreserveDataBuffer);
+    int          WriteEncodedStrip(uint32 strip, void* data, int bPreserveDataBuffer);
 
   public:
                  GTiffDataset();
@@ -1891,12 +1891,12 @@ GTiffDataset::~GTiffDataset()
 /*                        WriteEncodedTile()                            */
 /************************************************************************/
 
-tmsize_t GTiffDataset::WriteEncodedTile(uint32 tile, void* data,
-                                        int bPreserveDataBuffer)
+int GTiffDataset::WriteEncodedTile(uint32 tile, void* data,
+                                   int bPreserveDataBuffer)
 {
     /* TIFFWriteEncodedTile can alter the passed buffer if byte-swapping is necessary */
     /* so we use a temporary buffer before calling it */
-    tmsize_t cc = TIFFTileSize( hTIFF );
+    int cc = TIFFTileSize( hTIFF );
     if (bPreserveDataBuffer && TIFFIsByteSwapped(hTIFF))
     {
         if (cc != nTempWriteBufferSize)
@@ -1915,12 +1915,12 @@ tmsize_t GTiffDataset::WriteEncodedTile(uint32 tile, void* data,
 /*                        WriteEncodedStrip()                           */
 /************************************************************************/
 
-tmsize_t GTiffDataset::WriteEncodedStrip(uint32 strip, void* data,
-                                         int bPreserveDataBuffer)
+int  GTiffDataset::WriteEncodedStrip(uint32 strip, void* data,
+                                     int bPreserveDataBuffer)
 {
     /* TIFFWriteEncodedStrip can alter the passed buffer if byte-swapping is necessary */
     /* so we use a temporary buffer before calling it */
-    tmsize_t cc = TIFFStripSize( hTIFF );
+    int cc = TIFFStripSize( hTIFF );
     if (bPreserveDataBuffer && TIFFIsByteSwapped(hTIFF))
     {
         if (cc != nTempWriteBufferSize)
