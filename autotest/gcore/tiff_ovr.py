@@ -32,10 +32,44 @@ import os
 import sys
 import gdal
 import shutil
+import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
+
+
+###############################################################################
+# Check the overviews
+
+def tiff_ovr_check(src_ds):
+    for i in (1, 2, 3):
+        if src_ds.GetRasterBand(i).GetOverviewCount() != 2:
+            gdaltest.post_reason( 'overviews missing' )
+            return 'fail'
+
+        ovr_band = src_ds.GetRasterBand(i).GetOverview(0)
+        if ovr_band.XSize != 10 or ovr_band.YSize != 10:
+            msg = 'overview wrong size: band %d, overview 0, size = %d * %d,' % (i, ovr_band.XSize, ovr_band.YSize)
+            gdaltest.post_reason( msg )
+            return 'fail'
+
+        if ovr_band.Checksum() != 1087:
+            msg = 'overview wrong checkum: band %d, overview 0, checksum = %d,' % (i, ovr_band.Checksum())
+            gdaltest.post_reason( msg )
+            return 'fail'
+
+        ovr_band = src_ds.GetRasterBand(i).GetOverview(1)
+        if ovr_band.XSize != 5 or ovr_band.YSize != 5:
+            msg = 'overview wrong size: band %d, overview 1, size = %d * %d,' % (i, ovr_band.XSize, ovr_band.YSize)
+            gdaltest.post_reason( msg )
+            return 'fail'
+
+        if ovr_band.Checksum() != 328:
+            msg = 'overview wrong checkum: band %d, overview 1, checksum = %d,' % (i, ovr_band.Checksum())
+            gdaltest.post_reason( msg )
+            return 'fail'
+    return 'success'
 
 ###############################################################################
 # Create a 3 band floating point GeoTIFF file so we can build overviews on it
@@ -57,13 +91,12 @@ def tiff_ovr_1():
         gdaltest.post_reason('BuildOverviews reports an error' )
         return 'fail'
 
-    if ds.GetRasterBand(1).GetOverviewCount() != 2:
-        gdaltest.post_reason('Overview missing on target file.')
-        return 'fail'
+    ret = tiff_ovr_check(ds)
 
     ds = None
 
-    return 'success'
+    return ret
+
 
 ###############################################################################
 # Open file and verify some characteristics of the overviews. 
@@ -72,33 +105,11 @@ def tiff_ovr_2():
 
     src_ds = gdal.Open( 'tmp/mfloat32.tif' )
 
-    if src_ds.GetRasterBand(2).GetOverviewCount() != 2:
-        gdaltest.post_reason( 'overviews missing after re-open?' )
-        return 'fail'
-
-    ovr_band = src_ds.GetRasterBand(3).GetOverview(0)
-    if ovr_band.XSize != 10 or ovr_band.YSize != 10:
-        gdaltest.post_reason('first overview wrong size.')
-        return 'fail'
-
-    if ovr_band.Checksum() != 1087:
-        print ovr_band.Checksum()
-        gdaltest.post_reason( 'first overview wrong checkum' )
-        return 'fail'
-
-    ovr_band = src_ds.GetRasterBand(3).GetOverview(1)
-    if ovr_band.XSize != 5 or ovr_band.YSize != 5:
-        gdaltest.post_reason('first overview wrong size.')
-        return 'fail'
-
-    if ovr_band.Checksum() != 328:
-        print ovr_band.Checksum()
-        gdaltest.post_reason( 'first overview wrong checkum' )
-        return 'fail'
+    ret = tiff_ovr_check(src_ds)
 
     src_ds = None
 
-    return 'success'
+    return ret
 
 ###############################################################################
 # Open target file in update mode, and create internal overviews.
@@ -106,7 +117,7 @@ def tiff_ovr_2():
 def tiff_ovr_3():
 
     os.unlink( 'tmp/mfloat32.tif.ovr' )
-    
+
     src_ds = gdal.Open( 'tmp/mfloat32.tif', gdal.GA_Update )
 
     err = src_ds.BuildOverviews( overviewlist = [2, 4] )
@@ -114,33 +125,17 @@ def tiff_ovr_3():
         gdaltest.post_reason('BuildOverviews reports an error' )
         return 'fail'
 
-    if src_ds.GetRasterBand(2).GetOverviewCount() != 2:
-        gdaltest.post_reason( 'overviews missing after re-open?' )
-        return 'fail'
-
-    ovr_band = src_ds.GetRasterBand(3).GetOverview(0)
-    if ovr_band.XSize != 10 or ovr_band.YSize != 10:
-        gdaltest.post_reason('first overview wrong size.')
-        return 'fail'
-
-    if ovr_band.Checksum() != 1087:
-        print ovr_band.Checksum()
-        gdaltest.post_reason( 'first overview wrong checkum' )
-        return 'fail'
-
-    ovr_band = src_ds.GetRasterBand(3).GetOverview(1)
-    if ovr_band.XSize != 5 or ovr_band.YSize != 5:
-        gdaltest.post_reason('first overview wrong size.')
-        return 'fail'
-
-    if ovr_band.Checksum() != 328:
-        print ovr_band.Checksum()
-        gdaltest.post_reason( 'first overview wrong checkum' )
-        return 'fail'
+    ret = tiff_ovr_check(src_ds)
 
     src_ds = None
 
-    return 'success'
+    return ret
+
+###############################################################################
+# Re-open target file and check overviews
+
+def tiff_ovr_3bis():
+    return tiff_ovr_2()
 
 ###############################################################################
 # Test generation 
@@ -267,6 +262,7 @@ gdaltest_list_internal = [
     tiff_ovr_1,
     tiff_ovr_2,
     tiff_ovr_3,
+    tiff_ovr_3bis,
     tiff_ovr_4,
     tiff_ovr_5,
     tiff_ovr_6,
@@ -286,7 +282,7 @@ for item in gdaltest_list_internal:
     gdaltest_list.append(item)
 gdaltest_list.append(tiff_ovr_invert_endianness)
 for item in gdaltest_list_internal:
-    gdaltest_list.append(item)
+    gdaltest_list.append( (item, item.__name__ + '_interverted') )
 gdaltest_list.append(tiff_ovr_restore_endianness)
 
 if __name__ == '__main__':
