@@ -239,12 +239,8 @@ def ogr_geom_boundary_polygon():
 
 def ogr_geom_build_from_edges():
 
-    from osgeo import osr
-    from osgeo import ogr
-    ogr.UseExceptions()
-
-    nad83 = osr.SpatialReference()
-    nad83.SetFromUserInput('NAD83')
+    if gdaltest.have_geos == 0:
+        return 'skip'
 
     link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
 
@@ -259,12 +255,13 @@ def ogr_geom_build_from_edges():
 
     try:
         poly = ogr.BuildPolygonFromEdges( link_coll )
+        if poly is None:
+            return 'fail'
     except:
-        ogr.DontUseExceptions()
         return 'fail'
 
-    ogr.DontUseExceptions()
     return 'success'
+
 ###############################################################################
 # cleanup
 
