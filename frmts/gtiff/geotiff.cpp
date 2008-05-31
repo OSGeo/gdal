@@ -146,6 +146,11 @@ class GTiffDataset : public GDALPamDataset
     static void WriteRPCTag( TIFF *, char ** );
     void        ReadRPCTag();
 
+    void*        pabyTempWriteBuffer;
+    int          nTempWriteBufferSize;
+    tmsize_t     WriteEncodedTile(uint32 tile, void* data, int bPreserveDataBuffer);
+    tmsize_t     WriteEncodedStrip(uint32 strip, void* data, int bPreserveDataBuffer);
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -196,6 +201,8 @@ class GTiffDataset : public GDALPamDataset
     static TIFF *   CreateLL( const char * pszFilename,
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType, char **papszParmList );
+
+    CPLErr   WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data, int bPreserveDataBuffer);
 };
 
 /************************************************************************/
@@ -589,7 +596,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 
 {
-    int		nBlockId, nBlockBufSize;
+    int		nBlockId;
     CPLErr      eErr = CE_None;
 
     poGDS->Crystalize();
@@ -608,21 +615,8 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
             + (nBand-1) * poGDS->nBlocksPerBand;
-        
-        if( TIFFIsTiled(poGDS->hTIFF) )
-        {
-            nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
-            if( TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pImage, 
-                                      nBlockBufSize ) == -1 )
-                eErr = CE_Failure;
-        }
-        else
-        {
-            nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-            if( TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pImage, 
-                                       nBlockBufSize ) == -1 )
-                eErr = CE_Failure;
-        }
+
+        eErr = poGDS->WriteEncodedTileOrStrip(nBlockId, pImage, TRUE);
 
         return eErr;
     }
@@ -1255,7 +1249,7 @@ CPLErr GTiffBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 
 {
-    int		nBlockId, nBlockBufSize;
+    int		nBlockId;
     CPLErr      eErr = CE_None;
 
     poGDS->Crystalize();
@@ -1286,20 +1280,7 @@ CPLErr GTiffBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
         + (nBand-1) * poGDS->nBlocksPerBand;
     
-    if( TIFFIsTiled(poGDS->hTIFF) )
-    {
-        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
-        if( TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pabyOddImg, 
-                                  nBlockBufSize ) == -1 )
-            eErr = CE_Failure;
-    }
-    else
-    {
-        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-        if( TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pabyOddImg, 
-                                   nBlockBufSize ) == -1 )
-            eErr = CE_Failure;
-    }
+    eErr = poGDS->WriteEncodedTileOrStrip(nBlockId, pabyOddImg, FALSE);
     
     CPLFree( pabyOddImg );
     
@@ -1433,7 +1414,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                       void *pImage )
 
 {
-    int		nBlockId, nBlockBufSize;
+    int		nBlockId;
     CPLErr      eErr = CE_None;
 
     poGDS->Crystalize();
@@ -1471,20 +1452,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
             + (nBand-1) * poGDS->nBlocksPerBand;
         
-        if( TIFFIsTiled(poGDS->hTIFF) )
-        {
-            nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
-            if( TIFFWriteEncodedTile( poGDS->hTIFF, nBlockId, pabyOddImg, 
-                                      nBlockBufSize ) == -1 )
-                eErr = CE_Failure;
-        }
-        else
-        {
-            nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-            if( TIFFWriteEncodedStrip( poGDS->hTIFF, nBlockId, pabyOddImg, 
-                                       nBlockBufSize ) == -1 )
-                eErr = CE_Failure;
-        }
+        eErr = poGDS->WriteEncodedTileOrStrip( nBlockId, pabyOddImg, FALSE );
 
         CPLFree( pabyOddImg );
 
@@ -1849,6 +1817,9 @@ GTiffDataset::GTiffDataset()
     osProfile = "GDALGeoTIFF";
 
     papszCreationOptions = NULL;
+
+    nTempWriteBufferSize = 0;
+    pabyTempWriteBuffer = NULL;
 }
 
 /************************************************************************/
@@ -1912,6 +1883,83 @@ GTiffDataset::~GTiffDataset()
     CPLFree( pszProjection );
 
     CSLDestroy( papszCreationOptions );
+
+    CPLFree(pabyTempWriteBuffer);
+}
+
+/************************************************************************/
+/*                        WriteEncodedTile()                            */
+/************************************************************************/
+
+tmsize_t GTiffDataset::WriteEncodedTile(uint32 tile, void* data,
+                                        int bPreserveDataBuffer)
+{
+    /* TIFFWriteEncodedTile can alter the passed buffer if byte-swapping is necessary */
+    /* so we use a temporary buffer before calling it */
+    tmsize_t cc = TIFFTileSize( hTIFF );
+    if (bPreserveDataBuffer && TIFFIsByteSwapped(hTIFF))
+    {
+        if (cc != nTempWriteBufferSize)
+        {
+            pabyTempWriteBuffer = CPLRealloc(pabyTempWriteBuffer, cc);
+            nTempWriteBufferSize = cc;
+        }
+        memcpy(pabyTempWriteBuffer, data, cc);
+        return TIFFWriteEncodedTile(hTIFF, tile, pabyTempWriteBuffer, cc);
+    }
+    else
+        return TIFFWriteEncodedTile(hTIFF, tile, data, cc);
+}
+
+/************************************************************************/
+/*                        WriteEncodedStrip()                           */
+/************************************************************************/
+
+tmsize_t GTiffDataset::WriteEncodedStrip(uint32 strip, void* data,
+                                         int bPreserveDataBuffer)
+{
+    /* TIFFWriteEncodedStrip can alter the passed buffer if byte-swapping is necessary */
+    /* so we use a temporary buffer before calling it */
+    tmsize_t cc = TIFFStripSize( hTIFF );
+    if (bPreserveDataBuffer && TIFFIsByteSwapped(hTIFF))
+    {
+        if (cc != nTempWriteBufferSize)
+        {
+            pabyTempWriteBuffer = CPLRealloc(pabyTempWriteBuffer, cc);
+            nTempWriteBufferSize = cc;
+        }
+        memcpy(pabyTempWriteBuffer, data, cc);
+        return TIFFWriteEncodedStrip(hTIFF, strip, pabyTempWriteBuffer, cc);
+    }
+    else
+        return TIFFWriteEncodedStrip(hTIFF, strip, data, cc);
+}
+
+/************************************************************************/
+/*                  WriteEncodedTileOrStrip()                           */
+/************************************************************************/
+
+CPLErr  GTiffDataset::WriteEncodedTileOrStrip(uint32 tile_or_strip, void* data,
+                                              int bPreserveDataBuffer)
+{
+    CPLErr eErr = CE_None;
+
+    if( TIFFIsTiled( hTIFF ) )
+    {
+        if( WriteEncodedTile(tile_or_strip, data, bPreserveDataBuffer) == -1 )
+        {
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        if( WriteEncodedStrip(tile_or_strip, data, bPreserveDataBuffer) == -1 )
+        {
+            eErr = CE_Failure;
+        }
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -1921,7 +1969,6 @@ GTiffDataset::~GTiffDataset()
 CPLErr GTiffDataset::FlushBlockBuf()
 
 {
-    int		nBlockBufSize;
     CPLErr      eErr = CE_None;
 
     if( nLoadedBlock < 0 || !bLoadedBlockDirty )
@@ -1931,33 +1978,14 @@ CPLErr GTiffDataset::FlushBlockBuf()
 
     SetDirectory();
 
-    if( TIFFIsTiled(hTIFF) )
-        nBlockBufSize = TIFFTileSize( hTIFF );
-    else
-        nBlockBufSize = TIFFStripSize( hTIFF );
-
-    if( TIFFIsTiled( hTIFF ) )
+    eErr = WriteEncodedTileOrStrip(nLoadedBlock, pabyBlockBuf, TRUE);
+    if (eErr != CE_None)
     {
-        if( TIFFWriteEncodedTile(hTIFF, nLoadedBlock, pabyBlockBuf,
-                                 nBlockBufSize) == -1 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "TIFFWriteEncodedTile() failed." );
-            eErr = CE_Failure;
-        }
-    }
-    else
-    {
-        if( TIFFWriteEncodedStrip(hTIFF, nLoadedBlock, pabyBlockBuf,
-                                 nBlockBufSize) == -1 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "TIFFWriteEncodedStrip() failed." );
-            eErr = CE_Failure;
-        }
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "WriteEncodedTile/Strip() failed." );
     }
 
-    return eErr;;
+    return eErr;
 }
 
 /************************************************************************/
