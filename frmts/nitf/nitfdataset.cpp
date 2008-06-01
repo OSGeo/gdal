@@ -2852,6 +2852,21 @@ NITFDataset::NITFCreateCopy(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Copy TRE definitions as creation options.                       */
+/* -------------------------------------------------------------------- */
+    papszSrcMD = poSrcDS->GetMetadata( "TRE" );
+
+    for( iMD = 0; papszSrcMD && papszSrcMD[iMD]; iMD++ )
+    {
+        CPLString osTRE;
+
+        osTRE = "TRE=";
+        osTRE += papszSrcMD[iMD];
+
+        papszFullOptions = CSLAddString( papszFullOptions, osTRE );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Set if we can set IREP.                                         */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(papszFullOptions,"IREP") == NULL )
