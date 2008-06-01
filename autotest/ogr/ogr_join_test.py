@@ -40,13 +40,15 @@ import ogrtest
 def ogr_join_1():
     gdaltest.ds = ogr.Open( 'data' )
 
-    sql_layer = gdaltest.ds.ExecuteSQL(
+    sql_lyr = gdaltest.ds.ExecuteSQL(
         'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.eas_id' )
 
-    count = sql_layer.GetFeatureCount()
+    count = sql_lyr.GetFeatureCount()
     if count != 10:
         gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
         return 'fail'
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
 
     return 'success'
 
