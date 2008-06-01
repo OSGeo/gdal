@@ -35,9 +35,14 @@
 
 CPL_CVSID("$Id$");
 
-static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
+static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, 
                             int *pnOffset, int nBytesAvailable,
                             char **papszOptions );
+static int NITFWriteTREsFromOptions(
+    char *pachUDIDL, char *pachTRE,
+    int *pnOffset, int nBytesAvailable,
+    char **papszOptions );
+
 static int 
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                         int nHeaderLenSize, int nDataLenSize, 
@@ -631,11 +636,20 @@ int NITFCreate( const char *pszFilename,
     {
         NITFWriteBLOCKA( pachIMHDR + nUDIDLOffset, 
                          pachIMHDR + nOffset, 
-                         0, &nOffset, 
+                         &nOffset, 
                          sizeof(achHeader) - (pachIMHDR+nOffset-achHeader),
                          papszOptions );
     }
 
+    if( CSLFetchNameValue(papszOptions,"TRE") != NULL )
+    {
+        NITFWriteTREsFromOptions( 
+            pachIMHDR + nUDIDLOffset, 
+            pachIMHDR + nOffset, 
+            &nOffset, 
+            sizeof(achHeader) - (pachIMHDR+nOffset-achHeader),
+            papszOptions );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Update the image header length in the file header and the       */
@@ -645,7 +659,7 @@ int NITFCreate( const char *pszFilename,
 
     PLACE(achHeader+ 363, LISH1, CPLSPrintf("%06d",nIHSize)      );
     PLACE(achHeader+ 342, FL,
-          CPLSPrintf( "%012d", 404 + nIHSize + nImageSize ) );
+          CPLSPrintf( "%012d", (int) (404 + nIHSize + nImageSize) ) );
 
 /* -------------------------------------------------------------------- */
 /*      Write header info to file.                                      */
@@ -674,10 +688,118 @@ int NITFCreate( const char *pszFilename,
 }
 
 /************************************************************************/
+/*                            NITFWriteTRE()                            */
+/************************************************************************/
+
+static int NITFWriteTRE( char *pachUDIDL, 
+                         char *pachTREInHeader, 
+                         int  *pnOffset, int nBytesAvailable,
+                         char *pszTREName, char *pabyTREData, int nTREDataSize )
+
+{
+    char szTemp[200];
+    int  nOldOffset;
+
+/* -------------------------------------------------------------------- */
+/*      Try to allocate space in the header for for this BLOCKA         */
+/*      TRE.                                                            */
+/* -------------------------------------------------------------------- */
+    if( nBytesAvailable < nTREDataSize+14 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "%s TRE not written due to lack of header space.",
+                  pszTREName );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update IXSHDL.                                                  */
+/* -------------------------------------------------------------------- */
+    nOldOffset = atoi(NITFGetField( szTemp, pachUDIDL, 5, 5 ));
+
+    if( nOldOffset == 0 )
+    {
+        nOldOffset = 3;
+        PLACE(pachUDIDL+10, IXSOFL, "000" );
+        *pnOffset += 3;
+    }
+    sprintf( szTemp, "%05d", nOldOffset + 11 + nTREDataSize );
+    PLACE( pachUDIDL + 5, IXSHDL, szTemp );
+
+/* -------------------------------------------------------------------- */
+/*      Create TRE prefix.                                              */
+/* -------------------------------------------------------------------- */
+    sprintf( pachTREInHeader + nOldOffset, "%-6s%05d", 
+             pszTREName, nTREDataSize );
+    memcpy( pachTREInHeader + nOldOffset + 11, 
+            pabyTREData, nTREDataSize );
+
+/* -------------------------------------------------------------------- */
+/*      Increment values.                                               */
+/* -------------------------------------------------------------------- */
+    *pnOffset += nTREDataSize + 11;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                   NITFWriteTREsFromOptions()                         */
+/************************************************************************/
+
+static int NITFWriteTREsFromOptions(
+    char *pachUDIDL, char *pachTRE,
+    int *pnOffset, int nBytesAvailable,
+    char **papszOptions )    
+
+{
+    int bIgnoreBLOCKA = 
+        CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL;
+    int iOption;
+
+    if( papszOptions == NULL )
+        return TRUE;
+
+    for( iOption = 0; papszOptions[iOption] != NULL; iOption++ )
+    {
+        const char *pszEscapedContents;
+        char *pszUnescapedContents;
+        char *pszTREName;
+        int  nContentLength;
+
+        if( !EQUALN(papszOptions[iOption],"TRE=",4) )
+            continue;
+
+        if( EQUALN(papszOptions[iOption]+4,"BLOCKA=",7)
+            && bIgnoreBLOCKA )
+            continue;
+
+        pszEscapedContents = CPLParseNameValue( papszOptions[iOption]+4, 
+                                                &pszTREName );
+        
+        
+        pszUnescapedContents = 
+            CPLUnescapeString( pszEscapedContents, &nContentLength,
+                               CPLES_BackslashQuotable );
+
+        if( !NITFWriteTRE( pachUDIDL, pachTRE,
+                           pnOffset, nBytesAvailable, 
+                           pszTREName, pszUnescapedContents, 
+                           nContentLength ) )
+            return FALSE;
+        
+        CPLFree( pszTREName );
+        CPLFree( pszUnescapedContents );
+        nBytesAvailable -= (nContentLength + 14);
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          NITFWriteBLOCKA()                           */
 /************************************************************************/
 
-static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
+static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE,
                             int *pnOffset, int nBytesAvailable,
                             char **papszOptions )
 
@@ -703,32 +825,9 @@ static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
 /* ==================================================================== */
     for( iBlock = 1; iBlock <= nBlockCount; iBlock++ )
     {
-        char szTemp[200];
-        int iField, nOldOffset;
+        char szBLOCKA[200];
+        int iField;
 
-/* -------------------------------------------------------------------- */
-/*      Try to allocate space in the header for for this BLOCKA         */
-/*      TRE.                                                            */
-/* -------------------------------------------------------------------- */
-        if( nBytesAvailable < 137 )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Some BLOCKA TREs not written due to lack of header space." );
-            return nTRECount;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Update IXSHDL.                                                  */
-/* -------------------------------------------------------------------- */
-        nOldOffset = atoi(NITFGetField( szTemp, pachUDIDL, 5, 5 ));
-        sprintf( szTemp, "%05d", nOldOffset + 137 );
-        PLACE( pachUDIDL + 5, IXSHDL, szTemp );
-
-/* -------------------------------------------------------------------- */
-/*      Create TRE header.                                              */
-/* -------------------------------------------------------------------- */
-        sprintf( pachTRE + nOldOffset, "%03dBLOCKA00123", nTRECount );
-        
 /* -------------------------------------------------------------------- */
 /*      Write all fields.                                               */
 /* -------------------------------------------------------------------- */
@@ -746,24 +845,23 @@ static int NITFWriteBLOCKA( char *pachUDIDL, char *pachTRE, int nTRECount,
             if( pszValue == NULL )
                 pszValue = "";
 
-            memset( pachTRE + nOldOffset + 14 + iStart, ' ', iSize );
-            memcpy( pachTRE + nOldOffset + 14 + iStart 
-                    + MAX(0,iSize-strlen(pszValue)), 
+            memset( szBLOCKA + iStart, ' ', iSize );
+            memcpy( szBLOCKA + iStart + MAX(0,iSize-strlen(pszValue)), 
                     pszValue, MIN(iSize,strlen(pszValue)) );
         }
 
         // required field - semantics unknown. 
-        memcpy( pachTRE + nOldOffset + 14 + 118, "010.0", 5);
+        memcpy( szBLOCKA + 118, "010.0", 5);
 
-/* -------------------------------------------------------------------- */
-/*      Increment values.                                               */
-/* -------------------------------------------------------------------- */
-        nTRECount++;
-        nBytesAvailable -= 137;
-        *pnOffset += 137;
+        if( !NITFWriteTRE( pachUDIDL, pachTRE, 
+                           pnOffset, nBytesAvailable, 
+                           "BLOCKA", szBLOCKA, 123 ) )
+            return FALSE;
+
+        nBytesAvailable -= (123 + 14);
     }
     
-    return nTRECount;
+    return TRUE;
 }
                       
 /************************************************************************/
