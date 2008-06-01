@@ -641,6 +641,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
         pszPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
         osTarget = CPLFormFilename(pszPath, szAuxTarget, NULL);
+        CPLFree(pszPath);
     }
 
 /* -------------------------------------------------------------------- */
