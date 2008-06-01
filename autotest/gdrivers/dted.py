@@ -139,6 +139,11 @@ def dted_5():
 
 def dted_6():
 
+    singleBlockoldValue = gdal.GetConfigOption('GDAL_DTED_SINGLE_BLOCK', 'NO')
+
+    # Use GDAL_DTED_SINGLE_BLOCK=YES to speed up the process
+    gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', 'YES')
+
     ds = gdal.Open( 'tmp/n43.dt1' )
     
     bandSrc = ds.GetRasterBand(1)
@@ -165,6 +170,8 @@ def dted_6():
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
 
+    gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', singleBlockoldValue)
+
     if chksum != 41374:
         gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
         return 'fail'
@@ -175,10 +182,17 @@ def dted_6():
 # Test a WGS72 georeferenced DTED
 
 def dted_7():
-    # a warning is issued
     ds = gdal.Open( 'data/n43_wgs72.dt0' )
 
+    # a warning is issued
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     prj = ds.GetProjection()
+    gdal.PopErrorHandler()
+
+    if gdal.GetLastErrorMsg() is None:
+        gdaltest.post_reason( 'An expected warning was not emitted' )
+        return 'fail'
+
     if prj != 'GEOGCS["WGS 72",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4322"]]':
         gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
         return 'fail'
@@ -201,6 +215,10 @@ def dted_8():
     gdal.PopErrorHandler()
 
     gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'NO')
+
+    if gdal.GetLastErrorMsg() is None:
+        gdaltest.post_reason( 'An expected warning was not emitted' )
+        return 'fail'
 
     # 49187 is the checksum of data is the DTED is read without checking its checksum
     # so we should not get this value
