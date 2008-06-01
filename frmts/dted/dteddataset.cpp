@@ -107,7 +107,13 @@ DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDS, int nBand )
     bNoDataSet = TRUE;
     dfNoDataValue = (double) DTED_NODATA_VALUE;
 
-    nBlockXSize = 1;
+    /* For some applications, it may be valuable to consider the whole DTED */
+    /* file as single block, as the column orientation doesn't fit very well */
+    /* with some scanline oriented algorithms */
+    /* Of course you need to have a big enough case size, particularly for DTED 2 */
+    /* datasets */
+    nBlockXSize = CSLTestBoolean(CPLGetConfigOption("GDAL_DTED_SINGLE_BLOCK", "NO")) ?
+                            poDS->GetRasterXSize() : 1;
     nBlockYSize = poDS->GetRasterYSize();
 }
 
@@ -126,6 +132,30 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     (void) nBlockXOff;
     CPLAssert( nBlockYOff == 0 );
 
+    if (nBlockXSize != 1)
+    {
+        panData = (GInt16 *) pImage;
+        GInt16* panBuffer = (GInt16*) CPLMalloc(sizeof(GInt16) * nBlockYSize);
+        int i;
+        for(i=0;i<nBlockXSize;i++)
+        {
+            if( !DTEDReadProfileEx( poDTED_DS->psDTED, i, panBuffer,
+                                    poDTED_DS->bVerifyChecksum ) )
+            {
+                CPLFree(panBuffer);
+                return CE_Failure;
+            }
+            int j;
+            for(j=0;j<nBlockYSize;j++)
+            {
+                panData[j * nBlockXSize + i] = panBuffer[nYSize - j - 1];
+            }
+        }
+
+        CPLFree(panBuffer);
+        return CE_None;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Read the data.                                                  */
 /* -------------------------------------------------------------------- */
@@ -166,6 +196,29 @@ CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if (poDTED_DS->eAccess != GA_Update)
         return CE_Failure;
+
+    if (nBlockXSize != 1)
+    {
+        panData = (GInt16 *) pImage;
+        GInt16* panBuffer = (GInt16*) CPLMalloc(sizeof(GInt16) * nBlockYSize);
+        int i;
+        for(i=0;i<nBlockXSize;i++)
+        {
+            int j;
+            for(j=0;j<nBlockYSize;j++)
+            {
+                panBuffer[j] = panData[j * nBlockXSize + i];
+            }
+            if( !DTEDWriteProfile( poDTED_DS->psDTED, i, panBuffer) )
+            {
+                CPLFree(panBuffer);
+                return CE_Failure;
+            }
+        }
+
+        CPLFree(panBuffer);
+        return CE_None;
+    }
 
     panData = (GInt16 *) pImage;
     if( !DTEDWriteProfile( poDTED_DS->psDTED, nBlockXOff, panData) )
