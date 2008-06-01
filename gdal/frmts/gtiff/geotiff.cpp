@@ -85,6 +85,7 @@ class GTiffDataset : public GDALPamDataset
 
     toff_t      nDirOffset;
     int		bBase;
+    int         bCloseTIFFHandle; /* usefull for closing TIFF handle opened by GTIFF_DIR: */
 
     uint16	nPlanarConfig;
     uint16	nSamplesPerPixel;
@@ -172,7 +173,7 @@ class GTiffDataset : public GDALPamDataset
 
     CPLErr	   OpenOffset( TIFF *, toff_t nDirOffset, int, GDALAccess );
 
-    static GDALDataset *OpenDir( const char *pszFilename );
+    static GDALDataset *OpenDir( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -1798,6 +1799,7 @@ GTiffDataset::GTiffDataset()
     dfNoDataValue = -9999.0;
     pszProjection = CPLStrdup("");
     bBase = TRUE;
+    bCloseTIFFHandle = FALSE;
     bTreatAsRGBA = FALSE;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
@@ -1869,7 +1871,7 @@ GTiffDataset::~GTiffDataset()
         }
     }
 
-    if( bBase )
+    if( bBase || bCloseTIFFHandle )
     {
         XTIFFClose( hTIFF );
     }
@@ -3109,7 +3111,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      directory of a TIFF file.                                       */
 /* -------------------------------------------------------------------- */
     if( EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
-        return OpenDir( poOpenInfo->pszFilename );
+        return OpenDir( poOpenInfo );
 
 /* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
@@ -3215,16 +3217,16 @@ void GTiffDataset::ApplyPamInfo()
 /*      Open a specific directory as encoded into a filename.           */
 /************************************************************************/
 
-GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
+GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !EQUALN(pszCompositeName,"GTIFF_DIR:",10) )
+    if( !EQUALN(poOpenInfo->pszFilename,"GTIFF_DIR:",10) )
         return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Split out filename, and dir#/offset.                            */
 /* -------------------------------------------------------------------- */
-    const char *pszFilename = pszCompositeName + 10;
+    const char *pszFilename = poOpenInfo->pszFilename + 10;
     int        bAbsolute = FALSE;
     toff_t     nOffset;
     
@@ -3287,6 +3289,12 @@ GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
     poDS = new GTiffDataset();
     poDS->SetDescription( pszFilename );
 
+    if (poOpenInfo->eAccess == GA_Update)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Opening a specific TIFF directory is not supported in update mode. Switching to read-only" );
+    }
+
     if( poDS->OpenOffset( hTIFF, nOffset, FALSE, GA_ReadOnly ) != CE_None )
     {
         delete poDS;
@@ -3294,6 +3302,7 @@ GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
     }
     else
     {
+        poDS->bCloseTIFFHandle = TRUE;
         return poDS;
     }
 }
