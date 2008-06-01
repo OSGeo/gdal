@@ -156,9 +156,34 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
         wrk_args = args;
 #endif
 
-        while( ((nPR = vsnprintf( psCtx->szLastErrMsg, 
-                                 psCtx->nLastErrMsgMax, fmt, wrk_args )) == -1
-                || nPR >= psCtx->nLastErrMsgMax-1)
+/* -------------------------------------------------------------------- */
+/*      If CPL_ACCUM_ERROR_MSG=ON and the active error handler          */
+/*      is CPLQuietErrorHandler, accumulate the error messages          */
+/* -------------------------------------------------------------------- */
+        int nPreviousSize = 0;
+        if ( psCtx->psHandlerStack != NULL &&
+             psCtx->psHandlerStack->pfnHandler == CPLQuietErrorHandler &&
+             EQUAL(CPLGetConfigOption( "CPL_ACCUM_ERROR_MSG", "" ), "ON"))
+        {
+            nPreviousSize = strlen(psCtx->szLastErrMsg);
+            if (nPreviousSize)
+            {
+                if (nPreviousSize + 1 + 1 >= psCtx->nLastErrMsgMax)
+                {
+                    psCtx->nLastErrMsgMax *= 3;
+                    psCtx = (CPLErrorContext *) 
+                        CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1);
+                    CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
+                }
+                psCtx->szLastErrMsg[nPreviousSize] = '\n';
+                psCtx->szLastErrMsg[nPreviousSize+1] = '0';
+                nPreviousSize ++;
+            }
+        }
+
+        while( ((nPR = vsnprintf( psCtx->szLastErrMsg+nPreviousSize, 
+                                 psCtx->nLastErrMsgMax-nPreviousSize, fmt, wrk_args )) == -1
+                || nPR >= psCtx->nLastErrMsgMax-nPreviousSize-1)
                && psCtx->nLastErrMsgMax < 1000000 )
         {
 #ifdef va_copy
