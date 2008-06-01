@@ -771,7 +771,7 @@ CPLErr RMFDataset::WriteHeader()
 
         memcpy( abyHeader, sHeader.szSignature, RMF_SIGNATURE_SIZE );
         RMF_WRITE_ULONG( abyHeader, sHeader.iVersion, 4 );
-        // Длина
+        //
         RMF_WRITE_ULONG( abyHeader, sHeader.nOvrOffset, 12 );
         RMF_WRITE_ULONG( abyHeader, sHeader.iUserID, 16 );
         memcpy( abyHeader + 20, sHeader.byName, RMF_NAME_SIZE );
@@ -840,6 +840,8 @@ CPLErr RMFDataset::WriteHeader()
 
         VSIFSeekL( fp, sHeader.nExtHdrOffset, SEEK_SET );
         VSIFWriteL( pabyExtHeader, 1, sHeader.nExtHdrSize, fp );
+
+        CPLFree( pabyExtHeader );
     }
 
 #undef RMF_WRITE_DOUBLE
