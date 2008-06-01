@@ -237,6 +237,9 @@ def ogr_geom_boundary_polygon():
     
     return 'success'
 
+###############################################################################
+# Test OGRBuildPolygonFromEdges()
+
 def ogr_geom_build_from_edges():
 
     if gdaltest.have_geos == 0:
@@ -244,19 +247,25 @@ def ogr_geom_build_from_edges():
 
     link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
 
-    f = open("data/build_from_edges.txt","rb")
-    try:
-        for line in f:
-          geom = ogr.CreateGeometryFromWkt( line )
-          #print "geom is",geom
-          link_coll.AddGeometry( geom )
-    finally:
-        f.close()
+    wkt_array = [
+      'LINESTRING (-87.601595 30.999522,-87.599623 31.000059,-87.599219 31.00017)',
+      'LINESTRING (-87.601595 30.999522,-87.604349 30.999493,-87.606935 30.99952)',
+      'LINESTRING (-87.59966 31.000756,-87.599851 31.000805,-87.599992 31.000805,-87.600215 31.000761,-87.600279 31.000723,-87.600586 31.000624,-87.601256 31.000508,-87.602501 31.000447,-87.602801 31.000469,-87.603108 31.000579,-87.603331 31.000716,-87.603523 31.000909,-87.603766 31.001233,-87.603913 31.00136)',
+      'LINESTRING (-87.606134 31.000182,-87.605885 31.000325,-87.605343 31.000716,-87.60466 31.001117,-87.604468 31.0012,-87.603913 31.00136)',
+      'LINESTRING (-87.599219 31.00017,-87.599289 31.0003,-87.599398 31.000426,-87.599564 31.000547,-87.599609 31.000701,-87.59966 31.000756)',
+      'LINESTRING (-87.606935 30.99952,-87.606713 30.999799,-87.6064 30.999981,-87.606134 31.000182)' ]
+
+    for wkt in wkt_array:
+        geom = ogr.CreateGeometryFromWkt( wkt )
+        #print "geom is",geom
+        link_coll.AddGeometry( geom )
+        geom.Destroy()
 
     try:
         poly = ogr.BuildPolygonFromEdges( link_coll )
         if poly is None:
             return 'fail'
+        poly.Destroy()
     except:
         return 'fail'
 
