@@ -129,7 +129,20 @@ def wms_4():
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
 	return 'skip'
 
+    gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+
     cs = gdaltest.wms_ds.GetRasterBand(1).Checksum( 0, 0, 100, 100 )
+
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
+    str = gdal.GetLastErrorMsg()
+    gdal.ErrorReset()
+
+    if str is not None and string.find(str, 'Service denied due to system overload') != -1:
+        print str
+        return 'skip'
+
     if cs != 3903:
         gdaltest.post_reason( 'Wrong checksum: ' + str(cs) )
         return 'fail'
