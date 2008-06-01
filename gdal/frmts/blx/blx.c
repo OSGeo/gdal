@@ -621,6 +621,7 @@ int blx_encode_celldata(blxcontext_t *ctx, blxdata *indata, int side, unsigned c
     for(cn=0; cn<4; cn++) 
 	BLXfree(c[cn]);
     BLXfree(tc1);
+    BLXfree(tmpdata);
 
     return p-outbuf;
 }
