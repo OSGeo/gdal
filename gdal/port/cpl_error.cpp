@@ -504,7 +504,8 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
             char      path[5000];
             int       i = 0;
 
-            strcpy( path, cpl_log );
+            strncpy( path, cpl_log, sizeof(path) - 10 );
+            path[sizeof(path)-1] = '\0';
 
             while( (fpLog = fopen( path, "rt" )) != NULL ) 
             {
