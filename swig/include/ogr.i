@@ -284,7 +284,7 @@ public:
 %feature( "kwargs" ) CreateDataSource;
   OGRDataSourceShadow *CreateDataSource( const char *name, 
                                     char **options = 0 ) {
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( (OGRSFDriverH) self, name, options);
     return ds;
   }
   
@@ -293,7 +293,7 @@ public:
   OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds, 
                                   const char* name, 
                                   char **options = 0 ) {
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, name, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource((OGRSFDriverH)self, (OGRDataSourceH) copy_ds, name, options);
     return ds;
   }
   
@@ -301,20 +301,20 @@ public:
 %feature( "kwargs" ) Open;
   OGRDataSourceShadow *Open( const char* name, 
                         int update=0 ) {
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, name, update);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open((OGRSFDriverH)self, name, update);
     return ds;
   }
 
   int DeleteDataSource( const char *name ) {
-    return OGR_Dr_DeleteDataSource( self, name );
+    return OGR_Dr_DeleteDataSource( (OGRSFDriverH)self, name );
   }
 
   bool TestCapability (const char *cap) {
-    return OGR_Dr_TestCapability(self, cap);
+    return OGR_Dr_TestCapability((OGRSFDriverH)self, cap);
   }
   
   const char * GetName() {
-    return OGR_Dr_GetName( self );
+    return OGR_Dr_GetName( (OGRSFDriverH) self );
   }
 
 
@@ -341,31 +341,31 @@ public:
 %mutable;
 
   ~OGRDataSourceShadow() {
-    OGRReleaseDataSource(self);
+    OGRReleaseDataSource((OGRDataSourceH)self);
   }
 
   int GetRefCount() {
-    return OGR_DS_GetRefCount(self);
+    return OGR_DS_GetRefCount((OGRDataSourceH)self);
   }
   
   int GetSummaryRefCount() {
-    return OGR_DS_GetSummaryRefCount(self);
+    return OGR_DS_GetSummaryRefCount((OGRDataSourceH)self);
   }
   
   int GetLayerCount() {
-    return OGR_DS_GetLayerCount(self);
+    return OGR_DS_GetLayerCount((OGRDataSourceH)self);
   }
   
   OGRDriverShadow * GetDriver() {
-    return (OGRDriverShadow *) OGR_DS_GetDriver( self );
+    return (OGRDriverShadow *) OGR_DS_GetDriver( (OGRDataSourceH)self );
   }
 
   const char * GetName() {
-    return OGR_DS_GetName(self);
+    return OGR_DS_GetName((OGRDataSourceH)self);
   }
   
   OGRErr DeleteLayer(int index){
-    return OGR_DS_DeleteLayer(self, index);
+    return OGR_DS_DeleteLayer((OGRDataSourceH)self, index);
   }
 
   /* Note that datasources own their layers */
@@ -374,11 +374,10 @@ public:
               OSRSpatialReferenceShadow* srs=NULL,
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
-								  name,
-								  srs,
-								  geom_type,
-								  options);
+    OGRLayerShadow* layer = (OGRLayerShadow*) 
+        OGR_DS_CreateLayer( (OGRDataSourceH)self, name,
+                            (OGRSpatialReferenceH) srs,
+		            geom_type, options);
     return layer;
   }
 
@@ -386,8 +385,8 @@ public:
   OGRLayerShadow *CopyLayer(OGRLayerShadow *src_layer,
             const char* new_name,
             char** options=0) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CopyLayer( self,
-                                                      src_layer,
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CopyLayer( (OGRDataSourceH)self,
+                                                      (OGRLayerH) src_layer,
                                                       new_name,
                                                       options);
     return layer;
@@ -395,17 +394,17 @@ public:
   
   %feature( "kwargs" ) GetLayerByIndex;
   OGRLayerShadow *GetLayerByIndex( int index=0) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayer(self, index);
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayer((OGRDataSourceH)self, index);
     return layer;
   }
 
   OGRLayerShadow *GetLayerByName( const char* layer_name) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayerByName(self, layer_name);
+    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayerByName((OGRDataSourceH)self, layer_name);
     return layer;
   }
 
   bool TestCapability(const char * cap) {
-    return OGR_DS_TestCapability(self, cap);
+    return OGR_DS_TestCapability((OGRDataSourceH)self, cap);
   }
 
 
@@ -413,16 +412,15 @@ public:
   OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* spatialFilter=NULL,
                         const char* dialect="") {
-    OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_ExecuteSQL((OGRDataSourceShadow*)self,
-                                                      statement,
-                                                      spatialFilter,
-                                                      dialect);
+    OGRLayerShadow* layer = (OGRLayerShadow*) 
+        OGR_DS_ExecuteSQL((OGRDataSourceH)self, statement, 
+                          (OGRGeometryH)spatialFilter, dialect);
     return layer;
   }
   
 %apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
   void ReleaseResultSet(OGRLayerShadow *layer){
-    OGR_DS_ReleaseResultSet(self, layer);
+    OGR_DS_ReleaseResultSet((OGRDataSourceH)self, (OGRLayerH) layer);
   }
 %clear OGRLayerShadow *layer;
 
@@ -443,125 +441,125 @@ public:
 %extend {
 
   int GetRefCount() {
-    return OGR_L_GetRefCount(self);
+    return OGR_L_GetRefCount((OGRLayerH)self);
   }
   
   void SetSpatialFilter(OGRGeometryShadow* filter) {
-    OGR_L_SetSpatialFilter (self, filter);
+    OGR_L_SetSpatialFilter ((OGRLayerH)self, (OGRGeometryH)filter);
   }
   
   void SetSpatialFilterRect( double minx, double miny,
                              double maxx, double maxy) {
-    OGR_L_SetSpatialFilterRect(self, minx, miny, maxx, maxy);                          
+    OGR_L_SetSpatialFilterRect((OGRLayerH)self, minx, miny, maxx, maxy);                          
   }
   
   OGRGeometryShadow *GetSpatialFilter() {
-    return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
+    return (OGRGeometryShadow *) OGR_L_GetSpatialFilter((OGRLayerH)self);
   }
 
   OGRErr SetAttributeFilter(char* filter_string) {
-    return OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
+    return OGR_L_SetAttributeFilter((OGRLayerH)self, filter_string);
   }
   
   void ResetReading() {
-    OGR_L_ResetReading(self);
+    OGR_L_ResetReading((OGRLayerH)self);
   }
   
   const char * GetName() {
-    return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
+    return OGR_FD_GetName(OGR_L_GetLayerDefn((OGRLayerH)self));
   }
  
   const char * GetGeometryColumn() {
-    return OGR_L_GetGeometryColumn(self);
+    return OGR_L_GetGeometryColumn((OGRLayerH)self);
   }
   
   const char * GetFIDColumn() {
-    return OGR_L_GetFIDColumn(self);
+    return OGR_L_GetFIDColumn((OGRLayerH)self);
   }
 
 %newobject GetFeature;
   OGRFeatureShadow *GetFeature(long fid) {
-    return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
+    return (OGRFeatureShadow*) OGR_L_GetFeature((OGRLayerH)self, fid);
   }
   
 %newobject GetNextFeature;
   OGRFeatureShadow *GetNextFeature() {
-    return (OGRFeatureShadow*) OGR_L_GetNextFeature(self);
+    return (OGRFeatureShadow*) OGR_L_GetNextFeature((OGRLayerH)self);
   }
   
   OGRErr SetNextByIndex(long new_index) {
-    return OGR_L_SetNextByIndex(self, new_index);
+    return OGR_L_SetNextByIndex((OGRLayerH)self, new_index);
   }
   
   OGRErr SetFeature(OGRFeatureShadow *feature) {
-    return OGR_L_SetFeature(self, feature);
+    return OGR_L_SetFeature((OGRLayerH)self, (OGRFeatureH)feature);
   }
   
 
   OGRErr CreateFeature(OGRFeatureShadow *feature) {
-    return OGR_L_CreateFeature(self, feature);
+    return OGR_L_CreateFeature((OGRLayerH)self, (OGRFeatureH) feature);
   }
   
   OGRErr DeleteFeature(long fid) {
-    return OGR_L_DeleteFeature(self, fid);
+    return OGR_L_DeleteFeature((OGRLayerH)self, fid);
   }
   
   OGRErr SyncToDisk() {
-    return OGR_L_SyncToDisk(self);
+    return OGR_L_SyncToDisk((OGRLayerH)self);
   }
   
   OGRFeatureDefnShadow *GetLayerDefn() {
-    return (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn(self);
+    return (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn((OGRLayerH)self);
   }
 
   %feature( "kwargs" ) GetFeatureCount;  
   int GetFeatureCount(int force=1) {
-    return OGR_L_GetFeatureCount(self, force);
+    return OGR_L_GetFeatureCount((OGRLayerH)self, force);
   }
   
 #if defined(SWIGCSHARP)
   %feature( "kwargs" ) GetExtent;
   OGRErr GetExtent(OGREnvelope* extent, int force=1) {
-    return OGR_L_GetExtent(self, extent, force);
+    return OGR_L_GetExtent((OGRLayerH)self, extent, force);
   }
 #else
   %feature( "kwargs" ) GetExtent;
   OGRErr GetExtent(double argout[4], int force=1) {
-    return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
+    return OGR_L_GetExtent((OGRLayerH)self, (OGREnvelope*)argout, force);
   }
 #endif
 
   bool TestCapability(const char* cap) {
-    return OGR_L_TestCapability(self, cap);
+    return OGR_L_TestCapability((OGRLayerH)self, cap);
   }
   
   %feature( "kwargs" ) CreateField;
   OGRErr CreateField(OGRFieldDefnShadow* field_def, int approx_ok = 1) {
-    return OGR_L_CreateField(self, field_def, approx_ok);
+    return OGR_L_CreateField((OGRLayerH)self, (OGRFieldDefnH) field_def, approx_ok);
   }
   
   OGRErr StartTransaction() {
-    return OGR_L_StartTransaction(self);
+    return OGR_L_StartTransaction((OGRLayerH)self);
   }
   
   OGRErr CommitTransaction() {
-    return OGR_L_CommitTransaction(self);
+    return OGR_L_CommitTransaction((OGRLayerH)self);
   }
 
   OGRErr RollbackTransaction() {
-    return OGR_L_RollbackTransaction(self);
+    return OGR_L_RollbackTransaction((OGRLayerH)self);
   }
   
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
-    OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef(self);
+    OGRSpatialReferenceH ref =  OGR_L_GetSpatialRef((OGRLayerH)self);
     if( ref )
         OSRReference(ref);
     return (OSRSpatialReferenceShadow*) ref;
   }
   
   GIntBig GetFeaturesRead() {
-    return OGR_L_GetFeaturesRead(self);
+    return OGR_L_GetFeaturesRead((OGRLayerH)self);
   }
 
 } /* %extend */
@@ -580,58 +578,58 @@ public:
 %extend {
 
   ~OGRFeatureShadow() {
-    OGR_F_Destroy(self);
+    OGR_F_Destroy((OGRFeatureH) self);
   }
 
   %feature("kwargs") OGRFeatureShadow;
   OGRFeatureShadow( OGRFeatureDefnShadow *feature_def = 0 ) {
-      return (OGRFeatureShadow*) OGR_F_Create( feature_def );
+      return (OGRFeatureShadow*) OGR_F_Create( (OGRFeatureDefnH)feature_def );
   }
 
   OGRFeatureDefnShadow *GetDefnRef() {
-    return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
+    return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef((OGRFeatureH)self);
   }
   
   OGRErr SetGeometry(OGRGeometryShadow* geom) {
-    return OGR_F_SetGeometry(self, geom);
+    return OGR_F_SetGeometry((OGRFeatureH)self, (OGRGeometryH)geom);
   }
 
 /* The feature takes over owernship of the geometry. */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
-    return OGR_F_SetGeometryDirectly(self, geom);
+    return OGR_F_SetGeometryDirectly((OGRFeatureH)self, (OGRGeometryH)geom);
   }
 %clear OGRGeometryShadow *geom;
   
   /* Feature owns its geometry */
   OGRGeometryShadow *GetGeometryRef() {
-    return (OGRGeometryShadow*) OGR_F_GetGeometryRef(self);
+    return (OGRGeometryShadow*) OGR_F_GetGeometryRef((OGRFeatureH)self);
   }
   
   %newobject Clone;
   OGRFeatureShadow *Clone() {
-    return (OGRFeatureShadow*) OGR_F_Clone(self);
+    return (OGRFeatureShadow*) OGR_F_Clone((OGRFeatureH)self);
   }
   
   bool Equal(OGRFeatureShadow *feature) {
-    return OGR_F_Equal(self, feature);
+    return OGR_F_Equal((OGRFeatureH)self, (OGRFeatureH) feature);
   }
   
   int GetFieldCount() {
-    return OGR_F_GetFieldCount(self);
+    return OGR_F_GetFieldCount((OGRFeatureH)self);
   }
 
   /* ---- GetFieldDefnRef --------------------- */
   OGRFieldDefnShadow *GetFieldDefnRef(int id) {
-    return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, id);
+    return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef((OGRFeatureH)self, id);
   }
 
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+	  return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef((OGRFeatureH)self, i);
       return NULL;
   }
   /* ------------------------------------------- */
@@ -639,16 +637,16 @@ public:
   /* ---- GetFieldAsString --------------------- */
 
   const char* GetFieldAsString(int id) {
-    return (const char *) OGR_F_GetFieldAsString(self, id);
+    return (const char *) OGR_F_GetFieldAsString((OGRFeatureH)self, id);
   }
 
 #ifndef SWIGPERL
   const char* GetFieldAsString(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return (const char *) OGR_F_GetFieldAsString(self, i);
+	  return (const char *) OGR_F_GetFieldAsString((OGRFeatureH)self, i);
       return NULL;
   }
 #endif
@@ -657,16 +655,16 @@ public:
   /* ---- GetFieldAsInteger -------------------- */
 
   int GetFieldAsInteger(int id) {
-    return OGR_F_GetFieldAsInteger(self, id);
+    return OGR_F_GetFieldAsInteger((OGRFeatureH)self, id);
   }
 
 #ifndef SWIGPERL
   int GetFieldAsInteger(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return OGR_F_GetFieldAsInteger(self, i);
+	  return OGR_F_GetFieldAsInteger((OGRFeatureH)self, i);
       return 0;
   }
 #endif
@@ -675,16 +673,16 @@ public:
   /* ---- GetFieldAsDouble --------------------- */
 
   double GetFieldAsDouble(int id) {
-    return OGR_F_GetFieldAsDouble(self, id);
+    return OGR_F_GetFieldAsDouble((OGRFeatureH)self, id);
   }
 
 #ifndef SWIGPERL
   double GetFieldAsDouble(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return OGR_F_GetFieldAsDouble(self, i);
+	  return OGR_F_GetFieldAsDouble((OGRFeatureH)self, i);
       return 0;
   }
 #endif
@@ -694,66 +692,66 @@ public:
   void GetFieldAsDateTime(int id, int *pnYear, int *pnMonth, int *pnDay,
 			  int *pnHour, int *pnMinute, int *pnSecond,
 			  int *pnTZFlag) {
-      OGR_F_GetFieldAsDateTime(self, id, pnYear, pnMonth, pnDay,
+      OGR_F_GetFieldAsDateTime((OGRFeatureH)self, id, pnYear, pnMonth, pnDay,
 			       pnHour, pnMinute, pnSecond,
 			       pnTZFlag);
   }
   %clear (int *);
 
   void GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
-      *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
+      *pList = OGR_F_GetFieldAsIntegerList((OGRFeatureH)self, id, nLen);
   }
 
   void GetFieldAsDoubleList(int id, int *nLen, const double **pList) {
-      *pList = OGR_F_GetFieldAsDoubleList(self, id, nLen);
+      *pList = OGR_F_GetFieldAsDoubleList((OGRFeatureH)self, id, nLen);
   }
 
   void GetFieldAsStringList(int id, char ***pList) {
-      *pList = OGR_F_GetFieldAsStringList(self, id);
+      *pList = OGR_F_GetFieldAsStringList((OGRFeatureH)self, id);
   }
   
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
-    return OGR_F_IsFieldSet(self, id);
+    return OGR_F_IsFieldSet((OGRFeatureH)self, id);
   }
 
   bool IsFieldSet(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return OGR_F_IsFieldSet(self, i);
+	  return OGR_F_IsFieldSet((OGRFeatureH)self, i);
       return (bool)0;
   }
   /* ------------------------------------------- */  
       
   int GetFieldIndex(const char* name) {
-      return OGR_F_GetFieldIndex(self, name);
+      return OGR_F_GetFieldIndex((OGRFeatureH)self, name);
   }
 
   int GetFID() {
-    return OGR_F_GetFID(self);
+    return OGR_F_GetFID((OGRFeatureH)self);
   }
   
   OGRErr SetFID(int fid) {
-    return OGR_F_SetFID(self, fid);
+    return OGR_F_SetFID((OGRFeatureH)self, fid);
   }
   
   void DumpReadable() {
-    OGR_F_DumpReadable(self, NULL);
+    OGR_F_DumpReadable((OGRFeatureH)self, NULL);
   }
 
   void UnsetField(int id) {
-    OGR_F_UnsetField(self, id);
+    OGR_F_UnsetField((OGRFeatureH)self, id);
   }
 
 #ifndef SWIGPERL
   void UnsetField(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_UnsetField(self, i);
+	  OGR_F_UnsetField((OGRFeatureH)self, i);
   }
 #endif
 
@@ -761,52 +759,52 @@ public:
   
   %apply ( tostring argin ) { (const char* value) };
   void SetField(int id, const char* value) {
-    OGR_F_SetFieldString(self, id, value);
+    OGR_F_SetFieldString((OGRFeatureH)self, id, value);
   }
 
 #ifndef SWIGPERL
   void SetField(const char* name, const char* value) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_SetFieldString(self, i, value);
+	  OGR_F_SetFieldString((OGRFeatureH)self, i, value);
   }
 #endif
   %clear (const char* value );
   
   void SetField(int id, int value) {
-    OGR_F_SetFieldInteger(self, id, value);
+    OGR_F_SetFieldInteger((OGRFeatureH)self, id, value);
   }
   
 #ifndef SWIGPERL
   void SetField(const char* name, int value) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_SetFieldInteger(self, i, value);
+	  OGR_F_SetFieldInteger((OGRFeatureH)self, i, value);
   }
 #endif
   
   void SetField(int id, double value) {
-    OGR_F_SetFieldDouble(self, id, value);
+    OGR_F_SetFieldDouble((OGRFeatureH)self, id, value);
   }
   
 #ifndef SWIGPERL
   void SetField(const char* name, double value) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_SetFieldDouble(self, i, value);
+	  OGR_F_SetFieldDouble((OGRFeatureH)self, i, value);
   }
 #endif
   
   void SetField( int id, int year, int month, int day,
                              int hour, int minute, int second, 
                              int tzflag ) {
-    OGR_F_SetFieldDateTime(self, id, year, month, day,
+    OGR_F_SetFieldDateTime((OGRFeatureH)self, id, year, month, day,
                              hour, minute, second, 
                              tzflag);
   }
@@ -815,56 +813,56 @@ public:
   void SetField(const char* name, int year, int month, int day,
                              int hour, int minute, int second, 
                              int tzflag ) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_SetFieldDateTime(self, i, year, month, day,
+	  OGR_F_SetFieldDateTime((OGRFeatureH)self, i, year, month, day,
 				 hour, minute, second, 
 				 tzflag);
   }
 #endif
 
   void SetFieldIntegerList(int id, int nList, int *pList) {
-      OGR_F_SetFieldIntegerList(self, id, nList, pList);
+      OGR_F_SetFieldIntegerList((OGRFeatureH)self, id, nList, pList);
   }
 
   void SetFieldDoubleList(int id, int nList, double *pList) {
-      OGR_F_SetFieldDoubleList(self, id, nList, pList);
+      OGR_F_SetFieldDoubleList((OGRFeatureH)self, id, nList, pList);
   }
 
   void SetFieldStringList(int id, char **pList) {
-      OGR_F_SetFieldStringList(self, id, pList);
+      OGR_F_SetFieldStringList((OGRFeatureH)self, id, pList);
   }
 
   /* ------------------------------------------- */  
   
   %feature("kwargs") SetFrom;
   OGRErr SetFrom(OGRFeatureShadow *other, int forgiving=1) {
-    return OGR_F_SetFrom(self, other, forgiving);
+    return OGR_F_SetFrom((OGRFeatureH)self, (OGRFeatureH)other, forgiving);
   }
   
   const char *GetStyleString() {
-    return (const char*) OGR_F_GetStyleString(self);
+    return (const char*) OGR_F_GetStyleString((OGRFeatureH)self);
   }
   
   void SetStyleString(const char* the_string) {
-    OGR_F_SetStyleString(self, the_string);
+    OGR_F_SetStyleString((OGRFeatureH)self, the_string);
   }
 
   /* ---- GetFieldType ------------------------- */  
   OGRFieldType GetFieldType(int id) {
-    return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, id));
+    return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( (OGRFeatureH)self, id));
   }
   
   OGRFieldType GetFieldType(const char* name) {
-      int i = OGR_F_GetFieldIndex(self, name);
+      int i = OGR_F_GetFieldIndex((OGRFeatureH)self, name);
       if (i == -1) {
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
 	  return (OGRFieldType)0;
       } else
 	  return (OGRFieldType) OGR_Fld_GetType( 
-	      OGR_F_GetFieldDefnRef( self,  i )
+	      OGR_F_GetFieldDefnRef( (OGRFeatureH)self,  i )
 	      );
   }
   /* ------------------------------------------- */  
@@ -886,7 +884,7 @@ public:
   
   ~OGRFeatureDefnShadow() {
     /*OGR_FD_Destroy(self);*/
-    OGR_FD_Release( OGRFeatureDefnH(self) );
+    OGR_FD_Release( (OGRFeatureDefnH)self );
   }
 
   %feature("kwargs") OGRFeatureDefnShadow;
@@ -897,36 +895,36 @@ public:
   }
   
   const char* GetName(){
-    return OGR_FD_GetName(self);
+    return OGR_FD_GetName((OGRFeatureDefnH)self);
   }
   
   int GetFieldCount(){
-    return OGR_FD_GetFieldCount(self);
+    return OGR_FD_GetFieldCount((OGRFeatureDefnH)self);
   }
   
   /* FeatureDefns own their FieldDefns */
   OGRFieldDefnShadow* GetFieldDefn(int i){
-    return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
+    return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn((OGRFeatureDefnH)self, i);
   }
 
   int GetFieldIndex(const char* name) {
-      return OGR_FD_GetFieldIndex(self, name);
+      return OGR_FD_GetFieldIndex((OGRFeatureDefnH)self, name);
   }
   
   void AddFieldDefn(OGRFieldDefnShadow* defn) {
-    OGR_FD_AddFieldDefn(self, defn);
+    OGR_FD_AddFieldDefn((OGRFeatureDefnH)self, (OGRFieldDefnH) defn);
   }
   
   OGRwkbGeometryType GetGeomType() {
-    return (OGRwkbGeometryType) OGR_FD_GetGeomType(self);
+    return (OGRwkbGeometryType) OGR_FD_GetGeomType((OGRFeatureDefnH)self);
   }
   
   void SetGeomType(OGRwkbGeometryType geom_type) {
-    OGR_FD_SetGeomType(self, geom_type);
+    OGR_FD_SetGeomType((OGRFeatureDefnH)self, geom_type);
   }
   
   int GetReferenceCount(){
-    return OGR_FD_GetReferenceCount(self);
+    return OGR_FD_GetReferenceCount((OGRFeatureDefnH)self);
   }
   
 } /* %extend */
@@ -946,7 +944,7 @@ public:
 %extend {
 
   ~OGRFieldDefnShadow() {
-    OGR_Fld_Destroy(self);
+    OGR_Fld_Destroy((OGRFieldDefnH)self);
   }
 
   %feature("kwargs") OGRFieldDefnShadow;
@@ -956,47 +954,47 @@ public:
   }
 
   const char * GetName() {
-    return (const char *) OGR_Fld_GetNameRef(self);
+    return (const char *) OGR_Fld_GetNameRef((OGRFieldDefnH)self);
   }
   
   const char * GetNameRef() {
-    return (const char *) OGR_Fld_GetNameRef(self);
+    return (const char *) OGR_Fld_GetNameRef((OGRFieldDefnH)self);
   }
   
   void SetName( const char* name) {
-    OGR_Fld_SetName(self, name);
+    OGR_Fld_SetName((OGRFieldDefnH)self, name);
   }
   
   OGRFieldType GetType() {
-    return OGR_Fld_GetType(self);
+    return OGR_Fld_GetType((OGRFieldDefnH)self);
   }
 
   void SetType(OGRFieldType type) {
-    OGR_Fld_SetType(self, type);
+    OGR_Fld_SetType((OGRFieldDefnH)self, type);
   }
   
   OGRJustification GetJustify() {
-    return OGR_Fld_GetJustify(self);
+    return OGR_Fld_GetJustify((OGRFieldDefnH)self);
   }
   
   void SetJustify(OGRJustification justify) {
-    OGR_Fld_SetJustify(self, justify);
+    OGR_Fld_SetJustify((OGRFieldDefnH)self, justify);
   }
   
   int GetWidth () {
-    return OGR_Fld_GetWidth(self);
+    return OGR_Fld_GetWidth((OGRFieldDefnH)self);
   }
   
   void SetWidth (int width) {
-    OGR_Fld_SetWidth(self, width);
+    OGR_Fld_SetWidth((OGRFieldDefnH)self, width);
   }
   
   int GetPrecision() {
-    return OGR_Fld_GetPrecision(self);
+    return OGR_Fld_GetPrecision((OGRFieldDefnH)self);
   }
   
   void SetPrecision(int precision) {
-    OGR_Fld_SetPrecision(self, precision);
+    OGR_Fld_SetPrecision((OGRFieldDefnH)self, precision);
   }
 
   const char * GetFieldTypeName(OGRFieldType type) {
@@ -1024,9 +1022,9 @@ public:
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
+    OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
-                                      reference,
+                                      (OGRSpatialReferenceH) reference,
                                       &geom,
                                       len );
     if (err != 0 ) {
@@ -1050,8 +1048,8 @@ public:
 %inline {
 OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
-    OGRErr err = OGR_G_CreateFromWkb((unsigned char*) pBuf, reference, &geom, nLen);
+    OGRGeometryH geom;
+    OGRErr err = OGR_G_CreateFromWkb((unsigned char*) pBuf, (OGRSpatialReferenceH) reference, &geom, nLen);
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
@@ -1067,9 +1065,9 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
                                       OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
+    OGRGeometryH geom;
     OGRErr err = OGR_G_CreateFromWkt(val,
-                                      reference,
+                                     (OGRSpatialReferenceH) reference,
                                       &geom);
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
@@ -1111,7 +1109,8 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
   
   OGRErr eErr;
 
-  hPolygon = OGRBuildPolygonFromEdges( hLineCollection, bBestEffort, 
+  hPolygon = OGRBuildPolygonFromEdges( (OGRGeometryH) hLineCollection, 
+                                       bBestEffort, 
                                        bAutoClose, dfTolerance, &eErr );
 
   if (eErr != OGRERR_NONE ) {
@@ -1134,7 +1133,7 @@ public:
 %extend {
     
   ~OGRGeometryShadow() {
-    OGR_G_DestroyGeometry( self );
+    OGR_G_DestroyGeometry( (OGRGeometryH)self );
   }
   
 #ifndef SWIGJAVA
@@ -1168,268 +1167,274 @@ public:
 #endif
 
   OGRErr ExportToWkt( char** argout ) {
-    return OGR_G_ExportToWkt(self, argout);
+    return OGR_G_ExportToWkt((OGRGeometryH)self, argout);
   }
 
 #ifndef SWIGCSHARP
 #ifndef SWIGJAVA
   %feature("kwargs") ExportToWkb;
   OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
-    *nLen = OGR_G_WkbSize( self );
+    *nLen = OGR_G_WkbSize( (OGRGeometryH)self );
     *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
-    return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
+    return OGR_G_ExportToWkb((OGRGeometryH)self, byte_order, 
+                             (unsigned char*) *pBuf );
   }
 #endif
 #endif
 
   const char * ExportToGML() {
-    return (const char *) OGR_G_ExportToGML(self);
+    return (const char *) OGR_G_ExportToGML((OGRGeometryH)self);
   }
   
   const char * ExportToKML(const char* altitude_mode=NULL) {
-    return (const char *) OGR_G_ExportToKML(self, altitude_mode);
+    return (const char *) OGR_G_ExportToKML((OGRGeometryH)self, altitude_mode);
   }
 
   const char * ExportToJson() {
-    return (const char *) OGR_G_ExportToJson(self);
+    return (const char *) OGR_G_ExportToJson((OGRGeometryH)self);
   }
 
   %feature("kwargs") AddPoint;
   void AddPoint(double x, double y, double z = 0) {
-    OGR_G_AddPoint( self, x, y, z );
+    OGR_G_AddPoint( (OGRGeometryH)self, x, y, z );
   }
   
   void AddPoint_2D(double x, double y) {
-    OGR_G_AddPoint_2D( self, x, y );
+    OGR_G_AddPoint_2D( (OGRGeometryH)self, x, y );
   }
 
 /* The geometry now owns an inner geometry */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow* other_disown};
   OGRErr AddGeometryDirectly( OGRGeometryShadow* other_disown ) {
-    return OGR_G_AddGeometryDirectly( self, other_disown );
+    return OGR_G_AddGeometryDirectly( (OGRGeometryH)self, (OGRGeometryH)other_disown );
   }
 %clear OGRGeometryShadow* other_disown;
 
   OGRErr AddGeometry( OGRGeometryShadow* other ) {
-    return OGR_G_AddGeometry( self, other );
+    return OGR_G_AddGeometry( (OGRGeometryH)self, (OGRGeometryH)other );
   }
 
   %newobject Clone;
   OGRGeometryShadow* Clone() {
-    return (OGRGeometryShadow*) OGR_G_Clone(self);
+    return (OGRGeometryShadow*) OGR_G_Clone((OGRGeometryH)self);
   } 
     
   OGRwkbGeometryType GetGeometryType() {
-    return (OGRwkbGeometryType) OGR_G_GetGeometryType(self);
+    return (OGRwkbGeometryType) OGR_G_GetGeometryType((OGRGeometryH)self);
   }
 
   const char * GetGeometryName() {
-    return (const char *) OGR_G_GetGeometryName(self);
+    return (const char *) OGR_G_GetGeometryName((OGRGeometryH)self);
   }
   
   double GetArea() {
-    return OGR_G_GetArea(self);
+    return OGR_G_GetArea((OGRGeometryH)self);
   }
   
   int GetPointCount() {
-    return OGR_G_GetPointCount(self);
+    return OGR_G_GetPointCount((OGRGeometryH)self);
   }
 
   %feature("kwargs") GetX;  
   double GetX(int point=0) {
-    return OGR_G_GetX(self, point);
+    return OGR_G_GetX((OGRGeometryH)self, point);
   }
 
   %feature("kwargs") GetY;  
   double GetY(int point=0) {
-    return OGR_G_GetY(self, point);
+    return OGR_G_GetY((OGRGeometryH)self, point);
   }
 
   %feature("kwargs") GetZ;  
   double GetZ(int point=0) {
-    return OGR_G_GetZ(self, point);
+    return OGR_G_GetZ((OGRGeometryH)self, point);
   } 
 
   void GetPoint(int iPoint = 0, double argout[3] = NULL) {
-    OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
+    OGR_G_GetPoint( (OGRGeometryH)self, iPoint, argout+0, argout+1, argout+2 );
   }
 
   void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
-    OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
+    OGR_G_GetPoint( (OGRGeometryH)self, iPoint, argout+0, argout+1, NULL );
   }
 
   int GetGeometryCount() {
-    return OGR_G_GetGeometryCount(self);
+    return OGR_G_GetGeometryCount((OGRGeometryH)self);
   }
 
   %feature("kwargs") SetPoint;    
   void SetPoint(int point, double x, double y, double z=0) {
-    OGR_G_SetPoint(self, point, x, y, z);
+    OGR_G_SetPoint((OGRGeometryH)self, point, x, y, z);
   }
 
   %feature("kwargs") SetPoint_2D;
   void SetPoint_2D(int point, double x, double y) {
-    OGR_G_SetPoint_2D(self, point, x, y);
+    OGR_G_SetPoint_2D((OGRGeometryH)self, point, x, y);
   }
   
   /* Geometries own their internal geometries */
   OGRGeometryShadow* GetGeometryRef(int geom) {
-    return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
+    return (OGRGeometryShadow*) OGR_G_GetGeometryRef((OGRGeometryH)self, geom);
   }
 
   %newobject GetBoundary;
   OGRGeometryShadow* GetBoundary() {
-    return (OGRGeometryShadow*) OGR_G_GetBoundary(self);
-  }  
+    return (OGRGeometryShadow*) OGR_G_GetBoundary((OGRGeometryH)self);
+  }
 
   %newobject ConvexHull;
   OGRGeometryShadow* ConvexHull() {
-    return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
+    return (OGRGeometryShadow*) OGR_G_ConvexHull((OGRGeometryH)self);
   } 
 
   %newobject Buffer;
   %feature("kwargs") Buffer; 
   OGRGeometryShadow* Buffer( double distance, int quadsecs=30 ) {
-    return (OGRGeometryShadow*) OGR_G_Buffer( self, distance, quadsecs );
+    return (OGRGeometryShadow*) OGR_G_Buffer( (OGRGeometryH)self, distance, quadsecs );
   }
 
   %newobject Intersection;
   OGRGeometryShadow* Intersection( OGRGeometryShadow* other ) {
-    return (OGRGeometryShadow*) OGR_G_Intersection( self, other );
+    return (OGRGeometryShadow*) OGR_G_Intersection( (OGRGeometryH)self, (OGRGeometryH)other );
   }  
   
   %newobject Union;
   OGRGeometryShadow* Union( OGRGeometryShadow* other ) {
-    return (OGRGeometryShadow*) OGR_G_Union( self, other );
+    return (OGRGeometryShadow*) OGR_G_Union( (OGRGeometryH)self, (OGRGeometryH)other );
   }  
   
   %newobject Difference;
   OGRGeometryShadow* Difference( OGRGeometryShadow* other ) {
-    return (OGRGeometryShadow*) OGR_G_Difference( self, other );
+    return (OGRGeometryShadow*) 
+        OGR_G_Difference( (OGRGeometryH)self, (OGRGeometryH)other );
   }  
 
   %newobject SymmetricDifference;
   OGRGeometryShadow* SymmetricDifference( OGRGeometryShadow* other ) {
-    return (OGRGeometryShadow*) OGR_G_SymmetricDifference( self, other );
+    return (OGRGeometryShadow*) 
+        OGR_G_SymmetricDifference( (OGRGeometryH)self, (OGRGeometryH)other );
   } 
   
   double Distance( OGRGeometryShadow* other) {
-    return OGR_G_Distance(self, other);
+    return OGR_G_Distance((OGRGeometryH)self, (OGRGeometryH)other);
   }
   
   void Empty () {
-    OGR_G_Empty(self);
+    OGR_G_Empty((OGRGeometryH)self);
   }
 
   bool IsEmpty () {
-    return OGR_G_IsEmpty(self);
+    return OGR_G_IsEmpty((OGRGeometryH)self);
   }  
   
   bool IsValid () {
-    return OGR_G_IsValid(self);
+    return OGR_G_IsValid((OGRGeometryH)self);
   }  
   
   bool IsSimple () {
-    return OGR_G_IsSimple(self);
+    return OGR_G_IsSimple((OGRGeometryH)self);
   }  
   
   bool IsRing () {
-    return OGR_G_IsRing(self);
+    return OGR_G_IsRing((OGRGeometryH)self);
   }  
   
   bool Intersect (OGRGeometryShadow* other) {
-    return OGR_G_Intersect(self, other);
+    return OGR_G_Intersect((OGRGeometryH)self, (OGRGeometryH)other);
   }
 
   bool Equal (OGRGeometryShadow* other) {
-    return OGR_G_Equal(self, other);
+    return OGR_G_Equal((OGRGeometryH)self, (OGRGeometryH)other);
   }
   
   bool Disjoint(OGRGeometryShadow* other) {
-    return OGR_G_Disjoint(self, other);
+    return OGR_G_Disjoint((OGRGeometryH)self, (OGRGeometryH)other);
   }
 
   bool Touches (OGRGeometryShadow* other) {
-    return OGR_G_Touches(self, other);
+    return OGR_G_Touches((OGRGeometryH)self, (OGRGeometryH)other);
   }
 
   bool Crosses (OGRGeometryShadow* other) {
-    return OGR_G_Crosses(self, other);
+    return OGR_G_Crosses((OGRGeometryH)self, (OGRGeometryH)other);
   }
 
   bool Within (OGRGeometryShadow* other) {
-    return OGR_G_Within(self, other);
+    return OGR_G_Within((OGRGeometryH)self, (OGRGeometryH)other);
   }
 
   bool Contains (OGRGeometryShadow* other) {
-    return OGR_G_Contains(self, other);
+    return OGR_G_Contains((OGRGeometryH)self, (OGRGeometryH)other);
   }
   
   bool Overlaps (OGRGeometryShadow* other) {
-    return OGR_G_Overlaps(self, other);
+    return OGR_G_Overlaps((OGRGeometryH)self, (OGRGeometryH)other);
   }
 
   OGRErr TransformTo(OSRSpatialReferenceShadow* reference) {
-    return OGR_G_TransformTo(self, reference);
+    return OGR_G_TransformTo((OGRGeometryH)self, 
+                             (OGRSpatialReferenceH) reference);
   }
   
   OGRErr Transform(OSRCoordinateTransformationShadow* trans) {
-    return OGR_G_Transform(self, trans);
+    return OGR_G_Transform((OGRGeometryH)self, 
+                           (OGRCoordinateTransformationH) trans);
   }
   
   %newobject GetSpatialReference;
   OSRSpatialReferenceShadow* GetSpatialReference() {
-    OGRSpatialReferenceH ref =  OGR_G_GetSpatialReference(self);
+    OGRSpatialReferenceH ref =  OGR_G_GetSpatialReference((OGRGeometryH)self);
     if( ref )
         OSRReference(ref);
     return (OSRSpatialReferenceShadow*) ref;
   }
   
   void AssignSpatialReference(OSRSpatialReferenceShadow* reference) {
-    OGR_G_AssignSpatialReference(self, reference);
+    OGR_G_AssignSpatialReference((OGRGeometryH)self, 
+                                 (OGRSpatialReferenceH) reference);
   }
   
   void CloseRings() {
-    OGR_G_CloseRings(self);
+    OGR_G_CloseRings((OGRGeometryH)self);
   }
   
   void FlattenTo2D() {
-    OGR_G_FlattenTo2D(self);
+    OGR_G_FlattenTo2D((OGRGeometryH)self);
   }
 
 #if defined(SWIGCSHARP)  
   void GetEnvelope(OGREnvelope *env) {
-    OGR_G_GetEnvelope(self, env);
+    OGR_G_GetEnvelope((OGRGeometryH)self, env);
   }
 #else
   void GetEnvelope(double argout[4]) {
-    OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
+    OGR_G_GetEnvelope((OGRGeometryH)self, (OGREnvelope*)argout);
   }
 #endif  
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA)
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
     OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
-    OGR_G_Centroid( self, pt );
+    OGR_G_Centroid( (OGRGeometryH) self, (OGRGeometryH) pt );
     return pt;
   }
 #endif
   
   int WkbSize() {
-    return OGR_G_WkbSize(self);
+    return OGR_G_WkbSize((OGRGeometryH)self);
   }
   
   int GetCoordinateDimension() {
-    return OGR_G_GetCoordinateDimension(self);
+    return OGR_G_GetCoordinateDimension((OGRGeometryH)self);
   }
 
   void SetCoordinateDimension(int dimension) {
-    OGR_G_SetCoordinateDimension(self, dimension);
+    OGR_G_SetCoordinateDimension((OGRGeometryH)self, dimension);
   }
   
   int GetDimension() {
-    return OGR_G_GetDimension(self);
+    return OGR_G_GetDimension((OGRGeometryH)self);
   }
 
 } /* %extend */
@@ -1443,19 +1448,19 @@ public:
 
 %{
 char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
-  return OGR_Dr_GetName( h );
+  return OGR_Dr_GetName( (OGRSFDriverH) h );
 }
 
 char const *OGRDataSourceShadow_get_name( OGRDataSourceShadow *h ) {
-  return OGR_DS_GetName( h );
+  return OGR_DS_GetName( (OGRDataSourceH) h );
 }
 
 char const *OGRDriverShadow_name_get( OGRDriverShadow *h ) {
-  return OGR_Dr_GetName( h );
+  return OGR_Dr_GetName( (OGRSFDriverH) h );
 }
 
 char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
-  return OGR_DS_GetName( h );
+  return OGR_DS_GetName( (OGRDataSourceH) h );
 }
 %}
 
@@ -1487,7 +1492,7 @@ void OGRRegisterAll();
         CPLDebug( "SWIG", 
 		  "OGROpen() succeeded, but an error is posted, so we destroy"
 		  " the datasource and fail at swig level." );
-        OGRReleaseDataSource(ds);
+        OGRReleaseDataSource((OGRDataSourceH) ds);
         ds = NULL;
     }
 	
@@ -1503,7 +1508,7 @@ void OGRRegisterAll();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
-        OGRReleaseDataSource(ds);
+        OGRReleaseDataSource((OGRDataSourceH)ds);
         ds = NULL;
     }
 	
