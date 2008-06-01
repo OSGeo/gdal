@@ -45,7 +45,7 @@ $(JAVA_MODULES): lib%jni.so: %_wrap.o
 	$(LD) -shared $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
 
 %.o: %.cpp
-	$(CXX) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -UDEBUG -c $<
 
 %.o: %.cxx
 	$(CXX) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
