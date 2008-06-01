@@ -585,6 +585,73 @@ def nitf_29():
     return 'success'
 
 ###############################################################################
+# Verify we can write a file with BLOCKA TRE and read it back properly.
+
+def nitf_30():
+
+    src_ds = gdal.Open( 'data/fake_nsif.ntf' )
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf30.ntf', src_ds )
+    src_ds = None
+    
+    chksum = ds.GetRasterBand(1).Checksum()
+    chksum_expect = 12033
+    if chksum != chksum_expect:
+	gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+	print chksum, chksum_expect
+	return 'fail'
+
+    md = ds.GetMetadata()
+    if md['NITF_FHDR'] != 'NSIF01.00':
+        gdaltest.post_reason( 'Got wrong FHDR value' )
+        return 'fail'
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+41.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+41.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+41.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+41.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        return 'fail'
+
+    ds = None
+    
+    gdal.GetDriverByName('NITF').Delete( 'tmp/nitf30.ntf' )
+
+    return 'success'
+
+###############################################################################
+# Verify we can write a file with a custom TRE and read it back properly.
+
+def nitf_31():
+
+    if nitf_create( [ 'TRE=CUSTOM=Test TRE1\\0MORE',
+                      'TRE=TOTEST=SecondTRE',
+                      'ICORDS=G' ] ) != 'success':
+        return 'fail'
+
+    ds = gdal.Open( 'tmp/test_create.ntf' )
+
+    md = ds.GetMetadata( 'TRE' )
+    if len(md) != 2:
+        gdaltest.post_reason( 'Did not get expected TRE count' )
+        print md
+        return 'fail'
+
+    if md['CUSTOM'] != 'Test TRE1\\0MORE' \
+       or md['TOTEST'] != 'SecondTRE':
+        gdaltest.post_reason( 'Did not get expected TRE contents' )
+        print md
+        return 'fail'
+
+    ds = None
+    return nitf_check_created_file( 32498, 42602, 38982 )
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -862,6 +929,8 @@ gdaltest_list = [
     nitf_27,
     nitf_28,
     nitf_29,
+    nitf_30,
+    nitf_31,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
