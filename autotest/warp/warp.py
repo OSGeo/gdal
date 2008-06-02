@@ -69,7 +69,7 @@ def warp_1():
     test = gdalnumeric.LoadFile( 'data/utmsmall_near.vrt' )
     ref = gdalnumeric.LoadFile( 'data/utmsmall_near.tiff' )
 
-    if Numeric.alltrue(Numeric.fabs(test-ref) < threshold_byte):
+    if Numeric.alltrue(Numeric.fabs(test-ref) <= threshold_byte):
         return 'success'
     else:
         return 'fail'
@@ -103,7 +103,7 @@ def warp_4():
     test = gdalnumeric.LoadFile( 'data/utmsmall_cubicspline.vrt' )
     ref = gdalnumeric.LoadFile( 'data/utmsmall_cubicspline.tiff' )
 
-    if Numeric.alltrue(Numeric.fabs(test-ref) < threshold_byte):
+    if Numeric.alltrue(Numeric.fabs(test-ref) <= threshold_byte):
         return 'success'
     else:
         return 'fail'
@@ -158,7 +158,7 @@ def warp_9():
     test = gdalnumeric.LoadFile( 'data/utmsmall_ds_cubicspline.vrt' )
     ref = gdalnumeric.LoadFile( 'data/utmsmall_ds_cubicspline.tiff' )
 
-    if Numeric.alltrue(Numeric.fabs(test-ref) < threshold_byte):
+    if Numeric.alltrue(Numeric.fabs(test-ref) <= threshold_byte):
         return 'success'
     else:
         return 'fail'
