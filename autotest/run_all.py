@@ -35,7 +35,7 @@ for i in range(1,len(gdaltest.argv)):
     test_list.append( gdaltest.argv[i] )
 
 if len(test_list) == 0:
-    test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' ]
+    test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'warp' ]
 
 gdaltest.setup_run( 'gdalautotest_all' )
 
