@@ -553,7 +553,17 @@ class GDALTest:
             post_reason( 'Failed to open dataset: ' + new_filename )
             return 'fail'
 
-        if gt != new_ds.GetGeoTransform():
+        eps = 0.00000001
+        new_gt = new_ds.GetGeoTransform()
+        if abs(new_gt[0] - gt[0]) > eps \
+            or abs(new_gt[1] - gt[1]) > eps \
+            or abs(new_gt[2] - gt[2]) > eps \
+            or abs(new_gt[3] - gt[3]) > eps \
+            or abs(new_gt[4] - gt[4]) > eps \
+            or abs(new_gt[5] - gt[5]) > eps:
+            print
+            print 'old = ', gt
+            print 'new = ', new_gt
             post_reason( 'Did not get expected geotransform.' )
             return 'fail'
 
