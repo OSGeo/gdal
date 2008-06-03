@@ -49,7 +49,7 @@ will have a photometric interpretation of MIN_IS_WHITE.  Files with
 pseudo-color tables, or GCPs can currently only be created when creating from 
 an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).<p>
 
-Creation Options:<p>
+<h3>Creation Options</h3>
 
 <ul>
 
@@ -108,9 +108,28 @@ library version 4.0 or higher.<p>
 <li> <b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 
 new Byte file can be forced to be written as signed byte.<p>
 
+<!-- Commented for the moment. Not sure we want to advertize that
+<li> <b>ENDIANNESS=[NATIVE/INVERTED/LITTLE/BIG]</b>: Set the endianness of the
+TIFF file. By default, the native endianness of the host running GDAL will be
+used. Primarily intended for debugging & test purposes</p>
+-->
+
 </ul>
 
 GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
+
+<h3>About BigTIFF (only relevent with libtiff >= 4.0) </h3>
+
+When creating a new GeoTIFF with no compression, GDAL computes in advance the
+size of the resulting file. If that computed file size is over 4GiB, GDAL will automatically
+decide to create a BigTIFF file. However, when compression is used, it is not possible in
+advance to known the final size of the file, so classical TIFF will be chosen. In
+that case, the user must explicitely require the creation of a BigTIFF with BIGTIFF=YES
+if he anticipates the final file to be too big for classical TIFF format. If BigTIFF
+creation is not explicitely asked and that the resulting file is too big for classical TIFF,
+libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".<p>
+
+<hr>
 
 See Also:<p>
 
