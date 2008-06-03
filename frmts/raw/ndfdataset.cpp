@@ -222,6 +222,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Currently NDF driver supports only 8bit BYTE format." );
+        CSLDestroy( papszHeader );
         return NULL;
     }
 
