@@ -181,9 +181,8 @@ def radians(degrees):
     return math.pi/180.0*degrees
 def degrees(radians):
     return radians*180.0/math.pi
-class Densify(Translator):
     
-
+class Densify(Translator):
 
     def calcpoint(self,x0, x1, y0, y1, d):
         a = x1 - x0
@@ -232,14 +231,9 @@ class Densify(Translator):
         gtype = geometry.GetGeometryType()
         if  not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
             raise Exception("The densify function only works on linestring or multilinestring geometries")
-        # count = geometry.GetGeometryCount()
-        # for g in range(count):
-        #     geom = geometry.GetGeometryRef(g)
-        #
+            
         g = ogr.Geometry(ogr.wkbLineString)
 
-        
-        
         # add the first point
         x0 = geometry.GetX(0)
         y0 = geometry.GetY(0)
