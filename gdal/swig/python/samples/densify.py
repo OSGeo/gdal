@@ -3,7 +3,7 @@
 #  $Id$
 # 
 #  Project:  GDAL
-#  Purpose:  Convert GCPs to a point layer.
+#  Purpose:  Densifies linestrings by a tolerance.
 #  Author:   Howard Butler, hobu.inc@gmail.com
 # 
 #******************************************************************************
@@ -39,7 +39,7 @@ except ImportError:
 
 import sys
 import os
-
+import math
 
 
 
@@ -88,12 +88,18 @@ class Translator(object):
         self.parser = parser
         
     def __init__(self, arguments, options=None):
+        self.input = None
+        self.output = None
+        
         self.opts = options
         self.construct_parser()
         self.options, self.args = self.parser.parse_args(args=arguments)
 
+    def process(self):
         self.open()
-
+        self.make_fields()
+        self.translate()
+        
     def open(self):
         self.in_ds = ogr.Open(self.options.input)
         if self.options.layer:
@@ -134,9 +140,10 @@ class Translator(object):
             dsco = (),
 
         self.out_ds = self.out_drv.CreateDataSource( self.options.output, dsco)
-        self.output = self.out_ds.CreateLayer(self.options.output)
-        print self.input
-        print self.output
+        self.output = self.out_ds.CreateLayer(  self.options.output,
+                                                geom_type = self.input.GetLayerDefn().GetGeomType(), 
+                                                srs= self.input.GetSpatialRef())
+
 
     def make_fields(self):
         defn = self.input.GetLayerDefn()
@@ -144,13 +151,180 @@ class Translator(object):
         if self.options.fields:
             fields = self.options.fields.split(',')
             for i in range(defn.GetFieldCount()):
-                fld = defn.GetField(i)
+                fld = defn.GetFieldDefn(i)
                 for f in fields:
                     if fld.GetName().upper() == f.upper():
-                        
+                        self.output.CreateField(fld)
+        else:
+            for i in range(defn.GetFieldCount()):
+                fld = defn.GetFieldDefn(i)
+                self.output.CreateField(fld)
+
+    def translate(self, geometry_callback=None, attribute_callback=None):
+        f = self.input.GetNextFeature()
+        while f:
+            geom = f.GetGeometryRef().Clone()
+            if geometry_callback:
+                geom = geometry_callback(geom)
+            f.SetGeometry(geom)
+            d = ogr.Feature(feature_def=self.output.GetLayerDefn())
+            d.SetFrom(f)
+            self.output.CreateFeature(d)
+            f = self.input.GetNextFeature()
+
             
+    def __del__(self):
+        if self.output:
+            self.output.SyncToDisk()
+
+def radians(degrees):
+    return math.pi/180.0*degrees
+def degrees(radians):
+    return radians*180.0/math.pi
 class Densify(Translator):
-    pass
+    
+
+
+    def calcpoint(self,x0, x1, y0, y1, d):
+        a = x1 - x0
+        b = y1 - y0
+        
+        if a == 0:
+            xn = x1
+            
+            if b > 0:
+                yn = y0 + d
+            else:
+                yn = y0 - d
+            return (xn, yn)
+                      
+        theta = degrees(math.atan(abs(b)/abs(a)))
+        
+        if a > 0 and b > 0:
+            omega = theta
+        if a < 0 and b > 0:
+            omega = 180 - theta
+        if a < 0 and b < 0:
+            omega = 180 + theta
+        if a > 0 and b < 0:
+            omega = 360 - theta
+
+        if b == 0:
+            yn = y1
+            if a > 0:
+                xn = x0 + d
+            else:
+                xn = x0 - d
+        else:
+            xn = x0 + d*math.cos(radians(omega))
+            yn = y0 + d*math.sin(radians(omega))
+        
+        return (xn, yn)
+                    
+    def distance(self, x0, x1, y0, y1):
+        deltax = x0 - x1
+        deltay = y0 - y1
+        d2 = (deltax)**2 + (deltay)**2
+        d = math.sqrt(d2)
+        return d
+    
+    def densify(self, geometry):
+        gtype = geometry.GetGeometryType()
+        if  not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
+            raise Exception("The densify function only works on linestring or multilinestring geometries")
+        # count = geometry.GetGeometryCount()
+        # for g in range(count):
+        #     geom = geometry.GetGeometryRef(g)
+        #
+        g = ogr.Geometry(ogr.wkbLineString)
+
+        
+        
+        # add the first point
+        x0 = geometry.GetX(0)
+        y0 = geometry.GetY(0)
+        g.AddPoint(x0, y0)
+
+        for i in range(1,geometry.GetPointCount()):
+            threshold = self.options.distance
+            x1 = geometry.GetX(i)
+            y1 = geometry.GetY(i)
+            if not x0 or not y0:
+                raise Exception("First point is null")
+            d = self.distance(x0, x1, y0, y1)
+
+            if self.options.remainder.upper() == "UNIFORM":
+                if d != 0.0:
+                    threshold = float(d)/math.ceil(d/threshold)
+                else:
+                    # duplicate point... throw it out
+                    continue
+            if (d > threshold):
+                if self.options.remainder.upper() == "UNIFORM":
+                    segcount = int(math.ceil(d/threshold))
+
+                    dx = (x1 - x0)/segcount
+                    dy = (y1 - y0)/segcount
+
+                    x = x0
+                    y = y0
+                    for p in range(1,segcount):
+                        x = x + dx
+                        y = y + dy
+                        g.AddPoint(x, y)
+                        
+                elif self.options.remainder.upper() == "END":
+                    segcount = int(math.floor(d/threshold))
+                    xa = None
+                    ya = None
+                    for p in range(1,segcount):
+                        if not xa:
+                            xn, yn = self.calcpoint(x0,x1,y0,y1,threshold)
+                            d = self.distance(x0, xn, y0, yn)
+                            xa = xn
+                            ya = yn
+                            g.AddPoint(xa,ya)
+                            continue
+                        xn, yn = self.calcpoint(xa, x1, ya, y1, threshold)
+                        xa = xn
+                        ya = yn
+                        g.AddPoint(xa,ya)
+                        
+                elif self.options.remainder.upper() == "BEGIN":
+                    
+                    # I think this might put an extra point in at the end of the 
+                    # first segment
+                    segcount = int(math.floor(d/threshold))
+                    xa = None
+                    ya = None
+                    xb = x0
+                    yb = y0
+                    remainder = d % threshold
+                    for p in range(segcount):
+                        if not xa:
+                            xn, yn = self.calcpoint(x0,x1,y0,y1,remainder)
+ 
+                            d = self.distance(x0, xn, y0, yn)
+                            xa = xn
+                            ya = yn
+                            g.AddPoint(xa,ya)
+                            continue
+                        xn, yn = self.calcpoint(xa, x1, ya, y1, threshold)
+                        xa = xn
+                        ya = yn
+                        g.AddPoint(xa,ya)
+
+            g.AddPoint(x1,y1)
+            x0 = x1
+            y0 = y1
+
+                
+        return g
+
+    def process(self):
+        self.open()
+        self.make_fields()
+        self.translate(geometry_callback = self.densify)
 
 def main():
     import optparse
@@ -171,6 +345,7 @@ is chosen, the threshold distance will be used as an absolute value.""",
                           metavar="DISTANCE")
     options.append(o)
     d = Densify(sys.argv[1:], options=options)
+    d.process()
 
 if __name__=='__main__':
     main()
