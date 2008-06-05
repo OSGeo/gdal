@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
                            
 /************************************************************************/
 /* ==================================================================== */
-/*      		       HFAField					*/
+/*		                HFAField				*/
 /* ==================================================================== */
 /************************************************************************/
 
@@ -1290,11 +1290,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
               if( ExtractInstValue( NULL, iEntry, 
                                     pabyData, nDataOffset, nDataSize, 
                                     'd', &dfValue ) )
-                  VSIFPrintf( fpOut, "%.15g\n", 
-                              pszPrefix, dfValue );
+                  VSIFPrintf( fpOut, "%s%.15g\n", pszPrefix, dfValue );
               else
-                  VSIFPrintf( fpOut, "(access failed)\n", 
-                              pszPrefix );
+                  VSIFPrintf( fpOut, "%s(access failed)\n", pszPrefix );
           }
           break;
 
