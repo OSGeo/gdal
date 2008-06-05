@@ -145,8 +145,14 @@ using namespace std;
 
 #include "ogr_srs_api.h"
 
+#ifdef DEBUG
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
+typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
+#else
 typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
+#endif
 
 %}
 
@@ -251,8 +257,8 @@ public:
   }
 
   ~OSRSpatialReferenceShadow() {
-    if (OSRDereference( (OGRSpatialReferenceH)self ) == 0 ) {
-      OSRDestroySpatialReference( (OGRSpatialReferenceH)self );
+    if (OSRDereference( self ) == 0 ) {
+      OSRDestroySpatialReference( self );
     }
   }
 
@@ -260,85 +266,85 @@ public:
 %newobject __str__;
   char *__str__() {
     char *buf = 0;
-    OSRExportToPrettyWkt( (OGRSpatialReferenceH)self, &buf, 0 );
+    OSRExportToPrettyWkt( self, &buf, 0 );
     return buf;
   }
 
   int IsSame( OSRSpatialReferenceShadow *rhs ) {
-    return OSRIsSame( (OGRSpatialReferenceH)self, (OGRSpatialReferenceH)rhs );
+    return OSRIsSame( self, rhs );
   }
 
   int IsSameGeogCS( OSRSpatialReferenceShadow *rhs ) {
-    return OSRIsSameGeogCS( (OGRSpatialReferenceH)self, (OGRSpatialReferenceH)rhs );
+    return OSRIsSameGeogCS( self, rhs );
   }
 
   int IsGeographic() {
-    return OSRIsGeographic((OGRSpatialReferenceH)self);
+    return OSRIsGeographic(self);
   }
 
   int IsProjected() {
-    return OSRIsProjected((OGRSpatialReferenceH)self);
+    return OSRIsProjected(self);
   }
 
   int IsLocal() {
-    return OSRIsLocal((OGRSpatialReferenceH)self);
+    return OSRIsLocal(self);
   }
 
   OGRErr SetAuthority( const char * pszTargetKey,
                        const char * pszAuthority,
                        int nCode ) {
-    return OSRSetAuthority( (OGRSpatialReferenceH)self, pszTargetKey, pszAuthority, nCode );
+    return OSRSetAuthority( self, pszTargetKey, pszAuthority, nCode );
   }
 
   const char *GetAttrValue( const char *name, int child = 0 ) {
-    return OSRGetAttrValue( (OGRSpatialReferenceH)self, name, child );
+    return OSRGetAttrValue( self, name, child );
   }
 
 /*
   const char *__getattr__( const char *name ) {
-    return OSRGetAttrValue( (OGRSpatialReferenceH)self, name, 0 );
+    return OSRGetAttrValue( self, name, 0 );
   }
 */
 
   OGRErr SetAttrValue( const char *name, const char *value ) {
-    return OSRSetAttrValue( (OGRSpatialReferenceH)self, name, value ); 
+    return OSRSetAttrValue( self, name, value ); 
   }
 
 /*
   OGRErr __setattr__( const char *name, const char *value ) {
-    return OSRSetAttrValue( (OGRSpatialReferenceH)self, name, value );
+    return OSRSetAttrValue( self, name, value );
   }
 */
 
   OGRErr SetAngularUnits( const char*name, double to_radians ) {
-    return OSRSetAngularUnits( (OGRSpatialReferenceH)self, name, to_radians );
+    return OSRSetAngularUnits( self, name, to_radians );
   }
 
   double GetAngularUnits() {
     // Return code ignored.
-    return OSRGetAngularUnits( (OGRSpatialReferenceH)self, 0 );
+    return OSRGetAngularUnits( self, 0 );
   }
 
   OGRErr SetLinearUnits( const char*name, double to_meters ) {
-    return OSRSetLinearUnits( (OGRSpatialReferenceH)self, name, to_meters );
+    return OSRSetLinearUnits( self, name, to_meters );
   }
 
   OGRErr SetLinearUnitsAndUpdateParameters( const char*name, double to_meters) {
-    return OSRSetLinearUnitsAndUpdateParameters( (OGRSpatialReferenceH)self, name, to_meters );
+    return OSRSetLinearUnitsAndUpdateParameters( self, name, to_meters );
   }
 
   double GetLinearUnits() {
     // Return code ignored.
-    return OSRGetLinearUnits( (OGRSpatialReferenceH)self, 0 );
+    return OSRGetLinearUnits( self, 0 );
   }
 
   const char *GetLinearUnitsName() {
     const char *name = 0;
-    if ( OSRIsProjected( (OGRSpatialReferenceH)self ) ) {
-      name = OSRGetAttrValue( (OGRSpatialReferenceH)self, "PROJCS|UNIT", 0 );
+    if ( OSRIsProjected( self ) ) {
+      name = OSRGetAttrValue( self, "PROJCS|UNIT", 0 );
     }
-    else if ( OSRIsLocal( (OGRSpatialReferenceH)self ) ) {
-      name = OSRGetAttrValue( (OGRSpatialReferenceH)self, "LOCAL_CS|UNIT", 0 );
+    else if ( OSRIsLocal( self ) ) {
+      name = OSRGetAttrValue( self, "LOCAL_CS|UNIT", 0 );
     }
 
     if (name != 0) 
@@ -348,78 +354,78 @@ public:
   }
 
   const char *GetAuthorityCode( const char *target_key ) {
-    return OSRGetAuthorityCode( (OGRSpatialReferenceH)self, target_key );
+    return OSRGetAuthorityCode( self, target_key );
   }
 
   const char *GetAuthorityName( const char *target_key ) {
-    return OSRGetAuthorityName( (OGRSpatialReferenceH)self, target_key );
+    return OSRGetAuthorityName( self, target_key );
   }
 
   OGRErr SetUTM( int zone, int north =1 ) {
-    return OSRSetUTM( (OGRSpatialReferenceH)self, zone, north );
+    return OSRSetUTM( self, zone, north );
   }
 
   OGRErr SetStatePlane( int zone, int is_nad83 = 1, char const *unitsname = "", double units = 0.0 ) {
-    return OSRSetStatePlaneWithUnits( (OGRSpatialReferenceH)self, zone, is_nad83, unitsname, units );
+    return OSRSetStatePlaneWithUnits( self, zone, is_nad83, unitsname, units );
   }
 
   OGRErr AutoIdentifyEPSG() {
-    return OSRAutoIdentifyEPSG( (OGRSpatialReferenceH)self );
+    return OSRAutoIdentifyEPSG( self );
   }
 
   OGRErr SetProjection( char const *arg ) {
-    return OSRSetProjection( (OGRSpatialReferenceH)self, arg );
+    return OSRSetProjection( self, arg );
   }
 
   OGRErr SetProjParm( const char *name, double val ) {
-    return OSRSetProjParm( (OGRSpatialReferenceH)self, name, val ); 
+    return OSRSetProjParm( self, name, val ); 
   }
 
   double GetProjParm( const char *name, double default_val = 0.0 ) {
     // Return code ignored.
-    return OSRGetProjParm( (OGRSpatialReferenceH)self, name, default_val, 0 );
+    return OSRGetProjParm( self, name, default_val, 0 );
   }
 
   OGRErr SetNormProjParm( const char *name, double val ) {
-    return OSRSetNormProjParm( (OGRSpatialReferenceH)self, name, val );
+    return OSRSetNormProjParm( self, name, val );
   }
 
   double GetNormProjParm( const char *name, double default_val = 0.0 ) {
     // Return code ignored.
-    return OSRGetNormProjParm( (OGRSpatialReferenceH)self, name, default_val, 0 );
+    return OSRGetNormProjParm( self, name, default_val, 0 );
   }
 
 %feature( "kwargs" ) SetACEA;
   OGRErr SetACEA( double stdp1, double stdp2,
  		double clat, double clong,
                 double fe, double fn ) {
-    return OSRSetACEA( (OGRSpatialReferenceH)self, stdp1, stdp2, clat, clong, 
+    return OSRSetACEA( self, stdp1, stdp2, clat, clong, 
                        fe, fn );
   }    
 
 %feature( "kwargs" ) SetAE;
   OGRErr SetAE( double clat, double clong,
               double fe, double fn ) {
-    return OSRSetAE( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetAE( self, clat, clong, 
                      fe, fn );
   }
 
 %feature( "kwargs" ) SetBonne;
   OGRErr SetBonne( double stdp, double cm, double fe, double fn ) {
-    return OSRSetBonne( (OGRSpatialReferenceH)self, stdp, cm, fe, fn );
+    return OSRSetBonne( self, stdp, cm, fe, fn );
   }
 
 %feature( "kwargs" ) SetCEA;
   OGRErr SetCEA( double stdp1, double cm,
                double fe, double fn ) {
-    return OSRSetCEA( (OGRSpatialReferenceH)self, stdp1, cm, 
+    return OSRSetCEA( self, stdp1, cm, 
                       fe, fn );
   }
 
 %feature( "kwargs" ) SetCS;
   OGRErr SetCS( double clat, double clong,
               double fe, double fn ) {
-    return OSRSetCS( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetCS( self, clat, clong, 
                      fe, fn );
   }
 
@@ -427,26 +433,26 @@ public:
   OGRErr SetEC( double stdp1, double stdp2,
               double clat, double clong,
               double fe, double fn ) {
-    return OSRSetEC( (OGRSpatialReferenceH)self, stdp1, stdp2, clat, clong, 
+    return OSRSetEC( self, stdp1, stdp2, clat, clong, 
                      fe, fn );
   }
 
 %feature( "kwargs" ) SetEckertIV;
   OGRErr SetEckertIV( double cm,
                     double fe, double fn ) {
-    return OSRSetEckertIV( (OGRSpatialReferenceH)self, cm, fe, fn);
+    return OSRSetEckertIV( self, cm, fe, fn);
   }
 
 %feature( "kwargs" ) SetEckertVI;
   OGRErr SetEckertVI( double cm,
                     double fe, double fn ) {
-    return OSRSetEckertVI( (OGRSpatialReferenceH)self, cm, fe, fn);
+    return OSRSetEckertVI( self, cm, fe, fn);
   }
 
 %feature( "kwargs" ) SetEquirectangular;
   OGRErr SetEquirectangular( double clat, double clong,
                            double fe, double fn ) {
-    return OSRSetEquirectangular( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetEquirectangular( self, clat, clong, 
                                   fe, fn );
   }
 
@@ -454,39 +460,39 @@ public:
   OGRErr SetEquirectangular2( double clat, double clong,
                               double pseudostdparallellat,
                               double fe, double fn ) {
-    return OSRSetEquirectangular2( (OGRSpatialReferenceH)self, clat, clong,
+    return OSRSetEquirectangular2( self, clat, clong,
                                    pseudostdparallellat,
                                    fe, fn );
   }
 
 %feature( "kwargs" ) SetGaussLabordeReunion;
   OGRErr SetGaussLabordeReunion( double clat, double clong, double sc, double fe, double fn ) {
-    return OSRSetGaussLabordeReunion( (OGRSpatialReferenceH)self, clat, clong, sc, fe, fn );
+    return OSRSetGaussLabordeReunion( self, clat, clong, sc, fe, fn );
   }
 
 %feature( "kwargs" ) SetGS;
   OGRErr SetGS( double cm,
               double fe, double fn ) {
-    return OSRSetGS( (OGRSpatialReferenceH)self, cm, fe, fn );
+    return OSRSetGS( self, cm, fe, fn );
   }
     
 %feature( "kwargs" ) SetGH;
   OGRErr SetGH( double cm,
               double fe, double fn ) {
-    return OSRSetGH( (OGRSpatialReferenceH)self, cm, fe, fn );
+    return OSRSetGH( self, cm, fe, fn );
   }
     
 %feature( "kwargs" ) SetGEOS;
   OGRErr SetGEOS( double cm, double satelliteheight,
                 double fe, double fn ) {
-    return OSRSetGEOS( (OGRSpatialReferenceH)self, cm, satelliteheight,
+    return OSRSetGEOS( self, cm, satelliteheight,
                        fe, fn );
   }
     
 %feature( "kwargs" ) SetGnomonic;
   OGRErr SetGnomonic( double clat, double clong,
                     double fe, double fn ) {
-    return OSRSetGnomonic( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetGnomonic( self, clat, clong, 
                            fe, fn );
   }
 
@@ -495,7 +501,7 @@ public:
                double azimuth, double recttoskew,
                double scale,
                double fe, double fn ) {
-    return OSRSetHOM( (OGRSpatialReferenceH)self, clat, clong, azimuth, recttoskew,
+    return OSRSetHOM( self, clat, clong, azimuth, recttoskew,
                       scale, fe, fn );
   }
 
@@ -505,7 +511,7 @@ public:
                    double dfLat2, double dfLong2,
                    double scale,
                    double fe, double fn ) {
-    return OSRSetHOM2PNO( (OGRSpatialReferenceH)self, clat, dfLat1, dfLong1, dfLat2, dfLong2, 
+    return OSRSetHOM2PNO( self, clat, dfLat1, dfLong1, dfLat2, dfLong2, 
                           scale, fe, fn );
   }
 
@@ -514,7 +520,7 @@ public:
                   double azimuth, double pseudostdparallellat,
                   double scale, 
                   double fe, double fn ) {
-    return OSRSetKrovak( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetKrovak( self, clat, clong, 
                          azimuth, pseudostdparallellat, 
                          scale, fe, fn );
   }
@@ -522,7 +528,7 @@ public:
 %feature( "kwargs" ) SetLAEA;
   OGRErr SetLAEA( double clat, double clong,
                 double fe, double fn ) {
-    return OSRSetLAEA( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetLAEA( self, clat, clong, 
                        fe, fn );
   }
 
@@ -530,7 +536,7 @@ public:
   OGRErr SetLCC( double stdp1, double stdp2,
                double clat, double clong,
                double fe, double fn ) {
-    return OSRSetLCC( (OGRSpatialReferenceH)self, stdp1, stdp2, clat, clong, 
+    return OSRSetLCC( self, stdp1, stdp2, clat, clong, 
                       fe, fn );
   }
 
@@ -538,7 +544,7 @@ public:
   OGRErr SetLCC1SP( double clat, double clong,
                   double scale,
                   double fe, double fn ) {
-    return OSRSetLCC1SP( (OGRSpatialReferenceH)self, clat, clong, scale, 
+    return OSRSetLCC1SP( self, clat, clong, scale, 
                          fe, fn );
   }
 
@@ -546,14 +552,14 @@ public:
   OGRErr SetLCCB( double stdp1, double stdp2,
                 double clat, double clong,
                 double fe, double fn ) {
-    return OSRSetLCCB( (OGRSpatialReferenceH)self, stdp1, stdp2, clat, clong, 
+    return OSRSetLCCB( self, stdp1, stdp2, clat, clong, 
                        fe, fn );
   }
     
 %feature( "kwargs" ) SetMC;
   OGRErr SetMC( double clat, double clong,
               double fe, double fn ) {
-    return OSRSetMC( (OGRSpatialReferenceH)self, clat, clong,    
+    return OSRSetMC( self, clat, clong,    
                      fe, fn );
   }
 
@@ -561,21 +567,21 @@ public:
   OGRErr SetMercator( double clat, double clong,
                     double scale, 
                     double fe, double fn ) {
-    return OSRSetMercator( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetMercator( self, clat, clong, 
                            scale, fe, fn );
   }
 
 %feature( "kwargs" ) SetMollweide;
   OGRErr  SetMollweide( double cm,
                       double fe, double fn ) {
-    return OSRSetMollweide( (OGRSpatialReferenceH)self, cm, 
+    return OSRSetMollweide( self, cm, 
                             fe, fn );
   }
 
 %feature( "kwargs" ) SetNZMG;
   OGRErr SetNZMG( double clat, double clong,
                 double fe, double fn ) {
-    return OSRSetNZMG( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetNZMG( self, clat, clong, 
                        fe, fn );
   }
 
@@ -583,21 +589,21 @@ public:
   OGRErr SetOS( double dfOriginLat, double dfCMeridian,
               double scale,
               double fe,double fn) {
-    return OSRSetOS( (OGRSpatialReferenceH)self, dfOriginLat, dfCMeridian, scale, 
+    return OSRSetOS( self, dfOriginLat, dfCMeridian, scale, 
                      fe, fn );
   }
     
 %feature( "kwargs" ) SetOrthographic;
   OGRErr SetOrthographic( double clat, double clong,
                         double fe,double fn) {
-    return OSRSetOrthographic( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetOrthographic( self, clat, clong, 
                                fe, fn );
   }
 
 %feature( "kwargs" ) SetPolyconic;
   OGRErr SetPolyconic( double clat, double clong,
                      double fe, double fn ) {
-    return OSRSetPolyconic( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetPolyconic( self, clat, clong, 
                             fe, fn );
   }
 
@@ -605,34 +611,34 @@ public:
   OGRErr SetPS( double clat, double clong,
               double scale,
               double fe, double fn) {
-    return OSRSetPS( (OGRSpatialReferenceH)self, clat, clong, scale,
+    return OSRSetPS( self, clat, clong, scale,
                      fe, fn );
   }
     
 %feature( "kwargs" ) SetRobinson;
   OGRErr SetRobinson( double clong, 
                     double fe, double fn ) {
-    return OSRSetRobinson( (OGRSpatialReferenceH)self, clong, fe, fn );
+    return OSRSetRobinson( self, clong, fe, fn );
   }
     
 %feature( "kwargs" ) SetSinusoidal;
   OGRErr SetSinusoidal( double clong, 
                       double fe, double fn ) {
-    return OSRSetSinusoidal( (OGRSpatialReferenceH)self, clong, fe, fn );
+    return OSRSetSinusoidal( self, clong, fe, fn );
   }
     
 %feature( "kwargs" ) SetStereographic;
   OGRErr SetStereographic( double clat, double clong,
                          double scale,
                          double fe,double fn) {
-    return OSRSetStereographic( (OGRSpatialReferenceH)self, clat, clong, scale, 
+    return OSRSetStereographic( self, clat, clong, scale, 
                                 fe, fn );
   }
     
 %feature( "kwargs" ) SetSOC;
   OGRErr SetSOC( double latitudeoforigin, double cm,
                double fe, double fn ) {
-    return OSRSetSOC( (OGRSpatialReferenceH)self, latitudeoforigin, cm,
+    return OSRSetSOC( self, latitudeoforigin, cm,
 	              fe, fn );
   }
     
@@ -640,7 +646,7 @@ public:
   OGRErr SetTM( double clat, double clong,
               double scale,
               double fe, double fn ) {
-    return OSRSetTM( (OGRSpatialReferenceH)self, clat, clong, scale, 
+    return OSRSetTM( self, clat, clong, scale, 
                      fe, fn );
   }
 
@@ -649,14 +655,14 @@ public:
                      double clat, double clong,
                      double scale,
                      double fe, double fn ) {
-    return OSRSetTMVariant( (OGRSpatialReferenceH)self, pszVariantName, clat, clong,  
+    return OSRSetTMVariant( self, pszVariantName, clat, clong,  
                             scale, fe, fn );
   }
 
 %feature( "kwargs" ) SetTMG;
   OGRErr SetTMG( double clat, double clong, 
                double fe, double fn ) {
-    return OSRSetTMG( (OGRSpatialReferenceH)self, clat, clong, 
+    return OSRSetTMG( self, clat, clong, 
                       fe, fn );
   }
 
@@ -664,40 +670,40 @@ public:
   OGRErr SetTMSO( double clat, double clong,
                 double scale,
                 double fe, double fn ) {
-    return OSRSetTMSO( (OGRSpatialReferenceH)self, clat, clong, scale, 
+    return OSRSetTMSO( self, clat, clong, scale, 
                        fe, fn );
   }
 
 %feature( "kwargs" ) SetVDG;
   OGRErr SetVDG( double clong,
                double fe, double fn ) {
-    return OSRSetVDG( (OGRSpatialReferenceH)self, clong, fe, fn );
+    return OSRSetVDG( self, clong, fe, fn );
   }
 
   OGRErr SetWellKnownGeogCS( const char *name ) {
-    return OSRSetWellKnownGeogCS( (OGRSpatialReferenceH)self, name );
+    return OSRSetWellKnownGeogCS( self, name );
   }
 
   OGRErr SetFromUserInput( const char *name ) {
-    return OSRSetFromUserInput( (OGRSpatialReferenceH)self, name );
+    return OSRSetFromUserInput( self, name );
   }
 
   OGRErr CopyGeogCSFrom( OSRSpatialReferenceShadow *rhs ) {
-    return OSRCopyGeogCSFrom( (OGRSpatialReferenceH)self, (OGRSpatialReferenceH) rhs );
+    return OSRCopyGeogCSFrom( self, rhs );
   }
 
   OGRErr SetTOWGS84( double p1, double p2, double p3,
                      double p4 = 0.0, double p5 = 0.0,
                      double p6 = 0.0, double p7 = 0.0 ) {
-    return OSRSetTOWGS84( (OGRSpatialReferenceH)self, p1, p2, p3, p4, p5, p6, p7 );
+    return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
 
   OGRErr GetTOWGS84( double argout[7] ) {
-    return OSRGetTOWGS84( (OGRSpatialReferenceH)self, argout, 7 );
+    return OSRGetTOWGS84( self, argout, 7 );
   }
 
   OGRErr SetLocalCS( const char *pszName ) {
-    return OSRSetLocalCS( (OGRSpatialReferenceH)self, pszName );
+    return OSRSetLocalCS( self, pszName );
   }
 
   OGRErr SetGeogCS( const char * pszGeogName,
@@ -708,69 +714,69 @@ public:
                     double dfPMOffset = 0.0,
                     const char * pszUnits = "degree",
                     double dfConvertToRadians =  0.0174532925199433 ) {
-    return OSRSetGeogCS( (OGRSpatialReferenceH)self, pszGeogName, pszDatumName, pszEllipsoidName,
+    return OSRSetGeogCS( self, pszGeogName, pszDatumName, pszEllipsoidName,
                          dfSemiMajor, dfInvFlattening,
                          pszPMName, dfPMOffset, pszUnits, dfConvertToRadians );
   }
 
   OGRErr SetProjCS( const char *name = "unnamed" ) {
-    return OSRSetProjCS( (OGRSpatialReferenceH)self, name );
+    return OSRSetProjCS( self, name );
   }
 
 %apply (char **ignorechange) { (char **) };
   OGRErr ImportFromWkt( char **ppszInput ) {
-    return OSRImportFromWkt( (OGRSpatialReferenceH)self, ppszInput );
+    return OSRImportFromWkt( self, ppszInput );
   }
 %clear (char **);
 
   OGRErr ImportFromProj4( char *ppszInput ) {
-    return OSRImportFromProj4( (OGRSpatialReferenceH)self, ppszInput );
+    return OSRImportFromProj4( self, ppszInput );
   }
   
   OGRErr ImportFromUrl( char *url ) {
-    return OSRImportFromUrl( (OGRSpatialReferenceH)self, url );
+    return OSRImportFromUrl( self, url );
   }
 %apply (char **options) { (char **) };
   OGRErr ImportFromESRI( char **ppszInput ) {
-    return OSRImportFromESRI( (OGRSpatialReferenceH)self, ppszInput );
+    return OSRImportFromESRI( self, ppszInput );
   }
 %clear (char **);
 
   OGRErr ImportFromEPSG( int arg ) {
-    return OSRImportFromEPSG((OGRSpatialReferenceH)self, arg);
+    return OSRImportFromEPSG(self, arg);
   }
 
   OGRErr ImportFromPCI( char const *proj, char const *units = "METRE",
                         double argin[17] = 0 ) {
-    return OSRImportFromPCI( (OGRSpatialReferenceH)self, proj, units, argin );
+    return OSRImportFromPCI( self, proj, units, argin );
   }
 
   OGRErr ImportFromUSGS( long proj_code, long zone = 0,
                          double argin[15] = 0,
                          long datum_code = 0 ) {
-    return OSRImportFromUSGS( (OGRSpatialReferenceH)self, proj_code, zone, argin, datum_code );
+    return OSRImportFromUSGS( self, proj_code, zone, argin, datum_code );
   }
 
   OGRErr ImportFromXML( char const *xmlString ) {
-    return OSRImportFromXML( (OGRSpatialReferenceH)self, xmlString );
+    return OSRImportFromXML( self, xmlString );
   }
 
   OGRErr ExportToWkt( char **argout ) {
-    return OSRExportToWkt( (OGRSpatialReferenceH)self, argout );
+    return OSRExportToWkt( self, argout );
   }
 
   OGRErr ExportToPrettyWkt( char **argout, int simplify = 0 ) {
-    return OSRExportToPrettyWkt( (OGRSpatialReferenceH)self, argout, simplify );
+    return OSRExportToPrettyWkt( self, argout, simplify );
   }
 
   OGRErr ExportToProj4( char **argout ) {
-    return OSRExportToProj4( (OGRSpatialReferenceH)self, argout );
+    return OSRExportToProj4( self, argout );
   }
 
 %apply (char **argout) { (char **) };
 %apply (double *argout[ANY]) { (double *parms[17] ) };
   OGRErr ExportToPCI( char **proj, char **units, double *parms[17] ) {
-    return OSRExportToPCI( (OGRSpatialReferenceH)self, proj, units, parms );
+    return OSRExportToPCI( self, proj, units, parms );
   }
 %clear (char **);
 %clear (double *parms[17]);
@@ -778,50 +784,50 @@ public:
 %apply (long *OUTPUT) { (long*) };
 %apply (double *argout[ANY]) { (double *parms[15]) }
   OGRErr ExportToUSGS( long *code, long *zone, double *parms[15], long *datum ) {
-    return OSRExportToUSGS( (OGRSpatialReferenceH)self, code, zone, parms, datum );
+    return OSRExportToUSGS( self, code, zone, parms, datum );
   }
 %clear (long*);
 %clear (double *parms[15]);
 
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
-    return OSRExportToXML( (OGRSpatialReferenceH)self, argout, dialect );
+    return OSRExportToXML( self, argout, dialect );
   }
 
 %newobject CloneGeogCS;
   OSRSpatialReferenceShadow *CloneGeogCS() {
-    return (OSRSpatialReferenceShadow*) OSRCloneGeogCS((OGRSpatialReferenceH)self);
+    return (OSRSpatialReferenceShadow*) OSRCloneGeogCS(self);
   }
 
 /*
  * Commented out until the headers have changed to make OSRClone visible.
 %newobject Clone;
   OSRSpatialReferenceShadow *Clone() {
-    return (OSRSpatialReferenceShadow*) OSRClone((OGRSpatialReferenceH)self);
+    return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
 */
 
   OGRErr Validate() {
-    return OSRValidate((OGRSpatialReferenceH)self);
+    return OSRValidate(self);
   }
 
   OGRErr StripCTParms() {
-    return OSRStripCTParms((OGRSpatialReferenceH)self);
+    return OSRStripCTParms(self);
   }
 
   OGRErr FixupOrdering() {
-    return OSRFixupOrdering((OGRSpatialReferenceH)self);
+    return OSRFixupOrdering(self);
   }
 
   OGRErr Fixup() {
-    return OSRFixup((OGRSpatialReferenceH)self);
+    return OSRFixup(self);
   }
 
   OGRErr MorphToESRI() {
-    return OSRMorphToESRI((OGRSpatialReferenceH)self);
+    return OSRMorphToESRI(self);
   }
 
   OGRErr MorphFromESRI() {
-    return OSRMorphFromESRI((OGRSpatialReferenceH)self);
+    return OSRMorphFromESRI(self);
   }
 
 
@@ -847,12 +853,12 @@ public:
 %extend {
 
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
-    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( (OGRSpatialReferenceH)src, (OGRSpatialReferenceH)dst );
+    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
     return obj;
   }
 
   ~OSRCoordinateTransformationShadow() {
-    OCTDestroyCoordinateTransformation( (OGRCoordinateTransformationH)self );
+    OCTDestroyCoordinateTransformation( self );
   }
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied
@@ -860,7 +866,7 @@ public:
 %apply (double argout[ANY]) {(double inout[3])};
 %apply (double argin[ANY]) {(double inout[3])};
   void TransformPoint( double inout[3] ) {
-    OCTTransform( (OGRCoordinateTransformationH)self, 1, &inout[0], &inout[1], &inout[2] );
+    OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
   }
 %clear (double inout[3]);
 
@@ -868,14 +874,14 @@ public:
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;
-    OCTTransform( (OGRCoordinateTransformationH)self, 1, &argout[0], &argout[1], &argout[2] );
+    OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
   }
   
 #ifdef SWIGCSHARP
   %apply (double *inout) {(double*)};
 #endif
   void TransformPoints( int nCount, double *x, double *y, double *z ) {
-    OCTTransform( (OGRCoordinateTransformationH)self, nCount, x, y, z );
+    OCTTransform( self, nCount, x, y, z );
   }
 #ifdef SWIGCSHARP
   %clear (double*);
