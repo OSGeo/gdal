@@ -440,8 +440,6 @@ const char* CPL_STDCALL CPLGetLastErrorMsg()
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
 
-#define MAX_NUMBER_OF_ERRORS_REPORTED       1000
-
 void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
                              const char * pszErrorMsg )
 
@@ -449,11 +447,18 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
     static int       bLogInit = FALSE;
     static FILE *    fpLog = stderr;
     static int       nCount = 0;
+    static int       nMaxErrors = -1;
 
     if (eErrClass != CE_Debug)
     {
+        if( nMaxErrors == -1 )
+        {
+            nMaxErrors = 
+                atoi(CPLGetConfigOption( "CPL_MAX_ERROR_REPORTS", "1000" ));
+        }
+
         nCount++;
-        if (nCount > MAX_NUMBER_OF_ERRORS_REPORTED)
+        if (nCount > nMaxErrors && nMaxErrors > 0 )
             return;
     }
 
@@ -477,10 +482,14 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
     else
         fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
 
-    if (eErrClass != CE_Debug && nCount == MAX_NUMBER_OF_ERRORS_REPORTED)
+    if (eErrClass != CE_Debug 
+        && nMaxErrors > 0 
+        && nCount == nMaxErrors )
     {
-        fprintf( fpLog, "More than %d errors or warnings have been reported. "
-                        "No more will be reported from now.\n", MAX_NUMBER_OF_ERRORS_REPORTED );
+        fprintf( fpLog, 
+                 "More than %d errors or warnings have been reported. "
+                 "No more will be reported from now.\n", 
+                 nMaxErrors );
     }
 
     fflush( fpLog );
