@@ -163,7 +163,7 @@ Usage:
 \endhtmlonly
 
 \verbatim
-Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
+Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name] [-gt n]
                [-select field_list] [-where restricted_where] 
                [-sql <sql statement>] [--help-general]
                [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
@@ -202,6 +202,8 @@ fields from input layer to copy to the new layer (defaults to all)</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
 The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
+<dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
+<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200)</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
