@@ -114,6 +114,7 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUALN(papszArgv[iArg],"-skip",5) )
         {
             bSkipFailures = TRUE;
+            nGroupTransactions = 1; /* #2409 */
         }
         else if( EQUAL(papszArgv[iArg],"-append") )
         {
@@ -476,7 +477,7 @@ static void Usage()
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
+    printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n"
             "               [-select field_list] [-where restricted_where] \n"
             "               [-sql <sql statement>] \n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
@@ -503,6 +504,7 @@ static void Usage()
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
             " -sql statement: Execute given SQL statement and save result.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
+            " -gt n: group n features per transaction (default 200)\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
             " -lco  NAME=VALUE: Layer creation option (format specific)\n"
