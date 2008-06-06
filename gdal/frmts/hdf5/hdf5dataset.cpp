@@ -29,6 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define H5_USE_16_API
+
 #include "hdf5.h"
 
 #include "gdal_priv.h"

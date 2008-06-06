@@ -26,6 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#define H5_USE_16_API
+
 #include "hdf5.h"
 
 #include "gdal_pam.h"
