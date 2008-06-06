@@ -38,6 +38,13 @@ CPL_C_START
 void    GDALRegister_L1B(void);
 CPL_C_END
 
+enum {          // File formats
+    L1B_NONE,   // Not a L1B format
+    L1B_NOAA9,  // NOAA-9/14
+    L1B_NOAA15, // NOAA-15/METOP-2
+    L1B_AAPP    // AAPP L1B formats
+};
+
 enum {          // Spacecrafts:
     TIROSN,     // TIROS-N
     NOAA6,      // NOAA-6(A)
@@ -78,6 +85,7 @@ enum {          // Receiving stations names:
     WE,         // Western Europe CDA, Lannion, France
     SO,         // SOCC (Satellite Operations Control Center), Suitland, Maryland, USA
     WI,         // Wallops Island, Virginia, USA
+    SV,         // Svalbard, Norway
     UNKNOWN_STATION
 };
 
@@ -97,6 +105,7 @@ enum {          // AVHRR Earth location indication
 /************************************************************************/
 /*                      AVHRR band widths                               */
 /************************************************************************/
+
 static const char *apszBandDesc[] =
 {
     // NOAA-7 -- METOP-2 channels
@@ -112,7 +121,33 @@ static const char *apszBandDesc[] =
     "AVHRR Channel 3B: 3.55  micrometers -- 3.93 micrometers"
     };
 
-#define TBM_HEADER_SIZE 122
+/************************************************************************/
+/*      L1B file format related constants                               */
+/************************************************************************/
+
+#define L1B_DATASET_NAME_SIZE       42  // Length of the string containing
+                                        // dataset name
+#define L1B_NOAA9_HEADER_SIZE       122 // Terabit memory (TBM) header length
+#define L1B_NOAA9_HDR_NAME_OFF      30  // Dataset name offset
+#define L1B_NOAA9_HDR_SRC_OFF       70  // Receiving station name offset
+
+#define L1B_NOAA15_HEADER_SIZE      512 // Archive Retrieval System (ARS)
+                                        // header
+
+#define L1B_NOAA9_HDR_REC_SIZE      146 // Length of header record
+                                        // filled with the data
+#define L1B_NOAA9_HDR_REC_ID_OFF    0   // Spacecraft ID offset
+#define L1B_NOAA9_HDR_REC_PROD_OFF  1   // Data type offset
+#define L1B_NOAA9_HDR_REC_DSTAT_OFF 34  // DACS status offset
+
+#define L1B_NOAA15_HDR_REC_SIZE     992 // Length of header record
+                                        // filled with the data
+#define L1B_NOAA15_HDR_REC_SITE_OFF 0   // Dataset creation site ID offset
+#define L1B_NOAA15_HDR_REC_NAME_OFF 22  // Dataset name
+#define L1B_NOAA15_HDR_REC_ID_OFF   72  // Spacecraft ID offset
+#define L1B_NOAA15_HDR_REC_PROD_OFF 76  // Data type offset
+#define L1B_NOAA15_HDR_REC_STAT_OFF 116 // Instrument status offset
+#define L1B_NOAA15_HDR_REC_SRC_OFF  154 // Receiving station name offset
 
 #define DESIRED_GCPS_PER_LINE 11
 #define DESIRED_LINES_OF_GCPS 20
@@ -188,7 +223,7 @@ class L1BDataset : public GDALPamDataset
     int         nRecordDataEnd;
     int         nDataStartOffset;
     int         nRecordSize;
-    GUInt16     iInstrumentStatus;
+    GUInt32     iInstrumentStatus;
     GUInt32     iChannels;
 
     char        *pszGCPProjection;
@@ -201,9 +236,11 @@ class L1BDataset : public GDALPamDataset
     void        FetchGCPs( GDAL_GCP *, GByte *, int );
     void        FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int *iLocInd);
     void        FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader, int *intLocInd);
-    void        ProcessDatasetHeader();
+    CPLErr      ProcessDatasetHeader( int );
     int         ComputeFileOffsets();
     
+    static int  DetectFormat( GByte * );
+
   public:
                 L1BDataset();
                 ~L1BDataset();
@@ -648,20 +685,402 @@ void L1BDataset::ProcessRecordHeaders()
 /*                      ProcessDatasetHeader()                          */
 /************************************************************************/
 
-void L1BDataset::ProcessDatasetHeader()
+CPLErr L1BDataset::ProcessDatasetHeader( int eL1BFormat )
 {
-    GUInt16 *piHeader;
-    piHeader = (GUInt16 *)CPLMalloc(nDataStartOffset);
-    VSIFSeekL( fp, 0, SEEK_SET );
-    VSIFReadL( piHeader, 1, nDataStartOffset, fp );
-    if (eSpacecraftID > NOAA14)
+    char    szDatasetName[L1B_DATASET_NAME_SIZE + 1];
+
+    if ( eL1BFormat == L1B_NOAA9 )
     {
-        iInstrumentStatus = (piHeader + 512)[58];
-#ifdef CPL_LSB
-        CPL_SWAP16PTR(&iInstrumentStatus);
+        GByte   abyTBMHeader[L1B_NOAA9_HEADER_SIZE];
+
+        if ( VSIFSeekL( fp, 0, SEEK_SET ) < 0
+             || VSIFReadL( abyTBMHeader, 1, L1B_NOAA9_HEADER_SIZE,
+                           fp ) < L1B_DATASET_NAME_SIZE )
+        {
+            CPLDebug( "L1B", "Can't read NOAA-9/14 TBM header." );
+            return CE_Failure;
+        }
+
+        // Fetch dataset name. NOAA-9/14 datasets contain the names in TBM
+        // header only, so read it there.
+        memcpy( szDatasetName, abyTBMHeader + L1B_NOAA9_HDR_NAME_OFF,
+                L1B_DATASET_NAME_SIZE );
+        szDatasetName[L1B_DATASET_NAME_SIZE] = '\0';
+
+        // Determine processing center where the dataset was created
+        if ( EQUALN((const char *)abyTBMHeader
+                    + L1B_NOAA9_HDR_NAME_OFF, "CMS", 3) )
+             eProcCenter = CMS;
+        else if ( EQUALN((const char *)abyTBMHeader
+                         + L1B_NOAA9_HDR_NAME_OFF, "DSS", 3) )
+             eProcCenter = DSS;
+        else if ( EQUALN((const char *)abyTBMHeader
+                         + L1B_NOAA9_HDR_NAME_OFF, "NSS", 3) )
+             eProcCenter = NSS;
+        else if ( EQUALN((const char *)abyTBMHeader
+                         + L1B_NOAA9_HDR_NAME_OFF, "UKM", 3) )
+             eProcCenter = UKM;
+        else
+             eProcCenter = UNKNOWN_CENTER;
+
+        // Now read the dataset header record
+        GByte   abyRecHeader[L1B_NOAA9_HDR_REC_SIZE];
+        if ( VSIFSeekL( fp, L1B_NOAA9_HEADER_SIZE, SEEK_SET ) < 0
+             || VSIFReadL( abyRecHeader, 1, L1B_NOAA9_HDR_REC_SIZE,
+                           fp ) < L1B_NOAA9_HDR_REC_SIZE )
+        {
+            CPLDebug( "L1B", "Can't read NOAA-9/14 record header." );
+            return CE_Failure;
+        }
+
+        // Determine the spacecraft name
+        switch ( abyRecHeader[L1B_NOAA9_HDR_REC_ID_OFF] )
+        {
+            /* FIXME: use time code to determine TIROS-N, because the SatID
+             * identical to NOAA-11
+             * case 1:
+                eSpacecraftID = TIROSN;
+                break;
+            case 2:
+                eSpacecraftID = NOAA6;
+                break;*/
+            case 4:
+                eSpacecraftID = NOAA7;
+                break;
+            case 6:
+                eSpacecraftID = NOAA8;
+                break;
+            case 7:
+                eSpacecraftID = NOAA9;
+                break;
+            case 8:
+                eSpacecraftID = NOAA10;
+                break;
+            case 1:
+                eSpacecraftID = NOAA11;
+                break;
+            case 5:
+                eSpacecraftID = NOAA12;
+                break;
+            case 2:
+                eSpacecraftID = NOAA13;
+                break;
+            case 3:
+                eSpacecraftID = NOAA14;
+                break;
+            default:
+#ifdef DEBUG
+                CPLDebug( "L1B", "Unknown spacecraft ID \"%d\".",
+                          abyRecHeader[L1B_NOAA9_HDR_REC_ID_OFF] );
 #endif
+                return CE_Failure;
+        }
+
+        // Determine the product data type
+        int iWord = abyRecHeader[L1B_NOAA9_HDR_REC_PROD_OFF] >> 4;
+        switch ( iWord )
+        {
+            case 1:
+                eProductType = LAC;
+                break;
+            case 2:
+                eProductType = GAC;
+                break;
+            case 3:
+                eProductType = HRPT;
+                break;
+            default:
+#ifdef DEBUG
+                CPLDebug( "L1B", "Unknown product type \"%d\".", iWord );
+#endif
+                return CE_Failure;
+        }
+
+        // Determine receiving station name
+        iWord = ( abyRecHeader[L1B_NOAA9_HDR_REC_DSTAT_OFF] & 0x60 ) >> 5;
+        switch( iWord )
+        {
+            case 1:
+                eSource = GC;
+                break;
+            case 2:
+                eSource = WI;
+                break;
+            case 3:
+                eSource = SO;
+                break;
+            default:
+                eSource = UNKNOWN_STATION;
+                break;
+        }
     }
-    CPLFree( piHeader );
+
+    else if ( eL1BFormat == L1B_NOAA15 || eL1BFormat == L1B_AAPP )
+    {
+        GByte   abyRecHeader[L1B_NOAA15_HDR_REC_SIZE];
+        if ( VSIFSeekL( fp,
+                        (eL1BFormat == L1B_NOAA15) ? L1B_NOAA15_HEADER_SIZE : 0,
+                        SEEK_SET ) < 0
+             || VSIFReadL( abyRecHeader, 1, L1B_NOAA15_HDR_REC_SIZE,
+                           fp ) < L1B_NOAA15_HDR_REC_SIZE )
+        {
+            CPLDebug( "L1B", "Can't read NOAA-9/14 record header." );
+            return CE_Failure;
+        }
+
+        // Fetch dataset name
+        memcpy( szDatasetName, abyRecHeader + L1B_NOAA15_HDR_REC_NAME_OFF,
+                L1B_DATASET_NAME_SIZE );
+        szDatasetName[L1B_DATASET_NAME_SIZE] = '\0';
+
+        // Determine processing center where the dataset was created
+        if ( EQUALN((const char *)abyRecHeader
+                    + L1B_NOAA15_HDR_REC_SITE_OFF, "CMS", 3) )
+             eProcCenter = CMS;
+        else if ( EQUALN((const char *)abyRecHeader
+                         + L1B_NOAA15_HDR_REC_SITE_OFF, "DSS", 3) )
+             eProcCenter = DSS;
+        else if ( EQUALN((const char *)abyRecHeader
+                         + L1B_NOAA15_HDR_REC_SITE_OFF, "NSS", 3) )
+             eProcCenter = NSS;
+        else if ( EQUALN((const char *)abyRecHeader
+                         + L1B_NOAA15_HDR_REC_SITE_OFF, "UKM", 3) )
+             eProcCenter = UKM;
+        else
+             eProcCenter = UNKNOWN_CENTER;
+
+        // Determine the spacecraft name
+        int iWord = CPL_MSBWORD16( *(GUInt16 *)
+            (abyRecHeader + L1B_NOAA15_HDR_REC_ID_OFF) );
+        switch ( iWord )
+        {
+            case 2:
+                eSpacecraftID = NOAA16;
+                break;
+            case 4:
+                eSpacecraftID = NOAA15;
+                break;
+            case 6:
+                eSpacecraftID = NOAA17;
+                break;
+            case 7:
+                eSpacecraftID = NOAA18;
+                break;
+            /* FIXME: find appropriate samples and test these two cases:
+             * case 8:
+                eSpacecraftID = NOAA-N';
+                break;
+            case 11:
+                eSpacecraftID = METOP-1;
+                break;*/
+            case 12:
+            case 14:    // METOP simulator (code used in AAPP format)
+                eSpacecraftID = METOP2;
+                break;
+            default:
+#ifdef DEBUG
+                CPLDebug( "L1B", "Unknown spacecraft ID \"%d\".", iWord );
+#endif
+                return CE_Failure;
+        }
+
+        // Determine the product data type
+        iWord = CPL_MSBWORD16( *(GUInt16 *)
+            (abyRecHeader + L1B_NOAA15_HDR_REC_PROD_OFF) );
+        switch ( iWord )
+        {
+            case 1:
+                eProductType = LAC;
+                break;
+            case 2:
+                eProductType = GAC;
+                break;
+            case 3:
+                eProductType = HRPT;
+                break;
+            case 4:     // XXX: documentation specifies the code '4'
+            case 13:    // for FRAC but real datasets contain '13 here.'
+                eProductType = FRAC;
+                break;
+            default:
+#ifdef DEBUG
+                CPLDebug( "L1B", "Unknown product type \"%d\".", iWord );
+#endif
+                return CE_Failure;
+        }
+
+        // Fetch hinstrument status. Helps to determine whether we have
+        // 3A or 3B channel in the dataset.
+        iInstrumentStatus = CPL_MSBWORD32( *(GUInt32 *)
+            (abyRecHeader + L1B_NOAA15_HDR_REC_STAT_OFF) );
+
+        // Determine receiving station name
+        iWord = CPL_MSBWORD16( *(GUInt16 *)
+            (abyRecHeader + L1B_NOAA15_HDR_REC_SRC_OFF) );
+        switch( iWord )
+        {
+            case 1:
+                eSource = GC;
+                break;
+            case 2:
+                eSource = WI;
+                break;
+            case 3:
+                eSource = SO;
+                break;
+            case 4:
+                eSource = SV;
+                break;
+            case 5:
+                eSource = MO;
+                break;
+            default:
+                eSource = UNKNOWN_STATION;
+                break;
+        }
+    }
+    else
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Set fetched information as metadata records                     */
+/* -------------------------------------------------------------------- */
+    const char *pszText;
+
+    SetMetadataItem( "DATASET_NAME",  szDatasetName );
+
+    switch( eSpacecraftID )
+    {
+        case TIROSN:
+            pszText = "TIROS-N";
+            break;
+        case NOAA6:
+            pszText = "NOAA-6(A)";
+            break;
+        case NOAAB:
+            pszText = "NOAA-B";
+            break;
+        case NOAA7:
+            pszText = "NOAA-7(C)";
+            break;
+        case NOAA8:
+            pszText = "NOAA-8(E)";
+            break;
+        case NOAA9:
+            pszText = "NOAA-9(F)";
+            break;
+        case NOAA10:
+            pszText = "NOAA-10(G)";
+            break;
+        case NOAA11:
+            pszText = "NOAA-11(H)";
+            break;
+        case NOAA12:
+            pszText = "NOAA-12(D)";
+            break;
+        case NOAA13:
+            pszText = "NOAA-13(I)";
+            break;
+        case NOAA14:
+            pszText = "NOAA-14(J)";
+            break;
+        case NOAA15:
+            pszText = "NOAA-15(K)";
+            break;
+        case NOAA16:
+            pszText = "NOAA-16(L)";
+            break;
+        case NOAA17:
+            pszText = "NOAA-17(M)";
+            break;
+        case NOAA18:
+            pszText = "NOAA-18(N)";
+            break;
+        case METOP2:
+            pszText = "METOP-2(A)";
+            break;
+        default:
+            pszText = "Unknown";
+            break;
+    }
+    SetMetadataItem( "SATELLITE",  pszText );
+
+    switch( eProductType )
+    {
+        case LAC:
+            pszText = "AVHRR LAC";
+            break;
+        case HRPT:
+            pszText = "AVHRR HRPT";
+            break;
+        case GAC:
+            pszText = "AVHRR GAC";
+            break;
+        case FRAC:
+            pszText = "AVHRR FRAC";
+            break;
+        default:
+            pszText = "Unknown";
+            break;
+    }
+    SetMetadataItem( "DATA_TYPE",  pszText );
+
+    // Get revolution number as string, we don't need this value for processing
+    char    szRevolution[6];
+    memcpy( szRevolution, szDatasetName + 32, 5 );
+    szRevolution[5] = '\0';
+    SetMetadataItem( "REVOLUTION",  szRevolution );
+
+    switch( eSource )
+    {
+        case DU:
+            pszText = "Dundee, Scotland, UK";
+            break;
+        case GC:
+            pszText = "Fairbanks, Alaska, USA (formerly Gilmore Creek)";
+            break;
+        case HO:
+            pszText = "Honolulu, Hawaii, USA";
+            break;
+        case MO:
+            pszText = "Monterey, California, USA";
+            break;
+        case WE:
+            pszText = "Western Europe CDA, Lannion, France";
+            break;
+        case SO:
+            pszText = "SOCC (Satellite Operations Control Center), Suitland, Maryland, USA";
+            break;
+        case WI:
+            pszText = "Wallops Island, Virginia, USA";
+            break;
+        default:
+            pszText = "Unknown receiving station";
+            break;
+    }
+    SetMetadataItem( "SOURCE",  pszText );
+
+    switch( eProcCenter )
+    {
+        case CMS:
+            pszText = "Centre de Meteorologie Spatiale - Lannion, France";
+            break;
+        case DSS:
+            pszText = "Dundee Satellite Receiving Station - Dundee, Scotland, UK";
+            break;
+        case NSS:
+            pszText = "NOAA/NESDIS - Suitland, Maryland, USA";
+            break;
+        case UKM:
+            pszText = "United Kingdom Meteorological Office - Bracknell, England, UK";
+            break;
+        default:
+            pszText = "Unknown processing center";
+            break;
+    }
+    SetMetadataItem( "PROCESSING_CENTER",  pszText );
+    
+    return CE_None;
 }
 
 /************************************************************************/
@@ -739,7 +1158,7 @@ int L1BDataset::ComputeFileOffsets()
                         break;
                     }
                 }
-                nDataStartOffset = nRecordSize + 122;
+                nDataStartOffset = nRecordSize + L1B_NOAA9_HEADER_SIZE;
                 nRecordDataStart = 448;
                 iGCPCodeOffset = 52;
                 iGCPOffset = 104;
@@ -803,7 +1222,7 @@ int L1BDataset::ComputeFileOffsets()
                         break;
                     }
                 }
-                nDataStartOffset = nRecordSize + 512;
+                nDataStartOffset = nRecordSize + L1B_NOAA15_HEADER_SIZE;
                 nRecordDataStart = 1264;
                 iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
                 iGCPOffset = 640;
@@ -874,7 +1293,7 @@ int L1BDataset::ComputeFileOffsets()
                         break;
                     }
                 }
-                nDataStartOffset = nRecordSize * 2 + 122;
+                nDataStartOffset = nRecordSize * 2 + L1B_NOAA9_HEADER_SIZE;
                 nRecordDataStart = 448;
                 iGCPCodeOffset = 52;
                 iGCPOffset = 104;
@@ -938,7 +1357,7 @@ int L1BDataset::ComputeFileOffsets()
                         break;
                     }
                 }
-                nDataStartOffset = nRecordSize + 512;
+                nDataStartOffset = nRecordSize + L1B_NOAA15_HEADER_SIZE;
                 nRecordDataStart = 1264;
                 iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
                 iGCPOffset = 640;
@@ -955,6 +1374,46 @@ int L1BDataset::ComputeFileOffsets()
 
 
 /************************************************************************/
+/*                           DetectFormat()                             */
+/************************************************************************/
+
+int L1BDataset::DetectFormat( GByte *pabyHeader )
+
+{
+    // We will try the NOAA-15 and later formats first
+    if ( *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 25) == '.'
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 30) == '.'
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 33) == '.'
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 40) == '.'
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 46) == '.'
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 52) == '.'
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 61) == '.' )
+        return L1B_NOAA15;
+
+    // Next try the NOAA-9/14 formats
+    if ( *(pabyHeader + 8 + 25) == '.'
+         && *(pabyHeader + 8 + 30) == '.'
+         && *(pabyHeader + 8 + 33) == '.'
+         && *(pabyHeader + 8 + 40) == '.'
+         && *(pabyHeader + 8 + 46) == '.'
+         && *(pabyHeader + 8 + 52) == '.'
+         && *(pabyHeader + 8 + 61) == '.' )
+        return L1B_NOAA9;
+
+    // Finally try the AAPP formats 
+    if ( *(pabyHeader + 25) == '.'
+         && *(pabyHeader + 30) == '.'
+         && *(pabyHeader + 33) == '.'
+         && *(pabyHeader + 40) == '.'
+         && *(pabyHeader + 46) == '.'
+         && *(pabyHeader + 52) == '.'
+         && *(pabyHeader + 61) == '.' )
+        return L1B_AAPP;
+
+    return L1B_NONE;
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -964,14 +1423,7 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->fp == NULL )
         return FALSE;
 
-    // XXX: Signature is not good
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 33, ".", 1) ||
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 38, ".", 1) || 
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 41, ".", 1) || 
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 48, ".", 1) || 
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 54, ".", 1) ||
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 60, ".", 1) ||
-        !EQUALN((const char *) poOpenInfo->pabyHeader + 69, ".", 1) )
+    if ( DetectFormat(poOpenInfo->pabyHeader) == L1B_NONE )
         return FALSE;
 
     return TRUE;
@@ -984,7 +1436,8 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if ( !Identify(poOpenInfo) )
+    int eL1BFormat = DetectFormat(poOpenInfo->pabyHeader);
+    if ( eL1BFormat == L1B_NONE )
         return NULL;
 
 #if 0
@@ -1013,107 +1466,21 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    GByte       pabyTBMHeader[TBM_HEADER_SIZE];
+    if ( poDS->ProcessDatasetHeader( eL1BFormat ) != CE_None )
+    {
+        CPLDebug( "L1B", "Error reading L1B record header." );
+        goto bad;
+    }
+
+    GByte       pabyTBMHeader[L1B_NOAA9_HEADER_SIZE];
     int         i;
 
     if ( VSIFSeekL( poDS->fp, 0, SEEK_SET ) < 0
-         || VSIFReadL( pabyTBMHeader, 1, TBM_HEADER_SIZE, poDS->fp ) < TBM_HEADER_SIZE )
+         || VSIFReadL( pabyTBMHeader, 1, L1B_NOAA9_HEADER_SIZE, poDS->fp ) < L1B_NOAA9_HEADER_SIZE )
     {
         CPLDebug( "L1B", "Can't read TBM header." );
         goto bad;
     }
-
-    // Determine processing center where the dataset was created
-    if ( EQUALN((const char *) pabyTBMHeader + 30, "CMS", 3) )
-         poDS->eProcCenter = CMS;
-    else if ( EQUALN((const char *) pabyTBMHeader + 30, "DSS", 3) )
-         poDS->eProcCenter = DSS;
-    else if ( EQUALN((const char *) pabyTBMHeader + 30, "NSS", 3) )
-         poDS->eProcCenter = NSS;
-    else if ( EQUALN((const char *) pabyTBMHeader + 30, "UKM", 3) )
-         poDS->eProcCenter = UKM;
-    else
-         poDS->eProcCenter = UNKNOWN_CENTER;
-    
-    // Determine spacecraft type
-    if ( EQUALN((const char *)pabyTBMHeader + 39, "NA", 2) )
-         poDS->eSpacecraftID = NOAA6;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NB", 2) )
-         poDS->eSpacecraftID = NOAAB;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NC", 2) )
-         poDS->eSpacecraftID = NOAA7;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NE", 2) )
-         poDS->eSpacecraftID = NOAA8;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NF", 2) )
-         poDS->eSpacecraftID = NOAA9;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NG", 2) )
-         poDS->eSpacecraftID = NOAA10;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NH", 2) )
-         poDS->eSpacecraftID = NOAA11;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "ND", 2) )
-         poDS->eSpacecraftID = NOAA12;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NI", 2) )
-         poDS->eSpacecraftID = NOAA13;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NJ", 2) )
-         poDS->eSpacecraftID = NOAA14;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NK", 2) )
-         poDS->eSpacecraftID = NOAA15;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NL", 2) )
-         poDS->eSpacecraftID = NOAA16;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NM", 2) )
-         poDS->eSpacecraftID = NOAA17;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "NN", 2) )
-         poDS->eSpacecraftID = NOAA18;
-    else if ( EQUALN((const char *)pabyTBMHeader + 39, "M2", 2) )
-         poDS->eSpacecraftID = METOP2;
-    else
-    {
-#ifdef DEBUG
-        CPLDebug( "L1B", "Unknown spacecraft type \"%.2s\".",
-                  pabyTBMHeader + 39 );
-#endif
-         goto bad;
-    }
-           
-    // Determine product type
-    if ( EQUALN((const char *)pabyTBMHeader + 34, "HRPT", 4) )
-         poDS->eProductType = HRPT;
-    else if ( EQUALN((const char *)pabyTBMHeader + 34, "LHRR", 4) )
-         poDS->eProductType = LAC;
-    else if ( EQUALN((const char *)pabyTBMHeader + 34, "GHRR", 4) )
-         poDS->eProductType = GAC;
-    else if ( EQUALN((const char *)pabyTBMHeader + 34, "FRAC", 4) )
-         poDS->eProductType = FRAC;
-    else
-    {
-#ifdef DEBUG
-        CPLDebug( "L1B", "Unknown product type \"%.4s\".",
-                  pabyTBMHeader + 34 );
-#endif
-         goto bad;
-    }
-
-    // Get revolution number as string, we don't need this value for processing
-    memcpy(poDS->pszRevolution, pabyTBMHeader + 62, 5);
-    poDS->pszRevolution[5] = '\0';
-
-    // Get receiving station name
-    if ( EQUALN((const char *)pabyTBMHeader + 70, "DU", 2) )
-         poDS->eSource = DU;
-    else if ( EQUALN((const char *)pabyTBMHeader + 70, "GC", 2) )
-         poDS->eSource = GC;
-    else if ( EQUALN((const char *)pabyTBMHeader + 70, "HO", 2) )
-         poDS->eSource = HO;
-    else if ( EQUALN((const char *)pabyTBMHeader + 70, "MO", 2) )
-         poDS->eSource = MO;
-    else if ( EQUALN((const char *)pabyTBMHeader + 70, "WE", 2) )
-         poDS->eSource = WE;
-    else if ( EQUALN((const char *)pabyTBMHeader + 70, "SO", 2) )
-         poDS->eSource = SO;
-    else if ( EQUALN((const char *)pabyTBMHeader + 70, "WI", 2) )
-         poDS->eSource = WI;
-    else
-         poDS->eSource = UNKNOWN_STATION;
 
     // Determine number of bands
     for ( i = 97; i < 117; i++ )
@@ -1231,11 +1598,6 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         (sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
 
 /* -------------------------------------------------------------------- */
-/*      Load some info from header.                                     */
-/* -------------------------------------------------------------------- */
-    poDS->ProcessDatasetHeader();
-
-/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     int iBand;
@@ -1263,7 +1625,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 if ( poDS->eSpacecraftID >= NOAA15
                      && poDS->eSpacecraftID <= METOP2 )
-                    if (poDS->iInstrumentStatus & 0x0400)
+                    if ( poDS->iInstrumentStatus & 0x0400 )
                         poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[7] );
                     else
                         poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[6] );
@@ -1325,128 +1687,6 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
     }
 
-/* -------------------------------------------------------------------- */
-/*      Get and set other important information as metadata             */
-/* -------------------------------------------------------------------- */
-    const char *pszText;
-    switch( poDS->eSpacecraftID )
-    {
-        case TIROSN:
-            pszText = "TIROS-N";
-        break;
-        case NOAA6:
-            pszText = "NOAA-6(A)";
-        break;
-        case NOAAB:
-            pszText = "NOAA-B";
-        break;
-        case NOAA7:
-            pszText = "NOAA-7(C)";
-        break;
-        case NOAA8:
-            pszText = "NOAA-8(E)";
-        break;
-        case NOAA9:
-            pszText = "NOAA-9(F)";
-        break;
-        case NOAA10:
-            pszText = "NOAA-10(G)";
-        break;
-        case NOAA11:
-            pszText = "NOAA-11(H)";
-        break;
-        case NOAA12:
-            pszText = "NOAA-12(D)";
-        break;
-        case NOAA13:
-            pszText = "NOAA-13(I)";
-        break;
-        case NOAA14:
-            pszText = "NOAA-14(J)";
-        break;
-        case NOAA15:
-            pszText = "NOAA-15(K)";
-        break;
-        case NOAA16:
-            pszText = "NOAA-16(L)";
-        break;
-        case NOAA17:
-            pszText = "NOAA-17(M)";
-        break;
-        case NOAA18:
-            pszText = "NOAA-18(N)";
-        break;
-        case METOP2:
-            pszText = "METOP-2(A)";
-        break;
-        default:
-            pszText = "Unknown";
-    }
-    poDS->SetMetadataItem( "SATELLITE",  pszText );
-    switch( poDS->eProductType )
-    {
-        case LAC:
-            pszText = "AVHRR LAC";
-        break;
-        case HRPT:
-            pszText = "AVHRR HRPT";
-        break;
-        case GAC:
-            pszText = "AVHRR GAC";
-        break;
-        case FRAC:
-            pszText = "AVHRR FRAC";
-        break;
-        default:
-            pszText = "Unknown";
-    }
-    poDS->SetMetadataItem( "DATA_TYPE",  pszText );
-    poDS->SetMetadataItem( "REVOLUTION",  poDS->pszRevolution );
-    switch( poDS->eSource )
-    {
-        case DU:
-            pszText = "Dundee, Scotland, UK";
-        break;
-        case GC:
-            pszText = "Fairbanks, Alaska, USA (formerly Gilmore Creek)";
-        break;
-        case HO:
-            pszText = "Honolulu, Hawaii, USA";
-        break;
-        case MO:
-            pszText = "Monterey, California, USA";
-        break;
-        case WE:
-            pszText = "Western Europe CDA, Lannion, France";
-        break;
-        case SO:
-            pszText = "SOCC (Satellite Operations Control Center), Suitland, Maryland, USA";
-        break;
-        case WI:
-            pszText = "Wallops Island, Virginia, USA";
-        break;
-        default:
-            pszText = "Unknown receiving station";
-    }
-    poDS->SetMetadataItem( "SOURCE",  pszText );
-    switch( poDS->eProcCenter )
-    {
-        case CMS:
-            pszText = "Centre de Meteorologie Spatiale - Lannion, France";
-        break;
-        case DSS:
-            pszText = "Dundee Satellite Receiving Station - Dundee, Scotland, UK";
-        break;
-        case NSS:
-            pszText = "NOAA/NESDIS - Suitland, Maryland, USA";
-        break;
-        case UKM:
-            pszText = "United Kingdom Meteorological Office - Bracknell, England, UK";
-        break;
-        default:
-            pszText = "Unknown processing center";
-    }
-    poDS->SetMetadataItem( "PROCESSING_CENTER",  pszText );
     // Time of first scanline
     poDS->SetMetadataItem( "START",  poDS->sStartTime.PrintTime() );
     // Time of last scanline
