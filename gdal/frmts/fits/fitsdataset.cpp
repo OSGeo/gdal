@@ -304,6 +304,7 @@ FITSDataset::~FITSDataset() {
     }
 
     // Close the FITS handle - ignore the error status
+    status = 0;
     fits_close_file(hFITS, &status);
 
   }
@@ -395,6 +396,10 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 	     GetDescription());
     return CE_Failure;
   }
+  
+  // Create the bands
+  for (int i = 0; i < nBands; ++i)
+    SetBand(i+1, new FITSRasterBand(this, i+1));
 
   // Read header information from file and use it to set metadata
   // This process understands the CONTINUE standard for long strings.
@@ -447,10 +452,6 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
     }
     ++keyNum;
   } while (!endReached);
-  
-  // Create the bands
-  for (int i = 0; i < nBands; ++i)
-    SetBand(i+1, new FITSRasterBand(this, i+1));
   
   return CE_None;
 }
@@ -534,7 +535,7 @@ GDALDataset *FITSDataset::Create(const char* pszFilename,
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
   sprintf(extFilename, "!%s", pszFilename);
   fits_create_file(&hFITS, extFilename, &status);
-  delete extFilename;
+  delete[] extFilename;
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
 	     "Couldn't create FITS file %s (%d).\n", pszFilename, status);
