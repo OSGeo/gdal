@@ -239,7 +239,7 @@ class L1BDataset : public GDALPamDataset
     CPLErr      ProcessDatasetHeader( int );
     int         ComputeFileOffsets();
     
-    static int  DetectFormat( GByte * );
+    static int  DetectFormat( GDALOpenInfo *poOpenInfo );
 
   public:
                 L1BDataset();
@@ -1377,11 +1377,16 @@ int L1BDataset::ComputeFileOffsets()
 /*                           DetectFormat()                             */
 /************************************************************************/
 
-int L1BDataset::DetectFormat( GByte *pabyHeader )
+int L1BDataset::DetectFormat( GDALOpenInfo *poOpenInfo )
 
 {
+    GByte* pabyHeader = poOpenInfo->pabyHeader;
+    if (pabyHeader == NULL || poOpenInfo->nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
+        return L1B_NONE;
+
     // We will try the NOAA-15 and later formats first
-    if ( *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 25) == '.'
+    if ( poOpenInfo->nHeaderBytes > L1B_NOAA15_HEADER_SIZE + 61
+         && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 25) == '.'
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 30) == '.'
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 33) == '.'
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 40) == '.'
@@ -1423,7 +1428,7 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
     if( poOpenInfo->fp == NULL )
         return FALSE;
 
-    if ( DetectFormat(poOpenInfo->pabyHeader) == L1B_NONE )
+    if ( DetectFormat(poOpenInfo) == L1B_NONE )
         return FALSE;
 
     return TRUE;
@@ -1436,7 +1441,7 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int eL1BFormat = DetectFormat(poOpenInfo->pabyHeader);
+    int eL1BFormat = DetectFormat(poOpenInfo);
     if ( eL1BFormat == L1B_NONE )
         return NULL;
 
