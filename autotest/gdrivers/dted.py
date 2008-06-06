@@ -273,6 +273,42 @@ def dted_10():
     tst = gdaltest.GDALTest( 'dted', 'n43.dt0', 1, 49187)
     return tst.testCreateCopy( vsimem = 1 )
 
+
+###############################################################################
+# Test a DTED file that strictly the original edition of MIL-D-89020 that was buggy.
+# The latitude and longitude of the LL cornder of the UHF record was inverted.
+# This was fixed in MIL-D-89020 Amendement 1, but some products may be affected.
+
+def dted_11():
+
+    ds = gdal.Open( 'data/n43_coord_inverted.dt0' )
+
+    gt = ds.GetGeoTransform()
+
+    max_error = 0.000001
+
+    if abs(gt[0] - (-80.004166666666663)) > max_error or abs(gt[1] - 0.0083333333333333332) > max_error \
+        or abs(gt[2] - 0) > max_error or abs(gt[3] - 44.00416666666667) > max_error \
+        or abs(gt[4] - 0) > max_error or abs(gt[5] - (-0.0083333333333333332)) > max_error:
+        gdaltest.post_reason( 'DTED geotransform wrong.' )
+        return 'fail'
+
+    prj = ds.GetProjection()
+    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]':
+        gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
+        return 'fail'
+
+    band1 = ds.GetRasterBand(1)
+    if band1.GetNoDataValue() != -32767:
+        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        return 'fail'
+
+    if band1.DataType != gdal.GDT_Int16:
+        gdaltest.post_reason( 'Data type is not Int16!' )
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup.
 
@@ -302,6 +338,7 @@ gdaltest_list = [
     dted_8,
     dted_9,
     dted_10,
+    dted_11,
     dted_cleanup
     ]
   
