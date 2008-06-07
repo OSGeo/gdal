@@ -154,7 +154,7 @@ def mask_4():
     src_ds = None
 
     # confirm we got the custom mask on the copied dataset.
-    if ds.GetRasterBand(1).GetMaskFlags() != 2:
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
         gdaltest.post_reason( 'did not get expected mask flags' )
         print ds.GetRasterBand(1).GetMaskFlags()
         return 'fail'
@@ -188,7 +188,7 @@ def mask_5():
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
     
-    if ovr.GetMaskFlags() != 2:
+    if ovr.GetMaskFlags() != gdal.GMF_PER_DATASET:
         gdaltest.post_reason( 'did not get expected mask flags' )
         print ovr.GetMaskFlags()
         return 'fail'
@@ -211,7 +211,7 @@ def mask_5():
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
     
-    if ovr.GetMaskFlags() != 2:
+    if ovr.GetMaskFlags() != gdal.GMF_PER_DATASET:
         gdaltest.post_reason( 'did not get expected mask flags' )
         print ovr.GetMaskFlags()
         return 'fail'
@@ -463,6 +463,231 @@ def mask_12():
     return 'success' 
 
 ###############################################################################
+# Test creation of external TIFF mask band
+
+def mask_13():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    drv = gdal.GetDriverByName('GTiff')
+    ds = drv.CreateCopy( 'tmp/byte_with_mask.tif', src_ds )
+    src_ds = None
+
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 0:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds.GetRasterBand(1).GetMaskBand().Fill(1)
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('tmp/byte_with_mask.tif.msk')
+    except:
+        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk is absent' )
+        return 'fail'
+
+    ds = gdal.Open('tmp/byte_with_mask.tif')
+
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason( 'wrong mask flags' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/byte_with_mask.tif' )
+
+    try:
+        os.stat('tmp/byte_with_mask.tif.msk')
+        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk is still there' )
+        return 'fail'
+    except:
+        pass
+
+    return 'success' 
+
+###############################################################################
+# Test creation of internal TIFF mask band
+
+def mask_14():
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    drv = gdal.GetDriverByName('GTiff')
+    ds = drv.CreateCopy( 'tmp/byte_with_mask.tif', src_ds )
+    src_ds = None
+
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 0:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds.GetRasterBand(1).GetMaskBand().Fill(1)
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('tmp/byte_with_mask.tif.msk')
+        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk shouldn not exist' )
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/byte_with_mask.tif')
+
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason( 'wrong mask flags' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/byte_with_mask.tif' )
+
+    return 'success' 
+
+###############################################################################
+# Test creation of internal TIFF overview, mask band and mask band of overview
+
+def mask_and_ovr(order):
+
+    if gdaltest.have_ng == 0:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    drv = gdal.GetDriverByName('GTiff')
+    ds = drv.CreateCopy( 'tmp/byte_with_ovr_and_mask.tif', src_ds )
+    src_ds = None
+
+    if order == 1:
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+        ds.BuildOverviews( overviewlist = [2, 4] )
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+        ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+    elif order == 2:
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+    elif order == 3:
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+        ds.BuildOverviews( overviewlist = [2, 4] )
+        ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+    elif order == 4:
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.GetRasterBand(1).GetMaskBand().Fill(1)
+        # The overview for the mask will be implicitely created and computed
+        ds.BuildOverviews( overviewlist = [2, 4] )
+        gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+
+    if order < 4:
+        ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif', gdal.GA_Update)
+        ds.GetRasterBand(1).GetMaskBand().Fill(1)
+        # The overview of the mask will be implictely recomputed
+        ds.BuildOverviews( overviewlist = [2, 4] )
+
+    ds = None
+
+    try:
+        os.stat('tmp/byte_with_ovr_and_mask.tif.msk')
+        gdaltest.post_reason( 'tmp/byte_with_mask.tif.msk shouldn not exist' )
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/byte_with_ovr_and_mask.tif')
+
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason( 'wrong mask flags' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    if cs != 100:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask of the first overview' )
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+    if cs != 25:
+        print cs
+        gdaltest.post_reason( 'Got wrong checksum for the the mask of the second overview' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/byte_with_ovr_and_mask.tif' )
+
+    return 'success' 
+
+
+def mask_15():
+    return mask_and_ovr(1)
+
+def mask_16():
+    return mask_and_ovr(2)
+
+def mask_17():
+    return mask_and_ovr(3)
+
+def mask_18():
+    return mask_and_ovr(4)
+
+###############################################################################
 # Cleanup.
 
 
@@ -478,7 +703,13 @@ gdaltest_list = [
     mask_9,
     mask_10,
     mask_11,
-    mask_12 ]
+    mask_12,
+    mask_13,
+    mask_14,
+    mask_15,
+    mask_16,
+    mask_17,
+    mask_18]
 
 if __name__ == '__main__':
 
