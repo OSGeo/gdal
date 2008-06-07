@@ -152,6 +152,8 @@ class GTiffDataset : public GDALPamDataset
     int          WriteEncodedTile(uint32 tile, void* data, int bPreserveDataBuffer);
     int          WriteEncodedStrip(uint32 strip, void* data, int bPreserveDataBuffer);
 
+    GTiffDataset* poMaskDS;
+
   public:
                  GTiffDataset();
                  ~GTiffDataset();
@@ -254,6 +256,9 @@ public:
                                          const char * pszDomain = "" );
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
+
+    virtual GDALRasterBand *GetMaskBand();
+    virtual int             GetMaskFlags();
 };
 
 /************************************************************************/
@@ -991,6 +996,56 @@ GDALRasterBand *GTiffRasterBand::GetOverview( int i )
     }
     else
         return GDALRasterBand::GetOverview( i );
+}
+
+/************************************************************************/
+/*                           GetMaskFlags()                             */
+/************************************************************************/
+
+int GTiffRasterBand::GetMaskFlags()
+{
+    if( poGDS->poMaskDS != NULL )
+    {
+        int iBand;
+        int nMaskFlag = 0;
+        if( poGDS->poMaskDS->GetRasterCount() == 1)
+        {
+            iBand = 1;
+            nMaskFlag = GMF_PER_DATASET;
+        }
+        else
+        {
+            iBand = nBand;
+        }
+        if( poGDS->poMaskDS->GetRasterBand(iBand)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) != NULL 
+            && atoi(poGDS->poMaskDS->GetRasterBand(iBand)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )) == 1)
+        {
+            return nMaskFlag;
+        }
+        else
+        {
+            return nMaskFlag | GMF_ALPHA;
+        }
+    }
+    else
+        return GDALPamRasterBand::GetMaskFlags();
+}
+
+/************************************************************************/
+/*                            GetMaskBand()                             */
+/************************************************************************/
+
+GDALRasterBand *GTiffRasterBand::GetMaskBand()
+{
+    if( poGDS->poMaskDS != NULL )
+    {
+        if( poGDS->poMaskDS->GetRasterCount() == 1)
+            return poGDS->poMaskDS->GetRasterBand(1);
+        else
+            return poGDS->poMaskDS->GetRasterBand(nBand);
+    }
+    else
+        return GDALPamRasterBand::GetMaskBand();
 }
 
 /************************************************************************/
@@ -1822,6 +1877,8 @@ GTiffDataset::GTiffDataset()
 
     nTempWriteBufferSize = 0;
     pabyTempWriteBuffer = NULL;
+
+    poMaskDS = NULL;
 }
 
 /************************************************************************/
@@ -1841,8 +1898,17 @@ GTiffDataset::~GTiffDataset()
         {
             delete papoOverviewDS[i];
         }
-        CPLFree( papoOverviewDS );
     }
+
+    /* If we are a mask dataset, we can have overviews, but we don't */
+    /* own them. We can only free the array, not the overviews themselves */
+    CPLFree( papoOverviewDS );
+
+    /* poMaskDS is owned by the main image and the overviews */
+    /* so because of the latter case, we can delete it even if */
+    /* we are not the base image */
+    if (poMaskDS)
+        delete poMaskDS;
 
     SetDirectory();
 
@@ -3929,7 +3995,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
 
 /* -------------------------------------------------------------------- */
 /*      If this is a "base" raster, we should scan for any              */
-/*      associated overviews.                                           */
+/*      associated overviews or internal mask band                      */
 /* -------------------------------------------------------------------- */
     if( bBase )
     {
@@ -3939,32 +4005,124 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
             toff_t	nThisDir = TIFFCurrentDirOffset(hTIFF);
             uint32	nSubType;
 
-            if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType)
-                && (nSubType & FILETYPE_REDUCEDIMAGE) )
+            if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType))
             {
-                GTiffDataset	*poODS;
+                /* Embedded overview of the main image */
+                if ((nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
+                    (nSubType & FILETYPE_MASK) == 0)
+                {
+                    GTiffDataset	*poODS;
 
-                poODS = new GTiffDataset();
-                if( poODS->OpenOffset( hTIFF, nThisDir, FALSE, 
-                                       eAccess ) != CE_None 
-                    || poODS->GetRasterCount() != GetRasterCount() )
-                {
-                    delete poODS;
+                    poODS = new GTiffDataset();
+                    if( poODS->OpenOffset( hTIFF, nThisDir, FALSE, 
+                                        eAccess ) != CE_None 
+                        || poODS->GetRasterCount() != GetRasterCount() )
+                    {
+                        delete poODS;
+                    }
+                    else
+                    {
+                        CPLDebug( "GTiff", "Opened %dx%d overview.\n", 
+                                poODS->GetRasterXSize(), poODS->GetRasterYSize());
+                        nOverviewCount++;
+                        papoOverviewDS = (GTiffDataset **)
+                            CPLRealloc(papoOverviewDS, 
+                                    nOverviewCount * (sizeof(void*)));
+                        papoOverviewDS[nOverviewCount-1] = poODS;
+                    }
                 }
-                else
+
+                /* Embedded mask of the main image */
+                else if ((nSubType & FILETYPE_MASK) != 0 &&
+                         (nSubType & FILETYPE_REDUCEDIMAGE) == 0 &&
+                         poMaskDS == NULL )
                 {
-                    CPLDebug( "GTiff", "Opened %dx%d overview.\n", 
-                              poODS->GetRasterXSize(), poODS->GetRasterYSize());
-                    nOverviewCount++;
-                    papoOverviewDS = (GTiffDataset **)
-                        CPLRealloc(papoOverviewDS, 
-                                   nOverviewCount * (sizeof(void*)));
-                    papoOverviewDS[nOverviewCount-1] = poODS;
+                    poMaskDS = new GTiffDataset();
+
+                    /* The TIFF6 specification - page 37 - only allows 1 SamplesPerPixel and 1 BitsPerSample
+                       Here we support either 1 or 8 bit per sample
+                       and we support either 1 sample per pixel or as many samples as in the main image
+                       We don't check the value of the PhotometricInterpretation tag, which should be
+                       set to "Transparency mask" (4) according to the specification (page 36)
+                       ... But the TIFF6 specification allows image masks to have a higher resolution than
+                       the main image, what we don't support here
+                    */
+
+                    if( poMaskDS->OpenOffset( hTIFF, nThisDir, FALSE, 
+                                        eAccess ) != CE_None 
+                        || poMaskDS->GetRasterCount() == 0
+                        || !(poMaskDS->GetRasterCount() == 1 || poMaskDS->GetRasterCount() == GetRasterCount())
+                        || poMaskDS->GetRasterXSize() != GetRasterXSize()
+                        || poMaskDS->GetRasterYSize() != GetRasterYSize()
+                        || poMaskDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+                    {
+                        delete poMaskDS;
+                        poMaskDS = NULL;
+                    }
+                    else
+                    {
+                        CPLDebug( "GTiff", "Opened band mask.\n");
+                    }
+                }
+
+                /* Embedded mask of an overview */
+                /* The TIFF6 specification allows the combination of the FILETYPE_xxxx masks */
+                else if (nSubType & (FILETYPE_REDUCEDIMAGE | FILETYPE_MASK))
+                {
+                    GTiffDataset* poDS = new GTiffDataset();
+                    if( poDS->OpenOffset( hTIFF, nThisDir, FALSE, 
+                                        eAccess ) != CE_None
+                        || poDS->GetRasterCount() == 0
+                        || poDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
+                    {
+                        delete poDS;
+                    }
+                    else
+                    {
+                        int i;
+                        for(i=0;i<nOverviewCount;i++)
+                        {
+                            if (((GTiffDataset*)papoOverviewDS[i])->poMaskDS == NULL &&
+                                poDS->GetRasterXSize() == papoOverviewDS[i]->GetRasterXSize() &&
+                                poDS->GetRasterYSize() == papoOverviewDS[i]->GetRasterYSize() &&
+                                (poDS->GetRasterCount() == 1 || poDS->GetRasterCount() == GetRasterCount()))
+                            {
+                                CPLDebug( "GTiff", "Opened band mask for %dx%d overview.\n",
+                                          poDS->GetRasterXSize(), poDS->GetRasterYSize());
+                                ((GTiffDataset*)papoOverviewDS[i])->poMaskDS = poDS;
+                                break;
+                            }
+                        }
+                        if (i == nOverviewCount)
+                        {
+                            delete poDS;
+                        }
+                    }
                 }
             }
 
             SetDirectory( nThisDir );
         }
+
+        /* If we have a mask for the main image, loop over the overviews, and if they */
+        /* have a mask, let's set this mask as an overview of the main mask... */
+        if (poMaskDS != NULL)
+        {
+            int i;
+            for(i=0;i<nOverviewCount;i++)
+            {
+                if (((GTiffDataset*)papoOverviewDS[i])->poMaskDS != NULL)
+                {
+                    poMaskDS->nOverviewCount++;
+                    poMaskDS->papoOverviewDS = (GTiffDataset **)
+                        CPLRealloc(poMaskDS->papoOverviewDS, 
+                                poMaskDS->nOverviewCount * (sizeof(void*)));
+                    poMaskDS->papoOverviewDS[poMaskDS->nOverviewCount-1] =
+                            ((GTiffDataset*)papoOverviewDS[i])->poMaskDS;
+                }
+            }
+        }
+
     }
 
     return( CE_None );
