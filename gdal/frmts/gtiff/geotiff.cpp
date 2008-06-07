@@ -1367,6 +1367,16 @@ CPLErr GTiffBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
 /* -------------------------------------------------------------------- */
+/*      Handle the case of a strip or tile that doesn't exist yet.      */
+/*      Just set to zeros and return.                                   */
+/* -------------------------------------------------------------------- */
+    if( !poGDS->IsBlockAvailable(nBlockId) )
+    {
+        memset( pImage, 0, nBlockYSize * nBlockXSize);
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Load the block buffer.                                          */
 /* -------------------------------------------------------------------- */
     eErr = poGDS->LoadBlockBuf( nBlockId );
