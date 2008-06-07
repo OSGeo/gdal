@@ -87,6 +87,10 @@ gdaltransform$(EXE): gdaltransform.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaltransform.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdaltransform$(EXE)
 
+gdalflattenmask$(EXE): gdalflattenmask.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdalflattenmask.o $(XTRAOBJ) \
+		$(CONFIG_LIBS) -o gdalflattenmask$(EXE)
+
 ogrinfo$(EXE):	ogrinfo.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) ogrinfo.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o ogrinfo$(EXE)
