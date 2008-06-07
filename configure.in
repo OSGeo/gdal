@@ -1254,6 +1254,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select MrSID library or disable driver.
 dnl ---------------------------------------------------------------------------
 MRSID_FLAGS=
+HAVE_MRSID=no
 
 AC_ARG_WITH(mrsid,[  --with-mrsid[=ARG]      Include MrSID support (ARG=path to MrSID DSDK or no)],,)
 
@@ -1267,12 +1268,32 @@ if test "x$with_mrsid" = "xno"  -o "x$with_mrsid" = "x" ; then
 
 else
 
-  AC_MSG_CHECKING([for lt_base.h in $with_mrsid/include/support])
-  if test -r "$with_mrsid/include/support/lt_base.h" ; then
-    AC_MSG_RESULT([found MrSID DSDK version 4.x or newer.])
+  MRSID_BASE="$with_mrsid/include"
 
+  AC_MSG_CHECKING([for lt_base.h in $MRSID_BASE/support])
+  if test -r "$MRSID_BASE/support/lt_base.h" ; then
+
+    AC_MSG_RESULT([found MrSID DSDK version 4.x or newer.])
     HAVE_MRSID=yes
-    MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
+    MRSID_INCLUDE="-I$MRSID_BASE/base -I$MRSID_BASE/metadata -I$MRSID_BASE/mrsid_readers -I$MRSID_BASE/j2k_readers -I$MRSID_BASE/support"
+
+  else
+
+    AC_MSG_RESULT([not found.])
+
+    AC_MSG_CHECKING([for lt_base.h in $MRSID_BASE])
+    if test -r "$MRSID_BASE/lt_base.h" ; then
+
+      AC_MSG_RESULT([found MrSID DSDK version 7.x or newer.]);
+      HAVE_MRSID=yes
+      MRSID_INCLUDE="-I$MRSID_BASE"
+
+    fi
+
+  fi
+
+  if test $HAVE_MRSID = yes ; then
+
     MRSID_LIBS="-lltidsdk -lpthread"
 
     AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
