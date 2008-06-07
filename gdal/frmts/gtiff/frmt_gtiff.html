@@ -38,6 +38,39 @@ and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
 extention .tfw, .tifw/.tiffw or .wld, as well as a MapInfo .tab file (only control
 points used, Coordsys ignored).<P>
 
+<h2>Nodata masks</h2>
+
+TIFF files can contain internal transparency masks. The GeoTIFF driver
+recognizes an internal directory as being a transparency mask when the
+FILETYPE_MASK bit value is set on the TIFFTAG_SUBFILETYPE tag.
+According to the TIFF specification, such internal transparency masks
+contain 1 sample of 1-bit data. Although the TIFF specification allows
+for higher resolutions for the internal transparency mask, the GeoTIFF
+driver only supports internal transparency masks of the same dimensions
+as the main image. Transparency masks of internal overviews are also
+supported.<p>
+
+When the GDAL_TIFF_INTERNAL_MASK environment variable is set to YES and
+the GeoTIFF file is opened in update mode, the CreateMaskBand() method
+on a TIFF dataset or rasterband will create an internal transparency mask.
+Otherwise, the default behaviour of nodata mask creation will be used,
+that is to say the creation of a .msk file, as per
+<a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a><p>
+
+<h2>Overviews</h2>
+
+The GeoTIFF driver supports reading, creation and update of internal overviews.
+Internal overviews can be created on GeoTIFF files opened in update mode
+(with gdaladdo for instance). If the GeoTIFF file is opened as read only,
+the creation of overviews will be done in an external .ovr file.
+Overview are only updated on request with the BuildOverviews() method.<p>
+
+If a GeoTIFF file has a transparency mask and that the GDAL_TIFF_INTERNAL_MASK
+environment variable is set to YES and the GeoTIFF file is opened in update mode,
+BuildOverviews() will automatically create overviews for the internal transparency mask.
+These overviews will be refreshed by further calls to BuildOverviews() even if
+GDAL_TIFF_INTERNAL_MASK is not set to YES.<p>
+
 <h2>Creation Issues</h2>
 
 GeoTIFF files can be created with any GDAL defined band type, including
@@ -115,8 +148,6 @@ used. Primarily intended for debugging & test purposes</p>
 -->
 
 </ul>
-
-GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
 
 <h3>About BigTIFF (only relevent with libtiff >= 4.0) </h3>
 

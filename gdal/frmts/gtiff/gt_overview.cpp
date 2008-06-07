@@ -93,7 +93,10 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
     else
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
 
-    TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE );
+    if (nPhotometric == PHOTOMETRIC_MASK)
+        TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK );
+    else
+        TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE );
     
 /* -------------------------------------------------------------------- */
 /*	Write color table if one is present.				*/
