@@ -153,6 +153,7 @@ class GTiffDataset : public GDALPamDataset
     int          WriteEncodedStrip(uint32 strip, void* data, int bPreserveDataBuffer);
 
     GTiffDataset* poMaskDS;
+    GTiffDataset* poBaseDS;
 
   public:
                  GTiffDataset();
@@ -195,6 +196,8 @@ class GTiffDataset : public GDALPamDataset
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" );
     virtual void   *GetInternalHandle( const char * );
+
+    virtual CPLErr          CreateMaskBand( int nFlags );
 
     // only needed by createcopy and close code.
     static void	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
@@ -259,6 +262,7 @@ public:
 
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
+    virtual CPLErr          CreateMaskBand( int nFlags );
 };
 
 /************************************************************************/
@@ -605,7 +609,6 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int		nBlockId;
     CPLErr      eErr = CE_None;
 
-    poGDS->Crystalize();
     poGDS->SetDirectory();
 
     CPLAssert( poGDS != NULL
@@ -1308,7 +1311,6 @@ CPLErr GTiffBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int		nBlockId;
     CPLErr      eErr = CE_None;
 
-    poGDS->Crystalize();
     poGDS->SetDirectory();
 
     CPLAssert( poGDS != NULL
@@ -1483,7 +1485,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int		nBlockId;
     CPLErr      eErr = CE_None;
 
-    poGDS->Crystalize();
     poGDS->SetDirectory();
 
     CPLAssert( poGDS != NULL
@@ -1889,6 +1890,7 @@ GTiffDataset::GTiffDataset()
     pabyTempWriteBuffer = NULL;
 
     poMaskDS = NULL;
+    poBaseDS = NULL;
 }
 
 /************************************************************************/
@@ -2475,11 +2477,87 @@ CPLErr GTiffDataset::IBuildOverviews(
                     CPLRealloc(papoOverviewDS, 
                                nOverviewCount * (sizeof(void*)));
                 papoOverviewDS[nOverviewCount-1] = poODS;
+                poODS->poBaseDS = this;
             }
         }
         else
             panOverviewList[i] *= -1;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Create overviews for the mask.                                  */
+/* -------------------------------------------------------------------- */
+
+    if (poMaskDS != NULL &&
+        poMaskDS->GetRasterCount() == 1 &&
+        CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    {
+        for( i = 0; i < nOverviewCount; i++ )
+        {
+            if (papoOverviewDS[i]->poMaskDS == NULL)
+            {
+                toff_t	nOverviewOffset;
+
+                nOverviewOffset = 
+                    TIFF_WriteOverview( hTIFF,
+                                        papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize, 
+                                        1, PLANARCONFIG_CONTIG,
+                                        1, 128, 128, TRUE,
+                                        COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, 
+                                        NULL, NULL, NULL, FALSE, 
+                                        "" );
+
+                if( nOverviewOffset == 0 )
+                {
+                    eErr = CE_Failure;
+                    continue;
+                }
+
+                poODS = new GTiffDataset();
+                if( poODS->OpenOffset( hTIFF, nOverviewOffset, FALSE, 
+                                       GA_Update ) != CE_None )
+                {
+                    delete poODS;
+                    eErr = CE_Failure;
+                }
+                else
+                {
+                    poODS->poBaseDS = this;
+                    papoOverviewDS[i]->poMaskDS = poODS;
+                    poMaskDS->nOverviewCount++;
+                    poMaskDS->papoOverviewDS = (GTiffDataset **)
+                    CPLRealloc(poMaskDS->papoOverviewDS, 
+                               poMaskDS->nOverviewCount * (sizeof(void*)));
+                    poMaskDS->papoOverviewDS[poMaskDS->nOverviewCount-1] = poODS;
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Refresh overviews for the mask                                  */
+/* -------------------------------------------------------------------- */
+    if (poMaskDS != NULL &&
+        poMaskDS->GetRasterCount() == 1)
+    {
+        GDALRasterBand **papoOverviewBands;
+        int nMaskOverviews = 0;
+
+        papoOverviewBands = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviewCount);
+        for( i = 0; i < nOverviewCount; i++ )
+        {
+            if (papoOverviewDS[i]->poMaskDS != NULL)
+            {
+                papoOverviewBands[nMaskOverviews ++] =
+                        papoOverviewDS[i]->poMaskDS->GetRasterBand(1);
+            }
+        }
+        eErr = GDALRegenerateOverviews( poMaskDS->GetRasterBand(1),
+                                        nMaskOverviews, papoOverviewBands,
+                                        pszResampling, GDALDummyProgress, NULL);
+        CPLFree(papoOverviewBands);
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
@@ -4039,6 +4117,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                             CPLRealloc(papoOverviewDS, 
                                     nOverviewCount * (sizeof(void*)));
                         papoOverviewDS[nOverviewCount-1] = poODS;
+                        poODS->poBaseDS = this;
                     }
                 }
 
@@ -4072,6 +4151,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     else
                     {
                         CPLDebug( "GTiff", "Opened band mask.\n");
+                        poMaskDS->poBaseDS = this;
                     }
                 }
 
@@ -4100,6 +4180,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
                                 CPLDebug( "GTiff", "Opened band mask for %dx%d overview.\n",
                                           poDS->GetRasterXSize(), poDS->GetRasterYSize());
                                 ((GTiffDataset*)papoOverviewDS[i])->poMaskDS = poDS;
+                                poDS->poBaseDS = this;
                                 break;
                             }
                         }
@@ -5378,6 +5459,148 @@ char **GTiffDataset::GetFileList()
     }
 
     return papszFileList;
+}
+
+/************************************************************************/
+/*                         CreateMaskBand()                             */
+/************************************************************************/
+
+CPLErr GTiffDataset::CreateMaskBand(int nFlags)
+{
+    if (poMaskDS != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This TIFF dataset has already an internal mask band");
+        return CE_Failure;
+    }
+    else if (CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    {
+        toff_t  nBaseDirOffset;
+        toff_t  nOffset;
+        int     bIsTiled;
+        int     bIsOverview = FALSE;
+        uint32	nSubType;
+
+        if (nFlags != GMF_PER_DATASET)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The only flag value supported for internal mask is GMF_PER_DATASET");
+            return CE_Failure;
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      If we don't have read access, then create the mask externally.  */
+    /* -------------------------------------------------------------------- */
+        if( GetAccess() != GA_Update )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                    "File open for read-only accessing, "
+                    "creating mask externally." );
+
+            return GDALPamDataset::CreateMaskBand(nFlags);
+        }
+
+        if (poBaseDS)
+            poBaseDS->SetDirectory();
+        SetDirectory();
+
+        if( TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType))
+        {
+            bIsOverview = (nSubType & FILETYPE_REDUCEDIMAGE) != 0;
+
+            if ((nSubType & FILETYPE_MASK) != 0)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Cannot create a mask on a TIFF mask IFD !" );
+                return CE_Failure;
+            }
+        }
+
+        TIFFFlush( hTIFF );
+
+        bIsTiled = TIFFIsTiled(hTIFF);
+        nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
+
+        TIFFFreeDirectory( hTIFF );
+        TIFFCreateDirectory( hTIFF );
+
+    /* -------------------------------------------------------------------- */
+    /*      Setup TIFF fields.                                              */
+    /* -------------------------------------------------------------------- */
+        TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nRasterXSize );
+        TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nRasterYSize );
+        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
+        TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 1 );
+        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
+        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
+        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MASK );
+        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT );
+
+        if( bIsTiled )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
+            TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
+        }
+        else
+            TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
+
+        if (bIsOverview)
+            TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK );
+        else
+            TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_MASK );
+
+    /* -------------------------------------------------------------------- */
+    /*      Write directory, and return byte offset.                        */
+    /* -------------------------------------------------------------------- */
+        if( TIFFWriteCheck( hTIFF, bIsTiled, "CreateMaskBand()" ) == 0 )
+        {
+            TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
+            return CE_Failure;
+        }
+
+        TIFFWriteDirectory( hTIFF );
+        TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
+
+        nOffset = TIFFCurrentDirOffset( hTIFF );
+
+        TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
+
+        poMaskDS = new GTiffDataset();
+        if( poMaskDS->OpenOffset( hTIFF, nOffset, FALSE, GA_Update ) != CE_None)
+        {
+            delete poMaskDS;
+            poMaskDS = NULL;
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+    else
+    {
+        return GDALPamDataset::CreateMaskBand(nFlags);
+    }
+}
+
+/************************************************************************/
+/*                         CreateMaskBand()                             */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::CreateMaskBand(int nFlags)
+{
+    if (poGDS->poMaskDS != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This TIFF dataset has already an internal mask band");
+        return CE_Failure;
+    }
+    else if (CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    {
+        return poGDS->CreateMaskBand(nFlags);
+    }
+    else
+    {
+        return GDALPamRasterBand::CreateMaskBand(nFlags);
+    }
 }
 
 /************************************************************************/
