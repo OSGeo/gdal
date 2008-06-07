@@ -60,7 +60,8 @@ init_list = [ \
     ('separate_tiled.tif', 2, 15234, None), 
     ('seperate_strip.tif', 2, 15234, None),
     ('contig_tiled.tif', 2, 15234, None),
-    ('contig_strip.tif', 2, 15234, None)]
+    ('contig_strip.tif', 2, 15234, None),
+    ('empty1bit.tif', 1, 0, None)]
 
 ###############################################################################
 # Test absolute/offset && index directory access
