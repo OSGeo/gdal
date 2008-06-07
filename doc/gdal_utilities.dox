@@ -688,7 +688,7 @@ into a list of bands.  The default is to burn into band 1.</dd>
 
 <dt> <b>-i</b>: </dt><dd>
 Invert rasterization.  Burn the fixed burn value, or the burn value associated 
-with the first feature into all parts of the image <em>not</em> iside a 
+with the first feature into all parts of the image <em>not</em> inside a 
 polygon.</dd>
 
 <dt> <b>-burn</b> <em>value</em>: </dt><dd> 
