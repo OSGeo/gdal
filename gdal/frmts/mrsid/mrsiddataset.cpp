@@ -169,7 +169,11 @@ class MrSIDDataset : public GDALPamDataset
 
     LTIVSIStream        oStream;
 
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    MrSIDImageReader    *poImageReader;
+#else
     LTIImageReader      *poImageReader;
+#endif
 
 #ifdef MRSID_ESDK
     LTIGeoFileImageWriter *poImageWriter;
@@ -698,7 +702,14 @@ MrSIDDataset::~MrSIDDataset()
     if ( poLTINav )
         delete poLTINav;
     if ( poImageReader && !bIsOverview )
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    {
+        poImageReader->release();
+        poImageReader = NULL;
+    }
+#else
         delete poImageReader;
+#endif
 
     if ( pszProjection )
         CPLFree( pszProjection );
@@ -1281,12 +1292,21 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
 #endif
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    {
+        poDS->poImageReader = MrSIDImageReader::create();
+    }
+
+    eStat = poDS->poImageReader->initialize( &poDS->oStream, NULL );
+#else
     {
         poDS->poImageReader =
             new LTIDLLReader<MrSIDImageReader>( &poDS->oStream, NULL );
     }
 
     eStat = poDS->poImageReader->initialize();
+#endif
+
     if ( !LT_SUCCESS(eStat) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
