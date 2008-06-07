@@ -493,6 +493,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
         else
             return( papoBands[nBandId-1] );
     }
+    return NULL;
 }
 
 /************************************************************************/
