@@ -505,6 +505,8 @@ int main( int argc, char ** argv )
         nMaskFlags = GDALGetMaskFlags( hBand );
         if( (nMaskFlags & (GMF_NODATA|GMF_ALL_VALID)) == 0 )
         {
+            GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand) ;
+
             printf( "  Mask Flags: " );
             if( nMaskFlags & GMF_PER_DATASET )
                 printf( "PER_DATASET " );
@@ -515,6 +517,29 @@ int main( int argc, char ** argv )
             if( nMaskFlags & GMF_ALL_VALID )
                 printf( "ALL_VALID " );
             printf( "\n" );
+
+            if( hMaskBand != NULL &&
+                GDALGetOverviewCount(hMaskBand) > 0 )
+            {
+                int		iOverview;
+
+                printf( "  Overviews of mask band: " );
+                for( iOverview = 0; 
+                     iOverview < GDALGetOverviewCount(hMaskBand);
+                     iOverview++ )
+                {
+                    GDALRasterBandH	hOverview;
+
+                    if( iOverview != 0 )
+                        printf( ", " );
+
+                    hOverview = GDALGetOverview( hMaskBand, iOverview );
+                    printf( "%dx%d", 
+                            GDALGetRasterBandXSize( hOverview ),
+                            GDALGetRasterBandYSize( hOverview ) );
+                }
+                printf( "\n" );
+            }
         }
 
         if( strlen(GDALGetRasterUnitType(hBand)) > 0 )
