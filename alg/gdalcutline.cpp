@@ -30,9 +30,42 @@
 #include "gdalwarper.h"
 #include "gdal_alg.h"
 #include "ogr_api.h"
-#include "memdataset.h"
+#include "ogr_geos.h"
 
 CPL_CVSID("$Id: gdalwarper.cpp 13803 2008-02-17 05:28:42Z warmerdam $");
+
+/************************************************************************/
+/*                         BlendMaskGenerator()                         */
+/************************************************************************/
+
+#ifdef notdef
+static CPLErr
+BlendMaskGenerator( int nXSize, nYSize, GByte *pabyPolyMask,
+                    OGRGeometryH hPolygon, double dfBlendDist )
+
+{
+#ifndef HAVE_GEOS 
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "Blend distance support not available without the GEOS library.");
+    return CE_Failure;
+
+#else /* HAVE_GEOS */
+
+/* -------------------------------------------------------------------- */
+/*      Convert our polygon into GEOS format, and compute an            */
+/*      envelope to accelerate later distance operations.               */
+/* -------------------------------------------------------------------- */
+    
+    int iY, iX;
+    double dfLastDist = 0;
+    
+    for( iY = 0; iY < nYSize; iY++ )
+    {
+        
+    }
+#endif /* HAVE_GEOS */
+}
+#endif
 
 /************************************************************************/
 /*                       GDALWarpCutlineMasker()                        */
