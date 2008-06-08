@@ -288,6 +288,12 @@ static long GCIOAPI_CALL _read_GCIO (
       *result= (char)c;
       result++;
       nread++;
+      if (nread == kCacheSize_GCIO)
+      {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Too many characters at line %d.\n", GetGCCurrentLinenum_GCIO(hGXT));
+        return EOF;
+      }
     }/* switch */
   }/* while */
   *result= '\0';
