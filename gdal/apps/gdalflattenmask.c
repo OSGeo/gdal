@@ -224,7 +224,6 @@ int main(int argc, char* argv[])
         if (hColorTable)
         {
             GDALSetRasterColorTable(hDstBand, hColorTable);
-            GDALDestroyColorTable(hColorTable);
         }
 
         papszMetadata = GDALGetMetadata(hSrcBand, NULL);
