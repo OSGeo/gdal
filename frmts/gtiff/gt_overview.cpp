@@ -41,15 +41,16 @@ CPL_CVSID("$Id$");
 #define TIFFTAG_GDAL_METADATA  42112
 
 /************************************************************************/
-/*                         TIFF_WriteOverview()                         */
+/*                         GTIFFWriteDirectory()                        */
 /*                                                                      */
-/*      Create a new directory, without any image data for an overview. */
-/*      Returns offset of newly created overview directory, but the     */
+/*      Create a new directory, without any image data for an overview  */
+/*      or a mask                                                       */
+/*      Returns offset of newly created directory, but the              */
 /*      current directory is reset to be the one in used when this      */
 /*      function is called.                                             */
 /************************************************************************/
 
-toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
+toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize,
                            int nBitsPerPixel, int nPlanarConfig, int nSamples, 
                            int nBlockXSize, int nBlockYSize,
                            int bTiled, int nCompressFlag, int nPhotometric,
@@ -57,7 +58,6 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
                            unsigned short *panRed,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
-                           int bUseSubIFDs,
                            const char *pszMetadata )
 
 {
@@ -93,10 +93,7 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
     else
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
 
-    if (nPhotometric == PHOTOMETRIC_MASK)
-        TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK );
-    else
-        TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE );
+    TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, nSubfileType );
     
 /* -------------------------------------------------------------------- */
 /*	Write color table if one is present.				*/
@@ -115,8 +112,11 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Write directory, and return byte offset.                        */
 /* -------------------------------------------------------------------- */
-    if( TIFFWriteCheck( hTIFF, bTiled, "TIFFBuildOverviews" ) == 0 )
+    if( TIFFWriteCheck( hTIFF, bTiled, "GTIFFWriteDirectory" ) == 0 )
+    {
+        TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
         return 0;
+    }
 
     TIFFWriteDirectory( hTIFF );
     TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
@@ -422,12 +422,13 @@ GTIFFBuildOverviews( const char * pszFilename,
             / panOverviewList[iOverview];
 
         nDirOffset = 
-            TIFF_WriteOverview( hOTIFF, nOXSize, nOYSize, nBitsPerPixel, 
+            GTIFFWriteDirectory(hOTIFF, FILETYPE_REDUCEDIMAGE,
+                                nOXSize, nOYSize, nBitsPerPixel, 
                                 nPlanarConfig, nBands,
                                 128, 128, TRUE, nCompression,
                                 nPhotometric, nSampleFormat, 
                                 panRed, panGreen, panBlue, 
-                                FALSE, osMetadata );
+                                osMetadata );
     }
 
     if (panRed)

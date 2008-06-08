@@ -2450,11 +2450,12 @@ CPLErr GTiffDataset::IBuildOverviews(
                 / panOverviewList[i];
 
             nOverviewOffset = 
-                TIFF_WriteOverview( hTIFF, nOXSize, nOYSize, 
+                GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
+                                    nOXSize, nOYSize, 
                                     nOvBitsPerSample, nPlanarConfig,
                                     nSamplesPerPixel, 128, 128, TRUE,
                                     nCompression, nPhotometric, nSampleFormat, 
-                                    panRed, panGreen, panBlue, FALSE, 
+                                    panRed, panGreen, panBlue,
                                     osMetadata );
 
             if( nOverviewOffset == 0 )
@@ -2499,12 +2500,12 @@ CPLErr GTiffDataset::IBuildOverviews(
                 toff_t	nOverviewOffset;
 
                 nOverviewOffset = 
-                    TIFF_WriteOverview( hTIFF,
+                    GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK,
                                         papoOverviewDS[i]->nRasterXSize, papoOverviewDS[i]->nRasterYSize, 
                                         1, PLANARCONFIG_CONTIG,
                                         1, 128, 128, TRUE,
                                         COMPRESSION_NONE, PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, 
-                                        NULL, NULL, NULL, FALSE, 
+                                        NULL, NULL, NULL,
                                         "" );
 
                 if( nOverviewOffset == 0 )
@@ -5475,7 +5476,6 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
     }
     else if (CSLTestBoolean(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
     {
-        toff_t  nBaseDirOffset;
         toff_t  nOffset;
         int     bIsTiled;
         int     bIsOverview = FALSE;
@@ -5519,51 +5519,16 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlags)
         TIFFFlush( hTIFF );
 
         bIsTiled = TIFFIsTiled(hTIFF);
-        nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
-        TIFFFreeDirectory( hTIFF );
-        TIFFCreateDirectory( hTIFF );
-
-    /* -------------------------------------------------------------------- */
-    /*      Setup TIFF fields.                                              */
-    /* -------------------------------------------------------------------- */
-        TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nRasterXSize );
-        TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nRasterYSize );
-        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
-        TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 1 );
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
-        TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_NONE );
-        TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MASK );
-        TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT );
-
-        if( bIsTiled )
-        {
-            TIFFSetField( hTIFF, TIFFTAG_TILEWIDTH, nBlockXSize );
-            TIFFSetField( hTIFF, TIFFTAG_TILELENGTH, nBlockYSize );
-        }
-        else
-            TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nBlockYSize );
-
-        if (bIsOverview)
-            TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK );
-        else
-            TIFFSetField( hTIFF, TIFFTAG_SUBFILETYPE, FILETYPE_MASK );
-
-    /* -------------------------------------------------------------------- */
-    /*      Write directory, and return byte offset.                        */
-    /* -------------------------------------------------------------------- */
-        if( TIFFWriteCheck( hTIFF, bIsTiled, "CreateMaskBand()" ) == 0 )
-        {
-            TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
+        nOffset = GTIFFWriteDirectory(hTIFF,
+                                      (bIsOverview) ? FILETYPE_REDUCEDIMAGE | FILETYPE_MASK : FILETYPE_MASK,
+                                       nRasterXSize, nRasterYSize,
+                                       1, PLANARCONFIG_CONTIG, 1,
+                                       nBlockXSize, nBlockYSize,
+                                       bIsTiled, COMPRESSION_NONE, PHOTOMETRIC_MASK,
+                                       SAMPLEFORMAT_UINT, NULL, NULL, NULL, "");
+        if (nOffset == 0)
             return CE_Failure;
-        }
-
-        TIFFWriteDirectory( hTIFF );
-        TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
-
-        nOffset = TIFFCurrentDirOffset( hTIFF );
-
-        TIFFSetSubDirectory( hTIFF, nBaseDirOffset );
 
         poMaskDS = new GTiffDataset();
         if( poMaskDS->OpenOffset( hTIFF, nOffset, FALSE, GA_Update ) != CE_None)
