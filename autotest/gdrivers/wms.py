@@ -136,11 +136,11 @@ def wms_4():
 
     gdal.PopErrorHandler()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
-    str = gdal.GetLastErrorMsg()
+    msg = gdal.GetLastErrorMsg()
     gdal.ErrorReset()
 
-    if str is not None and string.find(str, 'Service denied due to system overload') != -1:
-        print str
+    if msg is not None and string.find(msg, 'Service denied due to system overload') != -1:
+        print msg
         return 'skip'
 
     if cs != 3903:
