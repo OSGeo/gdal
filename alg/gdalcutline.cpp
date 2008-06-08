@@ -31,6 +31,7 @@
 #include "gdal_alg.h"
 #include "ogr_api.h"
 #include "ogr_geos.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id: gdalwarper.cpp 13803 2008-02-17 05:28:42Z warmerdam $");
 
