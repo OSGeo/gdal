@@ -34,7 +34,7 @@
 #include "gdal_priv.h"
 #include "tiffio.h"
 
-toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
+toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize, int nYSize,
                            int nBitsPerPixel, int nPlanarConfig, int nSamples, 
                            int nBlockXSize, int nBlockYSize,
                            int bTiled, int nCompressFlag, int nPhotometric,
@@ -42,7 +42,6 @@ toff_t TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
                            unsigned short *panRed,
                            unsigned short *panGreen,
                            unsigned short *panBlue,
-                           int bUseSubIFDs,
                            const char *pszMetadata );
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
