@@ -29,7 +29,12 @@
 
 #include "dted_api.h"
 
+#ifndef AVOID_CPL
 CPL_CVSID("$Id$");
+#endif
+
+static int bWarnedTwoComplement = FALSE;
+
 
 /************************************************************************/
 /*                            DTEDGetField()                            */
@@ -104,14 +109,16 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
     if( fp == NULL )
     {
-#ifndef AVOID_CPL
         if( !bTestOpen )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+#ifndef AVOID_CPL
+            CPLError( CE_Failure, CPLE_OpenFailed,
+#else
+            fprintf( stderr, 
+#endif
                       "Failed to open file %s.",
                       pszFilename );
         }
-#endif
 
         return NULL;
     }
@@ -124,12 +131,16 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     {
         if( VSIFReadL( achRecord, 1, DTED_UHL_SIZE, fp ) != DTED_UHL_SIZE )
         {
-#ifndef AVOID_CPL
             if( !bTestOpen )
-                CPLError( CE_Failure, CPLE_OpenFailed,
+            {
+#ifndef AVOID_CPL
+               CPLError( CE_Failure, CPLE_OpenFailed,
+#else
+               fprintf( stderr, 
+#endif
                           "Unable to read header, %s is not DTED.",
                           pszFilename );
-#endif
+            }
             VSIFCloseL( fp );
             return NULL;
         }
@@ -138,13 +149,16 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
     if( !EQUALN(achRecord,"UHL",3) )
     {
-#ifndef AVOID_CPL
         if( !bTestOpen )
+        {
+#ifndef AVOID_CPL
             CPLError( CE_Failure, CPLE_OpenFailed,
+#else
+            fprintf( stderr, 
+#endif
                       "No UHL record.  %s is not a DTED file.",
                       pszFilename );
-#endif
-        
+        }
         VSIFCloseL( fp );
         return NULL;
     }
@@ -246,6 +260,80 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     return psDInfo;
 }
 
+
+
+/************************************************************************/
+/*                            DTEDReadPoint()                           */
+/*                                                                      */
+/*      Read one single sample. The coordinates are given from the      */
+/*      top-left corner of the file (contrary to the internal           */
+/*      organisation or a DTED file)                                    */
+/************************************************************************/
+
+int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal)
+{
+    int nOffset;
+    GByte pabyData[2];
+
+    if (nYOff < 0 || nXOff < 0 || nYOff >= psDInfo->nYSize || nXOff >= psDInfo->nXSize)
+    {
+#ifndef AVOID_CPL
+        CPLError( CE_Failure, CPLE_AppDefined,
+#else
+        fprintf( stderr, 
+#endif
+                  "Invalid raster coordinates (%d,%d) in DTED file.\n", nXOff, nYOff);
+        return FALSE;
+    }
+
+    nOffset = psDInfo->nDataOffset + nXOff * (12+psDInfo->nYSize*2) + 8 + 2 * (psDInfo->nYSize-1-nYOff);
+    if( VSIFSeekL( psDInfo->fp, nOffset, SEEK_SET ) != 0
+        || VSIFReadL( pabyData, 2, 1, psDInfo->fp ) != 1)
+    {
+#ifndef AVOID_CPL
+        CPLError( CE_Failure, CPLE_FileIO,
+#else
+        fprintf( stderr, 
+#endif
+                  "Failed to seek to, or read (%d,%d) at offset %d\n"
+                  "in DTED file.\n",
+                  nXOff, nYOff, nOffset );
+        return FALSE;
+    }
+
+    *panVal = ((pabyData[0] & 0x7f) << 8) | pabyData[1];
+
+    if( pabyData[0] & 0x80 )
+    {
+        *panVal *= -1;
+
+        /*
+        ** It seems that some files are improperly generated in twos
+        ** complement form for negatives.  For these, redo the job
+        ** in twos complement.  eg. w_069_s50.dt0
+        */
+        if(( *panVal < -16000 ) && (*panVal != DTED_NODATA_VALUE))
+        {
+            *panVal = (pabyData[0] << 8) | pabyData[1];
+
+            if( !bWarnedTwoComplement )
+            {
+                bWarnedTwoComplement = TRUE;
+#ifndef AVOID_CPL
+                CPLError( CE_Warning, CPLE_AppDefined,
+#else
+                fprintf( stderr,
+#endif
+                            "The DTED driver found values less than -16000, and has adjusted\n"
+                            "them assuming they are improperly two-complemented.  No more warnings\n"
+                            "will be issued in this session about this operation." );
+            }
+        }
+    }
+
+    return TRUE;
+}
+
 /************************************************************************/
 /*                          DTEDReadProfile()                           */
 /*                                                                      */
@@ -294,7 +382,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < psDInfo->nYSize; i++ )
     {
-        panData[i] = (pabyRecord[8+i*2] & 0x7f) * 256 + pabyRecord[8+i*2+1];
+        panData[i] = ((pabyRecord[8+i*2] & 0x7f) << 8) | pabyRecord[8+i*2+1];
 
         if( pabyRecord[8+i*2] & 0x80 )
         {
@@ -307,15 +395,16 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
             */
             if(( panData[i] < -16000 ) && (panData[i] != DTED_NODATA_VALUE))
             {
-                static int bWarned = FALSE;
+                panData[i] = (pabyRecord[8+i*2] << 8) | pabyRecord[8+i*2+1];
 
-                memcpy( panData + i, pabyRecord + 8+i*2, 2 );
-                panData[i] = CPL_MSBWORD16( panData[i] );
-
-                if( !bWarned )
+                if( !bWarnedTwoComplement )
                 {
-                    bWarned = TRUE;
+                    bWarnedTwoComplement = TRUE;
+#ifndef AVOID_CPL
                     CPLError( CE_Warning, CPLE_AppDefined,
+#else
+                    fprintf( stderr,
+#endif
                               "The DTED driver found values less than -16000, and has adjusted\n"
                               "them assuming they are improperly two-complemented.  No more warnings\n"
                               "will be issued in this session about this operation." );
@@ -347,7 +436,11 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
             if (! bWarned)
             {
                 bWarned = TRUE;
+#ifndef AVOID_CPL
                 CPLError( CE_Warning, CPLE_AppDefined,
+#else
+                fprintf( stderr,
+#endif
                             "The DTED driver has read from the file a checksum "
                             "with an impossible value (0x%X) at column %d.\n"
                             "Check with your file producer.\n"
@@ -357,7 +450,11 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
         }
         else if (fileCheckSum != nCheckSum)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+#ifndef AVOID_CPL
+            CPLError( CE_Warning, CPLE_AppDefined,
+#else
+            fprintf( stderr,
+#endif
                       "The DTED driver has found a computed and read checksum "
                       "that do not match at column %d.\n",
                       nColumnOffset);
