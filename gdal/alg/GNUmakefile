@@ -12,7 +12,7 @@ OBJ += contour.o
 endif
 
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I$(GDAL_ROOT)/frmts/mem
 
 default:	$(OBJ)
 
