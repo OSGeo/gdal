@@ -30,6 +30,7 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -506,6 +507,31 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 /* -------------------------------------------------------------------- */
     bReportTimings = CSLFetchBoolean( psOptions->papszWarpOptions, 
                                       "REPORT_TIMINGS", FALSE );
+
+/* -------------------------------------------------------------------- */
+/*      Support creating cutline from text warpoption.                  */
+/* -------------------------------------------------------------------- */
+    const char *pszCutlineWKT = 
+        CSLFetchNameValue( psOptions->papszWarpOptions, "CUTLINE" );
+        
+    if( pszCutlineWKT )
+    {
+        if( OGR_G_CreateFromWkt( (char **) &pszCutlineWKT, NULL, 
+                                 (OGRGeometryH *) &(psOptions->hCutline) )
+            != OGRERR_NONE )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to parse CUTLINE geometry wkt." );
+        }
+        else
+        {
+            const char *pszBD = CSLFetchNameValue( psOptions->papszWarpOptions,
+                                                   "CUTLINE_BLEND_DIST" );
+            if( pszBD )
+                psOptions->dfCutlineBlendDist = atof(pszBD);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If the options don't validate, then wipe them.                  */
@@ -1343,7 +1369,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.pafDstDensity == NULL );
 
-        eErr = CreateKernelMask( &oWK, i, "UnifiedSrcDensity" );
+        eErr = CreateKernelMask( &oWK, 0, "UnifiedSrcDensity" );
         
         if( eErr == CE_None )
             eErr = 
@@ -1354,6 +1380,35 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                         oWK.nSrcXSize, oWK.nSrcYSize,
                                         oWK.papabySrcImage,
                                         TRUE, oWK.pafUnifiedSrcDensity );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Generate a source density mask if we have a source cutline.     */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None && psOptions->hCutline != NULL )
+    {
+        if( oWK.pafUnifiedSrcDensity == NULL )
+        {
+            int j = oWK.nSrcXSize * oWK.nSrcYSize;
+
+            eErr = CreateKernelMask( &oWK, 0, "UnifiedSrcDensity" );
+
+            if( eErr == CE_None )
+            {
+                for( j = oWK.nSrcXSize * oWK.nSrcYSize - 1; j >= 0; j-- )
+                    oWK.pafUnifiedSrcDensity[j] = 1.0;
+            }
+        }
+        
+        if( eErr == CE_None )
+            eErr = 
+                GDALWarpCutlineMasker( psOptions, 
+                                       psOptions->nBandCount, 
+                                       psOptions->eWorkingDataType,
+                                       oWK.nSrcXOff, oWK.nSrcYOff, 
+                                       oWK.nSrcXSize, oWK.nSrcYSize,
+                                       oWK.papabySrcImage,
+                                       TRUE, oWK.pafUnifiedSrcDensity );
     }
     
 /* -------------------------------------------------------------------- */
