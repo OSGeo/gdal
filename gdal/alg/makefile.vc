@@ -11,8 +11,6 @@ GDAL_ROOT	=	..
 OBJ_OGR_RELATED =	contour.obj
 !ENDIF
 
-CPPFLAGS	:=	$(CPPFLAGS) -I$(GDAL_ROOT)/frmts/mem
-
 OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
 	thinplatespline.obj gdal_tps.obj gdalrasterize.obj llrasterize.obj \
