@@ -61,10 +61,19 @@
 #endif
 #endif
 
+#ifndef ABS
+#define ABS(x)  (((x)>=0) ? (x) : -(x))
+#endif
+
+#ifndef MIN
+#define MIN(x,y) (((x)<(y)) ? (x) : (y))
+#endif
+
 #define VSIFTellL ftell
 #define VSIFOpenL fopen
 #define VSIFCloseL fclose
 #define VSIFReadL fread
+#define VSIFWriteL fwrite
 #define CPLMalloc malloc
 #define CPLCalloc calloc
 #define CPLFree free
@@ -72,6 +81,7 @@
 #define GByte   unsigned char
 #define VSIFSeekL fseek
 #define CPLAssert assert
+#define VSIStrdup strdup
 
 #endif
 
@@ -118,6 +128,12 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 DTEDInfo *DTEDOpen( const char * pszFilename, const char * pszAccess,
                     int bTestOpen );
+
+/**     Read one single sample. The coordinates are given from the
+        top-left corner of the file (contrary to the internal
+        organisation or a DTED file)
+*/
+int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal);
 
 /**    Read one profile line.  These are organized in bottom to top
        order starting from the leftmost column (0).
