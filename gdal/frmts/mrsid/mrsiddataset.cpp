@@ -161,7 +161,11 @@ class MrSIDDataset : public GDALPamDataset
 {
     friend class MrSIDRasterBand;
 
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    MrSIDImageReader    *poImageReader;
+#else
     LTIImageReader      *poImageReader;
+#endif
 
 #ifdef MRSID_ESDK
     LTIGeoFileImageWriter *poImageWriter;
@@ -690,7 +694,14 @@ MrSIDDataset::~MrSIDDataset()
     if ( poLTINav )
         delete poLTINav;
     if ( poImageReader && !bIsOverview )
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    {
+        poImageReader->release();
+        poImageReader = NULL;
+    }
+#else
         delete poImageReader;
+#endif
 
     if ( pszProjection )
         CPLFree( pszProjection );
@@ -1273,12 +1284,21 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->poMetadata = new LTIDLLCopy<LTIMetadataDatabase>(
         poDS->poImageReader->getMetadata() );
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    {
+        poDS->poImageReader = MrSIDImageReader::create();
+    }
+
+    eStat = poDS->poImageReader->initialize( &poDS->oStream, NULL );
+#else
     const GUInt32       iNumRecs = poDS->poMetadata->getIndexCount();
     GUInt32             i;
 
     for ( i = 0; i < iNumRecs; i++ )
     {
         const LTIMetadataRecord *poMetadataRec = NULL;
+#endif
+
         if ( LT_SUCCESS(poDS->poMetadata->getDataByIndex(i, poMetadataRec)) )
 	{
             char    *pszElement = poDS->SerializeMetadataRec( poMetadataRec );
