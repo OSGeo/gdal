@@ -31,6 +31,7 @@
 #include "gdal_alg.h"
 #include "ogr_api.h"
 #include "ogr_geos.h"
+#include "ogr_geometry.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id: gdalwarper.cpp 13803 2008-02-17 05:28:42Z warmerdam $");
@@ -39,9 +40,9 @@ CPL_CVSID("$Id: gdalwarper.cpp 13803 2008-02-17 05:28:42Z warmerdam $");
 /*                         BlendMaskGenerator()                         */
 /************************************************************************/
 
-#ifdef notdef
 static CPLErr
-BlendMaskGenerator( int nXSize, nYSize, GByte *pabyPolyMask,
+BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize, 
+                    GByte *pabyPolyMask, float *pafValidityMask,
                     OGRGeometryH hPolygon, double dfBlendDist )
 
 {
@@ -53,20 +54,103 @@ BlendMaskGenerator( int nXSize, nYSize, GByte *pabyPolyMask,
 #else /* HAVE_GEOS */
 
 /* -------------------------------------------------------------------- */
+/*      Convert the polygon into a collection of lines so that we       */
+/*      measure distance from the edge even on the inside.              */
+/* -------------------------------------------------------------------- */
+    OGRGeometry *poLines
+        = OGRGeometryFactory::forceToMultiLineString( 
+            ((OGRGeometry *) hPolygon)->clone() );
+
+/* -------------------------------------------------------------------- */
 /*      Convert our polygon into GEOS format, and compute an            */
 /*      envelope to accelerate later distance operations.               */
 /* -------------------------------------------------------------------- */
+    OGREnvelope sEnvelope;
+    int iXMin, iYMin, iXMax, iYMax;
+    GEOSGeometry *poGEOSPoly;
+
+    poGEOSPoly = poLines->exportToGEOS();
+    OGR_G_GetEnvelope( hPolygon, &sEnvelope );
+
+    delete poLines;
+
+    if( sEnvelope.MinY - dfBlendDist > nYOff+nYSize 
+        || sEnvelope.MaxY + dfBlendDist < nYOff 
+        || sEnvelope.MinX - dfBlendDist > nXOff+nXSize
+        || sEnvelope.MaxX + dfBlendDist < nXOff )
+        return CE_None;
     
+    iXMin = MAX(0,(int) floor(sEnvelope.MinX - dfBlendDist - nXOff));
+    iXMax = MIN(nXSize, (int) ceil(sEnvelope.MaxX + dfBlendDist - nXOff));
+    iYMin = MAX(0,(int) floor(sEnvelope.MinY - dfBlendDist - nYOff));
+    iYMax = MIN(nYSize, (int) ceil(sEnvelope.MaxY + dfBlendDist - nYOff));
+
+/* -------------------------------------------------------------------- */
+/*      Loop over potential area within blend line distance,            */
+/*      processing each pixel.                                          */
+/* -------------------------------------------------------------------- */
     int iY, iX;
     double dfLastDist = 0;
     
     for( iY = 0; iY < nYSize; iY++ )
     {
-        
+        for( iX = 0; iX < nXSize; iX++ )
+        {
+            if( iX < iXMin || iX >= iXMax
+                || iY < iYMin || iY > iYMax
+                || dfLastDist > dfBlendDist + 1.5 )
+            {
+                if( pabyPolyMask[iX + iY * nXSize] == 0 )
+                    pafValidityMask[iX + iY * nXSize] = 0.0;
+
+                dfLastDist -= 1.0;
+                continue;
+            }
+            
+            double dfDist, dfRatio;
+            CPLString osPointWKT;
+            GEOSGeometry *poGEOSPoint;
+
+            osPointWKT.Printf( "POINT(%d.5 %d.5)", iX + nXOff, iY + nYOff );
+            poGEOSPoint = GEOSGeomFromWKT( osPointWKT );
+
+            GEOSDistance( poGEOSPoly, poGEOSPoint, &dfDist );
+            GEOSGeom_destroy( poGEOSPoint );
+
+            dfLastDist = dfDist;
+
+            if( dfDist > dfBlendDist )
+            {
+                if( pabyPolyMask[iX + iY * nXSize] == 0 )
+                    pafValidityMask[iX + iY * nXSize] = 0.0;
+
+                continue;
+            }
+
+            if( pabyPolyMask[iX + iY * nXSize] == 0 )
+            {
+                /* outside */
+                dfRatio = 0.5 - (dfDist / dfBlendDist) * 0.5;
+            }
+            else 
+            {
+                /* inside */
+                dfRatio = 0.5 + (dfDist / dfBlendDist) * 0.5;
+            }                
+
+            pafValidityMask[iX + iY * nXSize] *= dfRatio;
+        }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    GEOSGeom_destroy( poGEOSPoly );
+
+    return CE_None;
+
 #endif /* HAVE_GEOS */
 }
-#endif
 
 /************************************************************************/
 /*                       GDALWarpCutlineMasker()                        */
@@ -171,6 +255,12 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
             if( pabyPolyMask[i] == 0 )
                 ((float *) pValidityMask)[i] = 0.0;
         }
+    }
+    else
+    {
+        eErr = BlendMaskGenerator( nXOff, nYOff, nXSize, nYSize, 
+                                   pabyPolyMask, (float *) pValidityMask,
+                                   hPolygon, psWO->dfCutlineBlendDist );
     }
 
 /* -------------------------------------------------------------------- */
