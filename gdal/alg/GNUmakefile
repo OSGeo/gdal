@@ -11,6 +11,9 @@ ifeq ($(OGR_ENABLED),yes)
 OBJ += contour.o
 endif
 
+ifeq ($(HAVE_GEOS),yes)
+CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
+endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
