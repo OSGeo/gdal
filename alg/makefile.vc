@@ -5,11 +5,14 @@
 
 GDAL_ROOT	=	..
 
+EXTRAFLAGS =	$(GEOS_CFLAGS)
+
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
 OBJ_OGR_RELATED =	contour.obj
 !ENDIF
+
 
 OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsimplewarp.obj gdalwarper.obj gdalwarpkernel.obj \
