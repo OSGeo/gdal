@@ -1261,6 +1261,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     MrSIDDataset        *poDS;
     const LTFileSpec    oFileSpec( poOpenInfo->pszFilename );
+    LT_STATUS           eStat;
 
     poDS = new MrSIDDataset();
 #ifdef MRSID_J2K
@@ -1268,9 +1269,18 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->poImageReader = new LTIDLLReader<J2KImageReader>( oFileSpec, true );
     else
 #endif
+    {
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+        poDS->poImageReader = MrSIDImageReader::create();
+        eStat = poDS->poImageReader->initialize( oFileSpec, true );
+#else
         poDS->poImageReader = new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
+        eStat = poDS->poImageReader->initialize();
+#endif
+    }
 
-    if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
+
+    if ( !LT_SUCCESS(eStat) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1284,21 +1294,12 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->poMetadata = new LTIDLLCopy<LTIMetadataDatabase>(
         poDS->poImageReader->getMetadata() );
-#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
-    {
-        poDS->poImageReader = MrSIDImageReader::create();
-    }
-
-    eStat = poDS->poImageReader->initialize( &poDS->oStream, NULL );
-#else
     const GUInt32       iNumRecs = poDS->poMetadata->getIndexCount();
     GUInt32             i;
 
     for ( i = 0; i < iNumRecs; i++ )
     {
         const LTIMetadataRecord *poMetadataRec = NULL;
-#endif
-
         if ( LT_SUCCESS(poDS->poMetadata->getDataByIndex(i, poMetadataRec)) )
 	{
             char    *pszElement = poDS->SerializeMetadataRec( poMetadataRec );
