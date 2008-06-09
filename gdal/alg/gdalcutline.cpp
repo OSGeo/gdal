@@ -67,7 +67,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     OGREnvelope sEnvelope;
     int iXMin, iYMin, iXMax, iYMax;
-    GEOSGeometry *poGEOSPoly;
+    GEOSGeom poGEOSPoly;
 
     poGEOSPoly = poLines->exportToGEOS();
     OGR_G_GetEnvelope( hPolygon, &sEnvelope );
@@ -109,7 +109,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
             
             double dfDist, dfRatio;
             CPLString osPointWKT;
-            GEOSGeometry *poGEOSPoint;
+            GEOSGeom poGEOSPoint;
 
             osPointWKT.Printf( "POINT(%d.5 %d.5)", iX + nXOff, iY + nYOff );
             poGEOSPoint = GEOSGeomFromWKT( osPointWKT );
