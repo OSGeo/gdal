@@ -654,8 +654,14 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
 /**
  * Convert to multilinestring.
  *
- * Tries to force the provided geometry to be a multilinestring.  Currently
- * this just effects a change on linestrings.  The passed in geometry is
+ * Tries to force the provided geometry to be a multilinestring.
+ *
+ * - linestrings are placed in a multilinestring.
+ * - geometry collections will be converted to multilinestring if they only 
+ * contain linestrings.
+ * - polygons will be changed to a collection of linestrings (one per ring).
+ *
+ * The passed in geometry is
  * consumed and a new one returned (or potentially the same one). 
  * 
  * @return new geometry.
@@ -700,13 +706,45 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         return poMP;
     }
 
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
-        return poGeom;
+/* -------------------------------------------------------------------- */
+/*      Turn a linestring into a multilinestring.                       */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+    {
+        OGRMultiLineString *poMP = new OGRMultiLineString();
+        poMP->addGeometryDirectly( poGeom );
+        return poMP;
+    }
 
-    OGRMultiLineString *poMP = new OGRMultiLineString();
-    poMP->addGeometryDirectly( poGeom );
+/* -------------------------------------------------------------------- */
+/*      Convert polygons into a multilinestring.                        */
+/* -------------------------------------------------------------------- */
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    {
+        OGRMultiLineString *poMP = new OGRMultiLineString();
+        OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+        int iRing;
 
-    return poMP;
+        for( iRing = 0; iRing < poPoly->getNumInteriorRings()+1; iRing++ )
+        {
+            OGRLineString *poNewLS, *poLR;
+
+            if( iRing == 0 )
+                poLR = poPoly->getExteriorRing();
+            else
+                poLR = poPoly->getInteriorRing(iRing-1);
+
+            poNewLS = new OGRLineString();
+            poNewLS->addSubLineString( poLR );
+            poMP->addGeometryDirectly( poNewLS );
+        }
+        
+        delete poPoly;
+
+        return poMP;
+    }
+
+    return poGeom;
 }
 
 /************************************************************************/
