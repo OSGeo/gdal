@@ -1515,12 +1515,12 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
  * nodes value (the first CXT_Text child) will be replaced with the provided
  * value.  
  *
- * If the target node is an attribute instead of an element, the last separator
- * should be a "#" instead of the normal period path separator. 
+ * If the target node is an attribute instead of an element, the name
+ * should be prefixed with a #.
  *
  * Example:
  *   CPLSetXMLValue( "Citation.Id.Description", "DOQ dataset" );
- *   CPLSetXMLValue( "Citation.Id.Description#name", "doq" );
+ *   CPLSetXMLValue( "Citation.Id.Description.#name", "doq" );
  *
  * @param psRoot the subdocument to be updated. 
  *
