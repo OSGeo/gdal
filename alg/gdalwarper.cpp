@@ -30,6 +30,7 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -694,6 +695,9 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
     CPLFree( psOptions->papfnSrcPerBandValidityMaskFunc );
     CPLFree( psOptions->papSrcPerBandValidityMaskFuncArg );
 
+    if( psOptions->hCutline != NULL )
+        OGR_G_DestroyGeometry( (OGRGeometryH) psOptions->hCutline );
+
     CPLFree( psOptions );
 }
 
@@ -730,6 +734,11 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
     COPY_MEM( padfDstNoDataImag, double, psSrcOptions->nBandCount );
     COPY_MEM( papfnSrcPerBandValidityMaskFunc, GDALMaskFunc, 
               psSrcOptions->nBandCount );
+
+    if( psSrcOptions->hCutline != NULL )
+        psDstOptions->hCutline = 
+            OGR_G_Clone( (OGRGeometryH) psSrcOptions->hCutline );
+    psDstOptions->dfCutlineBlendDist = psSrcOptions->dfCutlineBlendDist;
 
     return psDstOptions;
 }
@@ -898,6 +907,25 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         CPLCreateXMLElementAndValue( 
             psTree, "DstAlphaBand", 
             CPLString().Printf( "%d", psWO->nDstAlphaBand ) );
+
+/* -------------------------------------------------------------------- */
+/*      Cutline.                                                        */
+/* -------------------------------------------------------------------- */
+    if( psWO->hCutline != NULL )
+    {
+        char *pszWKT = NULL;
+        if( OGR_G_ExportToWkt( (OGRGeometryH) psWO->hCutline, &pszWKT )
+            == OGRERR_NONE )
+        {
+            CPLCreateXMLElementAndValue( psTree, "Cutline", pszWKT );
+            CPLFree( pszWKT );
+        }
+    }
+
+    if( psWO->dfCutlineBlendDist != 0.0 )
+        CPLCreateXMLElementAndValue( 
+            psTree, "CutlineBlendDist", 
+            CPLString().Printf( "%.5g", psWO->dfCutlineBlendDist ) );
 
     return psTree;
 }
@@ -1112,6 +1140,19 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         atoi( CPLGetXMLValue( psTree, "SrcAlphaBand", "0" ) );
     psWO->nDstAlphaBand = 
         atoi( CPLGetXMLValue( psTree, "DstAlphaBand", "0" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Cutline.                                                        */
+/* -------------------------------------------------------------------- */
+    const char *pszWKT = CPLGetXMLValue( psTree, "Cutline", NULL );
+    if( pszWKT )
+    {
+        OGR_G_CreateFromWkt( (char **) &pszWKT, NULL, 
+                             (OGRGeometryH *) (&psWO->hCutline) );
+    }
+
+    psWO->dfCutlineBlendDist =
+        atof( CPLGetXMLValue( psTree, "CutlineBlendDist", "0" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Transformation.                                                 */
