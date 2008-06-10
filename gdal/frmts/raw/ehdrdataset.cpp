@@ -1235,7 +1235,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                                 nBits);
 
         if( bNoDataSet )
-            poBand->StoreNoDataValue( dfNoData );
+            poBand->SetNoDataValue( dfNoData );
             
         poDS->SetBand( i+1, poBand );
     }

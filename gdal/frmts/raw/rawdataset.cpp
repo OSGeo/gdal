@@ -130,9 +130,6 @@ RawRasterBand::RawRasterBand( FILE * fpRaw, vsi_l_offset nImgOffset,
 void RawRasterBand::Initialize()
 
 {
-    dfNoDataValue = 0.0;
-    bNoDataSet = FALSE;
-
     poCT = NULL;
     eInterp = GCI_Undefined;
 
@@ -881,33 +878,7 @@ size_t RawRasterBand::Write( void *pBuffer, size_t nSize, size_t nCount )
 void RawRasterBand::StoreNoDataValue( double dfValue )
 
 {
-    bNoDataSet = TRUE;
-    dfNoDataValue = dfValue;
-}
-
-/************************************************************************/
-/*                           SetNoDataValue()                           */
-/************************************************************************/
-
-CPLErr RawRasterBand::SetNoDataValue( double dfValue )
-
-{
-    bNoDataSet = TRUE;
-    dfNoDataValue = dfValue;
-    return CE_None;
-}
-
-/************************************************************************/
-/*                           GetNoDataValue()                           */
-/************************************************************************/
-
-double RawRasterBand::GetNoDataValue( int * pbSuccess )
-
-{
-    if( pbSuccess )
-        *pbSuccess = bNoDataSet;
-
-    return dfNoDataValue;
+    SetNoDataValue( dfValue );
 }
 
 /************************************************************************/
