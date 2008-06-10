@@ -1315,17 +1315,21 @@ else
       AC_MSG_ERROR([MrSID JPEG2000 support requested, but this is incompatible with use of standalone Kakadu])
     fi
 
-    if test "x$with_jp2mrsid" = "x" -a "$HAVE_KAKADU" = "no" \
-            -a -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then 
-      with_jp2mrsid=yes
-    fi
-    if test "x$with_jp2mrsid" = "xyes" \
-            -a ! -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then 
-      AC_MSG_ERROR([MrSID JPEG2000 support requested, but libltikdu.a not found.])
+    MRSID_KAKADU_LIB=no
+    if test "x$with_jp2mrsid" = "x" -a "$HAVE_KAKADU" = "no" ; then
+      if test -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then 
+        with_jp2mrsid=yes
+        MRSID_KAKADU_LIB=-lltikdu
+      elif test -r $with_mrsid/3rd-party/lib/Release/liblt_kakadu.a ; then 
+        with_jp2mrsid=yes
+        MRSID_KAKADU_LIB=-llt_kakadu
+      else
+         AC_MSG_ERROR([MrSID JPEG2000 support requested, but libltikdu.a not found.])
+      fi
     fi
 
     if test "x$with_jp2mrsid" = "xyes" ; then
-      MRSID_LIBS="$MRSID_LIBS -lltikdu"
+      MRSID_LIBS="$MRSID_LIBS $MRSID_KAKADU_LIB"
       MRSID_FLAGS="-DMRSID_J2K $MRSID_FLAGS"
       AC_MSG_RESULT([enabled])
     else
