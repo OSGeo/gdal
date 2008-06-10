@@ -30,6 +30,7 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -39,7 +40,7 @@ import gdal
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
 
-def pam_md_1():
+def pam_1():
 
     gdaltest.pam_setting = gdal.GetConfigOption( 'GDAL_PAM_ENABLED', "NULL" )
     gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
@@ -76,10 +77,10 @@ def pam_md_1():
 ###############################################################################
 # Verify that we can write XML to a new file. 
 
-def pam_md_2():
+def pam_2():
 
     driver = gdal.GetDriverByName( 'PNM' )
-    ds = driver.Create( 'tmp/pam_md.pnm', 10, 10 )
+    ds = driver.Create( 'tmp/pam.pnm', 10, 10 )
     band = ds.GetRasterBand( 1 )
 
     band.SetMetadata( { 'other' : 'red', 'key' : 'value' } )
@@ -99,9 +100,9 @@ def pam_md_2():
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
 
-def pam_md_3():
+def pam_3():
 
-    ds = gdal.Open( "tmp/pam_md.pnm" )
+    ds = gdal.Open( "tmp/pam.pnm" )
 
     band = ds.GetRasterBand(1)
     base_md = band.GetMetadata()
@@ -136,9 +137,30 @@ def pam_md_3():
     return 'success' 
 
 ###############################################################################
+# Check that PAM binary encoded nodata values work properly.
+#
+def pam_4():
+
+    # Copy test dataset to tmp directory so that the .aux.xml file
+    # won't be rewritten with the statistics in the master dataset.
+    shutil.copyfile( 'data/mfftest.hdr.aux.xml', 'tmp/mfftest.hdr.aux.xml' )
+    shutil.copyfile( 'data/mfftest.hdr', 'tmp/mfftest.hdr' )
+    shutil.copyfile( 'data/mfftest.r00', 'tmp/mfftest.r00' )
+
+    ds = gdal.Open( 'tmp/mfftest.hdr' )
+    stats = ds.GetRasterBand(1).GetStatistics(0,1)
+
+    if stats[0] != 0 or stats[1] != 4:
+        gdaltest.post_reason( 'Got wrong min/max, likely nodata not working?' )
+        print stats
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
-def pam_md_cleanup():
+def pam_cleanup():
     gdaltest.clean_tmp()
     if gdaltest.pam_setting != 'NULL':
 	gdal.SetConfigOption( 'GDAL_PAM_ENABLED', gdaltest.pam_setting )
@@ -147,14 +169,15 @@ def pam_md_cleanup():
     return 'success'
 
 gdaltest_list = [
-    pam_md_1,
-    pam_md_2,
-    pam_md_3,
-    pam_md_cleanup ]
+    pam_1,
+    pam_2,
+    pam_3,
+    pam_4,
+    pam_cleanup ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pam_md' )
+    gdaltest.setup_run( 'pam' )
 
     gdaltest.run_tests( gdaltest_list )
 
