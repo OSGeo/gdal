@@ -1507,7 +1507,7 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
         nOffset += GDALGetDataTypeSize( eType ) / 8;
 
         if( bNoDataSet )
-            poBand->StoreNoDataValue( dfNoDataValue );
+            poBand->SetNoDataValue( dfNoDataValue );
     }
 
     poDS->eRasterType = eType;

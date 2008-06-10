@@ -614,7 +614,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                                TRUE );
 
         if( bNoDataSet )
-            poBand->StoreNoDataValue( dfNoData );
+            poBand->SetNoDataValue( dfNoData );
 
         poDS->SetBand( i+1, poBand );
 
