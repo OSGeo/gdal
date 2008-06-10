@@ -373,6 +373,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( (EQUAL(value,"LSB_INTEGER")) || 
         (EQUAL(value,"LSB")) || // just incase
         (EQUAL(value,"LSB_UNSIGNED_INTEGER")) || 
+        (EQUAL(value,"LSB_SIGNED_INTEGER")) || 
         (EQUAL(value,"UNSIGNED_INTEGER")) || 
         (EQUAL(value,"VAX_REAL")) || 
         (EQUAL(value,"VAX_INTEGER")) || 
