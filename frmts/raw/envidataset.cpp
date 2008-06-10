@@ -2061,7 +2061,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CSLFetchNameValue(poDS->papszHeader,"data_ignore_value" ) != NULL )
     {
         for( i = 0; i < poDS->nBands; i++ )
-            ((RawRasterBand*)poDS->GetRasterBand(i+1))->StoreNoDataValue(atof(
+            ((RawRasterBand*)poDS->GetRasterBand(i+1))->SetNoDataValue(atof(
                                                                              CSLFetchNameValue(poDS->papszHeader,"data_ignore_value")));
     }
 

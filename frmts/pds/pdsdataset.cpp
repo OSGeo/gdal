@@ -702,7 +702,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
                                TRUE );
 
         if( bNoDataSet )
-            poBand->StoreNoDataValue( dfNoData );
+            poBand->NoDataValue( dfNoData );
 
         poDS->SetBand( i+1, poBand );
 
