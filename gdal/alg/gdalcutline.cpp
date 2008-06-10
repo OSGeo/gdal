@@ -153,6 +153,39 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                         CutlineTransformer()                         */
+/*                                                                      */
+/*      A simple transformer for the cutline that just offsets          */
+/*      relative to the current chunk.                                  */
+/************************************************************************/
+
+static int CutlineTransformer( void *pTransformArg, int bDstToSrc, 
+                               int nPointCount, 
+                               double *x, double *y, double *z, 
+                               int *panSuccess )
+
+{
+    int nXOff = ((int *) pTransformArg)[0];
+    int nYOff = ((int *) pTransformArg)[1];				
+    int i;
+
+    if( bDstToSrc )
+    {
+        nXOff *= -1;
+        nYOff *= -1;
+    }
+
+    for( i = 0; i < nPointCount; i++ )
+    {
+        x[i] -= nXOff;
+        y[i] -= nYOff;
+    }
+    
+    return TRUE;
+}
+
+
+/************************************************************************/
 /*                       GDALWarpCutlineMasker()                        */
 /*                                                                      */
 /*      This function will generate a source mask based on a            */
@@ -234,14 +267,20 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /* -------------------------------------------------------------------- */
     int nTargetBand = 1;
     double dfBurnValue = 255.0;
+    int    anXYOff[2];
+    
+    anXYOff[0] = nXOff;
+    anXYOff[1] = nYOff;
 
     eErr = 
         GDALRasterizeGeometries( hMemDS, 1, &nTargetBand, 
                                  1, &hPolygon, 
-                                 NULL, NULL, &dfBurnValue, NULL, NULL, NULL );
+                                 CutlineTransformer, anXYOff, 
+                                 &dfBurnValue, NULL, NULL, NULL );
 
     // Close and ensure data flushed to underlying array.
     GDALClose( hMemDS );
+
 /* -------------------------------------------------------------------- */
 /*      In the case with no blend distance, we just apply this as a     */
 /*      mask, zeroing out everything outside the polygon.               */
