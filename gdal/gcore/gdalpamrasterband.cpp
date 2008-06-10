@@ -85,8 +85,25 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLSetXMLValue( psTree, "Description", GetDescription() );
 
     if( psPam->bNoDataValueSet )
+    {
         CPLSetXMLValue( psTree, "NoDataValue", 
                         oFmt.Printf( "%.14E", psPam->dfNoDataValue ) );
+
+        /* hex encode real floating point values */
+        if( psPam->dfNoDataValue != floor(psPam->dfNoDataValue) 
+            || psPam->dfNoDataValue != atof(oFmt) )
+        {
+            double dfNoDataLittleEndian;
+
+            dfNoDataLittleEndian = psPam->dfNoDataValue;
+            CPL_LSBPTR64( &dfNoDataLittleEndian );
+
+            char *pszHexEncoding = 
+                CPLBinaryToHex( 8, (GByte *) &dfNoDataLittleEndian );
+            CPLSetXMLValue( psTree, "NoDataValue.#le_hex_equiv",pszHexEncoding);
+            CPLFree( pszHexEncoding );
+        }
+    }
 
     if( psPam->pszUnitType != NULL )
         CPLSetXMLValue( psTree, "UnitType", psPam->pszUnitType );
@@ -289,8 +306,30 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     
     if( CPLGetXMLValue( psTree, "NoDataValue", NULL ) != NULL )
     {
-        GDALPamRasterBand::SetNoDataValue( 
-            atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+        const char *pszLEHex = 
+            CPLGetXMLValue( psTree, "NoDataValue.le_hex_equiv", NULL );
+        if( pszLEHex != NULL )
+        {
+            int nBytes;
+            GByte *pabyBin = CPLHexToBinary( pszLEHex, &nBytes );
+            if( nBytes == 8 )
+            {
+                CPL_LSBPTR64( pabyBin );
+                
+                GDALPamRasterBand::SetNoDataValue( *((double *) pabyBin) );
+            }
+            else
+            {
+                GDALPamRasterBand::SetNoDataValue( 
+                    atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+            }
+            CPLFree( pabyBin );
+        }
+        else
+        {
+            GDALPamRasterBand::SetNoDataValue( 
+                atof(CPLGetXMLValue( psTree, "NoDataValue", "0" )) );
+        }
     }
 
     GDALPamRasterBand::SetOffset( 
