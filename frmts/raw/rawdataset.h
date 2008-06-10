@@ -72,9 +72,6 @@ protected:
     int         nLineSize;
     int		bNativeOrder;
 
-    int		bNoDataSet;
-    double	dfNoDataValue;
-    
     int		nLoadedScanline;
     void	*pLineBuffer;
     int         bDirty;
@@ -123,15 +120,13 @@ protected:
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
-    virtual CPLErr  SetNoDataValue( double );
-    virtual double  GetNoDataValue( int *pbSuccess = NULL );
-
     virtual char **GetCategoryNames();
     virtual CPLErr SetCategoryNames( char ** );
 
     virtual CPLErr  FlushCache();
 
     CPLErr          AccessLine( int iLine );
+
     // this is deprecated.
     void	 StoreNoDataValue( double );
 
