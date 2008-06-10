@@ -1269,16 +1269,19 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->poImageReader = new LTIDLLReader<J2KImageReader>( oFileSpec, true );
     else
 #endif
-    {
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
+    {
         poDS->poImageReader = MrSIDImageReader::create();
-        eStat = poDS->poImageReader->initialize( oFileSpec, true );
-#else
-        poDS->poImageReader = new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
-        eStat = poDS->poImageReader->initialize();
-#endif
     }
 
+    eStat = poDS->poImageReader->initialize( oFileSpec, true );
+#else
+    {
+        poDS->poImageReader = new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
+    }
+
+    eStat = poDS->poImageReader->initialize();
+#endif
 
     if ( !LT_SUCCESS(eStat) )
     {
