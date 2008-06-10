@@ -90,6 +90,8 @@ def pam_md_2():
 
     band.SetMetadata( [ expected_xml ], 'xml:test' )
 
+    band.SetNoDataValue( 100 )
+
     ds = None
 
     return 'success' 
@@ -125,6 +127,10 @@ def pam_md_3():
     if xml_md[0] != expected_xml:
         gdaltest.post_reason( 'xml does not match' )
         print xml_md
+        return 'fail'
+
+    if band.GetNoDataValue() != 100:
+        gdaltest.post_reason( 'nodata not saved via pam' )
         return 'fail'
     
     return 'success' 
