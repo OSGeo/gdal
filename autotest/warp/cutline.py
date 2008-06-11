@@ -40,6 +40,7 @@ try:
 except ImportError:
     import gdal
 
+import ogrtest
 import gdaltest
 
 ###############################################################################
@@ -52,6 +53,9 @@ def cutline_1():
 ###############################################################################
 
 def cutline_2():
+
+    if not ogrtest.have_geos():
+        return 'skip'
 
     tst = gdaltest.GDALTest( 'VRT', 'cutline_blend.vrt', 1, 21395 )
     return tst.testOpen()
