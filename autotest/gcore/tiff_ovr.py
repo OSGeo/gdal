@@ -246,6 +246,54 @@ def tiff_ovr_6():
 
     return 'success'
 
+
+###############################################################################
+# Check nearest resampling on a dataset with a raster band that has a color table
+
+def tiff_ovr_7():
+
+    shutil.copyfile( 'data/test_average_palette.tif', 'tmp/test_average_palette.tif' )
+
+    # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
+    # In nearest resampling, we are expecting a uniform black image.
+    ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
+    ds.BuildOverviews( 'NEAREST', overviewlist = [2] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 0
+
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check average resampling on a dataset with a raster band that has a color table
+
+def tiff_ovr_8():
+
+    shutil.copyfile( 'data/test_average_palette.tif', 'tmp/test_average_palette.tif' )
+
+    # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
+    # So the result of averaging (0,0,0) and (255,255,255) is (127,127,127), which is
+    # index 2. So the result of the averaging is a uniform grey image.
+    ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 200
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -254,6 +302,7 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr4.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr5.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr6.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/test_average_palette.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -266,6 +315,8 @@ gdaltest_list_internal = [
     tiff_ovr_4,
     tiff_ovr_5,
     tiff_ovr_6,
+    tiff_ovr_7,
+    tiff_ovr_8,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
