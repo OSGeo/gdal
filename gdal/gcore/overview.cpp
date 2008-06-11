@@ -47,7 +47,8 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
                         float * pafChunk, int nChunkYOff, int nChunkYSize,
                         GDALRasterBand * poOverview,
                         const char * pszResampling,
-                        int bHasNoData, float fNoDataValue)
+                        int bHasNoData, float fNoDataValue,
+                        GDALColorTable* poColorTable)
 
 {
 /* -------------------------------------------------------------------- */
@@ -116,7 +117,21 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
 
     if( nChunkYOff + nChunkYSize == nSrcHeight )
         nDstYOff2 = nOYSize;
-    
+
+
+    int nEntryCount = 0;
+    GDALColorEntry* aEntries = NULL;
+    if (poColorTable)
+    {
+        int i;
+        nEntryCount = poColorTable->GetColorEntryCount();
+        aEntries = (GDALColorEntry* )CPLMalloc(sizeof(GDALColorEntry) * nEntryCount);
+        for(i=0;i<nEntryCount;i++)
+        {
+            poColorTable->GetColorEntryAsRGB(i, &aEntries[i]);
+        }
+    }
+
 /* ==================================================================== */
 /*      Loop over destination scanlines.                                */
 /* ==================================================================== */
@@ -183,36 +198,93 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
             }
             else if ( eResampling == GRM_Average )
             {
-                double val;
-                double dfTotal = 0.0;
-                int    nCount = 0, iX, iY;
-
-                for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                if (poColorTable == NULL)
                 {
-                    for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                    double val;
+                    double dfTotal = 0.0;
+                    int    nCount = 0, iX, iY;
+
+                    for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
                     {
-                        val = pafSrcScanline[iX+(iY-nSrcYOff)*nSrcWidth];
-                        if (bHasNoData == FALSE || val != fNoDataValue)
+                        for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
                         {
-                            dfTotal += val;
-                            nCount++;
+                            val = pafSrcScanline[iX+(iY-nSrcYOff)*nSrcWidth];
+                            if (bHasNoData == FALSE || val != fNoDataValue)
+                            {
+                                dfTotal += val;
+                                nCount++;
+                            }
                         }
                     }
-                }
 
-                if (bHasNoData && nCount == 0)
-                {
-                    pafDstScanline[iDstPixel] = fNoDataValue;
+                    if (bHasNoData && nCount == 0)
+                    {
+                        pafDstScanline[iDstPixel] = fNoDataValue;
+                    }
+                    else
+                    {
+                        CPLAssert( nCount > 0 );
+                        if( nCount == 0 )
+                            pafDstScanline[iDstPixel] = 0.0;
+                        else
+                            pafDstScanline[iDstPixel] = (float) (dfTotal / nCount);
+                    }
                 }
                 else
                 {
-                    CPLAssert( nCount > 0 );
-                    if( nCount == 0 )
-                        pafDstScanline[iDstPixel] = 0.0;
-                    else
-                        pafDstScanline[iDstPixel] = (float) (dfTotal / nCount);
-                }
+                    double val;
+                    int    nTotalR = 0, nTotalG = 0, nTotalB = 0;
+                    int    nCount = 0, iX, iY;
 
+                    for( iY = nSrcYOff; iY < nSrcYOff2; iY++ )
+                    {
+                        for( iX = nSrcXOff; iX < nSrcXOff2; iX++ )
+                        {
+                            val = pafSrcScanline[iX+(iY-nSrcYOff)*nSrcWidth];
+                            if (bHasNoData == FALSE || val != fNoDataValue)
+                            {
+                                int nVal = (int)val;
+                                if (nVal >= 0 && nVal < nEntryCount)
+                                {
+                                    nTotalR += aEntries[nVal].c1;
+                                    nTotalG += aEntries[nVal].c2;
+                                    nTotalB += aEntries[nVal].c3;
+                                    nCount++;
+                                }
+                            }
+                        }
+                    }
+
+                    if (bHasNoData && nCount == 0)
+                    {
+                        pafDstScanline[iDstPixel] = fNoDataValue;
+                    }
+                    else
+                    {
+                        CPLAssert( nCount > 0 );
+                        if( nCount == 0 )
+                            pafDstScanline[iDstPixel] = 0.0;
+                        else
+                        {
+                            int nR = nTotalR / nCount, nG = nTotalG / nCount, nB = nTotalB / nCount;
+                            int i;
+                            double dfMinDist = 0;
+                            int iBestEntry = 0;
+                            for(i=0;i<nEntryCount;i++)
+                            {
+                                double dfDist = (nR - aEntries[i].c1) *  (nR - aEntries[i].c1) +
+                                                (nG - aEntries[i].c2) *  (nG - aEntries[i].c2) +
+                                                (nB - aEntries[i].c3) *  (nB - aEntries[i].c3);
+                                if (i == 0 || dfDist < dfMinDist)
+                                {
+                                    dfMinDist = dfDist;
+                                    iBestEntry = i;
+                                }
+                            }
+                            pafDstScanline[iDstPixel] = iBestEntry;
+                        }
+                    }
+                }
             }
 	    else if ( eResampling == GRM_Gauss )
             {
@@ -245,6 +317,7 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
     }
 
     CPLFree( pafDstScanline );
+    CPLFree( aEntries );
 
     return CE_None;
 }
@@ -517,13 +590,29 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
     GDALDataType eType;
     int    bHasNoData;
     float  fNoDataValue;
+    GDALColorTable* poColorTable = NULL;
 
     if (EQUALN(pszResampling,"AVER",4) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Computing overviews on palette index raster bands "
-                 "will probably lead to unexpected results.");
+        poColorTable = poSrcBand->GetColorTable();
+        if (poColorTable != NULL)
+        {
+            if (poColorTable->GetPaletteInterpretation() != GPI_RGB)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Computing overviews on palette index raster bands "
+                        "with a palette whose color interpreation is not RGB "
+                        "will probably lead to unexpected results.");
+                poColorTable = NULL;
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Computing overviews on palette index raster bands "
+                    "without a palette will probably lead to unexpected results.");
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -647,7 +736,7 @@ GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
                 GDALDownsampleChunk32R(nWidth, poSrcBand->GetYSize(), 
                                        pafChunk, nChunkYOff, nFullResYChunk,
                                        papoOvrBands[iOverview], pszResampling,
-                                       bHasNoData, fNoDataValue);
+                                       bHasNoData, fNoDataValue, poColorTable);
             else
                 GDALDownsampleChunkC32R(nWidth, poSrcBand->GetYSize(), 
                                         pafChunk, nChunkYOff, nFullResYChunk,
