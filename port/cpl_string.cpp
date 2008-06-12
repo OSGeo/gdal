@@ -722,7 +722,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 \endcode
 
  * @param pszString the string to be split into tokens.
- * @param pszDelimeters one or more characters to be used as token delimeters.
+ * @param pszDelimiters one or more characters to be used as token delimeters.
  * @param nCSLTFlags an ORing of one or more of the CSLT_ flag values.
  *
  * @return a string list of tokens owned by the caller.
@@ -1080,7 +1080,7 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
  * Find StringList entry with given key name.
  *
  * @param papszStrList the string list to search.
- * @param pszKey the key value to look for (case insensitive).
+ * @param pszName the key value to look for (case insensitive).
  *
  * @return -1 on failure or the list index of the first occurance 
  * matching the given key.
@@ -1384,12 +1384,12 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  *
  * CPLES_BackslashQuotable(0): This scheme turns a binary string into 
  * a form suitable to be placed within double quotes as a string constant.
- * The backslash, quote, '\0' and newline characters are all escaped in 
+ * The backslash, quote, '\\0' and newline characters are all escaped in 
  * the usual C style. 
  *
  * CPLES_XML(1): This scheme converts the '<', '<' and '&' characters into
  * their XML/HTML equivelent (&gt;, &lt; and &amp;) making a string safe
- * to embed as CDATA within an XML element.  The '\0' is not escaped and 
+ * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
  * should not be included in the input.
  *
  * CPLES_URL(2): Everything except alphanumerics and the underscore are 
@@ -1596,7 +1596,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
  *
  * @param pszInput the input string.  This is a zero terminated string.
  * @param pnLength location to return the length of the unescaped string, 
- * which may in some cases include embedded '\0' characters.
+ * which may in some cases include embedded '\\0' characters.
  * @param nScheme the escaped scheme to undo (see CPLEscapeString() for a
  * list). 
  * 

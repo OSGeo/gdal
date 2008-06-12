@@ -403,7 +403,7 @@ int CPLHashSetEqualPointer(const void* elt1, const void* elt2)
 /**
  * Hash function for a zero-terminated string
  * 
- * @param pszStr the string to hash. May be NULL.
+ * @param elt the string to hash. May be NULL.
  *
  * @return the hash value of the string
  */
