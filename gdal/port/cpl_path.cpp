@@ -783,16 +783,16 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
  * will generally not contain a trailing path separator.
  */
 
-const char *CPLCleanTrailingSlash( const char *pszFilename )
+const char *CPLCleanTrailingSlash( const char *pszPath )
 
 {
     char       *pszStaticResult = CPLGetStaticResult();
-    int        iPathLength = strlen(pszFilename);
+    int        iPathLength = strlen(pszPath);
 
     CPLAssert( iPathLength < CPL_PATH_BUF_SIZE );
-    CPLAssert( ! (pszFilename >= pszStaticResult && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
+    CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
-    strncpy( pszStaticResult, pszFilename, iPathLength );
+    strncpy( pszStaticResult, pszPath, iPathLength );
     pszStaticResult[iPathLength] = '\0';
 
     if( iPathLength > 0 

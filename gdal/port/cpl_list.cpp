@@ -169,6 +169,7 @@ CPLList *CPLListGetLast( CPLList *psList )
  * Return the pointer to the specified element in a list.
  * 
  * @param psList pointer to list head.
+ * @param nPosition the index of the element in the list, 0 being the first element
  *
  * @return pointer to the specified element in a list.
  */
