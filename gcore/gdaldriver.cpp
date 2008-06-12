@@ -1187,6 +1187,35 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
 /*                         GDALIdentifyDriver()                         */
 /************************************************************************/
 
+/**
+ * Identify the driver that can open a raster file.
+ *
+ * This function will try to identify the driver that can open the passed file
+ * name by invoking the Identify method of each registered GDALDriver in turn. 
+ * The first driver that successful identifies the file name will be returned.
+ * If all drivers fail then NULL is returned.
+ *
+ * In order to reduce the need for such searches touch the operating system
+ * file system machinery, it is possible to give an optional list of files.
+ * This is the list of all files at the same level in the file system as the
+ * target file, including the target file. The filenames will not include any
+ * path components, are an essentially just the output of CPLReadDir() on the
+ * parent directory. If the target object does not have filesystem semantics
+ * then the file list should be NULL.
+ *
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param papszFileList an array of strings, whose last element is the NULL pointer.
+ * These strings are filenames that are auxiliary to the main filename. The passed
+ * value may be NULL.
+ *
+ * @return A GDALDriverH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDriver *. 
+ */
+
+
 GDALDriverH CPL_STDCALL 
 GDALIdentifyDriver( const char * pszFilename, 
                     char **papszFileList )
