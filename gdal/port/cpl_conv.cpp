@@ -279,14 +279,14 @@ char *CPLStrlwr( char *pszString )
  * Reads in at most one less than nBufferSize characters from the fp
  * stream and stores them into the buffer pointed to by pszBuffer.
  * Reading stops after an EOF or a newline. If a newline is read, it
- * is _not_ stored into the buffer. A '\0' is stored after the last
+ * is _not_ stored into the buffer. A '\\0' is stored after the last
  * character in the buffer. All three types of newline terminators
- * recognized by the CPLFGets(): single '\r' and '\n' and '\r\n'
+ * recognized by the CPLFGets(): single '\\r' and '\\n' and '\\r\\n'
  * combination.
  *
  * @param pszBuffer pointer to the targeting character buffer.
  * @param nBufferSize maximum size of the string to read (not including
- * termonating '\0').
+ * termonating '\\0').
  * @param fp file pointer to read from.
  * @return pointer to the pszBuffer containing a string read
  * from the file or NULL if the error or end of file was encountered.
@@ -952,12 +952,12 @@ double CPLScanDouble( const char *pszString, int nMaxLength )
 
 /**
  * Copy the string pointed to by pszSrc, NOT including the terminating
- * `\0' character, to the array pointed to by pszDest.
+ * `\\0' character, to the array pointed to by pszDest.
  *
  * @param pszDest Pointer to the destination string buffer. Should be
  * large enough to hold the resulting string.
  *
- * @param pszDest Pointer to the source buffer.
+ * @param pszSrc Pointer to the source buffer.
  * 
  * @param nMaxLen Maximum length of the resulting string. If string length
  * is greater than nMaxLen, it will be truncated.
@@ -994,14 +994,14 @@ int CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
 
 /**
  * Copy the string pointed to by pszSrc, NOT including the terminating
- * `\0' character, to the array pointed to by pszDest. Remainder of the
+ * `\\0' character, to the array pointed to by pszDest. Remainder of the
  * destination string will be filled with space characters. This is only
  * difference from the PrintString().
  *
  * @param pszDest Pointer to the destination string buffer. Should be
  * large enough to hold the resulting string.
  *
- * @param pszDest Pointer to the source buffer.
+ * @param pszSrc Pointer to the source buffer.
  * 
  * @param nMaxLen Maximum length of the resulting string. If string length
  * is greater than nMaxLen, it will be truncated.
