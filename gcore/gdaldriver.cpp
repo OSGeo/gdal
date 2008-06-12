@@ -990,7 +990,7 @@ const char * CPL_STDCALL GDALGetDriverShortName( GDALDriverH hDriver )
  * For the GeoTIFF driver, this is "GeoTIFF"
  *
  * @param hDriver the handle of the driver
- * @return the long name of the driver. The
+ * @return the long name of the driver or empty string. The
  *         returned string should not be freed and is owned by the driver.
  */
 
@@ -1021,7 +1021,7 @@ const char * CPL_STDCALL GDALGetDriverLongName( GDALDriverH hDriver )
  * For the GeoTIFF driver, this is "frmt_gtiff.html"
  *
  * @param hDriver the handle of the driver
- * @return the URL to the help that describes the driver. The
+ * @return the URL to the help that describes the driver or NULL. The
  *         returned string should not be freed and is owned by the driver.
  */
 
@@ -1044,8 +1044,9 @@ const char * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH hDriver )
  * CreateCopy() as an XML string
  *
  * @param hDriver the handle of the driver
- * @return an XML string that describes the list of creation options. The
- *         returned string should not be freed and is owned by the driver.
+ * @return an XML string that describes the list of creation options or
+ *         empty string. The returned string should not be freed and is
+ *         owned by the driver.
  */
 
 const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
