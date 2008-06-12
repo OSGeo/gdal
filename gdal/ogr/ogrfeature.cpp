@@ -640,7 +640,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::IsFieldSet( int iField );
+ * \fn int OGRFeature::IsFieldSet( int iField ) const;
  *
  * Test if a field has ever been assigned a value or not.
  *
