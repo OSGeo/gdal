@@ -324,7 +324,7 @@
   <li> <b>ODrCDeleteDataSource</b>: True if this driver supports deleting data sources.<p>
  </ul>
 
- The #define macro forms of the capability names should be used in preference
+ The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid mispelling.
 
  This method is the same as the C function OGR_Dr_TestCapability().
@@ -349,7 +349,7 @@
   <li> <b>ODrCDeleteDataSource</b>: True if this driver supports deleting data sources.<p>
  </ul>
 
- The #define macro forms of the capability names should be used in preference
+ The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid mispelling.
 
  This function is the same as the C++ method OGRSFDriver::TestCapability().
@@ -553,7 +553,7 @@ success.
  This function is the same as the C++ method OGRDataSource::GetLayerByName().
 
  @param hDS handle to the data source from which to get the layer.
- @param psz Layer the layer name of the layer to fetch.
+ @param pszLayerName Layer the layer name of the layer to fetch.
 
  @return an handle to the layer, or NULL if the layer is not found
  or an error occurs.
@@ -726,7 +726,7 @@ success.
   <li> <b>ODsCreateLayer</b>: True if this datasource can create new layers.<p>
  </ul>
 
- The #define macro forms of the capability names should be used in preference
+ The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid mispelling.
 
  This method is the same as the C function OGR_DS_TestCapability().
@@ -752,7 +752,7 @@ success.
   <p>
  </ul>
 
- The #define macro forms of the capability names should be used in preference
+ The \#define macro forms of the capability names should be used in preference
  to the strings themselves to avoid mispelling.
 
  This function is the same as the C++ method OGRDataSource::TestCapability().
@@ -1060,7 +1060,7 @@ Sets the driver that the dataset was created or opened with.
 */
 
 /**
- \fnint OGR_L_GetFeatureCount( OGRLayerH hLayer, int bForce );
+ \fn int OGR_L_GetFeatureCount( OGRLayerH hLayer, int bForce );
 
  Fetch the feature count in this layer. 
 
@@ -1546,7 +1546,7 @@ Sets the driver that the dataset was created or opened with.
 
  This method is the same as the C function OGR_L_DeleteFeature().
 
- @param poFeature the feature to write to disk. 
+ @param nFID the feature id to be deleted from the layer 
 
  @return OGRERR_NONE on success.
 
@@ -1566,7 +1566,8 @@ Sets the driver that the dataset was created or opened with.
 
  This method is the same as the C++ method OGRLayer::DeleteFeature().
 
- @param poFeature the feature to write to disk. 
+ @param hLayer handle to the layer
+ @param nFID the feature id to be deleted from the layer 
 
  @return OGRERR_NONE on success.
 
@@ -1581,7 +1582,7 @@ Sets the driver that the dataset was created or opened with.
  Test if this layer supported the named capability.
 
  The capability codes that can be tested are represented as strings, but
- #defined constants exists to ensure correct spelling.  Specific layer 
+ \#defined constants exists to ensure correct spelling.  Specific layer 
  types may implement class specific capabilities, but this can't generally
  be discovered by the caller. <p>
 
@@ -1638,7 +1639,7 @@ OGRLayers will return FALSE for any unrecognised capabilities.<p>
  Test if this layer supported the named capability.
 
  The capability codes that can be tested are represented as strings, but
- #defined constants exists to ensure correct spelling.  Specific layer 
+ \#defined constants exists to ensure correct spelling.  Specific layer 
  types may implement class specific capabilities, but this can't generally
  be discovered by the caller. <p>
 
