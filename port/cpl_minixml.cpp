@@ -978,6 +978,8 @@ char *CPLSerializeXMLTree( CPLXMLNode *psNode )
  *
  * @param poParent the parent to which this node should be attached as a 
  * child.  May be NULL to keep as free standing. 
+ * @param eType the type of the newly created node
+ * @param pszText the value of the newly created node
  *
  * @return the newly created node, now owned by the caller (or parent node).
  */
