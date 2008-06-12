@@ -957,6 +957,19 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH hDriver,
 /*                       GDALGetDriverShortName()                       */
 /************************************************************************/
 
+/**
+ * Return the short name of a driver
+ *
+ * Return the short name of a the driver. This is the string that can be
+ * passed to the GDALGetDriverByName() function.
+ *
+ * For the GeoTIFF driver, this is "GTiff"
+ *
+ * @param hDriver the handle of the driver
+ * @return the short name of the driver. The
+ *         returned string should not be freed and is owned by the driver.
+ */
+
 const char * CPL_STDCALL GDALGetDriverShortName( GDALDriverH hDriver )
 
 {
@@ -968,6 +981,18 @@ const char * CPL_STDCALL GDALGetDriverShortName( GDALDriverH hDriver )
 /************************************************************************/
 /*                       GDALGetDriverLongName()                        */
 /************************************************************************/
+
+/**
+ * Return the long name of a driver
+ *
+ * Return the long name of a the driver.
+ *
+ * For the GeoTIFF driver, this is "GeoTIFF"
+ *
+ * @param hDriver the handle of the driver
+ * @return the long name of the driver. The
+ *         returned string should not be freed and is owned by the driver.
+ */
 
 const char * CPL_STDCALL GDALGetDriverLongName( GDALDriverH hDriver )
 
@@ -987,6 +1012,19 @@ const char * CPL_STDCALL GDALGetDriverLongName( GDALDriverH hDriver )
 /*                       GDALGetDriverHelpTopic()                       */
 /************************************************************************/
 
+/**
+ * Return the URL to the help that describes the driver
+ *
+ * Return the URL to the help that describes the driver. That URL is
+ * relative to the GDAL documentation directory.
+ *
+ * For the GeoTIFF driver, this is "frmt_gtiff.html"
+ *
+ * @param hDriver the handle of the driver
+ * @return the URL to the help that describes the driver. The
+ *         returned string should not be freed and is owned by the driver.
+ */
+
 const char * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH hDriver )
 
 {
@@ -998,6 +1036,17 @@ const char * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH hDriver )
 /************************************************************************/
 /*                   GDALGetDriverCreationOptionList()                  */
 /************************************************************************/
+
+/**
+ * Return the list of creation options of the driver
+ *
+ * Return the list of creation options of the driver used by Create() and
+ * CreateCopy() as an XML string
+ *
+ * @param hDriver the handle of the driver
+ * @return an XML string that describes the list of creation options. The
+ *         returned string should not be freed and is owned by the driver.
+ */
 
 const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
 
@@ -1016,6 +1065,29 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
 /************************************************************************/
 /*                   GDALValidateCreationOptions()                      */
 /************************************************************************/
+
+/**
+ * Validate the list of creation options that are handled by a driver
+ *
+ * This is a helper method primarily used by Create() and
+ * CreateCopy() to validate that the passed in list of creation options
+ * is compatible with the GDAL_DMD_CREATIONOPTIONLIST metadata item defined
+ * by some drivers. @see GDALGetDriverCreationOptionList()
+ *
+ * If the GDAL_DMD_CREATIONOPTIONLIST metadata item is not defined, this
+ * function will return TRUE. Otherwise it will check that the keys and values
+ * in the list of creation options are compatible with the capabilities declared
+ * by the GDAL_DMD_CREATIONOPTIONLIST metadata item. In case of incompatibility
+ * a (non fatal) warning will be emited and FALSE will be returned.
+ *
+ * @param hDriver the handle of the driver with whom the lists of creation option
+ *                must be validated
+ * @param papszCreationOptions the list of creation options. An array of strings,
+ *                             whose last element is a NULL pointer
+ * @return TRUE if the list of creation options is compatible with the Create()
+ *         and CreateCopy() method of the driver, FALSE otherwise.
+ */
+
 int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                                              char** papszCreationOptions)
 {
