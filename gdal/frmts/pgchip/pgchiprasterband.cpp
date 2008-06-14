@@ -39,7 +39,6 @@
 /************************************************************************/
 
 #include "pgchip.h"
-#include <cassert>
 
 
 /************************************************************************/
@@ -68,10 +67,7 @@ PGCHIPRasterBand::PGCHIPRasterBand( PGCHIPDataset *poDS, int nBand ){
 CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage ){
 
-    char    szCommand[1024];
     PGCHIPDataset *poGDS = (PGCHIPDataset *) poDS;
-    PGconn      *hPGConn;
-    PGresult    *hResult;
         
     int        chipDataSize;
     int        bandSize;
@@ -80,8 +76,6 @@ CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int        nXSize;
     int        i;
     
-    hPGConn = poGDS->hPGConn;
-        
     // Must start on the very left
     CPLAssert( nBlockXOff == 0 );
            
@@ -103,45 +97,6 @@ CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     chipDataSize = poGDS->PGCHIP->size - (sizeof(CHIP)-sizeof(void*)) - sizePalette;
     
 //printf("sizePalette: %d\n", sizePalette);
-    
-/* -------------------------------------------------------------------- */
-/*      Reading Chip (first pas only)                                   */
-/* -------------------------------------------------------------------- */
-    
-    if(poGDS->PGCHIP == NULL){
-
-        hResult = PQexec(hPGConn, "BEGIN");
-    
-        if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
-        {
-                                   
-            PQclear( hResult );
-            sprintf( szCommand,"SELECT raster FROM %s",poGDS->pszName);
-            
-            hResult = PQexec(hPGConn,szCommand);
-        
-            char *chipData =  PQgetvalue(hResult,0,0);        
-            poGDS->PGCHIP->data = (char *) CPLMalloc(chipDataSize);
-            
-            char *data = chipData + (sizePalette + sizeof(CHIP))*2;
-                    
-            // Reading whole data
-            for(i=0 ; i<chipDataSize ; i++){
-                ((unsigned char *)poGDS->PGCHIP->data)[i] = parse_hex( &data[i*2]) ;
-            }
-            
-            PQclear( hResult );
-            
-        }
-        else {
-            CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
-            PQclear( hResult );
-        }
-                
-        hResult = PQexec(hPGConn, "COMMIT");
-        PQclear( hResult );
-        
-     }
      
 /* -------------------------------------------------------------------- */
 /*      Extracting band from pointer                                    */
@@ -166,7 +121,7 @@ CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else {
 
-        assert (nPixelSize==2);
+        CPLAssert (nPixelSize==2);
     
         //GUInt16 *bufferData = (GUInt16 *)((char*)(dataptr + bandoffset));
          
@@ -182,7 +137,7 @@ CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 bandoffset+offset);
 #endif
             
-            ((GUInt16 *) pImage)[i] = dataptr[bandoffset+offset];
+            ((GUInt16 *) pImage)[i] = *(GUInt16*)&dataptr[bandoffset+offset];
             
         }
     }

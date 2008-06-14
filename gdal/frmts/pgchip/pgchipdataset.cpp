@@ -33,7 +33,6 @@
  */
 
 #include "pgchip.h"
-#include <cassert>
 
 /* Define to enable debugging info */
 /*#define PGCHIP_DEBUG 1*/
@@ -57,10 +56,8 @@ CPL_C_END
 PGCHIPDataset::PGCHIPDataset(){
 
     hPGConn = NULL;
-    pszConnectionString = NULL;
-    pszDBName = NULL;
-    pszName = NULL;
-    bHavePostGIS = FALSE;
+    pszTableName = NULL;
+    pszDSName = NULL;
     PGCHIP = NULL;
     
     bGeoTransformValid = FALSE;
@@ -84,11 +81,18 @@ PGCHIPDataset::PGCHIPDataset(){
 
 PGCHIPDataset::~PGCHIPDataset(){
 
+    if( hPGConn != NULL )
+    {
+        /* XXX - mloskot: After the connection is closed, valgrind still
+         * reports 36 bytes definitely lost, somewhere in the libpq.
+         */
+        PQfinish( hPGConn );
+        hPGConn = NULL;
+    }
+
     CPLFree(pszProjection);
-    CPLFree(pszConnectionString);
-    CPLFree(pszDBName);
-    CPLFree(pszName);
-    //CPLFree(PGCHIP->data); ?? 
+    CPLFree(pszTableName);
+    CPLFree(pszDSName);
     CPLFree(PGCHIP);
 }
 
@@ -106,29 +110,6 @@ CPLErr PGCHIPDataset::GetGeoTransform( double * padfTransform ){
         return CE_Failure;
 }
 
-
-
-/************************************************************************/
-/*                          SetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr PGCHIPDataset::SetGeoTransform( double * padfTransform ){
-
-    CPLErr              eErr = CE_None;
-
-    memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
-
-    if ( pszConnectionString && bGeoTransformValid )
-    {
-    
-        /* NOT YET AVAILABLE */
-    
-    }
-
-    return eErr;
-}
-    
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -136,136 +117,189 @@ CPLErr PGCHIPDataset::SetGeoTransform( double * padfTransform ){
 const char *PGCHIPDataset::GetProjectionRef(){
 
     char    szCommand[1024];
-    PGconn      *hPGConn;
     PGresult    *hResult;
-    int SRID = -1;        
-    
-    hPGConn = this->hPGConn;
-    
-    SRID = this->PGCHIP->SRID;
-    
+
+    if(SRID == -1)
+    {
+        return "";
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Reading proj                                                    */
 /* -------------------------------------------------------------------- */
-     
+
     sprintf( szCommand,"SELECT srtext FROM spatial_ref_sys where SRID=%d",SRID);
-            
+
     hResult = PQexec(hPGConn,szCommand);
-        
-    if(SRID == -1) {
-        return "";
-    }
-    else if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-             && PQntuples(hResult) > 0 ){
-        
+
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+             && PQntuples(hResult) > 0 )
+    {
+        CPLFree(pszProjection);
         pszProjection = CPLStrdup(PQgetvalue(hResult,0,0)); 
-                
-        return( pszProjection );
     }
-    
+
     if( hResult )
         PQclear( hResult );
-    
-    return NULL;
+
+    return pszProjection;
 }
 
-
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                        PGChipOpenConnection()                        */
 /************************************************************************/
 
-CPLErr PGCHIPDataset::SetProjection( const char * pszNewProjection ){
+static
+PGconn* PGChipOpenConnection(const char* pszFilename, char** ppszTableName, const char** ppszDSName,
+                             int bExitOnMissingTable, int* pbExistTable, int *pbHasNameCol)
+{
+    char       *pszConnectionString;
+    PGconn     *hPGConn;
+    PGresult   *hResult = NULL;
+    int         i=0;
+    int         bHavePostGIS;
+    char       *pszTableName;
+    char        szCommand[1024];
 
-    char    szCommand[1024];
-    PGconn      *hPGConn;
-    PGresult    *hResult;
-    
-    hPGConn = this->hPGConn;
-    
-    
-    if( !EQUALN(pszNewProjection,"GEOGCS",6)
-        && !EQUALN(pszNewProjection,"PROJCS",6)
-        && !EQUALN(pszProjection,"+",1)
-        && !EQUAL(pszNewProjection,"") )
+    if( pszFilename == NULL || !EQUALN(pszFilename,"PG:",3))
+        return NULL;
+
+    pszConnectionString = CPLStrdup(pszFilename);
+
+/* -------------------------------------------------------------------- */
+/*      Try to establish connection.                                    */
+/* -------------------------------------------------------------------- */
+    while(pszConnectionString[i] != '\0')
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Only OGC WKT Projections supported for writing to Postgis.\n"
-                "%s not supported.",
-                  pszNewProjection );
-        
-        return CE_Failure;
+
+        if(pszConnectionString[i] == '#')
+            pszConnectionString[i] = ' ';
+        else if(pszConnectionString[i] == '%')
+        {
+            pszConnectionString[i] = '\0';
+            break;
+        }
+        i++;
     }
-    
-    CPLFree( pszProjection ); pszProjection = NULL;
-        
+
+    hPGConn = PQconnectdb( pszConnectionString + 3 );
+    if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "PGconnectcb failed.\n%s", 
+                  PQerrorMessage(hPGConn) );
+        PQfinish(hPGConn);
+        CPLFree(pszConnectionString);
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
-/*      Reading SRID                                                    */
+/*      Test to see if this database instance has support for the       */
+/*      PostGIS Geometry type.  If so, disable sequential scanning      */
+/*      so we will get the value of the gist indexes.                   */
 /* -------------------------------------------------------------------- */
-     
-    this->SRID = -1;
-    
-    if( pszNewProjection[0]=='+')    
-        sprintf( szCommand,"SELECT SRID FROM spatial_ref_sys where proj4text=%s",pszNewProjection);
-    else
-        sprintf( szCommand,"SELECT SRID FROM spatial_ref_sys where srtext=%s",pszNewProjection);
-    
-    
-    hResult = PQexec(hPGConn,szCommand);
-        
-    
+
+    hResult = PQexec(hPGConn, 
+                         "SELECT oid FROM pg_type WHERE typname = 'geometry'" );
+
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-             && PQntuples(hResult) > 0 ){
-        
-        this->SRID = atoi(PQgetvalue(hResult,0,0)); 
-        
-        pszProjection = CPLStrdup( pszNewProjection );             
-        
-        PQclear( hResult );        
-        
-        return CE_None;
+        && PQntuples(hResult) > 0 )
+    {
+        bHavePostGIS = TRUE;
     }
-    
-    // Try to find SRID via EPSG number
-    if (this->SRID == -1 && strcmp(pszNewProjection,"")!=0){
-                
-            char *buf;
-            char epsg[16];
-            memset(epsg,0,16);
-            char *workingproj = (char *)pszNewProjection;
-    
-            while( (buf = strstr(workingproj,"EPSG")) != 0){
-                workingproj = buf+4;
-            }
-            
-            int iChar = 0;
-            workingproj = workingproj + 3;
-            
-            while(workingproj[iChar] != '"'){
-                epsg[iChar] = workingproj[iChar];
-                iChar++;
-            }
-            
-            if(epsg[0] != 0){
-                this->SRID = atoi(epsg); 
-                pszProjection = CPLStrdup(pszNewProjection);    
-            }
-            
-            return CE_None;
+
+    if( hResult )
+        PQclear( hResult );
+
+    if(!bHavePostGIS){
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Can't find geometry type, is Postgis correctly installed ?\n");
+        PQfinish(hPGConn);
+        CPLFree(pszConnectionString);
+        return NULL;
     }
-    else{
-         
-            CPLError( CE_Failure, CPLE_AppDefined,
-                "Projection %s not found in spatial_ref_sys table.\n",
-                  pszNewProjection );
-        
-            this->SRID = -1;
-            pszProjection = CPLStrdup("");    
-                  
-            if( hResult )
+
+/* -------------------------------------------------------------------- */
+/*  Try opening the layer                                               */
+/* -------------------------------------------------------------------- */
+
+    if( strstr(pszFilename, "layer=") != NULL )
+    {
+        pszTableName = CPLStrdup( strstr(pszFilename, "layer=") + 6 );
+    }
+    else
+    {
+        pszTableName = CPLStrdup("unknown_layer");
+    }
+
+    char* pszDSName = strstr(pszTableName, "%name=");
+    if (pszDSName)
+    {
+        *pszDSName = '\0';
+        pszDSName += 6;
+    }
+    else
+        pszDSName = "unknown_name";
+
+    sprintf( szCommand, 
+             "select b.attname from pg_class a,pg_attribute b where a.oid=b.attrelid and a.relname='%s' and b.attname='raster';",
+              pszTableName);
+
+    hResult = PQexec(hPGConn,szCommand);
+
+    if( ! (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK && PQntuples(hResult) > 0) )
+    {
+        if (pbExistTable)
+            *pbExistTable = FALSE;
+
+        if (bExitOnMissingTable)
+        {
+            if (hResult)
                 PQclear( hResult );
-                  
-            return CE_Failure;
+            CPLFree(pszConnectionString);
+            CPLFree(pszTableName);
+            PQfinish(hPGConn);
+            return NULL;
+        }
     }
+    else
+    {
+        if (pbExistTable)
+            *pbExistTable = TRUE;
+
+        sprintf( szCommand, 
+                "select b.attname from pg_class a,pg_attribute b where a.oid=b.attrelid and a.relname='%s' and b.attname='name';",
+                pszTableName);
+
+        if (hResult)
+            PQclear( hResult );
+        hResult = PQexec(hPGConn,szCommand);
+        if (PQresultStatus(hResult) == PGRES_TUPLES_OK && PQntuples(hResult) > 0)
+        {
+            if (pbHasNameCol)
+                *pbHasNameCol = TRUE;
+        }
+        else
+        {
+            if (pbHasNameCol)
+                *pbHasNameCol = FALSE;
+        }
+    }
+
+    if (hResult)
+        PQclear( hResult );
+
+    if (ppszTableName)
+        *ppszTableName = pszTableName;
+    else
+        CPLFree(pszTableName);
+
+    if (ppszDSName)
+        *ppszDSName = pszDSName;
+
+    CPLFree(pszConnectionString);
+
+    return hPGConn;
 }
 
 
@@ -278,154 +312,72 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
 
     char                szCommand[1024];
     PGresult            *hResult = NULL;
-    PGCHIPDataset 	    *poDS = NULL;
+    PGCHIPDataset       *poDS = NULL;
     char                *chipStringHex;
 
     unsigned char       *chipdata;
-    char                *layerName;
     int                 t;
-       
-            
-    /* Chek Postgis connection string */
-    if( poOpenInfo->pszFilename == NULL)
+    char                *pszTableName = NULL;
+    const char          *pszDSName = NULL;
+    int                  bHasNameCol = FALSE;
+
+    PGconn* hPGConn = PGChipOpenConnection(poOpenInfo->pszFilename, &pszTableName, &pszDSName, TRUE, NULL, &bHasNameCol);
+
+    if( hPGConn == NULL)
         return NULL;
-             
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
 
     poDS = new PGCHIPDataset();
-    poDS->pszConnectionString = CPLStrdup(poOpenInfo->pszFilename);
-    layerName = CPLStrdup(poOpenInfo->pszFilename);
+    poDS->hPGConn = hPGConn;
+    poDS->pszTableName = pszTableName;
+    poDS->pszDSName = CPLStrdup(pszDSName);
 
-/* -------------------------------------------------------------------- */
-/*      Verify postgresql prefix.                                       */
-/* -------------------------------------------------------------------- */
-    if( !EQUALN(poDS->pszConnectionString,"PG:",3) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                      "%s does not conform to PostgreSQL naming convention,"
-                      " PG:*\n" );
-        return NULL;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Try to establish connection.                                    */
-/* -------------------------------------------------------------------- */
-    int i=0;
-    while(poDS->pszConnectionString[i] != '\0'){
-        
-        if(poDS->pszConnectionString[i] == '#')
-            poDS->pszConnectionString[i] = ' ';
-        if(poDS->pszConnectionString[i] == '%')
-            poDS->pszConnectionString[i] = '\0';
-        i++;
-    }
-        
-    
-    poDS->hPGConn = PQconnectdb( poDS->pszConnectionString + 3 );
-    
-    if( poDS->hPGConn == NULL || PQstatus(poDS->hPGConn) == CONNECTION_BAD )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "PGconnectcb failed.\n%s", 
-                  PQerrorMessage(poDS->hPGConn) );
-        PQfinish(poDS->hPGConn);
-        poDS->hPGConn = NULL;
-        return NULL;
-    }
-    
-    
-/* -------------------------------------------------------------------- */
-/*      Try to establish the database name from the connection          */
-/*      string passed.                                                  */
-/* -------------------------------------------------------------------- */
-    if( strstr(poDS->pszConnectionString, "dbname=") != NULL )
-    {
-        int     i;
-
-        poDS->pszDBName = CPLStrdup( strstr(poDS->pszConnectionString, "dbname=") + 7 );
-                
-        for( i = 0; poDS->pszDBName[i] != '\0'; i++ )
-        {
-            if( poDS->pszDBName[i] == ' ' )                                   
-            {
-                poDS->pszDBName[i] = '\0';
-                break;
-            }
-        }
-    }
-    else if( getenv( "USER" ) != NULL )
-        poDS->pszDBName = CPLStrdup( getenv("USER") );
-    else
-        poDS->pszDBName = CPLStrdup( "unknown_dbname" );
-                   
-        
-/* -------------------------------------------------------------------- */
-/*      Test to see if this database instance has support for the       */
-/*      PostGIS Geometry type.  If so, disable sequential scanning      */
-/*      so we will get the value of the gist indexes.                   */
-/* -------------------------------------------------------------------- */
-       
-    
-    hResult = PQexec(poDS->hPGConn, 
-                         "SELECT oid FROM pg_type WHERE typname = 'geometry'" );
-   
-                         
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-        && PQntuples(hResult) > 0 )
-    {
-        poDS->bHavePostGIS = TRUE;
-    }
-
-    if( hResult )
-        PQclear( hResult );
-    
-    if(!poDS->bHavePostGIS){
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Can't find geometry type, is Postgis correctly installed ?\n");
-        return NULL;
-    }
-    
-    
-/* -------------------------------------------------------------------- */
-/*  try opening the layer                                               */
-/* -------------------------------------------------------------------- */
-    
-    if( strstr(layerName, "layer=") != NULL )
-    {
-	poDS->pszName = CPLStrdup( strstr(layerName, "layer=") + 6 );
-    }
-    else        
-        poDS->pszName = CPLStrdup("unknown_layer");
-            
-    
 /* -------------------------------------------------------------------- */
 /*      Read the chip                                                   */
 /* -------------------------------------------------------------------- */
-
 
     hResult = PQexec(poDS->hPGConn, "BEGIN");
     
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         PQclear( hResult );
-        sprintf( szCommand, 
-                 "SELECT raster FROM %s LIMIT 1",
-                 poDS->pszName);
-                         
+        if (bHasNameCol)
+            sprintf( szCommand, 
+                    "SELECT raster FROM %s WHERE name = '%s' LIMIT 1 ",
+                    poDS->pszTableName, poDS->pszDSName);
+        else
+            sprintf( szCommand, 
+                    "SELECT raster FROM %s LIMIT 1",
+                    poDS->pszTableName);
+
         hResult = PQexec(poDS->hPGConn,szCommand);
     }
-
 
     if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", PQerrorMessage(poDS->hPGConn) );
+        if (hResult)
+            PQclear( hResult );
+        delete poDS;
         return NULL;
     }
-           
+
+    if (PQntuples(hResult) == 0)
+    {
+        PQclear( hResult );
+        delete poDS;
+        return NULL;
+    }
+
     chipStringHex = PQgetvalue(hResult, 0, 0);
+
+    if (chipStringHex == NULL)
+    {
+        PQclear( hResult );
+        delete poDS;
+        return NULL;
+    }
+
     int stringlen = strlen((char *)chipStringHex);
         
     // Allocating memory for chip
@@ -437,14 +389,25 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
     
     // Chip assigment
     poDS->PGCHIP = (CHIP *)chipdata;
+    poDS->SRID = poDS->PGCHIP->SRID;
+    
+    if (poDS->PGCHIP->bvol.xmin != 0 && poDS->PGCHIP->bvol.ymin != 0 &
+        poDS->PGCHIP->bvol.xmax != 0 && poDS->PGCHIP->bvol.ymax != 0)
+    {
+        poDS->bGeoTransformValid = TRUE;
 
+        poDS->adfGeoTransform[0] = poDS->PGCHIP->bvol.xmin;
+        poDS->adfGeoTransform[3] = poDS->PGCHIP->bvol.ymax;
+        poDS->adfGeoTransform[1] = (poDS->PGCHIP->bvol.xmax - poDS->PGCHIP->bvol.xmin) / poDS->PGCHIP->width;
+        poDS->adfGeoTransform[5] = - (poDS->PGCHIP->bvol.ymax - poDS->PGCHIP->bvol.ymin) / poDS->PGCHIP->height;
+    }
+    
 #ifdef PGCHIP_DEBUG
     poDS->printChipInfo(*(poDS->PGCHIP));
 #endif
-           
-    if( hResult )
-        PQclear( hResult );
-    
+
+    PQclear( hResult );
+
     hResult = PQexec(poDS->hPGConn, "COMMIT");
     PQclear( hResult );
     
@@ -518,7 +481,7 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
 /*      Is there a palette?  Note: we should also read back and         */
 /*      apply transparency values if available.                         */
 /* -------------------------------------------------------------------- */
-    assert (poDS->nColorType != PGCHIP_COLOR_TYPE_PALETTE);
+    CPLAssert (poDS->nColorType != PGCHIP_COLOR_TYPE_PALETTE);
     if( poDS->nColorType == PGCHIP_COLOR_TYPE_PALETTE )
     {
         unsigned char *pPalette;
@@ -556,27 +519,25 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
                 GDALProgressFunc pfnProgress, void * pProgressData ){
 
     
-    PGconn      *hPGConn;
-    char	*pszConnectionString;
-    char	*pszDBName;
-    char        *pszName;
-    int         bHavePostGIS;
-    char                *szCommand;
-    PGresult            *hResult;
-    char    *layerName;
-    char    *pszProjection;
-    int    SRID;
-    GDALColorTable	*poCT= NULL;
-    
+    PGconn          *hPGConn;
+    char            *pszTableName = NULL;
+    const char      *pszDSName = NULL;
+    char*            pszCommand;
+    PGresult        *hResult;
+    char            *pszProjection;
+    int              SRID;
+    GDALColorTable  *poCT= NULL;
+    int              bTableExists = FALSE;
+    int              bHasNameCol = FALSE;
+
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
     int  nBands = poSrcDS->GetRasterCount();
-    
-    
+
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
-    
+
     /* check number of bands */
     if( nBands != 1 && nBands != 4)
     {
@@ -585,8 +546,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
 
         return NULL;
     }
-    
-    
+
     if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
         && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16)
     {
@@ -598,15 +558,16 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
 
         return NULL;
     }
-    
+
+    hPGConn = PGChipOpenConnection(pszFilename, &pszTableName, &pszDSName, FALSE, &bTableExists, &bHasNameCol);
+
     /* Check Postgis connection string */
-    if( pszFilename == NULL){
+    if( hPGConn == NULL){
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Connection string is NULL.\n");
+                  "Cannont connect to %s.\n", pszFilename);
         return NULL;
-    }     
-    
-    
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Setup some parameters.                                          */
 /* -------------------------------------------------------------------- */
@@ -640,152 +601,28 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     
     storageChunk = nBitDepth/8;
       
-    printf("nBands = %d, nBitDepth = %d\n",nBands,nBitDepth);
+    //printf("nBands = %d, nBitDepth = %d\n",nBands,nBitDepth);
     
-/* -------------------------------------------------------------------- */
-/*      Verify postgresql prefix.                                       */
-/* -------------------------------------------------------------------- */
-    
-    if( !EQUALN(pszFilename,"PG:",3) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                      "%s does not conform to PostgreSQL naming convention,"
-                      " PG:*\n" );
-        return NULL;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Try to establish connection.                                    */
-/* -------------------------------------------------------------------- */
-    
-    pszConnectionString = CPLStrdup(pszFilename);    
-    layerName = CPLStrdup(pszFilename);
+    pszCommand = (char*)CPLMalloc(1024);
 
-    int i=0;
-    while(pszConnectionString[i] != '\0'){
-        
-        if(pszConnectionString[i] == '#')
-            pszConnectionString[i] = ' ';
-        
-        i++;
-    }
-    
-    hPGConn = PQconnectdb( pszConnectionString + 3 );
-    
-    if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "PGconnectcb failed.\n%s", 
-                  PQerrorMessage(hPGConn) );
-        PQfinish(hPGConn);
-        hPGConn = NULL;
-        return NULL;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Try to establish the database name from the connection          */
-/*      string passed.                                                  */
-/* -------------------------------------------------------------------- */
-        
-    if( strstr(pszFilename, "dbname=") != NULL )
-    {
-        int     i;
+    if(!bTableExists){
+        sprintf( pszCommand, 
+                "CREATE TABLE %s(raster chip, name varchar)",
+                pszTableName);
 
-        pszDBName = CPLStrdup( strstr(pszFilename, "dbname=") + 7 );
-
-        for( i = 0; pszDBName[i] != '\0'; i++ )
-        {
-            if( pszDBName[i] == ' ' )                                   
-            {
-                pszDBName[i] = '\0';
-                break;
-            }
-        }
+        hResult = PQexec(hPGConn,pszCommand);
+        bHasNameCol = TRUE;
     }
-    else if( getenv( "USER" ) != NULL )
-        pszDBName = CPLStrdup( getenv("USER") );
     else
-        pszDBName = CPLStrdup( "unknown_dbname" );
-        
-               
-/* -------------------------------------------------------------------- */
-/*      Test to see if this database instance has support for the       */
-/*      PostGIS Geometry type.  If so, disable sequential scanning      */
-/*      so we will get the value of the gist indexes.                   */
-/* -------------------------------------------------------------------- */
-       
-    hResult = PQexec(hPGConn, "BEGIN");
-
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
-        PQclear( hResult );
+        if (bHasNameCol)
+            sprintf( pszCommand, 
+                    "DELETE FROM %s WHERE name = '%s'", pszTableName, pszDSName);
+        else
+            sprintf( pszCommand, 
+                    "DELETE FROM %s", pszTableName);
 
-        hResult = PQexec(hPGConn, 
-                         "SELECT oid FROM pg_type WHERE typname = 'geometry'" );
-    }
-
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-        && PQntuples(hResult) > 0 )
-    {
-        bHavePostGIS = TRUE;
-    }
-    else {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "You don't seem to have Postgis installed. Check your settings.\n");
-        return NULL;         
-    }
-        
-    if( hResult )
-        PQclear( hResult );
-
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-    
-    
-/* -------------------------------------------------------------------- */
-/*     try opening Postgis Raster Layer                                 */
-/* -------------------------------------------------------------------- */
-    
-    if( strstr(layerName, "layer=") != NULL )
-    {
-	pszName = CPLStrdup( strstr(layerName, "layer=") + 6 );
-    }
-    else        
-        pszName = CPLStrdup("unknown_layer");
-            
-    CPLFree(layerName); layerName = NULL;
-    
-    
-    // First allocation is small
-    szCommand = (char *)CPLMalloc(1024);
-        
-    hResult = PQexec(hPGConn, "BEGIN");
-
-    if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
-    {
-        int bTableExists = FALSE;    
-    
-        PQclear( hResult );
-        sprintf( szCommand, 
-                 "select b.attname from pg_class a,pg_attribute b where a.oid=b.attrelid and a.relname='%s' and b.attname='raster';",
-                 pszName);
-                 
-        hResult = PQexec(hPGConn,szCommand);
-        
-        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-        && PQntuples(hResult) > 0 ){
-            bTableExists = TRUE;
-        }
-        
-        if(!bTableExists){
-            PQclear( hResult );
-            sprintf( szCommand, 
-                    "CREATE TABLE %s(raster chip)",
-                    pszName);
-                    
-            hResult = PQexec(hPGConn,szCommand);
-        }
+        hResult = PQexec(hPGConn,pszCommand);
     }
 
     if( hResult && (PQresultStatus(hResult) == PGRES_COMMAND_OK || PQresultStatus(hResult) == PGRES_TUPLES_OK)){
@@ -794,14 +631,11 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     else {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", PQerrorMessage(hPGConn) );
-        CPLFree(szCommand); szCommand = NULL;
+        PQfinish( hPGConn );
+        hPGConn = NULL;
         return NULL;
     }
-    
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-        
-       
+
 /* -------------------------------------------------------------------- */
 /*      Projection, finding SRID                                        */
 /* -------------------------------------------------------------------- */    
@@ -822,11 +656,11 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     
     
     if( pszProjection[0]=='+')    
-        sprintf( szCommand,"SELECT SRID FROM spatial_ref_sys where proj4text=%s",pszProjection);
+        sprintf( pszCommand,"SELECT SRID FROM spatial_ref_sys where proj4text=%s",pszProjection);
     else
-        sprintf( szCommand,"SELECT SRID FROM spatial_ref_sys where srtext=%s",pszProjection);
+        sprintf( pszCommand,"SELECT SRID FROM spatial_ref_sys where srtext=%s",pszProjection);
             
-    hResult = PQexec(hPGConn,szCommand);
+    hResult = PQexec(hPGConn,pszCommand);
         
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
              && PQntuples(hResult) > 0 ){
@@ -841,7 +675,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
             char *buf;
             char epsg[16];
             memset(epsg,0,16);
-            char *workingproj = CPLStrdup( pszProjection );
+            const char *workingproj = pszProjection;
                 
             while( (buf = strstr(workingproj,"EPSG")) != 0){
                 workingproj = buf+4;
@@ -851,7 +685,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
             workingproj = workingproj + 3;
             
             
-            while(workingproj[iChar] != '"'){
+            while(workingproj[iChar] != '"' && iChar < 15){
                 epsg[iChar] = workingproj[iChar];
                 iChar++;
             }
@@ -940,6 +774,25 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     PGCHIP.future[3] = 0; // nbColors; // Useless as we store nbColors in the "compression" integer
     PGCHIP.data = NULL; // Serialized Form
     
+    double adfGeoTransform[6];
+    if (GDALGetGeoTransform(poSrcDS, adfGeoTransform) == CE_None)
+    {
+        if (adfGeoTransform[2] == 0 &&
+            adfGeoTransform[4] == 0 &&
+            adfGeoTransform[5] < 0)
+        {
+            PGCHIP.bvol.xmin = adfGeoTransform[0];
+            PGCHIP.bvol.ymax = adfGeoTransform[3];
+            PGCHIP.bvol.xmax = adfGeoTransform[0] + nXSize * adfGeoTransform[1];
+            PGCHIP.bvol.ymin = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Could not write geotransform.\n" );
+        }
+    }
+
     // PGCHIP.size changes if there is a palette.
     // Is calculated by Postgis when inserting anyway
     PGCHIP.size = sizeof(CHIP) - sizeof(void*) + (nYSize * nXSize * storageChunk * nBands) + sizePalette;
@@ -1033,8 +886,8 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
 /* -------------------------------------------------------------------- */
      
     // Second allocation to cope with data size
-    CPLFree(szCommand);
-    szCommand = (char *)CPLMalloc(PGCHIP.size*2 + 256);
+    CPLFree(pszCommand);
+    pszCommand = (char *)CPLMalloc(PGCHIP.size*2 + 256);
 
     hResult = PQexec(hPGConn, "BEGIN");
 
@@ -1042,14 +895,21 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     {
                         
         PQclear( hResult );
-        sprintf( szCommand, 
-                 "INSERT INTO %s(raster) values('%s')",
-                 pszName,result);
+        if (bHasNameCol)
+            sprintf( pszCommand, 
+                    "INSERT INTO %s(raster, name) values('%s', '%s')",
+                    pszTableName,result, pszDSName);
+        else
+            sprintf( pszCommand, 
+                    "INSERT INTO %s(raster) values('%s')",
+                    pszTableName,result);
                  
                 
-        hResult = PQexec(hPGConn,szCommand);
+        hResult = PQexec(hPGConn,pszCommand);
     
     }
+    
+    CPLFree(pszTableName); pszTableName = NULL;
     
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK ){
         PQclear( hResult );
@@ -1057,18 +917,23 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     else {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", PQerrorMessage(hPGConn) );
-        CPLFree(szCommand); szCommand = NULL;
+        CPLFree(pszCommand); pszCommand = NULL;
+        PQfinish( hPGConn );
+        hPGConn = NULL;
         return NULL;
     }
         
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
             
-    CPLFree( szCommand ); szCommand = NULL;
+    CPLFree( pszCommand ); pszCommand = NULL;
     CPLFree( pPalette ); pPalette = NULL;
     CPLFree( data ); data = NULL;
     CPLFree( result ); result = NULL;
-             
+
+    PQfinish( hPGConn );
+    hPGConn = NULL;
+
     return (GDALDataset *)GDALOpen(pszFilename,GA_Update);
 }
 
@@ -1092,6 +957,13 @@ void     PGCHIPDataset::printChipInfo(const CHIP& c){
      //}
 }
 
+/************************************************************************/
+/*                              PGCHIPDelete                            */
+/************************************************************************/
+static CPLErr PGCHIPDelete(const char* pszFilename)
+{
+    return CE_None;
+}
 
 /************************************************************************/
 /*                          GDALRegister_PGCHIP()                       */
@@ -1113,14 +985,9 @@ void GDALRegister_PGCHIP(){
          
         poDriver->pfnOpen = PGCHIPDataset::Open;
         poDriver->pfnCreateCopy = PGCHIPCreateCopy;
+        poDriver->pfnDelete = PGCHIPDelete;
         
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
-
-
-
-
 
