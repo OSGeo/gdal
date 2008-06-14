@@ -378,8 +378,9 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         hGeom = OGR_F_GetGeometryRef( hFeat );
 
         // FIXME: handle collections
-        if ( OGR_G_GetGeometryType( hGeom ) == wkbPoint
-             || OGR_G_GetGeometryType( hGeom ) == wkbPoint25D )
+        if ( hGeom != NULL &&
+             (OGR_G_GetGeometryType( hGeom ) == wkbPoint
+              || OGR_G_GetGeometryType( hGeom ) == wkbPoint25D) )
         {
             adfX.push_back( OGR_G_GetX( hGeom, 0 ) );
             adfY.push_back( OGR_G_GetY( hGeom, 0 ) );
@@ -391,6 +392,13 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
         
         OGR_F_Destroy( hFeat );
+    }
+
+    if (adfX.size() == 0)
+    {
+        printf( "No point geometry found on layer %s, skipping.\n",
+                OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
+       return;
     }
 
 /* -------------------------------------------------------------------- */
