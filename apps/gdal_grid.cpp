@@ -398,7 +398,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     {
         printf( "No point geometry found on layer %s, skipping.\n",
                 OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
-       return;
+        return;
     }
 
 /* -------------------------------------------------------------------- */
@@ -845,6 +845,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
+    CSLDestroy( papszCreateOptions );
     CPLFree( pOptions );
     OGR_DS_Destroy( hSrcDS );
     GDALClose( hDstDS );
