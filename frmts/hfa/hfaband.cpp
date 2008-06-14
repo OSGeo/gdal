@@ -484,35 +484,6 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
         nValueBitOffset = 0;
 
 /* -------------------------------------------------------------------- */
-/*      For floating point output, the saved 16-bit value will be       */
-/*      based on the minimum value for the tile. Note that the there    */
-/*      still seems to be some problems selecting the correct factor    */
-/*      right near a power of 2 boundary (like 512). I have not been    */
-/*      able to determine how the switchover occurs at power of 2       */
-/*      boundaries for the minimum value. (#1000)                       */
-/* -------------------------------------------------------------------- */
-        float fMultFactor = 1.0;
-        float fMinValue = 0.0;
-        if ( nDataType == EPT_f32 )
-        {
-            fMinValue = *((float *) &nDataMin);
-
-            int nDataMin = ( fMinValue > 0.0 ) ? (int)fMinValue : (int)-fMinValue;
-            int nDivShift = -9;
-
-            for ( ; ( nDataMin > 0 ); nDivShift++, nDataMin >>= 1 ) {}
-            if ( nDivShift < 0 )
-            {
-                nDivShift = -nDivShift;
-                fMultFactor = 1.0 / ( 1 << nDivShift );
-            }
-            else
-            {
-                fMultFactor = ( 1 << nDivShift );
-            }
-        }
-
-/* -------------------------------------------------------------------- */
 /*      Loop over block pixels.                                         */
 /* -------------------------------------------------------------------- */
         for( nPixelsOutput = 0; nPixelsOutput < nMaxPixels; nPixelsOutput++ )
@@ -622,22 +593,13 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
             {
                 ((GUInt32 *) pabyDest)[nPixelsOutput] = nDataValue;
             }
-/* -------------------------------------------------------------------- */
-/*      Note, floating point values are handled somewhat                */
-/*      differently, and I've only been able to test f32 with a         */
-/*      16bit offset value (see bug #1000 and                           */
-/*      data/imagine/bug1000/float.img)                                 */
-/* -------------------------------------------------------------------- */
             else if( nDataType == EPT_f32 )
             {
-                float fValue;
-
-                if( nNumBits == 16 )
-                    fValue = fMinValue + fMultFactor * (nRawValue / 32768.0);
-                else
-                    CPLAssert( FALSE );
-                
-                ((float *) pabyDest)[nPixelsOutput] = fValue;
+/* -------------------------------------------------------------------- */
+/*      Note, floating point values are handled as if they were signed  */
+/*      32-bit integers (bug #1000).                                    */
+/* -------------------------------------------------------------------- */
+                ((float *) pabyDest)[nPixelsOutput] = *((float*)( &nDataValue ));
             }
             else
             {
