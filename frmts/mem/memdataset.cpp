@@ -664,6 +664,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "DATATYPE=%s not recognised.", 
                           pszOption );
+                CSLDestroy( papszOptions );
                 delete poDS;
                 return NULL;
             }
@@ -742,6 +743,7 @@ GDALDataset *MEMDataset::Create( const char * pszFilename,
                     VSIFree( papBandData[iBand] );
             }
 
+            CPLFree( papBandData );
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Unable to create band arrays ... out of memory." );
             return NULL;
