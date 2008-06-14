@@ -59,14 +59,17 @@ gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		-o gdaltindex$(EXE)
 
+# Not compiled by default
 gdalbuildvrt$(EXE):	gdalbuildvrt.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalbuildvrt.o $(XTRAOBJ) $(CONFIG_LIBS)  \
 		-o gdalbuildvrt$(EXE)
 
+# Not compiled by default
 multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) multireadtest.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o multireadtest$(EXE)
 
+# Not compiled by default
 dumpoverviews$(EXE):	dumpoverviews.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) dumpoverviews.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o dumpoverviews$(EXE)
@@ -79,6 +82,7 @@ gdal_grid$(EXE):	gdal_grid.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdal_grid.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o gdal_grid$(EXE)
 
+# Not compiled by default
 gdalwarpsimple$(EXE): gdalwarpsimple.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalwarpsimple.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalwarpsimple$(EXE)
@@ -87,9 +91,15 @@ gdaltransform$(EXE): gdaltransform.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaltransform.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdaltransform$(EXE)
 
+# Not compiled by default
 gdalflattenmask$(EXE): gdalflattenmask.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdalflattenmask.o $(XTRAOBJ) \
 		$(CONFIG_LIBS) -o gdalflattenmask$(EXE)
+
+# Not compiled by default
+gdal2ogr$(EXE):	gdal2ogr.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdal2ogr.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o gdal2ogr$(EXE)
 
 ogrinfo$(EXE):	ogrinfo.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) ogrinfo.o $(XTRAOBJ) $(CONFIG_LIBS) \
@@ -99,6 +109,7 @@ ogr2ogr$(EXE):	ogr2ogr.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) ogr2ogr.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o ogr2ogr$(EXE)
 
+# Not compiled by default
 testepsg$(EXE):	testepsg.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) testepsg.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o testepsg$(EXE)
@@ -107,6 +118,7 @@ ogrtindex$(EXE):	ogrtindex.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) ogrtindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o ogrtindex$(EXE)
 
+# Not compiled by default
 test_ogrsf$(EXE):	test_ogrsf.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) test_ogrsf.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o test_ogrsf$(EXE)
