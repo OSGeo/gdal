@@ -567,22 +567,13 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
             {
                 ((GUInt32 *) pabyDest)[nPixelsOutput] = nDataValue;
             }
-/* -------------------------------------------------------------------- */
-/*      Note, floating point values are handled somewhat                */
-/*      differently, and I've only been able to test f32 with a         */
-/*      16bit offset value (see bug #1000 and                           */
-/*      data/imagine/bug1000/float.img)                                 */
-/* -------------------------------------------------------------------- */
             else if( nDataType == EPT_f32 )
             {
-                float fValue = *((float *) &nDataMin);
-
-                if( nNumBits == 16 )
-                    fValue = fValue + 0.25 * (nRawValue / 65536.0);
-                else
-                    CPLAssert( FALSE );
-                
-                ((float *) pabyDest)[nPixelsOutput] = fValue;
+/* -------------------------------------------------------------------- */
+/*      Note, floating point values are handled as if they were signed  */
+/*      32-bit integers (bug #1000).                                    */
+/* -------------------------------------------------------------------- */
+                ((float *) pabyDest)[nPixelsOutput] = *((float*)( &nDataValue ));
             }
             else
             {
