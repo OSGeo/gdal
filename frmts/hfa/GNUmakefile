@@ -17,6 +17,8 @@ default:	$(OBJ)
 clean:
 	rm -f *.o hfatest img2tif $(O_OBJ)
 
+$(O_OBJ):  hfa.h hfa_p.h
+
 %.o:	addtiffo_src/%.cpp
 	$(CXX) -c -I../../gcore -I../../port $(ALL_C_FLAGS) \
 		addtiffo_src/$*.cpp -o $*.o

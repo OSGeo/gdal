@@ -286,6 +286,8 @@ class HFAField
 
     char	*pszFieldName;
 
+    char        szNumberString[28]; /* buffer used to return an int as a string */
+
     		HFAField();
                 ~HFAField();
 
