@@ -1065,10 +1065,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     {
         if( pszStringRet == NULL )
         {
-            static char	szNumber[28]; // This is NOT threadsafe.
-
-            sprintf( szNumber, "%d", nIntRet );
-            pszStringRet = szNumber;
+            sprintf( szNumberString, "%d", nIntRet );
+            pszStringRet = szNumberString;
         }
         
         *((char **) pReqReturn) = pszStringRet;
