@@ -254,7 +254,11 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     char *apszOptions[2] = { NULL, NULL };
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
+#if defined(WIN32) && defined(_MSC_VER)
+    osDPOption.Printf( "DATAPOINTER=0x%p", pabyPolyMask );
+#else
     osDPOption.Printf( "DATAPOINTER=%p", pabyPolyMask );
+#endif
     apszOptions[0] = (char *) osDPOption.c_str();
 
     hMemDS = GDALCreate( GDALGetDriverByName("MEM"), "warp_temp", 
