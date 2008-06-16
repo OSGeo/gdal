@@ -202,6 +202,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
     float *pafMask = (float *) pValidityMask;
     CPLErr eErr;
+    GDALDriverH hMemDriver;
 
 /* -------------------------------------------------------------------- */
 /*      Do some minimal checking.                                       */
@@ -215,6 +216,13 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
     if( psWO == NULL || psWO->hCutline == NULL )
     {
         CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    hMemDriver = GDALGetDriverByName("MEM");
+    if (hMemDriver == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALWarpCutlineMasker needs MEM driver");
         return CE_Failure;
     }
 
@@ -261,7 +269,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 #endif
     apszOptions[0] = (char *) osDPOption.c_str();
 
-    hMemDS = GDALCreate( GDALGetDriverByName("MEM"), "warp_temp", 
+    hMemDS = GDALCreate( hMemDriver, "warp_temp", 
                          nXSize, nYSize, 0, GDT_Byte, NULL );
     GDALAddBand( hMemDS, GDT_Byte, apszOptions );
     GDALSetGeoTransform( hMemDS, adfGeoTransform );
