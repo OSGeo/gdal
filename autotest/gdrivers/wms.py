@@ -59,6 +59,9 @@ def wms_1():
     except urllib2.HTTPError, e:
         print 'Test WMS service is down (HTTP Error: %d)' % e.code
         gdaltest.wms_drv = None
+    except:
+        print 'Test WMS service is down.'
+        gdaltest.wms_drv = None
 
     if gdaltest.wms_drv is None:
         return 'skip'
@@ -191,6 +194,9 @@ def wms_6():
         web = urllib2.urlopen(srv)
     except urllib2.HTTPError, e:
         print 'Test WMS service is down (HTTP Error: %d)' % e.code
+        gdaltest.wms_drv = None
+    except:
+        print 'Test WMS service is down.'
         gdaltest.wms_drv = None
 
     if gdaltest.wms_drv is None:
