@@ -350,6 +350,7 @@ char **AIGDataset::GetFileList()
                                            papszCoverFiles[i], 
                                            NULL ) );
     }
+    CSLDestroy(papszCoverFiles);
     
     return papszFileList;
 }
