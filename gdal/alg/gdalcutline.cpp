@@ -258,16 +258,16 @@ GDALWarpCutlineMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /* -------------------------------------------------------------------- */
     GByte *pabyPolyMask = (GByte *) CPLCalloc( nXSize, nYSize );
     GDALDatasetH hMemDS;
-    CPLString osDPOption;
-    char *apszOptions[2] = { NULL, NULL };
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
-#if defined(WIN32) && defined(_MSC_VER)
-    osDPOption.Printf( "DATAPOINTER=0x%p", pabyPolyMask );
-#else
-    osDPOption.Printf( "DATAPOINTER=%p", pabyPolyMask );
-#endif
-    apszOptions[0] = (char *) osDPOption.c_str();
+    char szDataPointer[100];
+    char *apszOptions[] = { szDataPointer, NULL };
+
+    memset( szDataPointer, 0, sizeof(szDataPointer) );
+    sprintf( szDataPointer, "DATAPOINTER=" );
+    CPLPrintPointer( szDataPointer+strlen(szDataPointer), 
+                    pabyPolyMask, 
+                     sizeof(szDataPointer) - strlen(szDataPointer) );
 
     hMemDS = GDALCreate( hMemDriver, "warp_temp", 
                          nXSize, nYSize, 0, GDT_Byte, NULL );
