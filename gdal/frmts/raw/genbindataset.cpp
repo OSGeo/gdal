@@ -499,6 +499,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                   "instead of the .hdr file.  Please try again selecting\n"
                   "the raw data file corresponding to the header file: %s\n", 
                   poOpenInfo->pszFilename );
+        VSIFCloseL( fp );
         return NULL;
     }
 
