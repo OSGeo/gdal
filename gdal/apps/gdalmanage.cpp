@@ -88,6 +88,7 @@ static void ProcessIdentifyTarget( const char *pszTarget,
         ProcessIdentifyTarget( osSubTarget, papszSiblingList, 
                                bRecursive, bReportFailures );
     }
+    CSLDestroy(papszSiblingList);
 }
 
 /************************************************************************/
