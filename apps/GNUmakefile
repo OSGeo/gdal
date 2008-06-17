@@ -97,6 +97,11 @@ gdalflattenmask$(EXE): gdalflattenmask.o $(DEP_LIBS)
 		$(CONFIG_LIBS) -o gdalflattenmask$(EXE)
 
 # Not compiled by default
+gdaltorture$(EXE): gdaltorture.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdaltorture.o $(XTRAOBJ) \
+		$(CONFIG_LIBS) -o gdaltorture$(EXE)
+
+# Not compiled by default
 gdal2ogr$(EXE):	gdal2ogr.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdal2ogr.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o gdal2ogr$(EXE)
