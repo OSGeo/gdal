@@ -708,7 +708,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         || nBlockCount == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "GDALGetRandomSample(): returning because band"
+                  "GDALGetRandomRasterSample(): returning because band"
                   " appears degenerate." );
 
         return FALSE;
@@ -722,6 +722,16 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
     while( nSampleRate > 1 
            && ((nBlockCount-1) / nSampleRate + 1) * nBlockPixels < nSamples )
         nSampleRate--;
+
+    if ((nSamples / ((nBlockCount-1) / nSampleRate + 1)) == 0)
+    {
+        // FIXME ? EvenR: This is to avoid crash. Maybe fixable ?
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GDALGetRandomRasterSample(): returning because band"
+                  " appears degenerate." );
+
+        return FALSE;
+    }
 
     nBlockSampleRate = 
         MAX(1,nBlockPixels / (nSamples / ((nBlockCount-1) / nSampleRate + 1)));
