@@ -323,7 +323,7 @@ int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
 void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
 
 CPLErr CPL_DLL CPL_STDCALL 
-              GDALCreateDatasetMaskBand( GDALDatasetH hBand, int nFlags );
+              GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags );
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetCopyWholeRaster(
     GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions, 
