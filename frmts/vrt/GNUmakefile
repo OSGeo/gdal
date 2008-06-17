@@ -15,7 +15,7 @@ clean:
 
 install-obj:	$(O_OBJ)
 
-$(OBJ) $(O_OBJ):	vrtdataset.h
+$(OBJ) $(O_OBJ):	vrtdataset.h ../raw/rawdataset.h
 
 install:
 	$(INSTALL_DATA) vrtdataset.h $(DESTDIR)$(INST_INCLUDE)
