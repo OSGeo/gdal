@@ -7,6 +7,8 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) -I../raw $(CPPFLAGS)
 
 default:	$(OBJ)
 
+$(O_OBJ):	../raw/rawdataset.h
+
 clean:
 	rm -f *.o
 
