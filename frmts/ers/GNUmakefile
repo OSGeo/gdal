@@ -13,6 +13,8 @@ clean:
 
 install-obj:	$(O_OBJ)
 
+$(O_OBJ):	../raw/rawdataset.h
+
 plugin: gdal_ERS.so
 
 gdal_ERS.so:	$(OBJ)
