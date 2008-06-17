@@ -608,6 +608,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( nBytesRead < ADM_MIN_HEADER_SIZE )
     {
 	CPLDebug( "FAST", "Header file too short. Reading failed" );
+        CPLFree(pszHeader);
 	delete poDS;
 	return NULL;
     }
@@ -726,6 +727,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
 	CPLError( CE_Failure, CPLE_NotSupported,
                   "Failed to find and open band data files." );
+        CPLFree(pszHeader);
 	delete poDS;
 	return NULL;
     }
@@ -740,6 +742,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         CPLDebug( "FAST", "Failed to find number of pixels in line." );
+        CPLFree(pszHeader);
         delete poDS;
 	return NULL;
     }
@@ -755,6 +758,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         CPLDebug( "FAST", "Failed to find number of lines in raster." );
+        CPLFree(pszHeader);
         delete poDS;
 	return NULL;
     }
