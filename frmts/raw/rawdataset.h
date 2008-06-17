@@ -80,6 +80,8 @@ protected:
     GDALColorInterp eInterp;
 
     char           **papszCategoryNames;
+    
+    int         bOwnsFP;
 
     int         Seek( vsi_l_offset, int );
     size_t      Read( void *, size_t, size_t );
@@ -100,13 +102,13 @@ protected:
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL = FALSE );
+                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
                  RawRasterBand( FILE * fpRaw, 
                                 vsi_l_offset nImgOffset, int nPixelOffset,
                                 int nLineOffset,
                                 GDALDataType eDataType, int bNativeOrder,
-                                int nXSize, int nYSize, int bIsVSIL = FALSE );
+                                int nXSize, int nYSize, int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
                  ~RawRasterBand();
 
@@ -137,5 +139,6 @@ protected:
     int          GetNativeOrder() { return bNativeOrder; }
     int          GetIsVSIL() { return bIsVSIL; }
     FILE        *GetFP() { return fpRaw; }
+    int          GetOwnsFP() { return bOwnsFP; }
 };
 
