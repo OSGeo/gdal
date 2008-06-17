@@ -291,8 +291,8 @@ MFFDataset::~MFFDataset()
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
     }
+    CPLFree( pasGCPList );
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
 
@@ -864,13 +864,27 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             else if( EQUAL(pszRefinedType,"U*4") )
                 eDataType = GDT_UInt32;
             else if( EQUAL(pszRefinedType,"J*1") )
+            {
+                CPLError( CE_Warning, CPLE_OpenFailed, 
+                        "Unable to open band %d because type J*1 is not handled ... skipping.\n", 
+                         nRawBand + 1 );
+                nSkipped++;
+                VSIFCloseL(fpRaw);
                 continue; /* we don't support 1 byte complex */
+            }
             else if( EQUAL(pszRefinedType,"J*2") )
                 eDataType = GDT_CInt16;
             else if( EQUAL(pszRefinedType,"K*4") )
                 eDataType = GDT_CInt32;
             else
+            {
+                CPLError( CE_Warning, CPLE_OpenFailed, 
+                        "Unable to open band %d because type %s is not handled ... skipping.\n", 
+                         nRawBand + 1, pszRefinedType );
+                nSkipped++;
+                VSIFCloseL(fpRaw);
                 continue;
+            }
         }
         else if( EQUALN(pszExtension,"b",1) )
         {
@@ -893,7 +907,14 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             eDataType = GDT_CFloat32;
         }
         else
+        {
+            CPLError( CE_Warning, CPLE_OpenFailed, 
+                    "Unable to open band %d because extension %s is not handled ... skipping.\n", 
+                      nRawBand + 1, pszExtension );
+            nSkipped++;
+            VSIFCloseL(fpRaw);
             continue;
+        }
 
         nBand = poDS->GetRasterCount() + 1;
 
@@ -911,7 +932,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand = 
                 new RawRasterBand( poDS, nBand, fpRaw, 0, nPixelOffset,
                                    nPixelOffset * poDS->GetRasterXSize(),
-                                   eDataType, bNative, TRUE );
+                                   eDataType, bNative, TRUE, TRUE );
         }
 
         poDS->SetBand( nBand, poBand );
