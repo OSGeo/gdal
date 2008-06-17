@@ -16,6 +16,8 @@ all:	$(OBJ)
 
 install-obj:	$(O_OBJ)
 
+$(O_OBJ):	../raw/rawdataset.h
+
 envisat_dump:	envisat_dump.o EnvisatFile.o
 	$(CC) $(CFLAGS) envisat_dump.o EnvisatFile.o $(GDAL_LIB) -ldl -lm -o envisat_dump
 
