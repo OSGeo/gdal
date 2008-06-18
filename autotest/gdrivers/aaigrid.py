@@ -184,6 +184,24 @@ def aaigrid_8():
 
     return tst.testCreateCopy( vsimem = 1 )
 
+
+###############################################################################
+# Test DECIMAL_PRECISION creation option
+
+def aaigrid_9():
+
+    ds = gdal.Open('data/float32.bil')
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['DECIMAL_PRECISION=2'] )
+    got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
+    ds2 = None
+
+    gdal.GetDriverByName('AAIGRID').Delete('tmp/aaigrid.tmp')
+
+    if abs(got_minmax[0] - -0.84) < 1e-7:
+        return 'success'
+    else:
+        return 'fail'
+
 ###############################################################################
 
 gdaltest_list = [
@@ -195,7 +213,8 @@ gdaltest_list = [
     aaigrid_6,
     aaigrid_6bis,
     aaigrid_7,
-    aaigrid_8 ]
+    aaigrid_8,
+    aaigrid_9 ]
   
 
 
