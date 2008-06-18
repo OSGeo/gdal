@@ -767,6 +767,20 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIFWriteL( szHeader, 1, strlen(szHeader), fpImage );
 
 /* -------------------------------------------------------------------- */
+/*     Builds the format string used for printing float values.         */
+/* -------------------------------------------------------------------- */
+    char szFormatFloat[32];
+    strcpy(szFormatFloat, " %6.20g");
+    const char *pszDecimalPrecision = 
+        CSLFetchNameValue( papszOptions, "DECIMAL_PRECISION" );
+    if (pszDecimalPrecision)
+    {
+        int nDecimal = atoi(pszDecimalPrecision);
+        if (nDecimal >= 0)
+            sprintf(szFormatFloat, " %%.%df", nDecimal);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
     int         *panScanline = NULL;
@@ -813,7 +827,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
             {
-                sprintf( szHeader, " %6.20g", padfScanline[iPixel] );
+                sprintf( szHeader, szFormatFloat, padfScanline[iPixel] );
                 if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1 )
                 {
                     eErr = CE_Failure;
@@ -952,6 +966,7 @@ void GDALRegister_AAIGrid()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
 "   <Option name='FORCE_CELLSIZE' type='boolean' description='Force use of CELLSIZE, default is FALSE.'/>\n"
+"   <Option name='DECIMAL_PRECISION' type='int' description='Number of decimal when writing floating-point numbers.'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->pfnOpen = AAIGDataset::Open;
