@@ -30,6 +30,12 @@ ascii grid reading programs.  For force the X pixel size to be used as CELLSIZE
 use the FORCE_CELLSIZE=YES creation option or resample the input to have 
 square pixels.<P>
 
+When writing floating-point values, the driver uses the "%6.20g" format
+pattern as a default. You can consult a <a href="http://en.wikipedia.org/wiki/Printf">
+reference manual</a> for printf to have an idea of the exact behaviour of this ;-).
+You can alternatively specify the number of decimal places with the DECIMAL_PRECISION creation
+option. For example, DECIMAL_PRECISION=3 will output numbers with 3 decimal places.<p>
+
 The <a href="#AIG">AIG</a> driver is also available
 for Arc/Info Binary Grid format.<p>
 
