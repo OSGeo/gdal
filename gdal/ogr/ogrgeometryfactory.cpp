@@ -779,12 +779,44 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
  * @return a single resulting geometry (either OGRPolygon or OGRMultiPolygon).
  */
 
-enum
+typedef struct _sPolyExtended sPolyExtended;
+
+struct _sPolyExtended
 {
-    CONTAINS,
-    IS_CONTAINED_BY,
-    NOT_RELATED
+    OGRPolygon*     poPolygon;
+    OGREnvelope     sEnvelope;
+    OGRLinearRing*  poExteriorRing;
+    OGRPoint        poAPoint;
+    int             nInitialIndex;
+    int             bIsTopLevel;
+    OGRPolygon*     poEnclosingPolygon;
+    double          dfArea;
 };
+
+static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
+{
+    const sPolyExtended* psPoly1 = (const sPolyExtended*) p1;
+    const sPolyExtended* psPoly2 = (const sPolyExtended*) p2;
+    if (psPoly2->dfArea < psPoly1->dfArea)
+        return -1;
+    else if (psPoly2->dfArea > psPoly1->dfArea)
+        return 1;
+    else
+        return 0;
+}
+
+static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
+{
+    const sPolyExtended* psPoly1 = (const sPolyExtended*) p1;
+    const sPolyExtended* psPoly2 = (const sPolyExtended*) p2;
+    if (psPoly1->nInitialIndex < psPoly2->nInitialIndex)
+        return -1;
+    else if (psPoly1->nInitialIndex > psPoly2->nInitialIndex)
+        return 1;
+    else
+        return 0;
+}
+
 
 OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int nPolygonCount,
@@ -829,27 +861,27 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Setup per polygon relation, envelope and area information.      */
+/*      Setup per polygon envelope and area information.                */
 /* -------------------------------------------------------------------- */
-    OGREnvelope* envelopes = new OGREnvelope[nPolygonCount];
-    int** relations = new int*[nPolygonCount];
-    double* areas = new double[nPolygonCount];
+    sPolyExtended* asPolyEx = (sPolyExtended*)VSICalloc(sizeof(sPolyExtended), nPolygonCount);
+
     int go_on = TRUE;
     int bMixedUpGeometries = FALSE;
     int bNonPolygon = FALSE;
 
     for(i=0;i<nPolygonCount;i++)
     {
-        relations[i] = new int[nPolygonCount];
-        papoPolygons[i]->getEnvelope(&envelopes[i]);
-
-        //fprintf(stderr, "[%d] %d points\n", i, ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints());
+        asPolyEx[i].nInitialIndex = i;
+        asPolyEx[i].poPolygon = (OGRPolygon*)papoPolygons[i];
+        papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
 
         if( wkbFlatten(papoPolygons[i]->getGeometryType()) == wkbPolygon
             && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0
             && ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints() >= 4)
         {
-            areas[i] = ((OGRPolygon *)papoPolygons[i])->get_Area();
+            asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
+            asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRing();
+            asPolyEx[i].poExteriorRing->getPoint(0, &asPolyEx[i].poAPoint);
         }
         else
         {
@@ -865,19 +897,22 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
                 bNonPolygon = TRUE;
         }
-            
     }
-        
-    /* This a several step algorithm :
-       1) Compute in a matrix how polygons relate to each other
-       (this is the moment for detecting pathological intersections and exiting)
-       2) For each polygon, find the smallest enclosing polygon
-       3) For each polygon, compute its inclusion depth (0 means toplevel)
-       4) For each polygon of odd depth (= inner ring), add it to its outer ring
-        
+
+
+    /* This a several steps algorithm :
+       1) Sort polygons by descending areas
+       2) For each polygon of rank i, find its smallest enclosing polygon
+          among the polygons of rank [i-1 ... 0]. If there are no such polygon,
+          this is a toplevel polygon. Otherwise, depending on if the enclosing
+          polygon is toplevel or not, we can decide if we are toplevel or not
+       3) Re-sort the polygons to retrieve their inital order (nicer for some applications)
+       4) For each non toplevel polygon (= inner ring), add it to its outer ring
+       5) Add the toplevel polygons to the multipolygon
+
        Complexity : O(nPolygonCount^2)
     */
-        
+
     /* Compute how each polygon relate to the other ones
        To save a bit of computation we always begin the computation by a test 
        on the enveloppe. We also take into account the areas to avoid some 
@@ -894,40 +929,54 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
        no full geometry intersection or inclusion test is done
     */
 
+    if (!bMixedUpGeometries)
+    {
+        /* STEP 1 : Sort polygons by descending area */
+        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended), OGRGeometryFactoryCompareArea);
+    }
+    papoPolygons = NULL; /* just to use to avoid it afterwards */
+
 /* -------------------------------------------------------------------- */
 /*      Compute relationships, if things seem well structured.          */
 /* -------------------------------------------------------------------- */
-    for(i=0; !bMixedUpGeometries && go_on && i<nPolygonCount; i++)
-    {
-        for(j=i+1; go_on && j<nPolygonCount;j++)
-        {
-            OGRPoint pointI, pointJ;
-            const OGRLinearRing* exteriorRingI = ((OGRPolygon *)papoPolygons[i])->getExteriorRing();
-            const OGRLinearRing* exteriorRingJ = ((OGRPolygon *)papoPolygons[j])->getExteriorRing();
-            exteriorRingI->getPoint(0, &pointI);
-            exteriorRingJ->getPoint(0, &pointJ);
 
-            if (areas[i] > areas[j] && envelopes[i].Contains(envelopes[j]) &&
-                ((bUseFastVersion && exteriorRingI->isPointInRing(&pointJ)) ||
-                 (!bUseFastVersion && papoPolygons[i]->Contains(papoPolygons[j]))))
+    /* The first (largest) polygon is necessarily top-level */
+    asPolyEx[0].bIsTopLevel = TRUE;
+    asPolyEx[0].poEnclosingPolygon = NULL;
+
+    int nCountTopLevel = 1;
+
+    /* STEP 2 */
+    for(i=1; !bMixedUpGeometries && go_on && i<nPolygonCount; i++)
+    {
+        for(j=i-1; go_on && j>=0;j--)
+        {
+            if (asPolyEx[j].sEnvelope.Contains(asPolyEx[i].sEnvelope) &&
+                ((bUseFastVersion && asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint)) ||
+                 (!bUseFastVersion && asPolyEx[j].poPolygon->Contains(asPolyEx[i].poPolygon))))
             {
-                relations[i][j] = CONTAINS;
-                relations[j][i] = IS_CONTAINED_BY;
-            }
-            else if (areas[j] > areas[i] && envelopes[j].Contains(envelopes[i]) &&
-                     ((bUseFastVersion && exteriorRingJ->isPointInRing(&pointI)) ||
-                      (!bUseFastVersion && papoPolygons[j]->Contains(papoPolygons[i]))))
-            {
-                relations[j][i] = CONTAINS;
-                relations[i][j] = IS_CONTAINED_BY;
+                if (asPolyEx[j].bIsTopLevel)
+                {
+                    /* We are a lake */
+                    asPolyEx[i].bIsTopLevel = FALSE;
+                    asPolyEx[i].poEnclosingPolygon = asPolyEx[j].poPolygon;
+                }
+                else
+                {
+                    /* We are included in a something not toplevel (a lake), */
+                    /* so in OGCSF we are considered as toplevel too */
+                    nCountTopLevel ++;
+                    asPolyEx[i].bIsTopLevel = TRUE;
+                    asPolyEx[i].poEnclosingPolygon = NULL;
+                }
+                break;
             }
             /* We use Overlaps instead of Intersects to be more 
                tolerant about touching polygons */ 
-            else if ( bUseFastVersion || !envelopes[i].Intersects(envelopes[j])
-                     || !papoPolygons[i]->Overlaps(papoPolygons[j]) )
+            else if ( bUseFastVersion || !asPolyEx[i].sEnvelope.Intersects(asPolyEx[j].sEnvelope)
+                     || !asPolyEx[i].poPolygon->Overlaps(asPolyEx[j].poPolygon) )
             {
-                relations[i][j] = NOT_RELATED;
-                relations[j][i] = NOT_RELATED;
+
             }
             else
             {
@@ -939,8 +988,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 #ifdef DEBUG
                 char* wkt1;
                 char* wkt2;
-                papoPolygons[i]->exportToWkt(&wkt1);
-                papoPolygons[j]->exportToWkt(&wkt2);
+                asPolyEx[i].poPolygon->exportToWkt(&wkt1);
+                asPolyEx[j].poPolygon->exportToWkt(&wkt2);
                 CPLDebug( "OGR", 
                           "Bad intersection for polygons %d and %d\n"
                           "geom %d: %s\n"
@@ -950,6 +999,15 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 CPLFree(wkt2);
 #endif
             }
+        }
+
+        if (j < 0)
+        {
+            /* We come here because we are not included in anything */
+            /* We are toplevel */
+            nCountTopLevel ++;
+            asPolyEx[i].bIsTopLevel = TRUE;
+            asPolyEx[i].poEnclosingPolygon = NULL;
         }
     }
 
@@ -969,7 +1027,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         for( i=0; i < nPolygonCount; i++ )
         {
             ((OGRGeometryCollection*)geom)->
-                addGeometryDirectly( papoPolygons[i] );
+                addGeometryDirectly( asPolyEx[i].poPolygon );
         }
     }
 
@@ -979,100 +1037,46 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
     else
     {
-        int* directContainerIndex = new int[nPolygonCount];
+        /* STEP 3: Resort in initial order */
+        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended), OGRGeometryFactoryCompareByIndex);
 
-        /* Find the smallest enclosing polygon of each polygon */
+        /* STEP 4: Add holes as rings of their enclosing polygon */
         for(i=0;i<nPolygonCount;i++)
         {
-            int jSmallestContainer = -1;
-            double areaSmallestContainer = 0;
-            for(j=0;j<nPolygonCount;j++)
+            if (asPolyEx[i].bIsTopLevel == FALSE)
             {
-                if (i != j)
+                asPolyEx[i].poEnclosingPolygon->addRing(
+                    asPolyEx[i].poPolygon->getExteriorRing());
+                delete asPolyEx[i].poPolygon;
+            }
+            else if (nCountTopLevel == 1)
+            {
+                geom = asPolyEx[i].poPolygon;
+            }
+        }
+
+        /* STEP 5: Add toplevel polygons */
+        if (nCountTopLevel > 1)
+        {
+            for(i=0;i<nPolygonCount;i++)
+            {
+                if (asPolyEx[i].bIsTopLevel)
                 {
-                    if (relations[i][j] == IS_CONTAINED_BY)
+                    if (geom == NULL)
                     {
-                        if (jSmallestContainer < 0 || areas[j] < areaSmallestContainer)
-                        {
-                            jSmallestContainer = j;
-                            areaSmallestContainer = areas[j];
-                        }
+                        geom = new OGRMultiPolygon();
+                        ((OGRMultiPolygon*)geom)->addGeometryDirectly(asPolyEx[i].poPolygon);
+                    }
+                    else
+                    {
+                        ((OGRMultiPolygon*)geom)->addGeometryDirectly(asPolyEx[i].poPolygon);
                     }
                 }
             }
-            directContainerIndex[i] = jSmallestContainer;
         }
-
-        /* Compute the inclusion depth of each polygon */
-        int* containedDepth = new int [nPolygonCount];
-        for(i=0;i<nPolygonCount;i++)
-        {
-            int depth = 0;
-            int j = directContainerIndex[i];
-            while (j >= 0)
-            {
-                j = directContainerIndex[j];
-                depth++;
-            }
-            containedDepth[i] = depth;
-//          fprintf(stderr, "%d is of depth %d\n", i, depth);
-        }
-
-        int nbTopLevelPolygons = 0;
-        OGRPolygon** tempPolygons = new OGRPolygon*[nPolygonCount]; 
-
-        /* Create a copy of toplevel polygons */
-        for(i=0;i<nPolygonCount;i++)
-        {
-            if ((containedDepth[i] % 2) == 0)
-            {
-                nbTopLevelPolygons ++;
-                tempPolygons[i] = (OGRPolygon*)papoPolygons[i];
-                papoPolygons[i] = NULL;
-                if (nbTopLevelPolygons == 1)
-                    geom = tempPolygons[i];
-            }
-        }
-
-        /* Add interior rings to toplevel polygons */
-        for(i=0;i<nPolygonCount;i++)
-        {
-            if ((containedDepth[i] % 2) == 1)
-            {
-                tempPolygons[directContainerIndex[i]]->addRing(
-                    ((OGRPolygon *)papoPolygons[i])->getExteriorRing());
-                delete papoPolygons[i];
-            }
-        }
-
-        if (nbTopLevelPolygons > 1)
-        {
-            geom = new OGRMultiPolygon();
-
-            /* Add toplevel polygons to the multipolygon */
-            for(i=0;i<nPolygonCount;i++)
-            {
-                if ((containedDepth[i] % 2) == 0)
-                {
-                    ((OGRMultiPolygon*)geom)->addGeometryDirectly(
-                        tempPolygons[i]);
-                    tempPolygons[i] = NULL;
-                }
-            }
-        }
-
-        delete[] tempPolygons;
-        delete[] directContainerIndex;
-        delete[] containedDepth;
     }
 
-    for(i=0;i<nPolygonCount;i++)
-    {
-        delete[] relations[i];
-    }
-    delete[] relations;
-    delete[] areas;
-    delete[] envelopes;
+    CPLFree(asPolyEx);
 
     return geom;
 }
