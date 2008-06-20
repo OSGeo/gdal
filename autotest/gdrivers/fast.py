@@ -124,6 +124,8 @@ def fast_4():
         return 'fail'
 
     gt = ds.GetGeoTransform()
+
+    gdaltest.fast_ds = None
     ds = None
 
     tolerance = 0.01
