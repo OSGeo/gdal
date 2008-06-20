@@ -89,6 +89,31 @@ def hfa_write_4bit():
     return 'success'
 
 ###############################################################################
+# Test creating a file with a nodata value, and fetching otherwise unread
+# blocks and verifying they are the nodata value.  (#2427)
+
+def hfa_write_nd_invalid():
+
+    drv = gdal.GetDriverByName('HFA')
+    ds = drv.Create('tmp/ndinvalid.img', 512, 512, 1, gdal.GDT_Byte, [] )
+    ds.GetRasterBand(1).SetNoDataValue( 200 )
+    ds = None
+
+    ds = gdal.Open('tmp/ndinvalid.img')
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 29754:
+        gdaltest.post_reason( 'Got wrong checksum on invalid image.' )
+        print cs
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/ndinvalid.img' )
+
+    return 'success'
+
+###############################################################################
 # Get the driver, and verify a few things about it. 
 
 init_list = [ \
@@ -104,7 +129,8 @@ init_list = [ \
     ('utmsmall.tif', 1, 50054, None) ]
 
 gdaltest_list = [ hfa_write_desc,
-                  hfa_write_4bit ]
+                  hfa_write_4bit,
+                  hfa_write_nd_invalid]
 
 # full set of tests for normal mode.
 
