@@ -826,6 +826,115 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
     return CE_None;
 }
 
+/************************************************************************/
+/*                             NullBlock()                              */
+/*                                                                      */
+/*      Set the block buffer to zero or the nodata value as             */
+/*      appropriate.                                                    */
+/************************************************************************/
+
+void HFABand::NullBlock( void *pData )
+
+{
+    if( !bNoDataSet )
+        memset( pData, 0, 
+                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
+    else
+            
+    {
+        double adfND[2];
+        int nChunkSize = MAX(1,HFAGetDataTypeBits(nDataType)/8);
+        int nWords = nBlockXSize * nBlockYSize;
+        int i;
+
+        switch( nDataType )
+        {
+          case EPT_u1:
+          {
+              nWords = (nWords + 7)/8;
+              if( dfNoData != 0.0 )
+                  ((unsigned char *) &adfND)[0] = 0xff;
+              else
+                  ((unsigned char *) &adfND)[0] = 0x00;
+          }
+          break;
+
+          case EPT_u2:
+          {
+              nWords = (nWords + 3)/4;
+              if( dfNoData == 0.0 )
+                  ((unsigned char *) &adfND)[0] = 0x00;
+              else if( dfNoData == 1.0 )
+                  ((unsigned char *) &adfND)[0] = 0x55;
+              else if( dfNoData == 2.0 )
+                  ((unsigned char *) &adfND)[0] = 0xaa;
+              else
+                  ((unsigned char *) &adfND)[0] = 0xff;
+          }
+          break;
+
+          case EPT_u4:
+          {
+              unsigned char byVal = 
+                  (unsigned char) MAX(0,MIN(15,(int)dfNoData));
+
+              nWords = (nWords + 1)/2;
+                  
+              ((unsigned char *) &adfND)[0] = byVal + (byVal << 4);
+          }
+          break;
+
+          case EPT_u8:
+            ((unsigned char *) &adfND)[0] = 
+                (unsigned char) MAX(0,MIN(255,(int)dfNoData));
+            break;
+
+          case EPT_s8:
+            ((signed char *) &adfND)[0] = 
+                (signed char) MAX(-128,MIN(127,(int)dfNoData));
+            break;
+
+          case EPT_u16:
+            ((GUInt16 *) &adfND)[0] = (GUInt16) dfNoData;
+            break;
+
+          case EPT_s16:
+            ((GInt16 *) &adfND)[0] = (GInt16) dfNoData;
+            break;
+
+          case EPT_u32:
+            ((GUInt32 *) &adfND)[0] = (GUInt32) dfNoData;
+            break;
+
+          case EPT_s32:
+            ((GInt32 *) &adfND)[0] = (GInt32) dfNoData;
+            break;
+
+          case EPT_f32:
+            ((float *) &adfND)[0] = (float) dfNoData;
+            break;
+
+          case EPT_f64:
+            ((double *) &adfND)[0] = dfNoData;
+            break;
+
+          case EPT_c64:
+            ((float *) &adfND)[0] = dfNoData;
+            ((float *) &adfND)[1] = 0;
+            break;
+
+          case EPT_c128:
+            ((double *) &adfND)[0] = dfNoData;
+            ((double *) &adfND)[1] = 0;
+            break;
+        }
+            
+        for( i = 0; i < nWords; i++ )
+            memcpy( ((GByte *) pData) + nChunkSize * i, 
+                    &adfND[0], nChunkSize );
+    }
+
+}
 
 /************************************************************************/
 /*                           GetRasterBlock()                           */
@@ -848,9 +957,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
     if( !panBlockFlag[iBlock] & BFLG_VALID )
     {
-        memset( pData, 0, 
-                HFAGetDataTypeBits(nDataType)*nBlockXSize*nBlockYSize/8 );
-
+        NullBlock( pData );
         return( CE_None );
     }
 
@@ -1058,7 +1165,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*      file in the right size.                                         */
 /* -------------------------------------------------------------------- */
     if( (panBlockFlag[iBlock] & BFLG_VALID) == 0
-        && !(panBlockFlag[iBlock] & BFLG_COMPRESSED) )
+        && !(panBlockFlag[iBlock] & BFLG_COMPRESSED) 
+        && panBlockStart[iBlock] == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to write to invalid tile with number %d "
@@ -1264,6 +1372,20 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
                       (int) (nBlockOffset & 0xffffffff), 
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      If the block was previously invalid, mark it as valid now.      */
+/* -------------------------------------------------------------------- */
+        if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 )
+        {
+            char	szVarName[64];
+            HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+
+            sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
+            poDMS->SetStringField( szVarName, "true" );
+
+            panBlockFlag[iBlock] |= BFLG_VALID;
         }
     }
 /* -------------------------------------------------------------------- */
