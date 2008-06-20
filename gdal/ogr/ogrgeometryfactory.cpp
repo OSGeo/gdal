@@ -863,7 +863,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
 /*      Setup per polygon envelope and area information.                */
 /* -------------------------------------------------------------------- */
-    sPolyExtended* asPolyEx = (sPolyExtended*)VSICalloc(sizeof(sPolyExtended), nPolygonCount);
+    sPolyExtended* asPolyEx = new sPolyExtended[nPolygonCount];
 
     int go_on = TRUE;
     int bMixedUpGeometries = FALSE;
@@ -1076,7 +1076,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         }
     }
 
-    CPLFree(asPolyEx);
+    delete[] asPolyEx;
 
     return geom;
 }
