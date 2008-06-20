@@ -658,6 +658,13 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                              GDALGetDescription( hBaseDS ) );
     }
 
+    if (psTransform->hDS_X == NULL ||
+        psTransform->hDS_Y == NULL)
+    {
+        GDALDestroyGeoLocTransformer( psTransform );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get the band handles.                                           */
 /* -------------------------------------------------------------------- */
@@ -668,6 +675,13 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 
     nBand = MAX(1,atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
     psTransform->hBand_Y = GDALGetRasterBand( psTransform->hDS_Y, nBand );
+
+    if (psTransform->hBand_X == NULL ||
+        psTransform->hBand_Y == NULL)
+    {
+        GDALDestroyGeoLocTransformer( psTransform );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Load the geolocation array.                                     */
