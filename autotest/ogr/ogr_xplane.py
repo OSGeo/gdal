@@ -43,9 +43,9 @@ import ogr
 
 def ogr_xplane_apt_dat():
 
-    gdaltest.xplane_apt_ds = ogr.Open( 'data/apt.dat' )
+    xplane_apt_ds = ogr.Open( 'data/apt.dat' )
 
-    if gdaltest.xplane_apt_ds is None:
+    if xplane_apt_ds is None:
         return 'fail'
 
     layers = [ ( 'APT'                  , 7,   [ ('apt_icao', 'E46') ] ),
@@ -68,7 +68,7 @@ def ogr_xplane_apt_dat():
              ]
 
     for layer in layers:
-        lyr = gdaltest.xplane_apt_ds.GetLayerByName( layer[0] )
+        lyr = xplane_apt_ds.GetLayerByName( layer[0] )
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
@@ -88,9 +88,9 @@ def ogr_xplane_apt_dat():
 
 def ogr_xplane_nav_dat():
 
-    gdaltest.xplane_nav_ds = ogr.Open( 'data/nav.dat' )
+    xplane_nav_ds = ogr.Open( 'data/nav.dat' )
 
-    if gdaltest.xplane_nav_ds is None:
+    if xplane_nav_ds is None:
         return 'fail'
 
     layers = [ ( 'ILS'                  , 6, [ ('navaid_id', 'IMQS') ] ),
@@ -103,7 +103,7 @@ def ogr_xplane_nav_dat():
              ]
 
     for layer in layers:
-        lyr = gdaltest.xplane_nav_ds.GetLayerByName( layer[0] )
+        lyr = xplane_nav_ds.GetLayerByName( layer[0] )
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
@@ -115,6 +115,8 @@ def ogr_xplane_nav_dat():
                 print feat_read.GetField(item[0])
                 return 'fail'
 
+    xplane_nav_ds = None
+
     return 'success'
 
 
@@ -123,9 +125,9 @@ def ogr_xplane_nav_dat():
 
 def ogr_xplane_awy_dat():
 
-    gdaltest.xplane_awy_ds = ogr.Open( 'data/awy.dat' )
+    xplane_awy_ds = ogr.Open( 'data/awy.dat' )
 
-    if gdaltest.xplane_awy_ds is None:
+    if xplane_awy_ds is None:
         return 'fail'
 
     layers = [ ( 'AirwaySegment'        , 11, [ ('segment_name', 'R464') ] ),
@@ -133,7 +135,7 @@ def ogr_xplane_awy_dat():
              ]
 
     for layer in layers:
-        lyr = gdaltest.xplane_awy_ds.GetLayerByName( layer[0] )
+        lyr = xplane_awy_ds.GetLayerByName( layer[0] )
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
@@ -152,16 +154,16 @@ def ogr_xplane_awy_dat():
 
 def ogr_xplane_fix_dat():
 
-    gdaltest.xplane_fix_ds = ogr.Open( 'data/fix.dat' )
+    xplane_fix_ds = ogr.Open( 'data/fix.dat' )
 
-    if gdaltest.xplane_fix_ds is None:
+    if xplane_fix_ds is None:
         return 'fail'
 
     layers = [ ( 'FIX'                  , 1, [ ('fix_name', '00MKK') ] )
              ]
 
     for layer in layers:
-        lyr = gdaltest.xplane_fix_ds.GetLayerByName( layer[0] )
+        lyr = xplane_fix_ds.GetLayerByName( layer[0] )
         if lyr.GetFeatureCount() != layer[1] :
             gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
             return 'fail'
