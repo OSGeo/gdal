@@ -141,6 +141,7 @@ class HFABand
     CPLErr	LoadExternalBlockInfo();
     
     void ReAllocBlock( int iBlock, int nSize );
+    void NullBlock( void * );
 
   public:
     		HFABand( HFAInfo_t *, HFAEntry * );

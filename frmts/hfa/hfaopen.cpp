@@ -2031,11 +2031,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
             HFAStandard( 4, &nValue );
             memcpy( pabyData + nOffset + 6, &nValue, 4 );
 
-            /* logValid (true/false) */
-            if( bCreateCompressed )
-                nValue16 = 0;
-            else
-                nValue16 = 1;
+            /* logValid (false) */
+            nValue16 = 0;
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset + 10, &nValue16, 2 );
 
