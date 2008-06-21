@@ -336,7 +336,7 @@ int JPGDataset::EXIFInit(FILE *fp)
     if(VSIFReadL(&hdr,1,sizeof(hdr),fp) != sizeof(hdr)) 
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %d byte from image header.",
-                  sizeof(hdr));
+                  (int) sizeof(hdr));
 
     if (hdr.tiff_magic != TIFF_BIGENDIAN && hdr.tiff_magic != TIFF_LITTLEENDIAN)
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -613,7 +613,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Invalid EXIF header size: %ld, ignoring tag.", space );
+                      "Invalid EXIF header size: %ld, ignoring tag.", 
+                      (long) space );
         }
 
         papszMetadata = CSLSetNameValue(papszMetadata, pszName, pszTemp);
