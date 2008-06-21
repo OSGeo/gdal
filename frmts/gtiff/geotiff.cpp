@@ -595,6 +595,32 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      In the fairly common case of pixel interleaved 8bit data        */
+/*      that is multi-band, lets push the rest of the data into the     */
+/*      block cache too, to avoid (hopefully) having to redecode it.    */
+/*                                                                      */
+/*      Our following logic actually depends on the fact that the       */
+/*      this block is already loaded, so subsequent calls will end      */
+/*      up back in this method and pull from the loaded block.          */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nBands != 1 && eErr == CE_None )
+    {
+        int iOtherBand;
+
+        for( iOtherBand = 1; iOtherBand <= poGDS->nBands; iOtherBand++ )
+        {
+            if( iOtherBand == nBand )
+                continue;
+
+            GDALRasterBlock *poBlock;
+
+            poBlock = poGDS->GetRasterBand(iOtherBand)->
+                GetLockedBlockRef(nBlockXOff,nBlockYOff);
+            poBlock->DropLock();
+        }
+    }
+
     return eErr;
 }
 
