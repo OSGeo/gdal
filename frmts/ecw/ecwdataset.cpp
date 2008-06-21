@@ -1529,6 +1529,20 @@ void GDALRegister_ECW()
 }
 
 /************************************************************************/
+/*                      GDALRegister_ECW_JP2ECW()                       */
+/*                                                                      */
+/*      This function exists so that when built as a plugin, there      */
+/*      is a function that will register both drivers.                  */
+/************************************************************************/
+
+void GDALRegister_ECW_JP2ECW()
+
+{
+    GDALRegister_ECW();
+    GDALRegister_JP2ECW();
+}
+
+/************************************************************************/
 /*                        GDALRegister_JP2ECW()                         */
 /************************************************************************/
 void GDALRegister_JP2ECW()

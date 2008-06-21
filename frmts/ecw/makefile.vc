@@ -5,7 +5,7 @@ EXTRAFLAGS = 	-I$(ECWDIR)\include -I$(ECWDIR)/Source/include \
 
 OBJ	=	ecwdataset.obj ecwcreatecopy.obj jp2userbox.obj
 
-PLUGIN_DLL =	gdal_ECW.dll
+PLUGIN_DLL =	gdal_ECW_JP2ECW.dll
 
 GDAL_ROOT	=	..\..
 
