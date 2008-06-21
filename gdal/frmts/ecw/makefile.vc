@@ -5,6 +5,8 @@ EXTRAFLAGS = 	-I$(ECWDIR)\include -I$(ECWDIR)/Source/include \
 
 OBJ	=	ecwdataset.obj ecwcreatecopy.obj jp2userbox.obj
 
+PLUGIN_DLL =	gdal_ECW_JP2ECW.dll
+
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
@@ -25,9 +27,9 @@ testecw.exe:	testecw.cpp
 ecw_example1.exe:	ecw_example1.c
 	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
 	
-plugin:	gdal_ECW.dll
+plugin:	$(PLUGIN_DLL)
 
-gdal_ECW.dll: $(OBJ)
-	link /dll /out:gdal_ECW.dll $(OBJ) \
+$(PLUGIN_DLL): $(OBJ)
+	link /dll /out:$(PLUGIN_DLL) $(OBJ) \
 		$(GDALLIB) $(ECWLIB)
-	if exist gdal_ECW.dll.manifest mt -manifest gdal_ECW.dll.manifest -outputresource:gdal_ECW.dll;2
+	if exist gdal_ECW.dll.manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
