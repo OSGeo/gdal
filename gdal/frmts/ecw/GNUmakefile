@@ -12,8 +12,8 @@ clean:
 
 install-obj:	$(O_OBJ)
 
-plugin: gdal_ECW.so
+plugin: gdal_ECW_JP2ECW.so
 
 gdal_ECW.so:	$(OBJ)
 	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS) $(EXTRA_LIBS) \
-		-o gdal_ECW.so
+		-o gdal_ECW_JP2ECW.so
