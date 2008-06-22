@@ -89,6 +89,31 @@ def hfa_write_4bit():
     return 'success'
 
 ###############################################################################
+# test writing 4 bit files compressed.
+
+def hfa_write_4bit_compressed():
+    drv = gdal.GetDriverByName('HFA')
+    src_ds = gdal.Open('data/byte.tif')
+    ds = drv.CreateCopy('tmp/4bitc.img', src_ds,
+                        options = ['NBITS=1', 'COMPRESSED=YES'] )
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/4bitc.img')
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 252:
+        gdaltest.post_reason( 'Got wrong checksum on 4bit image.' )
+        print cs
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/4bitc.img' )
+
+    return 'success'
+
+###############################################################################
 # Test creating a file with a nodata value, and fetching otherwise unread
 # blocks and verifying they are the nodata value.  (#2427)
 
@@ -130,6 +155,7 @@ init_list = [ \
 
 gdaltest_list = [ hfa_write_desc,
                   hfa_write_4bit,
+                  hfa_write_4bit_compressed,
                   hfa_write_nd_invalid]
 
 # full set of tests for normal mode.
