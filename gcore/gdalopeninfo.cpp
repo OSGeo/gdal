@@ -98,10 +98,17 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn,
             /* XXX: ENOENT is used to catch the case of virtual filesystem
              * when we do not have a real file with such a name. Under some
              * circumstances EINVAL reported instead of ENOENT in Windows
-             * (for filenames containing colon, e.g. "smth://name"). */
+             * (for filenames containing colon, e.g. "smth://name"). 
+             * See also: #2437 */
             else if( errno == 27 /* "File to large" */ 
                      || errno == ENOENT || errno == EINVAL
-                     || errno == 79 /* EOVERFLOW - value too large */ )
+#ifdef EOVERFLOW
+                     || errno == EOVERFLOW
+#else
+                     || errno == 75 /* Linux EOVERFLOW */
+                     || errno == 79 /* Solaris EOVERFLOW */ 
+#endif
+                     )
             {
                 fp = VSIFOpenL( pszFilename, "rb" );
                 if( fp != NULL )
