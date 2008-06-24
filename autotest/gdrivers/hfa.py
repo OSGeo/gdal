@@ -671,6 +671,39 @@ def hfa_vsimem():
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
+# Test that PROJCS[] names are preserved as the mapinfo.proName in
+# the .img file.  (#2422)
+
+def hfa_proName():
+
+    drv = gdal.GetDriverByName('HFA')
+    src_ds = gdal.Open('data/stateplane.vrt')
+    dst_ds = drv.CreateCopy( 'tmp/proname.img', src_ds )
+
+    dst_ds = None
+    src_ds = None
+
+    # Make sure we don't have interference from an .aux.xml
+    try:
+        os.remove('tmp/proname.img.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/proname.img' )
+
+    srs = ds.GetProjectionRef()
+    if srs[:55] != 'PROJCS["NAD_1983_StatePlane_Ohio_South_FIPS_3402_Feet",':
+        gdaltest.post_reason( 'did not get expected PROJCS name.' )
+        print srs
+        result = 'fail'
+    else:
+        result = 'success'
+
+    drv.Delete( 'tmp/proname.img' )
+
+    return result
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -694,7 +727,8 @@ gdaltest_list = [
     hfa_nodata_read,
     hfa_rotated_read,
     hfa_rotated_write,
-    hfa_vsimem
+    hfa_vsimem,
+    hfa_proName
     ]
 
 if __name__ == '__main__':
