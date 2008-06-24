@@ -1890,8 +1890,11 @@ CPLErr HFADataset::WriteProjection()
 /* -------------------------------------------------------------------- */
 /*      MapInfo                                                         */
 /* -------------------------------------------------------------------- */
+    const char *pszPROJCS = oSRS.GetAttrValue( "PROJCS" );
 
-    if( bHaveSRS && sPro.proName != NULL )
+    if( pszPROJCS )
+        sMapInfo.proName = (char *) pszPROJCS;
+    else if( bHaveSRS && sPro.proName != NULL )
         sMapInfo.proName = sPro.proName;
     else
         sMapInfo.proName = "Unknown";
@@ -2035,6 +2038,9 @@ CPLErr HFADataset::ReadProjection()
     
 /* -------------------------------------------------------------------- */
 /*      General case for Erdas style projections.                       */
+/*                                                                      */
+/*      We make a particular effort to adapt the mapinfo->proname as    */
+/*      the PROJCS[] name per #2422.                                    */
 /* -------------------------------------------------------------------- */
     psDatum = HFAGetDatum( hHFA );
     psPro = HFAGetProParameters( hHFA );
@@ -2055,6 +2061,11 @@ CPLErr HFADataset::ReadProjection()
         oSRS.SetLocalCS( psPro->proName );
     }
 
+    else if( psPro->proNumber != EPRJ_LATLONG
+             && psMapInfo != NULL )
+    {
+        oSRS.SetProjCS( psMapInfo->proName );
+    }
     else if( psPro->proNumber != EPRJ_LATLONG )
     {
         oSRS.SetProjCS( psPro->proName );
