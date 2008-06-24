@@ -23173,6 +23173,7 @@ KAKDIR=$KAKDIR
 
 
 MRSID_FLAGS=
+HAVE_MRSID=no
 
 
 # Check whether --with-mrsid was given.
@@ -23197,14 +23198,37 @@ echo "$as_me: MrSID support disabled." >&6;}
 
 else
 
-  { echo "$as_me:$LINENO: checking for lt_base.h in $with_mrsid/include/support" >&5
-echo $ECHO_N "checking for lt_base.h in $with_mrsid/include/support... $ECHO_C" >&6; }
-  if test -r "$with_mrsid/include/support/lt_base.h" ; then
+  MRSID_BASE="$with_mrsid/include"
+
+  { echo "$as_me:$LINENO: checking for lt_base.h in $MRSID_BASE/support" >&5
+echo $ECHO_N "checking for lt_base.h in $MRSID_BASE/support... $ECHO_C" >&6; }
+  if test -r "$MRSID_BASE/support/lt_base.h" ; then
+
     { echo "$as_me:$LINENO: result: found MrSID DSDK version 4.x or newer." >&5
 echo "${ECHO_T}found MrSID DSDK version 4.x or newer." >&6; }
-
     HAVE_MRSID=yes
-    MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
+    MRSID_INCLUDE="-I$MRSID_BASE/base -I$MRSID_BASE/metadata -I$MRSID_BASE/mrsid_readers -I$MRSID_BASE/j2k_readers -I$MRSID_BASE/support"
+
+  else
+
+    { echo "$as_me:$LINENO: result: not found." >&5
+echo "${ECHO_T}not found." >&6; }
+
+    { echo "$as_me:$LINENO: checking for lt_base.h in $MRSID_BASE" >&5
+echo $ECHO_N "checking for lt_base.h in $MRSID_BASE... $ECHO_C" >&6; }
+    if test -r "$MRSID_BASE/lt_base.h" ; then
+
+      { echo "$as_me:$LINENO: result: found MrSID DSDK version 7.x or newer." >&5
+echo "${ECHO_T}found MrSID DSDK version 7.x or newer." >&6; };
+      HAVE_MRSID=yes
+      MRSID_INCLUDE="-I$MRSID_BASE"
+
+    fi
+
+  fi
+
+  if test $HAVE_MRSID = yes ; then
+
     MRSID_LIBS="-lltidsdk -lpthread"
 
     { echo "$as_me:$LINENO: checking for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers" >&5
@@ -23232,19 +23256,25 @@ echo "$as_me: error: MrSID JPEG2000 support requested, but this is incompatible 
    { (exit 1); exit 1; }; }
     fi
 
-    if test "x$with_jp2mrsid" = "x" -a "$HAVE_KAKADU" = "no" \
-            -a -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then
-      with_jp2mrsid=yes
-    fi
-    if test "x$with_jp2mrsid" = "xyes" \
-            -a ! -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then
-      { { echo "$as_me:$LINENO: error: MrSID JPEG2000 support requested, but libltikdu.a not found." >&5
+    MRSID_KAKADU_LIB=no
+    if test "$HAVE_KAKADU" = "no" ; then
+      if test x"$with_jp2mrsid" = x"" -o x"$with_jp2mrsid" = x"yes" ; then
+        if test -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then
+          with_jp2mrsid=yes
+          MRSID_KAKADU_LIB=-lltikdu
+        elif test -r $with_mrsid/3rd-party/lib/Release/liblt_kakadu.a ; then
+          with_jp2mrsid=yes
+          MRSID_KAKADU_LIB=-llt_kakadu
+        else
+          { { echo "$as_me:$LINENO: error: MrSID JPEG2000 support requested, but libltikdu.a not found." >&5
 echo "$as_me: error: MrSID JPEG2000 support requested, but libltikdu.a not found." >&2;}
    { (exit 1); exit 1; }; }
+        fi
+      fi
     fi
 
     if test "x$with_jp2mrsid" = "xyes" ; then
-      MRSID_LIBS="$MRSID_LIBS -lltikdu"
+      MRSID_LIBS="$MRSID_LIBS $MRSID_KAKADU_LIB"
       MRSID_FLAGS="-DMRSID_J2K $MRSID_FLAGS"
       { echo "$as_me:$LINENO: result: enabled" >&5
 echo "${ECHO_T}enabled" >&6; }
