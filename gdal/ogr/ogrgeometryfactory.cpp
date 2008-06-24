@@ -769,7 +769,13 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
  * (unless 'OGR_DEBUG_ORGANIZE_POLYGONS' configuration option is set to TRUE.
  * In that case, a slower algorithm that tests exact topological relationships 
  * is used if GEOS is available.)
- * 
+ *
+ * In cases where a big number of polygons is passed to this function, the processing
+ * may be really slow. You can skip the processing by setting OGR_ORGANIZE_POLYGONS=SKIP
+ * (the result of the function will be a multi-polygon with all polygons as toplevel polygons)
+ * or only make it analyze counter-clock wise polygons by setting OGR_ORGANIZE_POLYGONS=ONLY_CCW
+ * if you can assume that the outline of holes is counter-clock wise defined.
+ *
  * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
  * Ownership of the geometries is passed, but not of the array itself.
  * @param nPolygonCount number of items in papoPolygons
@@ -791,6 +797,7 @@ struct _sPolyExtended
     int             bIsTopLevel;
     OGRPolygon*     poEnclosingPolygon;
     double          dfArea;
+    int             bIsCW;
 };
 
 static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
@@ -817,6 +824,7 @@ static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
         return 0;
 }
 
+#define N_CRITICAL_PART_NUMBER   100
 
 OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int nPolygonCount,
@@ -868,6 +876,20 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     int go_on = TRUE;
     int bMixedUpGeometries = FALSE;
     int bNonPolygon = FALSE;
+    int bFoundCCW = FALSE;
+    int bOrganisePolygonSkip = FALSE;
+    int bOrganisePolygonOnlyCCW = FALSE;
+
+    if (nPolygonCount > N_CRITICAL_PART_NUMBER)
+    {
+        bOrganisePolygonSkip = EQUAL(CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT"), "SKIP");
+        bOrganisePolygonOnlyCCW = EQUAL(CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT"), "ONLY_CCW");
+        if (bOrganisePolygonSkip)
+        {
+            bMixedUpGeometries = TRUE;
+        }
+    }
+
 
     for(i=0;i<nPolygonCount;i++)
     {
@@ -882,6 +904,9 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
             asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRing();
             asPolyEx[i].poExteriorRing->getPoint(0, &asPolyEx[i].poAPoint);
+            asPolyEx[i].bIsCW = asPolyEx[i].poExteriorRing->isClockwise();
+            if (!bFoundCCW)
+                bFoundCCW = ! (asPolyEx[i].bIsCW);
         }
         else
         {
@@ -896,6 +921,36 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             }
             if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
                 bNonPolygon = TRUE;
+        }
+    }
+
+    /* Emits a warning if the number of parts is sufficiently big to anticipate for */
+    /* very long computation time */
+    if (nPolygonCount > N_CRITICAL_PART_NUMBER &&
+        !bOrganisePolygonSkip && !bOrganisePolygonOnlyCCW)
+    {
+        static int firstTime = 1;
+        if (firstTime)
+        {
+            if (bFoundCCW)
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                     "organizePolygons() received a polygon with more than %d parts. "
+                     "The processing may be really slow.\n"
+                     "You can skip the processing by setting OGR_ORGANIZE_POLYGONS=SKIP, "
+                     "or only make it analyze counter-clock wise parts by setting "
+                     "OGR_ORGANIZE_POLYGONS=ONLY_CCW if you can assume that the "
+                     "outline of holes is counter-clock wise defined", N_CRITICAL_PART_NUMBER);
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                        "organizePolygons() received a polygon with more than %d parts. "
+                        "The processing may be really slow.\n"
+                        "You can skip the processing by setting OGR_ORGANIZE_POLYGONS=SKIP.",
+                        N_CRITICAL_PART_NUMBER);
+            }
+            firstTime = 0;
         }
     }
 
@@ -949,6 +1004,14 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     /* STEP 2 */
     for(i=1; !bMixedUpGeometries && go_on && i<nPolygonCount; i++)
     {
+        if (bOrganisePolygonOnlyCCW && asPolyEx[i].bIsCW)
+        {
+            nCountTopLevel ++;
+            asPolyEx[i].bIsTopLevel = TRUE;
+            asPolyEx[i].poEnclosingPolygon = NULL;
+            continue;
+        }
+
         for(j=i-1; go_on && j>=0;j--)
         {
             if (asPolyEx[j].sEnvelope.Contains(asPolyEx[i].sEnvelope) &&
