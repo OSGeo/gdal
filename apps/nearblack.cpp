@@ -31,7 +31,10 @@
 #include "cpl_conv.h"
 
 static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
-                         int nNearDist, int nMaxNonBlack, int bNearWhite );
+                         int nNearDist, int nMaxNonBlack, int bNearWhite,
+                         int *panLastLineCounts, 
+                         int bDoHorizontalCheck, 
+                         int bDoVerticalCheck );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -155,8 +158,11 @@ int main( int argc, char ** argv )
 /*      Allocate a line buffer.                                         */
 /* -------------------------------------------------------------------- */
     GByte *pabyLine;
+    int   *panLastLineCounts;
 
     pabyLine = (GByte *) CPLMalloc(nXSize * nBands);
+
+    panLastLineCounts = (int *) CPLCalloc(sizeof(int),nXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Processing data one line at a time.                             */
@@ -174,9 +180,9 @@ int main( int argc, char ** argv )
             break;
         
         ProcessLine( pabyLine, 0, nXSize-1, nBands, nNearDist, nMaxNonBlack,
-                     bNearWhite );
+                     bNearWhite, panLastLineCounts, TRUE, TRUE );
         ProcessLine( pabyLine, nXSize-1, 0, nBands, nNearDist, nMaxNonBlack,
-                     bNearWhite );
+                     bNearWhite, NULL, TRUE, FALSE );
         
         eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
                                     pabyLine, nXSize, 1, GDT_Byte, 
@@ -184,10 +190,40 @@ int main( int argc, char ** argv )
         if( eErr != CE_None )
             break;
         
-        GDALTermProgress( (iLine+1) / (double) nYSize, NULL, NULL );
+        GDALTermProgress( 0.5 * ((iLine+1) / (double) nYSize), NULL, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now process from the bottom back up, doing only the vertical pass.*/
+/* -------------------------------------------------------------------- */
+    memset( panLastLineCounts, 0, sizeof(int) * nXSize);
+    
+    for( iLine = nYSize-1; iLine >= 0; iLine-- )
+    {
+        CPLErr eErr;
+
+        eErr = GDALDatasetRasterIO( hOutDS, GF_Read, 0, iLine, nXSize, 1, 
+                                    pabyLine, nXSize, 1, GDT_Byte, 
+                                    nBands, NULL, nBands, nXSize * nBands, 1 );
+        if( eErr != CE_None )
+            break;
+        
+        ProcessLine( pabyLine, 0, nXSize-1, nBands, nNearDist, nMaxNonBlack,
+                     bNearWhite, panLastLineCounts, FALSE, TRUE );
+        
+        eErr = GDALDatasetRasterIO( hOutDS, GF_Write, 0, iLine, nXSize, 1, 
+                                    pabyLine, nXSize, 1, GDT_Byte, 
+                                    nBands, NULL, nBands, nXSize * nBands, 1 );
+        if( eErr != CE_None )
+            break;
+        
+        GDALTermProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, 
+                          NULL, NULL );
     }
 
     CPLFree(pabyLine);
+    CPLFree( panLastLineCounts );
+
     GDALClose( hOutDS );
     if( hInDS != hOutDS )
         GDALClose( hInDS );
@@ -202,58 +238,126 @@ int main( int argc, char ** argv )
 /************************************************************************/
 
 static void ProcessLine( GByte *pabyLine, int iStart, int iEnd, int nBands,
-                         int nNearDist, int nMaxNonBlack, int bNearWhite )
+                         int nNearDist, int nMaxNonBlack, int bNearWhite,
+                         int *panLastLineCounts, 
+                         int bDoHorizontalCheck, 
+                         int bDoVerticalCheck )
 
 {
     int iDir, i;
-    int nNonBlackPixels = 0;
 
-    if( iStart < iEnd )
-        iDir = 1;
-    else
-        iDir = -1;
-
-    for( i = iStart; i != iEnd; i += iDir )
+/* -------------------------------------------------------------------- */
+/*      Vertical checking.                                              */
+/* -------------------------------------------------------------------- */
+    if( bDoVerticalCheck )
     {
-        int iBand;
-        int bIsNonBlack = FALSE;
+        int nXSize = MAX(iStart+1,iEnd+1);
 
-        for( iBand = 0; iBand < nBands; iBand++ )
+        for( i = 0; i < nXSize; i++ )
         {
-            if( bNearWhite )
+            int iBand;
+            int bIsNonBlack = FALSE;
+
+            // are we already terminated for this column?
+            if( panLastLineCounts[i] > nMaxNonBlack )
+                continue;
+
+            for( iBand = 0; iBand < nBands; iBand++ )
             {
-                if( (255 - pabyLine[i * nBands + iBand]) > nNearDist )
+
+                if( bNearWhite )
                 {
-                    bIsNonBlack = TRUE;
-                    break;
+                    if( (255 - pabyLine[i * nBands + iBand]) > nNearDist )
+                    {
+                        bIsNonBlack = TRUE;
+                        break;
+                    }
+                }
+                else
+                {
+                    if( pabyLine[i * nBands + iBand] > nNearDist )
+                    {
+                        bIsNonBlack = TRUE;
+                        break;
+                    }
                 }
             }
-            else
+
+            if( bIsNonBlack )
             {
-                if( pabyLine[i * nBands + iBand] > nNearDist )
-                {
-                    bIsNonBlack = TRUE;
-                    break;
-                }
+                panLastLineCounts[i]++;
+
+                if( panLastLineCounts[i] > nMaxNonBlack )
+                    continue; 
             }
-        }
-
-        if( bIsNonBlack )
-        {
-            nNonBlackPixels++;
-
-            if( nNonBlackPixels > nMaxNonBlack )
-                return;
-        }
-        else
-            nNonBlackPixels = 0;
-
-        for( iBand = 0; iBand < nBands; iBand++ )
-        {
-            if( bNearWhite )
-                pabyLine[i * nBands + iBand] = 255;
             else
-                pabyLine[i * nBands + iBand] = 0;
+                panLastLineCounts[i] = 0;
+
+            for( iBand = 0; iBand < nBands; iBand++ )
+            {
+                if( bNearWhite )
+                    pabyLine[i * nBands + iBand] = 255;
+                else
+                    pabyLine[i * nBands + iBand] = 0;
+            }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Horizontal Checking.                                            */
+/* -------------------------------------------------------------------- */
+    if( bDoHorizontalCheck )
+    {
+        int nNonBlackPixels = 0;
+
+        if( iStart < iEnd )
+            iDir = 1;
+        else
+            iDir = -1;
+
+        for( i = iStart; i != iEnd; i += iDir )
+        {
+            int iBand;
+            int bIsNonBlack = FALSE;
+
+            for( iBand = 0; iBand < nBands; iBand++ )
+            {
+                if( bNearWhite )
+                {
+                    if( (255 - pabyLine[i * nBands + iBand]) > nNearDist )
+                    {
+                        bIsNonBlack = TRUE;
+                        break;
+                    }
+                }
+                else
+                {
+                    if( pabyLine[i * nBands + iBand] > nNearDist )
+                    {
+                        bIsNonBlack = TRUE;
+                        break;
+                    }
+                }
+            }
+
+            if( bIsNonBlack )
+            {
+                nNonBlackPixels++;
+
+                if( nNonBlackPixels > nMaxNonBlack )
+                    return;
+            }
+            else
+                nNonBlackPixels = 0;
+
+            for( iBand = 0; iBand < nBands; iBand++ )
+            {
+                if( bNearWhite )
+                    pabyLine[i * nBands + iBand] = 255;
+                else
+                    pabyLine[i * nBands + iBand] = 0;
+            }
+        }
+    }
+
 }
