@@ -184,7 +184,7 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "GSAGRasterBand::GSAGRasterBand : Out of memory allocating %d * %d bytes",
-                 poDS->nRasterYSize+1, sizeof(vsi_l_offset) );
+                 (int) poDS->nRasterYSize+1, (int) sizeof(vsi_l_offset) );
 	return;
     }
 
