@@ -57,6 +57,10 @@ CPL_C_END
 #define extRDC          "rdc"
 #define extSMP          "smp"
 #define extREF          "ref"
+#define extRSTu         "RST"
+#define extRDCu         "RDC"
+#define extSMPu         "SMP"
+#define extREFu         "REF"
 
 //----- field names on rdc file:
 #define rdcFILE_FORMAT  "file format "
@@ -116,6 +120,7 @@ CPL_C_END
 #define rstDEGREE       "deg"
 #define rstMETER        "m"
 #define rstLATLONG      "latlong"
+#define rstLATLONG2     "lat/long"
 #define rstPLANE        "plane"
 #define rstUTM          "utm-%d%c"
 #define rstSPC          "spc%2d%2s%d"
@@ -439,7 +444,12 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( ! FileExists( pszLDocFilename ) )
     {
-        return NULL;
+        pszLDocFilename = CPLResetExtension( poOpenInfo->pszFilename, extRDCu );
+
+        if( ! FileExists( pszLDocFilename ) )
+        {
+            return NULL;
+        }
     }
 
     char **papszLRDC = CSLLoad( pszLDocFilename );
@@ -1080,12 +1090,29 @@ char **IdrisiDataset::GetFileList()
     char **papszFileList = GDALPamDataset::GetFileList();
     const char *pszAssociated;
         
+    // --------------------------------------------------------------------
+    //      Symbol table file
+    // --------------------------------------------------------------------
+
     pszAssociated = CPLResetExtension( pszFilename, extSMP );
 
     if( FileExists( pszAssociated ) )
     {
         papszFileList = CSLAddString( papszFileList, pszAssociated );
     }
+    else
+    {
+        pszAssociated = CPLResetExtension( pszFilename, extSMPu );
+
+        if( FileExists( pszAssociated ) )
+        {
+            papszFileList = CSLAddString( papszFileList, pszAssociated );
+        }
+    }
+
+    // --------------------------------------------------------------------
+    //      Documentation file
+    // --------------------------------------------------------------------
 
     pszAssociated = CPLResetExtension( pszFilename, extRDC );
 
@@ -1093,12 +1120,34 @@ char **IdrisiDataset::GetFileList()
     {
         papszFileList = CSLAddString( papszFileList, pszAssociated );
     }
+    else
+    {
+        pszAssociated = CPLResetExtension( pszFilename, extRDCu );
+
+        if( FileExists( pszAssociated ) )
+        {
+            papszFileList = CSLAddString( papszFileList, pszAssociated );
+        }
+    }
+
+    // --------------------------------------------------------------------
+    //      Reference file
+    // --------------------------------------------------------------------
 
     pszAssociated = CPLResetExtension( pszFilename, extREF );
 
     if( FileExists( pszAssociated ) )
     {
         papszFileList = CSLAddString( papszFileList, pszAssociated );
+    }
+    else
+    {
+        pszAssociated = CPLResetExtension( pszFilename, extREFu );
+
+        if( FileExists( pszAssociated ) )
+        {
+            papszFileList = CSLAddString( papszFileList, pszAssociated );
+        }
     }
 
     return papszFileList;
@@ -2097,7 +2146,8 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
     //  Latlong
     // ---------------------------------------------------------
 
-    if( EQUAL( pszRefSystem, rstLATLONG ) )
+    if( EQUAL( pszRefSystem, rstLATLONG  ) || 
+        EQUAL( pszRefSystem, rstLATLONG2 ) )
     {
         oSRS.SetWellKnownGeogCS( "WGS84" );
         oSRS.exportToWkt( pszProjString );
@@ -2171,6 +2221,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
         // ------------------------------------------------------------------
 
         const char *pszIdrisiDir = CPLGetConfigOption( "IDRISIDIR", NULL );
+
         if( ( pszIdrisiDir ) != NULL )
         {
             pszFName = CPLSPrintf( "%s%cgeoref%c%s.ref", 
