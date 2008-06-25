@@ -236,12 +236,21 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Is this a "pos"?  I think this is a GML 3 construct.            */
+/*      Is this a "pos"?  GML 3 construct.                              */
+/*      Parse if it exist a series of pos elements (this would allow    */
+/*      the correct parsing of gml3.1.1 geomtries such as linestring    */
+/*      defined with pos elements.                                      */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psPos = FindBareXMLChild( psGeomNode, "pos" );
+    CPLXMLNode *psPos;
     
-    if( psPos != NULL )
+    for( psPos = psGeomNode->psChild; 
+         psPos != NULL;
+         psPos = psPos->psNext )
     {
+        if( psPos->eType != CXT_Element 
+            || !EQUAL(BareGMLElement(psPos->pszValue),"pos") )
+            continue;
+        
         char **papszTokens = CSLTokenizeStringComplex( 
             GetElementText( psPos ), " ,", FALSE, FALSE );
         int bSuccess = FALSE;
@@ -267,6 +276,51 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
                       GetElementText( psPos ) );
         }
 
+        CSLDestroy( papszTokens );
+
+        return bSuccess;
+    }
+    
+
+/* -------------------------------------------------------------------- */
+/*      Is this a "posList"?  GML 3 construct (SF profile).             */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psPosList = FindBareXMLChild( psGeomNode, "posList" );
+    
+    if( psPosList != NULL )
+    {
+        char **papszTokens = CSLTokenizeStringComplex( 
+            GetElementText( psPosList ), " ,", FALSE, FALSE );
+        int bSuccess = FALSE;
+        int i=0, nCount=0;
+
+        /*assuming that it is a 2 dimension with x y values*/
+        /*we could also check to see if there is a count attribute and an srsDimension.
+          These attributes are only availabe for gml3.1.1 but not 
+          available for gml3.1 SF*/
+
+        nCount = CSLCount( papszTokens );
+       
+        if (nCount < 2  || fmod((double)nCount, 2.0) != 0)
+        {
+            
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Did not get at least two values or invalid number of \n"
+                      "set of coordinates <gml:posList>%s</gml:posList>",
+                      GetElementText( psPosList ) );
+        }
+        else
+        {
+            i=0;
+            while (i<nCount)
+            {
+                bSuccess = AddPoint( poGeometry, 
+                                     atof(papszTokens[i]), 
+                                     atof(papszTokens[i+1]),
+                                     0.0, 2 );
+                i+=2;
+            }
+        }
         CSLDestroy( papszTokens );
 
         return bSuccess;
@@ -347,6 +401,9 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
 
         // Find outer ring.
         psChild = FindBareXMLChild( psNode, "outerBoundaryIs" );
+        if (psChild == NULL)
+           psChild = FindBareXMLChild( psNode, "exterior");
+
         if( psChild == NULL || psChild->psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
@@ -382,7 +439,8 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
              psChild = psChild->psNext ) 
         {
             if( psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"innerBoundaryIs") )
+                && (EQUAL(BareGMLElement(psChild->pszValue),"innerBoundaryIs") ||
+                    EQUAL(BareGMLElement(psChild->pszValue),"interior")))
             {
                 poRing = (OGRLinearRing *) 
                     GML2OGRGeometry_XMLNode( psChild->psChild );

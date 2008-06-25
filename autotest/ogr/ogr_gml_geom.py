@@ -104,6 +104,35 @@ def gml_pos_point():
     return 'success'
 
 ###############################################################################
+# Test GML 3.x "posList" element for a point.
+
+def gml_posList_line():
+
+    gml = '<LineString><posList>31 42 53 64 55 76</posList></LineString>'
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'LINESTRING (31 42,53 64,55 76)':
+        gdaltest.post_reason( '<gml:posList> not correctly parsed' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML 3.x "polygon" element for a point.
+
+def gml_polygon():
+
+    gml = '<Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior><interior><LinearRing><posList>1 1 2 1 2 2 1 2 1 1</posList></LinearRing></interior></Polygon>'
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))':
+        gdaltest.post_reason( '<gml:Polygon> not correctly parsed' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Private utility function to conver WKT to GML with assigned WGS 84 as SRS
 
 def _CreateGMLWithSRSFromWkt(wkt, epsg):
@@ -300,6 +329,8 @@ for filename in files:
 
 gdaltest_list.append( gml_space_test )
 gdaltest_list.append( gml_pos_point )
+gdaltest_list.append( gml_posList_line )
+gdaltest_list.append( gml_polygon )
 gdaltest_list.append( gml_out_point_srs )
 gdaltest_list.append( gml_out_point3d_srs )
 gdaltest_list.append( gml_out_linestring_srs )
