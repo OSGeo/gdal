@@ -11,10 +11,19 @@ The JPEG JFIF format is supported for reading, and batch writing, but not
 update in place.  JPEG files are represented as one band (greyscale) or three 
 band (RGB) datasets with Byte valued bands.<p>
 
+The driver will automatically convert images whose color space is YCbCr, CMYK or
+YCbCrK to RGB, unless GDAL_JPEG_TO_RGB is set to NO (YES is the default). When
+color space translation to RGB is done, the source color space is indicated in the
+SOURCE_COLOR_SPACE metedata of the IMAGE_STRUCTURE domain.<p>
+
 There is currently no support for georeferencing information or metadata for
 JPEG files. But if an ESRI world file exists with the .jgw, .jpgw/.jpegw or .wld suffixes,
 it will be read and used to establish the geotransform for the image. Overviews
 can be built for JPEG files as an external .ovr file.<p>
+
+The driver also supports the "zlib compressed mask appended to the file" approach
+used by a few data providers to add a bitmask to identify pixels that are not valid data.
+See <a href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15</a> for further details.<p>
 
 The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library.  Also note that the GeoTIFF driver supports tiled TIFF with JPEG
@@ -23,8 +32,10 @@ compressed tiles.<p>
 <h2>Creation Options</h2>
 
 JPEG files are created using the "JPEG" driver code.  Only Byte band types
-are supported, and only 1 and 3 band configurations.  JPEG file creation
-is implemented by the batch (CreateCopy) method.  
+are supported, and only 1 and 3 band (RGB) configurations.  JPEG file creation
+is implemented by the batch (CreateCopy) method. YCbCr, CMYK or YCbCrK colorspaces
+are not supported in creation. If the source dataset has a nodata mask, it will be
+appended as a zlib compressed mask to the JPEG file.<p>
 
 <ul>
 
