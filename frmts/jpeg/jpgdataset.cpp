@@ -113,6 +113,9 @@ class JPGDataset : public GDALPamDataset
     GByte  *pabyCMask;
     int    nCMaskSize;
 
+    J_COLOR_SPACE eGDALColorSpace;   /* color space exposed by GDAL. Not necessarily the in_color_space nor */
+                                     /* the out_color_space of JPEG library */
+
   public:
                  JPGDataset();
                  ~JPGDataset();
@@ -739,28 +742,65 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                        pImage, eDataType, nWordSize, 
                        nXSize );
 #else
-        GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize, 
-                       eDataType, nWordSize * 3, 
-                       pImage, eDataType, nWordSize, 
-                       nXSize );
+        if (poGDS->eGDALColorSpace == JCS_RGB &&
+            poGDS->sDInfo.out_color_space == JCS_CMYK)
+        {
+            CPLAssert(eDataType == GDT_Byte);
+            int i;
+            if (nBand == 1)
+            {
+                for(i=0;i<nXSize;i++)
+                {
+                    int C = poGDS->pabyScanline[i * 4 + 0];
+                    int K = poGDS->pabyScanline[i * 4 + 3];
+                    ((GByte*)pImage)[i] = (C * K) / 255;
+                }
+            }
+            else  if (nBand == 2)
+            {
+                for(i=0;i<nXSize;i++)
+                {
+                    int M = poGDS->pabyScanline[i * 4 + 1];
+                    int K = poGDS->pabyScanline[i * 4 + 3];
+                    ((GByte*)pImage)[i] = (M * K) / 255;
+                }
+            }
+            else if (nBand == 3)
+            {
+                for(i=0;i<nXSize;i++)
+                {
+                    int Y = poGDS->pabyScanline[i * 4 + 2];
+                    int K = poGDS->pabyScanline[i * 4 + 3];
+                    ((GByte*)pImage)[i] = (Y * K) / 255;
+                }
+            }
+        }
+        else
+        {
+            GDALCopyWords( poGDS->pabyScanline + (nBand-1) * nWordSize, 
+                        eDataType, nWordSize * poGDS->GetRasterCount(), 
+                        pImage, eDataType, nWordSize, 
+                        nXSize );
+        }
 #endif
     }
 
 /* -------------------------------------------------------------------- */
 /*      Forceably load the other bands associated with this scanline.   */
 /* -------------------------------------------------------------------- */
-    if( poGDS->GetRasterCount() == 3 && nBand == 1 )
+    if( nBand == 1 )
     {
         GDALRasterBlock *poBlock;
 
-        poBlock = 
-            poGDS->GetRasterBand(2)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
-        poBlock->DropLock();
-
-        poBlock = 
-            poGDS->GetRasterBand(3)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
-        poBlock->DropLock();
+        int iBand;
+        for(iBand = 2; iBand <= poGDS->GetRasterCount() ; iBand++)
+        {
+            poBlock = 
+                poGDS->GetRasterBand(iBand)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+            poBlock->DropLock();
+        }
     }
+
 
     return CE_None;
 }
@@ -772,17 +812,54 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 GDALColorInterp JPGRasterBand::GetColorInterpretation()
 
 {
-    if( poGDS->nBands == 1 )
+    if( poGDS->eGDALColorSpace == JCS_GRAYSCALE )
         return GCI_GrayIndex;
 
-    else if( nBand == 1 )
-        return GCI_RedBand;
+    else if( poGDS->eGDALColorSpace == JCS_RGB)
+    {
+        if ( nBand == 1 )
+            return GCI_RedBand;
 
-    else if( nBand == 2 )
-        return GCI_GreenBand;
+        else if( nBand == 2 )
+            return GCI_GreenBand;
 
-    else 
-        return GCI_BlueBand;
+        else 
+            return GCI_BlueBand;
+    }
+    else if( poGDS->eGDALColorSpace == JCS_CMYK)
+    {
+        if ( nBand == 1 )
+            return GCI_CyanBand;
+
+        else if( nBand == 2 )
+            return GCI_MagentaBand;
+
+        else if ( nBand == 3 )
+            return GCI_YellowBand;
+
+        else
+            return GCI_BlackBand;
+    }
+    else if( poGDS->eGDALColorSpace == JCS_YCbCr ||
+             poGDS->eGDALColorSpace == JCS_YCCK)
+    {
+        if ( nBand == 1 )
+            return GCI_YCbCr_YBand;
+
+        else if( nBand == 2 )
+            return GCI_YCbCr_CbBand;
+
+        else if ( nBand == 3 )
+            return GCI_YCbCr_CrBand;
+
+        else
+            return GCI_BlackBand;
+    }
+    else
+    {
+        CPLAssert(0);
+        return GCI_Undefined;
+    }
 }
 
 /************************************************************************/
@@ -857,6 +934,8 @@ JPGDataset::JPGDataset()
     pabyBitMask = NULL;
     pabyCMask = NULL;
     nCMaskSize = 0;
+
+    eGDALColorSpace = JCS_UNKNOWN;
 }
 
 /************************************************************************/
@@ -910,8 +989,29 @@ CPLErr JPGDataset::LoadScanline( int iLine )
     }
 
     if( pabyScanline == NULL )
+    {
+        int nJPEGBands = 0;
+        switch(sDInfo.out_color_space)
+        {
+            case JCS_GRAYSCALE:
+                nJPEGBands = 1;
+                break;
+            case JCS_RGB:
+            case JCS_YCbCr:
+                nJPEGBands = 3;
+                break;
+            case JCS_CMYK:
+            case JCS_YCCK:
+                nJPEGBands = 4;
+                break;
+
+            default:
+                CPLAssert(0);
+        }
+
         pabyScanline = (GByte *)
-            CPLMalloc(GetRasterCount() * GetRasterXSize() * 2);
+            CPLMalloc(nJPEGBands * GetRasterXSize() * 2);
+    }
 
     // setup to trap a fatal error.
     if (setjmp(setjmp_buffer)) 
@@ -1114,6 +1214,8 @@ void JPGDataset::LoadDefaultTables( int n )
 void JPGDataset::Restart()
 
 {
+    J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
+
     jpeg_abort_decompress( &sDInfo );
     jpeg_destroy_decompress( &sDInfo );
     jpeg_create_decompress( &sDInfo );
@@ -1131,10 +1233,7 @@ void JPGDataset::Restart()
     jpeg_vsiio_src( &sDInfo, fpImage );
     jpeg_read_header( &sDInfo, TRUE );
     
-    if( GetRasterCount() == 1 )
-        sDInfo.out_color_space = JCS_GRAYSCALE;
-    else
-        sDInfo.out_color_space = JCS_RGB;
+    sDInfo.out_color_space = colorSpace;
     nLoadedScanline = -1;
     jpeg_start_decompress( &sDInfo );
 }
@@ -1456,16 +1555,55 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = poDS->sDInfo.image_width;
     poDS->nRasterYSize = poDS->sDInfo.image_height;
 
+    poDS->sDInfo.out_color_space = poDS->sDInfo.jpeg_color_space;
+    poDS->eGDALColorSpace = poDS->sDInfo.jpeg_color_space;
+
     if( poDS->sDInfo.jpeg_color_space == JCS_GRAYSCALE )
     {
         poDS->nBands = 1;
-        poDS->sDInfo.out_color_space = JCS_GRAYSCALE;
     }
-    else if( poDS->sDInfo.jpeg_color_space == JCS_RGB 
-             || poDS->sDInfo.jpeg_color_space == JCS_YCbCr )
+    else if( poDS->sDInfo.jpeg_color_space == JCS_RGB )
     {
         poDS->nBands = 3;
-        poDS->sDInfo.out_color_space = JCS_RGB;
+    }
+    else if( poDS->sDInfo.jpeg_color_space == JCS_YCbCr )
+    {
+        poDS->nBands = 3;
+        if (CSLTestBoolean(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
+        {
+            poDS->sDInfo.out_color_space = JCS_RGB;
+            poDS->eGDALColorSpace = JCS_RGB;
+            poDS->SetMetadataItem( "SOURCE_COLOR_SPACE", "YCbCr", "IMAGE_STRUCTURE" );
+        }
+    }
+    else if( poDS->sDInfo.jpeg_color_space == JCS_CMYK )
+    {
+        if (CSLTestBoolean(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
+        {
+            poDS->eGDALColorSpace = JCS_RGB;
+            poDS->nBands = 3;
+            poDS->SetMetadataItem( "SOURCE_COLOR_SPACE", "CMYK", "IMAGE_STRUCTURE" );
+        }
+        else
+        {
+            poDS->nBands = 4;
+        }
+    }
+    else if( poDS->sDInfo.jpeg_color_space == JCS_YCCK )
+    {
+        if (CSLTestBoolean(CPLGetConfigOption("GDAL_JPEG_TO_RGB", "YES")))
+        {
+            poDS->eGDALColorSpace = JCS_RGB;
+            poDS->nBands = 3;
+            poDS->SetMetadataItem( "SOURCE_COLOR_SPACE", "YCbCrK", "IMAGE_STRUCTURE" );
+        }
+        else
+        {
+            poDS->nBands = 4;
+        }
+        /* libjpeg does the translation from YCrCbK -> CMYK internally */
+        /* and we'll do the translation to RGB in IReadBlock() */
+        poDS->sDInfo.out_color_space = JCS_CMYK;
     }
     else
     {
