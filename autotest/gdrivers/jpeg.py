@@ -106,6 +106,11 @@ def jpeg_3():
         print ds.GetRasterBand(1).Checksum()
         return 'fail'
 
+    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_GrayIndex:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
     ds = None
     gdal.GetDriverByName('JPEG').Delete( 'tmp/byte.jpg' )
     
@@ -216,6 +221,101 @@ def jpeg_7():
 
     return 'success'
 
+###############################################################################
+# Read a CMYK image as a RGB image
+
+def jpeg_8():
+
+    ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
+
+    if ds.GetRasterBand(1).Checksum() != 20385:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(1).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 20865:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(2).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_GreenBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(2).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 19441:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(3).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_BlueBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(3).GetRasterColorInterpretation()
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+
+    if not md.has_key('SOURCE_COLOR_SPACE') or md['SOURCE_COLOR_SPACE'] != 'CMYK':
+        gdaltest.post_reason( 'missing SOURCE_COLOR_SPACE metadata' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read a CMYK image as a CMYK image
+
+def jpeg_9():
+
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
+    ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
+    gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'YES')
+
+    if ds.GetRasterBand(1).Checksum() != 21187:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(1).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(1).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 21054:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(2).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_MagentaBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(2).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 21499:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(3).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_YellowBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(3).GetRasterColorInterpretation()
+        return 'fail'
+
+    if ds.GetRasterBand(4).Checksum() != 21069:
+        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        print ds.GetRasterBand(4).Checksum()
+        return 'fail'
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_BlackBand:
+        gdaltest.post_reason( 'Wrong color interpretation.')
+        print ds.GetRasterBand(4).GetRasterColorInterpretation()
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     jpeg_1,
@@ -224,7 +324,9 @@ gdaltest_list = [
     jpeg_4,
     jpeg_5,
     jpeg_6,
-    jpeg_7 ]
+    jpeg_7,
+    jpeg_8,
+    jpeg_9 ]
 
 if __name__ == '__main__':
 
