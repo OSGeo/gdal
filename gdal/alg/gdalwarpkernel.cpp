@@ -659,10 +659,10 @@ CPLErr GDALWarpKernel::PerformWarp()
 CPLErr GDALWarpKernel::Validate()
 
 {
-    if ((size_t)eResample >= sizeof(adfGWKFilterRadius))
+    if ((size_t)eResample >= (sizeof(adfGWKFilterRadius) / sizeof(double)))
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unsupported resampling method %d.", eResample );
+                  "Unsupported resampling method %d.", (int) eResample );
         return CE_Failure;
     }
 
