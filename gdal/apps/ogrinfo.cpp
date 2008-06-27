@@ -39,6 +39,7 @@ int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
 int     bSummaryOnly = FALSE;
 int     nFetchFID = OGRNullFID;
+char**  papszOptions = NULL;
 
 static void Usage();
 
@@ -123,6 +124,20 @@ int main( int nArgc, char ** papszArgv )
                  || EQUAL(papszArgv[iArg],"-summary")  )
         {
             bSummaryOnly = TRUE;
+        }
+        else if( EQUALN(papszArgv[iArg],"-fields=", strlen("-fields=")) )
+        {
+            char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
+            sprintf(pszTemp, "DISPLAY_FIELDS=%s", papszArgv[iArg] + strlen("-fields="));
+            papszOptions = CSLAddString(papszOptions, pszTemp);
+            CPLFree(pszTemp);
+        }
+        else if( EQUALN(papszArgv[iArg],"-geom=", strlen("-geom=")) )
+        {
+            char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
+            sprintf(pszTemp, "DISPLAY_GEOMETRY=%s", papszArgv[iArg] + strlen("-geom="));
+            papszOptions = CSLAddString(papszOptions, pszTemp);
+            CPLFree(pszTemp);
         }
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -266,6 +281,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
+    CSLDestroy( papszOptions );
     delete poDS;
     if (poSpatialFilter)
         delete poSpatialFilter;
@@ -289,7 +305,8 @@ static void Usage()
 {
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
-            "               [-sql statement] [-al] [-so] [--formats]\n"
+            "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
+            "               [-geom={YES/NO/SUMMARY}][--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
     exit( 1 );
 }
@@ -375,7 +392,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     {
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
-            poFeature->DumpReadable( NULL );
+            poFeature->DumpReadable( NULL, papszOptions );
             delete poFeature;
         }
     }
@@ -389,7 +406,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         }
         else
         {
-            poFeature->DumpReadable( NULL );
+            poFeature->DumpReadable( NULL, papszOptions );
             delete poFeature;
         }
     }

@@ -267,7 +267,7 @@ class CPL_DLL OGRFeature
     long                GetFID() { return nFID; }
     virtual OGRErr      SetFID( long nFID );
 
-    void                DumpReadable( FILE * );
+    void                DumpReadable( FILE *, char** papszOptions = NULL );
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE);
 

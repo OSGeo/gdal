@@ -94,7 +94,7 @@ OGRGeometry::~OGRGeometry()
  * @param pszPrefix the prefix to put on each line of output.
  */
 
-void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix ) const
+void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszOptions ) const
 
 {
     char        *pszWkt = NULL;
@@ -105,10 +105,84 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix ) const
     if( fp == NULL )
         fp = stdout;
 
-    if( exportToWkt( &pszWkt ) == OGRERR_NONE )
+    const char* pszDisplayGeometry =
+                CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
+    if (pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "SUMMARY"))
     {
-        fprintf( fp, "%s%s\n", pszPrefix, pszWkt );
-        CPLFree( pszWkt );
+        OGRLineString *poLine;
+        OGRPolygon *poPoly;
+        OGRLinearRing *poRing;
+        OGRGeometryCollection *poColl;
+        fprintf( fp, "%s%s : ", pszPrefix, getGeometryName() );
+        switch( getGeometryType() )
+        {
+            case wkbUnknown:
+            case wkbNone:
+                break;
+            case wkbPoint:
+            case wkbPoint25D:
+                break;
+            case wkbLineString:
+            case wkbLineString25D:
+                poLine = (OGRLineString*)this;
+                fprintf( fp, "%d points\n", poLine->getNumPoints() );
+                break;
+            case wkbPolygon:
+            case wkbPolygon25D:
+            {
+                int ir;
+                int nRings;
+                poPoly = (OGRPolygon*)this;
+                poRing = poPoly->getExteriorRing();
+                nRings = poPoly->getNumInteriorRings();
+                fprintf( fp, "%d points", poRing->getNumPoints() );
+                if (nRings)
+                {
+                    fprintf( fp, ", %d inner rings (", nRings);
+                    for( ir = 0; ir < nRings; ir++)
+                    {
+                        if (ir)
+                            fprintf( fp, ", ");
+                        fprintf( fp, "%d points",
+                                 poPoly->getInteriorRing(ir)->getNumPoints() );
+                    }
+                    fprintf( fp, ")");
+                }
+                fprintf( fp, "\n");
+                break;
+            }
+            case wkbMultiPoint:
+            case wkbMultiPoint25D:
+            case wkbMultiLineString:
+            case wkbMultiLineString25D:
+            case wkbMultiPolygon:
+            case wkbMultiPolygon25D:
+            case wkbGeometryCollection:
+            case wkbGeometryCollection25D:
+            {
+                int ig;
+                poColl = (OGRGeometryCollection*)this;
+                fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
+                for ( ig = 0; ig < poColl->getNumGeometries(); ig++)
+                {
+                    OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
+                    fprintf( fp, "%s", pszPrefix);
+                    poChild->dumpReadable( fp, pszPrefix, papszOptions );
+                }
+                break;
+            }
+            case wkbLinearRing:
+                break;
+        }
+    }
+    else if (pszDisplayGeometry == NULL || CSLTestBoolean(pszDisplayGeometry) ||
+             EQUAL(pszDisplayGeometry, "WKT"))
+    {
+        if( exportToWkt( &pszWkt ) == OGRERR_NONE )
+        {
+            fprintf( fp, "%s%s\n", pszPrefix, pszWkt );
+            CPLFree( pszWkt );
+        }
     }
 }
 
