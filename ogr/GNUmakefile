@@ -27,6 +27,8 @@ very-clean: clean
 
 lib:	sublibs $(OBJ)
 
+$(OBJ): ogr_feature.h ogr_geometry.h
+
 obj:	$(OBJ)
 
 ifeq ($(OGR_ENABLED),yes)

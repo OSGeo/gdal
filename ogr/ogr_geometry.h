@@ -102,7 +102,7 @@ class CPL_DLL OGRGeometry
     // non-standard
     virtual OGRwkbGeometryType getGeometryType() const = 0;
     virtual const char *getGeometryName() const = 0;
-    virtual void   dumpReadable( FILE *, const char * = NULL ) const;
+    virtual void   dumpReadable( FILE *, const char * = NULL, char** papszOptions = NULL ) const;
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML() const;
 	virtual char * exportToKML() const;
