@@ -62,6 +62,12 @@ int CPL_DLL CPL_STDCALL GDALDitherRGB2PCT( GDALRasterBandH hRed,
 int CPL_DLL CPL_STDCALL GDALChecksumImage( GDALRasterBandH hBand, 
                                int nXOff, int nYOff, int nXSize, int nYSize );
                                
+CPLErr CPL_DLL CPL_STDCALL 
+GDALComputeProximity( GDALRasterBandH hSrcBand, 
+                      GDALRasterBandH hProximityBand,
+                      char **papszOptions,
+                      GDALProgressFunc pfnProgress, 
+                      void * pProgressArg );
 
 /*
  * Warp Related.
