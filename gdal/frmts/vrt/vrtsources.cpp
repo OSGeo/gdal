@@ -1042,28 +1042,34 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
 
 {
+    VRTSource * poSource;
+
     if( EQUAL(psChild->pszValue,"AveragedSource") 
         || (EQUAL(psChild->pszValue,"SimpleSource")
             && EQUALN(CPLGetXMLValue(psChild, "Resampling", "Nearest"),
                       "Aver",4)) )
     {
-        VRTSource * poSource = new VRTAveragedSource();
-        if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
-            return poSource;
+        poSource = new VRTAveragedSource();
     }
     else if( EQUAL(psChild->pszValue,"SimpleSource") )
     {
-        VRTSource * poSource = new VRTSimpleSource();
-        if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
-            return poSource;
+        poSource = new VRTSimpleSource();
     }
     else if( EQUAL(psChild->pszValue,"ComplexSource") )
     {
-        VRTSource * poSource = new VRTComplexSource();
-        if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
-            return poSource;
+        poSource = new VRTComplexSource();
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "VRTParseCoreSources() - Unknown source : %s", psChild->pszValue );
+        return NULL;
     }
 
+    if ( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
+        return poSource;
+
+    delete poSource;
     return NULL;
 }
 
