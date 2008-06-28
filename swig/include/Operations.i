@@ -131,6 +131,25 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
 %} 
 
 /************************************************************************/
+/*                          ComputeProximity()                          */
+/************************************************************************/
+
+%feature( "kwargs" ) ComputeProximity;
+%inline %{
+int  ComputeProximity( GDALRasterBandShadow *srcBand,
+                       GDALRasterBandShadow *proximityBand,
+                       char **options = NULL,
+                       GDALProgressFunc callback=NULL,
+                       void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALComputeProximity( srcBand, proximityBand, options,
+                                 callback, callback_data );
+}
+%} 
+
+/************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
 /************************************************************************/
 
