@@ -163,7 +163,7 @@ class OGRAVCBinDataSource : public OGRAVCDataSource
 };
 
 /************************************************************************/
-/*                             OGRAVCDriver                             */
+/*                           OGRAVCBinDriver                            */
 /************************************************************************/
 
 class OGRAVCBinDriver : public OGRSFDriver
@@ -243,6 +243,21 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
     OGRLayer *GetLayer( int );
     int TestCapability( const char * );
     virtual OGRSpatialReference *GetSpatialRef();
+};
+
+/************************************************************************/
+/*                           OGRAVCE00Driver                            */
+/************************************************************************/
+
+class OGRAVCE00Driver : public OGRSFDriver
+{
+  public:
+    		~OGRAVCE00Driver();
+                
+    const char *GetName();
+    OGRDataSource *Open( const char *, int );
+
+    int                 TestCapability( const char * );
 };
 
 #endif /* _OGR_AVC_H_INCLUDED */

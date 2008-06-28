@@ -132,6 +132,7 @@ void OGRRegisterAll()
 #endif
 #ifdef AVCBIN_ENABLED
     RegisterOGRAVCBin();
+    RegisterOGRAVCE00();
 #endif
 #ifdef DWGDIRECT_ENABLED
     RegisterOGRDXFDWG();
