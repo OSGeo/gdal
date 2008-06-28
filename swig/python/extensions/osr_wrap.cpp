@@ -2615,8 +2615,14 @@ using namespace std;
 
 #include "ogr_srs_api.h"
 
+#ifdef DEBUG
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
+typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
+#else
 typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
+#endif
 
 
 
