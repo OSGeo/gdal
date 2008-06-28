@@ -2585,6 +2585,18 @@ using namespace std;
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+#ifdef DEBUG 
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRDriverHS OGRDriverShadow;
+typedef struct OGRDataSourceHS OGRDataSourceShadow;
+typedef struct OGRLayerHS OGRLayerShadow;
+typedef struct OGRFeatureHS OGRFeatureShadow;
+typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
+typedef struct OGRGeometryHS OGRGeometryShadow;
+typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
+typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
+typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
+#else
 typedef void OSRSpatialReferenceShadow;
 typedef void OGRDriverShadow;
 typedef void OGRDataSourceShadow;
@@ -2594,6 +2606,8 @@ typedef void OGRFeatureDefnShadow;
 typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
+#endif
+
 
 
   #define SWIG_From_long   PyInt_FromLong 
@@ -3351,7 +3365,7 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
 
   OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
+    OGRGeometryShadow *geom;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
                                       &geom,
@@ -3367,7 +3381,7 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
 
   OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
                                       OSRSpatialReferenceShadow *reference=NULL ) {
-    void *geom;
+    OGRGeometryShadow *geom;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
                                       &geom);
