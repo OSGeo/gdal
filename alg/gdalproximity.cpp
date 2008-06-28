@@ -33,17 +33,11 @@
 
 CPL_CVSID("$Id: gdalchecksum.cpp 13893 2008-02-28 21:08:37Z rouault $");
 
-static CPLErr LoadTargetLine( GUInt32 *panTargetMask, int iLine,
-                              GDALRasterBandH hSrcBand, 
-                              int nTargetValues, int *panTargetValues );
-static CPLErr 
-LineProximitySearch( int nXSize, int nYSize, int iLine, int nMaxDist,
-                     float *pafLastProximityLine,
-                     float *pafThisProximityLine,
-                     int iFirstTargetLine, int iFirstTargetLineLoc,
-                     int nTargetMaskLines, int nTargetMaskLineWords,
-                     GUInt32 *panTargetMaskBuffer );
-
+static CPLErr
+ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY, 
+                      int bForward, int iLine, int nXSize, int nMaxDist,
+                      float *pafProximity,
+                      int nTargetValues, int *panTargetValues );
 
 /************************************************************************/
 /*                        GDALComputeProximity()                        */
@@ -169,15 +163,18 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      Allocate buffer for two scanlines of distances as floats        */
 /*      (the current and last line).                                    */
 /* -------------------------------------------------------------------- */
-    float *pafThisProximityLine;
-    float *pafLastProximityLine;
-    float *pafWriteBuffer;
+    int   *panNearX, *panNearY;
+    float *pafProximity;
+    GInt32 *panSrcScanline;
 
-    pafThisProximityLine = (float *) VSIMalloc(4 * nXSize);
-    pafLastProximityLine = (float *) VSIMalloc(4 * nXSize);
-    pafWriteBuffer = (float *) VSIMalloc(4 * nXSize);
+    pafProximity = (float *) VSIMalloc(4 * nXSize);
+    panNearX = (int *) VSIMalloc(sizeof(int) * nXSize);
+    panNearY = (int *) VSIMalloc(sizeof(int) * nXSize);
+    panSrcScanline = (GInt32 *) VSIMalloc(4 * nXSize);
 
-    if( pafLastProximityLine == NULL )
+    if( pafProximity== NULL 
+        || panNearX == NULL 
+        || panNearY == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
                   "Out of memory allocating %d byte buffer.", 
@@ -185,111 +182,92 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         return CE_Failure;
     }
 
-    for( i = 0; i < nXSize; i++ )
-    {
-        pafThisProximityLine[i] = -2.0;
-        pafLastProximityLine[i] = -2.0;
-    }
-
 /* -------------------------------------------------------------------- */
-/*      Allocate the target identification buffer.  We use one bit      */
-/*      per pixel and allocate a number of lines determined by the      */
-/*      maximum distance we need to search.                             */
-/* -------------------------------------------------------------------- */
-    GUInt32 *panTargetMaskBuffer;
-    int      nTargetMaskLines;
-    int      nTargetMaskLineWords;
-    
-    nTargetMaskLines = MIN(nMaxDist * 2 + 1,nYSize);
-    nTargetMaskLineWords = (nXSize+31)/32;
-    panTargetMaskBuffer = (GUInt32 *) 
-        VSIMalloc2(4*nTargetMaskLineWords,nTargetMaskLines);
-   
-    if( panTargetMaskBuffer == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OutOfMemory, 
-                  "Out of memory allocating %g byte buffer.", 
-                  nTargetMaskLineWords * (double) nTargetMaskLines );
-        return CE_Failure;
-    }
-
-    memset( panTargetMaskBuffer, 0, 
-            4 * nTargetMaskLineWords * nTargetMaskLines );
-
-/* -------------------------------------------------------------------- */
-/*      Prefill the target buffer.                                      */
+/*      Loop forward over all the lines.                                */
 /* -------------------------------------------------------------------- */
     int iLine;
-    int iFirstTargetLine = 0;
-    int iFirstTargetLineLoc = 0;
-    CPLErr eErr;
+    CPLErr eErr = CE_None;
 
-    for( iLine = 0; iLine < nTargetMaskLines; iLine++ )
-    {
-        eErr = 
-            LoadTargetLine( panTargetMaskBuffer + iLine * nTargetMaskLineWords, 
-                            iLine, hSrcBand, nTargetValues, panTargetValues );
-        if( eErr != CE_None )
-        {
-            CPLFree( panTargetMaskBuffer );
-            return eErr;
-        }
-    }
+    for( i = 0; i < nXSize; i++ )
+        panNearX[i] = panNearY[i] = -1;
 
-/* -------------------------------------------------------------------- */
-/*      Loop over the lines to process.                                 */
-/* -------------------------------------------------------------------- */
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
-        // Switch this/last proximity buffers.
-        {
-            float *pafTemp = pafThisProximityLine;
-            pafThisProximityLine = pafLastProximityLine;
-            pafLastProximityLine = pafTemp;
-        }
-
-        // Do we need to load a new target line?
-        if( (iFirstTargetLine + nTargetMaskLines) < nYSize
-            && (iFirstTargetLine + nTargetMaskLines) < iLine + nMaxDist )
-        {
-            eErr = 
-                LoadTargetLine( panTargetMaskBuffer 
-                                + iFirstTargetLineLoc * nTargetMaskLineWords, 
-                                iFirstTargetLine + nTargetMaskLines,
-                                hSrcBand, nTargetValues, panTargetValues );
-
-            iFirstTargetLine++;
-            iFirstTargetLineLoc = (iFirstTargetLineLoc+1) % nTargetMaskLines;
-        }
-
-        // Perform proximity search for this scanline.
-        eErr = 
-            LineProximitySearch( nXSize, nYSize, iLine, nMaxDist,
-                                 pafLastProximityLine, pafThisProximityLine,
-                                 iFirstTargetLine, iFirstTargetLineLoc,
-                                 nTargetMaskLines, nTargetMaskLineWords,
-                                 panTargetMaskBuffer );
+        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1, 
+                             panSrcScanline, nXSize, 1, GDT_Int32, 0, 0 );
         if( eErr != CE_None )
             break;
 
-        // We need to turn the -1.0's into >maxdist value.
         for( i = 0; i < nXSize; i++ )
-        {
-            pafWriteBuffer[i] = pafThisProximityLine[i];
-            if( pafWriteBuffer[i] < 0.0 )
-                pafWriteBuffer[i] = nMaxDist;
-        }
+            pafProximity[i] = -1.0;
+
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+                              TRUE, iLine, nXSize, nMaxDist,
+                              pafProximity, nTargetValues, panTargetValues );
+
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+                              FALSE, iLine, nXSize, nMaxDist,
+                              pafProximity, nTargetValues, panTargetValues );
 
         // Write out results.
         eErr = 
             GDALRasterIO( hProximityBand, GF_Write, 0, iLine, nXSize, 1, 
-                          pafWriteBuffer, nXSize, 1, GDT_Float32, 0, 0 );
+                          pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
 
-        
         if( eErr != CE_None )
             break;
 
-        if( !pfnProgress( (iLine+1) / (double) nYSize, "", pProgressArg ) )
+        if( !pfnProgress( 0.5 * (iLine+1) / (double) nYSize, 
+                          "", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop backward over all the lines.                               */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nXSize; i++ )
+        panNearX[i] = panNearY[i] = -1;
+
+    for( iLine = nYSize-1; eErr == CE_None && iLine >= 0; iLine-- )
+    {
+        // Read first pass proximity
+        eErr = 
+            GDALRasterIO( hProximityBand, GF_Read, 0, iLine, nXSize, 1, 
+                          pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
+
+        if( eErr != CE_None )
+            break;
+
+        // Read pixel values.
+
+        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1, 
+                             panSrcScanline, nXSize, 1, GDT_Int32, 0, 0 );
+        if( eErr != CE_None )
+            break;
+
+        // Process backwards.
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+                              FALSE, iLine, nXSize, nMaxDist,
+                              pafProximity, nTargetValues, panTargetValues );
+
+        // Process backwards.
+        ProcessProximityLine( panSrcScanline, panNearX, panNearY, 
+                              TRUE, iLine, nXSize, nMaxDist,
+                              pafProximity, nTargetValues, panTargetValues );
+
+        // Write out results.
+        eErr = 
+            GDALRasterIO( hProximityBand, GF_Write, 0, iLine, nXSize, 1, 
+                          pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
+
+        if( eErr != CE_None )
+            break;
+
+        if( !pfnProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, 
+                          "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             eErr = CE_Failure;
@@ -299,201 +277,140 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    CPLFree( pafThisProximityLine );
-    CPLFree( pafLastProximityLine );
-    CPLFree( panTargetMaskBuffer );
-    CPLFree( pafWriteBuffer );
+    CPLFree( panNearX );
+    CPLFree( panNearY );
+    CPLFree( panSrcScanline );
+    CPLFree( pafProximity );
 
     return eErr;
 }
 
 /************************************************************************/
-/*                           LoadTargetLine()                           */
+/*                        ProcessProximityLine()                        */
 /************************************************************************/
-static CPLErr LoadTargetLine( GUInt32 *panTargetMask, int iLine,
-                              GDALRasterBandH hSrcBand, 
-                              int nTargetValues, int *panTargetValues )
+                      
+static CPLErr
+ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY, 
+                      int bForward, int iLine, int nXSize, int nMaxDist,
+                      float *pafProximity,
+                      int nTargetValues, int *panTargetValues )
 
 {
-    int i;
-    int nXSize = GDALGetRasterXSize( hSrcBand );
-    GInt32 *panScanline;
-    CPLErr eErr;
+    int iStart, iEnd, iStep, iPixel;
 
-    memset( panTargetMask, 0, 4 * ((nXSize+31)/32) );
-    panScanline = (GInt32 *) CPLMalloc(4 * nXSize);
+    if( bForward )
+    {
+        iStart = 0;
+        iEnd = nXSize; 
+        iStep = 1;
+    }
+    else
+    {
+        iStart = nXSize-1;
+        iEnd = -1; 
+        iStep = -1;
+    }
 
-    eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1, 
-                         panScanline, nXSize, 1, GDT_Int32, 0, 0 );
-    for( i = 0; i < nXSize; i++ )
+    for( iPixel = iStart; iPixel != iEnd; iPixel += iStep )
     {
         int bIsTarget;
 
-        if( panTargetValues == NULL )
-            bIsTarget = (panScanline[i] != 0);
+/* -------------------------------------------------------------------- */
+/*      Is the current pixel a target pixel?                            */
+/* -------------------------------------------------------------------- */
+        if( nTargetValues == 0 )
+            bIsTarget = (panSrcScanline[iPixel] != 0);
         else
         {
-            int j;
-            bIsTarget = FALSE;
-            for( j = 0; j < nTargetValues; j++ )
+            int i;
+            for( i = 0; i < nTargetValues; i++ )
             {
-                bIsTarget |= (panScanline[i] == panTargetValues[i]);
+                if( panSrcScanline[iPixel] == panTargetValues[i] )
+                    bIsTarget = TRUE;
             }
         }
 
         if( bIsTarget )
-            panTargetMask[i>>5] |= (0x1 << (i & 0x1f));
-    }
-
-    CPLFree( panScanline );
-
-    return eErr;
-}
-
-#define MASK_LINE_INDEX(iReqLine) \
-    ((iReqLine - iFirstTargetLine + iFirstTargetLineLoc) % nTargetMaskLines)
-
-#define MASK_LINE(iReqLine) \
-    (panTargetMaskBuffer + nTargetMaskLineWords * MASK_LINE_INDEX(iReqLine))
-
-#define MASK_BIT(panMaskLine,iPixel) \
-    (panMaskLine[iPixel>>5] & (0x1 << (iPixel & 0x1f)))
-
-#define MASK_TEST(iPixel,iLine) MASK_BIT(MASK_LINE(iLine),iPixel)
-  
-/************************************************************************/
-/*                        LineProximitySearch()                         */
-/************************************************************************/
-
-static CPLErr 
-LineProximitySearch( int nXSize, int nYSize, int iLine, int nMaxDist,
-                     float *pafLastProximityLine,
-                     float *pafThisProximityLine,
-                     int iFirstTargetLine, int iFirstTargetLineLoc,
-                     int nTargetMaskLines, int nTargetMaskLineWords,
-                     GUInt32 *panTargetMaskBuffer )
-    
-{
-    int iPixel;
-    GUInt32 *panThisTargetMaskLine = MASK_LINE(iLine);
-
-    for( iPixel = 0; iPixel < nXSize; iPixel++ )
-    {
-        // Is this pixel a target pixel?  Distance zero.
-        if( MASK_BIT(panThisTargetMaskLine,iPixel) )
         {
-            pafThisProximityLine[iPixel] = 0.0;
+            pafProximity[iPixel] = 0.0;
+            panNearX[iPixel] = iPixel;
+            panNearY[iPixel] = iLine;
             continue;
         }
 
-        // Were the left and above pixels outside our last search region?
-        // If so, we only need to check one new pixel in the bottom right 
-        // corner of our search area. 
-        if( iPixel > 0 
-            && pafThisProximityLine[iPixel-1] == -1.0
-            && iLine > 1 
-            && pafLastProximityLine[iPixel] == -1.0 )
+/* -------------------------------------------------------------------- */
+/*      Are we near(er) to the closest target to the above (below)      */
+/*      pixel?                                                          */
+/* -------------------------------------------------------------------- */
+        float fNearDistSq = nXSize * nXSize * 2;
+        float fDistSq;
+
+        if( panNearX[iPixel] != -1 )
         {
-            if( iPixel < nXSize - nMaxDist
-                && iLine < nYSize - nMaxDist 
-                && MASK_TEST(iPixel+nMaxDist,iLine+nMaxDist) )
+            fDistSq = 
+                (panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
+                + (panNearY[iPixel] - iLine) * (panNearY[iPixel] - iLine);
+
+            if( fDistSq < fNearDistSq )
             {
-                pafThisProximityLine[iPixel] = 
-                    sqrt( nMaxDist * nMaxDist * 2 );
+                fNearDistSq = fDistSq;
             }
             else
-                pafThisProximityLine[iPixel] = -1.0;
+            {
+                panNearX[iPixel] = -1;
+                panNearY[iPixel] = -1;
+            }
         }
 
-        // Add case where we search the whole right column and bottom row. 
-#ifdef optimization
-#endif
+/* -------------------------------------------------------------------- */
+/*      Are we near(er) to the closest target to the left (right)       */
+/*      pixel?                                                          */
+/* -------------------------------------------------------------------- */
+        int iLast = iPixel-iStep;
 
-        // We will do a full search, in concentric boxes out from our center 
-        // pixel.  This is the most expensive case. 
-        float fLeastDistSq = (nMaxDist*2) * (nMaxDist*2);
-        int iLeastDist = nMaxDist*2;
-        int iDistOut;
-
-        for( iDistOut = 1; 
-             iDistOut < nMaxDist && iDistOut < iLeastDist*1.42 /*sqrt(2)*/;
-             iDistOut++ )
+        if( iPixel != iStart && panNearX[iLast] != -1 )
         {
-            int nEdgeLen = iDistOut*2 + 1;
-            int iBaseX, iBaseY, iOff;
-            float fDistSq;
+            fDistSq = 
+                (panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
+                + (panNearY[iLast] - iLine) * (panNearY[iLast] - iLine);
 
-            iBaseX = iPixel - iDistOut;
-            iBaseY = iLine - iDistOut;
-            
-            for( iOff = 0; iOff < nEdgeLen; iOff++ )
+            if( fDistSq < fNearDistSq )
             {
-                if( iBaseX+iOff >= 0 && iBaseX+iOff < nXSize )
-                {
-                    // top edge.
-                    if( iBaseY >= 0 )
-                    {
-                        if( MASK_TEST(iBaseX+iOff,iBaseY) )
-                        {
-                            iLeastDist = MIN(iLeastDist,iDistOut);
-                            fDistSq = (iOff - iDistOut) * (iOff - iDistOut) 
-                                + iDistOut * iDistOut;
-                            if( fDistSq < fLeastDistSq )
-                                fLeastDistSq = fDistSq;
-                        }
-                    }
-                    // bottom edge
-                    if( (iBaseY + nEdgeLen - 1) < nYSize )
-                    {
-                        if( MASK_TEST(iBaseX+iOff,iBaseY+nEdgeLen-1) )
-                        {
-                            iLeastDist = MIN(iLeastDist,iDistOut);
-                            fDistSq = (iOff - iDistOut) * (iOff - iDistOut) 
-                                + iDistOut * iDistOut;
-                            if( fDistSq < fLeastDistSq )
-                                fLeastDistSq = fDistSq;
-                        }
-                    }
-                }
-
-                if( iBaseY+iOff >= 0 && iBaseY+iOff < nYSize )
-                {
-                    // left edge
-                    if( iBaseX >= 0 )
-                    {
-                        if( MASK_TEST(iBaseX,iBaseY+iOff) )
-                        {
-                            iLeastDist = MIN(iLeastDist,iDistOut);
-                            fDistSq = (iOff - iDistOut) * (iOff - iDistOut) 
-                                + iDistOut * iDistOut;
-                            if( fDistSq < fLeastDistSq )
-                                fLeastDistSq = fDistSq;
-                        }
-                    }
-                    // right edge.
-                    if( (iBaseX + nEdgeLen - 1) < nXSize )
-                    {
-                        if( MASK_TEST(iBaseX+nEdgeLen-1,iBaseY+iOff) )
-                        {
-                            iLeastDist = MIN(iLeastDist,iDistOut);
-                            fDistSq = (iOff - iDistOut) * (iOff - iDistOut) 
-                                + iDistOut * iDistOut;
-                            if( fDistSq < fLeastDistSq )
-                                fLeastDistSq = fDistSq;
-                        }
-                    }
-                }
+                fNearDistSq = fDistSq;
+                panNearX[iPixel] = panNearX[iLast];
+                panNearY[iPixel] = panNearY[iLast];
             }
-        } /* next ring (box) out in search */
+        }
 
-        if( fLeastDistSq <= nMaxDist * nMaxDist )
-            pafThisProximityLine[iPixel] = sqrt(fLeastDistSq);
-        else if( iLeastDist < nMaxDist*2 )
-            pafThisProximityLine[iPixel] = -2.0; // hit in box, but >maxdist
-        else
-            pafThisProximityLine[iPixel] = -1.0; // no hit in box.
-    } /* next pixel on scanline */
+/* -------------------------------------------------------------------- */
+/*      Are we near(er) to the closest target to the topright           */
+/*      (bottom left) pixel?                                            */
+/* -------------------------------------------------------------------- */
+        int iTR = iPixel+iStep;
+
+        if( iTR != iEnd && panNearX[iTR] != -1 )
+        {
+            fDistSq = 
+                (panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
+                + (panNearY[iTR] - iLine) * (panNearY[iTR] - iLine);
+
+            if( fDistSq < fNearDistSq )
+            {
+                fNearDistSq = fDistSq;
+                panNearX[iPixel] = panNearX[iTR];
+                panNearY[iPixel] = panNearY[iTR];
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Update our proximity value.                                     */
+/* -------------------------------------------------------------------- */
+        if( panNearX[iPixel] != -1 
+            && fNearDistSq <= nMaxDist * nMaxDist
+            && (pafProximity[iPixel] < 0 
+                || fNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
+            pafProximity[iPixel] = sqrt(fNearDistSq);
+    }
 
     return CE_None;
 }
-                       
