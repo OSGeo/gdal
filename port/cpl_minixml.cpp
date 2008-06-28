@@ -59,6 +59,12 @@ typedef enum {
     TLiteral
 } XMLTokenType;
 
+typedef struct
+{
+    CPLXMLNode *psFirstNode;
+    CPLXMLNode *psLastChild;
+} StackContext;
+
 typedef struct {
     const char *pszInput;
     int        nInputOffset;
@@ -71,9 +77,10 @@ typedef struct {
 
     int        nStackMaxSize;
     int        nStackSize;
-    CPLXMLNode **papsStack;
+    StackContext *papsStack;
 
     CPLXMLNode *psFirstNode;
+    CPLXMLNode *psLastNode;
 } ParseContext;
 
 
@@ -440,12 +447,14 @@ static void PushNode( ParseContext *psContext, CPLXMLNode *psNode )
     if( psContext->nStackMaxSize <= psContext->nStackSize )
     {
         psContext->nStackMaxSize += 10;
-        psContext->papsStack = (CPLXMLNode **)
+        psContext->papsStack = (StackContext *)
             CPLRealloc(psContext->papsStack, 
-                       sizeof(CPLXMLNode*) * psContext->nStackMaxSize);
+                       sizeof(StackContext) * psContext->nStackMaxSize);
     }
 
-    psContext->papsStack[psContext->nStackSize++] = psNode;
+    psContext->papsStack[psContext->nStackSize].psFirstNode = psNode;
+    psContext->papsStack[psContext->nStackSize].psLastChild = NULL;
+    psContext->nStackSize ++;
 }
     
 /************************************************************************/
@@ -460,28 +469,24 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
 
 {
     if( psContext->psFirstNode == NULL )
+    {
         psContext->psFirstNode = psNode;
+        psContext->psLastNode = psNode;
+    }
     else if( psContext->nStackSize == 0 )
     {
-        CPLXMLNode *psSibling;
-
-        psSibling = psContext->psFirstNode;
-        while( psSibling->psNext != NULL )
-            psSibling = psSibling->psNext;
-        psSibling->psNext = psNode;
+        psContext->psLastNode->psNext = psNode;
+        psContext->psLastNode = psNode;
     }
-    else if( psContext->papsStack[psContext->nStackSize-1]->psChild == NULL )
+    else if( psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild == NULL )
     {
-        psContext->papsStack[psContext->nStackSize-1]->psChild = psNode;
+        psContext->papsStack[psContext->nStackSize-1].psFirstNode->psChild = psNode;
+        psContext->papsStack[psContext->nStackSize-1].psLastChild = psNode;
     }
     else
     {
-        CPLXMLNode *psSibling;
-
-        psSibling = psContext->papsStack[psContext->nStackSize-1]->psChild;
-        while( psSibling->psNext != NULL )
-            psSibling = psSibling->psNext;
-        psSibling->psNext = psNode;
+        psContext->papsStack[psContext->nStackSize-1].psLastChild->psNext = psNode;
+        psContext->papsStack[psContext->nStackSize-1].psLastChild = psNode;
     }
 }
 
@@ -541,6 +546,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     sContext.nStackSize = 0;
     sContext.papsStack = NULL;
     sContext.psFirstNode = NULL;
+    sContext.psLastNode = NULL;
 
     /* ensure token is initialized */
     AddToToken( &sContext, ' ' );
@@ -576,7 +582,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
             {
                 if( sContext.nStackSize == 0
                     || !EQUAL(sContext.pszToken+1,
-                         sContext.papsStack[sContext.nStackSize-1]->pszValue) )
+                         sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
                               "Line %d: <%.500s> doesn't have matching <%.500s>.",
@@ -675,7 +681,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                           sContext.nInputLine );
                 break;
             }
-            else if( sContext.papsStack[sContext.nStackSize-1]->pszValue[0] != '?' )
+            else if( sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue[0] != '?' )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Line %d: Found '?>' without matching '<?'.",
@@ -740,7 +746,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Parse error at EOF, not all elements have been closed,\n"
                   "starting with %.500s\n", 
-                  sContext.papsStack[sContext.nStackSize-1]->pszValue );
+                  sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -754,6 +760,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     {
         CPLDestroyXMLNode( sContext.psFirstNode );
         sContext.psFirstNode = NULL;
+        sContext.psLastNode = NULL;
     }
 
     return sContext.psFirstNode;
