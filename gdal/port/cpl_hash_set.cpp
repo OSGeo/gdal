@@ -289,23 +289,27 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
 }
 
 /************************************************************************/
-/*                          CPLHashSetFind()                            */
+/*                        CPLHashSetLookup()                            */
 /************************************************************************/
 
 /**
- * Returns if an element is inserted in a hash set
+ * Returns the element found in the hash set corresponding to the element to look up
+ * The element must not be modified.
  * 
  * @param set the hash set
  * @param elt the element to look up in the hash set
  *
- * @return TRUE if the element is in the hash set
+ * @return the element found in the hash set or NULL
  */
 
-int CPLHashSetFind(CPLHashSet* set, const void* elt)
+void* CPLHashSetLookup(CPLHashSet* set, const void* elt)
 {
     CPLAssert(set != NULL);
     void** pElt = CPLHashSetFindPtr(set, elt);
-    return pElt != NULL;
+    if (pElt)
+        return *pElt;
+    else
+        return NULL;
 }
 
 /************************************************************************/
