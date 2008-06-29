@@ -354,7 +354,7 @@ OGRFeature*
     poFeature->SetGeometryDirectly( new OGRPoint( dfLon, dfLat ) );
     poFeature->SetField( 0, pszIntersectionName );
 
-    if (CPLHashSetFind(poSet, poFeature) == FALSE)
+    if (CPLHashSetLookup(poSet, poFeature) == NULL)
     {
         CPLHashSetInsert(poSet, poFeature->Clone());
         RegisterFeature(poFeature);
