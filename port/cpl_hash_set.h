@@ -74,7 +74,7 @@ void         CPL_DLL CPLHashSetForeach(CPLHashSet* set,
 
 int          CPL_DLL CPLHashSetInsert(CPLHashSet* set, void* elt);
 
-int          CPL_DLL CPLHashSetFind(CPLHashSet* set, const void* elt);
+void         CPL_DLL * CPLHashSetLookup(CPLHashSet* set, const void* elt);
 
 int          CPL_DLL CPLHashSetRemove(CPLHashSet* set, const void* elt);
 
