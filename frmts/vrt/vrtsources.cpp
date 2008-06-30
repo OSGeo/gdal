@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "vrtdataset.h"
+#include "gdal_proxy.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 
@@ -144,6 +145,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     CPLXMLNode      *psSrc;
     int              bRelativeToVRT;
     const char      *pszRelativePath;
+    int              nBlockXSize, nBlockYSize;
 
     if( poRasterBand == NULL )
         return NULL;
@@ -168,6 +170,21 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
     CPLSetXMLValue( psSrc, "SourceBand", 
                     CPLSPrintf("%d",poRasterBand->GetBand()) );
+
+    /* Write a few additional useful properties of the dataset */
+    /* so that we can use a proxy dataset when re-opening. See XMLInit() */
+    /* below */
+    CPLSetXMLValue( psSrc, "SourceProperties.#RasterXSize", 
+                    CPLSPrintf("%d",poRasterBand->GetXSize()) );
+    CPLSetXMLValue( psSrc, "SourceProperties.#RasterYSize", 
+                    CPLSPrintf("%d",poRasterBand->GetYSize()) );
+    CPLSetXMLValue( psSrc, "SourceProperties.#DataType", 
+                GDALGetDataTypeName( poRasterBand->GetRasterDataType() ) );
+    poRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    CPLSetXMLValue( psSrc, "SourceProperties.#BlockXSize", 
+                    CPLSPrintf("%d",nBlockXSize) );
+    CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize", 
+                    CPLSPrintf("%d",nBlockYSize) );
 
     if( nSrcXOff != -1 
         || nSrcYOff != -1 
@@ -209,8 +226,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 /*      Prepare filename.                                               */
 /* -------------------------------------------------------------------- */
     char *pszSrcDSName = NULL;
+    CPLXMLNode* psSourceFileNameNode = CPLGetXMLNode(psSrc,"SourceFilename");
     const char *pszFilename = 
-        CPLGetXMLValue(psSrc, "SourceFilename", NULL);
+        psSourceFileNameNode ? CPLGetXMLValue(psSourceFileNameNode,NULL, NULL) : NULL;
 
     if( pszFilename == NULL )
     {
@@ -220,19 +238,72 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     }
     
     if( pszVRTPath != NULL
-        && atoi(CPLGetXMLValue( psSrc, "SourceFilename.relativetoVRT", "0")) )
+        && atoi(CPLGetXMLValue( psSourceFileNameNode, "relativetoVRT", "0")) )
     {
         pszSrcDSName = CPLStrdup(
             CPLProjectRelativeFilename( pszVRTPath, pszFilename ) );
     }
     else
         pszSrcDSName = CPLStrdup( pszFilename );
-        
-/* -------------------------------------------------------------------- */
-/*      Open the file (shared).                                         */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poSrcDS = (GDALDataset *) 
-        GDALOpenShared( pszSrcDSName, GA_ReadOnly );
+
+
+    int nSrcBand = atoi(CPLGetXMLValue(psSrc,"SourceBand","1"));
+
+    /* Newly generated VRT will have RasterXSize, RasterYSize, DataType, */
+    /* BlockXSize, BlockYSize tags, so that we don't have actually to */
+    /* open the real dataset immediately, but we can use a proxy dataset */
+    /* instead. This is particularly usefull when dealing with huge VRT */
+    /* For example, a VRT with the world coverage of DTED0 (25594 files) */
+    CPLXMLNode* psSrcProperties = CPLGetXMLNode(psSrc,"SourceProperties");
+    int nRasterXSize = 0, nRasterYSize =0;
+    GDALDataType eDataType = (GDALDataType)-1;
+    int nBlockXSize = 0, nBlockYSize = 0;
+    if (psSrcProperties)
+    {
+        nRasterXSize = atoi(CPLGetXMLValue(psSrcProperties,"RasterXSize","0"));
+        nRasterYSize = atoi(CPLGetXMLValue(psSrcProperties,"RasterYSize","0"));
+        const char *pszDataType = CPLGetXMLValue(psSrcProperties, "DataType", NULL);
+        if( pszDataType != NULL )
+        {
+            for( int iType = 0; iType < GDT_TypeCount; iType++ )
+            {
+                const char *pszThisName = GDALGetDataTypeName((GDALDataType)iType);
+
+                if( pszThisName != NULL && EQUAL(pszDataType,pszThisName) )
+                {
+                    eDataType = (GDALDataType) iType;
+                    break;
+                }
+            }
+        }
+        nBlockXSize = atoi(CPLGetXMLValue(psSrcProperties,"BlockXSize","0"));
+        nBlockYSize = atoi(CPLGetXMLValue(psSrcProperties,"BlockYSize","0"));
+    }
+
+    GDALDataset *poSrcDS;
+    if (nRasterXSize == 0 || nRasterYSize == 0 || eDataType == (GDALDataType)-1 ||
+        nBlockXSize == 0 || nBlockYSize == 0)
+    {
+        /* -------------------------------------------------------------------- */
+        /*      Open the file (shared).                                         */
+        /* -------------------------------------------------------------------- */
+        poSrcDS = (GDALDataset *) GDALOpenShared( pszSrcDSName, GA_ReadOnly );
+    }
+    else
+    {
+        /* -------------------------------------------------------------------- */
+        /*      Create a proxy dataset                                          */
+        /* -------------------------------------------------------------------- */
+        int i;
+        GDALProxyPoolDataset* proxyDS = new GDALProxyPoolDataset(pszSrcDSName, nRasterXSize, nRasterYSize, GA_ReadOnly, TRUE);
+        poSrcDS = proxyDS;
+
+        /* Only the information of rasterBand nSrcBand will be accurate */
+        /* but that's OK since we only use that band afterwards */
+        for(i=1;i<=nSrcBand;i++)
+            proxyDS->AddSrcBandDescription(eDataType, nBlockXSize, nBlockYSize);
+    }
+
     CPLFree( pszSrcDSName );
     
     if( poSrcDS == NULL )
@@ -241,7 +312,6 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Get the raster band.                                            */
 /* -------------------------------------------------------------------- */
-    int nSrcBand = atoi(CPLGetXMLValue(psSrc,"SourceBand","1"));
     
     poRasterBand = poSrcDS->GetRasterBand(nSrcBand);
     if( poRasterBand == NULL )
@@ -250,14 +320,31 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Set characteristics.                                            */
 /* -------------------------------------------------------------------- */
-    nSrcXOff = atoi(CPLGetXMLValue(psSrc,"SrcRect.xOff","-1"));
-    nSrcYOff = atoi(CPLGetXMLValue(psSrc,"SrcRect.yOff","-1"));
-    nSrcXSize = atoi(CPLGetXMLValue(psSrc,"SrcRect.xSize","-1"));
-    nSrcYSize = atoi(CPLGetXMLValue(psSrc,"SrcRect.ySize","-1"));
-    nDstXOff = atoi(CPLGetXMLValue(psSrc,"DstRect.xOff","-1"));
-    nDstYOff = atoi(CPLGetXMLValue(psSrc,"DstRect.yOff","-1"));
-    nDstXSize = atoi(CPLGetXMLValue(psSrc,"DstRect.xSize","-1"));
-    nDstYSize = atoi(CPLGetXMLValue(psSrc,"DstRect.ySize","-1"));
+    CPLXMLNode* psSrcRect = CPLGetXMLNode(psSrc,"SrcRect");
+    if (psSrcRect)
+    {
+        nSrcXOff = atoi(CPLGetXMLValue(psSrcRect,"xOff","-1"));
+        nSrcYOff = atoi(CPLGetXMLValue(psSrcRect,"yOff","-1"));
+        nSrcXSize = atoi(CPLGetXMLValue(psSrcRect,"xSize","-1"));
+        nSrcYSize = atoi(CPLGetXMLValue(psSrcRect,"ySize","-1"));
+    }
+    else
+    {
+        nSrcXOff = nSrcYOff = nSrcXSize = nSrcYSize = -1;
+    }
+
+    CPLXMLNode* psDstRect = CPLGetXMLNode(psSrc,"DstRect");
+    if (psDstRect)
+    {
+        nDstXOff = atoi(CPLGetXMLValue(psDstRect,"xOff","-1"));
+        nDstYOff = atoi(CPLGetXMLValue(psDstRect,"yOff","-1"));
+        nDstXSize = atoi(CPLGetXMLValue(psDstRect,"xSize","-1"));
+        nDstYSize = atoi(CPLGetXMLValue(psDstRect,"ySize","-1"));
+    }
+    else
+    {
+        nDstXOff = nDstYOff = nDstXSize = nDstYSize = -1;
+    }
 
     return CE_None;
 }
