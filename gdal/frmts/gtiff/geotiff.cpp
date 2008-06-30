@@ -2957,6 +2957,25 @@ void GTiffDataset::ApplyPamInfo()
         CPLFree( pszProjection );
         pszProjection = CPLStrdup( pszPamSRS );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Copy any PAM metadata into our GeoTIFF context, but with the    */
+/*      GeoTIFF context overriding the PAM info.                        */
+/* -------------------------------------------------------------------- */
+    char **papszPamDomains = oMDMD.GetDomainList();
+    int i;
+
+    for( i = 0; papszPamDomains && papszPamDomains[i] != NULL; i++ )
+    {
+        const char *pszDomain = papszPamDomains[i];
+        char **papszGT_MD = oGTiffMDMD.GetMetadata( pszDomain );
+        char **papszPAM_MD = CSLDuplicate(oMDMD.GetMetadata( pszDomain ));
+
+        papszPAM_MD = CSLMerge( papszPAM_MD, papszGT_MD );
+
+        oGTiffMDMD.SetMetadata( papszPAM_MD, pszDomain );
+        CSLDestroy( papszPAM_MD );
+    }
 }
 
 /************************************************************************/
