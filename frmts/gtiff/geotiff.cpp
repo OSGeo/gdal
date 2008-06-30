@@ -138,6 +138,7 @@ class GTiffDataset : public GDALPamDataset
     int	        bMetadataChanged;
 
     void        ApplyPamInfo();
+    void        PushMetadataToPam();
 
     GDALMultiDomainMetadata oGTiffMDMD;
 
@@ -3016,6 +3017,8 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             char *pszXML_MD = CPLSerializeXMLTree( psRoot );
             if( strlen(pszXML_MD) > 32000 )
             {
+                if( bSrcIsGeoTIFF )
+                    ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "Lost metadata writing to GeoTIFF ... too large to fit in tag." );
             }
@@ -3025,8 +3028,97 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             }
             CPLFree( pszXML_MD );
         }
+        else
+        {
+            if( bSrcIsGeoTIFF )
+                ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
+        }
 
         CPLDestroyXMLNode( psRoot );
+    }
+}
+
+/************************************************************************/
+/*                         PushMetadataToPam()                          */
+/*                                                                      */
+/*      When producing a strict profile TIFF or if our aggregate        */
+/*      metadata is too big for a single tiff tag we may end up         */
+/*      needing to write it via the PAM mechanisms.  This method        */
+/*      copies all the appropriate metadata into the PAM level          */
+/*      metadata object but with special care to avoid copying          */
+/*      metadata handled in other ways in TIFF format.                  */
+/************************************************************************/
+
+void GTiffDataset::PushMetadataToPam()
+
+{
+    int nBand;
+    for( nBand = 0; nBand <= GetRasterCount(); nBand++ )
+    {
+        GDALMultiDomainMetadata *poSrcMDMD;
+        GTiffRasterBand *poBand = NULL;
+
+        if( nBand == 0 )
+            poSrcMDMD = &(this->oGTiffMDMD);
+        else
+        {
+            poBand = (GTiffRasterBand *) GetRasterBand(nBand);
+            poSrcMDMD = &(poBand->oGTiffMDMD);
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Loop over the available domains.                                */
+/* -------------------------------------------------------------------- */
+        int iDomain, i;
+        char **papszDomainList;
+
+        papszDomainList = poSrcMDMD->GetDomainList();
+        for( iDomain = 0; 
+             papszDomainList && papszDomainList[iDomain]; 
+             iDomain++ )
+        {
+            char **papszMD = poSrcMDMD->GetMetadata( papszDomainList[iDomain] );
+
+            if( EQUAL(papszDomainList[iDomain],"RPC")
+                || EQUAL(papszDomainList[iDomain],"IMD") 
+                || EQUAL(papszDomainList[iDomain],"_temporary_") )
+                continue;
+
+            papszMD = CSLDuplicate(papszMD);
+
+            for( i = CSLCount(papszMD)-1; i > 0; i-- )
+            {
+                if( EQUALN(papszMD[i],"TIFFTAG_",8)
+                    || EQUALN(papszMD[i],GDALMD_AREA_OR_POINT,
+                              strlen(GDALMD_AREA_OR_POINT)) )
+                    papszMD = CSLRemoveStrings( papszMD, i, 1, NULL );
+            }
+
+            if( nBand == 0 )
+                ((GDALPamDataset *) this)->
+                    SetMetadata( papszMD, papszDomainList[iDomain]);
+            else
+                ((GDALPamRasterBand *) poBand)->
+                    SetMetadata( papszMD, papszDomainList[iDomain]);
+
+            CSLDestroy( papszMD );
+        }
+            
+/* -------------------------------------------------------------------- */
+/*      Handle some "special domain" stuff.                             */
+/* -------------------------------------------------------------------- */
+        if( poBand != NULL )
+        {
+            int bSuccess;
+            double dfOffset = poBand->GetOffset( &bSuccess );
+            double dfScale = poBand->GetScale();
+
+            if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
+            {
+                ((GDALPamRasterBand *) poBand)->SetScale( dfScale );
+                ((GDALPamRasterBand *) poBand)->SetOffset( dfOffset );
+            }
+        }
     }
 }
 
@@ -3389,6 +3481,25 @@ void GTiffDataset::ApplyPamInfo()
     {
         CPLFree( pszProjection );
         pszProjection = CPLStrdup( pszPamSRS );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy any PAM metadata into our GeoTIFF context, but with the    */
+/*      GeoTIFF context overriding the PAM info.                        */
+/* -------------------------------------------------------------------- */
+    char **papszPamDomains = oMDMD.GetDomainList();
+    int i;
+
+    for( i = 0; papszPamDomains && papszPamDomains[i] != NULL; i++ )
+    {
+        const char *pszDomain = papszPamDomains[i];
+        char **papszGT_MD = oGTiffMDMD.GetMetadata( pszDomain );
+        char **papszPAM_MD = CSLDuplicate(oMDMD.GetMetadata( pszDomain ));
+
+        papszPAM_MD = CSLMerge( papszPAM_MD, papszGT_MD );
+
+        oGTiffMDMD.SetMetadata( papszPAM_MD, pszDomain );
+        CSLDestroy( papszPAM_MD );
     }
 }
 
