@@ -1,0 +1,261 @@
+/******************************************************************************
+ * $Id: gdal_proxy.h $
+ *
+ * Project:  GDAL Core
+ * Purpose:  GDAL Core C++/Private declarations
+ * Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+ *
+ ******************************************************************************
+ * Copyright (c) 2008, Even Rouault
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+#ifndef GDAL_PROXY_H_INCLUDED
+#define GDAL_PROXY_H_INCLUDED
+
+#include "gdal.h"
+
+#ifdef __cplusplus
+
+#include "gdal_priv.h"
+
+/* ******************************************************************** */
+/*                        GDALProxyDataset                              */
+/* ******************************************************************** */
+
+class CPL_DLL GDALProxyDataset : public GDALDataset
+{
+    protected:
+        virtual GDALDataset *GetUnderlyingDataset() = 0;
+
+        virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                                void *, int, int, GDALDataType,
+                                int, int *, int, int, int );
+    public:
+
+        virtual char      **GetMetadata( const char * pszDomain  );
+        virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                        const char * pszDomain  );
+        virtual const char *GetMetadataItem( const char * pszName,
+                                            const char * pszDomain  );
+        virtual CPLErr      SetMetadataItem( const char * pszName,
+                                            const char * pszValue,
+                                            const char * pszDomain );
+
+        virtual void FlushCache(void);
+
+        virtual const char *GetProjectionRef(void);
+        virtual CPLErr SetProjection( const char * );
+
+        virtual CPLErr GetGeoTransform( double * );
+        virtual CPLErr SetGeoTransform( double * );
+
+        virtual void *GetInternalHandle( const char * );
+        virtual GDALDriver *GetDriver(void);
+        virtual char      **GetFileList(void);
+
+        virtual int    GetGCPCount();
+        virtual const char *GetGCPProjection();
+        virtual const GDAL_GCP *GetGCPs();
+        virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                                const char *pszGCPProjection );
+
+        virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                int nBufXSize, int nBufYSize, 
+                                GDALDataType eDT, 
+                                int nBandCount, int *panBandList,
+                                char **papszOptions );
+
+        virtual CPLErr          CreateMaskBand( int nFlags );
+
+};
+
+/* ******************************************************************** */
+/*                         GDALProxyRasterBand                          */
+/* ******************************************************************** */
+
+class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
+{
+    protected:
+        virtual GDALRasterBand* GetUnderlyingRasterBand() = 0;
+
+        virtual CPLErr IReadBlock( int, int, void * );
+        virtual CPLErr IWriteBlock( int, int, void * );
+        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                                void *, int, int, GDALDataType,
+                                int, int );
+
+    public:
+
+        virtual char      **GetMetadata( const char * pszDomain  );
+        virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                        const char * pszDomain  );
+        virtual const char *GetMetadataItem( const char * pszName,
+                                            const char * pszDomain  );
+        virtual CPLErr      SetMetadataItem( const char * pszName,
+                                            const char * pszValue,
+                                            const char * pszDomain );
+        virtual CPLErr FlushCache();
+        virtual char **GetCategoryNames();
+        virtual double GetNoDataValue( int *pbSuccess = NULL );
+        virtual double GetMinimum( int *pbSuccess = NULL );
+        virtual double GetMaximum(int *pbSuccess = NULL );
+        virtual double GetOffset( int *pbSuccess = NULL );
+        virtual double GetScale( int *pbSuccess = NULL );
+        virtual const char *GetUnitType();
+        virtual GDALColorInterp GetColorInterpretation();
+        virtual GDALColorTable *GetColorTable();
+        virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0);
+
+        virtual CPLErr SetCategoryNames( char ** );
+        virtual CPLErr SetNoDataValue( double );
+        virtual CPLErr SetColorTable( GDALColorTable * ); 
+        virtual CPLErr SetColorInterpretation( GDALColorInterp );
+        virtual CPLErr SetOffset( double );
+        virtual CPLErr SetScale( double );
+        virtual CPLErr SetUnitType( const char * );
+
+        virtual CPLErr GetStatistics( int bApproxOK, int bForce,
+                                    double *pdfMin, double *pdfMax, 
+                                    double *pdfMean, double *padfStdDev );
+        virtual CPLErr ComputeStatistics( int bApproxOK, 
+                                        double *pdfMin, double *pdfMax, 
+                                        double *pdfMean, double *pdfStdDev,
+                                        GDALProgressFunc, void *pProgressData );
+        virtual CPLErr SetStatistics( double dfMin, double dfMax, 
+                                    double dfMean, double dfStdDev );
+        virtual CPLErr ComputeRasterMinMax( int, double* );
+
+        virtual int HasArbitraryOverviews();
+        virtual int GetOverviewCount();
+        virtual GDALRasterBand *GetOverview(int);
+        virtual GDALRasterBand *GetRasterSampleOverview( int );
+        virtual CPLErr BuildOverviews( const char *, int, int *,
+                                    GDALProgressFunc, void * );
+
+        virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                int nBufXSize, int nBufYSize, 
+                                GDALDataType eDT, char **papszOptions );
+
+        virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                            int nBuckets, int * panHistogram,
+                            int bIncludeOutOfRange, int bApproxOK,
+                            GDALProgressFunc, void *pProgressData );
+
+        virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                            int *pnBuckets, int ** ppanHistogram,
+                                            int bForce,
+                                            GDALProgressFunc, void *pProgressData);
+        virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                            int nBuckets, int *panHistogram );
+
+        virtual const GDALRasterAttributeTable *GetDefaultRAT();
+        virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+
+        virtual GDALRasterBand *GetMaskBand();
+        virtual int             GetMaskFlags();
+        virtual CPLErr          CreateMaskBand( int nFlags );
+
+};
+
+
+/* ******************************************************************** */
+/*                     GDALProxyPoolDataset                             */
+/* ******************************************************************** */
+
+class     GDALProxyPoolRasterBand;
+
+class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
+{
+    private:
+        char            *pszProjectionRef;
+        double           adfGeoTransform[6];
+        int              bHasSrcProjection;
+        int              bHasSrcGeoTransform;
+
+    protected:
+        virtual GDALDataset *GetUnderlyingDataset();
+
+        friend class     GDALProxyPoolRasterBand;
+
+    public:
+        GDALProxyPoolDataset(const char* pszSourceDatasetDescription,
+                            int nRasterXSize, int nRasterYSize,
+                            GDALAccess eAccess = GA_ReadOnly,
+                            int bShared = FALSE,
+                            const char * pszProjectionRef = NULL,
+                            double * padfGeoTransform = NULL);
+        ~GDALProxyPoolDataset();
+
+        void         AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
+
+        virtual const char *GetProjectionRef(void);
+        virtual CPLErr SetProjection( const char * );
+
+        virtual CPLErr GetGeoTransform( double * );
+        virtual CPLErr SetGeoTransform( double * );
+
+};
+
+/* ******************************************************************** */
+/*                  GDALProxyPoolRasterBand                             */
+/* ******************************************************************** */
+
+
+class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
+{
+    protected:
+        virtual GDALRasterBand* GetUnderlyingRasterBand();
+
+    public:
+        GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS, int nBand,
+                                GDALDataType eDataType,
+                                int nBlockXSize, int nBlockYSize);
+};
+
+#endif
+
+
+/* ******************************************************************** */
+/*            C types and methods declarations                          */
+/* ******************************************************************** */
+
+
+CPL_C_START
+
+typedef struct GDALProxyPoolDatasetHS *GDALProxyPoolDatasetH;
+
+GDALProxyPoolDatasetH CPL_DLL GDALProxyPoolDatasetCreate(const char* pszSourceDatasetDescription,
+                                                         int nRasterXSize, int nRasterYSize,
+                                                         GDALAccess eAccess, int bShared,
+                                                         const char * pszProjectionRef,
+                                                         double * padfGeoTransform);
+
+void CPL_DLL GDALProxyPoolDatasetDelete(GDALProxyPoolDatasetH hProxyPoolDataset);
+
+void CPL_DLL GDALProxyPoolDatasetAddSrcBandDescription( GDALProxyPoolDatasetH hProxyPoolDataset,
+                                                        GDALDataType eDataType,
+                                                        int nBlockXSize, int nBlockYSize);
+
+CPL_C_END
+
+#endif /* GDAL_PROXY_H_INCLUDED */
