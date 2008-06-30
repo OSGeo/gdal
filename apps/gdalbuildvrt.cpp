@@ -27,10 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "gdal_proxy.h"
 #include "cpl_string.h"
 #include "ogrsf_frmts/shape/shapefil.h"
-#include "vrt/vrtdataset.h"
+#include "vrt/gdal_vrt.h"
 
 CPL_CVSID("$Id: gdalbuildvrt.cpp rouault $");
 
@@ -50,9 +50,13 @@ typedef enum
 
 typedef struct
 {
-    int                    rasterXSize;
-    int                    rasterYSize;
-} RasterSize;
+    int    isFileOK;
+    int    nRasterXSize;
+    int    nRasterYSize;
+    double adfGeoTransform[6];
+    int    nBlockXSize;
+    int    nBlockYSize;
+} DatasetProperty;
 
 typedef struct
 {
@@ -90,31 +94,29 @@ static void Usage()
     exit( 1 );
 }
 
+
 void build_vrt(const char* pszOutputFilename,
                int* pnInputFiles, char*** pppszInputFilenames,
                ResolutionStrategy resolutionStrategy)
 {
     char* projectionRef = NULL;
-    RasterSize* rasterSizes;
-    double* adfGeoTransforms;
     int nBands = 0;
     BandProperty* bandProperties = NULL;
-    int index = 0;
     double minX = 0, minY = 0, maxX = 0, maxY = 0;
     int i,j;
-    int* isFileOk;
     double we_res = 0;
     double ns_res = 0;
-    VRTDataset* ds;
     int rasterXSize;
     int rasterYSize;
-    
+    int nCount = 0;
+    int bFirst = TRUE;
+    VRTDatasetH hVRTDS = NULL;
+
     char** ppszInputFilenames = *pppszInputFilenames;
     int nInputFiles = *pnInputFiles;
-    
-    rasterSizes = (RasterSize*)CPLMalloc(nInputFiles*sizeof(RasterSize));
-    adfGeoTransforms = (double*)CPLMalloc(nInputFiles*6*sizeof(double));
-    isFileOk = (int*)CPLMalloc(nInputFiles*sizeof(int));
+
+    DatasetProperty* psDatasetProperties =
+            (DatasetProperty*) CPLMalloc(nInputFiles*sizeof(DatasetProperty));
 
     for(i=0;i<nInputFiles;i++)
     {
@@ -123,18 +125,16 @@ void build_vrt(const char* pszOutputFilename,
         GDALTermProgress( 1.0 * (i+1) / nInputFiles, NULL, NULL);
 
         GDALDatasetH hDS = GDALOpen(ppszInputFilenames[i], GA_ReadOnly );
-        isFileOk[i] = 0;
+        psDatasetProperties[i].isFileOK = FALSE;
+
         if (hDS)
         {
             char** papszMetadata = GDALGetMetadata( hDS, "SUBDATASETS" );
             if( CSLCount(papszMetadata) > 0 )
             {
-                rasterSizes = (RasterSize*)CPLRealloc(rasterSizes,
-                               (nInputFiles+CSLCount(papszMetadata))*sizeof(RasterSize));
-                adfGeoTransforms = (double*)CPLRealloc(adfGeoTransforms,
-                                    (nInputFiles+CSLCount(papszMetadata))*6*sizeof(double));
-                isFileOk = (int*)CPLRealloc(isFileOk,
-                            (nInputFiles+CSLCount(papszMetadata))*sizeof(int));
+                psDatasetProperties =
+                    (DatasetProperty*) CPLMalloc((nInputFiles+CSLCount(papszMetadata))*sizeof(DatasetProperty));
+
                 ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames,
                                         sizeof(char*) * (nInputFiles+CSLCount(papszMetadata)));
                 int count = 1;
@@ -155,30 +155,36 @@ void build_vrt(const char* pszOutputFilename,
             }
 
             const char* proj = GDALGetProjectionRef(hDS);
-            GDALGetGeoTransform(hDS, adfGeoTransforms + index * 6);
-            if (adfGeoTransforms[index * 6 + GEOTRSFRM_ROTATION_PARAM1] != 0 ||
-                adfGeoTransforms[index * 6 + GEOTRSFRM_ROTATION_PARAM2] != 0)
+            GDALGetGeoTransform(hDS, psDatasetProperties[i].adfGeoTransform);
+            if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
+                psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] != 0)
             {
                 fprintf( stderr, "gdalbuildvrt does not support rotated geo transforms. Skipping %s\n",
                              dsFileName);
                 GDALClose(hDS);
                 continue;
             }
-            if (adfGeoTransforms[index * 6 + GEOTRSFRM_NS_RES] >= 0)
+            if (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
             {
                 fprintf( stderr, "gdalbuildvrt does not support positive NS resolution. Skipping %s\n",
                              dsFileName);
                 GDALClose(hDS);
                 continue;
             }
-            rasterSizes[index].rasterXSize = GDALGetRasterXSize(hDS);
-            rasterSizes[index].rasterYSize = GDALGetRasterYSize(hDS);
-            double product_minX = adfGeoTransforms[index * 6 + GEOTRSFRM_TOPLEFT_X];
-            double product_maxY = adfGeoTransforms[index * 6 + GEOTRSFRM_TOPLEFT_Y];
-            double product_maxX = product_minX + rasterSizes[index].rasterXSize * adfGeoTransforms[index * 6 + GEOTRSFRM_WE_RES];
-            double product_minY = product_maxY + rasterSizes[index].rasterYSize * adfGeoTransforms[index * 6 + GEOTRSFRM_NS_RES];
-            
-            if (index == 0)
+            psDatasetProperties[i].nRasterXSize = GDALGetRasterXSize(hDS);
+            psDatasetProperties[i].nRasterYSize = GDALGetRasterYSize(hDS);
+            double product_minX = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
+            double product_maxY = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
+            double product_maxX = product_minX +
+                        GDALGetRasterXSize(hDS) * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES];
+            double product_minY = product_maxY +
+                        GDALGetRasterYSize(hDS) * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES];
+
+            GDALGetBlockSize(GDALGetRasterBand( hDS, 1 ),
+                             &psDatasetProperties[i].nBlockXSize,
+                             &psDatasetProperties[i].nBlockYSize);
+
+            if (bFirst)
             {
                 if (proj)
                     projectionRef = CPLStrdup(proj);
@@ -208,8 +214,8 @@ void build_vrt(const char* pszOutputFilename,
             }
             else
             {
-                if (proj != NULL && projectionRef == NULL ||
-                    proj == NULL && projectionRef != NULL ||
+                if ((proj != NULL && projectionRef == NULL) ||
+                    (proj == NULL && projectionRef != NULL) ||
                     (proj != NULL && projectionRef != NULL && EQUAL(proj, projectionRef) == FALSE))
                 {
                     fprintf( stderr, "gdalbuildvrt does not support heterogenous projection. Skipping %s\n",
@@ -258,30 +264,31 @@ void build_vrt(const char* pszOutputFilename,
             }
             if (resolutionStrategy == AVERAGE_RESOLUTION)
             {
-                we_res += adfGeoTransforms[index * 6 + GEOTRSFRM_WE_RES];
-                ns_res += adfGeoTransforms[index * 6 + GEOTRSFRM_NS_RES];
+                we_res += psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES];
+                ns_res += psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES];
             }
             else
             {
-                if (index == 0)
+                if (bFirst)
                 {
-                    we_res = adfGeoTransforms[index * 6 + GEOTRSFRM_WE_RES];
-                    ns_res = adfGeoTransforms[index * 6 + GEOTRSFRM_NS_RES];
+                    we_res = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES];
+                    ns_res = psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES];
                 }
                 else if (resolutionStrategy == HIGHEST_RESOLUTION)
                 {
-                    we_res = MIN(we_res, adfGeoTransforms[index * 6 + GEOTRSFRM_WE_RES]);
-                    ns_res = MIN(ns_res, adfGeoTransforms[index * 6 + GEOTRSFRM_NS_RES]);
+                    we_res = MIN(we_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES]);
+                    ns_res = MIN(ns_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES]);
                 }
                 else
                 {
-                    we_res = MAX(we_res, adfGeoTransforms[index * 6 + GEOTRSFRM_WE_RES]);
-                    ns_res = MAX(ns_res, adfGeoTransforms[index * 6 + GEOTRSFRM_NS_RES]);
+                    we_res = MAX(we_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES]);
+                    ns_res = MAX(ns_res, psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES]);
                 }
             }
 
-            isFileOk[i] = 1;
-            index++;
+            psDatasetProperties[i].isFileOK = 1;
+            nCount ++;
+            bFirst = FALSE;
             GDALClose(hDS);
         }
         else
@@ -293,24 +300,24 @@ void build_vrt(const char* pszOutputFilename,
     *pppszInputFilenames = ppszInputFilenames;
     *pnInputFiles = nInputFiles;
     
-    if (index == 0)
+    if (nCount == 0)
         goto end;
     
     if (resolutionStrategy == AVERAGE_RESOLUTION)
     {
-        we_res /= index;
-        ns_res /= index;
+        we_res /= nCount;
+        ns_res /= nCount;
     }
     
     rasterXSize = (int)(0.5 + (maxX - minX) / we_res);
     rasterYSize = (int)(0.5 + (maxY - minY) / -ns_res);
     
-    ds = new VRTDataset(rasterXSize, rasterYSize);
-    ds->SetDescription(pszOutputFilename);
+    hVRTDS = VRTCreate(rasterXSize, rasterYSize);
+    GDALSetDescription(hVRTDS, pszOutputFilename);
     
     if (projectionRef)
     {
-        ds->SetProjection(projectionRef);
+        GDALSetProjection(hVRTDS, projectionRef);
     }
 
     double adfGeoTransform[6];
@@ -320,59 +327,77 @@ void build_vrt(const char* pszOutputFilename,
     adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = maxY;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
     adfGeoTransform[GEOTRSFRM_NS_RES] = ns_res;
-    ds->SetGeoTransform(adfGeoTransform);
+    GDALSetGeoTransform(hVRTDS, adfGeoTransform);
     
     for(j=0;j<nBands;j++)
     {
-        ds->AddBand(bandProperties[j].dataType, NULL);
-        ds->GetRasterBand(j+1)->SetColorInterpretation(bandProperties[j].colorInterpretation);
+        GDALRasterBandH hBand;
+        GDALAddBand(hVRTDS, bandProperties[j].dataType, NULL);
+        hBand = GDALGetRasterBand(hVRTDS, j+1);
+        GDALSetRasterColorInterpretation(hBand, bandProperties[j].colorInterpretation);
         if (bandProperties[j].colorInterpretation == GCI_PaletteIndex)
         {
-            ds->GetRasterBand(j+1)->SetColorTable((GDALColorTable*)bandProperties[j].colorTable);
+            GDALSetRasterColorTable(hBand, bandProperties[j].colorTable);
         }
         if (bandProperties[j].bHasNoData)
-            ds->GetRasterBand(j+1)->SetNoDataValue(bandProperties[j].noDataValue);
+            GDALSetRasterNoDataValue(hBand, bandProperties[j].noDataValue);
     }
 
     for(i=0;i<nInputFiles;i++)
     {
-        if (isFileOk[i] == 0)
+        if (psDatasetProperties[i].isFileOK == 0)
             continue;
         const char* dsFileName = ppszInputFilenames[i];
-        GDALDatasetH hDS = GDALOpen(dsFileName, GA_ReadOnly ); 
-        int xoffset = (int)
-                (0.5 + (adfGeoTransforms[i * 6 + GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
-        int yoffset = (int)
-                (0.5 + (maxY - adfGeoTransforms[i * 6 + GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
-        int dest_width = (int)
-                (0.5 + rasterSizes[i].rasterXSize * adfGeoTransforms[i * 6 + GEOTRSFRM_WE_RES] / we_res);
-        int dest_height = (int)
-                (0.5 + rasterSizes[i].rasterYSize * adfGeoTransforms[i * 6 + GEOTRSFRM_NS_RES] / ns_res);
+
+        GDALProxyPoolDatasetH hProxyDS =
+               GDALProxyPoolDatasetCreate(dsFileName,
+                                         psDatasetProperties[i].nRasterXSize,
+                                         psDatasetProperties[i].nRasterYSize,
+                                         GA_ReadOnly, TRUE, projectionRef,
+                                         psDatasetProperties[i].adfGeoTransform);
 
         for(j=0;j<nBands;j++)
         {
-            VRTSourcedRasterBand *poBand = (VRTSourcedRasterBand*)ds->GetRasterBand( j + 1 );
+            GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
+                                            bandProperties[j].dataType,
+                                            psDatasetProperties[i].nBlockXSize,
+                                            psDatasetProperties[i].nBlockYSize);
+        }
+
+        int xoffset = (int)
+                (0.5 + (psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
+        int yoffset = (int)
+                (0.5 + (maxY - psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
+        int dest_width = (int)
+                (0.5 + psDatasetProperties[i].nRasterXSize * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
+        int dest_height = (int)
+                (0.5 + psDatasetProperties[i].nRasterYSize * psDatasetProperties[i].adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
+
+        for(j=0;j<nBands;j++)
+        {
+            VRTSourcedRasterBandH hVRTBand = (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, j + 1);
 
             /* Place the raster band at the right position in the VRT */
-            poBand->AddSimpleSource((GDALRasterBand*)GDALGetRasterBand(hDS, j + 1),
-                                    0, 0, rasterSizes[i].rasterXSize, rasterSizes[i].rasterYSize,
-                                    xoffset, yoffset,
-                                    dest_width, dest_height);
+            VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, j + 1),
+                               0, 0,
+                               psDatasetProperties[i].nRasterXSize,
+                               psDatasetProperties[i].nRasterYSize,
+                               xoffset, yoffset,
+                               dest_width, dest_height, "near",
+                               VRT_NODATA_UNSET);
         }
-        GDALClose(hDS);
+        GDALDereferenceDataset(hProxyDS);
     }
-    delete ds;
+    GDALClose(hVRTDS);
 
 end:
-    CPLFree(rasterSizes);
-    CPLFree(adfGeoTransforms);
+    CPLFree(psDatasetProperties);
     for(j=0;j<nBands;j++)
     {
         GDALDestroyColorTable(bandProperties[j].colorTable);
     }
     CPLFree(bandProperties);
     CPLFree(projectionRef);
-    CPLFree(isFileOk);
 
 }
 
@@ -465,7 +490,7 @@ int main( int nArgc, char ** papszArgv )
     int nInputFiles = 0;
     char ** ppszInputFilenames = NULL;
     const char * pszOutputFilename = NULL;
-    int i;
+    int i, iArg;
 
     GDALAllRegister();
 
@@ -476,7 +501,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Parse commandline.                                              */
 /* -------------------------------------------------------------------- */
-    for( int iArg = 1; iArg < nArgc; iArg++ )
+    for( iArg = 1; iArg < nArgc; iArg++ )
     {
         if( strcmp(papszArgv[iArg],"-tileindex") == 0 )
         {
@@ -526,6 +551,7 @@ int main( int nArgc, char ** papszArgv )
 
 
     CSLDestroy( papszArgv );
+    GDALDumpOpenDatasets( stderr );
     GDALDestroyDriverManager();
 
     return 0;
