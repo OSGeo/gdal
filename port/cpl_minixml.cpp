@@ -88,7 +88,7 @@ typedef struct {
 /*                              ReadChar()                              */
 /************************************************************************/
 
-static char ReadChar( ParseContext *psContext )
+static CPL_INLINE char ReadChar( ParseContext *psContext )
 
 {
     char        chReturn;
@@ -107,7 +107,7 @@ static char ReadChar( ParseContext *psContext )
 /*                             UnreadChar()                             */
 /************************************************************************/
 
-static void UnreadChar( ParseContext *psContext, char chToUnread )
+static CPL_INLINE void UnreadChar( ParseContext *psContext, char chToUnread )
 
 {
     if( chToUnread == '\0' )
@@ -130,7 +130,7 @@ static void UnreadChar( ParseContext *psContext, char chToUnread )
 /*                             AddToToken()                             */
 /************************************************************************/
 
-static void AddToToken( ParseContext *psContext, char chNewChar )
+static CPL_INLINE void AddToToken( ParseContext *psContext, char chNewChar )
 
 {
     if( psContext->pszToken == NULL )
@@ -1172,6 +1172,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 
 {
+    char        *apszTokens[2];
     char        **papszTokens;
     int         iToken = 0;
     int         bSideSearch = FALSE;
@@ -1185,7 +1186,16 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         pszPath++;
     }
 
-    papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
+    /* Slight optimization : avoid using CSLTokenizeStringComplex that */
+    /* does memory allocations when it is not really necessary */
+    if (strchr(pszPath, '.'))
+        papszTokens = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
+    else
+    {
+        apszTokens[0] = (char*) pszPath;
+        apszTokens[1] = NULL;
+        papszTokens = apszTokens;
+    }
 
     while( papszTokens[iToken] != NULL && psRoot != NULL )
     {
@@ -1216,7 +1226,8 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         iToken++;
     }
 
-    CSLDestroy( papszTokens );
+    if (papszTokens != apszTokens)
+        CSLDestroy( papszTokens );
     return psRoot;
 }
 
