@@ -40,6 +40,8 @@ class GDALDataset;
 class GDALRasterBand;
 class GDALDriver;
 class GDALRasterAttributeTable;
+class GDALProxyDataset;
+class GDALProxyRasterBand;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -196,6 +198,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend GDALDatasetH CPL_STDCALL GDALOpenShared( const char *, GDALAccess);
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
+    friend class GDALProxyDataset;
 
   protected:
     GDALDriver  *poDriver;
@@ -408,6 +411,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     friend class GDALDataset;
     friend class GDALRasterBlock;
+    friend class GDALProxyRasterBand;
 
   protected:
     virtual CPLErr IReadBlock( int, int, void * ) = 0;
