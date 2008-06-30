@@ -699,6 +699,8 @@ def hfa_proName():
     else:
         result = 'success'
 
+    ds = None
+
     drv.Delete( 'tmp/proname.img' )
 
     return result
