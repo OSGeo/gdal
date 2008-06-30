@@ -235,6 +235,11 @@ typedef unsigned long    GUIntBig;
 #  define FORCE_CDECL 
 #endif
 
+/* TODO : support for other compilers needed */
+#if defined(__GNUC__)
+#define CPL_INLINE inline
+#endif
+
 #ifndef NULL
 #  define NULL  0
 #endif
