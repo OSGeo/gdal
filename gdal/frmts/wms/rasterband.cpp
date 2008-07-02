@@ -280,10 +280,17 @@ void GDALWMSRasterBand::AskMiniDriverForBlock(CPLString *url, int x, int y) {
     GDALWMSImageRequestInfo iri;
     GDALWMSTiledImageRequestInfo tiri;
 
-    const int x0 = MIN(MAX(0, x * nBlockXSize), nRasterXSize);
-    const int y0 = MIN(MAX(0, y * nBlockYSize), nRasterYSize);
-    const int x1 = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize);
-    const int y1 = MIN(MAX(0, (y + 1) * nBlockYSize), nRasterYSize);
+    int x0 = MAX(0, x * nBlockXSize);
+    int y0 = MAX(0, y * nBlockYSize);
+    int x1 = MAX(0, (x + 1) * nBlockXSize);
+    int y1 = MAX(0, (y + 1) * nBlockYSize);
+    if (m_parent_dataset->m_clamp_requests) {
+	x0 = MIN(x0, nRasterXSize);
+	y0 = MIN(y0, nRasterYSize);
+	x1 = MIN(x1, nRasterXSize);
+	y1 = MIN(y1, nRasterYSize);
+    }
+    
     const double rx = (m_parent_dataset->m_data_window.m_x1 - m_parent_dataset->m_data_window.m_x0) / static_cast<double>(nRasterXSize);
     const double ry = (m_parent_dataset->m_data_window.m_y1 - m_parent_dataset->m_data_window.m_y0) / static_cast<double>(nRasterYSize);
     /* Use different method for x0,y0 and x1,y1 to make sure calculated values are exact for corner requests */
