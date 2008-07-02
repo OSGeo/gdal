@@ -34,6 +34,7 @@ GDALWMSDataset::GDALWMSDataset() {
     m_cache = 0;
     m_hint.m_valid = false;
     m_data_type = GDT_Byte;
+    m_clamp_requests = true;
 }
 
 GDALWMSDataset::~GDALWMSDataset() {
@@ -100,6 +101,15 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         const char *block_size_y = CPLGetXMLValue(config, "BlockSizeY", "1024");
         m_block_size_x = atoi(block_size_x);
         m_block_size_y = atoi(block_size_y);
+    }
+    if (ret == CE_None) {
+    	const int clamp_requests_bool = StrToBool(CPLGetXMLValue(config, "ClampRequests", "true"));
+    	if (clamp_requests_bool == -1) {
+	    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ClampRequests, true / false expected.");
+	    ret = CE_Failure;
+	} else {
+	    m_clamp_requests = clamp_requests_bool;
+	}
     }
     if (ret == CE_None) {
         CPLXMLNode *data_window_node = CPLGetXMLNode(config, "DataWindow");
