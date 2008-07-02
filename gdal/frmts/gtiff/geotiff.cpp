@@ -4620,7 +4620,13 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poDS == NULL )
         poDS = (GTiffDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
-    if( poDS != NULL && EQUAL(pszProfile,"GDALGeoTIFF") )
+    if ( poDS == NULL )
+    {
+        VSIUnlink( pszFilename );
+        return NULL;
+    }
+
+    if( EQUAL(pszProfile,"GDALGeoTIFF") )
     {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
     }
@@ -4651,19 +4657,16 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
-    if( poDS != NULL )
-    {
-        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
-                                           (GDALDatasetH) poDS,
-                                           NULL, pfnProgress, pProgressData );
+    eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+                                        (GDALDatasetH) poDS,
+                                        NULL, pfnProgress, pProgressData );
 
-        if( eErr == CE_Failure )
-        {
-            delete poDS;
-            poDS = NULL;
-            
-            VSIUnlink( pszFilename ); // should really delete more carefully.
-        }
+    if( eErr == CE_Failure )
+    {
+        delete poDS;
+        poDS = NULL;
+        
+        VSIUnlink( pszFilename ); // should really delete more carefully.
     }
     
     return poDS;
