@@ -201,8 +201,8 @@ class GTiffDataset : public GDALPamDataset
     virtual CPLErr          CreateMaskBand( int nFlags );
 
     // only needed by createcopy and close code.
-    static void	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
-                                   const char *, char ** );
+    static int	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
+                                   const char *, char **, int bExcludeRPBandIMGFileWriting = FALSE );
     static void	    WriteNoDataValue( TIFF *, double );
 
     static TIFF *   CreateLL( const char * pszFilename,
@@ -2906,11 +2906,12 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /*                           WriteMetadata()                            */
 /************************************************************************/
 
-void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
+int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
                                   int bSrcIsGeoTIFF,
                                   const char *pszProfile,
                                   const char *pszTIFFFilename,
-                                  char **papszCreationOptions )
+                                  char **papszCreationOptions,
+                                  int bExcludeRPBandIMGFileWriting)
 
 {
 /* -------------------------------------------------------------------- */
@@ -2941,7 +2942,7 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 /*      Handle RPC data written to an RPB file.                         */
 /* -------------------------------------------------------------------- */
     char **papszRPCMD = poSrcDS->GetMetadata("RPC");
-    if( papszRPCMD != NULL )
+    if( papszRPCMD != NULL && !bExcludeRPBandIMGFileWriting )
     {
         if( EQUAL(pszProfile,"GDALGeoTIFF") )
             WriteRPCTag( hTIFF, papszRPCMD );
@@ -2957,7 +2958,7 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 /*      Handle metadata data written to an IMD file.                    */
 /* -------------------------------------------------------------------- */
     char **papszIMDMD = poSrcDS->GetMetadata("IMD");
-    if( papszIMDMD != NULL )
+    if( papszIMDMD != NULL && !bExcludeRPBandIMGFileWriting)
     {
         GDALWriteIMDFile( pszTIFFFilename, papszIMDMD );
     }
@@ -3012,6 +3013,8 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
 /* -------------------------------------------------------------------- */
     if( psRoot != NULL )
     {
+        int bRet = TRUE;
+
         if( EQUAL(pszProfile,"GDALGeoTIFF") )
         {
             char *pszXML_MD = CPLSerializeXMLTree( psRoot );
@@ -3019,6 +3022,8 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             {
                 if( bSrcIsGeoTIFF )
                     ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
+                else
+                    bRet = FALSE;
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "Lost metadata writing to GeoTIFF ... too large to fit in tag." );
             }
@@ -3032,10 +3037,16 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         {
             if( bSrcIsGeoTIFF )
                 ((GTiffDataset *) poSrcDS)->PushMetadataToPam();
+            else
+                bRet = FALSE;
         }
 
         CPLDestroyXMLNode( psRoot );
+
+        return bRet;
     }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -3086,7 +3097,7 @@ void GTiffDataset::PushMetadataToPam()
 
             papszMD = CSLDuplicate(papszMD);
 
-            for( i = CSLCount(papszMD)-1; i > 0; i-- )
+            for( i = CSLCount(papszMD)-1; i >= 0; i-- )
             {
                 if( EQUALN(papszMD[i],"TIFFTAG_",8)
                     || EQUALN(papszMD[i],GDALMD_AREA_OR_POINT,
@@ -3095,11 +3106,9 @@ void GTiffDataset::PushMetadataToPam()
             }
 
             if( nBand == 0 )
-                ((GDALPamDataset *) this)->
-                    SetMetadata( papszMD, papszDomainList[iDomain]);
+                GDALPamDataset::SetMetadata( papszMD, papszDomainList[iDomain]);
             else
-                ((GDALPamRasterBand *) poBand)->
-                    SetMetadata( papszMD, papszDomainList[iDomain]);
+                poBand->GDALPamRasterBand::SetMetadata( papszMD, papszDomainList[iDomain]);
 
             CSLDestroy( papszMD );
         }
@@ -3115,8 +3124,8 @@ void GTiffDataset::PushMetadataToPam()
 
             if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
             {
-                ((GDALPamRasterBand *) poBand)->SetScale( dfScale );
-                ((GDALPamRasterBand *) poBand)->SetOffset( dfOffset );
+                poBand->GDALPamRasterBand::SetScale( dfScale );
+                poBand->GDALPamRasterBand::SetOffset( dfOffset );
             }
         }
     }
@@ -3488,11 +3497,10 @@ void GTiffDataset::ApplyPamInfo()
 /*      GeoTIFF context overriding the PAM info.                        */
 /* -------------------------------------------------------------------- */
     char **papszPamDomains = oMDMD.GetDomainList();
-    int i;
 
-    for( i = 0; papszPamDomains && papszPamDomains[i] != NULL; i++ )
+    for( int iDomain = 0; papszPamDomains && papszPamDomains[iDomain] != NULL; iDomain++ )
     {
-        const char *pszDomain = papszPamDomains[i];
+        const char *pszDomain = papszPamDomains[iDomain];
         char **papszGT_MD = oGTiffMDMD.GetMetadata( pszDomain );
         char **papszPAM_MD = CSLDuplicate(oMDMD.GetMetadata( pszDomain ));
 
@@ -3500,6 +3508,24 @@ void GTiffDataset::ApplyPamInfo()
 
         oGTiffMDMD.SetMetadata( papszPAM_MD, pszDomain );
         CSLDestroy( papszPAM_MD );
+    }
+
+    for( int i = 1; i <= GetRasterCount(); i++)
+    {
+        GTiffRasterBand* poBand = (GTiffRasterBand *)GetRasterBand(i);
+        papszPamDomains = poBand->oMDMD.GetDomainList();
+
+        for( int iDomain = 0; papszPamDomains && papszPamDomains[iDomain] != NULL; iDomain++ )
+        {
+            const char *pszDomain = papszPamDomains[iDomain];
+            char **papszGT_MD = poBand->oGTiffMDMD.GetMetadata( pszDomain );
+            char **papszPAM_MD = CSLDuplicate(poBand->oMDMD.GetMetadata( pszDomain ));
+
+            papszPAM_MD = CSLMerge( papszPAM_MD, papszGT_MD );
+
+            poBand->oGTiffMDMD.SetMetadata( papszPAM_MD, pszDomain );
+            CSLDestroy( papszPAM_MD );
+        }
     }
 }
 
@@ -5130,10 +5156,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "can only be written to 1 band Byte or UInt16 GeoTIFF files." );
 
 /* -------------------------------------------------------------------- */
-/*      Transfer some TIFF specific metadata, if available.  Should     */
-/*      we push this into .pam if we are avoiding GDAL tags?            */
+/*      Transfer some TIFF specific metadata, if available.             */
+/*      The return value will tell us if we need to try again later with*/
+/*      PAM because the profile doesn't allow to write some metadata    */
+/*      as TIFF tag                                                     */
 /* -------------------------------------------------------------------- */
-    GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE, pszProfile,
+    int bHasWrittenMDInGeotiffTAG =
+            GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE, pszProfile,
                                  pszFilename, papszOptions );
 
 /* -------------------------------------------------------------------- */
@@ -5306,12 +5335,41 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     poDS->osProfile = pszProfile;
-    if( EQUAL(pszProfile,"GDALGeoTIFF") )
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+/* -------------------------------------------------------------------- */
+/*      CloneInfo() doesn't merge metadata, it just replaces it totally */
+/*      So we have to merge it                                          */
+/* -------------------------------------------------------------------- */
+
+    char **papszSRC_MD = poSrcDS->GetMetadata();
+    char **papszDST_MD = CSLDuplicate(poDS->GetMetadata());
+
+    papszDST_MD = CSLMerge( papszDST_MD, papszSRC_MD );
+
+    poDS->SetMetadata( papszDST_MD );
+    CSLDestroy( papszDST_MD );
+
+    for( int nBand = 1; nBand <= poDS->GetRasterCount(); nBand++ )
     {
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        char **papszSRC_MD = poSrcDS->GetRasterBand(nBand)->GetMetadata();
+        char **papszDST_MD = CSLDuplicate(poDS->GetRasterBand(nBand)->GetMetadata());
+
+        papszDST_MD = CSLMerge( papszDST_MD, papszSRC_MD );
+
+        poDS->GetRasterBand(nBand)->SetMetadata( papszDST_MD );
+        CSLDestroy( papszDST_MD );
     }
 
     hTIFF = (TIFF*) poDS->GetInternalHandle(NULL);
+
+/* -------------------------------------------------------------------- */
+/*      Second chance : now that we have a PAM dataset, it is possible  */
+/*      to write metadata that we couldn't be writen as TIFF tag        */
+/* -------------------------------------------------------------------- */
+    if (!bHasWrittenMDInGeotiffTAG)
+        GTiffDataset::WriteMetadata( poDS, hTIFF, TRUE, pszProfile,
+                                     pszFilename, papszOptions, TRUE /* don't write RPC and IMG file again */);
 
     /* We must re-set the compression level at this point, since it has */
     /* been lost a few lines above when closing the newly create TIFF file */
