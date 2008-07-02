@@ -440,7 +440,36 @@ def tiff_write_15():
         return 'fail'
 
     md = ds.GetMetadata()
+    if not md.has_key('test'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if not md.has_key('testBand'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.remove( 'tmp/tw_15.tif.aux.xml' )
+    except:
+        try:
+            os.stat( 'tmp/tw_15.tif.aux.xml' )
+        except:
+            gdaltest.post_reason( 'No .aux.xml file.' )
+            return 'fail'
+            pass
+
+    ds = gdal.Open( 'tmp/tw_15.tif' )
+
+    md = ds.GetMetadata()
     if md.has_key('test'):
+        gdaltest.post_reason( 'Metadata written to BASELINE file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md.has_key('testBand'):
         gdaltest.post_reason( 'Metadata written to BASELINE file.' )
         return 'fail'
 
@@ -464,6 +493,7 @@ def tiff_write_16():
                      options=['PROFILE=BASELINE'] )
     
     ds.SetMetadata( {'test':'testvalue'} )
+    ds.GetRasterBand(1).SetMetadata( {'testBand':'testvalueBand'} )
 
     ds.SetGeoTransform( (10,5,0,30,0,-5) )
 
@@ -479,7 +509,36 @@ def tiff_write_16():
         return 'fail'
 
     md = ds.GetMetadata()
+    if not md.has_key('test'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if not md.has_key('testBand'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.remove( 'tmp/tw_16.tif.aux.xml' )
+    except:
+        try:
+            os.stat( 'tmp/tw_16.tif.aux.xml' )
+        except:
+            gdaltest.post_reason( 'No .aux.xml file.' )
+            return 'fail'
+            pass
+
+    ds = gdal.Open( 'tmp/tw_16.tif' )
+
+    md = ds.GetMetadata()
     if md.has_key('test'):
+        gdaltest.post_reason( 'Metadata written to BASELINE file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md.has_key('testBand'):
         gdaltest.post_reason( 'Metadata written to BASELINE file.' )
         return 'fail'
 
@@ -1043,6 +1102,183 @@ def tiff_write_32():
 
     return 'success'
 
+###############################################################################
+# Test that metadata is written in .aux.xml file in GeoTIFF profile with CreateCopy
+# (BASELINE is tested by tiff_write_15)
+
+def tiff_write_33():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open('data/byte.vrt')
+
+    ds = drv.CreateCopy( 'tmp/tw_33.tif', ds_in, options=['PROFILE=GeoTIFF'] )
+
+    ds_in = None
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/tw_33.tif' )
+
+    md = ds.GetMetadata()
+    if not md.has_key('test'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if not md.has_key('testBand'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.remove( 'tmp/tw_33.tif.aux.xml' )
+    except:
+        try:
+            os.stat( 'tmp/tw_33.tif.aux.xml' )
+        except:
+            gdaltest.post_reason( 'No .aux.xml file.' )
+            return 'fail'
+            pass
+
+    ds = gdal.Open( 'tmp/tw_33.tif' )
+
+    md = ds.GetMetadata()
+    if md.has_key('test'):
+        gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md.has_key('testBand'):
+        gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_33.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test that metadata is written in .aux.xml file in GeoTIFF profile with Create
+# (BASELINE is tested by tiff_write_16)
+
+def tiff_write_34():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds = drv.Create( 'tmp/tw_34.tif', 1, 1, gdal.GDT_Byte,
+                     options=['PROFILE=GeoTIFF'] )
+    ds.SetMetadata( {'test':'testvalue'} )
+    ds.GetRasterBand(1).SetMetadata( {'testBand':'testvalueBand'} )
+
+    ds = None
+
+    ds = gdal.Open( 'tmp/tw_34.tif' )
+
+    md = ds.GetMetadata()
+    if not md.has_key('test'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if not md.has_key('testBand'):
+        gdaltest.post_reason( 'Metadata absent from .aux.xml file.' )
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.remove( 'tmp/tw_34.tif.aux.xml' )
+    except:
+        try:
+            os.stat( 'tmp/tw_34.tif.aux.xml' )
+        except:
+            gdaltest.post_reason( 'No .aux.xml file.' )
+            return 'fail'
+            pass
+
+    ds = gdal.Open( 'tmp/tw_34.tif' )
+
+    md = ds.GetMetadata()
+    if md.has_key('test'):
+        gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md.has_key('testBand'):
+        gdaltest.post_reason( 'Metadata written to GeoTIFF file.' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_34.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test fallback from internal storage of Geotiff metadata to PAM storage
+# when metadata is too big to fit into the GDALGeotiff tag
+
+def tiff_write_35():
+
+    # I've no idea why this works, and why this rolled in a
+    # loop doesn't work... Python gurus please fix that !
+    big_string = 'a'
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+    big_string = big_string + big_string
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds = drv.Create( 'tmp/tw_35.tif', 1, 1, gdal.GDT_Byte )
+
+    md = {}
+    md['test'] = big_string
+    ds.SetMetadata( md )
+
+    md = ds.GetMetadata()
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = None
+    gdal.PopErrorHandler()
+
+    try:
+        os.stat( 'tmp/tw_35.tif.aux.xml' )
+    except:
+        gdaltest.post_reason( 'No .aux.xml file.' )
+        return 'fail'
+        pass
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open( 'tmp/tw_35.tif' )
+    gdal.PopErrorHandler()
+
+    md = ds.GetMetadata()
+    if not md.has_key('test') or len(md['test']) != 32768:
+        gdaltest.post_reason( 'Did not get expected metadata.' )
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( 'tmp/tw_35.tif' )
+
+    return 'success'
+
+
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -1081,6 +1317,9 @@ gdaltest_list = [
     tiff_write_30,
     tiff_write_31,
     tiff_write_32,
+    tiff_write_33,
+    tiff_write_34,
+    tiff_write_35,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':

@@ -13,5 +13,8 @@
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
     </SimpleSource>
+    <Metadata>
+      <MDI key="testBand">testvalueBand</MDI>
+    </Metadata>
   </VRTRasterBand>
 </VRTDataset>
