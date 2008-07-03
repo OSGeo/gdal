@@ -174,9 +174,8 @@ GDALDataset::~GDALDataset()
             sStruct.eAccess = eAccess;
             sStruct.pszDescription = (char*) GetDescription();
             psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
-            if (psStruct)
+            if (psStruct && psStruct->poDS == this)
             {
-                CPLAssert(psStruct->poDS == this);
                 CPLHashSetRemove(phSharedDatasetSet, psStruct);
             }
         }
