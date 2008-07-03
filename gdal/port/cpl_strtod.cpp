@@ -145,6 +145,56 @@ double CPLAtofM( const char *nptr )
 /*                          CPLStrtodDelim()                            */
 /************************************************************************/
 
+static void CPLReplacePointByLocalePoint(char* pszNumber, char point)
+{
+#if defined(WIN32CE)
+    static char byPoint = 0;
+    if (byPoint == 0)
+    {
+        char szBuf[16];
+        sprintf(szBuf, "%.1f", 1.0);
+        byPoint = szBuf[1];
+    }
+    if (point != byPoint)
+    {
+        int     i = 0;
+
+        while ( pszNumber[i] )
+        {
+            if ( pszNumber[i] == point )
+            {
+                pszNumber[i] = byPoint;
+                break;
+            }
+            i++;
+        }
+    }
+#else
+    struct lconv *poLconv = localeconv();
+    if ( poLconv
+         && poLconv->decimal_point
+         && strlen(poLconv->decimal_point) > 0 )
+    {
+        int     i = 0;
+        char    byPoint = poLconv->decimal_point[0];
+
+        if (point != byPoint)
+        {
+            while ( pszNumber[i] )
+            {
+                if ( pszNumber[i] == point )
+                {
+                    pszNumber[i] = byPoint;
+                    break;
+                }
+                i++;
+            }
+        }
+    }
+#endif
+}
+
+
 /**
  * Converts ASCII string to floating point number using specified delimiter.
  *
@@ -170,29 +220,11 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtod()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-
-    struct lconv *poLconv = localeconv();
     char        *pszNumber = CPLStrdup( nptr );
     double      dfValue;
     int         nError;
 
-    if ( poLconv
-         && poLconv->decimal_point
-         && strlen(poLconv->decimal_point) > 0 )
-    {
-        int     i = 0;
-        char    byPoint = poLconv->decimal_point[0];
-
-        while ( pszNumber[i] )
-        {
-            if ( pszNumber[i] == point )
-            {
-                pszNumber[i] = byPoint;
-                break;
-            }
-            i++;
-        }
-    }
+    CPLReplacePointByLocalePoint(pszNumber, point);
 
     dfValue = strtod( pszNumber, endptr );
     nError = errno;
@@ -263,28 +295,11 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
 
-    struct lconv *poLconv = localeconv();
     char        *pszNumber = CPLStrdup( nptr );
     double      dfValue;
     int         nError;
 
-    if ( poLconv
-         && poLconv->decimal_point
-         && strlen(poLconv->decimal_point) > 0 )
-    {
-        int     i = 0;
-        char    byPoint = poLconv->decimal_point[0];
-
-        while ( pszNumber[i] )
-        {
-            if ( pszNumber[i] == point )
-            {
-                pszNumber[i] = byPoint;
-                break;
-            }
-            i++;
-        }
-    }
+    CPLReplacePointByLocalePoint(pszNumber, point);
 
     dfValue = strtof( pszNumber, endptr );
     nError = errno;
