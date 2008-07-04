@@ -1048,7 +1048,8 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
                   "ECW driver ignores color table. "
-                  "The source raster band will be considered as grey level.\n" );
+                  "The source raster band will be considered as grey level.\n"
+                  "Consider using color table expansion (-expand option in gdal_translate)\n");
         if (bStrict)
             return NULL;
     }
@@ -1097,7 +1098,8 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
                   "JP2ECW driver ignores color table. "
-                  "The source raster band will be considered as grey level.\n" );
+                  "The source raster band will be considered as grey level.\n"
+                  "Consider using color table expansion (-expand option in gdal_translate)\n");
         if (bStrict)
             return NULL;
     }
