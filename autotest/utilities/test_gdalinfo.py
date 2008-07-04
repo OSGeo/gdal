@@ -67,12 +67,11 @@ def test_gdalinfo_1():
     if gdaltest.shelltestskip:
         return 'skip'
 
-    ret = os.system(gdaltest.gdalinfoexe + ' ../gcore/data/byte.tif >' + gdaltest.devnull)
-
-    if ret == 0:
-        return 'success'
-    else:
+    ret = os.popen(gdaltest.gdalinfoexe + ' ../gcore/data/byte.tif').read()
+    if ret.find('Driver: GTiff/GeoTIFF') == -1:
         return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test -checksum option
