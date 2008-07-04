@@ -1,0 +1,15 @@
+---------------------
+GDAL Autotest Package
+---------------------
+
+
+Notes about availability of GDAL sample and test data
+-----------------------------------------------------
+
+The GDAL Team makes every effort to assure that all sample data files
+available from GDAL download server (http://download.osgeo.org/gdal/data/) and
+test data files used in GDAL Autotest package (http://svn.osgeo.org/gdal/trunk/autotest/)
+are available as public and freely redistributable geodata.
+
+-- 
+http://gdal.org/
