@@ -62,7 +62,7 @@ def test_gdalinfo_1():
     if gdaltest.shelltestskip:
         return 'skip'
 
-    ret = os.system('../../gdal/apps/gdalinfo ../gcore/byte.tif >' + gdaltest.devnull)
+    ret = os.system('../../gdal/apps/gdalinfo ../gcore/data/byte.tif >' + gdaltest.devnull)
 
     if ret == 0:
         return 'success'
