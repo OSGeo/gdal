@@ -154,3 +154,8 @@
 
 /* #define CPL_DISABLE_DLL */
 /* #define CPL_DISABLE_STDCALL */
+
+/* Enable VSIStat64 for Windows CE (temporarily) */
+/* TODO: To be removed as specified in Ticket #2452 */
+#define VSI_STAT64 stat
+
