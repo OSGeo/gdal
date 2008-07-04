@@ -46,7 +46,8 @@ def test_gdalinfo_init():
 
     gdaltest.shelltestskip = True;
     try:
-        ret = os.system('../../gdal/apps/gdalinfo --version')
+        gdaltest.gdalinfoexe = os.getcwd() + '/../../gdal/apps/gdalinfo'
+        ret = os.system(gdaltest.gdalinfoexe + ' --version')
         if ret == 0:
             gdaltest.shelltestskip = False;
             return 'success'
@@ -62,7 +63,7 @@ def test_gdalinfo_1():
     if gdaltest.shelltestskip:
         return 'skip'
 
-    ret = os.system('../../gdal/apps/gdalinfo ../gcore/data/byte.tif >' + gdaltest.devnull)
+    ret = os.system(gdaltest.gdalinfoexe + ' ../gcore/data/byte.tif >' + gdaltest.devnull)
 
     if ret == 0:
         return 'success'
