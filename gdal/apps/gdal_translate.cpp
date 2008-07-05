@@ -33,6 +33,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "vrt/vrtdataset.h"
+#include "gdalctexpander.h"
 
 CPL_CVSID("$Id$");
 
@@ -52,7 +53,8 @@ static void Usage()
     printf( "Usage: gdal_translate [--help-general]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
-            "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
+            "       [-of format] [-b band] [-expand {rgb|rgba}]\n"
+            "       [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
@@ -113,6 +115,8 @@ static int ProxyMain( int argc, char ** argv )
     double              adfULLR[4] = { 0,0,0,0 };
     int                 bSetNoData = FALSE;
     double		dfNoDataReal = 0.0;
+    GDALDatasetH        hPalettedDataset = NULL;
+    int                 nRGBExpand = 0;
 
 
     anSrcWin[0] = 0;
@@ -312,6 +316,23 @@ static int ProxyMain( int argc, char ** argv )
             i++;
         }   
 
+        else if( EQUAL(argv[i],"-expand") && i < argc-1 )
+        {
+            if (EQUAL(argv[i+1], "rgb"))
+                nRGBExpand = 3;
+            else if (EQUAL(argv[i+1], "rgba"))
+                nRGBExpand = 4;
+            else
+            {
+                printf( "Value %s unsupported. Only rgb or rgba are supported.\n\n", 
+                    argv[i] );
+                Usage();
+                GDALDestroyDriverManager();
+                exit( 2 );
+            }
+            i++;
+        }
+
         else if( argv[i][0] == '-' )
         {
             printf( "Option %s incomplete, or not recognised.\n\n", 
@@ -359,6 +380,12 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 
     hDataset = GDALOpenShared( pszSource, GA_ReadOnly );
+    
+    if (nRGBExpand > 0)
+    {
+        hPalettedDataset = hDataset;
+        hDataset = GDALCTExpandedDatasetCreate(hDataset, nRGBExpand, TRUE);
+    }
     
     if( hDataset == NULL )
     {
@@ -594,6 +621,11 @@ static int ProxyMain( int argc, char ** argv )
         
         GDALClose( hDataset );
 
+        if( hPalettedDataset != NULL)
+        {
+            GDALClose( hPalettedDataset );
+        }
+
         CPLFree( panBandList );
 
         if( !bSubCall )
@@ -825,6 +857,11 @@ static int ProxyMain( int argc, char ** argv )
     if( hOutDS != NULL )
     {
         GDALClose( hOutDS );
+    }
+    
+    if( hPalettedDataset != NULL)
+    {
+        GDALClose( hPalettedDataset );
     }
 
     GDALClose( (GDALDatasetH) poVDS );
