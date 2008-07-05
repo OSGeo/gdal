@@ -517,7 +517,12 @@ const char CPL_DLL * CPL_STDCALL GDALDecToDMS( double, const char *, int );
 double CPL_DLL CPL_STDCALL GDALPackedDMSToDec( double );
 double CPL_DLL CPL_STDCALL GDALDecToPackedDMS( double );
 
+/* Note to developers : please keep this section in sync with ogr_core.h */
+
+#ifndef GDAL_VERSION_INFO_DEFINED
+#define GDAL_VERSION_INFO_DEFINED
 const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
+#endif
 
 #ifndef GDAL_CHECK_VERSION
 

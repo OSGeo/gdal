@@ -425,6 +425,13 @@ typedef enum ogr_style_tool_param_label_id
 /*                        Version checking                             */
 /* -------------------------------------------------------------------- */
 
+/* Note to developers : please keep this section in sync with gdal.h */
+
+#ifndef GDAL_VERSION_INFO_DEFINED
+#define GDAL_VERSION_INFO_DEFINED
+const char CPL_DLL * CPL_STDCALL GDALVersionInfo( const char * );
+#endif
+
 #ifndef GDAL_CHECK_VERSION
 
 /** Return TRUE if GDAL library version at runtime matches nVersionMajor.nVersionMinor.

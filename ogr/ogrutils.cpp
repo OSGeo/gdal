@@ -437,11 +437,30 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* ==================================================================== */
     for( iArg = 1; iArg < nArgc; iArg++ )
     {
+/* -------------------------------------------------------------------- */
+/*      --version                                                       */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(papszArgv[iArg],"--version") )
+        {
+            printf( "%s\n", GDALVersionInfo( "--version" ) );
+            CSLDestroy( papszReturn );
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --license                                                       */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--license") )
+        {
+            printf( "%s\n", GDALVersionInfo( "LICENSE" ) );
+            CSLDestroy( papszReturn );
+            return 0;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      --config                                                        */
 /* -------------------------------------------------------------------- */
-        if( EQUAL(papszArgv[iArg],"--config") )
+        else if( EQUAL(papszArgv[iArg],"--config") )
         {
             if( iArg + 2 >= nArgc )
             {
@@ -610,7 +629,9 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--help-general") )
         {
-            printf( "Generic GDAL utility command options:\n" );
+            printf( "Generic GDAL/OGR utility command options:\n" );
+            printf( "  --version: report version of GDAL/OGR in use.\n" );
+            printf( "  --license: report GDAL/OGR license info.\n" );
 #ifdef OGR_ENABLED
             printf( "  --formats: report all configured format drivers.\n" );
 #endif /* OGR_ENABLED */
