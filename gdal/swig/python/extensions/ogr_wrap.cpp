@@ -7417,7 +7417,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  PyObject *str3 ;
+  PyObject *str3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -7477,7 +7477,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_1(PyObject *SWIGUNUSEDPARM(sel
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  PyObject *str3 ;
+  PyObject *str3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;

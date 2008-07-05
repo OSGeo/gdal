@@ -228,7 +228,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
         return TRUE;
 
-    psInfo->nLastReported = (int) 100.0 * dfComplete;
+    psInfo->nLastReported = (int) (100.0 * dfComplete);
     
     if( pszMessage == NULL )
         pszMessage = "";

@@ -964,6 +964,8 @@ ComputeMedianCutPCT = _gdal.ComputeMedianCutPCT
 DitherRGB2PCT = _gdal.DitherRGB2PCT
 ReprojectImage = _gdal.ReprojectImage
 ComputeProximity = _gdal.ComputeProximity
+RegenerateOverviews = _gdal.RegenerateOverviews
+RegenerateOverview = _gdal.RegenerateOverview
 AutoCreateWarpedVRT = _gdal.AutoCreateWarpedVRT
 class Transformer(_object):
     """Proxy of C++ Transformer class"""
