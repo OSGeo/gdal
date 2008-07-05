@@ -329,6 +329,12 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetCopyWholeRaster(
     GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions, 
     GDALProgressFunc pfnProgress, void *pProgressData );
 
+CPLErr CPL_DLL 
+GDALRegenerateOverviews( GDALRasterBandH hSrcBand, 
+                         int nOverviewCount, GDALRasterBandH *pahOverviewBands,
+                         const char *pszResampling, 
+                         GDALProgressFunc pfnProgress, void *pProgressData );
+
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
