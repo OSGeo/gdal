@@ -60,7 +60,8 @@ def get_cli_utility_path_internal(cli_utility_name):
     # Second try for szekerest-vc71-full
     try:
         cli_utility_path = os.getcwd() + '/../../gdal/apps/' + cli_utility_name
-        ret = os.system(cli_utility_path + ' --utility_version > ' + devnull)
+        # Remove the ' > NUL'
+        ret = os.system(cli_utility_path + ' --utility_version')
         if ret == 0:
             ret = os.popen(cli_utility_path + ' --utility_version').read()
             print ret
