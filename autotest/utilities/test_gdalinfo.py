@@ -28,46 +28,22 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
+import os
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-
-###############################################################################
-# 
-def test_gdalinfo_init():
-    try:
-        sys.winver
-        gdaltest.devnull = 'NUL'
-    except:
-        gdaltest.devnull = '/dev/null'
-
-    gdaltest.shelltestskip = True;
-    try:
-        gdaltest.gdalinfoexe = os.getcwd() + '/../../gdal/apps/gdalinfo'
-        ret = os.system(gdaltest.gdalinfoexe + ' --version')
-        if ret == 0:
-            # Double check. For some reason, the first system fails on szekerest-vc71-full
-            # with ret == 0
-            ret = os.popen(gdaltest.gdalinfoexe + ' --version').read()
-            if ret.find('GDAL') != -1:
-                gdaltest.shelltestskip = False;
-                return 'success'
-    except:
-        pass
-
-    return 'skip'
+import test_cli_utilities
 
 ###############################################################################
 # Simple test
 
 def test_gdalinfo_1():
-    if gdaltest.shelltestskip:
+    if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' ../gcore/data/byte.tif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
     if ret.find('Driver: GTiff/GeoTIFF') == -1:
         return 'fail'
 
@@ -77,10 +53,10 @@ def test_gdalinfo_1():
 # Test -checksum option
 
 def test_gdalinfo_2():
-    if gdaltest.shelltestskip:
+    if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' -checksum ../gcore/data/byte.tif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -checksum ../gcore/data/byte.tif').read()
     if ret.find('Checksum=4672') == -1:
         return 'fail'
 
@@ -90,14 +66,14 @@ def test_gdalinfo_2():
 # Test -nomd option
 
 def test_gdalinfo_3():
-    if gdaltest.shelltestskip:
+    if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' ../gcore/data/byte.tif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
     if ret.find('Metadata') == -1:
         return 'fail'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' -nomd ../gcore/data/byte.tif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -nomd ../gcore/data/byte.tif').read()
     if ret.find('Metadata') != -1:
         return 'fail'
 
@@ -107,14 +83,14 @@ def test_gdalinfo_3():
 # Test -noct option
 
 def test_gdalinfo_4():
-    if gdaltest.shelltestskip:
+    if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' ../gdrivers/data/bug407.gif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/bug407.gif').read()
     if ret.find('0: 255,255,255,255') == -1:
         return 'fail'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' -noct ../gdrivers/data/bug407.gif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/bug407.gif').read()
     if ret.find('0: 255,255,255,255') != -1:
         return 'fail'
 
@@ -124,21 +100,20 @@ def test_gdalinfo_4():
 # Test -stats option
 
 def test_gdalinfo_5():
-    if gdaltest.shelltestskip:
+    if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' ../gcore/data/byte.tif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif').read()
     if ret.find('STATISTICS_MINIMUM=74') != -1:
         return 'fail'
 
-    ret = os.popen(gdaltest.gdalinfoexe + ' -stats ../gcore/data/byte.tif').read()
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' -stats ../gcore/data/byte.tif').read()
     if ret.find('STATISTICS_MINIMUM=74') == -1:
         return 'fail'
 
     return 'success'
 
 gdaltest_list = [
-    test_gdalinfo_init,
     test_gdalinfo_1,
     test_gdalinfo_2,
     test_gdalinfo_3,
