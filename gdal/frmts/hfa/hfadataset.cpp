@@ -1136,7 +1136,9 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     CPLErr eErr = CE_None;
 
     if( !bNoRegen )
-        eErr = GDALRegenerateOverviews( this, nReqOverviews, papoOvBands,
+        eErr = GDALRegenerateOverviews( (GDALRasterBandH) this, 
+                                        nReqOverviews, 
+                                        (GDALRasterBandH *) papoOvBands,
                                         pszResampling, 
                                         pfnProgress, pProgressData );
     

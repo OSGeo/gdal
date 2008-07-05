@@ -485,7 +485,9 @@ GTIFFBuildOverviews( const char * pszFilename,
                                       pfnProgress, pProgressData );
 
         eErr = 
-            GDALRegenerateOverviews( hSrcBand, nDstOverviews, papoOverviews, 
+            GDALRegenerateOverviews( (GDALRasterBandH) hSrcBand, 
+                                     nDstOverviews, 
+                                     (GDALRasterBandH *) papoOverviews, 
                                      pszResampling,
                                      GDALScaledProgress, 
                                      pScaledProgressData);

@@ -556,7 +556,8 @@ GDALRegenerateCascadingOverviews(
             (dfPixelsProcessed + dfPixels) / dfTotalPixels, 
             pfnProgress, pProgressData );
 
-        eErr = GDALRegenerateOverviews( poBaseBand, 1, papoOvrBands + i, 
+        eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBaseBand, 
+                                        1, (GDALRasterBandH *) papoOvrBands+i, 
                                         pszResampling, 
                                         GDALScaledProgress, 
                                         pScaledProgressData );
@@ -579,12 +580,14 @@ GDALRegenerateCascadingOverviews(
 /*                      GDALRegenerateOverviews()                       */
 /************************************************************************/
 CPLErr 
-GDALRegenerateOverviews( GDALRasterBand *poSrcBand,
-                         int nOverviews, GDALRasterBand **papoOvrBands, 
+GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
+                         int nOverviews, GDALRasterBandH *pahOvrBands, 
                          const char * pszResampling, 
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
+    GDALRasterBand *poSrcBand = (GDALRasterBand *) hSrcBand;
+    GDALRasterBand **papoOvrBands = (GDALRasterBand **) pahOvrBands;
     int    nFullResYChunk, nWidth;
     int    nFRXBlockSize, nFRYBlockSize;
     GDALDataType eType;
