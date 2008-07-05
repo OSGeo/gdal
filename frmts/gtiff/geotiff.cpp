@@ -2580,8 +2580,10 @@ CPLErr GTiffDataset::IBuildOverviews(
                         papoOverviewDS[i]->poMaskDS->GetRasterBand(1);
             }
         }
-        eErr = GDALRegenerateOverviews( poMaskDS->GetRasterBand(1),
-                                        nMaskOverviews, papoOverviewBands,
+        eErr = GDALRegenerateOverviews( (GDALRasterBandH) 
+                                        poMaskDS->GetRasterBand(1),
+                                        nMaskOverviews, 
+                                        (GDALRasterBandH *) papoOverviewBands,
                                         pszResampling, GDALDummyProgress, NULL);
         CPLFree(papoOverviewBands);
     }
@@ -2638,8 +2640,9 @@ CPLErr GTiffDataset::IBuildOverviews(
                                       (iBand+1) / (double) nBands,
                                       pfnProgress, pProgressData );
 
-        eErr = GDALRegenerateOverviews( poBand,
-                                        nNewOverviews, papoOverviewBands,
+        eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+                                        nNewOverviews, 
+                                        (GDALRasterBandH *) papoOverviewBands,
                                         pszResampling, 
                                         GDALScaledProgress, 
                                         pScaledProgressData);

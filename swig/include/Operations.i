@@ -150,6 +150,45 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 %} 
 
 /************************************************************************/
+/*                        RegenerateOverviews()                         */
+/************************************************************************/
+
+%feature( "kwargs" ) RegenerateOverviews;
+%inline %{
+int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
+     			  int overviewBandCount,
+                          GDALRasterBandShadow **overviewBands,
+                          char *resampling,
+                          GDALProgressFunc callback=NULL,
+                          void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALRegenerateOverviews( srcBand, overviewBandCount, overviewBands,
+    	   			    resampling, callback, callback_data );
+}
+%} 
+
+/************************************************************************/
+/*                         RegenerateOverview()                         */
+/************************************************************************/
+
+%feature( "kwargs" ) RegenerateOverview;
+%inline %{
+int  RegenerateOverview( GDALRasterBandShadow *srcBand,
+                          GDALRasterBandShadow *overviewBand,
+                          char *resampling,
+                          GDALProgressFunc callback=NULL,
+                          void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALRegenerateOverviews( srcBand, 1, &overviewBand,
+    	   			    resampling, callback, callback_data );
+}
+%} 
+
+/************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
 /************************************************************************/
 
