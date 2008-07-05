@@ -124,6 +124,15 @@ int main( int argc, char ** argv )
     int                 bMulti = FALSE;
     char                **papszTO = NULL;
 
+    /* Check that we are running against at least GDAL 1.6 */
+    /* Note to developers : if we use newer API, please change the requirement */
+    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1600)
+    {
+        fprintf(stderr, "At least, GDAL >= 1.6.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+        exit(1);
+    }
+
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
@@ -134,7 +143,13 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"-co") && i < argc-1 )
+        if( EQUAL(argv[i], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( EQUAL(argv[i],"-co") && i < argc-1 )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
             bCreateOutput = TRUE;
