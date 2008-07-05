@@ -34,6 +34,7 @@ import os
 sys.path.append( '../pymod' )
 
 import gdaltest
+import ogrtest
 import test_cli_utilities
 
 ###############################################################################
@@ -141,10 +142,14 @@ def test_ogrinfo_7():
         return 'skip'
 
     ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817').read()
-    if ret.find('Feature Count: 4') == -1:
-        return 'fail'
-
-    return 'success'
+    if ogrtest.have_geos():
+        if ret.find('Feature Count: 4') == -1:
+            return 'fail'
+        return 'success'
+    else:
+        if ret.find('Feature Count: 5') == -1:
+            return 'fail'
+        return 'success'
 
 ###############################################################################
 # Test -where option
