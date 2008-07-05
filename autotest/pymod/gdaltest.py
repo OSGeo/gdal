@@ -842,6 +842,20 @@ def rpcs_equal( md1, md2 ):
 
     return 1
 
+###############################################################################
+# Test if geotransforms are equal with an epsilon tolerance
+#
+
+def geotransform_equals(gt1, gt2, gt_epsilon):
+    for i in range(6):
+        if abs(gt1[i]-gt2[i]) > gt_epsilon:
+            print
+            print 'gt1 = ', gt1
+            print 'gt2 = ', gt2
+            post_reason( 'Geotransform differs.' )
+            return False
+    return True
+
 
 ###############################################################################
 # Download file at url 'url' and put it as 'filename' in 'tmp/cache/'
