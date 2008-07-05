@@ -113,12 +113,28 @@ def test_gdalinfo_5():
 
     return 'success'
 
+###############################################################################
+# Test a dataset with overviews and RAT
+
+def test_gdalinfo_6():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = os.popen(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/int.img').read()
+    if ret.find('Overviews') == -1:
+        return 'fail'
+    if ret.find('GDALRasterAttributeTable') == -1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
     test_gdalinfo_3,
     test_gdalinfo_4,
-    test_gdalinfo_5
+    test_gdalinfo_5,
+    test_gdalinfo_6
     ]
 
 
