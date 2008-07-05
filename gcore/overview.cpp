@@ -579,9 +579,32 @@ GDALRegenerateCascadingOverviews(
 /************************************************************************/
 /*                      GDALRegenerateOverviews()                       */
 /************************************************************************/
+
+/**
+ * Generate downsampled overviews.
+ *
+ * This function will generate one or more overview images from a base
+ * image using the requested downsampling algorithm.  It's primary use
+ * is for generating overviews via GDALDataset::BuildOverviews(), but it
+ * can also be used to generate downsampled images in one file from another
+ * outside the overview architecture.
+ *
+ * The output bands need to exist in advance. 
+ *
+ * The full set of resampling algorithms is documented in 
+ * GDALDataset::BuildOverviews().
+ *
+ * @param hSrcBand the source (base level) band. 
+ * @param nOverviewCount the number of downsampled bands being generated.
+ * @param pahOvrBands the list of downsampled bands to be generated.
+ * @param pszResampling Resampling algorithm (eg. "AVERAGE"). 
+ * @param pfnProgress progress report function.
+ * @param pProgressData progress function callback data.
+ * @return CE_None on success or CE_Failure on failure.
+ */
 CPLErr 
 GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
-                         int nOverviews, GDALRasterBandH *pahOvrBands, 
+                         int nOverviewCount, GDALRasterBandH *pahOvrBands, 
                          const char * pszResampling, 
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
@@ -594,6 +617,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     int    bHasNoData;
     float  fNoDataValue;
     GDALColorTable* poColorTable = NULL;
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     if (EQUALN(pszResampling,"AVER",4) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
@@ -623,9 +649,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /*      averaging, lets do them in cascading order to reduce the        */
 /*      amount of computation.                                          */
 /* -------------------------------------------------------------------- */
-    if( (EQUALN(pszResampling,"AVER",4) || EQUALN(pszResampling,"GAUSS",5)) && nOverviews > 1 )
+    if( (EQUALN(pszResampling,"AVER",4) || EQUALN(pszResampling,"GAUSS",5)) && nOverviewCount > 1 )
         return GDALRegenerateCascadingOverviews( poSrcBand, 
-                                                 nOverviews, papoOvrBands,
+                                                 nOverviewCount, papoOvrBands,
                                                  pszResampling, 
                                                  pfnProgress,
                                                  pProgressData );
@@ -733,7 +759,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             }
         }
         
-        for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
+        for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
         {
             if( eType == GDT_Float32 )
                 GDALDownsampleChunk32R(nWidth, poSrcBand->GetYSize(), 
@@ -755,7 +781,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     if( EQUAL(pszResampling,"AVERAGE_MP") )
     {
         GDALOverviewMagnitudeCorrection( (GDALRasterBandH) poSrcBand, 
-                                         nOverviews, 
+                                         nOverviewCount, 
                                          (GDALRasterBandH *) papoOvrBands,
                                          GDALDummyProgress, NULL );
     }
@@ -763,7 +789,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      It can be important to flush out data to overviews.             */
 /* -------------------------------------------------------------------- */
-    for( int iOverview = 0; iOverview < nOverviews; iOverview++ )
+    for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
         papoOvrBands[iOverview]->FlushCache();
 
     pfnProgress( 1.0, NULL, pProgressData );
