@@ -512,6 +512,15 @@ int main( int argc, char ** argv )
     int             i;
     OGRGeometryH    hSpatialFilter = NULL;
 
+    /* Check that we are running against at least GDAL 1.5 */
+    /* Note to developers : if we use newer API, please change the requirement */
+    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
+    {
+        fprintf(stderr, "At least, GDAL >= 1.5.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+        exit(1);
+    }
+
     GDALAllRegister();
     OGRRegisterAll();
 
@@ -524,7 +533,13 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"-of") && i < argc-1 )
+        if( EQUAL(argv[i], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
         }

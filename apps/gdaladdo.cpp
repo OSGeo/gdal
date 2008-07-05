@@ -54,12 +54,21 @@ static void Usage()
 int main( int nArgc, char ** papszArgv )
 
 {
-    GDALDataset *poDataset;
+    GDALDatasetH hDataset;
     const char * pszResampling = "nearest";
     const char * pszFilename = NULL;
     int          anLevels[1024];
     int          nLevelCount = 0;
     int          nResultStatus = 0;
+
+    /* Check that we are running against at least GDAL 1.4 */
+    /* Note to developers : if we use newer API, please change the requirement */
+    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
+    {
+        fprintf(stderr, "At least, GDAL >= 1.4.0 is required for this version of %s, "
+                        "which was compiled against GDAL %s\n", papszArgv[0], GDAL_RELEASE_NAME);
+        exit(1);
+    }
 
     GDALAllRegister();
 
@@ -72,7 +81,13 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        if( EQUAL(papszArgv[iArg],"-r") && iArg < nArgc-1 )
+        if( EQUAL(papszArgv[iArg], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( EQUAL(papszArgv[iArg],"-r") && iArg < nArgc-1 )
             pszResampling = papszArgv[++iArg];
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
@@ -88,20 +103,19 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data file.                                                 */
 /* -------------------------------------------------------------------- */
-    poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    hDataset = GDALOpen( pszFilename, GA_Update );
 
-    if( poDataset == NULL )
-        poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    if( hDataset == NULL )
+        hDataset = GDALOpen( pszFilename, GA_ReadOnly );
 
-    if( poDataset == NULL )
+    if( hDataset == NULL )
         exit( 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Generate overviews.                                             */
 /* -------------------------------------------------------------------- */
-    if( poDataset->BuildOverviews( pszResampling, 
-                                   nLevelCount, anLevels, 0, NULL,
-                                   GDALTermProgress, NULL ) != CE_None )
+    if (GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
+                             0, NULL, GDALTermProgress, NULL ) != CE_None )
     {
         printf( "Overview building failed.\n" );
         nResultStatus = 100;
@@ -110,7 +124,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    delete poDataset;
+    GDALClose(hDataset);
 
     CSLDestroy( papszArgv );
     GDALDestroyDriverManager();
