@@ -293,7 +293,9 @@ def ogr_shape_9():
 
     gdaltest.shape_lyr.SetSpatialFilterRect( -10, -130, 10, -110 )
 
-    if gdaltest.shape_lyr.GetFeatureCount() == 0:
+    if ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 0:
+        return 'success'
+    elif not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
         return 'success'
     else:
         return 'fail'
