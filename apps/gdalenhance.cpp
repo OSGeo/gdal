@@ -100,6 +100,9 @@ int main( int argc, char ** argv )
     int                 iBand;
     const char         *pszConfigFile = NULL;
 
+    /* Check strict compilation and runtime library version as we use C++ API */
+    if (! GDAL_CHECK_VERSION(argv[0]))
+        exit(1);
 /* -------------------------------------------------------------------- */
 /*      Register standard GDAL drivers, and process generic GDAL        */
 /*      command options.                                                */
@@ -114,7 +117,13 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"-of") && i < argc-1 )
+        if( EQUAL(argv[i], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( EQUAL(argv[i],"-of") && i < argc-1 )
             pszFormat = argv[++i];
 
         else if( EQUAL(argv[i],"-ot") && i < argc-1 )

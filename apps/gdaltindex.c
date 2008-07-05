@@ -81,6 +81,15 @@ int main(int argc, char *argv[])
     int alreadyExistingProjectionRefValid = FALSE;
     char* alreadyExistingProjectionRef = NULL;
 
+    /* Check that we are running against at least GDAL 1.4 */
+    /* Note to developers : if we use newer API, please change the requirement */
+    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
+    {
+        fprintf(stderr, "At least, GDAL >= 1.4.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+        exit(1);
+    }
+
     GDALAllRegister();
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -92,7 +101,13 @@ int main(int argc, char *argv[])
 /* -------------------------------------------------------------------- */
     for( i_arg = 1; i_arg < argc; i_arg++ )
     {
-        if( strcmp(argv[i_arg],"-tileindex") == 0 )
+        if( EQUAL(argv[i], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if( strcmp(argv[i_arg],"-tileindex") == 0 )
         {
             tile_index = argv[++i_arg];
         }
