@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 /* -------------------------------------------------------------------- */
     for( i_arg = 1; i_arg < argc; i_arg++ )
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if( EQUAL(argv[i_arg], "--utility_version") )
         {
             printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
