@@ -538,7 +538,7 @@ OPTIONAL_POD(int,i);
  */
 
 
-%typemap(in) (tostring argin) (PyObject *str)
+%typemap(in) (tostring argin) (PyObject * str=0)
 {
   /* %typemap(in) (tostring argin) */
   str = PyObject_Str( $input );
