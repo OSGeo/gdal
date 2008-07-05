@@ -281,7 +281,6 @@ def ogr_shape_8():
     
 ###############################################################################
 # Test that we don't return a polygon if we are "inside" but non-overlapping.
-# For now we actually do return this shape, but eventually we won't. 
 
 def ogr_shape_9():
 
@@ -293,11 +292,8 @@ def ogr_shape_9():
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
 
     gdaltest.shape_lyr.SetSpatialFilterRect( -10, -130, 10, -110 )
-    
-    tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'FID',
-                                              [ 13 ] )
 
-    if tr:
+    if gdaltest.shape_lyr.GetFeatureCount() == 0:
         return 'success'
     else:
         return 'fail'
