@@ -126,9 +126,63 @@ def test_ogrinfo_6():
     ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -geom=summary').read()
     if ret.find('Feature Count: 10') == -1:
         return 'fail'
-    if ret.find('POLYGON(') != -1:
+    if ret.find('POLYGON (') != -1:
         return 'fail'
     if ret.find('POLYGON :') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -spat option
+
+def test_ogrinfo_7():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -spat 479609 4764629 479764 4764817').read()
+    if ret.find('Feature Count: 4') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -where option
+
+def test_ogrinfo_8():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -where "EAS_ID=171"').read()
+    if ret.find('Feature Count: 1') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -fid option
+
+def test_ogrinfo_9():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fid 9').read()
+    if ret.find('OGRFeature(poly):9') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -fields=no option
+
+def test_ogrinfo_10():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = os.popen(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/poly.shp poly -fields=no').read()
+    if ret.find('AREA (Real') != -1:
+        return 'fail'
+    if ret.find('POLYGON (') == -1:
         return 'fail'
 
     return 'success'
@@ -139,7 +193,11 @@ gdaltest_list = [
     test_ogrinfo_3,
     test_ogrinfo_4,
     test_ogrinfo_5,
-    test_ogrinfo_6
+    test_ogrinfo_6,
+    test_ogrinfo_7,
+    test_ogrinfo_8,
+    test_ogrinfo_9,
+    test_ogrinfo_10
     ]
 
 
