@@ -782,14 +782,26 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
         || m_sFilterEnvelope.MaxY < sGeomEnv.MinY )
         return FALSE;
 
+
+/* -------------------------------------------------------------------- */
+/*      If the filter geometry is its own envelope and if the           */
+/*      envelope of the geometry is inside the filter geometry,         */
+/*      the geometry itself is inside the filter geometry               */
+/* -------------------------------------------------------------------- */
+    if( m_bFilterIsEnvelope &&
+        sGeomEnv.MinX >= m_sFilterEnvelope.MinX &&
+        sGeomEnv.MinY >= m_sFilterEnvelope.MinY &&
+        sGeomEnv.MaxX <= m_sFilterEnvelope.MaxX &&
+        sGeomEnv.MaxY <= m_sFilterEnvelope.MaxY)
+    {
+        return TRUE;
+    }
+    else
+    {
 /* -------------------------------------------------------------------- */
 /*      Fallback to full intersect test (using GEOS) if we still        */
 /*      don't know for sure.                                            */
 /* -------------------------------------------------------------------- */
-    if( m_bFilterIsEnvelope )
-        return TRUE;
-    else
-    {
         if( OGRGeometryFactory::haveGEOS() )
             return m_poFilterGeom->Intersects( poGeometry );
         else
