@@ -741,9 +741,6 @@ GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
                            GDALProgressFunc pfnProgress, void * pProgressData);
                            
 
-CPLErr CPL_DLL 
-GDALRegenerateOverviews( GDALRasterBand *, int, GDALRasterBand **,
-                         const char *, GDALProgressFunc, void * );
 
 int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
 

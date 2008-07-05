@@ -467,8 +467,9 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( nNewOverviews > 0 )
         {
-            eErr = GDALRegenerateOverviews( poBand, 
-                                            nNewOverviews, papoOverviewBands,
+            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand, 
+                                            nNewOverviews, 
+                                            (GDALRasterBandH*)papoOverviewBands,
                                             pszResampling, 
                                             pfnProgress, pProgressData );
         }
