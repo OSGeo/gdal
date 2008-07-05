@@ -193,7 +193,8 @@ int main( int nArgc, char ** papszArgv )
             }
             iArg++;
         }
-        else if( EQUAL(papszArgv[iArg],"-tg") && iArg < nArgc-1 )
+        else if( (EQUAL(papszArgv[iArg],"-tg") ||
+                  EQUAL(papszArgv[iArg],"-gt")) && iArg < nArgc-1 )
         {
             nGroupTransactions = atoi(papszArgv[++iArg]);
         }
