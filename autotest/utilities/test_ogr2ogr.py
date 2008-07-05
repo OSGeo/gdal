@@ -58,7 +58,7 @@ def test_ogr2ogr_1():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -82,7 +82,7 @@ def test_ogr2ogr_2():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -110,7 +110,7 @@ def test_ogr2ogr_3():
     else:
         if ds is None or ds.GetLayer(0).GetFeatureCount() != 5:
             return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -134,7 +134,7 @@ def test_ogr2ogr_4():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -159,7 +159,7 @@ def test_ogr2ogr_5():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 20:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -180,7 +180,7 @@ def test_ogr2ogr_6():
     ogr_pg.ogr_pg_1()
     if gdaltest.pg_ds is None:
         return 'skip'
-    gdaltest.pg_ds = None
+    gdaltest.pg_ds.Destroy()
 
     os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
@@ -190,7 +190,7 @@ def test_ogr2ogr_6():
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
@@ -211,7 +211,7 @@ def test_ogr2ogr_7():
     ogr_pg.ogr_pg_1()
     if gdaltest.pg_ds is None:
         return 'skip'
-    gdaltest.pg_ds = None
+    gdaltest.pg_ds.Destroy()
 
     os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
@@ -220,7 +220,7 @@ def test_ogr2ogr_7():
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     if ds is None or ds.GetLayerByName('tpoly').GetFeatureCount() != 10:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     os.popen(test_cli_utilities.get_ogrinfo_path() + ' PG:' + gdaltest.pg_connection_string + ' -sql "DELLAYER:tpoly"')
 
@@ -244,7 +244,7 @@ def test_ogr2ogr_8():
     ds = ogr.Open('tmp/poly.shp')
     if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -268,7 +268,7 @@ def test_ogr2ogr_9():
     ds = ogr.Open('tmp/poly.shp')
     if str(ds.GetLayer(0).GetSpatialRef()).find('1984') == -1:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -292,7 +292,7 @@ def test_ogr2ogr_10():
     ds = ogr.Open('tmp/poly.shp')
     if ds.GetLayer(0).GetLayerDefn().GetFieldCount() != 1:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -316,7 +316,7 @@ def test_ogr2ogr_11():
     ds = ogr.Open('tmp/poly.shp')
     if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -340,7 +340,7 @@ def test_ogr2ogr_12():
     ds = ogr.Open('tmp/poly.shp')
     if ds.GetLayer(0).GetLayerDefn().GetGeomType() != ogr.wkbPolygon25D:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
@@ -364,7 +364,7 @@ def test_ogr2ogr_13():
     ds = ogr.Open('tmp/poly.shp')
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
-    ds = None
+    ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
