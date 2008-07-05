@@ -44,9 +44,9 @@ def test_gdalwarp_1():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/test1.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/byte.tif tmp/testgdalwarp1.tif').read()
 
-    ds = gdal.Open('tmp/test1.tif')
+    ds = gdal.Open('tmp/testgdalwarp1.tif')
     if ds is None:
         return 'fail'
 
@@ -66,9 +66,9 @@ def test_gdalwarp_2():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of GTiff ../gcore/data/byte.tif tmp/test2.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of GTiff ../gcore/data/byte.tif tmp/testgdalwarp2.tif').read()
 
-    ds = gdal.Open('tmp/test2.tif')
+    ds = gdal.Open('tmp/testgdalwarp2.tif')
     if ds is None:
         return 'fail'
 
@@ -88,9 +88,9 @@ def test_gdalwarp_3():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/test3.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ot Int16 ../gcore/data/byte.tif tmp/testgdalwarp3.tif').read()
 
-    ds = gdal.Open('tmp/test3.tif')
+    ds = gdal.Open('tmp/testgdalwarp3.tif')
     if ds is None:
         return 'fail'
 
@@ -113,9 +113,9 @@ def test_gdalwarp_4():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/test4.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/testgdalwarp4.tif').read()
 
-    ds = gdal.Open('tmp/test4.tif')
+    ds = gdal.Open('tmp/testgdalwarp4.tif')
     if ds is None:
         return 'fail'
 
@@ -137,11 +137,11 @@ def test_gdalwarp_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/test_gcp.tif').read()
+    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/testgdalwarp_gcp.tif').read()
     
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gcp.tif tmp/test5.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' tmp/testgdalwarp_gcp.tif tmp/testgdalwarp5.tif').read()
 
-    ds = gdal.Open('tmp/test5.tif')
+    ds = gdal.Open('tmp/testgdalwarp5.tif')
     if ds is None:
         return 'fail'
 
@@ -165,9 +165,9 @@ def test_gdalwarp_6():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -tps tmp/test_gcp.tif tmp/test6.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -tps tmp/testgdalwarp_gcp.tif tmp/testgdalwarp6.tif').read()
 
-    ds = gdal.Open('tmp/test6.tif')
+    ds = gdal.Open('tmp/testgdalwarp6.tif')
     if ds is None:
         return 'fail'
 
@@ -191,9 +191,9 @@ def test_gdalwarp_7():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -tr 120 120 tmp/test_gcp.tif tmp/test7.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -tr 120 120 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp7.tif').read()
 
-    ds = gdal.Open('tmp/test7.tif')
+    ds = gdal.Open('tmp/testgdalwarp7.tif')
     if ds is None:
         return 'fail'
 
@@ -213,9 +213,9 @@ def test_gdalwarp_8():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 10 10 tmp/test_gcp.tif tmp/test8.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 10 10 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp8.tif').read()
 
-    ds = gdal.Open('tmp/test8.tif')
+    ds = gdal.Open('tmp/testgdalwarp8.tif')
     if ds is None:
         return 'fail'
 
@@ -235,9 +235,9 @@ def test_gdalwarp_9():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -te 440720.000 3750120.000 441920.000 3751320.000 tmp/test_gcp.tif tmp/test9.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -te 440720.000 3750120.000 441920.000 3751320.000 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp9.tif').read()
 
-    ds = gdal.Open('tmp/test9.tif')
+    ds = gdal.Open('tmp/testgdalwarp9.tif')
     if ds is None:
         return 'fail'
 
@@ -256,9 +256,9 @@ def test_gdalwarp_10():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rn tmp/test_gcp.tif tmp/test10.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rn tmp/testgdalwarp_gcp.tif tmp/testgdalwarp10.tif').read()
 
-    ds = gdal.Open('tmp/test10.tif')
+    ds = gdal.Open('tmp/testgdalwarp10.tif')
     if ds is None:
         return 'fail'
 
@@ -278,9 +278,9 @@ def test_gdalwarp_11():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rb tmp/test_gcp.tif tmp/test11.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rb tmp/testgdalwarp_gcp.tif tmp/testgdalwarp11.tif').read()
 
-    ds = gdal.Open('tmp/test11.tif')
+    ds = gdal.Open('tmp/testgdalwarp11.tif')
     if ds is None:
         return 'fail'
 
@@ -301,9 +301,9 @@ def test_gdalwarp_12():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rc tmp/test_gcp.tif tmp/test12.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rc tmp/testgdalwarp_gcp.tif tmp/testgdalwarp12.tif').read()
 
-    ds = gdal.Open('tmp/test12.tif')
+    ds = gdal.Open('tmp/testgdalwarp12.tif')
     if ds is None:
         return 'fail'
 
@@ -324,9 +324,9 @@ def test_gdalwarp_13():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rcs tmp/test_gcp.tif tmp/test13.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -rcs tmp/testgdalwarp_gcp.tif tmp/testgdalwarp13.tif').read()
 
-    ds = gdal.Open('tmp/test13.tif')
+    ds = gdal.Open('tmp/testgdalwarp13.tif')
     if ds is None:
         return 'fail'
 
@@ -347,9 +347,9 @@ def test_gdalwarp_14():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -r lanczos tmp/test_gcp.tif tmp/test14.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -ts 40 40 -r lanczos tmp/testgdalwarp_gcp.tif tmp/testgdalwarp14.tif').read()
 
-    ds = gdal.Open('tmp/test14.tif')
+    ds = gdal.Open('tmp/testgdalwarp14.tif')
     if ds is None:
         return 'fail'
 
@@ -369,9 +369,9 @@ def test_gdalwarp_15():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -dstnodata 1 -t_srs EPSG:32610 tmp/test_gcp.tif tmp/test15.tif').read()
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -dstnodata 1 -t_srs EPSG:32610 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp15.tif').read()
 
-    ds = gdal.Open('tmp/test15.tif')
+    ds = gdal.Open('tmp/testgdalwarp15.tif')
     if ds is None:
         return 'fail'
 
@@ -395,15 +395,15 @@ def test_gdalwarp_15():
 def test_gdalwarp_cleanup():
     for i in range(15):
         try:
-            os.remove('tmp/test' + str(i+1) + '.tif')
+            os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
         except:
             pass
         try:
-            os.remove('tmp/test' + str(i+1) + '.tif.aux.xml')
+            os.remove('tmp/testgdalwarp' + str(i+1) + '.tif.aux.xml')
         except:
             pass
     try:
-        os.remove('tmp/test_gcp.tif')
+        os.remove('tmp/testgdalwarp_gcp.tif')
     except:
         pass
 
@@ -426,7 +426,7 @@ gdaltest_list = [
     test_gdalwarp_13,
     test_gdalwarp_14,
     test_gdalwarp_15,
-    test_gdalwarp_cleanup
+    # test_gdalwarp_cleanup
     ]
 
 
