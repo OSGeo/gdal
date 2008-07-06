@@ -410,7 +410,8 @@ double GTIFAngleStringToDD( const char * pszAngle, int nUOMAngle )
                 {
                     szSeconds[1] = pszDecimal[4];
                     szSeconds[2] = '.';
-                    strcpy( szSeconds+3, pszDecimal + 5 );
+                    strncpy( szSeconds+3, pszDecimal + 5, sizeof(szSeconds) - 3 );
+                    szSeconds[sizeof(szSeconds) - 1] = 0;
                 }
                 else
                 {
