@@ -1444,6 +1444,14 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int		nBlockId, nBlockBufSize;
     CPLErr      eErr = CE_None;
 
+    if (eDataType != GDT_Byte)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Updating data with data type = %s and nBitsPerSample = %d is unsupported",
+                 GDALGetDataTypeName(eDataType), poGDS->nBitsPerSample);
+        return CE_Failure;
+    }
+
     poGDS->Crystalize();
     poGDS->SetDirectory();
 
