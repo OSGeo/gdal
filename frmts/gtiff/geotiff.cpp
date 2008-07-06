@@ -104,7 +104,7 @@ class GTiffDataset : public GDALPamDataset
     int         bLoadedBlockDirty;  
     GByte	*pabyBlockBuf;
 
-    CPLErr      LoadBlockBuf( int );
+    CPLErr      LoadBlockBuf( int nBlockId, int bReadFromDisk = TRUE );
     CPLErr      FlushBlockBuf();
 
     char	*pszProjection;
@@ -1246,218 +1246,6 @@ GDALColorInterp GTiffRGBABand::GetColorInterpretation()
 
 /************************************************************************/
 /* ==================================================================== */
-/*                             GTiffBitmapBand                          */
-/* ==================================================================== */
-/************************************************************************/
-
-class GTiffBitmapBand : public GTiffRasterBand
-{
-    friend class GTiffDataset;
-
-    GDALColorTable *poColorTable;
-
-  public:
-
-                   GTiffBitmapBand( GTiffDataset *, int );
-    virtual       ~GTiffBitmapBand();
-
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
-
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-};
-
-
-/************************************************************************/
-/*                           GTiffBitmapBand()                          */
-/************************************************************************/
-
-GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
-        : GTiffRasterBand( poDS, nBand )
-
-{
-
-    if( nBand != 1 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "One bit deep TIFF files only supported with one sample per pixel (band)." );
-    }
-
-    eDataType = GDT_Byte;
-
-    if( poDS->poColorTable != NULL )
-        poColorTable = poDS->poColorTable->Clone();
-    else
-    {
-        GDALColorEntry	oWhite, oBlack;
-
-        oWhite.c1 = 255;
-        oWhite.c2 = 255;
-        oWhite.c3 = 255;
-        oWhite.c4 = 255;
-
-        oBlack.c1 = 0;
-        oBlack.c2 = 0;
-        oBlack.c3 = 0;
-        oBlack.c4 = 255;
-
-        poColorTable = new GDALColorTable();
-        
-        if( poDS->nPhotometric == PHOTOMETRIC_MINISWHITE )
-        {
-            poColorTable->SetColorEntry( 0, &oWhite );
-            poColorTable->SetColorEntry( 1, &oBlack );
-        }
-        else
-        {
-            poColorTable->SetColorEntry( 0, &oBlack );
-            poColorTable->SetColorEntry( 1, &oWhite );
-        }
-    }
-}
-
-/************************************************************************/
-/*                          ~GTiffBitmapBand()                          */
-/************************************************************************/
-
-GTiffBitmapBand::~GTiffBitmapBand()
-
-{
-    delete poColorTable;
-}
-
-/************************************************************************/
-/*                            IWriteBlock()                             */
-/************************************************************************/
-
-CPLErr GTiffBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                     void * pImage )
-
-{
-    int		nBlockId;
-    CPLErr      eErr = CE_None;
-
-    poGDS->SetDirectory();
-
-    CPLAssert( poGDS != NULL
-               && nBlockXOff >= 0
-               && nBlockYOff >= 0
-               && pImage != NULL );
-
-    // First downsample to the particular number of bits in
-    // a temporary buffer.
-    int nLineOffset, iLine;
-    GByte *pabyOddImg = (GByte *) CPLCalloc(nBlockXSize,nBlockYSize);
-    
-    nLineOffset = (nBlockXSize * poGDS->nBitsPerSample + 7) / 8;
-    
-    for( iLine = 0; iLine < nBlockYSize; iLine++ )
-    {
-        GDALCopyBits( (GByte *) pImage, 
-                      iLine*nBlockXSize*8 + 8 - poGDS->nBitsPerSample, 8, 
-                      pabyOddImg, 
-                      iLine * nLineOffset * 8, poGDS->nBitsPerSample,
-                      poGDS->nBitsPerSample, nBlockXSize );
-    }
-    
-    // Then write as appropriate.
-    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
-        + (nBand-1) * poGDS->nBlocksPerBand;
-    
-    eErr = poGDS->WriteEncodedTileOrStrip(nBlockId, pabyOddImg, FALSE);
-    
-    CPLFree( pabyOddImg );
-    
-    return eErr;
-}
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr GTiffBitmapBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
-
-{
-    int			nBlockBufSize, nBlockId;
-    CPLErr		eErr = CE_None;
-
-    poGDS->SetDirectory();
-
-    if( TIFFIsTiled(poGDS->hTIFF) )
-        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
-    else
-    {
-        CPLAssert( nBlockXOff == 0 );
-        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-    }
-
-    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-
-/* -------------------------------------------------------------------- */
-/*      Handle the case of a strip or tile that doesn't exist yet.      */
-/*      Just set to zeros and return.                                   */
-/* -------------------------------------------------------------------- */
-    if( !poGDS->IsBlockAvailable(nBlockId) )
-    {
-        memset( pImage, 0, nBlockYSize * nBlockXSize);
-        return CE_None;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Load the block buffer.                                          */
-/* -------------------------------------------------------------------- */
-    eErr = poGDS->LoadBlockBuf( nBlockId );
-    if( eErr != CE_None )
-        return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Translate 1bit data to eight bit.                               */
-/* -------------------------------------------------------------------- */
-    int	  iDstOffset=0, iLine;
-    register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
-
-    for( iLine = 0; iLine < nBlockYSize; iLine++ )
-    {
-        int iSrcOffset, iPixel;
-
-        iSrcOffset = ((nBlockXSize+7) >> 3) * 8 * iLine;
-
-        for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
-        {
-            if( pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
-                ((GByte *) pImage)[iDstOffset++] = 1;
-            else
-                ((GByte *) pImage)[iDstOffset++] = 0;
-        }
-    }
-    
-    return CE_None;
-}
-
-/************************************************************************/
-/*                       GetColorInterpretation()                       */
-/************************************************************************/
-
-GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
-
-{
-    return GCI_PaletteIndex;
-}
-
-/************************************************************************/
-/*                           GetColorTable()                            */
-/************************************************************************/
-
-GDALColorTable *GTiffBitmapBand::GetColorTable()
-
-{
-    return poColorTable;
-}
-
-/************************************************************************/
-/* ==================================================================== */
 /*                             GTiffOddBitsBand                         */
 /* ==================================================================== */
 /************************************************************************/
@@ -1519,6 +1307,27 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                && nBlockYOff >= 0
                && pImage != NULL );
 
+    if( eDataType == GDT_Float32 && poGDS->nBitsPerSample < 32 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Writing float data with nBitsPerSample < 32 is unsupported");
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load the block buffer.                                          */
+/* -------------------------------------------------------------------- */
+    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+
+    /* Only read content from disk in the CONTIG case */
+    eErr = poGDS->LoadBlockBuf( nBlockId, 
+                                poGDS->nPlanarConfig == PLANARCONFIG_CONTIG && poGDS->nBands > 1 );
+    if( eErr != CE_None )
+        return eErr;
+
 /* -------------------------------------------------------------------- */
 /*      Handle case of "separate" images or single band images where    */
 /*      no interleaving with other data is required.                    */
@@ -1526,29 +1335,75 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE
         || poGDS->nBands == 1 )
     {
-        // First downsample to the particular number of bits in
-        // a temporary buffer.
-        int nLineOffset, iLine;
-        GByte *pabyOddImg = (GByte *) CPLCalloc(nBlockXSize,nBlockYSize);
+        int	iBit, iPixel, iBitOffset = 0;
+        int     iX, iY, nBitsPerLine;
 
-        nLineOffset = (nBlockXSize * poGDS->nBitsPerSample + 7) / 8;
+        // bits per line rounds up to next byte boundary.
+        nBitsPerLine = nBlockXSize * poGDS->nBitsPerSample;
+        if( (nBitsPerLine & 7) != 0 )
+            nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-        for( iLine = 0; iLine < nBlockYSize; iLine++ )
+        iPixel = 0;
+        for( iY = 0; iY < nBlockYSize; iY++ )
         {
-            GDALCopyBits( (GByte *) pImage, 
-                          iLine*nBlockXSize*8 + 8 - poGDS->nBitsPerSample, 8, 
-                          pabyOddImg, 
-                          iLine * nLineOffset * 8, poGDS->nBitsPerSample,
-                          poGDS->nBitsPerSample, nBlockXSize );
+            iBitOffset = iY * nBitsPerLine;
+
+            /* Small optimization in 1 bit case */
+            if (poGDS->nBitsPerSample == 1)
+            {
+                for( iX = 0; iX < nBlockXSize; iX++ )
+                {
+                    if (((GByte *) pImage)[iPixel++])
+                        poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
+                    iBitOffset++;
+                }
+
+                continue;
+            }
+
+            for( iX = 0; iX < nBlockXSize; iX++ )
+            {
+                int  nInWord = 0;
+                if( eDataType == GDT_Byte )
+                    nInWord = ((GByte *) pImage)[iPixel++];
+                else if( eDataType == GDT_UInt16 )
+                    nInWord = ((GUInt16 *) pImage)[iPixel++];
+                else if( eDataType == GDT_UInt32 )
+                    nInWord = ((GUInt32 *) pImage)[iPixel++];
+                else
+                    CPLAssert(0);
+
+
+                if (poGDS->nBitsPerSample == 24)
+                {
+/* -------------------------------------------------------------------- */
+/*      Special case for 24bit data which is pre-byteswapped since      */
+/*      the size falls on a byte boundary ... ugg (#2361).              */
+/* -------------------------------------------------------------------- */
+#ifdef CPL_MSB
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord >> 16;
+#else
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord >> 16;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord;
+#endif
+                    iBitOffset += 24;
+                }
+                else
+                {
+                    for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+                    {
+                        if (nInWord & (1 << (poGDS->nBitsPerSample - 1 - iBit)))
+                            poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
+                        iBitOffset++;
+                    }
+                } 
+            }
         }
 
-        // Then write as appropriate.
-        nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
-            + (nBand-1) * poGDS->nBlocksPerBand;
-        
-        eErr = poGDS->WriteEncodedTileOrStrip( nBlockId, pabyOddImg, FALSE );
-
-        CPLFree( pabyOddImg );
+        poGDS->bLoadedBlockDirty = TRUE;
 
         return eErr;
     }
@@ -1556,12 +1411,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
 /* -------------------------------------------------------------------- */
-
-    nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-        
-    eErr = poGDS->LoadBlockBuf( nBlockId );
-    if( eErr != CE_None )
-        return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      On write of pixel interleaved data, we might as well flush      */
@@ -1574,7 +1423,8 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         const GByte *pabyThisImage = NULL;
         GDALRasterBlock *poBlock = NULL;
-        int nLineOffset, iLine;
+        int	iBit, iPixel, iBitOffset = 0;
+        int     iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
 
         if( iBand+1 == nBand )
             pabyThisImage = (GByte *) pImage;
@@ -1595,19 +1445,63 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             pabyThisImage = (GByte *) poBlock->GetDataRef();
         }
 
-        // lines always end on byte boundaries.
-        nLineOffset = (poGDS->nBands*poGDS->nBitsPerSample*nBlockXSize+7) / 8;
+        iPixelBitSkip = poGDS->nBitsPerSample * poGDS->nBands;
+        iBandBitOffset = iBand * poGDS->nBitsPerSample;
 
-        for( iLine = 0; iLine < nBlockYSize; iLine++ )
+        // bits per line rounds up to next byte boundary.
+        nBitsPerLine = nBlockXSize * iPixelBitSkip;
+        if( (nBitsPerLine & 7) != 0 )
+            nBitsPerLine = (nBitsPerLine + 7) & (~7);
+
+        iPixel = 0;
+        for( iY = 0; iY < nBlockYSize; iY++ )
         {
-            GDALCopyBits( pabyThisImage, 
-                          iLine*nBlockXSize*8 + 8 - poGDS->nBitsPerSample, 8, 
-                          poGDS->pabyBlockBuf, 
-                          iLine*nLineOffset*8 + iBand * poGDS->nBitsPerSample, 
-                          poGDS->nBitsPerSample * poGDS->nBands,
-                          poGDS->nBitsPerSample, nBlockXSize );
+            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+
+            for( iX = 0; iX < nBlockXSize; iX++ )
+            {
+                int  nInWord = 0;
+                if( eDataType == GDT_Byte )
+                    nInWord = ((GByte *) pabyThisImage)[iPixel++];
+                else if( eDataType == GDT_UInt16 )
+                    nInWord = ((GUInt16 *) pabyThisImage)[iPixel++];
+                else if( eDataType == GDT_UInt32 )
+                    nInWord = ((GUInt32 *) pabyThisImage)[iPixel++];
+                else
+                    CPLAssert(0);
+
+
+                if (poGDS->nBitsPerSample == 24)
+                {
+/* -------------------------------------------------------------------- */
+/*      Special case for 24bit data which is pre-byteswapped since      */
+/*      the size falls on a byte boundary ... ugg (#2361).              */
+/* -------------------------------------------------------------------- */
+#ifdef CPL_MSB
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord >> 16;
+#else
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 0] = nInWord >> 16;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 1] = nInWord >> 8;
+                    poGDS->pabyBlockBuf[(iBitOffset>>3) + 2] = nInWord;
+#endif
+                    iBitOffset += 24;
+                }
+                else
+                {
+                    for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+                    {
+                        if (nInWord & (1 << (poGDS->nBitsPerSample - 1 - iBit)))
+                            poGDS->pabyBlockBuf[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
+                        iBitOffset++;
+                    }
+                } 
+
+                iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
+            }
         }
-        
+
         if( poBlock != NULL )
         {
             poBlock->MarkClean();
@@ -1628,36 +1522,15 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                     void * pImage )
 
 {
-    int			nBlockBufSize, nBlockId;
+    int			nBlockId;
     CPLErr		eErr = CE_None;
 
     poGDS->SetDirectory();
-
-    if( TIFFIsTiled(poGDS->hTIFF) )
-        nBlockBufSize = TIFFTileSize( poGDS->hTIFF );
-    else
-    {
-        CPLAssert( nBlockXOff == 0 );
-        nBlockBufSize = TIFFStripSize( poGDS->hTIFF );
-    }
 
     nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
         nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
-
-/* -------------------------------------------------------------------- */
-/*	Handle the case of a strip in a writable file that doesn't	*/
-/*	exist yet, but that we want to read.  Just set to zeros and	*/
-/*	return.								*/
-/* -------------------------------------------------------------------- */
-    if( poGDS->eAccess == GA_Update && !poGDS->IsBlockAvailable(nBlockId) )
-    {
-        memset( pImage, 0,
-                nBlockXSize * nBlockYSize
-                * GDALGetDataTypeSize(eDataType) / 8 );
-        return CE_None;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Load the block buffer.                                          */
@@ -1666,11 +1539,34 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( eErr != CE_None )
         return eErr;
 
+    if (  poGDS->nBitsPerSample == 1 && (poGDS->nBands == 1 || poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) )
+    {
+/* -------------------------------------------------------------------- */
+/*      Translate 1bit data to eight bit.                               */
+/* -------------------------------------------------------------------- */
+        int	  iDstOffset=0, iLine;
+        register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
+
+        for( iLine = 0; iLine < nBlockYSize; iLine++ )
+        {
+            int iSrcOffset, iPixel;
+
+            iSrcOffset = ((nBlockXSize+7) >> 3) * 8 * iLine;
+
+            for( iPixel = 0; iPixel < nBlockXSize; iPixel++, iSrcOffset++ )
+            {
+                if( pabyBlockBuf[iSrcOffset >>3] & (0x80 >> (iSrcOffset & 0x7)) )
+                    ((GByte *) pImage)[iDstOffset++] = 1;
+                else
+                    ((GByte *) pImage)[iDstOffset++] = 0;
+            }
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Handle the case of 16- and 24-bit floating point data as per    */
 /*      TIFF Technical Note 3.                                          */
 /* -------------------------------------------------------------------- */
-    if( eDataType == GDT_Float32 && poGDS->nBitsPerSample < 32 )
+    else if( eDataType == GDT_Float32 && poGDS->nBitsPerSample < 32 )
     {
         int	i, nBlockPixels, nWordBytes, iSkipBytes;
         GByte	*pabyImage;
@@ -1834,7 +1730,9 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
+        register GByte *pabyBlockBuf = poGDS->pabyBlockBuf;
         iPixel = 0;
+
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             iBitOffset = iBandBitOffset + iY * nBitsPerLine;
@@ -1845,7 +1743,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
                 {
-                    if( poGDS->pabyBlockBuf[iBitOffset>>3] 
+                    if( pabyBlockBuf[iBitOffset>>3] 
                         & (0x80 >>(iBitOffset & 7)) )
                         nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
                     iBitOffset++;
@@ -1859,11 +1757,107 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     ((GUInt16 *) pImage)[iPixel++] = nOutWord;
                 else if( eDataType == GDT_UInt32 )
                     ((GUInt32 *) pImage)[iPixel++] = nOutWord;
+                else
+                    CPLAssert(0);
             }
         }
     }
 
     return CE_None;
+}
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             GTiffBitmapBand                          */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTiffBitmapBand : public GTiffOddBitsBand
+{
+    friend class GTiffDataset;
+
+    GDALColorTable *poColorTable;
+
+  public:
+
+                   GTiffBitmapBand( GTiffDataset *, int );
+    virtual       ~GTiffBitmapBand();
+
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
+};
+
+
+/************************************************************************/
+/*                           GTiffBitmapBand()                          */
+/************************************************************************/
+
+GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDS, int nBand )
+        : GTiffOddBitsBand( poDS, nBand )
+
+{
+    eDataType = GDT_Byte;
+
+    if( poDS->poColorTable != NULL )
+        poColorTable = poDS->poColorTable->Clone();
+    else
+    {
+        GDALColorEntry	oWhite, oBlack;
+
+        oWhite.c1 = 255;
+        oWhite.c2 = 255;
+        oWhite.c3 = 255;
+        oWhite.c4 = 255;
+
+        oBlack.c1 = 0;
+        oBlack.c2 = 0;
+        oBlack.c3 = 0;
+        oBlack.c4 = 255;
+
+        poColorTable = new GDALColorTable();
+        
+        if( poDS->nPhotometric == PHOTOMETRIC_MINISWHITE )
+        {
+            poColorTable->SetColorEntry( 0, &oWhite );
+            poColorTable->SetColorEntry( 1, &oBlack );
+        }
+        else
+        {
+            poColorTable->SetColorEntry( 0, &oBlack );
+            poColorTable->SetColorEntry( 1, &oWhite );
+        }
+    }
+}
+
+/************************************************************************/
+/*                          ~GTiffBitmapBand()                          */
+/************************************************************************/
+
+GTiffBitmapBand::~GTiffBitmapBand()
+
+{
+    delete poColorTable;
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp GTiffBitmapBand::GetColorInterpretation()
+
+{
+    return GCI_PaletteIndex;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *GTiffBitmapBand::GetColorTable()
+
+{
+    return poColorTable;
 }
 
 /************************************************************************/
@@ -2101,7 +2095,7 @@ CPLErr GTiffDataset::FlushBlockBuf()
 /*      Load working block buffer with request block (tile/strip).      */
 /************************************************************************/
 
-CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
+CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
 
 {
     int	nBlockBufSize;
@@ -2173,9 +2167,15 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
 /*      doesn't yet exist on disk, just zero the memory buffer and      */
 /*      pretend we loaded it.                                           */
 /* -------------------------------------------------------------------- */
-    if( eAccess == GA_Update && !IsBlockAvailable( nBlockId ) )
+    if( !IsBlockAvailable( nBlockId ) )
     {
         memset( pabyBlockBuf, 0, nBlockBufSize );
+        nLoadedBlock = nBlockId;
+        return CE_None;
+    }
+
+    if( !bReadFromDisk )
+    {
         nLoadedBlock = nBlockId;
         return CE_None;
     }
@@ -4143,7 +4143,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     else
         SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
 
-    if( nBitsPerSample < 8 )
+    if(  (GetRasterBand(1)->GetRasterDataType() == GDT_Byte   && nBitsPerSample != 8 ) ||
+         (GetRasterBand(1)->GetRasterDataType() == GDT_UInt16 && nBitsPerSample != 16) ||
+         (GetRasterBand(1)->GetRasterDataType() == GDT_UInt32 && nBitsPerSample != 32) )
     {
         for (int i = 0; i < nBands; ++i)
             GetRasterBand(i+1)->SetMetadataItem( "NBITS", 
@@ -4630,14 +4632,53 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      How many bits per sample?  We have a special case if NBITS      */
-/*      specified for GDT_Byte.                                         */
+/*      specified for GDT_Byte, GDT_UInt16, GDT_UInt32.                 */
 /* -------------------------------------------------------------------- */
     int nBitsPerSample = GDALGetDataTypeSize(eType);
-    if( eType == GDT_Byte 
-        && CSLFetchNameValue(papszParmList, "NBITS") != NULL )
+    if (CSLFetchNameValue(papszParmList, "NBITS") != NULL)
     {
-        nBitsPerSample = 
-            MIN(8,MAX(1,atoi(CSLFetchNameValue(papszParmList, "NBITS"))));
+        int nMinBits = 0, nMaxBits = 0;
+        nBitsPerSample = atoi(CSLFetchNameValue(papszParmList, "NBITS"));
+        if( eType == GDT_Byte  )
+        {
+            nMinBits = 1;
+            nMaxBits = 8;
+        }
+        else if( eType == GDT_UInt16 )
+        {
+            nMinBits = 9;
+            nMaxBits = 16;
+        }
+        else if( eType == GDT_UInt32  )
+        {
+            nMinBits = 17;
+            nMaxBits = 32;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "NBITS is not supported for data type %s",
+                     GDALGetDataTypeName(eType));
+            nBitsPerSample = GDALGetDataTypeSize(eType);
+        }
+
+        if (nMinBits != 0)
+        {
+            if (nBitsPerSample < nMinBits)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "NBITS=%d is invalid for data type %s. Using NBITS=%d",
+                         nBitsPerSample, GDALGetDataTypeName(eType), nMinBits);
+                nBitsPerSample = nMinBits;
+            }
+            else if (nBitsPerSample > nMaxBits)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "NBITS=%d is invalid for data type %s. Using NBITS=%d",
+                         nBitsPerSample, GDALGetDataTypeName(eType), nMaxBits);
+                nBitsPerSample = nMaxBits;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -4905,10 +4946,14 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        if( poDS->nBitsPerSample < 8 )
-            poDS->SetBand( iBand+1, new GTiffOddBitsBand( poDS, iBand+1 ) );
-        else
+        if( poDS->nBitsPerSample == 8 ||
+            poDS->nBitsPerSample == 16 ||
+            poDS->nBitsPerSample == 32 ||
+            poDS->nBitsPerSample == 64 ||
+            poDS->nBitsPerSample == 128)
             poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
+        else
+            poDS->SetBand( iBand+1, new GTiffOddBitsBand( poDS, iBand+1 ) );
     }
 
     return( poDS );
@@ -5001,7 +5046,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     char     **papszCreateOptions = CSLDuplicate( papszOptions );
 
     if( poPBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) != NULL 
-        && atoi(poPBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )) < 8 
+        && atoi(poPBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )) > 0
         && CSLFetchNameValue( papszCreateOptions, "NBITS") == NULL )
     {
         papszCreateOptions = 
@@ -5969,7 +6014,7 @@ void GDALRegister_GTiff()
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100, default 75.'/>"
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9, default 6.'/>"
-"   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7)'/>"
+"   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
