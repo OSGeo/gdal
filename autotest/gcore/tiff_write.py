@@ -43,12 +43,12 @@ def tiff_write_1():
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
     if gdaltest.tiff_drv is None:
         gdaltest.post_reason( 'GTiff driver not found!' )
-        return 'false'
+        return 'fail'
     
     drv_md = gdaltest.tiff_drv.GetMetadata()
     if drv_md['DMD_MIMETYPE'] != 'image/tiff':
         gdaltest.post_reason( 'mime type is wrong' )
-        return 'false'
+        return 'fail'
 
     return 'success'
 
@@ -64,7 +64,7 @@ def tiff_write_2():
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 5028:
         gdaltest.post_reason( 'Didnt get expected checksum on still-open file')
-        return 'false'
+        return 'fail'
 
     bnd = None
     new_ds = None
@@ -75,11 +75,11 @@ def tiff_write_2():
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 5028:
         gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
-        return 'false'
+        return 'fail'
 
     if bnd.ComputeRasterMinMax() != (74.0, 255.0):
         gdaltest.post_reason( 'ComputeRasterMinMax() returned wrong value' )
-        return 'false'
+        return 'fail'
 
     bnd = None
     new_ds = None
@@ -103,7 +103,7 @@ def tiff_write_3():
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 50054:
         gdaltest.post_reason( 'Didnt get expected checksum on still-open file')
-        return 'false'
+        return 'fail'
 
     bnd = None
     new_ds = None
@@ -160,11 +160,11 @@ def tiff_write_4():
        or new_ds.GetRasterBand(2).Checksum() != 20950 \
        or new_ds.GetRasterBand(3).Checksum() != 23730:
         gdaltest.post_reason( 'Wrong checksum.' )
-        return 'false'
+        return 'fail'
 
     if gt != new_ds.GetGeoTransform():
         gdaltest.post_reason( 'Wrong geotransform.' )
-        return 'false'
+        return 'fail'
 
     dict = {}
     dict['TEST_KEY'] = 'TestValue'
@@ -178,21 +178,21 @@ def tiff_write_4():
        or new_ds.GetRasterBand(2).Checksum() != 20950 \
        or new_ds.GetRasterBand(3).Checksum() != 23730:
         gdaltest.post_reason( 'Wrong checksum (2).' )
-        return 'false'
+        return 'fail'
 
     if gt != new_ds.GetGeoTransform():
         gdaltest.post_reason( 'Wrong geotransform(2).' )
-        return 'false'
+        return 'fail'
 
     nd = new_ds.GetRasterBand(1).GetNoDataValue()
     if nd is not None:
         gdaltest.post_reason( 'Got unexpected nodata value.' )
-        return 'false'
+        return 'fail'
 
     md_dict = new_ds.GetMetadata()
     if md_dict['TEST_KEY'] != 'TestValue':
         gdaltest.post_reason( 'Missing metadata' )
-        return 'false'
+        return 'fail'
                               
     new_ds = None
     
@@ -212,12 +212,12 @@ def tiff_write_5():
     if string.find(new_ds.GetGCPProjection(),
                    'AUTHORITY["EPSG","26711"]') == -1:
         gdaltest.post_reason( 'GCP Projection not set properly.' )
-        return 'false'
+        return 'fail'
                    
     gcps = new_ds.GetGCPs()
     if len(gcps) != 4:
         gdaltest.post_reason( 'GCP count wrong.' )
-        return 'false'
+        return 'fail'
 
     new_ds = None
 
@@ -232,7 +232,7 @@ def tiff_write_5():
     gcps = new_ds.GetGCPs()
     if len(gcps) != 4:
         gdaltest.post_reason( 'GCP count wrong.' )
-        return 'false'
+        return 'fail'
     new_ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/test_5.tif' )
@@ -350,7 +350,7 @@ def tiff_write_9():
     bnd = new_ds.GetRasterBand(1)
     if bnd.Checksum() != 4084:
         gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
-        return 'false'
+        return 'fail'
 
     bnd = None
     new_ds = None
@@ -677,7 +677,7 @@ def tiff_write_19():
        new_ds.GetRasterBand(2).Checksum() != src_ds.GetRasterBand(2).Checksum() or \
        new_ds.GetRasterBand(3).Checksum() != src_ds.GetRasterBand(3).Checksum() :
         gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
-        return 'false'
+        return 'fail'
 
     new_ds = None
     src_ds = None
