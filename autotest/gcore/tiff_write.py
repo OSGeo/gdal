@@ -1278,6 +1278,216 @@ def tiff_write_35():
 
     return 'success'
 
+###############################################################################
+# Generic functions for the 8 following tests
+
+def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    ds_in = gdal.Open(vrtfilename)
+
+    ds = drv.CreateCopy( tmpfilename, ds_in, options = [ 'NBITS=' + str(nbits), 'INTERLEAVE='+ interleaving ] )
+
+    ds_in = None
+
+    ds = None
+
+    ds = gdal.Open( tmpfilename )
+    bnd = ds.GetRasterBand(1)
+    if bnd.Checksum() != 4672:
+        gdaltest.post_reason( 'Didnt get expected checksum on band 1')
+        return 'fail'
+    md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    if md['NBITS'] != str(nbits):
+        gdaltest.post_reason( 'Didnt get expected NBITS value')
+        return 'fail'
+
+    bnd = ds.GetRasterBand(2)
+    if bnd.Checksum() != 4672:
+        gdaltest.post_reason( 'Didnt get expected checksum on band 2')
+        return 'fail'
+    bnd = ds.GetRasterBand(3)
+    if bnd.Checksum() != 4672:
+        gdaltest.post_reason( 'Didnt get expected checksum on band 3')
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGE_STRUCTURE');
+    if md['INTERLEAVE'] != interleaving:
+        gdaltest.post_reason( 'Didnt get expected interleaving')
+        return 'fail'
+
+    ds = None
+
+    drv.Delete( tmpfilename )
+
+    return 'success'
+
+
+###############################################################################
+# Test copy with NBITS=9, INTERLEAVE=PIXEL
+
+def tiff_write_36():
+    return tiff_write_big_odd_bits('data/uint16_3band.vrt', 'tmp/tw_36.tif', 9, 'PIXEL' )
+
+
+###############################################################################
+# Test copy with NBITS=9, INTERLEAVE=BAND
+
+def tiff_write_37():
+    return tiff_write_big_odd_bits('data/uint16_3band.vrt', 'tmp/tw_37.tif', 9, 'BAND' )
+
+###############################################################################
+# Test copy with NBITS=12, INTERLEAVE=PIXEL
+
+def tiff_write_38():
+    return tiff_write_big_odd_bits('data/uint16_3band.vrt', 'tmp/tw_38.tif', 12, 'PIXEL' )
+
+###############################################################################
+# Test copy with NBITS=12, INTERLEAVE=BAND
+
+def tiff_write_39():
+    return tiff_write_big_odd_bits('data/uint16_3band.vrt', 'tmp/tw_39.tif', 12, 'BAND' )
+
+###############################################################################
+# Test copy with NBITS=17, INTERLEAVE=PIXEL
+
+def tiff_write_40():
+    return tiff_write_big_odd_bits('data/uint32_3band.vrt', 'tmp/tw_40tif', 17, 'PIXEL' )
+
+###############################################################################
+# Test copy with NBITS=17, INTERLEAVE=BAND
+
+def tiff_write_41():
+    return tiff_write_big_odd_bits('data/uint32_3band.vrt', 'tmp/tw_41.tif', 17, 'BAND' )
+
+###############################################################################
+# Test copy with NBITS=24, INTERLEAVE=PIXEL
+
+def tiff_write_42():
+    return tiff_write_big_odd_bits('data/uint32_3band.vrt', 'tmp/tw_42.tif', 24, 'PIXEL' )
+
+###############################################################################
+# Test copy with NBITS=24, INTERLEAVE=BAND
+
+def tiff_write_43():
+    return tiff_write_big_odd_bits('data/uint32_3band.vrt', 'tmp/tw_43.tif', 24, 'BAND' )
+
+
+###############################################################################
+# Test create with NBITS=9 and preservation through CreateCopy of NBITS
+
+def tiff_write_44():
+    drv = gdal.GetDriverByName( 'GTiff' )
+    ds = drv.Create( 'tmp/tw_44.tif', 1, 1, 1, gdal.GDT_UInt16, options = [ 'NBITS=9' ] )
+    ds = None
+    ds = gdal.Open( 'tmp/tw_44.tif' )
+    bnd = ds.GetRasterBand(1)
+    md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    if md['NBITS'] != '9':
+        gdaltest.post_reason( 'Didnt get expected NBITS value')
+        return 'fail'
+
+    ds2 = drv.CreateCopy( 'tmp/tw_44_copy.tif', ds )
+    ds2 = None
+
+    ds2 = gdal.Open('tmp/tw_44_copy.tif')
+    bnd = ds.GetRasterBand(1)
+    md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    if md['NBITS'] != '9':
+        gdaltest.post_reason( 'Didnt get expected NBITS value')
+        return 'fail'
+
+    ds = None
+    ds2 = None
+
+    drv.Delete( 'tmp/tw_44.tif' )
+    drv.Delete( 'tmp/tw_44_copy.tif' )
+
+    return 'success'
+
+###############################################################################
+# Test create with NBITS=17 and preservation through CreateCopy of NBITS
+
+def tiff_write_45():
+    drv = gdal.GetDriverByName( 'GTiff' )
+    ds = drv.Create( 'tmp/tw_45.tif', 1, 1, 1, gdal.GDT_UInt32, options = [ 'NBITS=17' ] )
+    ds = None
+    ds = gdal.Open( 'tmp/tw_45.tif' )
+    bnd = ds.GetRasterBand(1)
+    md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    if md['NBITS'] != '17':
+        gdaltest.post_reason( 'Didnt get expected NBITS value')
+        return 'fail'
+
+    ds2 = drv.CreateCopy( 'tmp/tw_45_copy.tif', ds )
+    ds2 = None
+
+    ds2 = gdal.Open('tmp/tw_45_copy.tif')
+    bnd = ds.GetRasterBand(1)
+    md = bnd.GetMetadata('IMAGE_STRUCTURE')
+    if md['NBITS'] != '17':
+        gdaltest.post_reason( 'Didnt get expected NBITS value')
+        return 'fail'
+
+    ds = None
+    ds2 = None
+
+    drv.Delete( 'tmp/tw_45.tif' )
+    drv.Delete( 'tmp/tw_45_copy.tif' )
+
+    return 'success'
+
+
+###############################################################################
+# Test correct round-tripping of ReadBlock/WriteBlock
+
+def tiff_write_46():
+    import struct
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+
+    ds = drv.Create("tmp/tiff_write_46_1.tif", 10, 10, 1, options = [ 'NBITS=1' ])
+    ds.GetRasterBand(1).Fill(0)
+
+    ds2 = drv.Create("tmp/tiff_write_46_2.tif", 10, 10, 1, options = [ 'NBITS=1' ])
+    ds2.GetRasterBand(1).Fill(1)
+    ones = ds2.ReadRaster(0, 0, 10, 1)
+
+    # Load the working block
+    data = ds.ReadRaster(0, 0, 10, 1)
+
+    # Write the working bloc
+    ds.WriteRaster(0, 0, 10, 1, ones)
+
+    # This will discard the cached block for ds
+    ds3 = drv.Create("tmp/tiff_write_46_3.tif", 10, 10, 1)
+    ds3.GetRasterBand(1).Fill(1)
+
+    # Load the working block again
+    data = ds.ReadRaster(0, 0, 10, 1)
+
+    # We expect (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+    got = struct.unpack('B' * 10, data)
+    for i in range(len(got)):
+        if got[i] != 1:
+            print got
+            gdal.SetCacheMax(oldSize)
+            return 'fail'
+
+    gdal.SetCacheMax(oldSize)
+
+    ds = None
+    ds2 = None
+    ds3 = None
+    drv.Delete( 'tmp/tiff_write_46_1.tif' )
+    drv.Delete( 'tmp/tiff_write_46_2.tif' )
+    drv.Delete( 'tmp/tiff_write_46_3.tif' )
+
+    return 'success'
+
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -1320,6 +1530,17 @@ gdaltest_list = [
     tiff_write_33,
     tiff_write_34,
     tiff_write_35,
+    tiff_write_36,
+    tiff_write_37,
+    tiff_write_38,
+    tiff_write_39,
+    tiff_write_40,
+    tiff_write_41,
+    tiff_write_42,
+    tiff_write_43,
+    tiff_write_44,
+    tiff_write_45,
+    tiff_write_46,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
