@@ -123,8 +123,6 @@ def tiff_write_4():
     except:
         return 'skip'
 
-    src_ds = gdal.Open( 'data/utmsmall.tif' )
-
     options = [ 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32' ]
     
     new_ds = gdaltest.tiff_drv.Create( 'tmp/test_4.tif', 40, 50, 3,
@@ -1488,6 +1486,52 @@ def tiff_write_46():
 
     return 'success'
 
+###############################################################################
+# Test #2457
+
+def tiff_write_47():
+
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+
+    ret = tiff_write_3()
+
+    gdal.SetCacheMax(oldSize)
+    return ret
+
+
+###############################################################################
+# Test #2457 with nYOff of RasterIO not aligned on the block height
+
+def tiff_write_48():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+
+    src_ds = gdal.Open( 'data/utmsmall.tif' )
+    new_ds = gdal.GetDriverByName("GTiff").Create('tmp/tiff_write_48.tif', 100, 100, 1, options = [ 'TILED=YES', 'BLOCKXSIZE=96', 'BLOCKYSIZE=96' ])
+    data = src_ds.ReadRaster(0, 0, 100, 1)
+    data2 = src_ds.ReadRaster(0, 1, 100, 99)
+    new_ds.WriteRaster(0, 1, 100, 99, data2)
+    new_ds.WriteRaster(0, 0, 100, 1, data)
+    new_ds = None
+    
+    gdal.SetCacheMax(oldSize)
+
+    new_ds = None
+    new_ds = gdal.Open('tmp/tiff_write_48.tif')
+    if new_ds.GetRasterBand(1).Checksum() != 50054:
+        gdaltest.post_reason( 'Didnt get expected checksum ')
+        return 'fail'
+
+    new_ds = None
+
+    drv.Delete( 'tmp/tiff_write_48.tif' )
+
+    return 'success'
+
 
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -1541,6 +1585,8 @@ gdaltest_list = [
     tiff_write_44,
     tiff_write_45,
     tiff_write_46,
+    tiff_write_47,
+    tiff_write_48,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
