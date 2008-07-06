@@ -174,7 +174,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         nLBlockXStart = nXOff / nBlockXSize;
         nXSpanEnd = nBufXSize + nXOff;
 
-        for( iBufYOff = 0, iSrcY = nYOff; iBufYOff < nBufYSize; iBufYOff++, iSrcY++ )
+        int nYInc = 0;
+        for( iBufYOff = 0, iSrcY = nYOff; iBufYOff < nBufYSize; iBufYOff+=nYInc, iSrcY+=nYInc )
         {
             size_t  iBufOffset, iSrcOffset;
             int     nXSpan;
@@ -231,32 +232,38 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
                 iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
-                    + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
-
-                if( eDataType == eBufType 
-                    && nPixelSpace == nBufDataSize )
+                    + ((size_t)(iSrcY) - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+                /* Fill up as many rows as possible for the loaded block */
+                int kmax = MIN(nBlockYSize - (iSrcY % nBlockYSize), nBufYSize - iBufYOff);
+                for(int k=0; k<kmax;k++)
                 {
-                    if( eRWFlag == GF_Read )
-                        memcpy( ((GByte *) pData) + iBufOffset,
-                                pabySrcBlock + iSrcOffset, nXSpanSize );
+                    if( eDataType == eBufType 
+                        && nPixelSpace == nBufDataSize )
+                    {
+                        if( eRWFlag == GF_Read )
+                            memcpy( ((GByte *) pData) + iBufOffset + k * nLineSpace,
+                                    pabySrcBlock + iSrcOffset, nXSpanSize );
+                        else
+                            memcpy( pabySrcBlock + iSrcOffset, 
+                                    ((GByte *) pData) + iBufOffset + k * nLineSpace, nXSpanSize );
+                    }
                     else
-                        memcpy( pabySrcBlock + iSrcOffset, 
-                                ((GByte *) pData) + iBufOffset, nXSpanSize );
-                }
-                else
-                {
-                    /* type to type conversion */
+                    {
+                        /* type to type conversion */
+                        
+                        if( eRWFlag == GF_Read )
+                            GDALCopyWords( pabySrcBlock + iSrcOffset,
+                                        eDataType, nBandDataSize,
+                                        ((GByte *) pData) + iBufOffset + k * nLineSpace,
+                                        eBufType, nPixelSpace, nXSpan );
+                        else
+                            GDALCopyWords( ((GByte *) pData) + iBufOffset + k * nLineSpace,
+                                        eBufType, nPixelSpace,
+                                        pabySrcBlock + iSrcOffset,
+                                        eDataType, nBandDataSize, nXSpan );
+                    }
                     
-                    if( eRWFlag == GF_Read )
-                        GDALCopyWords( pabySrcBlock + iSrcOffset,
-                                       eDataType, nBandDataSize,
-                                       ((GByte *) pData) + iBufOffset,
-                                       eBufType, nPixelSpace, nXSpan );
-                    else
-                        GDALCopyWords( ((GByte *) pData) + iBufOffset,
-                                       eBufType, nPixelSpace,
-                                       pabySrcBlock + iSrcOffset,
-                                       eDataType, nBandDataSize, nXSpan );
+                    iSrcOffset += nBlockXSize * nBandDataSize;
                 }
 
                 iBufOffset += nXSpanSize;
@@ -266,6 +273,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 poBlock->DropLock();
                 poBlock = NULL;
             }
+
+            /* Compute the increment to go on a block boundary */
+            nYInc = nBlockYSize - (iSrcY % nBlockYSize);
         }
 
         return CE_None;
