@@ -41,6 +41,7 @@
 
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
+#include <string>
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -398,7 +399,7 @@ char **VSIUnixStdioFilesystemHandler::ReadDir( const char *pszPath )
 void VSIInstallLargeFileHandler()
 
 {
-    VSIFileManager::InstallHandler( string(""), 
+    VSIFileManager::InstallHandler( std::string(""), 
                                     new VSIUnixStdioFilesystemHandler );
 }
 
