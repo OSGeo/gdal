@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id: gdalwarp.cpp 12380 2007-10-12 17:35:00Z rouault $");
+CPL_CVSID("$Id: gdaltransform.cpp 12380 2007-10-12 17:35:00Z rouault $");
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -43,7 +43,7 @@ static void Usage()
     printf( 
         "Usage: gdaltransform [--help-general]\n"
         "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
-        "    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]\n"
+        "    [-order n] [-tps] [-rpc] [-geoloc] \n"
         "    [-gcp pixel line easting northing [elevation]]*\n" 
         "    [srcfile [dstfile]]\n" 
         "\n" );

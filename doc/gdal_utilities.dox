@@ -838,7 +838,7 @@ transforms coordinates
 \verbatim
 gdaltransform [--help-general]
     [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
-    [-order n] [-tps] [-rpc] [-geoloc] [-et err_threshold]
+    [-order n] [-tps] [-rpc] [-geoloc]
     [-gcp pixel line easting northing [elevation]]*
     [srcfile [dstfile]]
 \endverbatim
