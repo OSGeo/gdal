@@ -96,6 +96,11 @@ def get_gdalwarp_path():
 
 ###############################################################################
 # 
+def get_gdaladdo_path():
+    return get_cli_utility_path('gdaladdo')
+
+###############################################################################
+# 
 def get_ogrinfo_path():
     return get_cli_utility_path('ogrinfo')
 
