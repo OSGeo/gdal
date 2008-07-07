@@ -101,6 +101,11 @@ def get_gdaladdo_path():
 
 ###############################################################################
 # 
+def get_gdaltransform_path():
+    return get_cli_utility_path('gdaltransform')
+
+###############################################################################
+# 
 def get_ogrinfo_path():
     return get_cli_utility_path('ogrinfo')
 
