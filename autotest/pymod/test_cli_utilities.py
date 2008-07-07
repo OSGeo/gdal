@@ -106,6 +106,11 @@ def get_gdaltransform_path():
 
 ###############################################################################
 # 
+def get_gdaltindex_path():
+    return get_cli_utility_path('gdaltindex')
+
+###############################################################################
+# 
 def get_ogrinfo_path():
     return get_cli_utility_path('ogrinfo')
 
@@ -113,3 +118,8 @@ def get_ogrinfo_path():
 # 
 def get_ogr2ogr_path():
     return get_cli_utility_path('ogr2ogr')
+
+###############################################################################
+# 
+def get_ogrtindex_path():
+    return get_cli_utility_path('ogrtindex')
