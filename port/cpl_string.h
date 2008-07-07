@@ -181,10 +181,11 @@ CPL_C_END
  * 1200 - VC++ 6.0
  * 1200-1202 - eVC++ 4.0
  */
-#if (_MSC_VER <= 1202)
-#  define MSVC_OLD_STUPID_BEHAVIOUR
+#if defined(_MSC_VER) 
+# if (_MSC_VER <= 1202) 
+#  define MSVC_OLD_STUPID_BEHAVIOUR 
+# endif
 #endif
- 
 
 /* Avoid C2614 errors */
 #ifdef MSVC_OLD_STUPID_BEHAVIOUR
