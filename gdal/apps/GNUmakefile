@@ -21,7 +21,14 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogrtindex$(EXE)
 endif
 
+NON_DEFAULT_LIST = 	gdalbuildvrt$(EXE) multireadtest$(EXE) \
+			dumpoverviews$(EXE) gdalwarpsimple$(EXE) gdalflattenmask$(EXE) \
+			gdaltorture$(EXE) gdal2ogr$(EXE) testepsg$(EXE) \
+			test_ogrsf$(EXE)
+
 default:	gdal-config-inst gdal-config $(BIN_LIST)
+
+all: default $(NON_DEFAULT_LIST)
 
 lib-depend:
 	(cd ../gcore ; $(MAKE) )
