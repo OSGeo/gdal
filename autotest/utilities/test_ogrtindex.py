@@ -46,7 +46,18 @@ def test_ogrtindex_1():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
 
-    shape_drv.DeleteDataSource('tmp/tileindex.shp')
+    try:
+        os.remove('tmp/tileindex.shp')
+    except:
+        pass
+    try:
+        os.remove('tmp/tileindex.dfb')
+    except:
+        pass
+    try:
+        os.remove('tmp/tileindex.shp')
+    except:
+        pass
 
     shape_ds = shape_drv.CreateDataSource( 'tmp' )
 
@@ -94,6 +105,7 @@ def test_ogrtindex_1():
             return 'fail'
         i = i + 1
         feat = ds.GetLayer(0).GetNextFeature()
+    ds.Destroy()
 
     return 'success'
 

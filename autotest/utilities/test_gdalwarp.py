@@ -466,7 +466,7 @@ gdaltest_list = [
     test_gdalwarp_13,
     test_gdalwarp_14,
     test_gdalwarp_15,
-    # test_gdalwarp_cleanup
+    test_gdalwarp_cleanup
     ]
 
 
