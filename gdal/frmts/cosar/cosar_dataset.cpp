@@ -83,7 +83,8 @@ COSARRasterBand::COSARRasterBand(COSARDataset *pDS, unsigned long nRTNB) {
 CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, 
 	void *pImage) {
 
-    unsigned long nRSFV, nRSLV;
+    unsigned long nRSFV = 0;
+    unsigned long nRSLV = 0;
     COSARDataset *pCDS = (COSARDataset *) poDS;
 
     /* Find the line we want to be at */
@@ -105,8 +106,11 @@ CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     nRSLV = CPL_SWAP32(nRSLV);
 #endif
 
-    if (nRSLV < nRSFV || nRSFV == 0 || nRSFV-1 >= nBlockXSize ||
-        nRSLV - nRSFV > nBlockXSize || nRSFV >= this->nRTNB || nRSLV > this->nRTNB) {
+    if (nRSLV < nRSFV || nRSFV == 0
+        || nRSFV - 1 >= ((unsigned long) nBlockXSize)
+        || nRSLV - nRSFV > ((unsigned long) nBlockXSize)
+        || nRSFV >= this->nRTNB || nRSLV > this->nRTNB)
+    {
         /* throw an error */
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RSLV/RSFV values are not sane... oh dear.\n");	
@@ -115,7 +119,8 @@ CPLErr COSARRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 	
 	
     /* zero out the range line */
-    for (int i = 0; i < this->nRasterXSize; i++) {
+    for (int i = 0; i < this->nRasterXSize; i++)
+    {
         ((GUInt32 *)pImage)[i] = 0;
     }
 
