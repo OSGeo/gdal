@@ -430,7 +430,7 @@ OGRFeature *OGROCITableLayer::GetFeature( long nFeatureId )
     if( poFeature != NULL && poFeature->GetFID() != nFeatureId )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::GetFeature(%d) ... query returned feature %d instead!",
+                  "OGROCITableLayer::GetFeature(%ld) ... query returned feature %ld instead!",
                   nFeatureId, poFeature->GetFID() );
         delete poFeature;
         return NULL;
@@ -587,7 +587,7 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
     if( pszFIDName == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::SetFeature(%d) failed because there is "
+                  "OGROCITableLayer::SetFeature(%ld) failed because there is "
                   "no apparent FID column on table %s.",
                   poFeature->GetFID(), 
                   poFeatureDefn->GetName() );
@@ -598,7 +598,7 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::SetFeature(%d) failed because the feature "
+                  "OGROCITableLayer::SetFeature(%ld) failed because the feature "
                   "has no FID!", poFeature->GetFID() );
 
         return OGRERR_FAILURE;
@@ -636,7 +636,7 @@ OGRErr OGROCITableLayer::DeleteFeature( long nFID )
     if( pszFIDName == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::DeleteFeature(%d) failed because there is "
+                  "OGROCITableLayer::DeleteFeature(%ld) failed because there is "
                   "no apparent FID column on table %s.",
                   nFID, 
                   poFeatureDefn->GetName() );
@@ -647,7 +647,7 @@ OGRErr OGROCITableLayer::DeleteFeature( long nFID )
     if( nFID == OGRNullFID )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "OGROCITableLayer::DeleteFeature(%d) failed for Null FID", 
+                  "OGROCITableLayer::DeleteFeature(%ld) failed for Null FID", 
                   nFID );
 
         return OGRERR_FAILURE;
