@@ -440,6 +440,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
     
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+
     virtual int         TestCapability( const char * );
 
     virtual OGRErr      SyncToDisk();
