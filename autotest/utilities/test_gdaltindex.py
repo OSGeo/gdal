@@ -50,11 +50,11 @@ def test_gdaltindex_1():
     except:
         pass
     try:
-        os.remove('tmp/tileindex.dfb')
+        os.remove('tmp/tileindex.dbf')
     except:
         pass
     try:
-        os.remove('tmp/tileindex.shp')
+        os.remove('tmp/tileindex.shx')
     except:
         pass
 
