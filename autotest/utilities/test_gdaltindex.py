@@ -45,7 +45,18 @@ def test_gdaltindex_1():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/tileindex.shp')
+    try:
+        os.remove('tmp/tileindex.shp')
+    except:
+        pass
+    try:
+        os.remove('tmp/tileindex.dfb')
+    except:
+        pass
+    try:
+        os.remove('tmp/tileindex.shp')
+    except:
+        pass
 
     drv = gdal.GetDriverByName('GTiff')
     wkt = 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]'
@@ -88,6 +99,7 @@ def test_gdaltindex_1():
             return 'fail'
         i = i + 1
         feat = ds.GetLayer(0).GetNextFeature()
+    ds.Destroy()
 
     return 'success'
 
@@ -103,6 +115,7 @@ def test_gdaltindex_2():
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
         return 'fail'
+    ds.Destroy()
 
     return 'success'
 
@@ -127,6 +140,7 @@ def test_gdaltindex_3():
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
         return 'fail'
+    ds.Destroy()
 
     return 'success'
 
