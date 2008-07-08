@@ -834,3 +834,51 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 	}
 
 }
+
+
+%define OBJECT_LIST_INPUT(type)
+%typemap(in, numinputs=1) (int object_list_count, type **poObjects)
+{
+  /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, type *optional_##type)*/
+  if ( $input == Py_None ) {
+    PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+    SWIG_fail;
+  }
+
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  $1 = PySequence_Size($input);
+  $2 = (type**) CPLMalloc($1*sizeof(type*));
+  
+  for( int i = 0; i<$1; i++ ) {
+
+      PyObject *o = PySequence_GetItem($input,i);
+      PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+      type* rawobjectpointer = NULL;
+      if (sobj) {
+          Py_DECREF(sobj);
+      } else {
+          SWIG_fail;
+      }
+      rawobjectpointer = (type*) sobj->ptr;
+      int v = GDALGetRasterBandXSize(rawobjectpointer);
+      $2[i] = rawobjectpointer;
+
+  }
+}
+
+%typemap(freearg)  (int object_list_count, type **poObjects)
+{
+  /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, type **poObjects)*/
+  if ( $2 ) {
+      for (int i = 0; i< $1; i++) {
+          CPLFree($2[i]);
+      }
+  }
+  CPLFree( $2 );
+}
+%enddef
+
+OBJECT_LIST_INPUT(GDALRasterBandShadow);

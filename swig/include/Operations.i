@@ -154,11 +154,12 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 /************************************************************************/
 
 %feature( "kwargs" ) RegenerateOverviews;
+%apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
 %inline %{
 int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
      			  int overviewBandCount,
                           GDALRasterBandShadow **overviewBands,
-                          char *resampling,
+                          char *resampling = "average",
                           GDALProgressFunc callback=NULL,
                           void* callback_data=NULL) {
 
