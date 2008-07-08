@@ -5444,9 +5444,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Copy actual imagery.                                            */
 /* -------------------------------------------------------------------- */
 
+    char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
+    if (nCompression != COMPRESSION_NONE)
+        papszCopyWholeRasterOptions[0] = "COMPRESSED=YES";
     eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
                                         (GDALDatasetH) poDS,
-                                        NULL, pfnProgress, pProgressData );
+                                        papszCopyWholeRasterOptions, pfnProgress, pProgressData );
 
     if( eErr == CE_Failure )
     {
