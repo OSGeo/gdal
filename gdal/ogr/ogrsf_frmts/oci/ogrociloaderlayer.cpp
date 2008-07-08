@@ -256,7 +256,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Write the FID.                                                  */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf( fpLoader, " %d|", poFeature->GetFID() );
+    VSIFPrintf( fpLoader, " %ld|", poFeature->GetFID() );
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry                                                */
