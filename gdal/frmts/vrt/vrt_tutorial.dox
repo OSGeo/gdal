@@ -188,10 +188,18 @@ The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
+Some characteristics of the source band can be specified in the optional
+SourceProperties tag to enable the VRT driver to differ the opening of the source
+dataset until it really needs to read data from it. This is particularly usefull
+when building VRTs with a big number of source datasets. The needed parameters are the
+raster dimensions, the size of the blocks and the data type. If the SourceProperties
+tag is not present, the source dataset will be opened at the same time as the VRT itself.
+
 \code
     <SimpleSource>
       <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
       <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="128" BlockYSize="128"/>
       <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </SimpleSource>
