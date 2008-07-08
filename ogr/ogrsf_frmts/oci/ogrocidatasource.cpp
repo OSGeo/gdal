@@ -109,9 +109,11 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     if( !EQUALN(pszNewName,"OCI:",3) )
     {
         if( !bTestOpen )
+        {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "%s does not conform to Oracle OCI driver naming convention,"
-                      " OCI:*\n" );
+                      " OCI:*\n", pszNewName );
+        }
         return FALSE;
     }
 
