@@ -105,7 +105,7 @@ def generate_tilemapresource( **args ):
   <Title>%(title)s</Title>
   <Abstract></Abstract>
   <SRS>%(srs)s</SRS>
-  <BoundingBox minx="%(south).20f" miny="%(west).20f" maxx="%(north).20f" maxy="%(east).20f"/>
+  <BoundingBox minx="%(west).20f" miny="%(south).20f" maxx="%(east).20f" maxy="%(north).20f"/>
   <Origin x="%(south).20f" y="%(west).20f"/>
   <TileFormat width="%(tilesize)d" height="%(tilesize)d" mime-type="image/%(tileformat)s" extension="%(tileformat)s"/>
   <TileSets profile="%(profile)s">
