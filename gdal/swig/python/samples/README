@@ -72,4 +72,8 @@ vec_tr_spat.py		Example of using Intersect() to filter based on
 			only those features that truely intersect a given
 			rectangle.  Easily extended to general polygon!
 
+classify.py             Demonstrates using numpy for simple range based
+                        classification of an image.  This is only an example
+                        that has stuff hardcoded.  
+
 
