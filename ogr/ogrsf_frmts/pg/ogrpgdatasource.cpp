@@ -278,13 +278,17 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
 /* -------------------------------------------------------------------- */
 /*      Set the encoding to UTF8 as the driver advertizes UTF8          */
+/*      unless PGCLIENTENCODING is defined                              */
 /* -------------------------------------------------------------------- */
-    const char* encoding = "UNICODE";
-    if (PQsetClientEncoding(hPGConn, encoding) == -1)
+    if (CPLGetConfigOption("PGCLIENTENCODING", NULL) == NULL)
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "PQsetClientEncoding(%s) failed.\n%s", 
-		  encoding, PQerrorMessage( hPGConn ) );
+        const char* encoding = "UNICODE";
+        if (PQsetClientEncoding(hPGConn, encoding) == -1)
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                    "PQsetClientEncoding(%s) failed.\n%s", 
+                    encoding, PQerrorMessage( hPGConn ) );
+        }
     }
 
 /* -------------------------------------------------------------------- */
