@@ -12,9 +12,9 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 
-plugin:	gdal_NETCDF.dll
+plugin:	gdal_netCDF.dll
 
-gdal_NETCDF.dll: $(OBJ)
-	link /dll /out:gdal_NETCDF.dll $(OBJ) \
+gdal_netCDF.dll: $(OBJ)
+	link /dll /out:$@ $(OBJ) \
 		$(GDALLIB) $(NETCDF_LIB)
-	if exist gdal_NETCDF.dll.manifest mt -manifest gdal_NETCDF.dll.manifest -outputresource:gdal_NETCDF.dll;2
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;2
