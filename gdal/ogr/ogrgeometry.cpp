@@ -539,6 +539,54 @@ OGRErr OGR_G_Transform( OGRGeometryH hGeom,
  * @return 0 for points, 1 for lines and 2 for surfaces.
  */
 
+
+/************************************************************************/
+/*                  OGRGeometry::segmentize()                           */
+/************************************************************************/
+/**
+ *
+ * Modify the geometry such it has no segment longer then the given distance.
+ * Interpolated points will have Z and M values (if needed) set to 0.
+ * Distance computation is performed in 2d only
+ *
+ * This function is the same as the C function OGR_G_Segmentize()
+ *
+ * @param hGeom handle on the geometry to segmentize
+ * @param dfMaxLength the maximum distance between 2 points after segmentization
+ */
+
+void OGRGeometry::segmentize( double dfMaxLength )
+{
+    /* Do nothing */
+}
+
+/************************************************************************/
+/*                         OGR_G_Segmentize()                           */
+/************************************************************************/
+
+/**
+ *
+ * Modify the geometry such it has no segment longer then the given distance.
+ * Interpolated points will have Z and M values (if needed) set to 0.
+ * Distance computation is performed in 2d only
+ *
+ * This function is the same as the CPP method OGRGeometry::segmentize().
+ *
+ * @param hGeom handle on the geometry to segmentize
+ * @param dfMaxLength the maximum distance between 2 points after segmentization
+ */
+
+void   CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength )
+{
+    if (dfMaxLength <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "dfMaxLength must be strictly positive");
+        return;
+    }
+    ((OGRGeometry *) hGeom)->segmentize( dfMaxLength );
+}
+
 /************************************************************************/
 /*                         OGR_G_GetDimension()                         */
 /************************************************************************/
