@@ -1262,13 +1262,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString fileName(poOpenInfo->pszFilename);
     CPLString NAM;
 
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The ADRG driver does not support update access to existing"
-                  " datasets.\n" );
+    if( poOpenInfo->nHeaderBytes < 500 )
         return NULL;
-    }
 
     if (EQUAL(CPLGetExtension((const char*)fileName), "thf"))
     {
@@ -1299,6 +1294,14 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (!module.Open((const char*)fileName, TRUE))
         return NULL;
+
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "The ADRG driver does not support update access to existing"
+                  " datasets.\n" );
+        return NULL;
+    }
 
     while ((record = module.ReadRecord()) != NULL)
     {
