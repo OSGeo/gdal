@@ -852,3 +852,13 @@ OGRBoolean OGRGeometryCollection::IsEmpty(  ) const
             return FALSE;
     return TRUE;
 }
+
+/************************************************************************/
+/*              OGRGeometryCollection::segmentize()                     */
+/************************************************************************/
+
+void OGRGeometryCollection::segmentize( double dfMaxLength )
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        papoGeoms[iGeom]->segmentize(dfMaxLength);
+}
