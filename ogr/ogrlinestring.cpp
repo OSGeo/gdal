@@ -1255,3 +1255,82 @@ OGRBoolean OGRLineString::IsEmpty(  ) const
 {
     return (nPointCount == 0);
 }
+
+/************************************************************************/
+/*                     OGRLineString::segmentize()                      */
+/************************************************************************/
+
+void OGRLineString::segmentize( double dfMaxLength )
+{
+    if (dfMaxLength <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "dfMaxLength must be strictly positive");
+        return;
+    }
+
+    int i;
+    OGRRawPoint* paoNewPoints = NULL;
+    double* padfNewZ = NULL;
+    int nNewPointCount = 0;
+    double dfSquareMaxLength = dfMaxLength * dfMaxLength;
+
+    for( i = 0; i < nPointCount; i++ )
+    {
+        paoNewPoints = (OGRRawPoint *)
+            OGRRealloc(paoNewPoints, sizeof(OGRRawPoint) * (nNewPointCount + 1));
+        paoNewPoints[nNewPointCount] = paoPoints[i];
+
+        if( getCoordinateDimension() == 3 )
+        {
+            padfNewZ = (double *)
+                OGRRealloc(padfNewZ, sizeof(double) * (nNewPointCount + 1));
+            padfNewZ[nNewPointCount] = padfZ[i];
+        }
+
+        nNewPointCount++;
+
+        if (i == nPointCount - 1)
+            break;
+
+        double dfX = paoPoints[i+1].x - paoPoints[i].x;
+        double dfY = paoPoints[i+1].y - paoPoints[i].y;
+        double dfSquareDist = dfX * dfX + dfY * dfY;
+        if (dfSquareDist > dfSquareMaxLength)
+        {
+            int nIntermediatePoints = (int)floor(dfSquareDist / dfSquareMaxLength);
+            int j;
+
+            paoNewPoints = (OGRRawPoint *)
+                OGRRealloc(paoNewPoints, sizeof(OGRRawPoint) * (nNewPointCount + nIntermediatePoints));
+            if( getCoordinateDimension() == 3 )
+            {
+                padfNewZ = (double *)
+                    OGRRealloc(padfNewZ, sizeof(double) * (nNewPointCount + nIntermediatePoints));
+            }
+
+            for(j=1;j<=nIntermediatePoints;j++)
+            {
+                paoNewPoints[nNewPointCount + j - 1].x = paoPoints[i].x + j * dfX / (nIntermediatePoints + 1);
+                paoNewPoints[nNewPointCount + j - 1].y = paoPoints[i].y + j * dfY / (nIntermediatePoints + 1);
+                if( getCoordinateDimension() == 3 )
+                {
+                    /* No interpolation */
+                    padfNewZ[nNewPointCount + j - 1] = 0;
+                }
+            }
+
+            nNewPointCount += nIntermediatePoints;
+        }
+    }
+
+    OGRFree(paoPoints);
+    paoPoints = paoNewPoints;
+    nPointCount = nNewPointCount;
+
+    if( getCoordinateDimension() == 3 )
+    {
+        OGRFree(padfZ);
+        padfZ = padfNewZ;
+    }
+}

@@ -117,6 +117,8 @@ class CPL_DLL OGRGeometry
 
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) = 0;
     OGRErr  transformTo( OGRSpatialReference *poSR );
+    
+    virtual void segmentize(double dfMaxLength);
 
     // ISpatialRelation
     virtual OGRBoolean  Intersects( OGRGeometry * ) const;
@@ -300,7 +302,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual const char *getGeometryName() const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
-
+    virtual void segmentize(double dfMaxLength);
 };
 
 /************************************************************************/
@@ -405,7 +407,8 @@ class CPL_DLL OGRPolygon : public OGRSurface
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
     virtual OGRBoolean  IsEmpty() const;
-    
+    virtual void segmentize(double dfMaxLength);
+
     // ISurface Interface
     virtual double      get_Area() const;
     virtual int         Centroid( OGRPoint * poPoint ) const;
@@ -470,6 +473,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
     virtual void flattenTo2D();
     virtual OGRBoolean  IsEmpty() const;
+    virtual void segmentize(double dfMaxLength);
 
     // IWks Interface
     virtual int WkbSize() const;
