@@ -76,4 +76,6 @@ classify.py             Demonstrates using numpy for simple range based
                         classification of an image.  This is only an example
                         that has stuff hardcoded.  
 
+gdal_lut.py             Read a LUT from a text file, and apply it to an image.
+                        Sort of a '1 band' version of pct2rgb.py.
 
