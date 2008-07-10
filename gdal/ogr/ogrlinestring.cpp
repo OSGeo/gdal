@@ -1298,7 +1298,7 @@ void OGRLineString::segmentize( double dfMaxLength )
         double dfSquareDist = dfX * dfX + dfY * dfY;
         if (dfSquareDist > dfSquareMaxLength)
         {
-            int nIntermediatePoints = (int)floor(dfSquareDist / dfSquareMaxLength);
+            int nIntermediatePoints = (int)floor(sqrt(dfSquareDist / dfSquareMaxLength));
             int j;
 
             paoNewPoints = (OGRRawPoint *)
