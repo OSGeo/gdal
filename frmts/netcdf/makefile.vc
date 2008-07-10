@@ -5,7 +5,7 @@ GDAL_ROOT	=	..\..
 
 OBJ		=	netcdfdataset.obj gmtdataset.obj
 
-PLUGIN_DLL 	=	gdal_NETCDF.dll
+PLUGIN_DLL 	=	gdal_netCDF.dll
 
 EXTRAFLAGS 	= 	/I$(NETCDF_INC_DIR)
 
