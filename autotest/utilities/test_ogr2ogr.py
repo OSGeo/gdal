@@ -389,7 +389,7 @@ def test_ogr2ogr_14():
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
     feat = ds.GetLayer(0).GetNextFeature()
-    if feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() != 70:
+    if feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() != 36:
         return 'fail'
     ds.Destroy()
 
