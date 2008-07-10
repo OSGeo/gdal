@@ -23,6 +23,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref nearblack - Convert nearly black/white borders to exact value.
 <li> \ref gdal_retile - Retiles a set of tiles and/or build tiled pyramid levels.
 <li> \ref gdal_grid - Create raster from the scattered data.
+<li> \ref gdal_proximity - Compute a raster proximity map.
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
