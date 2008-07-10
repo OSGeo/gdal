@@ -1321,6 +1321,57 @@ def ogr_pg_32():
     return 'success'
 
 ###############################################################################
+# Test encoding as UTF8
+
+def ogr_pg_33():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.GetLayerByName( 'tpoly' )
+    if gdaltest.pg_lyr is None:
+        gdaltest.post_reason( 'did not get tpoly layer' )
+        return 'fail'
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
+    # eacute in UTF8 : 0xc3 0xa9
+    dst_feat.SetField( 'SHORTNAME', '\xc3\xa9' )
+    gdaltest.pg_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test encoding as Latin1
+
+def ogr_pg_34():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    # We only test that on Linux since setting os.environ['XXX']
+    # is not guaranteed to have effects on system not supporting putenv
+    if sys.platform != 'linux2':
+        return 'skip'
+
+    os.environ['PGCLIENTENCODING'] = 'LATIN1' 
+    ogr_pg_1()
+    del os.environ['PGCLIENTENCODING']
+
+    gdaltest.pg_lyr = gdaltest.pg_ds.GetLayerByName( 'tpoly' )
+    if gdaltest.pg_lyr is None:
+        gdaltest.post_reason( 'did not get tpoly layer' )
+        return 'fail'
+
+    dst_feat = ogr.Feature( feature_def = gdaltest.pg_lyr.GetLayerDefn() )
+    # eacute in Latin1 : 0xe9
+    dst_feat.SetField( 'SHORTNAME', '\xe9' )
+    gdaltest.pg_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -1396,6 +1447,8 @@ gdaltest_list_internal = [
     ogr_pg_29,
     ogr_pg_31,
     ogr_pg_32,
+    ogr_pg_33,
+    ogr_pg_34,
     ogr_pg_cleanup ]
 
 
