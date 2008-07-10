@@ -370,6 +370,33 @@ def test_ogr2ogr_13():
 
     return 'success'
 
+###############################################################################
+# Test -segmentize
+
+def test_ogr2ogr_14():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/poly.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+    except:
+        pass
+
+    os.popen(test_cli_utilities.get_ogr2ogr_path() + ' -segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly').read()
+
+    ds = ogr.Open('tmp/poly.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        return 'fail'
+    feat = ds.GetLayer(0).GetNextFeature()
+    if feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() != 70:
+        return 'fail'
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -383,7 +410,8 @@ gdaltest_list = [
     test_ogr2ogr_10,
     test_ogr2ogr_11,
     test_ogr2ogr_12,
-    test_ogr2ogr_13
+    test_ogr2ogr_13,
+    test_ogr2ogr_14
     ]
 
 
