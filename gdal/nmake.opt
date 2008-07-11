@@ -305,6 +305,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #CURL_LIB = $(CURL_DIR)/libcurl.lib wsock32.lib wldap32.lib winmm.lib
 #CURL_CFLAGS = -DCURL_STATICLIB
 
+# Uncomment for DODS / OPeNDAP support
+#DODS_DIR = C:\libdap3.6.2
+#DODS_LIB = $(DODSDIR)\lib\libdapMD.lib
+
 # Uncomment for GEOS support
 #GEOS_DIR=C:/warmerda/geos
 #GEOS_CFLAGS = -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/headers -DHAVE_GEOS
@@ -423,7 +427,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) $(ODB
 		$(FITS_LIB_LINK) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(SDE_LIB) $(DWG_LIB) \
-		$(IDB_LIB) $(CURL_LIB) $(ADD_LIBS)
+		$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(ADD_LIBS)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
