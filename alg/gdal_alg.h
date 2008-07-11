@@ -259,7 +259,7 @@ void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                llScanlineFunc pfnScanlineFunc, void *pCBData );
 
 /* -------------------------------------------------------------------- */
-/*      High level API - GvShapes burned into GDAL raster.              */
+/*      High level rasterizer API - geometries burned into GDAL raster. */
 /* -------------------------------------------------------------------- */
 
 CPLErr CPL_DLL 
@@ -272,6 +272,16 @@ GDALRasterizeGeometries( GDALDatasetH hDS,
                          char **papszOptions,
                          GDALProgressFunc pfnProgress, 
                          void * pProgressArg );
+CPLErr CPL_DLL
+GDALRasterizeLayers( GDALDatasetH hDS, 
+                     int nBandCount, int *panBandList,
+                     int nLayerCount, OGRLayerH *pahLayers,
+                     GDALTransformerFunc pfnTransformer, 
+                     void *pTransformArg, 
+                     double *padfLayerBurnValues,
+                     char **papszOptions,
+                     GDALProgressFunc pfnProgress, 
+                     void *pProgressArg );
 
 /************************************************************************/
 /*  Gridding interface.                                                 */
