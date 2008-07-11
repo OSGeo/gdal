@@ -235,7 +235,7 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
  * Burn geometries into raster.
  *
  * Rasterize a list of geometric objects into a raster dataset.  The
- * geometries are passed as an array of OGRGeometry objects.  
+ * geometries are passed as an array of OGRGeometryH handlers.  
  *
  * If the geometries are in the georferenced coordinates of the raster
  * dataset, then the pfnTransform may be passed in NULL and one will be
@@ -262,7 +262,7 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
  * be created internally.
  * @param pTransformerArg callback data for transformer.
  * @param padfGeomBurnValue the array of values to burn into the raster.  
- * There should nBandCount values for each geometry. 
+ * There should be nBandCount values for each geometry. 
  * @param papszOption special options controlling rasterization, currently
  * none are defined.
  * @param pfnProgress the progress function to report completion.
@@ -392,6 +392,230 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             eErr = CE_Failure;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFree( pabyChunkBuf );
+    
+    if( bNeedToFreeTransformer )
+        GDALDestroyTransformer( pTransformArg );
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        GDALRasterizeLayers()                         */
+/************************************************************************/
+
+/**
+ * Burn geometries from the specified layer into raster.
+ *
+ * Rasterize all the geometric objects from a list of layers into a raster
+ * dataset.  The layers are passed as an array of OGRLayerH handlers.
+ *
+ * If the geometries are in the georferenced coordinates of the raster
+ * dataset, then the pfnTransform may be passed in NULL and one will be
+ * derived internally from the geotransform of the dataset.  The transform
+ * needs to transform the geometry locations into pixel/line coordinates
+ * on the raster dataset.
+ *
+ * The output raster may be of any GDAL supported datatype, though currently
+ * internally the burning is done either as GDT_Byte or GDT_Float32.  This
+ * may be improved in the future.  An explicit list of burn values for
+ * each layer for each band must be passed in. 
+ *
+ * Currently only polygon, multipolygon and geometrycollections of polygons
+ * or multipolygons are supported.  In the future support for points 
+ * and lines may be added.
+ *
+ * @param hDS output data, must be opened in update mode.
+ * @param nBandCount the number of bands to be updated.
+ * @param panBandList the list of bands to be updated. 
+ * @param nLayerCount the number of layers being passed in pahLayers array.
+ * @param pahLayers the array of layers to burn in. 
+ * @param pfnTransformer transformation to apply to geometries to put into 
+ * pixel/line coordinates on raster.  If NULL a geotransform based one will
+ * be created internally.
+ * @param pTransformerArg callback data for transformer.
+ * @param padfLayerBurnValues the array of values to burn into the raster.  
+ * There should be nBandCount values for each layer. 
+ * @param papszOption special options controlling rasterization:
+ * <dl>
+ * <dt>"ATTRIBUTE":<dt> <dd>Identifies an attribute field on the features to be
+ * used for a burn in value. The value will be burned into all output
+ * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
+ * pointer.</dd>
+ * </dl>
+ * @param pfnProgress the progress function to report completion.
+ * @param pProgressArg callback data for progress function.
+ *
+ * @return CE_None on success or CE_Failure on error.
+ */
+
+CPLErr GDALRasterizeLayers( GDALDatasetH hDS, 
+                            int nBandCount, int *panBandList,
+                            int nLayerCount, OGRLayerH *pahLayers,
+                            GDALTransformerFunc pfnTransformer, 
+                            void *pTransformArg, 
+                            double *padfLayerBurnValues,
+                            char **papszOptions,
+                            GDALProgressFunc pfnProgress, 
+                            void *pProgressArg )
+
+{
+    GDALDataType   eType;
+    int            nYChunkSize, nScanlineBytes;
+    unsigned char *pabyChunkBuf;
+    int            iY;
+    GDALDataset *poDS = (GDALDataset *) hDS;
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      Do some rudimentary arg checking.                               */
+/* -------------------------------------------------------------------- */
+    if( nBandCount == 0 || nLayerCount == 0 )
+        return CE_None;
+
+    // prototype band.
+    GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
+
+/* -------------------------------------------------------------------- */
+/*      If we have no transformer, assume the geometries are in file    */
+/*      georeferenced coordinates, and create a transformer to          */
+/*      convert that to pixel/line coordinates.                         */
+/*                                                                      */
+/*      We really just need to apply an affine transform, but for       */
+/*      simplicity we use the more general GenImgProjTransformer.       */
+/* -------------------------------------------------------------------- */
+    int bNeedToFreeTransformer = FALSE;
+
+    if( pfnTransformer == NULL )
+    {
+        bNeedToFreeTransformer = TRUE;
+
+        pTransformArg = 
+            GDALCreateGenImgProjTransformer( NULL, NULL, hDS, NULL, 
+                                             FALSE, 0.0, 0);
+        pfnTransformer = GDALGenImgProjTransform;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish a chunksize to operate on.  The larger the chunk      */
+/*      size the less times we need to make a pass through all the      */
+/*      shapes.                                                         */
+/* -------------------------------------------------------------------- */
+    if( poBand->GetRasterDataType() == GDT_Byte )
+        eType = GDT_Byte;
+    else
+        eType = GDT_Float32;
+
+    nScanlineBytes = nBandCount * poDS->GetRasterXSize()
+        * (GDALGetDataTypeSize(eType)/8);
+    nYChunkSize = 10000000 / nScanlineBytes;
+    if( nYChunkSize > poBand->GetYSize() )
+        nYChunkSize = poBand->GetYSize();
+
+    pabyChunkBuf = (unsigned char *) VSIMalloc(nYChunkSize * nScanlineBytes);
+    if( pabyChunkBuf == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+                  "Unable to allocate rasterization buffer." );
+        return CE_Failure;
+    }
+
+/* ==================================================================== */
+/*      Loop over image in designated chunks.                           */
+/* ==================================================================== */
+    CPLErr      eErr = CE_None;
+    int         iLayer;
+    const char  *pszBurnAttribute =
+        CSLFetchNameValue( papszOptions, "ATTRIBUTE" );
+
+    pfnProgress( 0.0, NULL, pProgressArg );
+
+    for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
+    {
+        int         iBurnField = -1;
+        double *padfBurnValues;
+
+        if ( pszBurnAttribute )
+        {
+            iBurnField =
+                OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( pahLayers[iLayer] ),
+                                      pszBurnAttribute );
+            if( iBurnField == -1 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Failed to find field %s on layer %s, skipping.\n",
+                          pszBurnAttribute, 
+                          OGR_FD_GetName(OGR_L_GetLayerDefn(pahLayers[iLayer])) );
+                return CE_Failure;
+            }
+        }
+        else
+            padfBurnValues = padfLayerBurnValues + iLayer * nBandCount;
+
+        OGRFeatureH hFeat;
+
+        OGR_L_ResetReading( pahLayers[iLayer] );
+
+        for( iY = 0; 
+             iY < poDS->GetRasterYSize() && eErr == CE_None; 
+             iY += nYChunkSize )
+        {
+            int	nThisYChunkSize;
+
+            nThisYChunkSize = nYChunkSize;
+            if( nThisYChunkSize + iY > poDS->GetRasterYSize() )
+                nThisYChunkSize = poDS->GetRasterYSize() - iY;
+
+            eErr = 
+                poDS->RasterIO( GF_Read, 0, iY,
+                                poDS->GetRasterXSize(), nThisYChunkSize, 
+                                pabyChunkBuf,
+                                poDS->GetRasterXSize(), nThisYChunkSize,
+                                eType, nBandCount, panBandList, 0, 0, 0 );
+            if( eErr != CE_None )
+                break;
+
+            while( (hFeat = OGR_L_GetNextFeature( pahLayers[iLayer] )) != NULL )
+            {
+                OGRGeometryH hGeom = OGR_F_GetGeometryRef( hFeat );
+                double      dfBurnValue;
+
+                if ( pszBurnAttribute )
+                {
+                    dfBurnValue = OGR_F_GetFieldAsDouble( hFeat, iBurnField );
+                    padfBurnValues = &dfBurnValue;
+                }
+                
+                gv_rasterize_new_one_shape( pabyChunkBuf, iY, nThisYChunkSize,
+                                            nBandCount, eType, poDS,
+                                            (OGRGeometry *) hGeom,
+                                            padfBurnValues, 
+                                            pfnTransformer, pTransformArg );
+
+                OGR_F_Destroy( hFeat );
+            }
+
+            eErr = 
+                poDS->RasterIO( GF_Write, 0, iY,
+                                poBand->GetXSize(), nThisYChunkSize, 
+                                pabyChunkBuf,
+                                poBand->GetXSize(), nThisYChunkSize, 
+                                eType, nBandCount, panBandList, 0, 0, 0 );
+
+            if( !pfnProgress((iY+nThisYChunkSize)/((double)poDS->GetRasterYSize()),
+                             "", pProgressArg ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                eErr = CE_Failure;
+            }
         }
     }
     
