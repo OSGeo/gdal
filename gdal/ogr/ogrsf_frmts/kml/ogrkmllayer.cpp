@@ -45,32 +45,35 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRwkbGeometryType eReqType,
                           OGRKMLDataSource *poDSIn )
 {    	
-	/* KML should be created as WGS84. */
-	poSRS_ = new OGRSpatialReference(NULL);   
-	poSRS_->SetWellKnownGeogCS( "WGS84" );
-	poCT_ = OGRCreateCoordinateTransformation( poSRSIn, poSRS_ );
-    if( poCT_ == NULL && poDSIn->IsFirstCTError() )
-	{
-		/* If we can't create a transformation, issue a warning - but continue the transformation*/
-		char *pszWKT = NULL;
-		
-		printf("Failed to create coordinate transformation between the\n"
-			   "following coordinate systems.  This may be because they\n"
-			   "are not transformable, or because projection services\n"
-			   "(PROJ.4 DLL/.so) could not be loaded.\n" 
-			   "KML geometries may not render correctly.\n"
-			   "This message will not be issued any more. \n");
-		
-		poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
-		printf( "Source:\n%s\n", pszWKT );
-		CPLFree( pszWKT );
-		
-		poSRS_->exportToPrettyWkt( &pszWKT, FALSE );
-		printf( "Target:\n%s\n", pszWKT );
-		CPLFree( pszWKT );
+    poCT_ = NULL;
 
-		poDSIn->IssuedFirstCTError(); 
-	}
+    /* KML should be created as WGS84. */
+    if( poSRSIn != NULL )
+    {
+        poSRS_ = new OGRSpatialReference(NULL);   
+        poSRS_->SetWellKnownGeogCS( "WGS84" );
+        poCT_ = OGRCreateCoordinateTransformation( poSRSIn, poSRS_ );
+        if( poCT_ == NULL && poDSIn->IsFirstCTError() )
+        {
+            /* If we can't create a transformation, issue a warning - but continue the transformation*/
+            char *pszWKT = NULL;
+		
+            poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
+
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Failed to create coordinate transformation between the\n"
+                      "input coordinate system and WGS84.  This may be because they\n"
+                      "are not transformable, or because projection services\n"
+                      "(PROJ.4 DLL/.so) could not be loaded.\n" 
+                      "KML geometries may not render correctly.\n"
+                      "This message will not be issued any more. \n"
+                      "\nSource:\n%s\n", 
+                      pszWKT );
+
+            CPLFree( pszWKT );
+            poDSIn->IssuedFirstCTError(); 
+        }
+    }
 
     iNextKMLId_ = 0;
     nTotalKMLCount_ = -1;
@@ -105,8 +108,8 @@ OGRKMLLayer::~OGRKMLLayer()
     if( NULL != poSRS_ )
         poSRS_->Release();
 	
-	if( NULL != poCT_ )
-		delete poCT_;
+    if( NULL != poCT_ )
+        delete poCT_;
 	
     CPLFree( pszName_ );
 }
@@ -322,39 +325,39 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
             // Match the OGR type to the GDAL type
             switch (fieldDefinition->GetType())
             {
-            case OFTInteger:
+              case OFTInteger:
                 pszKMLType = "int";
                 pszKMLEltName = "SimpleField";
                 break;
-            case OFTIntegerList:
+              case OFTIntegerList:
                 pszKMLType = "int";
                 pszKMLEltName = "SimpleArrayField";
                 break;
-            case OFTReal:
+              case OFTReal:
                 pszKMLType = "float";
                 pszKMLEltName = "SimpleField";
                 break;
-            case OFTRealList:
+              case OFTRealList:
                 pszKMLType = "float";
                 pszKMLEltName = "SimpleArrayField";
                 break;
-            case OFTString:
+              case OFTString:
                 pszKMLType = "string";
                 pszKMLEltName = "SimpleField";
                 break;
-            case OFTStringList:
+              case OFTStringList:
                 pszKMLType = "string";
                 pszKMLEltName = "SimpleArrayField";
                 break;
-            case OFTBinary:
+              case OFTBinary:
                 pszKMLType = "bool";
                 pszKMLEltName = "SimpleField";
                 break;
-            //TODO: KML doesn't handle these data types yet...
-            case OFTDate:                
-            case OFTTime:                
-            case OFTDateTime:
-				pszKMLType = "string";
+                //TODO: KML doesn't handle these data types yet...
+              case OFTDate:                
+              case OFTTime:                
+              case OFTDateTime:
+                pszKMLType = "string";
                 pszKMLEltName = "SimpleField";                
                 break;
 
@@ -364,7 +367,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
                 break;
             }
             VSIFPrintf( fp, "\t<%s name=\"%s\" type=\"%s\"></%s>\n", 
-                    pszKMLEltName, fieldDefinition->GetNameRef() ,pszKMLType, pszKMLEltName );
+                        pszKMLEltName, fieldDefinition->GetNameRef() ,pszKMLType, pszKMLEltName );
         }
         VSIFPrintf( fp, "</Schema>\n" );
     }
@@ -456,8 +459,8 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         char* pszGeometry = NULL;
         OGREnvelope sGeomBounds;		
 				
-		if (NULL != poCT_)
-			poFeature->GetGeometryRef()->transform( poCT_ );		
+        if (NULL != poCT_)
+            poFeature->GetGeometryRef()->transform( poCT_ );		
 		
         // TODO - porting
         // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
