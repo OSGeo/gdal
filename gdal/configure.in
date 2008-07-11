@@ -1022,7 +1022,7 @@ dnl Not found... again, with -lsz.
 
   else
 
-    if x"$with_hdf4" != x"" ; then
+    if test x"$with_hdf4" != x"" ; then
       AC_MSG_ERROR([HDF4 support requested with arg "$with_hdf4", but neither hdf4 nor mfhdf lib found])
     else
       LIBS="$ORIG_LIBS"
