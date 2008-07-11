@@ -5,7 +5,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			geoconcept xplane \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(SDE_DIR) $(IDB_DIR) 
+			$(SDE_DIR) $(IDB_DIR) $(DODSDIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -64,6 +64,11 @@ IDB_DIR = idb
 IDB_OBJ = idb\*.obj
 !ENDIF
 
+!IFDEF DODS_DIR
+DODSDIR = dods
+DODS_OBJ = dods\*.obj
+!ENDIF
+
 default:
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
@@ -79,7 +84,7 @@ default:
 				 gpx\*.obj xplane\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(IDB_OBJ)
+				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(IDB_OBJ) $(DODS_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
