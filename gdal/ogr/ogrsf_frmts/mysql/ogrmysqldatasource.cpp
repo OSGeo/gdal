@@ -199,23 +199,29 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     hConn = mysql_init( NULL );
 
-
-/* -------------------------------------------------------------------- */
-/*      Set the timeout for the connection if the users has specified.  */
-/* -------------------------------------------------------------------- */
-
-    const char *pszTimeoutLength = 
-        CPLGetConfigOption( "MYSQL_TIMEOUT", "0" );  
-
-    unsigned int timeout = atoi(pszTimeoutLength);        
-    mysql_options(hConn, MYSQL_OPT_CONNECT_TIMEOUT, (char*)&timeout);
-    
     if( hConn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "mysql_init() failed." );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Set desired options on the connection: charset and timeout.     */
+/* -------------------------------------------------------------------- */
+    if( hConn )
+    {
+        const char *pszTimeoutLength = 
+            CPLGetConfigOption( "MYSQL_TIMEOUT", "0" );  
+        
+        unsigned int timeout = atoi(pszTimeoutLength);        
+        mysql_options(hConn, MYSQL_OPT_CONNECT_TIMEOUT, (char*)&timeout);
+
+        mysql_options(hConn, MYSQL_SET_CHARSET_NAME, "utf8" );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Perform connection.                                             */
+/* -------------------------------------------------------------------- */
     if( hConn
         && mysql_real_connect( hConn, 
                                oHost.length() ? oHost.c_str() : NULL,
