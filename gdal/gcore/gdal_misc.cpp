@@ -2179,7 +2179,8 @@ int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
 /************************************************************************/
 
 GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
-                                        GDALAccess eAccess )
+                                        GDALAccess eAccess,
+                                        GDALDataset *poDependentDS )
 
 {
     const char *pszAuxSuffixLC = "aux";
@@ -2202,13 +2203,13 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      not exist, likely mean it is us but some sort of renaming       */
 /*      has occured.                                                    */
 /* -------------------------------------------------------------------- */
-    CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
-    CPLString oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
+    CPLString osJustFile = CPLGetFilename(pszBasename); // without dir
+    CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
     FILE *fp;
 
-    fp = VSIFOpenL( oAuxFilename, "rb" );
+    fp = VSIFOpenL( osAuxFilename, "rb" );
 
 
     if ( fp == NULL ) 
@@ -2216,8 +2217,8 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         // Can't found file with lower case suffix. Try the upper case one.
         // no point in doing this on Win32 with case insensitive filenames.
 #ifndef WIN32
-        oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
-        fp = VSIFOpenL( oAuxFilename, "rb" );
+        osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
+        fp = VSIFOpenL( osAuxFilename, "rb" );
 #endif
     }
 
@@ -2225,7 +2226,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     {
         VSIFReadL( abyHeader, 1, 32, fp );
         if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
-            poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+            poODS =  (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
         VSIFCloseL( fp );
     }
 
@@ -2240,19 +2241,19 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         {
             CPLDebug( "AUX", 
                       "Found %s but it has no dependent file, ignoring.",
-                      oAuxFilename.c_str() );
+                      osAuxFilename.c_str() );
             GDALClose( poODS );
             poODS = NULL;
         }
-        else if( !EQUAL(pszDep,oJustFile) )
+        else if( !EQUAL(pszDep,osJustFile) )
         {
             VSIStatBufL sStatBuf;
 
             if( VSIStatL( pszDep, &sStatBuf ) == 0 )
             {
                 CPLDebug( "AUX", "%s is for file %s, not %s, ignoring.",
-                          oAuxFilename.c_str(), 
-                          pszDep, oJustFile.c_str() );
+                          osAuxFilename.c_str(), 
+                          pszDep, osJustFile.c_str() );
                 GDALClose( poODS );
                 poODS = NULL;
             }
@@ -2260,10 +2261,34 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             {
                 CPLDebug( "AUX", "%s is for file %s, not %s, but since\n"
                           "%s does not exist, we will use .aux file as our own.",
-                          oAuxFilename.c_str(), 
-                          pszDep, oJustFile.c_str(),
+                          osAuxFilename.c_str(), 
+                          pszDep, osJustFile.c_str(),
                           pszDep );
             }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Confirm that the aux file matches the configuration of the      */
+/*      dependent dataset.                                              */
+/* -------------------------------------------------------------------- */
+        if( poODS != NULL && poDependentDS != NULL
+            && (poODS->GetRasterCount() != poDependentDS->GetRasterCount()
+                || poODS->GetRasterXSize() != poDependentDS->GetRasterXSize()
+                || poODS->GetRasterYSize() != poDependentDS->GetRasterYSize()) )
+        {
+            CPLDebug( "AUX",
+                      "Ignoring aux file %s as it's raster configuration\n"
+                      "(%dP x %dL x %dB) does not match master file (%dP x %dL x %dB)", 
+                      osAuxFilename.c_str(),
+                      poODS->GetRasterXSize(), 
+                      poODS->GetRasterYSize(),
+                      poODS->GetRasterCount(),
+                      poDependentDS->GetRasterXSize(), 
+                      poDependentDS->GetRasterYSize(),
+                      poDependentDS->GetRasterCount() );
+
+            GDALClose( poODS );
+            poODS = NULL;
         }
     }
         
@@ -2272,18 +2297,18 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /* -------------------------------------------------------------------- */
     if( poODS == NULL )
     {
-        oAuxFilename = pszBasename;
-        oAuxFilename += ".";
-        oAuxFilename += pszAuxSuffixLC;
-        fp = VSIFOpenL( oAuxFilename, "rb" );
+        osAuxFilename = pszBasename;
+        osAuxFilename += ".";
+        osAuxFilename += pszAuxSuffixLC;
+        fp = VSIFOpenL( osAuxFilename, "rb" );
 #ifndef WIN32
         if ( fp == NULL )
         {
             // Can't found file with lower case suffix. Try the upper case one.
-            oAuxFilename = pszBasename;
-            oAuxFilename += ".";
-            oAuxFilename += pszAuxSuffixUC;
-            fp = VSIFOpenL( oAuxFilename, "rb" );
+            osAuxFilename = pszBasename;
+            osAuxFilename += ".";
+            osAuxFilename += pszAuxSuffixUC;
+            fp = VSIFOpenL( osAuxFilename, "rb" );
         }
 #endif
 
@@ -2291,7 +2316,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         {
             VSIFReadL( abyHeader, 1, 32, fp );
             if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
-                poODS = (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+                poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
             VSIFCloseL( fp );
         }
  
@@ -2303,19 +2328,19 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             {
                 CPLDebug( "AUX", 
                           "Found %s but it has no dependent file, ignoring.",
-                          oAuxFilename.c_str() );
+                          osAuxFilename.c_str() );
                 GDALClose( poODS );
                 poODS = NULL;
             }
-            else if( !EQUAL(pszDep,oJustFile) )
+            else if( !EQUAL(pszDep,osJustFile) )
             {
                 VSIStatBufL sStatBuf;
 
                 if( VSIStatL( pszDep, &sStatBuf ) == 0 )
                 {
                     CPLDebug( "AUX", "%s is for file %s, not %s, ignoring.",
-                              oAuxFilename.c_str(), 
-                              pszDep, oJustFile.c_str() );
+                              osAuxFilename.c_str(), 
+                              pszDep, osJustFile.c_str() );
                     GDALClose( poODS );
                     poODS = NULL;
                 }
@@ -2323,12 +2348,36 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                 {
                     CPLDebug( "AUX", "%s is for file %s, not %s, but since\n"
                               "%s does not exist, we will use .aux file as our own.",
-                              oAuxFilename.c_str(), 
-                              pszDep, oJustFile.c_str(),
+                              osAuxFilename.c_str(), 
+                              pszDep, osJustFile.c_str(),
                               pszDep );
                 }
             }
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Confirm that the aux file matches the configuration of the      */
+/*      dependent dataset.                                              */
+/* -------------------------------------------------------------------- */
+    if( poODS != NULL && poDependentDS != NULL
+        && (poODS->GetRasterCount() != poDependentDS->GetRasterCount()
+            || poODS->GetRasterXSize() != poDependentDS->GetRasterXSize()
+            || poODS->GetRasterYSize() != poDependentDS->GetRasterYSize()) )
+    {
+        CPLDebug( "AUX",
+                  "Ignoring aux file %s as it's raster configuration\n"
+                  "(%dP x %dL x %dB) does not match master file (%dP x %dL x %dB)", 
+                  osAuxFilename.c_str(),
+                  poODS->GetRasterXSize(), 
+                  poODS->GetRasterYSize(),
+                  poODS->GetRasterCount(),
+                  poDependentDS->GetRasterXSize(), 
+                  poDependentDS->GetRasterYSize(),
+                  poDependentDS->GetRasterCount() );
+
+        GDALClose( poODS );
+        poODS = NULL;
     }
 
     return poODS;
