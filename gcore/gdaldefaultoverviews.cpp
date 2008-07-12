@@ -139,7 +139,8 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 /* -------------------------------------------------------------------- */
     if( !poODS )
     {
-        poODS = GDALFindAssociatedAuxFile( pszBasename, poDS->GetAccess() );
+        poODS = GDALFindAssociatedAuxFile( pszBasename, poDS->GetAccess(),
+                                           poDS );
 
         if( poODS )
         {

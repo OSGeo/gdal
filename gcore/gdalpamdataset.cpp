@@ -1149,7 +1149,7 @@ CPLErr GDALPamDataset::TryLoadAux()
 /*      Try to open .aux file.                                          */
 /* -------------------------------------------------------------------- */
     GDALDataset *poAuxDS = GDALFindAssociatedAuxFile( pszPhysicalFile, 
-                                                      GA_ReadOnly );
+                                                      GA_ReadOnly, this );
 
     if( poAuxDS == NULL )
         return CE_None;
