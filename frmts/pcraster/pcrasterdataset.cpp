@@ -94,12 +94,14 @@ GDALDataset* PCRasterDataset::open(GDALOpenInfo* info)
   }
 
 /* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
+/*      Initialize any PAM information and overviews.                   */
 /* -------------------------------------------------------------------- */
   if( dataset )
   {
       dataset->SetDescription( info->pszFilename );
       dataset->TryLoadXML();
+
+      dataset->oOvManager.Initialize( dataset, info->pszFilename );
   }
 
   return dataset;
