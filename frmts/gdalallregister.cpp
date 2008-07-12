@@ -315,6 +315,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_COASP();
 #endif
 
+#ifdef FRMT_tms
+    GDALRegister_TMS();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Put raw formats at the end of the list. These drivers support   */
 /*      various ASCII-header labeled formats, so the driver could be    */

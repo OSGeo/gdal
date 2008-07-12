@@ -130,6 +130,7 @@ void CPL_DLL GDALRegister_ADRG(void);
 void CPL_DLL GDALRegister_COASP(void);
 void CPL_DLL GDALRegister_BLX(void);
 void CPL_DLL GDALRegister_LCP(void);
+void CPL_DLL GDALRegister_TMS(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
