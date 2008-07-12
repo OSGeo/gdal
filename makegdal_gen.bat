@@ -47,6 +47,23 @@ if "%1"=="" (
 ::  *********************
 
 set _vcver_=%1
+set _clver_=1310
+
+if "%_vcver_%"=="6.00" (
+	set _clver_=1200
+)
+if "%_vcver_%"=="7.00" (
+	set _clver_=1300
+)
+if "%_vcver_%"=="7.10" (
+	set _clver_=1310
+)
+if "%_vcver_%"=="8.00" (
+	set _clver_=1400
+)
+if "%_vcver_%"=="9.00" (
+	set _clver_=1500
+)
 
 ::  *********************
 ::  Get GDAL Version
@@ -78,9 +95,9 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc DEBUG=1 clean^ ^&amp;^&amp; nmake -f makefile.vc DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc DEBUG=1 clean^"
+echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 clean^ ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 		^<Configuration
@@ -90,9 +107,9 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^ ^&amp;^&amp; nmake -f makefile.vc ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc clean^"
+echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% install^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% clean^ ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% install^"
+echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
 echo 	^</Configurations^>
