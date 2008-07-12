@@ -95,8 +95,8 @@ echo 			IntermediateDirectory="$(ConfigurationName)"
 echo 			ConfigurationType="0"^>
 echo 			^<Tool
 echo 				Name="VCNMakeTool"
-echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc install^"
-echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 clean^ ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc install^"
+echo 				BuildCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 install^"
+echo 				ReBuildCommandLine=^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 clean^ ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 install^"
 echo 				CleanCommandLine=  ^"cd $(ProjectDir) ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 clean^"
 echo 				Output="gdal%_gdalnum_%.dll"/^>
 echo 		^</Configuration^>
