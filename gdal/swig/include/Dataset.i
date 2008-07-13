@@ -185,6 +185,12 @@ public:
       return GDALCreateDatasetMaskBand( self, nFlags );
   }
 
+%apply (char **options) {char **};
+  char **GetFileList() {
+    return GDALGetFileList( self );
+  }
+%clear char **;
+
 #ifndef SWIGCSHARP
 %feature("kwargs") WriteRaster;
 %apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
