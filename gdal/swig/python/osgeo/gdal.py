@@ -578,6 +578,10 @@ class Dataset(MajorObject):
         """CreateMaskBand(self, int nFlags) -> CPLErr"""
         return _gdal.Dataset_CreateMaskBand(*args)
 
+    def GetFileList(*args):
+        """GetFileList(self) -> char"""
+        return _gdal.Dataset_GetFileList(*args)
+
     def WriteRaster(*args, **kwargs):
         """
         WriteRaster(self, int xoff, int yoff, int xsize, int ysize, int buf_len, 

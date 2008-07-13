@@ -3299,6 +3299,9 @@ SWIGINTERN CPLErr GDALDatasetShadow_AddBand(GDALDatasetShadow *self,GDALDataType
 SWIGINTERN CPLErr GDALDatasetShadow_CreateMaskBand(GDALDatasetShadow *self,int nFlags){
       return GDALCreateDatasetMaskBand( self, nFlags );
   }
+SWIGINTERN char **GDALDatasetShadow_GetFileList(GDALDatasetShadow *self){
+    return GDALGetFileList( self );
+  }
 SWIGINTERN CPLErr GDALDatasetShadow_WriteRaster(GDALDatasetShadow *self,int xoff,int yoff,int xsize,int ysize,int buf_len,char *buf_string,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0){
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
@@ -3729,7 +3732,7 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
      			  int overviewBandCount,
                           GDALRasterBandShadow **overviewBands,
-                          char *resampling,
+                          char *resampling = "average",
                           GDALProgressFunc callback=NULL,
                           void* callback_data=NULL) {
 
@@ -8697,6 +8700,51 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Dataset_GetFileList(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char **result = 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Dataset_GetFileList",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetFileList" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  {
+    result = (char **)GDALDatasetShadow_GetFileList(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) char **options -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = PyString_FromString( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -12591,16 +12639,12 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
   GDALRasterBandShadow **arg3 = (GDALRasterBandShadow **) 0 ;
-  char *arg4 = (char *) 0 ;
+  char *arg4 = (char *) "average" ;
   GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
   void *arg6 = (void *) NULL ;
   int result;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
-  void *argp3 = 0 ;
-  int res3 = 0 ;
   int res4 ;
   char *buf4 = 0 ;
   int alloc4 = 0 ;
@@ -12609,9 +12653,8 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
-  PyObject * obj5 = 0 ;
   char *  kwnames[] = {
-    (char *) "srcBand",(char *) "overviewBandCount",(char *) "overviewBands",(char *) "resampling",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "srcBand",(char *) "overviewBandCount",(char *) "resampling",(char *) "callback",(char *) "callback_data", NULL 
   };
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -12620,34 +12663,55 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   psProgressInfo->nLastReported = -1;
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OO:RegenerateOverviews",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOO:RegenerateOverviews",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RegenerateOverviews" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-  ecode2 = SWIG_AsVal_int(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RegenerateOverviews" "', argument " "2"" of type '" "int""'");
-  } 
-  arg2 = static_cast< int >(val2);
-  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_p_GDALRasterBandShadow, 0 |  0 );
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "RegenerateOverviews" "', argument " "3"" of type '" "GDALRasterBandShadow **""'"); 
+  {
+    /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, GDALRasterBandShadow *optional_##GDALRasterBandShadow)*/
+    if ( obj1 == Py_None ) {
+      PyErr_SetString( PyExc_TypeError, "Input must be a list, not None" );
+      SWIG_fail;
+    }
+    
+    if ( !PySequence_Check(obj1) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg2 = PySequence_Size(obj1);
+    arg3 = (GDALRasterBandShadow**) CPLMalloc(arg2*sizeof(GDALRasterBandShadow*));
+    
+    for( int i = 0; i<arg2; i++ ) {
+      PyObject *o = PySequence_GetItem(obj1,i);
+      PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+      GDALRasterBandShadow* rawobjectpointer = NULL;
+      if (sobj) {
+        Py_DECREF(sobj);
+      } else {
+        SWIG_fail;
+      }
+      rawobjectpointer = (GDALRasterBandShadow*) sobj->ptr;
+      int v = GDALGetRasterBandXSize(rawobjectpointer);
+      arg3[i] = rawobjectpointer;
+      
+    }
   }
-  arg3 = reinterpret_cast< GDALRasterBandShadow ** >(argp3);
-  res4 = SWIG_AsCharPtrAndSize(obj3, &buf4, NULL, &alloc4);
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "RegenerateOverviews" "', argument " "4"" of type '" "char *""'");
+  if (obj2) {
+    res4 = SWIG_AsCharPtrAndSize(obj2, &buf4, NULL, &alloc4);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "RegenerateOverviews" "', argument " "4"" of type '" "char *""'");
+    }
+    arg4 = reinterpret_cast< char * >(buf4);
   }
-  arg4 = reinterpret_cast< char * >(buf4);
-  if (obj4) {
+  if (obj3) {
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
-      if (obj4) {
+      if (obj3) {
         void* cbfunction = NULL;
-        SWIG_ConvertPtr( obj4, 
+        SWIG_ConvertPtr( obj3, 
           (void**)&cbfunction, 
           SWIGTYPE_p_f_double_p_q_const__char_p_void__int, 
           SWIG_POINTER_EXCEPTION | 0 );
@@ -12655,12 +12719,12 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
         if ( cbfunction == GDALTermProgress ) {
           arg5 = GDALTermProgress;
         } else {
-          if (!PyFunction_Check(obj4)) {
+          if (!PyFunction_Check(obj3)) {
             PyErr_SetString( PyExc_RuntimeError, 
               "Object given is not a Python function" );
             SWIG_fail;
           }
-          psProgressInfo->psPyCallback = obj4;
+          psProgressInfo->psPyCallback = obj3;
           arg5 = PyProgressProxy;
         }
         
@@ -12668,11 +12732,11 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
       
     }
   }
-  if (obj5) {
+  if (obj4) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
       
-      psProgressInfo->psPyCallbackData = obj5 ;
+      psProgressInfo->psPyCallbackData = obj4 ;
       arg6 = psProgressInfo;
       
     }
@@ -12687,6 +12751,15 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)*/
+    if ( arg3 ) {
+      for (int i = 0; i< arg2; i++) {
+        CPLFree(arg3[i]);
+      }
+    }
+    CPLFree( arg3 );
+  }
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -12696,6 +12769,15 @@ SWIGINTERN PyObject *_wrap_RegenerateOverviews(PyObject *SWIGUNUSEDPARM(self), P
   }
   return resultobj;
 fail:
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)*/
+    if ( arg3 ) {
+      for (int i = 0; i< arg2; i++) {
+        CPLFree(arg3[i]);
+      }
+    }
+    CPLFree( arg3 );
+  }
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -14248,6 +14330,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dataset_FlushCache", _wrap_Dataset_FlushCache, METH_VARARGS, NULL},
 	 { (char *)"Dataset_AddBand", (PyCFunction) _wrap_Dataset_AddBand, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Dataset_CreateMaskBand", _wrap_Dataset_CreateMaskBand, METH_VARARGS, NULL},
+	 { (char *)"Dataset_GetFileList", _wrap_Dataset_GetFileList, METH_VARARGS, NULL},
 	 { (char *)"Dataset_WriteRaster", (PyCFunction) _wrap_Dataset_WriteRaster, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Dataset_ReadRaster", (PyCFunction) _wrap_Dataset_ReadRaster, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Dataset_swigregister", Dataset_swigregister, METH_VARARGS, NULL},
