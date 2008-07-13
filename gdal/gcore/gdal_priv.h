@@ -742,7 +742,8 @@ GDALRegenerateOverviews( GDALRasterBand *, int, GDALRasterBand **,
 int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
 
 GDALDataset CPL_DLL *
-GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess );
+GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess,
+                           GDALDataset *poDependentDS );
 
 /* ==================================================================== */
 /*      Misc functions.                                                 */
