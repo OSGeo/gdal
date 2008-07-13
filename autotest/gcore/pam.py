@@ -158,6 +158,30 @@ def pam_4():
     return 'success'
 
 ###############################################################################
+# Verify that .aux files that don't match the configuration of the
+# dependent file are not utilized. (#2471)
+#
+def pam_5():
+
+    ds = gdal.Open( 'data/sasha.tif' )
+
+    try:
+        filelist = ds.GetFileList()
+    except:
+        # old bindings?
+        return 'skip'
+
+    ds = None
+
+    if len(filelist) != 1:
+        print filelist
+
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -173,6 +197,7 @@ gdaltest_list = [
     pam_2,
     pam_3,
     pam_4,
+    pam_5,
     pam_cleanup ]
 
 if __name__ == '__main__':
