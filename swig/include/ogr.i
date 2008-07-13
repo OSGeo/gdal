@@ -324,7 +324,7 @@ public:
   }
 
   bool TestCapability (const char *cap) {
-    return OGR_Dr_TestCapability(self, cap);
+    return (OGR_Dr_TestCapability(self, cap) > 0);
   }
   
   const char * GetName() {
@@ -419,7 +419,7 @@ public:
   }
 
   bool TestCapability(const char * cap) {
-    return OGR_DS_TestCapability(self, cap);
+    return (OGR_DS_TestCapability(self, cap) > 0);
   }
 
 
@@ -546,7 +546,7 @@ public:
 #endif
 
   bool TestCapability(const char* cap) {
-    return OGR_L_TestCapability(self, cap);
+    return (OGR_L_TestCapability(self, cap) > 0);
   }
   
   %feature( "kwargs" ) CreateField;
@@ -628,7 +628,7 @@ public:
   }
   
   bool Equal(OGRFeatureShadow *feature) {
-    return OGR_F_Equal(self, feature);
+    return (OGR_F_Equal(self, feature) > 0);
   }
   
   int GetFieldCount() {
@@ -728,7 +728,7 @@ public:
   
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
-    return OGR_F_IsFieldSet(self, id);
+    return (OGR_F_IsFieldSet(self, id) > 0);
   }
 
   bool IsFieldSet(const char* name) {
@@ -736,8 +736,8 @@ public:
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  return OGR_F_IsFieldSet(self, i);
-      return (bool)0;
+	  return (OGR_F_IsFieldSet(self, i) > 0);
+      return false;
   }
   /* ------------------------------------------- */  
       
@@ -1336,51 +1336,51 @@ public:
   }
 
   bool IsEmpty () {
-    return OGR_G_IsEmpty(self);
+    return (OGR_G_IsEmpty(self) > 0);
   }  
   
   bool IsValid () {
-    return OGR_G_IsValid(self);
+    return (OGR_G_IsValid(self) > 0);
   }  
   
   bool IsSimple () {
-    return OGR_G_IsSimple(self);
+    return (OGR_G_IsSimple(self) > 0);
   }  
   
   bool IsRing () {
-    return OGR_G_IsRing(self);
+    return (OGR_G_IsRing(self) > 0);
   }  
   
   bool Intersect (OGRGeometryShadow* other) {
-    return OGR_G_Intersect(self, other);
+    return (OGR_G_Intersect(self, other) > 0);
   }
 
   bool Equal (OGRGeometryShadow* other) {
-    return OGR_G_Equal(self, other);
+    return (OGR_G_Equal(self, other) > 0);
   }
   
   bool Disjoint(OGRGeometryShadow* other) {
-    return OGR_G_Disjoint(self, other);
+    return (OGR_G_Disjoint(self, other) > 0);
   }
 
   bool Touches (OGRGeometryShadow* other) {
-    return OGR_G_Touches(self, other);
+    return (OGR_G_Touches(self, other) > 0);
   }
 
   bool Crosses (OGRGeometryShadow* other) {
-    return OGR_G_Crosses(self, other);
+    return (OGR_G_Crosses(self, other) > 0);
   }
 
   bool Within (OGRGeometryShadow* other) {
-    return OGR_G_Within(self, other);
+    return (OGR_G_Within(self, other) > 0);
   }
 
   bool Contains (OGRGeometryShadow* other) {
-    return OGR_G_Contains(self, other);
+    return (OGR_G_Contains(self, other) > 0);
   }
   
   bool Overlaps (OGRGeometryShadow* other) {
-    return OGR_G_Overlaps(self, other);
+    return (OGR_G_Overlaps(self, other) > 0);
   }
 
   OGRErr TransformTo(OSRSpatialReferenceShadow* reference) {
