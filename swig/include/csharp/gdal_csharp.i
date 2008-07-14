@@ -170,8 +170,9 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      CPLErr ret = 0;
      if (pGCPs != null && pGCPs.Length > 0)
      {
+         IntPtr cPtr;
          try {
-             IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+             cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
             
              for (int i=0; i < pGCPs.Length; i++)
                 __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
@@ -201,8 +202,9 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     int ret = 0;
     if (pGCPs != null && pGCPs.Length > 0)
      {
+         IntPtr cPtr;
          try {
-             IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+             cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
             
              for (int i=0; i < pGCPs.Length; i++)
                 __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
