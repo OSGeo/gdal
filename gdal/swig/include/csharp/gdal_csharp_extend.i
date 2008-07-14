@@ -71,4 +71,20 @@
     }
     %clear void *buffer;
     %clear int* bandMap;
+    
+    %apply (void *buffer_ptr) {const GDAL_GCP* __GetGCPs};
+    const GDAL_GCP* __GetGCPs( ) {
+      return GDALGetGCPs( self );
+    }
+    %clear const GDAL_GCP* __GetGCPs;
+    
+    CPLErr __SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
+        return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
+    }
+    IMPLEMENT_ARRAY_MARSHALER(GDAL_GCP)
 }
+
+IMPLEMENT_ARRAY_MARSHALER_STATIC(GDAL_GCP)
+
+
+

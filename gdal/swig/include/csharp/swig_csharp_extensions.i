@@ -184,3 +184,64 @@
   protected static object ThisOwn_false() { return the$moduleObject; }
 %}
 
+
+/******************************************************************************
+ * Generic functions to marshal SWIGTYPE arrays                               *
+ *****************************************************************************/
+  
+%define IMPLEMENT_ARRAY_MARSHALER(CTYPE)
+%csmethodmodifiers __WriteCArrayItem_##CTYPE "private";
+%csmethodmodifiers __ReadCArrayItem_##CTYPE "private";
+%csmethodmodifiers __AllocCArray_##CTYPE "private";
+%csmethodmodifiers __FreeCArray_##CTYPE "private";
+    %apply (void *buffer_ptr) {CTYPE* carray};
+    %apply (void *buffer_ptr) {CTYPE* __AllocCArray_##CTYPE};
+    void __WriteCArrayItem_##CTYPE(CTYPE* carray, int index, CTYPE* value) {
+       carray[index] = *value;
+    }
+    CTYPE* __ReadCArrayItem_##CTYPE(CTYPE* carray, int index) {
+       return &carray[index];
+    }
+    CTYPE* __AllocCArray_##CTYPE(int size) {
+       return (CTYPE*)CPLMalloc(size * sizeof(CTYPE));
+    }
+    void __FreeCArray_##CTYPE(CTYPE* carray) {
+       if (carray)
+        CPLFree(carray);
+    }
+    %clear CTYPE* carray;
+    %clear CTYPE* __AllocCArray_##CTYPE;
+%enddef
+
+%define IMPLEMENT_ARRAY_MARSHALER_STATIC(CTYPE)
+%csmethodmodifiers __WriteCArrayItem_##CTYPE "private";
+%csmethodmodifiers __ReadCArrayItem_##CTYPE "private";
+%csmethodmodifiers __AllocCArray_##CTYPE "private";
+%csmethodmodifiers __FreeCArray_##CTYPE "private";
+    %apply (void *buffer_ptr) {CTYPE* carray};
+    %apply (void *buffer_ptr) {CTYPE* __AllocCArray_##CTYPE};
+%inline %{
+    void __WriteCArrayItem_##CTYPE(CTYPE* carray, int index, CTYPE* value) {
+       carray[index] = *value;
+    }
+%}
+%inline %{
+    CTYPE* __ReadCArrayItem_##CTYPE(CTYPE* carray, int index) {
+       return &carray[index];
+    }
+%}
+%inline %{
+    CTYPE* __AllocCArray_##CTYPE(int size) {
+       return (CTYPE*)CPLMalloc(size * sizeof(CTYPE));
+    }
+%}
+%inline %{
+    void __FreeCArray_##CTYPE(CTYPE* carray) {
+       if (carray)
+        CPLFree(carray);
+    }
+%}
+    %clear CTYPE* carray;
+    %clear CTYPE* __AllocCArray_##CTYPE;
+%enddef
+
