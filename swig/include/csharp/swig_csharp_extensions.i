@@ -214,10 +214,10 @@
 %enddef
 
 %define IMPLEMENT_ARRAY_MARSHALER_STATIC(CTYPE)
-%csmethodmodifiers __WriteCArrayItem_##CTYPE "private";
-%csmethodmodifiers __ReadCArrayItem_##CTYPE "private";
-%csmethodmodifiers __AllocCArray_##CTYPE "private";
-%csmethodmodifiers __FreeCArray_##CTYPE "private";
+%csmethodmodifiers __WriteCArrayItem_##CTYPE "internal";
+%csmethodmodifiers __ReadCArrayItem_##CTYPE "internal";
+%csmethodmodifiers __AllocCArray_##CTYPE "internal";
+%csmethodmodifiers __FreeCArray_##CTYPE "internal";
     %apply (void *buffer_ptr) {CTYPE* carray};
     %apply (void *buffer_ptr) {CTYPE* __AllocCArray_##CTYPE};
 %inline %{
