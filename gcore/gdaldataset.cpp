@@ -1152,7 +1152,7 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
                     const char *pszGCPProjection )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALSetDescription", CE_Failure );
+    VALIDATE_POINTER1( hDS, "GDALSetGCPs", CE_Failure );
 
     return ((GDALDataset *) hDS)->SetGCPs( nGCPCount, pasGCPList, 
                                            pszGCPProjection );
