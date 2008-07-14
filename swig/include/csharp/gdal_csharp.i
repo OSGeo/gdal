@@ -45,6 +45,11 @@
 %typemap(cstype) (void* callback_data) "string"
 %typemap(csin) (void* callback_data) "$csinput"
 
+%apply (void *buffer_ptr) {GDAL_GCP const *pGCPs};
+%csmethodmodifiers __SetGCPs "private";
+%csmethodmodifiers __GetGCPs "private";
+%csmethodmodifiers GDALGCPsToGeoTransform "private";
+
 %define %rasterio_functions(GDALTYPE,CSTYPE)
  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
       CPLErr retval;
@@ -145,6 +150,43 @@ public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALPr
 public int BuildOverviews( string resampling, int[] overviewlist) {
       return BuildOverviews( resampling, overviewlist, null, null);
   }
+  
+public GCP[] GetGCPs() {
+      /*hello*/
+      IntPtr cPtr = __GetGCPs();
+      int length = GetGCPCount();
+      GCP[] ret = null;
+      if (cPtr != IntPtr.Zero && length > 0)
+      {
+          ret = new GCP[length];
+          for (int i=0; i < length; i++)
+              ret[i] = __ReadCArrayItem_GDAL_GCP(cPtr, i);
+      }
+      GC.KeepAlive(this);
+      return ret;
+  }
+  
+public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
+     CPLErr ret = 0;
+     if (pGCPs != null && pGCPs.Length > 0)
+     {
+         try {
+             IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+            
+             for (int i=0; i < pGCPs.Length; i++)
+                __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
+             
+             ret = __SetGCPs(pGCPs.Length, cPtr, pszGCPProjection);
+         }
+         finally
+         {
+            if (cPtr)
+                __FreeCArray_GDAL_GCP(cPtr);
+         }
+     }
+     GC.KeepAlive(this);
+     return ret;
+  }
 }
 
 /*! Sixteen bit unsigned integer */ //%ds_rasterio_functions(DataType.GDT_UInt16,ushort)
@@ -154,3 +196,25 @@ public int BuildOverviews( string resampling, int[] overviewlist) {
 /*! Complex Float32 */ //%ds_rasterio_functions(DataType.GDT_CFloat32,int)              
 /*! Complex Float64 */ //%ds_rasterio_functions(DataType.GDT_CFloat64,int)
 
+%pragma(csharp) modulecode=%{
+  public static int GCPsToGeoTransform(GCP[] pGCPs, double[] argout, int bApproxOK) {
+    int ret = 0;
+    if (pGCPs != null && pGCPs.Length > 0)
+     {
+         try {
+             IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+            
+             for (int i=0; i < pGCPs.Length; i++)
+                __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
+             
+             ret = GCPsToGeoTransform(pGCPs.Length, cPtr, argout, bApproxOK);
+         }
+         finally
+         {
+            if (cPtr)
+                __FreeCArray_GDAL_GCP(cPtr);
+         }
+     }
+     return ret;
+   }
+%}
