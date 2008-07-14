@@ -170,10 +170,11 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      CPLErr ret = 0;
      if (pGCPs != null && pGCPs.Length > 0)
      {
-         IntPtr cPtr = null;
-         try {
-             cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+         IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+         if (cPtr == IntPtr.Zero)
+            throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
             
+         try {
              for (int i=0; i < pGCPs.Length; i++)
                 __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
              
@@ -181,8 +182,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
          }
          finally
          {
-            if (cPtr)
-                __FreeCArray_GDAL_GCP(cPtr);
+            __FreeCArray_GDAL_GCP(cPtr);
          }
      }
      GC.KeepAlive(this);
@@ -202,10 +202,11 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     int ret = 0;
     if (pGCPs != null && pGCPs.Length > 0)
      {
-         IntPtr cPtr = null;
-         try {
-             cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+         IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
+         if (cPtr == IntPtr.Zero)
+            throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
             
+         try {   
              for (int i=0; i < pGCPs.Length; i++)
                 __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
              
@@ -213,8 +214,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
          }
          finally
          {
-            if (cPtr)
-                __FreeCArray_GDAL_GCP(cPtr);
+            __FreeCArray_GDAL_GCP(cPtr);
          }
      }
      return ret;
