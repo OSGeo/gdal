@@ -170,7 +170,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      CPLErr ret = 0;
      if (pGCPs != null && pGCPs.Length > 0)
      {
-         IntPtr cPtr;
+         IntPtr cPtr = null;
          try {
              cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
             
@@ -202,7 +202,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     int ret = 0;
     if (pGCPs != null && pGCPs.Length > 0)
      {
-         IntPtr cPtr;
+         IntPtr cPtr = null;
          try {
              cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
             
