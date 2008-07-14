@@ -167,6 +167,30 @@ class GDALInfo {
             Console.WriteLine("");
 
             /* -------------------------------------------------------------------- */
+            /*      Report GCPs.                                                    */
+            /* -------------------------------------------------------------------- */
+            if( ds.GetGCPCount( ) > 0 )
+            {
+                Console.WriteLine( "GCP Projection: ", ds.GetGCPProjection());
+                GCP[] GCPs = ds.GetGCPs();
+                for( int i = 0; i < ds.GetGCPCount(); i++ )
+                {
+                    Console.WriteLine("GCP[" + i + "]: Id=" + GCPs[i].Id + ", Info=" + GCPs[i].Info);
+                    Console.WriteLine("          (" + GCPs[i].GCPPixel + "," + GCPs[i].GCPLine + ") -> (" 
+                                + GCPs[i].GCPX + "," + GCPs[i].GCPY + "," + GCPs[i].GCPZ + ")");
+                    Console.WriteLine("");
+                }
+                Console.WriteLine("");
+
+                double[] transform = new double[6];
+                Gdal.GCPsToGeoTransform(GCPs, transform, 0);
+                Console.WriteLine("GCP Equivalent geotransformation parameters: ", ds.GetGCPProjection());
+                for (int i = 0; i < 6; i++)
+                    Console.WriteLine("t[" + i + "] = " + transform[i].ToString());
+                Console.WriteLine("");
+            }
+
+            /* -------------------------------------------------------------------- */
             /*      Get raster band                                                 */
             /* -------------------------------------------------------------------- */
             for (int iBand = 1; iBand <= ds.RasterCount; iBand++) 
