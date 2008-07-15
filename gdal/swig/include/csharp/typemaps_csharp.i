@@ -63,21 +63,16 @@ OGRErrMessages( int rc ) {
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_FALSE_RETURN_NONE
-{
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
-
-}
-%typemap(ret) IF_FALSE_RETURN_NONE
-{
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
-
+%typemap(out) IF_FALSE_RETURN_NONE %{ $result = $1; %}
+%typemap(ctype) IF_FALSE_RETURN_NONE "int"
+%typemap(imtype) IF_FALSE_RETURN_NONE "int"
+%typemap(cstype) IF_FALSE_RETURN_NONE "int"
+%typemap(csout, excode=SWIGEXCODE) IF_FALSE_RETURN_NONE {
+    int res = $imcall;$excode
+    return res;
 }
 
-%typemap(out) IF_ERROR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
-}
+%typemap(out) IF_ERROR_RETURN_NONE %{ $result = $1; %}
 
 /*
  * Typemap char ** -> dict
