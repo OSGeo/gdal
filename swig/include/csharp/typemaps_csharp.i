@@ -74,14 +74,6 @@ OGRErrMessages( int rc ) {
   $1 = ($1_ltype)$input;
 }
 
-%typemap(in) (char **ignorechange) ( char *val )
-{
-  /* %typemap(in) (char **ignorechange) */
-	/*TODO*/
-	$1 = $null;
-}
-
-
 /* GDAL Typemaps */
 
 %typemap(out) IF_FALSE_RETURN_NONE %{ $result = $1; %}
@@ -219,9 +211,27 @@ OPTIONAL_POD(int,i);
 		free(*$1);
   *$1 = temp_string;
 }
-%typemap(freearg) (char **argout), (char **username), (char **usrname), (char **type)
+
+/*
+ * Typemap for char **ignorechange. 
+ */
+ 
+%typemap(imtype) (char **ignorechange) "ref string"
+%typemap(cstype) (char **ignorechange) "ref string"
+%typemap(csin) (char** ignorechange) "ref $csinput"
+  
+%typemap(in, noblock="1") (char **ignorechange)
 {
-  /* %typemap(freearg) (char **argout) */
+  /* %typemap(in) (char **ignorechange) */
+    $*1_type savearg = *(($1_type)$input); 
+	$1 = ($1_ltype)$input;
+}
+%typemap(argout, noblock="1") (char **ignorechange)
+{
+  /* %typemap(argout) (char **ignorechange) */
+  if ((*$1 - savearg) > 0)
+     memmove(savearg, *$1, strlen(*$1)+1);
+  *$1 = savearg;
 }
 
 /*
