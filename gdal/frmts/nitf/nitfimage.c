@@ -1629,15 +1629,15 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
         return FALSE;
     }
 
-    if( chICORDS != 'G' && chICORDS != 'N' && chICORDS != 'S' )
+    if( chICORDS != 'G' && chICORDS != 'N' && chICORDS != 'S' && chICORDS != 'D')
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Currently NITFWriteIGEOLO() only supports writing ICORDS=G, N and S corners." );
+                  "Invalid ICOORDS value (%c) for NITFWriteIGEOLO().", chICORDS );
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Format geographic coordinates.                                  */
+/*      Format geographic coordinates in DMS                            */
 /* -------------------------------------------------------------------- */
     if( chICORDS == 'G' )
     {
@@ -1659,6 +1659,26 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
         NITFEncodeDMSLoc( szIGEOLO + 37, dfLRX, "Long" );
         NITFEncodeDMSLoc( szIGEOLO + 45, dfLLY, "Lat" );
         NITFEncodeDMSLoc( szIGEOLO + 52, dfLLX, "Long" );
+    }
+/* -------------------------------------------------------------------- */
+/*      Format geographic coordinates in decimal degrees                */
+/* -------------------------------------------------------------------- */
+    else if( chICORDS == 'D' )
+    {
+        if( fabs(dfULX) > 180 || fabs(dfURX) > 180 
+            || fabs(dfLRX) > 180 || fabs(dfLLX) > 180 
+            || fabs(dfULY) >  90 || fabs(dfURY) >  90
+            || fabs(dfLRY) >  90 || fabs(dfLLY) >  90 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Attempt to write geographic bound outside of legal range." );
+            return FALSE;
+        }
+
+        sprintf(szIGEOLO + 0, "%+#07.3f%+#08.3f", dfULY, dfULX);
+        sprintf(szIGEOLO + 15, "%+#07.3f%+#08.3f", dfURY, dfURX);
+        sprintf(szIGEOLO + 30, "%+#07.3f%+#08.3f", dfLRY, dfLRX);
+        sprintf(szIGEOLO + 45, "%+#07.3f%+#08.3f", dfLLY, dfLLX);
     }
 
 /* -------------------------------------------------------------------- */
