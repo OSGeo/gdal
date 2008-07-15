@@ -5,7 +5,7 @@
 
 GDAL_ROOT	=	..
 
-EXTRAFLAGS =	$(GEOS_CFLAGS)
+EXTRAFLAGS =	$(GEOS_CFLAGS) -I../ogr/ogrsf_frmts
 
 !INCLUDE ..\nmake.opt
 
