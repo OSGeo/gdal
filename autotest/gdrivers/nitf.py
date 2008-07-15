@@ -651,6 +651,35 @@ def nitf_31():
     ds = None
     return nitf_check_created_file( 32498, 42602, 38982 )
 
+
+###############################################################################
+# Test Create() with ICORDS=D
+
+def nitf_32():
+
+    if nitf_create([ 'ICORDS=D' ]) != 'success':
+        return 'fail'
+
+    return nitf_check_created_file(32498, 42602, 38982)
+
+
+###############################################################################
+# Test Create() with ICORDS=D and a consistant BLOCKA
+
+def nitf_33():
+
+    if nitf_create([ 'ICORDS=D',
+        'BLOCKA_BLOCK_COUNT=01',
+        'BLOCKA_BLOCK_INSTANCE_01=01',
+        'BLOCKA_L_LINES_01=100',
+        'BLOCKA_FRLC_LOC_01=+29.950000+119.950000',
+        'BLOCKA_LRLC_LOC_01=+20.050000+119.950000',
+        'BLOCKA_LRFC_LOC_01=+20.050000+100.050000',
+        'BLOCKA_FRFC_LOC_01=+29.950000+100.050000' ]) != 'success':
+        return 'fail'
+
+    return nitf_check_created_file(32498, 42602, 38982)
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -931,6 +960,8 @@ gdaltest_list = [
     nitf_29,
     nitf_30,
     nitf_31,
+    nitf_32,
+    nitf_33,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
