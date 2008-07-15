@@ -430,6 +430,28 @@ def test_gdalwarp_15():
     return 'success'
 
 ###############################################################################
+# Test -of VRT which is a special case
+
+def test_gdalwarp_16():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -of VRT tmp/testgdalwarp_gcp.tif tmp/testgdalwarp16.vrt').read()
+
+    ds = gdal.Open('tmp/testgdalwarp16.vrt')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        print ds.GetRasterBand(1).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -444,6 +466,11 @@ def test_gdalwarp_cleanup():
             pass
     try:
         os.remove('tmp/testgdalwarp_gcp.tif')
+    except:
+        pass
+
+    try:
+        os.remove('tmp/testgdalwarp16.vrt')
     except:
         pass
 
@@ -466,6 +493,7 @@ gdaltest_list = [
     test_gdalwarp_13,
     test_gdalwarp_14,
     test_gdalwarp_15,
+    test_gdalwarp_16,
     test_gdalwarp_cleanup
     ]
 
