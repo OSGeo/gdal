@@ -87,20 +87,19 @@ OGRErrMessages( int rc ) {
 
 %typemap(out) IF_ERROR_RETURN_NONE %{ $result = $1; %}
 
-%define OPTIONAL_POD(type,argstring)
-%typemap(in) (type *optional_##type) ( type val )
+%define OPTIONAL_POD(CTYPE, CSTYPE)
+%typemap(imtype) (CTYPE *optional_##CTYPE) "IntPtr"
+%typemap(cstype) (CTYPE *optional_##CTYPE) "ref CSTYPE"
+%typemap(csin) (CTYPE *optional_##CTYPE) "(IntPtr)$csinput"
+ 
+%typemap(in) (CTYPE *optional_##CTYPE)
 {
-  /* %typemap(in) (type *optional_##type) */
+  /* %typemap(in) (type *optional_##CTYPE) */
   $1 = ($1_type)$input;
-}
-%typemap(typecheck,precedence=0) (type *optional_##type)
-{
-  /* %typemap(typecheck,precedence=0) (type *optionalInt) */
-
 }
 %enddef
 
-OPTIONAL_POD(int,i);
+OPTIONAL_POD(int, int);
 
 /*
  * Typemap for GIntBig (int64)
