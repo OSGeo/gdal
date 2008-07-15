@@ -29,8 +29,9 @@
 
 #include "gdal_alg.h"
 #include "gdal_priv.h"
-#include "ogr_geometry.h"
 #include "ogr_api.h"
+#include "ogrsf_frmts.h"
+#include "ogr_geometry.h"
 #include <vector>
 
 typedef struct {
@@ -541,28 +542,28 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
     {
         int         iBurnField = -1;
-        double *padfBurnValues;
+        double      *padfBurnValues;
+        OGRLayer    *poLayer = (OGRLayer *) pahLayers[iLayer];
 
         if ( pszBurnAttribute )
         {
             iBurnField =
-                OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( pahLayers[iLayer] ),
-                                      pszBurnAttribute );
-            if( iBurnField == -1 )
+                poLayer->GetLayerDefn()->GetFieldIndex( pszBurnAttribute );
+            if ( iBurnField == -1 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Failed to find field %s on layer %s, skipping.\n",
                           pszBurnAttribute, 
-                          OGR_FD_GetName(OGR_L_GetLayerDefn(pahLayers[iLayer])) );
+                          poLayer->GetLayerDefn()->GetName() );
                 return CE_Failure;
             }
         }
         else
             padfBurnValues = padfLayerBurnValues + iLayer * nBandCount;
 
-        OGRFeatureH hFeat;
+        OGRFeature *poFeat;
 
-        OGR_L_ResetReading( pahLayers[iLayer] );
+        poLayer->ResetReading();
 
         for( iY = 0; 
              iY < poDS->GetRasterYSize() && eErr == CE_None; 
@@ -583,24 +584,23 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             if( eErr != CE_None )
                 break;
 
-            while( (hFeat = OGR_L_GetNextFeature( pahLayers[iLayer] )) != NULL )
+            while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
-                OGRGeometryH hGeom = OGR_F_GetGeometryRef( hFeat );
+                OGRGeometry *poGeom = poFeat->GetGeometryRef();
                 double      dfBurnValue;
 
                 if ( pszBurnAttribute )
                 {
-                    dfBurnValue = OGR_F_GetFieldAsDouble( hFeat, iBurnField );
+                    dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
                     padfBurnValues = &dfBurnValue;
                 }
                 
                 gv_rasterize_new_one_shape( pabyChunkBuf, iY, nThisYChunkSize,
-                                            nBandCount, eType, poDS,
-                                            (OGRGeometry *) hGeom,
-                                            padfBurnValues, 
+                                            nBandCount, eType, poDS, poGeom,
+                                            padfBurnValues,
                                             pfnTransformer, pTransformArg );
 
-                OGR_F_Destroy( hFeat );
+                delete poFeat;
             }
 
             eErr = 
