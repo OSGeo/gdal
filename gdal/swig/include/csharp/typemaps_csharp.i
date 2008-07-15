@@ -151,11 +151,11 @@ OPTIONAL_POD(int,i);
  * Typemap for char** options
  */
 
-%typemap(imtype, out="IntPtr") char **options, char **dict "IntPtr[]"
-%typemap(cstype) char **options, char **dict %{string[]%}
-%typemap(in) char **options, char **dict %{ $1 = ($1_ltype)$input; %}
-%typemap(out) char **options, char **dict %{ $result = $1; %}
-%typemap(csin) char **options, char **dict "($csinput != null)? new $modulePINVOKE.StringListMarshal($csinput)._ar : null"
+%typemap(imtype, out="IntPtr") char **options, char **dict, char **CSL "IntPtr[]"
+%typemap(cstype) char **options, char **dict, char **CSL %{string[]%}
+%typemap(in) char **options, char **dict, char **CSL %{ $1 = ($1_ltype)$input; %}
+%typemap(out) char **options, char **dict, char **CSL %{ $result = $1; %}
+%typemap(csin) char **options, char **dict, char **CSL "($csinput != null)? new $modulePINVOKE.StringListMarshal($csinput)._ar : null"
 %typemap(csout, excode=SWIGEXCODE) char**options, char **dict {
         /* %typemap(csout) char**options */
         IntPtr cPtr = $imcall;
@@ -176,10 +176,26 @@ OPTIONAL_POD(int,i);
         return ret;
 }
  
-%typemap(freearg) char **options
-{
-  /* %typemap(freearg) char **options */
-  //CSLDestroy( $1 );
+%typemap(csout, excode=SWIGEXCODE) char** CSL {
+        /* %typemap(csout) char** CSL */
+        IntPtr cPtr = $imcall;
+        IntPtr objPtr;
+        int count = 0;
+        if (cPtr != IntPtr.Zero) {
+            while (Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
+                ++count;
+        }
+        string[] ret = new string[count];
+        if (count > 0) {       
+	        for(int cx = 0; cx < count; cx++) {
+                objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+                ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
+            }
+        }
+        if (cPtr != IntPtr.Zero)
+            $modulePINVOKE.StringListDestroy(cPtr);
+        $excode
+        return ret;
 }
 
 /*
@@ -356,3 +372,9 @@ OPTIONAL_POD(int,i);
       return ret;
 }
 
+%csmethodmodifiers StringListDestroy "internal";
+%inline %{
+    void StringListDestroy(void *buffer_ptr) {
+       CSLDestroy((char**)buffer_ptr);
+    }
+%}
