@@ -74,6 +74,17 @@ class GDALWrite {
                 System.Environment.Exit(-1);
             }
 
+            /* -------------------------------------------------------------------- */
+            /*      Setting corner GCPs.                                            */
+            /* -------------------------------------------------------------------- */
+            GCP[] GCPs = new GCP[] { 
+                new GCP(44.5, 27.5, 0, 0, 0, "info0", "id0"),
+                new GCP(45.5, 27.5, 0, 100, 0, "info1", "id1"),
+                new GCP(44.5, 26.5, 0, 0, 100, "info2", "id2"),
+                new GCP(45.5, 26.5, 0, 100, 100, "info3", "id3")
+            };
+            ds.SetGCPs(GCPs, "");
+
             Band ba = ds.GetRasterBand(1);
 
             byte [] buffer = new byte [w * h];
