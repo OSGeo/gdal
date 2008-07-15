@@ -393,6 +393,27 @@ def test_gdal_translate_15():
     return 'success'
 
 ###############################################################################
+# Test -of VRT which is a special case
+
+def test_gdal_translate_16():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test16.vrt').read()
+
+    ds = gdal.Open('tmp/test16.vrt')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -409,7 +430,10 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test15.tif1')
     except:
         pass
-
+    try:
+        os.remove('tmp/test16.vrt')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -428,6 +452,7 @@ gdaltest_list = [
     test_gdal_translate_13,
     test_gdal_translate_14,
     test_gdal_translate_15,
+    test_gdal_translate_16,
     test_gdal_translate_cleanup
     ]
 
