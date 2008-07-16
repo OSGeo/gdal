@@ -154,7 +154,9 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 /************************************************************************/
 
 %feature( "kwargs" ) RegenerateOverviews;
+#ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
+#endif
 %inline %{
 int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
      			  int overviewBandCount,
