@@ -1,7 +1,7 @@
 
 GDAL/OGR in Python
 ==================
-
+ 
 This Python package and extensions are a number of tools for programming and 
 manipulating the GDAL_ Geospatial Data Abstraction Library.  Actually, it is 
 two libraries -- GDAL for manipulating geospatial raster data and OGR for 
