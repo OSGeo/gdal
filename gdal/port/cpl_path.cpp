@@ -3,7 +3,7 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Portable filename/path parsing, and forming ala "Glob API".
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 1999, Frank Warmerdam
