@@ -2429,7 +2429,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                                      void *pProgressData )
 
 {
-    CPLAssert( pfnProgress != NULL );
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
 /*      If we have overviews, use them for the histogram.               */
