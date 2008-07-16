@@ -528,7 +528,7 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
     {
 
         pData = (GByte *) 
-            CPLCalloc(nPixelSize, GetRasterXSize() * GetRasterYSize() );
+            VSICalloc(nPixelSize * GetRasterXSize(), GetRasterYSize() );
 
         if( pData == NULL )
         {
@@ -610,14 +610,32 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create the new GTiffDataset object.                             */
+/*      Create the new MEMDataset object.                               */
 /* -------------------------------------------------------------------- */
     MEMDataset *poDS;
 
     poDS = new MEMDataset();
 
     poDS->nRasterXSize = atoi(CSLFetchNameValue(papszOptions,"PIXELS"));
+    if (poDS->nRasterXSize <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid value : PIXELS=%s.", CSLFetchNameValue(papszOptions,"PIXELS"));
+
+        CSLDestroy( papszOptions );
+        delete poDS;
+        return NULL;
+    }
     poDS->nRasterYSize = atoi(CSLFetchNameValue(papszOptions,"LINES"));
+    if (poDS->nRasterYSize <= 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid value : LINES=%s.", CSLFetchNameValue(papszOptions,"LINES"));
+
+        CSLDestroy( papszOptions );
+        delete poDS;
+        return NULL;
+    }
 
     poDS->eAccess = GA_Update;
 
@@ -635,7 +653,18 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszOption == NULL )
         nBands = 1;
     else
+    {
         nBands = atoi(pszOption);
+        if (nBands > 10000)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Invalid value : BANDS=%s.", CSLFetchNameValue(papszOptions,"BANDS"));
+
+            CSLDestroy( papszOptions );
+            delete poDS;
+            return NULL;
+        }
+    }
 
     pszOption = CSLFetchNameValue(papszOptions,"DATATYPE");
     if( pszOption == NULL )
