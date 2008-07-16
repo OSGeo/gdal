@@ -72,6 +72,10 @@ class Translator(object):
 
         g.add_option('-k', "--select", dest="fields",
                           help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)                          
+        g.add_option('-t', '--target-srs', dest="t_srs",
+                          help="""Target SRS -- the spatial reference system to project the data to""")
+        g.add_option('-a', '--assign-srs', dest="a_srs",
+                          help="""Assign SRS -- the spatial reference to assign to the input data""")
         g.add_option("-q", "--quiet",
                           action="store_false", dest="verbose", default=False,
                           help="don't print status messages to stdout")
@@ -101,16 +105,26 @@ class Translator(object):
         self.translate()
         
     def open(self):
-        self.in_ds = ogr.Open(self.options.input)
+        if self.options.input:
+            self.in_ds = ogr.Open(self.options.input)
+        else:
+            raise Exception("No input layer was specified")
         if self.options.layer:
             self.input = self.in_ds.GetLayerByName(self.options.layer)
             if not self.input:
                 raise Exception("The layer '%s' was not found" % self.options.layer)
         else:
             self.input = self.in_ds.GetLayer(0)
-        
+
+        if self.options.a_srs:
+            self.in_srs = osr.SpatialReference()
+            self.in_srs.SetFromUserInput(self.options.a_srs)
+        else:
+            self.in_srs = self.input.GetSpatialRef()
+
         if self.options.spat:
             self.input.SetSpatialFilterRect(*self.options.spat)
+            
         self.out_drv = ogr.GetDriverByName(self.options.driver)
         
         if self.options.where:
@@ -120,7 +134,8 @@ class Translator(object):
             raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?", self.options.driver)
         if not self.out_drv.TestCapability( 'CreateDataSource' ):
             raise Exception("The '%s' driver does not support creating layers, you will have to choose another output driver", self.options.driver)
-        
+        if not self.options.output:
+            raise Exception("No output layer was specified")
         if self.options.driver == 'ESRI Shapefile':
             path, filename = os.path.split(os.path.abspath(self.options.output))
             name, ext = os.path.splitext(filename)
@@ -140,9 +155,14 @@ class Translator(object):
             dsco = (),
 
         self.out_ds = self.out_drv.CreateDataSource( self.options.output, dsco)
+        
+        if self.options.t_srs:
+            self.out_srs = osr.SpatialReference()
+            self.out_srs.SetFromUserInput(self.options.t_srs)
+            
         self.output = self.out_ds.CreateLayer(  self.options.output,
                                                 geom_type = self.input.GetLayerDefn().GetGeomType(), 
-                                                srs= self.input.GetSpatialRef())
+                                                srs= self.out_srs)
 
 
     def make_fields(self):
@@ -162,10 +182,19 @@ class Translator(object):
 
     def translate(self, geometry_callback=None, attribute_callback=None):
         f = self.input.GetNextFeature()
+        trans = None
+        if self.options.t_srs:
+            trans = osr.CoordinateTransformation(self.in_srs, self.out_srs)
         while f:
             geom = f.GetGeometryRef().Clone()
+            
+            if trans:
+                geom.Transform(trans)
+
             if geometry_callback:
                 geom = geometry_callback(geom)
+
+                
             f.SetGeometry(geom)
             d = ogr.Feature(feature_def=self.output.GetLayerDefn())
             d.SetFrom(f)
