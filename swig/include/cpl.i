@@ -110,13 +110,17 @@ void CPLErrorReset();
 
 %feature( "kwargs" ) EscapeString;
 
+#ifndef SWIGCSHARP
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+#endif
 %inline %{
 char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 } 
 %}
+#ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
+#endif
 
 int CPLGetLastErrorNo();
 
