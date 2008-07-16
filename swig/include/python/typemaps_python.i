@@ -862,7 +862,9 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
       } else {
           SWIG_fail;
       }
+      printf("Fetching XSize... \n");
       rawobjectpointer = (type*) sobj->ptr;
+      printf("XSize: %d\n", GDALGetRasterBandXSize(rawobjectpointer));
       int v = GDALGetRasterBandXSize(rawobjectpointer);
       $2[i] = rawobjectpointer;
 
@@ -882,3 +884,34 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 %enddef
 
 OBJECT_LIST_INPUT(GDALRasterBandShadow);
+
+%typemap(in, numinputs=1) (int nBuckets, int* panHistogram)
+{
+  /* %typemap(in) int nBuckets, int* panHistogram -> list hobujunk*/
+  $2 = (int *) CPLCalloc(sizeof(int),$1);
+}
+
+%typemap(freearg)  (int nBuckets, int* panHistogram)
+{
+  /* %typemap(freearg) (int nBuckets, int* panHistogram)*/
+  if ( $2 ) {
+    CPLFree( $2 );
+  }
+}
+
+%typemap(argout) (int nBuckets, int* panHistogram)
+{
+  /* %typemap(out) int nBuckets, int* panHistogram -> list hobujunk*/
+  int *integerarray = $2;
+  if ( integerarray == NULL ) {
+    $result = Py_None;
+    Py_INCREF( $result );
+  }
+  else {
+    $result = PyList_New( $1 );
+    for ( int i = 0; i < $1; ++i ) {
+      PyObject *o =  PyInt_FromLong( integerarray[i] );
+      PyList_SetItem($result, i, o );
+    }
+  }
+}
