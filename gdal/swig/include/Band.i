@@ -260,15 +260,16 @@ public:
 
  
 #ifndef SWIGCSHARP
+%feature( "kwargs" ) GetHistogram;
   CPLErr GetHistogram( double dfMin=-0.5,
                      double dfMax=255.5,
                      int nBuckets=255,
+                     int *panHistogram = NULL,
                      int bIncludeOutOfRange = 0,
                      int bApproxOk = 1,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL ) {
 
-   int* panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
     CPLErr err;
     CPLErrorReset();
 
@@ -283,6 +284,7 @@ public:
                                 callback_data);
     return err;
   }
+
 #else
 %apply (int inout[ANY]) {int *panHistogram};
     CPLErr GetHistogram( double dfMin=-0.5,
