@@ -306,6 +306,8 @@ OPTIONAL_POD(int, int);
   $1 = ($1_ltype)$input;
 }
 
+%apply (double inout[ANY]) {double *pList};
+
 /*
  * Typemap for int inout[ANY]. 
  */
@@ -320,10 +322,7 @@ OPTIONAL_POD(int, int);
   $1 = ($1_ltype)$input;
 }
 
-%typemap(argout) (double inout[ANY])
-{
-  /* %typemap(argout) (double inout[ANY]) */
-}
+%apply (int inout[ANY]) {int *pList};
 
 /*
  * Typemap for double *defaultval. 
@@ -367,6 +366,41 @@ OPTIONAL_POD(int, int);
   $1 = ($1_ltype)$input;
 }
 
+%apply (int *hasval) {int *nLen};
+%apply (int *hasval) {int *pnBytes};
+
+/*
+ * Typemap for int **array_argout. 
+ */
+
+%typemap(imtype) (int **array_argout)  "out int[]"
+%typemap(cstype) (int **array_argout) "out int[]"
+%typemap(csin) (int **array_argout)  "out $csinput"
+
+%typemap(in) (int **array_argout)
+{
+  /* %typemap(in) (int **array_argout) */
+  $1 = ($1_ltype)$input;
+}
+
+%apply (int **array_argout) {int **pList};
+
+/*
+ * Typemap for double **array_argout. 
+ */
+
+%typemap(imtype) (double **array_argout)  "out double[]"
+%typemap(cstype) (double **array_argout) "out double[]"
+%typemap(csin) (double **array_argout)  "out $csinput"
+
+%typemap(in) (double **array_argout)
+{
+  /* %typemap(in) (double **array_argout) */
+  $1 = ($1_ltype)$input;
+}
+
+%apply (double **array_argout) {double **pList};
+
 /******************************************************************************
  * GDAL raster R/W support                                                    *
  *****************************************************************************/
@@ -380,6 +414,8 @@ OPTIONAL_POD(int, int);
       IntPtr ret = $imcall;$excode
       return ret;
 }
+
+%apply (void *buffer_ptr) {GByte*};
 
 %csmethodmodifiers StringListDestroy "internal";
 %inline %{
