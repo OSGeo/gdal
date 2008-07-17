@@ -27,17 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/*
- * NOTE: This code was originally adapted from the gdImageFilledPolygon() 
- * function in libgd.  
- * 
- * http://www.boutell.com/gd/
- *
- * It was later adapted for direct inclusion in GDAL and relicensed under
- * the GDAL MIT/X license (pulled from the OpenEV distribution). 
- */
-
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 
 static int llCompareInt(const void *a, const void *b)
 {
@@ -75,6 +66,16 @@ static int llCompareInt(const void *a, const void *b)
 /*         case, due to numerical inaccuracies, it's hard to predict    */
 /*         if the pixel will be considered inside or outside the shape. */
 /************************************************************************/
+
+/*
+ * NOTE: This code was originally adapted from the gdImageFilledPolygon() 
+ * function in libgd.  
+ * 
+ * http://www.boutell.com/gd/
+ *
+ * It was later adapted for direct inclusion in GDAL and relicensed under
+ * the GDAL MIT/X license (pulled from the OpenEV distribution). 
+ */
 
 void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
                                int nPartCount, int *panPartSize,
@@ -236,7 +237,6 @@ No known bug
             if( polyInts[i] <= maxx && polyInts[i+1] > minx )
             {
                 pfnScanlineFunc( pCBData, y, polyInts[i], polyInts[i+1] - 1 );
-                
 	    }
             
         }
@@ -245,5 +245,24 @@ No known bug
     free( polyInts );
 }
 
+/************************************************************************/
+/*                         GDALdllImagePoint()                          */
+/************************************************************************/
 
+void GDALdllImagePoint( int nRasterXSize, int nRasterYSize, 
+                        int nPartCount, int *panPartSize,
+                        double *padfX, double *padfY,
+                        llPointFunc pfnPointFunc, void *pCBData )
+{
+    int     i;
+ 
+    for ( i = 0; i < nPartCount; i++ )
+    {
+        int nX = (int)floor( padfX[i] + 0.5 );
+        int nY = (int)floor( padfY[i] + 0.5 );
+
+        if ( 0 <= nX && nX < nRasterXSize && 0 <= nY && nY < nRasterYSize )
+            pfnPointFunc( pCBData, nY, nX );
+    }
+}
 
