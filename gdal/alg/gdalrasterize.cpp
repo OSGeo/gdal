@@ -27,12 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
+
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
 #include "ogr_geometry.h"
-#include <vector>
+#include "ogr_spatialref.h"
 
 typedef struct {
     unsigned char * pabyChunkBuf;
@@ -59,8 +62,6 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd )
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
     CPLAssert( nXStart <= nXEnd );
     CPLAssert( nXStart < psInfo->nXSize );
-
-    /*  CPLAssert( nXEnd > 0 ); */
     CPLAssert( nXEnd >= 0 );
 
     if( nXStart < 0 )
@@ -102,6 +103,43 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd )
 }
 
 /************************************************************************/
+/*                            gvBurnPoint()                             */
+/************************************************************************/
+
+void gvBurnPoint( void *pCBData, int nY, int nX )
+
+{
+    GDALRasterizeInfo *psInfo = (GDALRasterizeInfo *) pCBData;
+    int iBand;
+
+    CPLAssert( nY >= 0 && nY < psInfo->nYSize );
+    CPLAssert( nX >= 0 && nX < psInfo->nXSize );
+
+    if( psInfo->eType == GDT_Byte )
+    {
+        for( iBand = 0; iBand < psInfo->nBands; iBand++ )
+        {
+            unsigned char *pbyInsert = psInfo->pabyChunkBuf 
+                + iBand * psInfo->nXSize * psInfo->nYSize
+                + nY * psInfo->nXSize + nX;
+
+            *pbyInsert = (unsigned char) psInfo->padfBurnValue[iBand];
+        }
+    }
+    else
+    {
+        for( iBand = 0; iBand < psInfo->nBands; iBand++ )
+        {
+            float   *pfInsert = ((float *) psInfo->pabyChunkBuf) 
+                + iBand * psInfo->nXSize * psInfo->nYSize
+                + nY * psInfo->nXSize + nX;
+
+            *pfInsert = (float) psInfo->padfBurnValue[iBand];
+        }
+    }
+}
+
+/************************************************************************/
 /*                    GDALCollectRingsFromGeometry()                    */
 /************************************************************************/
 
@@ -117,7 +155,18 @@ static void GDALCollectRingsFromGeometry(
     OGRwkbGeometryType eFlatType = wkbFlatten(poShape->getGeometryType());
     int i;
 
-    if( EQUAL(poShape->getGeometryName(),"LINEARRING") )
+    if ( eFlatType == wkbPoint )
+    {
+        OGRPoint    *poPoint = (OGRPoint *) poShape;
+        int nOldCount = aPointX.size();
+
+        aPointX.reserve(nOldCount + 1);
+        aPointY.reserve(nOldCount + 1);
+        aPointX.push_back( poPoint->getX() );
+        aPointY.push_back( poPoint->getY() );
+        aPartSize.push_back( 1 );
+    }
+    else if ( EQUAL(poShape->getGeometryName(),"LINEARRING") )
     {
         OGRLinearRing *poRing = (OGRLinearRing *) poShape;
         int nOldCount = aPointX.size();
@@ -221,11 +270,21 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
     //    /* fill polygon */
     // else
     //    /* How to report this problem? */    
-
-    GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
+    switch ( wkbFlatten(poShape->getGeometryType()) )
+    {
+        case wkbPoint:
+            GDALdllImagePoint( sInfo.nXSize, nYSize, 
                                aPartSize.size(), &(aPartSize[0]), 
                                &(aPointX[0]), &(aPointY[0]),
-                               gvBurnScanline, &sInfo );
+                               gvBurnPoint, &sInfo );
+            break;
+        default:
+            GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
+                                       aPartSize.size(), &(aPartSize[0]), 
+                                       &(aPointX[0]), &(aPointY[0]),
+                                       gvBurnScanline, &sInfo );
+            break;
+    }
 }
 
 /************************************************************************/
@@ -486,26 +545,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
 
 /* -------------------------------------------------------------------- */
-/*      If we have no transformer, assume the geometries are in file    */
-/*      georeferenced coordinates, and create a transformer to          */
-/*      convert that to pixel/line coordinates.                         */
-/*                                                                      */
-/*      We really just need to apply an affine transform, but for       */
-/*      simplicity we use the more general GenImgProjTransformer.       */
-/* -------------------------------------------------------------------- */
-    int bNeedToFreeTransformer = FALSE;
-
-    if( pfnTransformer == NULL )
-    {
-        bNeedToFreeTransformer = TRUE;
-
-        pTransformArg = 
-            GDALCreateGenImgProjTransformer( NULL, NULL, hDS, NULL, 
-                                             FALSE, 0.0, 0);
-        pfnTransformer = GDALGenImgProjTransform;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Establish a chunksize to operate on.  The larger the chunk      */
 /*      size the less times we need to make a pass through all the      */
 /*      shapes.                                                         */
@@ -530,7 +569,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     }
 
 /* ==================================================================== */
-/*      Loop over image in designated chunks.                           */
+/*      Read thespecified layers transfoming and rasterizing            */
+/*      geometries.                                                     */
 /* ==================================================================== */
     CPLErr      eErr = CE_None;
     int         iLayer;
@@ -561,11 +601,37 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         else
             padfBurnValues = padfLayerBurnValues + iLayer * nBandCount;
 
+/* -------------------------------------------------------------------- */
+/*      If we have no transformer, create the one from input file       */
+/*      projection. Note that each layer can be georefernced            */
+/*      separately.                                                     */
+/* -------------------------------------------------------------------- */
+        int bNeedToFreeTransformer = FALSE;
+
+        if( pfnTransformer == NULL )
+        {
+            char    *pszProjection;
+            bNeedToFreeTransformer = TRUE;
+
+            OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
+            poSRS->exportToWkt( &pszProjection );
+
+            pTransformArg = 
+                GDALCreateGenImgProjTransformer( NULL, pszProjection,
+                                                 hDS, NULL, FALSE, 0.0, 0 );
+            pfnTransformer = GDALGenImgProjTransform;
+
+            CPLFree( pszProjection );
+        }
+
         OGRFeature *poFeat;
 
         poLayer->ResetReading();
 
-        for( iY = 0; 
+/* -------------------------------------------------------------------- */
+/*      Loop over image in designated chunks.                           */
+/* -------------------------------------------------------------------- */
+       for( iY = 0; 
              iY < poDS->GetRasterYSize() && eErr == CE_None; 
              iY += nYChunkSize )
         {
@@ -617,6 +683,13 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 eErr = CE_Failure;
             }
         }
+
+        if ( bNeedToFreeTransformer )
+        {
+            GDALDestroyTransformer( pTransformArg );
+            pTransformArg = NULL;
+            pfnTransformer = NULL;
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -624,9 +697,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /* -------------------------------------------------------------------- */
     VSIFree( pabyChunkBuf );
     
-    if( bNeedToFreeTransformer )
-        GDALDestroyTransformer( pTransformArg );
-
     return eErr;
 }
 
