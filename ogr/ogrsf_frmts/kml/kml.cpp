@@ -242,14 +242,15 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
         // Check all Attributes
         for (i = 0; ppszAttr[i]; i += 2)
         {
-            // Find the namespace
+            // Find the namespace and determine the KML version
             if(strcmp(ppszAttr[i], "xmlns") == 0)
             {
-                // Is it KML 2.1?
-                if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.2") == 0)
+                // Is it KML 2.2?
+                if((strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.2") == 0) || 
+				   (strcmp(ppszAttr[i + 1], "http://www.opengis.net/kml/2.2") == 0))
                 {
                     ((KML *)pUserData)->validity = KML_VALIDITY_VALID;
-                    ((KML *)pUserData)->sVersion_ = "2.2 (beta)";
+                    ((KML *)pUserData)->sVersion_ = "2.2";
                 }
                 else if(strcmp(ppszAttr[i + 1], "http://earth.google.com/kml/2.1") == 0)
                 {
