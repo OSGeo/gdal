@@ -862,9 +862,8 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
       } else {
           SWIG_fail;
       }
-      printf("Fetching XSize... \n");
       rawobjectpointer = (type*) sobj->ptr;
-      printf("XSize: %d\n", GDALGetRasterBandXSize(rawobjectpointer));
+      /* FIXME remove this when Frank confirms this typemap works */
       int v = GDALGetRasterBandXSize(rawobjectpointer);
       $2[i] = rawobjectpointer;
 
