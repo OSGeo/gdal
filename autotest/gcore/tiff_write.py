@@ -239,6 +239,7 @@ def tiff_write_5():
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
+# Expected to fail (properly) with older libtiff versions (<=3.8.2 for sure)
 
 def tiff_write_6():
 
@@ -259,19 +260,27 @@ def tiff_write_6():
     buf_read = ds.ReadRaster( 0, 0, 32, 32, buf_type = gdal.GDT_Byte )
 
     if buf_read != buf:
+        gdaltest.tiff_write_6_failed = True
         gdaltest.post_reason( 'did not get back expected data.' )
         return 'fail'
 
     ds = None
 
+    gdaltest.tiff_write_6_failed = False
     gdaltest.tiff_drv.Delete( 'tmp/test_6.tif' )
 
     return 'success'
 
 ###############################################################################
 # Test a mixture of reading and writing on a LZW compressed file.
+# Will cause older libtiff versions (<=3.8.2 for sure) to crash, so skip it
+# if previous test failed
 
 def tiff_write_7():
+
+    if gdaltest.tiff_write_6_failed:
+        gdaltest.post_reason( 'skipped because of failure in tiff_write_6.' )
+        return 'fail'
 
     options= [ 'TILED=YES', 'COMPRESS=LZW', 'PREDICTOR=2' ]
     ds = gdaltest.tiff_drv.Create( 'tmp/test_7.tif', 200, 200, 1,
@@ -686,6 +695,7 @@ def tiff_write_19():
 
 ###############################################################################
 # Test write and read of some TIFF tags
+# Expected to fail (properly) with older libtiff versions (<=3.8.2 for sure)
 
 def tiff_write_20():
 
