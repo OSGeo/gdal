@@ -1879,7 +1879,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
             nSwathCols = (nSwathCols / nBlockXSize) * nBlockXSize;
             if (nSwathCols == 0)
                 nSwathCols = nBlockXSize;
-            CPLAssert(nSwathCols < nXSize);
+            if (nSwathCols > nXSize)
+                nSwathCols = nXSize;
 
             CPLDebug( "GDAL", 
               "GDALDatasetCopyWholeRaster(): because of compression and too high block,\n"
