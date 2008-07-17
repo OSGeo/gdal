@@ -160,6 +160,15 @@ if he anticipates the final file to be too big for classical TIFF format. If Big
 creation is not explicitely asked and that the resulting file is too big for classical TIFF,
 libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".<p>
 
+<h3>About JPEG compression of RGB images </h3>
+
+When translating a RGB image to JPEG-In-TIFF, using PHOTOMETRIC=YCBCR can make the size
+of the image typically 2 to 3 times smaller than the default photometric value (RGB).
+When using PHOTOMETRIC=YCBCR, the INTERLEAVE option must be kept to its default value (PIXEL),
+otherwise libtiff will fail to compress the data.
+<p>
+Note also that the dimensions of the tiles or strips must be a multiple of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR
+
 <hr>
 
 See Also:<p>
