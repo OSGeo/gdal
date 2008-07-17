@@ -247,20 +247,9 @@ GDALContourGenerate( GDALRasterBandH hBand,
                             void *hLayer, int iIDField, int iElevField,
                             GDALProgressFunc pfnProgress, void *pProgressArg );
 
-/* -------------------------------------------------------------------- */
-/*      Low level rasterizer API.                                       */
-/* -------------------------------------------------------------------- */
-typedef void (*llScanlineFunc)( void *pCBData, int nY, int nXStart, int nXEnd);
-
-
-void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
-                               int nPartCount, int *panPartSize, 
-                               double *padfX, double *padfY,
-                               llScanlineFunc pfnScanlineFunc, void *pCBData );
-
-/* -------------------------------------------------------------------- */
-/*      High level rasterizer API - geometries burned into GDAL raster. */
-/* -------------------------------------------------------------------- */
+/************************************************************************/
+/*      Rasterizer API - geometries burned into GDAL raster.            */
+/************************************************************************/
 
 CPLErr CPL_DLL 
 GDALRasterizeGeometries( GDALDatasetH hDS, 
