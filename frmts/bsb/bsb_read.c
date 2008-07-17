@@ -172,6 +172,12 @@ BSBInfo *BSBOpen( const char *pszFilename )
     int         i, bNO1 = FALSE;
     BSBInfo     *psInfo;
     int    nSkipped = 0;
+    const char *pszPalette;
+
+/* -------------------------------------------------------------------- */
+/*      Which palette do we want to use?                                */
+/* -------------------------------------------------------------------- */
+    pszPalette = CPLGetConfigOption( "BSB_PALETTE", "RGB" );
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -194,7 +200,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_FileIO,
                   "Could not read first %d bytes for header!", 
-                  sizeof(achTestBlock) );
+                  (int) sizeof(achTestBlock) );
         return NULL;
     }
 
@@ -290,7 +296,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->nXSize = atoi(papszTokens[nRAIndex+3]);
             psInfo->nYSize = atoi(papszTokens[nRAIndex+4]);
         }
-        else if( EQUALN(pszLine,"RGB/",4) && nCount >= 4 )
+        else if( EQUALN(pszLine, pszPalette, 3) && pszLine[3] == '/'
+                 && nCount >= 4 )
         {
             int	iPCT = atoi(papszTokens[0]);
             if( iPCT > psInfo->nPCTSize-1 )
@@ -561,7 +568,7 @@ int BSBReadScanline( BSBInfo *psInfo, int nScanline,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Got scanline id %d when looking for %d @ offset %ld.", 
-                  nLineMarker, nScanline+1, VSIFTellL( fp ) );
+                  nLineMarker, nScanline+1, (long) VSIFTellL( fp ) );
         return FALSE;
     }
 
