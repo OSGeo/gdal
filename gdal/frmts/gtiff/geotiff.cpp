@@ -5401,7 +5401,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->SetMetadata( papszDST_MD );
     CSLDestroy( papszDST_MD );
 
-    for( int nBand = 1; nBand <= poDS->GetRasterCount(); nBand++ )
+    /* Depending on the PHOTOMETRIC tag, the TIFF file may not have */
+    /* the same band count as the source. Will fail later in GDALDatasetCopyWholeRaster anyway... */
+    for( int nBand = 1;
+         nBand <= MIN(poDS->GetRasterCount(), poSrcDS->GetRasterCount()) ;
+         nBand++ )
     {
         char **papszSRC_MD = poSrcDS->GetRasterBand(nBand)->GetMetadata();
         char **papszDST_MD = CSLDuplicate(poDS->GetRasterBand(nBand)->GetMetadata());
