@@ -37,28 +37,9 @@
 class OGRFeature;
 
 
-/* All OGRStyleTool param lists are defined in ogr_core.h, except for 
- * OGRSTVectorParam which is kept here because we do not want to expose
- * it to the C API.
- * 
- * The OGRStyleVector class (and OGRSTVectorParam enum) are currently unused
- * and will likely be removed in a future release, so their use is discouraged.
+/*
+ * All OGRStyleTool param lists are defined in ogr_core.h.
  */
-typedef enum ogr_style_tool_param_vector_id
-{  
-    OGRSTVectorId       = 0,
-    OGRSTVectorNoCompress = 1,
-    OGRSTVectorSprain   = 2,
-    OGRSTVectorNoSlope  = 3,
-    OGRSTVectorMirroring = 4,
-    OGRSTVectorCentering = 5,
-    OGRSTVectorPriority = 6,
-    OGRSTVectorPlacement = 7,
-    OGRSTVectorLength   = 8,
-    OGRSTVectorEven     = 9,
-    OGRSTVectorLast     = 10
-              
-} OGRSTVectorParam;
 
 typedef enum ogr_style_type
 {
@@ -446,63 +427,6 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
      void SetParamStr(OGRSTLabelParam eParam, const char *pszParamString);
      void SetParamNum(OGRSTLabelParam eParam, int nParam);
      void SetParamDbl(OGRSTLabelParam eParam, double dfParam);
-     const char *GetStyleString();
-};
-
-
-/* IMPORTANT NOTE:
- * The OGRStyleVector class (and OGRSTVectorParam enum) are currently unused
- * and will likely be removed in a future release, so their use is discouraged.
- */
-
-class CPL_DLL OGRStyleVector : public OGRStyleTool
-{
-  private:
-    
-    OGRStyleValue    *m_pasStyleValue;
-
-    GBool Parse();
-
-  public:
-
-    OGRStyleVector();
-    virtual ~OGRStyleVector();
-
-    /*****************************************************************/
-    /* Explicit fct for all parameters defined in the Drawing tools  */
-    /*****************************************************************/
-    
-    const char *Id(GBool &bDefault){return GetParamStr(OGRSTVectorId,bDefault);}
-    void  SetId(const char *pszId){ SetParamStr(OGRSTVectorId,pszId);}
-    int  Priority(GBool &bDefault){return GetParamNum(OGRSTVectorPriority,bDefault);}
-    void SetPriority(int nPriority){SetParamNum(OGRSTVectorPriority,nPriority);}
-    
-
-    GBool NoCompress(GBool &bDefault){return GetParamNum(OGRSTVectorNoCompress,bDefault);}
-    void SetNoCompress(GBool bNoCompress){SetParamNum(OGRSTVectorNoCompress,bNoCompress);}
-    GBool Sprain(GBool &bDefault){return GetParamNum(OGRSTVectorSprain,bDefault);}
-    void SetSprain(GBool bSprain){SetParamNum(OGRSTVectorSprain,bSprain);}
-    GBool NoSlope(GBool &bDefault){return GetParamNum(OGRSTVectorNoSlope,bDefault);}
-    void SetNoSlope(GBool bNoSlope){SetParamNum(OGRSTVectorNoSlope,bNoSlope);}
-    GBool Mirroring(GBool &bDefault){return GetParamNum(OGRSTVectorMirroring,bDefault);}
-    void SetMirroring(GBool bMirroring){SetParamNum(OGRSTVectorMirroring,bMirroring);}
-    GBool Centering(GBool &bDefault){return GetParamNum(OGRSTVectorCentering,bDefault);}
-    void SetCentering(GBool bCentering){SetParamNum(OGRSTVectorCentering,bCentering);}
-    const char *Placement(GBool &bDefault){return GetParamStr(OGRSTVectorPlacement,bDefault);}
-    void SetPlacement(const char *pszPlacement){SetParamStr(OGRSTVectorPlacement,pszPlacement);}
-    double Length(GBool &bDefault){return GetParamDbl(OGRSTVectorLength,bDefault);}
-    void SetLength(double dfLength){SetParamDbl(OGRSTVectorLength,dfLength);}
-    GBool Even(GBool &bDefault){return GetParamNum(OGRSTVectorEven,bDefault);}
-    void SetEven(GBool bEven){SetParamNum(OGRSTVectorEven,bEven);}
-
-    /*****************************************************************/
-    
-     const char *GetParamStr(OGRSTVectorParam eParam, GBool &bValueIsNull);
-     int GetParamNum(OGRSTVectorParam eParam,GBool &bValueIsNull);
-     double GetParamDbl(OGRSTVectorParam eParam,GBool &bValueIsNull);
-     void SetParamStr(OGRSTVectorParam eParam, const char *pszParamString);
-     void SetParamNum(OGRSTVectorParam eParam, int nParam);
-     void SetParamDbl(OGRSTVectorParam eParam, double dfParam);
      const char *GetStyleString();
 };
 
