@@ -4485,7 +4485,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     pszValue = CSLFetchNameValue(papszParmList,"INTERLEAVE");
     if( pszValue != NULL )
     {
-        pszValue = CSLFetchNameValue(papszParmList,"INTERLEAVE");
         if( EQUAL( pszValue, "PIXEL" ) )
             nPlanar = PLANARCONFIG_CONTIG;
         else if( EQUAL( pszValue, "BAND" ) )
@@ -4825,6 +4824,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         CPLFree(v);
     }
     
+    /* Set the compression method before asking the default strip size */
+    /* This is usefull when translating to a JPEG-In-TIFF file where */
+    /* the default strip size is 8 or 16 depending on the photometric value */
+    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompression );
+
 /* -------------------------------------------------------------------- */
 /*      Setup tiling/stripping flags.                                   */
 /* -------------------------------------------------------------------- */
@@ -4854,7 +4858,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Set compression related tags.                                   */
 /* -------------------------------------------------------------------- */
-    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompression );
     if ( nCompression == COMPRESSION_LZW ||
          nCompression == COMPRESSION_ADOBE_DEFLATE )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
