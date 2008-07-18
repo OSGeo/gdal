@@ -36,7 +36,7 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#ifdef WIN32
+#ifdef _WIN32
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
 # include <io.h>
@@ -66,7 +66,7 @@ struct json_object* json_object_from_file(char *filename)
 	     filename, strerror(errno));
     return error_ptr(-1);
   }
-  if(!(pb = printbuf_new())) {
+  if((pb = printbuf_new()) == NULL) {
     mc_error("json_object_from_file: printbuf_new failed\n");
     return error_ptr(-1);
   }
@@ -102,7 +102,9 @@ int json_object_to_file(char *filename, struct json_object *obj)
     return -1;
   }
 
-  if(!(json_str = json_object_to_json_string(obj))) { return -1; }
+  if((json_str = json_object_to_json_string(obj)) == NULL) {
+      return -1;
+  }
 
 
   wsize = (unsigned int)(strlen(json_str) & UINT_MAX); /* CAW: probably unnecessary, but the most 64bit safe */
