@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$");
 
-static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 );
+static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, int bNO1 );
 
 /************************************************************************
 
@@ -168,7 +168,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 {
     FILE	*fp;
     char	achTestBlock[1000];
-    const char  *pszLine;
+    char        szLine[1000];
     int         i, bNO1 = FALSE;
     BSBInfo     *psInfo;
     int    nSkipped = 0;
@@ -251,20 +251,20 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     VSIFSeekL( fp, 0, SEEK_SET );
 
-    while( (pszLine = BSBReadHeaderLine(psInfo, bNO1)) != NULL )
+    while( BSBReadHeaderLine(psInfo, szLine, sizeof(szLine), bNO1) )
     {
         char	**papszTokens = NULL;
         int      nCount = 0;
 
-        if( pszLine[3] == '/' )
+        if( szLine[0] != '\0' && szLine[1] != '\0' && szLine[2] != '\0' && szLine[3] == '/' )
         {
-            psInfo->papszHeader = CSLAddString( psInfo->papszHeader, pszLine );
-            papszTokens = CSLTokenizeStringComplex( pszLine+4, ",=", 
+            psInfo->papszHeader = CSLAddString( psInfo->papszHeader, szLine );
+            papszTokens = CSLTokenizeStringComplex( szLine+4, ",=", 
                                                     FALSE,FALSE);
             nCount = CSLCount(papszTokens);
         }
 
-        if( EQUALN(pszLine,"BSB/",4) )
+        if( EQUALN(szLine,"BSB/",4) )
         {
             int		nRAIndex;
 
@@ -280,7 +280,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->nXSize = atoi(papszTokens[nRAIndex+1]);
             psInfo->nYSize = atoi(papszTokens[nRAIndex+2]);
         }
-        else if( EQUALN(pszLine,"NOS/",4) )
+        else if( EQUALN(szLine,"NOS/",4) )
         {
             int  nRAIndex;
             
@@ -296,7 +296,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->nXSize = atoi(papszTokens[nRAIndex+3]);
             psInfo->nYSize = atoi(papszTokens[nRAIndex+4]);
         }
-        else if( EQUALN(pszLine, pszPalette, 3) && pszLine[3] == '/'
+        else if( EQUALN(szLine, pszPalette, 3) && szLine[3] == '/'
                  && nCount >= 4 )
         {
             int	iPCT = atoi(papszTokens[0]);
@@ -322,7 +322,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->pabyPCT[iPCT*3+1] = (unsigned char)atoi(papszTokens[2]);
             psInfo->pabyPCT[iPCT*3+2] = (unsigned char)atoi(papszTokens[3]);
         }
-        else if( EQUALN(pszLine,"VER/",4) && nCount >= 1 )
+        else if( EQUALN(szLine,"VER/",4) && nCount >= 1 )
         {
             psInfo->nVersion = (int) (100 * atof(papszTokens[0]) + 0.5);
         }
@@ -402,7 +402,14 @@ BSBInfo *BSBOpen( const char *pszFilename )
         && psInfo->nColorSize >= 0x31 && psInfo->nColorSize <= 0x38 )
         psInfo->nColorSize -= 0x30;
 
-    CPLAssert( psInfo->nColorSize > 0 && psInfo->nColorSize < 9 );
+    if( ! (psInfo->nColorSize > 0 && psInfo->nColorSize < 9) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "BSBOpen : Bad value for nColorSize (%d). Probably due to corrupted BSB file",
+                  psInfo->nColorSize );
+        BSBClose( psInfo );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize line offset list.                                    */
@@ -432,24 +439,22 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /*      Read one virtual line of text from the BSB header.  This        */
 /*      will end if a 0x1A (EOF) is encountered, indicating the data    */
 /*      is about to start.  It will also merge multiple physical        */
-/*      lines where appropriate.  The buffer is internal, and only      */
-/*      lasts till the next call.                                       */
+/*      lines where appropriate.                                        */
 /************************************************************************/
 
-static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
+static int BSBReadHeaderLine( BSBInfo *psInfo, char* pszLine, int nLineMaxLen, int bNO1 )
 
 {
-    static char	szLine[1000];
     char        chNext;
     int	        nLineLen = 0;
 
-    while( !VSIFEofL(psInfo->fp) && nLineLen < sizeof(szLine)-1 )
+    while( !VSIFEofL(psInfo->fp) && nLineLen < nLineMaxLen-1 )
     {
         chNext = (char) BSBGetc( psInfo, bNO1 );
         if( chNext == 0x1A )
         {
             BSBUngetc( psInfo, chNext );
-            return NULL;
+            return FALSE;
         }
 
         /* each CR/LF (or LF/CR) as if just "CR" */
@@ -475,8 +480,8 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
             if( chTest != ' ' )
             {
                 BSBUngetc( psInfo, chTest );
-                szLine[nLineLen] = '\0';
-                return szLine;
+                pszLine[nLineLen] = '\0';
+                return TRUE;
             }
 
             /* eat pending spaces */
@@ -485,15 +490,15 @@ static const char *BSBReadHeaderLine( BSBInfo *psInfo, int bNO1 )
             BSBUngetc( psInfo,chTest );
 
             /* insert comma in data stream */
-            szLine[nLineLen++] = ',';
+            pszLine[nLineLen++] = ',';
         }
         else
         {
-            szLine[nLineLen++] = chNext;
+            pszLine[nLineLen++] = chNext;
         }
     }
 
-    return NULL;
+    return FALSE;
 }
 
 /************************************************************************/
