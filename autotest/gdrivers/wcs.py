@@ -44,6 +44,9 @@ import gdaltest
 
 def wcs_1():
 
+    gdaltest.wcs_drv = None
+    return 'skip'
+
     try:
         gdaltest.wcs_drv = gdal.GetDriverByName( 'WCS' )
     except:
@@ -56,7 +59,7 @@ def wcs_1():
     try:
         srv = 'http://geodata.telascience.org/cgi-bin/mapserv_dem?'
         web = urllib2.urlopen(srv)
-    except urllib2.HTTPError, e:
+    except:
         print 'Test WCS service is down (HTTP Error: %d)' % e.code
         gdaltest.wcs_drv = None
 
