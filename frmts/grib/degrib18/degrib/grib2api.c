@@ -2014,9 +2014,12 @@ void pk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nx,
    int i;
 
 #ifndef _FORTRAN
+   
    printf ("Can not pack things unless using FORTRAN!\n");
    return;
-#endif
+
+#else
+
    myAssert (*ndjer >= 8);
    /* Init the error handling array. */
    memset ((void *) jer, 0, 2 * *ndjer * sizeof (sInt4));
@@ -2072,7 +2075,7 @@ void pk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nx,
                 is0, ns0, is1, ns1, is3, ns3, is4, ns4, is5, ns5, is6, ns6,
                 is7, ns7, ib, ibitmap, ipack, nd5, missp, xmissp, misss,
                 xmisss, inew, minpk, iclean, l3264b, jer, ndjer, kjer);
-#endif
+#endif /* _FORTRAN */
 
       free (jmax);
       free (jmin);
@@ -2116,4 +2119,6 @@ void pk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nx,
       *kjer = 1;
 #endif
    }
+
+#endif /* _FORTRAN */
 }
