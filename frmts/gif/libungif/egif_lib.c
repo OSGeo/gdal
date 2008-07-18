@@ -11,17 +11,19 @@
 * 26 Jun 96 - Version 3.0 by Eric S. Raymond (Full GIF89 support)
 ******************************************************************************/
 
-#ifdef __MSDOS__
+#if defined(_MSC_VER) || defined(__MSDOS__)
 #  include <io.h>
-#  include <alloc.h>
 #  include <sys\stat.h>
+#  ifndef _MSC_VER
+#    include <alloc.h>
+#  endif
 #else
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #  ifdef R6000
 #    include <sys/mode.h>
 #  endif
-#endif /* __MSDOS__ */
+#endif /* _MSC_VER || __MSDOS__ */
 
 #ifdef unix
 #include <unistd.h>
