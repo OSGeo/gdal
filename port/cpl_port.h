@@ -85,7 +85,6 @@
 #  endif
 #endif
 
-
 #include "cpl_config.h"
 
 /* ==================================================================== */
@@ -443,6 +442,15 @@ char * strdup (char *instr);
 #define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | ((*(GByte*)((x)+1)) << 8) | \
                               ((*(GByte*)((x)+2)) << 16) | ((*(GByte*)((x)+1)) << 24))
 
+
+/* Utility macro to explicitly mark intentionally unreferenced parameters. */
+#ifndef UNREFERENCED_PARAM 
+#  ifdef UNREFERENCED_PARAMETER /* May be defined by Windows API */
+#    define UNREFERENCED_PARAM(param) UNREFERENCED_PARAMETER(param)
+#  else
+#    define UNREFERENCED_PARAM(param) ((void)param)
+#  endif /* UNREFERENCED_PARAMETER */
+#endif /* UNREFERENCED_PARAM */
 
 /***********************************************************************
  * Define CPL_CVSID() macro.  It can be disabled during a build by
