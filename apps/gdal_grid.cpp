@@ -504,7 +504,7 @@ int main( int argc, char ** argv )
     GUInt32         nXSize = 0, nYSize = 0;
     double          dfXMin = 0.0, dfXMax = 0.0, dfYMin = 0.0, dfYMax = 0.0;
     int             bIsXExtentSet = FALSE, bIsYExtentSet = FALSE;
-    GDALGridAlgorithm eAlgorithm;
+    GDALGridAlgorithm eAlgorithm = GGA_InverseDistanceToAPower;
     void            *pOptions = NULL;
     char            *pszOutputSRS = NULL;
     int             bQuiet = FALSE;
