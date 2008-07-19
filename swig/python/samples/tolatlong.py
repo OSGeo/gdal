@@ -97,7 +97,7 @@ Y = geomatrix[3] + geomatrix[4] * pixel + geomatrix[5] * line
 X += geomatrix[1] / 2.0
 Y += geomatrix[5] / 2.0
 
-# Build Spatial Reference object based on coordinate system, fethed from the
+# Build Spatial Reference object based on coordinate system, fetched from the
 # opened dataset
 srs = osr.SpatialReference()
 srs.ImportFromWkt(indataset.GetProjection())
