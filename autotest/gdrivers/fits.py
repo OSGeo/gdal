@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: fits.py  rouault $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for FITS driver.

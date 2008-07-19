@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: pgchip.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  PGCHIP Testing.

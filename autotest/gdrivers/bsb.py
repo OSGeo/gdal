@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: bsb.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  BSB Testing.
