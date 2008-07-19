@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: test_gdalwarp.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdalwarp testing

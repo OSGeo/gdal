@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: test_gdalinfo.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdalinfo testing

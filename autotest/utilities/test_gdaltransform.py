@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: test_gdaltransform.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaltransform testing
