@@ -883,9 +883,9 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   DBFReadIntegerAttribute( hDBF, iShape, iField );
               
               memset( &sFld, 0, sizeof(sFld) );
-              sFld.Date.Year = nFullDate / 10000;
-              sFld.Date.Month = (nFullDate / 100) % 100;
-              sFld.Date.Day = nFullDate % 100;
+              sFld.Date.Year = (GInt16)(nFullDate / 10000);
+              sFld.Date.Month = (GByte)((nFullDate / 100) % 100);
+              sFld.Date.Day = (GByte)(nFullDate % 100);
               
               poFeature->SetField( iField, &sFld );
           }
