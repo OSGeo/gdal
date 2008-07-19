@@ -876,7 +876,7 @@ int OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 
     while((pszLine = CPLReadLine(fp)) != NULL)
     {
-        int nType;
+        int nType = -1;
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);
 
@@ -1156,7 +1156,7 @@ int OGRXPlaneAptReader::ParseLinearGeometry(OGRMultiLineString& multilinestring,
 
     while((pszLine = CPLReadLine(fp)) != NULL)
     {
-        int nType;
+        int nType = -1;
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);
 
