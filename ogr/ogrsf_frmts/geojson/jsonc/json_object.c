@@ -189,7 +189,7 @@ char* json_object_to_json_string(struct json_object *this)
 {
   if(!this) return "null";
   if(!this->_pb) {
-    if(!(this->_pb = printbuf_new())) return NULL;
+    if((this->_pb = printbuf_new()) == NULL) return NULL;
   } else {
     printbuf_reset(this->_pb);
   }
@@ -205,6 +205,10 @@ static int json_object_object_to_json_string(struct json_object* this,
 {
   int i=0;
   struct json_object_iter iter;
+  
+  iter.key = NULL;
+  iter.val = NULL;
+  iter.entry = NULL;
   sprintbuf(pb, "{");
 
   /* CAW: scope operator to make ANSI correctness */

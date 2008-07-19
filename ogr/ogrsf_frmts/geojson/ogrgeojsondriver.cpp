@@ -70,6 +70,8 @@ OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate )
 OGRDataSource* OGRGeoJSONDriver::Open( const char* pszName, int bUpdate,
                                        char** papszOptions )
 {
+    UNREFERENCED_PARAM(papszOptions);
+
     OGRGeoJSONDataSource* poDS = NULL;
     poDS = new OGRGeoJSONDataSource();
 
