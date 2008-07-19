@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: leveller.py 11674 2007-06-19 19:10:19Z mloskot $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test PDS/ISIS formats.

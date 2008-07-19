@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ida.py 11065 2007-03-24 09:35:32Z mloskot $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test ILWIS format driver.
