@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: vrtwarp.py 12181 2007-09-17 20:42:03Z warmerdam $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Geolocation warper.
