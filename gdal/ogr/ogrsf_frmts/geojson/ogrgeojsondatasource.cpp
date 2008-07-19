@@ -232,6 +232,8 @@ int OGRGeoJSONDataSource::TestCapability( const char* pszCap )
 
 int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
 {
+    UNREFERENCED_PARAM(papszOptions);
+
     CPLAssert( NULL == fpOut_ );
 
 /* -------------------------------------------------------------------- */
