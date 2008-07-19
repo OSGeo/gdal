@@ -30,11 +30,12 @@ array_list_new(array_list_free_fn *free_fn)
 {
   struct array_list *this;
 
-  if(!(this = calloc(1, sizeof(struct array_list)))) return NULL;
+  if((this = calloc(1, sizeof(struct array_list))) == NULL) return NULL;
+
   this->size = ARRAY_LIST_DEFAULT_SIZE;
   this->length = 0;
   this->free_fn = free_fn;
-  if(!(this->array = calloc(sizeof(void*), this->size))) {
+  if((this->array = calloc(sizeof(void*), this->size)) == NULL) {
     free(this);
     return NULL;
   }
@@ -65,7 +66,7 @@ static int array_list_expand_internal(struct array_list *this, int max)
 
   if(max < this->size) return 0;
   new_size = MAX(this->size << 1, max);
-  if(!(t = realloc(this->array, new_size*sizeof(void*)))) return -1;
+  if((t = realloc(this->array, new_size*sizeof(void*))) == NULL) return -1;
   this->array = t;
   (void)memset(this->array + this->size, 0, (new_size-this->size)*sizeof(void*));
   this->size = new_size;
