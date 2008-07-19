@@ -134,6 +134,7 @@ size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, FILE * );
 int CPL_DLL     VSIFEofL( FILE * );
 int CPL_DLL     VSIFFlushL( FILE * );
 int CPL_DLL     VSIFPrintfL( FILE *, const char *, ... ) CPL_PRINT_FUNC_FORMAT(2, 3);
+int CPL_DLL     VSIFPutcL( int, FILE * );
 
 #if defined(VSI_STAT64_T)
 typedef struct VSI_STAT64_T VSIStatBufL;
