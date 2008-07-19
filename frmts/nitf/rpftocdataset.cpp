@@ -42,7 +42,7 @@
 #define GEOTRSFRM_ROTATION_PARAM2      4
 #define GEOTRSFRM_NS_RES               5
 
-CPL_CVSID("$Id: rpftocdataset.cpp rouault $");
+CPL_CVSID("$Id$");
 
 
 /** Overview of used classes :
