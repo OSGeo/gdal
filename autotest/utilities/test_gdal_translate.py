@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: test_gdal_translate.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_translate testing

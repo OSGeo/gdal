@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: test_gdaltindex.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdaltindex testing
