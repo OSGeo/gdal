@@ -45,12 +45,10 @@ static int bWarnedTwoComplement = FALSE;
 /************************************************************************/
 
 static
-const char *DTEDGetField( const char *pachRecord, int nStart, int nSize )
+char *DTEDGetField( char szResult[81], const char *pachRecord, int nStart, int nSize )
 
 {
-    static char szResult[81];
-
-    CPLAssert( nSize < sizeof(szResult) );
+    CPLAssert( nSize < 81 );
     memcpy( szResult, pachRecord + nStart - 1, nSize );
     szResult[nSize] = '\0';
 
@@ -96,6 +94,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     int min = 0;
     int sec = 0;
     int bSwapLatLong = FALSE;
+    char szResult[81];
 
 /* -------------------------------------------------------------------- */
 /*      Open the physical file.                                         */
@@ -172,8 +171,8 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
     psDInfo->bUpdate = EQUAL(pszAccess,"r+b");
     
-    psDInfo->nXSize = atoi(DTEDGetField(achRecord,48,4));
-    psDInfo->nYSize = atoi(DTEDGetField(achRecord,52,4));
+    psDInfo->nXSize = atoi(DTEDGetField(szResult,achRecord,48,4));
+    psDInfo->nYSize = atoi(DTEDGetField(szResult,achRecord,52,4));
 
     psDInfo->nUHLOffset = VSIFTellL( fp ) - DTED_UHL_SIZE;
     psDInfo->pachUHLRecord = (char *) CPLMalloc(DTED_UHL_SIZE);
@@ -210,15 +209,15 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 /*      center of the area.                                             */
 /* -------------------------------------------------------------------- */
     psDInfo->dfPixelSizeX =
-        atoi(DTEDGetField(achRecord,21,4)) / 36000.0;
+        atoi(DTEDGetField(szResult,achRecord,21,4)) / 36000.0;
 
     psDInfo->dfPixelSizeY =
-        atoi(DTEDGetField(achRecord,25,4)) / 36000.0;
+        atoi(DTEDGetField(szResult,achRecord,25,4)) / 36000.0;
 
     /* create a scope so I don't need to declare these up top */
-    deg = atoi(stripLeadingZeros(DTEDGetField(achRecord,5,3)));
-    min = atoi(stripLeadingZeros(DTEDGetField(achRecord,8,2)));
-    sec = atoi(stripLeadingZeros(DTEDGetField(achRecord,10,2)));
+    deg = atoi(stripLeadingZeros(DTEDGetField(szResult,achRecord,5,3)));
+    min = atoi(stripLeadingZeros(DTEDGetField(szResult,achRecord,8,2)));
+    sec = atoi(stripLeadingZeros(DTEDGetField(szResult,achRecord,10,2)));
 
     /* NOTE : The first version of MIL-D-89020 was buggy.
        The latitude and longitude of the LL cornder of the UHF record was inverted.
@@ -238,9 +237,9 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
         bSwapLatLong = TRUE;
     }
 
-    deg = atoi(stripLeadingZeros(DTEDGetField(achRecord,13,3)));
-    min = atoi(stripLeadingZeros(DTEDGetField(achRecord,16,2)));
-    sec = atoi(stripLeadingZeros(DTEDGetField(achRecord,18,2)));
+    deg = atoi(stripLeadingZeros(DTEDGetField(szResult,achRecord,13,3)));
+    min = atoi(stripLeadingZeros(DTEDGetField(szResult,achRecord,16,2)));
+    sec = atoi(stripLeadingZeros(DTEDGetField(szResult,achRecord,18,2)));
 
     dfLLOriginY = deg + min / 60.0 + sec / 3600.0;
     if( achRecord[19] == 'S' || (bSwapLatLong && achRecord[19] == 'W'))
