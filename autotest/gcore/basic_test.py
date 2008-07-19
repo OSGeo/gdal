@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: basic_test.py  $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic GDAL open
