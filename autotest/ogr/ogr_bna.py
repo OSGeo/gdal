@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_bna.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test BNA driver functionality.
