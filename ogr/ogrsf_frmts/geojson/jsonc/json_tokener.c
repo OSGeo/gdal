@@ -231,8 +231,8 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
     case json_tokener_state_null:
       printbuf_memappend(tok->pb, &c, 1);
       if(strncasecmp(json_null_str, tok->pb->buf,
-		     MIN(tok->st_pos+1, strlen(json_null_str))) == 0) {
-	if(tok->st_pos == strlen(json_null_str)) {
+		     MIN(tok->st_pos+1, (int)strlen(json_null_str))) == 0) {
+	if(tok->st_pos == (int)strlen(json_null_str)) {
 	  current = NULL;
 	  saved_state = json_tokener_state_finish;
 	  state = json_tokener_state_eatws;
@@ -329,16 +329,16 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 	if(tok->st_pos == 4) {
 	  unsigned char utf_out[3];
 	  if (tok->ucs_char < 0x80) {
-	    utf_out[0] = tok->ucs_char;
+	    utf_out[0] = (unsigned char)tok->ucs_char;
 	    printbuf_memappend(tok->pb, (char*)utf_out, 1);
 	  } else if (tok->ucs_char < 0x800) {
-	    utf_out[0] = 0xc0 | (tok->ucs_char >> 6);
-	    utf_out[1] = 0x80 | (tok->ucs_char & 0x3f);
+	    utf_out[0] = (unsigned char)(0xc0 | (tok->ucs_char >> 6));
+	    utf_out[1] = (unsigned char)(0x80 | (tok->ucs_char & 0x3f));
 	    printbuf_memappend(tok->pb, (char*)utf_out, 2);
 	  } else {
-	    utf_out[0] = 0xe0 | (tok->ucs_char >> 12);
-	    utf_out[1] = 0x80 | ((tok->ucs_char >> 6) & 0x3f);
-	    utf_out[2] = 0x80 | (tok->ucs_char & 0x3f);
+	    utf_out[0] = (unsigned char)(0xe0 | (tok->ucs_char >> 12));
+	    utf_out[1] = (unsigned char)(0x80 | ((tok->ucs_char >> 6) & 0x3f));
+	    utf_out[2] = (unsigned char)(0x80 | (tok->ucs_char & 0x3f));
 	    printbuf_memappend(tok->pb, (char*)utf_out, 3);
 	  }
 	  state = saved_state;
@@ -352,16 +352,16 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
     case json_tokener_state_boolean:
       printbuf_memappend(tok->pb, &c, 1);
       if(strncasecmp(json_true_str, tok->pb->buf,
-		     MIN(tok->st_pos+1, strlen(json_true_str))) == 0) {
-	if(tok->st_pos == strlen(json_true_str)) {
+		     MIN(tok->st_pos+1, (int)strlen(json_true_str))) == 0) {
+	if(tok->st_pos == (int)strlen(json_true_str)) {
 	  current = json_object_new_boolean(1);
 	  saved_state = json_tokener_state_finish;
 	  state = json_tokener_state_eatws;
 	  goto redo_char;
 	}
       } else if(strncasecmp(json_false_str, tok->pb->buf,
-			    MIN(tok->st_pos+1, strlen(json_false_str))) == 0) {
-	if(tok->st_pos == strlen(json_false_str)) {
+			    MIN(tok->st_pos+1, (int)strlen(json_false_str))) == 0) {
+	if(tok->st_pos == (int)strlen(json_false_str)) {
 	  current = json_object_new_boolean(0);
 	  saved_state = json_tokener_state_finish;
 	  state = json_tokener_state_eatws;

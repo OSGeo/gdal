@@ -31,6 +31,11 @@
 #include <jsonc/json.h> // JSON-C
 #include <algorithm> // for_each, find_if
 
+/* Remove annoying warnings Microsoft Visual C++ */
+#if defined(_MSC_VER)
+#  pragma warning(disable:4512)
+#endif
+
 /************************************************************************/
 /*                       STATIC MEMBERS DEFINITION                      */
 /************************************************************************/
@@ -157,7 +162,7 @@ void OGRGeoJSONLayer::ResetReading()
 
 bool OGRGeoJSONLayer::EvaluateSpatialFilter( OGRGeometry* poGeometry )
 {
-    return FilterGeometry( poGeometry );
+    return ( FilterGeometry( poGeometry ) == 0 ? false : true );
 }
 
 /*******************************************/
@@ -191,7 +196,7 @@ struct AttributeFilterPredicate
 
     bool operator()( OGRFeature* p )
     {
-        return query_.Evaluate( p );
+        return ( query_.Evaluate( p ) == 0 ? false : true );
     }
 
 private:
