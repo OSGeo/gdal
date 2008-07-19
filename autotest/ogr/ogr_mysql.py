@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id: ogr_mysql.py $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test MySQL driver functionality.
