@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test gdal.ComputeMedianCutPCT() and gdal.DitherRGB2PCT()
