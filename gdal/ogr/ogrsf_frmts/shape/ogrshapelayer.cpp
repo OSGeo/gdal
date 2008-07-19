@@ -541,6 +541,8 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
 OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
 {
+    UNREFERENCED_PARAM( bForce );
+
     double adMin[4], adMax[4];
 
     if( hSHP == NULL )
@@ -599,6 +601,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
+    UNREFERENCED_PARAM( bApproxOK );
     CPLAssert( NULL != poField );
 
     int         iNewField;
@@ -764,7 +767,7 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
 /* -------------------------------------------------------------------- */
 /*      Update .shp header.                                             */
 /* -------------------------------------------------------------------- */
-    nStartPos = hSHP->sHooks.FTell( hSHP->fpSHP );
+    nStartPos = (int)( hSHP->sHooks.FTell( hSHP->fpSHP ) );
 
     if( hSHP->sHooks.FSeek( hSHP->fpSHP, 0, SEEK_SET ) != 0
         || hSHP->sHooks.FRead( abyHeader, 100, 1, hSHP->fpSHP ) != 1 )
@@ -782,7 +785,7 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
 /* -------------------------------------------------------------------- */
 /*      Update .shx header.                                             */
 /* -------------------------------------------------------------------- */
-    nStartPos = hSHP->sHooks.FTell( hSHP->fpSHX );
+    nStartPos = (int)( hSHP->sHooks.FTell( hSHP->fpSHX ) );
     
     if( hSHP->sHooks.FSeek( hSHP->fpSHX, 0, SEEK_SET ) != 0
         || hSHP->sHooks.FRead( abyHeader, 100, 1, hSHP->fpSHX ) != 1 )
