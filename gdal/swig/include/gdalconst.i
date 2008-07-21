@@ -92,6 +92,7 @@
 %constant GRA_Bilinear         = GRA_Bilinear;
 %constant GRA_Cubic            = GRA_Cubic;
 %constant GRA_CubicSpline      = GRA_CubicSpline;
+%constant GRA_Lanczos          = GRA_Lanczos;
 
 // GDALPaletteInterp
 %constant GPI_Gray  = GPI_Gray;
