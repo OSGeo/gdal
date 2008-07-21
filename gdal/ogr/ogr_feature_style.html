@@ -10,12 +10,15 @@
 OGR - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>DRAFT V0.011 - 2008/02/28</H2>
+  <H2>DRAFT V0.012 - 2008/07/21</H2>
 </CENTER>
 
 <HR WIDTH=50%>
 <H2>REVISION HISTORY</H2>
 <UL>
+<LI><B>Version 0.012 - 2008-07-21 - Daniel Morissette</B><BR>
+    Added 'o:' for text outline color and updated 'b:' to be specifically
+    a filled label background box (ticket #2480)
 <LI><B>Version 0.011 - 2008-02-28 - Tamas Szekeres</B><BR>
     Note about OGR SQL to transfer the style between the data sources
 <LI><B>Version 0.010 - 2006-09-23- Andrey Kiselev</B><BR>
@@ -756,13 +759,17 @@ attribute field's value.
 
   <TR>
     <TD ALIGN=CENTER>b</TD>
-    <TD><B>Text Background Color</B> - For text styles that use a second color
-such as halo and box.</TD>
+    <TD><B>Text Background Color</B> - Color of the filled box to draw behind the label, expressed in hexadecimal (#RRGGBB[AA]), no box drawn if not set.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>b</TD>
+    <TD><B>Text Outline Color</B> - Color of the text outline (halo in MapInfo terminology), expressed in hexadecimal (#RRGGBB[AA]), no outline if not set.</TD>
   </TR>
 
   <TR>
     <TD ALIGN=CENTER>h</TD>
-    <TD><B>Shadow Color</B> - Color of the text shadow.</TD>
+    <TD><B>Shadow Color</B> - Color of the text shadow, expressed in hexadecimal (#RRGGBB[AA]), no shadow if not set.</TD>
   </TR>
 
   <TR>
