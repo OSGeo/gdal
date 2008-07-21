@@ -452,10 +452,52 @@ def test_gdalwarp_16():
     return 'success'
 
 ###############################################################################
+# Test -dstalpha
+
+def test_gdalwarp_17():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -dstalpha ../gcore/data/rgbsmall.tif tmp/testgdalwarp17.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp17.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(4) is None:
+        gdaltest.post_reason('No alpha band generated')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test -wm -multi
+
+def test_gdalwarp_18():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif').read()
+
+    ds = gdal.Open('tmp/testgdalwarp18.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
-    for i in range(15):
+    for i in range(18):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
         except:
@@ -494,6 +536,8 @@ gdaltest_list = [
     test_gdalwarp_14,
     test_gdalwarp_15,
     test_gdalwarp_16,
+    test_gdalwarp_17,
+    test_gdalwarp_18,
     test_gdalwarp_cleanup
     ]
 
