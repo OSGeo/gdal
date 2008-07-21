@@ -418,6 +418,8 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     void SetAdjustmentVert(const char *pszAdjustmentVert){SetParamStr(OGRSTLabelAdjHor,pszAdjustmentVert);}
     const char *ShadowColor(GBool &bDefault){return GetParamStr(OGRSTLabelHColor,bDefault);}
     void SetShadowColor(const char *pszShadowColor){SetParamStr(OGRSTLabelHColor,pszShadowColor);}
+    const char *OutlineColor(GBool &bDefault){return GetParamStr(OGRSTLabelOColor,bDefault);}
+    void SetOutlineColor(const char *pszOutlineColor){SetParamStr(OGRSTLabelOColor,pszOutlineColor);}
     
     /*****************************************************************/
     

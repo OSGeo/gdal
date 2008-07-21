@@ -104,7 +104,8 @@ static const OGRStyleParamId asStyleLabel[] =
     {OGRSTLabelStretch,"w",FALSE, OGRSTypeDouble},
     {OGRSTLabelAdjHor,"ah",FALSE, OGRSTypeString},
     {OGRSTLabelAdjVert,"av",FALSE, OGRSTypeString},
-    {OGRSTLabelHColor,"h",FALSE,OGRSTypeString}
+    {OGRSTLabelHColor,"h",FALSE,OGRSTypeString},
+    {OGRSTLabelOColor,"o",FALSE,OGRSTypeString}
 };
 
 /* ======================================================================== */
