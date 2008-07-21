@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.16 2007/02/23 18:56:44 dmorissette Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.17 2008/02/01 19:36:31 dmorissette Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.17  2008/02/01 19:36:31  dmorissette
+ * Initial support for V800 REGION and MULTIPLINE (bug 1496)
+ *
  * Revision 1.16  2007/02/23 18:56:44  dmorissette
  * Fixed another problem writing collections when the header of objects
  * part of a collection were split on multiple blocks. Fix WriteBytes()
@@ -412,6 +415,8 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
  *
  * In V450 the numVertices is stored on an int32 instead of an int16
  *
+ * In V800 the numHoles is stored on an int32 instead of an int16
+ *
  * IMPORTANT: This function makes the assumption that coordinates for all
  *            the sections are grouped together immediately after the
  *            last section header block (i.e. that the coord. data is not
@@ -423,7 +428,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
  * CPLError() will have been called.
  **********************************************************************/
 int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, 
-                                           GBool bV450Hdr,
+                                           int nVersion,
                                            int numSections,
                                            TABMAPCoordSecHdr *pasHdrs,
                                            GInt32    &numVerticesTotal)
@@ -440,8 +445,10 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
      * to take this fact into account.
      * Also, V450 header section uses int32 instead of int16 for numVertices
      * and we add another 2 bytes to align with a 4 bytes boundary.
+     * V800 header section uses int32 for numHoles but there is no need
+     * for the 2 alignment bytes so the size is the same as V450
      *------------------------------------------------------------*/
-    if (bV450Hdr)
+    if (nVersion >= 450)
         nTotalHdrSizeUncompressed = 28 * numSections;
     else
         nTotalHdrSizeUncompressed = 24 * numSections;
@@ -456,11 +463,14 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
 #ifdef TABDUMP
         int nHdrAddress = GetCurAddress();
 #endif
-        if (bV450Hdr)
+        if (nVersion >= 450)
             pasHdrs[i].numVertices = ReadInt32();
         else
             pasHdrs[i].numVertices = ReadInt16();
-        pasHdrs[i].numHoles = ReadInt16();
+        if (nVersion >= 800)
+            pasHdrs[i].numHoles = ReadInt32();
+        else
+            pasHdrs[i].numHoles = ReadInt16();
         ReadIntCoord(bCompressed, pasHdrs[i].nXMin, pasHdrs[i].nYMin);
         ReadIntCoord(bCompressed, pasHdrs[i].nXMax, pasHdrs[i].nYMax);
         pasHdrs[i].nDataOffset = ReadInt32();
@@ -519,13 +529,15 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
  *
  * In V450 the numVertices is stored on an int32 instead of an int16
  *
+ * In V800 the numHoles is stored on an int32 instead of an int16
+ *
  * At the end of the call, this TABMAPCoordBlock object will be ready to
  * receive the coordinate data.
  *
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
+int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
                                             int numSections,
                                             TABMAPCoordSecHdr *pasHdrs,
                                             GBool bCompressed /*=FALSE*/)
@@ -554,11 +566,14 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
                m_nComprOrgX, m_nComprOrgY);
 #endif
 
-        if (bV450Hdr)
+        if (nVersion >= 450)
             WriteInt32(pasHdrs[i].numVertices);
         else
             WriteInt16(pasHdrs[i].numVertices);
-        WriteInt16(pasHdrs[i].numHoles);
+        if (nVersion >= 800)
+            WriteInt32(pasHdrs[i].numHoles);
+        else
+            WriteInt16(pasHdrs[i].numHoles);
         WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin, bCompressed);
         WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax, bCompressed);
         WriteInt32(pasHdrs[i].nDataOffset);
