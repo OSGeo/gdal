@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.32 2006/11/28 18:49:08 dmorissette Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.33 2008/02/01 19:36:31 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.33  2008/02/01 19:36:31  dmorissette
+ * Initial support for V800 REGION and MULTIPLINE (bug 1496)
+ *
  * Revision 1.32  2006/11/28 18:49:08  dmorissette
  * Completed changes to split TABMAPObjectBlocks properly and produce an
  * optimal spatial index (bug 1585)
@@ -148,7 +151,7 @@
 /*---------------------------------------------------------------------
  * The header block starts with an array of map object lenght constants.
  *--------------------------------------------------------------------*/
-#define HDR_OBJ_LEN_ARRAY_SIZE   58
+#define HDR_OBJ_LEN_ARRAY_SIZE   73
 static GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
             0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
@@ -157,7 +160,9 @@ static GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0xa4,0xa9,0xa0,0xa8,0xad,0xa4,0xa8,0xad,
             0x16,0x1a,0x39,0x0d,0x11,0x37,0xa5,0xa9,
             0xb5,0xa4,0xa8,0xad,0xb2,0xb6,0xdc,0xbd,
-            0xbd,0xf4 };
+            0xbd,0xf4,0x2b,0x2f,0x55,0xc8,0xcc,0xd8,
+            0xc7,0xcb,0xd0,0xd3,0xd7,0xfd,0xc2,0xc2,
+            0xf9};
 
 
 

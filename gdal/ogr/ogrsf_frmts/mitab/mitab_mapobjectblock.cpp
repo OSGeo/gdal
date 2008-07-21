@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.19 2007/09/18 17:43:56 dmorissette Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.22 2008/02/20 21:35:30 dmorissette Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.22  2008/02/20 21:35:30  dmorissette
+ * Added support for V800 COLLECTION of large objects (bug 1496)
+ *
+ * Revision 1.21  2008/02/05 22:22:48  dmorissette
+ * Added support for TAB_GEOM_V800_MULTIPOINT (bug 1496)
+ *
+ * Revision 1.20  2008/02/01 19:36:31  dmorissette
+ * Initial support for V800 REGION and MULTIPLINE (bug 1496)
+ *
  * Revision 1.19  2007/09/18 17:43:56  dmorissette
  * Fixed another index splitting issue: compr coordinates origin was not
  * stored in the TABFeature in ReadGeometry... (bug 1732)
@@ -739,6 +748,10 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(GByte nNewObjType, GInt32 nId /*=0*/)
       case TAB_GEOM_V450_REGION:
       case TAB_GEOM_V450_MULTIPLINE_C:
       case TAB_GEOM_V450_MULTIPLINE:
+      case TAB_GEOM_V800_REGION_C:
+      case TAB_GEOM_V800_REGION:
+      case TAB_GEOM_V800_MULTIPLINE_C:
+      case TAB_GEOM_V800_MULTIPLINE:
         poObj = new TABMAPObjPLine;
         break;
       case TAB_GEOM_ARC_C:
@@ -759,10 +772,14 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(GByte nNewObjType, GInt32 nId /*=0*/)
         break;
       case TAB_GEOM_MULTIPOINT_C:
       case TAB_GEOM_MULTIPOINT:
+      case TAB_GEOM_V800_MULTIPOINT_C:
+      case TAB_GEOM_V800_MULTIPOINT:
         poObj = new TABMAPObjMultiPoint;
         break;
       case TAB_GEOM_COLLECTION_C:
       case TAB_GEOM_COLLECTION:
+      case TAB_GEOM_V800_COLLECTION_C:
+      case TAB_GEOM_V800_COLLECTION:
         poObj = new TABMAPObjCollection();
     break;
       default:
@@ -944,8 +961,27 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     {
         m_numLineSections = 1;
     }
+    else if (m_nType == TAB_GEOM_V800_REGION ||
+             m_nType == TAB_GEOM_V800_REGION_C ||
+             m_nType == TAB_GEOM_V800_MULTIPLINE ||
+             m_nType == TAB_GEOM_V800_MULTIPLINE_C )
+    {
+        /* V800 REGIONS/MULTIPLINES use an int32 */
+        m_numLineSections = poObjBlock->ReadInt32();
+        /* ... followed by 33 unknown bytes */
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadByte();
+    }
     else
     {
+        /* V300 and V450 REGIONS/MULTIPLINES use an int16 */
         m_numLineSections = poObjBlock->ReadInt16();
     }
 
@@ -1001,7 +1037,9 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (m_nType == TAB_GEOM_REGION ||
         m_nType == TAB_GEOM_REGION_C ||
         m_nType == TAB_GEOM_V450_REGION ||
-        m_nType == TAB_GEOM_V450_REGION_C )
+        m_nType == TAB_GEOM_V450_REGION_C ||
+        m_nType == TAB_GEOM_V800_REGION ||
+        m_nType == TAB_GEOM_V800_REGION_C )
     {
         m_nBrushId = poObjBlock->ReadByte();    // Brush index... REGION only
     }
@@ -1038,9 +1076,20 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32( m_nCoordDataSize );
 
     // Number of line segments applies only to MULTIPLINE/REGION but not PLINE
-    if (m_nType != TAB_GEOM_PLINE_C &&
-        m_nType != TAB_GEOM_PLINE )
+    if (m_nType == TAB_GEOM_V800_REGION ||
+        m_nType == TAB_GEOM_V800_REGION_C ||
+        m_nType == TAB_GEOM_V800_MULTIPLINE ||
+        m_nType == TAB_GEOM_V800_MULTIPLINE_C )
     {
+        /* V800 REGIONS/MULTIPLINES use an int32 */
+        poObjBlock->WriteInt32(m_numLineSections);
+        /* ... followed by 33 unknown bytes */
+        poObjBlock->WriteZeros(33);
+    }
+    else if (m_nType != TAB_GEOM_PLINE_C &&
+             m_nType != TAB_GEOM_PLINE )
+    {
+        /* V300 and V450 REGIONS/MULTIPLINES use an int16 */
         poObjBlock->WriteInt16(m_numLineSections);
     }
 
@@ -1084,7 +1133,9 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (m_nType == TAB_GEOM_REGION ||
         m_nType == TAB_GEOM_REGION_C ||
         m_nType == TAB_GEOM_V450_REGION ||
-        m_nType == TAB_GEOM_V450_REGION_C )
+        m_nType == TAB_GEOM_V450_REGION_C ||
+        m_nType == TAB_GEOM_V800_REGION ||
+        m_nType == TAB_GEOM_V800_REGION_C )
     {
         poObjBlock->WriteByte(m_nBrushId);    // Brush index... REGION only
     }
@@ -1565,6 +1616,21 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->ReadByte();
     poObjBlock->ReadByte();
 
+    if (m_nType == TAB_GEOM_V800_MULTIPOINT ||
+        m_nType == TAB_GEOM_V800_MULTIPOINT_C )
+    {
+        /* V800 MULTIPOINTS have another 33 unknown bytes... all zeros */
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadInt32();
+        poObjBlock->ReadByte();
+    }
+
     m_nSymbolId = poObjBlock->ReadByte();
 
     // ?????
@@ -1629,13 +1695,15 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Number of points
     poObjBlock->WriteInt32(m_nNumPoints);
 
-//  unknown bytes
-    poObjBlock->WriteInt32(0);
-    poObjBlock->WriteInt32(0);
-    poObjBlock->WriteInt32(0);
-    poObjBlock->WriteByte(0);
-    poObjBlock->WriteByte(0);
-    poObjBlock->WriteByte(0);
+    //  unknown bytes
+    poObjBlock->WriteZeros(15);
+
+    if (m_nType == TAB_GEOM_V800_MULTIPOINT ||
+        m_nType == TAB_GEOM_V800_MULTIPOINT_C )
+    {
+        /* V800 MULTIPOINTS have another 33 unknown bytes... all zeros */
+        poObjBlock->WriteZeros(33);
+    }
 
     // Symbol Id
     poObjBlock->WriteByte(m_nSymbolId);
@@ -1694,26 +1762,47 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    int SIZE_OF_MINI_HDR = 24;
+    int SIZE_OF_REGION_PLINE_MINI_HDR = 24, SIZE_OF_MPOINT_MINI_HDR = 24;
+    int nVersion = TAB_GEOM_GET_VERSION(m_nType);
 
     /* Figure the size of the mini-header that we find for each of the
      * 3 optional components (center x,y and mbr)
      */
     if (IsCompressedType())
     {
-        SIZE_OF_MINI_HDR = 12; /* 6 * int16 */
+        /* 6 * int16 */
+        SIZE_OF_REGION_PLINE_MINI_HDR = SIZE_OF_MPOINT_MINI_HDR = 12; 
     }
     else
     {
-        SIZE_OF_MINI_HDR = 24; /* 6 * int32 */
+        /* 6 * int32 */
+        SIZE_OF_REGION_PLINE_MINI_HDR = SIZE_OF_MPOINT_MINI_HDR = 24;
     }
   
+    if (nVersion >= 800)
+    {
+        /* extra 4 bytes for num_segments in Region/Pline mini-headers */
+        SIZE_OF_REGION_PLINE_MINI_HDR += 4;  
+    }
+
     m_nCoordBlockPtr = poObjBlock->ReadInt32();    // pointer into coord block
     m_nNumMultiPoints = poObjBlock->ReadInt32();   // no. points in multi point
     m_nRegionDataSize = poObjBlock->ReadInt32();   // size of region data inc. section hdrs
     m_nPolylineDataSize = poObjBlock->ReadInt32(); // size of multipline data inc. section hdrs
-    m_nNumRegSections = poObjBlock->ReadInt16();   // Num Region section headers
-    m_nNumPLineSections = poObjBlock->ReadInt16(); // Num Pline section headers
+
+    if (nVersion < 800)
+    {
+        // Num Region/Pline section headers (int16 in V650)
+        m_nNumRegSections = poObjBlock->ReadInt16();   
+        m_nNumPLineSections = poObjBlock->ReadInt16();
+    }
+    else
+    {
+        // Num Region/Pline section headers (int32 in V800)
+        m_nNumRegSections = poObjBlock->ReadInt32();   
+        m_nNumPLineSections = poObjBlock->ReadInt32();
+    }
+
 
     if (IsCompressedType())
     {
@@ -1741,15 +1830,15 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     if(m_nNumRegSections > 0)
     {
-        m_nCoordDataSize += SIZE_OF_MINI_HDR + m_nRegionDataSize;
+        m_nCoordDataSize += SIZE_OF_REGION_PLINE_MINI_HDR + m_nRegionDataSize;
     }
     if(m_nNumPLineSections > 0)
     {
-        m_nCoordDataSize += SIZE_OF_MINI_HDR + m_nPolylineDataSize;
+        m_nCoordDataSize += SIZE_OF_REGION_PLINE_MINI_HDR + m_nPolylineDataSize;
     }
     if(m_nNumMultiPoints > 0)
     {
-        m_nCoordDataSize += SIZE_OF_MINI_HDR + m_nMPointDataSize;
+        m_nCoordDataSize += SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize;
     }
 
 
@@ -1758,10 +1847,27 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
            "CoordBlockPtr=%d, numRegionSections=%d (size=%d+%d), "
            "numPlineSections=%d (size=%d+%d), numPoints=%d (size=%d+%d)\n",
            m_nId, m_nType, m_nType, m_nCoordBlockPtr, 
-           m_nNumRegSections, m_nRegionDataSize, SIZE_OF_MINI_HDR,
-           m_nNumPLineSections, m_nPolylineDataSize, SIZE_OF_MINI_HDR,
-           m_nNumMultiPoints, m_nMPointDataSize, SIZE_OF_MINI_HDR);
+           m_nNumRegSections, m_nRegionDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
+           m_nNumPLineSections, m_nPolylineDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
+           m_nNumMultiPoints, m_nMPointDataSize, SIZE_OF_MPOINT_MINI_HDR);
 #endif
+
+    if (nVersion >= 800)
+    {
+        // Extra byte in V800 files... value always 4???
+        int nValue = poObjBlock->ReadByte();
+        if (nValue != 4)
+        {
+            CPLError(CE_Failure, CPLE_AssertionFailed, 
+                     "TABMAPObjCollection::ReadObj(): Byte 29 in Collection "
+                     "object header not equal to 4 as expected. Value is %d. "
+                     "Please report this error to the MITAB list so that "
+                     "MITAB can be extended to support this case.",
+                     nValue);
+            // We don't return right away, the error should be caught at the
+            // end of this function.
+        }
+    }
 
     // ??? All zeros ???
     poObjBlock->ReadInt32();
@@ -1828,6 +1934,8 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
+    int nVersion = TAB_GEOM_GET_VERSION(m_nType);
+
     /* NB. MapInfo counts 2 extra bytes per Region and Pline section header
      * in the RegionDataSize and PolylineDataSize values but those 2 extra 
      * bytes are not present in the section hdr (possibly due to an alignment
@@ -1846,8 +1954,25 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteInt32(m_nNumMultiPoints);   // no. points in multi point
     poObjBlock->WriteInt32(nRegionDataSizeMI);   // size of region data inc. section hdrs
     poObjBlock->WriteInt32(nPolylineDataSizeMI); // size of Mpolyline data inc. sction hdrs
-    poObjBlock->WriteInt16(m_nNumRegSections);   // Num Region section headers
-    poObjBlock->WriteInt16(m_nNumPLineSections); // Num Pline section headers
+
+    if (nVersion < 800)
+    {
+        // Num Region/Pline section headers (int16 in V650)
+        poObjBlock->WriteInt16(m_nNumRegSections);
+        poObjBlock->WriteInt16(m_nNumPLineSections);
+    }
+    else
+    {
+        // Num Region/Pline section headers (int32 in V800)
+        poObjBlock->WriteInt32(m_nNumRegSections);
+        poObjBlock->WriteInt32(m_nNumPLineSections);
+    }
+
+    if (nVersion >= 800)
+    {
+        // Extra byte in V800 files... value always 4???
+        poObjBlock->WriteByte(4);
+    }
 
     // Unknown data ?????
     poObjBlock->WriteInt32(0);

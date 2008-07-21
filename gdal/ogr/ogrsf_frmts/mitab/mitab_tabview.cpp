@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabview.cpp,v 1.17 2007/06/21 14:00:23 dmorissette Exp $
+ * $Id: mitab_tabview.cpp,v 1.19 2008/03/05 20:35:39 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabview.cpp,v $
+ * Revision 1.19  2008/03/05 20:35:39  dmorissette
+ * Replace MITAB 1.x SetFeature() with a CreateFeature() for V2.x (bug 1859)
+ *
+ * Revision 1.18  2008/01/29 20:46:32  dmorissette
+ * Added support for v9 Time and DateTime fields (byg 1754)
+ *
  * Revision 1.17  2007/06/21 14:00:23  dmorissette
  * Added missing cast in isspace() calls to avoid failed assertion on Windows
  * (MITAB bug 1737, GDAL ticket 1678))
@@ -873,39 +879,29 @@ TABFeature *TABView::GetFeatureRef(int nFeatureId)
 
 
 /**********************************************************************
- *                   TABView::SetFeature()
+ *                   TABView::CreateFeature()
  *
- * Write a feature to this dataset.  
+ * Write a new feature to this dataset. The passed in feature is updated 
+ * with the new feature id.
  *
- * For now only sequential writes are supported (i.e. with nFeatureId=-1)
- * but eventually we should be able to do random access by specifying
- * a value through nFeatureId.
- *
- * Returns the new featureId (> 0) on success, or -1 if an
+ * Returns OGRERR_NONE on success, or an appropriate OGRERR_ code if an
  * error happened in which case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-int TABView::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
+OGRErr TABView::CreateFeature(TABFeature *poFeature)
 {
     if (m_eAccessMode != TABWrite)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "SetFeature() can be used only with Write access.");
-        return -1;
-    }
-
-    if (nFeatureId != -1)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "SetFeature(): random access not implemented yet.");
-        return -1;
+                 "CreateFeature() can be used only with Write access.");
+        return OGRERR_UNSUPPORTED_OPERATION;
     }
 
     if (m_poRelation == NULL)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "SetFeature() failed: file is not opened!");
-        return -1;
+                 "CreateFeature() failed: file is not opened!");
+        return OGRERR_FAILURE;
     }
 
     /*-----------------------------------------------------------------
@@ -915,11 +911,17 @@ int TABView::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     if (!m_bRelFieldsCreated)
     {
         if (m_poRelation->CreateRelFields() != 0)
-            return -1;
+            return OGRERR_FAILURE;
         m_bRelFieldsCreated = TRUE;
     }
 
-    return m_poRelation->SetFeature(poFeature, nFeatureId);
+    int nFeatureId = m_poRelation->WriteFeature(poFeature);
+    if (nFeatureId < 0)
+        return OGRERR_FAILURE;
+
+    poFeature->SetFID(nFeatureId);
+
+    return OGRERR_NONE;
 }
 
 
@@ -1692,9 +1694,17 @@ GByte *TABRelation::BuildFieldKey(TABFeature *poFeature, int nFieldNo,
                              poFeature->GetFieldAsDouble(nFieldNo));
         break;
 
+      // __TODO__ DateTime fields are 8 bytes long, not supported yet by
+      // the indexing code (see bug #1844).
+      case TABFDateTime:
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "TABRelation on field of type DateTime not supported yet.");
+        break;
+
       case TABFInteger:
       case TABFSmallInt:
       case TABFDate:
+      case TABFTime:
       case TABFLogical:
       default:
         pKey = m_poRelINDFileRef->BuildKey(nIndexNo,
@@ -1938,7 +1948,7 @@ GBool TABRelation::IsFieldUnique(int nFieldId)
 }
 
 /**********************************************************************
- *                   TABRelation::SetFeature()
+ *                   TABRelation::WriteFeature()
  *
  * Write a feature to this dataset.  
  *
@@ -1950,9 +1960,16 @@ GBool TABRelation::IsFieldUnique(int nFieldId)
  * error happened in which case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-int TABRelation::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
+int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
 {
     TABFeature *poMainFeature=NULL;
+
+    if (nFeatureId != -1)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "WriteFeature(): random access not implemented yet.");
+        return -1;
+    }
 
     CPLAssert(m_poMainTable && m_poRelTable);
 
@@ -2026,7 +2043,7 @@ int TABRelation::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
 
             poRelFeature->SetField(m_nRelFieldNo, nRecordNo);
 
-            if (m_poRelTable->SetFeature(poRelFeature, -1) < 0)
+            if (m_poRelTable->CreateFeature(poRelFeature) == OGRERR_NONE)
                 return -1;
 
             delete poRelFeature;
@@ -2037,10 +2054,12 @@ int TABRelation::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     /*-----------------------------------------------------------------
      * Write poMainFeature to the main table
      *----------------------------------------------------------------*/
-
     poMainFeature->SetField(m_nMainFieldNo, nRecordNo);
 
-    nFeatureId = m_poMainTable->SetFeature(poMainFeature, nFeatureId);
+    if (m_poMainTable->CreateFeature(poMainFeature) != OGRERR_NONE)
+        nFeatureId = poMainFeature->GetFID();
+    else
+        nFeatureId = -1;
 
     delete poMainFeature;
 

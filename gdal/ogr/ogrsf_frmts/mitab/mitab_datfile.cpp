@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.18 2007/10/09 17:43:16 fwarmerdam Exp $
+ * $Id: mitab_datfile.cpp,v 1.19 2008/01/29 20:46:32 dmorissette Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.19  2008/01/29 20:46:32  dmorissette
+ * Added support for v9 Time and DateTime fields (byg 1754)
+ *
  * Revision 1.18  2007/10/09 17:43:16  fwarmerdam
  * Remove static variables that interfere with reentrancy. (GDAL #1883)
  *
@@ -650,6 +653,10 @@ int  TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
                                  m_pasFieldDef[i].byLength != 8    )) ||
           (eType == TABFDate && (m_pasFieldDef[i].cType != 'C' ||
                                 m_pasFieldDef[i].byLength != 4     )) ||
+          (eType == TABFTime && (m_pasFieldDef[i].cType != 'C' ||
+                                 m_pasFieldDef[i].byLength != 4    )) ||
+          (eType == TABFDateTime && (m_pasFieldDef[i].cType != 'C' ||
+                                    m_pasFieldDef[i].byLength != 8 )) ||
           (eType == TABFLogical && (m_pasFieldDef[i].cType != 'L' ||
                                    m_pasFieldDef[i].byLength != 1  ))   ) ))
     {
@@ -743,6 +750,14 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
       case TABFDate:
         m_pasFieldDef[m_numFields-1].cType = 'C';
         m_pasFieldDef[m_numFields-1].byLength = 4;
+        break;
+      case TABFTime:
+        m_pasFieldDef[m_numFields-1].cType = 'C';
+        m_pasFieldDef[m_numFields-1].byLength = 4;
+        break;
+      case TABFDateTime:
+        m_pasFieldDef[m_numFields-1].cType = 'C';
+        m_pasFieldDef[m_numFields-1].byLength = 8;
         break;
       case TABFLogical:
         m_pasFieldDef[m_numFields-1].cType = 'L';
@@ -1040,6 +1055,123 @@ const char *TABDATFile::ReadDateField(int nWidth)
     sprintf(m_szBuffer, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
 
     return m_szBuffer;
+}
+
+/**********************************************************************
+ *                   TABDATFile::ReadTimeField()
+ *
+ * Read the Time field value at the current position in the data 
+ * block.
+ *
+ * A time field is a 4 bytes binary value which represents the number
+ * of milliseconds since midnight.
+ *
+ * We return a 9 char string in the format "HHMMSSMMM"
+ * 
+ * Note: nWidth is used only with TABTableDBF types.
+ *
+ * Returns a reference to an internal buffer that will be valid only until
+ * the next field is read, or "" if the operation failed, in which case
+ * CPLError() will have been called.
+ **********************************************************************/
+const char *TABDATFile::ReadTimeField(int nWidth)
+{
+    GInt32 nS;
+    static char szBuf[20];
+
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return "";
+
+    if (m_poRecordBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "Can't read field value: file is not opened.");
+        return "";
+    }
+
+    // With .DBF files, there is nothing to do... the value should already
+    // be stored in HHMMSSMMM format according to DBF specs.
+    if (m_eTableType == TABTableDBF)
+        return ReadCharField(nWidth);
+
+
+    nS  = m_poRecordBlock->ReadInt32(); // Convert time from ms to sec
+
+    // nS is set to -1 when the value is 'not set'
+    if (CPLGetLastErrorNo() != 0 || nS < 0 || (nS>86400000))
+        return "";
+
+    int nHour = int(nS/3600000);
+    int nMin  = int((nS/1000 - nHour*3600)/60);
+    int nSec  = int(nS/1000 - nHour*3600 - nMin*60);
+    int nMS   = int(nS-nHour*3600000-nMin*60000-nSec*1000);
+    sprintf(szBuf, "%2.2d%2.2d%2.2d%3.3d", nHour, nMin, nSec, nMS);
+
+    return szBuf;
+}
+
+/**********************************************************************
+ *                   TABDATFile::ReadDateTimeField()
+ *
+ * Read the DateTime field value at the current position in the data 
+ * block.
+ *
+ * A datetime field is an 8 bytes binary value in which the first byte is
+ * the day, followed by 1 byte for the month, and 2 bytes for the year. After
+ * this is 4 bytes which represents the number of milliseconds since midnight.
+ *
+ * We return an 17 chars string in the format "YYYYMMDDhhmmssmmm"
+ * 
+ * Note: nWidth is used only with TABTableDBF types.
+ *
+ * Returns a reference to an internal buffer that will be valid only until
+ * the next field is read, or "" if the operation failed, in which case
+ * CPLError() will have been called.
+ **********************************************************************/
+const char *TABDATFile::ReadDateTimeField(int nWidth)
+{
+    int nDay, nMonth, nYear;
+    GInt32 nS;
+    static char szBuf[20];
+
+    // If current record has been deleted, then return an acceptable 
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return "";
+
+    if (m_poRecordBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "Can't read field value: file is not opened.");
+        return "";
+    }
+
+    // With .DBF files, there is nothing to do... the value should already
+    // be stored in YYYYMMDD format according to DBF specs.
+    if (m_eTableType == TABTableDBF)
+        return ReadCharField(nWidth);
+
+
+    nYear  = m_poRecordBlock->ReadInt16();
+    nMonth = m_poRecordBlock->ReadByte();
+    nDay   = m_poRecordBlock->ReadByte();
+    nS     = m_poRecordBlock->ReadInt32();
+
+    if (CPLGetLastErrorNo() != 0 || 
+        (nYear==0 && nMonth==0 && nDay==0) || (nS>86400000))
+        return "";
+
+    int nHour = int(nS/3600000);
+    int nMin  = int((nS/1000 - nHour*3600)/60);
+    int nSec  = int(nS/1000 - nHour*3600 - nMin*60);
+    int nMS   = int(nS-nHour*3600000-nMin*60000-nSec*1000);
+
+    sprintf(szBuf, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
+            nYear, nMonth, nDay, nHour, nMin, nSec, nMS);
+
+    return szBuf;
 }
 
 /**********************************************************************
@@ -1351,6 +1483,250 @@ int TABDATFile::WriteDateField(const char *pszValue,
     // Update Index
     if (poINDFile && nIndexNo > 0)
     {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, (nYear*0x10000 +
+                                                     nMonth * 0x100 + nDay));
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABDATFile::WriteTimeField()
+ *
+ * Write the date field value at the current position in the data 
+ * block.
+ *
+ * A time field is a 4 byte binary value which represents the number
+ * of milliseconds since midnight.
+ *
+ * The expected input is a 10 chars string in the format "HH:MM:SS"
+ * or "HHMMSSmmm"
+ * 
+ * Returns 0 on success, or -1 if the operation failed, in which case
+ * CPLError() will have been called.
+ **********************************************************************/
+int TABDATFile::WriteTimeField(const char *pszValue,
+                               TABINDFile *poINDFile, int nIndexNo)
+{
+    int nHour, nMin, nSec, nMS;
+    GInt32 nS = -1;
+    char **papszTok = NULL;
+
+    if (m_poRecordBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+            "Can't write field value: GetRecordBlock() has not been called.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Get rid of leading spaces.
+     *----------------------------------------------------------------*/
+    while ( *pszValue == ' ' ) { pszValue++; }
+
+    /*-----------------------------------------------------------------
+     * Try to automagically detect time format, one of:
+     * "HH:MM:SS", or "HHMMSSmmm"
+     *----------------------------------------------------------------*/
+    
+    if (strlen(pszValue) == 8)
+    {
+        /*-------------------------------------------------------------
+         * "HH:MM:SS"
+         *------------------------------------------------------------*/
+        char szBuf[9];
+        strcpy(szBuf, pszValue);
+        szBuf[2]=0;
+        szBuf[5]=0;
+        nHour = atoi(szBuf);
+        nMin  = atoi(szBuf+3);
+        nSec  = atoi(szBuf+6);
+        nMS   = 0;
+
+        nS = (nHour*3600+nMin*60+nSec)*1000+nMS;
+    }
+    else if (strlen(pszValue) == 9)
+    {
+        /*-------------------------------------------------------------
+         * "HHMMSSmmm"
+         *------------------------------------------------------------*/
+        char szBuf[4];
+        strncpy(szBuf,pszValue,2);
+        szBuf[2]=0;
+        nHour = atoi(szBuf);
+
+        strncpy(szBuf,pszValue+2,2);
+        szBuf[2]=0;
+        nMin = atoi(szBuf);
+
+        strncpy(szBuf,pszValue+4,2);
+        szBuf[2]=0;
+        nSec = atoi(szBuf);
+
+        strncpy(szBuf,pszValue+6,3);
+        szBuf[3]=0;
+        nMS = atoi(szBuf);
+
+        nS = (nHour*3600+nMin*60+nSec)*1000+nMS;
+    }
+    else if (strlen(pszValue) == 0)
+    {
+        nS = -1;  // Write -1 to .DAT file if value is not set
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid time field value `%s'.  Time field values must "
+                 "be in the format `HH:MM:SS', or `HHMMSSmmm'",
+                 pszValue);
+        CSLDestroy(papszTok);
+        return -1;
+    }
+    CSLDestroy(papszTok);
+
+    m_poRecordBlock->WriteInt32(nS);
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, (nS));
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *                   TABDATFile::WriteDateTimeField()
+ *
+ * Write the DateTime field value at the current position in the data 
+ * block.
+ *
+ * A datetime field is a 8 bytes binary value in which the first byte is
+ * the day, followed by 1 byte for the month, and 2 bytes for the year.
+ * After this the time value is stored as a 4 byte integer 
+ * (milliseconds since midnight)
+ *
+ * The expected input is a 10 chars string in the format "YYYY/MM/DD HH:MM:SS"
+ * or "DD/MM/YYYY HH:MM:SS" or "YYYYMMDDhhmmssmmm"
+ * 
+ * Returns 0 on success, or -1 if the operation failed, in which case
+ * CPLError() will have been called.
+ **********************************************************************/
+int TABDATFile::WriteDateTimeField(const char *pszValue,
+                                   TABINDFile *poINDFile, int nIndexNo)
+{
+    int nDay, nMonth, nYear, nHour, nMin, nSec, nMS;
+    char **papszTok = NULL;
+
+    if (m_poRecordBlock == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+            "Can't write field value: GetRecordBlock() has not been called.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Get rid of leading spaces.
+     *----------------------------------------------------------------*/
+    while ( *pszValue == ' ' ) { pszValue++; }
+
+    /*-----------------------------------------------------------------
+     * Try to automagically detect date format, one of:
+     * "YYYY/MM/DD HH:MM:SS", "DD/MM/YYYY HH:MM:SS", or "YYYYMMDDhhmmssmmm"
+     *----------------------------------------------------------------*/
+    
+    if (strlen(pszValue) == 17)
+    {
+        /*-------------------------------------------------------------
+         * "YYYYMMDDhhmmssmmm"
+         *------------------------------------------------------------*/
+        char szBuf[18];
+        strcpy(szBuf, pszValue);
+        nMS  = atoi(szBuf+14);
+        szBuf[14]=0;
+        nSec = atoi(szBuf+12);
+        szBuf[12]=0;
+        nMin = atoi(szBuf+10);
+        szBuf[10]=0;
+        nHour = atoi(szBuf+8);
+        szBuf[8]=0;
+        nDay = atoi(szBuf+6);
+        szBuf[6] = 0;
+        nMonth = atoi(szBuf+4);
+        szBuf[4] = 0;
+        nYear = atoi(szBuf);
+    }
+    else if (strlen(pszValue) == 19 &&
+             (papszTok = CSLTokenizeStringComplex(pszValue, "/ :", 
+                                                  FALSE, FALSE)) != NULL &&
+             CSLCount(papszTok) == 6 &&
+             (strlen(papszTok[0]) == 4 || strlen(papszTok[2]) == 4) )
+    {
+        /*-------------------------------------------------------------
+         * Either "YYYY/MM/DD HH:MM:SS" or "DD/MM/YYYY HH:MM:SS"
+         *------------------------------------------------------------*/
+        if (strlen(papszTok[0]) == 4)
+        {
+            nYear = atoi(papszTok[0]);
+            nMonth= atoi(papszTok[1]);
+            nDay  = atoi(papszTok[2]);
+            nHour = atoi(papszTok[3]);
+            nMin  = atoi(papszTok[4]);
+            nSec  = atoi(papszTok[5]);
+            nMS   = 0;
+        }
+        else
+        {
+            nYear = atoi(papszTok[2]);
+            nMonth= atoi(papszTok[1]);
+            nDay  = atoi(papszTok[0]);
+            nHour = atoi(papszTok[3]);
+            nMin  = atoi(papszTok[4]);
+            nSec  = atoi(papszTok[5]);
+            nMS   = 0;
+        }
+    }
+    else if (strlen(pszValue) == 0)
+    {
+        nYear = nMonth = nDay = 0;
+        nHour = nMin = nSec = nMS = 0;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid date field value `%s'.  Date field values must "
+                 "be in the format `YYYY/MM/DD HH:MM:SS', "
+                 "`MM/DD/YYYY HH:MM:SS' or `YYYYMMDDhhmmssmmm'",
+                 pszValue);
+        CSLDestroy(papszTok);
+        return -1;
+    }
+    CSLDestroy(papszTok);
+
+    GInt32 nS = (nHour*3600+nMin*60+nSec)*1000+nMS;
+
+    m_poRecordBlock->WriteInt16(nYear);
+    m_poRecordBlock->WriteByte(nMonth);
+    m_poRecordBlock->WriteByte(nDay);
+    m_poRecordBlock->WriteInt32(nS);
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        // __TODO__  (see bug #1844)
+        // Indexing on DateTime Fields not currently supported, that will 
+        // require passing the 8 bytes datetime value to BuildKey() here...
+        CPLAssert(FALSE);
         GByte *pKey = poINDFile->BuildKey(nIndexNo, (nYear*0x10000 +
                                                      nMonth * 0x100 + nDay));
         if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
