@@ -166,6 +166,21 @@ static void GDALCollectRingsFromGeometry(
         aPointY.push_back( poPoint->getY() );
         aPartSize.push_back( 1 );
     }
+    else if ( eFlatType == wkbLineString )
+    {
+        OGRLineString   *poLine = (OGRLineString *) poShape;
+        int nCount = poLine->getNumPoints();
+        int nNewCount = aPointX.size() + nCount;
+
+        aPointX.reserve( nNewCount );
+        aPointY.reserve( nNewCount );
+        for ( i = nCount - 1; i >= 0; i-- )
+        {
+            aPointX.push_back( poLine->getX(i) );
+            aPointY.push_back( poLine->getY(i) );
+        }
+        aPartSize.push_back( nCount );
+    }
     else if ( EQUAL(poShape->getGeometryName(),"LINEARRING") )
     {
         OGRLinearRing *poRing = (OGRLinearRing *) poShape;
@@ -193,7 +208,9 @@ static void GDALCollectRingsFromGeometry(
                                           aPointX, aPointY, aPartSize );
     }
     
-    else if( eFlatType == wkbMultiPolygon
+    else if( eFlatType == wkbMultiPoint
+             || eFlatType == wkbMultiLineString
+             || eFlatType == wkbMultiPolygon
              || eFlatType == wkbGeometryCollection )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poShape;
@@ -274,10 +291,18 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
     switch ( wkbFlatten(poShape->getGeometryType()) )
     {
         case wkbPoint:
+        case wkbMultiPoint:
             GDALdllImagePoint( sInfo.nXSize, nYSize, 
                                aPartSize.size(), &(aPartSize[0]), 
                                &(aPointX[0]), &(aPointY[0]),
                                gvBurnPoint, &sInfo );
+            break;
+        case wkbLineString:
+        case wkbMultiLineString:
+            GDALdllImageLine( sInfo.nXSize, nYSize, 
+                              aPartSize.size(), &(aPartSize[0]), 
+                              &(aPointX[0]), &(aPointY[0]),
+                              gvBurnPoint, &sInfo );
             break;
         default:
             GDALdllImageFilledPolygon( sInfo.nXSize, nYSize, 
@@ -308,10 +333,6 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
  * internally the burning is done either as GDT_Byte or GDT_Float32.  This
  * may be improved in the future.  An explicit list of burn values for
  * each geometry for each band must be passed in. 
- *
- * Currently only polygon, multipolygon and geometrycollections of polygons
- * or multipolygons are supported.  In the future support for points 
- * and lines may be added.
  *
  * @param hDS output data, must be opened in update mode.
  * @param nBandCount the number of bands to be updated.
@@ -487,10 +508,6 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * internally the burning is done either as GDT_Byte or GDT_Float32.  This
  * may be improved in the future.  An explicit list of burn values for
  * each layer for each band must be passed in. 
- *
- * Currently only polygon, multipolygon and geometrycollections of polygons
- * or multipolygons are supported.  In the future support for points 
- * and lines may be added.
  *
  * @param hDS output data, must be opened in update mode.
  * @param nBandCount the number of bands to be updated.
