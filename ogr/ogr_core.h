@@ -417,7 +417,8 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelAdjHor    = 17,
     OGRSTLabelAdjVert   = 18,
     OGRSTLabelHColor    = 19,
-    OGRSTLabelLast      = 20
+    OGRSTLabelOColor    = 20,
+    OGRSTLabelLast      = 21
               
 } OGRSTLabelParam;
 
