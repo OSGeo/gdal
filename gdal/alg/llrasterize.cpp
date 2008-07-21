@@ -266,3 +266,93 @@ void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
     }
 }
 
+/************************************************************************/
+/*                         GDALdllImageLine()                           */
+/************************************************************************/
+
+void GDALdllImageLine( int nRasterXSize, int nRasterYSize, 
+                       int nPartCount, int *panPartSize,
+                       double *padfX, double *padfY,
+                       llPointFunc pfnPointFunc, void *pCBData )
+{
+    int     i, n;
+
+    if (!nPartCount) {
+        return;
+    }
+
+    for ( i = 0, n = 0; i < nPartCount; i++, n += panPartSize[i] )
+    {
+        int j;
+
+        for ( j = 1; j < panPartSize[i]; j++ )
+        {
+/* -------------------------------------------------------------------- */
+/*      Draw the line segment.                                          */
+/*      This is a straightforward Bresenham's algorithm handling        */
+/*      all slopes and directions.                                      */
+/*      TODO: line clipping prior to drawing; some optimisations are    */
+/*      certainly possible here.                                        */
+/* -------------------------------------------------------------------- */
+            int iX = (int)floor( padfX[n + j - 1] + 0.5 );
+            int iY = (int)floor( padfY[n + j - 1] + 0.5 );
+
+            int iX1 = (int)floor( padfX[n + j] + 0.5 );
+            int iY1 = (int)floor( padfY[n + j] + 0.5 );
+
+            int nDeltaX = ABS( iX1 - iX );
+            int nDeltaY = ABS( iY1 - iY );
+
+            // Step direction depends on line direction.
+            int nXStep = ( iX > iX1 ) ? -1 : 1;
+            int nYStep = ( iY > iY1 ) ? -1 : 1;
+
+            // Determine the line slope.
+            if ( nDeltaX >= nDeltaY )
+            {           
+                int nXError = nDeltaY << 1;
+                int nYError = nXError - (nDeltaX << 1);
+                int nError = nXError - nDeltaX;
+
+                while ( nDeltaX-- >= 0 )
+                {
+                    if ( 0 <= iX && iX < nRasterXSize
+                         && 0 <= iY && iY < nRasterYSize )
+                        pfnPointFunc( pCBData, iY, iX );
+
+                    iX += nXStep;
+                    if ( nError > 0 )
+                    { 
+                        iY += nYStep;
+                        nError += nYError;
+                    }
+                    else
+                        nError += nXError;
+                }		
+            }
+            else
+            {
+                int nXError = nDeltaX << 1;
+                int nYError = nXError - (nDeltaY << 1);
+                int nError = nXError - nDeltaY;
+
+                while ( nDeltaY-- >= 0 )
+                {
+                    if ( 0 <= iX && iX < nRasterXSize
+                         && 0 <= iY && iY < nRasterYSize )
+                        pfnPointFunc( pCBData, iY, iX );
+
+                    iY += nYStep;
+                    if ( nError > 0 )
+                    { 
+                        iX += nXStep;
+                        nError += nYError;
+                    }
+                    else
+                        nError += nXError;
+                }
+            }
+        }
+    }
+}
+
