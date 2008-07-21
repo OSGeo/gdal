@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.48 2007/10/09 17:43:16 fwarmerdam Exp $
+ * $Id: mitab_priv.h,v 1.53 2008/03/05 20:35:39 dmorissette Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,21 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.53  2008/03/05 20:35:39  dmorissette
+ * Replace MITAB 1.x SetFeature() with a CreateFeature() for V2.x (bug 1859)
+ *
+ * Revision 1.52  2008/02/20 21:35:30  dmorissette
+ * Added support for V800 COLLECTION of large objects (bug 1496)
+ *
+ * Revision 1.51  2008/02/05 22:22:48  dmorissette
+ * Added support for TAB_GEOM_V800_MULTIPOINT (bug 1496)
+ *
+ * Revision 1.50  2008/02/01 19:36:31  dmorissette
+ * Initial support for V800 REGION and MULTIPLINE (bug 1496)
+ *
+ * Revision 1.49  2008/01/29 20:46:32  dmorissette
+ * Added support for v9 Time and DateTime fields (byg 1754)
+ *
  * Revision 1.48  2007/10/09 17:43:16  fwarmerdam
  * Remove static variables that interfere with reentrancy. (GDAL #1883)
  *
@@ -198,9 +213,22 @@ typedef enum
 
 /*---------------------------------------------------------------------
  * Limits related to .TAB version number.  If we pass any of those limits
- * then we have to switch dataset version up from 300 to 450
+ * then we have to use larger object types
  *--------------------------------------------------------------------*/
-#define TAB_300_MAX_VERTICES    32767
+#define TAB_REGION_PLINE_300_MAX_VERTICES    32767
+
+#define TAB_REGION_PLINE_450_MAX_SEGMENTS       32767
+#define TAB_REGION_PLINE_450_MAX_VERTICES       1048575
+
+#define TAB_MULTIPOINT_650_MAX_VERTICES         1048576
+
+/* Use this macro to test whether the number of segments and vertices 
+ * in this object exceeds the V450/650 limits and requires a V800 object 
+ */
+#define TAB_REGION_PLINE_REQUIRES_V800(numSegments, numVerticesTotal) \
+    ((numSegments) > TAB_REGION_PLINE_450_MAX_SEGMENTS || \
+     ((numSegments)*3 + numVerticesTotal) > TAB_REGION_PLINE_450_MAX_VERTICES )
+
 
 /*---------------------------------------------------------------------
  * struct TABMAPIndexEntry - Entries found in type 1 blocks of .MAP files
@@ -251,7 +279,9 @@ typedef enum
     TABFDecimal,
     TABFFloat,
     TABFDate,
-    TABFLogical
+    TABFLogical,
+    TABFTime,
+    TABFDateTime
 } TABFieldType;
 
 #define TABFIELDTYPE_2_STRING(type)     \
@@ -262,6 +292,8 @@ typedef enum
     type == TABFFloat ? "Float" :       \
     type == TABFDate ? "Date" :         \
     type == TABFLogical ? "Logical" :   \
+    type == TABFTime ? "Time" :         \
+    type == TABFDateTime ? "DateTime" : \
     "Unknown field type"   )
 
 /*---------------------------------------------------------------------
@@ -285,7 +317,7 @@ typedef struct TABDATFieldDef_t
 typedef struct TABMAPCoordSecHdr_t
 {
     GInt32      numVertices;
-    GInt16      numHoles;
+    GInt32      numHoles;
     GInt32      nXMin;
     GInt32      nYMin;
     GInt32      nXMax;
@@ -567,7 +599,7 @@ class TABMAPObjLine: public TABMAPObjHdr
 class TABMAPObjPLine: public TABMAPObjHdrWithCoord
 {
   public:
-    GInt16      m_numLineSections;  /* MULTIPLINE/REGION only. Not in PLINE */
+    GInt32      m_numLineSections;  /* MULTIPLINE/REGION only. Not in PLINE */
     GInt32      m_nLabelX;      /* Centroid/label location */
     GInt32      m_nLabelY;
     GInt32      m_nComprOrgX;   /* Present only in compressed coord. case */
@@ -685,8 +717,8 @@ class TABMAPObjCollection: public TABMAPObjHdrWithCoord
     GInt32      m_nComprOrgX;   /* Present only in compressed coord. case */
     GInt32      m_nComprOrgY;
     GInt32      m_nNumMultiPoints;
-    GInt16      m_nNumRegSections;
-    GInt16      m_nNumPLineSections;
+    GInt32      m_nNumRegSections;
+    GInt32      m_nNumPLineSections;
 
     GByte       m_nMultiPointSymbolId;
     GByte       m_nRegionPenId;
@@ -1146,10 +1178,10 @@ class TABMAPCoordBlock: public TABRawBinBlock
     void        SetComprCoordOrigin(GInt32 nX, GInt32 nY);
     int         ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int         ReadIntCoords(GBool bCompressed, int numCoords, GInt32 *panXY);
-    int         ReadCoordSecHdrs(GBool bCompressed, GBool bV450Hdr,
+    int         ReadCoordSecHdrs(GBool bCompressed, int nVersion,
                                  int numSections, TABMAPCoordSecHdr *pasHdrs,
                                  GInt32    &numVerticesTotal);
-    int         WriteCoordSecHdrs(GBool bV450Hdr, int numSections,
+    int         WriteCoordSecHdrs(int nVersion, int numSections,
                                   TABMAPCoordSecHdr *pasHdrs,
                                   GBool bCompressed);
 
@@ -1611,6 +1643,8 @@ class TABDATFile
     double      ReadDecimalField(int nWidth);
     const char  *ReadLogicalField(int nWidth);
     const char  *ReadDateField(int nWidth);
+    const char  *ReadTimeField(int nWidth);
+    const char  *ReadDateTimeField(int nWidth);
 
     int         WriteCharField(const char *pszValue, int nWidth,
                                TABINDFile *poINDFile, int nIndexNo);
@@ -1625,6 +1659,10 @@ class TABDATFile
     int         WriteLogicalField(const char *pszValue,
                                   TABINDFile *poINDFile, int nIndexNo);
     int         WriteDateField(const char *pszValue,
+                               TABINDFile *poINDFile, int nIndexNo);
+    int         WriteTimeField(const char *pszValue,
+                               TABINDFile *poINDFile, int nIndexNo);
+    int         WriteDateTimeField(const char *pszValue,
                                TABINDFile *poINDFile, int nIndexNo);
 
 #ifdef DEBUG
@@ -1695,7 +1733,7 @@ class TABRelation
     TABFieldType    GetNativeFieldType(int nFieldId);
     TABFeature     *GetFeature(int nFeatureId);
 
-    int         SetFeature(TABFeature *poFeature, int nFeatureId=-1);
+    int         WriteFeature(TABFeature *poFeature, int nFeatureId=-1);
 
     int         SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
                            TABFieldType *paeMapInfoNativeFieldTypes=NULL);

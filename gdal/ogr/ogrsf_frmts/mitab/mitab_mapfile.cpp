@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.41 2007/11/08 18:57:56 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.43 2008/02/20 21:35:30 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.43  2008/02/20 21:35:30  dmorissette
+ * Added support for V800 COLLECTION of large objects (bug 1496)
+ *
+ * Revision 1.42  2008/02/01 19:36:31  dmorissette
+ * Initial support for V800 REGION and MULTIPLINE (bug 1496)
+ *
  * Revision 1.41  2007/11/08 18:57:56  dmorissette
  * Upgrade of OGR and CPL libs to the version from GDAL/OGR 1.4.3
  *
@@ -1037,10 +1043,12 @@ void  TABMAPFile::UpdateMapHeaderInfo(GByte nObjType)
         nObjType == TAB_GEOM_FONTSYMBOL ||
         nObjType == TAB_GEOM_CUSTOMSYMBOL ||
         nObjType == TAB_GEOM_MULTIPOINT ||
+        nObjType == TAB_GEOM_V800_MULTIPOINT ||
         nObjType == TAB_GEOM_SYMBOL_C ||
         nObjType == TAB_GEOM_FONTSYMBOL_C ||
         nObjType == TAB_GEOM_CUSTOMSYMBOL_C ||
-        nObjType == TAB_GEOM_MULTIPOINT_C )
+        nObjType == TAB_GEOM_MULTIPOINT_C ||
+        nObjType == TAB_GEOM_V800_MULTIPOINT_C )
     {
         m_poHeader->m_numPointObjects++;
     }
@@ -1048,22 +1056,26 @@ void  TABMAPFile::UpdateMapHeaderInfo(GByte nObjType)
              nObjType == TAB_GEOM_PLINE ||
              nObjType == TAB_GEOM_MULTIPLINE ||
              nObjType == TAB_GEOM_V450_MULTIPLINE ||
+             nObjType == TAB_GEOM_V800_MULTIPLINE ||
              nObjType == TAB_GEOM_ARC ||
              nObjType == TAB_GEOM_LINE_C ||
              nObjType == TAB_GEOM_PLINE_C ||
              nObjType == TAB_GEOM_MULTIPLINE_C ||
              nObjType == TAB_GEOM_V450_MULTIPLINE_C ||
+             nObjType == TAB_GEOM_V800_MULTIPLINE_C ||
              nObjType == TAB_GEOM_ARC_C)
     {
         m_poHeader->m_numLineObjects++;
     }
     else if (nObjType == TAB_GEOM_REGION ||
              nObjType == TAB_GEOM_V450_REGION ||
+             nObjType == TAB_GEOM_V800_REGION ||
              nObjType == TAB_GEOM_RECT ||
              nObjType == TAB_GEOM_ROUNDRECT ||
              nObjType == TAB_GEOM_ELLIPSE ||
              nObjType == TAB_GEOM_REGION_C ||
              nObjType == TAB_GEOM_V450_REGION_C ||
+             nObjType == TAB_GEOM_V800_REGION_C ||
              nObjType == TAB_GEOM_RECT_C ||
              nObjType == TAB_GEOM_ROUNDRECT_C ||
              nObjType == TAB_GEOM_ELLIPSE_C)
@@ -1077,26 +1089,13 @@ void  TABMAPFile::UpdateMapHeaderInfo(GByte nObjType)
     }
 
     /*-----------------------------------------------------------------
-     * Check for V450-specific object types and minimum TAB file version number
+     * Check forminimum TAB file version number
      *----------------------------------------------------------------*/
-    if (m_nMinTABVersion < 450 &&
-        (nObjType == TAB_GEOM_V450_REGION ||
-         nObjType == TAB_GEOM_V450_MULTIPLINE ||
-         nObjType == TAB_GEOM_V450_REGION_C ||
-         nObjType == TAB_GEOM_V450_MULTIPLINE_C) )
+    int nVersion = TAB_GEOM_GET_VERSION(nObjType);
+
+    if (nVersion > m_nMinTABVersion )
     {
-        m_nMinTABVersion = 450;
-    }
-    /*-----------------------------------------------------------------
-     * Check for V460-specific object types (multipoint and collection)
-     *----------------------------------------------------------------*/
-    if (m_nMinTABVersion < 650 &&
-        (nObjType == TAB_GEOM_MULTIPOINT   ||
-         nObjType == TAB_GEOM_MULTIPOINT_C ||
-         nObjType == TAB_GEOM_COLLECTION   ||
-         nObjType == TAB_GEOM_COLLECTION_C    ) )
-    {
-        m_nMinTABVersion = 650;
+        m_nMinTABVersion = nVersion;
     }
 
 }

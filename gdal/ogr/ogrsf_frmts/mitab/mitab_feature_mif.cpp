@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.32 2007/06/07 20:27:21 dmorissette Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.33 2008/02/01 20:30:59 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.33  2008/02/01 20:30:59  dmorissette
+ * Use %.15g instead of %.16g as number precision in .MIF output
+ *
  * Revision 1.32  2007/06/07 20:27:21  dmorissette
  * Fixed memory leaks when reading multipoint objects from .MIF files
  *
@@ -426,7 +429,7 @@ int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    fp->WriteLine("Point %.16g %.16g\n",poPoint->getX(),poPoint->getY());
+    fp->WriteLine("Point %.15g %.15g\n",poPoint->getX(),poPoint->getY());
     fp->WriteLine("    Symbol (%d,%d,%d)\n",GetSymbolNo(),GetSymbolColor(),
                   GetSymbolSize());
 
@@ -510,8 +513,8 @@ int TABFontPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    fp->WriteLine("Point %.16g %.16g\n",poPoint->getX(),poPoint->getY());
-    fp->WriteLine("    Symbol (%d,%d,%d,\"%s\",%d,%.16g)\n",
+    fp->WriteLine("Point %.15g %.15g\n",poPoint->getX(),poPoint->getY());
+    fp->WriteLine("    Symbol (%d,%d,%d,\"%s\",%d,%.15g)\n",
                   GetSymbolNo(),GetSymbolColor(),
                   GetSymbolSize(),GetFontNameRef(),GetFontStyleMIFValue(),
                   GetSymbolAngle());
@@ -599,7 +602,7 @@ int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
     }
  
 
-    fp->WriteLine("Point %.16g %.16g\n",poPoint->getX(),poPoint->getY());
+    fp->WriteLine("Point %.15g %.15g\n",poPoint->getX(),poPoint->getY());
     fp->WriteLine("    Symbol (\"%s\",%d,%d,%d)\n",GetFontNameRef(),
                   GetSymbolColor(), GetSymbolSize(),m_nCustomStyle);
 
@@ -807,7 +810,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
         nNumPoints = poLine->getNumPoints();
         if (nNumPoints == 2)
         {
-            fp->WriteLine("Line %.16g %.16g %.16g %.16g\n",poLine->getX(0),poLine->getY(0),
+            fp->WriteLine("Line %.15g %.15g %.15g %.15g\n",poLine->getX(0),poLine->getY(0),
                           poLine->getX(1),poLine->getY(1));
         }
         else
@@ -816,7 +819,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
             fp->WriteLine("Pline %d\n",nNumPoints);
             for (i=0;i<nNumPoints;i++)
             {
-                fp->WriteLine("%.16g %.16g\n",poLine->getX(i),poLine->getY(i));
+                fp->WriteLine("%.15g %.15g\n",poLine->getX(i),poLine->getY(i));
             }
         }
     }
@@ -842,7 +845,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
                 fp->WriteLine("  %d\n",nNumPoints);
                 for (i=0;i<nNumPoints;i++)
                 {
-                    fp->WriteLine("%.16g %.16g\n",poLine->getX(i),poLine->getY(i));
+                    fp->WriteLine("%.15g %.15g\n",poLine->getX(i),poLine->getY(i));
                 }
             }
             else
@@ -1061,7 +1064,7 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
             fp->WriteLine("  %d\n",numPoints);
             for(i=0; i<numPoints; i++)
             {
-                fp->WriteLine("%.16g %.16g\n",poRing->getX(i), poRing->getY(i));
+                fp->WriteLine("%.15g %.15g\n",poRing->getX(i), poRing->getY(i));
             }
         }
         
@@ -1083,7 +1086,7 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
         if (m_bCenterIsSet)
         {
-            fp->WriteLine("    Center %.16g %.16g\n", m_dCenterX, m_dCenterY);
+            fp->WriteLine("    Center %.15g %.15g\n", m_dCenterX, m_dCenterY);
         }
 
 
@@ -1271,13 +1274,13 @@ int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     if (m_bRoundCorners == TRUE)
     {
-        fp->WriteLine("Roundrect %.16g %.16g %.16g %.16g %.16g\n", 
+        fp->WriteLine("Roundrect %.15g %.15g %.15g %.15g %.15g\n", 
                       sEnvelope.MinX, sEnvelope.MinY,
                       sEnvelope.MaxX, sEnvelope.MaxY, m_dRoundXRadius*2.0);
     }
     else
     {
-        fp->WriteLine("Rect %.16g %.16g %.16g %.16g\n", 
+        fp->WriteLine("Rect %.15g %.15g %.15g %.15g\n", 
                       sEnvelope.MinX, sEnvelope.MinY,
                       sEnvelope.MaxX, sEnvelope.MaxY);
     }
@@ -1414,7 +1417,7 @@ int TABEllipse::WriteGeometryToMIFFile(MIDDATAFile *fp)
         return -1;
     }
       
-    fp->WriteLine("Ellipse %.16g %.16g %.16g %.16g\n",sEnvelope.MinX, sEnvelope.MinY,
+    fp->WriteLine("Ellipse %.15g %.15g %.15g %.15g\n",sEnvelope.MinX, sEnvelope.MinY,
                   sEnvelope.MaxX,sEnvelope.MaxY);
     
     if (GetPenPattern())
@@ -1566,11 +1569,11 @@ int TABArc::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
      
     // Write the Arc's actual MBR
-     fp->WriteLine("Arc %.16g %.16g %.16g %.16g\n", m_dCenterX-m_dXRadius, 
+     fp->WriteLine("Arc %.15g %.15g %.15g %.15g\n", m_dCenterX-m_dXRadius, 
                    m_dCenterY-m_dYRadius, m_dCenterX+m_dXRadius, 
                    m_dCenterY+m_dYRadius);
 
-     fp->WriteLine("  %.16g %.16g\n",m_dStartAngle,m_dEndAngle); 
+     fp->WriteLine("  %.15g %.15g\n",m_dStartAngle,m_dEndAngle); 
      
      if (GetPenPattern())
        fp->WriteLine("    Pen (%d,%d,%d)\n",GetPenWidthMIF(),GetPenPattern(),
@@ -1863,7 +1866,7 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
 
     //    UpdateTextMBR();
     GetMBR(dXMin, dYMin, dXMax, dYMax);
-    fp->WriteLine("    %.16g %.16g %.16g %.16g\n",dXMin, dYMin,dXMax, dYMax); 
+    fp->WriteLine("    %.15g %.15g %.15g %.15g\n",dXMin, dYMin,dXMax, dYMax); 
  
     if (IsFontBGColorUsed())
       fp->WriteLine("    Font (\"%s\",%d,%d,%d,%d)\n", GetFontNameRef(), 
@@ -1900,18 +1903,18 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
     }
 
     if (ABS(GetTextAngle()) >  0.000001)
-        fp->WriteLine("    Angle %.16g\n",GetTextAngle());
+        fp->WriteLine("    Angle %.15g\n",GetTextAngle());
 
     switch (GetTextLineType())
     {
       case TABTLSimple:
         if (m_bLineEndSet)
-            fp->WriteLine("    Label Line Simple %.16g %.16g \n",
+            fp->WriteLine("    Label Line Simple %.15g %.15g \n",
                           m_dfLineEndX, m_dfLineEndY );
         break;
       case TABTLArrow:
         if (m_bLineEndSet)
-            fp->WriteLine("    Label Line Arrow %.16g %.16g \n",
+            fp->WriteLine("    Label Line Arrow %.15g %.15g \n",
                           m_dfLineEndX, m_dfLineEndY );
         break;
       case TABTLNoLine:
@@ -2036,7 +2039,7 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
             if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
             { 
                 poPoint = (OGRPoint*)poGeom;
-                fp->WriteLine("%.16g %.16g\n",poPoint->getX(),poPoint->getY());
+                fp->WriteLine("%.15g %.15g\n",poPoint->getX(),poPoint->getY());
             }
             else
             {
