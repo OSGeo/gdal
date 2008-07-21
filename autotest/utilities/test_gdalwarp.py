@@ -479,7 +479,13 @@ def test_gdalwarp_18():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
 
-    os.popen(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif').read()
+    (ret_stdin, ret_stdout, ret_stderr) = os.popen3(test_cli_utilities.get_gdalwarp_path() + ' -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif')
+
+    ret_stdout.read()
+    # This error will be returned if GDAL is not compiled with thread support
+    if ret_stderr.read().find('CPLCreateThread() failed in ChunkAndWarpMulti()') != -1:
+        print 'GDAL not compiled with thread support'
+        return 'skip'
 
     ds = gdal.Open('tmp/testgdalwarp18.tif')
     if ds is None:
