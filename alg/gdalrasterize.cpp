@@ -158,10 +158,10 @@ static void GDALCollectRingsFromGeometry(
     if ( eFlatType == wkbPoint )
     {
         OGRPoint    *poPoint = (OGRPoint *) poShape;
-        int nOldCount = aPointX.size();
+        int nNewCount = aPointX.size() + 1;
 
-        aPointX.reserve(nOldCount + 1);
-        aPointY.reserve(nOldCount + 1);
+        aPointX.reserve( nNewCount );
+        aPointY.reserve( nNewCount );
         aPointX.push_back( poPoint->getX() );
         aPointY.push_back( poPoint->getY() );
         aPartSize.push_back( 1 );
@@ -169,16 +169,17 @@ static void GDALCollectRingsFromGeometry(
     else if ( EQUAL(poShape->getGeometryName(),"LINEARRING") )
     {
         OGRLinearRing *poRing = (OGRLinearRing *) poShape;
-        int nOldCount = aPointX.size();
+        int nCount = poRing->getNumPoints();
+        int nNewCount = aPointX.size() + nCount;
 
-        aPointX.reserve(nOldCount + poRing->getNumPoints());
-        aPointY.reserve(nOldCount + poRing->getNumPoints());
-        for( i = poRing->getNumPoints()-1; i >= 0; i-- )
+        aPointX.reserve( nNewCount );
+        aPointY.reserve( nNewCount );
+        for ( i = nCount - 1; i >= 0; i-- )
         {
             aPointX.push_back( poRing->getX(i) );
             aPointY.push_back( poRing->getY(i) );
         }
-        aPartSize.push_back( poRing->getNumPoints() );
+        aPartSize.push_back( nCount );
     }
     else if( eFlatType == wkbPolygon )
     {
