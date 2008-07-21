@@ -43,6 +43,11 @@ typedef void (*llPointFunc)( void *, int, int );
 void GDALdllImagePoint( int, int, int, int *, double *, double *,
                         llPointFunc, void * );
 
+void GDALdllImageLine( int nRasterXSize, int nRasterYSize, 
+                       int nPartCount, int *panPartSize,
+                       double *padfX, double *padfY,
+                       llPointFunc pfnPointFunc, void *pCBData );
+
 void GDALdllImageFilledPolygon( int, int, int, int *, double *, double *,
                                llScanlineFunc, void * );
 
