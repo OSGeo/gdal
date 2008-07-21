@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.90 2008/07/21 18:17:19 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.91 2008/07/21 19:23:03 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.91  2008/07/21 19:23:03  aboudreault
+ * Fixed another small error with expanded text.
+ *
  * Revision 1.90  2008/07/21 18:17:19  dmorissette
  * Fixed a few compile warnings
  *
@@ -6094,16 +6097,15 @@ const char *TABText::GetLabelStyleString()
     {
         char *pszTmpTextString = (char*)CPLMalloc(((nStringLen*2)+1)*sizeof(char));
         int j = 0;
-        int nStringCount = nStringLen-1; // no space needed after the last char
 
-        for (int i =0; i < nStringCount; ++i)
+        for (int i =0; i < nStringLen; ++i)
         { 
             pszTmpTextString[j] = pszTextString[i];
             pszTmpTextString[j+1] = ' ';
             j += 2;
         }
 
-        pszTmpTextString[j] = '\0';
+        pszTmpTextString[j-1] = '\0';
         CPLFree(pszTextString);
         pszTextString = (char*)CPLMalloc((strlen(pszTmpTextString)+1)*sizeof(char));
         strcpy(pszTextString, pszTmpTextString);
