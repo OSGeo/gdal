@@ -153,6 +153,7 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 /*                        RegenerateOverviews()                         */
 /************************************************************************/
 
+#ifndef SWIGPERL
 %feature( "kwargs" ) RegenerateOverviews;
 #ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
@@ -170,12 +171,14 @@ int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
     return GDALRegenerateOverviews( srcBand, overviewBandCount, overviewBands,
     	   			    resampling, callback, callback_data );
 }
-%} 
+%}
+#endif
 
 /************************************************************************/
 /*                         RegenerateOverview()                         */
 /************************************************************************/
 
+#ifndef SWIGPERL
 %feature( "kwargs" ) RegenerateOverview;
 %inline %{
 int  RegenerateOverview( GDALRasterBandShadow *srcBand,
@@ -190,6 +193,7 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
     	   			    resampling, callback, callback_data );
 }
 %} 
+#endif
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
