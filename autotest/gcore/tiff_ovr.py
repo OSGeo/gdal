@@ -287,6 +287,65 @@ def tiff_ovr_8():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs = 200
 
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR
+# --config INTERLEAVE_OVERVIEW PIXEL -ro
+
+def tiff_ovr_9():
+
+    shutil.copyfile( 'data/rgbsmall.tif', 'tmp/ovr9.tif' )
+
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
+    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
+
+    ds = gdal.Open('tmp/ovr9.tif', gdal.GA_ReadOnly)
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
+    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', '')
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', '')
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 5700
+
+    ds = None
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Similar to tiff_ovr_9 but with internal overviews.
+
+def tiff_ovr_10():
+
+    src_ds = gdal.Open('data/rgbsmall.tif', gdal.GA_ReadOnly)
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/ovr10.tif', src_ds, options = [ 'COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR' ] )
+    src_ds = None
+
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2] )
+
+    ds = None
+    ds = gdal.Open('tmp/ovr10.tif', gdal.GA_ReadOnly)
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 5700
+
+    ds = None
+
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
         print exp_cs, cs
@@ -303,6 +362,8 @@ def tiff_ovr_cleanup():
     gdaltest.tiff_drv.Delete( 'tmp/ovr5.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/ovr6.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/test_average_palette.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr9.tif' )
+    gdaltest.tiff_drv.Delete( 'tmp/ovr10.tif' )
     gdaltest.tiff_drv = None
 
     return 'success'
@@ -317,6 +378,8 @@ gdaltest_list_internal = [
     tiff_ovr_6,
     tiff_ovr_7,
     tiff_ovr_8,
+    tiff_ovr_9,
+    tiff_ovr_10,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
