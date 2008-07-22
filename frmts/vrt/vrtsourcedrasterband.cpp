@@ -450,7 +450,8 @@ CPLErr VRTSourcedRasterBand::AddComplexSource( GDALRasterBand *poSrcBand,
                                                int nDstXSize, int nDstYSize,
                                                double dfScaleOff,
                                                double dfScaleRatio,
-                                               double dfNoDataValue )
+                                               double dfNoDataValue,
+                                               int nColorTableComponent)
 
 {
 /* -------------------------------------------------------------------- */
@@ -496,6 +497,8 @@ CPLErr VRTSourcedRasterBand::AddComplexSource( GDALRasterBand *poSrcBand,
         poSource->dfScaleRatio = dfScaleRatio;
           
     }
+
+    poSource->nColorTableComponent = nColorTableComponent;
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/

@@ -222,11 +222,17 @@ the following form:
 The intermediary values are calculated using a linear interpolation
 between the bounding destination values of the corresponding range.
 
+The ComplexSource supports fetching a color component from a source rasterband
+that has a color table. The ColorTableComponent value is the index of the
+color component to extract : 1 for the red band, 2 for the green band, 3 for
+the blue band or 4 for the alpha band.
+
 When transforming the source values the operations are executed
 in the following order:
 
 <ol>
 <li>Nodata masking</li>
+<li>Color table expansion</li>
 <li>Applying the scale ratio</li>
 <li>Applying the scale offset</li>
 <li>Table lookup</li>
@@ -238,6 +244,7 @@ in the following order:
       <SourceBand>1</SourceBand>
       <ScaleOffset>0</ScaleOffset>
       <ScaleRatio>1</ScaleRatio>
+      <ColorTableComponent>1</ColorTableComponent>
       <LUT>0:0,2345.12:64,56789.5:128,2364753.02:255</LUT>
       <NODATA>0</NODATA>
       <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
