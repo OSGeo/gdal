@@ -281,7 +281,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                      int nDstXSize=-1, int nDstYSize=-1,
                                      double dfScaleOff=0.0, 
                                      double dfScaleRatio=1.0,
-                                     double dfNoDataValue = VRT_NODATA_UNSET);
+                                     double dfNoDataValue = VRT_NODATA_UNSET,
+                                     int nColorTableComponent = 0);
 
     CPLErr         AddFuncSource( VRTImageReadFunc pfnReadFunc, void *hCBData,
                                   double dfNoDataValue = VRT_NODATA_UNSET );
@@ -491,6 +492,7 @@ public:
     double         *padfLUTInputs;
     double         *padfLUTOutputs;
     int            nLUTItemCount;
+    int            nColorTableComponent;
 };
 
 /************************************************************************/

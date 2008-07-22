@@ -33,7 +33,6 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "vrt/vrtdataset.h"
-#include "gdalctexpander.h"
 
 CPL_CVSID("$Id$");
 
@@ -115,7 +114,6 @@ static int ProxyMain( int argc, char ** argv )
     double              adfULLR[4] = { 0,0,0,0 };
     int                 bSetNoData = FALSE;
     double		dfNoDataReal = 0.0;
-    GDALDatasetH        hPalettedDataset = NULL;
     int                 nRGBExpand = 0;
 
 
@@ -391,12 +389,6 @@ static int ProxyMain( int argc, char ** argv )
 
     hDataset = GDALOpenShared( pszSource, GA_ReadOnly );
     
-    if (nRGBExpand > 0)
-    {
-        hPalettedDataset = hDataset;
-        hDataset = GDALCTExpandedDatasetCreate(hDataset, nRGBExpand, TRUE);
-    }
-    
     if( hDataset == NULL )
     {
         fprintf( stderr,
@@ -619,7 +611,8 @@ static int ProxyMain( int argc, char ** argv )
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
         && pszOXSize == NULL && pszOYSize == NULL 
         && nGCPCount == 0 && !bGotBounds
-        && pszOutputSRS == NULL && !bSetNoData )
+        && pszOutputSRS == NULL && !bSetNoData
+        && nRGBExpand == 0)
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
@@ -630,11 +623,6 @@ static int ProxyMain( int argc, char ** argv )
             GDALClose( hOutDS );
         
         GDALClose( hDataset );
-
-        if( hPalettedDataset != NULL)
-        {
-            GDALClose( hPalettedDataset );
-        }
 
         CPLFree( panBandList );
 
@@ -777,6 +765,9 @@ static int ProxyMain( int argc, char ** argv )
             poVDS->SetMetadata( papszMD, "RPC" );
     }
 
+    if (nRGBExpand != 0)
+        nBandCount += nRGBExpand - 1;
+
 /* ==================================================================== */
 /*      Process all bands.                                              */
 /* ==================================================================== */
@@ -786,8 +777,24 @@ static int ProxyMain( int argc, char ** argv )
         GDALRasterBand  *poSrcBand;
         GDALDataType    eBandType;
 
-        poSrcBand = ((GDALDataset *) 
-                     hDataset)->GetRasterBand(panBandList[i]);
+        if (nRGBExpand != 0 && i < nRGBExpand)
+        {
+            poSrcBand = ((GDALDataset *) 
+                     hDataset)->GetRasterBand(panBandList[0]);
+            if (poSrcBand->GetColorTable() == NULL)
+            {
+                fprintf(stderr, "Error : band %d has no color table\n", panBandList[0]);
+                GDALClose( hDataset );
+                CPLFree( panBandList );
+                GDALDestroyDriverManager();
+                CSLDestroy( argv );
+                CSLDestroy( papszCreateOptions );
+                exit( 1 );
+            }
+        }
+        else
+            poSrcBand = ((GDALDataset *) 
+                        hDataset)->GetRasterBand(panBandList[i]);
 
 /* -------------------------------------------------------------------- */
 /*      Select output data type to match source.                        */
@@ -832,13 +839,15 @@ static int ProxyMain( int argc, char ** argv )
 /*      Create a simple or complex data source depending on the         */
 /*      translation type required.                                      */
 /* -------------------------------------------------------------------- */
-        if( bScale )
+        if( bScale || (nRGBExpand != 0 && i < nRGBExpand) )
         {
             poVRTBand->AddComplexSource( poSrcBand,
                                          anSrcWin[0], anSrcWin[1], 
                                          anSrcWin[2], anSrcWin[3], 
                                          0, 0, nOXSize, nOYSize,
-                                         dfOffset, dfScale );
+                                         dfOffset, dfScale,
+                                         VRT_NODATA_UNSET,
+                                         (nRGBExpand != 0 && i < nRGBExpand) ? i + 1 : 0 );
         }
         else
             poVRTBand->AddSimpleSource( poSrcBand,
@@ -850,6 +859,14 @@ static int ProxyMain( int argc, char ** argv )
 /*      copy over some other information of interest.                   */
 /* -------------------------------------------------------------------- */
         poVRTBand->CopyCommonInfoFrom( poSrcBand );
+
+        /* In case of color table translate, we must unset the color table */
+        /* and override the color interpretation */
+        if (nRGBExpand != 0 && i < nRGBExpand)
+        {
+            poVRTBand->SetColorTable( NULL );
+            poVRTBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + i) );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Set a forcable nodata value?                                    */
@@ -869,11 +886,6 @@ static int ProxyMain( int argc, char ** argv )
         GDALClose( hOutDS );
     }
     
-    if( hPalettedDataset != NULL)
-    {
-        GDALClose( hPalettedDataset );
-    }
-
     GDALClose( (GDALDatasetH) poVDS );
         
     GDALClose( hDataset );
