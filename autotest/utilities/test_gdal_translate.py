@@ -148,6 +148,18 @@ def test_gdal_translate_5():
     if ds is None:
         return 'fail'
 
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
+    if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
     if ds.GetRasterBand(1).Checksum() != 20615:
         gdaltest.post_reason('Bad checksum')
         return 'fail'
@@ -414,6 +426,56 @@ def test_gdal_translate_16():
     return 'success'
 
 ###############################################################################
+# Test -expand option to VRT
+
+def test_gdal_translate_17():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    os.popen(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt').read()
+
+    ds = gdal.Open('tmp/test17.vrt')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
+    if ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
+    if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
+    if ds.GetRasterBand(4).GetRasterColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('Bad color interpretation')
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 20615:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(2).Checksum() != 59147:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(3).Checksum() != 63052:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if ds.GetRasterBand(4).Checksum() != 63052:
+        print ds.GetRasterBand(3).Checksum()
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -432,6 +494,10 @@ def test_gdal_translate_cleanup():
         pass
     try:
         os.remove('tmp/test16.vrt')
+    except:
+        pass
+    try:
+        os.remove('tmp/test17.vrt')
     except:
         pass
     return 'success'
@@ -453,6 +519,7 @@ gdaltest_list = [
     test_gdal_translate_14,
     test_gdal_translate_15,
     test_gdal_translate_16,
+    test_gdal_translate_17,
     test_gdal_translate_cleanup
     ]
 
