@@ -595,9 +595,12 @@ int ILI2Reader::SetupParser() {
 
         catch (const XMLException& toCatch)
         {
+            char* msg = XMLString::transcode(toCatch.getMessage());
             CPLError( CE_Failure, CPLE_AppDefined,
-              "Unable to initalize Xerces C++ based ILI2 reader. Error message:\n%s\n",
-              toCatch.getMessage() );
+                      "Unable to initalize Xerces C++ based ILI2 reader. "
+                      "Error message:\n%s\n", msg );
+            XMLString::release(&msg);
+
             return FALSE;
         }
         bXercesInitialized = TRUE;
