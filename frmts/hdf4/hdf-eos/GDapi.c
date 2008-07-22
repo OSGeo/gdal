@@ -6253,23 +6253,6 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
     return (errorcode);
 }
 
-
-
-
-
-#if !defined(HP9000) && !defined(DEC_ALPHA)
-void
-sincos(double val, double *sin_val, double *cos_val)
-{
-    *sin_val = sin(val);
-    *cos_val = cos(val);
-    return;
-}
-#endif
-
-
-
-
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
