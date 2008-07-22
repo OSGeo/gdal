@@ -64,7 +64,7 @@ def test_gdaladdo_1():
 
 
 ###############################################################################
-# Similar to tiff_ovr_5
+# Test -r average. Similar to tiff_ovr_5
 
 def test_gdaladdo_2():
     if test_cli_utilities.get_gdaladdo_path() is None:
@@ -89,9 +89,43 @@ def test_gdaladdo_2():
 
     return 'success'
 
+###############################################################################
+# Test -ro
+
+def test_gdaladdo_3():
+    if test_cli_utilities.get_gdaladdo_path() is None:
+        return 'skip'
+
+    shutil.copyfile( '../gcore/data/nodata_byte.tif', 'tmp/test_gdaladdo_3.tif' )
+
+    os.popen(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/test_gdaladdo_3.tif 2').read()
+
+    ds = gdal.Open('tmp/test_gdaladdo_3.tif')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 1152
+
+    if cs != exp_cs:
+        gdaltest.post_reason( 'got wrong overview checksum.' )
+        print exp_cs, cs
+        return 'fail'
+
+    ds = None
+    
+    try:
+        os.stat('tmp/test_gdaladdo_3.tif.ovr')
+    except:
+        gdaltest.post_reason( 'no external overview.' )
+        return 'fail'
+
+    os.remove('tmp/test_gdaladdo_3.tif')
+    os.remove('tmp/test_gdaladdo_3.tif.ovr')
+
+    return 'success'
+
 gdaltest_list = [
     test_gdaladdo_1,
-    test_gdaladdo_2
+    test_gdaladdo_2,
+    test_gdaladdo_3
     ]
 
 
