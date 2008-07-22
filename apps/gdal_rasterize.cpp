@@ -134,6 +134,52 @@ static void ProcessLayer(
 
 {
 /* -------------------------------------------------------------------- */
+/*      Checkout that SRS are the same.                                 */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReferenceH  hDstSRS = NULL;
+    if( GDALGetProjectionRef( hDstDS ) != NULL )
+    {
+        char *pszProjection;
+
+        pszProjection = (char *) GDALGetProjectionRef( hDstDS );
+
+        hDstSRS = OSRNewSpatialReference(NULL);
+        if( OSRImportFromWkt( hDstSRS, &pszProjection ) != CE_None )
+        {
+            OSRDestroySpatialReference(hDstSRS);
+            hDstSRS = NULL;
+        }
+    }
+
+    OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);
+    if( hDstSRS != NULL && hSrcSRS != NULL )
+    {
+        if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
+        {
+            fprintf(stderr,
+                    "Warning : the output raster dataset and the input vector layer do not have the same SRS. "
+                    "Results will be probably incorrect.\n");
+        }
+    }
+    else if( hDstSRS != NULL && hSrcSRS == NULL )
+    {
+        fprintf(stderr,
+                "Warning : the output raster dataset has a SRS, but the input vector layer not. "
+                "Results will be probably incorrect.\n");
+    }
+    else if( hDstSRS == NULL && hSrcLayer != NULL )
+    {
+        fprintf(stderr,
+                "Warning : the input vector layer has a SRS, but the output raster dataset not. "
+                "Results will be probably incorrect.\n");
+    }
+
+    if( hDstSRS != NULL )
+    {
+        OSRDestroySpatialReference(hDstSRS);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Get field index, and check.                                     */
 /* -------------------------------------------------------------------- */
     int iBurnField = -1;
