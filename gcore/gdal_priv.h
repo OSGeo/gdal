@@ -703,6 +703,14 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void        SetHome( const char * );
 };
 
+/* Not a public symbol for the moment */
+CPLErr 
+GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
+                                 int nOverviews,
+                                 GDALRasterBand*** papapoOverviewBands,
+                                 const char * pszResampling, 
+                                 GDALProgressFunc pfnProgress, void * pProgressData );
+
 CPL_C_START
 GDALDriverManager CPL_DLL * GetGDALDriverManager( void );
 CPL_C_END
