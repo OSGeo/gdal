@@ -2592,68 +2592,146 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
 /* -------------------------------------------------------------------- */
-    GDALRasterBand **papoOverviewBands;
-
-    papoOverviewBands = (GDALRasterBand **) 
-        CPLCalloc(sizeof(void*),nOverviews);
-
-    for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
+    if (nCompression != COMPRESSION_NONE &&
+        nPlanarConfig == PLANARCONFIG_CONTIG &&
+        GDALDataTypeIsComplex(GetRasterBand( panBandList[0] )->GetRasterDataType()) == FALSE &&
+        GetRasterBand( panBandList[0] )->GetColorTable() == NULL &&
+        (EQUALN(pszResampling, "NEAR", 4) || EQUAL(pszResampling, "AVERAGE")))
     {
-        GDALRasterBand *poBand;
-        int            nNewOverviews;
+        /* In the case of pixel interleaved compressed overviews, we want to generate */
+        /* the overviews for all the bands block by block, and not band after band, */
+        /* in order to write the block once and not loose space in the TIFF file */
 
-        poBand = GetRasterBand( panBandList[iBand] );
+        GDALRasterBand ***papapoOverviewBands;
+        GDALRasterBand  **papoBandList;
 
-        nNewOverviews = 0;
-        for( i = 0; i < nOverviews && poBand != NULL; i++ )
+        int nNewOverviews = 0;
+
+        papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
+        papoBandList = (GDALRasterBand **) CPLCalloc(sizeof(void*),nBands);
+        for( int iBand = 0; iBand < nBands; iBand++ )
         {
-            int   j;
-            
-            for( j = 0; j < poBand->GetOverviewCount(); j++ )
+            GDALRasterBand* poBand = GetRasterBand( panBandList[iBand] );
+
+            papoBandList[iBand] = poBand;
+            papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*), poBand->GetOverviewCount());
+
+            int iCurOverview = 0;
+            for( i = 0; i < nOverviews; i++ )
             {
-                int    nOvFactor;
-                GDALRasterBand * poOverview = poBand->GetOverview( j );
+                int   j;
 
-                int bHasNoData;
-                double noDataValue = poBand->GetNoDataValue(&bHasNoData);
-
-                if (bHasNoData)
-                  poOverview->SetNoDataValue(noDataValue);
-
-                nOvFactor = (int) 
-                  (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
-
-                if( nOvFactor == panOverviewList[i] 
-                    || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
-                                                        poBand->GetXSize() ) )
+                for( j = 0; j < poBand->GetOverviewCount(); j++ )
                 {
-                    papoOverviewBands[nNewOverviews++] = poOverview;
-                    break;
+                    int    nOvFactor;
+                    GDALRasterBand * poOverview = poBand->GetOverview( j );
+
+                    nOvFactor = (int) 
+                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+
+                    int bHasNoData;
+                    double noDataValue = poBand->GetNoDataValue(&bHasNoData);
+
+                    if (bHasNoData)
+                        poOverview->SetNoDataValue(noDataValue);
+
+                    if( nOvFactor == panOverviewList[i] 
+                        || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
+                                                            poBand->GetXSize() ) )
+                    {
+                        papapoOverviewBands[iBand][iCurOverview] = poOverview;
+                        iCurOverview++ ;
+                        break;
+                    }
                 }
+            }
+
+            if (nNewOverviews == 0)
+                nNewOverviews = iCurOverview;
+            else if (nNewOverviews != iCurOverview)
+            {
+                CPLAssert(0);
+                return CE_Failure;
             }
         }
 
-        void         *pScaledProgressData;
+        GDALRegenerateOverviewsMultiBand(nBands, papoBandList,
+                                         nNewOverviews, papapoOverviewBands,
+                                         pszResampling, pfnProgress, pProgressData );
 
-        pScaledProgressData = 
-            GDALCreateScaledProgress( iBand / (double) nBands, 
-                                      (iBand+1) / (double) nBands,
-                                      pfnProgress, pProgressData );
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            CPLFree(papapoOverviewBands[iBand]);
+        }
+        CPLFree(papapoOverviewBands);
+        CPLFree(papoBandList);
+    }
+    else
+    {
+        GDALRasterBand **papoOverviewBands;
 
-        eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
-                                        nNewOverviews, 
-                                        (GDALRasterBandH *) papoOverviewBands,
-                                        pszResampling, 
-                                        GDALScaledProgress, 
-                                        pScaledProgressData);
+        papoOverviewBands = (GDALRasterBand **) 
+            CPLCalloc(sizeof(void*),nOverviews);
 
-        GDALDestroyScaledProgress( pScaledProgressData );
+        for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
+        {
+            GDALRasterBand *poBand;
+            int            nNewOverviews;
+
+            poBand = GetRasterBand( panBandList[iBand] );
+
+            nNewOverviews = 0;
+            for( i = 0; i < nOverviews && poBand != NULL; i++ )
+            {
+                int   j;
+
+                for( j = 0; j < poBand->GetOverviewCount(); j++ )
+                {
+                    int    nOvFactor;
+                    GDALRasterBand * poOverview = poBand->GetOverview( j );
+
+                    int bHasNoData;
+                    double noDataValue = poBand->GetNoDataValue(&bHasNoData);
+
+                    if (bHasNoData)
+                        poOverview->SetNoDataValue(noDataValue);
+
+                    nOvFactor = (int) 
+                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+
+                    if( nOvFactor == panOverviewList[i] 
+                        || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
+                                                            poBand->GetXSize() ) )
+                    {
+                        papoOverviewBands[nNewOverviews++] = poOverview;
+                        break;
+                    }
+                }
+            }
+
+            void         *pScaledProgressData;
+
+            pScaledProgressData = 
+                GDALCreateScaledProgress( iBand / (double) nBands, 
+                                        (iBand+1) / (double) nBands,
+                                        pfnProgress, pProgressData );
+
+            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+                                            nNewOverviews, 
+                                            (GDALRasterBandH *) papoOverviewBands,
+                                            pszResampling, 
+                                            GDALScaledProgress, 
+                                            pScaledProgressData);
+
+            GDALDestroyScaledProgress( pScaledProgressData );
+        }
+
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+        CPLFree( papoOverviewBands );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    CPLFree( papoOverviewBands );
 
     pfnProgress( 1.0, NULL, pProgressData );
 
