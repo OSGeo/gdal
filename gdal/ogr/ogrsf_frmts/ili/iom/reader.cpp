@@ -66,7 +66,8 @@ int iom_file::readHeader(const char *model)
 
 int iom_file::readLoop(const char *filename)
 {
-	try{
+	try
+    {
 		if (!parser->parseFirst(filename, token))
 		{
 			iom_issueerr("scanFirst() failed");
@@ -78,7 +79,8 @@ int iom_file::readLoop(const char *filename)
 		}
 		parser->parseReset(token);
 	}
-	catch (const XMLException& toCatch) {
+	catch (const XMLException& toCatch)
+    {
             char* message = XMLString::transcode(toCatch.getMessage());
 			iom_issueerr(message);
             XMLString::release(&message);
