@@ -813,6 +813,8 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
             CXT_Text, pszName );
+
+        CPLFree(pszName);
     }
 
 /* -------------------------------------------------------------------- */
