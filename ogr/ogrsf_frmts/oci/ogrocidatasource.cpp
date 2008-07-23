@@ -665,7 +665,9 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     OGROCIStatement oStatement( GetSession() );
     char            szSelect[200], **papszResult;
 
-    sprintf( szSelect, "SELECT WKTEXT, AUTH_SRID, AUTH_NAME FROM MDSYS.CS_SRS WHERE SRID = %d", nId );
+    sprintf( szSelect, 
+             "SELECT WKTEXT, AUTH_SRID, AUTH_NAME FROM MDSYS.CS_SRS "
+             "WHERE SRID = %d AND WKTEXT IS NOT NULL", nId );
 
     if( oStatement.Execute( szSelect ) != CE_None )
         return NULL;
