@@ -3761,6 +3761,14 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, toff_t nDirOffsetIn,
     
     if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
         nCompression = COMPRESSION_NONE;
+    
+    if (nCompression != COMPRESSION_NONE &&
+        !TIFFIsCODECConfigured(nCompression))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot open TIFF file due to missing codec." );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      YCbCr JPEG compressed images should be translated on the fly    */
@@ -4612,6 +4620,14 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             CPLError( CE_Warning, CPLE_IllegalArg, 
                       "COMPRESS=%s value not recognised, ignoring.",
                       pszValue );
+
+        if (nCompression != COMPRESSION_NONE &&
+            !TIFFIsCODECConfigured(nCompression))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Cannot create TIFF file due to missing codec for %s.", pszValue );
+            return NULL;
+        }
     }
 
     pszValue = CSLFetchNameValue( papszParmList, "PREDICTOR" );
