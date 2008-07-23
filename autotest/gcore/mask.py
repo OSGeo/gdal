@@ -50,6 +50,11 @@ def mask_1():
         return 'skip'
 
     ds = gdal.Open('data/byte.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     band = ds.GetRasterBand(1)
 
     if band.GetMaskFlags() != gdal.GMF_ALL_VALID:
@@ -73,6 +78,11 @@ def mask_2():
         return 'skip'
 
     ds = gdal.Open('data/byte.vrt')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     band = ds.GetRasterBand(1)
 
     if band.GetMaskFlags() != gdal.GMF_NODATA:
@@ -95,7 +105,11 @@ def mask_3():
     if gdaltest.have_ng == 0:
         return 'skip'
 
-    ds = gdal.Open('data/stefan_full_rgba.png')
+    ds = gdal.Open( 'data/stefan_full_rgba.png' )
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
 
     # Test first mask.
     
@@ -146,6 +160,10 @@ def mask_4():
         return 'skip'
 
     src_ds = gdal.Open('../gdrivers/data/masked.jpg')
+    
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
 
     # NOTE: for now we copy to PNM since it does everything (overviews too)
     # externally. Should eventually test with gtiff, hfa.
@@ -183,6 +201,11 @@ def mask_5():
         return 'skip'
 
     ds = gdal.Open('tmp/mask_4.pnm',gdal.GA_Update)
+
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     ds.BuildOverviews( overviewlist = [2,4] )
 
     # confirm mask flags on overview.
@@ -242,6 +265,11 @@ def mask_6():
         return 'skip'
 
     ds = gdal.Open('data/test_with_mask_1bit.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     band = ds.GetRasterBand(1)
 
     if band.GetMaskFlags() != gdal.GMF_PER_DATASET:
@@ -266,6 +294,11 @@ def mask_7():
         return 'skip'
 
     ds = gdal.Open('data/test3_with_1mask_1bit.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     for i in (1,2,3):
         band = ds.GetRasterBand(i)
 
@@ -291,6 +324,11 @@ def mask_8():
         return 'skip'
 
     ds = gdal.Open('data/test_with_mask_8bit.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     band = ds.GetRasterBand(1)
 
     if band.GetMaskFlags() != gdal.GMF_PER_DATASET + gdal.GMF_ALPHA:
@@ -315,6 +353,11 @@ def mask_9():
         return 'skip'
 
     ds = gdal.Open('data/test3_with_mask_1bit.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     for i in (1,2,3):
         band = ds.GetRasterBand(i)
 
@@ -340,6 +383,11 @@ def mask_10():
         return 'skip'
 
     ds = gdal.Open('data/test3_with_mask_8bit.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     for i in (1,2,3):
         band = ds.GetRasterBand(i)
 
@@ -365,6 +413,11 @@ def mask_11():
         return 'skip'
 
     ds = gdal.Open('data/test_with_mask_1bit_and_ovr.tif')
+    
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     band = ds.GetRasterBand(1)
 
     # Let's fetch the mask
@@ -419,6 +472,10 @@ def mask_12():
 
     ds = gdal.Open('data/test3_with_mask_1bit_and_ovr.tif')
 
+    if ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     for i in (1,2,3):
         band = ds.GetRasterBand(i)
 
@@ -471,6 +528,10 @@ def mask_13():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.CreateCopy( 'tmp/byte_with_mask.tif', src_ds )
@@ -535,6 +596,10 @@ def mask_14():
 
     src_ds = gdal.Open('data/byte.tif')
 
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.CreateCopy( 'tmp/byte_with_mask.tif', src_ds )
     src_ds = None
@@ -593,6 +658,10 @@ def mask_and_ovr(order):
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.CreateCopy( 'tmp/byte_with_ovr_and_mask.tif', src_ds )
