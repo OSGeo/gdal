@@ -1116,6 +1116,17 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
     {
         char* pszKey = NULL;
         const char* pszValue = CPLParseNameValue(*papszCreationOptions, &pszKey);
+        if (pszKey == NULL)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Creation option '%s' is not formatted with the key=value format",
+                     *papszCreationOptions);
+            bRet = FALSE;
+
+            papszCreationOptions ++;
+            continue;
+        }
+
         CPLXMLNode* psChildNode = psNode->psChild;
         while(psChildNode)
         {
