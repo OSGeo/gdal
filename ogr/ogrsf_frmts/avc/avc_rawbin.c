@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_rawbin.c,v 1.13 2005/06/03 03:49:59 daniel Exp $
+ * $Id: avc_rawbin.c,v 1.14 2008/07/23 20:51:38 dmorissette Exp $
  *
  * Name:     avc_rawbin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -27,6 +27,52 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ **********************************************************************
+ *
+ * $Log: avc_rawbin.c,v $
+ * Revision 1.14  2008/07/23 20:51:38  dmorissette
+ * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
+ * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
+ *
+ * Revision 1.13  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.12  2004/08/19 23:41:04  warmerda
+ * fixed pointer aliasing optimization bug
+ *
+ * Revision 1.11  2000/09/22 19:45:21  daniel
+ * Switch to MIT-style license
+ *
+ * Revision 1.10  2000/05/29 15:36:07  daniel
+ * Fixed compile warning
+ *
+ * Revision 1.9  2000/05/29 15:31:31  daniel
+ * Added Japanese DBCS support
+ *
+ * Revision 1.8  2000/01/10 02:59:11  daniel
+ * Fixed problem in AVCRawBinOpen() when file not found
+ *
+ * Revision 1.7  1999/12/24 07:18:34  daniel
+ * Added PC Arc/Info coverages support
+ *
+ * Revision 1.6  1999/08/29 15:05:43  daniel
+ * Added source filename in "Attempt to read past EOF" error message
+ *
+ * Revision 1.5  1999/06/08 22:09:03  daniel
+ * Allow opening file with "r+" (but no real random access support yet)
+ *
+ * Revision 1.4  1999/05/11 02:10:51  daniel
+ * Added write support
+ *
+ * Revision 1.3  1999/03/03 19:55:21  daniel
+ * Fixed syntax error in the CPL_MSB version of AVCRawBinReadInt32()
+ *
+ * Revision 1.2  1999/02/25 04:20:08  daniel
+ * Modified AVCRawBinEOF() to detect EOF even if AVCRawBinFSeek() was used.
+ *
+ * Revision 1.1  1999/01/29 16:28:52  daniel
+ * Initial revision
+ *
  **********************************************************************/
 
 #include "avc.h"
@@ -273,7 +319,8 @@ void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 
     pBuf[nBytesToRead] = '\0';
 
-    pszConvBuf = AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo, pBuf, 
+    pszConvBuf = AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo,
+                                          pBuf, 
                                           nBytesToRead);
 
     if (pszConvBuf != pBuf)
@@ -368,7 +415,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
      */
     if (psFile->nCurPos == 0 && psFile->nCurSize == 0)
     {
-        char c;
+        GByte c;
         /* Set bDisableReadBytesEOFError=TRUE to temporarily disable 
          * the EOF error message from AVCRawBinReadBytes().
          */
@@ -460,7 +507,8 @@ double  AVCRawBinReadDouble(AVCRawBinFile *psFile)
  * CPLGetLastErrNo() can be used to test if a write operation was 
  * succesful.
  **********************************************************************/
-void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite, GByte *pBuf)
+void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite, 
+                         const GByte *pBuf)
 {
     /*----------------------------------------------------------------
      * Make sure file is opened with Write access
@@ -473,7 +521,7 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite, GByte *pBuf)
         return;
     }
 
-    if (VSIFWrite(pBuf, nBytesToWrite, 1, psFile->fp) != 1)
+    if (VSIFWrite((void*)pBuf, nBytesToWrite, 1, psFile->fp) != 1)
         CPLError(CE_Failure, CPLE_FileIO,
                  "Writing to %s failed.", psFile->pszFname);
 
@@ -572,7 +620,7 @@ void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
  * succesful.
  **********************************************************************/
 void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
-                                const char *pszString)
+                                const GByte *pszString)
 {
     char acSpaces[8] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
     int i, nLen, numSpaces;
@@ -581,14 +629,14 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
      * convert strings to the proper multibyte encoding.
      */
     pszString = AVCE00Convert2ArcDBCS(psFile->psDBCSInfo,
-                                           pszString, nFieldSize);
+                                      pszString, nFieldSize);
 
-    nLen = strlen(pszString);
+    nLen = strlen((const char *)pszString);
     nLen = MIN(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 
     if (nLen > 0)
-        AVCRawBinWriteBytes(psFile, nLen, (GByte*)pszString);
+        AVCRawBinWriteBytes(psFile, nLen, pszString);
 
     /* Write spaces by 8 bytes chunks.  The last chunk may be less than 8 bytes
      */
